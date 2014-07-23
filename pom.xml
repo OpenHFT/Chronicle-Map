@@ -32,19 +32,19 @@
 
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>collections</artifactId>
+    <artifactId>chronicle-map</artifactId>
     <version>3.1.0-SNAPSHOT</version>
-    <packaging>bundle</packaging>
-    <name>OpenHFT/HugeCollections/collections</name>
-    <description>Java Collections which are designed to be huge (may GB)</description>
+    <name>OpenHFT/Chronicle-Map</name>
+    <description>Chronicle-Map</description>
 
     <dependencyManagement>
         <dependencies>
+
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
                 <type>pom</type>
-                <version>3.4.0</version>
+                <version>3.4.2</version>
                 <scope>import</scope>
             </dependency>
             <dependency>
@@ -62,6 +62,18 @@
                 <artifactId>compiler</artifactId>
                 <version>2.2.0</version>
             </dependency>
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>collections</artifactId>
+                <version>3.1.0-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>collections</artifactId>
+                <version>3.1.0-SNAPSHOT</version>
+                <classifier>tests</classifier>
+            </dependency>
 
         </dependencies>
 
@@ -70,77 +82,41 @@
     <dependencies>
 
         <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>2.3</version>
+            <groupId>net.openhft</groupId>
+            <artifactId>collections</artifactId>
         </dependency>
 
-
-        <dependency>
-            <groupId>com.sun.java</groupId>
-            <artifactId>tools</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.intellij</groupId>
-            <artifactId>annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>lang</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-        <!-- test dependencies -->
-        <dependency>
-            <groupId>org.apache.derby</groupId>
-            <artifactId>derby</artifactId>
-            <scope>test</scope>
-            <version>10.10.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>compiler</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>affinity</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava-testlib</artifactId>
-            <scope>test</scope>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
+            <groupId>net.openhft</groupId>
+            <artifactId>collections</artifactId>
+            <classifier>tests</classifier>
         </dependency>
 
     </dependencies>
 
 
     <build>
+
         <plugins>
+
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
 
 
             <plugin>
@@ -152,43 +128,20 @@
                     </checkinComment>
                     <content>${project.reporting.outputDirectory}</content>
                     <skipDeletedFiles>true</skipDeletedFiles>
-                    <pubScmUrl>scm:git:git@github.com:OpenHFT/HugeCollections</pubScmUrl>
+                    <pubScmUrl>scm:git:git@github.com:OpenHFT/Chronicle-Map</pubScmUrl>
                     <scmBranch>gh-pages</scmBranch>
                 </configuration>
             </plugin>
 
-
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>${project.artifactId}</Bundle-Name>
-                        <Export-Package>net.openhft.collections.*</Export-Package>
-                    </instructions>
-                </configuration>
-                <executions>
-                    <!--
-                        This execution makes sure that the manifest is available
-                        when the tests are executed
-                    -->
-                    <execution>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
     <scm>
-        <url>scm:git:git@github.com:OpenHFT/HugeCollections.git</url>
-        <connection>scm:git:git@github.com:OpenHFT/HugeCollections.git</connection>
-        <developerConnection>scm:git:git@github.com:OpenHFT/HugeCollections.git</developerConnection>
+        <url>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</url>
+        <connection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</connection>
+        <developerConnection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</developerConnection>
         <tag>master</tag>
     </scm>
+
 
 </project>
