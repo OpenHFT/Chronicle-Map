@@ -99,6 +99,7 @@ public class ChronicleMap8Test extends JSR166TestCase {
         map.put(three, "C");
         map.put(four, "D");
         map.put(five, "E");
+        System.out.println(map.toString());
         final boolean empty = map.isEmpty();
         assertFalse(empty);
         assertEquals(5, map.size());

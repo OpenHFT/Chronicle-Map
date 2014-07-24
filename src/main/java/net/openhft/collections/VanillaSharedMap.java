@@ -315,7 +315,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
      * A view of a ConcurrentHashMap as a {@link Set} of (key, value) entries.  This class cannot be directly
      * instantiated. See {@link #entrySet()}.
      */
-    static final class EntrySetView<K, V> extends CollectionView<K, V, Map.Entry<K, V>>
+    final class EntrySetView<K, V> extends CollectionView<K, V, Map.Entry<K, V>>
             implements Set<Map.Entry<K, V>>, java.io.Serializable {
         private static final long serialVersionUID = 2249069246763182397L;
 
@@ -346,7 +346,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
          * @return an iterator over the entries of the backing map
          */
         public Iterator<Map.Entry<K, V>> iterator() {
-            return new EntryIterator<K, V>(map);
+            return new EntryIterator<K, V>();
         }
 
         public boolean add(Entry<K, V> e) {
@@ -606,7 +606,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
     public void forEach(BiConsumer<? super K, ? super V> action) {
         if (action == null) throw new NullPointerException();
 
-        final EntryIterator entryIterator = new EntryIterator(this);
+        final EntryIterator entryIterator = new EntryIterator();
 
         for (Entry<K, V> e = entryIterator.next(); entryIterator.hasNext(); e = entryIterator.next()) {
             action.accept(e.getKey(), e.getValue());
@@ -1626,8 +1626,8 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
      */
     @Override
     public V put(K key, V value) {
-        super.put(key, value);
-        return putVal(key, value, true);
+        return super.put(key, value);
+        //  return putVal(key, value, true);
     }
 
 
@@ -2699,19 +2699,16 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
         }
     }
 
-    static final class EntryIterator<K, V> implements Iterator<Entry<K, V>>, IntIntMultiMap.EntryConsumer {
+    final class EntryIterator<K, V> implements Iterator<Entry<K, V>>, IntIntMultiMap.EntryConsumer {
 
-        private final AbstractVanillaSharedMap map;
-        private int segmentIndex;
+        int segmentIndex = segments.length;
 
         Entry<K, V> nextEntry, lastReturned;
 
         Deque<Integer> segmentPositions = new ArrayDeque<Integer>(); //todo: replace with a more efficient, auto resizing int[]
 
-        EntryIterator(AbstractVanillaSharedMap map) {
+        EntryIterator() {
             nextEntry = nextSegmentEntry();
-            this.map = map;
-            segmentIndex = map.segments.length;
         }
 
         public boolean hasNext() {
@@ -2720,7 +2717,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
 
         public void remove() {
             if (lastReturned == null) throw new IllegalStateException();
-            map.remove(lastReturned.getKey());
+            AbstractVanillaSharedMap.this.remove(lastReturned.getKey());
             lastReturned = null;
         }
 
@@ -2733,22 +2730,25 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
             return e;
         }
 
+
+
         Entry<K, V> nextSegmentEntry() {
             while (segmentIndex >= 0) {
                 if (segmentPositions.isEmpty()) {
                     switchToNextSegment();
                 } else {
 
-                    map.segments[segmentIndex].lock();
+                    final Segment segment = segments[segmentIndex];
+                    segment.lock();
                     try {
                         while (!segmentPositions.isEmpty()) {
-                            final Entry<K, V> entry = (Entry<K, V>) map.segments[segmentIndex].getEntry(segmentPositions.removeFirst());
+                            final Entry<K, V> entry = (Entry<K, V>) segment.getEntry(segmentPositions.removeFirst());
                             if (entry != null) {
                                 return entry;
                             }
                         }
                     } finally {
-                        map.segments[segmentIndex].unlock();
+                        segment.unlock();
                     }
                 }
             }
@@ -2760,11 +2760,12 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
             segmentIndex--;
             if (segmentIndex >= 0) {
 
-                map.segments[segmentIndex].lock();
+                final Segment segment = segments[segmentIndex];
+                segment.lock();
                 try {
-                    map.segments[segmentIndex].visit(this);
+                    segment.visit(this);
                 } finally {
-                    map.segments[segmentIndex].unlock();
+                    segment.unlock();
                 }
             }
         }
@@ -2777,7 +2778,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
 
     final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
         public Iterator<Map.Entry<K, V>> iterator() {
-            return new EntryIterator(AbstractVanillaSharedMap.this);
+            return new EntryIterator();
         }
 
         public boolean contains(Object o) {

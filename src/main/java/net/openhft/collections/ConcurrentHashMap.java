@@ -1128,7 +1128,7 @@ public abstract class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
      *
      * @return a string representation of this map
      */
-    public String toString() {
+     /*public String toString() {
         Node<K, V>[] t;
         int f = (t = table) == null ? 0 : t.length;
         Traverser<K, V> it = new Traverser<K, V>(t, f, 0, f);
@@ -1148,6 +1148,10 @@ public abstract class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
             }
         }
         return sb.append('}').toString();
+    } */
+
+    public String toString() {
+       return super.toString();
     }
 
     /**
