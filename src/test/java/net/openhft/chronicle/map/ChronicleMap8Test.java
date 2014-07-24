@@ -108,6 +108,24 @@ public class ChronicleMap8Test extends JSR166TestCase {
 
 
     /**
+     * Returns a new map from Integers 1-5 to Strings "A"-"E".
+     */
+    private static ConcurrentHashMap map5ConcurrentHashMap() {
+        ConcurrentHashMap<Integer,String> map = new ConcurrentHashMap<Integer,String>(5);
+        assertTrue(map.isEmpty());
+        map.put(one, "A");
+        map.put(two, "B");
+        map.put(three, "C");
+        map.put(four, "D");
+        map.put(five, "E");
+        System.out.println(map.toString());
+        final boolean empty = map.isEmpty();
+        assertFalse(empty);
+        assertEquals(5, map.size());
+        return map;
+    }
+
+    /**
      * getOrDefault returns value if present, else default
      */
     @Test
@@ -379,6 +397,9 @@ public class ChronicleMap8Test extends JSR166TestCase {
         }
     }
 
+
+
+
     /**
      * KeySetView.getMappedValue returns the map's mapped value
      */
@@ -392,17 +413,38 @@ public class ChronicleMap8Test extends JSR166TestCase {
         } catch (NullPointerException e) {
         }
 
-        final net.openhft.collections.KeySetView  set = map.keySet(one);
+        final net.openhft.collections.KeySetView  set = map.keySet("1");
 
         set.add(one);
         set.add(six);
         set.add(seven);
-        assertTrue(set.getMappedValue() == one);
-        assertTrue(map.get(one) != one);
-        assertTrue(map.get(six) == one);
-        assertTrue(map.get(seven) == one);
+        assertTrue(set.getMappedValue() == "1");
+        assertTrue(map.get(one) != "1");
+        assertTrue(map.get(six) == "1");
+        assertTrue(map.get(seven) == "1");
     }
 
+
+    @Test
+    public void testConcurrentHashMapGetMappedValue() {
+        ConcurrentHashMap map = map5ConcurrentHashMap();
+        assertNull(map.keySet().getMappedValue());
+        try {
+            map.keySet(null);
+            shouldThrow();
+        } catch (NullPointerException e) {
+        }
+
+        final ConcurrentHashMap.KeySetView set = map.keySet("1");
+
+        set.add(one);
+        set.add(six);
+        set.add(seven);
+        assertTrue(set.getMappedValue() == "1");
+        assertTrue(map.get(one) != "1");
+        assertTrue(map.get(six) == "1");
+        assertTrue(map.get(seven) == "1");
+    }
     void checkSpliteratorCharacteristics(Spliterator<?> sp,
                                          int requiredCharacteristics) {
         assertEquals(requiredCharacteristics,
