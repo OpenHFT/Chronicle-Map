@@ -1470,7 +1470,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
         return (v = get(key)) == null ? defaultValue : v;
     }
 
-    public void forEach(BiConsumer<? super K, ? super V> action) {
+  /*  public void forEach(BiConsumer<? super K, ? super V> action) {
         if (action == null) throw new NullPointerException();
         Node<K, V>[] t;
         if ((t = table) != null) {
@@ -1479,9 +1479,9 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
                 action.accept(p.key, p.val);
             }
         }
-    }
+    }*/
 
-    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+  /*  public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
         if (function == null) throw new NullPointerException();
         Node<K, V>[] t;
         if ((t = table) != null) {
@@ -1498,7 +1498,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
                 }
             }
         }
-    }
+    }*/
 
     /**
      * If the specified key is not already associated with a value, attempts to compute its value using the

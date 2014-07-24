@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.channels.FileChannel;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 import static java.lang.Thread.currentThread;
 
@@ -67,6 +68,20 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
 
     private final ObjectSerializer objectSerializer;
     private SharedHashMapBuilder builder;
+
+
+    // todo consider a better way to do this so that is is not creating an entry object each time
+    public void forEach(BiConsumer<? super K, ? super V> action) {
+        if (action == null) throw new NullPointerException();
+
+        final EntryIterator entryIterator = new EntryIterator();
+
+        for (Entry<K, V> e = entryIterator.next(); entryIterator.hasNext(); e = entryIterator.next()) {
+            action.accept(e.getKey(), e.getValue());
+        }
+
+    }
+
 
     private static int figureBufferAllocationFactor(SharedHashMapBuilder builder) {
         // if expected map size is about 1000, seems rather wasteful to allocate
@@ -322,6 +337,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
      */
     @Override
     public V put(K key, V value) {
+        super.put(key, value);
         return put0(key, value, true);
     }
 

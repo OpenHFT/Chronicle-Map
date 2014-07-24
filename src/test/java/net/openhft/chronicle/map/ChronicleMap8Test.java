@@ -201,7 +201,10 @@ public class ChronicleMap8Test extends JSR166TestCase {
     @Test
     public void testCompute4() {
         ChronicleMap map = map5();
-        map.compute(one, (x, y) -> null);
+        final BiFunction remappingFunction = (x, y) -> {
+            return null;
+        };
+        map.compute(one, remappingFunction);
         assertFalse(map.containsKey(one));
     }
 
@@ -259,9 +262,12 @@ public class ChronicleMap8Test extends JSR166TestCase {
     @Test
     public void testReplaceAll() {
         ChronicleMap<Integer, String> map = map5();
-        map.replaceAll((x, y) -> {
+
+        final BiFunction<Integer, String, String> function = (x, y) -> {
             return x > 3 ? "Z" : y;
-        });
+        };
+
+        map.replaceAll(function);
         assertEquals("A", map.get(one));
         assertEquals("B", map.get(two));
         assertEquals("C", map.get(three));
