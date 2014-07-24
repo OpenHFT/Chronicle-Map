@@ -1628,8 +1628,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
      */
     @Override
     public V put(K key, V value) {
-        return super.put(key, value);
-        //  return putVal(key, value, true);
+        return putVal(key, value, true);
     }
 
 
