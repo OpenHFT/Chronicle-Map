@@ -32,7 +32,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.*;
@@ -63,7 +62,7 @@ public class ChronicleMap8Test extends JSR166TestCase {
         }
 
 
-       // return new ChronicleMap(5);
+        // return new ChronicleMap(5);
 
     }
 
@@ -86,8 +85,6 @@ public class ChronicleMap8Test extends JSR166TestCase {
             throw new IllegalStateException(e);
         }
 
-
-         
 
     }
 
@@ -393,7 +390,9 @@ public class ChronicleMap8Test extends JSR166TestCase {
             shouldThrow();
         } catch (NullPointerException e) {
         }
-        final net.openhft.collections.ConcurrentHashMap.KeySetView set = map.keySet(one);
+
+        final net.openhft.collections.KeySetView  set = map.keySet(one);
+
         set.add(one);
         set.add(six);
         set.add(seven);

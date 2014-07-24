@@ -42,12 +42,12 @@ public interface ConcurrentMapLamdadSupport<K, V> {
      *
      * @return the set view
      */
-    public  net.openhft.collections.ConcurrentHashMap.KeySetView<K, V> keySet();
+    AbstractVanillaSharedMap.KeySetView<K, V> keySet();
 
 
     long mappingCount();
 
-    net.openhft.collections.ConcurrentHashMap.KeySetView<K, V> keySet(V mappedValue);
+    net.openhft.collections.KeySetView<K, V> keySet(V mappedValue);
 
     void forEach(long parallelismThreshold,
                  BiConsumer<? super K, ? super V> action);

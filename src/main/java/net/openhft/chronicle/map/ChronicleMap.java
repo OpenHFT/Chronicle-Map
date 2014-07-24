@@ -106,7 +106,6 @@ public interface ChronicleMap<K, V> extends SharedHashMap<K, V>, ConcurrentMapLa
      */
     default void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
         Objects.requireNonNull(function);
-
         final BiConsumer<K, V> action = (k, v) -> {
             while (!replace(k, v, function.apply(k, v))) {
                 // v changed or k is gone

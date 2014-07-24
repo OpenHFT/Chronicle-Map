@@ -28,7 +28,6 @@ import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.model.constraints.NotNull;
 import net.openhft.lang.model.constraints.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,11 +71,542 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
     private SharedHashMapBuilder builder;
 
 
+    // views
+
+    transient ValuesView<K, V> values;
+    transient EntrySetView<K, V> entrySet;
+    transient KeySetView<K, V> keySet;
+
+
+    /* ----------------Views -------------- */
+
+    /**
+     * Base class for views.
+     */
+    abstract static class CollectionView<K, V, E>
+            implements Collection<E>, java.io.Serializable {
+        private static final long serialVersionUID = 7249069246763182397L;
+        final AbstractVanillaSharedMap<K, V> map;
+
+        CollectionView(AbstractVanillaSharedMap<K, V> map) {
+            this.map = map;
+        }
+
+        /**
+         * Returns the map backing this view.
+         *
+         * @return the map backing this view
+         */
+        public AbstractVanillaSharedMap<K, V> getMap() {
+            return map;
+        }
+
+        /**
+         * Removes all of the elements from this view, by removing all the mappings from the map backing this
+         * view.
+         */
+        public final void clear() {
+            map.clear();
+        }
+
+        public final int size() {
+            return map.size();
+        }
+
+        public final boolean isEmpty() {
+            return map.isEmpty();
+        }
+
+        // implementations below rely on concrete classes supplying these
+        // abstract methods
+
+        /**
+         * Returns an iterator over the elements in this collection.
+         *
+         * <p>The returned iterator is <a href="package-summary.html#Weakly"><i>weakly consistent</i></a>.
+         *
+         * @return an iterator over the elements in this collection
+         */
+        public abstract Iterator<E> iterator();
+
+        public abstract boolean contains(Object o);
+
+        public abstract boolean remove(Object o);
+
+        private static final String oomeMsg = "Required array size too large";
+
+        public final Object[] toArray() {
+            long sz = map.mappingCount();
+            if (sz > MAX_ARRAY_SIZE)
+                throw new OutOfMemoryError(oomeMsg);
+            int n = (int) sz;
+            Object[] r = new Object[n];
+            int i = 0;
+            for (E e : this) {
+                if (i == n) {
+                    if (n >= MAX_ARRAY_SIZE)
+                        throw new OutOfMemoryError(oomeMsg);
+                    if (n >= MAX_ARRAY_SIZE - (MAX_ARRAY_SIZE >>> 1) - 1)
+                        n = MAX_ARRAY_SIZE;
+                    else
+                        n += (n >>> 1) + 1;
+                    r = Arrays.copyOf(r, n);
+                }
+                r[i++] = e;
+            }
+            return (i == n) ? r : Arrays.copyOf(r, i);
+        }
+
+        @SuppressWarnings("unchecked")
+        public final <T> T[] toArray(T[] a) {
+            long sz = map.mappingCount();
+            if (sz > MAX_ARRAY_SIZE)
+                throw new OutOfMemoryError(oomeMsg);
+            int m = (int) sz;
+            T[] r = (a.length >= m) ? a :
+                    (T[]) java.lang.reflect.Array
+                            .newInstance(a.getClass().getComponentType(), m);
+            int n = r.length;
+            int i = 0;
+            for (E e : this) {
+                if (i == n) {
+                    if (n >= MAX_ARRAY_SIZE)
+                        throw new OutOfMemoryError(oomeMsg);
+                    if (n >= MAX_ARRAY_SIZE - (MAX_ARRAY_SIZE >>> 1) - 1)
+                        n = MAX_ARRAY_SIZE;
+                    else
+                        n += (n >>> 1) + 1;
+                    r = Arrays.copyOf(r, n);
+                }
+                r[i++] = (T) e;
+            }
+            if (a == r && i < n) {
+                r[i] = null; // null-terminate
+                return r;
+            }
+            return (i == n) ? r : Arrays.copyOf(r, i);
+        }
+
+        /**
+         * Returns a string representation of this collection. The string representation consists of the
+         * string representations of the collection's elements in the order they are returned by its iterator,
+         * enclosed in square brackets ({@code "[]"}). Adjacent elements are separated by the characters
+         * {@code ", "} (comma and space).  Elements are converted to strings as by {@link
+         * String#valueOf(Object)}.
+         *
+         * @return a string representation of this collection
+         */
+        public final String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append('[');
+            Iterator<E> it = iterator();
+            if (it.hasNext()) {
+                for (; ; ) {
+                    Object e = it.next();
+                    sb.append(e == this ? "(this Collection)" : e);
+                    if (!it.hasNext())
+                        break;
+                    sb.append(',').append(' ');
+                }
+            }
+            return sb.append(']').toString();
+        }
+
+        public final boolean containsAll(Collection<?> c) {
+            if (c != this) {
+                for (Object e : c) {
+                    if (e == null || !contains(e))
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        public final boolean removeAll(Collection<?> c) {
+            if (c == null) throw new NullPointerException();
+            boolean modified = false;
+            for (Iterator<E> it = iterator(); it.hasNext(); ) {
+                if (c.contains(it.next())) {
+                    it.remove();
+                    modified = true;
+                }
+            }
+            return modified;
+        }
+
+        public final boolean retainAll(Collection<?> c) {
+            if (c == null) throw new NullPointerException();
+            boolean modified = false;
+            for (Iterator<E> it = iterator(); it.hasNext(); ) {
+                if (!c.contains(it.next())) {
+                    it.remove();
+                    modified = true;
+                }
+            }
+            return modified;
+        }
+
+    }
+
+
+    /**
+     * A view of a ConcurrentHashMap as a {@link Collection} of values, in which additions are disabled. This
+     * class cannot be directly instantiated. See {@link #values()}.
+     */
+    static final class ValuesView<K, V> extends CollectionView<K, V, V>
+            implements Collection<V>, java.io.Serializable {
+        private static final long serialVersionUID = 2249069246763182397L;
+
+        ValuesView(AbstractVanillaSharedMap<K, V> map) {
+            super(map);
+        }
+
+        public final boolean contains(Object o) {
+            return map.containsValue(o);
+        }
+
+        public final boolean remove(Object o) {
+            if (o != null) {
+                for (Iterator<V> it = iterator(); it.hasNext(); ) {
+                    if (o.equals(it.next())) {
+                        it.remove();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public final Iterator<V> iterator() {
+            ConcurrentHashMap<K, V> m = map;
+            Node<K, V>[] t;
+            int f = (t = m.table) == null ? 0 : t.length;
+            return new ValueIterator<K, V>(t, f, 0, f, m);
+        }
+
+        public final boolean add(V e) {
+            throw new UnsupportedOperationException();
+        }
+
+        public final boolean addAll(Collection<? extends V> c) {
+            throw new UnsupportedOperationException();
+        }
+
+        public Spliterator<V> spliterator() {
+            Node<K, V>[] t;
+            ConcurrentHashMap<K, V> m = map;
+            long n = m.sumCount();
+            int f = (t = m.table) == null ? 0 : t.length;
+            return new ValueSpliterator<K, V>(t, f, 0, f, n < 0L ? 0L : n);
+        }
+
+        public void forEach(Consumer<? super V> action) {
+            if (action == null) throw new NullPointerException();
+            Node<K, V>[] t;
+            if ((t = map.table) != null) {
+                Traverser<K, V> it = new Traverser<K, V>(t, t.length, 0, t.length);
+                for (Node<K, V> p; (p = it.advance()) != null; )
+                    action.accept(p.val);
+            }
+        }
+    }
+
+    /**
+     * A view of a ConcurrentHashMap as a {@link Set} of (key, value) entries.  This class cannot be directly
+     * instantiated. See {@link #entrySet()}.
+     */
+    static final class EntrySetView<K, V> extends CollectionView<K, V, Map.Entry<K, V>>
+            implements Set<Map.Entry<K, V>>, java.io.Serializable {
+        private static final long serialVersionUID = 2249069246763182397L;
+
+        EntrySetView(AbstractVanillaSharedMap<K, V> map) {
+            super(map);
+        }
+
+        public boolean contains(Object o) {
+            Object k, v, r;
+            Map.Entry<?, ?> e;
+            return ((o instanceof Map.Entry) &&
+                    (k = (e = (Map.Entry<?, ?>) o).getKey()) != null &&
+                    (r = map.get(k)) != null &&
+                    (v = e.getValue()) != null &&
+                    (v == r || v.equals(r)));
+        }
+
+        public boolean remove(Object o) {
+            Object k, v;
+            Map.Entry<?, ?> e;
+            return ((o instanceof Map.Entry) &&
+                    (k = (e = (Map.Entry<?, ?>) o).getKey()) != null &&
+                    (v = e.getValue()) != null &&
+                    map.remove(k, v));
+        }
+
+        /**
+         * @return an iterator over the entries of the backing map
+         */
+        public Iterator<Map.Entry<K, V>> iterator() {
+            return new EntryIterator<K, V>(map);
+        }
+
+        public boolean add(Entry<K, V> e) {
+            return map.putVal(e.getKey(), e.getValue(), false) == null;
+        }
+
+        public boolean addAll(Collection<? extends Entry<K, V>> c) {
+            boolean added = false;
+            for (Entry<K, V> e : c) {
+                if (add(e))
+                    added = true;
+            }
+            return added;
+        }
+
+        public final int hashCode() {
+            int h = 0;
+            Node<K, V>[] t;
+            if ((t = map.table) != null) {
+                Traverser<K, V> it = new Traverser<K, V>(t, t.length, 0, t.length);
+                for (Node<K, V> p; (p = it.advance()) != null; ) {
+                    h += p.hashCode();
+                }
+            }
+            return h;
+        }
+
+        public final boolean equals(Object o) {
+            Set<?> c;
+            return ((o instanceof Set) &&
+                    ((c = (Set<?>) o) == this ||
+                            (containsAll(c) && c.containsAll(this))));
+        }
+
+        public Spliterator<Map.Entry<K, V>> spliterator() {
+            Node<K, V>[] t;
+            ConcurrentHashMap<K, V> m = map;
+            long n = m.sumCount();
+            int f = (t = m.table) == null ? 0 : t.length;
+            return new EntrySpliterator<K, V>(t, f, 0, f, n < 0L ? 0L : n, m);
+        }
+
+        public void forEach(Consumer<? super Map.Entry<K, V>> action) {
+            if (action == null) throw new NullPointerException();
+            Node<K, V>[] t;
+            if ((t = map.table) != null) {
+                Traverser<K, V> it = new Traverser<K, V>(t, t.length, 0, t.length);
+                for (Node<K, V> p; (p = it.advance()) != null; )
+                    action.accept(new MapEntry<K, V>(p.key, p.val, map));
+            }
+        }
+
+    }
+
+
+    /**
+     * Creates a new {@link Set} backed by a ConcurrentHashMap from the given type to {@code Boolean.TRUE}.
+     *
+     * @param <K> the element type of the returned set
+     * @return the new set
+     * @since 1.8
+     */
+    public static <K> KeySetView<K, Boolean> newKeySet() {
+        final SharedHashMapBuilder<Integer, String> builder = SharedHashMapBuilder.of(Integer.class,
+                String.class);
+
+        try {
+            final AbstractVanillaSharedMap chronicleMap = (AbstractVanillaSharedMap) builder.clone().vClass(Boolean.class).file(null)
+                    .create();
+            return new KeySetView<K, Boolean>
+                    (chronicleMap, Boolean.TRUE);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+
+    }
+
+    /**
+     * Creates a new {@link Set} backed by a ConcurrentHashMap from the given type to {@code Boolean.TRUE}.
+     *
+     * @param initialCapacity The implementation performs internal sizing to accommodate this many elements.
+     * @param <K>             the element type of the returned set
+     * @return the new set
+     * @throws IllegalArgumentException if the initial capacity of elements is negative
+     * @since 1.8
+     */
+    public static <K> KeySetView<K, Boolean> newKeySet(int initialCapacity) {
+        return newKeySet();
+    }
+
+    /**
+     * Returns a {@link Set} view of the keys in this map, using the given common mapped value for any
+     * additions (i.e., {@link Collection#add} and {@link Collection#addAll(Collection)}). This is of course
+     * only appropriate if it is acceptable to use the same value for all additions from this view.
+     *
+     * @param mappedValue the mapped value to use for any additions
+     * @return the set view
+     * @throws NullPointerException if the mappedValue is null
+     */
+    public KeySetView<K, V> keySet(V mappedValue) {
+        if (mappedValue == null)
+            throw new NullPointerException();
+        return new KeySetView<K, V>(this, mappedValue);
+    }
+
+    /**
+     * A view of a ConcurrentHashMap as a {@link Set} of keys, in which additions may optionally be enabled by
+     * mapping to a common value.  This class cannot be directly instantiated. See {@link #keySet() keySet()},
+     * {@link #keySet(Object) keySet(V)}, {@link #newKeySet() newKeySet()}, {@link #newKeySet(int)
+     * newKeySet(int)}.
+     *
+     * @since 1.8
+     */
+    public static class KeySetView<K, V> extends CollectionView<K, V, K>
+            implements Set<K>, java.io.Serializable, net.openhft.collections.KeySetView<K, V> {
+        private static final long serialVersionUID = 7249069246763182397L;
+        private final V value;
+
+        KeySetView(AbstractVanillaSharedMap<K, V> map, V value) {  // non-public
+            super(map);
+            this.value = value;
+        }
+
+        /**
+         * Returns the default mapped value for additions, or {@code null} if additions are not supported.
+         *
+         * @return the default mapped value for additions, or {@code null} if not supported
+         */
+        public V getMappedValue() {
+            return value;
+        }
+
+        /**
+         * {@inheritDoc}
+         *
+         * @throws NullPointerException if the specified key is null
+         */
+        public boolean contains(Object o) {
+            return map.containsKey(o);
+        }
+
+        /**
+         * Removes the key from this map view, by removing the key (and its corresponding value) from the
+         * backing map.  This method does nothing if the key is not in the map.
+         *
+         * @param o the key to be removed from the backing map
+         * @return {@code true} if the backing map contained the specified key
+         * @throws NullPointerException if the specified key is null
+         */
+        public boolean remove(Object o) {
+            return map.remove(o) != null;
+        }
+
+        /**
+         * @return an iterator over the keys of the backing map
+         */
+        public Iterator<K> iterator() {
+            Node<K, V>[] t;
+            ConcurrentHashMap<K, V> m = map;
+            int f = (t = m.table) == null ? 0 : t.length;
+            return new KeyIterator<K, V>(t, f, 0, f, m);
+        }
+
+        /**
+         * Adds the specified key to this set view by mapping the key to the default mapped value in the
+         * backing map, if defined.
+         *
+         * @param e key to be added
+         * @return {@code true} if this set changed as a result of the call
+         * @throws NullPointerException          if the specified key is null
+         * @throws UnsupportedOperationException if no default mapped value for additions was provided
+         */
+        public boolean add(K e) {
+            V v;
+            if ((v = value) == null)
+                throw new UnsupportedOperationException();
+
+            return map.putVal(e, v, true) == null;
+        }
+
+        /**
+         * Adds all of the elements in the specified collection to this set, as if by calling {@link #add} on
+         * each one.
+         *
+         * @param c the elements to be inserted into this set
+         * @return {@code true} if this set changed as a result of the call
+         * @throws NullPointerException          if the collection or any of its elements are {@code null}
+         * @throws UnsupportedOperationException if no default mapped value for additions was provided
+         */
+        public boolean addAll(Collection<? extends K> c) {
+            boolean added = false;
+            V v;
+            if ((v = value) == null)
+                throw new UnsupportedOperationException();
+            for (K e : c) {
+                if (map.putVal(e, v, true) == null)
+                    added = true;
+            }
+            return added;
+        }
+
+        public int hashCode() {
+            int h = 0;
+            for (K e : this)
+                h += e.hashCode();
+            return h;
+        }
+
+        public boolean equals(Object o) {
+            Set<?> c;
+            return ((o instanceof Set) &&
+                    ((c = (Set<?>) o) == this ||
+                            (containsAll(c) && c.containsAll(this))));
+        }
+
+        public Spliterator<K> spliterator() {
+            Node<K, V>[] t;
+            ConcurrentHashMap<K, V> m = map;
+            long n = m.sumCount();
+            int f = (t = m.table) == null ? 0 : t.length;
+            return new KeySpliterator<K, V>(t, f, 0, f, n < 0L ? 0L : n);
+        }
+
+        public void forEach(Consumer<? super K> action) {
+            if (action == null) throw new NullPointerException();
+            Node<K, V>[] t;
+            if ((t = map.table) != null) {
+                Traverser<K, V> it = new Traverser<K, V>(t, t.length, 0, t.length);
+                for (Node<K, V> p; (p = it.advance()) != null; )
+                    action.accept(p.key);
+            }
+        }
+    }
+
+
+    /**
+     * Returns a {@link Set} view of the keys contained in this map. The set is backed by the map, so changes
+     * to the map are reflected in the set, and vice-versa. The set supports element removal, which removes
+     * the corresponding mapping from this map, via the {@code Iterator.remove}, {@code Set.remove}, {@code
+     * removeAll}, {@code retainAll}, and {@code clear} operations.  It does not support the {@code add} or
+     * {@code addAll} operations.
+     *
+     * <p>The view's iterators and spliterators are <a href="package-summary.html#Weakly"><i>weakly
+     * consistent</i></a>.
+     *
+     * <p>The view's {@code spliterator} reports {@link Spliterator#CONCURRENT}, {@link Spliterator#DISTINCT},
+     * and {@link Spliterator#NONNULL}.
+     *
+     * @return the set view
+     */
+    public AbstractVanillaSharedMap.KeySetView<K, V> keySet() {
+        KeySetView<K, V> ks;
+        return (ks = keySet) != null ? ks : (keySet = new KeySetView<K, V>(this, null));
+    }
+
     // todo consider a better way to do this so that is is not creating an entry object each time
     public void forEach(BiConsumer<? super K, ? super V> action) {
         if (action == null) throw new NullPointerException();
 
-        final EntryIterator entryIterator = new EntryIterator();
+        final EntryIterator entryIterator = new EntryIterator(this);
 
         for (Entry<K, V> e = entryIterator.next(); entryIterator.hasNext(); e = entryIterator.next()) {
             action.accept(e.getKey(), e.getValue());
@@ -887,8 +1417,6 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
     final boolean putReturnsNull;
     final boolean removeReturnsNull;
 
-    transient Set<Map.Entry<K, V>> entrySet;
-
 
     public AbstractVanillaSharedMap(SharedHashMapBuilder builder,
                                     Class<K> kClass, Class<V> vClass) throws IOException {
@@ -1099,7 +1627,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
     @Override
     public V put(K key, V value) {
         super.put(key, value);
-        return put0(key, value, true);
+        return putVal(key, value, true);
     }
 
 
@@ -1108,10 +1636,11 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
      */
     @Override
     public V putIfAbsent(K key, V value) {
-        return put0(key, value, false);
+        return putVal(key, value, false);
     }
 
-    private V put0(K key, V value, boolean replaceIfPresent) {
+    V putVal(K key, V value, boolean replaceIfPresent) {
+        super.putVal(key, value, replaceIfPresent);
         checkKey(key);
         checkValue(value);
         Bytes keyBytes = getKeyAsBytes(key);
@@ -1170,6 +1699,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
         return segments[segmentNum].acquire(keyBytes, key, value, segmentHash, create);
     }
 
+
     /**
      * {@inheritDoc}
      */
@@ -1190,15 +1720,45 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
             segment.clear();
     }
 
+
     /**
-     * {@inheritDoc}
+     * Returns a {@link Collection} view of the values contained in this map. The collection is backed by the
+     * map, so changes to the map are reflected in the collection, and vice-versa.  The collection supports
+     * element removal, which removes the corresponding mapping from this map, via the {@code
+     * Iterator.remove}, {@code Collection.remove}, {@code removeAll}, {@code retainAll}, and {@code clear}
+     * operations.  It does not support the {@code add} or {@code addAll} operations.
+     *
+     * <p>The view's iterators and spliterators are <a href="package-summary.html#Weakly"><i>weakly
+     * consistent</i></a>.
+     *
+     * <p>The view's {@code spliterator} reports {@link Spliterator#CONCURRENT} and {@link
+     * Spliterator#NONNULL}.
+     *
+     * @return the collection view
      */
-    @NotNull
-    @Override
-    public Set<Entry<K, V>> entrySet() {
-        return (entrySet != null) ? entrySet : (entrySet = new EntrySet());
+    public Collection<V> values() {
+        ValuesView<K, V> vs;
+        return (vs = values) != null ? vs : (values = new ValuesView<K, V>(this));
     }
 
+    /**
+     * Returns a {@link Set} view of the mappings contained in this map. The set is backed by the map, so
+     * changes to the map are reflected in the set, and vice-versa.  The set supports element removal, which
+     * removes the corresponding mapping from the map, via the {@code Iterator.remove}, {@code Set.remove},
+     * {@code removeAll}, {@code retainAll}, and {@code clear} operations.
+     *
+     * <p>The view's iterators and spliterators are <a href="package-summary.html#Weakly"><i>weakly
+     * consistent</i></a>.
+     *
+     * <p>The view's {@code spliterator} reports {@link Spliterator#CONCURRENT}, {@link Spliterator#DISTINCT},
+     * and {@link Spliterator#NONNULL}.
+     *
+     * @return the set view
+     */
+    public Set<Map.Entry<K, V>> entrySet() {
+        EntrySetView<K, V> es;
+        return (es = entrySet) != null ? es : (entrySet = new EntrySetView<K, V>(this));
+    }
 
     /**
      * {@inheritDoc}
@@ -2139,16 +2699,19 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
         }
     }
 
-    final class EntryIterator implements Iterator<Entry<K, V>>, IntIntMultiMap.EntryConsumer {
+    static final class EntryIterator<K, V> implements Iterator<Entry<K, V>>, IntIntMultiMap.EntryConsumer {
 
-        int segmentIndex = segments.length;
+        private final AbstractVanillaSharedMap map;
+        private int segmentIndex;
 
         Entry<K, V> nextEntry, lastReturned;
 
         Deque<Integer> segmentPositions = new ArrayDeque<Integer>(); //todo: replace with a more efficient, auto resizing int[]
 
-        EntryIterator() {
+        EntryIterator(AbstractVanillaSharedMap map) {
             nextEntry = nextSegmentEntry();
+            this.map = map;
+            segmentIndex = map.segments.length;
         }
 
         public boolean hasNext() {
@@ -2157,7 +2720,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
 
         public void remove() {
             if (lastReturned == null) throw new IllegalStateException();
-            AbstractVanillaSharedMap.this.remove(lastReturned.getKey());
+            map.remove(lastReturned.getKey());
             lastReturned = null;
         }
 
@@ -2175,17 +2738,17 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
                 if (segmentPositions.isEmpty()) {
                     switchToNextSegment();
                 } else {
-                    final Segment segment = segments[segmentIndex];
-                    segment.lock();
+
+                    map.segments[segmentIndex].lock();
                     try {
                         while (!segmentPositions.isEmpty()) {
-                            Entry<K, V> entry = segment.getEntry(segmentPositions.removeFirst());
+                            final Entry<K, V> entry = (Entry<K, V>) map.segments[segmentIndex].getEntry(segmentPositions.removeFirst());
                             if (entry != null) {
                                 return entry;
                             }
                         }
                     } finally {
-                        segment.unlock();
+                        map.segments[segmentIndex].unlock();
                     }
                 }
             }
@@ -2196,12 +2759,12 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
             segmentPositions.clear();
             segmentIndex--;
             if (segmentIndex >= 0) {
-                final Segment segment = segments[segmentIndex];
-                segment.lock();
+
+                map.segments[segmentIndex].lock();
                 try {
-                    segments[segmentIndex].visit(this);
+                    map.segments[segmentIndex].visit(this);
                 } finally {
-                    segment.unlock();
+                    map.segments[segmentIndex].unlock();
                 }
             }
         }
@@ -2214,7 +2777,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
 
     final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
         public Iterator<Map.Entry<K, V>> iterator() {
-            return new EntryIterator();
+            return new EntryIterator(AbstractVanillaSharedMap.this);
         }
 
         public boolean contains(Object o) {
