@@ -27,7 +27,8 @@ import java.util.function.Consumer;
 /**
  * @author Rob Austin.
  */
-public interface KeySetView<K, V> extends Collection<K>, java.io.Serializable, Set<K> {
+public interface KeySetView<K, V> extends Collection<K>, java.io.Serializable, Set<K>, CollectionView<K, V,
+        K> {
     /**
      * Returns the default mapped value for additions, or {@code null} if additions are not supported.
      *

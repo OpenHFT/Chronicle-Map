@@ -42,7 +42,7 @@ public interface ConcurrentMapLamdadSupport<K, V> {
      *
      * @return the set view
      */
-    AbstractVanillaSharedMap.KeySetView<K, V> keySet();
+    net.openhft.collections.KeySetView<K, V> keySet();
 
 
     long mappingCount();

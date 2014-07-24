@@ -84,7 +84,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
      * Base class for views.
      */
     abstract static class CollectionView<K, V, E>
-            implements Collection<E>, java.io.Serializable {
+            implements Collection<E>, net.openhft.collections.CollectionView<K, V, E>, java.io.Serializable {
         private static final long serialVersionUID = 7249069246763182397L;
         final AbstractVanillaSharedMap<K, V> map;
 
@@ -452,6 +452,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
         return new KeySetView<K, V>(this, mappedValue);
     }
 
+
     /**
      * A view of a ConcurrentHashMap as a {@link Set} of keys, in which additions may optionally be enabled by
      * mapping to a common value.  This class cannot be directly instantiated. See {@link #keySet() keySet()},
@@ -462,6 +463,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
      */
     public static class KeySetView<K, V> extends CollectionView<K, V, K>
             implements Set<K>, java.io.Serializable, net.openhft.collections.KeySetView<K, V> {
+
         private static final long serialVersionUID = 7249069246763182397L;
         private final V value;
 
@@ -1639,7 +1641,11 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
         return putVal(key, value, false);
     }
 
-    V putVal(K key, V value, boolean replaceIfPresent) {
+    V putVal(K key, V value, boolean onlyIfAbsent) {
+        return put0(key, value, !onlyIfAbsent);
+    }
+
+    V put0(K key, V value, boolean replaceIfPresent) {
         super.putVal(key, value, replaceIfPresent);
         checkKey(key);
         checkValue(value);
@@ -2729,7 +2735,6 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
             nextEntry = nextSegmentEntry();
             return e;
         }
-
 
 
         Entry<K, V> nextSegmentEntry() {
