@@ -19,18 +19,35 @@
 package net.openhft.collections;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
 
 /**
  * @author Rob Austin.
  */
-public interface ConcurrentHashMap3<K, V> {
+public interface ConcurrentMapLamdadSupport<K, V> {
+
+
+    /**
+     * Returns a {@link java.util.Set} view of the keys contained in this map. The set is backed by the map,
+     * so changes to the map are reflected in the set, and vice-versa. The set supports element removal, which
+     * removes the corresponding mapping from this map, via the {@code Iterator.remove}, {@code Set.remove},
+     * {@code removeAll}, {@code retainAll}, and {@code clear} operations.  It does not support the {@code
+     * add} or {@code addAll} operations.
+     *
+     * <p>The view's iterators and spliterators are <a href="package-summary.html#Weakly"><i>weakly
+     * consistent</i></a>.
+     *
+     * <p>The view's {@code spliterator} reports {@link java.util.Spliterator#CONCURRENT}, {@link
+     * java.util.Spliterator#DISTINCT}, and {@link java.util.Spliterator#NONNULL}.
+     *
+     * @return the set view
+     */
+    public  net.openhft.collections.ConcurrentHashMap.KeySetView<K, V> keySet();
 
 
     long mappingCount();
 
-    ConcurrentHashMap.KeySetView<K, V> keySet(V mappedValue);
+    net.openhft.collections.ConcurrentHashMap.KeySetView<K, V> keySet(V mappedValue);
 
     void forEach(long parallelismThreshold,
                  BiConsumer<? super K, ? super V> action);
@@ -60,6 +77,7 @@ public interface ConcurrentHashMap3<K, V> {
                     ToIntBiFunction<? super K, ? super V> transformer,
                     int basis,
                     IntBinaryOperator reducer);
+
 
     void forEachKey(long parallelismThreshold,
                     Consumer<? super K> action);

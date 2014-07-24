@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.collections.ConcurrentMapLamdadSupport;
 import net.openhft.collections.SharedHashMap;
 
 import java.util.Map;
@@ -29,7 +30,7 @@ import java.util.function.Function;
 /**
  * @author Rob Austin.
  */
-public interface ChronicleMap<K, V> extends SharedHashMap<K, V> { // }, ConcurrentHashMap3 {
+public interface ChronicleMap<K, V> extends SharedHashMap<K, V>, ConcurrentMapLamdadSupport<K, V> {
 
 
 

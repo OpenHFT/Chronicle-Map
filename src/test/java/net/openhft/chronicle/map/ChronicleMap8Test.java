@@ -25,10 +25,14 @@ package net.openhft.chronicle.map;/*
 /*import junit.framework.Test;
 import junit.framework.TestSuite;*/
 
+import net.openhft.collections.SharedHashMapBuilder;
 import net.openhft.collections.jrs166.JSR166TestCase;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.*;
@@ -36,15 +40,15 @@ import java.util.function.*;
 import static java.util.Spliterator.*;
 import static org.junit.Assert.*;
 
-public class ConcurrentHashMap8Test extends JSR166TestCase {
+public class ChronicleMap8Test extends JSR166TestCase {
 
     private static final double EPSILON = 1E-5;
 
 
-    private static ConcurrentHashMap<Long, Long> newLongMap() {
+    private static ChronicleMap<Long, Long> newLongMap() {
         //First create (or access if already created) the shared map
 
-/*        final ConcurrentHashMapBuilder0<Long, Long> builder = ConcurrentHashMapBuilder0.of(Long.class, Long.class);
+        final SharedHashMapBuilder<Long, Long> builder = SharedHashMapBuilder.of(Long.class, Long.class);
 
 
         //// don't include this, just to check it is as expected.
@@ -56,17 +60,18 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
             return builder.file(new File(shmPath)).create();
         } catch (IOException e) {
             throw new IllegalStateException(e);
-        }*/
+        }
 
 
-        return new ConcurrentHashMap(5);
+       // return new ChronicleMap(5);
 
     }
 
-    private static ConcurrentHashMap newIntegerStringMap() {
+    private static ChronicleMap newIntegerStringMap() {
 
 
-/*        final ConcurrentHashMapBuilder0<Long, String> builder = ConcurrentHashMapBuilder0.of(Long.class, String.class);
+        final SharedHashMapBuilder<Integer, String> builder = SharedHashMapBuilder.of(Integer.class,
+                String.class);
 
 
         //// don't include this, just to check it is as expected.
@@ -79,25 +84,26 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
             return builder.file(new File(shmPath)).create();
         } catch (IOException e) {
             throw new IllegalStateException(e);
-        }*/
+        }
 
 
-        return new ConcurrentHashMap(5);
+         
 
     }
 
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
      */
-    private static ConcurrentHashMap map5() {
-        ConcurrentHashMap map = newIntegerStringMap();
+    private static ChronicleMap map5() {
+        ChronicleMap map = newIntegerStringMap();
         assertTrue(map.isEmpty());
         map.put(one, "A");
         map.put(two, "B");
         map.put(three, "C");
         map.put(four, "D");
         map.put(five, "E");
-        assertFalse(map.isEmpty());
+        final boolean empty = map.isEmpty();
+        assertFalse(empty);
         assertEquals(5, map.size());
         return map;
     }
@@ -108,7 +114,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testGetOrDefault() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         assertEquals(map.getOrDefault(one, "Z"), "A");
         assertEquals(map.getOrDefault(six, "Z"), "Z");
     }
@@ -118,7 +124,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testComputeIfAbsent() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         map.computeIfAbsent(six, (x) -> "Z");
         assertTrue(map.containsKey(six));
     }
@@ -128,7 +134,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testComputeIfAbsent2() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         assertEquals("A", map.computeIfAbsent(one, (x) -> "Z"));
     }
 
@@ -137,7 +143,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testComputeIfAbsent3() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         map.computeIfAbsent(six, (x) -> null);
         assertFalse(map.containsKey(six));
     }
@@ -147,7 +153,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testComputeIfPresent() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         map.computeIfPresent(six, (x, y) -> "Z");
         assertFalse(map.containsKey(six));
     }
@@ -157,7 +163,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testComputeIfPresent2() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         assertEquals("Z", map.computeIfPresent(one, (x, y) -> "Z"));
     }
 
@@ -166,7 +172,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testCompute() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         map.compute(six, (x, y) -> null);
         assertFalse(map.containsKey(six));
     }
@@ -176,7 +182,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testCompute2() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         assertEquals("Z", map.compute(six, (x, y) -> "Z"));
     }
 
@@ -185,7 +191,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testCompute3() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         assertEquals("Z", map.compute(one, (x, y) -> "Z"));
     }
 
@@ -194,7 +200,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testCompute4() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         map.compute(one, (x, y) -> null);
         assertFalse(map.containsKey(one));
     }
@@ -204,7 +210,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testMerge1() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         assertEquals("Y", map.merge(six, "Y", (x, y) -> "Z"));
     }
 
@@ -213,7 +219,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testMerge2() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         assertEquals("Z", map.merge(one, "Y", (x, y) -> "Z"));
     }
 
@@ -222,7 +228,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testMerge3() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         map.merge(one, "Y", (x, y) -> null);
         assertFalse(map.containsKey(one));
     }
@@ -252,7 +258,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReplaceAll() {
-        ConcurrentHashMap<Integer, String> map = map5();
+        ChronicleMap<Integer, String> map = map5();
         map.replaceAll((x, y) -> {
             return x > 3 ? "Z" : y;
         });
@@ -277,7 +283,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testKeySetAddRemove() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         Set set1 = map.keySet();
         Set set2 = map.keySet(true);
         set2.add(six);
@@ -374,14 +380,14 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testGetMappedValue() {
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         assertNull(map.keySet().getMappedValue());
         try {
             map.keySet(null);
             shouldThrow();
         } catch (NullPointerException e) {
         }
-        final ConcurrentHashMap.KeySetView set = map.keySet(one);
+        final net.openhft.collections.ConcurrentHashMap.KeySetView set = map.keySet(one);
         set.add(one);
         set.add(six);
         set.add(seven);
@@ -403,7 +409,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testKeySetSpliterator() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap map = map5();
+        ChronicleMap map = map5();
         Set set = map.keySet();
         Spliterator<Integer> sp = set.spliterator();
         checkSpliteratorCharacteristics(sp, CONCURRENT | DISTINCT | NONNULL);
@@ -649,9 +655,9 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     }
 
     static final int SIZE = 10000;
-    static ConcurrentHashMap<Long, Long> longMap;
+    static ChronicleMap<Long, Long> longMap;
 
-    static ConcurrentHashMap<Long, Long> longMap() {
+    static ChronicleMap<Long, Long> longMap() {
         if (longMap == null) {
             longMap = newLongMap();
             for (int i = 0; i < SIZE; ++i)
@@ -677,7 +683,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testForEachKeySequentially() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Consumer<Long> consumer = (Long x) -> adder.add(x.longValue());
         m.forEachKey(Long.MAX_VALUE, consumer);
         assertEquals(adder.sum(), SIZE * (SIZE - 1) / 2);
@@ -689,7 +695,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testForEachValueSequentially() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = (ConcurrentHashMap) longMap();
+        ChronicleMap<Long, Long> m = (ChronicleMap) longMap();
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
         m.forEachValue(Long.MAX_VALUE, action);
         assertEquals(adder.sum(), SIZE * (SIZE - 1));
@@ -701,7 +707,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testForEachSequentially() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final BiConsumer<Long, Long> action = (Long x, Long y) -> adder.add(x.longValue() + y.longValue());
         m.forEach(Long.MAX_VALUE, action);
         assertEquals(adder.sum(), 3 * SIZE * (SIZE - 1) / 2);
@@ -713,7 +719,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testForEachEntrySequentially() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Consumer<Map.Entry<Long, Long>> action = (Map.Entry<Long, Long> e) -> adder.add(e.getKey().longValue() + e.getValue().longValue());
         m.forEachEntry(Long.MAX_VALUE, action);
         assertEquals(adder.sum(), 3 * SIZE * (SIZE - 1) / 2);
@@ -725,7 +731,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testForEachKeyInParallel() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
 
         m.forEachKey(1L, action);
@@ -738,7 +744,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testForEachValueInParallel() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
         m.forEachValue(1L, action);
         assertEquals(adder.sum(), SIZE * (SIZE - 1));
@@ -750,7 +756,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testForEachInParallel() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final BiConsumer<Long, Long> action = (Long x, Long y) -> adder.add(x.longValue() + y.longValue());
         m.forEach(1L, action);
         assertEquals(adder.sum(), 3 * SIZE * (SIZE - 1) / 2);
@@ -762,7 +768,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testForEachEntryInParallel() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Consumer<Map.Entry<Long, Long>> action = (Map.Entry<Long, Long> e) -> adder.add(e.getKey().longValue() + e.getValue().longValue());
         m.forEachEntry(1L, action);
         assertEquals(adder.sum(), 3 * SIZE * (SIZE - 1) / 2);
@@ -774,7 +780,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testMappedForEachKeySequentially() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Function<Long, Long> transformer = (Long x) -> Long.valueOf(4 * x.longValue());
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
         m.forEachKey(Long.MAX_VALUE, transformer,
@@ -788,7 +794,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testMappedForEachValueSequentially() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Function<Long, Long> transformer = (Long x) -> Long.valueOf(4 * x.longValue());
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
         m.forEachValue(Long.MAX_VALUE, transformer,
@@ -802,7 +808,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testMappedForEachSequentially() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final BiFunction<Long, Long, Long> transformer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
         m.forEach(Long.MAX_VALUE, transformer,
@@ -816,7 +822,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testMappedForEachEntrySequentially() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Function<Map.Entry<Long, Long>, Long> transformer = (Map.Entry<Long, Long> e) -> Long.valueOf(e.getKey().longValue() + e.getValue().longValue());
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
         m.forEachEntry(Long.MAX_VALUE, transformer,
@@ -830,7 +836,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testMappedForEachKeyInParallel() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Function<Long, Long> transformer = (Long x) -> Long.valueOf(4 * x.longValue());
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
         m.forEachKey(1L, transformer,
@@ -844,7 +850,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testMappedForEachValueInParallel() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Function<Long, Long> transformer = (Long x) -> Long.valueOf(4 * x.longValue());
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
         m.forEachValue(1L, transformer,
@@ -858,7 +864,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testMappedForEachInParallel() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final BiFunction<Long, Long, Long> transformer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
         m.forEach(1L, transformer,
@@ -872,7 +878,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
     @Test
     public void testMappedForEachEntryInParallel() {
         LongAdder adder = new LongAdder();
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Function<Map.Entry<Long, Long>, Long> transformer = (Map.Entry<Long, Long> e) -> Long.valueOf(e.getKey().longValue() + e.getValue().longValue());
         final Consumer<Long> action = (Long x) -> adder.add(x.longValue());
         m.forEachEntry(1L, transformer,
@@ -885,7 +891,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceKeysSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final BiFunction<Long, Long, Long> reducer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         r = m.reduceKeys(Long.MAX_VALUE, reducer);
@@ -897,7 +903,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceValuesSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final BiFunction<Long, Long, Long> reducer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         r = m.reduceKeys(Long.MAX_VALUE, reducer);
@@ -909,7 +915,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceEntriesSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Map.Entry<Long, Long> r;
         final AddKeys reducer = new AddKeys();
         r = m.reduceEntries(Long.MAX_VALUE, reducer);
@@ -921,7 +927,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceKeysInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final BiFunction<Long, Long, Long> reducer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         r = m.reduceKeys(1L, reducer);
@@ -933,7 +939,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceValuesInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final BiFunction<Long, Long, Long> reducer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         r = m.reduceValues(1L, reducer);
@@ -945,7 +951,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceEntriesInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Map.Entry<Long, Long> r;
         r = m.reduceEntries(1L, new AddKeys());
         assertEquals(r.getKey().longValue(), (long) SIZE * (SIZE - 1) / 2);
@@ -956,7 +962,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testMapReduceKeysSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Function<Long, Long> transformer = (Long x) -> Long.valueOf(4 * x.longValue());
         final BiFunction<Long, Long, Long> reducer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         Long r = m.reduceKeys(Long.MAX_VALUE, transformer,
@@ -969,7 +975,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testMapReduceValuesSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Function<Long, Long> transformer = (Long x) -> Long.valueOf(4 * x.longValue());
         final BiFunction<Long, Long, Long> reducer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         Long r = m.reduceValues(Long.MAX_VALUE, transformer,
@@ -982,7 +988,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testMappedReduceSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final BiFunction<Long, Long, Long> transformer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         final BiFunction<Long, Long, Long> reducer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         Long r = m.reduce(Long.MAX_VALUE, transformer,
@@ -996,7 +1002,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testMapReduceKeysInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Function<Long, Long> transformer = (Long x) -> Long.valueOf(4 * x.longValue());
         final BiFunction<Long, Long, Long> reducer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         Long r = m.reduceKeys(1L, transformer,
@@ -1009,7 +1015,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testMapReduceValuesInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final Function<Long, Long> transformer = (Long x) -> Long.valueOf(4 * x.longValue());
         final BiFunction<Long, Long, Long> reducer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         Long r = m.reduceValues(1L, transformer,
@@ -1022,7 +1028,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testMappedReduceInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final BiFunction<Long, Long, Long> transformer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
         final BiFunction<Long, Long, Long> reducer = (Long x, Long y) -> Long.valueOf(x.longValue() + y.longValue());
@@ -1036,7 +1042,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceKeysToLongSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToLongFunction<Long> transformer = (Long x) -> x.longValue();
         final LongBinaryOperator sum = Long::sum;
         long lr = m.reduceKeysToLong(Long.MAX_VALUE, transformer, 0L, sum);
@@ -1048,7 +1054,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceKeysToIntSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToIntFunction<Long> transformer = (Long x) -> x.intValue();
         final IntBinaryOperator sum = Integer::sum;
         int ir = m.reduceKeysToInt(Long.MAX_VALUE, transformer, 0, sum);
@@ -1060,7 +1066,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceKeysToDoubleSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToDoubleFunction<Long> transformer = (Long x) -> x.doubleValue();
         double dr = m.reduceKeysToDouble(Long.MAX_VALUE, transformer, 0.0, Double::sum);
         assertEquals(dr, (double) SIZE * (SIZE - 1) / 2, EPSILON);
@@ -1071,7 +1077,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceValuesToLongSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToLongFunction<Long> transformer = (Long x) -> x.longValue();
         long lr = m.reduceValuesToLong(Long.MAX_VALUE, transformer, 0L, Long::sum);
         assertEquals(lr, (long) SIZE * (SIZE - 1));
@@ -1082,7 +1088,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceValuesToIntSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToIntFunction<Long> transformer = (Long x) -> x.intValue();
         int ir = m.reduceValuesToInt(Long.MAX_VALUE, transformer, 0, Integer::sum);
         assertEquals(ir, SIZE * (SIZE - 1));
@@ -1093,7 +1099,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceValuesToDoubleSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToDoubleFunction<Long> transformer = (Long x) -> x.doubleValue();
         double dr = m.reduceValuesToDouble(Long.MAX_VALUE, transformer, 0.0, Double::sum);
         assertEquals(dr, (double) SIZE * (SIZE - 1), EPSILON);
@@ -1104,7 +1110,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceKeysToLongInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToLongFunction<Long> transformer = (Long x) -> x.longValue();
         long lr = m.reduceKeysToLong(1L, transformer, 0L, Long::sum);
         assertEquals(lr, (long) SIZE * (SIZE - 1) / 2);
@@ -1115,7 +1121,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceKeysToIntInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToIntFunction<Long> transformer = (Long x) -> x.intValue();
         int ir = m.reduceKeysToInt(1L, transformer, 0, Integer::sum);
         assertEquals(ir, SIZE * (SIZE - 1) / 2);
@@ -1126,7 +1132,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceKeysToDoubleInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToDoubleFunction<Long> transformer = (Long x) -> x.doubleValue();
         double dr = m.reduceKeysToDouble(1L, transformer, 0.0, Double::sum);
         assertEquals(dr, (double) SIZE * (SIZE - 1) / 2, 0.01);
@@ -1137,7 +1143,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceValuesToLongInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToLongFunction<Long> transformer = (Long x) -> x.longValue();
         long lr = m.reduceValuesToLong(1L, transformer, 0L, Long::sum);
         assertEquals(lr, (long) SIZE * (SIZE - 1));
@@ -1148,7 +1154,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceValuesToIntInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToIntFunction<Long> transformer = (Long x) -> x.intValue();
         int ir = m.reduceValuesToInt(1L, transformer, 0, Integer::sum);
         assertEquals(ir, SIZE * (SIZE - 1));
@@ -1159,7 +1165,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testReduceValuesToDoubleInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         final ToDoubleFunction<Long> transformer = (Long x) -> x.doubleValue();
         double dr = m.reduceValuesToDouble(1L, transformer, 0.0, Double::sum);
         assertEquals(dr, (double) SIZE * (SIZE - 1), EPSILON);
@@ -1170,7 +1176,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testSearchKeysSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final Function<Long, Long> searchFunction = (Long x) -> x.longValue() == (long) (SIZE / 2) ? x : null;
         r = m.searchKeys(Long.MAX_VALUE, searchFunction);
@@ -1185,7 +1191,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testSearchValuesSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final Function<Long, Long> searchFunction = (Long x) -> x.longValue() == (long) (SIZE / 2) ? x : null;
         r = m.searchValues(Long.MAX_VALUE, searchFunction);
@@ -1200,7 +1206,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testSearchSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final BiFunction<Long, Long, Long> searchFunction = (Long x, Long y) -> x.longValue() == (long) (SIZE / 2) ? x : null;
         r = m.search(Long.MAX_VALUE, searchFunction);
@@ -1215,7 +1221,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testSearchEntriesSequentially() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final Function<Map.Entry<Long, Long>, Long> searchFunction = (Map.Entry<Long, Long> e) -> e.getKey().longValue() == (long) (SIZE / 2) ? e.getKey() : null;
         r = m.searchEntries(Long.MAX_VALUE, searchFunction);
@@ -1230,7 +1236,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testSearchKeysInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final Function<Long, Long> searchFunction = (Long x) -> x.longValue() == (long) (SIZE / 2) ? x : null;
         r = m.searchKeys(1L, searchFunction);
@@ -1245,7 +1251,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testSearchValuesInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final Function<Long, Long> searchFunction = (Long x) -> x.longValue() == (long) (SIZE / 2) ? x : null;
         r = m.searchValues(1L, searchFunction);
@@ -1260,7 +1266,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testSearchInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final BiFunction<Long, Long, Long> searchFunction = (Long x, Long y) -> x.longValue() == (long) (SIZE / 2) ? x : null;
         r = m.search(1L, searchFunction);
@@ -1275,7 +1281,7 @@ public class ConcurrentHashMap8Test extends JSR166TestCase {
      */
     @Test
     public void testSearchEntriesInParallel() {
-        ConcurrentHashMap<Long, Long> m = longMap();
+        ChronicleMap<Long, Long> m = longMap();
         Long r;
         final Function<Map.Entry<Long, Long>, Long> searchFunction = (Map.Entry<Long, Long> e) -> e.getKey().longValue() == (long) (SIZE / 2) ? e.getKey() : null;
         r = m.searchEntries(1L, searchFunction);

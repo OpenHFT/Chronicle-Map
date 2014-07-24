@@ -26,7 +26,7 @@ import java.io.IOException;
 /**
  * @author Rob Austin.
  */
-class ChronicleMap0<K, V> extends VanillaSharedHashMap<K, V> implements ChronicleMap<K, V> {
+class ChronicleMap0<K, V> extends VanillaSharedMap<K, V> implements ChronicleMap<K, V> {
     public ChronicleMap0(ChronicleMapBuilder0<K, V> builder, File file, Class<K> kClass, Class<V> vClass)
             throws IOException {
         super(builder, file, kClass, vClass);

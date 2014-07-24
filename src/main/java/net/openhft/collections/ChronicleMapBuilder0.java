@@ -95,8 +95,8 @@ public class ChronicleMapBuilder0<K, V> extends SharedHashMapBuilder<K, V> imple
         if (identifier <= 0)
             throw new IllegalArgumentException("Identifier must be positive, " + identifier + " given");
 
-        final ChronicleReplicatedHashMap<K, V> result =
-                new ChronicleReplicatedHashMap<K, V>(builder, kClass, vClass);
+        final ChronicleReplicatedMap<K, V> result =
+                new ChronicleReplicatedMap<K, V>(builder, kClass, vClass);
 
         if (externalReplicatorBuilder != null)
             externalReplicator = applyExternalReplicator(result, externalReplicatorBuilder, kClass, vClass);

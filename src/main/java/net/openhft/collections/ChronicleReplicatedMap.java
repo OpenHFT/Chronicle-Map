@@ -26,9 +26,9 @@ import java.io.IOException;
 /**
  * @author Rob Austin.
  */
-public class ChronicleReplicatedHashMap<K, V> extends VanillaSharedReplicatedHashMap<K, V> implements ChronicleMap<K, V> {
+public class ChronicleReplicatedMap<K, V> extends VanillaSharedReplicatedMap<K, V> implements ChronicleMap<K, V> {
 
-    public ChronicleReplicatedHashMap(@NotNull SharedHashMapBuilder builder, @NotNull Class aClass, @NotNull Class aClass2) throws IOException {
+    public ChronicleReplicatedMap(@NotNull SharedHashMapBuilder builder, @NotNull Class aClass, @NotNull Class aClass2) throws IOException {
         super(builder, aClass, aClass2);
     }
 
