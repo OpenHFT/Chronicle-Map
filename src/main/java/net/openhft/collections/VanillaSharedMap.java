@@ -38,7 +38,9 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.channels.FileChannel;
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.*;
 
 import static java.lang.Thread.currentThread;
 
@@ -82,6 +84,765 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
 
     }
 
+
+    /**
+     * If the specified key is not already associated with a value, attempts to compute its value using the
+     * given mapping function and enters it into this map unless {@code null}.  The entire method invocation
+     * is performed atomically, so the function is applied at most once per key.  Some attempted update
+     * operations on this map by other threads may be blocked while computation is in progress, so the
+     * computation should be short and simple, and must not attempt to update any other mappings of this map.
+     *
+     * @param key             key with which the specified value is to be associated
+     * @param mappingFunction the function to compute a value
+     * @return the current (existing or computed) value associated with the specified key, or null if the
+     * computed value is null
+     * @throws NullPointerException  if the specified key or mappingFunction is null
+     * @throws IllegalStateException if the computation detectably attempts a recursive update to this map
+     *                               that would otherwise never complete
+     * @throws RuntimeException      or Error if the mappingFunction does so, in which case the mapping is
+     *                               left unestablished
+     */
+    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+        checkKey(key);
+
+        Bytes keyBytes = getKeyAsBytes(key);
+        long hash = Hasher.hash(keyBytes);
+        int segmentNum = hasher.getSegment(hash);
+        int segmentHash = hasher.segmentHash(hash);
+        return segments[segmentNum].put(keyBytes, key, null, segmentHash, false, mappingFunction);
+
+    }
+
+
+    /**
+     * Returns the value to which the specified key is mapped, or the given default value if this map contains
+     * no mapping for the key.
+     *
+     * @param key          the key whose associated value is to be returned
+     * @param defaultValue the value to return if this map contains no mapping for the given key
+     * @return the mapping for the key, if present; else the default value
+     * @throws NullPointerException if the specified key is null
+     */
+    public V getOrDefault(Object key, V defaultValue) {
+        V v;
+        return (v = get(key)) == null ? defaultValue : v;
+    }
+
+    /**
+     * Computes initial batch value for bulk tasks. The returned value is approximately exp2 of the number of
+     * times (minus one) to split task by two before executing leaf action. This value is faster to compute
+     * and more convenient to use as a guide to splitting than is the depth, since it is used while dividing
+     * by two anyway.
+     */
+    final int batchFor(long b) {
+        long n;
+        if (b == Long.MAX_VALUE || (n = sumCount()) <= 1L || n < b)
+            return 0;
+        int sp = ForkJoinPool.getCommonPoolParallelism() << 2; // slack of 4
+        return (b <= 0L || (n /= b) >= sp) ? sp : (int) n;
+    }
+
+
+    /**
+     * Performs the given action for each non-null transformation of each (key, value).
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element, or null if there is
+     *                             no transformation (in which case the action is not applied)
+     * @param action               the action
+     * @param <U>                  the return type of the transformer
+     * @since 1.8
+     */
+    public <U> void forEach(long parallelismThreshold,
+                            BiFunction<? super K, ? super V, ? extends U> transformer,
+                            Consumer<? super U> action) {
+        if (transformer == null || action == null)
+            throw new NullPointerException();
+        new ForEachTransformedMappingTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        transformer, action).invoke();
+    }
+
+    /**
+     * Returns a non-null result from applying the given search function on each (key, value), or null if
+     * none.  Upon success, further element processing is suppressed and the results of any other parallel
+     * invocations of the search function are ignored.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param searchFunction       a function returning a non-null result on success, else null
+     * @param <U>                  the return type of the search function
+     * @return a non-null result from applying the given search function on each (key, value), or null if none
+     * @since 1.8
+     */
+    public <U> U search(long parallelismThreshold,
+                        BiFunction<? super K, ? super V, ? extends U> searchFunction) {
+        if (searchFunction == null) throw new NullPointerException();
+        return new SearchMappingsTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        searchFunction, new AtomicReference<U>()).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all (key, value) pairs using the given
+     * reducer to combine values, or null if none.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element, or null if there is
+     *                             no transformation (in which case it is not combined)
+     * @param reducer              a commutative associative combining function
+     * @param <U>                  the return type of the transformer
+     * @return the result of accumulating the given transformation of all (key, value) pairs
+     * @since 1.8
+     */
+    public <U> U reduce(long parallelismThreshold,
+                        BiFunction<? super K, ? super V, ? extends U> transformer,
+                        BiFunction<? super U, ? super U, ? extends U> reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceMappingsTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all (key, value) pairs using the given
+     * reducer to combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all (key, value) pairs
+     * @since 1.8
+     */
+    public double reduceToDouble(long parallelismThreshold,
+                                 ToDoubleBiFunction<? super K, ? super V> transformer,
+                                 double basis,
+                                 DoubleBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceMappingsToDoubleTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all (key, value) pairs using the given
+     * reducer to combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all (key, value) pairs
+     * @since 1.8
+     */
+    public long reduceToLong(long parallelismThreshold,
+                             ToLongBiFunction<? super K, ? super V> transformer,
+                             long basis,
+                             LongBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceMappingsToLongTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all (key, value) pairs using the given
+     * reducer to combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all (key, value) pairs
+     * @since 1.8
+     */
+    public int reduceToInt(long parallelismThreshold,
+                           ToIntBiFunction<? super K, ? super V> transformer,
+                           int basis,
+                           IntBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceMappingsToIntTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Performs the given action for each key.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param action               the action
+     * @since 1.8
+     */
+    public void forEachKey(long parallelismThreshold,
+                           Consumer<? super K> action) {
+        if (action == null) throw new NullPointerException();
+        new ForEachKeyTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        action).invoke();
+    }
+
+    /**
+     * Performs the given action for each non-null transformation of each key.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element, or null if there is
+     *                             no transformation (in which case the action is not applied)
+     * @param action               the action
+     * @param <U>                  the return type of the transformer
+     * @since 1.8
+     */
+    public <U> void forEachKey(long parallelismThreshold,
+                               Function<? super K, ? extends U> transformer,
+                               Consumer<? super U> action) {
+        if (transformer == null || action == null)
+            throw new NullPointerException();
+        new ForEachTransformedKeyTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        transformer, action).invoke();
+    }
+
+    /**
+     * Returns a non-null result from applying the given search function on each key, or null if none. Upon
+     * success, further element processing is suppressed and the results of any other parallel invocations of
+     * the search function are ignored.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param searchFunction       a function returning a non-null result on success, else null
+     * @param <U>                  the return type of the search function
+     * @return a non-null result from applying the given search function on each key, or null if none
+     * @since 1.8
+     */
+    public <U> U searchKeys(long parallelismThreshold,
+                            Function<? super K, ? extends U> searchFunction) {
+        if (searchFunction == null) throw new NullPointerException();
+        return new SearchKeysTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        searchFunction, new AtomicReference<U>()).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating all keys using the given reducer to combine values, or null if
+     * none.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating all keys using the given reducer to combine values, or null if none
+     * @since 1.8
+     */
+    public K reduceKeys(long parallelismThreshold,
+                        BiFunction<? super K, ? super K, ? extends K> reducer) {
+        if (reducer == null) throw new NullPointerException();
+        return new ReduceKeysTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all keys using the given reducer to
+     * combine values, or null if none.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element, or null if there is
+     *                             no transformation (in which case it is not combined)
+     * @param reducer              a commutative associative combining function
+     * @param <U>                  the return type of the transformer
+     * @return the result of accumulating the given transformation of all keys
+     * @since 1.8
+     */
+    public <U> U reduceKeys(long parallelismThreshold,
+                            Function<? super K, ? extends U> transformer,
+                            BiFunction<? super U, ? super U, ? extends U> reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceKeysTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all keys using the given reducer to
+     * combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all keys
+     * @since 1.8
+     */
+    public double reduceKeysToDouble(long parallelismThreshold,
+                                     ToDoubleFunction<? super K> transformer,
+                                     double basis,
+                                     DoubleBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceKeysToDoubleTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all keys using the given reducer to
+     * combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all keys
+     * @since 1.8
+     */
+    public long reduceKeysToLong(long parallelismThreshold,
+                                 ToLongFunction<? super K> transformer,
+                                 long basis,
+                                 LongBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceKeysToLongTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all keys using the given reducer to
+     * combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all keys
+     * @since 1.8
+     */
+    public int reduceKeysToInt(long parallelismThreshold,
+                               ToIntFunction<? super K> transformer,
+                               int basis,
+                               IntBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceKeysToIntTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Performs the given action for each value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param action               the action
+     * @since 1.8
+     */
+    public void forEachValue(long parallelismThreshold,
+                             Consumer<? super V> action) {
+        if (action == null)
+            throw new NullPointerException();
+        new ForEachValueTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        action).invoke();
+    }
+
+    /**
+     * Performs the given action for each non-null transformation of each value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element, or null if there is
+     *                             no transformation (in which case the action is not applied)
+     * @param action               the action
+     * @param <U>                  the return type of the transformer
+     * @since 1.8
+     */
+    public <U> void forEachValue(long parallelismThreshold,
+                                 Function<? super V, ? extends U> transformer,
+                                 Consumer<? super U> action) {
+        if (transformer == null || action == null)
+            throw new NullPointerException();
+        new ForEachTransformedValueTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        transformer, action).invoke();
+    }
+
+    /**
+     * Returns a non-null result from applying the given search function on each value, or null if none.  Upon
+     * success, further element processing is suppressed and the results of any other parallel invocations of
+     * the search function are ignored.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param searchFunction       a function returning a non-null result on success, else null
+     * @param <U>                  the return type of the search function
+     * @return a non-null result from applying the given search function on each value, or null if none
+     * @since 1.8
+     */
+    public <U> U searchValues(long parallelismThreshold,
+                              Function<? super V, ? extends U> searchFunction) {
+        if (searchFunction == null) throw new NullPointerException();
+        return new SearchValuesTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        searchFunction, new AtomicReference<U>()).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating all values using the given reducer to combine values, or null if
+     * none.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating all values
+     * @since 1.8
+     */
+    public V reduceValues(long parallelismThreshold,
+                          BiFunction<? super V, ? super V, ? extends V> reducer) {
+        if (reducer == null) throw new NullPointerException();
+        return new ReduceValuesTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all values using the given reducer to
+     * combine values, or null if none.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element, or null if there is
+     *                             no transformation (in which case it is not combined)
+     * @param reducer              a commutative associative combining function
+     * @param <U>                  the return type of the transformer
+     * @return the result of accumulating the given transformation of all values
+     * @since 1.8
+     */
+    public <U> U reduceValues(long parallelismThreshold,
+                              Function<? super V, ? extends U> transformer,
+                              BiFunction<? super U, ? super U, ? extends U> reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceValuesTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all values using the given reducer to
+     * combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all values
+     * @since 1.8
+     */
+    public double reduceValuesToDouble(long parallelismThreshold,
+                                       ToDoubleFunction<? super V> transformer,
+                                       double basis,
+                                       DoubleBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceValuesToDoubleTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all values using the given reducer to
+     * combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all values
+     * @since 1.8
+     */
+    public long reduceValuesToLong(long parallelismThreshold,
+                                   ToLongFunction<? super V> transformer,
+                                   long basis,
+                                   LongBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceValuesToLongTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all values using the given reducer to
+     * combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all values
+     * @since 1.8
+     */
+    public int reduceValuesToInt(long parallelismThreshold,
+                                 ToIntFunction<? super V> transformer,
+                                 int basis,
+                                 IntBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceValuesToIntTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Performs the given action for each entry.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param action               the action
+     * @since 1.8
+     */
+    public void forEachEntry(long parallelismThreshold,
+                             Consumer<? super Map.Entry<K, V>> action) {
+        if (action == null) throw new NullPointerException();
+        new ForEachEntryTask<K, V>(null, batchFor(parallelismThreshold), 0, 0, table,
+                action).invoke();
+    }
+
+    /**
+     * Performs the given action for each non-null transformation of each entry.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element, or null if there is
+     *                             no transformation (in which case the action is not applied)
+     * @param action               the action
+     * @param <U>                  the return type of the transformer
+     * @since 1.8
+     */
+    public <U> void forEachEntry(long parallelismThreshold,
+                                 Function<Map.Entry<K, V>, ? extends U> transformer,
+                                 Consumer<? super U> action) {
+        if (transformer == null || action == null)
+            throw new NullPointerException();
+        new ForEachTransformedEntryTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        transformer, action).invoke();
+    }
+
+    /**
+     * Returns a non-null result from applying the given search function on each entry, or null if none.  Upon
+     * success, further element processing is suppressed and the results of any other parallel invocations of
+     * the search function are ignored.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param searchFunction       a function returning a non-null result on success, else null
+     * @param <U>                  the return type of the search function
+     * @return a non-null result from applying the given search function on each entry, or null if none
+     * @since 1.8
+     */
+    public <U> U searchEntries(long parallelismThreshold,
+                               Function<Map.Entry<K, V>, ? extends U> searchFunction) {
+        if (searchFunction == null) throw new NullPointerException();
+        return new SearchEntriesTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        searchFunction, new AtomicReference<U>()).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating all entries using the given reducer to combine values, or null if
+     * none.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating all entries
+     * @since 1.8
+     */
+    public Map.Entry<K, V> reduceEntries(long parallelismThreshold,
+                                         BiFunction<Map.Entry<K, V>, Map.Entry<K, V>, ? extends Map.Entry<K, V>> reducer) {
+        if (reducer == null) throw new NullPointerException();
+        return new ReduceEntriesTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all entries using the given reducer to
+     * combine values, or null if none.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element, or null if there is
+     *                             no transformation (in which case it is not combined)
+     * @param reducer              a commutative associative combining function
+     * @param <U>                  the return type of the transformer
+     * @return the result of accumulating the given transformation of all entries
+     * @since 1.8
+     */
+    public <U> U reduceEntries(long parallelismThreshold,
+                               Function<Map.Entry<K, V>, ? extends U> transformer,
+                               BiFunction<? super U, ? super U, ? extends U> reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceEntriesTask<K, V, U>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all entries using the given reducer to
+     * combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all entries
+     * @since 1.8
+     */
+    public double reduceEntriesToDouble(long parallelismThreshold,
+                                        ToDoubleFunction<Map.Entry<K, V>> transformer,
+                                        double basis,
+                                        DoubleBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceEntriesToDoubleTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all entries using the given reducer to
+     * combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all entries
+     * @since 1.8
+     */
+    public long reduceEntriesToLong(long parallelismThreshold,
+                                    ToLongFunction<Map.Entry<K, V>> transformer,
+                                    long basis,
+                                    LongBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceEntriesToLongTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Returns the result of accumulating the given transformation of all entries using the given reducer to
+     * combine values, and the given basis as an identity value.
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param transformer          a function returning the transformation for an element
+     * @param basis                the identity (initial default value) for the reduction
+     * @param reducer              a commutative associative combining function
+     * @return the result of accumulating the given transformation of all entries
+     * @since 1.8
+     */
+    public int reduceEntriesToInt(long parallelismThreshold,
+                                  ToIntFunction<Map.Entry<K, V>> transformer,
+                                  int basis,
+                                  IntBinaryOperator reducer) {
+        if (transformer == null || reducer == null)
+            throw new NullPointerException();
+        return new MapReduceEntriesToIntTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        null, transformer, basis, reducer).invoke();
+    }
+
+    /**
+     * Performs the given action for each (key, value).
+     *
+     * @param parallelismThreshold the (estimated) number of elements needed for this operation to be executed
+     *                             in parallel
+     * @param action               the action
+     * @since 1.8
+     */
+    public void forEach(long parallelismThreshold,
+                        BiConsumer<? super K, ? super V> action) {
+        if (action == null) throw new NullPointerException();
+        new ForEachMappingTask<K, V>
+                (null, batchFor(parallelismThreshold), 0, 0, table,
+                        action).invoke();
+    }
+
+
+    @SuppressWarnings("serial")
+    static final class SearchMappingsTask<K, V, U>
+            extends BulkTask<K, V, U> {
+        final BiFunction<? super K, ? super V, ? extends U> searchFunction;
+        final AtomicReference<U> result;
+
+        SearchMappingsTask
+                (BulkTask<K, V, ?> p, int b, int i, int f, Node<K, V>[] t,
+                 BiFunction<? super K, ? super V, ? extends U> searchFunction,
+                 AtomicReference<U> result) {
+            super(p, b, i, f, t);
+            this.searchFunction = searchFunction;
+            this.result = result;
+        }
+
+        public final U getRawResult() {
+            return result.get();
+        }
+
+        public final void compute() {
+            final BiFunction<? super K, ? super V, ? extends U> searchFunction;
+            final AtomicReference<U> result;
+            if ((searchFunction = this.searchFunction) != null &&
+                    (result = this.result) != null) {
+                for (int i = baseIndex, f, h; batch > 0 &&
+                        (h = ((f = baseLimit) + i) >>> 1) > i; ) {
+                    if (result.get() != null)
+                        return;
+                    addToPendingCount(1);
+                    new SearchMappingsTask<K, V, U>
+                            (this, batch >>>= 1, baseLimit = h, f, tab,
+                                    searchFunction, result).fork();
+                }
+                while (result.get() == null) {
+                    U u;
+                    Node<K, V> p;
+                    if ((p = advance()) == null) {
+                        propagateCompletion();
+                        break;
+                    }
+                    if ((u = searchFunction.apply(p.key, p.val)) != null) {
+                        if (result.compareAndSet(null, u))
+                            quietlyCompleteRoot();
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     private static int figureBufferAllocationFactor(SharedHashMapBuilder builder) {
         // if expected map size is about 1000, seems rather wasteful to allocate
@@ -341,6 +1102,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
         return put0(key, value, true);
     }
 
+
     /**
      * {@inheritDoc}
      */
@@ -356,8 +1118,9 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
         long hash = Hasher.hash(keyBytes);
         int segmentNum = hasher.getSegment(hash);
         int segmentHash = hasher.segmentHash(hash);
-        return segments[segmentNum].put(keyBytes, key, value, segmentHash, replaceIfPresent);
+        return segments[segmentNum].put(keyBytes, key, value, segmentHash, replaceIfPresent, null);
     }
+
 
     DirectBytes getKeyAsBytes(K key) {
         DirectBytes buffer = acquireBufferForKey();
@@ -825,7 +1588,18 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
             }
         }
 
-        V put(Bytes keyBytes, K key, V value, int hash2, boolean replaceIfPresent) {
+
+        /**
+         * @param keyBytes         the bytes of the key
+         * @param key              the key to the entry you wish to add   or update
+         * @param value            the value in the entry you wish to add or update
+         * @param hash2            the hash of the key in this segment
+         * @param replaceIfPresent true if the item is to be replaced
+         * @param mappingFunction  if non null, this takes presidents over the value, the value calculated via
+         *                         the mappingFunction is used instead
+         * @return
+         */
+        V put(Bytes keyBytes, K key, V value, int hash2, boolean replaceIfPresent, Function<? super K, ? extends V> mappingFunction) {
             lock();
             try {
                 long keyLen = keyBytes.remaining();
@@ -838,11 +1612,22 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
                     // key is found
                     entry.skip(keyLen);
                     if (replaceIfPresent) {
-                        return replaceValueOnPut(key, value, entry, pos, offset, !putReturnsNull, hashLookup);
+                        {
+                            if (mappingFunction != null)
+                                value = mappingFunction.apply(key);
+                            if (value == null)
+                                return putReturnsNull ? null : readValue(entry, null);
+                            return replaceValueOnPut(key, value, entry, pos, offset, !putReturnsNull, hashLookup);
+                        }
                     } else {
                         return putReturnsNull ? null : readValue(entry, null);
                     }
                 }
+
+                if (mappingFunction != null)
+                    value = mappingFunction.apply(key);
+                if (value == null)
+                    return null;
                 // key is not found
                 long offset = putEntry(keyBytes, value, false);
                 incrementSize();
@@ -1338,6 +2123,7 @@ abstract class AbstractVanillaSharedMap<K, V> extends net.openhft.collections.Co
         IntIntMultiMap checkConsistencyHashLookup() {
             return hashLookup;
         }
+
 
         private class PosPresentOnce implements IntIntMultiMap.EntryConsumer {
             int pos, count = 0;
