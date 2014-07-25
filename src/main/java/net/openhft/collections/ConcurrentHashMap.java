@@ -1,33 +1,6 @@
 /*
  * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- */
 
-/*
- *
- *
- *
- *
- *
  * Written by Doug Lea with assistance from members of JCP JSR-166
  * Expert Group and released to the public domain, as explained at
  * http://creativecommons.org/publicdomain/zero/1.0/
@@ -37,7 +10,6 @@ package net.openhft.collections;
 
 import net.openhft.lang.io.NativeBytes;
 
-import java.io.ObjectStreamField;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -48,7 +20,6 @@ import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.*;
 import java.util.stream.Stream;
 
@@ -507,14 +478,7 @@ public abstract class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
      */
     static final int NCPU = Runtime.getRuntime().availableProcessors();
 
-    /**
-     * For serialization compatibility.
-     */
-    private static final ObjectStreamField[] serialPersistentFields = {
-            new ObjectStreamField("segments", Segment[].class),
-            new ObjectStreamField("segmentMask", Integer.TYPE),
-            new ObjectStreamField("segmentShift", Integer.TYPE)
-    };
+
 
     /* ---------------- Nodes -------------- */
 
@@ -732,48 +696,7 @@ public abstract class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
     public ConcurrentHashMap() {
     }
 
-    /**
-     * Creates a new, empty map with an initial table size accommodating the specified number of elements
-     * without the need to dynamically resize.
-     *
-     * @param initialCapacity The implementation performs internal sizing to accommodate this many elements.
-     * @throws IllegalArgumentException if the initial capacity of elements is negative
-     */
-    public ConcurrentHashMap(int initialCapacity) {
-        if (initialCapacity < 0)
-            throw new IllegalArgumentException();
-        int cap = ((initialCapacity >= (MAXIMUM_CAPACITY >>> 1)) ?
-                MAXIMUM_CAPACITY :
-                tableSizeFor(initialCapacity + (initialCapacity >>> 1) + 1));
-        this.sizeCtl = cap;
-    }
-
-    /**
-     * Creates a new map with the same mappings as the given map.
-     *
-     * @param m the map
-     */
-    public ConcurrentHashMap(Map<? extends K, ? extends V> m) {
-        this.sizeCtl = DEFAULT_CAPACITY;
-        putAll(m);
-    }
-
-    /**
-     * Creates a new, empty map with an initial table size based on the given number of elements ({@code
-     * initialCapacity}) and initial table density ({@code loadFactor}).
-     *
-     * @param initialCapacity the initial capacity. The implementation performs internal sizing to accommodate
-     *                        this many elements, given the specified load factor.
-     * @param loadFactor      the load factor (table density) for establishing the initial table size
-     * @throws IllegalArgumentException if the initial capacity of elements is negative or the load factor is
-     *                                  nonpositive
-     * @since 1.6
-     */
-    public ConcurrentHashMap(int initialCapacity, float loadFactor) {
-        this(initialCapacity, loadFactor, 1);
-    }
-
-    /**
+       /**
      * Creates a new, empty map with an initial table size based on the given number of elements ({@code
      * initialCapacity}), table density ({@code loadFactor}), and number of concurrently updating threads
      * ({@code concurrencyLevel}).
@@ -798,114 +721,12 @@ public abstract class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
         this.sizeCtl = cap;
     }
 
-    // Original (since JDK1.2) Map methods
 
-    /**
-     * {@inheritDoc}
-     */
-    public int size() {
-        long n = sumCount();
-        return ((n < 0L) ? 0 :
-                (n > (long) Integer.MAX_VALUE) ? Integer.MAX_VALUE :
-                        (int) n);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
- /*   public boolean isEmpty() {
-        return sumCount() <= 0L; // ignore transient negative values
-    }*/
-
-
-    /**
-     * Returns the value to which the specified key is mapped, or {@code null} if this map contains no mapping
-     * for the key.
-     *
-     * <p>More formally, if this map contains a mapping from a key {@code k} to a value {@code v} such that
-     * {@code key.equals(k)}, then this method returns {@code v}; otherwise it returns {@code null}.  (There
-     * can be at most one such mapping.)
-     *
-     * @throws NullPointerException if the specified key is null
-     */
-    public V get(Object key) {
-        Node<K, V>[] tab;
-        Node<K, V> e, p;
-        int n, eh;
-        K ek;
-        int h = spread(key.hashCode());
-        if ((tab = table) != null && (n = tab.length) > 0 &&
-                (e = tabAt(tab, (n - 1) & h)) != null) {
-            if ((eh = e.hash) == h) {
-                if ((ek = e.key) == key || (ek != null && key.equals(ek)))
-                    return e.val;
-            } else if (eh < 0)
-                return (p = e.find(h, key)) != null ? p.val : null;
-            while ((e = e.next) != null) {
-                if (e.hash == h &&
-                        ((ek = e.key) == key || (ek != null && key.equals(ek))))
-                    return e.val;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Tests if the specified object is a key in this table.
-     *
-     * @param key possible key
-     * @return {@code true} if and only if the specified object is a key in this table, as determined by the
-     * {@code equals} method; {@code false} otherwise
-     * @throws NullPointerException if the specified key is null
-     */
-    public boolean containsKey(Object key) {
-        return get(key) != null;
-    }
-
-    /**
-     * Returns {@code true} if this map maps one or more keys to the specified value. Note: This method may
-     * require a full traversal of the map, and is much slower than method {@code containsKey}.
-     *
-     * @param value value whose presence in this map is to be tested
-     * @return {@code true} if this map maps one or more keys to the specified value
-     * @throws NullPointerException if the specified value is null
-     */
-    public boolean containsValue(Object value) {
-        if (value == null)
-            throw new NullPointerException();
-        Node<K, V>[] t;
-        if ((t = table) != null) {
-            Traverser<K, V> it = new Traverser<K, V>(t, t.length, 0, t.length);
-            for (Node<K, V> p; (p = it.advance()) != null; ) {
-                V v;
-                if ((v = p.val) == value || (v != null && value.equals(v)))
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Maps the specified key to the specified value in this table. Neither the key nor the value can be
-     * null.
-     *
-     * <p>The value can be retrieved by calling the {@code get} method with a key that is equal to the
-     * original key.
-     *
-     * @param key   key with which the specified value is to be associated
-     * @param value value to be associated with the specified key
-     * @return the previous value associated with {@code key}, or {@code null} if there was no mapping for
-     * {@code key}
-     * @throws NullPointerException if the specified key or value is null
-     */
-    public V put(K key, V value) {
-        return putVal(key, value, false);
-    }
 
     /**
      * Implementation for put and putIfAbsent
      */
-      V putVal(K key, V value, boolean onlyIfAbsent) {
+       V putVal(K key, V value, boolean onlyIfAbsent) {
         if (key == null || value == null) throw new NullPointerException();
         int hash = spread(key.hashCode());
         int binCount = 0;
@@ -968,30 +789,9 @@ public abstract class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
         return null;
     }
 
-    /**
-     * Copies all of the mappings from the specified map to this one. These mappings replace any mappings that
-     * this map had for any of the keys currently in the specified map.
-     *
-     * @param m mappings to be stored in this map
-     */
-    public void putAll(Map<? extends K, ? extends V> m) {
-        tryPresize(m.size());
-        for (Map.Entry<? extends K, ? extends V> e : m.entrySet())
-            putVal(e.getKey(), e.getValue(), false);
-    }
 
-    /**
-     * Removes the key (and its corresponding value) from this map. This method does nothing if the key is not
-     * in the map.
-     *
-     * @param key the key that needs to be removed
-     * @return the previous value associated with {@code key}, or {@code null} if there was no mapping for
-     * {@code key}
-     * @throws NullPointerException if the specified key is null
-     */
-    public V remove(Object key) {
-        return replaceNode(key, null, null);
-    }
+
+
 
     /**
      * Implementation for the four public remove/replace methods: Replaces node value with v, conditional upon
@@ -1068,332 +868,10 @@ public abstract class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
         return null;
     }
 
-    /**
-     * Removes all of the mappings from this map.
-     */
-    public void clear() {
-        long delta = 0L; // negative number of deletions
-        int i = 0;
-        Node<K, V>[] tab = table;
-        while (tab != null && i < tab.length) {
-            int fh;
-            Node<K, V> f = tabAt(tab, i);
-            if (f == null)
-                ++i;
-            else if ((fh = f.hash) == MOVED) {
-                tab = helpTransfer(tab, f);
-                i = 0; // restart
-            } else {
-                synchronized (f) {
-                    if (tabAt(tab, i) == f) {
-                        Node<K, V> p = (fh >= 0 ? f :
-                                (f instanceof TreeBin) ?
-                                        ((TreeBin<K, V>) f).first : null);
-                        while (p != null) {
-                            --delta;
-                            p = p.next;
-                        }
-                        setTabAt(tab, i++, null);
-                    }
-                }
-            }
-        }
-        if (delta != 0L)
-            addCount(delta, -1);
-    }
 
 
-    /**
-     * Returns the hash code value for this {@link Map}, i.e., the sum of, for each key-value pair in the map,
-     * {@code key.hashCode() ^ value.hashCode()}.
-     *
-     * @return the hash code value for this map
-     */
-    public int hashCode() {
-        int h = 0;
-        Node<K, V>[] t;
-        if ((t = table) != null) {
-            Traverser<K, V> it = new Traverser<K, V>(t, t.length, 0, t.length);
-            for (Node<K, V> p; (p = it.advance()) != null; )
-                h += p.key.hashCode() ^ p.val.hashCode();
-        }
-        return h;
-    }
 
-    /**
-     * Returns a string representation of this map.  The string representation consists of a list of key-value
-     * mappings (in no particular order) enclosed in braces ("{@code {}}").  Adjacent mappings are separated
-     * by the characters {@code ", "} (comma and space).  Each key-value mapping is rendered as the key
-     * followed by an equals sign ("{@code =}") followed by the associated value.
-     *
-     * @return a string representation of this map
-     */
-     /*public String toString() {
-        Node<K, V>[] t;
-        int f = (t = table) == null ? 0 : t.length;
-        Traverser<K, V> it = new Traverser<K, V>(t, f, 0, f);
-        StringBuilder sb = new StringBuilder();
-        sb.append('{');
-        Node<K, V> p;
-        if ((p = it.advance()) != null) {
-            for (; ; ) {
-                K k = p.key;
-                V v = p.val;
-                sb.append(k == this ? "(this Map)" : k);
-                sb.append('=');
-                sb.append(v == this ? "(this Map)" : v);
-                if ((p = it.advance()) == null)
-                    break;
-                sb.append(',').append(' ');
-            }
-        }
-        return sb.append('}').toString();
-    } */
 
-    public String toString() {
-       return super.toString();
-    }
-
-    /**
-     * Compares the specified object with this map for equality. Returns {@code true} if the given object is a
-     * map with the same mappings as this map.  This operation may return misleading results if either map is
-     * concurrently modified during execution of this method.
-     *
-     * @param o object to be compared for equality with this map
-     * @return {@code true} if the specified object is equal to this map
-     */
-    public boolean equals(Object o) {
-        if (o != this) {
-            if (!(o instanceof Map))
-                return false;
-            Map<?, ?> m = (Map<?, ?>) o;
-            Node<K, V>[] t;
-            int f = (t = table) == null ? 0 : t.length;
-            Traverser<K, V> it = new Traverser<K, V>(t, f, 0, f);
-            for (Node<K, V> p; (p = it.advance()) != null; ) {
-                V val = p.val;
-                Object v = m.get(p.key);
-                if (v == null || (v != val && !v.equals(val)))
-                    return false;
-            }
-            for (Map.Entry<?, ?> e : m.entrySet()) {
-                Object mk, mv, v;
-                if ((mk = e.getKey()) == null ||
-                        (mv = e.getValue()) == null ||
-                        (v = get(mk)) == null ||
-                        (mv != v && !mv.equals(v)))
-                    return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Stripped-down version of helper class used in previous version, declared for the sake of serialization
-     * compatibility
-     */
-    static class Segment<K, V> extends ReentrantLock implements Serializable {
-        private static final long serialVersionUID = 2249069246763182397L;
-        final float loadFactor;
-
-        Segment(float lf) {
-            this.loadFactor = lf;
-        }
-    }
-
-    /**
-     * Saves the state of the {@code ConcurrentHashMap} instance to a stream (i.e., serializes it).
-     *
-     * @param s the stream
-     * @throws java.io.IOException if an I/O error occurs
-     * @serialData the key (Object) and value (Object) for each key-value mapping, followed by a null pair.
-     * The key-value mappings are emitted in no particular order.
-     */
-    private void writeObject(java.io.ObjectOutputStream s)
-            throws java.io.IOException {
-        // For serialization compatibility
-        // Emulate segment calculation from previous version of this class
-        int sshift = 0;
-        int ssize = 1;
-        while (ssize < DEFAULT_CONCURRENCY_LEVEL) {
-            ++sshift;
-            ssize <<= 1;
-        }
-        int segmentShift = 32 - sshift;
-        int segmentMask = ssize - 1;
-        @SuppressWarnings("unchecked")
-        Segment<K, V>[] segments = (Segment<K, V>[])
-                new Segment<?, ?>[DEFAULT_CONCURRENCY_LEVEL];
-        for (int i = 0; i < segments.length; ++i)
-            segments[i] = new Segment<K, V>(LOAD_FACTOR);
-        s.putFields().put("segments", segments);
-        s.putFields().put("segmentShift", segmentShift);
-        s.putFields().put("segmentMask", segmentMask);
-        s.writeFields();
-
-        Node<K, V>[] t;
-        if ((t = table) != null) {
-            Traverser<K, V> it = new Traverser<K, V>(t, t.length, 0, t.length);
-            for (Node<K, V> p; (p = it.advance()) != null; ) {
-                s.writeObject(p.key);
-                s.writeObject(p.val);
-            }
-        }
-        s.writeObject(null);
-        s.writeObject(null);
-        segments = null; // throw away
-    }
-
-    /**
-     * Reconstitutes the instance from a stream (that is, deserializes it).
-     *
-     * @param s the stream
-     * @throws ClassNotFoundException if the class of a serialized object could not be found
-     * @throws java.io.IOException    if an I/O error occurs
-     */
-    private void readObject(java.io.ObjectInputStream s)
-            throws java.io.IOException, ClassNotFoundException {
-        /*
-         * To improve performance in typical cases, we create nodes
-         * while reading, then place in table once size is known.
-         * However, we must also validate uniqueness and deal with
-         * overpopulated bins while doing so, which requires
-         * specialized versions of putVal mechanics.
-         */
-        sizeCtl = -1; // force exclusion for table construction
-        s.defaultReadObject();
-        long size = 0L;
-        Node<K, V> p = null;
-        for (; ; ) {
-            @SuppressWarnings("unchecked")
-            K k = (K) s.readObject();
-            @SuppressWarnings("unchecked")
-            V v = (V) s.readObject();
-            if (k != null && v != null) {
-                p = new Node<K, V>(spread(k.hashCode()), k, v, p);
-                ++size;
-            } else
-                break;
-        }
-        if (size == 0L)
-            sizeCtl = 0;
-        else {
-            int n;
-            if (size >= (long) (MAXIMUM_CAPACITY >>> 1))
-                n = MAXIMUM_CAPACITY;
-            else {
-                int sz = (int) size;
-                n = tableSizeFor(sz + (sz >>> 1) + 1);
-            }
-            @SuppressWarnings("unchecked")
-            Node<K, V>[] tab = (Node<K, V>[]) new Node<?, ?>[n];
-            int mask = n - 1;
-            long added = 0L;
-            while (p != null) {
-                boolean insertAtFront;
-                Node<K, V> next = p.next, first;
-                int h = p.hash, j = h & mask;
-                if ((first = tabAt(tab, j)) == null)
-                    insertAtFront = true;
-                else {
-                    K k = p.key;
-                    if (first.hash < 0) {
-                        TreeBin<K, V> t = (TreeBin<K, V>) first;
-                        if (t.putTreeVal(h, k, p.val) == null)
-                            ++added;
-                        insertAtFront = false;
-                    } else {
-                        int binCount = 0;
-                        insertAtFront = true;
-                        Node<K, V> q;
-                        K qk;
-                        for (q = first; q != null; q = q.next) {
-                            if (q.hash == h &&
-                                    ((qk = q.key) == k ||
-                                            (qk != null && k.equals(qk)))) {
-                                insertAtFront = false;
-                                break;
-                            }
-                            ++binCount;
-                        }
-                        if (insertAtFront && binCount >= TREEIFY_THRESHOLD) {
-                            insertAtFront = false;
-                            ++added;
-                            p.next = first;
-                            TreeNode<K, V> hd = null, tl = null;
-                            for (q = p; q != null; q = q.next) {
-                                TreeNode<K, V> t = new TreeNode<K, V>
-                                        (q.hash, q.key, q.val, null, null);
-                                if ((t.prev = tl) == null)
-                                    hd = t;
-                                else
-                                    tl.next = t;
-                                tl = t;
-                            }
-                            setTabAt(tab, j, new TreeBin<K, V>(hd));
-                        }
-                    }
-                }
-                if (insertAtFront) {
-                    ++added;
-                    p.next = first;
-                    setTabAt(tab, j, p);
-                }
-                p = next;
-            }
-            table = tab;
-            sizeCtl = n - (n >>> 2);
-            baseCount = added;
-        }
-    }
-
-    // ConcurrentMap methods
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return the previous value associated with the specified key, or {@code null} if there was no mapping
-     * for the key
-     * @throws NullPointerException if the specified key or value is null
-     */
-    public V putIfAbsent(K key, V value) {
-        return putVal(key, value, true);
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @throws NullPointerException if the specified key is null
-     */
-    public boolean remove(Object key, Object value) {
-        if (key == null)
-            throw new NullPointerException();
-        return value != null && replaceNode(key, null, value) != null;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @throws NullPointerException if any of the arguments are null
-     */
-    public boolean replace(K key, V oldValue, V newValue) {
-        if (key == null || oldValue == null || newValue == null)
-            throw new NullPointerException();
-        return replaceNode(key, newValue, oldValue) != null;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return the previous value associated with the specified key, or {@code null} if there was no mapping
-     * for the key
-     * @throws NullPointerException if the specified key or value is null
-     */
-    public V replace(K key, V value) {
-        if (key == null || value == null)
-            throw new NullPointerException();
-        return replaceNode(key, value, null);
-    }
 
     // Overrides of JDK8+ Map extension method defaults
 
@@ -1498,48 +976,7 @@ public abstract class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
     }
 
 
-    // Hashtable legacy methods
 
-    /**
-     * Legacy method testing if some key maps into the specified value in this table.  This method is
-     * identical in functionality to {@link #containsValue(Object)}, and exists solely to ensure full
-     * compatibility with class {@link java.util.Hashtable}, which supported this method prior to introduction
-     * of the Java Collections framework.
-     *
-     * @param value a value to search for
-     * @return {@code true} if and only if some key maps to the {@code value} argument in this table as
-     * determined by the {@code equals} method; {@code false} otherwise
-     * @throws NullPointerException if the specified value is null
-     */
-    public boolean contains(Object value) {
-        return containsValue(value);
-    }
-
-    /**
-     * Returns an enumeration of the keys in this table.
-     *
-     * @return an enumeration of the keys in this table
-     * @see #keySet()
-     */
-    public Enumeration<K> keys() {
-        Node<K, V>[] t;
-        int f = (t = table) == null ? 0 : t.length;
-        return new KeyIterator<K, V>(t, f, 0, f, this);
-    }
-
-    /**
-     * Returns an enumeration of the values in this table.
-     *
-     * @return an enumeration of the values in this table
-     * @see #values()
-     */
-    public Enumeration<V> elements() {
-        Node<K, V>[] t;
-        int f = (t = table) == null ? 0 : t.length;
-        return new ValueIterator<K, V>(t, f, 0, f, this);
-    }
-
-    // ConcurrentHashMap-only methods
 
     /**
      * Returns the number of mappings. This method should be used instead of {@link #size} because a
