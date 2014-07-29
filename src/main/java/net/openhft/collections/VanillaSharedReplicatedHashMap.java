@@ -80,13 +80,13 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * @param <K> the entries key type
  * @param <V> the entries value type
  */
-class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedHashMap<K, V>
+class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<K, V>
         implements ChronicleMap<K, V>, ReplicaExternalizable<K, V>, EntryResolver<K, V>,
         Closeable {
 
     static final int MAX_UNSIGNED_SHORT = Character.MAX_VALUE;
 
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaSharedReplicatedMap.class);
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaSharedReplicatedHashMap.class);
     private static final int LAST_UPDATED_HEADER_SIZE = (127 * 8);
 
     // for file, jdbc and UDP replication
@@ -102,9 +102,9 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedHashMap<K, V
     private final ModificationDelegator modificationDelegator;
     private int startOfModificationIterators;
 
-    public VanillaSharedReplicatedMap(@NotNull SharedHashMapBuilder builder,
-                                      @NotNull Class<K> kClass,
-                                      @NotNull Class<V> vClass) throws IOException {
+    public VanillaSharedReplicatedHashMap(@NotNull SharedHashMapBuilder builder,
+                                          @NotNull Class<K> kClass,
+                                          @NotNull Class<V> vClass) throws IOException {
         super(builder, kClass, vClass);
 
         this.timeProvider = builder.timeProvider();
@@ -868,7 +868,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedHashMap<K, V
                         final long entryTimestamp = entry.readLong();
 
                         if (entryTimestamp >= timeStamp &&
-                                entry.readByte() == VanillaSharedReplicatedMap.this.identifier())
+                                entry.readByte() == VanillaSharedReplicatedHashMap.this.identifier())
                             callback.set(index, pos);
                     }
                 });
@@ -887,7 +887,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedHashMap<K, V
             // we have to make sure that every calls notifies on remove,
             // so that the replicators can pick it up
             for (K k : keySet()) {
-                VanillaSharedReplicatedMap.this.remove(k);
+                VanillaSharedReplicatedHashMap.this.remove(k);
             }
 
         }
@@ -1022,7 +1022,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedHashMap<K, V
             throw new IllegalStateException("identifier can't be 0");
         }
 
-        if (remoteIdentifier == VanillaSharedReplicatedMap.this.identifier()) {
+        if (remoteIdentifier == VanillaSharedReplicatedHashMap.this.identifier()) {
             // this may occur when working with UDP, as we will receive our own data
             return;
         }
@@ -1134,7 +1134,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedHashMap<K, V
         public void onPut(SharedHashMap<K, V> map, Bytes entry, int metaDataBytes,
                           boolean added, K key, V value, long pos, SharedSegment segment) {
 
-            assert VanillaSharedReplicatedMap.this == map :
+            assert VanillaSharedReplicatedHashMap.this == map :
                     "ModificationIterator.onPut() is called from outside of the parent map";
             try {
                 nextListener.onPut(map, entry, metaDataBytes, added, key, value, pos, segment);
@@ -1161,7 +1161,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedHashMap<K, V
         @Override
         public void onRemove(SharedHashMap<K, V> map, Bytes entry, int metaDataBytes,
                              K key, V value, int pos, SharedSegment segment) {
-            assert VanillaSharedReplicatedMap.this == map :
+            assert VanillaSharedReplicatedHashMap.this == map :
                     "ModificationIterator.onRemove() is called from outside of the parent map";
             try {
                 nextListener.onRemove(map, entry, metaDataBytes, key, value, pos, segment);
@@ -1255,7 +1255,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedHashMap<K, V
         public void onPut(SharedHashMap<K, V> map, Bytes entry, int metaDataBytes,
                           boolean added, K key, V value, long pos, SharedSegment segment) {
 
-            assert VanillaSharedReplicatedMap.this == map :
+            assert VanillaSharedReplicatedHashMap.this == map :
                     "ModificationIterator.onPut() is called from outside of the parent map";
 
 
@@ -1269,7 +1269,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedHashMap<K, V
         @Override
         public void onRemove(SharedHashMap<K, V> map, Bytes entry, int metaDataBytes,
                              K key, V value, int pos, SharedSegment segment) {
-            assert VanillaSharedReplicatedMap.this == map :
+            assert VanillaSharedReplicatedHashMap.this == map :
                     "ModificationIterator.onRemove() is called from outside of the parent map";
 
 

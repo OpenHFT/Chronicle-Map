@@ -297,8 +297,8 @@ public class SharedHashMapBuilder<K, V> implements Cloneable {
         if (identifier <= 0)
             throw new IllegalArgumentException("Identifier must be positive, " + identifier + " given");
 
-        final VanillaSharedReplicatedMap<K, V> result =
-                new VanillaSharedReplicatedMap<K, V>(builder, kClass, vClass);
+        final VanillaSharedReplicatedHashMap<K, V> result =
+                new VanillaSharedReplicatedHashMap<K, V>(builder, kClass, vClass);
 
         if (externalReplicatorBuilder != null)
             externalReplicator = applyExternalReplicator(result, externalReplicatorBuilder, kClass, vClass);
@@ -617,7 +617,7 @@ public class SharedHashMapBuilder<K, V> implements Cloneable {
 
 
     <K, V> ExternalReplicator.AbstractExternalReplicator applyExternalReplicator
-            (VanillaSharedReplicatedMap<K, V> map,
+            (VanillaSharedReplicatedHashMap<K, V> map,
              ExternalReplicatorBuilder builder,
              Class<K> kClass,
              Class<V> vClass) {
@@ -654,7 +654,7 @@ public class SharedHashMapBuilder<K, V> implements Cloneable {
     }
 
 
-    <K, V> void applyUdpReplication(VanillaSharedReplicatedMap<K, V> result,
+    <K, V> void applyUdpReplication(VanillaSharedReplicatedHashMap<K, V> result,
                                     UdpReplicatorBuilder udpReplicatorBuilder)
             throws IOException {
 
@@ -678,7 +678,7 @@ public class SharedHashMapBuilder<K, V> implements Cloneable {
     }
 
 
-    <K, V> void applyTcpReplication(@NotNull VanillaSharedReplicatedMap<K, V> result,
+    <K, V> void applyTcpReplication(@NotNull VanillaSharedReplicatedHashMap<K, V> result,
                                     @NotNull TcpReplicatorBuilder tcpReplicatorBuilder)
             throws IOException {
 
