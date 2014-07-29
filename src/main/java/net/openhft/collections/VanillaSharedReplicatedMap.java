@@ -18,6 +18,7 @@
 
 package net.openhft.collections;
 
+import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.*;
@@ -79,8 +80,8 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * @param <K> the entries key type
  * @param <V> the entries value type
  */
-class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedMap<K, V>
-        implements SharedHashMap<K, V>, ReplicaExternalizable<K, V>, EntryResolver<K, V>,
+class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedHashMap<K, V>
+        implements ChronicleMap<K, V>, ReplicaExternalizable<K, V>, EntryResolver<K, V>,
         Closeable {
 
     static final int MAX_UNSIGNED_SHORT = Character.MAX_VALUE;
@@ -129,7 +130,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedMap<K, V>
     }
 
     @Override
-    VanillaSharedMap<K, V>.Segment createSegment(NativeBytes bytes, int index) {
+    VanillaSharedHashMap<K, V>.Segment createSegment(NativeBytes bytes, int index) {
         return new Segment(bytes, index);
     }
 
@@ -374,7 +375,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedMap<K, V>
     }
 
 
-    class Segment extends VanillaSharedMap<K, V>.Segment {
+    class Segment extends VanillaSharedHashMap<K, V>.Segment {
 
         private volatile IntIntMultiMap hashLookupLiveAndDeleted;
         private volatile IntIntMultiMap hashLookupLiveOnly;
@@ -408,7 +409,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedMap<K, V>
 
 
         /**
-         * @see VanillaSharedMap.Segment#acquire(net.openhft.lang.io.Bytes, Object, Object, int, boolean)
+         * @see net.openhft.collections.VanillaSharedHashMap.Segment#acquire(net.openhft.lang.io.Bytes, Object, Object, int, boolean)
          */
         V acquire(Bytes keyBytes, K key, V usingValue, int hash2, boolean create, long timestamp) {
             lock();
@@ -691,7 +692,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedMap<K, V>
          *                           put)</s> this method is called only from usual put or acquire
          * @param searchedHashLookup the hash lookup that used to find the entry based on the key
          * @return offset of the written entry in the Segment bytes
-         * @see VanillaSharedMap.Segment#putEntry(net.openhft.lang.io.Bytes, Object, boolean)
+         * @see net.openhft.collections.VanillaSharedHashMap.Segment#putEntry(net.openhft.lang.io.Bytes, Object, boolean)
          */
         private long putEntry(Bytes keyBytes, int hash2, V value, boolean usingValue,
                               final int identifier, final long timestamp,
@@ -739,7 +740,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedMap<K, V>
         }
 
         /**
-         * @see VanillaSharedMap.Segment#remove(net.openhft.lang.io.Bytes, Object, Object, int)
+         * @see net.openhft.collections.VanillaSharedHashMap.Segment#remove(net.openhft.lang.io.Bytes, Object, Object, int)
          */
         public V remove(Bytes keyBytes, K key, V expectedValue, int hash2,
                         final long timestamp, final byte identifier) {
@@ -810,7 +811,7 @@ class VanillaSharedReplicatedMap<K, V> extends AbstractVanillaSharedMap<K, V>
         }
 
         /**
-         * @see VanillaSharedMap.Segment#remove(net.openhft.lang.io.Bytes, Object, Object, int)
+         * @see net.openhft.collections.VanillaSharedHashMap.Segment#remove(net.openhft.lang.io.Bytes, Object, Object, int)
          */
         public V replace(Bytes keyBytes, K key, V expectedValue, V newValue, int hash2,
                          long timestamp) {
