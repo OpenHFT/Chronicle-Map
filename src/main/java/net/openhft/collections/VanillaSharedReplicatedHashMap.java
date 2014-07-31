@@ -44,38 +44,40 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 /**
  * A Replicating Multi Master HashMap
  *
- * <p>Each remote hash map, mirrors its changes over to another remote hash map, neither hash map is considered the
- * master store of data, each hash map uses timestamps to reconcile changes. We refer to an instance of a remote
- * hash-map as a node. A node will be connected to any number of other nodes, for the first implementation the maximum
- * number of nodes will be fixed. The data that is stored locally in each node will become eventually consistent. So
- * changes made to one node, for example by calling put() will be replicated over to the other node. To achieve a high
- * level of performance and throughput, the call to put() won’t block, with concurrentHashMap, It is typical to check
- * the return code of some methods to obtain the old value for example remove(). Due to the loose coupling and lock free
- * nature of this multi master implementation,  this return value will only be the old value on the nodes local data
- * store. In other words the nodes are only concurrent locally. Its worth realising that another node performing exactly
- * the same operation may return a different value. However reconciliation will ensure the maps themselves become
+ * <p>Each remote hash map, mirrors its changes over to another remote hash map, neither hash map is
+ * considered the master store of data, each hash map uses timestamps to reconcile changes. We refer to an
+ * instance of a remote hash-map as a node. A node will be connected to any number of other nodes, for the
+ * first implementation the maximum number of nodes will be fixed. The data that is stored locally in each
+ * node will become eventually consistent. So changes made to one node, for example by calling put() will be
+ * replicated over to the other node. To achieve a high level of performance and throughput, the call to put()
+ * won’t block, with concurrentHashMap, It is typical to check the return code of some methods to obtain the
+ * old value for example remove(). Due to the loose coupling and lock free nature of this multi master
+ * implementation,  this return value will only be the old value on the nodes local data store. In other words
+ * the nodes are only concurrent locally. Its worth realising that another node performing exactly the same
+ * operation may return a different value. However reconciliation will ensure the maps themselves become
  * eventually consistent.
  *
  * <p>Reconciliation
  *
- * <p>If two ( or more nodes ) were to receive a change to their maps for the same key but different values, say by a
- * user of the maps, calling the put(key, value). Then, initially each node will update its local store and each local
- * store will hold a different value, but the aim of multi master replication is to provide eventual consistency across
- * the nodes. So, with multi master when ever a node is changed it will notify the other nodes of its change. We will
- * refer to this notification as an event. The event will hold a timestamp indicating the time the change occurred, it
- * will also hold the state transition, in this case it was a put with a key and value. Eventual consistency is achieved
- * by looking at the timestamp from the remote node, if for a given key, the remote nodes timestamp is newer than the
- * local nodes timestamp, then the event from the remote node will be applied to the local node, otherwise the event
- * will be ignored.
+ * <p>If two ( or more nodes ) were to receive a change to their maps for the same key but different values,
+ * say by a user of the maps, calling the put(key, value). Then, initially each node will update its local
+ * store and each local store will hold a different value, but the aim of multi master replication is to
+ * provide eventual consistency across the nodes. So, with multi master when ever a node is changed it will
+ * notify the other nodes of its change. We will refer to this notification as an event. The event will hold a
+ * timestamp indicating the time the change occurred, it will also hold the state transition, in this case it
+ * was a put with a key and value. Eventual consistency is achieved by looking at the timestamp from the
+ * remote node, if for a given key, the remote nodes timestamp is newer than the local nodes timestamp, then
+ * the event from the remote node will be applied to the local node, otherwise the event will be ignored.
  *
- * <p>However there is an edge case that we have to concern ourselves with, If two nodes update their map at the same
- * time with different values, we have to deterministically resolve which update wins, because of eventual consistency
- * both nodes should end up locally holding the same data. Although it is rare two remote nodes could receive an update
- * to their maps at exactly the same time for the same key, we have to handle this edge case, its therefore important
- * not to rely on timestamps alone to reconcile the updates. Typically the update with the newest timestamp should win,
- * but in this example both timestamps are the same, and the decision made to one node should be identical to the
- * decision made to the other. We resolve this simple dilemma by using a node identifier, each node will have a unique
- * identifier, the update from the node with the smallest identifier wins.
+ * <p>However there is an edge case that we have to concern ourselves with, If two nodes update their map at
+ * the same time with different values, we have to deterministically resolve which update wins, because of
+ * eventual consistency both nodes should end up locally holding the same data. Although it is rare two remote
+ * nodes could receive an update to their maps at exactly the same time for the same key, we have to handle
+ * this edge case, its therefore important not to rely on timestamps alone to reconcile the updates. Typically
+ * the update with the newest timestamp should win, but in this example both timestamps are the same, and the
+ * decision made to one node should be identical to the decision made to the other. We resolve this simple
+ * dilemma by using a node identifier, each node will have a unique identifier, the update from the node with
+ * the smallest identifier wins.
  *
  * @param <K> the entries key type
  * @param <V> the entries value type
@@ -203,8 +205,8 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
     }
 
     /**
-     * Used in conjunction with map replication, all put events that originate from a remote node will be processed
-     * using this method.
+     * Used in conjunction with map replication, all put events that originate from a remote node will be
+     * processed using this method.
      *
      * @param key        key with which the specified value is to be associated
      * @param value      value to be associated with the specified key
@@ -275,8 +277,8 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
     }
 
     /**
-     * Used in conjunction with map replication, all remove events that originate from a remote node will be processed
-     * using this method.
+     * Used in conjunction with map replication, all remove events that originate from a remote node will be
+     * processed using this method.
      *
      * @param key        key with which the specified value is associated
      * @param value      value expected to be associated with the specified key
@@ -393,6 +395,9 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
 
         }
 
+
+
+
         private long entrySize(long keyLen, long valueLen) {
             long result = alignment.alignAddr(metaDataBytes +
                     expectedStopBits(keyLen) + keyLen + 10 +
@@ -409,7 +414,8 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
 
 
         /**
-         * @see net.openhft.collections.VanillaSharedHashMap.Segment#acquire(net.openhft.lang.io.Bytes, Object, Object, int, boolean)
+         * @see net.openhft.collections.VanillaSharedHashMap.Segment#acquire(net.openhft.lang.io.Bytes,
+         * Object, Object, int, boolean)
          */
         V acquire(Bytes keyBytes, K key, V usingValue, int hash2, boolean create, long timestamp) {
             lock();
@@ -647,8 +653,8 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
         }
 
         /**
-         * Used only with replication, its sometimes possible to receive an old ( or stale update ) from a remote map.
-         * This method is used to determine if we should ignore such updates.
+         * Used only with replication, its sometimes possible to receive an old ( or stale update ) from a
+         * remote map. This method is used to determine if we should ignore such updates.
          *
          * <p>We can reject put() and removes() when comparing times stamps with remote systems
          *
@@ -677,22 +683,23 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
         }
 
         /**
-         * Puts entry. If {@code value} implements {@link net.openhft.lang.model.Byteable} interface and {@code
-         * usingValue} is {@code true}, the value is backed with the bytes of this entry.
+         * Puts entry. If {@code value} implements {@link net.openhft.lang.model.Byteable} interface and
+         * {@code usingValue} is {@code true}, the value is backed with the bytes of this entry.
          *
          * @param keyBytes           serialized key
-         * @param hash2              a hash of the {@code keyBytes}. Caller was searching for the key in the {@code
-         *                           searchedHashLookup} using this hash.
+         * @param hash2              a hash of the {@code keyBytes}. Caller was searching for the key in the
+         *                           {@code searchedHashLookup} using this hash.
          * @param value              the value to put
-         * @param usingValue         {@code true} if the value should be backed with the bytes of the entry, if it
-         *                           implements {@link net.openhft.lang.model.Byteable} interface, {@code false} if it
-         *                           should put itself
+         * @param usingValue         {@code true} if the value should be backed with the bytes of the entry,
+         *                           if it implements {@link net.openhft.lang.model.Byteable} interface,
+         *                           {@code false} if it should put itself
          * @param identifier         the identifier of the outer SHM node
-         * @param timestamp          the timestamp when the entry was put <s>(this could be later if it was a remote
-         *                           put)</s> this method is called only from usual put or acquire
+         * @param timestamp          the timestamp when the entry was put <s>(this could be later if it was a
+         *                           remote put)</s> this method is called only from usual put or acquire
          * @param searchedHashLookup the hash lookup that used to find the entry based on the key
          * @return offset of the written entry in the Segment bytes
-         * @see net.openhft.collections.VanillaSharedHashMap.Segment#putEntry(net.openhft.lang.io.Bytes, Object, boolean)
+         * @see net.openhft.collections.VanillaSharedHashMap.Segment#putEntry(net.openhft.lang.io.Bytes,
+         * Object, boolean)
          */
         private long putEntry(Bytes keyBytes, int hash2, V value, boolean usingValue,
                               final int identifier, final long timestamp,
@@ -740,7 +747,8 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
         }
 
         /**
-         * @see net.openhft.collections.VanillaSharedHashMap.Segment#remove(net.openhft.lang.io.Bytes, Object, Object, int)
+         * @see net.openhft.collections.VanillaSharedHashMap.Segment#remove(net.openhft.lang.io.Bytes, Object,
+         * Object, int)
          */
         public V remove(Bytes keyBytes, K key, V expectedValue, int hash2,
                         final long timestamp, final byte identifier) {
@@ -811,7 +819,8 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
         }
 
         /**
-         * @see net.openhft.collections.VanillaSharedHashMap.Segment#remove(net.openhft.lang.io.Bytes, Object, Object, int)
+         * @see net.openhft.collections.VanillaSharedHashMap.Segment#remove(net.openhft.lang.io.Bytes, Object,
+         * Object, int)
          */
         public V replace(Bytes keyBytes, K key, V expectedValue, V newValue, int hash2,
                          long timestamp) {
@@ -921,8 +930,8 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
     /**
      * {@inheritDoc}
      *
-     * <p>This method does not set a segment lock, A segment lock should be obtained before calling this method,
-     * especially when being used in a multi threaded context.
+     * <p>This method does not set a segment lock, A segment lock should be obtained before calling this
+     * method, especially when being used in a multi threaded context.
      */
     @Override
     public void writeExternalEntry(@NotNull AbstractBytes entry, @NotNull Bytes destination, int chronicleId) {
@@ -999,8 +1008,8 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
     /**
      * {@inheritDoc}
      *
-     * <p>This method does not set a segment lock, A segment lock should be obtained before calling this method,
-     * especially when being used in a multi threaded context.
+     * <p>This method does not set a segment lock, A segment lock should be obtained before calling this
+     * method, especially when being used in a multi threaded context.
      */
     @Override
     public void readExternalEntry(@NotNull Bytes source) {
@@ -1074,8 +1083,8 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
 
 
     /**
-     * receive an update from the map, via the SharedMapEventListener and delegates the changes to the currently active
-     * modification iterators
+     * receive an update from the map, via the SharedMapEventListener and delegates the changes to the
+     * currently active modification iterators
      */
     class ModificationDelegator extends SharedMapEventListener<K, V, SharedHashMap<K, V>> {
 
@@ -1196,16 +1205,16 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
     }
 
     /**
-     * Once a change occurs to a map, map replication requires that these changes are picked up by another thread, this
-     * class provides an iterator like interface to poll for such changes.
+     * Once a change occurs to a map, map replication requires that these changes are picked up by another
+     * thread, this class provides an iterator like interface to poll for such changes.
      *
-     * <p>In most cases the thread that adds data to the node is unlikely to be the same thread that replicates the data
-     * over to the other nodes, so data will have to be marshaled between the main thread storing data to the map, and
-     * the thread running the replication.
+     * <p>In most cases the thread that adds data to the node is unlikely to be the same thread that
+     * replicates the data over to the other nodes, so data will have to be marshaled between the main thread
+     * storing data to the map, and the thread running the replication.
      *
-     * <p>One way to perform this marshalling, would be to pipe the data into a queue. However, This class takes another
-     * approach. It uses a bit set, and marks bits which correspond to the indexes of the entries that have changed. It
-     * then provides an iterator like interface to poll for such changes.
+     * <p>One way to perform this marshalling, would be to pipe the data into a queue. However, This class
+     * takes another approach. It uses a bit set, and marks bits which correspond to the indexes of the
+     * entries that have changed. It then provides an iterator like interface to poll for such changes.
      *
      * @author Rob Austin.
      */
@@ -1290,8 +1299,8 @@ class VanillaSharedReplicatedHashMap<K, V> extends AbstractVanillaSharedHashMap<
 
 
         /**
-         * you can continue to poll hasNext() until data becomes available. If are are in the middle of processing an
-         * entry via {@code nextEntry}, hasNext will return true until the bit is cleared
+         * you can continue to poll hasNext() until data becomes available. If are are in the middle of
+         * processing an entry via {@code nextEntry}, hasNext will return true until the bit is cleared
          *
          * @return true if there is an entry
          */

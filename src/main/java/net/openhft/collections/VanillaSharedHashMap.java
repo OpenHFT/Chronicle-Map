@@ -16,6 +16,7 @@
 
 package net.openhft.collections;
 
+import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
@@ -40,7 +41,7 @@ import static java.lang.Thread.currentThread;
 import static net.openhft.collections.AbstractVanillaSharedHashMap.Hasher.hash;
 
 
-class VanillaSharedHashMap<K, V> extends AbstractVanillaSharedHashMap<K, V> {
+class VanillaSharedHashMap<K, V> extends AbstractVanillaSharedHashMap<K, V>    {
 
     public VanillaSharedHashMap(SharedHashMapBuilder builder, File file,
                                 Class<K> kClass, Class<V> vClass) throws IOException {
@@ -54,7 +55,7 @@ class VanillaSharedHashMap<K, V> extends AbstractVanillaSharedHashMap<K, V> {
 }
 
 abstract class AbstractVanillaSharedHashMap<K, V> extends AbstractMap<K, V>
-        implements SharedHashMap<K, V> {
+        implements ChronicleMap<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractVanillaSharedHashMap.class);
 
