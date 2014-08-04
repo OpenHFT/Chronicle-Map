@@ -21,7 +21,6 @@ package net.openhft.chronicle.map;
 import net.openhft.collections.*;
 import net.openhft.lang.io.serialization.BytesMarshallerFactory;
 import net.openhft.lang.io.serialization.ObjectSerializer;
-import net.openhft.lang.model.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,6 @@ public class ChronicleMapBuilder<K, V> extends SharedHashMapBuilder<K, V> implem
 
     @Override
     public ChronicleMapBuilder<K, V> clone() {
-
         return (ChronicleMapBuilder) super.clone();
     }
 
@@ -211,12 +209,6 @@ public class ChronicleMapBuilder<K, V> extends SharedHashMapBuilder<K, V> implem
         return this;
     }
 
-
-    public ChronicleMapBuilder timeProvider(TimeProvider timeProvider) {
-        super.timeProvider(timeProvider);
-        return this;
-    }
-
     public ChronicleMapBuilder identifier(byte identifier) {
         super.identifier(identifier);
         return this;
@@ -244,11 +236,5 @@ public class ChronicleMapBuilder<K, V> extends SharedHashMapBuilder<K, V> implem
         super.objectSerializer(objectSerializer);
         return this;
     }
-
-    public ChronicleMapBuilder externalReplicatorBuilder(@NotNull ExternalReplicatorBuilder externalReplicatorBuilder) {
-        super.externalReplicatorBuilder(externalReplicatorBuilder);
-        return this;
-    }
-
 
 }
