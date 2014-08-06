@@ -1,6 +1,3 @@
-Chronicle-Map
-=============
-
 # Chronicle Map
 ## Table of Contents
 
