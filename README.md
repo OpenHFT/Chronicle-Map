@@ -1,5 +1,4 @@
 # Chronicle Map
-## Table of Contents
 
 * [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map/wiki#should-i-use-chronicle-queue-or-chronicle-map)
 * [Overview](https://github.com/OpenHFT/Chronicle-Map/wiki#overview)
@@ -20,3 +19,4 @@
  *  [Multiple Chronicle Maps on a the same server with Replication](https://github.com/OpenHFT/Chronicle-Map/wiki#multiple-chronicle-maps-on-a-the-same-server-with-replication)
  *   [Identifier for Replication](https://github.com/OpenHFT/Chronicle-Map/wiki#identifier-for-replication)
  *   [Bootstrapping](https://github.com/OpenHFT/Chronicle-Map/wiki#bootstrapping)
+
