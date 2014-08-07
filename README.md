@@ -1,6 +1,7 @@
-# Chronicle Map
+# Chronicle Map  
 
 * [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map/wiki#should-i-use-chronicle-queue-or-chronicle-map)
+* [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map/wiki#what-is-the-difference-between-sharedhashmap-and-chronicle-map)
 * [Overview](https://github.com/OpenHFT/Chronicle-Map/wiki#overview)
 * [Object Construction](https://github.com/OpenHFT/Chronicle-Map/wiki#construction)
  *  [Simple Construction](https://github.com/OpenHFT/Chronicle-Map/wiki#simple-construction)
@@ -20,3 +21,6 @@
  *   [Identifier for Replication](https://github.com/OpenHFT/Chronicle-Map/wiki#identifier-for-replication)
  *   [Bootstrapping](https://github.com/OpenHFT/Chronicle-Map/wiki#bootstrapping)
 
+Performance Topics
+* [Chronicle Map with Large Data ](https://github.com/OpenHFT/Chronicle-Map/wiki#chronicle-map-with-large-data)
+* [Better to use small keys](https://github.com/OpenHFT/Chronicle-Map/wiki#better-to-use-small-keys)
