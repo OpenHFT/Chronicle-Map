@@ -73,7 +73,7 @@ public class SharedHashMapBuilder<K, V> implements Cloneable {
     private boolean canReplicate;
     byte identifier = Byte.MIN_VALUE;
     TcpReplicatorBuilder tcpReplicatorBuilder;
- //   ExternalReplicatorBuilder externalReplicatorBuilder;
+    //   ExternalReplicatorBuilder externalReplicatorBuilder;
 
     private TimeProvider timeProvider = TimeProvider.SYSTEM;
     UdpReplicatorBuilder udpReplicatorBuilder;
@@ -285,10 +285,6 @@ public class SharedHashMapBuilder<K, V> implements Cloneable {
         if (vClass == null)
             throw new IllegalArgumentException("missing mandatory parameter vClass");
 
-        if (file == null)
-            throw new IllegalArgumentException("missing mandatory parameter file");
-
-
         SharedHashMapBuilder<K, V> builder = toBuilder();
 
         if (!canReplicate())
@@ -334,23 +330,25 @@ public class SharedHashMapBuilder<K, V> implements Cloneable {
     SharedHashMapBuilder<K, V> toBuilder() throws IOException {
         SharedHashMapBuilder builder = clone();
 
-        for (int i = 0; i < 10; i++) {
-            if (file.exists() && file.length() > 0) {
-                readFile(file, builder);
-                break;
+        if (file != null) {
+            for (int i = 0; i < 10; i++) {
+                if (file.exists() && file.length() > 0) {
+                    readFile(file, builder);
+                    break;
+                }
+                if (file.createNewFile() || file.length() == 0) {
+                    newFile(file);
+                    break;
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new IOException(e);
+                }
             }
-            if (file.createNewFile() || file.length() == 0) {
-                newFile(file);
-                break;
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                throw new IOException(e);
-            }
+            if (builder == null || !file.exists())
+                throw new FileNotFoundException("Unable to create " + file);
         }
-        if (builder == null || !file.exists())
-            throw new FileNotFoundException("Unable to create " + file);
         return builder;
     }
 
