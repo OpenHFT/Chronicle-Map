@@ -22,11 +22,11 @@ package net.openhft.collections;
 import org.junit.*;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.collections.Builder.getPersistenceFile;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -47,6 +47,14 @@ public class ClusterReplicationTest {
 
     private ClusterReplicatorBuilder clusterReplicatorBuilder;
     private ClusterReplicatorBuilder clusterReplicatorBuilder1;
+
+
+    public static File getPersistenceFile() {
+        String TMP = System.getProperty("java.io.tmpdir");
+        File file = new File(TMP + "/test" + System.nanoTime());
+        file.deleteOnExit();
+        return file;
+    }
 
 
     @Before

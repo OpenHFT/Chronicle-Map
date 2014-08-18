@@ -15,14 +15,15 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 
     <parent>
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
         <version>1.1.0</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <properties>
@@ -59,13 +60,6 @@
                 <version>3.2.1</version>
             </dependency>
 
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>collections</artifactId>
-                <version>3.2.1</version>
-                <classifier>tests</classifier>
-            </dependency>
-
         </dependencies>
 
     </dependencyManagement>
@@ -94,11 +88,6 @@
             <artifactId>collections</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>collections</artifactId>
-            <classifier>tests</classifier>
-        </dependency>
 
     </dependencies>
 

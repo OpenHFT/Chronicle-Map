@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.collections.Builder.getPersistenceFile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -51,7 +50,7 @@ public class TwoMapOnDifferentServers {
                         .heartBeatInterval(1, SECONDS);
 
 
-        File persistenceFile = getPersistenceFile();
+        File persistenceFile = ClusterReplicationTest.getPersistenceFile();
         map1 = (ChronicleMap<Integer, CharSequence>) ChronicleMapBuilder.of(Integer.class,
                 CharSequence.class)
                 .entries(1000)
