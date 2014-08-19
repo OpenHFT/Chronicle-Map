@@ -34,6 +34,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static java.lang.Math.min;
@@ -137,7 +138,7 @@ class ClusterReplicator<K, V> implements ReplicaExternalizable<K, V>, Closeable 
      * @return a new DirectBitSet backed by a byteBuffer
      */
     private static DirectBitSet newBitSet(int numberOfBits) {
-        final ByteBufferBytes bytes = new ByteBufferBytes(wrap(new byte[(numberOfBits+7) / 8]));
+        final ByteBufferBytes bytes = new ByteBufferBytes(wrap(new byte[(numberOfBits + 7) / 8]));
         return new SingleThreadedDirectBitSet(bytes);
     }
 
@@ -149,9 +150,13 @@ class ClusterReplicator<K, V> implements ReplicaExternalizable<K, V>, Closeable 
         chronicalChannels[chronicleChannel] = replica;
         chronicalChannelBitSet.set(chronicleChannel);
 
+
+        // zero is used for bootstrapping
         if (chronicleChannel == 0)
             return;
 
+
+        // boot strap messages are only sent if the cluster is already established
         for (int i = (int) systemModificationIteratorBitSet.nextSetBit(0); i > 0; i = (int) systemModificationIteratorBitSet.nextSetBit(i + 1)) {
             byte remoteIdentifier = (byte) i;
             final long lastModificationTime = replica.lastModificationTime(remoteIdentifier);
@@ -227,9 +232,10 @@ class ClusterReplicator<K, V> implements ReplicaExternalizable<K, V>, Closeable 
             public void dirtyEntries(long fromTimeStamp) {
                 for (int i = (int) chronicalChannelBitSet.nextSetBit(0); i >= 0; i = (int)
                         chronicalChannelBitSet.nextSetBit(i + 1)) {
-                    chronicalChannels[i].acquireModificationIterator(remoteIdentifier, notifier).dirtyEntries(fromTimeStamp);
-                    notifier.onChange();
+                    chronicalChannels[i].acquireModificationIterator(remoteIdentifier,
+                            notifier).dirtyEntries(fromTimeStamp);
                 }
+                notifier.onChange();
             }
         };
 
@@ -247,7 +253,14 @@ class ClusterReplicator<K, V> implements ReplicaExternalizable<K, V>, Closeable 
      */
     @Override
     public long lastModificationTime(byte remoteIdentifier) {
-        long t = System.currentTimeMillis();
+
+        // if isEmpty, then we will ask for all the data from the remote node, as there could be a race
+        // around the chronicalChannelBitSet and the bootstrap message
+        if (chronicalChannelBitSet.nextSetBit(0) == -1) {
+            return 0;
+        }
+
+        long t = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1);
         for (int i = (int) chronicalChannelBitSet.nextSetBit(0); i > 0; i = (int) chronicalChannelBitSet.nextSetBit(i + 1)) {
             t = min(t, chronicalChannels[i].lastModificationTime(remoteIdentifier));
         }

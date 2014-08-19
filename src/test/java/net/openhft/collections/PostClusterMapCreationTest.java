@@ -38,7 +38,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-public class ClusterReplicationTest {
+public class PostClusterMapCreationTest {
 
     private SharedHashMap<Integer, CharSequence> map1a;
     private SharedHashMap<Integer, CharSequence> map2a;
@@ -71,7 +71,7 @@ public class ClusterReplicationTest {
 
             clusterReplicatorBuilder = new ClusterReplicatorBuilder((byte) 1, 1024);
             clusterReplicatorBuilder.tcpReplicatorBuilder(tcpReplicatorBuilder);
-
+            clusterA = clusterReplicatorBuilder.create();
 
             // this is how you add maps after the custer is created
             map1a = clusterReplicatorBuilder.create((short) 1,
@@ -79,20 +79,21 @@ public class ClusterReplicationTest {
                             .entries(1000)
                             .file(getPersistenceFile()));
 
-            clusterA = clusterReplicatorBuilder.create();
-
+            map2a = clusterReplicatorBuilder.create((short) 2,
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(1000)
+                            .file(getPersistenceFile()));
         }
 
 
         {
-
             final TcpReplicatorBuilder tcpReplicatorBuilder =
                     new TcpReplicatorBuilder(8087).heartBeatInterval(1, SECONDS);
 
             clusterReplicatorBuilder1 = new ClusterReplicatorBuilder((byte)
                     2, 1024);
             clusterReplicatorBuilder1.tcpReplicatorBuilder(tcpReplicatorBuilder);
-
+            clusterB = clusterReplicatorBuilder1.create();
 
             // this is how you add maps after the custer is created
             map1b = clusterReplicatorBuilder1.create((short) 1,
@@ -100,7 +101,10 @@ public class ClusterReplicationTest {
                             .entries(1000)
                             .file(getPersistenceFile()));
 
-            clusterB = clusterReplicatorBuilder1.create();
+            map2b = clusterReplicatorBuilder1.create((short) 2,
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(1000)
+                            .file(getPersistenceFile()));
         }
 
 
@@ -119,22 +123,14 @@ public class ClusterReplicationTest {
     }
 
 
+    /**
+     * sets up a 2 clusters ( notionally one for each host ), and replicates 2 Chronicle Maps between them
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @Test
     public void test() throws IOException, InterruptedException {
-
-        // todo remove this sleep
-
- //  Thread.sleep(100);
-
-        map2b = clusterReplicatorBuilder1.create((short) 2,
-                ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(1000)
-                        .file(getPersistenceFile()));
-
-        map2a = clusterReplicatorBuilder.create((short) 2,
-                ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(1000)
-                        .file(getPersistenceFile()));
 
         map2a.put(1, "EXAMPLE-2");
         map1a.put(1, "EXAMPLE-1");

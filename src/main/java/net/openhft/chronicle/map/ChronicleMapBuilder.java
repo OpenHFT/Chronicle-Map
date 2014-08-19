@@ -138,7 +138,7 @@ public class ChronicleMapBuilder<K, V> extends SharedHashMapBuilder<K, V> implem
     }
 
 
-    public SharedHashMapBuilder<K, V> file(File file) {
+    public ChronicleMapBuilder<K, V> file(File file) {
         super.file(file);
         return this;
     }

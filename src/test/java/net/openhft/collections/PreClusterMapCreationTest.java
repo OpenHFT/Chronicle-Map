@@ -38,7 +38,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-public class ClusterReplicationTest {
+public class PreClusterMapCreationTest {
 
     private SharedHashMap<Integer, CharSequence> map1a;
     private SharedHashMap<Integer, CharSequence> map2a;
@@ -79,6 +79,12 @@ public class ClusterReplicationTest {
                             .entries(1000)
                             .file(getPersistenceFile()));
 
+            map2a = clusterReplicatorBuilder.create((short) 2,
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(1000)
+                            .file(getPersistenceFile()));
+
+
             clusterA = clusterReplicatorBuilder.create();
 
         }
@@ -99,6 +105,12 @@ public class ClusterReplicationTest {
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(1000)
                             .file(getPersistenceFile()));
+
+            map2b = clusterReplicatorBuilder1.create((short) 2,
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(1000)
+                            .file(getPersistenceFile()));
+
 
             clusterB = clusterReplicatorBuilder1.create();
         }
@@ -122,19 +134,6 @@ public class ClusterReplicationTest {
     @Test
     public void test() throws IOException, InterruptedException {
 
-        // todo remove this sleep
-
- //  Thread.sleep(100);
-
-        map2b = clusterReplicatorBuilder1.create((short) 2,
-                ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(1000)
-                        .file(getPersistenceFile()));
-
-        map2a = clusterReplicatorBuilder.create((short) 2,
-                ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(1000)
-                        .file(getPersistenceFile()));
 
         map2a.put(1, "EXAMPLE-2");
         map1a.put(1, "EXAMPLE-1");

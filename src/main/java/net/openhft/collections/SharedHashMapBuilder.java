@@ -327,7 +327,7 @@ public class SharedHashMapBuilder<K, V> implements Cloneable {
         return file(file).kClass(kClass).vClass(vClass).create();
     }
 
-    SharedHashMapBuilder<K, V> toBuilder() throws IOException {
+    public SharedHashMapBuilder<K, V> toBuilder() throws IOException {
         SharedHashMapBuilder builder = clone();
 
         if (file != null) {

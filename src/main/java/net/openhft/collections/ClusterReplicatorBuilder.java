@@ -18,6 +18,8 @@
 
 package net.openhft.collections;
 
+import net.openhft.chronicle.map.ChronicleMapBuilder;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -66,12 +68,13 @@ public class ClusterReplicatorBuilder {
     }
 
     /**
-     * @param chronicleChannel when clustering with a number of maps, each map will be called a chronicle channel
+     * @param chronicleChannel when clustering with a number of maps, each map will be called a chronicle
+     *                         channel
      */
-    public <K, V> SharedHashMap<K, V> create(short chronicleChannel, SharedHashMapBuilder<K, V> builder) throws
+    public <K, V> SharedHashMap<K, V> create(short chronicleChannel, ChronicleMapBuilder<K, V> builder) throws
             IOException {
 
-        final SharedHashMapBuilder<K, V> builder0 = builder.toBuilder();
+        final ChronicleMapBuilder<K, V> builder0 = builder.clone();
         builder0.identifier(identifier);
 
         final VanillaSharedReplicatedHashMap<K, V> result =

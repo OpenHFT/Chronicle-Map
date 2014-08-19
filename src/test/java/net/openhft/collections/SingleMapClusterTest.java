@@ -38,13 +38,11 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-public class ClusterReplicationTest {
+public class SingleMapClusterTest {
 
     private SharedHashMap<Integer, CharSequence> map1a;
-    private SharedHashMap<Integer, CharSequence> map2a;
 
     private SharedHashMap<Integer, CharSequence> map1b;
-    private SharedHashMap<Integer, CharSequence> map2b;
 
     private ClusterReplicator clusterB;
     private ClusterReplicator clusterA;
@@ -71,8 +69,6 @@ public class ClusterReplicationTest {
 
             clusterReplicatorBuilder = new ClusterReplicatorBuilder((byte) 1, 1024);
             clusterReplicatorBuilder.tcpReplicatorBuilder(tcpReplicatorBuilder);
-
-
             // this is how you add maps after the custer is created
             map1a = clusterReplicatorBuilder.create((short) 1,
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -80,6 +76,12 @@ public class ClusterReplicationTest {
                             .file(getPersistenceFile()));
 
             clusterA = clusterReplicatorBuilder.create();
+
+
+
+
+
+
 
         }
 
@@ -101,6 +103,7 @@ public class ClusterReplicationTest {
                             .file(getPersistenceFile()));
 
             clusterB = clusterReplicatorBuilder1.create();
+
         }
 
 
@@ -124,29 +127,18 @@ public class ClusterReplicationTest {
 
         // todo remove this sleep
 
- //  Thread.sleep(100);
 
-        map2b = clusterReplicatorBuilder1.create((short) 2,
-                ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(1000)
-                        .file(getPersistenceFile()));
 
-        map2a = clusterReplicatorBuilder.create((short) 2,
-                ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(1000)
-                        .file(getPersistenceFile()));
-
-        map2a.put(1, "EXAMPLE-2");
         map1a.put(1, "EXAMPLE-1");
 
         // allow time for the recompilation to resolve
         waitTillEqual(2500);
 
         Assert.assertEquals("map1a=map1b", map1a, map1b);
-        Assert.assertEquals("map2a=map2b", map2a, map2b);
+
 
         assertTrue("map1a.empty", !map1a.isEmpty());
-        assertTrue("map2a.empty", !map2a.isEmpty());
+
 
     }
 
@@ -160,8 +152,8 @@ public class ClusterReplicationTest {
 
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
         for (int t = 0; t < timeOutMs; t++) {
-            if (map1a.equals(map1b) &&
-                    map2a.equals(map2b))
+            if (map1a.equals(map1b) )
+
                 break;
             Thread.sleep(1);
         }
