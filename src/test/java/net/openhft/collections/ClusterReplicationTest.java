@@ -116,7 +116,6 @@ public class ClusterReplicationTest {
 
 
     @Test
-    @Ignore
     public void test() throws IOException, InterruptedException {
 
         // todo remove this sleep
