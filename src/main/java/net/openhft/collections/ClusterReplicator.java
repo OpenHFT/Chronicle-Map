@@ -67,9 +67,7 @@ class ClusterReplicator<K, V> implements ReplicaExternalizable<K, V>, Closeable 
     private final AtomicReferenceArray<ModificationIterator> modificationIterator = new
             AtomicReferenceArray<ModificationIterator>(128);
 
-
     private final Set<AbstractChannelReplicator> replicators = new CopyOnWriteArraySet<AbstractChannelReplicator>();
-
 
     /**
      * handles a message received via the SystemQueue
