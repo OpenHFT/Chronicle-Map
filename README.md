@@ -1,5 +1,6 @@
 # Chronicle Map  
 
+
 * [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map/wiki#should-i-use-chronicle-queue-or-chronicle-map)
 * [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map/wiki#what-is-the-difference-between-sharedhashmap-and-chronicle-map)
 * [Overview](https://github.com/OpenHFT/Chronicle-Map/wiki#overview)
@@ -12,6 +13,7 @@
 * [Serialization](https://github.com/OpenHFT/Chronicle-Map/wiki#serialization)
   *   [Simple Types](https://github.com/OpenHFT/Chronicle-Map/wiki#simple-types)
   *   [Complex Types](https://github.com/OpenHFT/Chronicle-Map/wiki#complex-types)
+* [Close](https://github.com/OpenHFT/Chronicle-Map/wiki#close)
 * [TCP / UDP Replication](https://github.com/OpenHFT/Chronicle-Map/wiki#tcp--udp-replication)
  * [TCP / UDP Background.](https://github.com/OpenHFT/Chronicle-Map/wiki#tcp--udp-background)
  *   [How to setup UDP Replication](https://github.com/OpenHFT/Chronicle-Map/wiki#how-to-setup-udp-replication)
@@ -20,6 +22,7 @@
  *  [Multiple Chronicle Maps on a the same server with Replication](https://github.com/OpenHFT/Chronicle-Map/wiki#multiple-chronicle-maps-on-a-the-same-server-with-replication)
  *   [Identifier for Replication](https://github.com/OpenHFT/Chronicle-Map/wiki#identifier-for-replication)
  *   [Bootstrapping](https://github.com/OpenHFT/Chronicle-Map/wiki#bootstrapping)
+* [Clustering](https://github.com/OpenHFT/Chronicle-Map/wiki#cluster)
 
 #### Examples
 
@@ -32,3 +35,4 @@
 
 * [Chronicle Map with Large Data ](https://github.com/OpenHFT/Chronicle-Map/wiki#chronicle-map-with-large-data)
 * [Better to use small keys](https://github.com/OpenHFT/Chronicle-Map/wiki#better-to-use-small-keys)
+* [ConcurrentHashMap v ChronicleMap](https://github.com/OpenHFT/Chronicle-Map/wiki#concurrenthashmap-v-chroniclemap)
