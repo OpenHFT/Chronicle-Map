@@ -1,20 +1,20 @@
-package net.openhft.chronicle.map;/*
- * Copyright 2014 Higher Frequency Trading
- * <p/>
- * http://www.higherfrequencytrading.com
- * <p/>
+/*
+ * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package net.openhft.chronicle.map;
 
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166
@@ -25,7 +25,7 @@ package net.openhft.chronicle.map;/*
 /*import junit.framework.Test;
 import junit.framework.TestSuite;*/
 
-import net.openhft.collections.jrs166.JSR166TestCase;
+import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 import org.junit.Test;
 
 import java.io.File;
@@ -39,8 +39,9 @@ import static org.junit.Assert.*;
 
 public class ConcurrentMap8Test extends JSR166TestCase {
 
+    static final int SIZE = 10000;
     private static final double EPSILON = 1E-5;
-
+    static ConcurrentMap<Long, Long> longMap;
 
     private static ConcurrentMap<Long, Long> newLongMap() {
         //First create (or access if already created) the shared map
@@ -52,9 +53,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(8, builder.minSegments());
         //// end of test
 
-        String shmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "SHMTest" + System.nanoTime();
+        String chmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "CHMTest" + System.nanoTime();
         try {
-            return builder.file(new File(shmPath)).create();
+            return builder.create(new File(chmPath));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -75,10 +76,10 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(8, builder.minSegments());
         //// end of test
 
-        String shmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") +
-                "SHMTest" + System.nanoTime();
+        String chmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") +
+                "CHMTest" + System.nanoTime();
         try {
-            return builder.file(new File(shmPath)).create();
+            return builder.create(new File(chmPath));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -104,7 +105,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         return map;
     }
 
-
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
      */
@@ -121,6 +121,36 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(empty);
         assertEquals(5, map.size());
         return map;
+    }
+
+    static Set<Integer> populatedSet(int n) {
+        Set<Integer> a = ConcurrentHashMap.<Integer>newKeySet();
+        assertTrue(a.isEmpty());
+        for (int i = 0; i < n; i++)
+            a.add(i);
+        assertFalse(a.isEmpty());
+        assertEquals(n, a.size());
+        return a;
+    }
+
+    static Set populatedSet(Integer[] elements) {
+        Set<Integer> a = ConcurrentHashMap.<Integer>newKeySet();
+        assertTrue(a.isEmpty());
+        for (int i = 0; i < elements.length; i++)
+            a.add(elements[i]);
+        assertFalse(a.isEmpty());
+        assertEquals(elements.length, a.size());
+        return a;
+    }
+
+    static ConcurrentMap<Long, Long> longMap() {
+        if (longMap == null) {
+            longMap = newLongMap();
+            for (int i = 0; i < SIZE; ++i)
+                longMap.put(Long.valueOf(i), Long.valueOf(2 * i));
+        }
+
+        return longMap;
     }
 
     /**
@@ -250,26 +280,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(map.containsKey(one));
     }
 
-    static Set<Integer> populatedSet(int n) {
-        Set<Integer> a = ConcurrentHashMap.<Integer>newKeySet();
-        assertTrue(a.isEmpty());
-        for (int i = 0; i < n; i++)
-            a.add(i);
-        assertFalse(a.isEmpty());
-        assertEquals(n, a.size());
-        return a;
-    }
-
-    static Set populatedSet(Integer[] elements) {
-        Set<Integer> a = ConcurrentHashMap.<Integer>newKeySet();
-        assertTrue(a.isEmpty());
-        for (int i = 0; i < elements.length; i++)
-            a.add(elements[i]);
-        assertFalse(a.isEmpty());
-        assertEquals(elements.length, a.size());
-        return a;
-    }
-
     /*
      * replaceAll replaces all matching values.
      */
@@ -297,7 +307,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         Set a = ConcurrentHashMap.newKeySet();
         assertTrue(a.isEmpty());
     }
-
 
     /**
      * keySet.addAll adds each element from the given collection
@@ -604,20 +613,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(x, y);
         assertEquals(y, x);
     }
-
-    static final int SIZE = 10000;
-    static ConcurrentMap<Long, Long> longMap;
-
-    static ConcurrentMap<Long, Long> longMap() {
-        if (longMap == null) {
-            longMap = newLongMap();
-            for (int i = 0; i < SIZE; ++i)
-                longMap.put(Long.valueOf(i), Long.valueOf(2 * i));
-        }
-
-        return longMap;
-    }
-
 
     // explicit function class to avoid type inference problems
     static class AddKeys implements BiFunction<Map.Entry<Long, Long>, Map.Entry<Long, Long>, Map.Entry<Long, Long>> {
