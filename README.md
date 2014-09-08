@@ -1,7 +1,18 @@
 # Chronicle Map  
  ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
- 
- 
+
+#### Maven Artifact Download
+```xml
+<dependency>
+  <groupId>net.openhft</groupId>
+  <artifactId>chronicle-map</artifactId>
+  <version><!--replace with the latest version--></version>
+</dependency>
+```
+To get the latest version number [Click Here](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22) 
+
+#### Contents
+
 * [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#should-i-use-chronicle-queue-or-chronicle-map)
 * [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#what-is-the-difference-between-sharedhashmap-and-chronicle-map)
 * [Overview](https://github.com/OpenHFT/Chronicle-Map#overview)
