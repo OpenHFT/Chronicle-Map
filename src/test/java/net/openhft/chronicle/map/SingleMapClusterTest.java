@@ -44,9 +44,6 @@ public class SingleMapClusterTest {
     private ReplicatingCluster clusterB;
     private ReplicatingCluster clusterA;
 
-    private ReplicatingClusterBuilder replicatingClusterBuilder;
-    private ReplicatingClusterBuilder replicatingClusterBuilder1;
-
 
     public static File getPersistenceFile() {
         String TMP = System.getProperty("java.io.tmpdir");
@@ -60,9 +57,9 @@ public class SingleMapClusterTest {
     public void setup() throws IOException {
 
         {
-            final TcpReplicationConfig tcpReplicationConfig =
-                    TcpReplicationConfig.of(8086, new InetSocketAddress("localhost", 8087))
-                            .heartBeatInterval(1, SECONDS);
+            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
+                    .of(8086, new InetSocketAddress("localhost", 8087))
+                    .heartBeatInterval(1, SECONDS);
 
             clusterA = new ReplicatingClusterBuilder((byte) 1, 1024)
                     .tcpReplication(tcpReplicationConfig).create();
@@ -75,12 +72,12 @@ public class SingleMapClusterTest {
 
 
         {
-
-            final TcpReplicationConfig replicationConfig =
-                    TcpReplicationConfig.of(8087).heartBeatInterval(1, SECONDS);
+            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
+                    .of(8087, new InetSocketAddress("localhost", 8086))
+                    .heartBeatInterval(1, SECONDS);
 
             clusterB = new ReplicatingClusterBuilder((byte) 2, 1024)
-                    .tcpReplication(replicationConfig).create();
+                    .tcpReplication(tcpReplicationConfig).create();
             // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .addReplicator(clusterB.channelReplicator((short) 1))
@@ -104,9 +101,6 @@ public class SingleMapClusterTest {
 
     @Test
     public void test() throws IOException, InterruptedException {
-
-        // todo remove this sleep
-
 
         map1a.put(1, "EXAMPLE-1");
 

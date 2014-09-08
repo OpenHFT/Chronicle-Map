@@ -83,8 +83,9 @@ public class PostClusterMapCreationTest {
 
 
         {
-            final TcpReplicationConfig tcpReplicationConfig =
-                    TcpReplicationConfig.of(8087).heartBeatInterval(1, SECONDS);
+            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
+                    .of(8087, new InetSocketAddress("localhost", 8086))
+                    .heartBeatInterval(1, SECONDS);
 
             clusterB = new ReplicatingClusterBuilder((byte) 2, 1024)
                     .tcpReplication(tcpReplicationConfig).create();

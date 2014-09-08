@@ -138,8 +138,8 @@ public final class ReplicatingCluster implements Closeable {
         @Override
         public long lastModificationTime(byte remoteIdentifier) {
             long t = System.currentTimeMillis();
-            for (int i = (int) chronicleChannelBitSet.nextSetBit(0); i > 0;
-                 i = (int) chronicleChannelBitSet.nextSetBit(i + 1)) {
+            for (int i = (int) chronicleChannelBitSet.previousSetBit(chronicleChannels.length);
+                 i > 0; i = (int) chronicleChannelBitSet.previousSetBit(i - 1)) {
                 t = min(t, chronicleChannels[i].lastModificationTime(remoteIdentifier));
             }
             return t;
