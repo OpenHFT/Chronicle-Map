@@ -1,6 +1,6 @@
 # Chronicle Map  
  ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
-
+Replicate your Key Value Store across your network, with consistency, durability and performance.
 #### Maven Artifact Download
 ```xml
 <dependency>
