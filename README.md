@@ -22,10 +22,11 @@ Click here to get the [latest version number](http://search.maven.org/#search%7C
  *  [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
  *   [Entries](https://github.com/OpenHFT/Chronicle-Map#entries)
  *   [Chronicle Map Interface](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-interface)
+* [Oversized Entries Support] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#oversized-entries-support)  
+* 
 * [Serialization](https://github.com/OpenHFT/Chronicle-Map#serialization)
   *   [Simple Types](https://github.com/OpenHFT/Chronicle-Map#simple-types)
   *   [Complex Types](https://github.com/OpenHFT/Chronicle-Map#complex-types)
-* [Oversized Entries Support]  
 * [Close](https://github.com/OpenHFT/Chronicle-Map#close)
 * [TCP / UDP Replication](https://github.com/OpenHFT/Chronicle-Map#tcp--udp-replication)
  * [TCP / UDP Background.](https://github.com/OpenHFT/Chronicle-Map#tcp--udp-background)
@@ -49,10 +50,6 @@ Click here to get the [latest version number](http://search.maven.org/#search%7C
 * [Chronicle Map with Large Data ](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-with-large-data)
 * [Better to use small keys](https://github.com/OpenHFT/Chronicle-Map#better-to-use-small-keys)
 * [ConcurrentHashMap v ChronicleMap](https://github.com/OpenHFT/Chronicle-Map#concurrenthashmap-v-chroniclemap)
-
-#### Oversized Entries Support
-
-It is possible for an entry to be twice as large as the maximum entry, we refer to this type of entry as an oversized entry. Oversized entries are there to cater for the case where only a small percentage of your entries ( say 1% ) are twise as large as the others, in this case your large entry will span across two entries. The alternative would be to increase your maximum entry size to be similar to the size of the largest entry, but this approach is wasteful of memory, especially when most entries are no where near the max entry size.  
 
 
 ### Overview
@@ -242,6 +239,11 @@ StringBuilder myResult = map.getUsing("key", myString);
 The map.getUsing() method is similar to get, but because Chronicle Map stores its data off heap, if you were to call get("key"), a new object would be created each time, map.getUsing() works by reusing the heap memory which was used by the original Object "myString". This technique provides you with better control over your object creation.
 
 Exactly like map.getUsing(), acquireUsing() will give you back a reference to an value based on a key, but unlike getUsing() if there is not an entry in the map for this key the entry will be added and the value return will we the same value which you provided.
+
+
+#### Oversized Entries Support
+
+It is possible for an entry to be twice as large as the maximum entry, we refer to this type of entry as an oversized entry. Oversized entries are there to cater for the case where only a small percentage of your entries ( say 1% ) are twise as large as the others, in this case your large entry will span across two entries. The alternative would be to increase your maximum entry size to be similar to the size of the largest entry, but this approach is wasteful of memory, especially when most entries are no where near the max entry size.  
 
 ## Serialization
 
