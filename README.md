@@ -23,7 +23,6 @@ Click here to get the [latest version number](http://search.maven.org/#search%7C
  *   [Entries](https://github.com/OpenHFT/Chronicle-Map#entries)
  *   [Chronicle Map Interface](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-interface)
 * [Oversized Entries Support] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#oversized-entries-support)  
-* 
 * [Serialization](https://github.com/OpenHFT/Chronicle-Map#serialization)
   *   [Simple Types](https://github.com/OpenHFT/Chronicle-Map#simple-types)
   *   [Complex Types](https://github.com/OpenHFT/Chronicle-Map#complex-types)
