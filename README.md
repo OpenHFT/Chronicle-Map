@@ -25,6 +25,7 @@ Click here to get the [latest version number](http://search.maven.org/#search%7C
 * [Serialization](https://github.com/OpenHFT/Chronicle-Map#serialization)
   *   [Simple Types](https://github.com/OpenHFT/Chronicle-Map#simple-types)
   *   [Complex Types](https://github.com/OpenHFT/Chronicle-Map#complex-types)
+* [Oversized Entries Support]  
 * [Close](https://github.com/OpenHFT/Chronicle-Map#close)
 * [TCP / UDP Replication](https://github.com/OpenHFT/Chronicle-Map#tcp--udp-replication)
  * [TCP / UDP Background.](https://github.com/OpenHFT/Chronicle-Map#tcp--udp-background)
@@ -48,6 +49,11 @@ Click here to get the [latest version number](http://search.maven.org/#search%7C
 * [Chronicle Map with Large Data ](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-with-large-data)
 * [Better to use small keys](https://github.com/OpenHFT/Chronicle-Map#better-to-use-small-keys)
 * [ConcurrentHashMap v ChronicleMap](https://github.com/OpenHFT/Chronicle-Map#concurrenthashmap-v-chroniclemap)
+
+#### Oversized Entries Support
+
+It is possible for an entry to be twice as large as the maximum entry, we refer to this type of entry as an oversized entry. Oversized entries are there to cater for the case where only a small percentage of your entries ( say 1% ) are twise as large as the others, in this case your large entry will span across two entries. The alternative would be to increase your maximum entry size to be similar to the size of the largest entry, but this approach is wasteful of memory, especially when most entries are no where near the max entry size.  
+
 
 ### Overview
 A Chronicle Map implements the java.util.concurrent.ConcurrentMap, so on the face of it it works just like any other java.util.concurrent.ConcurrentMap, however there are a few differences.
