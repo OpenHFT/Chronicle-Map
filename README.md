@@ -240,7 +240,7 @@ The map.getUsing() method is similar to get, but because Chronicle Map stores it
 Exactly like map.getUsing(), acquireUsing() will give you back a reference to an value based on a key, but unlike getUsing() if there is not an entry in the map for this key the entry will be added and the value return will we the same value which you provided.
 
 
-#### Oversized Entries Support
+## Oversized Entries Support
 
 It is possible for an entry to be twice as large as the maximum entry, we refer to this type of entry as an oversized entry. Oversized entries are there to cater for the case where only a small percentage of your entries ( say 1% ) are twise as large as the others, in this case your large entry will span across two entries. The alternative would be to increase your maximum entry size to be similar to the size of the largest entry, but this approach is wasteful of memory, especially when most entries are no where near the max entry size.  
 
