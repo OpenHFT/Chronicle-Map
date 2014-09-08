@@ -9,7 +9,7 @@ Replicate your Key Value Store across your network, with consistency, durability
   <version><!--replace with the latest version--></version>
 </dependency>
 ```
-Click here to get the [latest version number](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22) 
+Click here to get the [Latest Version Number](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22) 
 
 #### Contents
 
