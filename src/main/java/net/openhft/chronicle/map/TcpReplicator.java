@@ -46,7 +46,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
     private static final int BUFFER_SIZE = 0x100000; // 1MB
     final AtomicBoolean forceBootstrap = new AtomicBoolean();
-    private final Map<SocketAddress, AbstractConnector> connectorBySocket = new ConcurrentHashMap<SocketAddress, AbstractConnector>();
     private final SelectionKey[] selectionKeysStore = new SelectionKey[Byte.MAX_VALUE + 1];
     // used to instruct the selector thread to set OP_WRITE on a key correlated by the bit index in the
     // bitset
@@ -101,15 +100,11 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     void process() throws IOException {
         try {
             final Details serverDetails = new Details(serverInetSocketAddress, localIdentifier);
-            connectorBySocket.put(serverInetSocketAddress, new ServerConnector(serverDetails));
+            new ServerConnector(serverDetails).connect();
 
             for (InetSocketAddress client : endpoints) {
                 final Details clientDetails = new Details(client, localIdentifier);
-                connectorBySocket.put(client, new ClientConnector(clientDetails));
-            }
-
-            for (AbstractConnector connector : connectorBySocket.values()) {
-                connector.connect();
+                new ClientConnector(clientDetails).connect();
             }
 
             while (selector.isOpen()) {
