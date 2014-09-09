@@ -73,7 +73,6 @@
 
     <dependencies>
 
-
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>lang</artifactId>
@@ -84,7 +83,6 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-
 
         <dependency>
             <groupId>org.slf4j</groupId>
