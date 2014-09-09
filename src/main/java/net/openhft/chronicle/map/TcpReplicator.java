@@ -277,19 +277,13 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
         final SocketChannel channel = (SocketChannel) key.channel();
 
-        if (approxTimeOutTime > attached.entryReader.lastHeartBeatReceived + attached.remoteHeartbeatInterval) {
+        if (approxTimeOutTime >
+                attached.entryReader.lastHeartBeatReceived + attached.remoteHeartbeatInterval) {
             if (LOG.isDebugEnabled())
                 LOG.debug("lost connection, attempting to reconnect. " +
                         "missed heartbeat from identifier=" + attached.remoteIdentifier);
-            try {
-                channel.socket().close();
-                channel.close();
-                activeKeys.clear(attached.remoteIdentifier);
-                closeables.remove(channel);
-            } catch (IOException e) {
-                LOG.debug("", e);
-            }
-
+            activeKeys.clear(attached.remoteIdentifier);
+            closeables.closeQuietly(channel.socket());
             attached.connector.connectLater();
         }
     }

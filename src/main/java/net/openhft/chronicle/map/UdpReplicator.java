@@ -169,23 +169,20 @@ class UdpReplicator extends AbstractChannelReplicator implements Replica.Modific
 
         final InetSocketAddress hostAddress = new InetSocketAddress(port);
         client.configureBlocking(false);
-        synchronized (closeables) {
-
-            if (address.isMulticastAddress()) {
-                client.setOption(IP_MULTICAST_IF, networkInterface);
-                client.setOption(SO_REUSEADDR, true);
-                client.bind(hostAddress);
-                client.join(address, networkInterface);
-                if (LOG.isDebugEnabled())
-                    LOG.debug("Connecting via multicast, group=" + address);
-            } else {
-                client.bind(hostAddress);
-            }
-
+        if (address.isMulticastAddress()) {
+            client.setOption(IP_MULTICAST_IF, networkInterface);
+            client.setOption(SO_REUSEADDR, true);
+            client.bind(hostAddress);
+            client.join(address, networkInterface);
             if (LOG.isDebugEnabled())
-                LOG.debug("Listening on port " + port);
-            closeables.add(client);
+                LOG.debug("Connecting via multicast, group=" + address);
+        } else {
+            client.bind(hostAddress);
         }
+
+        if (LOG.isDebugEnabled())
+            LOG.debug("Listening on port " + port);
+        closeables.add(client);
         return client;
     }
 

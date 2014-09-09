@@ -55,7 +55,7 @@ abstract class AbstractChannelReplicator implements Closeable {
     static final int SIZE_OF_SHORT = 2;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractChannelReplicator.class);
     final Selector selector;
-    final Set<Closeable> closeables = Collections.synchronizedSet(new LinkedHashSet<Closeable>());
+    final CloseablesManager closeables = new CloseablesManager();
     private final ExecutorService executorService;
     private final Queue<Runnable> pendingRegistrations = new ConcurrentLinkedQueue<Runnable>();
     @Nullable
@@ -110,28 +110,14 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     @Override
     public void close() {
-        synchronized (this.closeables) {
-            for (Closeable closeable : this.closeables) {
-                try {
-                    closeable.close();
-                } catch (IOException e) {
-                    LOG.error("", e);
-                }
-            }
-            closeables.clear();
-        }
+        closeables.closeQuietly();
         executorService.shutdownNow();
     }
 
     void closeEarlyAndQuietly(SelectableChannel channel) {
-        try {
-            if (throttler != null)
-                throttler.remove(channel);
-            closeables.remove(channel);
-            channel.close();
-        } catch (IOException ex) {
-            // do nothing
-        }
+        if (throttler != null)
+            throttler.remove(channel);
+        closeables.closeQuietly(channel);
     }
 
     /**
@@ -322,20 +308,15 @@ abstract class AbstractChannelReplicator implements Closeable {
          * connectionAttempts}
          */
         public final void connectLater() {
-            try {
-                if (socketChannel != null)
-                    socketChannel.close();
+            if (socketChannel != null) {
+                closeables.closeQuietly(socketChannel);
                 socketChannel = null;
-
-            } catch (IOException e1) {
-                LOG.error("", e1);
             }
 
             final long reconnectionInterval = connectionAttempts * 100;
             if (connectionAttempts < 5)
                 connectionAttempts++;
             doConnect(reconnectionInterval);
-
         }
 
         /**
@@ -354,31 +335,17 @@ abstract class AbstractChannelReplicator implements Closeable {
             final Thread thread = new Thread(new Runnable() {
 
                 public void run() {
-                    SelectableChannel socketChannel = null;
                     try {
                         if (reconnectionInterval > 0)
                             Thread.sleep(reconnectionInterval);
 
-                        synchronized (closeables) {
-                            socketChannel = doConnect();
-                            if (socketChannel == null)
-                                return;
-
-                            closeables.add(socketChannel);
-                            AbstractConnector.this.socketChannel = socketChannel;
-                        }
+                        SelectableChannel socketChannel = doConnect();
+                        closeables.add(socketChannel);
+                        AbstractConnector.this.socketChannel = socketChannel;
 
                     } catch (Exception e) {
-                        if (socketChannel != null)
-                            try {
-                                socketChannel.close();
-                                AbstractConnector.this.socketChannel = null;
-                            } catch (IOException e1) {
-                                //
-                            }
                         LOG.error("", e);
                     }
-
                 }
             });
 
