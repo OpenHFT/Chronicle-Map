@@ -137,10 +137,11 @@ public final class ReplicatingCluster implements Closeable {
          */
         @Override
         public long lastModificationTime(byte remoteIdentifier) {
-            long t = System.currentTimeMillis();
+            long t = 0;
             for (int i = (int) chronicleChannelBitSet.previousSetBit(chronicleChannels.length);
                  i > 0; i = (int) chronicleChannelBitSet.previousSetBit(i - 1)) {
-                t = min(t, chronicleChannels[i].lastModificationTime(remoteIdentifier));
+                t = (t == 0) ? chronicleChannels[i].lastModificationTime(remoteIdentifier) :
+                        min(t, chronicleChannels[i].lastModificationTime(remoteIdentifier));
             }
             return t;
         }
@@ -197,11 +198,10 @@ public final class ReplicatingCluster implements Closeable {
     }
 
     /**
-     * Returns a replicator, dedicated to the specified channel. Channel is basically
-     * just a number, that should correspond on different servers for instances
-     * of the same replicated map. Only one replicator per channel could be obtained from
-     * a single {@code ReplicatingCluster}. The returned replicator could be applied to a map
-     * at most once.
+     * Returns a replicator, dedicated to the specified channel. Channel is basically just a number, that
+     * should correspond on different servers for instances of the same replicated map. Only one replicator
+     * per channel could be obtained from a single {@code ReplicatingCluster}. The returned replicator could
+     * be applied to a map at most once.
      *
      * @return a replicator, dedicated to the specified channel
      */
@@ -282,8 +282,8 @@ public final class ReplicatingCluster implements Closeable {
     }
 
     /**
-     * used to send system messages such as bootstrap from one remote node to another,
-     * it also can be used in a broadcast context
+     * used to send system messages such as bootstrap from one remote node to another, it also can be used in
+     * a broadcast context
      */
     static class SystemQueue {
 
