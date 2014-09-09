@@ -85,10 +85,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -98,7 +94,6 @@
         <dependency>
             <groupId>com.google.auto.value</groupId>
             <artifactId>auto-value</artifactId>
-            <scope>provided</scope>
         </dependency>
 
         <!-- test dependencies -->
@@ -106,6 +101,12 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
             <scope>test</scope>
         </dependency>
 
