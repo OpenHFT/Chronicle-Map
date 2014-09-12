@@ -120,6 +120,11 @@ abstract class AbstractChannelReplicator implements Closeable {
         closeables.closeQuietly(channel);
     }
 
+    /**
+     * forces the TCP and UDP replicators to re-bootstrap
+     * This is called whenever a new CHM is added to a custer
+     */
+    public abstract void forceBootstrap();
 
     void checkThrottleInterval() throws ClosedChannelException {
         if (throttler != null)
