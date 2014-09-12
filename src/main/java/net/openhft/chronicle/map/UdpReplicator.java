@@ -81,6 +81,9 @@ class UdpReplicator extends AbstractChannelReplicator implements Replica.Modific
 
         serverConnector = new ServerConnector();
 
+        modificationIterator = replica.acquireModificationIterator(
+                ChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID, this);
+
         start();
     }
 
@@ -88,13 +91,6 @@ class UdpReplicator extends AbstractChannelReplicator implements Replica.Modific
     public void close() {
         writeChannel = null;
         super.close();
-    }
-
-
-    @Override
-    public void forceBootstrap() {
-        modificationIterator = replica.acquireModificationIterator(
-                ChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID, this);
     }
 
     /**

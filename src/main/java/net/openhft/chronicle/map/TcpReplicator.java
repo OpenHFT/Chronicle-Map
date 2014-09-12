@@ -23,21 +23,22 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.*;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.BitSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * Used with a {@see net.openhft.map.ReplicatedSharedHashMap} to send data between the maps using a
- * socket connection <p/> {@see net.openhft.map.OutSocketReplicator}
+ * Used with a {@see net.openhft.map.ReplicatedSharedHashMap} to send data between the maps using a socket
+ * connection <p/> {@see net.openhft.map.OutSocketReplicator}
  *
  * @author Rob Austin.
  */
@@ -64,9 +65,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
     /**
      * @param maxEntrySizeBytes used to check that the last entry will fit into the buffer, it can not be
-     *                          smaller than the size of and entry, if it is set smaller the buffer will
-     *                          over flow, it can be larger then the entry, but setting it too large
-     *                          reduces the workable space in the buffer.
+     *                          smaller than the size of and entry, if it is set smaller the buffer will over
+     *                          flow, it can be larger then the entry, but setting it too large reduces the
+     *                          workable space in the buffer.
      * @throws IOException
      */
     TcpReplicator(@NotNull final Replica replica,
@@ -295,10 +296,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         closeEarlyAndQuietly(key.channel());
     }
 
-    @Override
-    public void forceBootstrap() {
-        forceBootstrap.lazySet(true);
-    }
 
     /**
      * called when the selector receives a OP_CONNECT message
@@ -522,9 +519,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
     /**
      * sets interestOps to "selector keys",The change to interestOps much be on the same thread as the
-     * selector. This  class, allows via {@link AbstractChannelReplicator
-     * .KeyInterestUpdater#set(int)}  to holds a pending change  in interestOps ( via a bitset ), this change
-     * is processed later on the same thread as the selector
+     * selector. This  class, allows via {@link AbstractChannelReplicator .KeyInterestUpdater#set(int)}  to
+     * holds a pending change  in interestOps ( via a bitset ), this change is processed later on the same
+     * thread as the selector
      */
     private static class KeyInterestUpdater {
 
