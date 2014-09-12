@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -93,10 +95,12 @@ public final class ReplicatingCluster implements Closeable {
 
                 @Override
                 public boolean hasNext() {
-                    for (int i = (int) chronicleChannelBitSet.nextSetBit(0); i >= 0; i = (int)
-                            chronicleChannelBitSet.nextSetBit(i + 1)) {
-                        final ModificationIterator modificationIterator = chronicleChannels[i]
-                                .acquireModificationIterator(remoteIdentifier, notifier);
+                    // old-style iteration to avoid 1) iterator object creation
+                    // 2) ConcurrentModificationException
+                    for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
+                        final ModificationIterator modificationIterator =
+                                chronicleChannelList.get(i)
+                                        .acquireModificationIterator(remoteIdentifier, notifier);
                         if (modificationIterator.hasNext())
                             return true;
                     }
@@ -106,11 +110,11 @@ public final class ReplicatingCluster implements Closeable {
                 @Override
                 public boolean nextEntry(@NotNull EntryCallback callback,
                                          final int na) {
-                    for (int i = (int) chronicleChannelBitSet.nextSetBit(0); i >= 0;
-                         i = (int) chronicleChannelBitSet.nextSetBit(i + 1)) {
-                        final ModificationIterator modificationIterator = chronicleChannels[i]
+                    for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
+                        Replica chronicleChannel = chronicleChannelList.get(i);
+                        final ModificationIterator modificationIterator = chronicleChannel
                                 .acquireModificationIterator(remoteIdentifier, notifier);
-                        if (modificationIterator.nextEntry(callback, i))
+                        if (modificationIterator.nextEntry(callback, chronicleChannelIds.get(i)))
                             return true;
                     }
                     return false;
@@ -118,9 +122,9 @@ public final class ReplicatingCluster implements Closeable {
 
                 @Override
                 public void dirtyEntries(long fromTimeStamp) {
-                    for (int i = (int) chronicleChannelBitSet.nextSetBit(0); i >= 0;
-                         i = (int) chronicleChannelBitSet.nextSetBit(i + 1)) {
-                        chronicleChannels[i].acquireModificationIterator(remoteIdentifier, notifier)
+                    for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
+                        chronicleChannelList.get(i)
+                                .acquireModificationIterator(remoteIdentifier, notifier)
                                 .dirtyEntries(fromTimeStamp);
                         notifier.onChange();
                     }
@@ -138,8 +142,8 @@ public final class ReplicatingCluster implements Closeable {
         @Override
         public long lastModificationTime(byte remoteIdentifier) {
             long t = 0;
-            for (int i = (int) chronicleChannelBitSet.previousSetBit(chronicleChannels.length);
-                 i > 0; i = (int) chronicleChannelBitSet.previousSetBit(i - 1)) {
+            // not including the SystemQueue at index 0
+            for (int i = 1, len = chronicleChannelList.size(); i < len; i++) {
                 t = (t == 0) ? chronicleChannels[i].lastModificationTime(remoteIdentifier) :
                         min(t, chronicleChannels[i].lastModificationTime(remoteIdentifier));
             }
@@ -152,8 +156,9 @@ public final class ReplicatingCluster implements Closeable {
         }
     };
     private final int maxEntrySize;
-    private final DirectBitSet chronicleChannelBitSet;
     private final Replica[] chronicleChannels;
+    private final List<Replica> chronicleChannelList;
+    private final List<Integer> chronicleChannelIds;
     private final EntryExternalizable[] channelEntryExternalizables;
     private final AtomicReferenceArray<PayloadProvider> systemModificationIterator =
             new AtomicReferenceArray<PayloadProvider>(128);
@@ -169,7 +174,8 @@ public final class ReplicatingCluster implements Closeable {
         maxEntrySize = builder.maxEntrySize;
         chronicleChannels = new Replica[builder.maxNumberOfChronicles];
         channelEntryExternalizables = new EntryExternalizable[builder.maxNumberOfChronicles];
-        chronicleChannelBitSet = newBitSet(chronicleChannels.length);
+        chronicleChannelList = new ArrayList<Replica>();
+        chronicleChannelIds = new ArrayList<Integer>();
         MessageHandler systemMessageHandler = new MessageHandler() {
             @Override
             public void onMessage(Bytes bytes) {
@@ -241,8 +247,9 @@ public final class ReplicatingCluster implements Closeable {
                     " is already in use.");
         }
         chronicleChannels[chronicleChannel] = replica;
+        chronicleChannelList.add(replica);
+        chronicleChannelIds.add((int) chronicleChannel);
         channelEntryExternalizables[chronicleChannel] = entryExternalizable;
-        chronicleChannelBitSet.set(chronicleChannel);
 
         if (chronicleChannel == 0)
             return;
@@ -263,9 +270,11 @@ public final class ReplicatingCluster implements Closeable {
         for (AbstractChannelReplicator replicator : replicators) {
             replicator.close();
         }
-        for (int i = (int) chronicleChannelBitSet.nextSetBit(0); i > 0;
-             i = (int) chronicleChannelBitSet.nextSetBit(i + 1)) {
-            chronicleChannels[i].close();
+        // indexed reverse loop to avoid ConcurrentModificationException and remove elements from
+        // the end of the loop for correct iteration
+        for (int i = chronicleChannelList.size() - 1; i >= 0; i--) {
+            Replica chronicleChannel = chronicleChannelList.get(i);
+            chronicleChannel.close();
         }
     }
 
@@ -408,7 +417,8 @@ public final class ReplicatingCluster implements Closeable {
 
         @Override
         public void close() throws IOException {
-            chronicleChannelBitSet.clear(chronicleChannel);
+            chronicleChannelList.remove(chronicleChannels[chronicleChannel]);
+            chronicleChannelIds.remove(chronicleChannel);
             chronicleChannels[chronicleChannel] = null;
             channelEntryExternalizables[chronicleChannel] = null;
         }
