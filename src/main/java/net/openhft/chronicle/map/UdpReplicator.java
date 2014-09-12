@@ -91,11 +91,6 @@ class UdpReplicator extends AbstractChannelReplicator implements Replica.Modific
     }
 
 
-    @Override
-    public void forceBootstrap() {
-        modificationIterator = replica.acquireModificationIterator(
-                ChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID, this);
-    }
 
     /**
      * binds to the server socket and process data This method will block until interrupted
