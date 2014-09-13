@@ -31,8 +31,6 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -185,7 +183,6 @@ abstract class AbstractChannelReplicator implements Closeable {
 
             lastTime = time;
             bytesWritten = 0;
-
 
             if (LOG.isDebugEnabled())
                 LOG.debug("Restoring OP_WRITE on all channels");
