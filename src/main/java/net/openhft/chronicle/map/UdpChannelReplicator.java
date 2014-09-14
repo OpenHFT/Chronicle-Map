@@ -92,8 +92,8 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
 
     @Override
     public void close() {
-        writeChannel = null;
         super.close();
+        writeChannel = null;
     }
 
     /**
@@ -105,59 +105,63 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
         connectClient().register(selector, OP_READ);
         serverConnector.connectLater();
 
-        while (selector.isOpen()) {
+        try {
+            while (selector.isOpen()) {
 
-            registerPendingRegistrations();
+                registerPendingRegistrations();
 
-            // this may block for a long time, upon return the
-            // selected set contains keys of the ready channels
-            final int n = selector.select(100);
+                // this may block for a long time, upon return the
+                // selected set contains keys of the ready channels
+                final int n = selector.select(100);
 
-            if (shouldEnableOpWrite)
-                enableWrites();
+                if (shouldEnableOpWrite)
+                    enableWrites();
 
-            checkThrottleInterval();
+                checkThrottleInterval();
 
-            if (n == 0) {
-                continue;    // nothing to do
-            }
-
-            final Set<SelectionKey> selectionKeys = selector.selectedKeys();
-            for (final SelectionKey key : selectionKeys) {
-
-                try {
-
-                    if (key.isReadable()) {
-                        final DatagramChannel socketChannel = (DatagramChannel) key.channel();
-                        reader.readAll(socketChannel);
-                    }
-
-                    if (key.isWritable()) {
-                        final DatagramChannel socketChannel = (DatagramChannel) key.channel();
-                        try {
-                            int bytesJustWritten = writer.writeAll(socketChannel);
-                            contemplateThrottleWrites(bytesJustWritten);
-                        } catch (NotYetConnectedException e) {
-                            if (LOG.isDebugEnabled())
-                                LOG.debug("", e);
-                            serverConnector.connectLater();
-                        } catch (IOException e) {
-                            if (LOG.isDebugEnabled())
-                                LOG.debug("", e);
-                            serverConnector.connectLater();
-                        }
-                    }
-
-                } catch (Exception e) {
-                    LOG.error("", e);
-                    closeEarlyAndQuietly(key.channel());
+                if (n == 0) {
+                    continue;    // nothing to do
                 }
+
+                final Set<SelectionKey> selectionKeys = selector.selectedKeys();
+                for (final SelectionKey key : selectionKeys) {
+
+                    try {
+
+                        if (key.isReadable()) {
+                            final DatagramChannel socketChannel = (DatagramChannel) key.channel();
+                            reader.readAll(socketChannel);
+                        }
+
+                        if (key.isWritable()) {
+                            final DatagramChannel socketChannel = (DatagramChannel) key.channel();
+                            try {
+                                int bytesJustWritten = writer.writeAll(socketChannel);
+                                contemplateThrottleWrites(bytesJustWritten);
+                            } catch (NotYetConnectedException e) {
+                                if (LOG.isDebugEnabled())
+                                    LOG.debug("", e);
+                                serverConnector.connectLater();
+                            } catch (IOException e) {
+                                if (LOG.isDebugEnabled())
+                                    LOG.debug("", e);
+                                serverConnector.connectLater();
+                            }
+                        }
+
+                    } catch (Exception e) {
+                        LOG.error("", e);
+                        closeEarlyAndQuietly(key.channel());
+                    }
+                }
+
+                selectionKeys.clear();
             }
-
-            selectionKeys.clear();
+        } finally {
+            if (!isClosed) {
+                close();
+            }
         }
-
-
     }
 
 

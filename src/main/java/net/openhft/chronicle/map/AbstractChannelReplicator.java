@@ -58,6 +58,7 @@ abstract class AbstractChannelReplicator implements Closeable {
     private final Queue<Runnable> pendingRegistrations = new ConcurrentLinkedQueue<Runnable>();
     @Nullable
     private final Throttler throttler;
+    volatile boolean isClosed = false;
 
     AbstractChannelReplicator(String name, ThrottlingConfig throttlingConfig,
                               int maxEntrySizeBytes)
@@ -108,6 +109,7 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     @Override
     public void close() {
+        isClosed = true;
         closeables.closeQuietly();
         executorService.shutdownNow();
     }

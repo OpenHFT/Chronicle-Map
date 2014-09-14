@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 
 final class CloseablesManager implements Closeable {
-    private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(CloseablesManager.class.getName());
 
     private boolean isClosed = false;
     private List<Closeable> closeables = new ArrayList<Closeable>();

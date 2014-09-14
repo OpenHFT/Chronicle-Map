@@ -176,17 +176,10 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 LOG.debug("", e);
         } catch (Exception e) {
             LOG.error("", e);
-        } finally
-
-        {
-            if (selector != null)
-                try {
-                    selector.close();
-                } catch (IOException e) {
-                    if (LOG.isDebugEnabled())
-                        LOG.debug("", e);
-                }
-            close();
+        } finally {
+            if (!isClosed) {
+                close();
+            }
         }
     }
 
