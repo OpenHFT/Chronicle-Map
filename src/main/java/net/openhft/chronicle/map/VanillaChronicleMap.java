@@ -770,7 +770,16 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
                     return usingValue;
                 } else {
                     try {
-                        return valueFactory.create();
+                        usingValue = valueFactory.create();
+                        if (usingValue == null) {
+                            throw new IllegalStateException("acquireUsing() method requires" +
+                                    "valueFactory.create() result to be non-null. " +
+                                    "By default it is so when value class is" +
+                                    "a Byteable/BytesMarshallable/Externalizable subclass." +
+                                    "Note that acquireUsing() anyway makes very little sense " +
+                                    "when value class is not a Byteable subclass.");
+                        }
+                        return usingValue;
                     } catch (Exception e) {
                         throw new IllegalStateException(e);
                     }
