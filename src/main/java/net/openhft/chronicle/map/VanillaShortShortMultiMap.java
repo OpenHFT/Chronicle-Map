@@ -23,6 +23,8 @@ import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectStore;
 
+import static net.openhft.chronicle.map.VanillaIntIntMultiMap.multiMapCapacity;
+
 /**
  * Supports a simple interface for int -> int[] off heap.
  */
@@ -43,9 +45,9 @@ class VanillaShortShortMultiMap implements IntIntMultiMap {
     private int searchPos = -1;
 
     public VanillaShortShortMultiMap(int minCapacity) {
-        if (minCapacity < 0 || minCapacity > (1 << 16))
+        capacity = multiMapCapacity(minCapacity);
+        if (capacity > (1 << 16))
             throw new IllegalArgumentException();
-        capacity = Maths.nextPower2(minCapacity, 16);
         capacityMask = capacity - 1;
         capacityMask2 = (capacity - 1) * ENTRY_SIZE;
         bytes = DirectStore.allocateLazy(capacity * ENTRY_SIZE).bytes();
@@ -68,7 +70,7 @@ class VanillaShortShortMultiMap implements IntIntMultiMap {
      * constructor as the first argument
      */
     public static long sizeInBytes(int minCapacity) {
-        return Maths.nextPower2(minCapacity, 16L) * ENTRY_SIZE;
+        return ((long) multiMapCapacity(minCapacity)) * ENTRY_SIZE;
     }
 
     /**

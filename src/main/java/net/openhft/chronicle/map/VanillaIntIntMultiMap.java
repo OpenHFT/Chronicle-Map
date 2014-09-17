@@ -27,6 +27,17 @@ import net.openhft.lang.io.DirectStore;
  */
 class VanillaIntIntMultiMap implements IntIntMultiMap {
 
+    static int multiMapCapacity(int minCapacity) {
+        if (minCapacity < 0)
+            throw new IllegalArgumentException();
+        int capacity = Maths.nextPower2(minCapacity, 16);
+        if (((double) minCapacity) / capacity > 2./3.) {
+            // multi map shouldn't be too dense
+            capacity <<= 1;
+        }
+        return capacity;
+    }
+
     private static final int ENTRY_SIZE = 8;
     private static final int ENTRY_SIZE_SHIFT = 3;
     private static final int UNSET_KEY = 0;
@@ -50,9 +61,7 @@ class VanillaIntIntMultiMap implements IntIntMultiMap {
     private long searchPos = -1L;
 
     public VanillaIntIntMultiMap(int minCapacity) {
-        if (minCapacity < 0)
-            throw new IllegalArgumentException();
-        capacity = Maths.nextPower2(minCapacity, 16);
+        capacity = multiMapCapacity(minCapacity);
         capacityMask = capacity - 1;
         capacityMask2 = indexToPos(capacity - 1);
         bytes = DirectStore.allocateLazy(indexToPos(capacity)).bytes();
@@ -75,7 +84,7 @@ class VanillaIntIntMultiMap implements IntIntMultiMap {
      * constructor as the first argument
      */
     public static long sizeInBytes(int minCapacity) {
-        return indexToPos(Maths.nextPower2(minCapacity, 16));
+        return indexToPos(multiMapCapacity(minCapacity));
     }
 
     /**
@@ -84,7 +93,7 @@ class VanillaIntIntMultiMap implements IntIntMultiMap {
      * constructor as the second argument
      */
     public static long sizeOfBitSetInBytes(int minCapacity) {
-        return Maths.nextPower2(minCapacity, 64L) / 8L;
+        return Math.max(multiMapCapacity(minCapacity), 64L) / 8L;
     }
 
     public static ATSDirectBitSet newPositions(int capacity) {
