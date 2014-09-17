@@ -767,29 +767,19 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
 
         @Override
         public void write(Bytes bytes, Object obj) {
-            try {
-                new ObjectOutputStream(bytes.outputStream()).writeObject(obj);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
+            bytes.writeObject(obj);
         }
 
         @Nullable
         @Override
         public Object read(Bytes bytes) {
-            try {
-                return new ObjectInputStream(bytes.inputStream()).readObject();
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            } catch (ClassNotFoundException e) {
-                throw new IllegalStateException(e);
-            }
+            return bytes.readObject();
         }
 
         @Nullable
         @Override
         public Object read(Bytes bytes, @Nullable Object obj) {
-            return read(bytes);
+            return bytes.readInstance(null, obj);
         }
     }
 
