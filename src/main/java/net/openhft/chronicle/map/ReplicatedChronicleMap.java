@@ -593,13 +593,15 @@ class ReplicatedChronicleMap<K, V> extends VanillaChronicleMap<K, V>
 
                     return onKeyPresentOnAcquire(key, usingValue, offset, entry);
                 } else {
+                    boolean usingValuePassed = usingValue != null;
                     usingValue = tryObtainUsingValueOnAcquire(keyBytes, key, usingValue, create);
                     if (usingValue != null) {
                         // see VanillaChronicleMap.Segment.acquire() for explanation
                         // why `usingValue` is `create`.
                         offset = putEntryOnAcquire(keyBytes, hash2, usingValue, create, timestamp);
                         incrementSize();
-                        notifyPut(offset, true, key, usingValue, posFromOffset(offset));
+                        if (usingValuePassed || !create)
+                            notifyPut(offset, true, key, usingValue, posFromOffset(offset));
                         return usingValue;
                     } else {
                         return null;

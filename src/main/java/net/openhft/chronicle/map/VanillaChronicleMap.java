@@ -722,6 +722,7 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
                 if (offset >= 0) {
                     return onKeyPresentOnAcquire(key, usingValue, offset, entry);
                 } else {
+                    boolean usingValuePassed = usingValue != null;
                     usingValue = tryObtainUsingValueOnAcquire(keyBytes, key, usingValue, create);
                     if (usingValue != null) {
                         // If `create` is false, this method was called from get() or getUsing()
@@ -730,7 +731,8 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
                         // rather than "using" container to fill up, even if it implements Byteable.
                         offset = putEntry(keyBytes, usingValue, create);
                         incrementSize();
-                        notifyPut(offset, true, key, usingValue, posFromOffset(offset));
+                        if (usingValuePassed || !create)
+                            notifyPut(offset, true, key, usingValue, posFromOffset(offset));
                         return usingValue;
                     } else {
                         return null;
