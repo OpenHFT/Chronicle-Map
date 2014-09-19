@@ -78,15 +78,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         this.keyClass = keyClass;
         this.valueClass = valueClass;
-        Class<K> keyClassForMarshaller =
-                marshallerUseFactory(keyClass) && keyClass.isInterface() ?
-                        DataValueClasses.directClassFor(keyClass) : keyClass;
-        keyMarshaller = chooseDefaultMarshaller(keyClassForMarshaller);
-        Class<V> valueClassForMarshaller =
-                marshallerUseFactory(valueClass) && valueClass.isInterface() ?
-                        DataValueClasses.directClassFor(valueClass) : valueClass;
-        valueMarshaller = chooseDefaultMarshaller(valueClassForMarshaller);
-
+        keyMarshaller = chooseDefaultMarshaller(keyClass);
+        valueMarshaller = chooseDefaultMarshaller(valueClass);
         valueFactory = marshallerUseFactory(valueClass) ?
                 new AllocateInstanceObjectFactory(valueClass.isInterface() ?
                         DataValueClasses.directClassFor(valueClass) :
@@ -106,12 +99,14 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
 
     @SuppressWarnings("unchecked")
     private static <T> BytesMarshaller<T> chooseDefaultMarshaller(@NotNull Class<T> tClass) {
+        Class<T> classForMarshaller = marshallerUseFactory(tClass) && tClass.isInterface() ?
+                DataValueClasses.directClassFor(tClass) : tClass;
         if (Byteable.class.isAssignableFrom(tClass))
-            return new ByteableMarshaller(tClass);
+            return new ByteableMarshaller(classForMarshaller);
         if (BytesMarshallable.class.isAssignableFrom(tClass))
-            return new BytesMarshallableMarshaller(tClass);
+            return new BytesMarshallableMarshaller(classForMarshaller);
         if (Externalizable.class.isAssignableFrom(tClass))
-            return new ExternalizableMarshaller(tClass);
+            return new ExternalizableMarshaller(classForMarshaller);
         if (tClass == CharSequence.class)
             return (BytesMarshaller<T>) CharSequenceMarshaller.INSTANCE;
         if (tClass == String.class)
