@@ -526,7 +526,7 @@ class ReplicatedChronicleMap<K, V> extends VanillaChronicleMap<K, V>
             } else {
                 return null;
             }
-
+            alignment.alignPositionAddr(entry);
             return valueMarshaller.read(entry, usingValue);
         } finally {
             entry.position(start);
