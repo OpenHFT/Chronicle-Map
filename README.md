@@ -36,7 +36,8 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *   [Identifier for Replication](https://github.com/OpenHFT/Chronicle-Map#identifier-for-replication)
  *   [Bootstrapping](https://github.com/OpenHFT/Chronicle-Map#bootstrapping)
 * [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
-
+* [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
+* 
 #### Examples
 
 * [Replicating data between process on different servers](https://github.com/OpenHFT/Chronicle-Map#example--replicating-data-between-process-on-different-servers)
