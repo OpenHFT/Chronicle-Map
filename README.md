@@ -37,7 +37,9 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *   [Bootstrapping](https://github.com/OpenHFT/Chronicle-Map#bootstrapping)
 * [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
 * [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
-* 
+* [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
+
+
 #### Examples
 
 * [Replicating data between process on different servers](https://github.com/OpenHFT/Chronicle-Map#example--replicating-data-between-process-on-different-servers)
