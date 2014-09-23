@@ -56,7 +56,7 @@ final class CloseablesManager implements Closeable {
         try {
             close(closeable);
         } catch (IllegalStateException e) {
-            // this can occur if already closed ( for example closed called from another thread )
+            // this can occur if already closed ( for example closed is called from another thread )
         } catch (IOException e) {
             LOG.error("", e);
         }
