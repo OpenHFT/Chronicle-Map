@@ -65,9 +65,14 @@ If you compare HashMap, ConcurrentHashMap and Chronicle Map, most of the maps in
 
 Chronicle map lets you assign a map larger than your available memory, This will however impact performance as Chronicle Map will have to page the segments to and from disk as data is written or read from the map. This feature works brilliantly on Linux but unfortunately its not supported on Windows, if you use more memory than is physically available you will experience the following error :
 
-
-
-
+```java
+Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+j sun.misc.Unsafe.compareAndSwapLong(Ljava/lang/Object;JJJ)Z+0
+j net.openhft.lang.io.NativeBytes.compareAndSwapLong(JJJ)Z+13
+j net.openhft.lang.io.AbstractBytes.tryLockNanos8a(JJ)Z+12
+j net.openhft.lang.io.AbstractBytes.tryLockNanosLong(JJ)Z+41
+j net.openhft.collections.AbstractVanillaSharedHashMap$Segment.lock()V+12
+```
 
 ####  When to use ConcurrentHashMap
 Some of the time.
