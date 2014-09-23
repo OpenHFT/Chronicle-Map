@@ -29,7 +29,7 @@ final class CloseablesManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(CloseablesManager.class.getName());
 
     private boolean isClosed = false;
-    private List<Closeable> closeables = new ArrayList<Closeable>();
+    private final List<Closeable> closeables = new ArrayList<>();
 
     private void checkState() {
         if (isClosed)
@@ -83,5 +83,9 @@ final class CloseablesManager implements Closeable {
         } catch (IOException e) {
             // do nothing
         }
+    }
+
+    boolean  isClosed() {
+        return isClosed;
     }
 }
