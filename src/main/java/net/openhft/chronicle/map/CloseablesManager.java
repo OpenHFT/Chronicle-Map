@@ -55,6 +55,8 @@ final class CloseablesManager implements Closeable {
     public synchronized void closeQuietly(Closeable closeable) {
         try {
             close(closeable);
+        } catch (IllegalStateException e) {
+            // this can occur if already closed ( for example closed called from another thread )
         } catch (IOException e) {
             LOG.error("", e);
         }
@@ -85,7 +87,7 @@ final class CloseablesManager implements Closeable {
         }
     }
 
-    boolean  isClosed() {
+    boolean isClosed() {
         return isClosed;
     }
 }
