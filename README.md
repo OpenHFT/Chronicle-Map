@@ -36,6 +36,9 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *   [Identifier for Replication](https://github.com/OpenHFT/Chronicle-Map#identifier-for-replication)
  *   [Bootstrapping](https://github.com/OpenHFT/Chronicle-Map#bootstrapping)
 * [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
+* [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
+* [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
+
 
 #### Examples
 
@@ -56,9 +59,10 @@ A Chronicle Map implements the java.util.concurrent.ConcurrentMap, so on the fac
 
 ## When to use
 #### When to use HashMap
-Most of the time.
-
 If you compare HashMap, ConcurrentHashMap and Chronicle Map, most of the maps in your system are likely to be HashMap.  This is because HashMap is lightweight and synchronized HashMap works well for lightly contended use cases.  By contention I mean, how many threads on average are trying to use a Map.  One reason you can't have many contended resources, is that you only have so many CPUs and they can only be accessing so many resources at once (ideally no more than one or two per thread at a time)
+
+
+
 
 ####  When to use ConcurrentHashMap
 Some of the time.
@@ -432,6 +436,19 @@ builder = ChronicleMapBuilder.of(Integer.class,
 cluster = clusterReplicatorBuilder.create();
 
 map = clusterReplicatorBuilder.create((short) 1, builder);
+```
+
+####  Known Issues
+
+Chronicle map lets you assign a map larger than your available memory, This will however impact performance as Chronicle Map will have to page the segments to and from disk as data is written or read from the map. This feature works brilliantly on Linux but unfortunately its not supported on Windows, if you use more memory than is physically available you will experience the following error :
+
+```java
+Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+j sun.misc.Unsafe.compareAndSwapLong(Ljava/lang/Object;JJJ)Z+0
+j net.openhft.lang.io.NativeBytes.compareAndSwapLong(JJJ)Z+13
+j net.openhft.lang.io.AbstractBytes.tryLockNanos8a(JJ)Z+12
+j net.openhft.lang.io.AbstractBytes.tryLockNanosLong(JJ)Z+41
+j net.openhft.collections.AbstractVanillaSharedHashMap$Segment.lock()V+12
 ```
 
 # Example : Replicating data between process on different servers

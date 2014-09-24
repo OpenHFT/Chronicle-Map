@@ -29,7 +29,7 @@ final class CloseablesManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(CloseablesManager.class.getName());
 
     private boolean isClosed = false;
-    private List<Closeable> closeables = new ArrayList<Closeable>();
+    private final List<Closeable> closeables = new ArrayList<Closeable>();
 
     private void checkState() {
         if (isClosed)
@@ -55,6 +55,8 @@ final class CloseablesManager implements Closeable {
     public synchronized void closeQuietly(Closeable closeable) {
         try {
             close(closeable);
+        } catch (IllegalStateException e) {
+            // this can occur if already closed ( for example closed is called from another thread )
         } catch (IOException e) {
             LOG.error("", e);
         }
@@ -83,5 +85,9 @@ final class CloseablesManager implements Closeable {
         } catch (IOException e) {
             // do nothing
         }
+    }
+
+    boolean isClosed() {
+        return isClosed;
     }
 }

@@ -25,8 +25,20 @@ import static net.openhft.chronicle.map.Alignment.NO_ALIGNMENT;
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 
 public class Issue42 {
+
+    private static String OS = System.getProperty("os.name").toLowerCase();
+
+    public static boolean isWindows() {
+        return (OS.indexOf("win") >= 0);
+    }
+
+
     @Test
     public void crashJVMWindowsTest() throws IOException {
+
+        if (!isWindows())
+            return;
+
         final ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .entryAndValueAlignment(NO_ALIGNMENT)

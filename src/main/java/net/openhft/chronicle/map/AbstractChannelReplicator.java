@@ -329,16 +329,39 @@ abstract class AbstractChannelReplicator implements Closeable {
             final Thread thread = new Thread(new Runnable() {
 
                 public void run() {
+                    SelectableChannel socketChannel = null;
                     try {
                         if (reconnectionInterval > 0)
                             Thread.sleep(reconnectionInterval);
 
-                        SelectableChannel socketChannel = doConnect();
-                        closeables.add(socketChannel);
+                        socketChannel = doConnect();
+
+                        try {
+                            closeables.add(socketChannel);
+                        } catch (IllegalStateException e) {
+
+                            // close could have be called from another thread, while we were in Thread.sleep()
+                            // which would cause a IllegalStateException
+                            closeQuietly(socketChannel);
+                            return;
+                        }
+
                         AbstractConnector.this.socketChannel = socketChannel;
 
+
                     } catch (Exception e) {
-                        LOG.error("", e);
+                        closeQuietly(socketChannel);
+                        LOG.debug("", e);
+                    }
+                }
+
+                private void closeQuietly(SelectableChannel socketChannel) {
+                    if (socketChannel == null)
+                        return;
+                    try {
+                        socketChannel.close();
+                    } catch (Exception e1) {
+                        // do nothing
                     }
                 }
             });
@@ -346,6 +369,8 @@ abstract class AbstractChannelReplicator implements Closeable {
             thread.setName(name);
             thread.setDaemon(true);
             thread.start();
+
+
         }
 
         public void setSuccessfullyConnected() {
