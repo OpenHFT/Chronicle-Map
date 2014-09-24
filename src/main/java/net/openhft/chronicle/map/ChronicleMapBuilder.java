@@ -16,35 +16,33 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.map.serialization.MetaBytesInterop;
+import net.openhft.chronicle.map.serialization.MetaBytesWriter;
 import net.openhft.lang.Maths;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.*;
 import net.openhft.lang.io.serialization.impl.*;
-import net.openhft.lang.model.Byteable;
-import net.openhft.lang.model.DataValueClasses;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.map.Objects.builderEquals;
-import static net.openhft.chronicle.map.Objects.hash;
 
 public class ChronicleMapBuilder<K, V> implements Cloneable {
 
     public static final short UDP_REPLICATION_MODIFICATION_ITERATOR_ID = 128;
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
-    final Class<K> keyClass;
-    final Class<V> valueClass;
+    SerializationBuilder<K> keyBuilder;
+    SerializationBuilder<V> valueBuilder;
     boolean transactional = false;
     Replicator firstReplicator;
-    Map<Class<? extends Replicator>, Replicator> replicators =
-            new HashMap<Class<? extends Replicator>, Replicator>();
+    Map<Class<? extends Replicator>, Replicator> replicators = new HashMap<Class<? extends Replicator>, Replicator>();
     boolean forceReplicatedImpl = false;
     // used when configuring the number of segments.
     private int minSegments = -1;
@@ -66,58 +64,16 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     private TimeProvider timeProvider = TimeProvider.SYSTEM;
     private BytesMarshallerFactory bytesMarshallerFactory;
     private ObjectSerializer objectSerializer;
-    @NotNull
-    private BytesMarshaller<K> keyMarshaller;
-    @NotNull
-    private BytesMarshaller<V> valueMarshaller;
-    @NotNull
-    private ObjectFactory<V> valueFactory;
     private MapEventListener<K, V, ChronicleMap<K, V>> eventListener =
             MapEventListeners.nop();
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
-        this.keyClass = keyClass;
-        this.valueClass = valueClass;
-        keyMarshaller = chooseDefaultMarshaller(keyClass);
-        valueMarshaller = chooseDefaultMarshaller(valueClass);
-        valueFactory = marshallerUseFactory(valueClass) ?
-                new AllocateInstanceObjectFactory(valueClass.isInterface() ?
-                        DataValueClasses.directClassFor(valueClass) :
-                        valueClass) :
-                NullObjectFactory.INSTANCE;
+        keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
+        valueBuilder = new SerializationBuilder<V>(valueClass, SerializationBuilder.Role.VALUE);
     }
 
     public static <K, V> ChronicleMapBuilder<K, V> of(Class<K> keyClass, Class<V> valueClass) {
         return new ChronicleMapBuilder<K, V>(keyClass, valueClass);
-    }
-
-    private static boolean marshallerUseFactory(Class c) {
-        return Byteable.class.isAssignableFrom(c) ||
-                BytesMarshallable.class.isAssignableFrom(c) ||
-                Externalizable.class.isAssignableFrom(c);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> BytesMarshaller<T> chooseDefaultMarshaller(@NotNull Class<T> tClass) {
-        Class<T> classForMarshaller = marshallerUseFactory(tClass) && tClass.isInterface() ?
-                DataValueClasses.directClassFor(tClass) : tClass;
-        if (Byteable.class.isAssignableFrom(tClass))
-            return new ByteableMarshaller(classForMarshaller);
-        if (BytesMarshallable.class.isAssignableFrom(tClass))
-            return new BytesMarshallableMarshaller(classForMarshaller);
-        if (Externalizable.class.isAssignableFrom(tClass))
-            return new ExternalizableMarshaller(classForMarshaller);
-        if (tClass == CharSequence.class)
-            return (BytesMarshaller<T>) CharSequenceMarshaller.INSTANCE;
-        if (tClass == String.class)
-            return (BytesMarshaller<T>) StringMarshaller.INSTANCE;
-        if (tClass == Integer.class)
-            return (BytesMarshaller<T>) IntegerMarshaller.INSTANCE;
-        if (tClass == Long.class)
-            return (BytesMarshaller<T>) LongMarshaller.INSTANCE;
-        if (tClass == Double.class)
-            return (BytesMarshaller<T>) DoubleMarshaller.INSTANCE;
-        return SerializableMarshaller.INSTANCE;
     }
 
     private static long roundUpMapHeaderSize(long headerSize) {
@@ -129,12 +85,12 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
 
     @Override
     public ChronicleMapBuilder<K, V> clone() {
-
         try {
             @SuppressWarnings("unchecked")
-            final ChronicleMapBuilder result = (ChronicleMapBuilder) super.clone();
+            final ChronicleMapBuilder<K, V> result = (ChronicleMapBuilder<K, V>) super.clone();
+            result.keyBuilder = keyBuilder.clone();
+            result.valueBuilder = valueBuilder.clone();
             return result;
-
         } catch (CloneNotSupportedException e) {
             throw new AssertionError(e);
         }
@@ -393,12 +349,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
                 ", largeSegments=" + largeSegments() +
                 ", timeProvider=" + timeProvider() +
                 ", bytesMarshallerfactory=" + bytesMarshallerFactory() +
-
-                ", keyClass=" + keyClass +
-                ", valueClass=" + valueClass +
-                ", keyMarshaller=" + keyMarshaller +
-                ", valueMarshaller=" + valueMarshaller +
-                ", valueFactory=" + valueFactory +
+                ", keyBuilder=" + keyBuilder +
+                ", valueBuilder=" + valueBuilder +
                 ", eventListener=" + eventListener +
                 '}';
     }
@@ -481,76 +433,19 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
         return this;
     }
 
-    @NotNull
-    public BytesMarshaller<K> keyMarshaller() {
-        return keyMarshaller;
-    }
-
-    public ChronicleMapBuilder<K, V> keyMarshaller(
-            @NotNull BytesMarshaller<K> keyMarshaller) {
-        this.keyMarshaller = keyMarshaller;
+    public ChronicleMapBuilder<K, V> keyMarshaller(@NotNull BytesMarshaller<K> keyMarshaller) {
+        keyBuilder.marshaller(keyMarshaller, null);
         return this;
-    }
-
-    @NotNull
-    public BytesMarshaller<V> valueMarshaller() {
-        return valueMarshaller;
     }
 
     public ChronicleMapBuilder<K, V> valueMarshallerAndFactory(
             @NotNull BytesMarshaller<V> valueMarshaller, @NotNull ObjectFactory<V> valueFactory) {
-        this.valueMarshaller = valueMarshaller;
-        this.valueFactory = valueFactory;
+        valueBuilder.marshaller(valueMarshaller, valueFactory);
         return this;
     }
 
-    @NotNull
-    public ObjectFactory<V> valueFactory() {
-        return valueFactory;
-    }
-
-    @SuppressWarnings("unchecked")
-    public ChronicleMapBuilder<K, V> valueFactory(
-            @NotNull ObjectFactory<V> valueFactory) {
-        if (!marshallerUseFactory(valueClass)) {
-            throw new IllegalStateException("Default marshaller for " + valueClass +
-                    " value don't use object factory");
-        } else if (valueMarshaller instanceof ByteableMarshaller) {
-            if (valueFactory instanceof AllocateInstanceObjectFactory) {
-                valueMarshaller = new ByteableMarshaller(
-                        ((AllocateInstanceObjectFactory) valueFactory).allocatedClass());
-            } else {
-                valueMarshaller = new ByteableMarshallerWithCustomFactory(
-                        ((ByteableMarshaller) valueMarshaller).tClass, valueFactory);
-            }
-        } else if (valueMarshaller instanceof BytesMarshallableMarshaller) {
-            if (valueFactory instanceof AllocateInstanceObjectFactory) {
-                valueMarshaller = new BytesMarshallableMarshaller(
-                        ((AllocateInstanceObjectFactory) valueFactory).allocatedClass());
-            } else {
-                valueMarshaller = new BytesMarshallableMarshallerWithCustomFactory(
-                        ((BytesMarshallableMarshaller) valueMarshaller).marshaledClass(),
-                        valueFactory
-                );
-            }
-        } else if (valueMarshaller instanceof ExternalizableMarshaller) {
-            if (valueFactory instanceof AllocateInstanceObjectFactory) {
-                valueMarshaller = new ExternalizableMarshaller(
-                        ((AllocateInstanceObjectFactory) valueFactory).allocatedClass());
-            } else {
-                valueMarshaller = new ExternalizableMarshallerWithCustomFactory(
-                        ((ExternalizableMarshaller) valueMarshaller).marshaledClass(),
-                        valueFactory
-                );
-            }
-        } else {
-            // valueMarshaller is custom, it is user's responsibility to use the same factory inside
-            // marshaller and standalone
-            throw new IllegalStateException(
-                    "Change the value factory simultaneously with marshaller " +
-                            "using valueMarshallerAndFactory() method");
-        }
-        this.valueFactory = valueFactory;
+    public ChronicleMapBuilder<K, V> valueFactory(@NotNull ObjectFactory<V> valueFactory) {
+        valueBuilder.factory(valueFactory);
         return this;
     }
 
@@ -570,7 +465,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
                 FileInputStream fis = new FileInputStream(file);
                 ObjectInputStream ois = new ObjectInputStream(fis);
                 try {
-                    VanillaChronicleMap<K, V> map = (VanillaChronicleMap<K, V>) ois.readObject();
+                    VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
+                            (VanillaChronicleMap<K, ?, ?, V, ?, ?>) ois.readObject();
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
                     map.createMappedStoreAndSegments(file);
                     return establishReplication(map);
@@ -593,7 +489,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
         if (!file.exists())
             throw new FileNotFoundException("Unable to create " + file);
 
-        VanillaChronicleMap<K, V> map = newMap();
+        VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap();
 
         FileOutputStream fos = new FileOutputStream(file);
         ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -610,18 +506,27 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     }
 
     public ChronicleMap<K, V> create() throws IOException {
-        VanillaChronicleMap<K, V> map = newMap();
+        VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap();
         BytesStore bytesStore = new DirectStore(objectSerializer(), map.sizeInBytes(), true);
         map.createMappedStoreAndSegments(bytesStore);
         return establishReplication(map);
     }
 
-    private VanillaChronicleMap<K, V> newMap() throws IOException {
+    private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {
+        preMapConstruction();
         if (firstReplicator == null && !forceReplicatedImpl) {
-            return new VanillaChronicleMap<K, V>(this);
+            return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
+                    V, Object, MetaBytesWriter<V, Object>>(this);
         } else {
-            return new ReplicatedChronicleMap<K, V>(this);
+            return new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
+                    V, Object, MetaBytesWriter<V, Object>>(this);
         }
+    }
+
+    private void preMapConstruction() {
+        int maxSize = entrySize() * figureBufferAllocationFactor();
+        keyBuilder.maxSize(maxSize);
+        valueBuilder.maxSize(maxSize);
     }
 
     private ChronicleMap<K, V> establishReplication(ChronicleMap<K, V> map)
@@ -646,312 +551,11 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
         return map;
     }
 
-    private static enum CharSequenceMarshaller implements BytesMarshaller<CharSequence> {
-        INSTANCE;
-
-        @Override
-        public void write(Bytes bytes, CharSequence s) {
-            bytes.writeUTFΔ(s);
-        }
-
-        @Nullable
-        @Override
-        public CharSequence read(Bytes bytes) {
-            return bytes.readUTFΔ();
-        }
-
-        @Nullable
-        @Override
-        public CharSequence read(Bytes bytes, @Nullable CharSequence s) {
-            if (s instanceof StringBuilder) {
-                if (bytes.readUTFΔ((StringBuilder) s))
-                    return s;
-                return null;
-            }
-            return bytes.readUTFΔ();
-        }
-    }
-
-    private static enum StringMarshaller implements BytesMarshaller<String> {
-        INSTANCE;
-
-        @Override
-        public void write(Bytes bytes, String s) {
-            bytes.writeUTFΔ(s);
-        }
-
-        @Nullable
-        @Override
-        public String read(Bytes bytes) {
-            return bytes.readUTFΔ();
-        }
-
-        @Nullable
-        @Override
-        public String read(Bytes bytes, @Nullable String s) {
-            return bytes.readUTFΔ();
-        }
-    }
-
-    private static enum IntegerMarshaller implements BytesMarshaller<Integer> {
-        INSTANCE;
-
-        @Override
-        public void write(Bytes bytes, Integer v) {
-            bytes.writeInt(v);
-        }
-
-        @Nullable
-        @Override
-        public Integer read(Bytes bytes) {
-            return bytes.readInt();
-        }
-
-        @Nullable
-        @Override
-        public Integer read(Bytes bytes, @Nullable Integer v) {
-            return bytes.readInt();
-        }
-    }
-
-    private static enum LongMarshaller implements BytesMarshaller<Long> {
-        INSTANCE;
-
-        @Override
-        public void write(Bytes bytes, Long v) {
-            bytes.writeLong(v);
-        }
-
-        @Nullable
-        @Override
-        public Long read(Bytes bytes) {
-            return bytes.readLong();
-        }
-
-        @Nullable
-        @Override
-        public Long read(Bytes bytes, @Nullable Long v) {
-            return bytes.readLong();
-        }
-    }
-
-    private static enum DoubleMarshaller implements BytesMarshaller<Double> {
-        INSTANCE;
-
-        @Override
-        public void write(Bytes bytes, Double v) {
-            bytes.writeDouble(v);
-        }
-
-        @Nullable
-        @Override
-        public Double read(Bytes bytes) {
-            return bytes.readDouble();
-        }
-
-        @Nullable
-        @Override
-        public Double read(Bytes bytes, @Nullable Double v) {
-            return bytes.readDouble();
-        }
-    }
-
-
-    private static enum SerializableMarshaller implements BytesMarshaller {
-        INSTANCE;
-
-        @Override
-        public void write(Bytes bytes, Object obj) {
-            bytes.writeObject(obj);
-        }
-
-        @Nullable
-        @Override
-        public Object read(Bytes bytes) {
-            return bytes.readObject();
-        }
-
-        @Nullable
-        @Override
-        public Object read(Bytes bytes, @Nullable Object obj) {
-            return bytes.readInstance(null, obj);
-        }
-    }
-
-    private static class ByteableMarshaller<T extends Byteable> implements BytesMarshaller<T> {
-        private static final long serialVersionUID = 0L;
-
-        @NotNull
-        final Class<T> tClass;
-
-        ByteableMarshaller(@NotNull Class<T> tClass) {
-            this.tClass = tClass;
-        }
-
-        @Override
-        public void write(Bytes bytes, T t) {
-            bytes.write(t.bytes(), t.offset(), t.maxSize());
-        }
-
-        @Nullable
-        @Override
-        public T read(Bytes bytes) {
-            return read(bytes, null);
-        }
-
-        @Nullable
-        @Override
-        public T read(Bytes bytes, @Nullable T t) {
-            try {
-                if (t == null)
-                    t = getInstance();
-                t.bytes(bytes, bytes.position());
-                bytes.skip(t.maxSize());
-                return t;
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
-        }
-
-        @SuppressWarnings("unchecked")
-        @NotNull
-        T getInstance() throws Exception {
-            return (T) NativeBytes.UNSAFE.allocateInstance(tClass);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return obj != null && obj.getClass() == getClass() &&
-                    ((ByteableMarshaller) obj).tClass == tClass;
-        }
-
-        @Override
-        public int hashCode() {
-            return tClass.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return getClass().getSimpleName() + "{tClass=" + tClass + "}";
-        }
-    }
-
-    private static class ByteableMarshallerWithCustomFactory<T extends Byteable>
-            extends ByteableMarshaller<T> {
-        private static final long serialVersionUID = 0L;
-
-        @NotNull
-        private final ObjectFactory<T> factory;
-
-        ByteableMarshallerWithCustomFactory(@NotNull Class<T> tClass,
-                                            @NotNull ObjectFactory<T> factory) {
-            super(tClass);
-            this.factory = factory;
-        }
-
-        @NotNull
-        @Override
-        T getInstance() throws Exception {
-            return factory.create();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null || obj.getClass() != getClass())
-                return false;
-            ByteableMarshallerWithCustomFactory that = (ByteableMarshallerWithCustomFactory) obj;
-            return that.tClass == tClass && that.factory.equals(this.factory);
-        }
-
-        @Override
-        public int hashCode() {
-            return hash(tClass, factory);
-        }
-
-        @Override
-        public String toString() {
-            return getClass().getSimpleName() + "{tClass=" + tClass + ",factory=" + factory + "}";
-        }
-    }
-
-    private static class BytesMarshallableMarshallerWithCustomFactory<T extends BytesMarshallable>
-            extends BytesMarshallableMarshaller<T> {
-        private static final long serialVersionUID = 0L;
-
-        @NotNull
-        private final ObjectFactory<T> factory;
-
-        BytesMarshallableMarshallerWithCustomFactory(@NotNull Class<T> tClass,
-                                                     @NotNull ObjectFactory<T> factory) {
-            super(tClass);
-            this.factory = factory;
-        }
-
-        @NotNull
-        @Override
-        protected T getInstance() throws Exception {
-            return factory.create();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null || obj.getClass() != getClass())
-                return false;
-            BytesMarshallableMarshallerWithCustomFactory that =
-                    (BytesMarshallableMarshallerWithCustomFactory) obj;
-            return that.marshaledClass() == marshaledClass() && that.factory.equals(this.factory);
-        }
-
-        @Override
-        public int hashCode() {
-            return hash(marshaledClass(), factory);
-        }
-
-        @Override
-        public String toString() {
-            return getClass().getSimpleName() + "{marshaledClass=" + marshaledClass() +
-                    ",factory=" + factory + "}";
-        }
-    }
-
-    private static class ExternalizableMarshallerWithCustomFactory<T extends Externalizable>
-            extends ExternalizableMarshaller<T> {
-        private static final long serialVersionUID = 0L;
-
-        @NotNull
-        private final ObjectFactory<T> factory;
-
-        ExternalizableMarshallerWithCustomFactory(@NotNull Class<T> tClass,
-                                                  @NotNull ObjectFactory<T> factory) {
-            super(tClass);
-            this.factory = factory;
-        }
-
-        @NotNull
-        @Override
-        protected T getInstance() throws Exception {
-            return factory.create();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null || obj.getClass() != getClass())
-                return false;
-            ExternalizableMarshallerWithCustomFactory that =
-                    (ExternalizableMarshallerWithCustomFactory) obj;
-            return that.marshaledClass() == marshaledClass() && that.factory.equals(this.factory);
-        }
-
-        @Override
-        public int hashCode() {
-            return hash(marshaledClass(), factory);
-        }
-
-        @Override
-        public String toString() {
-            return getClass().getSimpleName() + "{marshaledClass=" + marshaledClass() +
-                    ",factory=" + factory + "}";
-        }
+    private int figureBufferAllocationFactor() {
+        // if expected map size is about 1000, seems rather wasteful to allocate
+        // key and value serialization buffers each x64 of expected entry size..
+        return (int) Math.min(Math.max(2L, entries() >> 10),
+                VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR);
     }
 }
 

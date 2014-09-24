@@ -16,18 +16,17 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.map.serialization.*;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
-import net.openhft.lang.io.serialization.BytesMarshallable;
-import net.openhft.lang.io.serialization.BytesMarshaller;
-import net.openhft.lang.io.serialization.ObjectFactory;
-import net.openhft.lang.io.serialization.ObjectSerializer;
+import net.openhft.lang.io.serialization.*;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.model.Byteable;
+import net.openhft.chronicle.map.threadlocal.Provider;
+import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,25 +40,40 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Thread.currentThread;
-import static net.openhft.chronicle.map.VanillaChronicleMap.Hasher.hash;
 
 
-class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
+class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
+        V, VW, MVW extends MetaBytesWriter<V, VW>> extends AbstractMap<K, V>
         implements ChronicleMap<K, V>, Serializable {
-    private static final long serialVersionUID = 0L;
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
 
     /**
      * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set bits.
      */
-    private static final int MAX_ENTRY_OVERSIZE_FACTOR = 64;
+    static final int MAX_ENTRY_OVERSIZE_FACTOR = 64;
 
     private static final int SEGMENT_HEADER = 64;
     final Class<K> kClass;
-    final BytesMarshaller<K> keyMarshaller;
-    final BytesMarshaller<V> valueMarshaller;
+    final SizeMarshaller keySizeMarshaller;
+    final BytesReader<K> originalKeyReader;
+    transient Provider<BytesReader<K>> keyReaderProvider;
+    final KI originalKeyInterop;
+    transient Provider<KI> keyInteropProvider;
+    final MKI originalMetaKeyInterop;
+    final MetaProvider<K, KI, MKI> metaKeyInteropProvider;
+
+    final Class<V> vClass;
+    final SizeMarshaller valueSizeMarshaller;
+    final BytesReader<V> originalValueReader;
+    transient Provider<BytesReader<V>> valueReaderProvider;
+    final VW originalValueWriter;
+    transient Provider<VW> valueWriterProvider;
+    final MVW originalMetaValueWriter;
+    final MetaProvider<V, VW, MVW> metaValueWriterProvider;
+    final ObjectFactory<V> valueFactory;
+
     final int metaDataBytes;
-    final Hasher hasher;
     //   private final int replicas;
     final int entrySize;
     final Alignment alignment;
@@ -70,10 +84,8 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
     // rather than as returning the Object can be expensive for something you probably don't use.
     final boolean putReturnsNull;
     final boolean removeReturnsNull;
-    private final int bufferAllocationFactor;
     private final ObjectSerializer objectSerializer;
-    private final Class<V> vClass;
-    private final ObjectFactory<V> valueFactory;
+
     private final long lockTimeOutNS;
     private final MapErrorListener errorListener;
     transient Segment[] segments; // non-final for close()
@@ -81,17 +93,31 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
     transient BytesStore ms;
     transient long headerSize;
     transient Set<Map.Entry<K, V>> entrySet;
-    private transient ThreadLocal<DirectBytes> localBufferForKeys;
-    private transient ThreadLocal<DirectBytes> localBufferForValues;
 
-    public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder)
-            throws IOException {
-        bufferAllocationFactor = figureBufferAllocationFactor(builder);
-        this.kClass = builder.keyClass;
-        this.keyMarshaller = builder.keyMarshaller();
-        this.vClass = builder.valueClass;
-        this.valueMarshaller = builder.valueMarshaller();
-        this.valueFactory = builder.valueFactory();
+    private int bits;
+    private int mask;
+
+    public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
+
+        SerializationBuilder<K> keyBuilder = builder.keyBuilder;
+        kClass = keyBuilder.eClass;
+        keySizeMarshaller = keyBuilder.sizeMarshaller();
+        originalKeyReader = keyBuilder.reader();
+
+        originalKeyInterop = (KI) keyBuilder.interop();
+
+        originalMetaKeyInterop = (MKI) keyBuilder.metaInterop();
+        metaKeyInteropProvider = (MetaProvider<K, KI, MKI>) keyBuilder.metaInteropProvider();
+
+        SerializationBuilder<V> valueBuilder = builder.valueBuilder;
+        vClass = valueBuilder.eClass;
+        valueSizeMarshaller = valueBuilder.sizeMarshaller();
+        originalValueReader = valueBuilder.reader();
+
+        originalValueWriter = (VW) valueBuilder.interop();
+        originalMetaValueWriter = (MVW) valueBuilder.metaInterop();
+        metaValueWriterProvider = (MetaProvider) valueBuilder.metaInteropProvider();
+        valueFactory = valueBuilder.factory();
 
         lockTimeOutNS = builder.lockTimeOut(TimeUnit.NANOSECONDS);
 
@@ -109,30 +135,18 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
         this.metaDataBytes = builder.metaDataBytes();
         this.eventListener = builder.eventListener();
 
-        int hashMask = useSmallMultiMaps() ? 0xFFFF : ~0;
-        this.hasher = new Hasher(actualSegments, hashMask);
+        this.mask = useSmallMultiMaps() ? 0xFFFF : ~0;
+        this.bits = Maths.intLog2(actualSegments);
 
         initTransients();
     }
 
-    private static int figureBufferAllocationFactor(ChronicleMapBuilder builder) {
-        // if expected map size is about 1000, seems rather wasteful to allocate
-        // key and value serialization buffers each x64 of expected entry size..
-        return (int) Math.min(Math.max(2L, builder.entries() >> 10),
-                MAX_ENTRY_OVERSIZE_FACTOR);
+    int segmentHash(long hash) {
+        return (int) (hash >>> bits) & mask;
     }
 
-    /**
-     * @param size positive number
-     * @return number of bytes taken by {@link net.openhft.lang.io.AbstractBytes#writeStopBit(long)} applied
-     * to {@code size}
-     */
-    static int expectedStopBits(long size) {
-        if (size <= 127)
-            return 1;
-        // numberOfLeadingZeros is cheap intrinsic on modern CPUs
-        // integral division is not... but there is no choice
-        return ((70 - Long.numberOfLeadingZeros(size)) / 7);
+    int getSegment(long hash) {
+        return (int) (hash & (actualSegments - 1));
     }
 
     /**
@@ -143,11 +157,15 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
     }
 
     void initTransients() {
+        keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
+        keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
+
+        valueReaderProvider = Provider.of((Class) originalValueReader.getClass());
+        valueWriterProvider = Provider.of((Class) originalValueWriter.getClass());
+
         @SuppressWarnings("unchecked")
         Segment[] ss = (Segment[]) Array.newInstance(segmentType(), actualSegments);
         this.segments = ss;
-        localBufferForKeys = new ThreadLocal<DirectBytes>();
-        localBufferForValues = new ThreadLocal<DirectBytes>();
     }
 
     Class segmentType() {
@@ -275,30 +293,6 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
         return eventListener;
     }
 
-    private DirectBytes acquireBufferForKey() {
-        DirectBytes buffer = localBufferForKeys.get();
-        if (buffer == null) {
-            buffer = new DirectStore(ms.objectSerializer(),
-                    entrySize * bufferAllocationFactor, false).bytes();
-            localBufferForKeys.set(buffer);
-        } else {
-            buffer.clear();
-        }
-        return buffer;
-    }
-
-    private DirectBytes acquireBufferForValue() {
-        DirectBytes buffer = localBufferForValues.get();
-        if (buffer == null) {
-            buffer = new DirectStore(ms.objectSerializer(),
-                    entrySize * bufferAllocationFactor, false).bytes();
-            localBufferForValues.set(buffer);
-        } else {
-            buffer.clear();
-        }
-        return buffer;
-    }
-
     void checkKey(Object key) {
         if (!kClass.isInstance(key)) {
             // key.getClass will cause NPE exactly as needed
@@ -327,26 +321,16 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
     private V put0(K key, V value, boolean replaceIfPresent) {
         checkKey(key);
         checkValue(value);
-        Bytes keyBytes = getKeyAsBytes(key);
-        long hash = hash(keyBytes);
-        int segmentNum = hasher.getSegment(hash);
-        int segmentHash = hasher.segmentHash(hash);
-        return segments[segmentNum].put(keyBytes, key, value, segmentHash, replaceIfPresent);
-    }
-
-    DirectBytes getKeyAsBytes(K key) {
-        DirectBytes buffer = acquireBufferForKey();
-        keyMarshaller.write(buffer, key);
-        buffer.flip();
-        return buffer;
-    }
-
-    DirectBytes getValueAsBytes(V value) {
-        DirectBytes buffer = acquireBufferForValue();
-        buffer.clear();
-        valueMarshaller.write(buffer, value);
-        buffer.flip();
-        return buffer;
+        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
+        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
+        copies = metaKeyInteropProvider.getCopies(copies);
+        MKI metaKeyInterop =
+                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
+        long hash = metaKeyInterop.hash(keyInterop, key);
+        int segmentNum = getSegment(hash);
+        int segmentHash = segmentHash(hash);
+        return segments[segmentNum].put(copies, metaKeyInterop, keyInterop, key, value, segmentHash,
+                replaceIfPresent);
     }
 
     @Override
@@ -366,22 +350,31 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
 
     V lookupUsing(K key, V value, boolean create) {
         checkKey(key);
-        Bytes keyBytes = getKeyAsBytes(key);
-        long hash = hash(keyBytes);
-        int segmentNum = hasher.getSegment(hash);
-        int segmentHash = hasher.segmentHash(hash);
-        return segments[segmentNum].acquire(keyBytes, key, value, segmentHash, create);
+        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
+        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
+        copies = metaKeyInteropProvider.getCopies(copies);
+        MKI metaKeyInterop =
+                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
+        long hash = metaKeyInterop.hash(keyInterop, key);
+        int segmentNum = getSegment(hash);
+        int segmentHash = segmentHash(hash);
+        return segments[segmentNum].acquire(copies, metaKeyInterop, keyInterop, key, value,
+                segmentHash, create);
     }
 
     @Override
-    public boolean containsKey(final Object key) {
-        checkKey(key);
-        Bytes keyBytes = getKeyAsBytes((K) key);
-        long hash = hash(keyBytes);
-        int segmentNum = hasher.getSegment(hash);
-        int segmentHash = hasher.segmentHash(hash);
-
-        return segments[segmentNum].containsKey(keyBytes, segmentHash);
+    public boolean containsKey(final Object k) {
+        checkKey(k);
+        K key = (K) k;
+        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
+        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
+        copies = metaKeyInteropProvider.getCopies(copies);
+        MKI metaKeyInterop =
+                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
+        long hash = metaKeyInterop.hash(keyInterop, key);
+        int segmentNum = getSegment(hash);
+        int segmentHash = segmentHash(hash);
+        return segments[segmentNum].containsKey(keyInterop, metaKeyInterop, key, segmentHash);
     }
 
     @Override
@@ -421,17 +414,23 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
      * that of a maps.entry. If the {@param expectedValue} equals null then ( if there exists ) an entry whose
      * key equals {@param key} this is removed.
      *
-     * @param key           the key of the entry to remove
+     * @param k             the key of the entry to remove
      * @param expectedValue null if not required
      * @return true if and entry was removed
      */
-    V removeIfValueIs(final Object key, final V expectedValue) {
-        checkKey(key);
-        Bytes keyBytes = getKeyAsBytes((K) key);
-        long hash = hash(keyBytes);
-        int segmentNum = hasher.getSegment(hash);
-        int segmentHash = hasher.segmentHash(hash);
-        return segments[segmentNum].remove(keyBytes, (K) key, expectedValue, segmentHash);
+    V removeIfValueIs(final Object k, final V expectedValue) {
+        checkKey(k);
+        K key = (K) k;
+        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
+        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
+        copies = metaKeyInteropProvider.getCopies(copies);
+        MKI metaKeyInterop =
+                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
+        long hash = metaKeyInterop.hash(keyInterop, key);
+        int segmentNum = getSegment(hash);
+        int segmentHash = segmentHash(hash);
+        return segments[segmentNum].remove(copies, metaKeyInterop, keyInterop, key, expectedValue,
+                segmentHash);
     }
 
     /**
@@ -482,11 +481,16 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
                        final V newValue) {
         checkKey(key);
         checkValue(newValue);
-        Bytes keyBytes = getKeyAsBytes(key);
-        long hash = hash(keyBytes);
-        int segmentNum = hasher.getSegment(hash);
-        int segmentHash = hasher.segmentHash(hash);
-        return segments[segmentNum].replace(keyBytes, key, existingValue, newValue, segmentHash);
+        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
+        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
+        copies = metaKeyInteropProvider.getCopies(copies);
+        MKI metaKeyInterop =
+                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
+        long hash = metaKeyInterop.hash(keyInterop, key);
+        int segmentNum = getSegment(hash);
+        int segmentHash = segmentHash(hash);
+        return segments[segmentNum].replace(copies, metaKeyInterop, keyInterop, key, existingValue,
+                newValue, segmentHash);
     }
 
     /**
@@ -498,51 +502,20 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-
-    static final class Hasher implements Serializable {
-        private static final long serialVersionUID = 0L;
-        private final int segments;
-        private final int bits;
-        private final int mask;
-
-        Hasher(int segments, int mask) {
-            this.segments = segments;
-            this.bits = Maths.intLog2(segments);
-            this.mask = mask;
-        }
-
-        static long hash(Bytes bytes) {
-            long h = 0;
-            long i = bytes.position();
-            long limit = bytes.limit(); // clustering.
-            for (; i < limit - 7; i += 8)
-                h = 1011001110001111L * h + bytes.readLong(i);
-            for (; i < limit - 1; i += 2)
-                h = 101111 * h + bytes.readShort(i);
-            if (i < limit)
-                h = 2111 * h + bytes.readByte(i);
-            h *= 11018881818881011L;
-            h ^= (h >>> 41) ^ (h >>> 21);
-            //System.out.println(bytes + " => " + Long.toHexString(h));
-            return h;
-        }
-
-        int segmentHash(long hash) {
-            return (int) (hash >>> bits) & mask;
-        }
-
-        int getSegment(long hash) {
-            return (int) (hash & (segments - 1));
-        }
+    long readValueSize(Bytes entry) {
+        long valueSize = valueSizeMarshaller.readSize(entry);
+        alignment.alignPositionAddr(entry);
+        return valueSize;
     }
 
     // these methods should be package local, not public or private.
     class Segment implements SharedSegment {
         /*
         The entry format is
-        - stop-bit encoded length for key
+        - encoded length for key
         - bytes for the key
-        - stop-bit encoded length of the value
+        - [possible alignment]
+        - encoded length of the value
         - bytes for the value.
          */
         static final int LOCK_OFFSET = 0; // 64-bit
@@ -685,10 +658,10 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
             return bytes.startAddr() + offset;
         }
 
-        private long entrySize(long keyLen, long valueLen) {
+        private long entrySize(long keySize, long valueSize) {
             return alignment.alignAddr(metaDataBytes +
-                    expectedStopBits(keyLen) + keyLen +
-                    expectedStopBits(valueLen)) + valueLen;
+                    keySizeMarshaller.sizeEncodingSize(keySize) + keySize +
+                    valueSizeMarshaller.sizeEncodingSize(valueSize)) + valueSize;
         }
 
         int inBlocks(long sizeInBytes) {
@@ -709,27 +682,30 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
          * true}, {@code usingValue} or a newly created instance of value class, if {@code usingValue ==
          * null}, is put into this Segment for the key.</li></ol>
          *
-         * @param keyBytes serialized {@code key}
          * @param hash2    a hash code related to the {@code keyBytes}
          * @return the value which is finally associated with the given key in this Segment after execution of
          * this method, or {@code null}.
          */
-        V acquire(Bytes keyBytes, K key, V usingValue, int hash2, boolean create) {
+        V acquire(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
+                  int hash2, boolean create) {
             lock();
             try {
+                long keySize = metaKeyInterop.size(keyInterop, key);
                 MultiStoreBytes entry = tmpBytes;
-                long offset = searchKey(keyBytes, hash2, entry, hashLookup);
+                long offset = searchKey(keyInterop, metaKeyInterop, key, keySize, hash2, entry,
+                        hashLookup);
                 if (offset >= 0) {
-                    return onKeyPresentOnAcquire(key, usingValue, offset, entry);
+                    return onKeyPresentOnAcquire(copies, key, usingValue, offset, entry);
                 } else {
                     boolean usingValuePassed = usingValue != null;
-                    usingValue = tryObtainUsingValueOnAcquire(keyBytes, key, usingValue, create);
+                    usingValue = tryObtainUsingValueOnAcquire(key, usingValue, create);
                     if (usingValue != null) {
                         // If `create` is false, this method was called from get() or getUsing()
                         // and non-null `usingValue` was returned by notifyMissed() method.
                         // This "missed" default value is considered as genuine value
                         // rather than "using" container to fill up, even if it implements Byteable.
-                        offset = putEntry(keyBytes, usingValue, create);
+                        offset = putEntry(copies, metaKeyInterop, keyInterop, key, keySize,
+                                usingValue, create);
                         incrementSize();
                         if (usingValuePassed || !create)
                             notifyPut(offset, true, key, usingValue, posFromOffset(offset));
@@ -743,30 +719,30 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
             }
         }
 
-        long searchKey(Bytes keyBytes, int hash2,
+        long searchKey(KI keyInterop, MKI metaKeyInterop, K key, long keySize, int hash2,
                        MultiStoreBytes entry, IntIntMultiMap hashLookup) {
-            long keyLen = keyBytes.remaining();
             hashLookup.startSearch(hash2);
             for (int pos; (pos = hashLookup.nextPos()) >= 0; ) {
                 long offset = offsetFromPos(pos);
                 reuse(entry, offset);
-                if (!keyEquals(keyBytes, keyLen, entry))
+                if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                     continue;
                 // key is found
-                entry.skip(keyLen);
+                entry.skip(keySize);
                 return offset;
             }
             // key is not found
             return -1L;
         }
 
-        V onKeyPresentOnAcquire(K key, V usingValue, long offset, NativeBytes entry) {
-            V v = readValue(entry, usingValue);
+        V onKeyPresentOnAcquire(ThreadLocalCopies copies, K key, V usingValue, long offset,
+                                NativeBytes entry) {
+            V v = readValue(copies, entry, usingValue);
             notifyGet(offset, key, v);
             return v;
         }
 
-        V tryObtainUsingValueOnAcquire(Bytes keyBytes, K key, V usingValue, boolean create) {
+        V tryObtainUsingValueOnAcquire(K key, V usingValue, boolean create) {
             if (create) {
                 if (usingValue != null) {
                     return usingValue;
@@ -789,30 +765,33 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
             } else {
                 if (usingValue instanceof Byteable)
                     ((Byteable) usingValue).bytes(null, 0);
-                return notifyMissed(keyBytes, key, usingValue);
+                return notifyMissed(key, usingValue);
             }
         }
 
-        V put(Bytes keyBytes, K key, V value, int hash2, boolean replaceIfPresent) {
+        V put(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V value,
+              int hash2, boolean replaceIfPresent) {
             lock();
             try {
-                long keyLen = keyBytes.remaining();
+                long keySize = metaKeyInterop.size(keyInterop, key);
                 hashLookup.startSearch(hash2);
                 for (int pos; (pos = hashLookup.nextPos()) >= 0; ) {
                     long offset = offsetFromPos(pos);
                     NativeBytes entry = entry(offset);
-                    if (!keyEquals(keyBytes, keyLen, entry))
+                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                         continue;
                     // key is found
-                    entry.skip(keyLen);
+                    entry.skip(keySize);
                     if (replaceIfPresent) {
-                        return replaceValueOnPut(key, value, entry, pos, offset, !putReturnsNull, hashLookup);
+                        return replaceValueOnPut(copies, key, value, entry, pos, offset,
+                                !putReturnsNull, hashLookup);
                     } else {
-                        return putReturnsNull ? null : readValue(entry, null);
+                        return putReturnsNull ? null : readValue(copies, entry, null);
                     }
                 }
                 // key is not found
-                long offset = putEntry(keyBytes, value, false);
+                long offset = putEntry(copies, metaKeyInterop, keyInterop, key, keySize, value,
+                        false);
                 incrementSize();
                 notifyPut(offset, true, key, value, posFromOffset(offset));
                 return null;
@@ -821,74 +800,81 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
             }
         }
 
-        V replaceValueOnPut(K key, V value, NativeBytes entry, int pos, long offset,
-                            boolean readPrevValue, IntIntMultiMap searchedHashLookup) {
-            long valueLenPos = entry.position();
-            long valueLen = readValueLen(entry);
-            long entryEndAddr = entry.positionAddr() + valueLen;
+        V replaceValueOnPut(ThreadLocalCopies copies, K key, V value, NativeBytes entry, int pos,
+                            long offset, boolean readPrevValue, IntIntMultiMap searchedHashLookup) {
+            long valueSizePos = entry.position();
+            long valueSize = readValueSize(entry);
+            long entryEndAddr = entry.positionAddr() + valueSize;
             V prevValue = null;
             if (readPrevValue)
-                prevValue = readValue(entry, null, valueLen);
+                prevValue = readValue(copies, entry, null, valueSize);
 
             // putValue may relocate entry and change offset
-            offset = putValue(pos, offset, entry, valueLenPos, entryEndAddr, value, searchedHashLookup);
+            offset = putValue(pos, offset, entry, valueSizePos, entryEndAddr, copies, value, null,
+                    searchedHashLookup);
             notifyPut(offset, false, key, value, posFromOffset(offset));
             return prevValue;
         }
 
         /**
-         * Puts entry. If {@code value} implements {@link net.openhft.lang.model.Byteable} interface and
+         * Puts entry. If {@code value} implements {@link Byteable} interface and
          * {@code usingValue} is {@code true}, the value is backed with the bytes of this entry.
          *
-         * @param keyBytes   serialized key
          * @param value      the value to put
-         * @param usingValue {@code true} if the value should be backed with the bytes of the entry, if it
-         *                   implements {@link net.openhft.lang.model.Byteable} interface, {@code false} if it
+         * @param usingValue {@code true} if the value should be backed with the bytes of the entry,
+         *                   if it implements {@link Byteable} interface, {@code false} if it
          *                   should put itself
          * @return offset of the written entry in the Segment bytes
          */
-        private long putEntry(Bytes keyBytes, V value, boolean usingValue) {
-            long keyLen = keyBytes.remaining();
+        private long putEntry(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
+                              long keySize, V value, boolean usingValue) {
 
             // "if-else polymorphism" is not very beautiful, but allows to
             // reuse the rest code of this method and doesn't hurt performance.
             boolean byteableValue = usingValue && value instanceof Byteable;
-            long valueLen;
-            Bytes valueBytes = null;
+            long valueSize;
+            MetaBytesWriter<V, VW> metaValueWriter = null;
+            VW valueWriter = null;
             Byteable valueAsByteable = null;
             if (!byteableValue) {
-                valueBytes = getValueAsBytes(value);
-                valueLen = valueBytes.remaining();
+                copies = valueWriterProvider.getCopies(copies);
+                valueWriter = valueWriterProvider.get(copies, originalValueWriter);
+                copies = metaValueWriterProvider.getCopies(copies);
+                metaValueWriter = metaValueWriterProvider.get(
+                        copies, originalMetaValueWriter, valueWriter, value);
+                valueSize = metaValueWriter.size(valueWriter, value);
             } else {
                 valueAsByteable = (Byteable) value;
-                valueLen = valueAsByteable.maxSize();
+                valueSize = valueAsByteable.maxSize();
             }
 
-            long entrySize = entrySize(keyLen, valueLen);
+            long entrySize = entrySize(keySize, valueSize);
             int pos = alloc(inBlocks(entrySize));
             long offset = offsetFromPos(pos);
             clearMetaData(offset);
             NativeBytes entry = entry(offset);
 
-            entry.writeStopBit(keyLen);
-            entry.write(keyBytes);
+            keySizeMarshaller.writeSize(entry, keySize);
+            metaKeyInterop.write(keyInterop, entry, key);
 
-            writeValueOnPutEntry(valueLen, valueBytes, valueAsByteable, entry);
+            writeValueOnPutEntry(valueSize, metaValueWriter, valueWriter, value, valueAsByteable,
+                    entry);
             hashLookup.putAfterFailedSearch(pos);
             return offset;
         }
 
-        void writeValueOnPutEntry(long valueLen, @Nullable Bytes valueBytes,
-                                  @Nullable Byteable valueAsByteable, NativeBytes entry) {
-            entry.writeStopBit(valueLen);
+        void writeValueOnPutEntry(long valueSize, MetaBytesWriter<V, VW> metaValueWriter,
+                                  VW valueWriter, V value, Byteable valueAsByteable,
+                                  NativeBytes entry) {
+            valueSizeMarshaller.writeSize(entry, valueSize);
             alignment.alignPositionAddr(entry);
 
-            if (valueBytes != null) {
-                entry.write(valueBytes);
+            if (metaValueWriter != null) {
+                metaValueWriter.write(valueWriter, entry, value);
             } else {
                 assert valueAsByteable != null;
                 long valueOffset = entry.positionAddr() - bytes.address();
-                bytes.zeroOut(valueOffset, valueOffset + valueLen);
+                bytes.zeroOut(valueOffset, valueOffset + valueSize);
                 valueAsByteable.bytes(bytes, valueOffset);
             }
         }
@@ -938,55 +924,48 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
                 nextPosToSearchFrom = fromPos;
         }
 
-        V readValue(NativeBytes entry, V value) {
-            return readValue(entry, value, readValueLen(entry));
+        V readValue(ThreadLocalCopies copies, NativeBytes entry, V value) {
+            return readValue(copies, entry, value, readValueSize(entry));
         }
 
-        long readValueLen(Bytes entry) {
-            long valueLen = entry.readStopBit();
-            alignment.alignPositionAddr(entry);
-            return valueLen;
-        }
-
-        /**
-         * TODO use the value length to limit reading
-         *
-         * @param value the object to reuse (if possible), if {@code null} a new object is created
-         */
-        V readValue(NativeBytes entry, V value, long valueLen) {
+        V readValue(ThreadLocalCopies copies, NativeBytes entry, V value, long valueSize) {
+            copies = valueReaderProvider.getCopies(copies);
+            BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
             bytes.positionAddr(entry.positionAddr());
-            return valueMarshaller.read(bytes, value);
+            return valueReader.read(bytes, valueSize, value);
         }
 
-        boolean keyEquals(Bytes keyBytes, long keyLen, Bytes entry) {
-            return keyLen == entry.readStopBit() && entry.startsWith(keyBytes);
+        boolean keyEquals(KI keyInterop, MKI metaKeyInterop, K key,
+                          long keySize, Bytes entry) {
+            return keySize == keySizeMarshaller.readSize(entry) &&
+                    metaKeyInterop.startsWith(keyInterop, entry, key);
         }
 
         /**
          * Removes a key (or key-value pair) from the Segment. <p/> The entry will only be removed if {@code
          * expectedValue} equals to {@code null} or the value previously corresponding to the specified key.
          *
-         * @param keyBytes bytes of the key to remove
          * @param hash2    a hash code related to the {@code keyBytes}
          * @return the value of the entry that was removed if the entry corresponding to the {@code keyBytes}
          * exists and {@link #removeReturnsNull} is {@code false}, {@code null} otherwise
          */
-        V remove(Bytes keyBytes, K key, V expectedValue, int hash2) {
+        V remove(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
+                 V expectedValue, int hash2) {
             lock();
             try {
-                long keyLen = keyBytes.remaining();
+                long keySize = metaKeyInterop.size(keyInterop, key);
                 hashLookup.startSearch(hash2);
                 for (int pos; (pos = hashLookup.nextPos()) >= 0; ) {
                     long offset = offsetFromPos(pos);
                     NativeBytes entry = entry(offset);
-                    if (!keyEquals(keyBytes, keyLen, entry))
+                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                         continue;
                     // key is found
-                    entry.skip(keyLen);
-                    long valueLen = readValueLen(entry);
-                    long entryEndAddr = entry.positionAddr() + valueLen;
+                    entry.skip(keySize);
+                    long valueSize = readValueSize(entry);
+                    long entryEndAddr = entry.positionAddr() + valueSize;
                     V valueRemoved = expectedValue != null || !removeReturnsNull
-                            ? readValue(entry, null, valueLen) : null;
+                            ? readValue(copies, entry, null, valueSize) : null;
                     if (expectedValue != null && !expectedValue.equals(valueRemoved))
                         return null;
                     hashLookup.removePrevPos();
@@ -1002,15 +981,15 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
             }
         }
 
-        boolean containsKey(Bytes keyBytes, int hash2) {
+        boolean containsKey(KI keyInterop, MKI metaKeyInterop, K key, int hash2) {
             lock();
             try {
-                long keyLen = keyBytes.remaining();
+                long keySize = metaKeyInterop.size(keyInterop, key);
                 IntIntMultiMap hashLookup = containsKeyHashLookup();
                 hashLookup.startSearch(hash2);
                 for (int pos; (pos = hashLookup.nextPos()) >= 0; ) {
                     Bytes entry = entry(offsetFromPos(pos));
-                    if (keyEquals(keyBytes, keyLen, entry))
+                    if (keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                         return true;
                 }
                 return false;
@@ -1031,20 +1010,21 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
          * @param hash2 a hash code related to the {@code keyBytes}
          * @return the replaced value or {@code null} if the value was not replaced
          */
-        V replace(Bytes keyBytes, K key, V expectedValue, V newValue, int hash2) {
+        V replace(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
+                  V expectedValue, V newValue, int hash2) {
             lock();
             try {
-                long keyLen = keyBytes.remaining();
+                long keySize = metaKeyInterop.size(keyInterop, key);
                 hashLookup.startSearch(hash2);
                 for (int pos; (pos = hashLookup.nextPos()) >= 0; ) {
                     long offset = offsetFromPos(pos);
                     NativeBytes entry = entry(offset);
-                    if (!keyEquals(keyBytes, keyLen, entry))
+                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                         continue;
                     // key is found
-                    entry.skip(keyLen);
-                    return onKeyPresentOnReplace(key, expectedValue, newValue, pos, offset, entry,
-                            hashLookup);
+                    entry.skip(keySize);
+                    return onKeyPresentOnReplace(copies, key, expectedValue, newValue,
+                            pos, offset, entry, hashLookup);
                 }
                 // key is not found
                 return null;
@@ -1053,18 +1033,19 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
             }
         }
 
-        V onKeyPresentOnReplace(K key, V expectedValue, V newValue, int pos, long offset,
-                                NativeBytes entry, IntIntMultiMap searchedHashLookup) {
-            long valueLenPos = entry.position();
-            long valueLen = readValueLen(entry);
-            long entryEndAddr = entry.positionAddr() + valueLen;
-            V valueRead = readValue(entry, null, valueLen);
+        V onKeyPresentOnReplace(ThreadLocalCopies copies, K key, V expectedValue, V newValue,
+                                int pos, long offset, NativeBytes entry,
+                                IntIntMultiMap searchedHashLookup) {
+            long valueSizePos = entry.position();
+            long valueSize = readValueSize(entry);
+            long entryEndAddr = entry.positionAddr() + valueSize;
+            V valueRead = readValue(copies, entry, null, valueSize);
             if (valueRead == null)
                 return null;
             if (expectedValue == null || expectedValue.equals(valueRead)) {
                 // putValue may relocate entry and change offset
-                offset = putValue(pos, offset, entry, valueLenPos, entryEndAddr, newValue,
-                        searchedHashLookup);
+                offset = putValue(pos, offset, entry, valueSizePos, entryEndAddr, copies, newValue,
+                        null, searchedHashLookup);
                 notifyPut(offset, false, key, newValue,
                         posFromOffset(offset));
                 return valueRead;
@@ -1089,10 +1070,9 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
             }
         }
 
-        V notifyMissed(Bytes keyBytes, K key, V usingValue) {
+        V notifyMissed(K key, V usingValue) {
             if (eventListener() != MapEventListeners.NOP) {
-                return eventListener().onGetMissing(VanillaChronicleMap.this, keyBytes,
-                        key, usingValue);
+                return eventListener().onGetMissing(VanillaChronicleMap.this, key, usingValue);
             }
             return null;
         }
@@ -1105,17 +1085,6 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
             }
         }
 
-        long putValue(int pos, long offset, NativeBytes entry, long valueLenPos,
-                      long entryEndAddr, V value, IntIntMultiMap searchedHashLookup) {
-            if (value instanceof Byteable) {
-                return putValue(pos, offset, entry, valueLenPos, entryEndAddr,
-                        null, (Byteable) value, false, searchedHashLookup);
-            } else {
-                return putValue(pos, offset, entry, valueLenPos, entryEndAddr,
-                        getValueAsBytes(value), null, true, searchedHashLookup);
-            }
-        }
-
         /**
          * Replaces value in existing entry. May cause entry relocation, because there may be not enough space
          * for new value in location already allocated for this entry.
@@ -1124,30 +1093,31 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
          * @param offset          relative offset of the entry in Segment bytes (before, i. e. including
          *                        metaData)
          * @param entry           relative pointer in Segment bytes
-         * @param valueLenPos     relative position of value "stop bit" in entry
+         * @param valueSizePos     relative position of value size in entry
          * @param entryEndAddr    absolute address of the entry end
-         * @param valueBytes      serialized value, or {@code null} if valueAsByteable is given
-         * @param valueAsByteable the value to put as {@code Byteable}, or {@code null} if valueBytes is
-         *                        given
-         * @param allowOversize   {@code true} if the entry is allowed become oversized if it was not yet
          * @return relative offset of the entry in Segment bytes after putting value (that may cause entry
          * relocation)
          */
-        long putValue(int pos, long offset, NativeBytes entry, long valueLenPos,
-                      long entryEndAddr, @Nullable Bytes valueBytes,
-                      @Nullable Byteable valueAsByteable, boolean allowOversize,
+        long putValue(int pos, long offset, NativeBytes entry, long valueSizePos,
+                      long entryEndAddr, ThreadLocalCopies copies, V value, Bytes valueBytes,
                       IntIntMultiMap searchedHashLookup) {
-            long valueLenAddr = entry.address() + valueLenPos;
-            long newValueLen;
+            long valueSizeAddr = entry.address() + valueSizePos;
+            long newValueSize;
+            VW valueWriter = null;
+            MetaBytesWriter<V, VW> metaValueWriter = null;
             if (valueBytes != null) {
-                newValueLen = valueBytes.remaining();
+                newValueSize = valueBytes.remaining();
             } else {
-                assert valueAsByteable != null;
-                newValueLen = valueAsByteable.maxSize();
+                copies = valueWriterProvider.getCopies(copies);
+                valueWriter = valueWriterProvider.get(copies, originalValueWriter);
+                copies = metaValueWriterProvider.getCopies(copies);
+                metaValueWriter = metaValueWriterProvider.get(
+                        copies, originalMetaValueWriter, valueWriter, value);
+                newValueSize = metaValueWriter.size(valueWriter, value);
             }
             long newValueAddr = alignment.alignAddr(
-                    valueLenAddr + expectedStopBits(newValueLen));
-            long newEntryEndAddr = newValueAddr + newValueLen;
+                    valueSizeAddr + valueSizeMarshaller.sizeEncodingSize(newValueSize));
+            long newEntryEndAddr = newValueAddr + newValueSize;
             // Fast check before counting "sizes in blocks" that include
             // integral division
             newValueDoesNotFit:
@@ -1157,24 +1127,7 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
                 int oldSizeInBlocks = inBlocks(oldEntrySize);
                 int newSizeInBlocks = inBlocks(newEntryEndAddr - entryStartAddr);
                 if (newSizeInBlocks > oldSizeInBlocks) {
-                    if (!allowOversize && oldSizeInBlocks == 1) {
-                        // If the value is Byteable, illegal oversize could be detected because of
-                        // too high (inaccurate maxSize() estimate. Marshall the value to get
-                        // the precise size.
-                        if (valueAsByteable != null) {
-                            // noinspection unchecked
-                            return putValue(pos, offset, entry, valueLenPos, entryEndAddr,
-                                    getValueAsBytes((V) valueAsByteable), null, false, searchedHashLookup);
-                        }
-                        throw new IllegalArgumentException("Byteable value is not allowed " +
-                                "to make the entry oversized while it was not initially.");
-                    }
                     if (newSizeInBlocks > MAX_ENTRY_OVERSIZE_FACTOR) {
-                        if (valueAsByteable != null) {
-                            // noinspection unchecked
-                            return putValue(pos, offset, entry, valueLenPos, entryEndAddr,
-                                    getValueAsBytes((V) valueAsByteable), null, false, searchedHashLookup);
-                        }
                         throw new IllegalArgumentException("Value too large: " +
                                 "entry takes " + newSizeInBlocks + " blocks, " +
                                 MAX_ENTRY_OVERSIZE_FACTOR + " is maximum.");
@@ -1190,12 +1143,12 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
                     // after successful search by key
                     replacePosInHashLookupOnRelocation(searchedHashLookup, prevPos, pos);
                     offset = offsetFromPos(pos);
-                    // Moving metadata, key stop bit and key.
+                    // Moving metadata, key size and key.
                     // Don't want to fiddle with pseudo-buffers for this,
                     // since we already have all absolute addresses.
                     long newEntryStartAddr = entryStartAddr(offset);
                     NativeBytes.UNSAFE.copyMemory(entryStartAddr,
-                            newEntryStartAddr, valueLenAddr - entryStartAddr);
+                            newEntryStartAddr, valueSizeAddr - entryStartAddr);
                     entry = entry(offset);
                     // END OF RELOCATION
                 } else if (newSizeInBlocks < oldSizeInBlocks) {
@@ -1208,23 +1161,13 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
                 }
             }
             // Common code for all cases
-            entry.position(valueLenPos);
-            entry.writeStopBit(newValueLen);
+            entry.position(valueSizePos);
+            valueSizeMarshaller.writeSize(entry, newValueSize);
             alignment.alignPositionAddr(entry);
             if (valueBytes != null) {
                 entry.write(valueBytes);
             } else {
-                if (valueAsByteable instanceof BytesMarshallable) {
-                    long posAddr = entry.positionAddr();
-                    ((BytesMarshallable) valueAsByteable).writeMarshallable(entry);
-                    long actualValueLen = entry.positionAddr() - posAddr;
-                    if (actualValueLen > newValueLen) {
-                        throw new AssertionError(
-                                "Byteable value returned maxSize less than the actual size");
-                    }
-                } else {
-                    entry.write(valueAsByteable.bytes(), valueAsByteable.offset(), newValueLen);
-                }
+                metaValueWriter.write(valueWriter, entry, value);
             }
             return offset;
         }
@@ -1246,11 +1189,16 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
 
         public Entry<K, V> getEntry(long pos) {
             bytes.position(offsetFromPos(pos) + metaDataBytes);
-            bytes.readStopBit();
-            K key = keyMarshaller.read(bytes);
-            bytes.readStopBit();
+
+            long keySize = keySizeMarshaller.readSize(bytes);
+            ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
+            K key = keyReaderProvider.get(copies, originalKeyReader).read(bytes, keySize);
+
+            long valueSize = valueSizeMarshaller.readSize(bytes);
             alignment.alignPositionAddr(bytes);
-            V value = valueMarshaller.read(bytes);
+            copies = valueReaderProvider.getCopies(copies);
+            V value = valueReaderProvider.get(copies, originalValueReader).read(bytes, valueSize);
+
             return new WriteThroughEntry(key, value);
         }
 
@@ -1268,11 +1216,11 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
                         throw new AssertionError();
                     long offset = offsetFromPos(pos);
                     Bytes entry = entry(offset);
-                    long keyLen = entry.readStopBit();
-                    entry.skip(keyLen);
+                    long keySize = keySizeMarshaller.readSize(entry);
+                    entry.skip(keySize);
                     afterKeyHookOnCheckConsistency(entry);
-                    long valueLen = entry.readStopBit();
-                    long sizeInBytes = entrySize(keyLen, valueLen);
+                    long valueSize = valueSizeMarshaller.readSize(entry);
+                    long sizeInBytes = entrySize(keySize, valueSize);
                     int entrySizeInBlocks = inBlocks(sizeInBytes);
                     if (!freeList.allSet(pos, pos + entrySizeInBlocks))
                         throw new AssertionError();
@@ -1400,14 +1348,13 @@ class VanillaChronicleMap<K, V> extends AbstractMap<K, V>
             final NativeBytes entry = segment.entry(offset);
 
             final long limit = entry.limit();
-            final long keyLen = entry.readStopBit();
-            entry.limit(entry.position() + keyLen);
-            final int segmentHash = hasher.segmentHash(hash(entry));
-            entry.limit(limit);
+            final long keySize = keySizeMarshaller.readSize(entry);
+            long position = entry.position();
+            final int segmentHash = segmentHash(Hasher.hash(entry, position, position + keySize));
 
-            entry.skip(keyLen);
-            long valueLen = segment.readValueLen(entry);
-            final long entryEndAddr = entry.positionAddr() + valueLen;
+            entry.skip(keySize);
+            long valueSize = readValueSize(entry);
+            final long entryEndAddr = entry.positionAddr() + valueSize;
             segment.getHashLookup().remove(segmentHash, pos);
             segment.decrementSize();
             segment.free(pos, segment.inBlocks(entryEndAddr - segment.entryStartAddr(offset)));

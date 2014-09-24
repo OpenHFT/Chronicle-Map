@@ -514,21 +514,15 @@ public class ChronicleMapTest {
         for (int j = 1; j <= 3; j++) {
             for (int i = 0; i < entries; i++) {
                 CharSequence userCS = getUserCharSequence(i);
-                if (i * 9876 == 829682760) {
-                    System.out.println(1);
-                }
 
                 if (j > 1) {
-                    if (i == 1) {
-                        System.out.println(1);
-                    }
                     assertNotNull(userCS.toString(), map.getUsing(userCS, value));
                 } else {
                     map.acquireUsing(userCS, value);
                 }
                 if (i >= 1)
                     assertTrue(userCS.toString(), map.containsKey(getUserCharSequence(1)));
-                assertEquals(j - 1, value.getValue());
+                assertEquals(userCS.toString(), j - 1, value.getValue());
 
                 value.addAtomicValue(1);
 
@@ -1174,23 +1168,23 @@ public class ChronicleMapTest {
                 .entrySize(10);
         builder.entryAndValueAlignment(NO_ALIGNMENT);
         testOversizeEntriesPutRemoveReplace(
-                (VanillaChronicleMap<CharSequence, CharSequence>)
+                (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
                         builder.create(getPersistenceFile())
         );
         builder.entryAndValueAlignment(Alignment.OF_4_BYTES);
         testOversizeEntriesPutRemoveReplace(
-                (VanillaChronicleMap<CharSequence, CharSequence>)
+                (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
                         builder.create(getPersistenceFile())
         );
         builder.entryAndValueAlignment(OF_8_BYTES);
         testOversizeEntriesPutRemoveReplace(
-                (VanillaChronicleMap<CharSequence, CharSequence>)
+                (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
                         builder.create(getPersistenceFile())
         );
     }
 
     public void testOversizeEntriesPutRemoveReplace(
-            VanillaChronicleMap<CharSequence, CharSequence> map) {
+            VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?> map) {
         String key = "k";
         String oversizedKey = "oversized key";
         String value = "v";

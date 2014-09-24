@@ -33,10 +33,10 @@ public class MultiMapTimeBaseReplicationTest {
 
     private Replica.ModificationIterator segmentModificationIterator2;
     private Replica.ModificationIterator segmentModificationIterator1;
-    private Builder.MapProvider<ReplicatedChronicleMap<Integer, Integer>> mapP1;
-    private Builder.MapProvider<ReplicatedChronicleMap<Integer, Integer>> mapP2;
-    private ReplicatedChronicleMap<Integer, Integer> map2;
-    private ReplicatedChronicleMap<Integer, Integer> map1;
+    private Builder.MapProvider<ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?>> mapP1;
+    private Builder.MapProvider<ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?>> mapP2;
+    private ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?> map2;
+    private ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?> map1;
 
 
     private ArrayBlockingQueue<byte[]> map1ToMap2;

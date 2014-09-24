@@ -66,14 +66,14 @@ public class Builder {
                 .create(getPersistenceFile());
     }
 
-    static MapProvider<ReplicatedChronicleMap<Integer, Integer>> newShmIntInt(
+    static MapProvider<ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?>> newShmIntInt(
             int size, final ArrayBlockingQueue<byte[]> input,
             final ArrayBlockingQueue<byte[]> output,
             final byte localIdentifier, byte externalIdentifier) throws IOException {
 
         Replicator queue = QueueReplicator.of(localIdentifier, externalIdentifier, input, output);
-        final ReplicatedChronicleMap<Integer, Integer> result =
-                (ReplicatedChronicleMap<Integer, Integer>) ChronicleMapBuilder
+        final ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?> result =
+                (ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?>) ChronicleMapBuilder
                         .of(Integer.class, Integer.class)
                         .entries(size)
                         .addReplicator(queue)
@@ -88,10 +88,10 @@ public class Builder {
         if (q == null)
             throw new AssertionError();
         final QueueReplicator finalQ = q;
-        return new MapProvider<ReplicatedChronicleMap<Integer, Integer>>() {
+        return new MapProvider<ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?>>() {
 
             @Override
-            public ReplicatedChronicleMap<Integer, Integer> getMap() {
+            public ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?> getMap() {
                 return result;
             }
 

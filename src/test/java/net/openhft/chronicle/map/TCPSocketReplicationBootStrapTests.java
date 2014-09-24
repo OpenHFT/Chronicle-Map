@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
 
 public class TCPSocketReplicationBootStrapTests {
 
-    private ReplicatedChronicleMap<Integer, CharSequence> map1;
+    private ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map1;
     private ChronicleMap<Integer, CharSequence> map2;
 
     @Test
@@ -89,8 +89,8 @@ public class TCPSocketReplicationBootStrapTests {
         map1 = newTcpSocketShmIntString((byte) 1, 8079, new InetSocketAddress("localhost", 8076));
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8076);
-        final ReplicatedChronicleMap<Integer, CharSequence> map2a =
-                (ReplicatedChronicleMap<Integer, CharSequence>)
+        final ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map2a =
+                (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>)
                         map2aBuilder.create(getPersistenceFile());
 
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2

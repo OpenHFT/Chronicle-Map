@@ -40,7 +40,7 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
      * @param usingValue value provided to reuse, could be null.
      * @return null if null should be returned, or a value to put in the map and return.
      */
-    public V onGetMissing(M map, Bytes keyBytes, K key, V usingValue) {
+    public V onGetMissing(M map, K key, V usingValue) {
         return null;
     }
 

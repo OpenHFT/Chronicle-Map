@@ -36,14 +36,9 @@ public final class MapEventListeners {
         public final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
         @Override
-        public Object onGetMissing(ChronicleMap map, Bytes keyBytes,
+        public Object onGetMissing(ChronicleMap map,
                                    Object key, Object usingValue) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(map.file()).append(" missed ");
-
-            keyBytes.toString(sb, 0, 0, keyBytes.limit());
-
-            LOGGER.info(sb.toString());
+            LOGGER.info("{} missed {}", map.file(), key);
             return null;
         }
 
@@ -62,13 +57,14 @@ public final class MapEventListeners {
                 sb.append(" | ");
             }
             Bytes slice = entry.slice(metaDataBytes, entry.limit() - metaDataBytes);
-            long keyLength = slice.readStopBit();
-            slice.toString(sb, slice.position(), 0L, slice.position() + keyLength);
-            slice.position(slice.position() + keyLength);
-            long valueLength = slice.readStopBit();
-            slice.alignPositionAddr(4);
+            VanillaChronicleMap vanillaMap = (VanillaChronicleMap) map;
+            long keySize = vanillaMap.keySizeMarshaller.readSize(slice);
+            slice.toString(sb, slice.position(), 0L, slice.position() + keySize);
+            slice.position(slice.position() + keySize);
+            long valueSize = vanillaMap.valueSizeMarshaller.readSize(slice);
+            vanillaMap.alignment.alignPositionAddr(slice);
             sb.append(" = ");
-            slice.toString(sb, slice.position(), 0L, slice.position() + valueLength);
+            slice.toString(sb, slice.position(), 0L, slice.position() + valueSize);
             LOGGER.info(sb.toString());
         }
 
@@ -89,7 +85,7 @@ public final class MapEventListeners {
         public final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
         @Override
-        public Object onGetMissing(ChronicleMap map, Bytes keyBytes,
+        public Object onGetMissing(ChronicleMap map,
                                    Object key, Object usingValue) {
             LOGGER.info("{} missed {}", map.file(), key);
             return null;
