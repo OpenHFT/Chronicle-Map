@@ -438,7 +438,7 @@ map = clusterReplicatorBuilder.create((short) 1, builder);
 
 ####  Known Issues
 
-Chronicle map lets you assign a map larger than your available memory, This will however impact performance as Chronicle Map will have to page the segments to and from disk as data is written or read from the map. This feature works brilliantly on Linux but unfortunately its not supported on Windows, if you use more memory than is physically available you will experience the following error :
+Chronicle map lets you assign a map larger than your available memory, If you were to create more entries than the available memory, chronicle map will page the segments that are accessed least to disk, and load the recently used segments into available memory. This feature lets you work with extremely large maps, it works brilliantly on Linux but unfortunately, this paging feature is not supported on Windows, if you use more memory than is physically available on windows you will experience the following error :
 
 ```java
 Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
