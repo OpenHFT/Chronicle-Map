@@ -55,7 +55,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 
 
 ### Overview
-Chronicle Map implements the java.util.concurrent.ConcurrentMap, however unlike the standard java map, ChronicleMap is able to share the map accross processes
+Chronicle Map implements the java.util.concurrent.ConcurrentMap, however unlike the standard java map, ChronicleMap is able to share your entries accross processes :
 
 
 ![](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-diagram_04.jpg)
