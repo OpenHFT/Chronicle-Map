@@ -60,19 +60,11 @@ Chronicle Map implements the java.util.concurrent.ConcurrentMap, however unlike 
 
 ![](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-diagram_04.jpg)
 
-
-there are a few differences.
-
 ## When to use
 #### When to use HashMap
 If you compare HashMap, ConcurrentHashMap and Chronicle Map, most of the maps in your system are likely to be HashMap.  This is because HashMap is lightweight and synchronized HashMap works well for lightly contended use cases.  By contention I mean, how many threads on average are trying to use a Map.  One reason you can't have many contended resources, is that you only have so many CPUs and they can only be accessing so many resources at once (ideally no more than one or two per thread at a time)
 
-
-
-
 ####  When to use ConcurrentHashMap
-Some of the time.
-
 ConcurrentHashMap scales very well when highly contended.  It uses more memory but if you only have a few of them, this doesn't matter.  They have higher throughput than the other two solutions, but also it creates the highest garbage.  If garbage pressure is an issue for you, you may want to consider Chronicle Map
 
 ####  When to use Chronicle Map
