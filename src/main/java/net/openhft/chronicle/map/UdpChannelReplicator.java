@@ -209,6 +209,8 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
             final SelectionKey selectionKey = writeChannel.keyFor(this.selector);
             if (selectionKey != null)
                 selectionKey.interestOps(selectionKey.interestOps() | OP_WRITE);
+            // we have just enabled it, so don't have to do this again.
+            shouldEnableOpWrite = false;
         } catch (Exception e) {
             LOG.error("", e);
         }

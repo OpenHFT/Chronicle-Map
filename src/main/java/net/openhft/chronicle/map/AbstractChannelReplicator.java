@@ -136,9 +136,6 @@ abstract class AbstractChannelReplicator implements Closeable {
             throttler.add(channel);
     }
 
-    interface ChannelReplicatorBuilder {
-    }
-
     /**
      * throttles 'writes' to ensure the network is not swamped, this is achieved by periodically
      * de-registering the write selector during periods of high volume.
@@ -211,9 +208,9 @@ abstract class AbstractChannelReplicator implements Closeable {
             if (bytesWritten > maxBytesInInterval) {
                 for (SelectableChannel channel : channels) {
                     final SelectionKey selectionKey = channel.keyFor(selector);
-                    if (selectionKey != null)
+                    if (selectionKey != null) {
                         selectionKey.interestOps(selectionKey.interestOps() & ~OP_WRITE);
-
+                    }
                     if (LOG.isDebugEnabled())
                         LOG.debug("Throttling UDP writes");
                 }

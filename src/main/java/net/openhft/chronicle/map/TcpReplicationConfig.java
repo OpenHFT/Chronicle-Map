@@ -16,8 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import com.google.auto.value.AutoValue;
-
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,7 +26,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@AutoValue
+
 public abstract class TcpReplicationConfig {
 
     private static final int DEFAULT_PACKET_SIZE = 1024 * 8;
@@ -65,7 +63,7 @@ public abstract class TcpReplicationConfig {
     static TcpReplicationConfig create(int serverPort, Set<InetSocketAddress> endpoints,
                                        int packetSize, ThrottlingConfig throttlingConfig,
                                        long heartBeatInterval, TimeUnit heartBeatIntervalUnit) {
-        return new AutoValue_TcpReplicationConfig(serverPort, endpoints, packetSize,
+        return new TcpReplicationConfigBean(serverPort, endpoints, packetSize,
                 throttlingConfig, heartBeatInterval, heartBeatIntervalUnit);
     }
 

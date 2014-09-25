@@ -16,14 +16,13 @@
 
 package net.openhft.chronicle.map;
 
-import com.google.auto.value.AutoValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 
-@AutoValue
+
 public abstract class UdpReplicationConfig {
 
     /**
@@ -36,6 +35,9 @@ public abstract class UdpReplicationConfig {
     public static UdpReplicationConfig simple(@NotNull InetAddress address, int port) {
         if (address.isMulticastAddress())
             throw new IllegalArgumentException();
+
+
+
         return create(address, port, null, ThrottlingConfig.noThrottling());
     }
 
@@ -49,7 +51,7 @@ public abstract class UdpReplicationConfig {
     static UdpReplicationConfig create(InetAddress address, int port,
                                        NetworkInterface networkInterface,
                                        ThrottlingConfig throttlingConfig) {
-        return new AutoValue_UdpReplicationConfig(address, port, networkInterface,
+        return new UdpReplicationConfigBean(address, port, networkInterface,
                 throttlingConfig);
     }
 

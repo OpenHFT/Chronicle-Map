@@ -16,13 +16,12 @@
 
 package net.openhft.chronicle.map;
 
-import com.google.auto.value.AutoValue;
 
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-@AutoValue
+
 public abstract class ThrottlingConfig {
 
     private static final long DEFAULT_BUCKET_INTERVAL = 100L;
@@ -48,8 +47,8 @@ public abstract class ThrottlingConfig {
     }
 
     /**
-     * Returns a config which throttle the specified max bits per the given time unit
-     * with default bucketing interval.
+     * Returns a config which throttle the specified max bits per the given time unit with default bucketing
+     * interval.
      *
      * @param maxBits the preferred maximum bits
      * @param perUnit the time unit per which maximum bits specified
@@ -73,7 +72,7 @@ public abstract class ThrottlingConfig {
     static ThrottlingConfig create(
             long throttle, TimeUnit throttlePerUnit,
             long throttleBucketInterval, TimeUnit throttleBucketIntervalUnit) {
-        return new AutoValue_ThrottlingConfig(throttle, throttlePerUnit,
+        return new ThrottlingConfigBean(throttle, throttlePerUnit,
                 throttleBucketInterval, throttleBucketIntervalUnit);
     }
 
@@ -82,8 +81,8 @@ public abstract class ThrottlingConfig {
     abstract TimeUnit throttlePerUnit();
 
     /**
-     * Returns maximum bits per the given time unit, i. e. the throttling. {@code 0} (zero)
-     * designates there is no throttling.
+     * Returns maximum bits per the given time unit, i. e. the throttling. {@code 0} (zero) designates there
+     * is no throttling.
      *
      * @param perUnit maximum bits is returned per this time unit
      * @return maximum bits per the given time unit, or {@code 0} if there is no throttling
@@ -97,9 +96,8 @@ public abstract class ThrottlingConfig {
     abstract TimeUnit bucketIntervalUnit();
 
     /**
-     * Returns the throttle bucketing interval in the given time units.
-     * <p/>
-     * <p>Default throttle bucketing interval is 100 millis.
+     * Returns the throttle bucketing interval in the given time units. <p/> <p>Default throttle bucketing
+     * interval is 100 millis.
      *
      * @param unit the time unit of the interval
      * @return the bucketing interval for throttling in the given time units

@@ -223,7 +223,7 @@ public final class ReplicatingCluster implements Closeable {
         final int chronicleChannel = bytes.readUnsignedShort();
         final long lastModificationTime = bytes.readLong();
 
-        // this could be null if once node has a chronicle channel before the other
+        // this could be null if one node has a chronicle channel before the other
         if (chronicleChannels[chronicleChannel] != null) {
             chronicleChannels[chronicleChannel].acquireModificationIterator(remoteIdentifier, NOP)
                     .dirtyEntries(lastModificationTime);
@@ -315,6 +315,9 @@ public final class ReplicatingCluster implements Closeable {
 
                 final PayloadProvider iterator = new PayloadProvider() {
 
+
+                    // todo it maybe possibel to replace this with a single atomic refernce,
+                    // todo this way no aditional objects will be created
                     final Queue<Bytes> payloads = new LinkedTransferQueue<Bytes>();
 
                     @Override

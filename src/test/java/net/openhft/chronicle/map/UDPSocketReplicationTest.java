@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -43,8 +42,8 @@ public class UDPSocketReplicationTest {
 
         UdpReplicationConfig udpConfig = UdpReplicationConfig
                 .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
-        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
 
+        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
                 .addReplicator(udp((byte) identifier, udpConfig))
                 .create(Builder.getPersistenceFile());
@@ -75,7 +74,7 @@ public class UDPSocketReplicationTest {
 
 
     @Test
-    @Ignore
+  //  @Ignore
     public void testBufferOverflow() throws IOException, InterruptedException {
 
         for (int i = 0; i < 1024; i++) {
