@@ -3,6 +3,7 @@ package net.openhft.chronicle.map;
 import junit.framework.TestCase;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -10,9 +11,10 @@ import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-public class NodeDiscoveryHostPortBroadcasterTest extends TestCase {
+public class NodeDiscoveryBroadcasterTest extends TestCase {
 
     @Test
+    @Ignore
     public void test() throws IOException, InterruptedException {
 
         final UdpReplicationConfig udpConfig = UdpReplicationConfig
@@ -59,6 +61,7 @@ public class NodeDiscoveryHostPortBroadcasterTest extends TestCase {
 
 
     @Test
+    @Ignore
     public void testJustListen() throws IOException, InterruptedException {
 
         final UdpReplicationConfig udpConfig = UdpReplicationConfig
