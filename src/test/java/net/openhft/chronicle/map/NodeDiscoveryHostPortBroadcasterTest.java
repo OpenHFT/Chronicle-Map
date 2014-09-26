@@ -25,10 +25,10 @@ public class NodeDiscoveryHostPortBroadcasterTest extends TestCase {
         BytesExternalizableImpl externalizable = new BytesExternalizableImpl(remoteNodes);
 
 
-        final NodeDiscoveryHostPortBroadcaster nodeDiscoveryHostPortBroadcaster
-                = new NodeDiscoveryHostPortBroadcaster(udpConfig, 1024, externalizable);
+        final NodeDiscoveryBroadcaster nodeDiscoveryBroadcaster
+                = new NodeDiscoveryBroadcaster(udpConfig, 1024, externalizable);
 
-        externalizable.setModificationNotifier(nodeDiscoveryHostPortBroadcaster);
+        externalizable.setModificationNotifier(nodeDiscoveryBroadcaster);
 
 
         Thread.sleep(1000);
@@ -71,10 +71,10 @@ public class NodeDiscoveryHostPortBroadcasterTest extends TestCase {
         BytesExternalizableImpl externalizable = new BytesExternalizableImpl(remoteNodes);
 
 
-        final NodeDiscoveryHostPortBroadcaster nodeDiscoveryHostPortBroadcaster
-                = new NodeDiscoveryHostPortBroadcaster(udpConfig, 1024, externalizable);
+        final NodeDiscoveryBroadcaster nodeDiscoveryBroadcaster
+                = new NodeDiscoveryBroadcaster(udpConfig, 1024, externalizable);
 
-        externalizable.setModificationNotifier(nodeDiscoveryHostPortBroadcaster);
+        externalizable.setModificationNotifier(nodeDiscoveryBroadcaster);
 
 
         Thread.sleep(10000000);

@@ -16,8 +16,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static net.openhft.chronicle.map.NodeDiscoveryHostPortBroadcaster.BOOTSTRAP_BYTES;
-import static net.openhft.chronicle.map.NodeDiscoveryHostPortBroadcaster.LOG;
+import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
+import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
 
 /**
  * Broad cast the nodes host ports and identifiers over UDP, to make it easy to join a grid of remote nodes
@@ -25,8 +25,8 @@ import static net.openhft.chronicle.map.NodeDiscoveryHostPortBroadcaster.LOG;
  *
  * @author Rob Austin.
  */
-public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
-    public static final Logger LOG = LoggerFactory.getLogger(NodeDiscoveryHostPortBroadcaster.class.getName
+public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
+    public static final Logger LOG = LoggerFactory.getLogger(NodeDiscoveryBroadcaster.class.getName
             ());
     private static final byte UNUSED = (byte) -1;
 
@@ -46,7 +46,7 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
      * @param externalizable
      * @throws java.io.IOException
      */
-    NodeDiscoveryHostPortBroadcaster(
+    NodeDiscoveryBroadcaster(
             @NotNull final UdpReplicationConfig replicationConfig,
             final int serializedEntrySize,
             final BytesExternalizable externalizable)
