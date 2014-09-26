@@ -9,8 +9,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.openhft.chronicle.map.NodeDiscoveryHostPortBroadcaster.BOOTSTRAP_BYTES;
@@ -220,7 +221,7 @@ class RemoteNodes {
 
 
     private final Bytes activeIdentifiersBitSetBytes;
-    private Set<InetSocketAddress> inetSocketAddresses;
+    private ConcurrentSkipListSet inetSocketAddresses;
     private final ATSDirectBitSet atsDirectBitSet;
 
 
@@ -228,7 +229,21 @@ class RemoteNodes {
      * @param activeIdentifiersBitSetBytes byte sof a bitset containing the known identifiers
      */
     RemoteNodes(final Bytes activeIdentifiersBitSetBytes) {
-        this.inetSocketAddresses = new HashSet<InetSocketAddress>();
+
+        this.inetSocketAddresses = new ConcurrentSkipListSet<InetSocketAddress>(new Comparator<InetSocketAddress>(){
+
+            @Override
+            public int compare(InetSocketAddress o1, InetSocketAddress o2) {
+
+                int result = Integer.compare(o1.getPort(), o2.getPort());
+                if (result!=0)
+                    return result;
+
+                return o1.getHostName().compareTo(o2.getHostName());
+
+            }
+        });
+
         this.activeIdentifiersBitSetBytes = activeIdentifiersBitSetBytes;
         this.atsDirectBitSet = new ATSDirectBitSet(this.activeIdentifiersBitSetBytes);
     }
