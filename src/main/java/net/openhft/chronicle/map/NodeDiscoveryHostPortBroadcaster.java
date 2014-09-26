@@ -4,6 +4,8 @@ import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,12 +17,14 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.openhft.chronicle.map.NodeDiscoveryHostPortBroadcaster.BOOTSTRAP_BYTES;
+import static net.openhft.chronicle.map.NodeDiscoveryHostPortBroadcaster.LOG;
 
 /**
  * @author Rob Austin.
  */
 public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
-
+    public static final Logger LOG = LoggerFactory.getLogger(NodeDiscoveryHostPortBroadcaster.class.getName
+            ());
     private static final byte UNUSED = (byte) -1;
 
     static final ByteBufferBytes BOOTSTRAP_BYTES;
@@ -32,6 +36,7 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
         BOOTSTRAP_BYTES.write((short) BOOTSTRAP.length());
         BOOTSTRAP_BYTES.append(BOOTSTRAP);
     }
+
 
     /**
      * @param replicationConfig
@@ -223,6 +228,8 @@ class RemoteNodes {
     private final Bytes activeIdentifiersBitSetBytes;
     private ConcurrentSkipListSet inetSocketAddresses;
     private final ATSDirectBitSet atsDirectBitSet;
+    private final ATSDirectBitSet targetDirectBitSet = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer
+            .allocate(16)));
 
 
     /**
@@ -230,13 +237,13 @@ class RemoteNodes {
      */
     RemoteNodes(final Bytes activeIdentifiersBitSetBytes) {
 
-        this.inetSocketAddresses = new ConcurrentSkipListSet<InetSocketAddress>(new Comparator<InetSocketAddress>(){
+        this.inetSocketAddresses = new ConcurrentSkipListSet<InetSocketAddress>(new Comparator<InetSocketAddress>() {
 
             @Override
             public int compare(InetSocketAddress o1, InetSocketAddress o2) {
 
                 int result = Integer.compare(o1.getPort(), o2.getPort());
-                if (result!=0)
+                if (result != 0)
                     return result;
 
                 return o1.getHostName().compareTo(o2.getHostName());
@@ -263,6 +270,11 @@ class RemoteNodes {
 
     public ATSDirectBitSet activeIdentifierBitSet() {
         return atsDirectBitSet;
+    }
+
+
+    public ATSDirectBitSet targetDirectBitSet() {
+        return targetDirectBitSet;
     }
 }
 
@@ -315,20 +327,26 @@ class BytesExternalizableImpl implements BytesExternalizable {
         }
 
         Bytes bytes = allNodes.activeIdentifierBytes();
-        bytes.clear();
+        //bytes.position(0);
 
-        // we will store the size in here
+        toString(allNodes.activeIdentifierBitSet(), "writting");
+
+        // we will store the size of the bitset
         destination.writeUnsignedShort((int) bytes.remaining());
+
+        // then write it out
         destination.write(bytes);
 
-
+        int i = 1;
+        i++;
     }
 
     @Override
     public void readExternalBytes(@NotNull Bytes source) {
 
         if (isBootstrap(source)) {
-            System.out.println("received Bootstrap");
+
+            LOG.debug("received Bootstrap")  ;
             onChange();
             return;
         }
@@ -340,34 +358,62 @@ class BytesExternalizableImpl implements BytesExternalizable {
             final String host = source.readUTF();
             final int port = source.readInt();
 
-            System.out.println("received InetSocketAddress(" + host + "," + port + ")");
+            LOG.debug("received InetSocketAddress(" + host + "," + port + ")");
             allNodes.add(new InetSocketAddress(host, port));
         }
 
         // the number of bytes in the bitset
         int sizeInBytes = source.readUnsignedShort();
         if (sizeInBytes == 0) {
-            System.out.println("received nothing..");
+            LOG.debug("received nothing..");
             return;
         }
 
-        source.limit(source.position() + sizeInBytes);
+        //source.limit(source.position() + sizeInBytes);
 
-        final ATSDirectBitSet sourceBitSet = new ATSDirectBitSet(source);
 
-        final ATSDirectBitSet resultBitSet = allNodes.activeIdentifierBitSet();
+        //todo we should not have to do this !  -  maybe a bug in Bitset of ByteBuffer
+        Bytes sourceBytes = toNewBuffer(source);
+
+        final ATSDirectBitSet sourceBitSet = new ATSDirectBitSet(sourceBytes);
+
+     //   toString(sourceBitSet, "sourceBitSet");
+
+        final ATSDirectBitSet resultBitSet = allNodes.targetDirectBitSet();
 
         // merges the source into the destination and returns the destination
         orBitSets(sourceBitSet, resultBitSet);
 
 
+      //  toString(resultBitSet, "resultBitSet");
+
+
+    }
+
+
+    /**
+     * we shoudl have to do this, but I think there is a bug in the bitset, so added it as a work around
+     *
+     * @param source
+     * @return
+     */
+    private Bytes toNewBuffer(Bytes source) {
+
+        ByteBufferBytes result = new ByteBufferBytes(ByteBuffer.allocate((int) source.remaining()));
+
+        result.write(source);
+        result.clear();
+        return result;
+
+    }
+
+    private void toString(ATSDirectBitSet bitSet, String type) {
         final StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < resultBitSet.size(); i++) {
-            builder.append(resultBitSet.get(i) ? '1' : '0');
+        for (int i = 0; i < bitSet.size(); i++) {
+            builder.append(bitSet.get(i) ? '1' : '0');
         }
 
-        System.out.println("identifer bitset =" + builder);
-
+        LOG.debug(type + "=" + "bitset =" + builder);
     }
 
     public void onChange() {
@@ -418,13 +464,12 @@ class BytesExternalizableImpl implements BytesExternalizable {
     private ATSDirectBitSet orBitSets(@NotNull final ATSDirectBitSet source,
                                       @NotNull final ATSDirectBitSet destination) {
 
-        source.clear();
 
         // merges the two bit-sets together via 'or'
         for (int i = (int) source.nextSetBit(0); i > 0;
              i = (int) source.nextSetBit(i + 1)) {
             try {
-                destination.set(i);
+                destination.set(i, true);
             } catch (IndexOutOfBoundsException e) {
                 e.printStackTrace();
             }
