@@ -1,3 +1,5 @@
+### Using Chronicle in production and wish to have professionally supported code - find out more..
+
 # Chronicle Map
 Replicate your Key Value Store across your network, with consistency, durability and performance.
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
