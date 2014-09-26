@@ -20,6 +20,9 @@ import static net.openhft.chronicle.map.NodeDiscoveryHostPortBroadcaster.BOOTSTR
 import static net.openhft.chronicle.map.NodeDiscoveryHostPortBroadcaster.LOG;
 
 /**
+ * Broad cast the nodes host ports and identifiers over UDP, to make it easy to join a grid of remote nodes
+ * just by name, this functionality requires UDP
+ *
  * @author Rob Austin.
  */
 public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
@@ -479,18 +482,15 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
     public void sendBootStrap() {
         bootstrapRequired.set(true);
-
     }
 
     public void add(InetSocketAddress interfaceAddress) {
         allNodes.add(interfaceAddress);
-
     }
 
 
     public void add(byte identifier) {
         allNodes.activeIdentifierBitSet().set(identifier);
-
     }
 
 
