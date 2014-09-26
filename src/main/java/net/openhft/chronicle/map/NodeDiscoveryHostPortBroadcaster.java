@@ -102,7 +102,6 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
 
             out.limit(in.position());
 
-
             final short invertedSize = out.readShort();
             final int size = out.readUnsignedShort();
 
@@ -181,15 +180,15 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
 
             long size = in.position() - start;
 
+
+            // we'll write the size inverted at the start
             in.writeShort(0, ~((int) size));
             in.writeUnsignedShort(SIZE_OF_SHORT, (int) size);
 
-            udpReplicator.disableWrites();
 
-
-            // we'll write the size inverted at the start
-            in.writeShort(0, ~(in.readUnsignedShort(SIZE_OF_SHORT)));
             out.limit((int) in.position());
+
+            udpReplicator.disableWrites();
 
             return socketChannel.write(out);
 
@@ -277,6 +276,8 @@ class BytesExternalizableImpl implements BytesExternalizable {
     public void writeExternalBytes(@NotNull Bytes destination) {
 
         if (bootstrapRequired.getAndSet(false)) {
+            //destination.write(BOOTSTRAP_BYTES);
+            BOOTSTRAP_BYTES.clear();
             destination.write(BOOTSTRAP_BYTES);
             return;
         }
@@ -293,7 +294,13 @@ class BytesExternalizableImpl implements BytesExternalizable {
             destination.writeInt(inetSocketAddress.getPort());
         }
 
-        destination.write(allNodes.activeIdentifierBytes());
+        Bytes bytes = allNodes.activeIdentifierBytes();
+        bytes.clear();
+
+        // we will store the size in here
+        destination.writeUnsignedShort((int) bytes.remaining());
+        destination.write(bytes);
+
 
     }
 
@@ -316,15 +323,19 @@ class BytesExternalizableImpl implements BytesExternalizable {
             allNodes.add(new InetSocketAddress(host, port));
         }
 
-        int identifierBitSetBytes = source.readShort();
-        source.limit(source.position() + identifierBitSetBytes);
+        // the number of bytes in the bitset
+        int size = source.readUnsignedShort();
+        if (size == 0)
+            return;
+
+        source.limit(source.position() + size);
 
         final ATSDirectBitSet sourceBitSet = new ATSDirectBitSet(source);
 
         final ATSDirectBitSet resultBitSet = allNodes.activeIdentifierBitSet();
 
         // merges the source into the destination and returns the destination
-        orBitSets(sourceBitSet, resultBitSet);
+        orBitSets(sourceBitSet, resultBitSet, size / 8);
 
 
     }
@@ -335,16 +346,24 @@ class BytesExternalizableImpl implements BytesExternalizable {
      * @return returns true if the UDP message contains the text 'BOOTSTRAP'
      */
     private boolean isBootstrap(Bytes source) {
-        long start = source.position();
+
+        final long start = source.position();
 
         try {
 
-            if (source.remaining() < BOOTSTRAP_BYTES.limit())
+            long size = BOOTSTRAP_BYTES.limit();
+
+            if (size < source.remaining())
                 return false;
 
-            for (int i = 0; i <= BOOTSTRAP_BYTES.limit(); i++) {
-                byte actualByte = source.readByte(start + i);
-                byte expectedByte = BOOTSTRAP_BYTES.readByte(i);
+            if (source.remaining() < size)
+                return false;
+
+            for (int i = 0; i < size; i++) {
+
+                final byte actualByte = source.readByte(start + i);
+                final byte expectedByte = BOOTSTRAP_BYTES.readByte(i);
+
                 if (!(expectedByte == actualByte))
                     return false;
             }
@@ -360,12 +379,12 @@ class BytesExternalizableImpl implements BytesExternalizable {
      *
      * @param source
      * @param destination
+     * @param numberOfLongs
      * @return
      */
-    private ATSDirectBitSet orBitSets(ATSDirectBitSet source, ATSDirectBitSet destination) {
+    private ATSDirectBitSet orBitSets(ATSDirectBitSet source, ATSDirectBitSet destination, final long numberOfLongs) {
         // merge the two bit-sets together via 'or'
 
-        long numberOfLongs = source.size() / 8;
         for (int longIndex = 1; longIndex < numberOfLongs; longIndex++) {
             destination.or(longIndex, source.getLong(longIndex));
         }
