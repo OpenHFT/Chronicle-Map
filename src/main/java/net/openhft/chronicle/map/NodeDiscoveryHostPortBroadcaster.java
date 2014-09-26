@@ -294,8 +294,6 @@ class BytesExternalizableImpl implements BytesExternalizable {
         this.allNodes = allNodes;
     }
 
-    private final AtomicBoolean modificationsComplete = new AtomicBoolean(true);
-
     /**
      * this is used to tell nodes that are connecting to us which host and ports are in our grid, along with
      * all the identifiers.
@@ -465,7 +463,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
                                       @NotNull final ATSDirectBitSet destination) {
 
 
-        // merges the two bit-sets together via 'or'
+        // merges the two bit-sets together
         for (int i = (int) source.nextSetBit(0); i > 0;
              i = (int) source.nextSetBit(i + 1)) {
             try {
