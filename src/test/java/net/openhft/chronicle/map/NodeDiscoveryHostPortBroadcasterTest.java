@@ -42,10 +42,10 @@ public class NodeDiscoveryHostPortBroadcasterTest extends TestCase {
         externalizable.add((byte) 3);
         externalizable.add((byte) 4);
         externalizable.add((byte) 1);
+        externalizable.onChange();
 
         Thread.sleep(1000);
     }
-
 
 
     @Test
@@ -68,8 +68,6 @@ public class NodeDiscoveryHostPortBroadcasterTest extends TestCase {
 
 
         Thread.sleep(10000000);
-
-
 
 
     }

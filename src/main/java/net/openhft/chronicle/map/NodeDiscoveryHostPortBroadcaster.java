@@ -279,7 +279,6 @@ class BytesExternalizableImpl implements BytesExternalizable {
     @Override
     public void writeExternalBytes(@NotNull Bytes destination) {
 
-        modificationsComplete.set(true);
 
         if (bootstrapRequired.getAndSet(false)) {
             //destination.write(BOOTSTRAP_BYTES);
@@ -307,8 +306,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
         destination.writeUnsignedShort((int) bytes.remaining());
         destination.write(bytes);
 
-        if (!(modificationsComplete.get()))
-            modificationNotifier.onChange();
+
     }
 
     @Override
@@ -357,8 +355,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
     }
 
-    private void onChange() {
-        modificationsComplete.set(false);
+    public void onChange() {
         modificationNotifier.onChange();
     }
 
@@ -424,18 +421,19 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
     public void sendBootStrap() {
         bootstrapRequired.set(true);
-        onChange();
+
     }
 
     public void add(InetSocketAddress interfaceAddress) {
         allNodes.add(interfaceAddress);
-        onChange();
+
     }
 
 
     public void add(byte identifier) {
         allNodes.activeIdentifierBitSet().set(identifier);
-        onChange();
+
     }
+
 
 }
