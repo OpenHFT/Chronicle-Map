@@ -49,8 +49,8 @@ import static net.openhft.chronicle.map.ReplicatedChronicleMap.MAX_UNSIGNED_SHOR
  */
 abstract class AbstractChannelReplicator implements Closeable {
 
-    static final int BITS_IN_A_BYTE = 8;
-    static final int SIZE_OF_SHORT = 2;
+    public static final int BITS_IN_A_BYTE = 8;
+    public static final int SIZE_OF_SHORT = 2;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractChannelReplicator.class);
     final Selector selector;
     final CloseablesManager closeables = new CloseablesManager();

@@ -11,6 +11,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static net.openhft.chronicle.map.NodeDiscoveryHostPortBroadcaster.BOOTSTRAP_BYTES;
 
 /**
  * @author Rob Austin.
@@ -27,7 +30,6 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
         BOOTSTRAP_BYTES = new ByteBufferBytes(ByteBuffer.allocate(2 + BOOTSTRAP.length()));
         BOOTSTRAP_BYTES.write((short) BOOTSTRAP.length());
         BOOTSTRAP_BYTES.append(BOOTSTRAP);
-
     }
 
     /**
@@ -45,7 +47,7 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
 
         BytesExternalizable externalizable = new BytesExternalizableImpl(remoteNodes, this);
 
-        setReader(new UdpSocketChannelEntryReader(serializedEntrySize, externalizable));
+        setReader(new UdpSocketChannelEntryReader(serializedEntrySize, externalizable, this));
 
         setWriter(new UdpSocketChannelEntryWriter(serializedEntrySize, externalizable, this));
 
@@ -58,13 +60,17 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
         private final ByteBuffer in;
         private final ByteBufferBytes out;
         private final BytesExternalizable externalizable;
+        private Replica.ModificationNotifier modificationNotifier;
 
         /**
-         * @param serializedEntrySize the maximum size of an entry include the meta data
-         * @param externalizable      supports reading and writing serialize entries
+         * @param serializedEntrySize  the maximum size of an entry include the meta data
+         * @param externalizable       supports reading and writing serialize entries
+         * @param modificationNotifier
          */
         UdpSocketChannelEntryReader(final int serializedEntrySize,
-                                    @NotNull final BytesExternalizable externalizable) {
+                                    @NotNull final BytesExternalizable externalizable,
+                                    @NotNull final Replica.ModificationNotifier modificationNotifier) {
+            this.modificationNotifier = modificationNotifier;
             // we make the buffer twice as large just to give ourselves headroom
             in = ByteBuffer.allocateDirect(serializedEntrySize * 2);
 
@@ -96,6 +102,7 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
 
             out.limit(in.position());
 
+
             final short invertedSize = out.readShort();
             final int size = out.readUnsignedShort();
 
@@ -110,6 +117,7 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
             externalizable.readExternalBytes(out);
         }
 
+
     }
 
     private static class UdpSocketChannelEntryWriter implements EntryWriter {
@@ -118,31 +126,23 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
         private final ByteBuffer out;
         private final ByteBufferBytes in;
 
+
+        @NotNull
         private final BytesExternalizable externalizable;
         private UdpChannelReplicator udpReplicator;
 
         UdpSocketChannelEntryWriter(final int serializedEntrySize,
                                     @NotNull final BytesExternalizable externalizable,
                                     @NotNull final UdpChannelReplicator udpReplicator) {
+
+            this.externalizable = externalizable;
             this.udpReplicator = udpReplicator;
 
             // we make the buffer twice as large just to give ourselves headroom
             out = ByteBuffer.allocateDirect(serializedEntrySize * 2);
             in = new ByteBufferBytes(out);
 
-            // write bootstrap to the 'in' buffer
-            {
-                // skip 2 bytes where we write the size
-                in.skip(SIZE_OF_SHORT);
 
-                in.write(BOOTSTRAP_BYTES);
-
-                // now write the size at the start
-                in.writeShort(0, (int) in.position() - SIZE_OF_SHORT);
-
-            }
-
-            this.externalizable = externalizable;
         }
 
 
@@ -167,48 +167,48 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
 
             out.clear();
             in.clear();
+
+            // skip the size inverted
             in.skip(SIZE_OF_SHORT);
+
+            // skip the size
+            in.skip(SIZE_OF_SHORT);
+
+            long start = in.position();
+
+            // writes the contents of
+            externalizable.writeExternalBytes(in);
+
+            long size = in.position() - start;
+
+            in.writeShort(0, ~((int) size));
+            in.writeUnsignedShort(SIZE_OF_SHORT, (int) size);
+
+            udpReplicator.disableWrites();
+
 
             // we'll write the size inverted at the start
             in.writeShort(0, ~(in.readUnsignedShort(SIZE_OF_SHORT)));
             out.limit((int) in.position());
 
-            int start = out.position();
-
-            // writes the contents of
-            externalizable.writeExternalBytes(in);
-            udpReplicator.disableWrites();
-            // number of bytes written
-            return out.position() - start;
+            return socketChannel.write(out);
 
 
         }
     }
 
-
 }
+
 
 /**
  * supports reading and writing serialize entries
  */
 interface BytesExternalizable {
 
-    /**
-     * The map implements this method to save its contents.
-     *
-     * @param destination a buffer the entry will be written to, the segment may reject this operation and add
-     *                    zeroBytes, if the identifier in the entry did not match the maps local
-     */
+
     void writeExternalBytes(@NotNull Bytes destination);
 
-    /**
-     * The map implements this method to restore its contents. This method must read the values in the same
-     * sequence and with the same types as were written by {@code writeExternalEntry()}. This method is
-     * typically called when we receive a remote replication event, this event could originate from either a
-     * remote {@code put(K key, V value)} or {@code remove(Object key)}
-     *
-     * @param source bytes to read an entry from
-     */
+
     void readExternalBytes(@NotNull Bytes source);
 
 
@@ -223,7 +223,6 @@ class RemoteNodes {
 
 
     /**
-     * @param inetSocketAddresses          the host and ports which we should connect to for TCP replication
      * @param activeIdentifiersBitSetBytes byte sof a bitset containing the known identifiers
      */
     RemoteNodes(final Bytes activeIdentifiersBitSetBytes) {
@@ -254,16 +253,17 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
     private final RemoteNodes allNodes;
     private final Replica.ModificationNotifier modificationNotifier;
-    //private final InetSocketAddress localInetSocketAddress;
+    private final AtomicBoolean bootstrapRequired = new AtomicBoolean(true);
 
     public BytesExternalizableImpl(final RemoteNodes allNodes,
                                    final Replica.ModificationNotifier modificationNotifier) {
         this.allNodes = allNodes;
-        this.modificationNotifier = modificationNotifier;
+
         // todo this should only be added once we have connected - we will add our host and port to allNodes
         //this.localInetSocketAddress = new InetSocketAddress(localHost, localPort);
         //this.allNodes.add(localInetSocketAddress);
 
+        this.modificationNotifier = modificationNotifier;
     }
 
     /**
@@ -276,10 +276,16 @@ class BytesExternalizableImpl implements BytesExternalizable {
     @Override
     public void writeExternalBytes(@NotNull Bytes destination) {
 
+        if (bootstrapRequired.getAndSet(false)) {
+            destination.write(BOOTSTRAP_BYTES);
+            return;
+        }
+
         final Set<InetSocketAddress> inetSocketAddresses = allNodes.inetSocketAddresses();
 
         // write the number of hosts and ports
-        destination.write((short) inetSocketAddresses.size());
+        short count = (short) inetSocketAddresses.size();
+        destination.writeUnsignedShort(count);
 
         // write all the host and ports
         for (InetSocketAddress inetSocketAddress : inetSocketAddresses) {
@@ -288,19 +294,19 @@ class BytesExternalizableImpl implements BytesExternalizable {
         }
 
         destination.write(allNodes.activeIdentifierBytes());
+
     }
 
     @Override
     public void readExternalBytes(@NotNull Bytes source) {
 
-        if (source.equals(NodeDiscoveryHostPortBroadcaster.BOOTSTRAP_BYTES)) {
-            // used to wake up the OP_WRITE
+
+        if (isBootstrap(source)) {
             modificationNotifier.onChange();
             return;
         }
 
-        // the number of host and ports
-        int count = source.readShort();
+        int count = source.readUnsignedShort();
 
         for (int i = 0; i < count; i++) {
 
@@ -321,6 +327,32 @@ class BytesExternalizableImpl implements BytesExternalizable {
         orBitSets(sourceBitSet, resultBitSet);
 
 
+    }
+
+
+    /**
+     * @param source
+     * @return returns true if the UDP message contains the text 'BOOTSTRAP'
+     */
+    private boolean isBootstrap(Bytes source) {
+        long start = source.position();
+
+        try {
+
+            if (source.remaining() < BOOTSTRAP_BYTES.limit())
+                return false;
+
+            for (int i = 0; i <= BOOTSTRAP_BYTES.limit(); i++) {
+                byte actualByte = source.readByte(start + i);
+                byte expectedByte = BOOTSTRAP_BYTES.readByte(i);
+                if (!(expectedByte == actualByte))
+                    return false;
+            }
+
+            return true;
+        } finally {
+            source.position(start);
+        }
     }
 
     /**
