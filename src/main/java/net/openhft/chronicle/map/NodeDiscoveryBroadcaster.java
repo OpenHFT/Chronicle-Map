@@ -56,8 +56,8 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
 
         final UdpSocketChannelEntryWriter writer = new UdpSocketChannelEntryWriter(1024, externalizable,
                 this);
-        final UdpSocketChannelEntryReader reader = new UdpSocketChannelEntryReader(1024, externalizable,
-                this);
+        final UdpSocketChannelEntryReader reader = new UdpSocketChannelEntryReader(1024, externalizable
+        );
 
 
         setReader(reader);
@@ -73,17 +73,15 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
         private final ByteBuffer in;
         private final ByteBufferBytes out;
         private final BytesExternalizable externalizable;
-        private Replica.ModificationNotifier modificationNotifier;
+
 
         /**
          * @param serializedEntrySize  the maximum size of an entry include the meta data
          * @param externalizable       supports reading and writing serialize entries
-         * @param modificationNotifier
          */
         public UdpSocketChannelEntryReader(final int serializedEntrySize,
-                                           @NotNull final BytesExternalizable externalizable,
-                                           @NotNull final Replica.ModificationNotifier modificationNotifier) {
-            this.modificationNotifier = modificationNotifier;
+                                           @NotNull final BytesExternalizable externalizable) {
+
             // we make the buffer twice as large just to give ourselves headroom
             in = ByteBuffer.allocateDirect(serializedEntrySize * 2);
 
@@ -231,8 +229,8 @@ class RemoteNodes {
     private final Bytes activeIdentifiersBitSetBytes;
     private ConcurrentSkipListSet inetSocketAddresses;
     private final ATSDirectBitSet atsDirectBitSet;
-    private final ATSDirectBitSet targetDirectBitSet = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer
-            .allocate(16)));
+   /* private final ATSDirectBitSet targetDirectBitSet = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer
+            .allocate(16)));*/
 
 
     /**
@@ -276,9 +274,6 @@ class RemoteNodes {
     }
 
 
-    public ATSDirectBitSet targetDirectBitSet() {
-        return targetDirectBitSet;
-    }
 }
 
 class BytesExternalizableImpl implements BytesExternalizable {
@@ -309,7 +304,6 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
 
         if (bootstrapRequired.getAndSet(false)) {
-            //destination.write(BOOTSTRAP_BYTES);
             BOOTSTRAP_BYTES.clear();
             destination.write(BOOTSTRAP_BYTES);
             return;
@@ -330,25 +324,24 @@ class BytesExternalizableImpl implements BytesExternalizable {
         Bytes bytes = allNodes.activeIdentifierBytes();
         //bytes.position(0);
 
-        toString(allNodes.activeIdentifierBitSet(), "writting");
+        toString(allNodes.activeIdentifierBitSet(), "writing");
 
         // we will store the size of the bitset
         destination.writeUnsignedShort((int) bytes.remaining());
 
         // then write it out
         destination.write(bytes);
-
-        int i = 1;
-        i++;
     }
 
     @Override
     public void readExternalBytes(@NotNull Bytes source) {
 
         if (isBootstrap(source)) {
-
             LOG.debug("received Bootstrap");
+
+            // we've received a bootstrap message so will will now rebroadcast what we know
             onChange();
+
             return;
         }
 
@@ -365,29 +358,17 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
         // the number of bytes in the bitset
         int sizeInBytes = source.readUnsignedShort();
+
         if (sizeInBytes == 0) {
             LOG.debug("received nothing..");
             return;
         }
 
-        //source.limit(source.position() + sizeInBytes);
-
-
-        //todo we should not have to do this !  -  maybe a bug in Bitset of ByteBuffer
+        //todo we should not have to do this !  -  maybe a bug in BitSet of ByteBuffer
         Bytes sourceBytes = toNewBuffer(source);
 
-        final ATSDirectBitSet sourceBitSet = new ATSDirectBitSet(sourceBytes);
-
-        //   toString(sourceBitSet, "sourceBitSet");
-
-        final ATSDirectBitSet resultBitSet = allNodes.targetDirectBitSet();
-
         // merges the source into the destination and returns the destination
-        orBitSets(sourceBitSet, resultBitSet);
-
-
-        //  toString(resultBitSet, "resultBitSet");
-
+        orBitSets(new ATSDirectBitSet(sourceBytes), allNodes.activeIdentifierBitSet());
 
     }
 
@@ -456,6 +437,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
     }
 
     /**
+     * bitwise OR's the two bit sets or put another way,
      * merges the source bitset into the destination bitset and returns the destination
      *
      * @param source
@@ -492,6 +474,5 @@ class BytesExternalizableImpl implements BytesExternalizable {
     public void add(byte identifier) {
         allNodes.activeIdentifierBitSet().set(identifier);
     }
-
 
 }
