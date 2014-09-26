@@ -34,22 +34,26 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
 
     /**
      * @param replicationConfig
+     * @param externalizable
      * @throws java.io.IOException
      */
     NodeDiscoveryHostPortBroadcaster(
             @NotNull final UdpReplicationConfig replicationConfig,
             final int serializedEntrySize,
-            RemoteNodes remoteNodes)
+            final BytesExternalizable externalizable)
             throws IOException {
 
         super(replicationConfig, serializedEntrySize, UNUSED);
 
+        final UdpSocketChannelEntryWriter writer = new UdpSocketChannelEntryWriter(1024, externalizable,
+                this);
+        final UdpSocketChannelEntryReader reader = new UdpSocketChannelEntryReader(1024, externalizable,
+                this);
 
-        BytesExternalizable externalizable = new BytesExternalizableImpl(remoteNodes, this);
 
-        setReader(new UdpSocketChannelEntryReader(serializedEntrySize, externalizable, this));
+        setReader(reader);
 
-        setWriter(new UdpSocketChannelEntryWriter(serializedEntrySize, externalizable, this));
+        setWriter(writer);
 
         start();
     }
@@ -67,9 +71,9 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
          * @param externalizable       supports reading and writing serialize entries
          * @param modificationNotifier
          */
-        UdpSocketChannelEntryReader(final int serializedEntrySize,
-                                    @NotNull final BytesExternalizable externalizable,
-                                    @NotNull final Replica.ModificationNotifier modificationNotifier) {
+        public UdpSocketChannelEntryReader(final int serializedEntrySize,
+                                           @NotNull final BytesExternalizable externalizable,
+                                           @NotNull final Replica.ModificationNotifier modificationNotifier) {
             this.modificationNotifier = modificationNotifier;
             // we make the buffer twice as large just to give ourselves headroom
             in = ByteBuffer.allocateDirect(serializedEntrySize * 2);
@@ -119,7 +123,7 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
 
     }
 
-    private static class UdpSocketChannelEntryWriter implements EntryWriter {
+    public static class UdpSocketChannelEntryWriter implements EntryWriter {
 
 
         private final ByteBuffer out;
@@ -130,9 +134,9 @@ public class NodeDiscoveryHostPortBroadcaster extends UdpChannelReplicator {
         private final BytesExternalizable externalizable;
         private UdpChannelReplicator udpReplicator;
 
-        UdpSocketChannelEntryWriter(final int serializedEntrySize,
-                                    @NotNull final BytesExternalizable externalizable,
-                                    @NotNull final UdpChannelReplicator udpReplicator) {
+        public UdpSocketChannelEntryWriter(final int serializedEntrySize,
+                                           @NotNull final BytesExternalizable externalizable,
+                                           @NotNull final UdpChannelReplicator udpReplicator) {
 
             this.externalizable = externalizable;
             this.udpReplicator = udpReplicator;
@@ -208,8 +212,7 @@ interface BytesExternalizable {
     void writeExternalBytes(@NotNull Bytes destination);
 
 
-    void readExternalBytes(@NotNull Bytes source);
-
+    public void readExternalBytes(@NotNull Bytes source);
 
 }
 
@@ -251,18 +254,17 @@ class RemoteNodes {
 class BytesExternalizableImpl implements BytesExternalizable {
 
     private final RemoteNodes allNodes;
-    private final Replica.ModificationNotifier modificationNotifier;
-    private final AtomicBoolean bootstrapRequired = new AtomicBoolean(true);
 
-    public BytesExternalizableImpl(final RemoteNodes allNodes,
-                                   final Replica.ModificationNotifier modificationNotifier) {
-        this.allNodes = allNodes;
+    private final AtomicBoolean bootstrapRequired = new AtomicBoolean();
 
-        // todo this should only be added once we have connected - we will add our host and port to allNodes
-        //this.localInetSocketAddress = new InetSocketAddress(localHost, localPort);
-        //this.allNodes.add(localInetSocketAddress);
-
+    public void setModificationNotifier(Replica.ModificationNotifier modificationNotifier) {
         this.modificationNotifier = modificationNotifier;
+    }
+
+    Replica.ModificationNotifier modificationNotifier;
+
+    public BytesExternalizableImpl(final RemoteNodes allNodes) {
+        this.allNodes = allNodes;
     }
 
     /**
@@ -307,9 +309,9 @@ class BytesExternalizableImpl implements BytesExternalizable {
     @Override
     public void readExternalBytes(@NotNull Bytes source) {
 
-
         if (isBootstrap(source)) {
-            modificationNotifier.onChange();
+            System.out.println("received Bootstrap");
+            //modificationNotifier.onChange();
             return;
         }
 
@@ -320,23 +322,33 @@ class BytesExternalizableImpl implements BytesExternalizable {
             final String host = source.readUTF();
             final int port = source.readInt();
 
+            System.out.println("received InetSocketAddress(" + host + "," + port + ")");
             allNodes.add(new InetSocketAddress(host, port));
         }
 
         // the number of bytes in the bitset
-        int size = source.readUnsignedShort();
-        if (size == 0)
+        int sizeInBytes = source.readUnsignedShort();
+        if (sizeInBytes == 0) {
+            System.out.println("received nothing..");
             return;
+        }
 
-        source.limit(source.position() + size);
+        source.limit(source.position() + sizeInBytes);
 
         final ATSDirectBitSet sourceBitSet = new ATSDirectBitSet(source);
 
         final ATSDirectBitSet resultBitSet = allNodes.activeIdentifierBitSet();
 
         // merges the source into the destination and returns the destination
-        orBitSets(sourceBitSet, resultBitSet, size / 8);
+        orBitSets(sourceBitSet, resultBitSet);
 
+
+        final StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < resultBitSet.size(); i++) {
+            builder.append(resultBitSet.get(i) ? '1' : '0');
+        }
+
+        System.out.println("identifer bitset =" + builder);
 
     }
 
@@ -375,22 +387,39 @@ class BytesExternalizableImpl implements BytesExternalizable {
     }
 
     /**
-     * merges the source into the destination and returns the destination
+     * merges the source bitset into the destination bitset and returns the destination
      *
      * @param source
      * @param destination
-     * @param numberOfLongs
      * @return
      */
-    private ATSDirectBitSet orBitSets(ATSDirectBitSet source, ATSDirectBitSet destination, final long numberOfLongs) {
-        // merge the two bit-sets together via 'or'
+    private ATSDirectBitSet orBitSets(@NotNull final ATSDirectBitSet source,
+                                      @NotNull final ATSDirectBitSet destination) {
 
-        for (int longIndex = 1; longIndex < numberOfLongs; longIndex++) {
-            destination.or(longIndex, source.getLong(longIndex));
+        // merges the two bit-sets together via 'or'
+        for (int i = (int) source.nextSetBit(0); i > 0;
+             i = (int) source.nextSetBit(i + 1)) {
+            destination.set(i);
         }
 
         return destination;
     }
 
+
+    public void sendBootStrap() {
+        bootstrapRequired.set(true);
+    }
+
+    public void add(InetSocketAddress interfaceAddress) {
+        allNodes.add(interfaceAddress);
+        modificationNotifier.onChange();
+
+    }
+
+
+    public void add(byte identifier) {
+        allNodes.activeIdentifierBitSet().set(identifier);
+        modificationNotifier.onChange();
+    }
 
 }

@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.Inet4Address;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
 public class NodeDiscoveryHostPortBroadcasterTest extends TestCase {
@@ -21,10 +22,23 @@ public class NodeDiscoveryHostPortBroadcasterTest extends TestCase {
 
         final RemoteNodes remoteNodes = new RemoteNodes(identifierBitSetBits);
 
-        final NodeDiscoveryHostPortBroadcaster nodeDiscoveryHostPortBroadcaster
-                = new NodeDiscoveryHostPortBroadcaster(udpConfig, 1024, remoteNodes);
+        BytesExternalizableImpl externalizable = new BytesExternalizableImpl(remoteNodes);
 
-        Thread.sleep(50000000);
+
+        final NodeDiscoveryHostPortBroadcaster nodeDiscoveryHostPortBroadcaster
+                = new NodeDiscoveryHostPortBroadcaster(udpConfig, 1024, externalizable);
+
+        externalizable.setModificationNotifier(nodeDiscoveryHostPortBroadcaster);
+
+
+        Thread.sleep(1000);
+
+        externalizable.sendBootStrap();
+
+        externalizable.add(new InetSocketAddress("myhost", 8888));
+        externalizable.add((byte) 2);
+
+        Thread.sleep(1000);
     }
 
 
