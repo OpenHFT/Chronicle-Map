@@ -347,7 +347,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
         if (isBootstrap(source)) {
 
-            LOG.debug("received Bootstrap")  ;
+            LOG.debug("received Bootstrap");
             onChange();
             return;
         }
@@ -378,7 +378,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
         final ATSDirectBitSet sourceBitSet = new ATSDirectBitSet(sourceBytes);
 
-     //   toString(sourceBitSet, "sourceBitSet");
+        //   toString(sourceBitSet, "sourceBitSet");
 
         final ATSDirectBitSet resultBitSet = allNodes.targetDirectBitSet();
 
@@ -386,7 +386,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
         orBitSets(sourceBitSet, resultBitSet);
 
 
-      //  toString(resultBitSet, "resultBitSet");
+        //  toString(resultBitSet, "resultBitSet");
 
 
     }
@@ -472,7 +472,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
             try {
                 destination.set(i, true);
             } catch (IndexOutOfBoundsException e) {
-                e.printStackTrace();
+                LOG.error("", e);
             }
         }
 
