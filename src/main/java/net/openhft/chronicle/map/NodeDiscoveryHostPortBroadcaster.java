@@ -396,10 +396,16 @@ class BytesExternalizableImpl implements BytesExternalizable {
     private ATSDirectBitSet orBitSets(@NotNull final ATSDirectBitSet source,
                                       @NotNull final ATSDirectBitSet destination) {
 
+        source.clear();
+
         // merges the two bit-sets together via 'or'
         for (int i = (int) source.nextSetBit(0); i > 0;
              i = (int) source.nextSetBit(i + 1)) {
-            destination.set(i);
+            try {
+                destination.set(i);
+            } catch (IndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
         }
 
         return destination;

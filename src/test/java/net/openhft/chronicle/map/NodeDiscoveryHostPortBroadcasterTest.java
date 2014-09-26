@@ -36,7 +36,12 @@ public class NodeDiscoveryHostPortBroadcasterTest extends TestCase {
         externalizable.sendBootStrap();
 
         externalizable.add(new InetSocketAddress("myhost", 8888));
+        externalizable.add(new InetSocketAddress("myOtherHost", 8888));
         externalizable.add((byte) 2);
+        externalizable.add((byte) 2);
+        externalizable.add((byte) 3);
+        externalizable.add((byte) 4);
+        externalizable.add((byte) 1);
 
         Thread.sleep(1000);
     }
