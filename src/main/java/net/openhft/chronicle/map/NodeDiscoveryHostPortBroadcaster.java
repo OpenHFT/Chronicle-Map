@@ -267,6 +267,8 @@ class BytesExternalizableImpl implements BytesExternalizable {
         this.allNodes = allNodes;
     }
 
+    private final AtomicBoolean modificationsComplete = new AtomicBoolean(true);
+
     /**
      * this is used to tell nodes that are connecting to us which host and ports are in our grid, along with
      * all the identifiers.
@@ -276,6 +278,8 @@ class BytesExternalizableImpl implements BytesExternalizable {
      */
     @Override
     public void writeExternalBytes(@NotNull Bytes destination) {
+
+        modificationsComplete.set(true);
 
         if (bootstrapRequired.getAndSet(false)) {
             //destination.write(BOOTSTRAP_BYTES);
@@ -303,7 +307,8 @@ class BytesExternalizableImpl implements BytesExternalizable {
         destination.writeUnsignedShort((int) bytes.remaining());
         destination.write(bytes);
 
-
+        if (!(modificationsComplete.get()))
+            modificationNotifier.onChange();
     }
 
     @Override
@@ -311,7 +316,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
         if (isBootstrap(source)) {
             System.out.println("received Bootstrap");
-            //modificationNotifier.onChange();
+            onChange();
             return;
         }
 
@@ -350,6 +355,11 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
         System.out.println("identifer bitset =" + builder);
 
+    }
+
+    private void onChange() {
+        modificationsComplete.set(false);
+        modificationNotifier.onChange();
     }
 
 
@@ -414,18 +424,18 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
     public void sendBootStrap() {
         bootstrapRequired.set(true);
+        onChange();
     }
 
     public void add(InetSocketAddress interfaceAddress) {
         allNodes.add(interfaceAddress);
-        modificationNotifier.onChange();
-
+        onChange();
     }
 
 
     public void add(byte identifier) {
         allNodes.activeIdentifierBitSet().set(identifier);
-        modificationNotifier.onChange();
+        onChange();
     }
 
 }
