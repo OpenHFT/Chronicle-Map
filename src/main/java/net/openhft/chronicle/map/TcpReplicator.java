@@ -393,11 +393,12 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     /**
      * used to exchange identifiers and timestamps and heartbeat intervals between the server and client
      *
-     * @param key the SelectionKey relating to the this cha
+     * @param key           the SelectionKey relating to the this cha
+     * @param socketChannel
      * @throws java.io.IOException
      * @throws InterruptedException
      */
-    private void doHandShaking(@NotNull final SelectionKey key)
+    private void doHandShaking(@NotNull final SelectionKey key, SocketChannel socketChannel)
             throws IOException, InterruptedException {
         final Attached attached = (Attached) key.attachment();
         final TcpSocketChannelEntryWriter writer = attached.entryWriter;
@@ -418,15 +419,25 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             activeKeys.set(remoteIdentifier);
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug("server-connection id={}, remoteIdentifier={}",
-                        localIdentifier, remoteIdentifier);
+                LOG.debug("server-connection id={}, remoteIdentifier={}", localIdentifier, remoteIdentifier);
             }
 
+            // this can occur sometimes when if 2 or more remote node attempt to use node discovery at the
+            // same time
             if (remoteIdentifier == localIdentifier) {
-                throw new IllegalStateException("Where are connecting to a remote " +
-                        "map with the same " +
-                        "identifier as this map, identifier=" + localIdentifier + ", " +
-                        "please change either this maps identifier or the remote one");
+
+
+                final NonUniqueIdentifierListener listener = replicationConfig.nonUniqueIdentifierListener();
+
+                if (listener != null)
+                    listener.onNonUniqueIdentifier(remoteIdentifier);
+
+                // throwing this exception will cause us to disconnect, both the client and server
+                // will be able to detect the the remote and local identifiers are the same,
+                // as the identifier is send early on in the hand shaking via the connect(() and accept()
+                // methods
+                throw new IllegalStateException("dropping connection, as the remote and local-identifier " +
+                        "are the same, identifier=" + localIdentifier);
             }
 
             attached.remoteModificationIterator = replica.acquireModificationIterator(remoteIdentifier,
@@ -469,7 +480,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             attached.hasRemoteHeartbeatInterval = true;
 
             // now we're finished we can get on with reading the entries
-            attached.setHandShakingComplete();
+            attached.handShakingComplete = true;
             attached.remoteModificationIterator.dirtyEntries(attached.remoteBootstrapTimestamp);
             reader.entriesFromBuffer();
         }
@@ -527,7 +538,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         if (attached.isHandShakingComplete()) {
             attached.entryReader.entriesFromBuffer();
         } else {
-            doHandShaking(key);
+            doHandShaking(key, socketChannel);
         }
     }
 
@@ -718,15 +729,12 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         // true if its socket is a ServerSocket
         public boolean isServer;        // the frequency the remote node will send a heartbeat
         public long remoteHeartbeatInterval = heartBeatIntervalMillis;
-        private boolean handShakingComplete;
+        public boolean handShakingComplete;
 
         boolean isHandShakingComplete() {
             return handShakingComplete;
         }
 
-        void setHandShakingComplete() {
-            handShakingComplete = true;
-        }
 
         void clearHandShaking() {
             handShakingComplete = false;

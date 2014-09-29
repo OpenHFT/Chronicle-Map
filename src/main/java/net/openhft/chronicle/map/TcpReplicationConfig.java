@@ -41,12 +41,19 @@ public class TcpReplicationConfig {
     private ThrottlingConfig throttlingConfig = ThrottlingConfig.noThrottling();
     private long heartBeatInterval = DEFAULT_HEART_BEAT_INTERVAL;
     private TimeUnit heartBeatIntervalUnit = DEFAULT_HEART_BEAT_INTERVAL_UNIT;
-
+    private NonUniqueIdentifierListener nonUniqueIdentifierListener;
 
     TcpReplicationConfig() {
 
     }
 
+    public NonUniqueIdentifierListener nonUniqueIdentifierListener() {
+        return nonUniqueIdentifierListener;
+    }
+
+    public void nonUniqueIdentifierListener(NonUniqueIdentifierListener nonUniqueIdentifierListener) {
+        this.nonUniqueIdentifierListener = nonUniqueIdentifierListener;
+    }
 
     public boolean autoReconnectedUponDroppedConnection() {
         return autoReconnectedUponDroppedConnection;
