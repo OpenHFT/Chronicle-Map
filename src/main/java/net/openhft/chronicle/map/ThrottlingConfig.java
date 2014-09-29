@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
-public abstract class ThrottlingConfig {
+public class ThrottlingConfig {
 
     private static final long DEFAULT_BUCKET_INTERVAL = 100L;
     private static final TimeUnit DEFAULT_BUCKET_INTERVAL_UNIT = MILLISECONDS;
@@ -30,11 +30,27 @@ public abstract class ThrottlingConfig {
     private static final ThrottlingConfig NO_THROTTLING = create(0L, MILLISECONDS,
             DEFAULT_BUCKET_INTERVAL, DEFAULT_BUCKET_INTERVAL_UNIT);
 
-    /**
-     * Package-private constructor forbids subclassing from outside of the package
-     */
-    ThrottlingConfig() {
-        // nothing to do
+    private final long throttle;
+    private final TimeUnit throttlePerUnit;
+    private final long bucketInterval;
+    private final TimeUnit bucketIntervalUnit;
+
+
+    ThrottlingConfig(
+            long throttle,
+            TimeUnit throttlePerUnit,
+            long bucketInterval,
+            TimeUnit bucketIntervalUnit) {
+        this.throttle = throttle;
+        if (throttlePerUnit == null) {
+            throw new NullPointerException("Null throttlePerUnit");
+        }
+        this.throttlePerUnit = throttlePerUnit;
+        this.bucketInterval = bucketInterval;
+        if (bucketIntervalUnit == null) {
+            throw new NullPointerException("Null bucketIntervalUnit");
+        }
+        this.bucketIntervalUnit = bucketIntervalUnit;
     }
 
     /**
@@ -72,13 +88,10 @@ public abstract class ThrottlingConfig {
     static ThrottlingConfig create(
             long throttle, TimeUnit throttlePerUnit,
             long throttleBucketInterval, TimeUnit throttleBucketIntervalUnit) {
-        return new ThrottlingConfigBean(throttle, throttlePerUnit,
+        return new ThrottlingConfig(throttle, throttlePerUnit,
                 throttleBucketInterval, throttleBucketIntervalUnit);
     }
 
-    abstract long throttle();
-
-    abstract TimeUnit throttlePerUnit();
 
     /**
      * Returns maximum bits per the given time unit, i. e. the throttling. {@code 0} (zero) designates there
@@ -91,9 +104,6 @@ public abstract class ThrottlingConfig {
         return throttlePerUnit().convert(throttle(), perUnit);
     }
 
-    abstract long bucketInterval();
-
-    abstract TimeUnit bucketIntervalUnit();
 
     /**
      * Returns the throttle bucketing interval in the given time units. <p/> <p>Default throttle bucketing
@@ -118,5 +128,63 @@ public abstract class ThrottlingConfig {
         if (throttleBucketInterval <= 0L)
             throw new IllegalArgumentException();
         return create(throttle(), throttlePerUnit(), throttleBucketInterval, unit);
+    }
+
+
+    long throttle() {
+        return throttle;
+    }
+
+
+    TimeUnit throttlePerUnit() {
+        return throttlePerUnit;
+    }
+
+
+    long bucketInterval() {
+        return bucketInterval;
+    }
+
+    TimeUnit bucketIntervalUnit() {
+        return bucketIntervalUnit;
+    }
+
+    @Override
+    public String toString() {
+        return "ThrottlingConfig{"
+                + "throttle=" + throttle
+                + ", throttlePerUnit=" + throttlePerUnit
+                + ", bucketInterval=" + bucketInterval
+                + ", bucketIntervalUnit=" + bucketIntervalUnit
+                + "}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof ThrottlingConfig) {
+            ThrottlingConfig that = (ThrottlingConfig) o;
+            return (this.throttle == that.throttle())
+                    && (this.throttlePerUnit.equals(that.throttlePerUnit()))
+                    && (this.bucketInterval == that.bucketInterval())
+                    && (this.bucketIntervalUnit.equals(that.bucketIntervalUnit()));
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int h = 1;
+        h *= 1000003;
+        h ^= (throttle >>> 32) ^ throttle;
+        h *= 1000003;
+        h ^= throttlePerUnit.hashCode();
+        h *= 1000003;
+        h ^= (bucketInterval >>> 32) ^ bucketInterval;
+        h *= 1000003;
+        h ^= bucketIntervalUnit.hashCode();
+        return h;
     }
 }

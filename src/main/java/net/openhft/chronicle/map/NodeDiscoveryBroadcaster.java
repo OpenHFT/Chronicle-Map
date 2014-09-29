@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.lang.collection.ATSDirectBitSet;
+import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
@@ -26,12 +27,13 @@ import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
  * @author Rob Austin.
  */
 public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
+
     public static final Logger LOG = LoggerFactory.getLogger(NodeDiscoveryBroadcaster.class.getName
             ());
+
     private static final byte UNUSED = (byte) -1;
 
     static final ByteBufferBytes BOOTSTRAP_BYTES;
-
 
     static {
         final String BOOTSTRAP = "BOOTSTRAP";
@@ -53,6 +55,7 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
             throws IOException {
 
         super(replicationConfig, serializedEntrySize, UNUSED);
+
 
         final UdpSocketChannelEntryWriter writer = new UdpSocketChannelEntryWriter(1024, externalizable,
                 this);
@@ -76,8 +79,8 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
 
 
         /**
-         * @param serializedEntrySize  the maximum size of an entry include the meta data
-         * @param externalizable       supports reading and writing serialize entries
+         * @param serializedEntrySize the maximum size of an entry include the meta data
+         * @param externalizable      supports reading and writing serialize entries
          */
         public UdpSocketChannelEntryReader(final int serializedEntrySize,
                                            @NotNull final BytesExternalizable externalizable) {
@@ -229,9 +232,8 @@ class RemoteNodes {
     private final Bytes activeIdentifiersBitSetBytes;
     private ConcurrentSkipListSet inetSocketAddresses;
     private final ATSDirectBitSet atsDirectBitSet;
-   /* private final ATSDirectBitSet targetDirectBitSet = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer
-            .allocate(16)));*/
-
+    private byte ourProposedID = -1;
+    private final ATSDirectBitSet allProposedID;
 
     /**
      * @param activeIdentifiersBitSetBytes byte sof a bitset containing the known identifiers
@@ -254,6 +256,9 @@ class RemoteNodes {
 
         this.activeIdentifiersBitSetBytes = activeIdentifiersBitSetBytes;
         this.atsDirectBitSet = new ATSDirectBitSet(this.activeIdentifiersBitSetBytes);
+
+        // this will only hold bits in it while we in the phase of searching for an id
+        this.allProposedID = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer.allocate(128 / 8)));
     }
 
 
@@ -269,11 +274,18 @@ class RemoteNodes {
         inetSocketAddresses.add(inetSocketAddress);
     }
 
-    public ATSDirectBitSet activeIdentifierBitSet() {
+    public DirectBitSet activeIdentifierBitSet() {
         return atsDirectBitSet;
     }
 
 
+    public byte ourProposedID() {
+        return ourProposedID;
+    }
+
+    public DirectBitSet allProposedID() {
+        return allProposedID;
+    }
 }
 
 class BytesExternalizableImpl implements BytesExternalizable {
@@ -281,15 +293,18 @@ class BytesExternalizableImpl implements BytesExternalizable {
     private final RemoteNodes allNodes;
 
     private final AtomicBoolean bootstrapRequired = new AtomicBoolean();
+    private final UDPEventListener udpEventListener;
 
     public void setModificationNotifier(Replica.ModificationNotifier modificationNotifier) {
         this.modificationNotifier = modificationNotifier;
+
     }
 
     Replica.ModificationNotifier modificationNotifier;
 
-    public BytesExternalizableImpl(final RemoteNodes allNodes) {
+    public BytesExternalizableImpl(final RemoteNodes allNodes, UDPEventListener udpEventListener) {
         this.allNodes = allNodes;
+        this.udpEventListener = udpEventListener;
     }
 
     /**
@@ -320,6 +335,8 @@ class BytesExternalizableImpl implements BytesExternalizable {
             destination.writeUTF(inetSocketAddress.getHostName());
             destination.writeInt(inetSocketAddress.getPort());
         }
+
+        destination.write(allNodes.ourProposedID());
 
         Bytes bytes = allNodes.activeIdentifierBytes();
         //bytes.position(0);
@@ -356,6 +373,10 @@ class BytesExternalizableImpl implements BytesExternalizable {
             allNodes.add(new InetSocketAddress(host, port));
         }
 
+
+        byte remoteProposedId = source.readByte();
+
+
         // the number of bytes in the bitset
         int sizeInBytes = source.readUnsignedShort();
 
@@ -370,6 +391,8 @@ class BytesExternalizableImpl implements BytesExternalizable {
         // merges the source into the destination and returns the destination
         orBitSets(new ATSDirectBitSet(sourceBytes), allNodes.activeIdentifierBitSet());
 
+
+        udpEventListener.onRemoteNodeEvent(allNodes, remoteProposedId);
     }
 
 
@@ -389,7 +412,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
     }
 
-    private void toString(ATSDirectBitSet bitSet, String type) {
+    private void toString(DirectBitSet bitSet, String type) {
         final StringBuilder builder = new StringBuilder();
         for (int i = 0; i < bitSet.size(); i++) {
             builder.append(bitSet.get(i) ? '1' : '0');
@@ -437,15 +460,15 @@ class BytesExternalizableImpl implements BytesExternalizable {
     }
 
     /**
-     * bitwise OR's the two bit sets or put another way,
-     * merges the source bitset into the destination bitset and returns the destination
+     * bitwise OR's the two bit sets or put another way, merges the source bitset into the destination bitset
+     * and returns the destination
      *
      * @param source
      * @param destination
      * @return
      */
-    private ATSDirectBitSet orBitSets(@NotNull final ATSDirectBitSet source,
-                                      @NotNull final ATSDirectBitSet destination) {
+    private DirectBitSet orBitSets(@NotNull final DirectBitSet source,
+                                   @NotNull final DirectBitSet destination) {
 
 
         // merges the two bit-sets together
@@ -475,4 +498,16 @@ class BytesExternalizableImpl implements BytesExternalizable {
         allNodes.activeIdentifierBitSet().set(identifier);
     }
 
+}
+
+interface UDPEventListener {
+
+    /**
+     * called when we have received a UDP message, this is called after the message has been parsed
+     *
+     * @param allNodes
+     * @param remoteProposedId a remote node has proposed using this as an id
+     */
+
+    void onRemoteNodeEvent(RemoteNodes allNodes, byte remoteProposedId);
 }

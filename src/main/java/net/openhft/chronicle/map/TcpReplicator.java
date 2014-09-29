@@ -31,10 +31,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.BitSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Used with a {@see net.openhft.map.ReplicatedSharedHashMap} to send data between the maps using a socket
@@ -52,15 +52,14 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     // bitset
     private final KeyInterestUpdater opWriteUpdater = new KeyInterestUpdater(OP_WRITE, selectionKeysStore);
     private final BitSet activeKeys = new BitSet(selectionKeysStore.length);
-    private final long heartBeatInterval;
-    private final InetSocketAddress serverInetSocketAddress;
-    private final int packetSize;
-    private final Iterable<InetSocketAddress> endpoints;
+    private final long heartBeatIntervalMillis;
 
     private final Replica replica;
     private final byte localIdentifier;
     private final int maxEntrySizeBytes;
     private final Replica.EntryExternalizable externalizable;
+    private final TcpReplicationConfig replicationConfig;
+
     private long selectorTimeout;
 
     /**
@@ -78,21 +77,21 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig(),
                 maxEntrySizeBytes);
 
-        serverInetSocketAddress = new InetSocketAddress(replicationConfig.serverPort());
+        final ThrottlingConfig throttlingConfig = replicationConfig.throttlingConfig();
+        long throttleBucketInterval = TimeUnit.MILLISECONDS.convert(throttlingConfig
+                .bucketInterval(), throttlingConfig.bucketIntervalUnit());
 
-        heartBeatInterval = replicationConfig.heartBeatInterval(MILLISECONDS);
+        heartBeatIntervalMillis = TimeUnit.MILLISECONDS.convert(replicationConfig.heartBeatInterval(),
+                replicationConfig.heartBeatIntervalUnit());
 
-        long throttleBucketInterval =
-                replicationConfig.throttlingConfig().bucketInterval(MILLISECONDS);
-        selectorTimeout = Math.min(heartBeatInterval, throttleBucketInterval);
+        selectorTimeout = Math.min(heartBeatIntervalMillis, throttleBucketInterval);
 
-        packetSize = replicationConfig.packetSize();
-        endpoints = replicationConfig.endpoints();
 
         this.replica = replica;
         this.localIdentifier = replica.identifier();
         this.maxEntrySizeBytes = maxEntrySizeBytes;
         this.externalizable = externalizable;
+        this.replicationConfig = replicationConfig;
 
         start();
     }
@@ -100,10 +99,12 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     @Override
     void process() throws IOException {
         try {
+            final InetSocketAddress serverInetSocketAddress = new InetSocketAddress(replicationConfig
+                    .serverPort());
             final Details serverDetails = new Details(serverInetSocketAddress, localIdentifier);
             new ServerConnector(serverDetails).connect();
 
-            for (InetSocketAddress client : endpoints) {
+            for (InetSocketAddress client : replicationConfig.endpoints()) {
                 final Details clientDetails = new Details(client, localIdentifier);
                 new ClientConnector(clientDetails).connect();
             }
@@ -234,7 +235,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         final Attached attachment = (Attached) key.attachment();
 
         if (attachment.isHandShakingComplete() && attachment.entryWriter.lastSentTime +
-                heartBeatInterval < approxTime) {
+                heartBeatIntervalMillis < approxTime) {
 
             attachment.entryWriter.lastSentTime = approxTime;
             attachment.entryWriter.writeHeartbeatToBuffer();
@@ -278,7 +279,14 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                         "missed heartbeat from identifier=" + attached.remoteIdentifier);
             activeKeys.clear(attached.remoteIdentifier);
             closeables.closeQuietly(channel.socket());
-            attached.connector.connectLater();
+
+            // when node discovery is used ( by nodes broadcasting out their host:port over UDP ),
+            // when new or restarted nodes are started up. they attempt to find the nodes
+            // on the grid by listening to the host and ports of the other nodes, so these nodes will establish the connection when they come back up,
+            // hence under these circumstances, polling a dropped node to attempt to reconnect is no-longer
+            // required as the remote node will establish the connection its self on startup.
+            if (replicationConfig.autoReconnectedUponDroppedConnection())
+                attached.connector.connectLater();
         }
     }
 
@@ -310,7 +318,15 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             }
         } catch (SocketException e) {
             quietClose(key, e);
-            attached.connector.connect();
+
+            // when node discovery is used ( by nodes broadcasting out their host:port over UDP ),
+            // when new or restarted nodes are started up. they attempt to find the nodes
+            // on the grid by listening to the host and ports of the other nodes, so these nodes will establish the connection when they come back up,
+            // hence under these circumstances, polling a dropped node to attempt to reconnect is no-longer
+            // required as the remote node will establish the connection its self on startup.
+            if (replicationConfig.autoReconnectedUponDroppedConnection())
+                attached.connector.connect();
+
             throw e;
         }
 
@@ -419,7 +435,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             writer.writeRemoteBootstrapTimestamp(replica.lastModificationTime(remoteIdentifier));
 
             // tell the remote node, what are heartbeat interval is
-            writer.writeRemoteHeartbeatInterval(heartBeatInterval);
+            writer.writeRemoteHeartbeatInterval(heartBeatIntervalMillis);
         }
 
         if (attached.remoteBootstrapTimestamp == Long.MIN_VALUE) {
@@ -620,9 +636,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
         @Override
         public String toString() {
-            return "ClientConnector{" +
-                    "" + details +
-                    '}';
+            return "ClientConnector{" + details + '}';
         }
 
         /**
@@ -703,7 +717,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         public boolean hasRemoteHeartbeatInterval;
         // true if its socket is a ServerSocket
         public boolean isServer;        // the frequency the remote node will send a heartbeat
-        public long remoteHeartbeatInterval = heartBeatInterval;
+        public long remoteHeartbeatInterval = heartBeatIntervalMillis;
         private boolean handShakingComplete;
 
         boolean isHandShakingComplete() {
@@ -719,7 +733,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
             remoteIdentifier = Byte.MIN_VALUE;
             remoteBootstrapTimestamp = Long.MIN_VALUE;
-            remoteHeartbeatInterval = heartBeatInterval;
+            remoteHeartbeatInterval = heartBeatIntervalMillis;
             hasRemoteHeartbeatInterval = false;
             remoteModificationIterator = null;
 
@@ -752,7 +766,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         private long lastSentTime;
 
         private TcpSocketChannelEntryWriter() {
-            out = ByteBuffer.allocateDirect(packetSize + maxEntrySizeBytes);
+            out = ByteBuffer.allocateDirect(replicationConfig.packetSize() + maxEntrySizeBytes);
             in = new ByteBufferBytes(out);
             entryCallback = new EntryCallback(externalizable, in);
         }
@@ -903,7 +917,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         private int sizeOfNextEntry = Integer.MIN_VALUE;
 
         private TcpSocketChannelEntryReader() {
-            in = ByteBuffer.allocateDirect(packetSize + maxEntrySizeBytes);
+            in = ByteBuffer.allocateDirect(replicationConfig.packetSize() + maxEntrySizeBytes);
             out = new ByteBufferBytes(in);
             out.limit(0);
             in.clear();

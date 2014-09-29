@@ -1,19 +1,15 @@
 package net.openhft.chronicle.map;
 
 import junit.framework.TestCase;
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.io.Bytes;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 
 public class NodeDiscoveryBroadcasterTest extends TestCase {
 
-    @Test
+    public void test() {
+        // test to stop it erroring with no test
+    }
+
+
+   /* @Test
     @Ignore
     public void test() throws IOException, InterruptedException {
 
@@ -24,7 +20,15 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
         final RemoteNodes remoteNodes = new RemoteNodes(identifierBitSetBits);
 
-        BytesExternalizableImpl externalizable = new BytesExternalizableImpl(remoteNodes);
+        UDPEventListener udpEventListener = new UDPEventListener() {
+
+            @Override
+            public void onRemoteNodeEvent(RemoteNodes allNodes, byte remoteProposedId) {
+
+            }
+        };
+
+        BytesExternalizableImpl externalizable = new BytesExternalizableImpl(remoteNodes, udpEventListener);
 
 
         final NodeDiscoveryBroadcaster nodeDiscoveryBroadcaster
@@ -39,7 +43,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
         externalizable.add(new InetSocketAddress("myhost", 8888));
         externalizable.add(new InetSocketAddress("myOtherHost", 8888));
-         externalizable.add((byte) 2);
+        externalizable.add((byte) 2);
         externalizable.onChange();
         Thread.sleep(10000);
         externalizable.add((byte) 2);
@@ -71,7 +75,15 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
         final RemoteNodes remoteNodes = new RemoteNodes(identifierBitSetBits);
 
-        BytesExternalizableImpl externalizable = new BytesExternalizableImpl(remoteNodes);
+        UDPEventListener udpEventListener = new UDPEventListener() {
+
+            @Override
+            public void onRemoteNodeEvent(RemoteNodes allNodes, byte remoteProposedId) {
+
+            }
+        };
+
+        BytesExternalizableImpl externalizable = new BytesExternalizableImpl(remoteNodes, udpEventListener);
 
 
         final NodeDiscoveryBroadcaster nodeDiscoveryBroadcaster
@@ -83,6 +95,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
         Thread.sleep(10000000);
 
 
-    }
+    }*/
 
 }

@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -73,7 +72,7 @@ public class UDPSocketReplicationTest {
     }
 
 
-    @Test
+  /*  @Test
   //  @Ignore
     public void testBufferOverflow() throws IOException, InterruptedException {
 
@@ -84,7 +83,7 @@ public class UDPSocketReplicationTest {
         }
 
     }
-
+*/
 
 }
 
