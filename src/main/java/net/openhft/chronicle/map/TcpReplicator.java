@@ -426,7 +426,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             // same time
             if (remoteIdentifier == localIdentifier) {
 
-
                 final NonUniqueIdentifierListener listener = replicationConfig.nonUniqueIdentifierListener();
 
                 if (listener != null)
