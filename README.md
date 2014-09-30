@@ -1,4 +1,4 @@
-*We can help you get Chronicle up and running in your organisation, we suggest you invite us in for consultancy, charged on an ad-hoc basis, our [We](sales@higherfrequencytrading.com) can help discuss the best options tailored to your individual requirements.*
+*We can help you get Chronicle up and running in your organisation, we suggest you invite us in for consultancy, charged on an ad-hoc basis, [We](sales@higherfrequencytrading.com) can help discuss the best options tailored to your individual requirements.*
 
 *Using Chronicle in production and wish to have professionally supported code - [find out more..](http://openhft.net/support/)*
 
