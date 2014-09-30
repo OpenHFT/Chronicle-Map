@@ -14,15 +14,12 @@ Replicate your Key Value Store across your network, with consistency, durability
 ```
 Click here to get the [Latest Version Number](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22) 
 
-
-#### Source Code Docuementation
-* [JavaDoc](http://openhft.github.io/Chronicle-Map/apidocs)
-
 #### Contents
 
 * [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#should-i-use-chronicle-queue-or-chronicle-map)
 * [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#what-is-the-difference-between-sharedhashmap-and-chronicle-map)
 * [Overview](https://github.com/OpenHFT/Chronicle-Map#overview)
+* [JavaDoc](http://openhft.github.io/Chronicle-Map/apidocs)
 * [Object Construction](https://github.com/OpenHFT/Chronicle-Map#construction)
  *  [Simple Construction](https://github.com/OpenHFT/Chronicle-Map#simple-construction)
  *   [Flow Interface](https://github.com/OpenHFT/Chronicle-Map#flow-interface)
