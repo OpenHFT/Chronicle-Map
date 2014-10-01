@@ -139,10 +139,13 @@ public class DiscoveryCluster {
             @Override
             public boolean isIdentifierUnique(byte remoteIdentifier, SocketAddress remoteAddress) {
                 final SocketAddress socketAddress = identifiers.putIfAbsent(remoteIdentifier, remoteAddress);
+                remoteNodes.activeIdentifierBitSet().set(remoteIdentifier);
                 return socketAddress == null;
             }
         };
 
+
+        remoteNodes.activeIdentifierBitSet().set(identifier);
 
         final TcpReplicationConfig tcpConfig = TcpReplicationConfig
                 .of(tcpPort, toInetSocketArray(knownHostPorts))
