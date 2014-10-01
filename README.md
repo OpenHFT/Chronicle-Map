@@ -458,9 +458,9 @@ j net.openhft.lang.io.AbstractBytes.tryLockNanosLong(JJ)Z+41
 j net.openhft.collections.AbstractVanillaSharedHashMap$Segment.lock()V+12
 ```
 
-##### Chroncle Map is Full
+##### When Chronicle Map is Full
 
-If you fill Chronicle Map it will throw this error.
+It will throw this exception :
 
 ```java
 Caught: java.lang.IllegalStateException: VanillaShortShortMultiMap is full
@@ -473,7 +473,7 @@ java.lang.IllegalStateException: VanillaShortShortMultiMap is full
 
 Chronicle Map doesn't resize automatically.  It is assumed you will make the virtual size of the map larger than you need and it will handle this reasonably efficiently. With the default settings you will run out of space between 1 and 2 million entries.
 
-You should set the .entries(4000000) and .entrySize(??) to the size of the key+value you will use.
+You should set the .entries(4000000) and .entrySize(..) to the size of the key+value you require.
 
 
 # Example : Replicating data between process on different servers
