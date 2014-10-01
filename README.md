@@ -473,7 +473,7 @@ java.lang.IllegalStateException: VanillaShortShortMultiMap is full
 
 Chronicle Map doesn't resize automatically.  It is assumed you will make the virtual size of the map larger than you need and it will handle this reasonably efficiently. With the default settings you will run out of space between 1 and 2 million entries.
 
-You should set the .entries(4000000) and .entrySize(..) to the size of the key+value you require.
+You should set the .entries(..) and .entrySize(..) to those you require.
 
 
 # Example : Replicating data between process on different servers
