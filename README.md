@@ -445,6 +445,8 @@ map = clusterReplicatorBuilder.create((short) 1, builder);
 
 ####  Known Issues
 
+##### Memory issue on Windows
+
 Chronicle map lets you assign a map larger than your available memory, If you were to create more entries than the available memory, chronicle map will page the segments that are accessed least to disk, and load the recently used segments into available memory. This feature lets you work with extremely large maps, it works brilliantly on Linux but unfortunately, this paging feature is not supported on Windows, if you use more memory than is physically available on windows you will experience the following error :
 
 ```java
@@ -455,6 +457,23 @@ j net.openhft.lang.io.AbstractBytes.tryLockNanos8a(JJ)Z+12
 j net.openhft.lang.io.AbstractBytes.tryLockNanosLong(JJ)Z+41
 j net.openhft.collections.AbstractVanillaSharedHashMap$Segment.lock()V+12
 ```
+
+##### Storing Lots of Entries
+
+If you store a lot of entries in chronicle map you will see this exception, this is not an issue, the map is just full.
+```java
+Caught: java.lang.IllegalStateException: VanillaShortShortMultiMap is full
+java.lang.IllegalStateException: VanillaShortShortMultiMap is full
+	at net.openhft.collections.VanillaShortShortMultiMap.nextPos(VanillaShortShortMultiMap.java:226)
+	at net.openhft.collections.AbstractVanillaSharedHashMap$Segment.put(VanillaSharedHashMap.java:834)
+	at net.openhft.collections.AbstractVanillaSharedHashMap.put0(VanillaSharedHashMap.java:348)
+	at net.openhft.collections.AbstractVanillaSharedHashMap.put(VanillaSharedHashMap.java:330)
+```
+
+Chronicle Map doesn't resize automatically.  It is assumed you will make the virtual size of the map larger than you need and it will handle this reasonably efficiently. With the default settings you will run out of space between 1 and 2 million entries.
+
+You should set the .entries(4000000) and .entrySize(??) to the size of the key+value you will use.
+
 
 # Example : Replicating data between process on different servers
 
