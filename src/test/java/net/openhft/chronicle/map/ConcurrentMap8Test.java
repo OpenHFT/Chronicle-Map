@@ -1,20 +1,20 @@
-package net.openhft.chronicle.map;/*
- * Copyright 2014 Higher Frequency Trading
- * <p/>
- * http://www.higherfrequencytrading.com
- * <p/>
+/*
+ * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package net.openhft.chronicle.map;
 
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166
@@ -25,24 +25,19 @@ package net.openhft.chronicle.map;/*
 /*import junit.framework.Test;
 import junit.framework.TestSuite;*/
 
-import net.openhft.collections.jrs166.JSR166TestCase;
-import org.junit.Test;
+import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiFunction;
-
-import static org.junit.Assert.*;
 
 public class ConcurrentMap8Test extends JSR166TestCase {
 
+    static final int SIZE = 10000;
     private static final double EPSILON = 1E-5;
+    static ConcurrentMap<Long, Long> longMap;
 
+    // ******** commented out for the moment as it only works in java8     ********************************
 
-    private static ConcurrentMap<Long, Long> newLongMap() {
+   /* private static ConcurrentMap<Long, Long> newLongMap() {
         //First create (or access if already created) the shared map
 
         final ChronicleMapBuilder<Long, Long> builder = ChronicleMapBuilder.of(Long.class, Long.class);
@@ -52,9 +47,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(8, builder.minSegments());
         //// end of test
 
-        String shmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "SHMTest" + System.nanoTime();
+        String chmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "CHMTest" + System.nanoTime();
         try {
-            return builder.file(new File(shmPath)).create();
+            return builder.create(new File(chmPath));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -75,10 +70,10 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(8, builder.minSegments());
         //// end of test
 
-        String shmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") +
-                "SHMTest" + System.nanoTime();
+        String chmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") +
+                "CHMTest" + System.nanoTime();
         try {
-            return builder.file(new File(shmPath)).create();
+            return builder.create(new File(chmPath));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -86,9 +81,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
 
     }
 
-    /**
+    *//**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
-     */
+     *//*
     private static ConcurrentMap map5() {
         ConcurrentMap map = newIntegerStringMap();
         assertTrue(map.isEmpty());
@@ -104,10 +99,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         return map;
     }
 
-
-    /**
+    *//**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
-     */
+     *//*
     private static ConcurrentHashMap map5ConcurrentHashMap() {
         ConcurrentHashMap<Integer, String> map = new ConcurrentHashMap<Integer, String>(5);
         assertTrue(map.isEmpty());
@@ -121,133 +115,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(empty);
         assertEquals(5, map.size());
         return map;
-    }
-
-    /**
-     * getOrDefault returns value if present, else default
-     */
-    @Test
-    public void testGetOrDefault() {
-        ConcurrentMap map = map5();
-        assertEquals(map.getOrDefault(one, "Z"), "A");
-        assertEquals(map.getOrDefault(six, "Z"), "Z");
-    }
-
-    /**
-     * computeIfAbsent adds when the given key is not present
-     */
-    @Test
-    public void testComputeIfAbsent() {
-        ConcurrentMap map = map5();
-        map.computeIfAbsent(six, (x) -> "Z");
-        assertTrue(map.containsKey(six));
-    }
-
-    /**
-     * computeIfAbsent does not replace if the key is already present
-     */
-    @Test
-    public void testComputeIfAbsent2() {
-        ConcurrentMap map = map5();
-        assertEquals("A", map.computeIfAbsent(one, (x) -> "Z"));
-    }
-
-    /**
-     * computeIfAbsent does not add if function returns null
-     */
-    @Test
-    public void testComputeIfAbsent3() {
-        ConcurrentMap map = map5();
-        map.computeIfAbsent(six, (x) -> null);
-        assertFalse(map.containsKey(six));
-    }
-
-    /**
-     * computeIfPresent does not replace if the key is already present
-     */
-    @Test
-    public void testComputeIfPresent() {
-        ConcurrentMap map = map5();
-        map.computeIfPresent(six, (x, y) -> "Z");
-        assertFalse(map.containsKey(six));
-    }
-
-    /**
-     * computeIfPresent adds when the given key is not present
-     */
-    @Test
-    public void testComputeIfPresent2() {
-        ConcurrentMap map = map5();
-        assertEquals("Z", map.computeIfPresent(one, (x, y) -> "Z"));
-    }
-
-    /**
-     * compute does not replace if the function returns null
-     */
-    @Test
-    public void testCompute() {
-        ConcurrentMap map = map5();
-        map.compute(six, (x, y) -> null);
-        assertFalse(map.containsKey(six));
-    }
-
-    /**
-     * compute adds when the given key is not present
-     */
-    @Test
-    public void testCompute2() {
-        ConcurrentMap map = map5();
-        assertEquals("Z", map.compute(six, (x, y) -> "Z"));
-    }
-
-    /**
-     * compute replaces when the given key is present
-     */
-    @Test
-    public void testCompute3() {
-        ConcurrentMap map = map5();
-        assertEquals("Z", map.compute(one, (x, y) -> "Z"));
-    }
-
-    /**
-     * compute removes when the given key is present and function returns null
-     */
-    @Test
-    public void testCompute4() {
-        ConcurrentMap map = map5();
-        final BiFunction remappingFunction = (x, y) -> {
-            return null;
-        };
-        map.compute(one, remappingFunction);
-        assertFalse(map.containsKey(one));
-    }
-
-    /**
-     * merge adds when the given key is not present
-     */
-    @Test
-    public void testMerge1() {
-        ConcurrentMap map = map5();
-        assertEquals("Y", map.merge(six, "Y", (x, y) -> "Z"));
-    }
-
-    /**
-     * merge replaces when the given key is present
-     */
-    @Test
-    public void testMerge2() {
-        ConcurrentMap map = map5();
-        assertEquals("Z", map.merge(one, "Y", (x, y) -> "Z"));
-    }
-
-    /**
-     * merge removes when the given key is present and function returns null
-     */
-    @Test
-    public void testMerge3() {
-        ConcurrentMap map = map5();
-        map.merge(one, "Y", (x, y) -> null);
-        assertFalse(map.containsKey(one));
     }
 
     static Set<Integer> populatedSet(int n) {
@@ -270,9 +137,146 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         return a;
     }
 
-    /*
+    static ConcurrentMap<Long, Long> longMap() {
+        if (longMap == null) {
+            longMap = newLongMap();
+            for (int i = 0; i < SIZE; ++i)
+                longMap.put(Long.valueOf(i), Long.valueOf(2 * i));
+        }
+
+        return longMap;
+    }
+
+    *//**
+     * getOrDefault returns value if present, else default
+     *//*
+    @Test
+    public void testGetOrDefault() {
+        ConcurrentMap map = map5();
+        assertEquals(map.getOrDefault(one, "Z"), "A");
+        assertEquals(map.getOrDefault(six, "Z"), "Z");
+    }
+
+    *//**
+     * computeIfAbsent adds when the given key is not present
+     *//*
+    @Test
+    public void testComputeIfAbsent() {
+        ConcurrentMap map = map5();
+        map.computeIfAbsent(six, (x) -> "Z");
+        assertTrue(map.containsKey(six));
+    }
+
+    *//**
+     * computeIfAbsent does not replace if the key is already present
+     *//*
+    @Test
+    public void testComputeIfAbsent2() {
+        ConcurrentMap map = map5();
+        assertEquals("A", map.computeIfAbsent(one, (x) -> "Z"));
+    }
+
+    *//**
+     * computeIfAbsent does not add if function returns null
+     *//*
+    @Test
+    public void testComputeIfAbsent3() {
+        ConcurrentMap map = map5();
+        map.computeIfAbsent(six, (x) -> null);
+        assertFalse(map.containsKey(six));
+    }
+
+    *//**
+     * computeIfPresent does not replace if the key is already present
+     *//*
+    @Test
+    public void testComputeIfPresent() {
+        ConcurrentMap map = map5();
+        map.computeIfPresent(six, (x, y) -> "Z");
+        assertFalse(map.containsKey(six));
+    }
+
+    *//**
+     * computeIfPresent adds when the given key is not present
+     *//*
+    @Test
+    public void testComputeIfPresent2() {
+        ConcurrentMap map = map5();
+        assertEquals("Z", map.computeIfPresent(one, (x, y) -> "Z"));
+    }
+
+    *//**
+     * compute does not replace if the function returns null
+     *//*
+    @Test
+    public void testCompute() {
+        ConcurrentMap map = map5();
+        map.compute(six, (x, y) -> null);
+        assertFalse(map.containsKey(six));
+    }
+
+    *//**
+     * compute adds when the given key is not present
+     *//*
+    @Test
+    public void testCompute2() {
+        ConcurrentMap map = map5();
+        assertEquals("Z", map.compute(six, (x, y) -> "Z"));
+    }
+
+    *//**
+     * compute replaces when the given key is present
+     *//*
+    @Test
+    public void testCompute3() {
+        ConcurrentMap map = map5();
+        assertEquals("Z", map.compute(one, (x, y) -> "Z"));
+    }
+
+    *//**
+     * compute removes when the given key is present and function returns null
+     *//*
+    @Test
+    public void testCompute4() {
+        ConcurrentMap map = map5();
+        final BiFunction remappingFunction = (x, y) -> {
+            return null;
+        };
+        map.compute(one, remappingFunction);
+        assertFalse(map.containsKey(one));
+    }
+
+    *//**
+     * merge adds when the given key is not present
+     *//*
+    @Test
+    public void testMerge1() {
+        ConcurrentMap map = map5();
+        assertEquals("Y", map.merge(six, "Y", (x, y) -> "Z"));
+    }
+
+    *//**
+     * merge replaces when the given key is present
+     *//*
+    @Test
+    public void testMerge2() {
+        ConcurrentMap map = map5();
+        assertEquals("Z", map.merge(one, "Y", (x, y) -> "Z"));
+    }
+
+    *//**
+     * merge removes when the given key is present and function returns null
+     *//*
+    @Test
+    public void testMerge3() {
+        ConcurrentMap map = map5();
+        map.merge(one, "Y", (x, y) -> null);
+        assertFalse(map.containsKey(one));
+    }
+
+    *//*
      * replaceAll replaces all matching values.
-     */
+     *//*
     @Test
     public void testReplaceAll() {
         ConcurrentMap<Integer, String> map = map5();
@@ -289,19 +293,18 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals("Z", map.get(five));
     }
 
-    /**
+    *//**
      * Default-constructed set is empty
-     */
+     *//*
     @Test
     public void testNewKeySet() {
         Set a = ConcurrentHashMap.newKeySet();
         assertTrue(a.isEmpty());
     }
 
-
-    /**
+    *//**
      * keySet.addAll adds each element from the given collection
-     */
+     *//*
     @Test
     public void testAddAll() {
         Set full = populatedSet(3);
@@ -313,9 +316,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(6, full.size());
     }
 
-    /**
+    *//**
      * keySet.addAll adds each element from the given collection that did not already exist in the set
-     */
+     *//*
     @Test
     public void testAddAll2() {
         Set full = populatedSet(3);
@@ -327,9 +330,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(5, full.size());
     }
 
-    /**
+    *//**
      * keySet.add will not add the element if it already exists in the set
-     */
+     *//*
     @Test
     public void testAdd2() {
         Set full = populatedSet(3);
@@ -337,9 +340,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(3, full.size());
     }
 
-    /**
+    *//**
      * keySet.add adds the element when it does not exist in the set
-     */
+     *//*
     @Test
     public void testAdd3() {
         Set full = populatedSet(3);
@@ -347,9 +350,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertTrue(full.contains(three));
     }
 
-    /**
+    *//**
      * keySet.add throws UnsupportedOperationException if no default mapped value
-     */
+     *//*
     @Test
     public void testAdd4() {
         Set full = map5().keySet();
@@ -360,9 +363,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         }
     }
 
-    /**
+    *//**
      * keySet.add throws NullPointerException if the specified key is null
-     */
+     *//*
     @Test
     public void testAdd5() {
         Set full = populatedSet(3);
@@ -373,9 +376,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         }
     }
 
-    /**
+    *//**
      * keyset.clear removes all elements from the set
-     */
+     *//*
     @Test
     public void testClear() {
         Set full = populatedSet(3);
@@ -383,9 +386,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(0, full.size());
     }
 
-    /**
+    *//**
      * keyset.contains returns true for added elements
-     */
+     *//*
     @Test
     public void testContains() {
         Set full = populatedSet(3);
@@ -393,9 +396,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(full.contains(five));
     }
 
-    /**
+    *//**
      * KeySets with equal elements are equal
-     */
+     *//*
     @Test
     public void testEquals() {
         Set a = populatedSet(3);
@@ -412,9 +415,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(a.hashCode(), b.hashCode());
     }
 
-    /**
+    *//**
      * KeySet.containsAll returns true for collections with subset of elements
-     */
+     *//*
     @Test
     public void testContainsAll() {
         Set full = populatedSet(3);
@@ -426,9 +429,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(full.containsAll(v));
     }
 
-    /**
+    *//**
      * KeySet.isEmpty is true when empty, else false
-     */
+     *//*
     @Test
     public void testIsEmpty() {
         Set empty = ConcurrentHashMap.newKeySet();
@@ -437,9 +440,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(full.isEmpty());
     }
 
-    /**
+    *//**
      * KeySet.iterator() returns an iterator containing the elements of the set
-     */
+     *//*
     @Test
     public void testIterator() {
         Collection empty = ConcurrentHashMap.newKeySet();
@@ -470,9 +473,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         }
     }
 
-    /**
+    *//**
      * KeySet.iterator.remove removes current element
-     */
+     *//*
     @Test
     public void testIteratorRemove() {
         Set q = populatedSet(3);
@@ -486,9 +489,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(it.hasNext());
     }
 
-    /**
+    *//**
      * KeySet.toString holds toString of elements
-     */
+     *//*
     @Test
     public void testToString() {
         assertEquals("[]", ConcurrentHashMap.newKeySet().toString());
@@ -498,9 +501,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
             assertTrue(s.contains(String.valueOf(i)));
     }
 
-    /**
+    *//**
      * KeySet.removeAll removes all elements from the given collection
-     */
+     *//*
     @Test
     public void testRemoveAll() {
         Set full = populatedSet(3);
@@ -511,9 +514,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(1, full.size());
     }
 
-    /**
+    *//**
      * KeySet.remove removes an element
-     */
+     *//*
     @Test
     public void testRemove() {
         Set full = populatedSet(3);
@@ -522,9 +525,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(2, full.size());
     }
 
-    /**
+    *//**
      * keySet.size returns the number of elements
-     */
+     *//*
     @Test
     public void testSize() {
         Set empty = ConcurrentHashMap.newKeySet();
@@ -533,9 +536,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(0, empty.size());
     }
 
-    /**
+    *//**
      * KeySet.toArray() returns an Object array containing all elements from the set
-     */
+     *//*
     @Test
     public void testToArray() {
         Object[] a = ConcurrentHashMap.newKeySet().toArray();
@@ -553,9 +556,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertSame(Object[].class, full.toArray().getClass());
     }
 
-    /**
+    *//**
      * toArray(Integer array) returns an Integer array containing all elements from the set
-     */
+     *//*
     @Test
     public void testToArray2() {
         Collection empty = ConcurrentHashMap.newKeySet();
@@ -590,9 +593,9 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertTrue(Arrays.asList(elements).containsAll(Arrays.asList(full.toArray(a))));
     }
 
-    /**
+    *//**
      * A deserialized serialized set is equal
-     */
+     *//*
     @Test
     public void testSerialization() throws Exception {
         int size = 20;
@@ -605,20 +608,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(y, x);
     }
 
-    static final int SIZE = 10000;
-    static ConcurrentMap<Long, Long> longMap;
-
-    static ConcurrentMap<Long, Long> longMap() {
-        if (longMap == null) {
-            longMap = newLongMap();
-            for (int i = 0; i < SIZE; ++i)
-                longMap.put(Long.valueOf(i), Long.valueOf(2 * i));
-        }
-
-        return longMap;
-    }
-
-
     // explicit function class to avoid type inference problems
     static class AddKeys implements BiFunction<Map.Entry<Long, Long>, Map.Entry<Long, Long>, Map.Entry<Long, Long>> {
         public Map.Entry<Long, Long> apply(Map.Entry<Long, Long> x, Map.Entry<Long, Long> y) {
@@ -628,5 +617,5 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         }
     }
 
-
+*/
 }
