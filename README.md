@@ -86,7 +86,7 @@ If you have;
 Chronicle queue is designed to send every update. If your network can't do this something has to give. You could compress the data but at some point you have to work within the limits of your hardware or get more hardware. Chronicle Map on the other hand sends the latest value only. This will naturally drop updates and is a more natural choice for low bandwidth connections.
 
 #### What is the difference between SharedHashMap and Chronicle Map
-The only difference is Chronicle Map targets java 8, and SharedHashMap targets java 7. Effectively SharedHashMap has just been renamed to ChronicleMap, to further enrich the Chronicle product suite. In addition, The original Chronicle has been renamed to Chronicle Queue.
+Effectively SharedHashMap has just been renamed to ChronicleMap, to further enrich the Chronicle product suite. In addition, The original Chronicle has been renamed to Chronicle Queue.
 
 One of the main differences between chronicle and ConcurrentHashMap, is how you go about creating an instance see the getting started guide below for details.
 
