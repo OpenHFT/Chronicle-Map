@@ -1,4 +1,6 @@
-*Using Chronicle in production and wish to have professionally supported code - [find out more..](http://openhft.net/support/)*
+*We can help you get Chronicle up and running in your organisation, we suggest you invite us in for consultancy, charged on an ad-hoc basis, we can discuss the best options tailored to your individual requirements. - [Contact Us](sales@higherfrequencytrading.com)*
+
+*Or you may already be using Chronicle and just want some help - [find out more..](http://openhft.net/support/)*
 
 # Chronicle Map
 
@@ -19,7 +21,8 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#should-i-use-chronicle-queue-or-chronicle-map)
 * [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#what-is-the-difference-between-sharedhashmap-and-chronicle-map)
 * [Overview](https://github.com/OpenHFT/Chronicle-Map#overview)
-* [Object Construction](https://github.com/OpenHFT/Chronicle-Map#construction)
+* [JavaDoc](http://openhft.github.io/Chronicle-Map/apidocs)
+* [Getting Started Guide](https://github.com/OpenHFT/Chronicle-Map#getting-started)
  *  [Simple Construction](https://github.com/OpenHFT/Chronicle-Map#simple-construction)
  *   [Flow Interface](https://github.com/OpenHFT/Chronicle-Map#flow-interface)
  *  [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
@@ -39,6 +42,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *   [Identifier for Replication](https://github.com/OpenHFT/Chronicle-Map#identifier-for-replication)
  *   [Bootstrapping](https://github.com/OpenHFT/Chronicle-Map#bootstrapping)
 * [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
+* [Stackoverflow](http://stackoverflow.com/tags/chronicle/info)
 * [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
 * [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
 
@@ -82,11 +86,11 @@ If you have;
 Chronicle queue is designed to send every update. If your network can't do this something has to give. You could compress the data but at some point you have to work within the limits of your hardware or get more hardware. Chronicle Map on the other hand sends the latest value only. This will naturally drop updates and is a more natural choice for low bandwidth connections.
 
 #### What is the difference between SharedHashMap and Chronicle Map
-The only difference is Chronicle Map targets java 8, and SharedHashMap targets java 7. Effectively SharedHashMap has just been renamed to ChronicleMap, to further enrich the Chronicle product suite. In addition, The original Chronicle has been renamed to Chronicle Queue.
+Effectively SharedHashMap has just been renamed to ChronicleMap, to further enrich the Chronicle product suite. In addition, The original Chronicle has been renamed to Chronicle Queue.
 
-## Construction
+One of the main differences between chronicle and ConcurrentHashMap, is how you go about creating an instance see the getting started guide below for details.
 
-One of the main differences is how you go about creating an instance of the Chronicle Map.
+## Getting Started
 
 ### Simple Construction
 
@@ -441,6 +445,8 @@ map = clusterReplicatorBuilder.create((short) 1, builder);
 
 ####  Known Issues
 
+##### Memory issue on Windows
+
 Chronicle map lets you assign a map larger than your available memory, If you were to create more entries than the available memory, chronicle map will page the segments that are accessed least to disk, and load the recently used segments into available memory. This feature lets you work with extremely large maps, it works brilliantly on Linux but unfortunately, this paging feature is not supported on Windows, if you use more memory than is physically available on windows you will experience the following error :
 
 ```java
@@ -451,6 +457,24 @@ j net.openhft.lang.io.AbstractBytes.tryLockNanos8a(JJ)Z+12
 j net.openhft.lang.io.AbstractBytes.tryLockNanosLong(JJ)Z+41
 j net.openhft.collections.AbstractVanillaSharedHashMap$Segment.lock()V+12
 ```
+
+##### When Chronicle Map is Full
+
+It will throw this exception :
+
+```java
+Caught: java.lang.IllegalStateException: VanillaShortShortMultiMap is full
+java.lang.IllegalStateException: VanillaShortShortMultiMap is full
+	at net.openhft.collections.VanillaShortShortMultiMap.nextPos(VanillaShortShortMultiMap.java:226)
+	at net.openhft.collections.AbstractVanillaSharedHashMap$Segment.put(VanillaSharedHashMap.java:834)
+	at net.openhft.collections.AbstractVanillaSharedHashMap.put0(VanillaSharedHashMap.java:348)
+	at net.openhft.collections.AbstractVanillaSharedHashMap.put(VanillaSharedHashMap.java:330)
+```
+
+Chronicle Map doesn't resize automatically.  It is assumed you will make the virtual size of the map larger than you need and it will handle this reasonably efficiently. With the default settings you will run out of space between 1 and 2 million entries.
+
+You should set the .entries(..) and .entrySize(..) to those you require.
+
 
 # Example : Replicating data between process on different servers
 
