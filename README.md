@@ -74,6 +74,8 @@ If you compare HashMap, ConcurrentHashMap and Chronicle Map, most of the maps in
 ####  When to use ConcurrentHashMap
 ConcurrentHashMap scales very well when highly contended.  It uses more memory but if you only have a few of them, this doesn't matter.  They have higher throughput than the other two solutions, but also it creates the highest garbage.  If garbage pressure is an issue for you, you may want to consider Chronicle Map
 
+One of the main differences between chronicle and ConcurrentHashMap, is how you go about creating an instance see the getting started guide below for details.
+
 ####  When to use Chronicle Map
 If you have;
 * lots of small key-values
@@ -88,7 +90,7 @@ Chronicle queue is designed to send every update. If your network can't do this 
 #### What is the difference between SharedHashMap and Chronicle Map
 Effectively SharedHashMap has just been renamed to ChronicleMap, to further enrich the Chronicle product suite. In addition, The original Chronicle has been renamed to Chronicle Queue.
 
-One of the main differences between chronicle and ConcurrentHashMap, is how you go about creating an instance see the getting started guide below for details.
+
 
 ## Getting Started
 
@@ -192,7 +194,7 @@ map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).file(file).crea
 Note: In order to share data between map1 and map2, the file has to point to the same file location on your server.
 
 ### Entries
-One of the differences with Chronicle Map against ConcurrentHashMap, is that it does not have to be resized, unlike the ConcurrentHashMap, Chronicle Map is not limited to the available on heap memory. Resizing is a very expensive operation for Hash Maps, as it can stall your application, so as such we don't do it. When you are building a Chronicle Map you can set the maximum number of entries that you are ever likely to support, its ok to over exaggerate this number. As the Chronicle Map is not limited to your available memory, At worst you will end up having a very large file on disk.
+One of the differences with Chronicle Map against ConcurrentHashMap, is that it can't be resized, unlike the ConcurrentHashMap, Chronicle Map is not limited to the available on heap memory. Resizing is a very expensive operation for Hash Maps, as it can stall your application, so as such we don't do it. When you are building a Chronicle Map you can set the maximum number of entries that you are ever likely to support, its ok to over exaggerate this number. As the Chronicle Map is not limited to your available memory, At worst you will end up having a very large file on disk.
 
 You set the maximum number of entries by the builder:
 
