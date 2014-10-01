@@ -22,7 +22,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#what-is-the-difference-between-sharedhashmap-and-chronicle-map)
 * [Overview](https://github.com/OpenHFT/Chronicle-Map#overview)
 * [JavaDoc](http://openhft.github.io/Chronicle-Map/apidocs)
-* [Object Construction](https://github.com/OpenHFT/Chronicle-Map#construction)
+* [Getting Started](https://github.com/OpenHFT/Chronicle-Map#construction)
  *  [Simple Construction](https://github.com/OpenHFT/Chronicle-Map#simple-construction)
  *   [Flow Interface](https://github.com/OpenHFT/Chronicle-Map#flow-interface)
  *  [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
