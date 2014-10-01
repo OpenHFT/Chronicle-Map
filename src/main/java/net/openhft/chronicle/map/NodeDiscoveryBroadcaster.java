@@ -412,7 +412,8 @@ class BytesExternalizableImpl implements BytesExternalizable {
         Bytes bytes = allNodes.activeIdentifierBytes();
         //bytes.position(0);
 
-        toString(allNodes.activeIdentifierBitSet(), "writing");
+        if (LOG.isDebugEnabled())
+            toString(allNodes.activeIdentifierBitSet(), "writing");
 
         // we will store the size of the bitset
         destination.writeUnsignedShort((int) bytes.remaining());
@@ -647,7 +648,7 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
             long size = BOOTSTRAP_BYTES.limit();
 
-            if (size < source.remaining())
+            if (size > source.remaining())
                 return null;
 
             for (int i = 0; i < size; i++) {

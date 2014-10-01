@@ -27,7 +27,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
         DiscoveryCluster discoveryCluster = new DiscoveryCluster();
 
-        ChronicleMap<Integer, CharSequence> map = discoveryCluster.discoverMap(1025, 8086);
+        ChronicleMap<Integer, CharSequence> map = discoveryCluster.discoverMap(1025, 8087);
 
         Thread.sleep(10000);
     }
