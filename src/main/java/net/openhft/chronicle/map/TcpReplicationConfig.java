@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.map;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,34 +43,38 @@ public class TcpReplicationConfig {
     private ThrottlingConfig throttlingConfig = ThrottlingConfig.noThrottling();
     private long heartBeatInterval = DEFAULT_HEART_BEAT_INTERVAL;
     private TimeUnit heartBeatIntervalUnit = DEFAULT_HEART_BEAT_INTERVAL_UNIT;
-    private NonUniqueIdentifierListener nonUniqueIdentifierListener;
+    public IdentifierListener identifierListener;
 
     TcpReplicationConfig() {
 
     }
 
-    public NonUniqueIdentifierListener nonUniqueIdentifierListener() {
-        return nonUniqueIdentifierListener;
+    public IdentifierListener identifierListener() {
+        return identifierListener;
     }
 
-    public void nonUniqueIdentifierListener(NonUniqueIdentifierListener nonUniqueIdentifierListener) {
-        this.nonUniqueIdentifierListener = nonUniqueIdentifierListener;
+    public TcpReplicationConfig nonUniqueIdentifierListener(@NotNull final IdentifierListener
+                                                                    identifierListener) {
+        this.identifierListener = identifierListener;
+        return this;
     }
 
     public boolean autoReconnectedUponDroppedConnection() {
         return autoReconnectedUponDroppedConnection;
     }
 
-    public void autoReconnectedUponDroppedConnection(boolean autoReconnectedUponDroppedConnection) {
+    public TcpReplicationConfig autoReconnectedUponDroppedConnection(boolean autoReconnectedUponDroppedConnection) {
         this.autoReconnectedUponDroppedConnection = autoReconnectedUponDroppedConnection;
+        return this;
     }
 
     public ThrottlingConfig throttlingConfig() {
         return throttlingConfig;
     }
 
-    public void throttlingConfig(ThrottlingConfig throttlingConfig) {
+    public TcpReplicationConfig throttlingConfig(ThrottlingConfig throttlingConfig) {
         this.throttlingConfig = throttlingConfig;
+        return this;
     }
 
 
@@ -84,15 +90,16 @@ public class TcpReplicationConfig {
         return serverPort;
     }
 
-    public void serverPort(int serverPort) {
+    public TcpReplicationConfig serverPort(int serverPort) {
         this.serverPort = serverPort;
+        return this;
     }
 
     public Set<InetSocketAddress> endpoints() {
         return endpoints;
     }
 
-    public void endpoints(Set<InetSocketAddress> endpoints) {
+    public TcpReplicationConfig endpoints(Set<InetSocketAddress> endpoints) {
 
         for (final InetSocketAddress endpoint : endpoints) {
             if (endpoint.getPort() == serverPort && "localhost".equals(endpoint.getHostName()))
@@ -101,6 +108,7 @@ public class TcpReplicationConfig {
         }
 
         this.endpoints = endpoints;
+        return this;
     }
 
     public int packetSize() {
@@ -133,15 +141,17 @@ public class TcpReplicationConfig {
     }
 
 
-    public void packetSize(int packetSize) {
+    public TcpReplicationConfig packetSize(int packetSize) {
         if (packetSize <= 0)
             throw new IllegalArgumentException();
         this.packetSize = packetSize;
+        return this;
     }
 
-    public void throttlingConfig(long heartBeatInterval, TimeUnit heartBeatIntervalUnit) {
+    public TcpReplicationConfig throttlingConfig(long heartBeatInterval, TimeUnit heartBeatIntervalUnit) {
         this.heartBeatInterval = heartBeatInterval;
         this.heartBeatIntervalUnit = heartBeatIntervalUnit;
+        return this;
     }
 
 
@@ -194,4 +204,6 @@ public class TcpReplicationConfig {
         this.heartBeatIntervalUnit = unit;
         return this;
     }
+
+
 }

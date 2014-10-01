@@ -23,10 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.SocketException;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.BitSet;
@@ -85,7 +82,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 replicationConfig.heartBeatIntervalUnit());
 
         selectorTimeout = Math.min(heartBeatIntervalMillis, throttleBucketInterval);
-
 
         this.replica = replica;
         this.localIdentifier = replica.identifier();
@@ -424,19 +420,27 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
             // this can occur sometimes when if 2 or more remote node attempt to use node discovery at the
             // same time
-            if (remoteIdentifier == localIdentifier) {
 
-                final NonUniqueIdentifierListener listener = replicationConfig.nonUniqueIdentifierListener();
+            final IdentifierListener identifierListener = replicationConfig.identifierListener;
+            final SocketAddress remoteAddress = socketChannel.getRemoteAddress();
 
-                if (listener != null)
-                    listener.onNonUniqueIdentifier(remoteIdentifier);
+            boolean identifierIsUnique;
+
+            if (identifierListener != null) {
+                identifierIsUnique = identifierListener.isIdentifierUnique(remoteIdentifier, remoteAddress);
+            }  else {
+                identifierIsUnique =  remoteIdentifier != localIdentifier;
+            }
+
+            if (identifierIsUnique) {
+
 
                 // throwing this exception will cause us to disconnect, both the client and server
                 // will be able to detect the the remote and local identifiers are the same,
                 // as the identifier is send early on in the hand shaking via the connect(() and accept()
                 // methods
-                throw new IllegalStateException("dropping connection, as the remote and local-identifier " +
-                        "are the same, identifier=" + localIdentifier);
+                throw new IllegalStateException("dropping connection, " +
+                        "as the remote-identifier is already being used, identifier=" + remoteIdentifier);
             }
 
             attached.remoteModificationIterator = replica.acquireModificationIterator(remoteIdentifier,
