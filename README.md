@@ -458,9 +458,10 @@ j net.openhft.lang.io.AbstractBytes.tryLockNanosLong(JJ)Z+41
 j net.openhft.collections.AbstractVanillaSharedHashMap$Segment.lock()V+12
 ```
 
-##### Storing Lots of Entries
+##### Chroncle Map is Full
 
-If you store a lot of entries in chronicle map you will see this exception, this is not an issue, the map is just full.
+If you fill Chronicle Map it will throw this error.
+
 ```java
 Caught: java.lang.IllegalStateException: VanillaShortShortMultiMap is full
 java.lang.IllegalStateException: VanillaShortShortMultiMap is full
