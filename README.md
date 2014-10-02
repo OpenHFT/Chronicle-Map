@@ -27,6 +27,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *   [Flow Interface](https://github.com/OpenHFT/Chronicle-Map#flow-interface)
  *  [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
  *   [Entries](https://github.com/OpenHFT/Chronicle-Map#entries)
+ *   [Size of Space Reserved on Disk](https://github.com/OpenHFT/Chronicle-Map#size-of-space-reserved-on-disk)
  *   [Chronicle Map Interface](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-interface)
 * [Oversized Entries Support] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#oversized-entries-support)  
 * [Serialization](https://github.com/OpenHFT/Chronicle-Map#serialization)
@@ -206,6 +207,21 @@ map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
 .create();
 ```
 In this example above we have set 1000 entries.
+
+### Size of space reserved on disk
+
+In linux, if you looked at the size of the 'file', it will report the used entry size, so if you have just added one entry, it will report the size of this entry, but Windows will report the reserved size, as it reserves the disk space eagerly ( in fact windows also reserves the memory eagerly as well ), in other words number-of-entries x entry-size. 
+
+so on linux, if your type
+``` 
+# It shows you the extents. 
+ls -l <file>
+
+# It shows you how much is actually used.
+du <file>
+```
+
+To illustrate this with an example - On Ubuntu we can create a 100 TB chronicle map.  Both top and ls -l say the process virtual size / file size is 100 TB, however the resident memory via 'du' says the size is 71 MB after adding 10000 entries.
 
 ### Chronicle Map Interface 
 The Chronicle Map interface adds a few methods above an beyond the standard ConcurrentMap, The ChronicleMapBuilder can also be used to return the ChronicleMap, see the example below :
@@ -394,7 +410,7 @@ ChronicleMapBuilder<Integer, CharSequence> builder;
 builder = ChronicleMapBuilder.of(Integer.class,
         CharSequence.class)
         .entries(1000)
-        .file(getPersistenceFile());
+        .file(file);
 
 map = clusterReplicatorBuilder.create((short) 1, builder);
 ```
@@ -438,7 +454,7 @@ ChronicleMapBuilder<Integer, CharSequence> builder;
 builder = ChronicleMapBuilder.of(Integer.class,
         CharSequence.class)
         .entries(1000)
-        .file(getPersistenceFile());
+        .file(file);
 
 cluster = clusterReplicatorBuilder.create();
 
@@ -566,7 +582,7 @@ ChronicleMapBuilder<Integer, CharSequence> builder;
 builder = ChronicleMapBuilder.of(Integer.class,
         CharSequence.class)
         .entries(1000)
-        .file(getPersistenceFile());
+        .file(file);
 
 cluster = clusterReplicatorBuilder.create();
 
