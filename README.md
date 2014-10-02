@@ -213,13 +213,11 @@ In linux, if you looked at the size of the 'file', it will report the used entry
 
 so on linux, if your type
 ``` 
-ls -l file
+# It shows you the extents. 
+ls -l <file>
 
-// It shows you the extents. If you use
-
-du file
-
-// It shows you how much is actually used. Can you confirm you used du?
+# It shows you how much is actually used.
+du <file>
 ```
 
 ### Chronicle Map Interface 
