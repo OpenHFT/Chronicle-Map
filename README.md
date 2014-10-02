@@ -207,6 +207,21 @@ map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
 ```
 In this example above we have set 1000 entries.
 
+### Size of space reserved on disk
+
+In linux, if you looked at the size of the 'file', it will report the used entry size, so if you have just added one entry, it will report the size of this entry, however Windows it will report the reserved size which is the number-of-entries * entry-size.
+
+so on linux, if your type
+``` 
+ls -l file
+
+// It shows you the extents. If you use
+
+du file
+
+// It shows you how much is actually used. Can you confirm you used du?
+```
+
 ### Chronicle Map Interface 
 The Chronicle Map interface adds a few methods above an beyond the standard ConcurrentMap, The ChronicleMapBuilder can also be used to return the ChronicleMap, see the example below :
 
