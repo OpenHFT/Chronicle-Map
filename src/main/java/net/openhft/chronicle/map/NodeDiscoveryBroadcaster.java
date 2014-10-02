@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static net.openhft.chronicle.map.BytesExternalizableImpl.ProposedIdentifierWithHost;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
 
@@ -227,13 +227,13 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
 }
 
 
-class RemoteNodes implements BytesMarshallable {
+class KnownNodes implements BytesMarshallable {
 
     private Bytes activeIdentifiersBitSetBytes;
     private ConcurrentSkipListSet<AddressAndPort> addressAndPorts = new ConcurrentSkipListSet<AddressAndPort>();
     private ATSDirectBitSet atsDirectBitSet;
 
-    RemoteNodes() {
+    KnownNodes() {
 
         this.activeIdentifiersBitSetBytes = new ByteBufferBytes(ByteBuffer.allocate(128 / 8));
         this.addressAndPorts = new ConcurrentSkipListSet<AddressAndPort>();
@@ -407,22 +407,22 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
 
 class BytesExternalizableImpl implements BytesMarshallable {
 
-    private final RemoteNodes remoteNode;
+    private final KnownNodes remoteNode;
 
     private final AtomicBoolean bootstrapRequired = new AtomicBoolean();
     private final UDPEventListener udpEventListener;
 
-    private ProposedIdentifierWithHost ourProposedIdentifier;
+    private ProposedNodes ourProposedIdentifier;
 
-    final ConcurrentExpiryMap<AddressAndPort, ProposedIdentifierWithHost> proposedIdentifiersWithHost = new
-            ConcurrentExpiryMap<AddressAndPort, ProposedIdentifierWithHost>(AddressAndPort.class,
-            ProposedIdentifierWithHost.class);
+    final ConcurrentExpiryMap<AddressAndPort, ProposedNodes> proposedIdentifiersWithHost = new
+            ConcurrentExpiryMap<AddressAndPort, ProposedNodes>(AddressAndPort.class,
+            ProposedNodes.class);
 
-    public ProposedIdentifierWithHost getOurProposedIdentifier() {
+    public ProposedNodes getOurProposedIdentifier() {
         return ourProposedIdentifier;
     }
 
-    private void setOurProposedIdentifier(ProposedIdentifierWithHost ourProposedIdentifier) {
+    private void setOurProposedIdentifier(ProposedNodes ourProposedIdentifier) {
         this.ourProposedIdentifier = ourProposedIdentifier;
     }
 
@@ -433,12 +433,12 @@ class BytesExternalizableImpl implements BytesMarshallable {
 
     Replica.ModificationNotifier modificationNotifier;
 
-    public BytesExternalizableImpl(final RemoteNodes remoteNode, UDPEventListener udpEventListener) {
+    public BytesExternalizableImpl(final KnownNodes remoteNode, UDPEventListener udpEventListener) {
         this.remoteNode = remoteNode;
         this.udpEventListener = udpEventListener;
     }
 
-    public RemoteNodes getRemoteNodes() {
+    public KnownNodes getRemoteNodes() {
         return remoteNode;
     }
 
@@ -456,8 +456,8 @@ class BytesExternalizableImpl implements BytesMarshallable {
 
         remoteNode.writeMarshallable(out);
 
-        // we are no going to broadcast all the nodes that have been bootstaping in the last 200
-        proposedIdentifiersWithHost.expireEntries(System.currentTimeMillis() - 200);
+        // we are no going to broadcast all the nodes that have been bootstaping in the last second
+        proposedIdentifiersWithHost.expireEntries(System.currentTimeMillis() - SECONDS.toMillis(1));
 
         proposedIdentifiersWithHost.writeMarshallable(out);
 
@@ -465,7 +465,7 @@ class BytesExternalizableImpl implements BytesMarshallable {
     }
 
     private boolean writeBootstrap(Bytes out) {
-        final ProposedIdentifierWithHost ourProposedIdentifier = getOurProposedIdentifier();
+        final ProposedNodes ourProposedIdentifier = getOurProposedIdentifier();
         if (ourProposedIdentifier == null || ourProposedIdentifier.addressAndPort == null)
             return false;
 
@@ -480,7 +480,7 @@ class BytesExternalizableImpl implements BytesMarshallable {
      * @param in
      * @return returns true if the UDP message contains the text 'BOOTSTRAP'
      */
-    private ProposedIdentifierWithHost readBootstrapMessage(Bytes in) {
+    private ProposedNodes readBootstrapMessage(Bytes in) {
 
         final long start = in.position();
 
@@ -501,7 +501,7 @@ class BytesExternalizableImpl implements BytesMarshallable {
                     return null;
             }
 
-            final ProposedIdentifierWithHost result = new ProposedIdentifierWithHost();
+            final ProposedNodes result = new ProposedNodes();
             result.readMarshallable(in);
 
             return result;
@@ -515,7 +515,7 @@ class BytesExternalizableImpl implements BytesMarshallable {
     @Override
     public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
 
-        final ProposedIdentifierWithHost bootstrap = readBootstrapMessage(in);
+        final ProposedNodes bootstrap = readBootstrapMessage(in);
         if (bootstrap != null) {
             LOG.debug("received Bootstrap");
 
@@ -543,8 +543,6 @@ class BytesExternalizableImpl implements BytesMarshallable {
         this.remoteNode.readMarshallable(in);
 
 
-        // we are no going to broadcast all the nodes that have been bootstaping in the last 200
-        proposedIdentifiersWithHost.expireEntries(System.currentTimeMillis() - 200);
         proposedIdentifiersWithHost.readMarshallable(in);
 
         if (udpEventListener != null)
@@ -559,13 +557,13 @@ class BytesExternalizableImpl implements BytesMarshallable {
             modificationNotifier.onChange();
     }
 
-    public static class ProposedIdentifierWithHost implements BytesMarshallable {
+    public static class ProposedNodes implements BytesMarshallable {
 
         private byte identifier;
         private long timestamp;
         private AddressAndPort addressAndPort;
 
-        public ProposedIdentifierWithHost() {
+        public ProposedNodes() {
 
         }
 
@@ -573,14 +571,14 @@ class BytesExternalizableImpl implements BytesMarshallable {
             return identifier;
         }
 
-        public ProposedIdentifierWithHost(@NotNull final AddressAndPort addressAndPort,
-                                          byte identifier) {
+        public ProposedNodes(@NotNull final AddressAndPort addressAndPort,
+                             byte identifier) {
             this.addressAndPort = addressAndPort;
             this.identifier = identifier;
             this.timestamp = System.currentTimeMillis();
         }
 
-        public ProposedIdentifierWithHost(byte[] address, short port, byte identifier) {
+        public ProposedNodes(byte[] address, short port, byte identifier) {
             this(new AddressAndPort(address, port), identifier);
         }
 
@@ -619,7 +617,7 @@ class BytesExternalizableImpl implements BytesMarshallable {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            ProposedIdentifierWithHost that = (ProposedIdentifierWithHost) o;
+            ProposedNodes that = (ProposedNodes) o;
 
             if (identifier != that.identifier) return false;
             if (!addressAndPort.equals(that.addressAndPort)) return false;
@@ -640,10 +638,10 @@ class BytesExternalizableImpl implements BytesMarshallable {
      * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the host:port
      * and perhaps even proposed identifier of the node that sent it.
      *
-     * @param proposedIdentifierWithHost
+     * @param proposedNodes
      */
-    public void sendBootStrap(ProposedIdentifierWithHost proposedIdentifierWithHost) {
-        setOurProposedIdentifier(proposedIdentifierWithHost);
+    public void sendBootStrap(ProposedNodes proposedNodes) {
+        setOurProposedIdentifier(proposedNodes);
         bootstrapRequired.set(true);
     }
 
@@ -656,7 +654,7 @@ interface UDPEventListener {
      * called when we have received a UDP message, this is called after the message has been parsed
      */
 
-    void onRemoteNodeEvent(RemoteNodes remoteNode, ConcurrentExpiryMap<AddressAndPort, ProposedIdentifierWithHost> proposedIdentifiersWithHost);
+    void onRemoteNodeEvent(KnownNodes remoteNode, ConcurrentExpiryMap<AddressAndPort, BytesExternalizableImpl.ProposedNodes> proposedIdentifiersWithHost);
 }
 
 class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallable> implements BytesMarshallable {
@@ -680,7 +678,7 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
             for (int i = 0; i < size; i++) {
 
                 final K k = kClass.newInstance();
-                k.writeMarshallable(in);
+                k.readMarshallable(in);
 
                 final V v = vClass.newInstance();
                 v.readMarshallable(in);
