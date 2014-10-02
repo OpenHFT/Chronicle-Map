@@ -4,6 +4,7 @@ import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.serialization.BytesMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,10 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -47,6 +45,33 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
         BOOTSTRAP_BYTES.append(BOOTSTRAP);
     }
 
+
+    /**
+     * we shoudl have to do this, but I think there is a bug in the bitset, so added it as a work around
+     *
+     * @param source
+     * @return
+     */
+    static Bytes toNewBuffer(Bytes source) {
+
+        ByteBufferBytes result = new ByteBufferBytes(ByteBuffer.allocate((int) source.remaining()));
+
+        result.write(source);
+        result.clear();
+        return result;
+
+    }
+
+    static String toString(DirectBitSet bitSet) {
+        final StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < bitSet.size(); i++) {
+            builder.append(bitSet.get(i) ? '1' : '0');
+        }
+        return builder.toString();
+
+        // LOG.debug(type + "=" + "bitset =" + builder);
+    }
+
     /**
      * @param replicationConfig
      * @param externalizable
@@ -55,7 +80,7 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
     NodeDiscoveryBroadcaster(
             @NotNull final UdpReplicationConfig replicationConfig,
             final int serializedEntrySize,
-            final BytesExternalizable externalizable)
+            final BytesMarshallable externalizable)
             throws IOException {
 
         super(replicationConfig, serializedEntrySize, UNUSED);
@@ -73,14 +98,14 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
 
         private final ByteBuffer in;
         private final ByteBufferBytes out;
-        private final BytesExternalizable externalizable;
+        private final BytesMarshallable externalizable;
 
         /**
          * @param serializedEntrySize the maximum size of an entry include the meta data
          * @param externalizable      supports reading and writing serialize entries
          */
         public UdpSocketChannelEntryReader(final int serializedEntrySize,
-                                           @NotNull final BytesExternalizable externalizable) {
+                                           @NotNull final BytesMarshallable externalizable) {
 
             // we make the buffer twice as large just to give ourselves headroom
             in = ByteBuffer.allocateDirect(serializedEntrySize * 2);
@@ -124,7 +149,7 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
             if (out.remaining() != size)
                 return;
 
-            externalizable.readExternalBytes(out);
+            externalizable.readMarshallable(out);
         }
 
 
@@ -136,11 +161,11 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
         private final ByteBufferBytes in;
 
         @NotNull
-        private final BytesExternalizable externalizable;
+        private final BytesMarshallable externalizable;
         private UdpChannelReplicator udpReplicator;
 
         public UdpSocketChannelEntryWriter(final int serializedEntrySize,
-                                           @NotNull final BytesExternalizable externalizable,
+                                           @NotNull final BytesMarshallable externalizable,
                                            @NotNull final UdpChannelReplicator udpReplicator) {
 
             this.externalizable = externalizable;
@@ -183,7 +208,7 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
             long start = in.position();
 
             // writes the contents of
-            externalizable.writeExternalBytes(in);
+            externalizable.writeMarshallable(in);
 
             long size = in.position() - start;
 
@@ -202,47 +227,26 @@ public class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
 }
 
 
-/**
- * supports reading and writing serialize entries
- */
-interface BytesExternalizable {
+class RemoteNodes implements BytesMarshallable {
 
+    private Bytes activeIdentifiersBitSetBytes;
+    private ConcurrentSkipListSet<AddressAndPort> addressAndPorts = new ConcurrentSkipListSet<AddressAndPort>();
+    private ATSDirectBitSet atsDirectBitSet;
 
-    void writeExternalBytes(@NotNull Bytes destination);
+    RemoteNodes() {
 
-
-    public void readExternalBytes(@NotNull Bytes source);
-
-}
-
-class RemoteNodes {
-
-
-    private final Bytes activeIdentifiersBitSetBytes;
-    private final ConcurrentSkipListSet<AddressAndPort> addressAndPorts;
-    private final ATSDirectBitSet atsDirectBitSet;
-
-
-    /**
-     * @param activeIdentifiersBitSetBytes byte sof a bitset containing the known identifiers
-     */
-    RemoteNodes(final Bytes activeIdentifiersBitSetBytes) {
-
+        this.activeIdentifiersBitSetBytes = new ByteBufferBytes(ByteBuffer.allocate(128 / 8));
         this.addressAndPorts = new ConcurrentSkipListSet<AddressAndPort>();
-
-        this.activeIdentifiersBitSetBytes = activeIdentifiersBitSetBytes;
         this.atsDirectBitSet = new ATSDirectBitSet(this.activeIdentifiersBitSetBytes);
     }
+
 
     public Set<AddressAndPort> addressAndPorts() {
         return addressAndPorts;
     }
 
-    public Bytes activeIdentifierBytes() {
-        return activeIdentifiersBitSetBytes;
-    }
-
-    public void add(AddressAndPort inetSocketAddress) {
+    public void add(AddressAndPort inetSocketAddress, byte identifier) {
+        activeIdentifierBitSet().set(identifier);
         addressAndPorts.add(inetSocketAddress);
     }
 
@@ -251,19 +255,64 @@ class RemoteNodes {
     }
 
 
+    @Override
+    public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
+        short size = in.readShort();
+
+        for (int i = 0; i < size; i++) {
+            final AddressAndPort addressAndPort = new AddressAndPort();
+            addressAndPort.readMarshallable(in);
+            addressAndPorts.add(addressAndPort);
+        }
+
+        ByteBufferBytes activeIdentifiersBitSetBytes = new ByteBufferBytes(ByteBuffer.allocate(128 / 8));
+        activeIdentifiersBitSetBytes.readMarshallable(in);
+
+        ATSDirectBitSet bitset = new ATSDirectBitSet(activeIdentifiersBitSetBytes);
+        for (long next = bitset.nextSetBit(0); next > 0; next = bitset.nextSetBit(next + 1)) {
+            atsDirectBitSet.set(next);
+        }
+    }
+
+    @Override
+    public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
+
+        // make a safe copy
+        final Set<AddressAndPort> addressAndPorts = new HashSet<AddressAndPort>(this.addressAndPorts);
+
+        // write the size
+        out.writeShort(addressAndPorts.size());
+
+        for (AddressAndPort bytesMarshallable : addressAndPorts) {
+            bytesMarshallable.writeMarshallable(out);
+        }
+
+        activeIdentifiersBitSetBytes.clear();
+        activeIdentifiersBitSetBytes.writeMarshallable(out);
+
+    }
+
+    @Override
+    public String toString() {
+        return "RemoteNodes{" +
+                " addressAndPorts=" + addressAndPorts +
+                ", bitSet=" + NodeDiscoveryBroadcaster.toString(atsDirectBitSet) +
+                '}';
+    }
 }
 
 
-class AddressAndPort implements Comparable<AddressAndPort> {
+class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
     private byte[] address;
     private short port;
 
     public AddressAndPort(byte[] address, short port) {
-        if (address.length != 4)
-            throw new IllegalStateException("address.length should equal '4' but is length=" +
-                    address.length);
         this.address = address;
         this.port = port;
+    }
+
+    public AddressAndPort() {
+
     }
 
     public byte[] getAddress() {
@@ -275,7 +324,6 @@ class AddressAndPort implements Comparable<AddressAndPort> {
     }
 
     public byte[] address() {
-
         return address;
     }
 
@@ -326,27 +374,55 @@ class AddressAndPort implements Comparable<AddressAndPort> {
     }
 
     static String numericToTextFormat(byte[] src) {
-        return (src[0] & 0xff) + "." + (src[1] & 0xff) + "." + (src[2] & 0xff) + "." + (src[3] & 0xff);
+        if (src.length == 4) {
+            return (src[0] & 0xff) + "." + (src[1] & 0xff) + "." + (src[2] & 0xff) + "." + (src[3] & 0xff);
+        }
+        throw new UnsupportedOperationException();
+
     }
 
 
+    @Override
+    public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
+        short len = in.readShort();
+        address = new byte[len];
+
+        for (int i = 0; i < len; i++) {
+            address[i] = in.readByte();
+        }
+        port = in.readShort();
+
+    }
+
+    @Override
+    public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
+        out.writeShort(getAddress().length);
+        for (byte address : getAddress()) {
+            out.write(address);
+        }
+        out.writeShort(port);
+    }
 }
 
 
-class BytesExternalizableImpl implements BytesExternalizable {
+class BytesExternalizableImpl implements BytesMarshallable {
 
-    private final RemoteNodes allNodes;
+    private final RemoteNodes remoteNode;
 
     private final AtomicBoolean bootstrapRequired = new AtomicBoolean();
     private final UDPEventListener udpEventListener;
 
     private ProposedIdentifierWithHost ourProposedIdentifier;
 
+    final ConcurrentExpiryMap<AddressAndPort, ProposedIdentifierWithHost> proposedIdentifiersWithHost = new
+            ConcurrentExpiryMap<AddressAndPort, ProposedIdentifierWithHost>(AddressAndPort.class,
+            ProposedIdentifierWithHost.class);
+
     public ProposedIdentifierWithHost getOurProposedIdentifier() {
         return ourProposedIdentifier;
     }
 
-    public void setOurProposedIdentifier(ProposedIdentifierWithHost ourProposedIdentifier) {
+    private void setOurProposedIdentifier(ProposedIdentifierWithHost ourProposedIdentifier) {
         this.ourProposedIdentifier = ourProposedIdentifier;
     }
 
@@ -357,126 +433,93 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
     Replica.ModificationNotifier modificationNotifier;
 
-    public BytesExternalizableImpl(final RemoteNodes allNodes, UDPEventListener udpEventListener) {
-        this.allNodes = allNodes;
+    public BytesExternalizableImpl(final RemoteNodes remoteNode, UDPEventListener udpEventListener) {
+        this.remoteNode = remoteNode;
         this.udpEventListener = udpEventListener;
+    }
+
+    public RemoteNodes getRemoteNodes() {
+        return remoteNode;
     }
 
     /**
      * this is used to tell nodes that are connecting to us which host and ports are in our grid, along with
      * all the identifiers.
-     *
-     * @param destination a buffer the entry will be written to, the segment may reject this operation and add
-     *                    zeroBytes, if the identifier in the entry did not match the maps local
      */
     @Override
-    public void writeExternalBytes(@NotNull Bytes destination) {
-
+    public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
 
         if (bootstrapRequired.getAndSet(false)) {
-
-            final ProposedIdentifierWithHost ourProposedIdentifier = getOurProposedIdentifier();
-            if (ourProposedIdentifier == null || ourProposedIdentifier.addressAndPort == null)
-                return;
-
-            BOOTSTRAP_BYTES.clear();
-            destination.write(BOOTSTRAP_BYTES);
-
-
-            for (byte b : ourProposedIdentifier.addressAndPort.address()) {
-                destination.writeByte(b);
-            }
-
-            destination.writeShort(ourProposedIdentifier.addressAndPort.port());
-            destination.writeByte(ourProposedIdentifier.identifier());
+            writeBootstrap(out);
             return;
         }
 
-        final Set<AddressAndPort> addressAndPorts = allNodes.addressAndPorts();
-
-        // write the number of hosts and ports
-        short count = (short) addressAndPorts.size();
-        destination.writeUnsignedShort(count);
-
-        // write all the host and ports
-        for (AddressAndPort inetSocketAddress : addressAndPorts) {
-            for (byte b : inetSocketAddress.address()) {
-                destination.writeByte(b);
-            }
-
-            destination.writeShort(inetSocketAddress.port());
-        }
-
-        //   destination.write(allNodes.ourProposedID());
-
-        Bytes bytes = allNodes.activeIdentifierBytes();
-        //bytes.position(0);
-
-        if (LOG.isDebugEnabled())
-            toString(allNodes.activeIdentifierBitSet(), "writing");
-
-        // we will store the size of the bitset
-        destination.writeUnsignedShort((int) bytes.remaining());
+        remoteNode.writeMarshallable(out);
 
         // we are no going to broadcast all the nodes that have been bootstaping in the last 200
-        expireOldBootstrapStats(System.currentTimeMillis() - 200);
+        proposedIdentifiersWithHost.expireEntries(System.currentTimeMillis() - 200);
 
-        // this is where we will store the count of the bootstrap data which is written below
-        destination.skip(2);
-        long countLocation = destination.position();
-        int countBootstrapDataRepublished = 0;
+        proposedIdentifiersWithHost.writeMarshallable(out);
 
-        // rebroadcast all the host:port:identifier of the nodes that have sent a bootstrap in the last 200
-        // milliseconds
-        for (ProposedIdentifierWithHost proposedIdentifierWithHost : bootstrapStatsMap.values()) {
-
-            for (byte b : proposedIdentifierWithHost.addressAndPort.address()) {
-                destination.writeByte(b);
-            }
-
-            destination.writeShort(proposedIdentifierWithHost.addressAndPort.port());
-            destination.writeByte(proposedIdentifierWithHost.identifier());
-            countBootstrapDataRepublished++;
-        }
-
-        destination.writeInt(countLocation, countBootstrapDataRepublished);
 
     }
 
-    final ConcurrentMap<AddressAndPort, ProposedIdentifierWithHost> bootstrapStatsMap = new
-            ConcurrentHashMap<AddressAndPort, ProposedIdentifierWithHost>();
+    private boolean writeBootstrap(Bytes out) {
+        final ProposedIdentifierWithHost ourProposedIdentifier = getOurProposedIdentifier();
+        if (ourProposedIdentifier == null || ourProposedIdentifier.addressAndPort == null)
+            return false;
 
-    final Queue<ProposedIdentifierWithHost> proposedIdentifierWithHostExpiryQueue = new ConcurrentLinkedQueue<ProposedIdentifierWithHost>();
+        BOOTSTRAP_BYTES.clear();
+        out.write(BOOTSTRAP_BYTES);
 
+        ourProposedIdentifier.writeMarshallable(out);
+        return true;
+    }
 
-    private void expireOldBootstrapStats(long timeOlderThan) {
-        for (; ; ) {
+    /**
+     * @param in
+     * @return returns true if the UDP message contains the text 'BOOTSTRAP'
+     */
+    private ProposedIdentifierWithHost readBootstrapMessage(Bytes in) {
 
-            final ProposedIdentifierWithHost proposedIdentifierWithHost = proposedIdentifierWithHostExpiryQueue.peek();
+        final long start = in.position();
 
-            if (proposedIdentifierWithHost == null)
-                break;
+        try {
 
-            if (proposedIdentifierWithHost.timestamp < timeOlderThan) {
-                // only remote it if it has not changed
-                bootstrapStatsMap.remove(proposedIdentifierWithHost.addressAndPort, proposedIdentifierWithHost);
+            long size = BOOTSTRAP_BYTES.limit();
+
+            if (size > in.remaining())
+                return null;
+
+            // reads the text bootstrap
+            for (int i = 0; i < size; i++) {
+
+                final byte byteRead = in.readByte();
+                final byte expectedByte = BOOTSTRAP_BYTES.readByte(i);
+
+                if (!(expectedByte == byteRead))
+                    return null;
             }
 
-            proposedIdentifierWithHostExpiryQueue.poll();
+            final ProposedIdentifierWithHost result = new ProposedIdentifierWithHost();
+            result.readMarshallable(in);
+
+            return result;
+
+        } finally {
+            in.position(start);
         }
     }
 
 
     @Override
-    public void readExternalBytes(@NotNull Bytes source) {
+    public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
 
-        final ProposedIdentifierWithHost bootstrap = readBootstrapMessage(source);
+        final ProposedIdentifierWithHost bootstrap = readBootstrapMessage(in);
         if (bootstrap != null) {
             LOG.debug("received Bootstrap");
 
-            bootstrapStatsMap.put(bootstrap.addressAndPort, bootstrap);
-            proposedIdentifierWithHostExpiryQueue.add(bootstrap);
-
+            proposedIdentifiersWithHost.put(bootstrap.addressAndPort, bootstrap);
 
             try {
 
@@ -485,6 +528,8 @@ class BytesExternalizableImpl implements BytesExternalizable {
 
                 Thread.sleep((int) (Math.random() * 9.0));
 
+                // this is used to turn on the OP_WRITE, so that we can broadcast back the known host and
+                // ports in the grid
                 onChange();
 
             } catch (InterruptedException e) {
@@ -494,102 +539,39 @@ class BytesExternalizableImpl implements BytesExternalizable {
             return;
         }
 
-        int count = source.readUnsignedShort();
+
+        this.remoteNode.readMarshallable(in);
 
 
-        final Set<AddressAndPort> allNodeInTheGrid = new HashSet<AddressAndPort>();
+        // we are no going to broadcast all the nodes that have been bootstaping in the last 200
+        proposedIdentifiersWithHost.expireEntries(System.currentTimeMillis() - 200);
+        proposedIdentifiersWithHost.readMarshallable(in);
 
-        for (int i = 0; i < count; i++) {
-            byte[] address = new byte[4];
-            address[0] = source.readByte();
-            address[1] = source.readByte();
-            address[2] = source.readByte();
-            address[3] = source.readByte();
+        if (udpEventListener != null)
+            udpEventListener.onRemoteNodeEvent(remoteNode, proposedIdentifiersWithHost);
 
-            final short port = source.readShort();
-
-            LOG.debug("received InetSocketAddress(" + address + "," + port + ")");
-            allNodeInTheGrid.add(new AddressAndPort(address, port));
-        }
-
-
-        int countRebroadcast = source.readShort();
-
-        final Set<ProposedIdentifierWithHost> proposedIdentifierWithHosts = new
-                HashSet<ProposedIdentifierWithHost>();
-
-        // rebroadcast all the host:port:identifier of the nodes that have sent a bootstrap in the last 200
-        // milliseconds
-        for (int i = 0; i < countRebroadcast; i++) {
-            byte[] address = new byte[4];
-            address[0] = source.readByte();
-            address[1] = source.readByte();
-            address[2] = source.readByte();
-            address[3] = source.readByte();
-
-            final short port = source.readShort();
-            final byte identifier = source.readByte();
-
-            final ProposedIdentifierWithHost proposed = new ProposedIdentifierWithHost(
-                    address, port, identifier);
-
-            proposedIdentifierWithHosts.add(proposed);
-        }
-
-        // the number of bytes in the bitset
-        int sizeInBytes = source.readUnsignedShort();
-
-        if (sizeInBytes == 0) {
-            LOG.debug("received nothing..");
-            return;
-        }
-
-
-        //todo we should not have to do this !  -  maybe a bug in BitSet of ByteBuffer
-        Bytes usedIdentifiers = toNewBuffer(source);
-
-        udpEventListener.onRemoteNodeEvent(allNodeInTheGrid,
-                new ATSDirectBitSet(usedIdentifiers),
-                proposedIdentifierWithHosts);
 
     }
 
-
-    /**
-     * we shoudl have to do this, but I think there is a bug in the bitset, so added it as a work around
-     *
-     * @param source
-     * @return
-     */
-    private Bytes toNewBuffer(Bytes source) {
-
-        ByteBufferBytes result = new ByteBufferBytes(ByteBuffer.allocate((int) source.remaining()));
-
-        result.write(source);
-        result.clear();
-        return result;
-
-    }
-
-    private void toString(DirectBitSet bitSet, String type) {
-        final StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < bitSet.size(); i++) {
-            builder.append(bitSet.get(i) ? '1' : '0');
-        }
-
-        LOG.debug(type + "=" + "bitset =" + builder);
-    }
 
     public void onChange() {
-        modificationNotifier.onChange();
+        if (modificationNotifier != null)
+            modificationNotifier.onChange();
     }
 
+    public static class ProposedIdentifierWithHost implements BytesMarshallable {
 
-    public static class ProposedIdentifierWithHost {
+        private byte identifier;
+        private long timestamp;
+        private AddressAndPort addressAndPort;
 
-        private final int identifier;
-        private final long timestamp;
-        private final AddressAndPort addressAndPort;
+        public ProposedIdentifierWithHost() {
+
+        }
+
+        public byte identifier() {
+            return identifier;
+        }
 
         public ProposedIdentifierWithHost(@NotNull final AddressAndPort addressAndPort,
                                           byte identifier) {
@@ -603,6 +585,35 @@ class BytesExternalizableImpl implements BytesExternalizable {
         }
 
 
+        public AddressAndPort addressAndPort() {
+            return addressAndPort;
+        }
+
+        @Override
+        public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
+            addressAndPort = new AddressAndPort();
+            addressAndPort.readMarshallable(in);
+            timestamp = in.readLong();
+            identifier = in.readByte();
+
+        }
+
+        @Override
+        public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
+            addressAndPort.writeMarshallable(out);
+            out.writeLong(timestamp);
+            out.writeByte(identifier);
+        }
+
+        @Override
+        public String toString() {
+            return "ProposedIdentifierWithHost{" +
+                    "identifier=" + identifier +
+                    ", timestamp=" + timestamp +
+                    ", addressAndPort=" + addressAndPort +
+                    '}';
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -611,84 +622,31 @@ class BytesExternalizableImpl implements BytesExternalizable {
             ProposedIdentifierWithHost that = (ProposedIdentifierWithHost) o;
 
             if (identifier != that.identifier) return false;
-            if (timestamp != that.timestamp) return false;
-            if (addressAndPort != null ? !addressAndPort.equals(that.addressAndPort) : that.addressAndPort != null)
-                return false;
+            if (!addressAndPort.equals(that.addressAndPort)) return false;
 
             return true;
         }
 
         @Override
         public int hashCode() {
-            int result = identifier;
-            result = 31 * result + (int) (timestamp ^ (timestamp >>> 32));
-            result = 31 * result + (addressAndPort != null ? addressAndPort.hashCode() : 0);
+            int result = (int) identifier;
+            result = 31 * result + addressAndPort.hashCode();
             return result;
         }
-
-        public int identifier() {
-            return identifier;
-
-        }
-
-        public AddressAndPort addressAndPort() {
-            return addressAndPort;
-        }
     }
+
 
     /**
-     * @param source
-     * @return returns true if the UDP message contains the text 'BOOTSTRAP'
+     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the host:port
+     * and perhaps even proposed identifier of the node that sent it.
+     *
+     * @param proposedIdentifierWithHost
      */
-    private ProposedIdentifierWithHost readBootstrapMessage(Bytes source) {
-
-        final long start = source.position();
-
-        try {
-
-            long size = BOOTSTRAP_BYTES.limit();
-
-            if (size > source.remaining())
-                return null;
-
-            for (int i = 0; i < size; i++) {
-
-                final byte byteRead = source.readByte(start + i);
-                final byte expectedByte = BOOTSTRAP_BYTES.readByte(i);
-
-                if (!(expectedByte == byteRead))
-                    return null;
-            }
-
-            byte[] address = new byte[4];
-            address[0] = source.readByte();
-            address[1] = source.readByte();
-            address[2] = source.readByte();
-            address[3] = source.readByte();
-
-            final short port = source.readShort();
-            final byte identifier = source.readByte();
-
-            return new ProposedIdentifierWithHost(address, port, identifier);
-
-        } finally {
-            source.position(start);
-        }
-    }
-
-
-    public void sendBootStrap() {
+    public void sendBootStrap(ProposedIdentifierWithHost proposedIdentifierWithHost) {
+        setOurProposedIdentifier(proposedIdentifierWithHost);
         bootstrapRequired.set(true);
     }
 
-    public void add(AddressAndPort addressAndPort) {
-        allNodes.add(addressAndPort);
-    }
-
-
-    public void add(byte identifier) {
-        allNodes.activeIdentifierBitSet().set(identifier);
-    }
 
 }
 
@@ -698,7 +656,108 @@ interface UDPEventListener {
      * called when we have received a UDP message, this is called after the message has been parsed
      */
 
-    void onRemoteNodeEvent(Set<AddressAndPort> usedHostPorts,
-                           ATSDirectBitSet usedIdentifers,
-                           Set<ProposedIdentifierWithHost> proposedHostPortIdentifiers);
+    void onRemoteNodeEvent(RemoteNodes remoteNode, ConcurrentExpiryMap<AddressAndPort, ProposedIdentifierWithHost> proposedIdentifiersWithHost);
+}
+
+class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallable> implements BytesMarshallable {
+
+    final ConcurrentMap<K, V> map = new
+            ConcurrentHashMap<K, V>();
+    private final Class<K> kClass;
+    private final Class<V> vClass;
+
+    ConcurrentExpiryMap(Class<K> kClass, Class<V> vClass) {
+
+        this.kClass = kClass;
+        this.vClass = vClass;
+    }
+
+    @Override
+    public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
+
+        short size = in.readShort();
+        try {
+            for (int i = 0; i < size; i++) {
+
+                final K k = kClass.newInstance();
+                k.writeMarshallable(in);
+
+                final V v = vClass.newInstance();
+                v.readMarshallable(in);
+
+                map.put(k, v);
+            }
+        } catch (Exception e) {
+            LOG.error("", e);
+        }
+
+    }
+
+    @Override
+    public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
+        final Map<K, V> safeCopy = new HashMap<K, V>(map);
+        out.writeShort(safeCopy.size());
+        for (Map.Entry<K, V> entry : safeCopy.entrySet()) {
+            entry.getKey().writeMarshallable(out);
+            entry.getValue().writeMarshallable(out);
+        }
+    }
+
+    class W<V> {
+        final long timestamp;
+        final V v;
+
+        public W(V v) {
+            this.v = v;
+            this.timestamp = System.currentTimeMillis();
+        }
+    }
+
+    public void put(final K k, final V v) {
+        map.put(k, v);
+        final W w = new W(v);
+        queue.add(new Map.Entry<K, W<V>>() {
+
+            @Override
+            public K getKey() {
+                return k;
+            }
+
+            @Override
+            public W<V> getValue() {
+                return w;
+            }
+
+            @Override
+            public W<V> setValue(W<V> value) {
+                throw new UnsupportedOperationException();
+            }
+        });
+    }
+
+
+    final Queue<Map.Entry<K, W<V>>> queue = new ConcurrentLinkedQueue<Map.Entry<K, W<V>>>();
+
+    public java.util.Collection<V> values() {
+        return map.values();
+    }
+
+
+    public void expireEntries(long timeOlderThan) {
+        for (; ; ) {
+
+            final Map.Entry<K, W<V>> e = this.queue.peek();
+
+            if (e == null)
+                break;
+
+            if (e.getValue().timestamp < timeOlderThan) {
+                // only remote it if it has not changed
+                map.remove(e.getKey(), e.getValue().v);
+            }
+
+            this.queue.poll();
+        }
+    }
+
 }
