@@ -27,7 +27,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *   [Flow Interface](https://github.com/OpenHFT/Chronicle-Map#flow-interface)
  *  [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
  *   [Entries](https://github.com/OpenHFT/Chronicle-Map#entries)
- *   [Size of space reserved on disk](https://github.com/OpenHFT/Chronicle-Map#size-of-space-reserved-on-disk)
+ *   [Size of Space Reserved on Disk](https://github.com/OpenHFT/Chronicle-Map#size-of-space-reserved-on-disk)
  *   [Chronicle Map Interface](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-interface)
 * [Oversized Entries Support] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#oversized-entries-support)  
 * [Serialization](https://github.com/OpenHFT/Chronicle-Map#serialization)
