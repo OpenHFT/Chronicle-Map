@@ -454,7 +454,7 @@ ChronicleMapBuilder<Integer, CharSequence> builder;
 builder = ChronicleMapBuilder.of(Integer.class,
         CharSequence.class)
         .entries(1000)
-        .file(getPersistenceFile());
+        .file(file);
 
 cluster = clusterReplicatorBuilder.create();
 
@@ -582,7 +582,7 @@ ChronicleMapBuilder<Integer, CharSequence> builder;
 builder = ChronicleMapBuilder.of(Integer.class,
         CharSequence.class)
         .entries(1000)
-        .file(getPersistenceFile());
+        .file(file);
 
 cluster = clusterReplicatorBuilder.create();
 
