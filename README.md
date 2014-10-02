@@ -210,7 +210,7 @@ In this example above we have set 1000 entries.
 
 ### Size of space reserved on disk
 
-In linux, if you looked at the size of the 'file', it will report the used entry size, so if you have just added one entry, it will report the size of this entry, but Windows will report the reserved size, as it reserves the disk space eagerly ( in fact windows also reserves the memory eagerly as well ), in other words number-of-entries x entry-size.
+In linux, if you looked at the size of the 'file', it will report the used entry size, so if you have just added one entry, it will report the size of this entry, but Windows will report the reserved size, as it reserves the disk space eagerly ( in fact windows also reserves the memory eagerly as well ), in other words number-of-entries x entry-size. 
 
 so on linux, if your type
 ``` 
@@ -222,10 +222,6 @@ du <file>
 ```
 
 To illustrate this with an example - On Ubuntu we can create a 100 TB chronicle map.  Both top and ls -l say the process virtual size / file size is 100 TB, however the resident memory via 'du' says the size is 71 MB after adding 10000 entries.
-
- 
-
-
 
 ### Chronicle Map Interface 
 The Chronicle Map interface adds a few methods above an beyond the standard ConcurrentMap, The ChronicleMapBuilder can also be used to return the ChronicleMap, see the example below :
