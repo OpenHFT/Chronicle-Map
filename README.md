@@ -210,7 +210,7 @@ In this example above we have set 1000 entries.
 
 ### Size of space reserved on disk
 
-In linux, if you looked at the size of the 'file', it will report the used entry size, so if you have just added one entry, it will report the size of this entry, however Windows it will report the reserved size which is the number-of-entries * entry-size.
+In linux, if you looked at the size of the 'file', it will report the used entry size, so if you have just added one entry, it will report the size of this entry, but Windows will report the reserved size, in otherwords number-of-entries x entry-size.
 
 so on linux, if your type
 ``` 
