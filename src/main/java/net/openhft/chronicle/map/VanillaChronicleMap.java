@@ -72,6 +72,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     final MVW originalMetaValueWriter;
     final MetaProvider<V, VW, MVW> metaValueWriterProvider;
     final ObjectFactory<V> valueFactory;
+    final DefaultValueProvider<K, V> defaultValueProvider;
 
     final int metaDataBytes;
     //   private final int replicas;
@@ -118,6 +119,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         originalMetaValueWriter = (MVW) valueBuilder.metaInterop();
         metaValueWriterProvider = (MetaProvider) valueBuilder.metaInteropProvider();
         valueFactory = valueBuilder.factory();
+        defaultValueProvider = builder.defaultValueProvider();
 
         lockTimeOutNS = builder.lockTimeOut(TimeUnit.NANOSECONDS);
 
@@ -162,6 +164,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         valueReaderProvider = Provider.of((Class) originalValueReader.getClass());
         valueWriterProvider = Provider.of((Class) originalValueWriter.getClass());
+
+        if (defaultValueProvider instanceof ConstantValueProvider) {
+            ConstantValueProvider<K, V> constantValueProvider =
+                    (ConstantValueProvider<K, V>) defaultValueProvider;
+            if (constantValueProvider.wasDeserialized()) {
+                ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
+                BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
+                constantValueProvider.initTransients(valueReader);
+            }
+        }
 
         @SuppressWarnings("unchecked")
         Segment[] ss = (Segment[]) Array.newInstance(segmentType(), actualSegments);
@@ -765,7 +777,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             } else {
                 if (usingValue instanceof Byteable)
                     ((Byteable) usingValue).bytes(null, 0);
-                return notifyMissed(key, usingValue);
+                return defaultValueProvider.get(key, usingValue);
             }
         }
 
@@ -1068,13 +1080,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 eventListener().onGetFound(VanillaChronicleMap.this, tmpBytes, metaDataBytes,
                         key, value);
             }
-        }
-
-        V notifyMissed(K key, V usingValue) {
-            if (eventListener() != MapEventListeners.NOP) {
-                return eventListener().onGetMissing(VanillaChronicleMap.this, key, usingValue);
-            }
-            return null;
         }
 
         void notifyRemoved(long offset, K key, V value, final int pos) {

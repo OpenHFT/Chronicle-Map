@@ -36,13 +36,6 @@ public final class MapEventListeners {
         public final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
         @Override
-        public Object onGetMissing(ChronicleMap map,
-                                   Object key, Object usingValue) {
-            LOGGER.info("{} missed {}", map.file(), key);
-            return null;
-        }
-
-        @Override
         public void onGetFound(ChronicleMap map, Bytes entry, int metaDataBytes,
                                Object key, Object value) {
             logOperation(map, entry, metaDataBytes, " get ");
@@ -83,13 +76,6 @@ public final class MapEventListeners {
     private static final MapEventListener KEY_VALUE_LOGGING = new MapEventListener() {
         private static final long serialVersionUID = 0L;
         public final Logger LOGGER = LoggerFactory.getLogger(getClass());
-
-        @Override
-        public Object onGetMissing(ChronicleMap map,
-                                   Object key, Object usingValue) {
-            LOGGER.info("{} missed {}", map.file(), key);
-            return null;
-        }
 
         @Override
         public void onGetFound(ChronicleMap map, Bytes entry, int metaDataBytes,

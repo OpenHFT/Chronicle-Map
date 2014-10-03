@@ -1300,12 +1300,6 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         @Override
-        public V onGetMissing(ChronicleMap<K, V> map, K key,
-                              V usingValue) {
-            return nextListener.onGetMissing(map, key, usingValue);
-        }
-
-        @Override
         public void onGetFound(ChronicleMap<K, V> map, Bytes entry, int metaDataBytes,
                                K key, V value) {
             nextListener.onGetFound(map, entry, metaDataBytes, key, value);

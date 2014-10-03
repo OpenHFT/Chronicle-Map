@@ -31,27 +31,15 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
     private static final long serialVersionUID = 0L;
 
     /**
-     * This is called when there was no existing entry for a key.
-     * Optionally you can provide a value to add to the map.
+     * This method is called if the key is found in the map during {@link ChronicleMap#get get},
+     * {@link ChronicleMap#getUsing getUsing} or {@link ChronicleMap#acquireUsing acquireUsing}
+     * method call.
      *
-     * @param map        accessed
-     * @param keyBytes   bytes of the key looked up
-     * @param key        object used as key
-     * @param usingValue value provided to reuse, could be null.
-     * @return null if null should be returned, or a value to put in the map and return.
-     */
-    public V onGetMissing(M map, K key, V usingValue) {
-        return null;
-    }
-
-    /**
-     * This method is called if a value is found in the map.
-     *
-     * @param map           accessed
+     * @param map           the accessed map
      * @param entry         bytes of the entry
-     * @param metaDataBytes length of meta data for this map.
-     * @param key           looked up
-     * @param value         found
+     * @param metaDataBytes length of meta data for this map
+     * @param key           the key looked up
+     * @param value         the value found for the key
      */
     public void onGetFound(M map, Bytes entry, int metaDataBytes, K key, V value) {
         // do nothing

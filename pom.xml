@@ -133,8 +133,8 @@
                     <compilerArgument>-Xlint:deprecation</compilerArgument>
                     <source>1.6</source>
                     <target>1.6</target>
-                    <testSource>1.6</testSource>
-                    <testTarget>1.6</testTarget>
+                    <testSource>1.8</testSource>
+                    <testTarget>1.8</testTarget>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>

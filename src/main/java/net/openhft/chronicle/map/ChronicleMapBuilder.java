@@ -18,6 +18,9 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.map.serialization.MetaBytesInterop;
 import net.openhft.chronicle.map.serialization.MetaBytesWriter;
+import net.openhft.chronicle.map.serialization.MetaProvider;
+import net.openhft.chronicle.map.threadlocal.Provider;
+import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.Maths;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.*;
@@ -66,6 +69,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     private ObjectSerializer objectSerializer;
     private MapEventListener<K, V, ChronicleMap<K, V>> eventListener =
             MapEventListeners.nop();
+    private V defaultValue = null;
+    private DefaultValueProvider<K, V> defaultValueProvider = NullValueProvider.INSTANCE;
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
@@ -457,6 +462,65 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
 
     public MapEventListener<K, V, ChronicleMap<K, V>> eventListener() {
         return eventListener;
+    }
+
+    /**
+     * Specifies the value to be put for each key queried in {@link ChronicleMap#get get()} and
+     * {@link ChronicleMap#getUsing(Object, Object) getUsing()} methods, if the key is absent
+     * in the map. Then this default value is returned from query method.
+     *
+     * <p>Setting default value to {@code null} is interpreted as map shouldn't put any default
+     * value for absent keys. This is by default.
+     *
+     * <p>This configuration overrides any previous
+     * {@link #defaultValueProvider(DefaultValueProvider)} configuration to this
+     * {@code ChronicleMapBuilder}.
+     *
+     * @param defaultValue the default value to be put to the map for absent keys during
+     * {@code get()} and {@code getUsing()} calls and returned from these calls
+     * @return this builder object back
+     */
+    public ChronicleMapBuilder<K, V> defaultValue(V defaultValue) {
+        this.defaultValue = defaultValue;
+        this.defaultValueProvider = null;
+        return this;
+    }
+
+    /**
+     * Specifies the function to obtain a value for the key during {@link ChronicleMap#get get()}
+     * and {@link ChronicleMap#getUsing(Object, Object) getUsing()} calls, if the key is absent
+     * in the map. If the obtained value is non-null, it is put for the key in the map and then
+     * returned from current {@code get()} or {@code getUsing()} call.
+     *
+     * <p>This configuration overrides any previous {@link #defaultValue(Object)} configuration
+     * to this {@code ChronicleMapBuilder}.
+     *
+     * @param defaultValueProvider the strategy to obtain a default value by the absent key
+     * @return this builder object back
+     */
+    public ChronicleMapBuilder<K, V> defaultValueProvider(
+            DefaultValueProvider<K, V> defaultValueProvider) {
+        this.defaultValueProvider = defaultValueProvider;
+        return this;
+    }
+
+    /**
+     * Non-public because should be called only after {@link #preMapConstruction()}
+     */
+    DefaultValueProvider<K, V> defaultValueProvider() {
+        if (defaultValueProvider != null)
+            return defaultValueProvider;
+        if (defaultValue == null)
+            return NullValueProvider.INSTANCE;
+        Object originalValueWriter = valueBuilder.interop();
+        Provider writerProvider = Provider.of(originalValueWriter.getClass());
+        ThreadLocalCopies copies = writerProvider.getCopies(null);
+        Object valueWriter = writerProvider.get(copies, originalValueWriter);
+        MetaProvider metaWriterProvider = valueBuilder.metaInteropProvider();
+        copies = metaWriterProvider.getCopies(copies);
+        MetaBytesWriter metaValueWriter = metaWriterProvider.get(copies,
+                valueBuilder.metaInterop(), valueWriter, defaultValue);
+        return new ConstantValueProvider<K, V>(defaultValue, metaValueWriter, valueWriter);
     }
 
     public ChronicleMap<K, V> create(File file) throws IOException {
