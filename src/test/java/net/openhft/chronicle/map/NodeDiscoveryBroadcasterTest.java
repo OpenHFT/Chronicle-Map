@@ -22,11 +22,9 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
         byte[] server1Address = Inet4Address.getLocalHost().getAddress();
         AddressAndPort server1AddressAndPort = new AddressAndPort(server1Address, (short) 1234);
 
-
         // write broadcast our address on the bootstrap method
         byte[] server2Address = Inet4Address.getByName("129.168.0.2").getAddress();
         AddressAndPort server2AddressAndPort = new AddressAndPort(server1Address, (short) 1234);
-
 
         KnownNodes server1KnownNodes = new KnownNodes();
         DiscoveryNodeBytesMarshallable server1BytesExternalizable = new DiscoveryNodeBytesMarshallable(server1KnownNodes, null);
@@ -38,13 +36,10 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
         // SERER1 - is the new node join the cluster
         // we will first send the boostrap along with our host and port
         {
-
-            DiscoveryNodeBytesMarshallable.ProposedNodes proposedNodes = new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) -1);
-
+            final DiscoveryNodeBytesMarshallable.ProposedNodes proposedNodes = new
+                    DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) -1);
             server1BytesExternalizable.sendBootStrap(proposedNodes);
-
             server1BytesExternalizable.writeMarshallable(udpData);
-
         }
 
         KnownNodes server2KnownNodes = new KnownNodes();

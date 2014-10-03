@@ -31,7 +31,7 @@ import static net.openhft.chronicle.map.Replicators.tcp;
 /**
  * @author Rob Austin.
  */
-public class NodeDescovery {
+public class NodeDiscovery {
 
 
     public ChronicleMap<Integer, CharSequence> discoverMap(int udpBroadcastPort, final int tcpPort) throws IOException, InterruptedException {
