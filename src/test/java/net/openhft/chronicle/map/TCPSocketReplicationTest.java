@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -136,7 +135,6 @@ public class TCPSocketReplicationTest {
 
 
     @Test
-    @Ignore
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         final long start = System.currentTimeMillis();
         System.out.print("SoakTesting ");
@@ -167,34 +165,7 @@ public class TCPSocketReplicationTest {
     }
 
 
-    @Ignore
-    @Test
-    public void testObjectAllocationWithYourKit() throws IOException, InterruptedException {
 
-
-        System.out.print("SoakTesting ");
-        for (; ; ) {
-
-            Random rnd = new Random(0);
-            for (int i = 1; i < 10; i++) {
-
-                final int select = rnd.nextInt(2);
-                final ChronicleMap<Integer, CharSequence> map = select > 0 ? map1 : map2;
-
-                switch (rnd.nextInt(2)) {
-                    case 0:
-                        map.put(rnd.nextInt(1000) /* + select * 100 */, "test");
-                        break;
-                    case 1:
-                        map.remove(rnd.nextInt(1000) /*+ select * 100 */);
-                        break;
-                }
-            }
-
-        }
-
-
-    }
 
 
 }

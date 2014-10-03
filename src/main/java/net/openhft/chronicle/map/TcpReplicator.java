@@ -751,8 +751,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
             if (remoteIdentifier != Byte.MIN_VALUE)
                 TcpReplicator.this.opWriteUpdater.set(remoteIdentifier);
-
-            selector.wakeup();
         }
 
 

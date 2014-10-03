@@ -95,6 +95,7 @@ public class TCPSocketReplicationIntValueTest {
     }
 
 
+    // see https://higherfrequencytrading.atlassian.net/browse/HCOLL-148
     @Test
     @Ignore
     public void test() throws IOException, InterruptedException {
@@ -154,7 +155,6 @@ public class TCPSocketReplicationIntValueTest {
 
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
-
 
         final long start = System.currentTimeMillis();
         System.out.print("SoakTesting ");

@@ -202,10 +202,9 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore //todo: fails on my machine
     public void testRemoveInteger() throws IOException {
 
-        int count = 3000;
+        int count = 300;
         final ChronicleMap<Object, Object> map = ChronicleMapBuilder.of(Object.class, Object.class)
                 .entrySize(count)
                 .minSegments(2)

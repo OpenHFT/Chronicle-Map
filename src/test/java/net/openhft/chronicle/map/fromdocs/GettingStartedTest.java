@@ -17,7 +17,6 @@
 package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -31,8 +30,8 @@ import static org.junit.Assert.assertEquals;
  * Created by peter on 28/02/14.
  */
 public class GettingStartedTest {
+
     @Test
-    @Ignore
     public void testTheCodeInGuide() throws IOException {
         String tmpdir = System.getProperty("java.io.tmpdir");
         Map<String, String> map = ChronicleMapBuilder.of(String.class, String.class)
