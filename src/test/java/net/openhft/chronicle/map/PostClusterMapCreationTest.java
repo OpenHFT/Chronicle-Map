@@ -122,7 +122,6 @@ public class PostClusterMapCreationTest {
      * @throws InterruptedException
      */
     @Test
-    @Ignore
     public void test() throws IOException, InterruptedException {
 
         map2a.put(1, "EXAMPLE-2");
