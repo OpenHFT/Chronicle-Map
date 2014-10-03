@@ -197,7 +197,7 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
     public void onChange() {
         // the write have to be enabled on the same thread as the selector
         shouldEnableOpWrite = true;
-        selector.wakeup();
+
     }
 
     private void enableWrites() {

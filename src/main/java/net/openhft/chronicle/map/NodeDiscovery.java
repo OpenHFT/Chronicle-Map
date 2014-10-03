@@ -14,12 +14,10 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.ByteBuffer.wrap;
@@ -42,15 +40,18 @@ public class NodeDiscovery {
         final UdpReplicationConfig udpConfig = UdpReplicationConfig
                 .simple(Inet4Address.getByName("255.255.255.255"), udpBroadcastPort);
 
+
         final KnownNodes knownNodes = new KnownNodes();
+        final Set<AddressAndPort> knownHostPorts = new ConcurrentSkipListSet<AddressAndPort>();
         final DirectBitSet knownIdentifiers = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer.allocate
                 (128 / 8)));
+
+        final AtomicReference<CountDownLatch> countDownLatch = new AtomicReference<CountDownLatch>(new
+                CountDownLatch(1));
 
         final AddressAndPort ourAddressAndPort = new AddressAndPort(InetAddress.getLocalHost()
                 .getAddress(),
                 (short) tcpPort);
-
-        final Set<AddressAndPort> knownHostPorts = new ConcurrentSkipListSet<AddressAndPort>();
 
         final UDPEventListener udpEventListener = new UDPEventListener() {
 
@@ -71,67 +72,83 @@ public class NodeDiscovery {
 
                         if (remoteIdentifier == proposedIdentifier.get())
                             useAnotherIdentifier.set(true);
+
+                        countDownLatch.get().countDown();
                     }
                 }
             }
 
 
         };
-
         final DiscoveryNodeBytesMarshallable externalizable = new DiscoveryNodeBytesMarshallable(knownNodes, udpEventListener);
+
+        final NodeDiscoveryBroadcaster nodeDiscoveryBroadcaster
+                = new NodeDiscoveryBroadcaster(udpConfig, 1024, externalizable);
+
+        externalizable.setModificationNotifier(nodeDiscoveryBroadcaster);
 
         final DiscoveryNodeBytesMarshallable.ProposedNodes ourHostPort = new
                 DiscoveryNodeBytesMarshallable.ProposedNodes(ourAddressAndPort, (byte) -1);
 
         // to start with we will send a bootstrap that just contains our hostname without and identifier
 
-        externalizable.sendBootStrap(ourHostPort);
-        Thread.sleep(10);
+        for (int i = 0; i < 20; i++) {
+            externalizable.sendBootStrap(ourHostPort);
 
-        // we should not get back some identifiers
+            // once the count down latch is trigger we know we go something back from one of the nodes
+            if (countDownLatch.get().await(50, TimeUnit.MILLISECONDS))
+                break;
+        }
+
+        // we should now get back some identifiers
         // the identifiers will come back to the callback on the nio thread, the update arrives at the
         // onRemoteNodeEvent
 
-        externalizable.sendBootStrap(ourHostPort);
-        Thread.sleep(10);
+
         byte identifier;
 
-
+        // now we are going to propose an identifier
         boolean isFistTime = true;
 
+        OUTER:
         for (; ; ) {
-
+            useAnotherIdentifier.set(false);
             identifier = proposeRandomUnusedIdentifier(knownIdentifiers, isFistTime);
             proposedIdentifier.set(identifier);
+            LOG.info("proposing to use identifier=" + identifier);
 
             isFistTime = false;
 
             final DiscoveryNodeBytesMarshallable.ProposedNodes proposedNodes = new
                     DiscoveryNodeBytesMarshallable.ProposedNodes(ourAddressAndPort, identifier);
 
-            externalizable.sendBootStrap(proposedNodes);
+            Thread.sleep(500);
 
-            Thread.sleep(10);
+            countDownLatch.set(new CountDownLatch(1));
 
-            for (int j = 0; j < 3; j++) {
-
+            for (int i = 0; i < 20; i++) {
                 externalizable.sendBootStrap(proposedNodes);
-                Thread.sleep(10);
 
-                if (useAnotherIdentifier.get()) {
-                    // given that another node host proposed the same identifier, we will choose a different one.
-                    continue;
+                // once the count down latch is trigger we know we go something back from one of the nodes
+                if (countDownLatch.get().await(50, TimeUnit.MILLISECONDS)) {
+                    if (useAnotherIdentifier.get()) {
+                        // given that another node host proposed the same identifier, we will choose a different one.
+                        LOG.info("Another node is using identifier=" + identifier+", " +
+                                "going to have to select another one.");
+                        continue OUTER;
+                    } else {
+                        break OUTER;
+                    }
                 }
+
+
             }
+
+            LOG.info("looks like we are the only node in the grid, so going to use identifier="+identifier);
 
             break;
         }
 
-
-        final NodeDiscoveryBroadcaster nodeDiscoveryBroadcaster
-                = new NodeDiscoveryBroadcaster(udpConfig, 1024, externalizable);
-
-        externalizable.setModificationNotifier(nodeDiscoveryBroadcaster);
 
         // we should make a local copy as this may change
 
@@ -839,6 +856,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
     public void sendBootStrap(ProposedNodes proposedNodes) {
         setOurProposedIdentifier(proposedNodes);
         bootstrapRequired.set(true);
+        onChange();
     }
 
 

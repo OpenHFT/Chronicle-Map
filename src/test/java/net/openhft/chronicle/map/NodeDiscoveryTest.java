@@ -7,8 +7,6 @@ public class NodeDiscoveryTest {
     @Test
     public void testDiscoverMap() throws Exception {
         final NodeDiscovery nodeDiscovery = new NodeDiscovery();
-        final ChronicleMap<Integer, CharSequence> map = nodeDiscovery.discoverMap(1235, 1236);
-
-       // Thread.sleep(10000);
+        final ChronicleMap<Integer, CharSequence> map = nodeDiscovery.discoverMap(8123, 1237);
     }
 }
