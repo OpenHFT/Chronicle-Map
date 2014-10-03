@@ -3,7 +3,6 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -36,9 +35,7 @@ public class DiscoveryCluster {
         final UdpReplicationConfig udpConfig = UdpReplicationConfig
                 .simple(Inet4Address.getByName("255.255.255.255"), udpBroadcastPort);
 
-        final Bytes identifierBitSetBits = new ByteBufferBytes(ByteBuffer.allocate(128 / 8));
-
-        final RemoteNodes remoteNodes = new RemoteNodes(identifierBitSetBits);
+        final KnownNodes knownNodes = new KnownNodes();
         final DirectBitSet knownIdentifiers = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer.allocate
                 (128 / 8)));
 
@@ -51,15 +48,14 @@ public class DiscoveryCluster {
         final UDPEventListener udpEventListener = new UDPEventListener() {
 
             @Override
-            public void onRemoteNodeEvent(@NotNull final Set<AddressAndPort> usedHostPorts,
-                                          @NotNull final ATSDirectBitSet usedIdentifiers,
-                                          @NotNull final Set<BytesExternalizableImpl.ProposedIdentifierWithHost> proposedHostPortIdentifiers) {
+            public void onRemoteNodeEvent(KnownNodes remoteNode, ConcurrentExpiryMap<AddressAndPort, BytesExternalizableImpl.ProposedNodes> proposedIdentifiersWithHost) {
 
-                knownHostPorts.addAll(usedHostPorts);
+                knownHostPorts.addAll(remoteNode.addressAndPorts());
 
-                orBitSets(usedIdentifiers, knownIdentifiers);
+                orBitSets(remoteNode.activeIdentifierBitSet(), knownIdentifiers);
 
-                for (BytesExternalizableImpl.ProposedIdentifierWithHost proposedIdentifierWithHost : proposedHostPortIdentifiers) {
+                for (BytesExternalizableImpl.ProposedNodes proposedIdentifierWithHost :
+                        proposedIdentifiersWithHost.values()) {
                     if (!proposedIdentifierWithHost.addressAndPort().equals(ourAddressAndPort)) {
 
                         int remoteIdentifier = proposedIdentifierWithHost.identifier();
@@ -71,23 +67,25 @@ public class DiscoveryCluster {
                     }
                 }
             }
+
+
         };
 
-        final BytesExternalizableImpl externalizable = new BytesExternalizableImpl(remoteNodes, udpEventListener);
+        final BytesExternalizableImpl externalizable = new BytesExternalizableImpl(knownNodes, udpEventListener);
 
-        final BytesExternalizableImpl.ProposedIdentifierWithHost ourHostPort = new
-                BytesExternalizableImpl.ProposedIdentifierWithHost(ourAddressAndPort, (byte) -1);
+        final BytesExternalizableImpl.ProposedNodes ourHostPort = new
+                BytesExternalizableImpl.ProposedNodes(ourAddressAndPort, (byte) -1);
 
         // to start with we will send a bootstrap that just contains our hostname without and identifier
-        externalizable.setOurProposedIdentifier(ourHostPort);
-        externalizable.sendBootStrap();
+
+        externalizable.sendBootStrap(ourHostPort);
         Thread.sleep(10);
 
         // we should not get back some identifiers
         // the identifiers will come back to the callback on the nio thread, the update arrives at the
         // onRemoteNodeEvent
 
-        externalizable.sendBootStrap();
+        externalizable.sendBootStrap(ourHostPort);
         Thread.sleep(10);
         byte identifier;
 
@@ -101,17 +99,16 @@ public class DiscoveryCluster {
 
             isFistTime = false;
 
-            final BytesExternalizableImpl.ProposedIdentifierWithHost proposedIdentifierWithHost = new
-                    BytesExternalizableImpl.ProposedIdentifierWithHost(ourAddressAndPort, identifier);
+            final BytesExternalizableImpl.ProposedNodes proposedNodes = new
+                    BytesExternalizableImpl.ProposedNodes(ourAddressAndPort, identifier);
 
-            externalizable.setOurProposedIdentifier(proposedIdentifierWithHost);
-            externalizable.sendBootStrap();
+            externalizable.sendBootStrap(proposedNodes);
 
             Thread.sleep(10);
 
             for (int j = 0; j < 3; j++) {
 
-                externalizable.sendBootStrap();
+                externalizable.sendBootStrap(proposedNodes);
                 Thread.sleep(10);
 
                 if (useAnotherIdentifier.get()) {
@@ -139,13 +136,13 @@ public class DiscoveryCluster {
             @Override
             public boolean isIdentifierUnique(byte remoteIdentifier, SocketAddress remoteAddress) {
                 final SocketAddress socketAddress = identifiers.putIfAbsent(remoteIdentifier, remoteAddress);
-                remoteNodes.activeIdentifierBitSet().set(remoteIdentifier);
+                knownNodes.activeIdentifierBitSet().set(remoteIdentifier);
                 return socketAddress == null;
             }
         };
 
-
-        remoteNodes.activeIdentifierBitSet().set(identifier);
+        // add our identifier and host:port to the list of known identifiers
+        knownNodes.add(ourAddressAndPort, identifier);
 
         final TcpReplicationConfig tcpConfig = TcpReplicationConfig
                 .of(tcpPort, toInetSocketArray(knownHostPorts))
@@ -204,7 +201,8 @@ public class DiscoveryCluster {
     }
 
 
-    private byte proposeRandomUnusedIdentifier(final DirectBitSet knownIdentifiers, boolean isFirstTime) throws UnknownHostException {
+    public static byte proposeRandomUnusedIdentifier(final DirectBitSet knownIdentifiers,
+                                         boolean isFirstTime) throws UnknownHostException {
         byte possible;
 
 
