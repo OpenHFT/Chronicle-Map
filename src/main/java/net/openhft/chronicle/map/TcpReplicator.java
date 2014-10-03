@@ -424,16 +424,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             final IdentifierListener identifierListener = replicationConfig.identifierListener;
             final SocketAddress remoteAddress = socketChannel.getRemoteAddress();
 
-            boolean identifierIsUnique;
 
-            if (identifierListener != null) {
-                identifierIsUnique = identifierListener.isIdentifierUnique(remoteIdentifier, remoteAddress);
-            }  else {
-                identifierIsUnique =  remoteIdentifier != localIdentifier;
-            }
-
-            if (identifierIsUnique) {
-
+            if ( (identifierListener != null && !identifierListener.isIdentifierUnique(remoteIdentifier,
+                    remoteAddress)) || remoteIdentifier == localIdentifier)
 
                 // throwing this exception will cause us to disconnect, both the client and server
                 // will be able to detect the the remote and local identifiers are the same,
@@ -441,7 +434,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 // methods
                 throw new IllegalStateException("dropping connection, " +
                         "as the remote-identifier is already being used, identifier=" + remoteIdentifier);
-            }
 
             attached.remoteModificationIterator = replica.acquireModificationIterator(remoteIdentifier,
                     attached);
