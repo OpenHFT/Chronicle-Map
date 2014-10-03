@@ -1,5 +1,17 @@
 package net.openhft.chronicle.map.example;
 
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.lang.model.Byteable;
+import net.openhft.lang.values.IntValue;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class WordCount {
 
     static String[] words;
@@ -18,7 +30,6 @@ public class WordCount {
 
     static interface ByteableIntValue extends IntValue, Byteable {}
 
-    @Benchmark
     public int chronicleMap() throws IOException {
         ChronicleMap<String, ByteableIntValue> map =
                 ChronicleMapBuilder.of(String.class, ByteableIntValue.class)
