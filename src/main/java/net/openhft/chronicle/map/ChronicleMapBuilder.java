@@ -524,6 +524,9 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     }
 
     private void preMapConstruction() {
+        keyBuilder.objectSerializer(objectSerializer());
+        valueBuilder.objectSerializer(objectSerializer());
+
         int maxSize = entrySize() * figureBufferAllocationFactor();
         keyBuilder.maxSize(maxSize);
         valueBuilder.maxSize(maxSize);
