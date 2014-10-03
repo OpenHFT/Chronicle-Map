@@ -2,7 +2,6 @@ package net.openhft.chronicle.map;
 
 import junit.framework.TestCase;
 import net.openhft.lang.io.ByteBufferBytes;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testng.Assert;
 
@@ -16,10 +15,8 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
     public static final int SERVER2_IDENTIFER = 10;
     public static final int PROPOSED_IDENTIFIER = 5;
 
-
     @Test
-    @Ignore
-    public void test3() throws IOException, InterruptedException {
+    public void testsTheSerializationOfTheNodeDiscovery() throws IOException, InterruptedException {
 
         // write broadcast our address on the bootstrap method
         byte[] server1Address = Inet4Address.getLocalHost().getAddress();
@@ -32,7 +29,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
 
         KnownNodes server1KnownNodes = new KnownNodes();
-        BytesExternalizableImpl server1BytesExternalizable = new BytesExternalizableImpl(server1KnownNodes, null);
+        DiscoveryNodeBytesMarshallable server1BytesExternalizable = new DiscoveryNodeBytesMarshallable(server1KnownNodes, null);
 
         // for the unit test we are using a ByteBufferBytes, but iltimately this data would have been send
         // and received via UDP
@@ -42,8 +39,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
         // we will first send the boostrap along with our host and port
         {
 
-
-            BytesExternalizableImpl.ProposedNodes proposedNodes = new BytesExternalizableImpl.ProposedNodes(server1AddressAndPort, (byte) -1);
+            DiscoveryNodeBytesMarshallable.ProposedNodes proposedNodes = new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) -1);
 
             server1BytesExternalizable.sendBootStrap(proposedNodes);
 
@@ -53,7 +49,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
         KnownNodes server2KnownNodes = new KnownNodes();
         server2KnownNodes.add(server2AddressAndPort, (byte) SERVER2_IDENTIFER);
-        BytesExternalizableImpl server2BytesExternalizable = new BytesExternalizableImpl(server2KnownNodes, null);
+        DiscoveryNodeBytesMarshallable server2BytesExternalizable = new DiscoveryNodeBytesMarshallable(server2KnownNodes, null);
 
         // add our identifier and host:port to the list of known identifiers
 
@@ -65,7 +61,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             server2BytesExternalizable.readMarshallable(udpData);
 
             Assert.assertTrue(server2BytesExternalizable.proposedIdentifiersWithHost.values().contains
-                    (new BytesExternalizableImpl.ProposedNodes(server1AddressAndPort, (byte) -1)));
+                    (new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) -1)));
         }
 
         // SERVER 2
@@ -114,9 +110,9 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
             KnownNodes knownNodes = new KnownNodes();
 
-            BytesExternalizableImpl bytesExternalizable = new BytesExternalizableImpl(knownNodes, null);
+            DiscoveryNodeBytesMarshallable bytesExternalizable = new DiscoveryNodeBytesMarshallable(knownNodes, null);
 
-            BytesExternalizableImpl.ProposedNodes proposedNodes = new BytesExternalizableImpl.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER);
+            DiscoveryNodeBytesMarshallable.ProposedNodes proposedNodes = new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER);
 
             // send the bootstrap along with this newly proposed identifier
             bytesExternalizable.sendBootStrap(proposedNodes);
@@ -132,7 +128,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             server2BytesExternalizable.readMarshallable(udpData);
 
             Assert.assertTrue(server2BytesExternalizable.proposedIdentifiersWithHost.values().contains
-                    (new BytesExternalizableImpl.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER)));
+                    (new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER)));
         }
 
 
@@ -169,7 +165,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
                     (SERVER2_IDENTIFER));
 
             Assert.assertTrue(server1BytesExternalizable.proposedIdentifiersWithHost.values().contains
-                    (new BytesExternalizableImpl.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER)));
+                    (new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER)));
 
         }
 
