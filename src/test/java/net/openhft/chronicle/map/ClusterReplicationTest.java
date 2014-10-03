@@ -89,11 +89,7 @@ public class ClusterReplicationTest {
 
 
     @Test
-    @Ignore
     public void test() throws IOException, InterruptedException {
-
-        // todo remove this sleep
-        Thread.sleep(100);
 
         map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
