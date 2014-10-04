@@ -19,8 +19,8 @@ package net.openhft.chronicle.map.fromdocs;
 import net.openhft.affinity.AffinitySupport;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.lang.io.serialization.impl.NewInstanceObjectFactory;
 import net.openhft.lang.model.DataValueClasses;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -28,10 +28,12 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import static net.openhft.lang.model.DataValueClasses.directClassFor;
 import static org.junit.Assert.assertEquals;
 
 /**
- * These code fragments will appear in an article on OpenHFT.  These tests to ensure that the examples compile and behave as expected.
+ * These code fragments will appear in an article on OpenHFT.
+ * These tests to ensure that the examples compile and behave as expected.
  */
 public class OpenJDKAndHashMapExamplesTest {
     private static final SimpleDateFormat YYYYMMDD = new SimpleDateFormat("yyyyMMdd");
@@ -48,12 +50,14 @@ public class OpenJDKAndHashMapExamplesTest {
     }
 
     @Test
-    @Ignore
     public void bondExample() throws IOException, InterruptedException {
 
-
+        Class<BondVOInterface> bondVODirectClass = directClassFor(BondVOInterface.class);
+        NewInstanceObjectFactory<BondVOInterface> bondVODirectObjectFactory =
+                new NewInstanceObjectFactory<BondVOInterface>(bondVODirectClass);
         ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
-                .of(String.class, BondVOInterface.class)
+                .of(String.class, bondVODirectClass)
+                .valueFactory(bondVODirectObjectFactory)
                 .entrySize(512)
                 .create(new File(TMP + "/chm-myBondPortfolioCHM"));
 
@@ -74,7 +78,8 @@ public class OpenJDKAndHashMapExamplesTest {
 
 
         ChronicleMap<String, BondVOInterface> chmB = ChronicleMapBuilder
-                .of(String.class, BondVOInterface.class)
+                .of(String.class, bondVODirectClass)
+                .valueFactory(bondVODirectObjectFactory)
                 .entrySize(320)
                 .create(new File(TMP + "/chm-myBondPortfolioCHM"));
 
@@ -143,7 +148,7 @@ public class OpenJDKAndHashMapExamplesTest {
         // cleanup.
         chm.close();
         chmB.close();
-        new File("/dev/chm/myBondPortfolioCHM").delete();
+        new File(TMP + "/chm-myBondPortfolioCHM").delete();
 
     }
 
