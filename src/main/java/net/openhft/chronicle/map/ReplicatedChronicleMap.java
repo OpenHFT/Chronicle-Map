@@ -558,7 +558,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     public boolean wasRemoved(@NotNull Bytes entry) {
         final long start = entry.position();
         try {
-            return entry.readBoolean(keySizeMarshaller.readSize(entry) + 10);
+            return entry.readBoolean(keySizeMarshaller.readSize(entry) + 9);
         } finally {
             entry.position(start);
         }
