@@ -26,6 +26,7 @@ public final class BytesReaders {
     }
 
     private static class SimpleBytesReader<E> implements BytesReader<E> {
+        private static final long serialVersionUID = 0L;
 
         private final BytesMarshaller<E> marshaller;
 

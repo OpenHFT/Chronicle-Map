@@ -1416,6 +1416,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     final class WriteThroughEntry extends SimpleEntry<K, V> {
+        private static final long serialVersionUID = 0L;
 
         WriteThroughEntry(K key, V value) {
             super(key, value);
