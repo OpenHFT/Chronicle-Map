@@ -36,18 +36,21 @@ public class ByteableMarshaller<E extends Byteable> implements AgileBytesMarshal
                                                                 ObjectFactory<E> factory) {
         if (factory instanceof AllocateInstanceObjectFactory) {
             Class allocatedClass = ((AllocateInstanceObjectFactory) factory).allocatedClass();
-            return new ByteableMarshaller<E>(allocatedClass);
+            return new Default<E>(allocatedClass);
         } else {
             return new WithCustomFactory<E>(eClass, factory);
         }
     }
 
     @NotNull
-    final Class<E> tClass;
-    final long size;
+    private final Class<E> tClass;
+    private long size;
 
-    ByteableMarshaller(@NotNull Class<E> tClass) {
+    private ByteableMarshaller(@NotNull Class<E> tClass) {
         this.tClass = tClass;
+    }
+
+    void initSize() {
         try {
             size = getInstance().maxSize();
         } catch (Exception e) {
@@ -126,6 +129,15 @@ public class ByteableMarshaller<E extends Byteable> implements AgileBytesMarshal
         return (E) NativeBytes.UNSAFE.allocateInstance(tClass);
     }
 
+    private static class Default<E extends Byteable> extends ByteableMarshaller<E> {
+        private static final long serialVersionUID = 0L;
+
+        Default(@NotNull Class<E> tClass) {
+            super(tClass);
+            initSize();
+        }
+    }
+
     private static class WithCustomFactory<E extends Byteable> extends ByteableMarshaller<E> {
         private static final long serialVersionUID = 0L;
 
@@ -136,6 +148,7 @@ public class ByteableMarshaller<E extends Byteable> implements AgileBytesMarshal
                                             @NotNull ObjectFactory<E> factory) {
             super(tClass);
             this.factory = factory;
+            initSize();
         }
 
         @NotNull
