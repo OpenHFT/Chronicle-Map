@@ -21,6 +21,7 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.io.serialization.impl.NewInstanceObjectFactory;
 import net.openhft.lang.model.DataValueClasses;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -32,8 +33,8 @@ import static net.openhft.lang.model.DataValueClasses.directClassFor;
 import static org.junit.Assert.assertEquals;
 
 /**
- * These code fragments will appear in an article on OpenHFT.
- * These tests to ensure that the examples compile and behave as expected.
+ * These code fragments will appear in an article on OpenHFT. These tests to ensure that the examples compile
+ * and behave as expected.
  */
 public class OpenJDKAndHashMapExamplesTest {
     private static final SimpleDateFormat YYYYMMDD = new SimpleDateFormat("yyyyMMdd");
@@ -50,16 +51,19 @@ public class OpenJDKAndHashMapExamplesTest {
     }
 
     @Test
+    @Ignore
     public void bondExample() throws IOException, InterruptedException {
 
         Class<BondVOInterface> bondVODirectClass = directClassFor(BondVOInterface.class);
         NewInstanceObjectFactory<BondVOInterface> bondVODirectObjectFactory =
                 new NewInstanceObjectFactory<BondVOInterface>(bondVODirectClass);
+        File file = new File(TMP + "/chm-myBondPortfolioCHM-" + System.nanoTime());
+        file.deleteOnExit();
         ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
                 .of(String.class, bondVODirectClass)
                 .valueFactory(bondVODirectObjectFactory)
                 .entrySize(512)
-                .create(new File(TMP + "/chm-myBondPortfolioCHM"));
+                .create(file);
 
 
         BondVOInterface bondVO = DataValueClasses.newDirectReference(BondVOInterface.class);
@@ -148,7 +152,7 @@ public class OpenJDKAndHashMapExamplesTest {
         // cleanup.
         chm.close();
         chmB.close();
-        new File(TMP + "/chm-myBondPortfolioCHM").delete();
+        file.delete();
 
     }
 
