@@ -70,7 +70,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     private MapEventListener<K, V, ChronicleMap<K, V>> eventListener =
             MapEventListeners.nop();
     private V defaultValue = null;
-    private DefaultValueProvider<K, V> defaultValueProvider = NullValueProvider.INSTANCE;
+    private DefaultValueProvider<K, V> defaultValueProvider = null;
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
@@ -357,6 +357,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
                 ", keyBuilder=" + keyBuilder +
                 ", valueBuilder=" + valueBuilder +
                 ", eventListener=" + eventListener +
+                ", defaultValue=" + defaultValue +
+                ", defaultValueProvider=" + defaultValueProvider +
                 '}';
     }
 
