@@ -21,7 +21,6 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.io.serialization.impl.NewInstanceObjectFactory;
 import net.openhft.lang.model.DataValueClasses;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -51,7 +50,6 @@ public class OpenJDKAndHashMapExamplesTest {
     }
 
     @Test
-    @Ignore
     public void bondExample() throws IOException, InterruptedException {
 
         Class<BondVOInterface> bondVODirectClass = directClassFor(BondVOInterface.class);
@@ -85,7 +83,7 @@ public class OpenJDKAndHashMapExamplesTest {
                 .of(String.class, bondVODirectClass)
                 .valueFactory(bondVODirectObjectFactory)
                 .entrySize(320)
-                .create(new File(TMP + "/chm-myBondPortfolioCHM"));
+                .create(file);
 
         // ZERO Copy but creates a new off heap reference each time
 
