@@ -21,7 +21,6 @@ import net.openhft.lang.values.IntValue;
 import net.openhft.lang.values.IntValue$$Native;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -76,7 +75,6 @@ public class TCPSocketReplicationIntValueTest {
 
 
     @Test
-    @Ignore
     public void test3() throws IOException, InterruptedException {
 
         map1.put(set(5), "EXAMPLE-2");
@@ -97,7 +95,6 @@ public class TCPSocketReplicationIntValueTest {
 
     // see https://higherfrequencytrading.atlassian.net/browse/HCOLL-148
     @Test
-    @Ignore
     public void test() throws IOException, InterruptedException {
 
         map1.put(set(1), "EXAMPLE-1");
@@ -107,9 +104,9 @@ public class TCPSocketReplicationIntValueTest {
         map2.put(set(5), "EXAMPLE-2");
         map2.put(set(6), "EXAMPLE-2");
 
-        map1.remove(2);
-        map2.remove(3);
-        map1.remove(3);
+        map1.remove(set(2));
+        map2.remove(set(3));
+        map1.remove(set(3));
         map2.put(set(5), "EXAMPLE-2");
 
         // allow time for the recompilation to resolve
