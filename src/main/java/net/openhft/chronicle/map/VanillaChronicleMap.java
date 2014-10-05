@@ -897,6 +897,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         int alloc(int blocks) {
+            if (blocks > MAX_ENTRY_OVERSIZE_FACTOR)
+                throw new IllegalArgumentException("Entry is too large: requires " + blocks +
+                        " entry size chucks, " + MAX_ENTRY_OVERSIZE_FACTOR + " is maximum.");
             int ret = (int) freeList.setNextNContinuousClearBits(nextPosToSearchFrom,
                     blocks);
             if (ret == DirectBitSet.NOT_FOUND) {
