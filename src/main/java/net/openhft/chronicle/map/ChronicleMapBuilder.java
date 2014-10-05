@@ -25,11 +25,13 @@ import net.openhft.lang.Maths;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.*;
 import net.openhft.lang.io.serialization.impl.*;
+import net.openhft.lang.model.Byteable;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +40,9 @@ import java.util.concurrent.TimeUnit;
 import static net.openhft.chronicle.map.Objects.builderEquals;
 
 public class ChronicleMapBuilder<K, V> implements Cloneable {
+
+    private static final Bytes EMPTY_BYTES = new ByteBufferBytes(ByteBuffer.allocate(0));
+    private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
 
     public static final short UDP_REPLICATION_MODIFICATION_ITERATOR_ID = 128;
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
@@ -52,7 +57,9 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     private int actualSegments = -1;
     // used when reading the number of entries per
     private int actualEntriesPerSegment = -1;
-    private int entrySize = 256;
+    private int keySize = 0;
+    private int valueSize = 0;
+    private int entrySize = 0;
     private Alignment alignment = Alignment.OF_4_BYTES;
     private long entries = 1 << 20;
     private int replicas = 0;
@@ -126,22 +133,189 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     }
 
     /**
-     * <p>Note that the actual entrySize will be aligned to 4 (default entry alignment). I. e. if you set
-     * entry size to 30, the actual entry size will be 32 (30 aligned to 4 bytes). If you don't want entry
-     * size to be aligned, set {@code entryAndValueAlignment(Alignment.NO_ALIGNMENT)}.
+     * Configures the number of bytes, taken by serialized form of keys, put into maps, created by
+     * this builder.
+     *
+     * <p>If key is a boxed primitive type or {@link Byteable} subclass, i. e. if key size is known
+     * statically, it is automatically accounted and shouldn't be specified by user.
+     *
+     * <p>If key size varies moderately, specify the size higher than average, but lower than
+     * the maximum possible, to minimize average memory overuse. If key size varies in a wide range,
+     * it's better to use {@link #entrySize() entry size} in "chunk" mode and configure it directly.
+     *
+     * <p>Example: if keys in your map(s) are English words in {@link String} form, keys size 10
+     * (a bit more than average English word length) would be a good choice: <pre>{@code
+     * ChronicleMap<String, LongValue> wordFrequencies = ChronicleMapBuilder
+     *     .of(String.class, directClassFor(LongValue.class))
+     *     .entries(50000)
+     *     .keySize(10)
+     *     // shouldn't specify valueSize(), because it is statically known
+     *     .create();}</pre>
+     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded
+     * (and each character takes 2 bytes on-heap), because default off-heap {@link String} encoding
+     * is UTF-8 in {@code ChronicleMap}.)
+     *
+     * @param keySize number of bytes, taken by serialized form of keys
+     * @return this {@code ChronicleMapBuilder} back
+     * @see #valueSize(int)
+     * @see #entrySize()
+     */
+    public ChronicleMapBuilder<K, V> keySize(int keySize) {
+        if (keySize <= 0)
+            throw new IllegalArgumentException("Key size must be positive");
+        this.keySize = keySize;
+        return this;
+    }
+
+    private int keySize() {
+        return keyOrValueSize(keySize, keyBuilder);
+    }
+
+    /**
+     * Configures the number of bytes, taken by serialized form of value, put into maps, created by
+     * this builder.
+     *
+     * <p>If value is a boxed primitive type or {@link Byteable} subclass, i. e. if value size
+     * is known statically, it is automatically accounted and shouldn't be specified by user.
+     *
+     * <p>If value size varies moderately, specify the size higher than average, but lower than
+     * the maximum possible, to minimize average memory overuse. If value size varies in a wide
+     * range, it's better to use {@link #entrySize() entry size} in "chunk" mode and configure
+     * it directly.
+     *
+     * @param valueSize number of bytes, taken by serialized form of values
+     * @return this {@code ChronicleMapBuilder} back
+     * @see #keySize(int)
+     * @see #entrySize()
+     */
+    public ChronicleMapBuilder<K, V> valueSize(int valueSize) {
+        if (valueSize <= 0)
+            throw new IllegalArgumentException("Value size must be positive");
+        this.valueSize = valueSize;
+        return this;
+    }
+
+    private int valueSize() {
+        return keyOrValueSize(valueSize, valueBuilder);
+    }
+
+    private int keyOrValueSize(int configuredSize, SerializationBuilder builder) {
+        if (configuredSize > 0)
+            return configuredSize;
+        // this means size is statically known
+        if (builder.sizeMarshaller().sizeEncodingSize(0L) == 0)
+            return (int) builder.sizeMarshaller().readSize(EMPTY_BYTES);
+        return DEFAULT_KEY_OR_VALUE_SIZE;
+    }
+
+    /**
+     * Configures the {@linkplain #entrySize() entry size}.
+     *
+     * <p>Note that the actual entrySize will be aligned to 4 (default {@linkplain
+     * #entryAndValueAlignment() entry alignment}). I. e. if you set entry size to 30, the actual
+     * entry size will be 32 (30 aligned to 4 bytes). If you don't want entry size to be aligned,
+     * set {@code entryAndValueAlignment(Alignment.NO_ALIGNMENT)}.
      *
      * @param entrySize the size in bytes
      * @return this {@code ChronicleMapBuilder} back
+     * @see #entrySize()
      * @see #entryAndValueAlignment(Alignment)
      * @see #entryAndValueAlignment()
      */
     public ChronicleMapBuilder<K, V> entrySize(int entrySize) {
+        if (entrySize <= 0)
+            throw new IllegalArgumentException("Entry Size must be positive");
         this.entrySize = entrySize;
         return this;
     }
 
+    /**
+     * Returns the size in bytes of allocation unit of {@code ChronicleMap} instances, created by
+     * this builder.
+     *
+     * <p>{@code ChronicleMap} stores it's data off-heap, so it is required to serialize
+     * key and values (unless they are direct {@link Byteable} instances). Serialized key bytes +
+     * serialized value bytes + some metadata bytes comprise "entry space", which
+     * {@code ChronicleMap} should allocate. So <i>entry size</i> is a minimum allocation portion
+     * in the maps, created by this builder. E. g. if entry size is 100, the created map could only
+     * allocate 100, 200, 300... bytes for an entry. If say 150 bytes of entry space are required
+     * by the entry, 200 bytes will be allocated, 150 used and 50 wasted. To minimize memory overuse
+     * and improve speed, you should pay decent attention to this configuration.
+     *
+     * <p>In fully default case you can expect entry size to be about 256 bytes. But it is strongly
+     * recommended always to configure {@linkplain #keySize(int) key size} and
+     * {@linkplain #valueSize(int) value size}, if they couldn't be derived statically.
+     *
+     * <p>If entry size is not {@linkplain #entrySize(int) configured} explicitly, it is computed
+     * based on {@linkplain #metaDataBytes() meta data bytes}, plus {@linkplain #keySize(int) key
+     * size}, plus {@linkplain #valueSize(int) value size}, plus a few bytes required by
+     * implementations, with respect to {@linkplain #entryAndValueAlignment() alignment}.
+     *
+     * <p>There are three major patterns of this configuration usage:
+     * <ul>
+     *     <li>Key and value sizes are known exactly. Just specify them using precisely
+     *     corresponding methods. No memory would be wasted in this case.</li>
+     *     <li>Key and/or value size varies moderately. Specify them using corresponding methods,
+     *     or {@linkplain #entrySize(int) specify entry size} directly, by values somewhere between
+     *     average and maximum possible. The idea is to have most (90% or more) entries to fit
+     *     a single "entry size" with moderate memory waste (10-20% on average), rest 10% or less of
+     *     entries should take 2 "entry sizes", thus with ~50% memory overuse.</li>
+     *     <li>Key and/or value size varies in a wide range. Then it's best to use entry size
+     *     configuration in <i>chunk mode</i>. Specify entry size so that most entries should take
+     *     from 5 to several dozens of "chunks". With this approach, average memory waste should be
+     *     very low.
+     *
+     *     <p>However, remember that operations with entries that span several "entry sizes"
+     *     are a bit slower, than entries which take a single "entry size" (that is why "chunk"
+     *     approach is not recommended, when key and/or value size varies moderately). Also, note
+     *     that the maximum number of chunks could be taken by an entry is 64.
+     *     {@link IllegalArgumentException} is thrown on attempt to insert too large entry, compared
+     *     to the configured or computed entry size.
+     *
+     *     <p>Example: if values in your map are adjacency lists of some social graph, where nodes
+     *     are represented as {@code long} ids, and adjacency lists are serialized in efficient
+     *     manner, for example as {@code long[]} arrays. Typical number of connections is 100-300,
+     *     maximum is 3000. In this case entry size of 50 * (8 bytes for each id) = 400 bytes would
+     *     be a good choice: <pre>{@code
+     * Map<Long, long[]> socialGraph = ChronicleMapBuilder
+     *     .of(Long.class, long[].class)
+     *     .entries(1_000_000_000)
+     *     .entrySize(50 * 8)
+     *     .create();}</pre>
+     *     It is minimum possible (because 3000 friends / 50 friends = 60 is close to 64 "max
+     *     chunks by single entry" limit, and ensures moderate average memory overuse (not more
+     *     than 20%).
+     *     </li>
+     * </ul>
+     *
+     * @return size of memory allocation unit (in bytes)
+     */
     public int entrySize() {
-        return entrySize;
+        if (entrySize > 0)
+            return entrySize;
+        int size = metaDataBytes;
+        int keySize = keySize();
+        size += keyBuilder.sizeMarshaller().sizeEncodingSize(keySize);
+        size += keySize;
+        if (replicatedImpl())
+            size += ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
+        int valueSize = valueSize();
+        size += valueBuilder.sizeMarshaller().sizeEncodingSize(valueSize);
+        size = entryAndValueAlignment().alignSize(size);
+        size += valueSize;
+        // Some cache line heuristics
+        for (int i = 1; i <= 4; i++) {
+            int bound = i * 64;
+            // Not more than 5% oversize.
+            // DEFAULT_KEY_OR_VALUE_SIZE and this heuristic are specially adjusted to produce
+            // entry size 256 -- the default value prior to keySize and valueSize -- when key and
+            // value sizes are both not static nor configured, in both vanilla and replicated modes.
+            if (size < bound && (bound - size) <= bound / 20) {
+                size = bound;
+                break;
+            }
+        }
+        return entryAndValueAlignment().alignSize(size);
     }
 
     int alignedEntrySize() {
@@ -149,14 +323,14 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     }
 
     /**
-     * Specifies alignment of address in memory of entries and independently of address in memory
-     * of values within entries.
-     * <p/>
+     * Configures alignment strategy of address in memory of entries and independently of address
+     * in memory of values within entries in ChronicleMaps, created by this builder.
+     *
      * <p>Useful when values of the map are updated intensively, particularly fields with
      * volatile access, because it doesn't work well if the value crosses cache lines. Also, on some
      * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
-     * <p/>
-     * <p>Note that specified {@link #entrySize()} will be aligned according to this alignment.
+     *
+     * <p>Note that {@link #entrySize()} will be aligned according to this alignment.
      * I. e. if you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual entry size
      * will be 24 (20 aligned to 8 bytes).
      *
@@ -170,11 +344,12 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     }
 
     /**
-     * Returns alignment of addresses in memory of entries and independently of values within
-     * entries.
-     * <p/>
+     * Returns alignment strategy of addresses in memory of entries and independently of values
+     * within entries in ChronicleMaps, created by this builder.
+     *
      * <p>Default is {@link Alignment#OF_4_BYTES}.
      *
+     * @return entry/value alignment strategy
      * @see #entryAndValueAlignment(Alignment)
      */
     public Alignment entryAndValueAlignment() {
@@ -341,6 +516,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
                 "actualSegments=" + actualSegments() +
                 ", minSegments=" + minSegments() +
                 ", actualEntriesPerSegment=" + actualEntriesPerSegment() +
+                ", keySize=" + keySize() +
+                ", valueSize=" + valueSize() +
                 ", entrySize=" + entrySize() +
                 ", entryAndValueAlignment=" + entryAndValueAlignment() +
                 ", entries=" + entries() +
@@ -580,13 +757,17 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {
         preMapConstruction();
-        if (firstReplicator == null && !forceReplicatedImpl) {
+        if (!replicatedImpl()) {
             return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                     V, Object, MetaBytesWriter<V, Object>>(this);
         } else {
             return new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                     V, Object, MetaBytesWriter<V, Object>>(this);
         }
+    }
+
+    private boolean replicatedImpl() {
+        return firstReplicator != null || forceReplicatedImpl;
     }
 
     private void preMapConstruction() {

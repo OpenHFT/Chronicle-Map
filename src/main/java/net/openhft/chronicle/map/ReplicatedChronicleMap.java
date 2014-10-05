@@ -86,6 +86,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     private static final long serialVersionUID = 0L;
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
     private static final long LAST_UPDATED_HEADER_SIZE = 128L * 8L;
+    public static final int ADDITIONAL_ENTRY_BYTES = 10;
     private final TimeProvider timeProvider;
     private final byte localIdentifier;
     transient Set<Closeable> closeables;
@@ -586,7 +587,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         private long entrySize(long keySize, long valueSize) {
             long result = alignment.alignAddr(metaDataBytes +
-                    keySizeMarshaller.sizeEncodingSize(keySize) + keySize + 10 +
+                    keySizeMarshaller.sizeEncodingSize(keySize) + keySize + ADDITIONAL_ENTRY_BYTES +
                     valueSizeMarshaller.sizeEncodingSize(valueSize)) + valueSize;
             // replication enforces that the entry size will never be larger than an unsigned short
             if (result > MAX_UNSIGNED_SHORT)
@@ -613,7 +614,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 if (offset >= 0) {
 
                     // skip the timestamp, identifier and is deleted flag
-                    entry.skip(10);
+                    entry.skip(ADDITIONAL_ENTRY_BYTES);
 
                     return onKeyPresentOnAcquire(copies, key, usingValue, offset, entry);
                 } else {
