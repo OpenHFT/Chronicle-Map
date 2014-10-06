@@ -594,9 +594,26 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
                 '}';
     }
 
+    final static int INADDRSZ = 16;
+    final static int INT16SZ = 2;
+
     static String numericToTextFormat(byte[] src) {
         if (src.length == 4) {
             return (src[0] & 0xff) + "." + (src[1] & 0xff) + "." + (src[2] & 0xff) + "." + (src[3] & 0xff);
+        }
+
+        if (src.length == 6) {
+
+            StringBuffer sb = new StringBuffer(39);
+            for (int i = 0; i < (INADDRSZ / INT16SZ); i++) {
+                sb.append(Integer.toHexString(((src[i << 1] << 8) & 0xff00)
+                        | (src[(i << 1) + 1] & 0xff)));
+                if (i < (INADDRSZ / INT16SZ) - 1) {
+                    sb.append(":");
+                }
+            }
+            return sb.toString();
+
         }
         throw new UnsupportedOperationException();
     }
