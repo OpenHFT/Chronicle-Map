@@ -99,7 +99,7 @@ public class NodeDiscovery {
             externalizable.sendBootStrap(ourHostPort);
 
             // once the count down latch is trigger we know we go something back from one of the nodes
-            if (countDownLatch.get().await(5, TimeUnit.MILLISECONDS))
+            if (countDownLatch.get().await(50, TimeUnit.MILLISECONDS))
                 break;
         }
 
@@ -133,7 +133,7 @@ public class NodeDiscovery {
                 externalizable.sendBootStrap(proposedNodes);
 
                 // once the count down latch is trigger we know we go something back from one of the nodes
-                if (countDownLatch.get().await(5, TimeUnit.MILLISECONDS)) {
+                if (countDownLatch.get().await(50, TimeUnit.MILLISECONDS)) {
                     if (useAnotherIdentifier.get()) {
                         // given that another node host proposed the same identifier, we will choose a different one.
                         LOG.info("Another node is using identifier=" + identifier + ", " +
