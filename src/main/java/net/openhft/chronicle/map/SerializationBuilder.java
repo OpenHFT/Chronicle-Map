@@ -63,10 +63,10 @@ final class SerializationBuilder<E> implements Cloneable {
         this.bufferIdentity = role;
         this.eClass = eClass;
 
-        ObjectFactory<E> factory = this.factory;
-        if (factory == null && role == Role.VALUE) {
+        ObjectFactory<E> factory = null;
+        if (role == Role.VALUE) {
             factory = concreteClass(eClass) && marshallerUseFactory(eClass) ?
-                    new AllocateInstanceObjectFactory(eClass) :
+                    new NewInstanceObjectFactory<E>(eClass) :
                     NullObjectFactory.INSTANCE;
         }
 
@@ -84,6 +84,9 @@ final class SerializationBuilder<E> implements Cloneable {
             BytesMarshaller<E> marshaller = chooseMarshaller(eClass, eClass);
             if (marshaller != null)
                 marshaller(marshaller, factory);
+        }
+        if (role == Role.VALUE && concreteClass(eClass) && marshallerUseFactory(eClass)) {
+            factory(factory);
         }
     }
 
