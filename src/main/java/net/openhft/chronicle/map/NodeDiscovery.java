@@ -978,7 +978,7 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
     }
 
 
-    /*public static void main(String... args) {
+    public static void main(String... args) {
         String ip;
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -998,5 +998,40 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
         } catch (SocketException e) {
             throw new RuntimeException(e);
         }
-    }*/
+    }
+
+
+    /**
+     * private NetworkInterface defaultNetworkInterface() throws SocketException { NetworkInterface
+     * networkInterface = null
+     *
+     * for (String suggestedName : new String[]{"en0", "eth0"}) { networkInterface =
+     * NetworkInterface.getByName(suggestedName); if (networkInterface != null) break; } return
+     * networkInterface; }
+     *
+     * /**
+     *
+     * @return the default network interface, or
+     * @throws SocketException
+     */
+    public static NetworkInterface defaultNetworkInterface() throws SocketException {
+        NetworkInterface networkInterface = null;
+
+        for (String suggestedName : new String[]{"en0", "eth0"}) {
+            networkInterface = NetworkInterface.getByName(suggestedName);
+            if (networkInterface != null)
+                break;
+        }
+
+        if (networkInterface != null)
+            return networkInterface;
+
+        Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+        if (networkInterfaces == null || !networkInterfaces.hasMoreElements())
+            return null;
+
+        return networkInterfaces.nextElement();
+
+
+    }
 }

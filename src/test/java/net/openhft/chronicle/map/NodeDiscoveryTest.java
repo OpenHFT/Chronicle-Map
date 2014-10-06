@@ -14,8 +14,9 @@ public class NodeDiscoveryTest {
     public void testDiscoverMap() throws Exception {
         final NodeDiscovery nodeDiscovery = new NodeDiscovery();
 
-        NetworkInterface en0 = NetworkInterface.getByName("en0");
-        Enumeration<InetAddress> inetAddresses = en0.getInetAddresses();
+
+        NetworkInterface networkInterface = ConcurrentExpiryMap.defaultNetworkInterface();
+        Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
 
         AddressAndPort ourAddressAndPort1 = new AddressAndPort(inetAddresses.nextElement().getAddress(),
                 (short) 1237);
@@ -24,4 +25,6 @@ public class NodeDiscoveryTest {
 
         Thread.sleep(1000000);
     }
+
+
 }
