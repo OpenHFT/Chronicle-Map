@@ -39,7 +39,6 @@ public class NodeDiscovery {
         final UdpReplicationConfig udpConfig = UdpReplicationConfig
                 .simple(Inet4Address.getByName("255.255.255.255"), udpBroadcastPort);
 
-
         final KnownNodes knownNodes = new KnownNodes();
         final Set<AddressAndPort> knownHostPorts = new ConcurrentSkipListSet<AddressAndPort>();
         final DirectBitSet knownAndProposedIdentifiers = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer.allocate
@@ -97,7 +96,7 @@ public class NodeDiscovery {
             externalizable.sendBootStrap(ourHostPort);
 
             // once the count down latch is trigger we know we go something back from one of the nodes
-            if (countDownLatch.get().await(50, TimeUnit.MILLISECONDS))
+            if (countDownLatch.get().await(500, TimeUnit.MILLISECONDS))
                 break;
         }
 
@@ -131,7 +130,7 @@ public class NodeDiscovery {
                 externalizable.sendBootStrap(proposedNodes);
 
                 // once the count down latch is trigger we know we go something back from one of the nodes
-                if (countDownLatch.get().await(50, TimeUnit.MILLISECONDS)) {
+                if (countDownLatch.get().await(500, TimeUnit.MILLISECONDS)) {
                     if (useAnotherIdentifier.get()) {
                         // given that another node host proposed the same identifier, we will choose a different one.
                         LOG.info("Another node is using identifier=" + identifier + ", " +
