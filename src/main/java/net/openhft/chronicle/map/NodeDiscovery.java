@@ -99,7 +99,7 @@ public class NodeDiscovery {
             externalizable.sendBootStrap(ourHostPort);
 
             // once the count down latch is trigger we know we go something back from one of the nodes
-            if (countDownLatch.get().await(500, TimeUnit.MILLISECONDS))
+            if (countDownLatch.get().await(5, TimeUnit.MILLISECONDS))
                 break;
         }
 
@@ -133,17 +133,17 @@ public class NodeDiscovery {
                 externalizable.sendBootStrap(proposedNodes);
 
                 // once the count down latch is trigger we know we go something back from one of the nodes
-                if (countDownLatch.get().await(500, TimeUnit.MILLISECONDS)) {
+                if (countDownLatch.get().await(5, TimeUnit.MILLISECONDS)) {
                     if (useAnotherIdentifier.get()) {
                         // given that another node host proposed the same identifier, we will choose a different one.
                         LOG.info("Another node is using identifier=" + identifier + ", " +
-                                "going to have to select another one.");
+                                "going to have to select another one, we will wait 500ms before continuing");
                         continue OUTER;
                     } else {
                         break OUTER;
                     }
                 } else {
-                    LOG.info("timed-out getting a response from the server so sending another boot-stap  " +
+                    LOG.info("timed-out getting a response from the server so sending another boot-strap  " +
                             "message");
                 }
 
@@ -160,14 +160,16 @@ public class NodeDiscovery {
 
         final IdentifierListener identifierListener = new IdentifierListener() {
 
-            final ConcurrentMap<Byte, SocketAddress> identifiers = new ConcurrentHashMap<Byte,
+            private final ConcurrentMap<Byte, SocketAddress> identifiers = new ConcurrentHashMap<Byte,
                     SocketAddress>();
 
             @Override
             public boolean isIdentifierUnique(byte remoteIdentifier, SocketAddress remoteAddress) {
-                final SocketAddress socketAddress = identifiers.putIfAbsent(remoteIdentifier, remoteAddress);
+                final SocketAddress lastKnownAddress = identifiers.putIfAbsent(remoteIdentifier, remoteAddress);
+                if (remoteAddress.equals(lastKnownAddress))
+                    return true;
                 knownNodes.identifers().set(remoteIdentifier);
-                return socketAddress == null;
+                return lastKnownAddress == null;
             }
         };
 
@@ -177,6 +179,9 @@ public class NodeDiscovery {
         final TcpReplicationConfig tcpConfig = TcpReplicationConfig
                 .of(ourAddressAndPort.getPort(), toInetSocketArray(knownHostPorts))
                 .heartBeatInterval(1, SECONDS).nonUniqueIdentifierListener(identifierListener);
+
+
+        LOG.info("Using Remote identifier=" + identifier);
 
         return ChronicleMapBuilder.of(Integer.class,
                 CharSequence.class)
