@@ -16,9 +16,19 @@
 
 package net.openhft.chronicle.map;
 
+import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+
 public class DefaultValueTest {
 
-   /* @Test
+    @Test
     public void test() throws IllegalAccessException, InstantiationException, IOException {
         File file = Builder.getPersistenceFile();
         try {
@@ -44,5 +54,5 @@ public class DefaultValueTest {
         } finally {
             file.delete();
         }
-    }*/
+    }
 }
