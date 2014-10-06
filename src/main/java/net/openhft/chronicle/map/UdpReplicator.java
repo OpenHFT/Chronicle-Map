@@ -38,7 +38,6 @@ class UdpReplicator extends UdpChannelReplicator implements Replica.Modification
     private static final Logger LOG =
             LoggerFactory.getLogger(UdpReplicator.class.getName());
 
-
     UdpReplicator(@NotNull final Replica replica,
                   @NotNull final Replica.EntryExternalizable entryExternalizable,
                   @NotNull final UdpReplicationConfig replicationConfig,
@@ -57,7 +56,6 @@ class UdpReplicator extends UdpChannelReplicator implements Replica.Modification
 
         start();
     }
-
 
     private static class UdpSocketChannelEntryReader implements EntryReader {
 

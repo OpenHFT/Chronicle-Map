@@ -31,8 +31,7 @@ import static net.openhft.chronicle.map.Replicators.tcp;
  */
 public class NodeDiscovery {
 
-
-    public ChronicleMap<Integer, CharSequence> discoverMap(int udpBroadcastPort, final int tcpPort) throws IOException, InterruptedException {
+    public ChronicleMap<Integer, CharSequence> discoverMap(int udpBroadcastPort, final AddressAndPort ourAddressAndPort) throws IOException, InterruptedException {
 
         final AtomicInteger proposedIdentifier = new AtomicInteger();
         final AtomicBoolean useAnotherIdentifier = new AtomicBoolean();
@@ -49,11 +48,7 @@ public class NodeDiscovery {
         final AtomicReference<CountDownLatch> countDownLatch = new AtomicReference<CountDownLatch>(new
                 CountDownLatch(1));
 
-        final AddressAndPort ourAddressAndPort = new AddressAndPort(InetAddress.getLocalHost()
-                .getAddress(),
-                (short) tcpPort);
-
-        final UDPEventListener udpEventListener = new UDPEventListener() {
+        final NodeDiscoveryEventListener nodeDiscoveryEventListener = new NodeDiscoveryEventListener() {
 
             @Override
             public void onRemoteNodeEvent(KnownNodes remoteNode, ConcurrentExpiryMap<AddressAndPort, DiscoveryNodeBytesMarshallable.ProposedNodes> proposedIdentifiersWithHost) {
@@ -80,7 +75,8 @@ public class NodeDiscovery {
 
 
         };
-        final DiscoveryNodeBytesMarshallable externalizable = new DiscoveryNodeBytesMarshallable(knownNodes, udpEventListener);
+        final DiscoveryNodeBytesMarshallable externalizable = new DiscoveryNodeBytesMarshallable
+                (knownNodes, nodeDiscoveryEventListener, ourAddressAndPort);
 
         final NodeDiscoveryBroadcaster nodeDiscoveryBroadcaster
                 = new NodeDiscoveryBroadcaster(udpConfig, 1024, externalizable);
@@ -133,7 +129,7 @@ public class NodeDiscovery {
                 if (countDownLatch.get().await(50, TimeUnit.MILLISECONDS)) {
                     if (useAnotherIdentifier.get()) {
                         // given that another node host proposed the same identifier, we will choose a different one.
-                        LOG.info("Another node is using identifier=" + identifier+", " +
+                        LOG.info("Another node is using identifier=" + identifier + ", " +
                                 "going to have to select another one.");
                         continue OUTER;
                     } else {
@@ -144,7 +140,7 @@ public class NodeDiscovery {
 
             }
 
-            LOG.info("looks like we are the only node in the grid, so going to use identifier="+identifier);
+            LOG.info("looks like we are the only node in the grid, so going to use identifier=" + identifier);
 
             break;
         }
@@ -169,7 +165,7 @@ public class NodeDiscovery {
         knownNodes.add(ourAddressAndPort, identifier);
 
         final TcpReplicationConfig tcpConfig = TcpReplicationConfig
-                .of(tcpPort, toInetSocketArray(knownHostPorts))
+                .of(ourAddressAndPort.getPort(), toInetSocketArray(knownHostPorts))
                 .heartBeatInterval(1, SECONDS).nonUniqueIdentifierListener(identifierListener);
 
         return ChronicleMapBuilder.of(Integer.class,
@@ -634,13 +630,15 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
     private final KnownNodes remoteNode;
 
     private final AtomicBoolean bootstrapRequired = new AtomicBoolean();
-    private final UDPEventListener udpEventListener;
+    private final NodeDiscoveryEventListener nodeDiscoveryEventListener;
 
     private ProposedNodes ourProposedIdentifier;
 
     final ConcurrentExpiryMap<AddressAndPort, ProposedNodes> proposedIdentifiersWithHost = new
             ConcurrentExpiryMap<AddressAndPort, ProposedNodes>(AddressAndPort.class,
             ProposedNodes.class);
+
+    private AddressAndPort ourAddressAndPort;
 
     public ProposedNodes getOurProposedIdentifier() {
         return ourProposedIdentifier;
@@ -656,9 +654,12 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
     Replica.ModificationNotifier modificationNotifier;
 
-    public DiscoveryNodeBytesMarshallable(final KnownNodes remoteNode, UDPEventListener udpEventListener) {
+    public DiscoveryNodeBytesMarshallable(@NotNull final KnownNodes remoteNode,
+                                          @NotNull final NodeDiscoveryEventListener nodeDiscoveryEventListener,
+                                          @NotNull final AddressAndPort ourAddressAndPort) {
         this.remoteNode = remoteNode;
-        this.udpEventListener = udpEventListener;
+        this.nodeDiscoveryEventListener = nodeDiscoveryEventListener;
+        this.ourAddressAndPort = ourAddressAndPort;
     }
 
     public KnownNodes getRemoteNodes() {
@@ -740,7 +741,12 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
         final ProposedNodes bootstrap = readBootstrapMessage(in);
         if (bootstrap != null) {
-            LOG.debug("received Bootstrap");
+
+
+            if (bootstrap.addressAndPort().equals(this.ourAddressAndPort))
+                return;
+
+            LOG.info("Received Bootstrap from " + bootstrap);
 
             proposedIdentifiersWithHost.put(bootstrap.addressAndPort, bootstrap);
 
@@ -764,8 +770,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         this.remoteNode.readMarshallable(in);
         this.proposedIdentifiersWithHost.readMarshallable(in);
 
-        if (udpEventListener != null)
-            udpEventListener.onRemoteNodeEvent(remoteNode, proposedIdentifiersWithHost);
+        if (nodeDiscoveryEventListener != null)
+            nodeDiscoveryEventListener.onRemoteNodeEvent(remoteNode, proposedIdentifiersWithHost);
     }
 
 
@@ -862,7 +868,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
 }
 
-interface UDPEventListener {
+interface NodeDiscoveryEventListener {
     /**
      * called when we have received a UDP message, this is called after the message has been parsed
      */
@@ -970,4 +976,27 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
             this.queue.poll();
         }
     }
+
+
+    /*public static void main(String... args) {
+        String ip;
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface iface = interfaces.nextElement();
+                // filters out 127.0.0.1 and inactive interfaces
+                if (iface.isLoopback() || !iface.isUp())
+                    continue;
+
+                Enumeration<InetAddress> addresses = iface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress addr = addresses.nextElement();
+                    ip = addr.getHostAddress();
+                    System.out.println(iface.getDisplayName() + " " + ip);
+                }
+            }
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        }
+    }*/
 }

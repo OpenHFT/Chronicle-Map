@@ -7,6 +7,7 @@ import org.testng.Assert;
 
 import java.io.IOException;
 import java.net.Inet4Address;
+import java.net.InetAddress;
 
 import static java.nio.ByteBuffer.allocate;
 
@@ -18,6 +19,10 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
     @Test
     public void testsTheSerializationOfTheNodeDiscovery() throws IOException, InterruptedException {
 
+        final AddressAndPort ourAddressAndPort = new AddressAndPort(InetAddress.getLocalHost()
+                .getAddress(),
+                (short) 1024);
+
         // write broadcast our address on the bootstrap method
         byte[] server1Address = Inet4Address.getLocalHost().getAddress();
         AddressAndPort server1AddressAndPort = new AddressAndPort(server1Address, (short) 1234);
@@ -27,7 +32,8 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
         AddressAndPort server2AddressAndPort = new AddressAndPort(server1Address, (short) 1234);
 
         KnownNodes server1KnownNodes = new KnownNodes();
-        DiscoveryNodeBytesMarshallable server1BytesExternalizable = new DiscoveryNodeBytesMarshallable(server1KnownNodes, null);
+        DiscoveryNodeBytesMarshallable server1BytesExternalizable = new DiscoveryNodeBytesMarshallable
+                (server1KnownNodes, null, ourAddressAndPort);
 
         // for the unit test we are using a ByteBufferBytes, but iltimately this data would have been send
         // and received via UDP
@@ -44,7 +50,8 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
         KnownNodes server2KnownNodes = new KnownNodes();
         server2KnownNodes.add(server2AddressAndPort, (byte) SERVER2_IDENTIFER);
-        DiscoveryNodeBytesMarshallable server2BytesExternalizable = new DiscoveryNodeBytesMarshallable(server2KnownNodes, null);
+        DiscoveryNodeBytesMarshallable server2BytesExternalizable = new DiscoveryNodeBytesMarshallable
+                (server2KnownNodes, null, ourAddressAndPort);
 
         // add our identifier and host:port to the list of known identifiers
 
@@ -105,7 +112,8 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
             KnownNodes knownNodes = new KnownNodes();
 
-            DiscoveryNodeBytesMarshallable bytesExternalizable = new DiscoveryNodeBytesMarshallable(knownNodes, null);
+            DiscoveryNodeBytesMarshallable bytesExternalizable = new DiscoveryNodeBytesMarshallable
+                    (knownNodes, null, ourAddressAndPort);
 
             DiscoveryNodeBytesMarshallable.ProposedNodes proposedNodes = new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER);
 
