@@ -43,19 +43,20 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *  [Multiple Chronicle Maps on a the same server with Replication](https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps-on-a-the-same-server-with-replication)
  *   [Identifier for Replication](https://github.com/OpenHFT/Chronicle-Map#identifier-for-replication)
  *   [Bootstrapping](https://github.com/OpenHFT/Chronicle-Map#bootstrapping)
-* [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
-* [Stackoverflow](http://stackoverflow.com/tags/chronicle/info)
-* [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
-* [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
-* [Use Case Which include Chronicle Map] (http://openhft.net/products/chronicle-engine/)
+ *      [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
+ * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
+ * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
+ * [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
+ * [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
+ * [Stackoverflow](http://stackoverflow.com/tags/chronicle/info)
+ * [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
+ * [Use Case Which include Chronicle Map] (http://openhft.net/products/chronicle-engine/)
 
 #### Examples
 
 * [Replicating data between process on different servers with TCP/IP Replication](https://github.com/OpenHFT/Chronicle-Map#example--replicating-data-between-process-on-different-servers)
 * [Replicating data between process on different servers with UDP] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--replicating-data-between-process-on-different-servers-using-udp)
-  * [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
-  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
-  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
+
 
 #### Performance Topics
 
