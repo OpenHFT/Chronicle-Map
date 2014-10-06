@@ -125,7 +125,7 @@ public class NodeDiscovery {
             final DiscoveryNodeBytesMarshallable.ProposedNodes proposedNodes = new
                     DiscoveryNodeBytesMarshallable.ProposedNodes(ourAddressAndPort, identifier);
 
-            Thread.sleep(500);
+            Thread.sleep(100);
 
             countDownLatch.set(new CountDownLatch(1));
 

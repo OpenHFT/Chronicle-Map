@@ -23,6 +23,8 @@ public class NodeDiscoveryTest {
                 (short) 1237);
 
         final ChronicleMap<Integer, CharSequence> map = nodeDiscovery.discoverMap(8123, ourAddressAndPort1);
+
+
         Thread.sleep(1000000);
     }
 
