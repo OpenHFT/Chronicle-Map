@@ -597,50 +597,38 @@ Lets assume that we had two server, lets call them server1 and server2, if we wi
 between them, this is how we could set it up
 
 ``` java 
+Map map1;
+Map map2;
 
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
-import org.junit.Test;
+//  ----------  SERVER1 1 ----------
+{
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import net.openhft.collections.*;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+    // we connect the maps via a TCP socket connection on port 8077
 
-...
+    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
+            .heartBeatInterval(1L, SECONDS);
+    ChronicleMapBuilder<Integer, CharSequence> map1Builder =
+            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .entries(20000L)
+                    .addReplicator(tcp((byte) 1, tcpConfig));
 
-//  ----------  SERVER 1 ----------
 
-// we connect the maps via a TCP socket connection on port 8077
-TcpReplicationConfig tcpConfig = TcpReplicationConfig
-    .of(8076, new InetSocketAddress("localhost", 8077))
-    .heartBeatInterval(1, SECONDS);
+    map1 = map1Builder.create();
+}
+//  ----------  SERVER2 2 on the same server as ----------
 
-ChronicleMap<Integer, CharSequence> map1;
+{
+    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
+            .heartBeatInterval(1L, SECONDS);
+    ChronicleMapBuilder<Integer, CharSequence> map2Builder =
+            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .entries(20000L)
+                    .addReplicator(tcp((byte) 2, tcpConfig));
+    map2 = map2Builder.create();
 
-map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-    .entries(20000)
-    .addReplicator(Replicators.of((byte) 1, tcpConfig))
-    .create();
-
-//  ----------  SERVER 2 ----------
-
-TcpReplicationConfig tcpConfig = TcpReplicationConfig
-    .of(8077)
-    .heartBeatInterval(1, SECONDS);
-
-ChronicleMap<Integer, CharSequence> map1;
-
-map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-    .entries(20000)
-    .addReplicator(Replicators.of((byte) 2, tcpConfig))
-    .create();
-
-// we will stores some data into one map here
-map2.put(5, "EXAMPLE");
-
+    // we will stores some data into one map here
+    map2.put(5, "EXAMPLE");
+}
 
 //  ----------  CHECK ----------
 
@@ -649,13 +637,14 @@ map2.put(5, "EXAMPLE");
 // allow time for the recompilation to resolve
 int t = 0;
 for (; t < 5000; t++) {
-  if (map1.equals(map2))
-  break;
-  Thread.sleep(1);
+    if (map1.equals(map2))
+        break;
+    Thread.sleep(1);
 }
 
-assertEquals(map1, map2);
+Assert.assertEquals(map1, map2);
 assertTrue(!map1.isEmpty());
+}
 ```
 
 # Performance Topics
