@@ -124,7 +124,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         lockTimeOutNS = builder.lockTimeOut(TimeUnit.NANOSECONDS);
 
         //  this.replicas = builder.replicas();
-        this.entrySize = builder.alignedEntrySize();
+        this.entrySize = builder.entrySize();
         this.alignment = builder.entryAndValueAlignment();
 
         this.errorListener = builder.errorListener();

@@ -126,7 +126,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
 
     private int tryMinSegments(int min, int max) {
         for (int i = min; i < max; i <<= 1) {
-            if (i * i * i >= alignedEntrySize() * 2)
+            if (i * i * i >= entrySize() * 2)
                 return i;
         }
         return max;
@@ -292,7 +292,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
      */
     public int entrySize() {
         if (entrySize > 0)
-            return entrySize;
+            return entryAndValueAlignment().alignSize(entrySize);
         int size = metaDataBytes;
         int keySize = keySize();
         size += keyBuilder.sizeMarshaller().sizeEncodingSize(keySize);
@@ -316,10 +316,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
             }
         }
         return entryAndValueAlignment().alignSize(size);
-    }
-
-    int alignedEntrySize() {
-        return entryAndValueAlignment().alignSize(entrySize());
     }
 
     /**
