@@ -52,7 +52,9 @@ public class NodeDiscovery {
             @Override
             public void onRemoteNodeEvent(KnownNodes remoteNodes,
                                           ConcurrentExpiryMap<AddressAndPort,
-                                          DiscoveryNodeBytesMarshallable.ProposedNodes> proposedIdentifiersWithHost) {
+                                                  DiscoveryNodeBytesMarshallable.ProposedNodes> proposedIdentifiersWithHost) {
+
+                LOG.info("onRemoteNodeEvent " + remoteNodes + ", proposedIdentifiersWithHost=" + proposedIdentifiersWithHost);
 
                 knownHostPorts.addAll(remoteNodes.addressAndPorts());
 
@@ -63,7 +65,7 @@ public class NodeDiscovery {
                     if (!proposedIdentifierWithHost.addressAndPort().equals(ourAddressAndPort)) {
 
                         int proposedIdentifer = proposedIdentifierWithHost.identifier();
-                        if (proposedIdentifer!=-1) {
+                        if (proposedIdentifer != -1) {
                             knownAndProposedIdentifiers.set(proposedIdentifer, true);
                         }
 
@@ -139,6 +141,9 @@ public class NodeDiscovery {
                     } else {
                         break OUTER;
                     }
+                } else {
+                    LOG.info("timed-out getting a response from the server so sending another boot-stap  " +
+                            "message");
                 }
 
 
@@ -478,6 +483,7 @@ class KnownNodes implements BytesMarshallable {
 
     /**
      * all the known identifiers
+     *
      * @return
      */
     public DirectBitSet identifers() {
@@ -773,19 +779,16 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
             proposedIdentifiersWithHost.put(bootstrap.addressAndPort, bootstrap);
 
-            try {
+            //  try {
 
-                // we've received a bootstrap message so will will now rebroadcast what we know,
-                // after a random delay
-                Thread.sleep((int) (Math.random() * 9.0));
+            // we've received a bootstrap message so will will now rebroadcast what we know,
+            // after a random delay
+            //  Thread.sleep((int) (Math.random() * 9.0));
 
-                // this is used to turn on the OP_WRITE, so that we can broadcast back the known host and
-                // ports in the grid
-                onChange();
+            // this is used to turn on the OP_WRITE, so that we can broadcast back the known host and
+            // ports in the grid
+            onChange();
 
-            } catch (InterruptedException e) {
-                LOG.error("", e);
-            }
 
             return;
         }
@@ -909,6 +912,16 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
 
         this.kClass = kClass;
         this.vClass = vClass;
+    }
+
+    @Override
+    public String toString() {
+        return "ConcurrentExpiryMap{" +
+                "map=" + map +
+                ", kClass=" + kClass +
+                ", vClass=" + vClass +
+                ", queue=" + queue +
+                '}';
     }
 
     @Override
