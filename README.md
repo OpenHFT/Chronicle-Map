@@ -591,7 +591,7 @@ will run out of space between 1 and 2 million entries.
 You should set the .entries(..) and .entrySize(..) to those you require.
 
 
-# Example : Replicating data between process on different servers
+# Example : Replicating data between process on different servers via TCP
 
 Lets assume that we had two server, lets call them server1 and server2, if we wished to share a map
 between them, this is how we could set it up
@@ -624,6 +624,80 @@ Map map2;
             ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(20000L)
                     .addReplicator(tcp((byte) 2, tcpConfig));
+    map2 = map2Builder.create();
+
+    // we will stores some data into one map here
+    map2.put(5, "EXAMPLE");
+}
+
+//  ----------  CHECK ----------
+
+// we are now going to check that the two maps contain the same data
+
+// allow time for the recompilation to resolve
+int t = 0;
+for (; t < 5000; t++) {
+    if (map1.equals(map2))
+        break;
+    Thread.sleep(1);
+}
+
+Assert.assertEquals(map1, map2);
+assertTrue(!map1.isEmpty());
+}
+```
+
+# Example : Replicating data between process on different servers using UDP
+
+This example is the same as the one above, but it uses a slow throttled TCP/IP connection to fill in updates that may have been missed when sent over UDP. Usually on a good network, for example a wired LAN, UDP won’t miss updates. But UDP does not support guaranteed delivery, we recommend also running a TCP connection along side to ensure the data becomes eventually consistent.  Note : It is possible to use Chronicle without the TCP replication and just use UDP (  that’s if you like living dangerously ! )
+
+
+``` java 
+
+Map map1;
+Map map2;
+
+int udpPort = 1234;
+
+//  ----------  SERVER1 1 ----------
+{
+
+    // we connect the maps via a TCP socket connection on port 8077
+
+    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
+            .heartBeatInterval(1L, SECONDS)
+
+            // a maximum of 1024 bits per millisecond
+            .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
+
+
+    UdpReplicationConfig udpConfig = UdpReplicationConfig
+            .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
+
+    ChronicleMapBuilder<Integer, CharSequence> map1Builder =
+            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .entries(20000L)
+                    .addReplicator(tcp((byte) 1, tcpConfig))
+                    .addReplicator(udp((byte) 1, udpConfig));
+
+
+    map1 = map1Builder.create();
+}
+//  ----------  SERVER2 2 on the same server as ----------
+
+{
+    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
+            .heartBeatInterval(1L, SECONDS);
+
+    UdpReplicationConfig udpConfig = UdpReplicationConfig
+            .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
+
+    ChronicleMapBuilder<Integer, CharSequence> map2Builder =
+            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .entries(20000L)
+                    .addReplicator(tcp((byte) 2, tcpConfig))
+                    .addReplicator(udp((byte) 1, udpConfig));
+
     map2 = map2Builder.create();
 
     // we will stores some data into one map here
