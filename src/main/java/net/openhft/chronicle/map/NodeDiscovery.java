@@ -42,7 +42,7 @@ public class NodeDiscovery {
 
         final KnownNodes knownNodes = new KnownNodes();
         final Set<AddressAndPort> knownHostPorts = new ConcurrentSkipListSet<AddressAndPort>();
-        final DirectBitSet knownIdentifiers = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer.allocate
+        final DirectBitSet knownAndProposedIdentifiers = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer.allocate
                 (128 / 8)));
 
         final AtomicReference<CountDownLatch> countDownLatch = new AtomicReference<CountDownLatch>(new
@@ -51,21 +51,26 @@ public class NodeDiscovery {
         final NodeDiscoveryEventListener nodeDiscoveryEventListener = new NodeDiscoveryEventListener() {
 
             @Override
-            public void onRemoteNodeEvent(KnownNodes remoteNode, ConcurrentExpiryMap<AddressAndPort, DiscoveryNodeBytesMarshallable.ProposedNodes> proposedIdentifiersWithHost) {
+            public void onRemoteNodeEvent(KnownNodes remoteNodes,
+                                          ConcurrentExpiryMap<AddressAndPort,
+                                          DiscoveryNodeBytesMarshallable.ProposedNodes> proposedIdentifiersWithHost) {
 
-                knownHostPorts.addAll(remoteNode.addressAndPorts());
+                knownHostPorts.addAll(remoteNodes.addressAndPorts());
 
-                orBitSets(remoteNode.activeIdentifierBitSet(), knownIdentifiers);
+                orBitSets(remoteNodes.identifers(), knownAndProposedIdentifiers);
 
                 for (DiscoveryNodeBytesMarshallable.ProposedNodes proposedIdentifierWithHost :
                         proposedIdentifiersWithHost.values()) {
                     if (!proposedIdentifierWithHost.addressAndPort().equals(ourAddressAndPort)) {
 
-                        int remoteIdentifier = proposedIdentifierWithHost.identifier();
-                        knownIdentifiers.set(remoteIdentifier, true);
+                        int proposedIdentifer = proposedIdentifierWithHost.identifier();
+                        if (proposedIdentifer!=-1) {
+                            knownAndProposedIdentifiers.set(proposedIdentifer, true);
+                        }
+
                         knownHostPorts.add(proposedIdentifierWithHost.addressAndPort());
 
-                        if (remoteIdentifier == proposedIdentifier.get())
+                        if (proposedIdentifer == proposedIdentifier.get())
                             useAnotherIdentifier.set(true);
 
                         countDownLatch.get().countDown();
@@ -109,7 +114,7 @@ public class NodeDiscovery {
         OUTER:
         for (; ; ) {
             useAnotherIdentifier.set(false);
-            identifier = proposeRandomUnusedIdentifier(knownIdentifiers, isFistTime);
+            identifier = proposeRandomUnusedIdentifier(knownAndProposedIdentifiers, isFistTime);
             proposedIdentifier.set(identifier);
             LOG.info("proposing to use identifier=" + identifier);
 
@@ -156,7 +161,7 @@ public class NodeDiscovery {
             @Override
             public boolean isIdentifierUnique(byte remoteIdentifier, SocketAddress remoteAddress) {
                 final SocketAddress socketAddress = identifiers.putIfAbsent(remoteIdentifier, remoteAddress);
-                knownNodes.activeIdentifierBitSet().set(remoteIdentifier);
+                knownNodes.identifers().set(remoteIdentifier);
                 return socketAddress == null;
             }
         };
@@ -468,11 +473,15 @@ class KnownNodes implements BytesMarshallable {
     }
 
     public void add(AddressAndPort inetSocketAddress, byte identifier) {
-        activeIdentifierBitSet().set(identifier);
+        identifers().set(identifier);
         addressAndPorts.add(inetSocketAddress);
     }
 
-    public DirectBitSet activeIdentifierBitSet() {
+    /**
+     * all the known identifiers
+     * @return
+     */
+    public DirectBitSet identifers() {
         return atsDirectBitSet;
     }
 
