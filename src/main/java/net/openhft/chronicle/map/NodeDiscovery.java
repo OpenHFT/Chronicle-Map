@@ -74,9 +74,10 @@ public class NodeDiscovery {
                         if (proposedIdentifer == proposedIdentifier.get())
                             useAnotherIdentifier.set(true);
 
-                        countDownLatch.get().countDown();
+
                     }
                 }
+                countDownLatch.get().countDown();
             }
 
 
