@@ -655,7 +655,6 @@ This example is the same as the one above, but it uses a slow throttled TCP/IP c
 
 
 ``` java 
-
 Map map1;
 Map map2;
 
@@ -689,7 +688,8 @@ int udpPort = 1234;
 
 {
     TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
-            .heartBeatInterval(1L, SECONDS);
+            .heartBeatInterval(1L, SECONDS)
+            .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
 
     UdpReplicationConfig udpConfig = UdpReplicationConfig
             .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
