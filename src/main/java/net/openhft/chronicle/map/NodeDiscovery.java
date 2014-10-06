@@ -603,7 +603,7 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
 
     @Override
     public String toString() {
-        return "AddressAndPort{" +
+        return "{" +
                 "address=" + numericToTextFormat(address) +
                 ", port=" + port +
                 '}';
@@ -851,7 +851,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
         @Override
         public String toString() {
-            return "ProposedIdentifierWithHost{" +
+            return "{" +
                     "identifier=" + identifier +
                     ", timestamp=" + timestamp +
                     ", addressAndPort=" + addressAndPort +
@@ -917,12 +917,7 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
 
     @Override
     public String toString() {
-        return "ConcurrentExpiryMap{" +
-                "map=" + map +
-                ", kClass=" + kClass +
-                ", vClass=" + vClass +
-                ", queue=" + queue +
-                '}';
+        return "ConcurrentExpiryMap{" + map + '}';
     }
 
     @Override

@@ -18,6 +18,7 @@ public class NodeDiscoveryTest {
         NetworkInterface networkInterface = ConcurrentExpiryMap.defaultNetworkInterface();
         Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
 
+        inetAddresses.nextElement();
         AddressAndPort ourAddressAndPort1 = new AddressAndPort(inetAddresses.nextElement().getAddress(),
                 (short) 1237);
 
