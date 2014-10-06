@@ -622,6 +622,22 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
         return this;
     }
 
+    /**
+     * Specifies that key objects, queried with the maps created by this builder, are inherently
+     * immutable. Keys in {@code ChronicleMap} are not required to be immutable, as in ordinary
+     * {@link Map} implementations, because they are serialized off-heap. However,
+     * {@code ChronicleMap} implementations can benefit from the knowledge that keys are not mutated
+     * between queries. By default, {@code ChronicleMapBuilder} detects immutability automatically
+     * only for very few standard JDK types (for example, for {@link String}), it is not recommended
+     * to rely on {@code ChronicleMapBuilder} to be smart enough about this.
+     *
+     * @return this builder back
+     */
+    public ChronicleMapBuilder<K, V> immutableKeys() {
+        keyBuilder.instancesAreMutable(false);
+        return this;
+    }
+
     public ChronicleMapBuilder<K, V> valueMarshallerAndFactory(
             @NotNull BytesMarshaller<V> valueMarshaller, @NotNull ObjectFactory<V> valueFactory) {
         valueBuilder.marshaller(valueMarshaller, valueFactory);

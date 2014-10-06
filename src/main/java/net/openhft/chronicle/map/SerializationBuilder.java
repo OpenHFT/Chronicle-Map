@@ -45,11 +45,16 @@ final class SerializationBuilder<E> implements Cloneable {
                 Externalizable.class.isAssignableFrom(c);
     }
 
+    private static boolean instancesAreMutable(Class c) {
+        return c != String.class;
+    }
+
     enum Role {KEY, VALUE}
     private enum CopyingInterop {FROM_MARSHALLER, FROM_WRITER}
 
     private final Serializable bufferIdentity;
     final Class<E> eClass;
+    private boolean instancesAreMutable;
     private SizeMarshaller sizeMarshaller = stopBit();
     private BytesReader<E> reader;
     private Object interop;
@@ -62,6 +67,7 @@ final class SerializationBuilder<E> implements Cloneable {
     SerializationBuilder(Class<E> eClass, Role role) {
         this.bufferIdentity = role;
         this.eClass = eClass;
+        instancesAreMutable = instancesAreMutable(eClass);
 
         ObjectFactory<E> factory = null;
         if (role == Role.VALUE) {
@@ -144,13 +150,13 @@ final class SerializationBuilder<E> implements Cloneable {
     }
 
     public SerializationBuilder<E> maxSize(long maxSize) {
-        boolean mutable = eClass != String.class; // for example
         if (copyingInterop == CopyingInterop.FROM_MARSHALLER) {
             metaInteropProvider(CopyingMetaBytesInterop
-                    .<E, BytesMarshaller<E>>providerForBytesMarshaller(mutable, maxSize));
+                    .<E, BytesMarshaller<E>>providerForBytesMarshaller(
+                            instancesAreMutable, maxSize));
         } else if (copyingInterop == CopyingInterop.FROM_WRITER) {
             metaInteropProvider(CopyingMetaBytesInterop
-                    .<E, BytesWriter<E>>providerForBytesWriter(mutable, maxSize));
+                    .<E, BytesWriter<E>>providerForBytesWriter(instancesAreMutable, maxSize));
         }
         return this;
     }
@@ -162,6 +168,11 @@ final class SerializationBuilder<E> implements Cloneable {
                 factory = NullObjectFactory.INSTANCE;
             marshaller(new SerializableMarshaller(serializer), factory);
         }
+        return this;
+    }
+
+    public SerializationBuilder<E> instancesAreMutable(boolean mutable) {
+        this.instancesAreMutable = mutable;
         return this;
     }
 
