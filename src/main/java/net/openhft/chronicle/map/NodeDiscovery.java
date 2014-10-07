@@ -30,6 +30,8 @@ import static net.openhft.chronicle.map.UdpReplicationConfig.simple;
 
 /**
  * @author Rob Austin.
+ *
+ *         This code is in alpha, and still has to undergo refactoring
  */
 public class NodeDiscovery {
 
@@ -821,7 +823,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             onChange();
             return;
         }
-
 
 
         // the host and port the message came from
