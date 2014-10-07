@@ -54,7 +54,6 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Stackoverflow](http://stackoverflow.com/tags/chronicle/info)
  * [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
  * [Use Case Which include Chronicle Map] (http://openhft.net/products/chronicle-engine/)
- * [JavaDoc] (http://openhft.github.io/Chronicle-Map/apidocs/)
 
 #### Examples
 
