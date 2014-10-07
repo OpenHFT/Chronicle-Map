@@ -95,11 +95,11 @@ public class NodeDiscovery {
 
         // to start with we will send a bootstrap that just contains our hostname without and identifier
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 10; i++) {
             externalizable.sendBootStrap(ourHostPort);
 
             // once the count down latch is trigger we know we go something back from one of the nodes
-            if (countDownLatch.get().await(50, TimeUnit.MILLISECONDS))
+            if (countDownLatch.get().await(i*20, TimeUnit.MILLISECONDS))
                 break;
         }
 
@@ -107,6 +107,7 @@ public class NodeDiscovery {
         // the identifiers will come back to the callback on the nio thread, the update arrives at the
         // onRemoteNodeEvent
 
+        Thread.sleep(200);
 
         byte identifier;
 
@@ -133,7 +134,7 @@ public class NodeDiscovery {
                 externalizable.sendBootStrap(proposedNodes);
 
                 // once the count down latch is trigger we know we go something back from one of the nodes
-                if (countDownLatch.get().await(50, TimeUnit.MILLISECONDS)) {
+                if (countDownLatch.get().await(i*20, TimeUnit.MILLISECONDS)) {
                     if (useAnotherIdentifier.get()) {
                         // given that another node host proposed the same identifier, we will choose a different one.
                         LOG.info("Another node is using identifier=" + identifier + ", " +
