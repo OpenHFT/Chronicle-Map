@@ -46,7 +46,10 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *      [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
- * [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
+* [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
+  
+#### Miscellaneous
+
  * [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
  * [Stackoverflow](http://stackoverflow.com/tags/chronicle/info)
  * [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
@@ -54,8 +57,10 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 
 #### Examples
 
-* [Replicating data between process on different servers with TCP/IP Replication](https://github.com/OpenHFT/Chronicle-Map#example--replicating-data-between-process-on-different-servers)
-* [Replicating data between process on different servers with UDP] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--replicating-data-between-process-on-different-servers-using-udp)
+ * [Hello World - A map which stores data off heap](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--simple-hello-world)
+ * [Sharing the map between two ( or more ) processes on the same computer](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--sharing-the-map-on-two--or-more--processes-on-the-same-machine)
+ * [Replicating data between process on different servers with TCP/IP Replication](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--replicating-data-between-process-on-different-servers-via-tcp)
+ * [Replicating data between process on different servers with UDP] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--replicating-data-between-process-on-different-servers-using-udp)
 
 
 #### Performance Topics
@@ -593,6 +598,45 @@ will run out of space between 1 and 2 million entries.
 You should set the .entries(..) and .entrySize(..) to those you require.
 
 
+# Example : Simple Hello World
+
+This simple chronicle map, works just like ConcurrentHashMap but stores its data off-heap. If you want to use Chronicle Map to share data between java process you should look at the next exampl 
+
+``` java 
+Map<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class,
+        CharSequence.class).create();
+
+map.put(1, "hello world");
+System.out.println(map.get(1));
+
+``` 
+
+# Example : Sharing the map on two ( or more ) processes on the same machine
+
+Lets assume that we had two server, lets call them server1 and server2, if we wished to share a map
+between them, this is how we could set it up
+
+``` java 
+
+// --- RUN ON ONE JAVA PROCESS ( BUT ON THE SAME SERVER )
+{
+    File file = new File("a-new-file-on-your-sever");	
+    Map<Integer, CharSequence> map1 = ChronicleMapBuilder.of(Integer.class,
+            CharSequence.class).create(file); // this has to be the same file as used by map 2
+    map1.put(1, "hello world");
+}
+
+// --- RUN ON THE OTHER JAVA PROCESS ( BUT ON THE SAME SERVER )
+{
+    File file = new File("a-new-file-on-your-sever");  // this has to be the same file as used by map 1
+    Map<Integer, CharSequence> map1 = ChronicleMapBuilder.of(Integer.class,
+            CharSequence.class).create(file);
+
+    System.out.println(map1.get(1));
+}
+```
+
+
 # Example : Replicating data between process on different servers via TCP
 
 Lets assume that we had two server, lets call them server1 and server2, if we wished to share a map
@@ -617,7 +661,7 @@ Map map2;
 
     map1 = map1Builder.create();
 }
-//  ----------  SERVER2 2 on the same server as ----------
+//  ----------  SERVER2 on the same server as ----------
 
 {
     TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
