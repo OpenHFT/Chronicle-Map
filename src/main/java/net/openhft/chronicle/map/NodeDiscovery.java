@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.ByteBuffer.wrap;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
 import static net.openhft.chronicle.map.Replicators.tcp;
@@ -35,21 +36,21 @@ public class NodeDiscovery {
     private final AddressAndPort ourAddressAndPort;
     private final UdpReplicationConfig udpConfig;
 
-    public NodeDiscovery(final AddressAndPort ourAddressAndPort) throws UnknownHostException {
-        this(8123, ourAddressAndPort, Inet4Address.getByName("255.255.255.255"));
-    }
-
-    public NodeDiscovery(int udpBroadcastPort, final AddressAndPort ourAddressAndPort, InetAddress address) throws UnknownHostException {
-        this.ourAddressAndPort = ourAddressAndPort;
-        this.udpConfig = simple(address, udpBroadcastPort);
-    }
-
     public NodeDiscovery() throws SocketException, UnknownHostException {
-        this(new AddressAndPort(net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress(),
-                (short) 8123));
+        this((short) 8124, (short) 8123, getDefaultAddress(), Inet4Address.getByName("255.255.255.255"));
     }
 
-    public ChronicleMap<Integer, CharSequence> discoverMap() throws IOException, InterruptedException {
+    public NodeDiscovery(short udpBroadcastPort,
+                         short tcpPort,
+                         @NotNull InetAddress tcpAddress,
+                         @NotNull InetAddress udpBroadcastAddress) throws UnknownHostException {
+        this.ourAddressAndPort = new AddressAndPort(tcpAddress.getAddress(), tcpPort);
+        this.udpConfig = simple(udpBroadcastAddress, udpBroadcastPort);
+    }
+
+
+    public ChronicleMap<Integer, CharSequence> discoverMap() throws
+            IOException, InterruptedException {
 
         final AtomicInteger ourProposedIdentifier = new AtomicInteger();
         final AtomicBoolean useAnotherIdentifier = new AtomicBoolean();
@@ -332,8 +333,6 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
             builder.append(bitSet.get(i) ? '1' : '0');
         }
         return builder.toString();
-
-        // LOG.debug(type + "=" + "bitset =" + builder);
     }
 
     /**
@@ -1085,7 +1084,7 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
 
     }
 
-    public static byte[] getDefaultAddress() throws SocketException {
+    public static InetAddress getDefaultAddress() throws SocketException {
         NetworkInterface networkInterface = ConcurrentExpiryMap.defaultNetworkInterface();
         Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
         InetAddress inetAddress = inetAddresses.nextElement();
@@ -1093,6 +1092,6 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
         if (inetAddress == null)
             throw new IllegalStateException();
 
-        return inetAddress.getAddress();
+        return inetAddress;
     }
 }
