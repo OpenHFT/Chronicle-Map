@@ -200,7 +200,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     long createMappedStoreAndSegments(File file) throws IOException {
         return createMappedStoreAndSegments(new MappedStore(file, FileChannel.MapMode.READ_WRITE,
-                sizeInBytes(), objectSerializer));
+                sizeInBytes(), JDKObjectSerializer.INSTANCE));
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {

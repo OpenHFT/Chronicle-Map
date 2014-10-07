@@ -823,7 +823,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
 
     public ChronicleMap<K, V> create() throws IOException {
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap();
-        BytesStore bytesStore = new DirectStore(objectSerializer(), map.sizeInBytes(), true);
+        BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
+                map.sizeInBytes(), true);
         map.createMappedStoreAndSegments(bytesStore);
         return establishReplication(map);
     }
