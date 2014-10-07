@@ -35,28 +35,40 @@ public class NodeDiscovery {
 
     private final AddressAndPort ourAddressAndPort;
     private final UdpReplicationConfig udpConfig;
+    private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
+    private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListenerAtomicReference =
+            new AtomicReference<NodeDiscoveryEventListener>();
+    private KnownNodes knownNodes;
 
-    public NodeDiscovery() throws SocketException, UnknownHostException {
+    public NodeDiscovery() throws IOException {
         this((short) 8124, (short) 8123, getDefaultAddress(), Inet4Address.getByName("255.255.255.255"));
     }
 
     public NodeDiscovery(short udpBroadcastPort,
                          short tcpPort,
                          @NotNull InetAddress tcpAddress,
-                         @NotNull InetAddress udpBroadcastAddress) throws UnknownHostException {
+                         @NotNull InetAddress udpBroadcastAddress) throws IOException {
         this.ourAddressAndPort = new AddressAndPort(tcpAddress.getAddress(), tcpPort);
         this.udpConfig = simple(udpBroadcastAddress, udpBroadcastPort);
+        knownNodes = new KnownNodes();
+
+        discoveryNodeBytesMarshallable = new DiscoveryNodeBytesMarshallable
+                (knownNodes, nodeDiscoveryEventListenerAtomicReference, ourAddressAndPort);
+
+        final NodeDiscoveryBroadcaster nodeDiscoveryBroadcaster
+                = new NodeDiscoveryBroadcaster(udpConfig, 1024, discoveryNodeBytesMarshallable);
+
+        discoveryNodeBytesMarshallable.setModificationNotifier(nodeDiscoveryBroadcaster);
     }
 
 
-    public ChronicleMap<Integer, CharSequence> discoverMap() throws
+    public synchronized ChronicleMap<Integer, CharSequence> discoverMap() throws
             IOException, InterruptedException {
 
         final AtomicInteger ourProposedIdentifier = new AtomicInteger();
         final AtomicBoolean useAnotherIdentifier = new AtomicBoolean();
 
 
-        final KnownNodes knownNodes = new KnownNodes();
         final Set<AddressAndPort> knownHostPorts = new ConcurrentSkipListSet<AddressAndPort>();
         final DirectBitSet knownAndProposedIdentifiers = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer.allocate
                 (128 / 8)));
@@ -75,7 +87,7 @@ public class NodeDiscovery {
 
                 knownHostPorts.addAll(remoteNodes.addressAndPorts());
 
-                orBitSets(remoteNodes.identifers(), knownAndProposedIdentifiers);
+                orBitSets(remoteNodes.identifiers(), knownAndProposedIdentifiers);
 
                 for (DiscoveryNodeBytesMarshallable.ProposedNodes proposedIdentifierWithHost :
                         proposedIdentifiersWithHost.values()) {
@@ -99,13 +111,8 @@ public class NodeDiscovery {
 
 
         };
-        final DiscoveryNodeBytesMarshallable externalizable = new DiscoveryNodeBytesMarshallable
-                (knownNodes, nodeDiscoveryEventListener, ourAddressAndPort);
 
-        final NodeDiscoveryBroadcaster nodeDiscoveryBroadcaster
-                = new NodeDiscoveryBroadcaster(udpConfig, 1024, externalizable);
-
-        externalizable.setModificationNotifier(nodeDiscoveryBroadcaster);
+        nodeDiscoveryEventListenerAtomicReference.set(nodeDiscoveryEventListener);
 
         final DiscoveryNodeBytesMarshallable.ProposedNodes ourHostPort = new
                 DiscoveryNodeBytesMarshallable.ProposedNodes(ourAddressAndPort, (byte) -1);
@@ -113,7 +120,7 @@ public class NodeDiscovery {
         // to start with we will send a bootstrap that just contains our hostname without and identifier
 
         for (int i = 0; i < 10; i++) {
-            externalizable.sendBootStrap(ourHostPort);
+            discoveryNodeBytesMarshallable.sendBootStrap(ourHostPort);
 
             // once the count down latch is trigger we know we go something back from one of the nodes
             if (countDownLatch.get().await(i * 20, TimeUnit.MILLISECONDS))
@@ -148,7 +155,7 @@ public class NodeDiscovery {
             countDownLatch.set(new CountDownLatch(1));
 
             for (int i = 0; i < 20; i++) {
-                externalizable.sendBootStrap(proposedNodes);
+                discoveryNodeBytesMarshallable.sendBootStrap(proposedNodes);
 
                 // once the count down latch is trigger we know we go something back from one of the nodes
                 if (countDownLatch.get().await(i * 20, TimeUnit.MILLISECONDS)) {
@@ -185,7 +192,7 @@ public class NodeDiscovery {
                 final SocketAddress lastKnownAddress = identifiers.putIfAbsent(remoteIdentifier, remoteAddress);
                 if (remoteAddress.equals(lastKnownAddress))
                     return true;
-                knownNodes.identifers().set(remoteIdentifier);
+                knownNodes.identifiers().set(remoteIdentifier);
                 return lastKnownAddress == null;
             }
         };
@@ -199,6 +206,7 @@ public class NodeDiscovery {
 
 
         LOG.info("Using Remote identifier=" + identifier);
+        nodeDiscoveryEventListenerAtomicReference.set(null);
 
         return ChronicleMapBuilder.of(Integer.class,
                 CharSequence.class)
@@ -498,7 +506,7 @@ class KnownNodes implements BytesMarshallable {
     }
 
     public void add(AddressAndPort inetSocketAddress, byte identifier) {
-        identifers().set(identifier);
+        identifiers().set(identifier);
         addressAndPorts.add(inetSocketAddress);
     }
 
@@ -507,7 +515,7 @@ class KnownNodes implements BytesMarshallable {
      *
      * @return
      */
-    public DirectBitSet identifers() {
+    public DirectBitSet identifiers() {
         return atsDirectBitSet;
     }
 
@@ -677,10 +685,11 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
 
 class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
+    private AddressAndPort sourceAddressAndPort = new AddressAndPort();
     private final KnownNodes remoteNode;
 
     private final AtomicBoolean bootstrapRequired = new AtomicBoolean();
-    private final NodeDiscoveryEventListener nodeDiscoveryEventListener;
+    private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListener;
 
     private ProposedNodes ourProposedIdentifier;
 
@@ -705,7 +714,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
     Replica.ModificationNotifier modificationNotifier;
 
     public DiscoveryNodeBytesMarshallable(@NotNull final KnownNodes remoteNode,
-                                          @NotNull final NodeDiscoveryEventListener nodeDiscoveryEventListener,
+                                          @NotNull final AtomicReference<NodeDiscoveryEventListener>
+                                                  nodeDiscoveryEventListener,
                                           @NotNull final AddressAndPort ourAddressAndPort) {
         this.remoteNode = remoteNode;
         this.nodeDiscoveryEventListener = nodeDiscoveryEventListener;
@@ -727,6 +737,9 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             writeBootstrap(out);
             return;
         }
+
+        // the host and port the message came from
+        this.ourAddressAndPort.writeMarshallable(out);
 
         remoteNode.writeMarshallable(out);
 
@@ -792,7 +805,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         final ProposedNodes bootstrap = readBootstrapMessage(in);
         if (bootstrap != null) {
 
-
             if (bootstrap.addressAndPort().equals(this.ourAddressAndPort))
                 return;
 
@@ -807,16 +819,24 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             // this is used to turn on the OP_WRITE, so that we can broadcast back the known host and
             // ports in the grid
             onChange();
-
-
             return;
         }
+
+        LOG.info("Received Proposal");
+
+        // the host and port the message came from
+        this.sourceAddressAndPort.readMarshallable(in);
+        if (sourceAddressAndPort.equals(ourAddressAndPort))
+            return;
 
         this.remoteNode.readMarshallable(in);
         this.proposedIdentifiersWithHost.readMarshallable(in);
 
-        if (nodeDiscoveryEventListener != null)
-            nodeDiscoveryEventListener.onRemoteNodeEvent(remoteNode, proposedIdentifiersWithHost);
+        NodeDiscoveryEventListener listener = nodeDiscoveryEventListener.get();
+        if (listener != null)
+            listener.onRemoteNodeEvent(remoteNode, proposedIdentifiersWithHost);
+
+        onChange();
     }
 
 

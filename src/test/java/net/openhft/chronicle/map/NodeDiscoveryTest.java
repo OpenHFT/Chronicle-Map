@@ -10,7 +10,6 @@ public class NodeDiscoveryTest {
     public void testDiscoverMap() throws Exception {
 
 
-
         final NodeDiscovery nodeDiscovery = new NodeDiscovery();
 
         final ChronicleMap<Integer, CharSequence> map = nodeDiscovery.discoverMap();

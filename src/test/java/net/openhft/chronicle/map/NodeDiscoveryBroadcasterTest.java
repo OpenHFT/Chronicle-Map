@@ -97,7 +97,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             Assert.assertTrue(server1BytesExternalizable.getRemoteNodes().addressAndPorts().contains
                     (server2AddressAndPort));
 
-            Assert.assertTrue(server1BytesExternalizable.getRemoteNodes().identifers().get
+            Assert.assertTrue(server1BytesExternalizable.getRemoteNodes().identifiers().get
                     (SERVER2_IDENTIFER));
 
         }
@@ -164,7 +164,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             Assert.assertTrue(server1BytesExternalizable.getRemoteNodes().addressAndPorts().contains
                     (server2AddressAndPort));
 
-            Assert.assertTrue(server1BytesExternalizable.getRemoteNodes().identifers().get
+            Assert.assertTrue(server1BytesExternalizable.getRemoteNodes().identifiers().get
                     (SERVER2_IDENTIFER));
 
             Assert.assertTrue(server1BytesExternalizable.proposedIdentifiersWithHost.values().contains
