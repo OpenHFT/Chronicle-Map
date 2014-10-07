@@ -58,7 +58,9 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     // used when reading the number of entries per
     private int actualEntriesPerSegment = -1;
     private int keySize = 0;
+    private K sampleKey;
     private int valueSize = 0;
+    private V sampleValue;
     private int entrySize = 0;
     private Alignment alignment = Alignment.OF_4_BYTES;
     private long entries = 1 << 20;
@@ -133,11 +135,9 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     }
 
     /**
-     * Configures the number of bytes, taken by serialized form of keys, put into maps, created by
-     * this builder.
-     *
-     * <p>If key is a boxed primitive type or {@link Byteable} subclass, i. e. if key size is known
-     * statically, it is automatically accounted and shouldn't be specified by user.
+     * Configures the optimal number of bytes, taken by serialized form of keys, put into maps,
+     * created by this builder. If key size is always the same, call
+     * {@link #constantKeySizeBySample(Object)} method instead of this one.
      *
      * <p>If key size varies moderately, specify the size higher than average, but lower than
      * the maximum possible, to minimize average memory overuse. If key size varies in a wide range,
@@ -157,6 +157,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
      *
      * @param keySize number of bytes, taken by serialized form of keys
      * @return this {@code ChronicleMapBuilder} back
+     * @see #constantKeySizeBySample(Object)
      * @see #valueSize(int)
      * @see #entrySize()
      */
@@ -167,13 +168,42 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
         return this;
     }
 
+    /**
+     * Configures the constant number of bytes, taken by serialized form of keys, put into maps,
+     * created by this builder. This is done by providing the {@code sampleKey}, all keys should
+     * take the same number of bytes in serialized form, as this sample object.
+     *
+     * <p>For example, if your keys are Git commit hashes:<pre>{@code
+     * Map<byte[], String> gitCommitMessagesByHash =
+     *     ChronicleMapBuilder.of(byte[].class, String.class)
+     *     .constantKeySizeBySample(new byte[20])
+     *     .create();
+     * }</pre>
+     *
+     * <p>If keys are of boxed primitive type or {@link Byteable} subclass, i. e. if key size
+     * is known statically, it is automatically accounted and this method shouldn't be called.
+     *
+     * <p>If key size varies, method {@link #keySize(int)} or {@link #entrySize(int)} should be
+     * called instead of this one.
+     *
+     * @param sampleKey the sample key
+     * @return this builder back
+     * @see #keySize(int)
+     * @see #constantValueSizeBySample(Object)
+     */
+    public ChronicleMapBuilder<K, V> constantKeySizeBySample(K sampleKey) {
+        this.sampleKey = sampleKey;
+        return this;
+    }
+
     private int keySize() {
         return keyOrValueSize(keySize, keyBuilder);
     }
 
     /**
-     * Configures the number of bytes, taken by serialized form of value, put into maps, created by
-     * this builder.
+     * Configures the optimal number of bytes, taken by serialized form of values, put into maps,
+     * created by this builder. If value size is always the same, call
+     * {@link #constantValueSizeBySample(Object)} method instead of this one.
      *
      * <p>If value is a boxed primitive type or {@link Byteable} subclass, i. e. if value size
      * is known statically, it is automatically accounted and shouldn't be specified by user.
@@ -192,6 +222,27 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
         if (valueSize <= 0)
             throw new IllegalArgumentException("Value size must be positive");
         this.valueSize = valueSize;
+        return this;
+    }
+
+    /**
+     * Configures the constant number of bytes, taken by serialized form of values, put into maps,
+     * created by this builder. This is done by providing the {@code sampleValue}, all values should
+     * take the same number of bytes in serialized form, as this sample object.
+     *
+     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size
+     * is known statically, it is automatically accounted and this method shouldn't be called.
+     *
+     * <p>If value size varies, method {@link #valueSize(int)} or {@link #entrySize(int)} should be
+     * called instead of this one.
+     *
+     * @param sampleValue the sample value
+     * @return this builder back
+     * @see #valueSize(int)
+     * @see #constantKeySizeBySample(Object)
+     */
+    public ChronicleMapBuilder<K, V> constantValueSizeBySample(V sampleValue) {
+        this.sampleValue = sampleValue;
         return this;
     }
 
@@ -252,9 +303,10 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
      * implementations, with respect to {@linkplain #entryAndValueAlignment() alignment}.
      *
      * <p>There are three major patterns of this configuration usage:
-     * <ul>
-     *     <li>Key and value sizes are known exactly. Just specify them using precisely
-     *     corresponding methods. No memory would be wasted in this case.</li>
+     * <ol>
+     *     <li>Key and value sizes are constant. Configure them via {@link #constantKeySizeBySample(
+     *     Object)} and {@link #constantValueSizeBySample(Object)} methods, and you will experience
+     *     no memory waste at all.</li>
      *     <li>Key and/or value size varies moderately. Specify them using corresponding methods,
      *     or {@linkplain #entrySize(int) specify entry size} directly, by values somewhere between
      *     average and maximum possible. The idea is to have most (90% or more) entries to fit
@@ -265,12 +317,18 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
      *     from 5 to several dozens of "chunks". With this approach, average memory waste should be
      *     very low.
      *
-     *     <p>However, remember that operations with entries that span several "entry sizes"
-     *     are a bit slower, than entries which take a single "entry size" (that is why "chunk"
-     *     approach is not recommended, when key and/or value size varies moderately). Also, note
-     *     that the maximum number of chunks could be taken by an entry is 64.
-     *     {@link IllegalArgumentException} is thrown on attempt to insert too large entry, compared
-     *     to the configured or computed entry size.
+     *     <p>However, remember that
+     *     <ul>
+     *         <li>Operations with entries that span several "entry sizes" are a bit slower, than
+     *         entries which take a single "entry size". That is why "chunk" approach
+     *         is not recommended, when key and/or value size varies moderately.</li>
+     *         <li>The maximum number of chunks could be taken by an entry is 64.
+     *         {@link IllegalArgumentException} is thrown on attempt to insert too large entry,
+     *         compared to the configured or computed entry size.</li>
+     *         <li>The number of "entries" {@linkplain #entries(long) in the whole map} and
+     *         {@linkplain #actualEntriesPerSegment() per segment} is actually the number
+     *         "chunks".</li>
+     *     </ul>
      *
      *     <p>Example: if values in your map are adjacency lists of some social graph, where nodes
      *     are represented as {@code long} ids, and adjacency lists are serialized in efficient
@@ -279,16 +337,19 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
      *     be a good choice: <pre>{@code
      * Map<Long, long[]> socialGraph = ChronicleMapBuilder
      *     .of(Long.class, long[].class)
-     *     .entries(1_000_000_000)
+     *     // given that graph should have of 1 billion nodes, and 150 average adjacency list size
+     *     // => values takes 3 chuncks on average
+     *     .entries(1_000_000_000L * (150 / 50))
      *     .entrySize(50 * 8)
      *     .create();}</pre>
      *     It is minimum possible (because 3000 friends / 50 friends = 60 is close to 64 "max
      *     chunks by single entry" limit, and ensures moderate average memory overuse (not more
      *     than 20%).
      *     </li>
-     * </ul>
+     * </ol>
      *
      * @return size of memory allocation unit (in bytes)
+     * @see #entries(long)
      */
     public int entrySize() {
         if (entrySize > 0)
@@ -789,6 +850,11 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
         int maxSize = entrySize() * figureBufferAllocationFactor();
         keyBuilder.maxSize(maxSize);
         valueBuilder.maxSize(maxSize);
+
+        if (sampleKey != null)
+            keyBuilder.constantSizeBySample(sampleKey);
+        if (sampleValue != null)
+            valueBuilder.constantSizeBySample(sampleValue);
     }
 
     private ChronicleMap<K, V> establishReplication(ChronicleMap<K, V> map)

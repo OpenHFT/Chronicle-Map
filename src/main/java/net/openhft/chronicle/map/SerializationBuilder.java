@@ -18,6 +18,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.map.serialization.*;
 import net.openhft.chronicle.map.serialization.impl.*;
+import net.openhft.chronicle.map.threadlocal.Provider;
+import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.*;
 import net.openhft.lang.io.serialization.impl.*;
@@ -61,6 +63,7 @@ final class SerializationBuilder<E> implements Cloneable {
     private CopyingInterop copyingInterop = null;
     private MetaBytesInterop<E, ?> metaInterop;
     private MetaProvider<E, ?, ?> metaInteropProvider;
+    private long maxSize;
     private ObjectFactory<E> factory;
 
     @SuppressWarnings("unchecked")
@@ -132,7 +135,6 @@ final class SerializationBuilder<E> implements Cloneable {
 
     public SerializationBuilder<E> writer(BytesWriter<E> writer) {
         return copyingInterop(CopyingInterop.FROM_WRITER)
-                .sizeMarshaller(stopBit())
                 .setInterop(writer)
                 .metaInterop(CopyingMetaBytesInterop
                         .<E, BytesWriter<E>>forBytesWriter(bufferIdentity));
@@ -142,7 +144,6 @@ final class SerializationBuilder<E> implements Cloneable {
                                               ObjectFactory<E> factory) {
         if (factory == null) factory = this.factory;
         return copyingInterop(CopyingInterop.FROM_MARSHALLER)
-                .sizeMarshaller(stopBit())
                 .reader(BytesReaders.fromBytesMarshaller(marshaller), factory)
                 .setInterop(marshaller)
                 .metaInterop(CopyingMetaBytesInterop
@@ -151,13 +152,54 @@ final class SerializationBuilder<E> implements Cloneable {
 
     public SerializationBuilder<E> maxSize(long maxSize) {
         if (copyingInterop == CopyingInterop.FROM_MARSHALLER) {
+            this.maxSize = maxSize;
             metaInteropProvider(CopyingMetaBytesInterop
                     .<E, BytesMarshaller<E>>providerForBytesMarshaller(
                             instancesAreMutable, maxSize));
         } else if (copyingInterop == CopyingInterop.FROM_WRITER) {
+            this.maxSize = maxSize;
             metaInteropProvider(CopyingMetaBytesInterop
                     .<E, BytesWriter<E>>providerForBytesWriter(instancesAreMutable, maxSize));
         }
+        return this;
+    }
+
+    public SerializationBuilder<E> constantSizeBySample(E sampleObject) {
+        Object originalInterop = this.interop;
+        Provider interopProvider = Provider.of(originalInterop.getClass());
+        ThreadLocalCopies copies = interopProvider.getCopies(null);
+        Object interop = interopProvider.get(copies, originalInterop);
+        copies = metaInteropProvider.getCopies(copies);
+        MetaBytesWriter metaInterop;
+        if (maxSize > 0) {
+            // this loop is very dumb: tries to find buffer size, sufficient to serialize
+            // the object, by trying to serialize to small buffers first and doubling the buffer
+            // size on _any_ Exception (it may be IllegalArgument, IndexOutOfBounds, IllegalState,
+            // see JLANG-17 issue).
+            // TODO The question is: couldn't this cause JVM crash without throwing an exception?
+            findSufficientSerializationSize:
+            while (true) {
+                MetaProvider metaInteropProvider = this.metaInteropProvider;
+                try {
+                    metaInterop = metaInteropProvider.get(
+                            copies, this.metaInterop, interop, sampleObject);
+                    break findSufficientSerializationSize;
+                } catch (Exception e) {
+                    // assuming nobody need > 512 mb _constant size_ keys/values
+                    if (maxSize > 512 * 1024 * 1024) {
+                        throw e;
+                    }
+                    maxSize(maxSize * 2);
+                }
+            }
+        } else {
+            MetaProvider metaInteropProvider = this.metaInteropProvider;
+            metaInterop = metaInteropProvider.get(copies, this.metaInterop, interop, sampleObject);
+        }
+        long constantSize = metaInterop.size(interop, sampleObject);
+        // set max size once more, because current maxSize could be x64 or x2 larger than needed
+        maxSize(constantSize);
+        sizeMarshaller(SizeMarshallers.constant(constantSize));
         return this;
     }
 
