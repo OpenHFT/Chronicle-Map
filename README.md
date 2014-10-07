@@ -46,12 +46,16 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *      [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
- * [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
+* [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
+  
+#### Miscellaneous
+
  * [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
  * [Stackoverflow](http://stackoverflow.com/tags/chronicle/info)
  * [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
  * [Use Case Which include Chronicle Map] (http://openhft.net/products/chronicle-engine/)
-
+ * [JavaDoc] (http://openhft.github.io/Chronicle-Map/apidocs/)
+ * 
 #### Examples
 
 * [Replicating data between process on different servers with TCP/IP Replication](https://github.com/OpenHFT/Chronicle-Map#example--replicating-data-between-process-on-different-servers)
