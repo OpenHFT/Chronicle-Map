@@ -58,7 +58,7 @@ public enum ByteArrayMarshaller implements BytesInterop<byte[]>, BytesReader<byt
 
     @Override
     public byte[] read(Bytes bytes, long size, byte[] ba) {
-        if (size != ba.length)
+        if (ba == null || size != ba.length)
             ba = new byte[(int) size];
         bytes.read(ba);
         return ba;
