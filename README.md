@@ -58,7 +58,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 #### Examples
 
  * [Hello World - A map which stores data off heap](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example-simple-hello-world)
- * [Sharing the map on two ( or more ) processes on the same machine](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--sharing-the-map-on-two--or-more--processes-on-the-same-machine)
+ * [Sharing the map between two ( or more ) processes on the same computer](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--sharing-the-map-on-two--or-more--processes-on-the-same-machine)
  * [Replicating data between process on different servers with TCP/IP Replication](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--replicating-data-between-process-on-different-servers-via-tcp)
  * [Replicating data between process on different servers with UDP] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--replicating-data-between-process-on-different-servers-using-udp)
 
