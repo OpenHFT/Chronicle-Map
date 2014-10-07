@@ -25,19 +25,35 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
 import static net.openhft.chronicle.map.Replicators.tcp;
+import static net.openhft.chronicle.map.UdpReplicationConfig.simple;
 
 /**
  * @author Rob Austin.
  */
 public class NodeDiscovery {
 
-    public ChronicleMap<Integer, CharSequence> discoverMap(int udpBroadcastPort, final AddressAndPort ourAddressAndPort) throws IOException, InterruptedException {
+    private final AddressAndPort ourAddressAndPort;
+    private final UdpReplicationConfig udpConfig;
 
-        final AtomicInteger proposedIdentifier = new AtomicInteger();
+    public NodeDiscovery(final AddressAndPort ourAddressAndPort) throws UnknownHostException {
+        this(8123, ourAddressAndPort, Inet4Address.getByName("255.255.255.255"));
+    }
+
+    public NodeDiscovery(int udpBroadcastPort, final AddressAndPort ourAddressAndPort, InetAddress address) throws UnknownHostException {
+        this.ourAddressAndPort = ourAddressAndPort;
+        this.udpConfig = simple(address, udpBroadcastPort);
+    }
+
+    public NodeDiscovery() throws SocketException, UnknownHostException {
+        this(new AddressAndPort(net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress(),
+                (short) 8123));
+    }
+
+    public ChronicleMap<Integer, CharSequence> discoverMap() throws IOException, InterruptedException {
+
+        final AtomicInteger ourProposedIdentifier = new AtomicInteger();
         final AtomicBoolean useAnotherIdentifier = new AtomicBoolean();
 
-        final UdpReplicationConfig udpConfig = UdpReplicationConfig
-                .simple(Inet4Address.getByName("255.255.255.255"), udpBroadcastPort);
 
         final KnownNodes knownNodes = new KnownNodes();
         final Set<AddressAndPort> knownHostPorts = new ConcurrentSkipListSet<AddressAndPort>();
@@ -64,14 +80,14 @@ public class NodeDiscovery {
                         proposedIdentifiersWithHost.values()) {
                     if (!proposedIdentifierWithHost.addressAndPort().equals(ourAddressAndPort)) {
 
-                        int proposedIdentifer = proposedIdentifierWithHost.identifier();
-                        if (proposedIdentifer != -1) {
-                            knownAndProposedIdentifiers.set(proposedIdentifer, true);
+                        int proposedIdentifier = proposedIdentifierWithHost.identifier();
+                        if (proposedIdentifier != -1) {
+                            knownAndProposedIdentifiers.set(proposedIdentifier, true);
                         }
 
                         knownHostPorts.add(proposedIdentifierWithHost.addressAndPort());
 
-                        if (proposedIdentifer == proposedIdentifier.get())
+                        if (proposedIdentifier == ourProposedIdentifier.get())
                             useAnotherIdentifier.set(true);
 
 
@@ -99,7 +115,7 @@ public class NodeDiscovery {
             externalizable.sendBootStrap(ourHostPort);
 
             // once the count down latch is trigger we know we go something back from one of the nodes
-            if (countDownLatch.get().await(i*20, TimeUnit.MILLISECONDS))
+            if (countDownLatch.get().await(i * 20, TimeUnit.MILLISECONDS))
                 break;
         }
 
@@ -118,7 +134,7 @@ public class NodeDiscovery {
         for (; ; ) {
             useAnotherIdentifier.set(false);
             identifier = proposeRandomUnusedIdentifier(knownAndProposedIdentifiers, isFistTime);
-            proposedIdentifier.set(identifier);
+            ourProposedIdentifier.set(identifier);
             LOG.info("proposing to use identifier=" + identifier);
 
             isFistTime = false;
@@ -134,7 +150,7 @@ public class NodeDiscovery {
                 externalizable.sendBootStrap(proposedNodes);
 
                 // once the count down latch is trigger we know we go something back from one of the nodes
-                if (countDownLatch.get().await(i*20, TimeUnit.MILLISECONDS)) {
+                if (countDownLatch.get().await(i * 20, TimeUnit.MILLISECONDS)) {
                     if (useAnotherIdentifier.get()) {
                         // given that another node host proposed the same identifier, we will choose a different one.
                         LOG.info("Another node is using identifier=" + identifier + ", " +
@@ -144,10 +160,9 @@ public class NodeDiscovery {
                         break OUTER;
                     }
                 } else {
-                    LOG.info("timed-out getting a response from the server so sending another boot-strap  " +
+                    LOG.debug("timed-out getting a response from the server so sending another boot-strap  " +
                             "message");
                 }
-
 
             }
 
@@ -786,8 +801,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
             proposedIdentifiersWithHost.put(bootstrap.addressAndPort, bootstrap);
 
-            //  try {
-
             // we've received a bootstrap message so will will now rebroadcast what we know,
             // after a random delay
             //  Thread.sleep((int) (Math.random() * 9.0));
@@ -1070,6 +1083,16 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
 
         return networkInterfaces.nextElement();
 
+    }
 
+    public static byte[] getDefaultAddress() throws SocketException {
+        NetworkInterface networkInterface = ConcurrentExpiryMap.defaultNetworkInterface();
+        Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+        InetAddress inetAddress = inetAddresses.nextElement();
+
+        if (inetAddress == null)
+            throw new IllegalStateException();
+
+        return inetAddress.getAddress();
     }
 }
