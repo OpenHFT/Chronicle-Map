@@ -2,13 +2,13 @@ package net.openhft.chronicle.map;
 
 import junit.framework.TestCase;
 import net.openhft.lang.io.ByteBufferBytes;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testng.Assert;
 
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.ByteBuffer.allocate;
 
@@ -17,13 +17,19 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
     public static final int SERVER2_IDENTIFER = 10;
     public static final int PROPOSED_IDENTIFIER = 5;
 
+
     @Test
-    @Ignore
     public void testsTheSerializationOfTheNodeDiscovery() throws IOException, InterruptedException {
 
-        final AddressAndPort ourAddressAndPort = new AddressAndPort(InetAddress.getLocalHost()
+
+        AtomicReference ref = new AtomicReference();
+        final AddressAndPort ourAddressAndPort1 = new AddressAndPort(InetAddress.getLocalHost()
                 .getAddress(),
                 (short) 1024);
+
+        final AddressAndPort ourAddressAndPort2 = new AddressAndPort(InetAddress.getLocalHost()
+                .getAddress(),
+                (short) 1025);
 
         // write broadcast our address on the bootstrap method
         byte[] server1Address = Inet4Address.getLocalHost().getAddress();
@@ -35,14 +41,14 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
         KnownNodes server1KnownNodes = new KnownNodes();
         DiscoveryNodeBytesMarshallable server1BytesExternalizable = new DiscoveryNodeBytesMarshallable
-                (server1KnownNodes, null, ourAddressAndPort);
+                (server1KnownNodes, ref, ourAddressAndPort1);
 
         // for the unit test we are using a ByteBufferBytes, but iltimately this data would have been send
         // and received via UDP
         ByteBufferBytes udpData = new ByteBufferBytes(allocate(1024));
 
         // SERER1 - is the new node join the cluster
-        // we will first send the boostrap along with our host and port
+        // we will first send the bootstrap along with our host and port
         {
             final DiscoveryNodeBytesMarshallable.ProposedNodes proposedNodes = new
                     DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) -1);
@@ -53,7 +59,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
         KnownNodes server2KnownNodes = new KnownNodes();
         server2KnownNodes.add(server2AddressAndPort, (byte) SERVER2_IDENTIFER);
         DiscoveryNodeBytesMarshallable server2BytesExternalizable = new DiscoveryNodeBytesMarshallable
-                (server2KnownNodes, null, ourAddressAndPort);
+                (server2KnownNodes, ref, ourAddressAndPort2);
 
         // add our identifier and host:port to the list of known identifiers
 
@@ -115,7 +121,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             KnownNodes knownNodes = new KnownNodes();
 
             DiscoveryNodeBytesMarshallable bytesExternalizable = new DiscoveryNodeBytesMarshallable
-                    (knownNodes, null, ourAddressAndPort);
+                    (knownNodes, ref, ourAddressAndPort1);
 
             DiscoveryNodeBytesMarshallable.ProposedNodes proposedNodes = new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER);
 

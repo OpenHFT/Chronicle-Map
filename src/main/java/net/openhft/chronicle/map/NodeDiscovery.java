@@ -741,7 +741,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         }
 
         // the host and port the message came from
-        this.ourAddressAndPort.writeMarshallable(out);
+        ourAddressAndPort.writeMarshallable(out);
 
         remoteNode.writeMarshallable(out);
 
