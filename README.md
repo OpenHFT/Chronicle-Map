@@ -55,7 +55,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
  * [Use Case Which include Chronicle Map] (http://openhft.net/products/chronicle-engine/)
  * [JavaDoc] (http://openhft.github.io/Chronicle-Map/apidocs/)
- * 
+
 #### Examples
 
 * [Replicating data between process on different servers with TCP/IP Replication](https://github.com/OpenHFT/Chronicle-Map#example--replicating-data-between-process-on-different-servers)
