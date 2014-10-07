@@ -598,7 +598,7 @@ will run out of space between 1 and 2 million entries.
 You should set the .entries(..) and .entrySize(..) to those you require.
 
 
-# Example :Simple Hello World
+# Example : Simple Hello World
 
 This simple chronicle map, works just like ConcurrentHashMap but stores its data off-heap. If you want to use Chronicle Map to share data between java process you should look at the next exampl 
 
