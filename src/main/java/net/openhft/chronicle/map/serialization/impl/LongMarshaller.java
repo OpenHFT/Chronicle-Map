@@ -25,7 +25,7 @@ public enum LongMarshaller implements AgileBytesMarshaller<Long> {
 
     @Override
     public long size(Long e) {
-        return 4L;
+        return 8L;
     }
 
     @Override
@@ -55,7 +55,7 @@ public enum LongMarshaller implements AgileBytesMarshaller<Long> {
 
     @Override
     public long readSize(Bytes bytes) {
-        return 4L;
+        return 8L;
     }
 
     @Override
