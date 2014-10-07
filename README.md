@@ -661,7 +661,7 @@ Map map2;
 
     map1 = map1Builder.create();
 }
-//  ----------  SERVER2 2 on the same server as ----------
+//  ----------  SERVER2 on the same server as ----------
 
 {
     TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
