@@ -85,7 +85,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     // rather than as returning the Object can be expensive for something you probably don't use.
     final boolean putReturnsNull;
     final boolean removeReturnsNull;
-    private final ObjectSerializer objectSerializer;
 
     private final long lockTimeOutNS;
     private final MapErrorListener errorListener;
@@ -130,7 +129,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         this.errorListener = builder.errorListener();
         this.putReturnsNull = builder.putReturnsNull();
         this.removeReturnsNull = builder.removeReturnsNull();
-        this.objectSerializer = builder.objectSerializer();
 
         this.actualSegments = builder.actualSegments();
         this.entriesPerSegment = builder.actualEntriesPerSegment();
