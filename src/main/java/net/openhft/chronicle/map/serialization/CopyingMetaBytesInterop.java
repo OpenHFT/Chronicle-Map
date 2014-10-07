@@ -34,6 +34,7 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
 
     final DirectBytesBuffer buffer;
     transient long size;
+    transient long hash;
     transient W writer;
     transient E cur;
 
@@ -49,6 +50,7 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
             innerWrite(writer, buffer, e);
             buffer.flip();
             size = buffer.remaining();
+            hash = 0L;
         }
     }
 
@@ -66,7 +68,10 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
 
     @Override
     public long hash(W writer, E e) {
-        return Hasher.hash(buffer.buffer);
+        long h;
+        if ((h = hash) == 0L)
+            return hash = Hasher.hash(buffer.buffer);
+        return h;
     }
 
     @Override

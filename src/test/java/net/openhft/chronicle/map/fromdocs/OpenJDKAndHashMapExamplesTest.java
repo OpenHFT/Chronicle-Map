@@ -52,15 +52,11 @@ public class OpenJDKAndHashMapExamplesTest {
     @Test
     public void bondExample() throws IOException, InterruptedException {
 
-        Class<BondVOInterface> bondVODirectClass = directClassFor(BondVOInterface.class);
-        NewInstanceObjectFactory<BondVOInterface> bondVODirectObjectFactory =
-                new NewInstanceObjectFactory<BondVOInterface>(bondVODirectClass);
         File file = new File(TMP + "/chm-myBondPortfolioCHM-" + System.nanoTime());
         file.deleteOnExit();
         ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
-                .of(String.class, bondVODirectClass)
-                .valueFactory(bondVODirectObjectFactory)
-                .entrySize(512)
+                .of(String.class, directClassFor(BondVOInterface.class))
+                .keySize(10)
                 .create(file);
 
 
@@ -80,9 +76,8 @@ public class OpenJDKAndHashMapExamplesTest {
 
 
         ChronicleMap<String, BondVOInterface> chmB = ChronicleMapBuilder
-                .of(String.class, bondVODirectClass)
-                .valueFactory(bondVODirectObjectFactory)
-                .entrySize(320)
+                .of(String.class, directClassFor(BondVOInterface.class))
+                .keySize(10)
                 .create(file);
 
         // ZERO Copy but creates a new off heap reference each time

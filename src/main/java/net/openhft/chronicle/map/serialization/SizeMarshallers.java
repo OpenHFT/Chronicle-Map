@@ -47,5 +47,34 @@ public final class SizeMarshallers {
         }
     }
 
+    public static SizeMarshaller constant(long size) {
+        return new ConstantSizeMarshaller(size);
+    }
+
+    private static class ConstantSizeMarshaller implements SizeMarshaller {
+        private static final long serialVersionUID = 0L;
+
+        private final long size;
+
+        private ConstantSizeMarshaller(long size) {
+            this.size = size;
+        }
+
+        @Override
+        public int sizeEncodingSize(long size) {
+            return 0;
+        }
+
+        @Override
+        public void writeSize(Bytes bytes, long size) {
+            // do nothing
+        }
+
+        @Override
+        public long readSize(Bytes bytes) {
+            return size;
+        }
+    }
+
     private SizeMarshallers() {}
 }
