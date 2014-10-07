@@ -14,7 +14,7 @@ public class NodeDiscoveryTest {
 
         final ChronicleMap<Integer, CharSequence> map = nodeDiscovery.discoverMap();
 
-        Thread.sleep(1000000);
+         Thread.sleep(1000000);
     }
 
 

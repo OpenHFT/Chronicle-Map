@@ -822,12 +822,14 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             return;
         }
 
-        LOG.info("Received Proposal");
+
 
         // the host and port the message came from
         this.sourceAddressAndPort.readMarshallable(in);
         if (sourceAddressAndPort.equals(ourAddressAndPort))
             return;
+
+        LOG.info("Received Proposal");
 
         this.remoteNode.readMarshallable(in);
         this.proposedIdentifiersWithHost.readMarshallable(in);
@@ -835,8 +837,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         NodeDiscoveryEventListener listener = nodeDiscoveryEventListener.get();
         if (listener != null)
             listener.onRemoteNodeEvent(remoteNode, proposedIdentifiersWithHost);
-
-        onChange();
     }
 
 
