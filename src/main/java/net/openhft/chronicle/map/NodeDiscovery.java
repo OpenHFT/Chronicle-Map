@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static java.nio.ByteBuffer.wrap;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress;
+import static net.openhft.chronicle.map.DiscoveryNodeBytesMarshallable.ProposedNodes;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
 import static net.openhft.chronicle.map.Replicators.tcp;
@@ -70,20 +70,19 @@ public class NodeDiscovery {
         final AtomicInteger ourProposedIdentifier = new AtomicInteger();
         final AtomicBoolean useAnotherIdentifier = new AtomicBoolean();
 
-
         final Set<AddressAndPort> knownHostPorts = new ConcurrentSkipListSet<AddressAndPort>();
         final DirectBitSet knownAndProposedIdentifiers = new ATSDirectBitSet(new ByteBufferBytes(ByteBuffer.allocate
                 (128 / 8)));
 
-        final AtomicReference<CountDownLatch> countDownLatch = new AtomicReference<CountDownLatch>(new
-                CountDownLatch(1));
+        final AtomicReference<CountDownLatch> countDownLatch
+                = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
 
         final NodeDiscoveryEventListener nodeDiscoveryEventListener = new NodeDiscoveryEventListener() {
 
             @Override
-            public void onRemoteNodeEvent(KnownNodes remoteNodes,
-                                          ConcurrentExpiryMap<AddressAndPort,
-                                                  DiscoveryNodeBytesMarshallable.ProposedNodes> proposedIdentifiersWithHost) {
+            public void onRemoteNodeEvent(@NotNull final KnownNodes remoteNodes,
+                                          @NotNull final ConcurrentExpiryMap<AddressAndPort,
+                                                  ProposedNodes> proposedIdentifiersWithHost) {
 
                 LOG.info("onRemoteNodeEvent " + remoteNodes + ", proposedIdentifiersWithHost=" + proposedIdentifiersWithHost);
 
@@ -91,7 +90,7 @@ public class NodeDiscovery {
 
                 orBitSets(remoteNodes.identifiers(), knownAndProposedIdentifiers);
 
-                for (DiscoveryNodeBytesMarshallable.ProposedNodes proposedIdentifierWithHost :
+                for (ProposedNodes proposedIdentifierWithHost :
                         proposedIdentifiersWithHost.values()) {
                     if (!proposedIdentifierWithHost.addressAndPort().equals(ourAddressAndPort)) {
 
@@ -116,8 +115,8 @@ public class NodeDiscovery {
 
         nodeDiscoveryEventListenerAtomicReference.set(nodeDiscoveryEventListener);
 
-        final DiscoveryNodeBytesMarshallable.ProposedNodes ourHostPort = new
-                DiscoveryNodeBytesMarshallable.ProposedNodes(ourAddressAndPort, (byte) -1);
+        final ProposedNodes ourHostPort = new
+                ProposedNodes(ourAddressAndPort, (byte) -1);
 
         // to start with we will send a bootstrap that just contains our hostname without and identifier
 
@@ -149,8 +148,8 @@ public class NodeDiscovery {
 
             isFistTime = false;
 
-            final DiscoveryNodeBytesMarshallable.ProposedNodes proposedNodes = new
-                    DiscoveryNodeBytesMarshallable.ProposedNodes(ourAddressAndPort, identifier);
+            final ProposedNodes proposedNodes = new
+                    ProposedNodes(ourAddressAndPort, identifier);
 
             Thread.sleep(100);
 
@@ -234,6 +233,7 @@ public class NodeDiscovery {
             addresses[i++] = new InetSocketAddress(InetAddress.getByAddress(addressAndPort.address())
                     .getHostAddress(), addressAndPort.port());
         }
+
         return addresses;
     }
 
@@ -301,17 +301,6 @@ public class NodeDiscovery {
             else
                 possible++;
         }
-    }
-
-    /**
-     * creates a bit set based on a number of bits
-     *
-     * @param numberOfBits the number of bits the bit set should include
-     * @return a new DirectBitSet backed by a byteBuffer
-     */
-    private static DirectBitSet newBitSet(int numberOfBits) {
-        final ByteBufferBytes bytes = new ByteBufferBytes(wrap(new byte[(numberOfBits + 7) / 8]));
-        return new ATSDirectBitSet(bytes);
     }
 
 }
@@ -938,7 +927,7 @@ interface NodeDiscoveryEventListener {
     /**
      * called when we have received a UDP message, this is called after the message has been parsed
      */
-    void onRemoteNodeEvent(KnownNodes remoteNode, ConcurrentExpiryMap<AddressAndPort, DiscoveryNodeBytesMarshallable.ProposedNodes> proposedIdentifiersWithHost);
+    void onRemoteNodeEvent(KnownNodes remoteNode, ConcurrentExpiryMap<AddressAndPort, ProposedNodes> proposedIdentifiersWithHost);
 }
 
 class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallable> implements BytesMarshallable {
