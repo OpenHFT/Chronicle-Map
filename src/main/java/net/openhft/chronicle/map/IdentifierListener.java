@@ -8,7 +8,7 @@ import java.net.SocketAddress;
 public interface IdentifierListener {
 
     /**
-     * checks the identifier that is unique and we haven't see it before, unless it comes from the same port
+     * checks the identifier that is unique and we haven't seen it before, unless it comes from the same port
      * and host.
      *
      * @param remoteIdentifier remoteIdentifier
