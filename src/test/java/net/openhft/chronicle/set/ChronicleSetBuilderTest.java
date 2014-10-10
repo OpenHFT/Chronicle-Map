@@ -1,4 +1,4 @@
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.set;
 
 import org.junit.Assert;
 import org.junit.Test;

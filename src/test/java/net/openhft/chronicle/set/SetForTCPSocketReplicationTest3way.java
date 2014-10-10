@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.set;
 
+import net.openhft.chronicle.map.ChronicleSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.set;
 
+import net.openhft.chronicle.map.*;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.BytesMarshallerFactory;
 import net.openhft.lang.io.serialization.ObjectSerializer;
@@ -30,14 +31,13 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static net.openhft.chronicle.map.Objects.builderEquals;
 
 public class ChronicleSetBuilder<E> implements Cloneable {
 
     private ChronicleMapBuilder<E, Void> chronicleMapBuilder;
 
     ChronicleSetBuilder(Class<E> keyClass) {
-        chronicleMapBuilder = new ChronicleMapBuilder<E, Void>(keyClass, Void.class);
+        chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, Void.class);
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
@@ -261,7 +261,7 @@ public class ChronicleSetBuilder<E> implements Cloneable {
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
-        return builderEquals(this, o);
+        return chronicleMapBuilder.equals(o);
     }
 
     @Override
@@ -303,14 +303,6 @@ public class ChronicleSetBuilder<E> implements Cloneable {
 
     public ChronicleSetBuilder<E> objectSerializer(ObjectSerializer objectSerializer) {
         chronicleMapBuilder.objectSerializer(objectSerializer);
-        return this;
-    }
-
-    /**
-     * For testing
-     */
-    ChronicleSetBuilder<E> forceReplicatedImpl() {
-        chronicleMapBuilder.forceReplicatedImpl();
         return this;
     }
 
@@ -377,7 +369,7 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         }
 
         public boolean add(E e) {
-            return m.put(e, (Void)null) == null;
+            return m.put(e, (Void) null) == null;
         }
 
         public Iterator<E> iterator() {
