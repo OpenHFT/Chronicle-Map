@@ -17,12 +17,10 @@
 package net.openhft.chronicle.map;
 
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ArrayBlockingQueue;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.Replicators.tcp;
@@ -57,55 +55,6 @@ public class Builder {
         return file;
     }
 
-
-    static <K, V> ChronicleMap<K, V> newShm(
-            int size, final ArrayBlockingQueue<byte[]> input,
-            final ArrayBlockingQueue<byte[]> output,
-            final byte localIdentifier, byte externalIdentifier,
-            Class<K> kClass, Class<V> vClass) throws IOException {
-        Replicator queue = QueueReplicator.of(localIdentifier, externalIdentifier, input, output);
-        return ChronicleMapBuilder.of(kClass, vClass)
-                .entries(size)
-                .addReplicator(queue)
-                .create(getPersistenceFile());
-    }
-
-    static MapProvider<ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?>> newShmIntInt(
-            int size, final ArrayBlockingQueue<byte[]> input,
-            final ArrayBlockingQueue<byte[]> output,
-            final byte localIdentifier, byte externalIdentifier) throws IOException {
-
-        Replicator queue = QueueReplicator.of(localIdentifier, externalIdentifier, input, output);
-        final ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?> result =
-                (ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?>) ChronicleMapBuilder
-                        .of(Integer.class, Integer.class)
-                        .entries(size)
-                        .addReplicator(queue)
-                        .create(getPersistenceFile());
-        QueueReplicator q = null;
-        for (Closeable closeable : result.closeables) {
-            if (closeable instanceof QueueReplicator) {
-                q = (QueueReplicator) closeable;
-                break;
-            }
-        }
-        if (q == null)
-            throw new AssertionError();
-        final QueueReplicator finalQ = q;
-        return new MapProvider<ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?>>() {
-
-            @Override
-            public ReplicatedChronicleMap<Integer, ?, ?, Integer, ?, ?> getMap() {
-                return result;
-            }
-
-            @Override
-            public boolean isQueueEmpty() {
-                return finalQ.isEmpty();
-            }
-
-        };
-    }
 
     public static <T extends ChronicleMap<Integer, Void>> T newTcpSocketShmIntString(
             final byte identifier,
