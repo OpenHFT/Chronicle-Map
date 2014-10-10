@@ -698,6 +698,7 @@ assertTrue(!map1.isEmpty());
 This example is the same as the one above, but it uses a slow throttled TCP/IP connection to fill in updates that may have been missed when sent over UDP. Usually on a good network, for example a wired LAN, UDP won’t miss updates. But UDP does not support guaranteed delivery, we recommend also running a TCP connection along side to ensure the data becomes eventually consistent.  Note : It is possible to use Chronicle without the TCP replication and just use UDP (  that’s if you like living dangerously ! )
 
 
+
 ``` java 
 Map map1;
 Map map2;
@@ -767,6 +768,18 @@ assertTrue(!map1.isEmpty());
 }
 ```
 
+# Example : Creating a Chronicle Set and adding data to it
+
+This project also provideds the Chronicle Set, Chronicle Set is built on Chronicle Map, so the builder configuration are almost identical to Chronicle Map ( see above ), this example shows how to create a simple off heap set
+``` java 
+        Set<Integer> set = ChronicleSetBuilder.of(Integer.class).create();
+        
+        set.add(1);
+        set.remove(1)
+```
+and just like map it support shared memory and TCP replication.         
+        
+        
 # Performance Topics
 
 ### Tuning Chronicle Map with Large Data 
