@@ -429,6 +429,11 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         public long longSize() {
             return m.longSize();
         }
+
+        @Override
+        public void close() throws IOException {
+            m.close();
+        }
     }
 
 }
