@@ -237,7 +237,7 @@ You set the maximum number of entries by the builder:
 ``` java
 ConcurrentMap<Integer, CharSequence> map =
     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-    .entries(1000) // se the max number of entries here
+    .entries(1000) // set the max number of entries here
     .create(file);
 ```
 In this example above we have set 1000 entries.
