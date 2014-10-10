@@ -224,6 +224,7 @@ Note: In order to share data between map1 and map2, the file has to point to the
 on your server.
 
 ### Entries
+
 One of the differences with Chronicle Map against ConcurrentHashMap, is that it can't be resized,
 unlike the ConcurrentHashMap, Chronicle Map is not limited to the available on heap memory.
 Resizing is a very expensive operation for Hash Maps, as it can stall your application, so as such
@@ -231,23 +232,28 @@ we don't do it. When you are building a Chronicle Map you can set the maximum nu
 you are ever likely to support, its ok to over exaggerate this number. As the Chronicle Map is not
 limited to your available memory, At worst you will end up having a very large file on disk.
 
-
 You set the maximum number of entries by the builder:
 
 ``` java
 ConcurrentMap<Integer, CharSequence> map =
     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-    .entries(1000)
+    .entries(1000) // se the max number of entries here
     .create(file);
 ```
 In this example above we have set 1000 entries.
 
+We have optimised chronicle, So that you can have situations where you either don't use;
+
+- all the entries you have allowed for.  This works best on Unix where the disk space and memory used reflect the number of actual entries, not the number you allowed for.
+
+- all the space you allow for each entry.  This helps if you have entries which are multiple cache lines (128 bytes +), only the lines you touch sit in your CPU cache and if you have multiple pages (8+ Kbytes) only the pages you touch use memory or disk.  The CPU cache usage matters as it can be 10000x smaller than main memory.
+
 ### Size of space reserved on disk
 
-In linux, if you looked at the size of the 'file', it will report the used entry size, so if you
+In linux, if you looked at the size of the 'file', it will report the used entry size so if you
 have just added one entry, it will report the size of this entry, but Windows will report
 the reserved size, as it reserves the disk space eagerly ( in fact windows also reserves the memory
-eagerly as well ), in other words number-of-entries x entry-size. 
+eagerly as well ) in other words number-of-entries x entry-size. 
 
 so on linux, if your type
 ``` 
@@ -260,7 +266,8 @@ du <file>
 
 To illustrate this with an example - On Ubuntu we can create a 100 TB chronicle map.  Both `top` and
 `ls -l` say the process virtual size / file size is 100 TB, however the resident memory via `du`
-says the size is 71 MB after adding 10000 entries.
+says the size is 71 MB after adding 10000 entries. You can see the size actually used with du.
+
 
 ### Chronicle Map Interface 
 The Chronicle Map interface adds a few methods above an beyond the standard ConcurrentMap,
