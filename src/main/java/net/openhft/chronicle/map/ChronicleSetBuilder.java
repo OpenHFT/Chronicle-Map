@@ -23,30 +23,34 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.io.Serializable;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.map.Objects.builderEquals;
 
-public class ChronicleSetBuilder<K> implements Cloneable {
+public class ChronicleSetBuilder<E> implements Cloneable {
 
-    ChronicleMapBuilder<K, Boolean> chronicleMapBuilder;
+    private ChronicleMapBuilder<E, Boolean> chronicleMapBuilder;
 
-    ChronicleSetBuilder(Class<K> keyClass) {
-        chronicleMapBuilder = new ChronicleMapBuilder(keyClass, Boolean.class);
+    ChronicleSetBuilder(Class<E> keyClass) {
+        chronicleMapBuilder = new ChronicleMapBuilder<E, Boolean>(keyClass, Boolean.class);
         chronicleMapBuilder.constantValueSizeBySample(Boolean.TRUE);
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
-        return new ChronicleSetBuilder(keyClass);
+        return new ChronicleSetBuilder<K>(keyClass);
     }
 
+
     @Override
-    public ChronicleSetBuilder<K> clone() {
+    public ChronicleSetBuilder<E> clone() {
         try {
             @SuppressWarnings("unchecked")
-            final ChronicleSetBuilder<K> result = (ChronicleSetBuilder<K>) super.clone();
+            final ChronicleSetBuilder<E> result = (ChronicleSetBuilder<E>) super.clone();
             result.chronicleMapBuilder = chronicleMapBuilder.clone();
             return result;
         } catch (CloneNotSupportedException e) {
@@ -55,7 +59,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
     }
 
 
-    public ChronicleSetBuilder<K> actualSegments(int actualSegments) {
+    public ChronicleSetBuilder<E> actualSegments(int actualSegments) {
         chronicleMapBuilder.actualSegments(actualSegments);
         return this;
     }
@@ -70,7 +74,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
      * @param minSegments the minimum number of segments in maps, constructed by this builder
      * @return this builder object back
      */
-    public ChronicleSetBuilder<K> minSegments(int minSegments) {
+    public ChronicleSetBuilder<E> minSegments(int minSegments) {
         chronicleMapBuilder.minSegments(minSegments);
         return this;
     }
@@ -80,7 +84,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
     }
 
 
-    public ChronicleSetBuilder<K> actualElementsPerSegment(int actualEntriesPerSegment) {
+    public ChronicleSetBuilder<E> actualElementsPerSegment(int actualEntriesPerSegment) {
         chronicleMapBuilder.actualEntriesPerSegment(actualEntriesPerSegment);
         return this;
     }
@@ -110,7 +114,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
      * @return this {@code ChronicleSetBuilder} back
      * @see #constantElementsSizeBySample(Object)
      */
-    public ChronicleSetBuilder<K> elementSize(int elementSize) {
+    public ChronicleSetBuilder<E> elementSize(int elementSize) {
         chronicleMapBuilder.keySize(elementSize);
         return this;
     }
@@ -135,7 +139,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
      * @param element the sample element
      * @return this builder back
      */
-    public ChronicleSetBuilder<K> constantElementsSizeBySample(K element) {
+    public ChronicleSetBuilder<E> constantElementsSizeBySample(E element) {
         chronicleMapBuilder.constantKeySizeBySample(element);
         return this;
     }
@@ -151,7 +155,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
      * @param alignment the new alignment of the seta constructed by this builder
      * @return this {@code ChronicleSetBuilder} back
      */
-    public ChronicleSetBuilder<K> alignment(Alignment alignment) {
+    public ChronicleSetBuilder<E> alignment(Alignment alignment) {
         chronicleMapBuilder.entryAndValueAlignment(alignment);
         return this;
     }
@@ -168,7 +172,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
         return chronicleMapBuilder.entryAndValueAlignment();
     }
 
-    public ChronicleSetBuilder<K> elements(long entries) {
+    public ChronicleSetBuilder<E> elements(long entries) {
         chronicleMapBuilder.entries(entries);
         return this;
     }
@@ -177,7 +181,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
         return chronicleMapBuilder.entries();
     }
 
-    public ChronicleSetBuilder<K> replicas(int replicas) {
+    public ChronicleSetBuilder<E> replicas(int replicas) {
         chronicleMapBuilder.replicas(replicas);
         return this;
     }
@@ -193,7 +197,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
      * @param transactional if the built map should be transactional
      * @return this {@code ChronicleMapBuilder} back
      */
-    public ChronicleSetBuilder<K> transactional(boolean transactional) {
+    public ChronicleSetBuilder<E> transactional(boolean transactional) {
         chronicleMapBuilder.transactional(transactional);
         return this;
     }
@@ -202,7 +206,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
         return chronicleMapBuilder.transactional();
     }
 
-    public ChronicleSetBuilder<K> lockTimeOut(long lockTimeOut, TimeUnit unit) {
+    public ChronicleSetBuilder<E> lockTimeOut(long lockTimeOut, TimeUnit unit) {
         chronicleMapBuilder.lockTimeOut(lockTimeOut, unit);
         return this;
     }
@@ -212,7 +216,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
     }
 
 
-    public ChronicleSetBuilder<K> errorListener(MapErrorListener errorListener) {
+    public ChronicleSetBuilder<E> errorListener(MapErrorListener errorListener) {
         chronicleMapBuilder.errorListener(errorListener);
         return this;
     }
@@ -226,12 +230,12 @@ public class ChronicleSetBuilder<K> implements Cloneable {
         return chronicleMapBuilder.largeSegments();
     }
 
-    public ChronicleSetBuilder<K> largeSegments(boolean largeSegments) {
+    public ChronicleSetBuilder<E> largeSegments(boolean largeSegments) {
         chronicleMapBuilder.largeSegments(largeSegments);
         return this;
     }
 
-    public ChronicleSetBuilder<K> metaDataBytes(int metaDataBytes) {
+    public ChronicleSetBuilder<E> metaDataBytes(int metaDataBytes) {
         chronicleMapBuilder.metaDataBytes(metaDataBytes);
         return this;
     }
@@ -269,17 +273,17 @@ public class ChronicleSetBuilder<K> implements Cloneable {
         return toString().hashCode();
     }
 
-    public ChronicleSetBuilder<K> addReplicator(Replicator replicator) {
+    public ChronicleSetBuilder<E> addReplicator(Replicator replicator) {
         chronicleMapBuilder.addReplicator(replicator);
         return this;
     }
 
-    public ChronicleSetBuilder<K> setReplicators(Replicator... replicators) {
+    public ChronicleSetBuilder<E> setReplicators(Replicator... replicators) {
         chronicleMapBuilder.setReplicators(replicators);
         return this;
     }
 
-    public ChronicleSetBuilder<K> timeProvider(TimeProvider timeProvider) {
+    public ChronicleSetBuilder<E> timeProvider(TimeProvider timeProvider) {
         chronicleMapBuilder.timeProvider(timeProvider);
         return this;
     }
@@ -292,7 +296,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
         return chronicleMapBuilder.bytesMarshallerFactory();
     }
 
-    public ChronicleSetBuilder<K> bytesMarshallerFactory(BytesMarshallerFactory bytesMarshallerFactory) {
+    public ChronicleSetBuilder<E> bytesMarshallerFactory(BytesMarshallerFactory bytesMarshallerFactory) {
         chronicleMapBuilder.bytesMarshallerFactory(bytesMarshallerFactory);
         return this;
     }
@@ -301,7 +305,7 @@ public class ChronicleSetBuilder<K> implements Cloneable {
         return chronicleMapBuilder.objectSerializer();
     }
 
-    public ChronicleSetBuilder<K> objectSerializer(ObjectSerializer objectSerializer) {
+    public ChronicleSetBuilder<E> objectSerializer(ObjectSerializer objectSerializer) {
         chronicleMapBuilder.objectSerializer(objectSerializer);
         return this;
     }
@@ -309,12 +313,12 @@ public class ChronicleSetBuilder<K> implements Cloneable {
     /**
      * For testing
      */
-    ChronicleSetBuilder<K> forceReplicatedImpl() {
+    ChronicleSetBuilder<E> forceReplicatedImpl() {
         chronicleMapBuilder.forceReplicatedImpl();
         return this;
     }
 
-    public ChronicleSetBuilder<K> keyMarshaller(@NotNull BytesMarshaller<K> keyMarshaller) {
+    public ChronicleSetBuilder<E> keyMarshaller(@NotNull BytesMarshaller<E> keyMarshaller) {
         chronicleMapBuilder.keyMarshaller(keyMarshaller);
         return this;
     }
@@ -327,22 +331,109 @@ public class ChronicleSetBuilder<K> implements Cloneable {
      *
      * @return this builder back
      */
-    public ChronicleSetBuilder<K> immutableKeys() {
+    public ChronicleSetBuilder<E> immutableKeys() {
         chronicleMapBuilder.immutableKeys();
         return this;
     }
 
 
-    public Set<K> create(File file) throws IOException {
-        final ChronicleMap<K, Boolean> map = chronicleMapBuilder.create(file);
-        return Collections.newSetFromMap(map);
+    public ChronicleSet<E> create(File file) throws IOException {
+        final ChronicleMap<E, Boolean> map = chronicleMapBuilder.create(file);
+        return new SetFromMap<E>(map);
     }
 
-    public Set<K> create() throws IOException {
-        final ChronicleMap<K, Boolean> map = chronicleMapBuilder.create();
-        return Collections.newSetFromMap(map);
+    public ChronicleSet<E> create() throws IOException {
+        final ChronicleMap<E, Boolean> map = chronicleMapBuilder.create();
+        return new SetFromMap<E>(map);
     }
 
+    private static class SetFromMap<E> extends AbstractSet<E>
+            implements ChronicleSet<E>, Serializable {
+
+        private final ChronicleMap<E, Boolean> m;  // The backing map
+        private transient Set<E> s;       // Its keySet
+
+        SetFromMap(ChronicleMap<E, Boolean> map) {
+            if (!map.isEmpty())
+                throw new IllegalArgumentException("Map is non-empty");
+            m = map;
+            s = map.keySet();
+        }
+
+        public void clear() {
+            m.clear();
+        }
+
+        public int size() {
+            return m.size();
+        }
+
+        public boolean isEmpty() {
+            return m.isEmpty();
+        }
+
+        public boolean contains(Object o) {
+            return m.containsKey(o);
+        }
+
+        public boolean remove(Object o) {
+            return m.remove(o) != null;
+        }
+
+        public boolean add(E e) {
+            return m.put(e, Boolean.TRUE) == null;
+        }
+
+        public Iterator<E> iterator() {
+            return s.iterator();
+        }
+
+        public Object[] toArray() {
+            return s.toArray();
+        }
+
+        public <T> T[] toArray(T[] a) {
+            return s.toArray(a);
+        }
+
+        public String toString() {
+            return s.toString();
+        }
+
+        public int hashCode() {
+            return s.hashCode();
+        }
+
+        public boolean equals(Object o) {
+            return o == this || s.equals(o);
+        }
+
+        public boolean containsAll(Collection<?> c) {
+            return s.containsAll(c);
+        }
+
+        public boolean removeAll(Collection<?> c) {
+            return s.removeAll(c);
+        }
+
+        public boolean retainAll(Collection<?> c) {
+            return s.retainAll(c);
+        }
+        // addAll is the only inherited implementation
+
+        private static final long serialVersionUID = 2454657854757543876L;
+
+        private void readObject(java.io.ObjectInputStream stream)
+                throws IOException, ClassNotFoundException {
+            stream.defaultReadObject();
+            s = m.keySet();
+        }
+
+        @Override
+        public long longSize() {
+            return m.longSize();
+        }
+    }
 
 }
 
