@@ -76,10 +76,6 @@ public class Builder {
                 .addReplicator(tcp(identifier, tcpConfig));
     }
 
-    interface MapProvider<T> {
-        T getMap();
 
-        boolean isQueueEmpty();
-    }
 
 }
