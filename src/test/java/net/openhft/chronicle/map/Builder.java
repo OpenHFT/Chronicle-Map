@@ -21,7 +21,11 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.InetSocketAddress;
 import java.util.concurrent.ArrayBlockingQueue;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.openhft.chronicle.map.Replicators.tcp;
 
 /**
  * @author Rob Austin.
@@ -101,6 +105,26 @@ public class Builder {
             }
 
         };
+    }
+
+    public static <T extends ChronicleMap<Integer, Void>> T newTcpSocketShmIntString(
+            final byte identifier,
+            final int serverPort,
+            final InetSocketAddress... endpoints) throws IOException {
+        return (T) newTcpSocketShmBuilder(Integer.class, Void.class,
+                identifier, serverPort, endpoints).create(getPersistenceFile());
+    }
+
+    public static <K, V> ChronicleMapBuilder<K, V> newTcpSocketShmBuilder(
+            Class<K> kClass, Class<V> vClass,
+            final byte identifier,
+            final int serverPort,
+            final InetSocketAddress... endpoints) throws IOException {
+        TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(serverPort, endpoints)
+                .heartBeatInterval(1L, SECONDS);
+        return ChronicleMapBuilder.of(kClass, vClass)
+                .entries(20000L)
+                .addReplicator(tcp(identifier, tcpConfig));
     }
 
     interface MapProvider<T> {

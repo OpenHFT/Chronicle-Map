@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
-import static net.openhft.chronicle.map.TCPSocketReplication4WayMapTest.newTcpSocketShmBuilder;
+import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
 import static net.openhft.chronicle.map.TCPSocketReplication4WayMapTest.newTcpSocketShmIntValueString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

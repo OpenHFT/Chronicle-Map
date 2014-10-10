@@ -381,7 +381,6 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         long valueSize;
         if (!isDeleted) {
             valueSize = valueSizeMarshaller.readSize(entry);
-            assert valueSize > 0;
         } else {
             valueSize = 0;
         }

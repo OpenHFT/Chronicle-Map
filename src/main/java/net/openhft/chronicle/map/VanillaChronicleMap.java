@@ -17,15 +17,16 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.map.serialization.*;
+import net.openhft.chronicle.map.threadlocal.Provider;
+import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
-import net.openhft.lang.io.serialization.*;
+import net.openhft.lang.io.serialization.JDKObjectSerializer;
+import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.model.Byteable;
-import net.openhft.chronicle.map.threadlocal.Provider;
-import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -312,7 +313,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     void checkValue(Object value) {
-        if (!vClass.isInstance(value)) {
+        if (vClass != Void.class && !vClass.isInstance(value)) {
             throw new ClassCastException("Value must be a " + vClass.getName() +
                     " but was a " + value.getClass());
         }
@@ -692,7 +693,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * true}, {@code usingValue} or a newly created instance of value class, if {@code usingValue ==
          * null}, is put into this Segment for the key.</li></ol>
          *
-         * @param hash2    a hash code related to the {@code keyBytes}
+         * @param hash2 a hash code related to the {@code keyBytes}
          * @return the value which is finally associated with the given key in this Segment after execution of
          * this method, or {@code null}.
          */
@@ -827,13 +828,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Puts entry. If {@code value} implements {@link Byteable} interface and
-         * {@code usingValue} is {@code true}, the value is backed with the bytes of this entry.
+         * Puts entry. If {@code value} implements {@link Byteable} interface and {@code usingValue} is {@code
+         * true}, the value is backed with the bytes of this entry.
          *
          * @param value      the value to put
-         * @param usingValue {@code true} if the value should be backed with the bytes of the entry,
-         *                   if it implements {@link Byteable} interface, {@code false} if it
-         *                   should put itself
+         * @param usingValue {@code true} if the value should be backed with the bytes of the entry, if it
+         *                   implements {@link Byteable} interface, {@code false} if it should put itself
          * @return offset of the written entry in the Segment bytes
          */
         private long putEntry(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
@@ -958,7 +958,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * Removes a key (or key-value pair) from the Segment. <p/> The entry will only be removed if {@code
          * expectedValue} equals to {@code null} or the value previously corresponding to the specified key.
          *
-         * @param hash2    a hash code related to the {@code keyBytes}
+         * @param hash2 a hash code related to the {@code keyBytes}
          * @return the value of the entry that was removed if the entry corresponding to the {@code keyBytes}
          * exists and {@link #removeReturnsNull} is {@code false}, {@code null} otherwise
          */
@@ -1095,12 +1095,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * Replaces value in existing entry. May cause entry relocation, because there may be not enough space
          * for new value in location already allocated for this entry.
          *
-         * @param pos             index of the first block occupied by the entry
-         * @param offset          relative offset of the entry in Segment bytes (before, i. e. including
-         *                        metaData)
-         * @param entry           relative pointer in Segment bytes
-         * @param valueSizePos     relative position of value size in entry
-         * @param entryEndAddr    absolute address of the entry end
+         * @param pos          index of the first block occupied by the entry
+         * @param offset       relative offset of the entry in Segment bytes (before, i. e. including
+         *                     metaData)
+         * @param entry        relative pointer in Segment bytes
+         * @param valueSizePos relative position of value size in entry
+         * @param entryEndAddr absolute address of the entry end
          * @return relative offset of the entry in Segment bytes after putting value (that may cause entry
          * relocation)
          */

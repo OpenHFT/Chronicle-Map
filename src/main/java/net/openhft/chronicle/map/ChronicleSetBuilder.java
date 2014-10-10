@@ -34,17 +34,15 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
 
 public class ChronicleSetBuilder<E> implements Cloneable {
 
-    private ChronicleMapBuilder<E, Boolean> chronicleMapBuilder;
+    private ChronicleMapBuilder<E, Void> chronicleMapBuilder;
 
     ChronicleSetBuilder(Class<E> keyClass) {
-        chronicleMapBuilder = new ChronicleMapBuilder<E, Boolean>(keyClass, Boolean.class);
-        chronicleMapBuilder.constantValueSizeBySample(Boolean.TRUE);
+        chronicleMapBuilder = new ChronicleMapBuilder<E, Void>(keyClass, Void.class);
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
         return new ChronicleSetBuilder<K>(keyClass);
     }
-
 
     @Override
     public ChronicleSetBuilder<E> clone() {
@@ -57,7 +55,6 @@ public class ChronicleSetBuilder<E> implements Cloneable {
             throw new AssertionError(e);
         }
     }
-
 
     public ChronicleSetBuilder<E> actualSegments(int actualSegments) {
         chronicleMapBuilder.actualSegments(actualSegments);
@@ -82,7 +79,6 @@ public class ChronicleSetBuilder<E> implements Cloneable {
     public int minSegments() {
         return chronicleMapBuilder.minSegments();
     }
-
 
     public ChronicleSetBuilder<E> actualElementsPerSegment(int actualEntriesPerSegment) {
         chronicleMapBuilder.actualEntriesPerSegment(actualEntriesPerSegment);
@@ -338,22 +334,22 @@ public class ChronicleSetBuilder<E> implements Cloneable {
 
 
     public ChronicleSet<E> create(File file) throws IOException {
-        final ChronicleMap<E, Boolean> map = chronicleMapBuilder.create(file);
+        final ChronicleMap<E, Void> map = chronicleMapBuilder.create(file);
         return new SetFromMap<E>(map);
     }
 
     public ChronicleSet<E> create() throws IOException {
-        final ChronicleMap<E, Boolean> map = chronicleMapBuilder.create();
+        final ChronicleMap<E, Void> map = chronicleMapBuilder.create();
         return new SetFromMap<E>(map);
     }
 
     private static class SetFromMap<E> extends AbstractSet<E>
             implements ChronicleSet<E>, Serializable {
 
-        private final ChronicleMap<E, Boolean> m;  // The backing map
+        private final ChronicleMap<E, Void> m;  // The backing map
         private transient Set<E> s;       // Its keySet
 
-        SetFromMap(ChronicleMap<E, Boolean> map) {
+        SetFromMap(ChronicleMap<E, Void> map) {
             if (!map.isEmpty())
                 throw new IllegalArgumentException("Map is non-empty");
             m = map;
@@ -381,7 +377,7 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         }
 
         public boolean add(E e) {
-            return m.put(e, Boolean.TRUE) == null;
+            return m.put(e, (Void)null) == null;
         }
 
         public Iterator<E> iterator() {

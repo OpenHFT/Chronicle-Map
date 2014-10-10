@@ -21,7 +21,10 @@ import net.openhft.chronicle.map.serialization.impl.*;
 import net.openhft.chronicle.map.threadlocal.Provider;
 import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.*;
+import net.openhft.lang.io.serialization.BytesMarshallable;
+import net.openhft.lang.io.serialization.BytesMarshaller;
+import net.openhft.lang.io.serialization.ObjectFactory;
+import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.model.Byteable;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +43,7 @@ final class SerializationBuilder<E> implements Cloneable {
     private static boolean concreteClass(Class c) {
         return !c.isInterface() && !Modifier.isAbstract(c.getModifiers());
     }
-    
+
     private static boolean marshallerUseFactory(Class c) {
         return Byteable.class.isAssignableFrom(c) ||
                 BytesMarshallable.class.isAssignableFrom(c) ||
@@ -52,6 +55,7 @@ final class SerializationBuilder<E> implements Cloneable {
     }
 
     enum Role {KEY, VALUE}
+
     private enum CopyingInterop {FROM_MARSHALLER, FROM_WRITER}
 
     private final Serializable bufferIdentity;
@@ -84,6 +88,8 @@ final class SerializationBuilder<E> implements Cloneable {
         } else if (eClass == CharSequence.class || eClass == String.class) {
             reader((BytesReader<E>) CharSequenceReader.of(), factory);
             writer((BytesWriter<E>) CharSequenceWriter.instance());
+        } else if (eClass == Void.class) {
+            agileMarshaller((AgileBytesMarshaller<E>) VoidMarshaller.INSTANCE, factory);
         } else if (eClass == Long.class) {
             agileMarshaller((AgileBytesMarshaller<E>) LongMarshaller.INSTANCE, factory);
         } else if (eClass == byte[].class) {
