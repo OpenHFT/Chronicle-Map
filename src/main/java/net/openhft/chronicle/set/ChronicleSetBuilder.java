@@ -187,21 +187,6 @@ public class ChronicleSetBuilder<E> implements Cloneable {
     }
 
 
-    /**
-     * Not supported yet.
-     *
-     * @param transactional if the built map should be transactional
-     * @return this {@code ChronicleMapBuilder} back
-     */
-    public ChronicleSetBuilder<E> transactional(boolean transactional) {
-        chronicleMapBuilder.transactional(transactional);
-        return this;
-    }
-
-    public boolean transactional() {
-        return chronicleMapBuilder.transactional();
-    }
-
     public ChronicleSetBuilder<E> lockTimeOut(long lockTimeOut, TimeUnit unit) {
         chronicleMapBuilder.lockTimeOut(lockTimeOut, unit);
         return this;
@@ -249,7 +234,6 @@ public class ChronicleSetBuilder<E> implements Cloneable {
                 ", alignment=" + alignment() +
                 ", entries=" + elements() +
                 ", replicas=" + replicas() +
-                ", transactional=" + transactional() +
                 ", metaDataBytes=" + metaDataBytes() +
                 ", errorListener=" + errorListener() +
                 ", largeSegments=" + largeSegments() +

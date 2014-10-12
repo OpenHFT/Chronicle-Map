@@ -48,7 +48,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
-    boolean transactional = false;
     Replicator firstReplicator;
     Map<Class<? extends Replicator>, Replicator> replicators = new HashMap<Class<? extends Replicator>, Replicator>();
     boolean forceReplicatedImpl = false;
@@ -461,21 +460,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
         return (int) Maths.nextPower2(Math.max((entries >> 30) + 1, minSegments()), 1);
     }
 
-    /**
-     * Not supported yet.
-     *
-     * @param transactional if the built map should be transactional
-     * @return this {@code ChronicleMapBuilder} back
-     */
-    public ChronicleMapBuilder<K, V> transactional(boolean transactional) {
-        this.transactional = transactional;
-        return this;
-    }
-
-    public boolean transactional() {
-        return transactional;
-    }
-
     public ChronicleMapBuilder<K, V> lockTimeOut(long lockTimeOut, TimeUnit unit) {
         this.lockTimeOut = lockTimeOut;
         lockTimeOutUnit = unit;
@@ -579,7 +563,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
                 ", entryAndValueAlignment=" + entryAndValueAlignment() +
                 ", entries=" + entries() +
                 ", replicas=" + replicas() +
-                ", transactional=" + transactional() +
                 ", lockTimeOut=" + lockTimeOut + " " + lockTimeOutUnit +
                 ", metaDataBytes=" + metaDataBytes() +
                 ", errorListener=" + errorListener() +
