@@ -63,7 +63,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     private int entrySize = 0;
     private Alignment alignment = Alignment.OF_4_BYTES;
     private long entries = 1 << 20;
-    private int replicas = 0;
     private long lockTimeOut = 2000;
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
     private int metaDataBytes = 0;
@@ -421,15 +420,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
         return entries;
     }
 
-    public ChronicleMapBuilder<K, V> replicas(int replicas) {
-        this.replicas = replicas;
-        return this;
-    }
-
-    public int replicas() {
-        return replicas;
-    }
-
     public ChronicleMapBuilder<K, V> actualEntriesPerSegment(int actualEntriesPerSegment) {
         this.actualEntriesPerSegment = actualEntriesPerSegment;
         return this;
@@ -562,7 +552,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
                 ", entrySize=" + entrySize() +
                 ", entryAndValueAlignment=" + entryAndValueAlignment() +
                 ", entries=" + entries() +
-                ", replicas=" + replicas() +
                 ", lockTimeOut=" + lockTimeOut + " " + lockTimeOutUnit +
                 ", metaDataBytes=" + metaDataBytes() +
                 ", errorListener=" + errorListener() +

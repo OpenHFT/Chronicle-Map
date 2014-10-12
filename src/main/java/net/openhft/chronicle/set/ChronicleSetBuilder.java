@@ -177,16 +177,6 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         return chronicleMapBuilder.entries();
     }
 
-    public ChronicleSetBuilder<E> replicas(int replicas) {
-        chronicleMapBuilder.replicas(replicas);
-        return this;
-    }
-
-    public int replicas() {
-        return chronicleMapBuilder.replicas();
-    }
-
-
     public ChronicleSetBuilder<E> lockTimeOut(long lockTimeOut, TimeUnit unit) {
         chronicleMapBuilder.lockTimeOut(lockTimeOut, unit);
         return this;
@@ -233,7 +223,6 @@ public class ChronicleSetBuilder<E> implements Cloneable {
                 ", actualEntriesPerSegment=" + actualElementsPerSegment() +
                 ", alignment=" + alignment() +
                 ", entries=" + elements() +
-                ", replicas=" + replicas() +
                 ", metaDataBytes=" + metaDataBytes() +
                 ", errorListener=" + errorListener() +
                 ", largeSegments=" + largeSegments() +
