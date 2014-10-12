@@ -92,6 +92,8 @@ final class SerializationBuilder<E> implements Cloneable {
             agileMarshaller((AgileBytesMarshaller<E>) VoidMarshaller.INSTANCE, factory);
         } else if (eClass == Long.class) {
             agileMarshaller((AgileBytesMarshaller<E>) LongMarshaller.INSTANCE, factory);
+        } else if (eClass == Double.class) {
+            agileMarshaller((AgileBytesMarshaller<E>) DoubleMarshaller.INSTANCE, factory);
         } else if (eClass == byte[].class) {
             reader((BytesReader<E>) ByteArrayMarshaller.INSTANCE, factory);
             interop((BytesInterop<E>) ByteArrayMarshaller.INSTANCE);
@@ -113,8 +115,6 @@ final class SerializationBuilder<E> implements Cloneable {
             return new ExternalizableMarshaller(classForMarshaller);
         if (eClass == Integer.class)
             return (BytesMarshaller<E>) IntegerMarshaller.INSTANCE;
-        if (eClass == Double.class)
-            return (BytesMarshaller<E>) DoubleMarshaller.INSTANCE;
         return null;
     }
 
@@ -350,28 +350,6 @@ final class SerializationBuilder<E> implements Cloneable {
             return bytes.readInt();
         }
     }
-
-    private enum DoubleMarshaller implements BytesMarshaller<Double> {
-        INSTANCE;
-
-        @Override
-        public void write(Bytes bytes, Double v) {
-            bytes.writeDouble(v);
-        }
-
-        @Nullable
-        @Override
-        public Double read(Bytes bytes) {
-            return bytes.readDouble();
-        }
-
-        @Nullable
-        @Override
-        public Double read(Bytes bytes, @Nullable Double v) {
-            return bytes.readDouble();
-        }
-    }
-
 
     private static class SerializableMarshaller implements BytesMarshaller {
         private static final long serialVersionUID = 0L;
