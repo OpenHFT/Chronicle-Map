@@ -37,7 +37,8 @@ public class ChronicleSetBuilder<E> implements Cloneable {
     private ChronicleMapBuilder<E, Void> chronicleMapBuilder;
 
     ChronicleSetBuilder(Class<E> keyClass) {
-        chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, Void.class);
+        chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, Void.class)
+                .entryAndValueAlignment(Alignment.NO_ALIGNMENT);
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
@@ -124,22 +125,6 @@ public class ChronicleSetBuilder<E> implements Cloneable {
      */
     public ChronicleSetBuilder<E> constantElementsSizeBySample(E element) {
         chronicleMapBuilder.constantKeySizeBySample(element);
-        return this;
-    }
-
-
-    /**
-     * Configures alignment strategy of address in memory of elements
-     *
-     * <p>Useful when elements are updated intensively, particularly fields with volatile access, because it
-     * doesn't work well if the value elements cache lines. Also, on some (nowadays rare) architectures any
-     * misaligned memory access is more expensive than aligned.
-     *
-     * @param alignment the new alignment of the seta constructed by this builder
-     * @return this {@code ChronicleSetBuilder} back
-     */
-    public ChronicleSetBuilder<E> alignment(Alignment alignment) {
-        chronicleMapBuilder.entryAndValueAlignment(alignment);
         return this;
     }
 
