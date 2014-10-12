@@ -20,7 +20,19 @@ import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.NativeBytes;
 import sun.misc.Unsafe;
 
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
+import static java.nio.ByteOrder.nativeOrder;
+
 public final class Hasher {
+
+    private static final long LONG_LEVEL_PRIME_MULTIPLE = 1011001110001111L;
+    private static final int SHORT_LEVEL_PRIME_MULTIPLE = 101111;
+    private static final long BYTE_LEVEL_PRIME_MULTIPLE = 2111;
+
+    private static final int INT_HASH_LOW_SHORT_MULTIPLE =
+            nativeOrder() == LITTLE_ENDIAN ? SHORT_LEVEL_PRIME_MULTIPLE : 1;
+    private static final int INT_HASH_HIGH_SHORT_MULTIPLE =
+            nativeOrder() == LITTLE_ENDIAN ? 1 : SHORT_LEVEL_PRIME_MULTIPLE;
 
     public static long hash(Bytes bytes) {
         return hash(bytes, bytes.position(), bytes.limit());
@@ -30,11 +42,11 @@ public final class Hasher {
         long h = 0;
         long i = offset;
         for (; i < limit - 7; i += 8)
-            h = 1011001110001111L * h + bytes.readLong(i);
+            h = LONG_LEVEL_PRIME_MULTIPLE * h + bytes.readLong(i);
         for (; i < limit - 1; i += 2)
-            h = 101111 * h + bytes.readShort(i);
+            h = SHORT_LEVEL_PRIME_MULTIPLE * h + bytes.readShort(i);
         if (i < limit)
-            h = 2111 * h + bytes.readByte(i);
+            h = BYTE_LEVEL_PRIME_MULTIPLE * h + bytes.readByte(i);
         return hash(h);
     }
 
@@ -46,12 +58,17 @@ public final class Hasher {
         long i = 0;
         long limit = ((long) length) * scale;
         for (; i < limit - 7; i += 8)
-            h = 1011001110001111L * h + unsafe.getLong(array, base + i);
+            h = LONG_LEVEL_PRIME_MULTIPLE * h + unsafe.getLong(array, base + i);
         for (; i < limit - 1; i += 2)
-            h = 101111 * h + unsafe.getShort(array, base + i);
+            h = SHORT_LEVEL_PRIME_MULTIPLE * h + unsafe.getShort(array, base + i);
         if (i < limit)
-            h = 2111 * h + unsafe.getByte(array, base + i);
+            h = BYTE_LEVEL_PRIME_MULTIPLE * h + unsafe.getByte(array, base + i);
         return hash(h);
+    }
+
+    public static long hash(int value) {
+        return hash(((long) (((short) (value >>> 16)) * INT_HASH_HIGH_SHORT_MULTIPLE)) +
+                ((short) value) * INT_HASH_LOW_SHORT_MULTIPLE);
     }
 
     public static long hash(long value) {
