@@ -61,10 +61,6 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         return this;
     }
 
-    public int actualSegments() {
-        return chronicleMapBuilder.actualSegments();
-    }
-
     /**
      * Set minimum number of segments. See concurrencyLevel in {@link java.util.concurrent.ConcurrentHashMap}.
      *
@@ -76,19 +72,10 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         return this;
     }
 
-    public int minSegments() {
-        return chronicleMapBuilder.minSegments();
-    }
-
     public ChronicleSetBuilder<E> actualElementsPerSegment(int actualEntriesPerSegment) {
         chronicleMapBuilder.actualEntriesPerSegment(actualEntriesPerSegment);
         return this;
     }
-
-    public int actualElementsPerSegment() {
-        return chronicleMapBuilder.actualEntriesPerSegment();
-    }
-
 
     /**
      * Configures the optimal number of bytes for an element. If elementSize is always the same, call {@link
@@ -156,25 +143,9 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         return this;
     }
 
-    /**
-     * * Returns the alignment memory strategy used for addresses of elements
-     *
-     * <p>Default is {@link net.openhft.chronicle.map.Alignment#OF_4_BYTES}.
-     *
-     * @return alignment memory strategy
-     * @see #alignment(net.openhft.chronicle.map.Alignment)
-     */
-    public Alignment alignment() {
-        return chronicleMapBuilder.entryAndValueAlignment();
-    }
-
     public ChronicleSetBuilder<E> elements(long entries) {
         chronicleMapBuilder.entries(entries);
         return this;
-    }
-
-    public long elements() {
-        return chronicleMapBuilder.entries();
     }
 
     public ChronicleSetBuilder<E> lockTimeOut(long lockTimeOut, TimeUnit unit) {
@@ -182,23 +153,10 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         return this;
     }
 
-    public long lockTimeOut(TimeUnit unit) {
-        return chronicleMapBuilder.lockTimeOut(unit);
-    }
-
 
     public ChronicleSetBuilder<E> errorListener(MapErrorListener errorListener) {
         chronicleMapBuilder.errorListener(errorListener);
         return this;
-    }
-
-    public MapErrorListener errorListener() {
-        return chronicleMapBuilder.errorListener();
-    }
-
-
-    public boolean largeSegments() {
-        return chronicleMapBuilder.largeSegments();
     }
 
     public ChronicleSetBuilder<E> largeSegments(boolean largeSegments) {
@@ -211,23 +169,10 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         return this;
     }
 
-    public int metaDataBytes() {
-        return chronicleMapBuilder.metaDataBytes();
-    }
-
     @Override
     public String toString() {
-        return " ChronicleMapBuilder{" +
-                "actualSegments=" + actualSegments() +
-                ", minSegments=" + minSegments() +
-                ", actualEntriesPerSegment=" + actualElementsPerSegment() +
-                ", alignment=" + alignment() +
-                ", entries=" + elements() +
-                ", metaDataBytes=" + metaDataBytes() +
-                ", errorListener=" + errorListener() +
-                ", largeSegments=" + largeSegments() +
-                ", timeProvider=" + timeProvider() +
-                ", bytesMarshallerfactory=" + bytesMarshallerFactory() +
+        return " ChronicleSetBuilder{" +
+                "chronicleMapBuilder=" + chronicleMapBuilder +
                 '}';
     }
 
@@ -257,21 +202,9 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         return this;
     }
 
-    public TimeProvider timeProvider() {
-        return chronicleMapBuilder.timeProvider();
-    }
-
-    public BytesMarshallerFactory bytesMarshallerFactory() {
-        return chronicleMapBuilder.bytesMarshallerFactory();
-    }
-
     public ChronicleSetBuilder<E> bytesMarshallerFactory(BytesMarshallerFactory bytesMarshallerFactory) {
         chronicleMapBuilder.bytesMarshallerFactory(bytesMarshallerFactory);
         return this;
-    }
-
-    public ObjectSerializer objectSerializer() {
-        return chronicleMapBuilder.objectSerializer();
     }
 
     public ChronicleSetBuilder<E> objectSerializer(ObjectSerializer objectSerializer) {

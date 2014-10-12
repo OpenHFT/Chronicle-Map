@@ -50,7 +50,6 @@ public class BigData {
         if (!new File("/ocz/tmp").exists()) dir = ".";
         String chmPath = dir + "/testmap-" + Long.toString(System.nanoTime(), 36);
         new File(chmPath).deleteOnExit();
-        System.out.println("ChronicleMap entries() = " + builder.entries());
         try {
             theMap = builder.create(new File(chmPath));
         } catch (IOException e) {

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.blackboard;
+package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 

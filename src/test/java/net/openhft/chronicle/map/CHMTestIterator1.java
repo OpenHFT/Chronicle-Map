@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.blackboard;
-
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
+package net.openhft.chronicle.map;
 
 import java.io.File;
 import java.util.Map;
