@@ -16,9 +16,9 @@
 
 package net.openhft.chronicle.map.serialization;
 
-import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.NativeBytes;
+import sun.misc.Unsafe;
 
 public final class Hasher {
 
@@ -38,17 +38,19 @@ public final class Hasher {
         return hash(h);
     }
 
-    public static long hash(byte[] ba) {
+    public static long hash(Object array, int length) {
+        Unsafe unsafe = NativeBytes.UNSAFE;
+        long base = unsafe.arrayBaseOffset(array.getClass());
+        long scale = unsafe.arrayIndexScale(array.getClass());
         long h = 0;
         long i = 0;
-        long base = NativeBytes.UNSAFE.arrayBaseOffset(byte[].class);
-        long limit = ba.length;
+        long limit = ((long) length) * scale;
         for (; i < limit - 7; i += 8)
-            h = 1011001110001111L * h + NativeBytes.UNSAFE.getLong(ba, base + i);
+            h = 1011001110001111L * h + unsafe.getLong(array, base + i);
         for (; i < limit - 1; i += 2)
-            h = 101111 * h + NativeBytes.UNSAFE.getShort(ba, base + i);
+            h = 101111 * h + unsafe.getShort(array, base + i);
         if (i < limit)
-            h = 2111 * h + NativeBytes.UNSAFE.getByte(ba, base + i);
+            h = 2111 * h + unsafe.getByte(array, base + i);
         return hash(h);
     }
 

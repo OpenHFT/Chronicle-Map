@@ -41,7 +41,7 @@ public enum ByteArrayMarshaller implements BytesInterop<byte[]>, BytesReader<byt
 
     @Override
     public long hash(byte[] ba) {
-        return Hasher.hash(ba);
+        return Hasher.hash(ba, ba.length);
     }
 
     @Override
