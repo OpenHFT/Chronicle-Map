@@ -172,15 +172,11 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         return toString().hashCode();
     }
 
-    public ChronicleSetBuilder<E> addReplicator(Replicator replicator) {
-        chronicleMapBuilder.addReplicator(replicator);
+    public ChronicleSetBuilder<E> replicators(byte identifier, Replicator replicator) {
+        chronicleMapBuilder.replicators(identifier, replicator);
         return this;
     }
 
-    public ChronicleSetBuilder<E> setReplicators(Replicator... replicators) {
-        chronicleMapBuilder.setReplicators(replicators);
-        return this;
-    }
 
     public ChronicleSetBuilder<E> timeProvider(TimeProvider timeProvider) {
         chronicleMapBuilder.timeProvider(timeProvider);

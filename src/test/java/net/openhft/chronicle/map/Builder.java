@@ -73,7 +73,7 @@ public class Builder {
                 .heartBeatInterval(1L, SECONDS);
         return ChronicleMapBuilder.of(kClass, vClass)
                 .entries(20000L)
-                .addReplicator(tcp(identifier, tcpConfig));
+                .replicators(identifier, tcp( tcpConfig));
     }
 
 

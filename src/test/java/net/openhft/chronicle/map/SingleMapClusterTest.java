@@ -66,7 +66,7 @@ public class SingleMapClusterTest {
             // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .addReplicator(clusterA.channelReplicator((short) 1))
+                    .channel(clusterA.createChannel((short) 1))
                     .create(getPersistenceFile());
         }
 
@@ -80,7 +80,7 @@ public class SingleMapClusterTest {
                     .tcpReplication(tcpReplicationConfig).create();
             // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .addReplicator(clusterB.channelReplicator((short) 1))
+                    .channel(clusterB.createChannel((short) 1))
                     .entries(1000)
                     .create(getPersistenceFile());
         }

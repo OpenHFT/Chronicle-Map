@@ -21,7 +21,7 @@ import java.io.IOException;
 
 /**
  * @see Replicators
- * @see ChronicleMapBuilder#addReplicator(Replicator)
+ * @see ChronicleMapBuilder#replicator(byte, Replicator)
  */
 public abstract class Replicator {
 
@@ -30,14 +30,6 @@ public abstract class Replicator {
      */
     protected Replicator() {
     }
-
-    /**
-     * Returns this node identifier within the replication topology.
-     *
-     * @return the unique identifier among nodes
-     * @see Replica#identifier()
-     */
-    public abstract byte identifier();
 
     /**
      * Applies the replicator to the map instance and returns a Closeable token to manage resources,

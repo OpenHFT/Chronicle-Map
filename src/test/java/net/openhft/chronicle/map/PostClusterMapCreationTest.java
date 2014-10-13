@@ -17,7 +17,10 @@
 package net.openhft.chronicle.map;
 
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.File;
@@ -69,12 +72,12 @@ public class PostClusterMapCreationTest {
             // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .addReplicator(clusterA.channelReplicator((short) 1))
+                    .channel(clusterA.createChannel((short) 1))
                     .create(getPersistenceFile());
 
             map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .addReplicator(clusterA.channelReplicator((short) 2))
+                    .channel(clusterA.createChannel((short) 2))
                     .create(getPersistenceFile());
         }
 
@@ -90,12 +93,12 @@ public class PostClusterMapCreationTest {
             // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .addReplicator(clusterB.channelReplicator((short) 1))
+                    .channel(clusterB.createChannel((short) 1))
                     .create(getPersistenceFile());
 
             map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .addReplicator(clusterB.channelReplicator((short) 2))
+                    .channel(clusterB.createChannel((short) 2))
                     .create(getPersistenceFile());
         }
 

@@ -49,7 +49,7 @@ public class TCPSocketReplicationTest3wayPutReturnsNull {
 
                 .entries(1000)
                 .putReturnsNull(true)
-                .addReplicator(Replicators.tcp(identifier, tcpConfig))
+                .replicators(identifier, Replicators.tcp(tcpConfig))
                 .create(Builder.getPersistenceFile());
     }
 

@@ -57,7 +57,7 @@ public class ClusterReplicationTest {
 
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .addReplicator(clusterA.channelReplicator((short) 1))
+                    .channel(clusterA.createChannel((short) 1))
                     .create(getPersistenceFile());
         }
 
@@ -70,7 +70,7 @@ public class ClusterReplicationTest {
 
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .addReplicator(clusterB.channelReplicator((short) 1))
+                    .channel(clusterB.createChannel((short) 1))
                     .create(getPersistenceFile());
         }
     }
@@ -93,13 +93,13 @@ public class ClusterReplicationTest {
 
         map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
-                .addReplicator(clusterB.channelReplicator((short) 2))
+                .channel(clusterB.createChannel((short) 2))
                 .create(getPersistenceFile());
 
 
         map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
-                .addReplicator(clusterA.channelReplicator((short) 2))
+                .channel(clusterA.createChannel((short) 2))
                 .create(getPersistenceFile());
 
         map2a.put(1, "EXAMPLE-2");

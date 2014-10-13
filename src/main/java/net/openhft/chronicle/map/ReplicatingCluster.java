@@ -211,7 +211,7 @@ public final class ReplicatingCluster implements Closeable {
      *
      * @return a replicator, dedicated to the specified channel
      */
-    public Replicator channelReplicator(short channel) {
+    public ChronicleChannel createChannel(short channel) {
         return new ChronicleChannel(channel);
     }
 
@@ -393,14 +393,14 @@ public final class ReplicatingCluster implements Closeable {
         }
     }
 
-    private class ChronicleChannel extends Replicator implements Closeable {
+    public class ChronicleChannel extends Replicator implements Closeable {
+
         private final short chronicleChannel;
 
         private ChronicleChannel(short chronicleChannel) {
             this.chronicleChannel = chronicleChannel;
         }
 
-        @Override
         public byte identifier() {
             return localIdentifier;
         }
