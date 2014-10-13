@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle;
 
 import java.io.Serializable;
 
-public interface MapErrorListener extends Serializable {
+public interface ChronicleHashErrorListener extends Serializable {
     void onLockTimeout(long threadId) throws IllegalStateException;
 
     void errorOnUnlock(IllegalMonitorStateException e);

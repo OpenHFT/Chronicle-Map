@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle;
 
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class MapErrorListeners {
+public final class ChronicleHashErrorListeners {
 
-    public static MapErrorListener logging() {
+    public static ChronicleHashErrorListener logging() {
         return LoggingErrorListener.INSTANCE;
     }
 
-    public static MapErrorListener error() {
+    public static ChronicleHashErrorListener error() {
         return ThrowingErrorListener.INSTANCE;
     }
 
@@ -35,7 +35,7 @@ public final class MapErrorListeners {
      * We can add some configuration-on-the-first-call in the future.
      */
 
-    private static enum LoggingErrorListener implements MapErrorListener {
+    private static enum LoggingErrorListener implements ChronicleHashErrorListener {
         INSTANCE;
         final Logger LOG = LoggerFactory.getLogger(getClass());
 
@@ -55,7 +55,7 @@ public final class MapErrorListeners {
         }
     }
 
-    private static enum ThrowingErrorListener implements MapErrorListener {
+    private static enum ThrowingErrorListener implements ChronicleHashErrorListener {
         INSTANCE;
 
         @Override

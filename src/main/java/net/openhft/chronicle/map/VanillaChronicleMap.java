@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.ChronicleHashErrorListener;
 import net.openhft.chronicle.map.serialization.*;
 import net.openhft.chronicle.map.threadlocal.Provider;
 import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
@@ -88,7 +89,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     final boolean removeReturnsNull;
 
     private final long lockTimeOutNS;
-    private final MapErrorListener errorListener;
+    private final ChronicleHashErrorListener errorListener;
     transient Segment[] segments; // non-final for close()
     // non-final for close() and because it is initialized out of constructor
     transient BytesStore ms;
