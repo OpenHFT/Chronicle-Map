@@ -14,21 +14,29 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle;
+
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleSet;
 
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 
 /**
- * TimeProvider was created initially to support testing of ReplicatedChronicleMap,
- * with the aim of possibly later providing and optimization to System.currentTimeMillis()
- * on every call to put(), get() and remove()
- * <p/>
- * Subclasses should be immutable, because {@link ChronicleMapBuilder} doesn't make defensive copies.
+ * TimeProvider was aims to possibly later provide an optimization to
+ * {@link System#currentTimeMillis()} on every call to replicated {@link ChronicleMap}
+ * or {@link ChronicleSet}.
+ *
+ * Subclasses should be immutable, because {@link ChronicleHashBuilder} doesn't make defensive
+ * copies.
  *
  * @author Rob Austin.
+ * @see ChronicleHashBuilder#timeProvider(TimeProvider)
  */
 public abstract class TimeProvider implements Serializable {
+    /**
+     * Delegates {@link #currentTimeMillis()} to {@link System#currentTimeMillis()}.
+     */
     public static final TimeProvider SYSTEM = new System();
     private static final long serialVersionUID = 0L;
 

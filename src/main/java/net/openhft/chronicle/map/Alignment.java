@@ -18,8 +18,15 @@ package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.Bytes;
 
-
+/**
+ * Memory addresses alignment strategies.
+ *
+ * @see ChronicleMapBuilder#entryAndValueAlignment(Alignment)
+ */
 public enum Alignment {
+    /**
+     * Doesn't align memory addresses.
+     */
     NO_ALIGNMENT {
         @Override
         void alignPositionAddr(Bytes bytes) {
@@ -37,6 +44,9 @@ public enum Alignment {
         }
     },
 
+    /**
+     * Aligns memory addresses on 4-byte boundary.
+     */
     OF_4_BYTES {
         @Override
         void alignPositionAddr(Bytes bytes) {
@@ -54,6 +64,9 @@ public enum Alignment {
         }
     },
 
+    /**
+     * Aligns memory addresses on 8-byte boundary.
+     */
     OF_8_BYTES {
         @Override
         void alignPositionAddr(Bytes bytes) {

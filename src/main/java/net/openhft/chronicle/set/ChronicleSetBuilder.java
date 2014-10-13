@@ -16,6 +16,10 @@
 
 package net.openhft.chronicle.set;
 
+import net.openhft.chronicle.TimeProvider;
+import net.openhft.chronicle.map.Alignment;
+import net.openhft.chronicle.ChronicleHashBuilder;
+import net.openhft.chronicle.ChronicleHashErrorListener;
 import net.openhft.chronicle.map.*;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.BytesMarshallerFactory;
@@ -29,10 +33,12 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 
-public class ChronicleSetBuilder<E> implements Cloneable {
+public class ChronicleSetBuilder<E>
+        implements ChronicleHashBuilder<E, ChronicleSet<E>, ChronicleSetBuilder<E>> {
 
     private ChronicleMapBuilder<E, Void> chronicleMapBuilder;
 
@@ -57,98 +63,104 @@ public class ChronicleSetBuilder<E> implements Cloneable {
         }
     }
 
+    @Override
     public ChronicleSetBuilder<E> actualSegments(int actualSegments) {
         chronicleMapBuilder.actualSegments(actualSegments);
         return this;
     }
 
-    /**
-     * Set minimum number of segments. See concurrencyLevel in {@link java.util.concurrent.ConcurrentHashMap}.
-     *
-     * @param minSegments the minimum number of segments in maps, constructed by this builder
-     * @return this builder object back
-     */
+    @Override
     public ChronicleSetBuilder<E> minSegments(int minSegments) {
         chronicleMapBuilder.minSegments(minSegments);
         return this;
     }
 
-    public ChronicleSetBuilder<E> actualElementsPerSegment(int actualEntriesPerSegment) {
+    @Override
+    public ChronicleSetBuilder<E> actualEntriesPerSegment(int actualEntriesPerSegment) {
         chronicleMapBuilder.actualEntriesPerSegment(actualEntriesPerSegment);
         return this;
     }
 
     /**
-     * Configures the optimal number of bytes for an element. If elementSize is always the same, call {@link
-     * #constantElementsSizeBySample(Object)} method instead of this one.
+     * {@inheritDoc}
      *
-     * <p>If the size varies moderately, specify the size higher than average, but lower than the maximum
-     * possible, to minimize average memory overuse. If the size varies in a wide range, it's better to use
-     *
-     *
-     * <p>Example: if element in your set(s) are English words in {@link String} form, keys size 10
+     * <p>Example: if keys in your set(s) are English words in {@link String} form, keys size 10
      * (a bit more than average English word length) would be a good choice: <pre>{@code
-     * ChronicleSetBuilder<String, LongValue> wordFrequencies = ChronicleSetBuilder
-     *     .of(String.class)
+     * ChronicleSet<String> uniqueWords = ChronicleSetBuilder.of(String.class)
      *     .entries(50000)
-     *     .elementSize(10)
+     *     .keySize(10)
      *     .create();}</pre>
+     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded
+     * (and each character takes 2 bytes on-heap), because default off-heap {@link String} encoding
+     * is UTF-8 in {@code ChronicleSet}.)
      *
-     * @param elementSize number of bytes, taken by serialized form of the element
-     * @return this {@code ChronicleSetBuilder} back
-     * @see #constantElementsSizeBySample(Object)
+     * @see #constantKeySizeBySample(Object)
+     * @see #entrySize(int)
      */
-    public ChronicleSetBuilder<E> elementSize(int elementSize) {
-        chronicleMapBuilder.keySize(elementSize);
+    @Override
+    public ChronicleSetBuilder<E> keySize(int keySize) {
+        chronicleMapBuilder.keySize(keySize);
         return this;
     }
-
 
     /**
-     * Configures the constant number of bytes, taken by serialized form of elements, created by this builder.
-     * This is done by providing the {@code element}, all elements should take the same number of bytes in
-     * serialized form, as this sample object.
+     * {@inheritDoc}
      *
-     * <p>For example, if your elements are Git commit hashes:<pre>{@code
-     * Map<byte[], String> gitCommitMessagesByHash =
-     *     ChronicleSetBuilder.of(byte[].class)
-     *     .constantElementsSizeBySample(new byte[20])
-     *     .create();
-     * }</pre>
+     * <p>For example, if your keys are Git commit hashes:<pre>{@code
+     * Set<byte[]> gitCommitsOfInterest = ChronicleSetBuilder.of(byte[].class)
+     *     .constantKeySizeBySample(new byte[20])
+     *     .create();}</pre>
      *
-     * <p>If elements are of boxed primitive type or {@link net.openhft.lang.model.Byteable} subclass, i. e.
-     * if element size is known statically, it is automatically accounted and this method shouldn't be
-     * called.
-     *
-     * @param element the sample element
-     * @return this builder back
+     * @see #keySize(int)
      */
-    public ChronicleSetBuilder<E> constantElementsSizeBySample(E element) {
-        chronicleMapBuilder.constantKeySizeBySample(element);
+    @Override
+    public ChronicleSetBuilder<E> constantKeySizeBySample(E sampleKey) {
+        chronicleMapBuilder.constantKeySizeBySample(sampleKey);
         return this;
     }
 
-    public ChronicleSetBuilder<E> elements(long entries) {
+    /**
+     * {@inheritDoc}
+     *
+     * <p>In fully default case you can expect entry size to be about 120-130 bytes. But it is
+     * strongly recommended always to configure {@linkplain #keySize(int) key size},
+     * if they couldn't be derived statically.
+     *
+     * <p>If entry size is not configured explicitly by calling this method, it is computed
+     * based on {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key
+     * size}, plus a few bytes required by implementations.
+     */
+    @Override
+    public ChronicleSetBuilder<E> entrySize(int entrySize) {
+        chronicleMapBuilder.entrySize(entrySize);
+        return this;
+    }
+
+    @Override
+    public ChronicleSetBuilder<E> entries(long entries) {
         chronicleMapBuilder.entries(entries);
         return this;
     }
 
+    @Override
     public ChronicleSetBuilder<E> lockTimeOut(long lockTimeOut, TimeUnit unit) {
         chronicleMapBuilder.lockTimeOut(lockTimeOut, unit);
         return this;
     }
 
-
-    public ChronicleSetBuilder<E> errorListener(MapErrorListener errorListener) {
+    @Override
+    public ChronicleSetBuilder<E> errorListener(ChronicleHashErrorListener errorListener) {
         chronicleMapBuilder.errorListener(errorListener);
         return this;
     }
 
+    @Override
     public ChronicleSetBuilder<E> largeSegments(boolean largeSegments) {
         chronicleMapBuilder.largeSegments(largeSegments);
         return this;
     }
 
+    @Override
     public ChronicleSetBuilder<E> metaDataBytes(int metaDataBytes) {
         chronicleMapBuilder.metaDataBytes(metaDataBytes);
         return this;
@@ -164,7 +176,9 @@ public class ChronicleSetBuilder<E> implements Cloneable {
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
-        return chronicleMapBuilder.equals(o);
+        if (!(o instanceof ChronicleSetBuilder))
+            return false;
+        return chronicleMapBuilder.equals(((ChronicleSetBuilder) o).chronicleMapBuilder);
     }
 
     @Override
@@ -178,45 +192,44 @@ public class ChronicleSetBuilder<E> implements Cloneable {
     }
 
 
+    @Override
     public ChronicleSetBuilder<E> timeProvider(TimeProvider timeProvider) {
         chronicleMapBuilder.timeProvider(timeProvider);
         return this;
     }
 
-    public ChronicleSetBuilder<E> bytesMarshallerFactory(BytesMarshallerFactory bytesMarshallerFactory) {
+    @Override
+    public ChronicleSetBuilder<E> bytesMarshallerFactory(
+            BytesMarshallerFactory bytesMarshallerFactory) {
         chronicleMapBuilder.bytesMarshallerFactory(bytesMarshallerFactory);
         return this;
     }
 
+    @Override
     public ChronicleSetBuilder<E> objectSerializer(ObjectSerializer objectSerializer) {
         chronicleMapBuilder.objectSerializer(objectSerializer);
         return this;
     }
 
+    @Override
     public ChronicleSetBuilder<E> keyMarshaller(@NotNull BytesMarshaller<E> keyMarshaller) {
         chronicleMapBuilder.keyMarshaller(keyMarshaller);
         return this;
     }
 
-    /**
-     * Specifies that elements, are immutable.  {@code ChronicleSet} implementations can benefit from the
-     * knowledge that elements are not mutated between queries. By default, {@code ChronicleMapBuilder}
-     * detects immutability automatically only for very few standard JDK types (for example, for {@link
-     * String}), it is not recommended to rely on {@code ChronicleSetBuilder} to be smart enough about this.
-     *
-     * @return this builder back
-     */
+    @Override
     public ChronicleSetBuilder<E> immutableKeys() {
         chronicleMapBuilder.immutableKeys();
         return this;
     }
 
-
+    @Override
     public ChronicleSet<E> create(File file) throws IOException {
         final ChronicleMap<E, Void> map = chronicleMapBuilder.create(file);
         return new SetFromMap<E>(map);
     }
 
+    @Override
     public ChronicleSet<E> create() throws IOException {
         final ChronicleMap<E, Void> map = chronicleMapBuilder.create();
         return new SetFromMap<E>(map);
