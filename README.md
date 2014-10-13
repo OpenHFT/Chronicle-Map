@@ -528,7 +528,8 @@ when using Chronicle Channels its the channels that are given the unique identif
 
 ``` java
 byte identifier = 2;
-ChannelReplicator channelReplicatorA = new ChannelReplicatorBuilder(identifier, 1024)
+int maxEntrySize =1024;
+ChannelReplicator channelReplicatorA = new ChannelReplicatorBuilder(identifier, maxEntrySize)
   .create();
 ```
 
@@ -543,6 +544,7 @@ of buffers.
 Once you have created the ChannelReplicator you should attach your tcp configuration 
 ``` java
 byte identifier = 2;
+int maxEntrySize =1024;
 ChannelReplicator channelReplicator = new ChannelReplicatorBuilder(identifier, 1024)
   .tcpReplication(tcpConfig)
   .create();;
