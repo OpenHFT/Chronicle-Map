@@ -512,7 +512,7 @@ A heartbeat will only be send if no data is transmitted, if the maps are constan
 no heartbeat message is sent. If a map does not receive either data of a heartbeat the connection
 is dropped and re-established.
 
-# Channels
+# Channels and ChannelReplicator
 
 Chronicle Map TCP Replication lets you distribute a single Chronicle Map, to a number of servers
 across your network. Replication is point to point and the data transfer is bidirectional, so in the
