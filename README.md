@@ -63,7 +63,6 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Replicating data between process on different servers with UDP] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--replicating-data-between-process-on-different-servers-using-udp)
  *  [Creating a Chronicle Set and adding data to it](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--creating-a-chronicle-set-and-adding-data-to-it)
 
-
 #### Performance Topics
 
 * [Chronicle Map with Large Data ](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-with-large-data)
@@ -71,11 +70,9 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [Better to use small keys](https://github.com/OpenHFT/Chronicle-Map#better-to-use-small-keys)
 * [ConcurrentHashMap v ChronicleMap](https://github.com/OpenHFT/Chronicle-Map#concurrenthashmap-v-chroniclemap)
 
-
 ### Overview
 Chronicle Map implements the `java.util.concurrent.ConcurrentMap`, however unlike the standard
 java map, ChronicleMap is able to share your entries accross processes:
-
 
 ![](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-diagram_04.jpg)
 
