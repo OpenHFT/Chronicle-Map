@@ -35,7 +35,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-public class PostClusterMapCreationTest {
+public class PostChannelCreationTest {
 
     private ChronicleMap<Integer, CharSequence> map1a;
     private ChronicleMap<Integer, CharSequence> map2a;
