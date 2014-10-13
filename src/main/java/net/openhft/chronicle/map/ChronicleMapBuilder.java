@@ -39,6 +39,49 @@ import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.map.Objects.builderEquals;
 
+/**
+ * {@code ChronicleMapBuilder} manages the whole set of {@link ChronicleMap} configurations, could
+ * be used as a classic builder and/or factory. This means that in addition to the standard builder
+ * usage pattern: <pre>{@code
+ * ChronicleMap<Key, Value> map = ChronicleMapBuilder
+ *     .of(Key.class, Value.class)
+ *     .entries(100500)
+ *     // ... other configurations
+ *     .create();}</pre>
+ * {@code ChronicleMapBuilder} could be prepared and used to create many similar maps: <pre>{@code
+ * ChronicleMapBuilder<Key, Value> builder = ChronicleMapBuilder
+ *     .of(Key.class, Value.class)
+ *     .entries(100500);
+ *
+ * ChronicleMap<Key, Value> map1 = builder.create();
+ * ChronicleMap<Key, Value> map2 = builder.create();}</pre>
+ * i. e. created {@code ChronicleMap} instances don't depend on the builder.
+ *
+ * <p>Use static {@link #of(Class, Class)} method to obtain a {@code ChronicleMapBuilder} instance.
+ *
+ * <p>{@code ChronicleMapBuilder} is mutable. Configuration methods mutate the builder and
+ * return <i>the builder itself</i> back to support chaining pattern, rather than the builder copies
+ * with the corresponding configuration changed. To make an independent configuration,
+ * {@linkplain #clone} the builder.
+ *
+ * <p>Later in this documentation, "ChronicleMap" means
+ * "ChronicleMaps, created by {@code ChronicleMapBuilder}", unless specified different, because
+ * theoretically someone might provide {@code ChronicleMap} implementations with completely
+ * different properties.
+ *
+ * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
+ * doesn't support resizing. That is why you should <i>always</i> configure {@linkplain
+ * #entries(long) number of entries} you are going to insert into the created map <i>at most</i>.
+ * See {@link #entries(long)} method documentation for more information on this.
+ *
+ * <p>{@code ChronicleMap} allocates memory by equally sized chunks. This size is called
+ * {@linkplain #entrySize(int) entry size}, you are strongly recommended to configure it to achieve
+ * least memory consumption and best speed. See {@link #entrySize(int)} method documentation for
+ * more information on this.
+ *
+ * @param <K> key type of the maps, produced by this builder
+ * @param <V> value type of the maps, produced by this builder
+ */
 public class ChronicleMapBuilder<K, V> implements Cloneable {
 
     private static final Bytes EMPTY_BYTES = new ByteBufferBytes(ByteBuffer.allocate(0));
@@ -109,8 +152,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable {
     }
 
     /**
-     * Set minimum number of segments. See concurrencyLevel
-     * in {@link java.util.concurrent.ConcurrentHashMap}.
+     * Set minimum number of segments. See concurrencyLevel in {@link ConcurrentHashMap}.
      *
      * @param minSegments the minimum number of segments in maps, constructed by this builder
      * @return this builder object back
