@@ -67,6 +67,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 #### Performance Topics
 
 * [Chronicle Map with Large Data ](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-with-large-data)
+* [Lock Contention] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#lock-contention)
 * [Better to use small keys](https://github.com/OpenHFT/Chronicle-Map#better-to-use-small-keys)
 * [ConcurrentHashMap v ChronicleMap](https://github.com/OpenHFT/Chronicle-Map#concurrenthashmap-v-chroniclemap)
 
@@ -859,10 +860,10 @@ So, If you set a large number of actual segments, this will reduce your lock con
 
 See the example below to see how to set the number of segments :
 
-        ChronicleMap<Long, String> map = ChronicleMapBuilder.of(Long.class, String.class)
-                .entries(100)
-                .actualSegments(100)    // set your number of segments here
-                .create();
+ChronicleMap<Long, String> map = ChronicleMapBuilder.of(Long.class, String.class)
+   .entries(100)
+   .actualSegments(100)    // set your number of segments here
+   .create();
 
  
 Reducing lock contention will make this warning message go away, but this message maybe more of a symptom 
