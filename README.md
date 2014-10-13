@@ -520,7 +520,7 @@ example of just two servers, they only have to be connected via a single tcp soc
 the data is transferred both ways. Which is great, however what if you wanted to replicate more than
 just one chronicle map, what if you were going to replicate two chronicle maps across your network,
 unfortunately with just TCP replication you would have to have two tcp socket connections, which is
-not ideal. This is why we created Chronicle Clustering. Clustering lets you replicate numerous
+not ideal. This is why we created Chronicle Channels. Channels lets you replicate numerous
 Chronicle Maps via a single point to point socket connection.
 
 Chronicle Channels are similar to TCP replication, where each map has to be given a unique identifier, but
