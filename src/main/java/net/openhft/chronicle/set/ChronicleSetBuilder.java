@@ -16,10 +16,9 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.TimeProvider;
-import net.openhft.chronicle.map.Alignment;
 import net.openhft.chronicle.ChronicleHashBuilder;
 import net.openhft.chronicle.ChronicleHashErrorListener;
+import net.openhft.chronicle.TimeProvider;
 import net.openhft.chronicle.map.*;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.BytesMarshallerFactory;
@@ -33,7 +32,6 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 
@@ -90,9 +88,9 @@ public class ChronicleSetBuilder<E>
      *     .entries(50000)
      *     .keySize(10)
      *     .create();}</pre>
-     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded
-     * (and each character takes 2 bytes on-heap), because default off-heap {@link String} encoding
-     * is UTF-8 in {@code ChronicleSet}.)
+     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded (and each
+     * character takes 2 bytes on-heap), because default off-heap {@link String} encoding is UTF-8 in {@code
+     * ChronicleSet}.)
      *
      * @see #constantKeySizeBySample(Object)
      * @see #entrySize(int)
@@ -122,13 +120,13 @@ public class ChronicleSetBuilder<E>
     /**
      * {@inheritDoc}
      *
-     * <p>In fully default case you can expect entry size to be about 120-130 bytes. But it is
-     * strongly recommended always to configure {@linkplain #keySize(int) key size},
-     * if they couldn't be derived statically.
+     * <p>In fully default case you can expect entry size to be about 120-130 bytes. But it is strongly
+     * recommended always to configure {@linkplain #keySize(int) key size}, if they couldn't be derived
+     * statically.
      *
-     * <p>If entry size is not configured explicitly by calling this method, it is computed
-     * based on {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key
-     * size}, plus a few bytes required by implementations.
+     * <p>If entry size is not configured explicitly by calling this method, it is computed based on
+     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size}, plus a few
+     * bytes required by implementations.
      */
     @Override
     public ChronicleSetBuilder<E> entrySize(int entrySize) {
@@ -163,6 +161,12 @@ public class ChronicleSetBuilder<E>
     @Override
     public ChronicleSetBuilder<E> metaDataBytes(int metaDataBytes) {
         chronicleMapBuilder.metaDataBytes(metaDataBytes);
+        return this;
+    }
+
+    @Override
+    public ChronicleSetBuilder<E> replicators(byte identifier, Replicator... replicators) {
+        chronicleMapBuilder.replicators(identifier, replicators);
         return this;
     }
 

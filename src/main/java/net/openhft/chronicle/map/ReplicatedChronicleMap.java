@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 
+import net.openhft.chronicle.TimeProvider;
 import net.openhft.chronicle.map.serialization.BytesReader;
 import net.openhft.chronicle.map.serialization.MetaBytesInterop;
 import net.openhft.chronicle.map.serialization.MetaBytesWriter;
