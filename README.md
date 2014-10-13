@@ -529,7 +529,7 @@ when using Chronicle Channels its the channels that are given the unique identif
 ``` java
 byte identifier = 2;
 int maxEntrySize =1024;
-ChannelReplicator channelReplicatorA = new ChannelReplicatorBuilder(identifier, maxEntrySize)
+ChannelReplicator replicator = new ChannelReplicatorBuilder(identifier, maxEntrySize)
   .create();
 ```
 
@@ -545,7 +545,7 @@ Once you have created the ChannelReplicator you should attach your tcp configura
 ``` java
 byte identifier = 2;
 int maxEntrySize =1024;
-ChannelReplicator channelReplicator = new ChannelReplicatorBuilder(identifier, 1024)
+ChannelReplicator replicator = new ChannelReplicatorBuilder(identifier, 1024)
   .tcpReplication(tcpConfig)
   .create();;
 ```
@@ -555,7 +555,7 @@ Attaching ChannelReplicator replication to the map:
 ``` java
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
     .entries(1000)
-    .channel(channelReplicator.createChannel((short) 1))
+    .channel(replicator.createChannel((short) 1))
     .create(file);
 ```
 
@@ -576,7 +576,7 @@ Once you have created the ChannelReplicator you may wish to hold onto the refere
 once you have finished, this will close everything in the ChannelReplicator 
 
 ``` java
-channelReplicator.close();
+replicator.close();
 ```
 
 ####  Known Issues
