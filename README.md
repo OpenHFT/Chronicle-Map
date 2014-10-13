@@ -844,7 +844,6 @@ about 115 K Chronicle Map lookups per second.
 If you see the following warning :
 
 ``` java 
-
 WARNING:net.openhft.lang.io.AbstractBytes tryLockNanosLong0
 WARNING: Thread-2, to obtain a lock took 0.129 seconds
 ``` 
@@ -860,11 +859,12 @@ So, If you set a large number of actual segments, this will reduce your lock con
 
 See the example below to see how to set the number of segments :
 
+``` java 
 ChronicleMap<Long, String> map = ChronicleMapBuilder.of(Long.class, String.class)
    .entries(100)
    .actualSegments(100)    // set your number of segments here
    .create();
-
+```  
  
 Reducing lock contention will make this warning message go away, but this message maybe more of a symptom 
 of a general problem with what the system is doing, so you may experience a delay anyway.
