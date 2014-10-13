@@ -46,7 +46,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *      [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
-* [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
+* [Channels and the Channel Provider](https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider)
   
 #### Miscellaneous
 
@@ -63,7 +63,6 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Replicating data between process on different servers with UDP] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--replicating-data-between-process-on-different-servers-using-udp)
  *  [Creating a Chronicle Set and adding data to it](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--creating-a-chronicle-set-and-adding-data-to-it)
 
-
 #### Performance Topics
 
 * [Chronicle Map with Large Data ](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-with-large-data)
@@ -71,11 +70,9 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [Better to use small keys](https://github.com/OpenHFT/Chronicle-Map#better-to-use-small-keys)
 * [ConcurrentHashMap v ChronicleMap](https://github.com/OpenHFT/Chronicle-Map#concurrenthashmap-v-chroniclemap)
 
-
 ### Overview
 Chronicle Map implements the `java.util.concurrent.ConcurrentMap`, however unlike the standard
 java map, ChronicleMap is able to share your entries accross processes:
-
 
 ![](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-diagram_04.jpg)
 
@@ -512,7 +509,7 @@ A heartbeat will only be send if no data is transmitted, if the maps are constan
 no heartbeat message is sent. If a map does not receive either data of a heartbeat the connection
 is dropped and re-established.
 
-# Cluster
+# Channels and ChannelProvider
 
 Chronicle Map TCP Replication lets you distribute a single Chronicle Map, to a number of servers
 across your network. Replication is point to point and the data transfer is bidirectional, so in the
@@ -520,37 +517,42 @@ example of just two servers, they only have to be connected via a single tcp soc
 the data is transferred both ways. Which is great, however what if you wanted to replicate more than
 just one chronicle map, what if you were going to replicate two chronicle maps across your network,
 unfortunately with just TCP replication you would have to have two tcp socket connections, which is
-not ideal. This is why we created Chronicle Clustering. Clustering lets you replicate numerous
+not ideal. This is why we created Chronicle Channels. Channels let you replicate numerous
 Chronicle Maps via a single point to point socket connection.
 
-Clustering is similar to TCP replication, where each map has to be given a unique identifier, but
-when using Chronicle Clustering its the cluster that is given the unique identifier not the map.
+Chronicle Channels are similar to TCP replication, where each map has to be given a unique identifier, but
+when using Chronicle Channels its the channels that are given the unique identifier not the map.
 
 ``` java
-ReplicatingClusterBuilder clusterBuilder = new ReplicatingClusterBuilder((byte) 2, 1024);
+byte identifier = 2;
+int maxEntrySize = 1024;
+ChannelProvider replicator = new ChannelProviderBuilder(identifier, maxEntrySize)
+  .create();
 ```
 
-In this example above the cluster is given the identifier of 2
+In this example above the channel is given the identifier of 2
 
 In addition to specifying the identifier we also have to set the maximum entry size, this sets
-the size of the memory buffers within the cluster.  This has to be set manually, with clusters you
-are able to attach additional maps to a cluster once its up and running, so the maximum size of each
+the size of the memory buffers within the ChannelProvider.  This has to be set manually, with channels you
+are able to attach additional maps to a ChannelProvider once its up and running, so the maximum size of each
 entry in the map can not be known in advance and we don’t currently support automatic resizing
 of buffers.
 
-Once you have created the cluster you should attach your tcpConfig
+Once you have created the ChannelProvider you should attach your tcp configuration 
 ``` java
-TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8087).heartBeatInterval(1, SECONDS);
-clusterBuilder.tcpReplication(tcpConfig);
-ReplicatingCluster cluster = clusterBuilder.create();
+byte identifier = 2;
+int maxEntrySize =1024;
+ChannelProvider replicator = new ChannelProviderBuilder(identifier, 1024)
+  .tcpReplication(tcpConfig)
+  .create();;
 ```
 
-Attaching cluster replication to the map:
+Attaching ChannelProvider replication to the map:
 
 ``` java
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
     .entries(1000)
-    .addReplicator(cluster.channelReplicator((short) 1))
+    .channel(replicator.createChannel((short) 1))
     .create(file);
 ```
 
@@ -567,11 +569,11 @@ If you inadvertently got the chronicle channels around the wrong way, then chron
 to replicate the wrong maps data. The chronicle channels don't have to be in order but they must be
 unique for each map you have.
 
-Once you have created the cluster you may wish to hold onto the reference so that you can call close
-once you have finished, this will close everything in the cluster 
+Once you have created the ChannelProvider you may wish to hold onto the reference so that you can call close
+once you have finished, this will close everything in the ChannelProvider 
 
 ``` java
-cluster.close();
+replicator.close();
 ```
 
 ####  Known Issues

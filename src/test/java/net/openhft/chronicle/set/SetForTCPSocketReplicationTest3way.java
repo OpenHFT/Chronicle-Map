@@ -51,7 +51,7 @@ public class SetForTCPSocketReplicationTest3way {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         return (T) ChronicleSetBuilder.of(Integer.class)
-                .addReplicator(tcp(identifier, of(serverPort, endpoints).
+                .replicators(identifier, tcp(of(serverPort, endpoints).
                         heartBeatInterval(1L, SECONDS))).create(getPersistenceFile());
     }
 

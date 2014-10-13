@@ -212,7 +212,7 @@ public class NodeDiscovery {
         return ChronicleMapBuilder.of(Integer.class,
                 CharSequence.class)
                 .entries(20000L)
-                .addReplicator(tcp(identifier, tcpConfig)).create();
+                .replicators(identifier, tcp(tcpConfig)).create();
 
     }
 

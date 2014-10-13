@@ -45,8 +45,8 @@ import static net.openhft.chronicle.map.Replica.ModificationNotifier.NOP;
 /**
  * @author Rob Austin.
  */
-public final class ReplicatingCluster implements Closeable {
-    private static final Logger LOG = LoggerFactory.getLogger(ReplicatingCluster.class.getName());
+public final class ChannelProvider implements Closeable {
+    private static final Logger LOG = LoggerFactory.getLogger(ChannelProvider.class.getName());
 
     private static final byte BOOTSTRAP_MESSAGE = 'B';
     final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
@@ -152,7 +152,7 @@ public final class ReplicatingCluster implements Closeable {
 
         @Override
         public void close() throws IOException {
-            ReplicatingCluster.this.close();
+            ChannelProvider.this.close();
         }
     };
     private final int maxEntrySize;
@@ -169,7 +169,7 @@ public final class ReplicatingCluster implements Closeable {
     private final Set<AbstractChannelReplicator> replicators =
             new CopyOnWriteArraySet<AbstractChannelReplicator>();
 
-    ReplicatingCluster(ReplicatingClusterBuilder builder) {
+    ChannelProvider(ChannelProviderBuilder builder) {
         localIdentifier = builder.identifier;
         maxEntrySize = builder.maxEntrySize;
         chronicleChannels = new Replica[builder.maxNumberOfChronicles];
@@ -206,12 +206,12 @@ public final class ReplicatingCluster implements Closeable {
     /**
      * Returns a replicator, dedicated to the specified channel. Channel is basically just a number, that
      * should correspond on different servers for instances of the same replicated map. Only one replicator
-     * per channel could be obtained from a single {@code ReplicatingCluster}. The returned replicator could
+     * per channel could be obtained from a single {@code ReplicatingChannel}. The returned replicator could
      * be applied to a map at most once.
      *
      * @return a replicator, dedicated to the specified channel
      */
-    public Replicator channelReplicator(short channel) {
+    public ChronicleChannel createChannel(short channel) {
         return new ChronicleChannel(channel);
     }
 
@@ -393,14 +393,14 @@ public final class ReplicatingCluster implements Closeable {
         }
     }
 
-    private class ChronicleChannel extends Replicator implements Closeable {
+    public class ChronicleChannel extends Replicator implements Closeable {
+
         private final short chronicleChannel;
 
         private ChronicleChannel(short chronicleChannel) {
             this.chronicleChannel = chronicleChannel;
         }
 
-        @Override
         public byte identifier() {
             return localIdentifier;
         }
@@ -409,7 +409,7 @@ public final class ReplicatingCluster implements Closeable {
         protected Closeable applyTo(ChronicleMapBuilder builder,
                                     Replica map, EntryExternalizable entryExternalizable) {
             if (builder.entrySize() > maxEntrySize) {
-                throw new IllegalArgumentException("During ReplicatingClusterBuilder setup, " +
+                throw new IllegalArgumentException("During ReplicatingChannelBuilder setup, " +
                         "maxEntrySize=" + maxEntrySize + " was specified, but map with " +
                         "entrySize=" + builder.entrySize() + " is attempted to apply" +
                         "to the replicator");

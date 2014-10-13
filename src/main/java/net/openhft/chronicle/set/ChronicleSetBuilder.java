@@ -39,7 +39,8 @@ public class ChronicleSetBuilder<E>
     ChronicleSetBuilder(Class<E> keyClass) {
         chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
                 .entryAndValueAlignment(Alignment.NO_ALIGNMENT)
-                .valueMarshallerAndFactory(DummyValueMarshaller.INSTANCE, NullObjectFactory.of());
+                .valueMarshallerAndFactory(DummyValueMarshaller.INSTANCE,
+                        NullObjectFactory.<DummyValue>of());
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
@@ -85,7 +86,8 @@ public class ChronicleSetBuilder<E>
      *     .entries(50000)
      *     .keySize(10)
      *     .create();}</pre>
-     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded
+     *
+     * <p>(Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded
      * (and each character takes 2 bytes on-heap), because default off-heap {@link String} encoding
      * is UTF-8 in {@code ChronicleSet}.)
      *
@@ -121,9 +123,9 @@ public class ChronicleSetBuilder<E>
      * strongly recommended always to configure {@linkplain #keySize(int) key size},
      * if they couldn't be derived statically.
      *
-     * <p>If entry size is not configured explicitly by calling this method, it is computed
-     * based on {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key
-     * size}, plus a few bytes required by implementations.
+     * <p>If entry size is not configured explicitly by calling this method, it is computed based on
+     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size},
+     * plus a few bytes required by implementations.
      */
     @Override
     public ChronicleSetBuilder<E> entrySize(int entrySize) {
@@ -162,6 +164,12 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
+    public ChronicleSetBuilder<E> replicators(byte identifier, Replicator... replicators) {
+        chronicleMapBuilder.replicators(identifier, replicators);
+        return this;
+    }
+
+    @Override
     public String toString() {
         return " ChronicleSetBuilder{" +
                 "chronicleMapBuilder=" + chronicleMapBuilder +
@@ -181,15 +189,11 @@ public class ChronicleSetBuilder<E>
         return toString().hashCode();
     }
 
-    public ChronicleSetBuilder<E> addReplicator(Replicator replicator) {
-        chronicleMapBuilder.addReplicator(replicator);
+    public ChronicleSetBuilder<E> replicators(byte identifier, Replicator replicator) {
+        chronicleMapBuilder.replicators(identifier, replicator);
         return this;
     }
 
-    public ChronicleSetBuilder<E> setReplicators(Replicator... replicators) {
-        chronicleMapBuilder.setReplicators(replicators);
-        return this;
-    }
 
     @Override
     public ChronicleSetBuilder<E> timeProvider(TimeProvider timeProvider) {

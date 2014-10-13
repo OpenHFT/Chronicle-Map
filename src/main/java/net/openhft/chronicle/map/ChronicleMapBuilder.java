@@ -27,9 +27,12 @@ import net.openhft.chronicle.map.serialization.MetaProvider;
 import net.openhft.chronicle.map.threadlocal.Provider;
 import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.Maths;
-import net.openhft.lang.io.*;
+import net.openhft.lang.io.ByteBufferBytes;
+import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.BytesStore;
+import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.io.serialization.*;
-import net.openhft.lang.io.serialization.impl.*;
+import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.model.Byteable;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -44,8 +47,8 @@ import java.util.concurrent.TimeUnit;
 import static net.openhft.chronicle.map.Objects.builderEquals;
 
 /**
- * {@code ChronicleMapBuilder} manages the whole set of {@link ChronicleMap} configurations, could
- * be used as a classic builder and/or factory. This means that in addition to the standard builder
+ * {@code ChronicleMapBuilder} manages the whole set of {@link ChronicleMap} configurations, could be used as
+ * a classic builder and/or factory. This means that in addition to the standard builder
  * usage pattern: <pre>{@code
  * ChronicleMap<Key, Value> map = ChronicleMapBuilder
  *     .of(Key.class, Value.class)
@@ -63,25 +66,22 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
  *
  * <p>Use static {@link #of(Class, Class)} method to obtain a {@code ChronicleMapBuilder} instance.
  *
- * <p>{@code ChronicleMapBuilder} is mutable. Configuration methods mutate the builder and
- * return <i>the builder itself</i> back to support chaining pattern, rather than the builder copies
- * with the corresponding configuration changed. To make an independent configuration,
- * {@linkplain #clone} the builder.
+ * <p>{@code ChronicleMapBuilder} is mutable. Configuration methods mutate the builder and return <i>the
+ * builder itself</i> back to support chaining pattern, rather than the builder copies with the corresponding
+ * configuration changed. To make an independent configuration, {@linkplain #clone} the builder.
  *
- * <p>Later in this documentation, "ChronicleMap" means
- * "ChronicleMaps, created by {@code ChronicleMapBuilder}", unless specified different, because
- * theoretically someone might provide {@code ChronicleMap} implementations with completely
- * different properties.
+ * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
+ * ChronicleMapBuilder}", unless specified different, because theoretically someone might provide {@code
+ * ChronicleMap} implementations with completely different properties.
  *
- * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
- * doesn't support resizing. That is why you should <i>always</i> configure {@linkplain
- * #entries(long) number of entries} you are going to insert into the created map <i>at most</i>.
- * See {@link #entries(long)} method documentation for more information on this.
+ * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently doesn't support
+ * resizing. That is why you should <i>always</i> configure {@linkplain #entries(long) number of entries} you
+ * are going to insert into the created map <i>at most</i>. See {@link #entries(long)} method documentation
+ * for more information on this.
  *
- * <p>{@code ChronicleMap} allocates memory by equally sized chunks. This size is called
- * {@linkplain #entrySize(int) entry size}, you are strongly recommended to configure it to achieve
- * least memory consumption and best speed. See {@link #entrySize(int)} method documentation for
- * more information on this.
+ * <p>{@code ChronicleMap} allocates memory by equally sized chunks. This size is called {@linkplain
+ * #entrySize(int) entry size}, you are strongly recommended to configure it to achieve least memory
+ * consumption and best speed. See {@link #entrySize(int)} method documentation for more information on this.
  *
  * @param <K> key type of the maps, produced by this builder
  * @param <V> value type of the maps, produced by this builder
@@ -94,11 +94,12 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
 
     public static final short UDP_REPLICATION_MODIFICATION_ITERATOR_ID = 128;
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
+
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
-    Replicator firstReplicator;
-    Map<Class<? extends Replicator>, Replicator> replicators = new HashMap<Class<? extends Replicator>, Replicator>();
-    boolean forceReplicatedImpl = false;
+
+    private Map<Class<? extends Replicator>, Replicator> replicators = new HashMap<Class<? extends Replicator>, Replicator>();
+
     // used when configuring the number of segments.
     private int minSegments = -1;
     private int actualSegments = -1;
@@ -126,6 +127,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
             MapEventListeners.nop();
     private V defaultValue = null;
     private DefaultValueProvider<K, V> defaultValueProvider = null;
+    private byte identifier = -1;
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
@@ -156,6 +158,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         }
     }
 
+
     @Override
     public ChronicleMapBuilder<K, V> minSegments(int minSegments) {
         this.minSegments = minSegments;
@@ -185,9 +188,9 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
      *     .keySize(10)
      *     // shouldn't specify valueSize(), because it is statically known
      *     .create();}</pre>
-     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded
-     * (and each character takes 2 bytes on-heap), because default off-heap {@link String} encoding
-     * is UTF-8 in {@code ChronicleMap}.)
+     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded (and each
+     * character takes 2 bytes on-heap), because default off-heap {@link String} encoding is UTF-8 in {@code
+     * ChronicleMap}.)
      *
      * @see #constantKeySizeBySample(Object)
      * @see #valueSize(int)
@@ -224,17 +227,16 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * Configures the optimal number of bytes, taken by serialized form of values, put into maps,
-     * created by this builder. If value size is always the same, call
-     * {@link #constantValueSizeBySample(Object)} method instead of this one.
+     * Configures the optimal number of bytes, taken by serialized form of values, put into maps, created by
+     * this builder. If value size is always the same, call {@link #constantValueSizeBySample(Object)} method
+     * instead of this one.
      *
-     * <p>If value is a boxed primitive type or {@link Byteable} subclass, i. e. if value size
-     * is known statically, it is automatically accounted and shouldn't be specified by user.
+     * <p>If value is a boxed primitive type or {@link Byteable} subclass, i. e. if value size is known
+     * statically, it is automatically accounted and shouldn't be specified by user.
      *
-     * <p>If value size varies moderately, specify the size higher than average, but lower than
-     * the maximum possible, to minimize average memory overuse. If value size varies in a wide
-     * range, it's better to use {@linkplain #entrySize(int) entry size} in "chunk" mode and
-     * configure it directly.
+     * <p>If value size varies moderately, specify the size higher than average, but lower than the maximum
+     * possible, to minimize average memory overuse. If value size varies in a wide range, it's better to use
+     * {@linkplain #entrySize(int) entry size} in "chunk" mode and configure it directly.
      *
      * @param valueSize number of bytes, taken by serialized form of values
      * @return this {@code ChronicleMapBuilder} back
@@ -249,15 +251,15 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * Configures the constant number of bytes, taken by serialized form of values, put into maps,
-     * created by this builder. This is done by providing the {@code sampleValue}, all values should
-     * take the same number of bytes in serialized form, as this sample object.
+     * Configures the constant number of bytes, taken by serialized form of values, put into maps, created by
+     * this builder. This is done by providing the {@code sampleValue}, all values should take the same number
+     * of bytes in serialized form, as this sample object.
      *
-     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size
-     * is known statically, it is automatically accounted and this method shouldn't be called.
+     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is known
+     * statically, it is automatically accounted and this method shouldn't be called.
      *
-     * <p>If value size varies, method {@link #valueSize(int)} or {@link #entrySize(int)} should be
-     * called instead of this one.
+     * <p>If value size varies, method {@link #valueSize(int)} or {@link #entrySize(int)} should be called
+     * instead of this one.
      *
      * @param sampleValue the sample value
      * @return this builder back
@@ -286,18 +288,18 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
      * {@inheritDoc}
      *
      * <p>In fully default case you can expect entry size to be about 256 bytes. But it is strongly
-     * recommended always to configure {@linkplain #keySize(int) key size} and
-     * {@linkplain #valueSize(int) value size}, if they couldn't be derived statically.
+     * recommended always to configure {@linkplain #keySize(int) key size} and {@linkplain #valueSize(int)
+     * value size}, if they couldn't be derived statically.
      *
-     * <p>If entry size is not configured explicitly by calling this method, it is computed
-     * based on {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key
-     * size}, plus {@linkplain #valueSize(int) value size}, plus a few bytes required by
-     * implementations, with respect to {@linkplain #entryAndValueAlignment(Alignment) alignment}.
+     * <p>If entry size is not configured explicitly by calling this method, it is computed based on
+     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size}, plus
+     * {@linkplain #valueSize(int) value size}, plus a few bytes required by implementations, with respect to
+     * {@linkplain #entryAndValueAlignment(Alignment) alignment}.
      *
      * <p>Note that the actual entrySize will be aligned to 4 (default {@linkplain
-     * #entryAndValueAlignment(Alignment) entry alignment}). I. e. if you set entry size to 30,
-     * the actual entry size will be 32 (30 aligned to 4 bytes). If you don't want entry size
-     * to be aligned, set {@code entryAndValueAlignment(Alignment.NO_ALIGNMENT)}.
+     * #entryAndValueAlignment(Alignment) entry alignment}). I. e. if you set entry size to 30, the actual
+     * entry size will be 32 (30 aligned to 4 bytes). If you don't want entry size to be aligned, set {@code
+     * entryAndValueAlignment(Alignment.NO_ALIGNMENT)}.
      *
      * @see #entryAndValueAlignment(Alignment)
      * @see #entries(long)
@@ -317,7 +319,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         int keySize = keySize();
         size += keyBuilder.sizeMarshaller().sizeEncodingSize(keySize);
         size += keySize;
-        if (replicatedImpl())
+        if (useReplication())
             size += ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
         int valueSize = valueSize();
         size += valueBuilder.sizeMarshaller().sizeEncodingSize(valueSize);
@@ -339,16 +341,16 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * Configures alignment strategy of address in memory of entries and independently of address
-     * in memory of values within entries in ChronicleMaps, created by this builder.
+     * Configures alignment strategy of address in memory of entries and independently of address in memory of
+     * values within entries in ChronicleMaps, created by this builder.
      *
-     * <p>Useful when values of the map are updated intensively, particularly fields with
-     * volatile access, because it doesn't work well if the value crosses cache lines. Also, on some
-     * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
+     * <p>Useful when values of the map are updated intensively, particularly fields with volatile access,
+     * because it doesn't work well if the value crosses cache lines. Also, on some (nowadays rare)
+     * architectures any misaligned memory access is more expensive than aligned.
      *
-     * <p>Note that {@linkplain #entrySize(int) entry size} will be aligned according to this
-     * alignment. I. e. if you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual
-     * entry size will be 24 (20 aligned to 8 bytes).
+     * <p>Note that {@linkplain #entrySize(int) entry size} will be aligned according to this alignment. I. e.
+     * if you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual entry size will be 24 (20
+     * aligned to 8 bytes).
      *
      * <p>Default is {@link Alignment#OF_4_BYTES}.
      *
@@ -406,7 +408,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return (int) Maths.nextPower2(Math.max((entries >> 30) + 1, minSegments()), 1);
     }
 
-    @Override
     public ChronicleMapBuilder<K, V> lockTimeOut(long lockTimeOut, TimeUnit unit) {
         this.lockTimeOut = lockTimeOut;
         lockTimeOutUnit = unit;
@@ -428,20 +429,20 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * Configures if the maps created by this builder should return {@code null} instead of previous
-     * mapped values on {@link ChronicleMap#put(Object, Object) ChornicleMap.put(key, value)} calls.
+     * Configures if the maps created by this builder should return {@code null} instead of previous mapped
+     * values on {@link ChronicleMap#put(Object, Object) ChornicleMap.put(key, value)} calls.
      *
-     * <p>{@link Map#put(Object, Object) Map.put()} returns the previous value, functionality which
-     * is rarely used but fairly cheap for {@link HashMap}. In the case, for an off heap collection,
-     * it has to create a new object and deserialize the data from off-heap memory. It's expensive
-     * for something you probably don't use.
+     * <p>{@link Map#put(Object, Object) Map.put()} returns the previous value, functionality which is rarely
+     * used but fairly cheap for {@link HashMap}. In the case, for an off heap collection, it has to create a
+     * new object and deserialize the data from off-heap memory. It's expensive for something you probably
+     * don't use.
      *
-     * <p>By default, of cause, {@code ChronicleMap} conforms the general {@code Map} contract
-     * and returns the previous mapped value on {@code put()} calls.
+     * <p>By default, of cause, {@code ChronicleMap} conforms the general {@code Map} contract and returns the
+     * previous mapped value on {@code put()} calls.
      *
      * @param putReturnsNull {@code true} if you want {@link ChronicleMap#put(Object, Object)
-     *                       ChronicleMap.put()} to not return the value that was replaced
-     *                       but instead return {@code null}
+     *                       ChronicleMap.put()} to not return the value that was replaced but instead return
+     *                       {@code null}
      * @return an instance of the map builder back
      * @see #removeReturnsNull(boolean)
      */
@@ -455,17 +456,17 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * Configures if the maps created by this builder should return {@code null} instead of
-     * the last mapped value on {@link ChronicleMap#remove(Object) ChronicleMap.remove(key)} calls.
+     * Configures if the maps created by this builder should return {@code null} instead of the last mapped
+     * value on {@link ChronicleMap#remove(Object) ChronicleMap.remove(key)} calls.
      *
-     * <p>{@link Map#remove(Object) Map.remove()} returns the previous value, functionality which
-     * is rarely used but fairly cheap for {@link HashMap}. In the case, for an off heap collection,
-     * it has to create a new object and deserialize the data from off-heap memory. It's expensive
-     * for something you probably don't use.
+     * <p>{@link Map#remove(Object) Map.remove()} returns the previous value, functionality which is rarely
+     * used but fairly cheap for {@link HashMap}. In the case, for an off heap collection, it has to create a
+     * new object and deserialize the data from off-heap memory. It's expensive for something you probably
+     * don't use.
      *
      * @param removeReturnsNull {@code true} if you want {@link ChronicleMap#remove(Object)
-     *                          ChronicleMap.remove()} to not return the value of the removed entry
-     *                          but instead return {@code null}
+     *                          ChronicleMap.remove()} to not return the value of the removed entry but
+     *                          instead return {@code null}
      * @return an instance of the map builder back
      * @see #putReturnsNull(boolean)
      */
@@ -495,6 +496,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         this.metaDataBytes = metaDataBytes;
         return this;
     }
+
 
     int metaDataBytes() {
         return metaDataBytes;
@@ -549,32 +551,23 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return toString().hashCode();
     }
 
-    @Override
-    public ChronicleMapBuilder<K, V> addReplicator(Replicator replicator) {
-        if (firstReplicator == null) {
-            firstReplicator = replicator;
-            replicators.put(replicator.getClass(), replicator);
-        } else {
-            if (replicator.identifier() != firstReplicator.identifier()) {
-                throw new IllegalArgumentException(
-                        "Identifiers of all replicators of the map should be the same");
-            }
-            if (replicators.containsKey(replicator.getClass())) {
-                throw new IllegalArgumentException("Replicator of " + replicator.getClass() +
-                        " class has already to the map");
-            }
-            replicators.put(replicator.getClass(), replicator);
+    public ChronicleMapBuilder<K, V> replicators(byte identifier, Replicator... replicators) {
+
+        this.identifier = identifier;
+        this.replicators.clear();
+        for (Replicator replicator : replicators) {
+            this.replicators.put(replicator.getClass(), replicator);
         }
+
         return this;
     }
 
-    @Override
-    public ChronicleMapBuilder<K, V> setReplicators(Replicator... replicators) {
-        firstReplicator = null;
+
+    public ChronicleMapBuilder<K, V> channel(ChannelProvider.ChronicleChannel chronicleChannel) {
+        this.identifier = chronicleChannel.identifier();
         this.replicators.clear();
-        for (Replicator replicator : replicators) {
-            addReplicator(replicator);
-        }
+        replicators.put(chronicleChannel.getClass(), chronicleChannel);
+
         return this;
     }
 
@@ -613,13 +606,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
-    /**
-     * For testing
-     */
-    ChronicleMapBuilder<K, V> forceReplicatedImpl() {
-        this.forceReplicatedImpl = true;
-        return this;
-    }
 
     @Override
     public ChronicleMapBuilder<K, V> keyMarshaller(@NotNull BytesMarshaller<K> keyMarshaller) {
@@ -662,19 +648,18 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * Specifies the value to be put for each key queried in {@link ChronicleMap#get get()} and
-     * {@link ChronicleMap#getUsing(Object, Object) getUsing()} methods, if the key is absent
-     * in the map. Then this default value is returned from query method.
+     * Specifies the value to be put for each key queried in {@link ChronicleMap#get get()} and {@link
+     * ChronicleMap#getUsing(Object, Object) getUsing()} methods, if the key is absent in the map. Then this
+     * default value is returned from query method.
      *
-     * <p>Setting default value to {@code null} is interpreted as map shouldn't put any default
-     * value for absent keys. This is by default.
+     * <p>Setting default value to {@code null} is interpreted as map shouldn't put any default value for
+     * absent keys. This is by default.
      *
-     * <p>This configuration overrides any previous
-     * {@link #defaultValueProvider(DefaultValueProvider)} configuration to this
-     * {@code ChronicleMapBuilder}.
+     * <p>This configuration overrides any previous {@link #defaultValueProvider(DefaultValueProvider)}
+     * configuration to this {@code ChronicleMapBuilder}.
      *
-     * @param defaultValue the default value to be put to the map for absent keys during
-     * {@code get()} and {@code getUsing()} calls and returned from these calls
+     * @param defaultValue the default value to be put to the map for absent keys during {@code get()} and
+     *                     {@code getUsing()} calls and returned from these calls
      * @return this builder object back
      */
     public ChronicleMapBuilder<K, V> defaultValue(V defaultValue) {
@@ -684,13 +669,13 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * Specifies the function to obtain a value for the key during {@link ChronicleMap#get get()}
-     * and {@link ChronicleMap#getUsing(Object, Object) getUsing()} calls, if the key is absent
-     * in the map. If the obtained value is non-null, it is put for the key in the map and then
-     * returned from current {@code get()} or {@code getUsing()} call.
+     * Specifies the function to obtain a value for the key during {@link ChronicleMap#get get()} and {@link
+     * ChronicleMap#getUsing(Object, Object) getUsing()} calls, if the key is absent in the map. If the
+     * obtained value is non-null, it is put for the key in the map and then returned from current {@code
+     * get()} or {@code getUsing()} call.
      *
-     * <p>This configuration overrides any previous {@link #defaultValue(Object)} configuration
-     * to this {@code ChronicleMapBuilder}.
+     * <p>This configuration overrides any previous {@link #defaultValue(Object)} configuration to this {@code
+     * ChronicleMapBuilder}.
      *
      * @param defaultValueProvider the strategy to obtain a default value by the absent key
      * @return this builder object back
@@ -778,7 +763,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {
         preMapConstruction();
-        if (!replicatedImpl()) {
+        if (!useReplication()) {
             return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                     V, Object, MetaBytesWriter<V, Object>>(this);
         } else {
@@ -787,8 +772,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         }
     }
 
-    private boolean replicatedImpl() {
-        return firstReplicator != null || forceReplicatedImpl;
+    private boolean useReplication() {
+        return identifier != -1;
     }
 
     private void preMapConstruction() {
@@ -832,6 +817,10 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         // key and value serialization buffers each x64 of expected entry size..
         return (int) Math.min(Math.max(2L, entries() >> 10),
                 VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR);
+    }
+
+    public byte identifier() {
+        return identifier;
     }
 }
 

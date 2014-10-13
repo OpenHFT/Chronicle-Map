@@ -25,13 +25,8 @@ public final class Replicators {
     private Replicators() {
     }
 
-    public static Replicator tcp(final byte identifier,
-                                 final TcpReplicationConfig replicationConfig) {
+    public static Replicator tcp(final TcpReplicationConfig replicationConfig) {
         return new Replicator() {
-            @Override
-            public byte identifier() {
-                return identifier;
-            }
 
             @Override
             protected Closeable applyTo(ChronicleMapBuilder builder,
@@ -43,13 +38,9 @@ public final class Replicators {
         };
     }
 
-    public static Replicator udp(final byte identifier,
-                                 final UdpReplicationConfig replicationConfig) {
+    public static Replicator udp(
+            final UdpReplicationConfig replicationConfig) {
         return new Replicator() {
-            @Override
-            public byte identifier() {
-                return identifier;
-            }
 
             @Override
             protected Closeable applyTo(ChronicleMapBuilder builder,

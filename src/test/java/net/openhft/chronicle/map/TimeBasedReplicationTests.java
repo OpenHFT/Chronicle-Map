@@ -48,9 +48,10 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
 
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10).replicators((byte) 1);
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .forceReplicatedImpl()
+                .replicators((byte) 1)
                 .timeProvider(timeProvider)
                 .create(getPersistenceFile());
 
@@ -78,10 +79,10 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALatePutIfAbsent() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10).replicators((byte) 1);
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .forceReplicatedImpl()
-                .entries(10)
+                .replicators((byte) 1)
                 .timeProvider(timeProvider)
                 .create(getPersistenceFile());
 
@@ -110,10 +111,10 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALateReplace() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10).replicators((byte) 1);
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .forceReplicatedImpl()
-                .entries(10)
+                .replicators((byte) 1)
                 .timeProvider(timeProvider)
                 .create(getPersistenceFile());
 
@@ -145,10 +146,10 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALateReplaceWithValue() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10).replicators((byte) 1);
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .forceReplicatedImpl()
-                .entries(10)
+                .replicators((byte) 1)
                 .timeProvider(timeProvider)
                 .create(getPersistenceFile());
 
@@ -177,9 +178,9 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALateRemoveWithValue() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).replicators((byte) 1);
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-
-                .forceReplicatedImpl()
+                .replicators((byte) 1)
                 .timeProvider(timeProvider)
                 .create(getPersistenceFile());
 
@@ -207,9 +208,9 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALateRemove() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).replicators((byte) 1);
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-
-                .forceReplicatedImpl()
+                .replicators((byte) 1)
                 .timeProvider(timeProvider)
                 .create(getPersistenceFile());
 
@@ -237,10 +238,9 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreWithRemoteRemove() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).replicators((byte) 1);
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-
-                .forceReplicatedImpl()
-                .entries(10)
+                .replicators((byte) 1)
                 .timeProvider(timeProvider)
                 .create(getPersistenceFile());
 
@@ -269,10 +269,9 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
 
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).replicators((byte) 1);
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-
-                .forceReplicatedImpl()
-                .entries(10)
+                .replicators((byte) 1)
                 .timeProvider(timeProvider)
                 .create(getPersistenceFile());
 
@@ -303,7 +302,7 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
-                .forceReplicatedImpl()
+                .replicators((byte) 1)
                 .entries(10)
                 .timeProvider(timeProvider)
                 .create(getPersistenceFile());
@@ -331,9 +330,10 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testPutRemovePut() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10).replicators((byte) 1);
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
-                .forceReplicatedImpl()
                 .entries(10)
                 .timeProvider(timeProvider)
                 .create(getPersistenceFile());

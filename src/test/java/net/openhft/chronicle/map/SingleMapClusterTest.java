@@ -41,9 +41,8 @@ public class SingleMapClusterTest {
 
     private ChronicleMap<Integer, CharSequence> map1b;
 
-    private ReplicatingCluster clusterB;
-    private ReplicatingCluster clusterA;
-
+    private ChannelProvider channelProviderA;
+    private ChannelProvider channelProviderB;
 
     public static File getPersistenceFile() {
         String TMP = System.getProperty("java.io.tmpdir");
@@ -61,12 +60,12 @@ public class SingleMapClusterTest {
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
-            clusterA = new ReplicatingClusterBuilder((byte) 1, 1024)
-                    .tcpReplication(tcpReplicationConfig).create();
+            channelProviderA = new ChannelProviderBuilder()
+                    .replicators((byte) 1, tcpReplicationConfig).create();
             // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .addReplicator(clusterA.channelReplicator((short) 1))
+                    .channel(channelProviderA.createChannel((short) 1))
                     .create(getPersistenceFile());
         }
 
@@ -76,11 +75,12 @@ public class SingleMapClusterTest {
                     .of(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 
-            clusterB = new ReplicatingClusterBuilder((byte) 2, 1024)
-                    .tcpReplication(tcpReplicationConfig).create();
+            channelProviderB = new ChannelProviderBuilder()
+                    .replicators((byte) 2, tcpReplicationConfig).create();
+
             // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .addReplicator(clusterB.channelReplicator((short) 1))
+                    .channel(channelProviderB.createChannel((short) 1))
                     .entries(1000)
                     .create(getPersistenceFile());
         }
@@ -89,7 +89,7 @@ public class SingleMapClusterTest {
     @After
     public void tearDown() throws InterruptedException {
 
-        for (final Closeable closeable : new Closeable[]{clusterA, clusterB}) {
+        for (final Closeable closeable : new Closeable[]{channelProviderA, channelProviderB}) {
             try {
                 closeable.close();
             } catch (IOException e) {

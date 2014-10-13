@@ -18,16 +18,16 @@ package net.openhft.chronicle.map;
 
 
 import net.openhft.chronicle.TimeProvider;
+import net.openhft.chronicle.map.serialization.BytesReader;
+import net.openhft.chronicle.map.serialization.MetaBytesInterop;
+import net.openhft.chronicle.map.serialization.MetaBytesWriter;
+import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.MultiStoreBytes;
 import net.openhft.lang.io.NativeBytes;
-import net.openhft.chronicle.map.serialization.BytesReader;
-import net.openhft.chronicle.map.serialization.MetaBytesInterop;
-import net.openhft.chronicle.map.serialization.MetaBytesWriter;
 import net.openhft.lang.model.Byteable;
-import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,8 +100,13 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             throws IOException {
         super(builder);
         this.timeProvider = builder.timeProvider();
-        Replicator firstReplicator = builder.firstReplicator;
-        this.localIdentifier = firstReplicator != null ? firstReplicator.identifier() : 1;
+
+        this.localIdentifier = builder.identifier();
+
+        if (localIdentifier==-1){
+            throw new IllegalStateException("localIdentifier should not be -1");
+        }
+
     }
 
     private int assignedModIterBitSetSizeInBytes() {
@@ -882,15 +887,15 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Puts entry. If {@code value} implements {@link Byteable} interface and
-         * {@code usingValue} is {@code true}, the value is backed with the bytes of this entry.
+         * Puts entry. If {@code value} implements {@link Byteable} interface and {@code usingValue} is {@code
+         * true}, the value is backed with the bytes of this entry.
          *
          * @param hash2              a hash of the {@code keyBytes}. Caller was searching for the key in the
          *                           {@code searchedHashLookup} using this hash.
          * @param value              the value to put
          * @param usingValue         {@code true} if the value should be backed with the bytes of the entry,
-         *                           if it implements {@link Byteable} interface,
-         *                           {@code false} if it should put itself
+         *                           if it implements {@link Byteable} interface, {@code false} if it should
+         *                           put itself
          * @param identifier         the identifier of the outer CHM node
          * @param timestamp          the timestamp when the entry was put <s>(this could be later if it was a
          *                           remote put)</s> this method is called only from usual put or acquire

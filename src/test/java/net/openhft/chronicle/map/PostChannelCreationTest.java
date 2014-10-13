@@ -17,14 +17,17 @@
 package net.openhft.chronicle.map;
 
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -32,7 +35,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-public class ClusterReplicationTest {
+public class PostChannelCreationTest {
 
     private ChronicleMap<Integer, CharSequence> map1a;
     private ChronicleMap<Integer, CharSequence> map2a;
@@ -40,45 +43,69 @@ public class ClusterReplicationTest {
     private ChronicleMap<Integer, CharSequence> map1b;
     private ChronicleMap<Integer, CharSequence> map2b;
 
-    private ReplicatingCluster clusterB;
-    private ReplicatingCluster clusterA;
+    private ChannelProvider channelProviderA;
+    private ChannelProvider channelProviderB;
+
+    public static File getPersistenceFile() {
+        String TMP = System.getProperty("java.io.tmpdir");
+        File file = new File(TMP + "/test" + System.nanoTime());
+        file.deleteOnExit();
+        return file;
+    }
 
 
     @Before
 
     public void setup() throws IOException {
+
         {
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig
+            final TcpReplicationConfig tcpConfig = TcpReplicationConfig
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
-            clusterA = new ReplicatingClusterBuilder((byte) 1, 1024).tcpReplication(tcpConfig)
-                    .create();
+            channelProviderA = new ChannelProviderBuilder()
+                    .replicators((byte) 1, tcpConfig).create();
 
+            // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .addReplicator(clusterA.channelReplicator((short) 1))
+                    .channel(channelProviderA.createChannel((short) 1))
+                    .create(getPersistenceFile());
+
+            map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .entries(1000)
+                    .channel(channelProviderA.createChannel((short) 2))
                     .create(getPersistenceFile());
         }
+
 
         {
-            TcpReplicationConfig tcpConfig =
-                    TcpReplicationConfig.of(8087).heartBeatInterval(1, SECONDS);
+            final TcpReplicationConfig tcpConfig = TcpReplicationConfig
+                    .of(8087, new InetSocketAddress("localhost", 8086))
+                    .heartBeatInterval(1, SECONDS);
 
-            clusterB = new ReplicatingClusterBuilder((byte) 2, 1024).tcpReplication(tcpConfig)
-                    .create();
+            channelProviderB = new ChannelProviderBuilder()
+                    .replicators((byte) 2, tcpConfig).create();
 
+            // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .addReplicator(clusterB.channelReplicator((short) 1))
+                    .channel(channelProviderB.createChannel((short) 1))
+                    .create(getPersistenceFile());
+
+            map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .entries(1000)
+                    .channel(channelProviderB.createChannel((short) 2))
                     .create(getPersistenceFile());
         }
+
+
     }
 
     @After
     public void tearDown() throws InterruptedException {
 
-        for (final Closeable closeable : new Closeable[]{clusterA, clusterB}) {
+        for (final Closeable closeable : new Closeable[]{channelProviderA, channelProviderB}) {
             try {
                 closeable.close();
             } catch (IOException e) {
@@ -88,19 +115,14 @@ public class ClusterReplicationTest {
     }
 
 
+    /**
+     * sets up a 2 clusters ( notionally one for each host ), and replicates 2 Chronicle Maps between them
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @Test
     public void test() throws IOException, InterruptedException {
-
-        map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .entries(1000)
-                .addReplicator(clusterB.channelReplicator((short) 2))
-                .create(getPersistenceFile());
-
-
-        map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .entries(1000)
-                .addReplicator(clusterA.channelReplicator((short) 2))
-                .create(getPersistenceFile());
 
         map2a.put(1, "EXAMPLE-2");
         map1a.put(1, "EXAMPLE-1");
