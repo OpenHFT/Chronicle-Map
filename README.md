@@ -46,7 +46,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *      [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
-* [Channels and the Channel Replicator](https://github.com/OpenHFT/Chronicle-Map#channels-and-channelreplicator)
+* [Channels and the Channel Provider](https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider)
   
 #### Miscellaneous
 
@@ -512,7 +512,7 @@ A heartbeat will only be send if no data is transmitted, if the maps are constan
 no heartbeat message is sent. If a map does not receive either data of a heartbeat the connection
 is dropped and re-established.
 
-# Channels and ChannelReplicator
+# Channels and ChannelProvider
 
 Chronicle Map TCP Replication lets you distribute a single Chronicle Map, to a number of servers
 across your network. Replication is point to point and the data transfer is bidirectional, so in the
@@ -529,28 +529,28 @@ when using Chronicle Channels its the channels that are given the unique identif
 ``` java
 byte identifier = 2;
 int maxEntrySize = 1024;
-ChannelReplicator replicator = new ChannelReplicatorBuilder(identifier, maxEntrySize)
+ChannelProvider replicator = new ChannelProviderBuilder(identifier, maxEntrySize)
   .create();
 ```
 
 In this example above the channel is given the identifier of 2
 
 In addition to specifying the identifier we also have to set the maximum entry size, this sets
-the size of the memory buffers within the ChannelReplicator.  This has to be set manually, with channels you
-are able to attach additional maps to a ChannelReplicator once its up and running, so the maximum size of each
+the size of the memory buffers within the ChannelProvider.  This has to be set manually, with channels you
+are able to attach additional maps to a ChannelProvider once its up and running, so the maximum size of each
 entry in the map can not be known in advance and we don’t currently support automatic resizing
 of buffers.
 
-Once you have created the ChannelReplicator you should attach your tcp configuration 
+Once you have created the ChannelProvider you should attach your tcp configuration 
 ``` java
 byte identifier = 2;
 int maxEntrySize =1024;
-ChannelReplicator replicator = new ChannelReplicatorBuilder(identifier, 1024)
+ChannelProvider replicator = new ChannelProviderBuilder(identifier, 1024)
   .tcpReplication(tcpConfig)
   .create();;
 ```
 
-Attaching ChannelReplicator replication to the map:
+Attaching ChannelProvider replication to the map:
 
 ``` java
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -572,8 +572,8 @@ If you inadvertently got the chronicle channels around the wrong way, then chron
 to replicate the wrong maps data. The chronicle channels don't have to be in order but they must be
 unique for each map you have.
 
-Once you have created the ChannelReplicator you may wish to hold onto the reference so that you can call close
-once you have finished, this will close everything in the ChannelReplicator 
+Once you have created the ChannelProvider you may wish to hold onto the reference so that you can call close
+once you have finished, this will close everything in the ChannelProvider 
 
 ``` java
 replicator.close();

@@ -21,40 +21,48 @@ import java.io.IOException;
 /**
  * @author Rob Austin.
  */
-public final class ChannelReplicatorBuilder {
+public final class ChannelProviderBuilder {
 
-    final byte identifier;
-    final int maxEntrySize;
+    byte identifier;
+    int maxEntrySize = 1024;
     int maxNumberOfChronicles = 128;
     private UdpReplicationConfig udpReplicationConfig = null;
     private TcpReplicationConfig tcpReplicationConfig = null;
 
-    ChannelReplicatorBuilder(byte identifier, final int maxEntrySize) {
-        this.identifier = identifier;
+
+
+    public int maxEntrySize() {
+        return maxEntrySize;
+    }
+
+    public ChannelProviderBuilder maxEntrySize(int maxEntrySize) {
         this.maxEntrySize = maxEntrySize;
-        if (identifier <= 0) {
-            throw new IllegalArgumentException("Identifier must be positive, identifier=" +
-                    identifier);
+        return this;
+    }
+
+    public ChannelProviderBuilder replicators(byte identifier, Config... configs) {
+        this.identifier = identifier;
+
+
+        for (Config config : configs) {
+
+            if (config instanceof TcpReplicationConfig) {
+                this.tcpReplicationConfig = (TcpReplicationConfig) config;
+            } else if (config instanceof UdpReplicationConfig) {
+                this.udpReplicationConfig = (UdpReplicationConfig) config;
+            } else
+                throw new UnsupportedOperationException();
         }
-    }
-
-    public ChannelReplicatorBuilder udpReplication(UdpReplicationConfig replicationConfig) {
-        this.udpReplicationConfig = replicationConfig;
         return this;
     }
 
-    public ChannelReplicatorBuilder tcpReplication(TcpReplicationConfig replicationConfig) {
-        this.tcpReplicationConfig = replicationConfig;
-        return this;
-    }
-
-    public ChannelReplicatorBuilder maxNumberOfChronicles(int maxNumberOfChronicles) {
+    public ChannelProviderBuilder maxNumberOfChronicles(int maxNumberOfChronicles) {
         this.maxNumberOfChronicles = maxNumberOfChronicles;
         return this;
     }
 
-    public ChannelReplicator create() throws IOException {
-        final ChannelReplicator replicatingCluster = new ChannelReplicator(this);
+    public ChannelProvider create() throws IOException {
+        final ChannelProvider replicatingCluster = new ChannelProvider(this);
         if (tcpReplicationConfig != null) {
             final TcpReplicator tcpReplicator = new TcpReplicator(
                     replicatingCluster.asReplica,
