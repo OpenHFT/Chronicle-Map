@@ -46,7 +46,8 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *      [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
-* [Channels](https://github.com/OpenHFT/Chronicle-Map#channels)
+* [Channels and the Channel Replicator](https://github
+.com/OpenHFT/Chronicle-Map#channels-and-channelreplicator)
   
 #### Miscellaneous
 
