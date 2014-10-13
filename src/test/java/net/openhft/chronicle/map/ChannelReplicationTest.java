@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-public class ClusterReplicationTest {
+public class ChannelReplicationTest {
 
     private ChronicleMap<Integer, CharSequence> map1a;
     private ChronicleMap<Integer, CharSequence> map2a;
@@ -40,8 +40,8 @@ public class ClusterReplicationTest {
     private ChronicleMap<Integer, CharSequence> map1b;
     private ChronicleMap<Integer, CharSequence> map2b;
 
-    private ReplicatingChannel clusterB;
-    private ReplicatingChannel clusterA;
+    private ChannelReplicator channelReplicatorA;
+    private ChannelReplicator channelReplicatorB;
 
 
     @Before
@@ -52,12 +52,13 @@ public class ClusterReplicationTest {
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
-            clusterA = new ReplicatingChannelBuilder((byte) 1, 1024).tcpReplication(tcpConfig)
-                    .create();
+            channelReplicatorA = new ChannelReplicatorBuilder((byte) 1, 1024)
+                .tcpReplication(tcpConfig)
+                .create();
 
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .channel(clusterA.createChannel((short) 1))
+                    .channel(channelReplicatorA.createChannel((short) 1))
                     .create(getPersistenceFile());
         }
 
@@ -65,12 +66,12 @@ public class ClusterReplicationTest {
             TcpReplicationConfig tcpConfig =
                     TcpReplicationConfig.of(8087).heartBeatInterval(1, SECONDS);
 
-            clusterB = new ReplicatingChannelBuilder((byte) 2, 1024).tcpReplication(tcpConfig)
+            channelReplicatorB = new ChannelReplicatorBuilder((byte) 2, 1024).tcpReplication(tcpConfig)
                     .create();
 
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .channel(clusterB.createChannel((short) 1))
+                    .channel(channelReplicatorB.createChannel((short) 1))
                     .create(getPersistenceFile());
         }
     }
@@ -78,7 +79,7 @@ public class ClusterReplicationTest {
     @After
     public void tearDown() throws InterruptedException {
 
-        for (final Closeable closeable : new Closeable[]{clusterA, clusterB}) {
+        for (final Closeable closeable : new Closeable[]{channelReplicatorA, channelReplicatorB}) {
             try {
                 closeable.close();
             } catch (IOException e) {
@@ -93,13 +94,13 @@ public class ClusterReplicationTest {
 
         map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
-                .channel(clusterB.createChannel((short) 2))
+                .channel(channelReplicatorB.createChannel((short) 2))
                 .create(getPersistenceFile());
 
 
         map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
-                .channel(clusterA.createChannel((short) 2))
+                .channel(channelReplicatorA.createChannel((short) 2))
                 .create(getPersistenceFile());
 
         map2a.put(1, "EXAMPLE-2");

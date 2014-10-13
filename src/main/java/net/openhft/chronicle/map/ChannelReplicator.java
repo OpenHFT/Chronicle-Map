@@ -45,8 +45,8 @@ import static net.openhft.chronicle.map.Replica.ModificationNotifier.NOP;
 /**
  * @author Rob Austin.
  */
-public final class ReplicatingChannel implements Closeable {
-    private static final Logger LOG = LoggerFactory.getLogger(ReplicatingChannel.class.getName());
+public final class ChannelReplicator implements Closeable {
+    private static final Logger LOG = LoggerFactory.getLogger(ChannelReplicator.class.getName());
 
     private static final byte BOOTSTRAP_MESSAGE = 'B';
     final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
@@ -152,7 +152,7 @@ public final class ReplicatingChannel implements Closeable {
 
         @Override
         public void close() throws IOException {
-            ReplicatingChannel.this.close();
+            ChannelReplicator.this.close();
         }
     };
     private final int maxEntrySize;
@@ -169,7 +169,7 @@ public final class ReplicatingChannel implements Closeable {
     private final Set<AbstractChannelReplicator> replicators =
             new CopyOnWriteArraySet<AbstractChannelReplicator>();
 
-    ReplicatingChannel(ReplicatingChannelBuilder builder) {
+    ChannelReplicator(ChannelReplicatorBuilder builder) {
         localIdentifier = builder.identifier;
         maxEntrySize = builder.maxEntrySize;
         chronicleChannels = new Replica[builder.maxNumberOfChronicles];

@@ -46,7 +46,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *      [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
-* [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
+* [Channels](https://github.com/OpenHFT/Chronicle-Map#channels)
   
 #### Miscellaneous
 
@@ -512,7 +512,7 @@ A heartbeat will only be send if no data is transmitted, if the maps are constan
 no heartbeat message is sent. If a map does not receive either data of a heartbeat the connection
 is dropped and re-established.
 
-# Cluster
+# Channels
 
 Chronicle Map TCP Replication lets you distribute a single Chronicle Map, to a number of servers
 across your network. Replication is point to point and the data transfer is bidirectional, so in the
@@ -523,34 +523,37 @@ unfortunately with just TCP replication you would have to have two tcp socket co
 not ideal. This is why we created Chronicle Clustering. Clustering lets you replicate numerous
 Chronicle Maps via a single point to point socket connection.
 
-Clustering is similar to TCP replication, where each map has to be given a unique identifier, but
-when using Chronicle Clustering its the cluster that is given the unique identifier not the map.
+Chronicle Channels are similar to TCP replication, where each map has to be given a unique identifier, but
+when using Chronicle Channels its the channels that are given the unique identifier not the map.
 
 ``` java
-ReplicatingClusterBuilder clusterBuilder = new ReplicatingClusterBuilder((byte) 2, 1024);
+byte identifier = 2;
+ChannelReplicator channelReplicatorA = new ChannelReplicatorBuilder(identifier, 1024)
+  .create();
 ```
 
-In this example above the cluster is given the identifier of 2
+In this example above the channel is given the identifier of 2
 
 In addition to specifying the identifier we also have to set the maximum entry size, this sets
-the size of the memory buffers within the cluster.  This has to be set manually, with clusters you
-are able to attach additional maps to a cluster once its up and running, so the maximum size of each
+the size of the memory buffers within the ChannelReplicator.  This has to be set manually, with channels you
+are able to attach additional maps to a ChannelReplicator once its up and running, so the maximum size of each
 entry in the map can not be known in advance and we don’t currently support automatic resizing
 of buffers.
 
-Once you have created the cluster you should attach your tcpConfig
+Once you have created the ChannelReplicator you should attach your tcp configuration 
 ``` java
-TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8087).heartBeatInterval(1, SECONDS);
-clusterBuilder.tcpReplication(tcpConfig);
-ReplicatingCluster cluster = clusterBuilder.create();
+byte identifier = 2;
+ChannelReplicator channelReplicator = new ChannelReplicatorBuilder(identifier, 1024)
+  .tcpReplication(tcpConfig)
+  .create();;
 ```
 
-Attaching cluster replication to the map:
+Attaching ChannelReplicator replication to the map:
 
 ``` java
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
     .entries(1000)
-    .addReplicator(cluster.channelReplicator((short) 1))
+    .channel(channelReplicator.createChannel((short) 1))
     .create(file);
 ```
 
@@ -567,11 +570,11 @@ If you inadvertently got the chronicle channels around the wrong way, then chron
 to replicate the wrong maps data. The chronicle channels don't have to be in order but they must be
 unique for each map you have.
 
-Once you have created the cluster you may wish to hold onto the reference so that you can call close
-once you have finished, this will close everything in the cluster 
+Once you have created the ChannelReplicator you may wish to hold onto the reference so that you can call close
+once you have finished, this will close everything in the ChannelReplicator 
 
 ``` java
-cluster.close();
+channelReplicator.close();
 ```
 
 ####  Known Issues

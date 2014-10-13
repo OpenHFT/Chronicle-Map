@@ -21,7 +21,7 @@ import java.io.IOException;
 /**
  * @author Rob Austin.
  */
-public final class ReplicatingChannelBuilder {
+public final class ChannelReplicatorBuilder {
 
     final byte identifier;
     final int maxEntrySize;
@@ -29,7 +29,7 @@ public final class ReplicatingChannelBuilder {
     private UdpReplicationConfig udpReplicationConfig = null;
     private TcpReplicationConfig tcpReplicationConfig = null;
 
-    ReplicatingChannelBuilder(byte identifier, final int maxEntrySize) {
+    ChannelReplicatorBuilder(byte identifier, final int maxEntrySize) {
         this.identifier = identifier;
         this.maxEntrySize = maxEntrySize;
         if (identifier <= 0) {
@@ -38,23 +38,23 @@ public final class ReplicatingChannelBuilder {
         }
     }
 
-    public ReplicatingChannelBuilder udpReplication(UdpReplicationConfig replicationConfig) {
+    public ChannelReplicatorBuilder udpReplication(UdpReplicationConfig replicationConfig) {
         this.udpReplicationConfig = replicationConfig;
         return this;
     }
 
-    public ReplicatingChannelBuilder tcpReplication(TcpReplicationConfig replicationConfig) {
+    public ChannelReplicatorBuilder tcpReplication(TcpReplicationConfig replicationConfig) {
         this.tcpReplicationConfig = replicationConfig;
         return this;
     }
 
-    public ReplicatingChannelBuilder maxNumberOfChronicles(int maxNumberOfChronicles) {
+    public ChannelReplicatorBuilder maxNumberOfChronicles(int maxNumberOfChronicles) {
         this.maxNumberOfChronicles = maxNumberOfChronicles;
         return this;
     }
 
-    public ReplicatingChannel create() throws IOException {
-        final ReplicatingChannel replicatingCluster = new ReplicatingChannel(this);
+    public ChannelReplicator create() throws IOException {
+        final ChannelReplicator replicatingCluster = new ChannelReplicator(this);
         if (tcpReplicationConfig != null) {
             final TcpReplicator tcpReplicator = new TcpReplicator(
                     replicatingCluster.asReplica,
