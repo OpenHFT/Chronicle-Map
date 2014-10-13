@@ -528,7 +528,7 @@ when using Chronicle Channels its the channels that are given the unique identif
 
 ``` java
 byte identifier = 2;
-int maxEntrySize =1024;
+int maxEntrySize = 1024;
 ChannelReplicator replicator = new ChannelReplicatorBuilder(identifier, maxEntrySize)
   .create();
 ```
