@@ -336,8 +336,15 @@ Its recommended that you call close() once you have finished working with a Chro
 ``` java
 map.close()
 ```
+
+You only need to close to clean up resources deterministically.  If your program is exiting, 
+you don't need to close the collection, as Chronicle never knows when the program might crash, 
+so we have designed it so you don't have to close() it.
+
 WARNING : If you call close too early before you have finished working with the map, this can cause
 your JVM to crash. Close MUST BE the last thing that you do with the map.
+
+
 
 # TCP / UDP Replication
 Chronicle Hash Map supports both TCP and UDP replication
@@ -829,6 +836,37 @@ directory is an HDD and its performance is around 125 IOPS (I/Os per second). Ea
 memory accesses so you might get around 65 lookups per second. For 100-200K operations you can
 expect around 1600 seconds or 25-50 minutes. If you use an SSD, it can get around 230 K IOPS, or
 about 115 K Chronicle Map lookups per second.
+
+
+### Lock contention
+
+If you see the following warning :
+
+``` java 
+
+WARNING:net.openhft.lang.io.AbstractBytes tryLockNanosLong0
+WARNING: Thread-2, to obtain a lock took 0.129 seconds
+``` 
+ 
+It's likely you have lock contention, this can be due to : 
+
+- a low number of segments and
+- the machine was heavily over utilised, possibly with the working data set larger than main memory.
+- you have a large number of threads, greater than the number of cores you have, doing nothing but hit one map.
+
+It’s not possible to fully disable locking,  locking is done a a segment basis.
+So, If you set a large number of actual segments, this will reduce your lock contention. 
+
+See the example below to see how to set the number of segments :
+
+        ChronicleMap<Long, String> map = ChronicleMapBuilder.of(Long.class, String.class)
+                .entries(100)
+                .actualSegments(100)    // set your number of segments here
+                .create();
+
+ 
+Reducing lock contention will make this warning message go away, but this message maybe more of a symptom 
+of a general problem with what the system is doing, so you may experience a delay anyway.
 
 ### Better to use small keys
 
