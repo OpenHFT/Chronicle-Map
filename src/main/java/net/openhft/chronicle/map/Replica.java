@@ -55,14 +55,11 @@ public interface Replica extends Closeable {
                                                      ModificationNotifier modificationNotifier);
 
     /**
-     * Returns the timestamp of the last change from the specified remote node, already replicated
-     * to this Replica.
-     * <p/>
-     * <p>Used in conjunction with replication, to back fill data from a remote node. This node
+     * Returns the timestamp of the last change from the specified remote node, already replicated to this
+     * Replica. <p/> <p>Used in conjunction with replication, to back fill data from a remote node. This node
      * may have missed updates while it was not been running or connected via TCP.
      *
-     * @param remoteIdentifier the identifier of the remote node to check last replicated update
-     *                         time from
+     * @param remoteIdentifier the identifier of the remote node to check last replicated update time from
      * @return a timestamp of the last modification to an entry, or 0 if there are no entries.
      * @see #identifier()
      */
@@ -102,7 +99,7 @@ public interface Replica extends Closeable {
          * A non-blocking call that provides the entry that has changed to {@code callback.onEntry()}.
          *
          * @param callback    a callback which will be called when a new entry becomes available.
-         * @param chronicleId only assigned when clustering
+         * @param chronicleId only assigned when using chronicle channels
          * @return {@code true} if the entry was accepted by the {@code callback.onEntry()} method, {@code
          * false} if the entry was not accepted or was not available
          */
@@ -111,10 +108,8 @@ public interface Replica extends Closeable {
         /**
          * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer. It means all
          * these entries will be considered as "new" by this ModificationIterator and iterated once again no
-         * matter if they have already been.
-         * <p/>
-         * <p>This functionality is used to publish recently modified entries to a new remote node as it
-         * connects.
+         * matter if they have already been. <p/> <p>This functionality is used to publish recently modified
+         * entries to a new remote node as it connects.
          *
          * @param fromTimeStamp the timestamp from which all entries should be dirty
          */
@@ -133,7 +128,7 @@ public interface Replica extends Closeable {
          * @param entry       the byte location of the entry to be stored
          * @param destination a buffer the entry will be written to, the segment may reject this operation and
          *                    add zeroBytes, if the identifier in the entry did not match the maps local
-         * @param chronicleId used in cluster into identify the canonical map or queue
+         * @param chronicleId is the channel id used to identify the canonical map or queue
          */
         void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination, int chronicleId);
 
@@ -180,20 +175,20 @@ public interface Replica extends Closeable {
     }
 
     /**
-     * Implemented typically by a replicator, This interface provides the event, which will get
-     * called whenever a put() or remove() has occurred to the map
+     * Implemented typically by a replicator, This interface provides the event, which will get called
+     * whenever a put() or remove() has occurred to the map
      */
     abstract class EntryCallback {
 
         /**
          * Called whenever a put() or remove() has occurred to a replicating map.
          *
-         * @param entry       the entry you will receive, this does not have to be locked,
-         *                    as locking is already provided from the caller.
+         * @param entry       the entry you will receive, this does not have to be locked, as locking is
+         *                    already provided from the caller.
          * @param chronicleId only assigned when clustering
-         * @return {@code false} if this entry should be ignored because the identifier
-         * of the source node is not from one of our changes, WARNING even though we check
-         * the identifier in the ModificationIterator the entry may have been updated.
+         * @return {@code false} if this entry should be ignored because the identifier of the source node is
+         * not from one of our changes, WARNING even though we check the identifier in the
+         * ModificationIterator the entry may have been updated.
          */
         public abstract boolean onEntry(final Bytes entry, final int chronicleId);
 

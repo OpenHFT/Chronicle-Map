@@ -21,7 +21,7 @@ import java.io.IOException;
 /**
  * @author Rob Austin.
  */
-public final class ReplicatingClusterBuilder {
+public final class ReplicatingChannelBuilder {
 
     final byte identifier;
     final int maxEntrySize;
@@ -29,7 +29,7 @@ public final class ReplicatingClusterBuilder {
     private UdpReplicationConfig udpReplicationConfig = null;
     private TcpReplicationConfig tcpReplicationConfig = null;
 
-    ReplicatingClusterBuilder(byte identifier, final int maxEntrySize) {
+    ReplicatingChannelBuilder(byte identifier, final int maxEntrySize) {
         this.identifier = identifier;
         this.maxEntrySize = maxEntrySize;
         if (identifier <= 0) {
@@ -38,23 +38,23 @@ public final class ReplicatingClusterBuilder {
         }
     }
 
-    public ReplicatingClusterBuilder udpReplication(UdpReplicationConfig replicationConfig) {
+    public ReplicatingChannelBuilder udpReplication(UdpReplicationConfig replicationConfig) {
         this.udpReplicationConfig = replicationConfig;
         return this;
     }
 
-    public ReplicatingClusterBuilder tcpReplication(TcpReplicationConfig replicationConfig) {
+    public ReplicatingChannelBuilder tcpReplication(TcpReplicationConfig replicationConfig) {
         this.tcpReplicationConfig = replicationConfig;
         return this;
     }
 
-    public ReplicatingClusterBuilder maxNumberOfChronicles(int maxNumberOfChronicles) {
+    public ReplicatingChannelBuilder maxNumberOfChronicles(int maxNumberOfChronicles) {
         this.maxNumberOfChronicles = maxNumberOfChronicles;
         return this;
     }
 
-    public ReplicatingCluster create() throws IOException {
-        final ReplicatingCluster replicatingCluster = new ReplicatingCluster(this);
+    public ReplicatingChannel create() throws IOException {
+        final ReplicatingChannel replicatingCluster = new ReplicatingChannel(this);
         if (tcpReplicationConfig != null) {
             final TcpReplicator tcpReplicator = new TcpReplicator(
                     replicatingCluster.asReplica,

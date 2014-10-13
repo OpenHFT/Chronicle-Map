@@ -562,7 +562,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
 
-    public ChronicleMapBuilder<K, V> channel(ReplicatingCluster.ChronicleChannel replicator) {
+    public ChronicleMapBuilder<K, V> channel(ReplicatingChannel.ChronicleChannel replicator) {
         this.identifier = replicator.identifier();
         this.replicators.clear();
         replicators.put(replicator.getClass(), replicator);

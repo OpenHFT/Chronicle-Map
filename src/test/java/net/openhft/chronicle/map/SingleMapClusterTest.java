@@ -41,8 +41,8 @@ public class SingleMapClusterTest {
 
     private ChronicleMap<Integer, CharSequence> map1b;
 
-    private ReplicatingCluster clusterB;
-    private ReplicatingCluster clusterA;
+    private ReplicatingChannel clusterB;
+    private ReplicatingChannel clusterA;
 
 
     public static File getPersistenceFile() {
@@ -61,7 +61,7 @@ public class SingleMapClusterTest {
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
-            clusterA = new ReplicatingClusterBuilder((byte) 1, 1024)
+            clusterA = new ReplicatingChannelBuilder((byte) 1, 1024)
                     .tcpReplication(tcpReplicationConfig).create();
             // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -76,7 +76,7 @@ public class SingleMapClusterTest {
                     .of(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 
-            clusterB = new ReplicatingClusterBuilder((byte) 2, 1024)
+            clusterB = new ReplicatingChannelBuilder((byte) 2, 1024)
                     .tcpReplication(tcpReplicationConfig).create();
             // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
