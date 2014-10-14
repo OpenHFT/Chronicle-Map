@@ -9,7 +9,7 @@ requirements. - [Contact Us](sales@higherfrequencytrading.com)*
 Replicate your Key Value Store across your network, with consistency, durability and performance.
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
 
-![](https://www.youtube.com/watch?v=pFVv8r8ZTZ8)
+[![ScreenShot](https://raw.github.com/GabLeRoux/WebMole/master/ressources/WebMole_Youtube_Video.png)](https://www.youtube.com/watch?v=pFVv8r8ZTZ8)
 
 #### Maven Artifact Download
 ```xml
