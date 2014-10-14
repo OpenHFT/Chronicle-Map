@@ -620,7 +620,7 @@ will run out of space between 1 and 2 million entries.
 
 You should set the .entries(..) and .entrySize(..) to those you require.
 
-##### Don't forget to se the EntrySize
+##### Don't forget to set the EntrySize
 
 If you put() and entry that is much larger than the max entry size set via entrySize(), 
 the code will error. To see how to set the entry size the example below sets the entry size to 10, 
