@@ -345,6 +345,9 @@ your JVM to crash. Close MUST BE the last thing that you do with the map.
 
 
 # TCP / UDP Replication
+
+![TCP/IP Replication](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-TCP-Replication_simple_02.jpg)
+
 Chronicle Hash Map supports both TCP and UDP replication
 
 ### TCP / UDP Background.
