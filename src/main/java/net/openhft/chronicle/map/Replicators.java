@@ -20,12 +20,12 @@ package net.openhft.chronicle.map;
 import java.io.Closeable;
 import java.io.IOException;
 
-public final class Replicators {
+final class Replicators {
 
     private Replicators() {
     }
 
-    public static Replicator tcp(final TcpReplicationReplicatorConfig replicationConfig) {
+    static Replicator tcp(final TcpReplicationReplicatorConfig replicationConfig) {
         return new Replicator() {
 
             @Override
@@ -38,7 +38,7 @@ public final class Replicators {
         };
     }
 
-    public static Replicator udp(
+    static Replicator udp(
             final UdpReplicationReplicatorConfig replicationConfig) {
         return new Replicator() {
 
