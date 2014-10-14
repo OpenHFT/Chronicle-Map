@@ -40,7 +40,7 @@ class UdpReplicator extends UdpChannelReplicator implements Replica.Modification
 
     UdpReplicator(@NotNull final Replica replica,
                   @NotNull final Replica.EntryExternalizable entryExternalizable,
-                  @NotNull final UdpReplicationReplicatorConfig replicationConfig,
+                  @NotNull final UdpReplicationConfig replicationConfig,
                   final int serializedEntrySize)
             throws IOException {
 

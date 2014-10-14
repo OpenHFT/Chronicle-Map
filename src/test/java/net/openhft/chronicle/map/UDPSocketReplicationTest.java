@@ -37,7 +37,7 @@ public class UDPSocketReplicationTest {
             final int identifier,
             final int udpPort) throws IOException {
 
-        UdpReplicationReplicatorConfig udpConfig = UdpReplicationReplicatorConfig
+        UdpReplicationConfig udpConfig = UdpReplicationConfig
                 .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
 
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)

@@ -25,7 +25,7 @@ import static net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress;
 import static net.openhft.chronicle.map.DiscoveryNodeBytesMarshallable.ProposedNodes;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
-import static net.openhft.chronicle.map.UdpReplicationReplicatorConfig.simple;
+import static net.openhft.chronicle.map.UdpReplicationConfig.simple;
 
 /**
  * @author Rob Austin.
@@ -35,7 +35,7 @@ import static net.openhft.chronicle.map.UdpReplicationReplicatorConfig.simple;
 public class NodeDiscovery {
 
     private final AddressAndPort ourAddressAndPort;
-    private final UdpReplicationReplicatorConfig udpConfig;
+    private final UdpReplicationConfig udpConfig;
     private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
     private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListenerAtomicReference =
             new AtomicReference<NodeDiscoveryEventListener>();
@@ -200,7 +200,7 @@ public class NodeDiscovery {
         // add our identifier and host:port to the list of known identifiers
         knownNodes.add(ourAddressAndPort, identifier);
 
-        final TcpReplicationReplicatorConfig tcpConfig = TcpReplicationReplicatorConfig
+        final TcpReplicationConfig tcpConfig = TcpReplicationConfig
                 .of(ourAddressAndPort.getPort(), toInetSocketArray(knownHostPorts))
                 .heartBeatInterval(1, SECONDS).nonUniqueIdentifierListener(identifierListener);
 
@@ -339,7 +339,7 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
      * @throws java.io.IOException
      */
     NodeDiscoveryBroadcaster(
-            @NotNull final UdpReplicationReplicatorConfig replicationConfig,
+            @NotNull final UdpReplicationConfig replicationConfig,
             final int serializedEntrySize,
             final BytesMarshallable externalizable)
             throws IOException {

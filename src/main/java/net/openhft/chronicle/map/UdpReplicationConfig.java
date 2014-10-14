@@ -23,16 +23,16 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 
 
-public abstract class UdpReplicationReplicatorConfig implements ReplicatorConfig {
+public abstract class UdpReplicationConfig implements ReplicationConfig {
 
     /**
      * Package-private constructor forbids subclassing from outside of the package
      */
-    UdpReplicationReplicatorConfig() {
+    UdpReplicationConfig() {
         // nothing to do
     }
 
-    public static UdpReplicationReplicatorConfig simple(@NotNull InetAddress address, int port) {
+    public static UdpReplicationConfig simple(@NotNull InetAddress address, int port) {
         if (address.isMulticastAddress())
             throw new IllegalArgumentException();
 
@@ -40,17 +40,17 @@ public abstract class UdpReplicationReplicatorConfig implements ReplicatorConfig
         return create(address, port, null, ThrottlingConfig.noThrottling());
     }
 
-    public static UdpReplicationReplicatorConfig multiCast(@NotNull InetAddress address, int port,
+    public static UdpReplicationConfig multiCast(@NotNull InetAddress address, int port,
                                                  @NotNull NetworkInterface networkInterface) {
         if (!address.isMulticastAddress() || networkInterface == null)
             throw new IllegalArgumentException();
         return create(address, port, networkInterface, ThrottlingConfig.noThrottling());
     }
 
-    static UdpReplicationReplicatorConfig create(InetAddress address, int port,
+    static UdpReplicationConfig create(InetAddress address, int port,
                                        NetworkInterface networkInterface,
                                        ThrottlingConfig throttlingConfig) {
-        return new UdpReplicationReplicatorConfigBean(address, port, networkInterface,
+        return new UdpReplicationConfigBean(address, port, networkInterface,
                 throttlingConfig);
     }
 
@@ -63,7 +63,7 @@ public abstract class UdpReplicationReplicatorConfig implements ReplicatorConfig
 
     public abstract ThrottlingConfig throttlingConfig();
 
-    public UdpReplicationReplicatorConfig throttlingConfig(ThrottlingConfig throttlingConfig) {
+    public UdpReplicationConfig throttlingConfig(ThrottlingConfig throttlingConfig) {
         ThrottlingConfig.checkMillisecondBucketInterval(throttlingConfig, "UDP");
         return create(address(), port(), networkInterface(), throttlingConfig);
     }

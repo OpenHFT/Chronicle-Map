@@ -44,7 +44,7 @@ public class TCPSocketReplicationTest3wayPutReturnsNull {
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        TcpReplicationReplicatorConfig tcpConfig = TcpReplicationReplicatorConfig.of(serverPort, endpoints);
+        TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(serverPort, endpoints);
         return (T) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
 
                 .entries(1000)

@@ -164,7 +164,7 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> replicators(byte identifier, ReplicatorConfig... replicators) {
+    public ChronicleSetBuilder<E> replicators(byte identifier, ReplicationConfig... replicators) {
         chronicleMapBuilder.replicators(identifier, replicators);
         return this;
     }

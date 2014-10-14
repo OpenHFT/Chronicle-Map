@@ -189,7 +189,7 @@ public interface ChronicleHashBuilder<K, C, B extends ChronicleHashBuilder<K, C,
 
     B metaDataBytes(int metaDataBytes);
 
-    B replicators(byte identifier, ReplicatorConfig... replicators);
+    B replicators(byte identifier, ReplicationConfig... replicators);
 
     B timeProvider(TimeProvider timeProvider);
 

@@ -27,7 +27,7 @@ import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
-import static net.openhft.chronicle.map.TcpReplicationReplicatorConfig.of;
+import static net.openhft.chronicle.map.TcpReplicationConfig.of;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -43,7 +43,7 @@ public class TwoMapOnDifferentServers {
     @Before
     public void setup() throws IOException {
 
-        final TcpReplicationReplicatorConfig tcpConfig =
+        final TcpReplicationConfig tcpConfig =
                 of(8076, new InetSocketAddress("localhost", 8077))
                         .heartBeatInterval(1, SECONDS);
 

@@ -679,7 +679,7 @@ Map map2;
     ChronicleMapBuilder<Integer, CharSequence> map1Builder =
             ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(20000L)
-                    .addReplicator(tcp((byte) 1, tcpConfig));
+                    .addReplicator((byte) 1, tcpConfig);
 
 
     map1 = map1Builder.create();

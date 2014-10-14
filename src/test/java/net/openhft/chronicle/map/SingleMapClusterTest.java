@@ -56,7 +56,7 @@ public class SingleMapClusterTest {
     public void setup() throws IOException {
 
         {
-            final TcpReplicationReplicatorConfig tcpReplicationConfig = TcpReplicationReplicatorConfig
+            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
             int maxEntrySize = 1024;
@@ -73,7 +73,7 @@ public class SingleMapClusterTest {
 
 
         {
-            final TcpReplicationReplicatorConfig tcpReplicationConfig = TcpReplicationReplicatorConfig
+            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
                     .of(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 

@@ -68,7 +68,7 @@ public class Builder {
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        TcpReplicationReplicatorConfig tcpConfig = TcpReplicationReplicatorConfig.of(serverPort, endpoints)
+        TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(serverPort, endpoints)
                 .heartBeatInterval(1L, SECONDS);
         return ChronicleMapBuilder.of(kClass, vClass)
                 .entries(20000L)
