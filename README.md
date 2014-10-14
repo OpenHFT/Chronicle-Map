@@ -620,6 +620,50 @@ will run out of space between 1 and 2 million entries.
 
 You should set the .entries(..) and .entrySize(..) to those you require.
 
+##### Don't forget to se the EntrySize
+
+If you put() and entry that is much larger than the max entry size set via   entrySize();, see example below 
+
+```java
+   ChronicleMap<Integer, String> map =
+                 ChronicleMapBuilder.of(Integer.class, String.class)
+                         .entrySize(10).create();
+ 
+```
+
+it could error :
+
+this code will produce a java.lang.IllegalArgumentException
+
+```java
+@Test
+public void test() throws IOException, InterruptedException {
+    ChronicleMap<Integer, String> map =
+            ChronicleMapBuilder.of(Integer.class, String.class)
+                    .entrySize(10).create();
+
+    String value =   new String(new char[2000]);
+    map.put(1, value);
+
+    Assert.assertEquals(value, map.get(1));
+}
+
+```
+
+and this will cause a malloc_error_break
+```java
+@Test
+public void test() throws IOException, InterruptedException {
+    ChronicleMap<Integer, String> map =
+            ChronicleMapBuilder.of(Integer.class, String.class)
+                    .entrySize(10).create();
+
+    String value =   new String(new char[20000000]);
+    map.put(1, value);
+
+    Assert.assertEquals(value, map.get(1));
+}
+```
 
 # Example : Simple Hello World
 
@@ -633,6 +677,9 @@ map.put(1, "hello world");
 System.out.println(map.get(1));
 
 ``` 
+
+
+
 
 # Example : Sharing the map on two ( or more ) processes on the same machine
 
