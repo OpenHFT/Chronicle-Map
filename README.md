@@ -9,7 +9,6 @@ requirements. - [Contact Us](sales@higherfrequencytrading.com)*
 Replicate your Key Value Store across your network, with consistency, durability and performance.
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
 
-[![ScreenShot](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-14-at-17.49.36.png)](https://www.youtube.com/watch?v=pFVv8r8ZTZ8)
 
 #### Maven Artifact Download
 ```xml
@@ -118,6 +117,9 @@ product suite. In addition, The original Chronicle has been renamed to Chronicle
 
 
 ## Getting Started
+
+#### Tutorial 1 - Creating an instance of Chronicle Map
+[![ScreenShot](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-14-at-17.49.36.png)](https://www.youtube.com/watch?v=pFVv8r8ZTZ8)
 
 ### Simple Construction
 
