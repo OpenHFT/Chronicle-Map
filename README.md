@@ -622,7 +622,9 @@ You should set the .entries(..) and .entrySize(..) to those you require.
 
 ##### Don't forget to se the EntrySize
 
-If you put() and entry that is much larger than the max entry size set via   entrySize();, see example below 
+If you put() and entry that is much larger than the max entry size set via entrySize(), the code will error, 
+see below the example, to set the entry size to 10, you should pick a number that is the size in bytes of 
+your entries : 
 
 ```java
 ChronicleMap<Integer, String> map =
@@ -631,9 +633,7 @@ ChronicleMap<Integer, String> map =
  
 ```
 
-it could error :
-
-this code will produce a java.lang.IllegalArgumentException
+This example will throw an java.lang.IllegalArgumentException because the entrySize is too small.
 
 ```java
 @Test
@@ -650,7 +650,9 @@ public void test() throws IOException, InterruptedException {
 
 ```
 
-and this will cause a malloc_error_break
+If the entry size is dramatically too small ( like in the example below ), 
+you will get a *malloc_error_break* :
+
 ```java
 @Test
 public void test() throws IOException, InterruptedException {
