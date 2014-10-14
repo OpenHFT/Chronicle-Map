@@ -169,6 +169,12 @@ public class ChronicleSetBuilder<E>
         return this;
     }
 
+    @Override
+    public ChronicleSetBuilder<E> channel(ChannelProvider.ChronicleChannel chronicleChannel) {
+        chronicleMapBuilder.channel(chronicleChannel);
+        return this;
+    }
+
 
     @Override
     public String toString() {
