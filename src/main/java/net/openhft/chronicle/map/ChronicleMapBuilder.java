@@ -20,6 +20,7 @@ import net.openhft.chronicle.ChronicleHashBuilder;
 import net.openhft.chronicle.ChronicleHashErrorListener;
 import net.openhft.chronicle.ChronicleHashErrorListeners;
 import net.openhft.chronicle.TimeProvider;
+import net.openhft.chronicle.map.serialization.AgileBytesMarshaller;
 import net.openhft.chronicle.map.serialization.MetaBytesInterop;
 import net.openhft.chronicle.map.serialization.MetaBytesWriter;
 import net.openhft.chronicle.map.serialization.MetaProvider;
@@ -621,6 +622,13 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     public ChronicleMapBuilder<K, V> valueMarshallerAndFactory(
             @NotNull BytesMarshaller<V> valueMarshaller, @NotNull ObjectFactory<V> valueFactory) {
         valueBuilder.marshaller(valueMarshaller, valueFactory);
+        return this;
+    }
+
+    public ChronicleMapBuilder<K, V> valueMarshallerAndFactory(
+            @NotNull AgileBytesMarshaller<V> valueMarshaller,
+            @NotNull ObjectFactory<V> valueFactory) {
+        valueBuilder.agileMarshaller(valueMarshaller, valueFactory);
         return this;
     }
 
