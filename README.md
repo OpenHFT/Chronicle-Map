@@ -625,9 +625,9 @@ You should set the .entries(..) and .entrySize(..) to those you require.
 If you put() and entry that is much larger than the max entry size set via   entrySize();, see example below 
 
 ```java
-   ChronicleMap<Integer, String> map =
-                 ChronicleMapBuilder.of(Integer.class, String.class)
-                         .entrySize(10).create();
+ChronicleMap<Integer, String> map =
+             ChronicleMapBuilder.of(Integer.class, String.class)
+                     .entrySize(10).create();
  
 ```
 
@@ -677,9 +677,6 @@ map.put(1, "hello world");
 System.out.println(map.get(1));
 
 ``` 
-
-
-
 
 # Example : Sharing the map on two ( or more ) processes on the same machine
 
