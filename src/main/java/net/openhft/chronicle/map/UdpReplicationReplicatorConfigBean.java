@@ -4,13 +4,13 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 
 
-final class UdpReplicationConfigBean extends UdpReplicationConfig {
+final class UdpReplicationReplicatorConfigBean extends UdpReplicationReplicatorConfig {
     private final InetAddress address;
     private final int port;
     private final NetworkInterface networkInterface;
     private final ThrottlingConfig throttlingConfig;
 
-    UdpReplicationConfigBean(
+    UdpReplicationReplicatorConfigBean(
             InetAddress address,
             int port,
             NetworkInterface networkInterface,
@@ -63,8 +63,8 @@ final class UdpReplicationConfigBean extends UdpReplicationConfig {
         if (o == this) {
             return true;
         }
-        if (o instanceof UdpReplicationConfig) {
-            UdpReplicationConfig that = (UdpReplicationConfig) o;
+        if (o instanceof UdpReplicationReplicatorConfig) {
+            UdpReplicationReplicatorConfig that = (UdpReplicationReplicatorConfig) o;
             return (this.address.equals(that.address()))
                     && (this.port == that.port())
                     && (this.networkInterface.equals(that.networkInterface()))

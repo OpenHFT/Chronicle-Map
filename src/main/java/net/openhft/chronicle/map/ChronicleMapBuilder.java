@@ -551,11 +551,21 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return toString().hashCode();
     }
 
-    public ChronicleMapBuilder<K, V> replicators(byte identifier, Replicator... replicators) {
+    public ChronicleMapBuilder<K, V> replicators(byte identifier, ReplicatorConfig... replicatorConfigs) {
 
         this.identifier = identifier;
         this.replicators.clear();
-        for (Replicator replicator : replicators) {
+        for (ReplicatorConfig replicatorConfig : replicatorConfigs) {
+
+            Replicator replicator;
+            if (replicatorConfig instanceof TcpReplicationReplicatorConfig) {
+                replicator = Replicators.tcp((TcpReplicationReplicatorConfig) replicatorConfig);
+            } else if (replicatorConfig instanceof UdpReplicationReplicatorConfig) {
+                replicator = Replicators.udp((UdpReplicationReplicatorConfig) replicatorConfig);
+            } else
+                throw new UnsupportedOperationException();
+
+
             this.replicators.put(replicator.getClass(), replicator);
         }
 

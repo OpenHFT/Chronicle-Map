@@ -66,7 +66,7 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
      * @param localIdentifier   just used for logging
      * @throws IOException
      */
-    UdpChannelReplicator(@NotNull final UdpReplicationConfig replicationConfig,
+    UdpChannelReplicator(@NotNull final UdpReplicationReplicatorConfig replicationConfig,
                          final int maxPayloadSize, final byte localIdentifier)
             throws IOException {
 

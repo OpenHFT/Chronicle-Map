@@ -29,7 +29,7 @@ import static java.util.Collections.unmodifiableSet;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 
-public class TcpReplicationConfig implements Config {
+public class TcpReplicationReplicatorConfig implements ReplicatorConfig {
 
     private static final int DEFAULT_PACKET_SIZE = 1024 * 8;
     private static final long DEFAULT_HEART_BEAT_INTERVAL = 20;
@@ -45,7 +45,7 @@ public class TcpReplicationConfig implements Config {
     private TimeUnit heartBeatIntervalUnit = DEFAULT_HEART_BEAT_INTERVAL_UNIT;
     public IdentifierListener identifierListener;
 
-    TcpReplicationConfig() {
+    TcpReplicationReplicatorConfig() {
 
     }
 
@@ -53,7 +53,7 @@ public class TcpReplicationConfig implements Config {
         return identifierListener;
     }
 
-    public TcpReplicationConfig nonUniqueIdentifierListener(@NotNull final IdentifierListener
+    public TcpReplicationReplicatorConfig nonUniqueIdentifierListener(@NotNull final IdentifierListener
                                                                     identifierListener) {
         this.identifierListener = identifierListener;
         return this;
@@ -63,7 +63,7 @@ public class TcpReplicationConfig implements Config {
         return autoReconnectedUponDroppedConnection;
     }
 
-    public TcpReplicationConfig autoReconnectedUponDroppedConnection(boolean autoReconnectedUponDroppedConnection) {
+    public TcpReplicationReplicatorConfig autoReconnectedUponDroppedConnection(boolean autoReconnectedUponDroppedConnection) {
         this.autoReconnectedUponDroppedConnection = autoReconnectedUponDroppedConnection;
         return this;
     }
@@ -72,7 +72,7 @@ public class TcpReplicationConfig implements Config {
         return throttlingConfig;
     }
 
-    public TcpReplicationConfig throttlingConfig(ThrottlingConfig throttlingConfig) {
+    public TcpReplicationReplicatorConfig throttlingConfig(ThrottlingConfig throttlingConfig) {
         this.throttlingConfig = throttlingConfig;
         return this;
     }
@@ -90,7 +90,7 @@ public class TcpReplicationConfig implements Config {
         return serverPort;
     }
 
-    public TcpReplicationConfig serverPort(int serverPort) {
+    public TcpReplicationReplicatorConfig serverPort(int serverPort) {
         this.serverPort = serverPort;
         return this;
     }
@@ -99,7 +99,7 @@ public class TcpReplicationConfig implements Config {
         return endpoints;
     }
 
-    public TcpReplicationConfig endpoints(Set<InetSocketAddress> endpoints) {
+    public TcpReplicationReplicatorConfig endpoints(Set<InetSocketAddress> endpoints) {
 
         for (final InetSocketAddress endpoint : endpoints) {
             if (endpoint.getPort() == serverPort && "localhost".equals(endpoint.getHostName()))
@@ -115,11 +115,11 @@ public class TcpReplicationConfig implements Config {
         return packetSize;
     }
 
-    public static TcpReplicationConfig of(int serverPort, InetSocketAddress... endpoints) {
+    public static TcpReplicationReplicatorConfig of(int serverPort, InetSocketAddress... endpoints) {
         return of(serverPort, Arrays.asList(endpoints));
     }
 
-    public static TcpReplicationConfig of(int serverPort, Collection<InetSocketAddress> endpoints) {
+    public static TcpReplicationReplicatorConfig of(int serverPort, Collection<InetSocketAddress> endpoints) {
         // at least in tests, we configure "receive-only" replication without endpoints.
         // TODO decide what to do with this case
 //        if (endpoints.isEmpty())
@@ -130,7 +130,7 @@ public class TcpReplicationConfig implements Config {
                         + " can not point to the same port as the server");
         }
 
-        TcpReplicationConfig tcpReplicationConfig = new TcpReplicationConfig();
+        TcpReplicationReplicatorConfig tcpReplicationConfig = new TcpReplicationReplicatorConfig();
 
         tcpReplicationConfig.serverPort(serverPort);
         tcpReplicationConfig.endpoints = unmodifiableSet(new HashSet<InetSocketAddress>(endpoints));
@@ -141,14 +141,14 @@ public class TcpReplicationConfig implements Config {
     }
 
 
-    public TcpReplicationConfig packetSize(int packetSize) {
+    public TcpReplicationReplicatorConfig packetSize(int packetSize) {
         if (packetSize <= 0)
             throw new IllegalArgumentException();
         this.packetSize = packetSize;
         return this;
     }
 
-    public TcpReplicationConfig throttlingConfig(long heartBeatInterval, TimeUnit heartBeatIntervalUnit) {
+    public TcpReplicationReplicatorConfig throttlingConfig(long heartBeatInterval, TimeUnit heartBeatIntervalUnit) {
         this.heartBeatInterval = heartBeatInterval;
         this.heartBeatIntervalUnit = heartBeatIntervalUnit;
         return this;
@@ -160,7 +160,7 @@ public class TcpReplicationConfig implements Config {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        TcpReplicationConfig that = (TcpReplicationConfig) o;
+        TcpReplicationReplicatorConfig that = (TcpReplicationReplicatorConfig) o;
 
         if (autoReconnectedUponDroppedConnection != that.autoReconnectedUponDroppedConnection) return false;
         if (heartBeatInterval != that.heartBeatInterval) return false;
@@ -199,7 +199,7 @@ public class TcpReplicationConfig implements Config {
                 '}';
     }
 
-    public TcpReplicationConfig heartBeatInterval(long time, TimeUnit unit) {
+    public TcpReplicationReplicatorConfig heartBeatInterval(long time, TimeUnit unit) {
         this.heartBeatInterval = time;
         this.heartBeatIntervalUnit = unit;
         return this;

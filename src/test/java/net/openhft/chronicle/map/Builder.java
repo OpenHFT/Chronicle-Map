@@ -23,7 +23,6 @@ import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.chronicle.map.Replicators.tcp;
 
 /**
  * @author Rob Austin.
@@ -69,11 +68,11 @@ public class Builder {
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(serverPort, endpoints)
+        TcpReplicationReplicatorConfig tcpConfig = TcpReplicationReplicatorConfig.of(serverPort, endpoints)
                 .heartBeatInterval(1L, SECONDS);
         return ChronicleMapBuilder.of(kClass, vClass)
                 .entries(20000L)
-                .replicators(identifier, tcp( tcpConfig));
+                .replicators(identifier,  tcpConfig);
     }
 
 

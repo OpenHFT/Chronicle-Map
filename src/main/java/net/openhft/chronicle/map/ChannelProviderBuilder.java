@@ -26,8 +26,8 @@ public final class ChannelProviderBuilder {
     byte identifier;
     int maxEntrySize = 1024;
     int maxNumberOfChronicles = 128;
-    private UdpReplicationConfig udpReplicationConfig = null;
-    private TcpReplicationConfig tcpReplicationConfig = null;
+    private UdpReplicationReplicatorConfig udpReplicationConfig = null;
+    private TcpReplicationReplicatorConfig tcpReplicationConfig = null;
 
 
 
@@ -40,16 +40,16 @@ public final class ChannelProviderBuilder {
         return this;
     }
 
-    public ChannelProviderBuilder replicators(byte identifier, Config... configs) {
+    public ChannelProviderBuilder replicators(byte identifier, ReplicatorConfig... replicatorConfigs) {
         this.identifier = identifier;
 
 
-        for (Config config : configs) {
+        for (ReplicatorConfig replicatorConfig : replicatorConfigs) {
 
-            if (config instanceof TcpReplicationConfig) {
-                this.tcpReplicationConfig = (TcpReplicationConfig) config;
-            } else if (config instanceof UdpReplicationConfig) {
-                this.udpReplicationConfig = (UdpReplicationConfig) config;
+            if (replicatorConfig instanceof TcpReplicationReplicatorConfig) {
+                this.tcpReplicationConfig = (TcpReplicationReplicatorConfig) replicatorConfig;
+            } else if (replicatorConfig instanceof UdpReplicationReplicatorConfig) {
+                this.udpReplicationConfig = (UdpReplicationReplicatorConfig) replicatorConfig;
             } else
                 throw new UnsupportedOperationException();
         }

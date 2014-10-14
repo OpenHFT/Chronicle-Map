@@ -59,7 +59,7 @@ public class PostChannelCreationTest {
     public void setup() throws IOException {
 
         {
-            final TcpReplicationConfig tcpConfig = TcpReplicationConfig
+            final TcpReplicationReplicatorConfig tcpConfig = TcpReplicationReplicatorConfig
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
@@ -80,7 +80,7 @@ public class PostChannelCreationTest {
 
 
         {
-            final TcpReplicationConfig tcpConfig = TcpReplicationConfig
+            final TcpReplicationReplicatorConfig tcpConfig = TcpReplicationReplicatorConfig
                     .of(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 

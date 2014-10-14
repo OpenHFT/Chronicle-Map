@@ -25,7 +25,7 @@ public final class Replicators {
     private Replicators() {
     }
 
-    public static Replicator tcp(final TcpReplicationConfig replicationConfig) {
+    public static Replicator tcp(final TcpReplicationReplicatorConfig replicationConfig) {
         return new Replicator() {
 
             @Override
@@ -39,7 +39,7 @@ public final class Replicators {
     }
 
     public static Replicator udp(
-            final UdpReplicationConfig replicationConfig) {
+            final UdpReplicationReplicatorConfig replicationConfig) {
         return new Replicator() {
 
             @Override

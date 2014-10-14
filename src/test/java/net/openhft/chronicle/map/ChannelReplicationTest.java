@@ -51,7 +51,7 @@ public class ChannelReplicationTest {
 
     public void setup() throws IOException {
         {
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig
+            TcpReplicationReplicatorConfig tcpConfig = TcpReplicationReplicatorConfig
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
@@ -66,8 +66,8 @@ public class ChannelReplicationTest {
         }
 
         {
-            TcpReplicationConfig tcpConfig =
-                    TcpReplicationConfig.of(8087).heartBeatInterval(1, SECONDS);
+            TcpReplicationReplicatorConfig tcpConfig =
+                    TcpReplicationReplicatorConfig.of(8087).heartBeatInterval(1, SECONDS);
 
             channelProviderB = new ChannelProviderBuilder().replicators((byte) 2, tcpConfig)
                     .create();

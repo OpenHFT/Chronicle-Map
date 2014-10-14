@@ -56,12 +56,14 @@ public class SingleMapClusterTest {
     public void setup() throws IOException {
 
         {
-            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
+            final TcpReplicationReplicatorConfig tcpReplicationConfig = TcpReplicationReplicatorConfig
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
-
+            int maxEntrySize = 1024;
+            byte identifier= 1;
             channelProviderA = new ChannelProviderBuilder()
-                    .replicators((byte) 1, tcpReplicationConfig).create();
+                    .maxEntrySize(maxEntrySize)
+                    .replicators(identifier, tcpReplicationConfig).create();
             // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
@@ -71,7 +73,7 @@ public class SingleMapClusterTest {
 
 
         {
-            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
+            final TcpReplicationReplicatorConfig tcpReplicationConfig = TcpReplicationReplicatorConfig
                     .of(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 

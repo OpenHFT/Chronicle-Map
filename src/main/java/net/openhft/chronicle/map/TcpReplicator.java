@@ -55,7 +55,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     private final byte localIdentifier;
     private final int maxEntrySizeBytes;
     private final Replica.EntryExternalizable externalizable;
-    private final TcpReplicationConfig replicationConfig;
+    private final TcpReplicationReplicatorConfig replicationConfig;
 
     private long selectorTimeout;
 
@@ -68,7 +68,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
      */
     TcpReplicator(@NotNull final Replica replica,
                   @NotNull final Replica.EntryExternalizable externalizable,
-                  @NotNull final TcpReplicationConfig replicationConfig,
+                  @NotNull final TcpReplicationReplicatorConfig replicationConfig,
                   final int maxEntrySizeBytes) throws IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig(),

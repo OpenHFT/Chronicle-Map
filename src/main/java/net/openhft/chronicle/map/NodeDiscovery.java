@@ -25,8 +25,7 @@ import static net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress;
 import static net.openhft.chronicle.map.DiscoveryNodeBytesMarshallable.ProposedNodes;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
-import static net.openhft.chronicle.map.Replicators.tcp;
-import static net.openhft.chronicle.map.UdpReplicationConfig.simple;
+import static net.openhft.chronicle.map.UdpReplicationReplicatorConfig.simple;
 
 /**
  * @author Rob Austin.
@@ -36,7 +35,7 @@ import static net.openhft.chronicle.map.UdpReplicationConfig.simple;
 public class NodeDiscovery {
 
     private final AddressAndPort ourAddressAndPort;
-    private final UdpReplicationConfig udpConfig;
+    private final UdpReplicationReplicatorConfig udpConfig;
     private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
     private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListenerAtomicReference =
             new AtomicReference<NodeDiscoveryEventListener>();
@@ -201,7 +200,7 @@ public class NodeDiscovery {
         // add our identifier and host:port to the list of known identifiers
         knownNodes.add(ourAddressAndPort, identifier);
 
-        final TcpReplicationConfig tcpConfig = TcpReplicationConfig
+        final TcpReplicationReplicatorConfig tcpConfig = TcpReplicationReplicatorConfig
                 .of(ourAddressAndPort.getPort(), toInetSocketArray(knownHostPorts))
                 .heartBeatInterval(1, SECONDS).nonUniqueIdentifierListener(identifierListener);
 
@@ -212,7 +211,7 @@ public class NodeDiscovery {
         return ChronicleMapBuilder.of(Integer.class,
                 CharSequence.class)
                 .entries(20000L)
-                .replicators(identifier, tcp(tcpConfig)).create();
+                .replicators(identifier, tcpConfig).create();
 
     }
 
@@ -340,7 +339,7 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
      * @throws java.io.IOException
      */
     NodeDiscoveryBroadcaster(
-            @NotNull final UdpReplicationConfig replicationConfig,
+            @NotNull final UdpReplicationReplicatorConfig replicationConfig,
             final int serializedEntrySize,
             final BytesMarshallable externalizable)
             throws IOException {
