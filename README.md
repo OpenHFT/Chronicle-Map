@@ -524,10 +524,11 @@ Chronicle Channels are similar to TCP replication, where each map has to be give
 when using Chronicle Channels its the channels that are given the unique identifier not the map.
 
 ``` java
-byte identifier = 2;
 int maxEntrySize = 1024;
-ChannelProvider replicator = new ChannelProviderBuilder(identifier, maxEntrySize)
-  .create();
+byte identifier= 1;
+ChannelProvider channelProvider = new ChannelProviderBuilder()
+                    .maxEntrySize(maxEntrySize)
+                    .replicators(identifier, tcpReplicationConfig).create();
 ```
 
 In this example above the channel is given the identifier of 2
@@ -538,22 +539,22 @@ are able to attach additional maps to a ChannelProvider once its up and running,
 entry in the map can not be known in advance and we don’t currently support automatic resizing
 of buffers.
 
-Once you have created the ChannelProvider you should attach your tcp configuration 
+When creating the ChannelProvider you should attach your tcp or udp configuration 
 ``` java
-byte identifier = 2;
-int maxEntrySize =1024;
-ChannelProvider replicator = new ChannelProviderBuilder(identifier, 1024)
-  .tcpReplication(tcpConfig)
-  .create();;
+int maxEntrySize = 1024;
+byte identifier = 1;
+ChannelProvider channelProvider = new ChannelProviderBuilder()
+                    .maxEntrySize(maxEntrySize)
+                    .replicators(identifier, tcpReplicationConfig).create();
 ```
 
 Attaching ChannelProvider replication to the map:
 
 ``` java
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-    .entries(1000)
-    .channel(replicator.createChannel((short) 1))
-    .create(file);
+  .entries(1000)
+  .channel(channelProviderA.createChannel((short) 1))
+  .create(getPersistenceFile());
 ```
 
 The chronicle channel is use to identify which map is to be replicated to which other map on
