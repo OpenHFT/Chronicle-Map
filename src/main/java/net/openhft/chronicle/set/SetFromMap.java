@@ -17,8 +17,8 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleSet;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.AbstractSet;
@@ -113,6 +113,11 @@ class SetFromMap<E> extends AbstractSet<E>
     @Override
     public long longSize() {
         return m.longSize();
+    }
+
+    @Override
+    public File file() {
+        return m.file();
     }
 
     @Override

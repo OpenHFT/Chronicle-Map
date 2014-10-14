@@ -1,6 +1,7 @@
 package net.openhft.chronicle;
 
 import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,8 +27,8 @@ import java.util.concurrent.TimeUnit;
  * @param <B> the concrete builder type, i. e. {@link ChronicleMapBuilder}
  *            or {@link ChronicleSetBuilder}
  */
-public interface ChronicleHashBuilder<K, C, B extends ChronicleHashBuilder<K, C, B>>
-        extends Cloneable {
+public interface ChronicleHashBuilder<K, C extends ChronicleHash,
+        B extends ChronicleHashBuilder<K, C, B>> extends Cloneable {
 
     B clone();
 
