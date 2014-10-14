@@ -666,53 +666,69 @@ Lets assume that we had two server, lets call them server1 and server2, if we wi
 between them, this is how we could set it up
 
 ``` java 
-Map map1;
-Map map2;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+public class YourClass {
+
+
+    @Test
+    public void test() throws IOException, InterruptedException {
+
+        Map map1;
+        Map map2;
 
 //  ----------  SERVER1 1 ----------
-{
+        {
 
-    // we connect the maps via a TCP socket connection on port 8077
+            // we connect the maps via a TCP socket connection on port 8077
 
-    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
-            .heartBeatInterval(1L, SECONDS);
-    ChronicleMapBuilder<Integer, CharSequence> map1Builder =
-            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(20000L)
-                    .addReplicator((byte) 1, tcpConfig);
+            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
+                    .heartBeatInterval(1L, TimeUnit.SECONDS);
+            ChronicleMapBuilder<Integer, CharSequence> map1Builder =
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(20000L)
+                            .replicators((byte) 1, tcpConfig);
 
 
-    map1 = map1Builder.create();
-}
+            map1 = map1Builder.create();
+        }
 //  ----------  SERVER2 on the same server as ----------
 
-{
-    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
-            .heartBeatInterval(1L, SECONDS);
-    ChronicleMapBuilder<Integer, CharSequence> map2Builder =
-            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(20000L)
-                    .addReplicator(tcp((byte) 2, tcpConfig));
-    map2 = map2Builder.create();
+        {
+            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
+                    .heartBeatInterval(1L, TimeUnit.SECONDS);
+            ChronicleMapBuilder<Integer, CharSequence> map2Builder =
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(20000L)
+                            .replicators((byte) 2, tcpConfig);
+            map2 = map2Builder.create();
 
-    // we will stores some data into one map here
-    map2.put(5, "EXAMPLE");
-}
+            // we will stores some data into one map here
+            map2.put(5, "EXAMPLE");
+        }
 
 //  ----------  CHECK ----------
 
 // we are now going to check that the two maps contain the same data
 
 // allow time for the recompilation to resolve
-int t = 0;
-for (; t < 5000; t++) {
-    if (map1.equals(map2))
-        break;
-    Thread.sleep(1);
-}
+        int t = 0;
+        for (; t < 5000; t++) {
+            if (map1.equals(map2))
+                break;
+            Thread.sleep(1);
+        }
 
-Assert.assertEquals(map1, map2);
-assertTrue(!map1.isEmpty());
+        Assert.assertEquals(map1, map2);
+        Assert.assertTrue(!map1.isEmpty());
+    }
+
 }
 ```
 
@@ -723,71 +739,86 @@ This example is the same as the one above, but it uses a slow throttled TCP/IP c
 
 
 ``` java 
-Map map1;
-Map map2;
+import org.junit.Assert;
+import org.junit.Test;
 
-int udpPort = 1234;
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+public class YourClass {
+
+
+    @Test
+    public void test() throws IOException, InterruptedException {
+
+        Map map1;
+        Map map2;
+
+        int udpPort = 1234;
 
 //  ----------  SERVER1 1 ----------
-{
+        {
 
-    // we connect the maps via a TCP socket connection on port 8077
+            // we connect the maps via a TCP socket connection on port 8077
 
-    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
-            .heartBeatInterval(1L, SECONDS)
+            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
+                    .heartBeatInterval(1L, TimeUnit.SECONDS)
 
-            // a maximum of 1024 bits per millisecond
-            .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
-
-
-    UdpReplicationConfig udpConfig = UdpReplicationConfig
-            .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
-
-    ChronicleMapBuilder<Integer, CharSequence> map1Builder =
-            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(20000L)
-                    .addReplicator(tcp((byte) 1, tcpConfig))
-                    .addReplicator(udp((byte) 1, udpConfig));
+                            // a maximum of 1024 bits per millisecond
+                    .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
 
 
-    map1 = map1Builder.create();
-}
+            UdpReplicationConfig udpConfig = UdpReplicationConfig
+                    .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
+
+            ChronicleMapBuilder<Integer, CharSequence> map1Builder =
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(20000L)
+                            .replicators((byte) 1, tcpConfig, udpConfig);
+
+
+            map1 = map1Builder.create();
+        }
 //  ----------  SERVER2 2 on the same server as ----------
 
-{
-    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
-            .heartBeatInterval(1L, SECONDS)
-            .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
+        {
+            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
+                    .heartBeatInterval(1L, TimeUnit.SECONDS)
+                    .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
 
-    UdpReplicationConfig udpConfig = UdpReplicationConfig
-            .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
+            UdpReplicationConfig udpConfig = UdpReplicationConfig
+                    .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
 
-    ChronicleMapBuilder<Integer, CharSequence> map2Builder =
-            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(20000L)
-                    .addReplicator(tcp((byte) 2, tcpConfig))
-                    .addReplicator(udp((byte) 1, udpConfig));
+            ChronicleMapBuilder<Integer, CharSequence> map2Builder =
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(20000L)
+                            .replicators((byte) 2, tcpConfig, udpConfig);
 
-    map2 = map2Builder.create();
+            map2 = map2Builder.create();
 
-    // we will stores some data into one map here
-    map2.put(5, "EXAMPLE");
-}
+            // we will stores some data into one map here
+            map2.put(5, "EXAMPLE");
+        }
 
 //  ----------  CHECK ----------
 
 // we are now going to check that the two maps contain the same data
 
 // allow time for the recompilation to resolve
-int t = 0;
-for (; t < 5000; t++) {
-    if (map1.equals(map2))
-        break;
-    Thread.sleep(1);
-}
+        int t = 0;
+        for (; t < 5000; t++) {
+            if (map1.equals(map2))
+                break;
+            Thread.sleep(1);
+        }
 
-Assert.assertEquals(map1, map2);
-assertTrue(!map1.isEmpty());
+        Assert.assertEquals(map1, map2);
+        Assert.assertTrue(!map1.isEmpty());
+
+    }
 }
 ```
 
