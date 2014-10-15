@@ -1,6 +1,5 @@
 package net.openhft.chronicle.map;
 
-import junit.framework.TestCase;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
@@ -13,7 +12,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 
-public class SerializerTest extends TestCase {
+public class SerializerTest {
 
     @Test
     public void testValueMarshallable() throws Exception {
@@ -31,8 +30,9 @@ public class SerializerTest extends TestCase {
         testReadWriteValue(new MyTestClassObjectGraph(3));
     }
 
-    @Ignore
+
     @Test
+    @Ignore
     public void testKeyMarshallable() throws Exception {
         testReadWriteKey("Test");
         testReadWriteKey(1);
