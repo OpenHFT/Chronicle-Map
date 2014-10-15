@@ -228,7 +228,8 @@ up to you.  For the best performance on many unix systems we recommend using
 
 If instead, you do not wish to replicate between processes on the same server or if you are only
 using TCP replication to replicate between servers, you do not have to provide the "file",
-so you can call `create()` method on ChronicleMapBuilder without file parameter:
+so you can call the `create()` method on you ChronicleMapBuilder without providing the file 
+parameter:
 ```
 ConcurrentMap<Integer, CharSequence> map = builder.create();
 ```
