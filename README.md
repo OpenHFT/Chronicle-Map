@@ -119,7 +119,7 @@ product suite. In addition, The original Chronicle has been renamed to Chronicle
 ## Getting Started
 
 #### Tutorial 1 - Creating an instance of Chronicle Map
-[![ScreenShot](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-14-at-17.49.36.png)](https://www.youtube.com/watch?v=pFVv8r8ZTZ8)
+[![ScreenShot](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-14-at-17.49.36.png)](http://vimeo.com/10893210)
 
 ### Simple Construction
 
