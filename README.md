@@ -181,7 +181,8 @@ can store off heap, so the objects have to be  :  (one of the following )
 - Strings - for good performance.
 - implements Serializable  
 - implements Externalizable ( with a public default constructor ) 
-- Implements our custom interface BytesMarshallable ( with a public default constructor ) - use this for best performance.
+- implements our custom interface BytesMarshallable ( with a public default constructor ) - use 
+this for best performance.
 
 or value objects that are created through, a directClass interface, for example : 
 ``` java
