@@ -786,7 +786,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return identifier != -1;
     }
 
-    private void preMapConstruction() {
+      void preMapConstruction() {
         keyBuilder.objectSerializer(objectSerializer());
         valueBuilder.objectSerializer(objectSerializer());
 

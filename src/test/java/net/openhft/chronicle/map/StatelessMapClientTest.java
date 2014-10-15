@@ -25,10 +25,10 @@ public class StatelessMapClientTest extends TestCase {
         testReadValueWriteValue(Collections.singleton("Test"));
         testReadValueWriteValue(Collections.EMPTY_MAP);
         testReadValueWriteValue(new MyTestClass(3));
-        testReadValueWriteValue(new MyTestClassMarshallable(3));
+      testReadValueWriteValue(new MyTestClassMarshallable(3));
 
-        testReadValueWriteValue(new MyTestClassExternalizable(3));
-        testReadValueWriteValue(new MyTestClassObjectGraph(3));
+    //    testReadValueWriteValue(new MyTestClassExternalizable(3));
+      //  testReadValueWriteValue(new MyTestClassObjectGraph(3));
 
 
     }

@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import static net.openhft.chronicle.map.StatelessMapClient.EventId.*;
 
 /**
- *
  * **** THIS IS VERY MUCH IN DRAFT ***
  *
  * @author Rob Austin.
@@ -141,8 +140,42 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         lockTimeOutNS = builder.lockTimeOut(TimeUnit.NANOSECONDS);
 
+        keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
+        keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
 
+        valueReaderProvider = Provider.of((Class) originalValueReader.getClass());
+        valueWriterProvider = Provider.of((Class) originalValueWriter.getClass());
+
+        if (defaultValueProvider instanceof ConstantValueProvider) {
+            ConstantValueProvider<K, V> constantValueProvider =
+                    (ConstantValueProvider<K, V>) defaultValueProvider;
+            if (constantValueProvider.wasDeserialized()) {
+                ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
+                BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
+                constantValueProvider.initTransients(valueReader);
+            }
+        }
     }
+
+
+    void initTransients() {
+        keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
+        keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
+
+        valueReaderProvider = Provider.of((Class) originalValueReader.getClass());
+        valueWriterProvider = Provider.of((Class) originalValueWriter.getClass());
+
+        if (defaultValueProvider instanceof ConstantValueProvider) {
+            ConstantValueProvider<K, V> constantValueProvider =
+                    (ConstantValueProvider<K, V>) defaultValueProvider;
+            if (constantValueProvider.wasDeserialized()) {
+                ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
+                BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
+                constantValueProvider.initTransients(valueReader);
+            }
+        }
+    }
+
 
     @Override
     public V putIfAbsent(K key, V value) {
@@ -151,7 +184,7 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
 
         writeKey(key, copies);
-        writeValue(value, copies);
+        writeValue(value);
 
         return null;
     }
@@ -163,7 +196,7 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         writeKey((K) key, copies);
-        writeValue((V) value, copies);
+        writeValue((V) value);
 
         // send the transaction id
         long transactionId = nextUniqueTransaction();
@@ -179,8 +212,8 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
         target.writeByte(REPLACE_WITH_OLD_AND_NEW_VALUE.ordinal());
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         writeKey(key, copies);
-        writeValue(oldValue, copies);
-        writeValue(newValue, copies);
+        writeValue(oldValue);
+        writeValue(newValue);
 
         // send the transaction id
         long transactionId = nextUniqueTransaction();
@@ -191,12 +224,13 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     }
 
+
     @Override
     public V replace(K key, V value) {
         target.writeByte(REPLACE.ordinal());
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         writeKey(key, copies);
-        writeValue(value, copies);
+        writeValue(value);
 
         // send the transaction id
         long transactionId = nextUniqueTransaction();
@@ -251,8 +285,7 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
     @Override
     public boolean containsValue(Object value) {
         target.writeByte(CONTAINS_VALUE.ordinal());
-        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
-        writeValue((V) value, copies);
+        writeValue((V) value);
 
         // send the transaction id
         long transactionId = nextUniqueTransaction();
@@ -289,8 +322,25 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     }
 
-    private V readValue(ByteBufferBytes byteBufferBytes) {
-        throw new UnsupportedOperationException("todo");
+    V readValue(ByteBufferBytes source) {
+
+        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
+
+        copies = metaKeyInteropProvider.getCopies(copies);
+
+        copies = valueReaderProvider.getCopies(copies);
+        BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
+
+        try {
+            final V v = valueFactory.create();
+
+
+            long valueSize = valueSizeMarshaller.readSize(source);
+            return valueReader.read(source, valueSize, v);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @Override
@@ -309,7 +359,7 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         writeKey((K) key, copies);
-        writeValue((V) value, copies);
+        writeValue((V) value);
 
         // send the transaction id
         long transactionId = nextUniqueTransaction();
@@ -362,7 +412,7 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         for (Entry e : entries) {
             writeKey(e.getKey(), copies);
-            writeValue(e.getValue(), copies);
+            writeValue(e.getValue());
         }
     }
 
@@ -460,31 +510,39 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
 
-    private void writeValue(V value, ThreadLocalCopies copies) {
-
+    void writeValue(V value) {
+        boolean byteableValue = value instanceof Byteable;
+        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         VW valueWriter = valueWriterProvider.get(copies, originalValueWriter);
         copies = valueWriterProvider.getCopies(copies);
         long valueSize;
         MetaBytesWriter<V, VW> metaValueWriter = null;
         Byteable valueAsByteable = null;
 
-        if (value instanceof Byteable) {
-            valueAsByteable = (Byteable) value;
-            valueSize = valueAsByteable.maxSize();
-
-            target.writeLong(valueSize);
-            target.write(valueAsByteable.bytes());
-        } else {
+        if (!byteableValue) {
             copies = valueWriterProvider.getCopies(copies);
             valueWriter = valueWriterProvider.get(copies, originalValueWriter);
             copies = metaValueWriterProvider.getCopies(copies);
             metaValueWriter = metaValueWriterProvider.get(
                     copies, originalMetaValueWriter, valueWriter, value);
             valueSize = metaValueWriter.size(valueWriter, value);
-            target.writeLong(valueSize);
-            metaValueWriter.write(valueWriter, target, value);
+        } else {
+            valueAsByteable = (Byteable) value;
+            valueSize = valueAsByteable.maxSize();
         }
 
+        valueSizeMarshaller.writeSize(target, valueSize);
+
+
+        if (metaValueWriter != null) {
+            metaValueWriter.write(valueWriter, target, value);
+        } else {
+            throw new UnsupportedOperationException("");
+           /* assert valueAsByteable != null;
+            long valueOffset = entry.positionAddr() - bytes.address();
+            target.zeroOut(valueOffset, valueOffset + valueSize);
+            valueAsByteable.bytes(target, valueOffset);*/
+        }
     }
 
     /**
