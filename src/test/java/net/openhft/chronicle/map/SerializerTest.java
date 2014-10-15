@@ -6,53 +6,101 @@ import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.model.constraints.NotNull;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 
-public class StatelessMapClientTest extends TestCase {
-
+public class SerializerTest extends TestCase {
 
     @Test
-    public void testReadValueWriteIntegerValue() throws Exception {
-        testReadValueWriteValue("Test");
-        testReadValueWriteValue(1);
-        testReadValueWriteValue(1L);
-        testReadValueWriteValue(1.0);
-        testReadValueWriteValue(1.0f);
-        testReadValueWriteValue(Collections.singleton("Test"));
-        testReadValueWriteValue(Collections.EMPTY_MAP);
-        testReadValueWriteValue(new MyTestClass(3));
-      testReadValueWriteValue(new MyTestClassMarshallable(3));
+    public void testValueMarshallable() throws Exception {
+        testReadWriteValue("Test");
+        testReadWriteValue(1);
+        testReadWriteValue(1L);
+        testReadWriteValue(1.0);
+        testReadWriteValue(1.0f);
+        testReadWriteValue(Collections.singleton("Test"));
+        testReadWriteValue(Collections.EMPTY_MAP);
+        testReadWriteValue(new MyTestClass(3));
+        testReadWriteValue(new MyTestClassMarshallable(3));
 
-      testReadValueWriteValue(new MyTestClassExternalizable(3));
- testReadValueWriteValue(new MyTestClassObjectGraph(3));
-
-
+        testReadWriteValue(new MyTestClassExternalizable(3));
+        testReadWriteValue(new MyTestClassObjectGraph(3));
     }
 
-    public void testReadValueWriteValue(Object value) throws Exception {
+    @Ignore
+    @Test
+    public void testKeyMarshallable() throws Exception {
+        testReadWriteKey("Test");
+        testReadWriteKey(1);
+        testReadWriteKey(1L);
+        testReadWriteKey(1.0);
+        testReadWriteKey(1.0f);
+        testReadWriteKey(Collections.singleton("Test"));
+        testReadWriteKey(Collections.EMPTY_MAP);
+        testReadWriteKey(new MyTestClass(3));
+        testReadWriteKey(new MyTestClassMarshallable(3));
+
+        testReadWriteKey(new MyTestClassExternalizable(3));
+        testReadWriteKey(new MyTestClassObjectGraph(3));
+    }
+
+
+    public void testReadWriteValue(Object value) throws Exception {
 
         Class valueClass = value.getClass();
 
-        final ByteBufferBytes buffer = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
-        ByteBufferBytes slice = buffer.slice();
+        final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
+        ByteBufferBytes in = out.slice();
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(Integer.class, valueClass);
         builder.preMapConstruction();
 
-        StatelessMapClient statelessMap = new StatelessMapClient(buffer, builder);
+        Serializer v = new Serializer(builder.valueBuilder);
 
-        statelessMap.writeValue(value);
-        long position = buffer.position();
-        slice.limit(position);
+        v.setObject(value);
+        v.writeMarshallable(out);
 
-        Object actual = statelessMap.readValue(slice);
+        long position = out.position();
+        in.limit(position);
+
+        // let just blank the value so that we can test if it works
+        v.setObject(null);
+
+        v.readMarshallable(in);
+        Object actual = v.getObject();
         Assert.assertEquals(actual, value);
     }
 
+
+    public void testReadWriteKey(Object key) throws Exception {
+
+        Class clazz = key.getClass();
+
+        final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
+        ByteBufferBytes in = out.slice();
+
+        ChronicleMapBuilder builder = ChronicleMapBuilder.of(clazz, Integer.class);
+        builder.preMapConstruction();
+
+        Serializer v = new Serializer(builder.keyBuilder);
+
+        v.setObject(key);
+        v.writeMarshallable(out);
+
+        long position = out.position();
+        in.limit(position);
+
+        // let just blank the value so that we can test if it works
+        v.setObject(null);
+
+        v.readMarshallable(in);
+        Object actual = v.getObject();
+        Assert.assertEquals(actual, key);
+    }
 
     public static class MyTestClassExternalizable implements Externalizable {
         int a;
