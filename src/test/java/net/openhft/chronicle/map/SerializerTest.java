@@ -59,7 +59,7 @@ public class SerializerTest {
 
         Serializer v = new Serializer(builder.valueBuilder);
 
-        v.writeMarshallable(out, value);
+        v.writeMarshallable(value, out);
 
         long position = out.position();
         in.limit(position);
@@ -83,7 +83,7 @@ public class SerializerTest {
         Serializer v = new Serializer(builder.keyBuilder);
 
 
-        v.writeMarshallable(out, key);
+        v.writeMarshallable(key, out);
 
         long position = out.position();
         in.limit(position);

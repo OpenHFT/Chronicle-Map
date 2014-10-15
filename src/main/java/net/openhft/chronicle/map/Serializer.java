@@ -51,7 +51,7 @@ public class Serializer<O, VW, MVW extends MetaBytesWriter<O, VW>> {
         }
     }
 
-    public void writeMarshallable(@NotNull Bytes out, O value) {
+    public void writeMarshallable(O value, @NotNull Bytes out) {
 
         ThreadLocalCopies copies = readerProvider.getCopies(null);
         VW valueWriter = writerProvider.get(copies, originalWriter);

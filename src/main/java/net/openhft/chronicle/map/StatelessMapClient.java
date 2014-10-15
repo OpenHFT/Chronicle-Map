@@ -47,6 +47,18 @@ public class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
     private final Serializer<V, ?, ?> valueSerializer;
     private final Serializer<K, ?, ?> keySerializer;
 
+    public StatelessMapClient(Bytes out, Class<K> kClass, Class<V> vClass) {
+
+        final SerializationBuilder<K> keyBuilder = new SerializationBuilder<K>(kClass,
+                SerializationBuilder.Role.KEY);
+        final SerializationBuilder<V> valueBuilder = new SerializationBuilder<V>(vClass,
+                SerializationBuilder.Role.VALUE);
+
+        keySerializer = new Serializer(keyBuilder);
+        valueSerializer = new Serializer(valueBuilder);
+
+        this.out = out;
+    }
 
     @Override
     public File file() {
@@ -74,20 +86,6 @@ public class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
 
 
     private final Bytes out;
-
-
-    public StatelessMapClient(Bytes out, Class<K> kClass, Class<V> vClass) {
-
-        final SerializationBuilder<K> keyBuilder = new SerializationBuilder<K>(kClass,
-                SerializationBuilder.Role.KEY);
-        final SerializationBuilder<V> valueBuilder = new SerializationBuilder<V>(vClass,
-                SerializationBuilder.Role.VALUE);
-
-        keySerializer = new Serializer(keyBuilder);
-        valueSerializer = new Serializer(valueBuilder);
-
-        this.out = out;
-    }
 
 
     @Override
@@ -125,7 +123,7 @@ public class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
     }
 
     private void writeValue(V newValue) {
-        valueSerializer.writeMarshallable(out, newValue);
+        valueSerializer.writeMarshallable(newValue, out);
     }
 
 
@@ -245,7 +243,7 @@ public class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
 
         final HashMap<K, V> safeCopy = new HashMap<K, V>(map);
 
-        out.writeLong(safeCopy.size());
+        out.writeStopBit(safeCopy.size());
 
         final Set<Entry> entries = (Set) safeCopy.entrySet();
 
@@ -274,10 +272,10 @@ public class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
     }
 
     private Set<K> readKeySet(Bytes in) {
-        int size = in.readInt();
+        long size = in.readStopBit();
         final HashSet<K> result = new HashSet<>();
 
-        for (int i = 0; i < size; i++) {
+        for (long i = 0; i < size; i++) {
             result.add(readKey(out));
         }
         return result;
@@ -293,11 +291,14 @@ public class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
         writeEvent(VALUES);
 
         // get the data back from the server
-        Bytes in = blockingFetch();
+      final  Bytes in = blockingFetch();
 
-        int size = in.readInt();
+        final  long size = in.readStopBit();
 
-        ArrayList<V> result = new ArrayList<V>();
+        if (size > Integer.MAX_VALUE)
+            throw new IllegalStateException("size=" + size + " is too large.");
+
+        final   ArrayList<V> result = new ArrayList<V>((int) size);
 
         for (int i = 0; i < size; i++) {
             result.add(readValue(in));
@@ -314,7 +315,7 @@ public class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
         // get the data back from the server
         Bytes bytes = blockingFetch();
 
-        int size = bytes.readInt();
+        long size = bytes.readStopBit();
 
         Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
 
@@ -322,7 +323,6 @@ public class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
             K k = keySerializer.readMarshallable(bytes);
             V v = valueSerializer.readMarshallable(bytes);
             result.add(new Entry(k, v));
-
         }
 
         return result;
@@ -335,7 +335,7 @@ public class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
      * @param key the key of the map
      */
     private void writeKey(K key) {
-        keySerializer.writeMarshallable(out, key);
+        keySerializer.writeMarshallable(key, out);
     }
 
     private void writeEvent(EventId event) {
