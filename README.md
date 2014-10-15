@@ -168,6 +168,29 @@ and define the snapshot version in your pom.xml, for example:
   <version>1.0.1-SNAPSHOT</version>
 </dependency>
 ```
+
+#### Key Value Object Types
+
+Unlike HashMap which will support any heap object, Chronicle Map only works with objects that it 
+can store off heap, so the objects have to be  :  (one of the following )
+
+- AutoBoxed primitives - for good performance.
+- Strings - for good performance.
+- implements Serializable  
+- implements Externalizable ( with a public default constructor ) 
+- Implements our custom interface BytesMarshallable ( with a public default constructor ) - use this for best performance.
+
+or value objects that are created through, a directClass interface, for example : 
+``` java
+      ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
+               .of(String.class, directClassFor(BondVOInterface.class))
+               .create(file);
+
+```
+
+Object graphs can also be included as long as the outer object supports Serializable, Externalizable or BytesMarshallable.
+
+
 #### Java Class Construction
 
 Creating an instance of Chronicle Map is a little more complexed than just calling a constructor.
