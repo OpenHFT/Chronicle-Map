@@ -79,7 +79,7 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 .getSimpleName());
     }
 
-    enum EventId {
+    public static enum EventId {
         LONG_SIZE, SIZE,
         IS_EMPTY,
         CONTAINS_KEY,
