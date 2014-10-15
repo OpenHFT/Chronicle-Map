@@ -226,7 +226,7 @@ the instances of Chronicle Map on the same server. The name and location of the 
 up to you.  For the best performance on many unix systems we recommend using
 [tmpfs](http://en.wikipedia.org/wiki/Tmpfs).
 
-If instead, you do not wish to replicate between process on the same server or if you are only
+If instead, you do not wish to replicate between processes on the same server or if you are only
 using TCP replication to replicate between servers, you do not have to provide the "file",
 so you can call `create()` method on ChronicleMapBuilder without file parameter:
 ```
