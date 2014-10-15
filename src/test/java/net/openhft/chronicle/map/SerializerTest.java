@@ -5,7 +5,6 @@ import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.model.constraints.NotNull;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.*;
@@ -32,7 +31,6 @@ public class SerializerTest {
 
 
     @Test
-    @Ignore
     public void testKeyMarshallable() throws Exception {
         testReadWriteKey("Test");
         testReadWriteKey(1);
@@ -61,17 +59,13 @@ public class SerializerTest {
 
         Serializer v = new Serializer(builder.valueBuilder);
 
-        v.setObject(value);
-        v.writeMarshallable(out);
+        v.writeMarshallable(out, value);
 
         long position = out.position();
         in.limit(position);
 
-        // let just blank the value so that we can test if it works
-        v.setObject(null);
 
-        v.readMarshallable(in);
-        Object actual = v.getObject();
+        Object actual = v.readMarshallable(in);
         Assert.assertEquals(actual, value);
     }
 
@@ -88,17 +82,13 @@ public class SerializerTest {
 
         Serializer v = new Serializer(builder.keyBuilder);
 
-        v.setObject(key);
-        v.writeMarshallable(out);
+
+        v.writeMarshallable(out, key);
 
         long position = out.position();
         in.limit(position);
 
-        // let just blank the value so that we can test if it works
-        v.setObject(null);
-
-        v.readMarshallable(in);
-        Object actual = v.getObject();
+        Object actual = v.readMarshallable(in);
         Assert.assertEquals(actual, key);
     }
 
