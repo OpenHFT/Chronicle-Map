@@ -11,7 +11,7 @@ import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.constraints.NotNull;
 
 /**
- * uses a {@code SerializationBuilder} to readMarshallable and writeMarshallable objects
+ * uses a {@code SerializationBuilder} to read and write object(s) as bytes
  *
  * @author Rob Austin.
  */
@@ -27,13 +27,12 @@ public class Serializer<O, VW, MVW extends MetaBytesWriter<O, VW>> {
 
     public Serializer(final SerializationBuilder<O> serializationBuilder) {
 
-
         sizeMarshaller = serializationBuilder.sizeMarshaller();
-        originalReader = serializationBuilder.reader();
-
-        originalWriter = (VW) serializationBuilder.interop();
         originalMetaValueWriter = (MVW) serializationBuilder.metaInterop();
         metaValueWriterProvider = (MetaProvider) serializationBuilder.metaInteropProvider();
+
+        originalReader = serializationBuilder.reader();
+        originalWriter = (VW) serializationBuilder.interop();
 
         readerProvider = Provider.of((Class) originalReader.getClass());
         writerProvider = Provider.of((Class) originalWriter.getClass());
@@ -41,9 +40,8 @@ public class Serializer<O, VW, MVW extends MetaBytesWriter<O, VW>> {
 
     public O readMarshallable(@NotNull Bytes in) throws IllegalStateException {
 
-        ThreadLocalCopies copies;
-        copies = readerProvider.getCopies(null);
-        BytesReader<O> valueReader = readerProvider.get(copies, originalReader);
+        final ThreadLocalCopies copies = readerProvider.getCopies(null);
+        final BytesReader<O> valueReader = readerProvider.get(copies, originalReader);
 
         try {
             long valueSize = sizeMarshaller.readSize(in);
@@ -55,35 +53,32 @@ public class Serializer<O, VW, MVW extends MetaBytesWriter<O, VW>> {
 
     public void writeMarshallable(@NotNull Bytes out, O value) {
 
-        boolean byteableValue = value instanceof Byteable;
-        ThreadLocalCopies copies;
-        copies = readerProvider.getCopies(null);
+        ThreadLocalCopies copies = readerProvider.getCopies(null);
         VW valueWriter = writerProvider.get(copies, originalWriter);
         copies = writerProvider.getCopies(copies);
-        long valueSize;
-        MetaBytesWriter<O, VW> metaValueWriter = null;
-        Byteable valueAsByteable = null;
 
-        if (!byteableValue) {
+        final long valueSize;
+
+        MetaBytesWriter<O, VW> metaValueWriter = null;
+
+        if ((value instanceof Byteable)) {
+            valueSize = ((Byteable) value).maxSize();
+        } else {
             copies = writerProvider.getCopies(copies);
             valueWriter = writerProvider.get(copies, originalWriter);
             copies = metaValueWriterProvider.getCopies(copies);
             metaValueWriter = metaValueWriterProvider.get(
                     copies, originalMetaValueWriter, valueWriter, value);
             valueSize = metaValueWriter.size(valueWriter, value);
-        } else {
-            valueAsByteable = (Byteable) value;
-            valueSize = valueAsByteable.maxSize();
         }
 
         sizeMarshaller.writeSize(out, valueSize);
 
-
-        if (metaValueWriter != null) {
+        if (metaValueWriter != null)
             metaValueWriter.write(valueWriter, out, value);
-        } else {
+        else
             throw new UnsupportedOperationException("");
-        }
+
     }
 
 }

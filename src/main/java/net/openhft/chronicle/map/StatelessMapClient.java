@@ -1,15 +1,11 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.map.serialization.MetaBytesInterop;
-import net.openhft.chronicle.map.serialization.MetaBytesWriter;
-import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -22,34 +18,7 @@ import static net.openhft.chronicle.map.StatelessMapClient.EventId.*;
  *
  * @author Rob Austin.
  */
-public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
-        V, VW, MVW extends MetaBytesWriter<V, VW>> extends AbstractMap<K, V>
-        implements ChronicleMap<K, V>, Serializable {
-
-
-    private ThreadLocal<Buffer> sourceBuffer = new ThreadLocal<Buffer>();
-
-
-    Map<Long, Object> transactionIDs = new HashMap<Long, Object>();
-
-
-    AtomicLong transactionID = new AtomicLong();
-
-    private long timeoutMs = TimeUnit.SECONDS.toMillis(20);
-    private final Serializer<V, ?, ?> valueSerializer;
-    private final Serializer<K, ?, ?> keySerializer;
-
-
-    @Override
-    public File file() {
-        return null;
-    }
-
-    @Override
-    public void close() throws IOException {
-        throw new UnsupportedOperationException("This is not supported in the " + this.getClass()
-                .getSimpleName());
-    }
+public class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
 
     public static enum EventId {
         LONG_SIZE, SIZE,
@@ -69,6 +38,27 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
         REMOVE_WITH_VALUE
     }
 
+    private final ThreadLocal<Buffer> sourceBuffer = new ThreadLocal<Buffer>();
+    private final Map<Long, Object> transactionIDs = new HashMap<Long, Object>();
+
+    private final AtomicLong transactionID = new AtomicLong();
+
+    private long timeoutMs = TimeUnit.SECONDS.toMillis(20);
+    private final Serializer<V, ?, ?> valueSerializer;
+    private final Serializer<K, ?, ?> keySerializer;
+
+
+    @Override
+    public File file() {
+        return null;
+    }
+
+    @Override
+    public void close() throws IOException {
+        throw new UnsupportedOperationException("This is not supported in the " + this.getClass()
+                .getSimpleName());
+    }
+
 
     long nextUniqueTransaction() {
         long time = System.currentTimeMillis();
@@ -86,165 +76,127 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
     private final Bytes out;
 
 
-    public StatelessMapClient(Bytes out, ChronicleMapBuilder<K, V> builder) {
+    public StatelessMapClient(Bytes out, Class<K> kClass, Class<V> vClass) {
 
-        valueSerializer = new Serializer(builder.valueBuilder);
-        keySerializer = new Serializer(builder.keyBuilder);
+        final SerializationBuilder<K> keyBuilder = new SerializationBuilder<K>(kClass,
+                SerializationBuilder.Role.KEY);
+        final SerializationBuilder<V> valueBuilder = new SerializationBuilder<V>(vClass,
+                SerializationBuilder.Role.VALUE);
+
+        keySerializer = new Serializer(keyBuilder);
+        valueSerializer = new Serializer(valueBuilder);
 
         this.out = out;
-
     }
 
 
     @Override
     public V putIfAbsent(K key, V value) {
-        out.writeByte(PUT_IF_ABSENT.ordinal());
-
+        writeEvent(PUT_IF_ABSENT);
         writeKey(key);
         writeValue(value);
 
-        return null;
+        return readValue(blockingFetch());
+
     }
 
 
     @Override
     public boolean remove(Object key, Object value) {
-        out.writeByte(REMOVE_WITH_VALUE.ordinal());
-
-
+        writeEvent(REMOVE_WITH_VALUE);
         writeKey((K) key);
         writeValue((V) value);
 
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
-
         // get the data back from the server
-        return blockingFetch(transactionId).readBoolean();
+        return blockingFetch().readBoolean();
 
     }
 
+
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        out.writeByte(REPLACE_WITH_OLD_AND_NEW_VALUE.ordinal());
-
+        writeEvent(REPLACE_WITH_OLD_AND_NEW_VALUE);
         writeKey(key);
         writeValue(oldValue);
         writeValue(newValue);
 
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
-
         // get the data back from the server
-        return blockingFetch(transactionId).readBoolean();
+        return blockingFetch().readBoolean();
+    }
 
+    private void writeValue(V newValue) {
+        valueSerializer.writeMarshallable(out, newValue);
     }
 
 
     @Override
     public V replace(K key, V value) {
-        out.writeByte(REPLACE.ordinal());
+        writeEvent(REPLACE);
 
         writeKey(key);
         writeValue(value);
 
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
-
         // get the data back from the server
-        return readValue(blockingFetch(transactionId));
+        return readValue(blockingFetch());
     }
 
 
     @Override
     public int size() {
 
-        out.writeByte(SIZE.ordinal());
-
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
+        writeEvent(SIZE);
 
         // get the data back from the server
-        return blockingFetch(transactionId).readInt();
+        return blockingFetch().readInt();
     }
 
 
     @Override
     public boolean isEmpty() {
-        out.writeByte(IS_EMPTY.ordinal());
-
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
+        writeEvent(IS_EMPTY);
 
         // get the data back from the server
-        return blockingFetch(transactionId).readBoolean();
+        return blockingFetch().readBoolean();
     }
 
     @Override
     public boolean containsKey(Object key) {
-        out.writeByte(CONTAINS_KEY.ordinal());
-
+        writeEvent(CONTAINS_KEY);
         writeKey((K) key);
 
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
-
         // get the data back from the server
-        return blockingFetch(transactionId).readBoolean();
+        return blockingFetch().readBoolean();
 
     }
 
     @Override
     public boolean containsValue(Object value) {
-        out.writeByte(CONTAINS_VALUE.ordinal());
+        writeEvent(CONTAINS_VALUE);
         writeValue((V) value);
 
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
-
         // get the data back from the server
-        return blockingFetch(transactionId).readBoolean();
+        return blockingFetch().readBoolean();
     }
 
     @Override
     public long longSize() {
-        out.writeByte(LONG_SIZE.ordinal());
-
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
+        writeEvent(LONG_SIZE);
 
         // get the data back from the server
-        return blockingFetch(transactionId).readLong();
+        return blockingFetch().readLong();
     }
 
     @Override
     public V get(Object key) {
-        out.writeByte(GET.ordinal());
-
+        writeEvent(GET);
         writeKey((K) key);
-
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
-
         // get the data back from the server
-        return readValue(blockingFetch(transactionId));
+        return readValue(blockingFetch());
 
     }
 
-    V readValue(ByteBufferBytes source) {
-
-
+    V readValue(Bytes source) {
         return valueSerializer.readMarshallable(source);
-
-
     }
 
     @Override
@@ -259,61 +211,43 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     @Override
     public V put(K key, V value) {
-        out.writeByte(PUT.ordinal());
+        writeEvent(PUT);
+        writeKey(key);
+        writeValue(value);
 
-
-        writeKey((K) key);
-        writeValue((V) value);
-
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
 
         // get the data back from the server
-        return readValue(blockingFetch(transactionId));
+        return readValue(blockingFetch());
 
     }
 
     @Override
     public V remove(Object key) {
-        out.writeByte(REMOVE.ordinal());
-
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
-
+        writeEvent(REMOVE);
+        writeKey((K) key);
         // get the data back from the server
-        return readValue(blockingFetch(transactionId));
+        return readValue(blockingFetch());
 
     }
 
     @Override
     public void putAll(Map<? extends K, ? extends V> map) {
 
-        throw new UnsupportedOperationException("todo");
-    /*    out.writeByte(PUT_ALL.ordinal());
-
-
-        HashMap<K, V> safeCopy = new HashMap<K, V>(map);
-
-        writeEntries(copies, safeCopy);
-
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
+        writeEvent(PUT_ALL);
+        writeEntries(map);
 
         // get the data back from the server
-        blockingFetch(transactionId);
-*/
-        //return;
-
+        blockingFetch();
 
     }
 
-    private void writeEntries(ThreadLocalCopies copies, HashMap<K, V> safeCopy) {
+    private void writeEntries(Map<? extends K, ? extends V> map) {
+
+        final HashMap<K, V> safeCopy = new HashMap<K, V>(map);
+
         out.writeLong(safeCopy.size());
 
-        Set<Entry> entries = (Set) safeCopy.entrySet();
+        final Set<Entry> entries = (Set) safeCopy.entrySet();
 
         for (Entry e : entries) {
             writeKey(e.getKey());
@@ -323,68 +257,50 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     @Override
     public void clear() {
-        out.writeByte(CLEAR.ordinal());
-
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
+        writeEvent(CLEAR);
 
         // get the data back from the server
-        blockingFetch(transactionId);
+        blockingFetch();
 
-        return;
     }
 
     @NotNull
     @Override
     public Set<K> keySet() {
-        out.writeByte(KEY_SET.ordinal());
-
-        // send the transaction id
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
+        writeEvent(KEY_SET);
 
         // get the data back from the server
-        return readKeySet(blockingFetch(transactionId));
+        return readKeySet(blockingFetch());
     }
 
-    private Set<K> readKeySet(ByteBufferBytes bufferBytes) {
-        int size = bufferBytes.readInt();
-
-        HashSet<K> result = new HashSet<>();
+    private Set<K> readKeySet(Bytes in) {
+        int size = in.readInt();
+        final HashSet<K> result = new HashSet<>();
 
         for (int i = 0; i < size; i++) {
-            result.add(readKey(bufferBytes));
+            result.add(readKey(out));
         }
         return result;
     }
 
-    private K readKey(ByteBufferBytes bufferBytes) {
-        long transactionId = nextUniqueTransaction();
-        out.writeLong(transactionId);
-
-        // get the data back from the server
-        return readKey(blockingFetch(transactionId));
-
+    private K readKey(Bytes bufferBytes) {
+        return keySerializer.readMarshallable(bufferBytes);
     }
 
     @NotNull
     @Override
     public Collection<V> values() {
-        out.writeByte(VALUES.ordinal());
-        long transactionId = nextUniqueTransaction();
-
-        out.writeLong(transactionId);
+        writeEvent(VALUES);
 
         // get the data back from the server
-        ByteBufferBytes bufferBytes = blockingFetch(transactionId);
+        Bytes in = blockingFetch();
 
-        int size = bufferBytes.readInt();
+        int size = in.readInt();
 
         ArrayList<V> result = new ArrayList<V>();
 
         for (int i = 0; i < size; i++) {
-            result.add(readValue(bufferBytes));
+            result.add(readValue(in));
         }
         return result;
     }
@@ -392,32 +308,26 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
     @NotNull
     @Override
     public Set<Map.Entry<K, V>> entrySet() {
-        out.writeByte(ENTRY_SET.ordinal());
+        writeEvent(ENTRY_SET);
 
-        long transactionId = nextUniqueTransaction();
 
         // get the data back from the server
-        ByteBufferBytes bufferBytes = blockingFetch(transactionId);
+        Bytes bytes = blockingFetch();
 
-        int size = bufferBytes.readInt();
+        int size = bytes.readInt();
 
         Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
 
         for (int i = 0; i < size; i++) {
-            K k = readKey(bufferBytes);
-            V v = readValue(bufferBytes);
+            K k = keySerializer.readMarshallable(bytes);
+            V v = valueSerializer.readMarshallable(bytes);
             result.add(new Entry(k, v));
 
         }
 
-
         return result;
     }
 
-
-    void writeValue(V value) {
-        valueSerializer.writeMarshallable(out, value);
-    }
 
     /**
      * write the keysize and the key to the the {@code target} buffer
@@ -428,6 +338,9 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
         keySerializer.writeMarshallable(out, key);
     }
 
+    private void writeEvent(EventId event) {
+        out.write((byte) event.ordinal());
+    }
 
     public Buffer buffer() {
         Buffer result = sourceBuffer.get();
@@ -463,7 +376,7 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
      * @param transactionId
      * @return
      */
-    private ByteBufferBytes blockingFetch(long transactionId) {
+    private Bytes blockingFetch(long transactionId) {
         final Buffer buffer = buffer();
         buffer.set(null);
 
@@ -537,6 +450,13 @@ public class StatelessMapClient<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
 
+    }
+
+
+    private Bytes blockingFetch() {
+        long transactionId = nextUniqueTransaction();
+        out.writeLong(transactionId);
+        return blockingFetch(transactionId);
     }
 }
 
