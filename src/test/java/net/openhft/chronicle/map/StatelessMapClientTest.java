@@ -27,8 +27,8 @@ public class StatelessMapClientTest extends TestCase {
         testReadValueWriteValue(new MyTestClass(3));
       testReadValueWriteValue(new MyTestClassMarshallable(3));
 
-    //    testReadValueWriteValue(new MyTestClassExternalizable(3));
-      //  testReadValueWriteValue(new MyTestClassObjectGraph(3));
+      testReadValueWriteValue(new MyTestClassExternalizable(3));
+ testReadValueWriteValue(new MyTestClassObjectGraph(3));
 
 
     }
@@ -165,14 +165,14 @@ public class StatelessMapClientTest extends TestCase {
 
     public static class MyTestClassObjectGraph implements Serializable {
 
-        MyTestClassMarshallable delegate;
+        MyTestClass delegate;
 
         public MyTestClassObjectGraph() {
 
         }
 
         MyTestClassObjectGraph(int a) {
-            delegate = new MyTestClassMarshallable(a);
+            delegate = new MyTestClass(a);
         }
 
         @Override
