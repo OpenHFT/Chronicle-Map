@@ -30,10 +30,18 @@ final class Replicators {
 
             @Override
             protected Closeable applyTo(ChronicleMapBuilder builder,
-                                        Replica map, Replica.EntryExternalizable entryExternalizable)
+                                        Replica replica, Replica.EntryExternalizable entryExternalizable,
+                                        final ChronicleMap chronicleMap)
                     throws IOException {
-                return new TcpReplicator(map, entryExternalizable, replicationConfig,
-                        builder.entrySize());
+
+                final KeyValueSerializer keyValueSerializer = new KeyValueSerializer(builder
+                        .keyBuilder, builder.valueBuilder);
+
+                StatelessServerConnector statelessServerConnector = new StatelessServerConnector
+                        (keyValueSerializer, chronicleMap);
+
+                return new TcpReplicator(replica, entryExternalizable, replicationConfig,
+                        builder.entrySize(), statelessServerConnector);
             }
         };
     }
@@ -44,7 +52,7 @@ final class Replicators {
 
             @Override
             protected Closeable applyTo(ChronicleMapBuilder builder,
-                                        Replica map, Replica.EntryExternalizable entryExternalizable)
+                                        Replica map, Replica.EntryExternalizable entryExternalizable, final ChronicleMap chronicleMap)
                     throws IOException {
                 return new UdpReplicator(map, entryExternalizable, replicationConfig,
                         builder.entrySize());

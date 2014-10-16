@@ -197,8 +197,9 @@ abstract class AbstractChannelReplicator implements Closeable {
 
 
         /**
-         * checks the number of bytes written in this interval, if this number of bytes exceeds a threshold,
-         * the selected will de-register the socket that is being written to, until the interval is finished.
+         * checks the number of bytes written in this interval, if this number of bytes exceeds a
+         * threshold, the selected will de-register the socket that is being written to, until the
+         * interval is finished.
          *
          * @throws ClosedChannelException
          */
@@ -261,12 +262,22 @@ abstract class AbstractChannelReplicator implements Closeable {
 
         @Override
         public boolean onEntry(final Bytes entry, final int chronicleId) {
+
+            long pos0 = in.position();
+
+            // used to denote that this is not a stateless map event
+            in.writeByte(StatelessMapClient.EventId.STATEFUL_UPDATE.ordinal());
+
+            long sizeLocation = in.position();
+
+            // this is where we will store the size of the entry
             in.skip(SIZE_OF_SHORT);
+
             final long start = in.position();
             externalizable.writeExternalEntry(entry, in, chronicleId);
 
             if (in.position() == start) {
-                in.position(in.position() - SIZE_OF_SHORT);
+                in.position(pos0);
                 return false;
             }
 
@@ -276,7 +287,10 @@ abstract class AbstractChannelReplicator implements Closeable {
             if (entrySize > MAX_UNSIGNED_SHORT)
                 throw new IllegalStateException("entry too large, the entry size=" + entrySize + ", " +
                         "entries are limited to a size of " + MAX_UNSIGNED_SHORT);
-            in.writeUnsignedShort(start - SIZE_OF_SHORT, entrySize);
+
+            if (LOG.isDebugEnabled())
+                LOG.debug("sending entry of entrySize=" + entrySize);
+            in.writeUnsignedShort(sizeLocation, entrySize);
 
             return true;
         }

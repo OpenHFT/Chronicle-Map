@@ -3,9 +3,14 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -18,16 +23,23 @@ import static net.openhft.chronicle.map.StatelessMapClient.EventId.*;
  *
  * @author Rob Austin.
  */
-class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
+class StatelessMapClient<K, V> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(StatelessMapClient.class);
+
+
+    private final SocketChannel clientChannel;
+    public static final ByteBuffer STATELESS_CLIENT_IDENTIFER = ByteBuffer.wrap(new byte[]{-127});
 
     public static enum EventId {
+        HEARTBEAT,
+        STATEFUL_UPDATE,
         LONG_SIZE, SIZE,
         IS_EMPTY,
         CONTAINS_KEY,
         CONTAINS_VALUE,
         GET, PUT,
         REMOVE,
-        PUT_ALL,
         CLEAR,
         KEY_SET,
         VALUES,
@@ -46,22 +58,47 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
     private long timeoutMs = TimeUnit.SECONDS.toMillis(20);
 
 
-    public StatelessMapClient(Bytes out, KeyValueSerializer<K, V> keyValueSerializer) {
-        this.out = out;
+    public StatelessMapClient(final KeyValueSerializer<K,
+            V> keyValueSerializer, final InetSocketAddress remote) throws IOException {
+
         this.keyValueSerializer = keyValueSerializer;
+
+        clientChannel = SocketChannel.open();
+        clientChannel.connect(remote);
+
+        doHandShaking();
     }
 
-    @Override
+    private void doHandShaking() throws IOException {
+
+
+        while (STATELESS_CLIENT_IDENTIFER.remaining() > 0) {
+            clientChannel.write(STATELESS_CLIENT_IDENTIFER);
+        }
+
+        in.buffer().clear();
+
+        while (in.buffer().position() <= 0) {
+            clientChannel.read(in.buffer());
+        }
+
+        in.limit(in.buffer().position());
+        in.position(0);
+        byte remoteIdentifier = in.readByte();
+
+        LOG.info("Attached to a map with a remote identifier=" + remoteIdentifier);
+
+    }
+
+
     public File file() {
         return null;
     }
 
-    @Override
     public void close() throws IOException {
         throw new UnsupportedOperationException("This is not supported in the " + this.getClass()
                 .getSimpleName());
     }
-
 
     long nextUniqueTransaction() {
         long time = System.currentTimeMillis();
@@ -76,160 +113,142 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
     }
 
 
-    private final Bytes out;
+    private final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocate(1024));
+    private final ByteBufferBytes in = new ByteBufferBytes(ByteBuffer.allocate(1024));
     private final KeyValueSerializer<K, V> keyValueSerializer;
 
 
-    @Override
-    public V putIfAbsent(K key, V value) {
-        writeEvent(PUT_IF_ABSENT);
+    public synchronized V putIfAbsent(K key, V value) throws IOException {
+
+        long sizeLocation = writeEvent(PUT_IF_ABSENT);
         writeKey(key);
         writeValue(value);
-
-        return readKey();
+        return readKey(sizeLocation);
     }
 
 
-    @Override
-    public boolean remove(Object key, Object value) {
-        writeEvent(REMOVE_WITH_VALUE);
+    public synchronized boolean remove(Object key, Object value) throws IOException {
+        long sizeLocation = writeEvent(REMOVE_WITH_VALUE);
         writeKey((K) key);
         writeValue((V) value);
 
         // get the data back from the server
-        return blockingFetch().readBoolean();
+        return blockingFetch(sizeLocation).readBoolean();
 
     }
 
-    @Override
-    public boolean replace(K key, V oldValue, V newValue) {
-        writeEvent(REPLACE_WITH_OLD_AND_NEW_VALUE);
+
+    public synchronized boolean replace(K key, V oldValue, V newValue) throws IOException {
+        long sizeLocation = writeEvent(REPLACE_WITH_OLD_AND_NEW_VALUE);
         writeKey(key);
         writeValue(oldValue);
         writeValue(newValue);
 
         // get the data back from the server
-        return blockingFetch().readBoolean();
-    }
-
-    private void writeKey(K key) {
-        keyValueSerializer.writeKey(key, out);
+        return blockingFetch(sizeLocation).readBoolean();
     }
 
 
-    @Override
-    public V replace(K key, V value) {
-        writeEvent(REPLACE);
+    public synchronized V replace(K key, V value) throws IOException {
+        long sizeLocation = writeEvent(REPLACE);
         writeKey(key);
         writeValue(value);
 
         // get the data back from the server
-        return readKey();
+        return readKey(sizeLocation);
     }
 
 
-    @Override
-    public int size() {
+    public synchronized int size() throws IOException {
 
-        writeEvent(SIZE);
+        long sizeLocation = writeEvent(SIZE);
 
         // get the data back from the server
-        return blockingFetch().readInt();
+        return blockingFetch(sizeLocation).readInt();
     }
 
 
-    @Override
-    public boolean isEmpty() {
-        writeEvent(IS_EMPTY);
+    public synchronized boolean isEmpty() throws IOException {
+        long sizeLocation = writeEvent(IS_EMPTY);
 
         // get the data back from the server
-        return blockingFetch().readBoolean();
+        return blockingFetch(sizeLocation).readBoolean();
     }
 
-    @Override
-    public boolean containsKey(Object key) {
-        writeEvent(CONTAINS_KEY);
+
+    public synchronized boolean containsKey(Object key) throws IOException {
+        long sizeLocation = writeEvent(CONTAINS_KEY);
         writeKey((K) key);
 
         // get the data back from the server
-        return blockingFetch().readBoolean();
+        return blockingFetch(sizeLocation).readBoolean();
 
     }
 
-    @Override
-    public boolean containsValue(Object value) {
-        writeEvent(CONTAINS_VALUE);
+
+    public synchronized boolean containsValue(Object value) throws IOException {
+        long sizeLocation = writeEvent(CONTAINS_VALUE);
         writeValue((V) value);
 
         // get the data back from the server
-        return blockingFetch().readBoolean();
+        return blockingFetch(sizeLocation).readBoolean();
     }
 
-    @Override
-    public long longSize() {
-        writeEvent(LONG_SIZE);
 
+    public synchronized long longSize() throws IOException {
+        long sizeLocation = writeEvent(LONG_SIZE);
         // get the data back from the server
-        return blockingFetch().readLong();
+        return blockingFetch(sizeLocation).readLong();
     }
 
-    @Override
-    public V get(Object key) {
-        writeEvent(GET);
+
+    public synchronized V get(Object key) throws IOException {
+        long sizeLocation = writeEvent(GET);
         writeKey((K) key);
+
         // get the data back from the server
-        return readKey();
+        return readKey(sizeLocation);
 
     }
 
 
-    @Override
-    public V getUsing(K key, V value) {
+    public synchronized V getUsing(K key, V value) {
         throw new UnsupportedOperationException("getUsing is not supported for stateless clients");
     }
 
-    @Override
-    public V acquireUsing(K key, V value) {
+
+    public synchronized V acquireUsing(K key, V value) {
         throw new UnsupportedOperationException("getUsing is not supported for stateless clients");
     }
 
-    @Override
-    public V put(K key, V value) {
 
-        writeEvent(PUT);
+    public synchronized V put(K key, V value) throws IOException {
+
+        long sizeLocation = writeEvent(PUT);
         writeKey(key);
         writeValue(value);
 
         // get the data back from the server
-        return readKey();
+        return readKey(sizeLocation);
 
     }
 
-    private V readKey() {
-        return keyValueSerializer.readValue(blockingFetch());
-    }
 
-    private void writeValue(V value) {
-        keyValueSerializer.writeValue(value, out);
-    }
-
-    @Override
-    public V remove(Object key) {
-        writeEvent(REMOVE);
+    public synchronized V remove(Object key) throws IOException {
+        long sizeLocation = writeEvent(REMOVE);
         writeKey((K) key);
+
         // get the data back from the server
-        return readKey();
+        return readKey(sizeLocation);
 
     }
 
-    @Override
-    public void putAll(Map<? extends K, ? extends V> map) {
 
-        writeEvent(PUT_ALL);
-        writeEntries(map);
+    public synchronized void putAll(Map<? extends K, ? extends V> map) throws IOException {
 
-        // get the data back from the server
-        blockingFetch();
+        for (Map.Entry<? extends K, ? extends V> e : map.entrySet()) {
+            put(e.getKey(), e.getValue());
+        }
 
     }
 
@@ -247,42 +266,32 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
         }
     }
 
-    @Override
-    public void clear() {
-        writeEvent(CLEAR);
+
+    public synchronized void clear() throws IOException {
+        long sizeLocation = writeEvent(CLEAR);
 
         // get the data back from the server
-        blockingFetch();
+        blockingFetch(sizeLocation);
 
     }
 
     @NotNull
-    @Override
-    public Set<K> keySet() {
-        writeEvent(KEY_SET);
+
+    public synchronized Set<K> keySet() throws IOException {
+        long sizeLocation = writeEvent(KEY_SET);
 
         // get the data back from the server
-        return readKeySet(blockingFetch());
-    }
-
-    private Set<K> readKeySet(Bytes in) {
-        long size = in.readStopBit();
-        final HashSet<K> result = new HashSet<>();
-
-        for (long i = 0; i < size; i++) {
-            result.add(keyValueSerializer.readKey(in));
-        }
-        return result;
+        return readKeySet(blockingFetch(sizeLocation));
     }
 
 
     @NotNull
-    @Override
-    public Collection<V> values() {
-        writeEvent(VALUES);
+
+    public synchronized Collection<V> values() throws IOException {
+        long sizeLocation = writeEvent(VALUES);
 
         // get the data back from the server
-        final Bytes in = blockingFetch();
+        final Bytes in = blockingFetch(sizeLocation);
 
         final long size = in.readStopBit();
 
@@ -299,13 +308,12 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
 
 
     @NotNull
-    @Override
-    public Set<Map.Entry<K, V>> entrySet() {
-        writeEvent(ENTRY_SET);
 
+    public synchronized Set<Map.Entry<K, V>> entrySet() throws IOException {
+        long sizeLocation = writeEvent(ENTRY_SET);
 
         // get the data back from the server
-        Bytes in = blockingFetch();
+        Bytes in = blockingFetch(sizeLocation);
 
         long size = in.readStopBit();
 
@@ -321,8 +329,13 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
     }
 
 
-    private void writeEvent(EventId event) {
+    private long writeEvent(EventId event) {
+        out.clear();
+        out.buffer().clear();
+
         out.write((byte) event.ordinal());
+        long sizeLocation = markSizeLocation();
+        return sizeLocation;
     }
 
     public Buffer buffer() {
@@ -337,12 +350,12 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
 
             volatile ByteBufferBytes buffer = null;
 
-            @Override
+
             public void set(ByteBufferBytes source) {
                 buffer = source;
             }
 
-            @Override
+
             public ByteBufferBytes get() {
                 return buffer;
             }
@@ -359,7 +372,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
      * @param transactionId
      * @return
      */
-    private Bytes blockingFetch(long transactionId) {
+    private Bytes blockingFetchWithTransaction(long transactionId) {
         final Buffer buffer = buffer();
         buffer.set(null);
 
@@ -404,7 +417,11 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
 
         public final V setValue(V newValue) {
             V oldValue = value;
-            StatelessMapClient.this.put((K) getKey(), (V) newValue);
+            try {
+                StatelessMapClient.this.put((K) getKey(), (V) newValue);
+            } catch (IOException e) {
+                LOG.error("", e);
+            }
             return oldValue;
         }
 
@@ -431,15 +448,80 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
         public final String toString() {
             return getKey() + "=" + getValue();
         }
-
     }
 
-
-    private Bytes blockingFetch() {
+    private Bytes blockingFetch(long sizeLocation) throws IOException {
         long transactionId = nextUniqueTransaction();
+
+        LOG.info("sending data with transactionId=" + transactionId);
         out.writeLong(transactionId);
-        return blockingFetch(transactionId);
+        writeSizeAt(sizeLocation);
+
+
+        out.buffer().limit((int) out.position());
+        while (out.buffer().remaining() > 0) {
+            int write = clientChannel.write(out.buffer());
+            System.out.println(write);
+        }
+
+        in.clear();
+        in.buffer().clear();
+
+        // read size
+        while (in.buffer().position() < 2) {
+            clientChannel.read(in.buffer());
+        }
+
+        int size = in.readUnsignedShort();
+
+        while (in.buffer().position() < size + 2) {
+            clientChannel.read(in.buffer());
+        }
+
+        long inTransactionId = in.readLong();
+
+        if (inTransactionId != transactionId) {
+            throw new IllegalStateException("the received transaction-id=" + inTransactionId +
+                    ", does not match the expected transaction-id=" + transactionId);
+        }
+
+        return in;
     }
+
+    private void writeSizeAt(long locationOfSize) {
+        long size = out.position() - locationOfSize;
+        out.writeUnsignedShort(locationOfSize, (int) size - 2);
+    }
+
+    private long markSizeLocation() {
+        long position = out.position();
+        out.skip(2);
+        return position;
+    }
+
+    private void writeKey(K key) {
+        keyValueSerializer.writeKey(key, out);
+    }
+
+    private V readKey(final long sizeLocation) throws IOException {
+        return keyValueSerializer.readValue(blockingFetch(sizeLocation));
+    }
+
+    private void writeValue(V value) {
+        keyValueSerializer.writeValue(value, out);
+    }
+
+
+    private Set<K> readKeySet(Bytes in) {
+        long size = in.readStopBit();
+        final HashSet<K> result = new HashSet<>();
+
+        for (long i = 0; i < size; i++) {
+            result.add(keyValueSerializer.readKey(in));
+        }
+        return result;
+    }
+
 }
 
 

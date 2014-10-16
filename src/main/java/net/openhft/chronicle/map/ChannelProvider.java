@@ -407,7 +407,7 @@ public final class ChannelProvider implements Closeable {
 
         @Override
         protected Closeable applyTo(ChronicleMapBuilder builder,
-                                    Replica map, EntryExternalizable entryExternalizable) {
+                                    Replica map, EntryExternalizable entryExternalizable, final ChronicleMap chronicleMap) {
             if (builder.entrySize() > maxEntrySize) {
                 throw new IllegalArgumentException("During ReplicatingChannelBuilder setup, " +
                         "maxEntrySize=" + maxEntrySize + " was specified, but map with " +

@@ -805,7 +805,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         if (map instanceof ReplicatedChronicleMap) {
             ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;
             for (Replicator replicator : replicators.values()) {
-                Closeable token = replicator.applyTo(this, result, result);
+                Closeable token = replicator.applyTo(this, result, result, map);
                 if (replicators.size() == 1 && token.getClass() == UdpReplicator.class) {
                     LOG.warn(
                             "MISSING TCP REPLICATION : The UdpReplicator only attempts to read data " +
