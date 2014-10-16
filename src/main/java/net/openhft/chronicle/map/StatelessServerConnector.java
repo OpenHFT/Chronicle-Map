@@ -11,27 +11,16 @@ import java.util.Set;
 /**
  * @author Rob Austin.
  */
-public class StatelessServerConnector<K, V> {
+class StatelessServerConnector<K, V> {
 
 
+    private final KeyValueSerializer<K, V> keyValueSerializer;
     private final ChronicleMap<K, V> map;
 
 
-    private final Serializer<V, ?, ?> valueSerializer;
-    private final Serializer<K, ?, ?> keySerializer;
-
-    public StatelessServerConnector(Class<K> kClass, Class<V> vClass, ChronicleMap<K, V> map) {
-
+    public StatelessServerConnector(KeyValueSerializer<K, V> keyValueSerializer, ChronicleMap<K, V> map) {
+        this.keyValueSerializer = keyValueSerializer;
         this.map = map;
-
-        final SerializationBuilder<K> keyBuilder = new SerializationBuilder<K>(kClass,
-                SerializationBuilder.Role.KEY);
-        final SerializationBuilder<V> valueBuilder = new SerializationBuilder<V>(vClass,
-                SerializationBuilder.Role.VALUE);
-
-        keySerializer = new Serializer(keyBuilder);
-        valueSerializer = new Serializer(valueBuilder);
-
     }
 
 
@@ -112,24 +101,20 @@ public class StatelessServerConnector<K, V> {
         map.replace(key, oldValue, newValue);
     }
 
-
     public void longSize(Bytes in, Bytes out) {
         reflectTransactionId(in, out);
         out.writeLong(map.longSize());
     }
-
 
     public void size(Bytes in, Bytes out) {
         reflectTransactionId(in, out);
         out.writeInt(map.size());
     }
 
-
     public void isEmpty(Bytes in, Bytes out) {
         reflectTransactionId(in, out);
         out.writeBoolean(map.isEmpty());
     }
-
 
     public void containsKey(Bytes in, Bytes out) {
         K k = readKey(in);
@@ -137,20 +122,17 @@ public class StatelessServerConnector<K, V> {
         out.writeBoolean(map.containsKey(k));
     }
 
-
     public void containsValue(Bytes in, Bytes out) {
         V v = readValue(in);
         reflectTransactionId(in, out);
         out.writeBoolean(map.containsValue(v));
     }
 
-
     public void get(Bytes in, Bytes out) {
         K k = readKey(in);
         reflectTransactionId(in, out);
         writeValue(map.get(k), out);
     }
-
 
     public void put(Bytes in, Bytes out) {
         K k = readKey(in);
@@ -159,13 +141,11 @@ public class StatelessServerConnector<K, V> {
         writeValue(map.put(k, v), out);
     }
 
-
     public void remove(Bytes in, Bytes out) {
         final V value = map.remove(readKey(in));
         reflectTransactionId(in, out);
         writeValue(value, out);
     }
-
 
     public void putAll(Bytes in, Bytes out) {
         map.putAll(readEntries(in));
@@ -236,14 +216,13 @@ public class StatelessServerConnector<K, V> {
         map.replace(k, v);
     }
 
-
     /**
      * write the keysize and the key to the the {@code target} buffer
      *
      * @param key the key of the map
      */
     private void writeKey(K key, Bytes out) {
-        keySerializer.writeMarshallable(key, out);
+        keyValueSerializer.writeKey(key, out);
     }
 
     private void reflectTransactionId(Bytes in, Bytes out) {
@@ -251,15 +230,59 @@ public class StatelessServerConnector<K, V> {
     }
 
     private void writeValue(V value, final Bytes out) {
-        valueSerializer.writeMarshallable(value, out);
+        keyValueSerializer.writeValue(value, out);
     }
 
     private K readKey(Bytes in) {
-        return keySerializer.readMarshallable(in);
+        return keyValueSerializer.readKey(in);
     }
 
     private V readValue(Bytes in) {
+        return keyValueSerializer.readValue(in);
+    }
+
+}
+
+class KeyValueSerializer<K, V> {
+
+    private final Serializer<V> valueSerializer;
+    private final Serializer<K> keySerializer;
+
+    KeyValueSerializer(SerializationBuilder<K> keySerializer,
+                       SerializationBuilder<V> valueSerializer) {
+        this.keySerializer = new Serializer<K>(keySerializer);
+        this.valueSerializer = new Serializer<V>(valueSerializer);
+    }
+
+    V readValue(Bytes in) {
+        if (in.readBoolean())
+            return null;
         return valueSerializer.readMarshallable(in);
+    }
+
+    K readKey(Bytes in) {
+        if (in.readBoolean())
+            return null;
+
+        return keySerializer.readMarshallable(in);
+    }
+
+    /**
+     * write the keysize and the key to the the {@code target} buffer
+     *
+     * @param key the key of the map
+     */
+    void writeKey(K key, Bytes out) {
+
+        out.writeBoolean(key == null);
+        if (key != null)
+            keySerializer.writeMarshallable(key, out);
+    }
+
+    void writeValue(V value, Bytes out) {
+        out.writeBoolean(value == null);
+        if (value != null)
+            valueSerializer.writeMarshallable(value, out);
     }
 
 }

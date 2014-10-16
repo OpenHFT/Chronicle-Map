@@ -79,17 +79,21 @@ public class SerializerTest {
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(clazz, Integer.class);
         builder.preMapConstruction();
+        {
+            Serializer v = new Serializer(builder.keyBuilder);
 
-        Serializer v = new Serializer(builder.keyBuilder);
+
+            v.writeMarshallable(key, out);
+
+            long position = out.position();
+            in.limit(position);
+
+            Object actual = v.readMarshallable(in);
+            Assert.assertEquals(actual, key);
+
+        }
 
 
-        v.writeMarshallable(key, out);
-
-        long position = out.position();
-        in.limit(position);
-
-        Object actual = v.readMarshallable(in);
-        Assert.assertEquals(actual, key);
     }
 
     public static class MyTestClassExternalizable implements Externalizable {

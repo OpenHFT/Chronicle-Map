@@ -1,9 +1,6 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.map.serialization.BytesReader;
-import net.openhft.chronicle.map.serialization.MetaBytesWriter;
-import net.openhft.chronicle.map.serialization.MetaProvider;
-import net.openhft.chronicle.map.serialization.SizeMarshaller;
+import net.openhft.chronicle.map.serialization.*;
 import net.openhft.chronicle.map.threadlocal.Provider;
 import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.io.Bytes;
@@ -15,24 +12,24 @@ import net.openhft.lang.model.constraints.NotNull;
  *
  * @author Rob Austin.
  */
-public class Serializer<O, VW, MVW extends MetaBytesWriter<O, VW>> {
+class Serializer<O> {
 
     final SizeMarshaller sizeMarshaller;
     final BytesReader<O> originalReader;
     transient Provider<BytesReader<O>> readerProvider;
-    final VW originalWriter;
-    transient Provider<VW> writerProvider;
-    final MVW originalMetaValueWriter;
-    final MetaProvider<O, VW, MVW> metaValueWriterProvider;
+    final Object originalWriter;
+    transient Provider writerProvider;
+    final MetaBytesInterop originalMetaValueWriter;
+    final MetaProvider metaValueWriterProvider;
 
-    public Serializer(final SerializationBuilder<O> serializationBuilder) {
+    Serializer(final SerializationBuilder serializationBuilder) {
 
         sizeMarshaller = serializationBuilder.sizeMarshaller();
-        originalMetaValueWriter = (MVW) serializationBuilder.metaInterop();
-        metaValueWriterProvider = (MetaProvider) serializationBuilder.metaInteropProvider();
+        originalMetaValueWriter = serializationBuilder.metaInterop();
+        metaValueWriterProvider = serializationBuilder.metaInteropProvider();
 
         originalReader = serializationBuilder.reader();
-        originalWriter = (VW) serializationBuilder.interop();
+        originalWriter = serializationBuilder.interop();
 
         readerProvider = Provider.of((Class) originalReader.getClass());
         writerProvider = Provider.of((Class) originalWriter.getClass());
@@ -54,12 +51,12 @@ public class Serializer<O, VW, MVW extends MetaBytesWriter<O, VW>> {
     public void writeMarshallable(O value, @NotNull Bytes out) {
 
         ThreadLocalCopies copies = readerProvider.getCopies(null);
-        VW valueWriter = writerProvider.get(copies, originalWriter);
+        Object valueWriter = writerProvider.get(copies, originalWriter);
         copies = writerProvider.getCopies(copies);
 
         final long valueSize;
 
-        MetaBytesWriter<O, VW> metaValueWriter = null;
+        MetaBytesWriter metaValueWriter = null;
 
         if ((value instanceof Byteable)) {
             valueSize = ((Byteable) value).maxSize();
