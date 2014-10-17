@@ -474,9 +474,11 @@ class StatelessMapClient<K, V> {
 
         int size = in.readUnsignedShort();
 
-        while (in.buffer().position() < size + 2) {
+        while (in.buffer().position() < size) {
             clientChannel.read(in.buffer());
         }
+
+        boolean isException = in.readBoolean();
 
         long inTransactionId = in.readLong();
 

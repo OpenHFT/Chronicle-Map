@@ -103,47 +103,47 @@ class StatelessServerConnector<K, V> {
         long sizeLocation = reflectTransactionId(in, out);
         map.replace(key, oldValue, newValue);
 
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
 
     public void longSize(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
         out.writeLong(map.longSize());
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     public void size(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
         out.writeInt(map.size());
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     public void isEmpty(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
         out.writeBoolean(map.isEmpty());
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     public void containsKey(Bytes in, Bytes out) {
         K k = readKey(in);
         long sizeLocation = reflectTransactionId(in, out);
         out.writeBoolean(map.containsKey(k));
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     public void containsValue(Bytes in, Bytes out) {
         V v = readValue(in);
         long sizeLocation = reflectTransactionId(in, out);
         out.writeBoolean(map.containsValue(v));
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     public void get(Bytes in, Bytes out) {
         K k = readKey(in);
         long sizeLocation = reflectTransactionId(in, out);
         writeValue(map.get(k), out);
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     public void put(Bytes in, Bytes out) {
@@ -151,20 +151,20 @@ class StatelessServerConnector<K, V> {
         V v = readValue(in);
         long sizeLocation = reflectTransactionId(in, out);
         writeValue(map.put(k, v), out);
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     public void remove(Bytes in, Bytes out) {
         final V value = map.remove(readKey(in));
         long sizeLocation = reflectTransactionId(in, out);
         writeValue(value, out);
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     public void putAll(Bytes in, Bytes out) {
         map.putAll(readEntries(in));
         long sizeLocation = reflectTransactionId(in, out);
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     private Map<K, V> readEntries(Bytes in) {
@@ -182,7 +182,7 @@ class StatelessServerConnector<K, V> {
     public void clear(Bytes in, Bytes out) {
         map.clear();
         long sizeLocation = reflectTransactionId(in, out);
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
 
@@ -194,7 +194,7 @@ class StatelessServerConnector<K, V> {
         for (K key : ks) {
             writeKey(key, out);
         }
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     public void values(Bytes in, Bytes out) {
@@ -204,7 +204,7 @@ class StatelessServerConnector<K, V> {
         for (final V value : values) {
             writeValue(value, out);
         }
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     public void entrySet(Bytes in, Bytes out) {
@@ -223,7 +223,7 @@ class StatelessServerConnector<K, V> {
         V v = readValue(in);
         long sizeLocation = reflectTransactionId(in, out);
         writeValue(map.putIfAbsent(key, v), out);
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
 
@@ -233,7 +233,7 @@ class StatelessServerConnector<K, V> {
 
         long sizeLocation = reflectTransactionId(in, out);
         map.replace(k, v);
-        writeSizeAt(sizeLocation, out);
+        writeSizeAndFlags(sizeLocation, false, out);
     }
 
     /**
@@ -247,7 +247,7 @@ class StatelessServerConnector<K, V> {
 
     private long reflectTransactionId(Bytes in, Bytes out) {
         long sizeLocation = out.position();
-        out.skip(2);
+        out.skip(3);
         long transactionId = in.readLong();
         out.writeLong(transactionId);
         return sizeLocation;
@@ -265,9 +265,10 @@ class StatelessServerConnector<K, V> {
         return keyValueSerializer.readValue(in);
     }
 
-    private void writeSizeAt(long locationOfSize, Bytes out) {
+    private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
         long size = out.position() - locationOfSize;
-        out.writeUnsignedShort((int) size);
+        out.writeUnsignedShort(0L, (int) size);
+        out.writeBoolean(2L, isException);
     }
 }
 
