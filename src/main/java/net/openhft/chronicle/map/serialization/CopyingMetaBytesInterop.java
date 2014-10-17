@@ -16,14 +16,14 @@
 
 package net.openhft.chronicle.map.serialization;
 
+import net.openhft.chronicle.map.threadlocal.Provider;
+import net.openhft.chronicle.map.threadlocal.StatefulCopyable;
+import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
-import net.openhft.chronicle.map.threadlocal.Provider;
-import net.openhft.chronicle.map.threadlocal.StatefulCopyable;
-import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -190,7 +190,7 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
             forBytesWriter = new ForBytesWriter();
         }
 
-        private Bytes obtain(long maxSize) {
+        Bytes obtain(long maxSize) {
             DirectBytes buf;
             if ((buf = buffer) != null) {
                 if (maxSize <= buf.capacity()) {
