@@ -23,7 +23,7 @@ import static net.openhft.chronicle.map.StatelessMapClient.EventId.*;
  *
  * @author Rob Austin.
  */
-class StatelessMapClient<K, V> {
+class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessMapClient.class);
 
@@ -95,7 +95,7 @@ class StatelessMapClient<K, V> {
         return null;
     }
 
-    public void close() throws IOException {
+    public void close() {
         throw new UnsupportedOperationException("This is not supported in the " + this.getClass()
                 .getSimpleName());
     }
@@ -118,7 +118,7 @@ class StatelessMapClient<K, V> {
     private final KeyValueSerializer<K, V> keyValueSerializer;
 
 
-    public synchronized V putIfAbsent(K key, V value) throws IOException {
+    public synchronized V putIfAbsent(K key, V value) {
 
         long sizeLocation = writeEvent(PUT_IF_ABSENT);
         writeKey(key);
@@ -127,7 +127,7 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized boolean remove(Object key, Object value) throws IOException {
+    public synchronized boolean remove(Object key, Object value) {
         long sizeLocation = writeEvent(REMOVE_WITH_VALUE);
         writeKey((K) key);
         writeValue((V) value);
@@ -138,7 +138,7 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized boolean replace(K key, V oldValue, V newValue) throws IOException {
+    public synchronized boolean replace(K key, V oldValue, V newValue) {
         long sizeLocation = writeEvent(REPLACE_WITH_OLD_AND_NEW_VALUE);
         writeKey(key);
         writeValue(oldValue);
@@ -149,7 +149,7 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized V replace(K key, V value) throws IOException {
+    public synchronized V replace(K key, V value) {
         long sizeLocation = writeEvent(REPLACE);
         writeKey(key);
         writeValue(value);
@@ -159,7 +159,7 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized int size() throws IOException {
+    public synchronized int size() {
 
         long sizeLocation = writeEvent(SIZE);
 
@@ -168,7 +168,7 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized boolean isEmpty() throws IOException {
+    public synchronized boolean isEmpty() {
         long sizeLocation = writeEvent(IS_EMPTY);
 
         // get the data back from the server
@@ -176,7 +176,7 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized boolean containsKey(Object key) throws IOException {
+    public synchronized boolean containsKey(Object key) {
         long sizeLocation = writeEvent(CONTAINS_KEY);
         writeKey((K) key);
 
@@ -186,7 +186,7 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized boolean containsValue(Object value) throws IOException {
+    public synchronized boolean containsValue(Object value) {
         long sizeLocation = writeEvent(CONTAINS_VALUE);
         writeValue((V) value);
 
@@ -195,14 +195,14 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized long longSize() throws IOException {
+    public synchronized long longSize() {
         long sizeLocation = writeEvent(LONG_SIZE);
         // get the data back from the server
         return blockingFetch(sizeLocation).readLong();
     }
 
 
-    public synchronized V get(Object key) throws IOException {
+    public synchronized V get(Object key) {
         long sizeLocation = writeEvent(GET);
         writeKey((K) key);
 
@@ -222,19 +222,21 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized V put(K key, V value) throws IOException {
+    public synchronized V put(K key, V value) {
 
         long sizeLocation = writeEvent(PUT);
         writeKey(key);
         writeValue(value);
 
         // get the data back from the server
+
         return readKey(sizeLocation);
+
 
     }
 
 
-    public synchronized V remove(Object key) throws IOException {
+    public synchronized V remove(Object key) {
         long sizeLocation = writeEvent(REMOVE);
         writeKey((K) key);
 
@@ -244,7 +246,7 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized void putAll(Map<? extends K, ? extends V> map) throws IOException {
+    public synchronized void putAll(Map<? extends K, ? extends V> map) {
 
         for (Map.Entry<? extends K, ? extends V> e : map.entrySet()) {
             put(e.getKey(), e.getValue());
@@ -267,17 +269,19 @@ class StatelessMapClient<K, V> {
     }
 
 
-    public synchronized void clear() throws IOException {
+    public synchronized void clear() {
         long sizeLocation = writeEvent(CLEAR);
 
         // get the data back from the server
+
         blockingFetch(sizeLocation);
+
 
     }
 
     @NotNull
 
-    public synchronized Set<K> keySet() throws IOException {
+    public synchronized Set<K> keySet() {
         long sizeLocation = writeEvent(KEY_SET);
 
         // get the data back from the server
@@ -287,7 +291,7 @@ class StatelessMapClient<K, V> {
 
     @NotNull
 
-    public synchronized Collection<V> values() throws IOException {
+    public synchronized Collection<V> values() {
         long sizeLocation = writeEvent(VALUES);
 
         // get the data back from the server
@@ -309,7 +313,7 @@ class StatelessMapClient<K, V> {
 
     @NotNull
 
-    public synchronized Set<Map.Entry<K, V>> entrySet() throws IOException {
+    public synchronized Set<Map.Entry<K, V>> entrySet() {
         long sizeLocation = writeEvent(ENTRY_SET);
 
         // get the data back from the server
@@ -417,11 +421,9 @@ class StatelessMapClient<K, V> {
 
         public final V setValue(V newValue) {
             V oldValue = value;
-            try {
-                StatelessMapClient.this.put((K) getKey(), (V) newValue);
-            } catch (IOException e) {
-                LOG.error("", e);
-            }
+
+            StatelessMapClient.this.put((K) getKey(), (V) newValue);
+
             return oldValue;
         }
 
@@ -450,7 +452,17 @@ class StatelessMapClient<K, V> {
         }
     }
 
-    private Bytes blockingFetch(long sizeLocation) throws IOException {
+    private Bytes blockingFetch(long sizeLocation) {
+        try {
+            return blockingFetchThrowable(sizeLocation);
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
+
+    }
+
+
+    private Bytes blockingFetchThrowable(long sizeLocation) throws IOException {
         long transactionId = nextUniqueTransaction();
 
         LOG.info("sending data with transactionId=" + transactionId);
@@ -487,6 +499,17 @@ class StatelessMapClient<K, V> {
                     ", does not match the expected transaction-id=" + transactionId);
         }
 
+        if (isException) {
+            int len = in.readUnsignedShort();
+
+            in.limit(in.position() + len);
+
+            Object o = in.readObject();
+            RuntimeException runtimeException = (RuntimeException) o;
+            throw runtimeException;
+        }
+
+
         return in;
     }
 
@@ -505,7 +528,7 @@ class StatelessMapClient<K, V> {
         keyValueSerializer.writeKey(key, out);
     }
 
-    private V readKey(final long sizeLocation) throws IOException {
+    private V readKey(final long sizeLocation) {
         return keyValueSerializer.readValue(blockingFetch(sizeLocation));
     }
 
@@ -532,4 +555,11 @@ interface Buffer {
     void set(ByteBufferBytes source);
 
     ByteBufferBytes get();
+}
+
+class RuntimeIOException extends RuntimeException {
+
+    public RuntimeIOException(IOException e) {
+        super(e);
+    }
 }

@@ -101,8 +101,13 @@ class StatelessServerConnector<K, V> {
         V newValue = readValue(in);
 
         long sizeLocation = reflectTransactionId(in, out);
-        map.replace(key, oldValue, newValue);
-
+        try {
+            map.replace(key, oldValue, newValue);
+        } catch (RuntimeException e) {
+            writeException(e, out);
+            writeSizeAndFlags(sizeLocation, true, out);
+            return;
+        }
         writeSizeAndFlags(sizeLocation, false, out);
     }
 
@@ -142,8 +147,25 @@ class StatelessServerConnector<K, V> {
     public void get(Bytes in, Bytes out) {
         K k = readKey(in);
         long sizeLocation = reflectTransactionId(in, out);
-        writeValue(map.get(k), out);
+        try {
+            writeValue(map.get(k), out);
+        } catch (RuntimeException e) {
+            writeException(e, out);
+            writeSizeAndFlags(sizeLocation, true, out);
+            return;
+        }
         writeSizeAndFlags(sizeLocation, false, out);
+
+    }
+
+    private void writeException(RuntimeException e, Bytes out) {
+
+        long start = out.position();
+        out.skip(2);
+        out.writeObject(e);
+        long len = out.position() - (start + 2L);
+        out.writeUnsignedShort(start,(int) len);
+
     }
 
     public void put(Bytes in, Bytes out) {
