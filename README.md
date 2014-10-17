@@ -8,6 +8,8 @@ requirements. - [Contact Us](sales@higherfrequencytrading.com)*
 
 Replicate your Key Value Store across your network, with consistency, durability and performance.
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
+
+
 #### Maven Artifact Download
 ```xml
 <dependency>
@@ -18,6 +20,7 @@ Replicate your Key Value Store across your network, with consistency, durability
 ```
 Click here to get the [Latest Version Number](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22) 
 
+
 #### Contents
 
 * [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#should-i-use-chronicle-queue-or-chronicle-map)
@@ -26,7 +29,10 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [JavaDoc](http://openhft.github.io/Chronicle-Map/apidocs)
 * [Getting Started Guide](https://github.com/OpenHFT/Chronicle-Map#getting-started)
  *  [Simple Construction](https://github.com/OpenHFT/Chronicle-Map#simple-construction)
- *  [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
+ *   [Maven Download](https://github.com/OpenHFT/Chronicle-Map#maven-artifact-download-1)
+ *   [Snapshot Download](https://github.com/OpenHFT/Chronicle-Map#maven-snapshot-download)
+ *   [Key Value Object Types](https://github.com/OpenHFT/Chronicle-Map#key-value-object-types)
+ *   [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
  *   [Entries](https://github.com/OpenHFT/Chronicle-Map#entries)
  *   [Size of Space Reserved on Disk](https://github.com/OpenHFT/Chronicle-Map#size-of-space-reserved-on-disk)
  *   [Chronicle Map Interface](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-interface)
@@ -46,7 +52,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *      [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
-* [Clustering](https://github.com/OpenHFT/Chronicle-Map#cluster)
+* [Channels and the Channel Provider](https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider)
   
 #### Miscellaneous
 
@@ -63,7 +69,6 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Replicating data between process on different servers with UDP] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--replicating-data-between-process-on-different-servers-using-udp)
  *  [Creating a Chronicle Set and adding data to it](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--creating-a-chronicle-set-and-adding-data-to-it)
 
-
 #### Performance Topics
 
 * [Chronicle Map with Large Data ](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-with-large-data)
@@ -71,11 +76,9 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [Better to use small keys](https://github.com/OpenHFT/Chronicle-Map#better-to-use-small-keys)
 * [ConcurrentHashMap v ChronicleMap](https://github.com/OpenHFT/Chronicle-Map#concurrenthashmap-v-chroniclemap)
 
-
 ### Overview
 Chronicle Map implements the `java.util.concurrent.ConcurrentMap`, however unlike the standard
 java map, ChronicleMap is able to share your entries accross processes:
-
 
 ![](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-diagram_04.jpg)
 
@@ -117,6 +120,9 @@ product suite. In addition, The original Chronicle has been renamed to Chronicle
 
 
 ## Getting Started
+
+#### Tutorial 1 - Creating an instance of Chronicle Map
+[![ScreenShot](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-14-at-17.49.36.png)](http://openhft.net/chronicle-map-video-tutorial-1/)
 
 ### Simple Construction
 
@@ -165,6 +171,30 @@ and define the snapshot version in your pom.xml, for example:
   <version>1.0.1-SNAPSHOT</version>
 </dependency>
 ```
+
+#### Key Value Object Types
+
+Unlike HashMap which will support any heap object, Chronicle Map only works with objects that it 
+can store off heap, so the objects have to be  :  (one of the following )
+
+- AutoBoxed primitives - for good performance.
+- Strings - for good performance.
+- implements Serializable  
+- implements Externalizable ( with a public default constructor ) 
+- implements our custom interface BytesMarshallable ( with a public default constructor ) - use 
+this for best performance.
+
+or value objects that are created through, a directClass interface, for example : 
+``` java
+      ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
+               .of(String.class, directClassFor(BondVOInterface.class))
+               .create(file);
+
+```
+
+Object graphs can also be included as long as the outer object supports Serializable, Externalizable or BytesMarshallable.
+
+
 #### Java Class Construction
 
 Creating an instance of Chronicle Map is a little more complexed than just calling a constructor.
@@ -196,9 +226,10 @@ the instances of Chronicle Map on the same server. The name and location of the 
 up to you.  For the best performance on many unix systems we recommend using
 [tmpfs](http://en.wikipedia.org/wiki/Tmpfs).
 
-If instead, you do not wish to replicate between process on the same server or if you are only
+If instead, you do not wish to replicate between processes on the same server or if you are only
 using TCP replication to replicate between servers, you do not have to provide the "file",
-so you can call `create()` method on ChronicleMapBuilder without file parameter:
+so you can call the `create()` method on you ChronicleMapBuilder without providing the file 
+parameter:
 ```
 ConcurrentMap<Integer, CharSequence> map = builder.create();
 ```
@@ -306,8 +337,9 @@ added and the value return will we the same value which you provided.
 
 ## Oversized Entries Support
 
-It is possible for an entry to be twice as large as the maximum entry, we refer to this type of
-entry as an oversized entry. Oversized entries are there to cater for the case where only a small
+It is possible for the size of your entry to be twice as large as the maximum entry size, 
+we refer to this type of entry as an oversized entry. Oversized entries are there to cater for the case 
+where only a small
 percentage of your entries are twise as large as the others, in this case your large entry will
 span across two entries. The alternative would be to increase your maximum entry size to be similar
 to the size of the largest entry, but this approach is wasteful of memory, especially when most
@@ -348,7 +380,11 @@ your JVM to crash. Close MUST BE the last thing that you do with the map.
 
 
 # TCP / UDP Replication
+
 Chronicle Hash Map supports both TCP and UDP replication
+
+![TCP/IP Replication](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-TCP-Replication_simple_02.jpg)
+
 
 ### TCP / UDP Background.
 TCP/IP is a reliable protocol, what this means is unless you have a network failure or hardware
@@ -512,7 +548,7 @@ A heartbeat will only be send if no data is transmitted, if the maps are constan
 no heartbeat message is sent. If a map does not receive either data of a heartbeat the connection
 is dropped and re-established.
 
-# Cluster
+# Channels and ChannelProvider
 
 Chronicle Map TCP Replication lets you distribute a single Chronicle Map, to a number of servers
 across your network. Replication is point to point and the data transfer is bidirectional, so in the
@@ -520,38 +556,44 @@ example of just two servers, they only have to be connected via a single tcp soc
 the data is transferred both ways. Which is great, however what if you wanted to replicate more than
 just one chronicle map, what if you were going to replicate two chronicle maps across your network,
 unfortunately with just TCP replication you would have to have two tcp socket connections, which is
-not ideal. This is why we created Chronicle Clustering. Clustering lets you replicate numerous
+not ideal. This is why we created Chronicle Channels. Channels let you replicate numerous
 Chronicle Maps via a single point to point socket connection.
 
-Clustering is similar to TCP replication, where each map has to be given a unique identifier, but
-when using Chronicle Clustering its the cluster that is given the unique identifier not the map.
+Chronicle Channels are similar to TCP replication, where each map has to be given a unique identifier, but
+when using Chronicle Channels its the channels that are given the unique identifier not the map.
 
 ``` java
-ReplicatingClusterBuilder clusterBuilder = new ReplicatingClusterBuilder((byte) 2, 1024);
+int maxEntrySize = 1024;
+byte identifier= 1;
+ChannelProvider channelProvider = new ChannelProviderBuilder()
+                    .maxEntrySize(maxEntrySize)
+                    .replicators(identifier, tcpReplicationConfig).create();
 ```
 
-In this example above the cluster is given the identifier of 2
+In this example above the channel is given the identifier of 2
 
 In addition to specifying the identifier we also have to set the maximum entry size, this sets
-the size of the memory buffers within the cluster.  This has to be set manually, with clusters you
-are able to attach additional maps to a cluster once its up and running, so the maximum size of each
+the size of the memory buffers within the ChannelProvider.  This has to be set manually, with channels you
+are able to attach additional maps to a ChannelProvider once its up and running, so the maximum size of each
 entry in the map can not be known in advance and we don’t currently support automatic resizing
 of buffers.
 
-Once you have created the cluster you should attach your tcpConfig
+When creating the ChannelProvider you should attach your tcp or udp configuration 
 ``` java
-TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8087).heartBeatInterval(1, SECONDS);
-clusterBuilder.tcpReplication(tcpConfig);
-ReplicatingCluster cluster = clusterBuilder.create();
+int maxEntrySize = 1024;
+byte identifier = 1;
+ChannelProvider channelProvider = new ChannelProviderBuilder()
+                    .maxEntrySize(maxEntrySize)
+                    .replicators(identifier, tcpReplicationConfig).create();
 ```
 
-Attaching cluster replication to the map:
+Attaching ChannelProvider replication to the map:
 
 ``` java
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-    .entries(1000)
-    .addReplicator(cluster.channelReplicator((short) 1))
-    .create(file);
+  .entries(1000)
+  .channel(channelProviderA.createChannel((short) 1))
+  .create(getPersistenceFile());
 ```
 
 The chronicle channel is use to identify which map is to be replicated to which other map on
@@ -567,11 +609,11 @@ If you inadvertently got the chronicle channels around the wrong way, then chron
 to replicate the wrong maps data. The chronicle channels don't have to be in order but they must be
 unique for each map you have.
 
-Once you have created the cluster you may wish to hold onto the reference so that you can call close
-once you have finished, this will close everything in the cluster 
+Once you have created the ChannelProvider you may wish to hold onto the reference so that you can call close
+once you have finished, this will close everything in the ChannelProvider 
 
 ``` java
-cluster.close();
+replicator.close();
 ```
 
 ####  Known Issues
@@ -613,6 +655,52 @@ will run out of space between 1 and 2 million entries.
 
 You should set the .entries(..) and .entrySize(..) to those you require.
 
+##### Don't forget to set the EntrySize
+
+If you put() and entry that is much larger than the max entry size set via entrySize(), 
+the code will error. To see how to set the entry size the example below sets the entry size to 10, 
+you should pick a size that is the size in bytes of your entries : 
+
+```java
+ChronicleMap<Integer, String> map =
+             ChronicleMapBuilder.of(Integer.class, String.class)
+                     .entrySize(10).create();
+ 
+```
+
+This example will throw an java.lang.IllegalArgumentException because the entrySize is too small.
+
+```java
+@Test
+public void test() throws IOException, InterruptedException {
+    ChronicleMap<Integer, String> map =
+            ChronicleMapBuilder.of(Integer.class, String.class)
+                    .entrySize(10).create();
+
+    String value =   new String(new char[2000]);
+    map.put(1, value);
+
+    Assert.assertEquals(value, map.get(1));
+}
+
+```
+
+If the entry size is dramatically too small ( like in the example below ), 
+you will get a *malloc_error_break* :
+
+```java
+@Test
+public void test() throws IOException, InterruptedException {
+    ChronicleMap<Integer, String> map =
+            ChronicleMapBuilder.of(Integer.class, String.class)
+                    .entrySize(10).create();
+
+    String value =   new String(new char[20000000]);
+    map.put(1, value);
+
+    Assert.assertEquals(value, map.get(1));
+}
+```
 
 # Example : Simple Hello World
 
@@ -659,53 +747,69 @@ Lets assume that we had two server, lets call them server1 and server2, if we wi
 between them, this is how we could set it up
 
 ``` java 
-Map map1;
-Map map2;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+public class YourClass {
+
+
+    @Test
+    public void test() throws IOException, InterruptedException {
+
+        Map map1;
+        Map map2;
 
 //  ----------  SERVER1 1 ----------
-{
+        {
 
-    // we connect the maps via a TCP socket connection on port 8077
+            // we connect the maps via a TCP socket connection on port 8077
 
-    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
-            .heartBeatInterval(1L, SECONDS);
-    ChronicleMapBuilder<Integer, CharSequence> map1Builder =
-            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(20000L)
-                    .addReplicator(tcp((byte) 1, tcpConfig));
+            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
+                    .heartBeatInterval(1L, TimeUnit.SECONDS);
+            ChronicleMapBuilder<Integer, CharSequence> map1Builder =
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(20000L)
+                            .replicators((byte) 1, tcpConfig);
 
 
-    map1 = map1Builder.create();
-}
+            map1 = map1Builder.create();
+        }
 //  ----------  SERVER2 on the same server as ----------
 
-{
-    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
-            .heartBeatInterval(1L, SECONDS);
-    ChronicleMapBuilder<Integer, CharSequence> map2Builder =
-            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(20000L)
-                    .addReplicator(tcp((byte) 2, tcpConfig));
-    map2 = map2Builder.create();
+        {
+            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
+                    .heartBeatInterval(1L, TimeUnit.SECONDS);
+            ChronicleMapBuilder<Integer, CharSequence> map2Builder =
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(20000L)
+                            .replicators((byte) 2, tcpConfig);
+            map2 = map2Builder.create();
 
-    // we will stores some data into one map here
-    map2.put(5, "EXAMPLE");
-}
+            // we will stores some data into one map here
+            map2.put(5, "EXAMPLE");
+        }
 
 //  ----------  CHECK ----------
 
 // we are now going to check that the two maps contain the same data
 
 // allow time for the recompilation to resolve
-int t = 0;
-for (; t < 5000; t++) {
-    if (map1.equals(map2))
-        break;
-    Thread.sleep(1);
-}
+        int t = 0;
+        for (; t < 5000; t++) {
+            if (map1.equals(map2))
+                break;
+            Thread.sleep(1);
+        }
 
-Assert.assertEquals(map1, map2);
-assertTrue(!map1.isEmpty());
+        Assert.assertEquals(map1, map2);
+        Assert.assertTrue(!map1.isEmpty());
+    }
+
 }
 ```
 
@@ -716,71 +820,86 @@ This example is the same as the one above, but it uses a slow throttled TCP/IP c
 
 
 ``` java 
-Map map1;
-Map map2;
+import org.junit.Assert;
+import org.junit.Test;
 
-int udpPort = 1234;
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+public class YourClass {
+
+
+    @Test
+    public void test() throws IOException, InterruptedException {
+
+        Map map1;
+        Map map2;
+
+        int udpPort = 1234;
 
 //  ----------  SERVER1 1 ----------
-{
+        {
 
-    // we connect the maps via a TCP socket connection on port 8077
+            // we connect the maps via a TCP socket connection on port 8077
 
-    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
-            .heartBeatInterval(1L, SECONDS)
+            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
+                    .heartBeatInterval(1L, TimeUnit.SECONDS)
 
-            // a maximum of 1024 bits per millisecond
-            .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
-
-
-    UdpReplicationConfig udpConfig = UdpReplicationConfig
-            .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
-
-    ChronicleMapBuilder<Integer, CharSequence> map1Builder =
-            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(20000L)
-                    .addReplicator(tcp((byte) 1, tcpConfig))
-                    .addReplicator(udp((byte) 1, udpConfig));
+                            // a maximum of 1024 bits per millisecond
+                    .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
 
 
-    map1 = map1Builder.create();
-}
+            UdpReplicationConfig udpConfig = UdpReplicationConfig
+                    .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
+
+            ChronicleMapBuilder<Integer, CharSequence> map1Builder =
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(20000L)
+                            .replicators((byte) 1, tcpConfig, udpConfig);
+
+
+            map1 = map1Builder.create();
+        }
 //  ----------  SERVER2 2 on the same server as ----------
 
-{
-    TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
-            .heartBeatInterval(1L, SECONDS)
-            .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
+        {
+            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
+                    .heartBeatInterval(1L, TimeUnit.SECONDS)
+                    .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
 
-    UdpReplicationConfig udpConfig = UdpReplicationConfig
-            .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
+            UdpReplicationConfig udpConfig = UdpReplicationConfig
+                    .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
 
-    ChronicleMapBuilder<Integer, CharSequence> map2Builder =
-            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(20000L)
-                    .addReplicator(tcp((byte) 2, tcpConfig))
-                    .addReplicator(udp((byte) 1, udpConfig));
+            ChronicleMapBuilder<Integer, CharSequence> map2Builder =
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                            .entries(20000L)
+                            .replicators((byte) 2, tcpConfig, udpConfig);
 
-    map2 = map2Builder.create();
+            map2 = map2Builder.create();
 
-    // we will stores some data into one map here
-    map2.put(5, "EXAMPLE");
-}
+            // we will stores some data into one map here
+            map2.put(5, "EXAMPLE");
+        }
 
 //  ----------  CHECK ----------
 
 // we are now going to check that the two maps contain the same data
 
 // allow time for the recompilation to resolve
-int t = 0;
-for (; t < 5000; t++) {
-    if (map1.equals(map2))
-        break;
-    Thread.sleep(1);
-}
+        int t = 0;
+        for (; t < 5000; t++) {
+            if (map1.equals(map2))
+                break;
+            Thread.sleep(1);
+        }
 
-Assert.assertEquals(map1, map2);
-assertTrue(!map1.isEmpty());
+        Assert.assertEquals(map1, map2);
+        Assert.assertTrue(!map1.isEmpty());
+
+    }
 }
 ```
 

@@ -25,7 +25,6 @@ import static net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress;
 import static net.openhft.chronicle.map.DiscoveryNodeBytesMarshallable.ProposedNodes;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
-import static net.openhft.chronicle.map.Replicators.tcp;
 import static net.openhft.chronicle.map.UdpReplicationConfig.simple;
 
 /**
@@ -212,7 +211,7 @@ public class NodeDiscovery {
         return ChronicleMapBuilder.of(Integer.class,
                 CharSequence.class)
                 .entries(20000L)
-                .replicators(identifier, tcp(tcpConfig)).create();
+                .replicators(identifier, tcpConfig).create();
 
     }
 

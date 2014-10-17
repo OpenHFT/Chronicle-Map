@@ -27,7 +27,7 @@ import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
-import static net.openhft.chronicle.map.Replicators.tcp;
+import static net.openhft.chronicle.map.TcpReplicationConfig.of;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -43,21 +43,20 @@ public class TwoMapOnDifferentServers {
     @Before
     public void setup() throws IOException {
 
-        final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
-                .of(8076, new InetSocketAddress("localhost", 8077))
-                .heartBeatInterval(1, SECONDS);
+        final TcpReplicationConfig tcpConfig =
+                of(8076, new InetSocketAddress("localhost", 8077))
+                        .heartBeatInterval(1, SECONDS);
 
 
         File persistenceFile = getPersistenceFile();
         map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
-                .replicators((byte) 1, tcp(tcpReplicationConfig))
+                .replicators((byte) 1, tcpConfig)
                 .create(persistenceFile);
 
         map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
-                .replicators((byte) 2, tcp(
-                        TcpReplicationConfig.of(8077).heartBeatInterval(1, SECONDS)))
+                .replicators((byte) 2, of(8077).heartBeatInterval(1, SECONDS))
                 .create(persistenceFile);
     }
 

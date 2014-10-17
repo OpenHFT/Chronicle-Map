@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.map.ChronicleSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +26,6 @@ import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
-import static net.openhft.chronicle.map.Replicators.tcp;
 import static net.openhft.chronicle.map.TcpReplicationConfig.of;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -51,8 +49,8 @@ public class SetForTCPSocketReplicationTest3way {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         return (T) ChronicleSetBuilder.of(Integer.class)
-                .replicators(identifier, tcp(of(serverPort, endpoints).
-                        heartBeatInterval(1L, SECONDS))).create(getPersistenceFile());
+                .replicators(identifier, of(serverPort, endpoints).
+                        heartBeatInterval(1L, SECONDS)).create(getPersistenceFile());
     }
 
 

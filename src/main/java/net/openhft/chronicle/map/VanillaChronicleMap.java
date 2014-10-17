@@ -133,7 +133,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         this.removeReturnsNull = builder.removeReturnsNull();
 
         this.actualSegments = builder.actualSegments();
-        this.entriesPerSegment = builder.actualEntriesPerSegment();
+        // align by 8 because otherwise sizeOfBitSets() might address less blocks than specified
+        this.entriesPerSegment = align8(builder.actualEntriesPerSegment());
         this.metaDataBytes = builder.metaDataBytes();
         this.eventListener = builder.eventListener();
 
@@ -156,6 +157,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
      */
     static long align64(long l) {
         return (l + 63) & ~63;
+    }
+
+    static int align8(int n) {
+        return (n + 7) & ~7;
     }
 
     void initTransients() {
@@ -555,8 +560,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             long start = bytes.startAddr() + SEGMENT_HEADER;
             createHashLookups(start);
             start += align64(sizeOfMultiMap() + sizeOfMultiMapBitSet()) * multiMapsPerSegment();
-            final NativeBytes bsBytes = new NativeBytes(
-                    tmpBytes.objectSerializer(), start, start + sizeOfBitSets(), null);
+            final NativeBytes bsBytes = new NativeBytes(tmpBytes.objectSerializer(),
+                    start, start + ((entriesPerSegment + 7) / 8), null);
             freeList = new SingleThreadedDirectBitSet(bsBytes);
             start += numberOfBitSets() * sizeOfBitSets();
             entriesOffset = start - bytes.startAddr();
@@ -914,13 +919,21 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                         );
                     }
                 }
+                updateNextPosToSearchFrom(ret, blocks);
+            } else {
+                // if bit at nextPosToSearchFrom is clear, it was skipped because
+                // more than 1 block was requested. Don't move nextPosToSearchFrom
+                // in this case. blocks == 1 clause is just a fast path.
+                if (blocks == 1 || freeList.isSet(nextPosToSearchFrom)) {
+                    updateNextPosToSearchFrom(ret, blocks);
+                }
             }
-            // if bit at nextPosToSearchFrom is clear, it was skipped because
-            // more than 1 block was requested. Don't move nextPosToSearchFrom
-            // in this case. blocks == 1 clause is just a fast path.
-            if (blocks == 1 || freeList.isSet(nextPosToSearchFrom))
-                nextPosToSearchFrom = ret + blocks;
             return ret;
+        }
+
+        private void updateNextPosToSearchFrom(int allocated, int blocks) {
+            if ((nextPosToSearchFrom = allocated + blocks) >= freeList.size())
+                nextPosToSearchFrom = 0;
         }
 
         private boolean realloc(int fromPos, int oldBlocks, int newBlocks) {
@@ -1188,6 +1201,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             try {
                 hashLookup.clear();
                 freeList.clear();
+                nextPosToSearchFrom = 0;
                 resetSize();
             } finally {
                 unlock();

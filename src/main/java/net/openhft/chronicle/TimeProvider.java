@@ -17,7 +17,7 @@
 package net.openhft.chronicle;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleSet;
+import net.openhft.chronicle.set.ChronicleSet;
 
 import java.io.ObjectStreamException;
 import java.io.Serializable;

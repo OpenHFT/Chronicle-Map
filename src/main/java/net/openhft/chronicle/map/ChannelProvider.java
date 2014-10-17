@@ -45,8 +45,8 @@ import static net.openhft.chronicle.map.Replica.ModificationNotifier.NOP;
 /**
  * @author Rob Austin.
  */
-public final class ReplicatingChannel implements Closeable {
-    private static final Logger LOG = LoggerFactory.getLogger(ReplicatingChannel.class.getName());
+public final class ChannelProvider implements Closeable {
+    private static final Logger LOG = LoggerFactory.getLogger(ChannelProvider.class.getName());
 
     private static final byte BOOTSTRAP_MESSAGE = 'B';
     final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
@@ -152,7 +152,7 @@ public final class ReplicatingChannel implements Closeable {
 
         @Override
         public void close() throws IOException {
-            ReplicatingChannel.this.close();
+            ChannelProvider.this.close();
         }
     };
     private final int maxEntrySize;
@@ -169,7 +169,7 @@ public final class ReplicatingChannel implements Closeable {
     private final Set<AbstractChannelReplicator> replicators =
             new CopyOnWriteArraySet<AbstractChannelReplicator>();
 
-    ReplicatingChannel(ReplicatingChannelBuilder builder) {
+    ChannelProvider(ChannelProviderBuilder builder) {
         localIdentifier = builder.identifier;
         maxEntrySize = builder.maxEntrySize;
         chronicleChannels = new Replica[builder.maxNumberOfChronicles];
@@ -407,7 +407,7 @@ public final class ReplicatingChannel implements Closeable {
 
         @Override
         protected Closeable applyTo(ChronicleMapBuilder builder,
-                                    Replica map, EntryExternalizable entryExternalizable) {
+                                    Replica map, EntryExternalizable entryExternalizable, final ChronicleMap chronicleMap) {
             if (builder.entrySize() > maxEntrySize) {
                 throw new IllegalArgumentException("During ReplicatingChannelBuilder setup, " +
                         "maxEntrySize=" + maxEntrySize + " was specified, but map with " +

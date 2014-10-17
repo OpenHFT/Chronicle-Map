@@ -23,8 +23,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.Inet4Address;
 
-import static net.openhft.chronicle.map.Replicators.udp;
-
 /**
  * Test  ReplicatedChronicleMap where the Replicated is over a TCP Socket
  *
@@ -44,7 +42,7 @@ public class UDPSocketReplicationTest {
 
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
-                .replicators((byte) identifier, udp(udpConfig))
+                .replicators((byte) identifier, udpConfig)
                 .create(Builder.getPersistenceFile());
     }
 

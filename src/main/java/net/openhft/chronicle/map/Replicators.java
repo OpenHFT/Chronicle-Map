@@ -20,31 +20,39 @@ package net.openhft.chronicle.map;
 import java.io.Closeable;
 import java.io.IOException;
 
-public final class Replicators {
+final class Replicators {
 
     private Replicators() {
     }
 
-    public static Replicator tcp(final TcpReplicationConfig replicationConfig) {
+    static Replicator tcp(final TcpReplicationConfig replicationConfig) {
         return new Replicator() {
 
             @Override
             protected Closeable applyTo(ChronicleMapBuilder builder,
-                                        Replica map, Replica.EntryExternalizable entryExternalizable)
+                                        Replica replica, Replica.EntryExternalizable entryExternalizable,
+                                        final ChronicleMap chronicleMap)
                     throws IOException {
-                return new TcpReplicator(map, entryExternalizable, replicationConfig,
-                        builder.entrySize());
+
+                final KeyValueSerializer keyValueSerializer = new KeyValueSerializer(builder
+                        .keyBuilder, builder.valueBuilder);
+
+                StatelessServerConnector statelessServerConnector = new StatelessServerConnector
+                        (keyValueSerializer, chronicleMap);
+
+                return new TcpReplicator(replica, entryExternalizable, replicationConfig,
+                        builder.entrySize(), statelessServerConnector);
             }
         };
     }
 
-    public static Replicator udp(
+    static Replicator udp(
             final UdpReplicationConfig replicationConfig) {
         return new Replicator() {
 
             @Override
             protected Closeable applyTo(ChronicleMapBuilder builder,
-                                        Replica map, Replica.EntryExternalizable entryExternalizable)
+                                        Replica map, Replica.EntryExternalizable entryExternalizable, final ChronicleMap chronicleMap)
                     throws IOException {
                 return new UdpReplicator(map, entryExternalizable, replicationConfig,
                         builder.entrySize());

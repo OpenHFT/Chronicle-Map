@@ -29,7 +29,7 @@ import static java.util.Collections.unmodifiableSet;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 
-public class TcpReplicationConfig {
+public class TcpReplicationConfig implements ReplicationConfig {
 
     private static final int DEFAULT_PACKET_SIZE = 1024 * 8;
     private static final long DEFAULT_HEART_BEAT_INTERVAL = 20;

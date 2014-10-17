@@ -23,26 +23,24 @@ import net.openhft.chronicle.map.*;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.BytesMarshallerFactory;
 import net.openhft.lang.io.serialization.ObjectSerializer;
+import net.openhft.lang.io.serialization.impl.NullObjectFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 
 public class ChronicleSetBuilder<E>
         implements ChronicleHashBuilder<E, ChronicleSet<E>, ChronicleSetBuilder<E>> {
 
-    private ChronicleMapBuilder<E, Void> chronicleMapBuilder;
+    private ChronicleMapBuilder<E, DummyValue> chronicleMapBuilder;
 
     ChronicleSetBuilder(Class<E> keyClass) {
-        chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, Void.class)
-                .entryAndValueAlignment(Alignment.NO_ALIGNMENT);
+        chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
+                .entryAndValueAlignment(Alignment.NO_ALIGNMENT)
+                .valueMarshallerAndFactory(DummyValueMarshaller.INSTANCE,
+                        NullObjectFactory.<DummyValue>of());
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
@@ -88,7 +86,8 @@ public class ChronicleSetBuilder<E>
      *     .entries(50000)
      *     .keySize(10)
      *     .create();}</pre>
-     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded (and each
+     *
+     * <p>(Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded (and each
      * character takes 2 bytes on-heap), because default off-heap {@link String} encoding is UTF-8 in {@code
      * ChronicleSet}.)
      *
@@ -165,10 +164,17 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> replicators(byte identifier, Replicator... replicators) {
+    public ChronicleSetBuilder<E> replicators(byte identifier, ReplicationConfig... replicators) {
         chronicleMapBuilder.replicators(identifier, replicators);
         return this;
     }
+
+    @Override
+    public ChronicleSetBuilder<E> channel(ChannelProvider.ChronicleChannel chronicleChannel) {
+        chronicleMapBuilder.channel(chronicleChannel);
+        return this;
+    }
+
 
     @Override
     public String toString() {
@@ -189,12 +195,6 @@ public class ChronicleSetBuilder<E>
     public int hashCode() {
         return toString().hashCode();
     }
-
-    public ChronicleSetBuilder<E> replicators(byte identifier, Replicator replicator) {
-        chronicleMapBuilder.replicators(identifier, replicator);
-        return this;
-    }
-
 
     @Override
     public ChronicleSetBuilder<E> timeProvider(TimeProvider timeProvider) {
@@ -229,107 +229,14 @@ public class ChronicleSetBuilder<E>
 
     @Override
     public ChronicleSet<E> create(File file) throws IOException {
-        final ChronicleMap<E, Void> map = chronicleMapBuilder.create(file);
+        final ChronicleMap<E, DummyValue> map = chronicleMapBuilder.create(file);
         return new SetFromMap<E>(map);
     }
 
     @Override
     public ChronicleSet<E> create() throws IOException {
-        final ChronicleMap<E, Void> map = chronicleMapBuilder.create();
+        final ChronicleMap<E, DummyValue> map = chronicleMapBuilder.create();
         return new SetFromMap<E>(map);
-    }
-
-    private static class SetFromMap<E> extends AbstractSet<E>
-            implements ChronicleSet<E>, Serializable {
-
-        private final ChronicleMap<E, Void> m;  // The backing map
-        private transient Set<E> s;       // Its keySet
-
-        SetFromMap(ChronicleMap<E, Void> map) {
-            if (!map.isEmpty())
-                throw new IllegalArgumentException("Map is non-empty");
-            m = map;
-            s = map.keySet();
-        }
-
-        public void clear() {
-            m.clear();
-        }
-
-        public int size() {
-            return m.size();
-        }
-
-        public boolean isEmpty() {
-            return m.isEmpty();
-        }
-
-        public boolean contains(Object o) {
-            return m.containsKey(o);
-        }
-
-        public boolean remove(Object o) {
-            return m.remove(o) != null;
-        }
-
-        public boolean add(E e) {
-            return m.put(e, (Void) null) == null;
-        }
-
-        public Iterator<E> iterator() {
-            return s.iterator();
-        }
-
-        public Object[] toArray() {
-            return s.toArray();
-        }
-
-        public <T> T[] toArray(T[] a) {
-            return s.toArray(a);
-        }
-
-        public String toString() {
-            return s.toString();
-        }
-
-        public int hashCode() {
-            return s.hashCode();
-        }
-
-        public boolean equals(Object o) {
-            return o == this || s.equals(o);
-        }
-
-        public boolean containsAll(Collection<?> c) {
-            return s.containsAll(c);
-        }
-
-        public boolean removeAll(Collection<?> c) {
-            return s.removeAll(c);
-        }
-
-        public boolean retainAll(Collection<?> c) {
-            return s.retainAll(c);
-        }
-        // addAll is the only inherited implementation
-
-        private static final long serialVersionUID = 2454657854757543876L;
-
-        private void readObject(java.io.ObjectInputStream stream)
-                throws IOException, ClassNotFoundException {
-            stream.defaultReadObject();
-            s = m.keySet();
-        }
-
-        @Override
-        public long longSize() {
-            return m.longSize();
-        }
-
-        @Override
-        public void close() throws IOException {
-            m.close();
-        }
     }
 
 }

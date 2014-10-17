@@ -23,7 +23,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 
 
-public abstract class UdpReplicationConfig {
+public abstract class UdpReplicationConfig implements ReplicationConfig {
 
     /**
      * Package-private constructor forbids subclassing from outside of the package
@@ -35,7 +35,6 @@ public abstract class UdpReplicationConfig {
     public static UdpReplicationConfig simple(@NotNull InetAddress address, int port) {
         if (address.isMulticastAddress())
             throw new IllegalArgumentException();
-
 
 
         return create(address, port, null, ThrottlingConfig.noThrottling());

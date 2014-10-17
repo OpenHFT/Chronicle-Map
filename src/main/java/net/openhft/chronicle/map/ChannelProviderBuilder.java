@@ -21,46 +21,54 @@ import java.io.IOException;
 /**
  * @author Rob Austin.
  */
-public final class ReplicatingChannelBuilder {
+public final class ChannelProviderBuilder {
 
-    final byte identifier;
-    final int maxEntrySize;
+    byte identifier;
+    int maxEntrySize = 1024;
     int maxNumberOfChronicles = 128;
     private UdpReplicationConfig udpReplicationConfig = null;
     private TcpReplicationConfig tcpReplicationConfig = null;
 
-    ReplicatingChannelBuilder(byte identifier, final int maxEntrySize) {
-        this.identifier = identifier;
+
+
+    public int maxEntrySize() {
+        return maxEntrySize;
+    }
+
+    public ChannelProviderBuilder maxEntrySize(int maxEntrySize) {
         this.maxEntrySize = maxEntrySize;
-        if (identifier <= 0) {
-            throw new IllegalArgumentException("Identifier must be positive, identifier=" +
-                    identifier);
+        return this;
+    }
+
+    public ChannelProviderBuilder replicators(byte identifier, ReplicationConfig... replicationConfigs) {
+        this.identifier = identifier;
+
+
+        for (ReplicationConfig replicationConfig : replicationConfigs) {
+
+            if (replicationConfig instanceof TcpReplicationConfig) {
+                this.tcpReplicationConfig = (TcpReplicationConfig) replicationConfig;
+            } else if (replicationConfig instanceof UdpReplicationConfig) {
+                this.udpReplicationConfig = (UdpReplicationConfig) replicationConfig;
+            } else
+                throw new UnsupportedOperationException();
         }
-    }
-
-    public ReplicatingChannelBuilder udpReplication(UdpReplicationConfig replicationConfig) {
-        this.udpReplicationConfig = replicationConfig;
         return this;
     }
 
-    public ReplicatingChannelBuilder tcpReplication(TcpReplicationConfig replicationConfig) {
-        this.tcpReplicationConfig = replicationConfig;
-        return this;
-    }
-
-    public ReplicatingChannelBuilder maxNumberOfChronicles(int maxNumberOfChronicles) {
+    public ChannelProviderBuilder maxNumberOfChronicles(int maxNumberOfChronicles) {
         this.maxNumberOfChronicles = maxNumberOfChronicles;
         return this;
     }
 
-    public ReplicatingChannel create() throws IOException {
-        final ReplicatingChannel replicatingCluster = new ReplicatingChannel(this);
+    public ChannelProvider create() throws IOException {
+        final ChannelProvider replicatingCluster = new ChannelProvider(this);
         if (tcpReplicationConfig != null) {
             final TcpReplicator tcpReplicator = new TcpReplicator(
                     replicatingCluster.asReplica,
                     replicatingCluster.asEntryExternalizable,
                     tcpReplicationConfig,
-                    maxEntrySize);
+                    maxEntrySize, null);
             replicatingCluster.add(tcpReplicator);
         }
 

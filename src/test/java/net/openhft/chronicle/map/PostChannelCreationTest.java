@@ -35,7 +35,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-public class PostClusterMapCreationTest {
+public class PostChannelCreationTest {
 
     private ChronicleMap<Integer, CharSequence> map1a;
     private ChronicleMap<Integer, CharSequence> map2a;
@@ -43,11 +43,8 @@ public class PostClusterMapCreationTest {
     private ChronicleMap<Integer, CharSequence> map1b;
     private ChronicleMap<Integer, CharSequence> map2b;
 
-    private ReplicatingChannel clusterB;
-    private ReplicatingChannel clusterA;
-
-    private ReplicatingChannelBuilder replicatingClusterBuilder1;
-
+    private ChannelProvider channelProviderA;
+    private ChannelProvider channelProviderB;
 
     public static File getPersistenceFile() {
         String TMP = System.getProperty("java.io.tmpdir");
@@ -62,43 +59,43 @@ public class PostClusterMapCreationTest {
     public void setup() throws IOException {
 
         {
-            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
+            final TcpReplicationConfig tcpConfig = TcpReplicationConfig
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
-            clusterA = new ReplicatingChannelBuilder((byte) 1, 1024)
-                    .tcpReplication(tcpReplicationConfig).create();
+            channelProviderA = new ChannelProviderBuilder()
+                    .replicators((byte) 1, tcpConfig).create();
 
             // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .channel(clusterA.createChannel((short) 1))
+                    .channel(channelProviderA.createChannel((short) 1))
                     .create(getPersistenceFile());
 
             map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .channel(clusterA.createChannel((short) 2))
+                    .channel(channelProviderA.createChannel((short) 2))
                     .create(getPersistenceFile());
         }
 
 
         {
-            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
+            final TcpReplicationConfig tcpConfig = TcpReplicationConfig
                     .of(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 
-            clusterB = new ReplicatingChannelBuilder((byte) 2, 1024)
-                    .tcpReplication(tcpReplicationConfig).create();
+            channelProviderB = new ChannelProviderBuilder()
+                    .replicators((byte) 2, tcpConfig).create();
 
             // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .channel(clusterB.createChannel((short) 1))
+                    .channel(channelProviderB.createChannel((short) 1))
                     .create(getPersistenceFile());
 
             map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .channel(clusterB.createChannel((short) 2))
+                    .channel(channelProviderB.createChannel((short) 2))
                     .create(getPersistenceFile());
         }
 
@@ -108,7 +105,7 @@ public class PostClusterMapCreationTest {
     @After
     public void tearDown() throws InterruptedException {
 
-        for (final Closeable closeable : new Closeable[]{clusterA, clusterB}) {
+        for (final Closeable closeable : new Closeable[]{channelProviderA, channelProviderB}) {
             try {
                 closeable.close();
             } catch (IOException e) {

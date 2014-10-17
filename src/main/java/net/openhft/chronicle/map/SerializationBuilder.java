@@ -80,7 +80,7 @@ final class SerializationBuilder<E> implements Cloneable {
         if (role == Role.VALUE) {
             factory = concreteClass(eClass) && marshallerUseFactory(eClass) ?
                     new NewInstanceObjectFactory<E>(eClass) :
-                    NullObjectFactory.INSTANCE;
+                    (ObjectFactory<E>) NullObjectFactory.<E>of();
         }
 
         if (concreteClass(eClass) && Byteable.class.isAssignableFrom(eClass)) {

@@ -20,6 +20,7 @@ import net.openhft.chronicle.ChronicleHashBuilder;
 import net.openhft.chronicle.ChronicleHashErrorListener;
 import net.openhft.chronicle.ChronicleHashErrorListeners;
 import net.openhft.chronicle.TimeProvider;
+import net.openhft.chronicle.map.serialization.AgileBytesMarshaller;
 import net.openhft.chronicle.map.serialization.MetaBytesInterop;
 import net.openhft.chronicle.map.serialization.MetaBytesWriter;
 import net.openhft.chronicle.map.serialization.MetaProvider;
@@ -555,11 +556,21 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return toString().hashCode();
     }
 
-    public ChronicleMapBuilder<K, V> replicators(byte identifier, Replicator... replicators) {
+    public ChronicleMapBuilder<K, V> replicators(byte identifier, ReplicationConfig... replicationConfigs) {
 
         this.identifier = identifier;
         this.replicators.clear();
-        for (Replicator replicator : replicators) {
+        for (ReplicationConfig replicationConfig : replicationConfigs) {
+
+            Replicator replicator;
+            if (replicationConfig instanceof TcpReplicationConfig) {
+                replicator = Replicators.tcp((TcpReplicationConfig) replicationConfig);
+            } else if (replicationConfig instanceof UdpReplicationConfig) {
+                replicator = Replicators.udp((UdpReplicationConfig) replicationConfig);
+            } else
+                throw new UnsupportedOperationException();
+
+
             this.replicators.put(replicator.getClass(), replicator);
         }
 
@@ -567,10 +578,10 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
 
-    public ChronicleMapBuilder<K, V> channel(ReplicatingChannel.ChronicleChannel replicator) {
-        this.identifier = replicator.identifier();
+    public ChronicleMapBuilder<K, V> channel(ChannelProvider.ChronicleChannel chronicleChannel) {
+        this.identifier = chronicleChannel.identifier();
         this.replicators.clear();
-        replicators.put(replicator.getClass(), replicator);
+        replicators.put(chronicleChannel.getClass(), chronicleChannel);
 
         return this;
     }
@@ -626,6 +637,13 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     public ChronicleMapBuilder<K, V> valueMarshallerAndFactory(
             @NotNull BytesMarshaller<V> valueMarshaller, @NotNull ObjectFactory<V> valueFactory) {
         valueBuilder.marshaller(valueMarshaller, valueFactory);
+        return this;
+    }
+
+    public ChronicleMapBuilder<K, V> valueMarshallerAndFactory(
+            @NotNull AgileBytesMarshaller<V> valueMarshaller,
+            @NotNull ObjectFactory<V> valueFactory) {
+        valueBuilder.agileMarshaller(valueMarshaller, valueFactory);
         return this;
     }
 
@@ -773,7 +791,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return identifier != -1;
     }
 
-    private void preMapConstruction() {
+      void preMapConstruction() {
         keyBuilder.objectSerializer(objectSerializer());
         valueBuilder.objectSerializer(objectSerializer());
 
@@ -792,7 +810,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         if (map instanceof ReplicatedChronicleMap) {
             ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;
             for (Replicator replicator : replicators.values()) {
-                Closeable token = replicator.applyTo(this, result, result);
+                Closeable token = replicator.applyTo(this, result, result, map);
                 if (replicators.size() == 1 && token.getClass() == UdpReplicator.class) {
                     LOG.warn(
                             "MISSING TCP REPLICATION : The UdpReplicator only attempts to read data " +
