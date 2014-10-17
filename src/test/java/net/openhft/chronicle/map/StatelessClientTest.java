@@ -1,12 +1,10 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.ByteBufferBytes;
 import org.junit.Test;
 import org.testng.Assert;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
@@ -33,12 +31,8 @@ public class StatelessClientTest {
 
         KeyValueSerializer keyValueSerializer = new KeyValueSerializer(builder.keyBuilder, builder.valueBuilder);
 
-        final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
-        // ByteBufferBytes in = out.slice();
-
         InetSocketAddress remote = new InetSocketAddress("localhost", 8076);
         StatelessMapClient<Integer, String> map = new StatelessMapClient<Integer, String>(keyValueSerializer, remote);
-
 
         Assert.assertEquals("EXAMPLE-10", map.get(10));
         Assert.assertEquals(1, map.size());
