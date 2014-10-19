@@ -16,8 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.map.serialization.*;
-import net.openhft.chronicle.map.serialization.impl.*;
 import net.openhft.chronicle.threadlocal.Provider;
 import net.openhft.chronicle.threadlocal.ThreadLocalCopies;
 import net.openhft.chronicle.serialization.*;
