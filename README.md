@@ -29,7 +29,10 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [JavaDoc](http://openhft.github.io/Chronicle-Map/apidocs)
 * [Getting Started Guide](https://github.com/OpenHFT/Chronicle-Map#getting-started)
  *  [Simple Construction](https://github.com/OpenHFT/Chronicle-Map#simple-construction)
- *  [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
+ *   [Maven Download](https://github.com/OpenHFT/Chronicle-Map#maven-artifact-download-1)
+ *   [Snapshot Download](https://github.com/OpenHFT/Chronicle-Map#maven-snapshot-download)
+ *   [Key Value Object Types](https://github.com/OpenHFT/Chronicle-Map#key-value-object-types)
+ *   [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
  *   [Entries](https://github.com/OpenHFT/Chronicle-Map#entries)
  *   [Size of Space Reserved on Disk](https://github.com/OpenHFT/Chronicle-Map#size-of-space-reserved-on-disk)
  *   [Chronicle Map Interface](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-interface)
@@ -119,7 +122,7 @@ product suite. In addition, The original Chronicle has been renamed to Chronicle
 ## Getting Started
 
 #### Tutorial 1 - Creating an instance of Chronicle Map
-[![ScreenShot](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-14-at-17.49.36.png)](https://www.youtube.com/watch?v=pFVv8r8ZTZ8)
+[![ScreenShot](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-14-at-17.49.36.png)](http://openhft.net/chronicle-map-video-tutorial-1/)
 
 ### Simple Construction
 
@@ -168,6 +171,30 @@ and define the snapshot version in your pom.xml, for example:
   <version>1.0.1-SNAPSHOT</version>
 </dependency>
 ```
+
+#### Key Value Object Types
+
+Unlike HashMap which will support any heap object, Chronicle Map only works with objects that it 
+can store off heap, so the objects have to be  :  (one of the following )
+
+- AutoBoxed primitives - for good performance.
+- Strings - for good performance.
+- implements Serializable  
+- implements Externalizable ( with a public default constructor ) 
+- implements our custom interface BytesMarshallable ( with a public default constructor ) - use 
+this for best performance.
+
+or value objects that are created through, a directClass interface, for example : 
+``` java
+      ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
+               .of(String.class, directClassFor(BondVOInterface.class))
+               .create(file);
+
+```
+
+Object graphs can also be included as long as the outer object supports Serializable, Externalizable or BytesMarshallable.
+
+
 #### Java Class Construction
 
 Creating an instance of Chronicle Map is a little more complexed than just calling a constructor.
@@ -199,9 +226,10 @@ the instances of Chronicle Map on the same server. The name and location of the 
 up to you.  For the best performance on many unix systems we recommend using
 [tmpfs](http://en.wikipedia.org/wiki/Tmpfs).
 
-If instead, you do not wish to replicate between process on the same server or if you are only
+If instead, you do not wish to replicate between processes on the same server or if you are only
 using TCP replication to replicate between servers, you do not have to provide the "file",
-so you can call `create()` method on ChronicleMapBuilder without file parameter:
+so you can call the `create()` method on you ChronicleMapBuilder without providing the file 
+parameter:
 ```
 ConcurrentMap<Integer, CharSequence> map = builder.create();
 ```

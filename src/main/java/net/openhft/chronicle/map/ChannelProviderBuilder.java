@@ -68,7 +68,7 @@ public final class ChannelProviderBuilder {
                     replicatingCluster.asReplica,
                     replicatingCluster.asEntryExternalizable,
                     tcpReplicationConfig,
-                    maxEntrySize);
+                    maxEntrySize, null);
             replicatingCluster.add(tcpReplicator);
         }
 

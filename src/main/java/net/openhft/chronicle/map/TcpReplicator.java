@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.ByteBufferBytes;
+import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +33,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
+import static net.openhft.chronicle.map.StatelessMapClient.EventId.HEARTBEAT;
 
 /**
- * Used with a {@see net.openhft.map.ReplicatedSharedHashMap} to send data between the maps using a socket
- * connection <p/> {@see net.openhft.map.OutSocketReplicator}
+ * Used with a {@see net.openhft.map.ReplicatedSharedHashMap} to send data between the maps using a
+ * socket connection <p/> {@see net.openhft.map.OutSocketReplicator}
  *
  * @author Rob Austin.
  */
@@ -43,6 +45,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
     private static final int BUFFER_SIZE = 0x100000; // 1MB
+    public static final int STATELESS_CLIENT = -127;
+    public static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
 
     private final SelectionKey[] selectionKeysStore = new SelectionKey[Byte.MAX_VALUE + 1];
     // used to instruct the selector thread to set OP_WRITE on a key correlated by the bit index in the
@@ -57,22 +61,28 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     private final Replica.EntryExternalizable externalizable;
     private final TcpReplicationConfig replicationConfig;
 
+    private final StatelessServerConnector statelessServerConnector;
+
     private long selectorTimeout;
 
     /**
-     * @param maxEntrySizeBytes used to check that the last entry will fit into the buffer, it can not be
-     *                          smaller than the size of and entry, if it is set smaller the buffer will over
-     *                          flow, it can be larger then the entry, but setting it too large reduces the
-     *                          workable space in the buffer.
+     * @param maxEntrySizeBytes        used to check that the last entry will fit into the buffer,
+     *                                 it can not be smaller than the size of and entry, if it is
+     *                                 set smaller the buffer will over flow, it can be larger then
+     *                                 the entry, but setting it too large reduces the workable
+     *                                 space in the buffer.
+     * @param statelessServerConnector
      * @throws IOException
      */
     TcpReplicator(@NotNull final Replica replica,
                   @NotNull final Replica.EntryExternalizable externalizable,
                   @NotNull final TcpReplicationConfig replicationConfig,
-                  final int maxEntrySizeBytes) throws IOException {
+                  final int maxEntrySizeBytes,
+                  StatelessServerConnector statelessServerConnector) throws IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig(),
                 maxEntrySizeBytes);
+        this.statelessServerConnector = statelessServerConnector;
 
         final ThrottlingConfig throttlingConfig = replicationConfig.throttlingConfig();
         long throttleBucketInterval = TimeUnit.MILLISECONDS.convert(throttlingConfig
@@ -251,7 +261,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     }
 
     /**
-     * check to see if we have lost connection with the remote node and if we have attempts a reconnect.
+     * check to see if we have lost connection with the remote node and if we have attempts a
+     * reconnect.
      *
      * @param key               the key relating to the heartbeat that we are checking
      * @param approxTimeOutTime the approximate time in milliseconds
@@ -374,8 +385,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     }
 
     /**
-     * this can be called when a new CHM is added to a cluster, we have to rebootstrap so will clear all the
-     * old bootstrap information
+     * this can be called when a new CHM is added to a cluster, we have to rebootstrap so will clear
+     * all the old bootstrap information
      *
      * @param key the nio SelectionKey
      */
@@ -387,7 +398,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     }
 
     /**
-     * used to exchange identifiers and timestamps and heartbeat intervals between the server and client
+     * used to exchange identifiers and timestamps and heartbeat intervals between the server and
+     * client
      *
      * @param key           the SelectionKey relating to the this cha
      * @param socketChannel
@@ -403,6 +415,11 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         if (attached.remoteIdentifier == Byte.MIN_VALUE) {
 
             final byte remoteIdentifier = reader.identifierFromBuffer();
+
+            if (remoteIdentifier == STATELESS_CLIENT) {
+                attached.handShakingComplete = true;
+                return;
+            }
 
             if (remoteIdentifier == Byte.MIN_VALUE)
                 return;
@@ -425,7 +442,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             final SocketAddress remoteAddress = socketChannel.getRemoteAddress();
 
 
-            if ( (identifierListener != null && !identifierListener.isIdentifierUnique(remoteIdentifier,
+            if ((identifierListener != null && !identifierListener.isIdentifierUnique(remoteIdentifier,
                     remoteAddress)) || remoteIdentifier == localIdentifier)
 
                 // throwing this exception will cause us to disconnect, both the client and server
@@ -477,7 +494,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             // now we're finished we can get on with reading the entries
             attached.handShakingComplete = true;
             attached.remoteModificationIterator.dirtyEntries(attached.remoteBootstrapTimestamp);
-            reader.entriesFromBuffer();
+            reader.entriesFromBuffer(attached);
         }
     }
 
@@ -531,17 +548,17 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         attached.entryReader.lastHeartBeatReceived = approxTime;
 
         if (attached.isHandShakingComplete()) {
-            attached.entryReader.entriesFromBuffer();
+            attached.entryReader.entriesFromBuffer(attached);
         } else {
             doHandShaking(key, socketChannel);
         }
     }
 
     /**
-     * sets interestOps to "selector keys",The change to interestOps much be on the same thread as the
-     * selector. This  class, allows via {@link AbstractChannelReplicator .KeyInterestUpdater#set(int)}  to
-     * holds a pending change  in interestOps ( via a bitset ), this change is processed later on the same
-     * thread as the selector
+     * sets interestOps to "selector keys",The change to interestOps much be on the same thread as
+     * the selector. This  class, allows via {@link AbstractChannelReplicator
+     * .KeyInterestUpdater#set(int)}  to holds a pending change  in interestOps ( via a bitset ),
+     * this change is processed later on the same thread as the selector
      */
     private static class KeyInterestUpdater {
 
@@ -572,8 +589,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         }
 
         /**
-         * @param keyIndex the index of the key that has changed, the list of keys is provided by the
-         *                 constructor {@link KeyInterestUpdater(int, SelectionKey[])}
+         * @param keyIndex the index of the key that has changed, the list of keys is provided by
+         *                 the constructor {@link KeyInterestUpdater(int, SelectionKey[])}
          */
         public void set(int keyIndex) {
             changeOfOpWriteRequired.set(keyIndex);
@@ -774,11 +791,18 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
 
         /**
+         * @return the buffer messages can be written to
+         */
+        Bytes buffer() {
+            return in;
+        }
+
+        /**
          * writes the timestamp into the buffer
          *
          * @param localIdentifier the current nodes identifier
          */
-        void identifierToBuffer(final int localIdentifier) {
+        void identifierToBuffer(final byte localIdentifier) {
             in.writeByte(localIdentifier);
         }
 
@@ -792,7 +816,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         }
 
         /**
-         * writes all the entries that have changed, to the buffer which will later be written to TCP/IP
+         * writes all the entries that have changed, to the buffer which will later be written to
+         * TCP/IP
          *
          * @param modificationIterator a record of which entries have modification
          * @param selectionKey
@@ -804,7 +829,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             final SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
             final Attached attached = (Attached) selectionKey.attachment();
 
-            // this can occur when new CHM's are added to a cluster
+            // this can occur when new map are added to a channel
             final boolean handShakingComplete = attached.isHandShakingComplete();
 
             for (; ; ) {
@@ -867,9 +892,15 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         }
 
         /**
-         * used to send an single zero byte if we have not send any data for up to the localHeartbeatInterval
+         * used to send an single zero byte if we have not send any data for up to the
+         * localHeartbeatInterval
          */
         private void writeHeartbeatToBuffer() {
+
+            // denotes the state - 0 for a heartbeat
+            in.writeByte(HEARTBEAT.ordinal());
+
+            // denotes the size in bytes
             in.writeUnsignedShort(0);
         }
 
@@ -879,8 +910,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
 
         /**
-         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE will get
-         * added back in as soon as we have data to write
+         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE
+         * will get added back in as soon as we have data to write
          *
          * @param socketChannel the socketChannel we wish to stop writing to
          * @param attached      data associated with the socketChannels key
@@ -914,8 +945,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         private final ByteBuffer in;
         private final ByteBufferBytes out;
         public long lastHeartBeatReceived = System.currentTimeMillis();
-        // we use Integer.MIN_VALUE as N/A
-        private int sizeOfNextEntry = Integer.MIN_VALUE;
+
+        private int sizeInBytes;
+        private byte state;
 
         private TcpSocketChannelEntryReader() {
             in = ByteBuffer.allocateDirect(replicationConfig.packetSize() + maxEntrySizeBytes);
@@ -943,45 +975,79 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         /**
          * reads entries from the buffer till empty
          *
+         * @param attached
          * @throws InterruptedException
          */
-        private void entriesFromBuffer() throws InterruptedException, IOException {
-
+        private void entriesFromBuffer(Attached attached) throws InterruptedException, IOException {
             for (; ; ) {
 
                 out.limit(in.position());
 
                 // its set to MIN_VALUE when it should be read again
-                if (sizeOfNextEntry == Integer.MIN_VALUE) {
-                    if (out.remaining() < SIZE_OF_SHORT) {
+                if (state == NOT_SET) {
+                    if (out.remaining() < SIZE_OF_SHORT + 1 ) {
                         return;
                     }
 
-                    int value = out.readUnsignedShort();
+                    // state is used for both heartbeat and stateless
+                    state = out.readByte();
 
-                    // this is the heartbeat
-                    if (value == 0)
+
+
+                    sizeInBytes = out.readUnsignedShort();
+
+                    if (state == 0 && sizeInBytes != 0) {
+                        int i = 1;
+                    }
+
+                    // this is the :
+                    //  -- heartbeat if its 0
+                    //  -- stateful update if its 1
+                    //  -- the id of the stateful event
+                    if (state == NOT_SET)
                         continue;
-
-                    sizeOfNextEntry = value;
                 }
 
 
-                if (out.remaining() < sizeOfNextEntry) {
+
+                if (out.remaining() < sizeInBytes) {
                     return;
                 }
 
-                final long nextEntryPos = out.position() + sizeOfNextEntry;
+                if (sizeInBytes == 0) {
+                    int j = 1;
+                }
+
+
+                final long nextEntryPos = out.position() + sizeInBytes;
                 final long limit = out.limit();
                 out.limit(nextEntryPos);
-                externalizable.readExternalEntry(out);
+
+                boolean isStateless = (state != 1);
+
+                if (isStateless) {
+                    if (statelessServerConnector == null) {
+
+                        LOG.error("", new IllegalArgumentException("received an event " +
+                                "from a stateless map, stateless maps are not " +
+                                "currently supported when using Chronicle Channels"));
+                    } else
+
+                        statelessServerConnector.processStatelessEvent(state,
+                                out, attached.entryWriter.buffer());
+                    // to allow the sizeInBytes to be read the next time around
+
+
+                } else
+                    externalizable.readExternalEntry(out);
 
                 out.limit(limit);
                 // skip onto the next entry
                 out.position(nextEntryPos);
 
-                // to allow the sizeOfNextEntry to be read the next time around
-                sizeOfNextEntry = Integer.MIN_VALUE;
+
+                state = NOT_SET;
+                sizeInBytes = 0;
             }
 
         }
@@ -1016,7 +1082,12 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
          * @return the timestamp or -1 if unsuccessful
          */
         long remoteBootstrapTimestamp() {
-            return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
+            if (out.remaining() >= 8)
+                return out.readLong();
+            else
+                return Long.MIN_VALUE;
+
+          //  return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
         }
 
         public long remoteHeartbeatIntervalFromBuffer() {

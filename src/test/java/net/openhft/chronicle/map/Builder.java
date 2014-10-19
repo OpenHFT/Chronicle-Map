@@ -21,8 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Rob Austin.
@@ -69,7 +68,7 @@ public class Builder {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(serverPort, endpoints)
-                .heartBeatInterval(1L, SECONDS);
+                .heartBeatInterval(1L, TimeUnit.SECONDS);
         return ChronicleMapBuilder.of(kClass, vClass)
                 .entries(20000L)
                 .replicators(identifier,  tcpConfig);

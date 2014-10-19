@@ -41,6 +41,7 @@ public abstract class Replicator {
      *                            map configurations, not accessible via the map instance.
      * @param map                 a replicated map instance. Provides basic tools for replication implementation.
      * @param entryExternalizable the callback for ser/deser implementation in the replicator
+     * @param chronicleMap
      * @return a {@code Closeable} token to control replication resources.
      * It should be closed on closing the replicated map.
      * @throws java.io.IOException   if an io error occurred during the replicator setup
@@ -49,6 +50,6 @@ public abstract class Replicator {
      *                               applied to a map (or the specified number of maps)
      */
     protected abstract Closeable applyTo(ChronicleMapBuilder builder,
-                                         Replica map, Replica.EntryExternalizable entryExternalizable)
+                                         Replica map, Replica.EntryExternalizable entryExternalizable, final ChronicleMap chronicleMap)
             throws IOException;
 }

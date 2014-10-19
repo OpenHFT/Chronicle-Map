@@ -34,9 +34,8 @@ public class OSResizesMain {
     public static void main(String[] args) throws IOException, InterruptedException {
         File file = File.createTempFile("over-sized", "deleteme");
         ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class)
-
-                .entrySize(1024 * 1024)
-                .entries(1024 * 1024)
+                .entrySize(100 * 1024 * 1024)
+                .entries(1000000)
                 .create(file);
         for (int i = 0; i < 10000; i++) {
             char[] chars = new char[i];
@@ -48,6 +47,10 @@ public class OSResizesMain {
                 file.length() / 1e9,
                 run("du", "-h", file.getAbsolutePath()).split("\\s")[0],
                 run("grep", "over-sized", "/proc/" + Jvm.getProcessId() + "/maps").split("\\s")[0]);
+        // show up in top.
+        long time = System.currentTimeMillis();
+        while (time + 20000 > System.currentTimeMillis())
+            Thread.yield();
         map.close();
         file.delete();
     }
