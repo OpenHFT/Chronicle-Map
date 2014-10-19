@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization;
+package net.openhft.chronicle.serialization;
 
 import net.openhft.lang.io.Bytes;
 
-public interface MetaBytesInterop<E, I> extends MetaBytesWriter<E, I> {
+import java.io.Serializable;
 
-    boolean startsWith(I interop, Bytes bytes, E e);
+public interface SizeMarshaller extends Serializable {
 
-    long hash(I interop, E e);
+    int sizeEncodingSize(long size);
 
+    void writeSize(Bytes bytes, long size);
+
+    long readSize(Bytes bytes);
 }

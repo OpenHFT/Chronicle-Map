@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization.impl;
+package net.openhft.chronicle.serialization.impl;
 
-import net.openhft.chronicle.map.serialization.BytesReader;
+import net.openhft.chronicle.serialization.BytesReader;
 import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.pool.CharSequenceInterner;
-import net.openhft.chronicle.map.threadlocal.StatefulCopyable;
+import net.openhft.chronicle.threadlocal.StatefulCopyable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

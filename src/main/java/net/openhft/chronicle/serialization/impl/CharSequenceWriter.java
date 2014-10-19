@@ -14,34 +14,32 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization;
+package net.openhft.chronicle.serialization.impl;
 
-import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.serialization.BytesWriter;
+import net.openhft.lang.io.AbstractBytes;
+import net.openhft.lang.io.Bytes;
 
 import java.io.ObjectStreamException;
 
-public final class DelegatingMetaBytesInteropProvider<E, I extends BytesInterop<E>>
-        implements MetaProvider<E, I, MetaBytesInterop<E, I>> {
+public final class CharSequenceWriter<CS extends CharSequence> implements BytesWriter<CS> {
     private static final long serialVersionUID = 0L;
-    private static final DelegatingMetaBytesInteropProvider INSTANCE =
-            new DelegatingMetaBytesInteropProvider();
+    private static final CharSequenceWriter INSTANCE = new CharSequenceWriter();
 
-    public static <E, I extends BytesInterop<E>>
-    MetaProvider<E, I, MetaBytesInterop<E, I>> instance() {
+    public static <CS extends CharSequence> CharSequenceWriter<CS> instance() {
         return INSTANCE;
     }
 
-    private DelegatingMetaBytesInteropProvider() {}
+    private CharSequenceWriter() {}
 
     @Override
-    public MetaBytesInterop<E, I> get(ThreadLocalCopies copies,
-                                      MetaBytesInterop<E, I> originalMetaWriter, I writer, E e) {
-        return originalMetaWriter;
+    public long size(CS s) {
+        return AbstractBytes.findUTFLength(s, s.length());
     }
 
     @Override
-    public ThreadLocalCopies getCopies(ThreadLocalCopies copies) {
-        return copies;
+    public void write(Bytes bytes, CS s) {
+        AbstractBytes.writeUTF0(bytes, s, s.length());
     }
 
     private Object readResolve() throws ObjectStreamException {

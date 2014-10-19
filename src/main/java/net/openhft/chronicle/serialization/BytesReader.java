@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization;
+package net.openhft.chronicle.serialization;
 
 import net.openhft.lang.io.Bytes;
 
 import java.io.Serializable;
 
-public interface BytesWriter<E> extends Serializable {
+public interface BytesReader<E> extends Serializable {
 
-    long size(E e);
+    E read(Bytes bytes, long size);
 
-    void write(Bytes bytes, E e);
+    E read(Bytes bytes, long size, E e);
 }

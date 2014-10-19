@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.threadlocal;
+package net.openhft.chronicle.threadlocal;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
