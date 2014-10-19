@@ -24,6 +24,7 @@ import net.openhft.chronicle.serialization.AgileBytesMarshaller;
 import net.openhft.chronicle.serialization.MetaBytesInterop;
 import net.openhft.chronicle.serialization.MetaBytesWriter;
 import net.openhft.chronicle.serialization.MetaProvider;
+import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.chronicle.threadlocal.Provider;
 import net.openhft.chronicle.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.Maths;
@@ -66,9 +67,8 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
  *
  * <p>Use static {@link #of(Class, Class)} method to obtain a {@code ChronicleMapBuilder} instance.
  *
- * <p>{@code ChronicleMapBuilder} is mutable. Configuration methods mutate the builder and return <i>the
- * builder itself</i> back to support chaining pattern, rather than the builder copies with the corresponding
- * configuration changed. To make an independent configuration, {@linkplain #clone} the builder.
+ * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
+ * documentation.
  *
  * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
  * ChronicleMapBuilder}", unless specified different, because theoretically someone might provide {@code
@@ -85,6 +85,8 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
  *
  * @param <K> key type of the maps, produced by this builder
  * @param <V> value type of the maps, produced by this builder
+ * @see ChronicleMap
+ * @see ChronicleSetBuilder
  */
 public class ChronicleMapBuilder<K, V> implements Cloneable,
         ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>> {
@@ -587,6 +589,13 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     @Override
+    public ChronicleMapBuilder<K, V> disableReplication() {
+        identifier = -1;
+        replicators.clear();
+        return this;
+    }
+
+    @Override
     public ChronicleMapBuilder<K, V> timeProvider(TimeProvider timeProvider) {
         this.timeProvider = timeProvider;
         return this;
@@ -615,6 +624,22 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
                 objectSerializer;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Example: <pre>{@code Map<Key, Value> map =
+     *     ChronicleMapBuilder.of(Key.class, Value.class)
+     *     .entries(1_000_000)
+     *     .keySize(50).valueSize(200)
+     *     // this class hasn't implemented yet, just for example
+     *     .objectSerializer(new KryoObjectSerializer())
+     *     .create();}</pre>
+     *
+     * <p>This serializer is used to serialize both keys and values, if they both require this:
+     * loosely typed, nullable, and custom {@linkplain #keyMarshaller(BytesMarshaller) key}
+     * and {@linkplain #valueMarshallerAndFactory(BytesMarshaller, ObjectFactory) value} marshallers
+     * are not configured.
+     */
     @Override
     public ChronicleMapBuilder<K, V> objectSerializer(ObjectSerializer objectSerializer) {
         this.objectSerializer = objectSerializer;
@@ -622,6 +647,11 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Example:
+     */
     @Override
     public ChronicleMapBuilder<K, V> keyMarshaller(@NotNull BytesMarshaller<K> keyMarshaller) {
         keyBuilder.marshaller(keyMarshaller, null);

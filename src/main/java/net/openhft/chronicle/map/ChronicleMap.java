@@ -24,8 +24,6 @@ import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.model.Byteable;
 
 import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 

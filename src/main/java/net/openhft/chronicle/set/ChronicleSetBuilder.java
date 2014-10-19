@@ -30,7 +30,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-
+/**
+ * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations,
+ * could be used as a classic builder and/or factory.
+ *
+ * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
+ * documentation.
+ *
+ * @param <E> element type of the sets, created by this builder
+ * @see ChronicleSet
+ * @see ChronicleMapBuilder
+ */
 public class ChronicleSetBuilder<E>
         implements ChronicleHashBuilder<E, ChronicleSet<E>, ChronicleSetBuilder<E>> {
 
@@ -175,6 +185,12 @@ public class ChronicleSetBuilder<E>
         return this;
     }
 
+    @Override
+    public ChronicleSetBuilder<E> disableReplication() {
+        chronicleMapBuilder.disableReplication();
+        return this;
+    }
+
 
     @Override
     public String toString() {
@@ -209,6 +225,16 @@ public class ChronicleSetBuilder<E>
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p> Example: <pre>{@code Set<Key> set = ChronicleSetBuilder.of(Key.class)
+     *     .entries(1_000_000)
+     *     .keySize(100)
+     *     // this class hasn't implemented yet, just for example
+     *     .objectSerializer(new KryoObjectSerializer())
+     *     .create();}</pre>
+     */
     @Override
     public ChronicleSetBuilder<E> objectSerializer(ObjectSerializer objectSerializer) {
         chronicleMapBuilder.objectSerializer(objectSerializer);
