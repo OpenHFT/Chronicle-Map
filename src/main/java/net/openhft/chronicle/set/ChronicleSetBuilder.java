@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations,
- * could be used as a classic builder and/or factory.
+ * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could
+ * be used as a classic builder and/or factory.
  *
  * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
  * documentation.
@@ -97,9 +97,9 @@ public class ChronicleSetBuilder<E>
      *     .keySize(10)
      *     .create();}</pre>
      *
-     * <p>(Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded (and each
-     * character takes 2 bytes on-heap), because default off-heap {@link String} encoding is UTF-8 in {@code
-     * ChronicleSet}.)
+     * <p>(Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded
+     * (and each character takes 2 bytes on-heap), because default off-heap {@link String} encoding
+     * is UTF-8 in {@code ChronicleSet}.)
      *
      * @see #constantKeySizeBySample(Object)
      * @see #entrySize(int)
@@ -129,13 +129,13 @@ public class ChronicleSetBuilder<E>
     /**
      * {@inheritDoc}
      *
-     * <p>In fully default case you can expect entry size to be about 120-130 bytes. But it is strongly
-     * recommended always to configure {@linkplain #keySize(int) key size}, if they couldn't be derived
-     * statically.
+     * <p>In fully default case you can expect entry size to be about 120-130 bytes. But it is
+     * strongly recommended always to configure {@linkplain #keySize(int) key size}, if they
+     * couldn't be derived statically.
      *
      * <p>If entry size is not configured explicitly by calling this method, it is computed based on
-     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size}, plus a few
-     * bytes required by implementations.
+     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size},
+     * plus a few bytes required by implementations.
      */
     @Override
     public ChronicleSetBuilder<E> entrySize(int entrySize) {
@@ -250,6 +250,12 @@ public class ChronicleSetBuilder<E>
     @Override
     public ChronicleSetBuilder<E> immutableKeys() {
         chronicleMapBuilder.immutableKeys();
+        return this;
+    }
+
+    @Override
+    public ChronicleSetBuilder<E> stateless(boolean isStateless) {
+        chronicleMapBuilder.stateless(isStateless);
         return this;
     }
 

@@ -130,6 +130,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     private V defaultValue = null;
     private DefaultValueProvider<K, V> defaultValueProvider = null;
     private byte identifier = -1;
+    private boolean isStateless;
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
@@ -731,6 +732,14 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
+
+
+    @Override
+    public ChronicleMapBuilder<K, V> stateless(boolean isStateless) {
+        this.isStateless = isStateless;
+        return this;
+    }
+
     /**
      * Non-public because should be called only after {@link #preMapConstruction()}
      */
@@ -805,6 +814,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         map.createMappedStoreAndSegments(bytesStore);
         return establishReplication(map);
     }
+
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {
         preMapConstruction();

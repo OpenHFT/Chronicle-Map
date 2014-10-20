@@ -62,7 +62,7 @@ abstract class AbstractChannelReplicator implements Closeable {
             throws IOException {
         executorService = Executors.newSingleThreadExecutor(
                 new NamedThreadFactory(name, true));
-        selector = openSelector();
+        selector = openSelector(closeables);
 
         throttler = throttlingConfig.throttling(DAYS) > 0 ?
                 new Throttler(selector,
@@ -70,7 +70,7 @@ abstract class AbstractChannelReplicator implements Closeable {
                         maxEntrySizeBytes, throttlingConfig.throttling(DAYS)) : null;
     }
 
-    Selector openSelector() throws IOException {
+    static Selector openSelector(final CloseablesManager closeables) throws IOException {
         Selector result = null;
         try {
             result = Selector.open();
@@ -81,7 +81,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         return result;
     }
 
-    SocketChannel openSocketChannel() throws IOException {
+   static SocketChannel openSocketChannel(final CloseablesManager closeables) throws IOException {
         SocketChannel result = null;
 
         try {

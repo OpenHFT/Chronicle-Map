@@ -729,7 +729,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         SelectableChannel doConnect() throws IOException, InterruptedException {
             boolean success = false;
 
-            final SocketChannel socketChannel = openSocketChannel();
+            final SocketChannel socketChannel = openSocketChannel(TcpReplicator.this.closeables);
 
             try {
                 socketChannel.configureBlocking(false);
