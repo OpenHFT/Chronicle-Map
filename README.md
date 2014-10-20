@@ -975,7 +975,7 @@ public class YourClass {
 
 # Example : Creating a Chronicle Set and adding data to it
 
-This project also provideds the Chronicle Set, Chronicle Set is built on Chronicle Map, so the builder configuration are almost identical to Chronicle Map ( see above ), this example shows how to create a simple off heap set
+This project also provides the Chronicle Set, `ChronicleSet` is built on Chronicle Map, so the builder configuration are almost identical to `ChronicleMap` ( see above ), this example shows how to create a simple off heap set
 ``` java 
         Set<Integer> set = ChronicleSetBuilder.of(Integer.class).create();
         
@@ -989,13 +989,13 @@ and just like map it support shared memory and TCP replication.
 
 ### Tuning Chronicle Map with Large Data 
 
-Generally speaking Chronicle Map is slower then ConcurrentHashMap for a small number of entries, but
+Generally speaking `ChronicleMap` is slower then ConcurrentHashMap for a small number of entries, but
 for a large number of entries ConcurrentHashMap doesn't scale as well as Chronicle Map, especially
 when you start running low on heap. ConcurrentHashMap quickly becomes unusable whereas Chronicle Map
 can still work when it is 20 times the size of a ConcurrentHashMap with an Out of Memory Error.
   
 For example with a heap of 3/4 of say 32 GB main memory, you might get say 100 million entries but
-when using most of the heap you might see 20-40 second gc pauses with Chronicle Map you could have
+when using most of the heap you might see 20-40 second gc pauses with `ChronicleMap` you could have
 1000 million entries and see < 100 ms pauses (depending on your disk subsystem and how fast you
 write your data)
 
@@ -1020,12 +1020,12 @@ overhead per entry of 16 - 24 bytes adding another 20 GB.
 So while the virtual memory is 270 GB, it is expected that for 500 M entries you will be trying to
 use no more than 20 GB (overhead/hash tables) + ~120 GB (entries)
 
-When Chronicle Map has exhausted all the memory on your server, its not going to be so fast, for a
+When `ChronicleMap` has exhausted all the memory on your server, its not going to be so fast, for a
 random access pattern you are entirely dependant on how fast your underlying disk is. If your home
 directory is an HDD and its performance is around 125 IOPS (I/Os per second). Each lookup takes two
 memory accesses so you might get around 65 lookups per second. For 100-200K operations you can
 expect around 1600 seconds or 25-50 minutes. If you use an SSD, it can get around 230 K IOPS, or
-about 115 K Chronicle Map lookups per second.
+about 115 K `ChronicleMap` lookups per second.
 
 
 ### Lock contention
@@ -1071,9 +1071,9 @@ Chronicle Map assumes every entry is the same size and if you have 10kB-20kB ent
 can be using 20 kB of virtual memory or at least 12 KB of actual memory (since virtual memory turns
 into physical memory in multiples of a page)
 
-As the Chronicle Map gets larger the most important factor is the use of CPU cache rather than main
+As the `ChronicleMap` gets larger the most important factor is the use of CPU cache rather than main
 memory, performance is constrained by the number of cache lines you have to touch to update/read an
-entry. For large entries this is much the same as ConcurrentHashMap.  In this case, Chronicle Map is
+entry. For large entries this is much the same as ConcurrentHashMap.  In this case, `ChronicleMap` is
 not worse than ConcurrentHashMap but not much better.
 
 For large key/values it is not total memory use but other factors which matter such as;
@@ -1092,7 +1092,7 @@ For large key/values it is not total memory use but other factors which matter s
 
 
 ### ConcurrentHashMap v ChronicleMap
-ConcurrentHashMap ( CHM ) outperforms Chronicle Map ( CM ) on throughput.  If you don't need
+ConcurrentHashMap ( CHM ) outperforms `ChronicleMap` ( CM ) on throughput.  If you don't need
 the extra features SharedHashMap gives you, it is not worth the extra complexity it brings.
 i.e. don't use it just because you think it is cool. The test can be found in
 [ChronicleMapTest](https://github.com/OpenHFT/Chronicle-Map/blob/master/src/test/java/net/openhft/chronicle/map/ChronicleMapTest.java)
@@ -1117,10 +1117,10 @@ counter.  The update increments the counter once in each thread, creating an new
 _*HashMap refers to ConcurrentHashMap, Chronicle refers to Chronicle Map_
 
 Notes:
-* Chronicle Map was tested with a 32 MB heap, CHM was test with a 100 GB heap.
-* The Chronicle Map test had a small minor GC on startup of 0.5 ms, but not during the test.
+* `ChronicleMap` was tested with a 32 MB heap, CHM was test with a 100 GB heap.
+* The `ChronicleMap` test had a small minor GC on startup of 0.5 ms, but not during the test.
   This is being investigated.
-* Chronicle Map was tested "writing" to a tmpfs file system.
+* `ChronicleMap` was tested "writing" to a tmpfs file system.
 
 #### How does it perform when persisted?
 
