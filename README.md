@@ -652,7 +652,7 @@ A stateless client is an instance of a ChronicleMap or a ChronicleSet that does 
 }
 ```
 
-This example above, creates an Chronicle Map ( statefull instance ) running on port 8076, 
+This example above, creates a Chronicle Map ( statefull instance ) running on port 8076, 
 It creates a "statelessMap" and connects to it via :
 
 ``` java
