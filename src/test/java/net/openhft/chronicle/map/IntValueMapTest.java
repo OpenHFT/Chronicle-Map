@@ -24,7 +24,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 import static org.junit.Assert.assertEquals;
 
 
@@ -39,8 +38,7 @@ public class IntValueMapTest {
         final ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class)
                 .entries(20000)
-                .keyMarshaller(ByteableIntValueMarshaller.INSTANCE)
-                .create(getPersistenceFile());
+                .keyMarshaller(ByteableIntValueMarshaller.INSTANCE).create();
 
         IntValue$$Native value = new IntValue$$Native();
         value.bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);

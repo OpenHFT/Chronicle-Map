@@ -130,6 +130,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     private byte identifier = -1;
 
     private StatelessBuilder statelessBuilder;
+    private File file;
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
@@ -672,6 +673,12 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
+    @Override
+    public ChronicleMapBuilder<K, V> file(File file) throws IOException {
+        this.file = file;
+        return this;
+    }
+
     public ChronicleMapBuilder<K, V> valueMarshallerAndFactory(
             @NotNull BytesMarshaller<V> valueMarshaller, @NotNull ObjectFactory<V> valueFactory) {
         valueBuilder.marshaller(valueMarshaller, valueFactory);
@@ -759,8 +766,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return new ConstantValueProvider<K, V>(defaultValue, metaValueWriter, valueWriter);
     }
 
-    @Override
-    public ChronicleMap<K, V> create(File file) throws IOException {
+    public ChronicleMap<K, V> createWithFile(File file) throws IOException {
         for (int i = 0; i < 10; i++) {
             if (file.exists() && file.length() > 0) {
                 FileInputStream fis = new FileInputStream(file);
@@ -810,10 +816,14 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     @Override
     public ChronicleMap<K, V> create() throws IOException {
 
-        if (statelessBuilder != null) {
+        if (statelessBuilder != null)
             return createStatelessMap(statelessBuilder);
-        }
 
+            return (file != null) ? createWithFile(file) : createWithoutFile();
+
+    }
+
+    private ChronicleMap<K, V> createWithoutFile() throws IOException {
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap();
         BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
                 map.sizeInBytes(), true);
@@ -824,11 +834,10 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     private ChronicleMap<K, V> createStatelessMap(StatelessBuilder statelessBuilder) throws IOException {
         preMapConstruction();
 
-        KeyValueSerializer keyValueSerializer = new KeyValueSerializer(this.keyBuilder,
-                this.valueBuilder);
+        final KeyValueSerializer<K, V> keyValueSerializer
+                = new KeyValueSerializer<K, V>(keyBuilder, valueBuilder);
 
-        return new StatelessMapClient<K, V>(keyValueSerializer,
-                statelessBuilder);
+        return new StatelessMapClient<K, V>(keyValueSerializer, statelessBuilder);
     }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {

@@ -48,49 +48,55 @@ public class ChronicleMapTest extends JSR166TestCase {
 
     static ChronicleMap<Integer, CharSequence> newShmIntString(int size) throws IOException {
 
+        ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .entries(size).file(getPersistenceFile());
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .entries(size)
-                .create(getPersistenceFile());
+                .entries(size).create();
 
     }
 
     static ChronicleMap<ArrayList, CharSequence> newShmListBoolean(int size) throws IOException {
 
+        ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
+
+                .entries(size).file(getPersistenceFile());
         return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
 
-                .entries(size).create(getPersistenceFile());
+                .entries(size).create();
 
     }
 
 
     static ChronicleMap<ArrayList, CharSequence> newShmListBoolean() throws IOException {
 
-        return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
-
-                .create(getPersistenceFile());
+        ChronicleMapBuilder.of(ArrayList.class, CharSequence.class).file(getPersistenceFile());
+        return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class).create();
 
     }
 
     static ChronicleMap<CharSequence, CharSequence> newShmStringString(int size) throws IOException {
 
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+
+                .entries(size).file(getPersistenceFile());
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
 
-                .entries(size).create(getPersistenceFile());
+                .entries(size).create();
 
     }
 
 
     static ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
 
-        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-
-                .create(getPersistenceFile());
+        ChronicleMapBuilder.of(Integer.class, CharSequence.class).file(getPersistenceFile());
+        return ChronicleMapBuilder.of(Integer.class, CharSequence.class).create();
 
     }
 
     static ChronicleMap<BI, Boolean> newShmBiBoolean() throws IOException {
 
-        return ChronicleMapBuilder.of(BI.class, Boolean.class).create(getPersistenceFile());
+        ChronicleMapBuilder.of(BI.class, Boolean.class).file(getPersistenceFile());
+        return ChronicleMapBuilder.of(BI.class, Boolean.class).create();
 
     }
 

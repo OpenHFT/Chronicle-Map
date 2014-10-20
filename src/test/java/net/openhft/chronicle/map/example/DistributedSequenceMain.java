@@ -12,11 +12,13 @@ public class DistributedSequenceMain {
 
     public static void main(String... ignored) throws IOException {
         Class<LongValue> longValueClass = DataValueClasses.directClassFor(LongValue.class);
+        ChronicleMapBuilder.of(String.class, longValueClass)
+                        .entries(128)
+                        .actualSegments(1).file(new File("/tmp/counters"));
         ChronicleMap<String, LongValue> map =
                 ChronicleMapBuilder.of(String.class, longValueClass)
                         .entries(128)
-                        .actualSegments(1)
-                        .create(new File("/tmp/counters"));
+                        .actualSegments(1).create();
         LongValue value = DataValueClasses.newDirectReference(longValueClass);
         map.acquireUsing("sequence", value);
 

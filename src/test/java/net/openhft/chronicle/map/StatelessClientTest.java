@@ -8,7 +8,6 @@ import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.StatelessBuilder.remoteAddress;
-import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 import static net.openhft.chronicle.map.TcpReplicationConfig.of;
 
 /**
@@ -28,8 +27,7 @@ public class StatelessClientTest {
 
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(20000L)
-                    .replicators((byte) 2, of(8076).heartBeatInterval(1L, SECONDS))
-                    .create(getPersistenceFile());
+                    .replicators((byte) 2, of(8076).heartBeatInterval(1L, SECONDS)).create();
 
             serverMap.put(10, "EXAMPLE-10");
         }

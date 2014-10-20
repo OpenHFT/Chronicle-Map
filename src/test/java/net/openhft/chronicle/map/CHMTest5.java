@@ -41,8 +41,8 @@ public class CHMTest5 {
         //// end of test
 
         String chmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "CHMTest5";
-        ChronicleMap<String, CHMTest5Data> theSharedMap = builder
-                .create(new File(chmPath));
+
+        ChronicleMap<String, CHMTest5Data> theSharedMap = builder.file(new File(chmPath)).create();
 
         //Now get the shared data object, auto-creating if it's not there
         CHMTest5Data data = DataValueClasses.newDirectReference(CHMTest5Data.class);

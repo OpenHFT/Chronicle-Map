@@ -51,13 +51,11 @@ public class TwoMapOnDifferentServers {
         File persistenceFile = getPersistenceFile();
         map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
-                .replicators((byte) 1, tcpConfig)
-                .create(persistenceFile);
+                .replicators((byte) 1, tcpConfig).create();
 
         map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
-                .replicators((byte) 2, of(8077).heartBeatInterval(1, SECONDS))
-                .create(persistenceFile);
+                .replicators((byte) 2, of(8077).heartBeatInterval(1, SECONDS)).create();
     }
 
     @After

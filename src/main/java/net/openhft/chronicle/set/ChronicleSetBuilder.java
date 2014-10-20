@@ -261,9 +261,9 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSet<E> create(File file) throws IOException {
-        final ChronicleMap<E, DummyValue> map = chronicleMapBuilder.create(file);
-        return new SetFromMap<E>(map);
+    public ChronicleSetBuilder<E> file(File file) throws IOException {
+        chronicleMapBuilder.file(file);
+        return this;
     }
 
     @Override
@@ -271,6 +271,8 @@ public class ChronicleSetBuilder<E>
         final ChronicleMap<E, DummyValue> map = chronicleMapBuilder.create();
         return new SetFromMap<E>(map);
     }
+
+
 
 }
 

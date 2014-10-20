@@ -42,8 +42,7 @@ public class UDPSocketReplicationTest {
 
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
-                .replicators((byte) identifier, udpConfig)
-                .create(Builder.getPersistenceFile());
+                .replicators((byte) identifier, udpConfig).create();
     }
 
     @Before

@@ -362,31 +362,20 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      */
     B stateless(StatelessBuilder statelessBuilder);
 
+
     /**
-     * Opens a hash container residing the specified file, or creates a new one if the file not yet
-     * exists and maps its off-heap memory to the file. All changes to the map are persisted to disk
-     * (this is an operating system guarantee) independently from JVM process lifecycle.
-     *
-     * <p>Multiple containers could give access to the same data simultaneously, either inside a
-     * single JVM or across processes. Access is synchronized correctly across all instances, i. e.
-     * hash container mapping the data from the first JVM isn't able to modify the data,
-     * concurrently accessed from the second JVM by another hash container instance, mapping the
-     * same data.
-     *
-     * <p>On container's {@link ChronicleHash#close() close()} the data isn't removed, it remains on
-     * disk and available to be opened again (given the same file name) or during different JVM
-     * run.
+     * Specifies that hash containers us the specified file, if create is called and this is not set
+     * the map will be created in off-heap memory, and changes will not be persisted to disk. If a
+     * file is provided all  changes to the map are  persisted to disk (this is an operating system
+     * guarantee) independently from JVM process lifecycle.
      *
      * @param file the file with existing hash container or a desired location of a new off-heap
      *             persisted hash container
-     * @return a hash container mapped to the given file
-     * @throws IOException if any IO error, related to off-heap memory allocation or file mapping
-     *                     occurs
+     * @return this builder back
      * @see ChronicleHash#file()
      * @see ChronicleHash#close()
-     * @see #create()
      */
-    C create(File file) throws IOException;
+    B file(File file) throws IOException;
 
     /**
      * Creates a new hash container, storing it's data in off-heap memory, not mapped to any file.
@@ -399,6 +388,10 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @see #create()
      */
     C create() throws IOException;
+
+
+
+
 
 
 }

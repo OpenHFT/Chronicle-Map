@@ -123,8 +123,8 @@ public class MapCheck {
         try {
 
 //            return new ConcurrentHashMap();
-            return ChronicleMapBuilder.of(Object.class, Object.class)
-                    .create(getPersistenceFile());
+            ChronicleMapBuilder.of(Object.class, Object.class).file(getPersistenceFile());
+            return ChronicleMapBuilder.of(Object.class, Object.class).create();
 
         } catch (Exception e) {
             throw new RuntimeException("Can't instantiate CHM : " + e);

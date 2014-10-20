@@ -26,7 +26,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -48,7 +47,7 @@ public class TCPSocketReplication4WayMapTest {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         return (T) newTcpSocketShmBuilder(Integer.class, CharSequence.class,
-                identifier, serverPort, endpoints).create(getPersistenceFile());
+                identifier, serverPort, endpoints).create();
     }
 
 
@@ -60,8 +59,7 @@ public class TCPSocketReplication4WayMapTest {
         return newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 identifier, serverPort, endpoints)
                 .entries(20000L)
-                .keyMarshaller(ByteableIntValueMarshaller.INSTANCE)
-                .create(getPersistenceFile());
+                .keyMarshaller(ByteableIntValueMarshaller.INSTANCE).create();
     }
 
 

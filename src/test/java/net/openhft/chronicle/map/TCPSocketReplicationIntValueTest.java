@@ -55,8 +55,8 @@ public class TCPSocketReplicationIntValueTest {
         value.bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
         map1Builder = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 (byte) 1, 8076, new InetSocketAddress("localhost", 8077));
-        map1 = map1Builder.keyMarshaller(ByteableIntValueMarshaller.INSTANCE)
-                .create(getPersistenceFile());
+        map1Builder.keyMarshaller(ByteableIntValueMarshaller.INSTANCE).file(getPersistenceFile());
+        map1 = map1Builder.keyMarshaller(ByteableIntValueMarshaller.INSTANCE).create();
         map2 = newTcpSocketShmIntValueString((byte) 2, 8077);
     }
 

@@ -114,8 +114,7 @@ public class ChronicleMapTest {
                 .entrySize(entrySize)
                 .entryAndValueAlignment(alignment)
                 .valueMarshallerAndFactory(ByteableLongValueMarshaller.INSTANCE,
-                        DirectLongValueFactory.INSTANCE)
-                .create(getPersistenceFile());
+                        DirectLongValueFactory.INSTANCE).create();
     }
 
     private static void printStatus() {
@@ -137,8 +136,7 @@ public class ChronicleMapTest {
 
         final ChronicleMap<CharSequence, CharSequence> map =
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                        .minSegments(2)
-                        .create(getPersistenceFile());
+                        .minSegments(2).create();
 
         assertFalse(map.containsKey("key3"));
         map.put("key1", "one");
@@ -184,8 +182,7 @@ public class ChronicleMapTest {
         final ChronicleMap<CharSequence, CharSequence> map =
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                         .minSegments(1024)
-                        .removeReturnsNull(true)
-                        .create(getPersistenceFile());
+                        .removeReturnsNull(true).create();
 
 
         for (int i = 1; i < 1024; i++) {
@@ -207,8 +204,7 @@ public class ChronicleMapTest {
         int count = 300;
         final ChronicleMap<Object, Object> map = ChronicleMapBuilder.of(Object.class, Object.class)
                 .entrySize(count)
-                .minSegments(2)
-                .create(getPersistenceFile());
+                .minSegments(2).create();
 
 
         for (int i = 1; i < count; i++) {
@@ -233,8 +229,7 @@ public class ChronicleMapTest {
         final ChronicleMap<CharSequence, CharSequence> map =
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                         .minSegments(2)
-                        .removeReturnsNull(true)
-                        .create(getPersistenceFile());
+                        .removeReturnsNull(true).create();
 
         assertFalse(map.containsKey("key3"));
         map.put("key1", "one");
@@ -279,8 +274,7 @@ public class ChronicleMapTest {
 
         final ChronicleMap<CharSequence, CharSequence> map =
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                        .minSegments(2)
-                        .create(getPersistenceFile());
+                        .minSegments(2).create();
 
 
         map.put("key1", "one");
@@ -345,8 +339,7 @@ public class ChronicleMapTest {
 
         final ChronicleMap<CharSequence, CharSequence> map =
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                        .minSegments(2)
-                        .create(getPersistenceFile());
+                        .minSegments(2).create();
 
         map.put("key1", "one");
         map.put("key2", "two");
@@ -388,8 +381,7 @@ public class ChronicleMapTest {
 
         final ChronicleMap<CharSequence, CharSequence> map =
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                        .minSegments(2)
-                        .create(getPersistenceFile());
+                        .minSegments(2).create();
 
 
         map.put("key1", "one");
@@ -591,7 +583,8 @@ public class ChronicleMapTest {
                     .entrySize(20)
                     .valueMarshallerAndFactory(ByteableIntValueMarshaller.INSTANCE,
                             DirectIntValueFactory.INSTANCE);
-            final ChronicleMap<CharSequence, IntValue> map = builder.create(getPersistenceFile());
+
+            final ChronicleMap<CharSequence, IntValue> map = builder.create();
 
             int procs = Runtime.getRuntime().availableProcessors();
             int threads = procs * 2; // runs > 100 ? procs / 2 : procs;
@@ -713,8 +706,7 @@ public class ChronicleMapTest {
                         .minSegments(16)
                         .entrySize(32)
                         .putReturnsNull(true)
-                        .removeReturnsNull(true)
-                        .create(getPersistenceFile());
+                        .removeReturnsNull(true).create();
         StringBuilder key = new StringBuilder();
         StringBuilder value = new StringBuilder();
         StringBuilder value2 = new StringBuilder();
@@ -1144,8 +1136,7 @@ public class ChronicleMapTest {
                         .minSegments(16)
                         .entrySize(32)
                         .putReturnsNull(true)
-                        .removeReturnsNull(true)
-                        .create(getPersistenceFile());
+                        .removeReturnsNull(true).create();
 
         int[] expectedKeys = new int[noOfElements];
         String[] expectedValues = new String[noOfElements];
@@ -1166,19 +1157,22 @@ public class ChronicleMapTest {
                 .minSegments(1)
                 .entrySize(10);
         builder.entryAndValueAlignment(NO_ALIGNMENT);
+        builder.file(getPersistenceFile());
         testOversizeEntriesPutRemoveReplace(
                 (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
-                        builder.create(getPersistenceFile())
+                        builder.create()
         );
         builder.entryAndValueAlignment(Alignment.OF_4_BYTES);
+        builder.file(getPersistenceFile());
         testOversizeEntriesPutRemoveReplace(
                 (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
-                        builder.create(getPersistenceFile())
+                        builder.create()
         );
         builder.entryAndValueAlignment(OF_8_BYTES);
+        builder.file(getPersistenceFile());
         testOversizeEntriesPutRemoveReplace(
                 (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
-                        builder.create(getPersistenceFile())
+                        builder.create()
         );
     }
 
@@ -1225,13 +1219,13 @@ public class ChronicleMapTest {
     @Test
     public void equalsTest() throws IOException {
         final ChronicleMap<Integer, String> map1 = ChronicleMapBuilder
-                .of(Integer.class, String.class).create(getPersistenceFile());
+                .of(Integer.class, String.class).create();
 
         map1.put(1, "one");
         map1.put(2, "two");
 
         final ChronicleMap<Integer, String> map2 = ChronicleMapBuilder
-                .of(Integer.class, String.class).create(getPersistenceFile());
+                .of(Integer.class, String.class).create();
 
         map2.put(1, "one");
         map2.put(2, "two");
