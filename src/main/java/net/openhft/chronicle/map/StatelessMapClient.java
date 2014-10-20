@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.StatelessBuilder;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
@@ -9,12 +10,9 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static net.openhft.chronicle.map.StatelessMapClient.EventId.*;
@@ -28,10 +26,10 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessMapClient.class);
 
-
     private final SocketChannel clientChannel;
     public static final ByteBuffer STATELESS_CLIENT_IDENTIFER = ByteBuffer.wrap(new byte[]{-127});
     private final CloseablesManager closeables = new CloseablesManager();
+    private final StatelessBuilder builder;
 
     public static enum EventId {
         HEARTBEAT,
@@ -52,22 +50,23 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         REMOVE_WITH_VALUE
     }
 
-    private final ThreadLocal<Buffer> sourceBuffer = new ThreadLocal<Buffer>();
-    private final Map<Long, Object> transactionIDs = new HashMap<Long, Object>();
+    // private final ThreadLocal<Buffer> sourceBuffer = new ThreadLocal<Buffer>();
+
 
     private final AtomicLong transactionID = new AtomicLong();
 
-    private long timeoutMs = TimeUnit.SECONDS.toMillis(20);
+    // private long timeoutMs = TimeUnit.SECONDS.toMillis(20);
 
 
-    public StatelessMapClient(final KeyValueSerializer<K,
-            V> keyValueSerializer, final InetSocketAddress remote) throws IOException {
+    public StatelessMapClient(final KeyValueSerializer<K, V> keyValueSerializer,
+                              final StatelessBuilder builder) throws IOException {
 
         this.keyValueSerializer = keyValueSerializer;
+        this.builder = builder;
 
         try {
             clientChannel = AbstractChannelReplicator.openSocketChannel(closeables);
-            clientChannel.connect(remote);
+            clientChannel.connect(builder.remoteAddress());
 
             doHandShaking();
         } catch (IOException e) {
@@ -97,7 +96,6 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
 
     }
 
-
     public File file() {
         return null;
     }
@@ -117,11 +115,9 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         return transactionID.incrementAndGet();
     }
 
-
     private final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocate(1024));
     private final ByteBufferBytes in = new ByteBufferBytes(ByteBuffer.allocate(1024));
     private final KeyValueSerializer<K, V> keyValueSerializer;
-
 
     public synchronized V putIfAbsent(K key, V value) {
 
@@ -138,7 +134,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         writeValue((V) value);
 
         // get the data back from the server
-        return blockingFetch(sizeLocation, 20000).readBoolean();
+        return blockingFetch(sizeLocation).readBoolean();
 
     }
 
@@ -150,7 +146,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         writeValue(newValue);
 
         // get the data back from the server
-        return blockingFetch(sizeLocation, 20000).readBoolean();
+        return blockingFetch(sizeLocation).readBoolean();
     }
 
 
@@ -169,7 +165,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         long sizeLocation = writeEvent(SIZE);
 
         // get the data back from the server
-        return blockingFetch(sizeLocation, 20000).readInt();
+        return blockingFetch(sizeLocation).readInt();
     }
 
 
@@ -177,7 +173,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         long sizeLocation = writeEvent(IS_EMPTY);
 
         // get the data back from the server
-        return blockingFetch(sizeLocation, 20000).readBoolean();
+        return blockingFetch(sizeLocation).readBoolean();
     }
 
 
@@ -186,7 +182,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         writeKey((K) key);
 
         // get the data back from the server
-        return blockingFetch(sizeLocation, 20000).readBoolean();
+        return blockingFetch(sizeLocation).readBoolean();
 
     }
 
@@ -196,14 +192,14 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         writeValue((V) value);
 
         // get the data back from the server
-        return blockingFetch(sizeLocation, 20000).readBoolean();
+        return blockingFetch(sizeLocation).readBoolean();
     }
 
 
     public synchronized long longSize() {
         long sizeLocation = writeEvent(LONG_SIZE);
         // get the data back from the server
-        return blockingFetch(sizeLocation, 20000).readLong();
+        return blockingFetch(sizeLocation).readLong();
     }
 
 
@@ -278,7 +274,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         long sizeLocation = writeEvent(CLEAR);
 
         // get the data back from the server
-        blockingFetch(sizeLocation, 20000);
+        blockingFetch(sizeLocation);
 
     }
 
@@ -288,7 +284,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         long sizeLocation = writeEvent(KEY_SET);
 
         // get the data back from the server
-        return readKeySet(blockingFetch(sizeLocation, 20000));
+        return readKeySet(blockingFetch(sizeLocation));
     }
 
 
@@ -298,7 +294,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         long sizeLocation = writeEvent(VALUES);
 
         // get the data back from the server
-        final Bytes in = blockingFetch(sizeLocation, 20000);
+        final Bytes in = blockingFetch(sizeLocation);
 
         final long size = in.readStopBit();
 
@@ -320,7 +316,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         long sizeLocation = writeEvent(ENTRY_SET);
 
         // get the data back from the server
-        Bytes in = blockingFetch(sizeLocation, 20000);
+        Bytes in = blockingFetch(sizeLocation);
 
         long size = in.readStopBit();
 
@@ -344,62 +340,6 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         long sizeLocation = markSizeLocation();
         return sizeLocation;
     }
-
-    public Buffer buffer() {
-        Buffer result = sourceBuffer.get();
-
-
-        if (result != null) {
-            return result;
-        }
-
-        result = new Buffer() {
-
-            volatile ByteBufferBytes buffer = null;
-
-
-            public void set(ByteBufferBytes source) {
-                buffer = source;
-            }
-
-
-            public ByteBufferBytes get() {
-                return buffer;
-            }
-        };
-
-        sourceBuffer.set(result);
-        return result;
-    }
-
-
-    /**
-     * blocks until a message is received from the server or a timeout is reached
-     *
-     * @param transactionId
-     * @return
-     */
-    private Bytes blockingFetchWithTransaction(long transactionId) {
-        final Buffer buffer = buffer();
-        buffer.set(null);
-
-        synchronized (this) {
-            transactionIDs.put(transactionId, buffer);
-            try {
-                buffer.wait(timeoutMs);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        final ByteBufferBytes bufferBytes = buffer.get();
-
-        if (bufferBytes == null)
-            throw new RuntimeException("Timed-out", new TimeoutException());
-
-        return bufferBytes;
-    }
-
 
     class Entry implements Map.Entry<K, V> {
 
@@ -455,9 +395,9 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         }
     }
 
-    private Bytes blockingFetch(long sizeLocation, long timeOutMs) {
+    private Bytes blockingFetch(long sizeLocation) {
         try {
-            return blockingFetchThrowable(sizeLocation, timeOutMs);
+            return blockingFetchThrowable(sizeLocation, this.builder.timeoutMs());
         } catch (IOException e) {
             closeables.closeQuietly();
             throw new RuntimeIOException(e);
@@ -475,7 +415,9 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         long transactionId = nextUniqueTransaction(startTime);
         long timeoutTime = startTime + timeOutMs;
 
-        LOG.info("sending data with transactionId=" + transactionId);
+        if (LOG.isDebugEnabled())
+            LOG.debug("sending data with transactionId=" + transactionId);
+
         out.writeLong(transactionId);
         writeSizeAt(sizeLocation);
 
@@ -525,7 +467,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private void checkTimeout(long timeoutTime) {
         if (timeoutTime < System.currentTimeMillis())
-            throw new RuntimeTimeOutException();
+            throw new TimeoutException();
     }
 
     private void writeSizeAt(long locationOfSize) {
@@ -544,7 +486,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private V readKey(final long sizeLocation) {
-        return keyValueSerializer.readValue(blockingFetch(sizeLocation, 20000));
+        return keyValueSerializer.readValue(blockingFetch(sizeLocation));
     }
 
     private void writeValue(V value) {
@@ -580,9 +522,9 @@ class RuntimeIOException extends RuntimeException {
 
 }
 
-class RuntimeTimeOutException extends RuntimeException {
+class TimeoutException extends RuntimeException {
 
-    public RuntimeTimeOutException() {
+    public TimeoutException() {
 
     }
 

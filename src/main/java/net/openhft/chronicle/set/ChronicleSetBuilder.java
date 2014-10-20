@@ -18,6 +18,7 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.ChronicleHashBuilder;
 import net.openhft.chronicle.ChronicleHashErrorListener;
+import net.openhft.chronicle.StatelessBuilder;
 import net.openhft.chronicle.TimeProvider;
 import net.openhft.chronicle.map.*;
 import net.openhft.lang.io.serialization.BytesMarshaller;
@@ -254,8 +255,8 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> stateless(boolean isStateless) {
-        chronicleMapBuilder.stateless(isStateless);
+    public ChronicleSetBuilder<E> stateless(StatelessBuilder statelessBuilder) {
+        chronicleMapBuilder.stateless(statelessBuilder);
         return this;
     }
 
