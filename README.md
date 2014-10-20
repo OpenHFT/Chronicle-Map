@@ -636,7 +636,7 @@ final ChronicleMap<Integer, CharSequence> statelessMap;
 
     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
             .entries(20000L)
-            .replicators((byte) 2, TcpReplicationConfig.of(8076))
+            .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
             .create();
                        
     serverMap.put(10, "EXAMPLE-10");
