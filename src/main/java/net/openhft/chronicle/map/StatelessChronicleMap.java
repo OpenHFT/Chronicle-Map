@@ -1,6 +1,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.StatelessBuilder;
+import net.openhft.chronicle.exceptions.IORuntimeException;
+import net.openhft.chronicle.exceptions.TimeoutRuntimeException;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
@@ -392,7 +394,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             return blockingFetchThrowable(sizeLocation, this.builder.timeoutMs());
         } catch (IOException e) {
             closeables.closeQuietly();
-            throw new RuntimeIOException(e);
+            throw new IORuntimeException(e);
         } catch (Exception e) {
             closeables.closeQuietly();
             throw e;
@@ -459,7 +461,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private void checkTimeout(long timeoutTime) {
         if (timeoutTime < System.currentTimeMillis())
-            throw new TimeoutException();
+            throw new TimeoutRuntimeException();
     }
 
     private void writeSizeAt(long locationOfSize) {
@@ -485,7 +487,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         keyValueSerializer.writeValue(value, out);
     }
 
-
     private Set<K> readKeySet(Bytes in) {
         long size = in.readStopBit();
         final HashSet<K> result = new HashSet<>();
@@ -498,26 +499,3 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 }
 
-
-interface Buffer {
-
-    void set(ByteBufferBytes source);
-
-    ByteBufferBytes get();
-}
-
-class RuntimeIOException extends RuntimeException {
-
-    RuntimeIOException(IOException e) {
-        super(e);
-    }
-
-}
-
-class TimeoutException extends RuntimeException {
-
-    TimeoutException() {
-
-    }
-
-}
