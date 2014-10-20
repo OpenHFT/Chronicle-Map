@@ -27,10 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.SelectableChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
+import java.nio.channels.*;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -65,13 +62,35 @@ abstract class AbstractChannelReplicator implements Closeable {
             throws IOException {
         executorService = Executors.newSingleThreadExecutor(
                 new NamedThreadFactory(name, true));
-        selector = Selector.open();
-        closeables.add(selector);
+        selector = openSelector();
 
         throttler = throttlingConfig.throttling(DAYS) > 0 ?
                 new Throttler(selector,
                         throttlingConfig.bucketInterval(MILLISECONDS),
                         maxEntrySizeBytes, throttlingConfig.throttling(DAYS)) : null;
+    }
+
+    Selector openSelector() throws IOException {
+        Selector result = null;
+        try {
+            result = Selector.open();
+        } finally {
+            if (result != null)
+                closeables.add(result);
+        }
+        return result;
+    }
+
+    SocketChannel openSocketChannel() throws IOException {
+        SocketChannel result = null;
+
+        try {
+            result = SocketChannel.open();
+        } finally {
+            if (result != null)
+                closeables.add(result);
+        }
+        return result;
     }
 
     void addPendingRegistration(Runnable registration) {
@@ -388,5 +407,6 @@ abstract class AbstractChannelReplicator implements Closeable {
             connectionAttempts = 0;
         }
     }
+
 
 }

@@ -64,6 +64,8 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V> {
         this.keyValueSerializer = keyValueSerializer;
 
         clientChannel = SocketChannel.open();
+
+
         clientChannel.connect(remote);
 
         doHandShaking();

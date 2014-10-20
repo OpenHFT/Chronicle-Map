@@ -316,7 +316,14 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     private void onConnect(@NotNull final SelectionKey key)
             throws IOException, InterruptedException {
 
-        final SocketChannel channel = (SocketChannel) key.channel();
+        SocketChannel channel = null;
+
+        try {
+            channel = (SocketChannel) key.channel();
+        } finally {
+            closeables.add(channel);
+        }
+
         final Attached attached = (Attached) key.attachment();
 
         try {
@@ -328,7 +335,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
             // when node discovery is used ( by nodes broadcasting out their host:port over UDP ),
             // when new or restarted nodes are started up. they attempt to find the nodes
-            // on the grid by listening to the host and ports of the other nodes, so these nodes will establish the connection when they come back up,
+            // on the grid by listening to the host and ports of the other nodes,
+            // so these nodes will establish the connection when they come back up,
             // hence under these circumstances, polling a dropped node to attempt to reconnect is no-longer
             // required as the remote node will establish the connection its self on startup.
             if (replicationConfig.autoReconnectedUponDroppedConnection())
@@ -363,9 +371,25 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
      * called when the selector receives a OP_ACCEPT message
      */
     private void onAccept(@NotNull final SelectionKey key) throws IOException {
+        ServerSocketChannel server = null;
 
-        final ServerSocketChannel server = (ServerSocketChannel) key.channel();
-        final SocketChannel channel = server.accept();
+        try {
+            server = (ServerSocketChannel) key.channel();
+        } finally {
+            if (server != null)
+                closeables.add(server);
+        }
+
+        SocketChannel channel = null;
+
+        try {
+            channel = server.accept();
+        } finally {
+            if (channel != null)
+                closeables.add(channel);
+        }
+
+
         channel.configureBlocking(false);
         channel.socket().setReuseAddress(true);
         channel.socket().setTcpNoDelay(true);
@@ -631,11 +655,21 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         SelectableChannel doConnect() throws
                 IOException, InterruptedException {
 
-            final ServerSocketChannel serverChannel = ServerSocketChannel.open();
+
+            final ServerSocketChannel serverChannel = openServerSocketChannel();
 
             serverChannel.socket().setReceiveBufferSize(BUFFER_SIZE);
             serverChannel.configureBlocking(false);
-            final ServerSocket serverSocket = serverChannel.socket();
+            ServerSocket serverSocket = null;
+
+            try {
+                serverSocket = serverChannel.socket();
+            } finally {
+                if (serverSocket != null)
+                    closeables.add(serverSocket);
+            }
+
+
             serverSocket.setReuseAddress(true);
 
             serverSocket.bind(details.address());
@@ -661,6 +695,18 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         }
     }
 
+    private ServerSocketChannel openServerSocketChannel() throws IOException {
+        ServerSocketChannel result = null;
+
+        try {
+            result = ServerSocketChannel.open();
+        } finally {
+            if (result != null)
+                closeables.add(result);
+        }
+        return result;
+    }
+
     private class ClientConnector extends AbstractConnector {
 
         private final Details details;
@@ -682,7 +728,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         @Override
         SelectableChannel doConnect() throws IOException, InterruptedException {
             boolean success = false;
-            final SocketChannel socketChannel = SocketChannel.open();
+
+            final SocketChannel socketChannel = openSocketChannel();
+
             try {
                 socketChannel.configureBlocking(false);
                 socketChannel.socket().setReuseAddress(true);
@@ -737,6 +785,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 }
             }
         }
+
+
     }
 
     /**

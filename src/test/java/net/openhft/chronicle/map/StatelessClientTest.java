@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testng.Assert;
 
@@ -17,6 +18,7 @@ public class StatelessClientTest {
 
 
     @Test
+    @Ignore
     public void test() throws IOException, InterruptedException {
 
         ChronicleMapBuilder<Integer, CharSequence> builder =
