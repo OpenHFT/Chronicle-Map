@@ -488,7 +488,7 @@ TcpReplicationConfig tcpConfig = ...
 map = ChronicleMapBuilder
     .of(Integer.class, CharSequence.class)
     .addReplicator(Replicators.tcp(identifier, tcpConfig))
-    .create(file);
+    .create();
 ```
 
 ### Bootstrapping 
@@ -593,7 +593,7 @@ Attaching ChannelProvider replication to the map:
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
   .entries(1000)
   .channel(channelProviderA.createChannel((short) 1))
-  .create(getPersistenceFile());
+  .create();
 ```
 
 The chronicle channel is use to identify which map is to be replicated to which other map on
