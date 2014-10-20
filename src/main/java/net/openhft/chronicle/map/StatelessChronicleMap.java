@@ -1,8 +1,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.common.StatelessBuilder;
-import net.openhft.chronicle.exceptions.IORuntimeException;
-import net.openhft.chronicle.exceptions.TimeoutRuntimeException;
+import net.openhft.chronicle.common.exceptions.IORuntimeException;
+import net.openhft.chronicle.common.exceptions.TimeoutRuntimeException;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;

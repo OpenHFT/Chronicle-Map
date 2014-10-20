@@ -14,44 +14,17 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.common.serialization.impl;
 
 import net.openhft.chronicle.common.serialization.AgileBytesMarshaller;
 import net.openhft.lang.io.Bytes;
 
-import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;
-
-enum DummyValueMarshaller implements AgileBytesMarshaller<DummyValue> {
+public enum VoidMarshaller implements AgileBytesMarshaller<Void> {
     INSTANCE;
 
     @Override
-    public boolean startsWith(Bytes bytes, DummyValue dummyValue) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public long hash(DummyValue dummyValue) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public DummyValue read(Bytes bytes, long size) {
-        return DUMMY_VALUE;
-    }
-
-    @Override
-    public DummyValue read(Bytes bytes, long size, DummyValue dummyValue) {
-        return DUMMY_VALUE;
-    }
-
-    @Override
-    public long size(DummyValue dummyValue) {
+    public long size(Void e) {
         return 0L;
-    }
-
-    @Override
-    public void write(Bytes bytes, DummyValue dummyValue) {
-        // do nothing
     }
 
     @Override
@@ -65,7 +38,34 @@ enum DummyValueMarshaller implements AgileBytesMarshaller<DummyValue> {
     }
 
     @Override
+    public boolean startsWith(Bytes bytes, Void e) {
+        return false;
+    }
+
+    @Override
+    public long hash(Void e) {
+        return 0;
+    }
+
+    @Override
+    public void write(Bytes bytes, Void e) {
+        // do nothing;
+    }
+
+    @Override
     public long readSize(Bytes bytes) {
         return 0L;
     }
+
+    @Override
+    public Void read(Bytes bytes, long size) {
+        // Void nothing;
+        return null;
+    }
+
+    @Override
+    public Void read(Bytes bytes, long size, Void aVoid) {
+        return null;
+    }
+
 }

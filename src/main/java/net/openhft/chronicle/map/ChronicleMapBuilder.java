@@ -17,13 +17,13 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.common.*;
-import net.openhft.chronicle.serialization.AgileBytesMarshaller;
-import net.openhft.chronicle.serialization.MetaBytesInterop;
-import net.openhft.chronicle.serialization.MetaBytesWriter;
-import net.openhft.chronicle.serialization.MetaProvider;
+import net.openhft.chronicle.common.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.common.serialization.MetaBytesInterop;
+import net.openhft.chronicle.common.serialization.MetaBytesWriter;
+import net.openhft.chronicle.common.serialization.MetaProvider;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
-import net.openhft.chronicle.threadlocal.Provider;
-import net.openhft.chronicle.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.common.threadlocal.Provider;
+import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.Maths;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;

@@ -1,8 +1,8 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.threadlocal.Provider;
-import net.openhft.chronicle.threadlocal.ThreadLocalCopies;
-import net.openhft.chronicle.serialization.*;
+import net.openhft.chronicle.common.threadlocal.Provider;
+import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.common.serialization.*;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.constraints.NotNull;
