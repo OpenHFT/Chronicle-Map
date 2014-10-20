@@ -617,7 +617,7 @@ once you have finished, this will close everything in the ChannelProvider
 replicator.close();
 ```
 
-#### Stateless Client
+# Stateless Client
 
 
 A stateless client is an instance of a ChronicleMap or a ChronicleSet that does not hold any data
