@@ -53,7 +53,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
 * [Channels and the Channel Provider](https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider)
-* [Stateless Client](https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider)
+* [Stateless Client](https://github.com/OpenHFT/Chronicle-Map#stateless-client)
 
 #### Miscellaneous
 
