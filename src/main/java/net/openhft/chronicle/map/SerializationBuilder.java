@@ -16,10 +16,10 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.map.serialization.*;
-import net.openhft.chronicle.map.serialization.impl.*;
-import net.openhft.chronicle.map.threadlocal.Provider;
-import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.threadlocal.Provider;
+import net.openhft.chronicle.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.serialization.*;
+import net.openhft.chronicle.serialization.impl.*;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.io.serialization.BytesMarshaller;
@@ -36,7 +36,7 @@ import java.io.Serializable;
 import java.lang.reflect.Modifier;
 
 import static net.openhft.chronicle.map.Objects.hash;
-import static net.openhft.chronicle.map.serialization.SizeMarshallers.stopBit;
+import static net.openhft.chronicle.serialization.SizeMarshallers.stopBit;
 
 final class SerializationBuilder<E> implements Cloneable {
 
@@ -99,6 +99,9 @@ final class SerializationBuilder<E> implements Cloneable {
         } else if (eClass == byte[].class) {
             reader((BytesReader<E>) ByteArrayMarshaller.INSTANCE, factory);
             interop((BytesInterop<E>) ByteArrayMarshaller.INSTANCE);
+        } else if (eClass == char[].class) {
+            reader((BytesReader<E>) CharArrayMarshaller.INSTANCE, factory);
+            interop((BytesInterop<E>) CharArrayMarshaller.INSTANCE);
         } else if (concreteClass(eClass)) {
             BytesMarshaller<E> marshaller = chooseMarshaller(eClass, eClass);
             if (marshaller != null)

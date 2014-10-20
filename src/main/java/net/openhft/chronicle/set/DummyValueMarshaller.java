@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.map.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.serialization.AgileBytesMarshaller;
 import net.openhft.lang.io.Bytes;
 
 import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;

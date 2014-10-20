@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization;
+package net.openhft.chronicle.serialization;
 
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.NativeBytes;

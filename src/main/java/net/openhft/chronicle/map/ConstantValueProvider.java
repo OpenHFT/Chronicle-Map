@@ -16,8 +16,8 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.map.serialization.BytesReader;
-import net.openhft.chronicle.map.serialization.MetaBytesWriter;
+import net.openhft.chronicle.serialization.BytesReader;
+import net.openhft.chronicle.serialization.MetaBytesWriter;
 import net.openhft.lang.io.ByteBufferBytes;
 
 import java.nio.ByteBuffer;

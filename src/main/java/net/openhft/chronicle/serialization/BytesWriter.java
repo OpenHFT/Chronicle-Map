@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization;
+package net.openhft.chronicle.serialization;
 
-public interface AgileBytesMarshaller<E> extends BytesReader<E>, BytesInterop<E>, SizeMarshaller {
+import net.openhft.lang.io.Bytes;
+
+import java.io.Serializable;
+
+public interface BytesWriter<E> extends Serializable {
+
+    long size(E e);
+
+    void write(Bytes bytes, E e);
 }

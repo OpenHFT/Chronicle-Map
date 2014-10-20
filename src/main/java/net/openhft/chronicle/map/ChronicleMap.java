@@ -17,15 +17,13 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.ChronicleHash;
-import net.openhft.chronicle.map.serialization.BytesReader;
+import net.openhft.chronicle.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.model.Byteable;
 
 import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 

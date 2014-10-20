@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization.impl;
+package net.openhft.chronicle.serialization.impl;
 
-import net.openhft.chronicle.map.serialization.BytesInterop;
-import net.openhft.chronicle.map.serialization.BytesReader;
-import net.openhft.chronicle.map.serialization.Hasher;
+import net.openhft.chronicle.serialization.BytesInterop;
+import net.openhft.chronicle.serialization.BytesReader;
+import net.openhft.chronicle.serialization.Hasher;
 import net.openhft.lang.io.Bytes;
 
 public enum ByteArrayMarshaller implements BytesInterop<byte[]>, BytesReader<byte[]> {

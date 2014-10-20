@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization.impl;
+package net.openhft.chronicle.serialization.impl;
 
-import net.openhft.chronicle.map.serialization.AgileBytesMarshaller;
-import net.openhft.chronicle.map.serialization.Hasher;
+import net.openhft.chronicle.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.serialization.Hasher;
 import net.openhft.lang.io.Bytes;
 
-public enum LongMarshaller implements AgileBytesMarshaller<Long> {
+import static java.lang.Double.doubleToLongBits;
+
+public enum DoubleMarshaller implements AgileBytesMarshaller<Double> {
     INSTANCE;
 
     @Override
-    public long size(Long e) {
+    public long size(Double e) {
         return 8L;
     }
 
@@ -39,18 +41,18 @@ public enum LongMarshaller implements AgileBytesMarshaller<Long> {
     }
 
     @Override
-    public boolean startsWith(Bytes bytes, Long e) {
-        return e == bytes.readLong(0);
+    public boolean startsWith(Bytes bytes, Double e) {
+        return doubleToLongBits(e) == bytes.readLong(0);
     }
 
     @Override
-    public long hash(Long e) {
-        return Hasher.hash(e);
+    public long hash(Double e) {
+        return Hasher.hash(doubleToLongBits(e));
     }
 
     @Override
-    public void write(Bytes bytes, Long e) {
-        bytes.writeLong(e);
+    public void write(Bytes bytes, Double e) {
+        bytes.writeLong(doubleToLongBits(e));
     }
 
     @Override
@@ -59,12 +61,12 @@ public enum LongMarshaller implements AgileBytesMarshaller<Long> {
     }
 
     @Override
-    public Long read(Bytes bytes, long size) {
-        return bytes.readLong();
+    public Double read(Bytes bytes, long size) {
+        return Double.longBitsToDouble(bytes.readLong());
     }
 
     @Override
-    public Long read(Bytes bytes, long size, Long e) {
-        return bytes.readLong();
+    public Double read(Bytes bytes, long size, Double e) {
+        return read(bytes, size);
     }
 }

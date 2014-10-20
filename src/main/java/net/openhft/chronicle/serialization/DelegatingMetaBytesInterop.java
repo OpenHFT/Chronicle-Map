@@ -14,32 +14,42 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization.impl;
+package net.openhft.chronicle.serialization;
 
-import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.Bytes;
-import net.openhft.chronicle.map.serialization.BytesWriter;
 
 import java.io.ObjectStreamException;
 
-public final class CharSequenceWriter<CS extends CharSequence> implements BytesWriter<CS> {
+public final class DelegatingMetaBytesInterop<E, I extends BytesInterop<E>>
+        implements MetaBytesInterop<E, I> {
     private static final long serialVersionUID = 0L;
-    private static final CharSequenceWriter INSTANCE = new CharSequenceWriter();
+    private static final DelegatingMetaBytesInterop INSTANCE = new DelegatingMetaBytesInterop();
 
-    public static <CS extends CharSequence> CharSequenceWriter<CS> instance() {
+    public static <E, I extends BytesInterop<E>>
+    DelegatingMetaBytesInterop<E, I> instance() {
         return INSTANCE;
     }
 
-    private CharSequenceWriter() {}
+    private DelegatingMetaBytesInterop() {}
 
     @Override
-    public long size(CS s) {
-        return AbstractBytes.findUTFLength(s, s.length());
+    public long size(I interop, E e) {
+        return interop.size(e);
     }
 
     @Override
-    public void write(Bytes bytes, CS s) {
-        AbstractBytes.writeUTF0(bytes, s, s.length());
+    public boolean startsWith(I interop, Bytes bytes, E e) {
+        return interop.startsWith(bytes, e);
+    }
+
+    @Override
+    public long hash(I interop, E e) {
+        return interop.hash(e);
+    }
+
+    @Override
+    public void write(I interop, Bytes bytes, E e) {
+        interop.write(bytes, e);
     }
 
     private Object readResolve() throws ObjectStreamException {

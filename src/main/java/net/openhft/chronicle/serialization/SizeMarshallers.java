@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization;
+package net.openhft.chronicle.serialization;
 
 import net.openhft.lang.io.Bytes;
+
+import static net.openhft.lang.io.IOTools.stopBitLength;
 
 public final class SizeMarshallers {
 
@@ -29,11 +31,7 @@ public final class SizeMarshallers {
 
         @Override
         public int sizeEncodingSize(long size) {
-            if (size <= 127)
-                return 1;
-            // numberOfLeadingZeros is cheap intrinsic on modern CPUs
-            // integral division is not... but there is no choice
-            return ((70 - Long.numberOfLeadingZeros(size)) / 7);
+            return stopBitLength(size);
         }
 
         @Override

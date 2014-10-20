@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization;
+package net.openhft.chronicle.serialization;
 
 import net.openhft.lang.io.Bytes;
-import net.openhft.lang.model.Byteable;
 
-/**
- * Marshaller for byte sequences, which are copied to off-heap {@link Bytes}
- * in a very straightforward manner, e. g. {@link Byteable Byteables}, {@code byte[]} arrays,
- * {@code Bytes} themselves. The criterion of this interface applicability --
- * {@link #equals} implementation shouldn't require deserialization and any garbage creation.
- *
- * @param <E> type of marshalled objects
- */
-public interface BytesInterop<E> extends BytesWriter<E> {
+public interface MetaBytesInterop<E, I> extends MetaBytesWriter<E, I> {
 
-    boolean startsWith(Bytes bytes, E e);
+    boolean startsWith(I interop, Bytes bytes, E e);
 
-    long hash(E e);
+    long hash(I interop, E e);
+
 }

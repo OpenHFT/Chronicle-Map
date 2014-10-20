@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization;
+package net.openhft.chronicle.threadlocal;
 
-import net.openhft.lang.io.Bytes;
+public interface StatefulCopyable<S extends StatefulCopyable<S>> {
+    Object stateIdentity();
 
-import java.io.Serializable;
-
-public interface BytesReader<E> extends Serializable {
-
-    E read(Bytes bytes, long size);
-
-    E read(Bytes bytes, long size, E e);
+    S copy();
 }

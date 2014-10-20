@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization.impl;
+package net.openhft.chronicle.serialization.impl;
 
-import net.openhft.chronicle.map.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.serialization.Hasher;
 import net.openhft.lang.io.Bytes;
 
-public enum VoidMarshaller implements AgileBytesMarshaller<Void> {
+public enum LongMarshaller implements AgileBytesMarshaller<Long> {
     INSTANCE;
 
     @Override
-    public long size(Void e) {
-        return 0L;
+    public long size(Long e) {
+        return 8L;
     }
 
     @Override
@@ -38,34 +39,32 @@ public enum VoidMarshaller implements AgileBytesMarshaller<Void> {
     }
 
     @Override
-    public boolean startsWith(Bytes bytes, Void e) {
-        return false;
+    public boolean startsWith(Bytes bytes, Long e) {
+        return e == bytes.readLong(0);
     }
 
     @Override
-    public long hash(Void e) {
-        return 0;
+    public long hash(Long e) {
+        return Hasher.hash(e);
     }
 
     @Override
-    public void write(Bytes bytes, Void e) {
-        // do nothing;
+    public void write(Bytes bytes, Long e) {
+        bytes.writeLong(e);
     }
 
     @Override
     public long readSize(Bytes bytes) {
-        return 0L;
+        return 8L;
     }
 
     @Override
-    public Void read(Bytes bytes, long size) {
-        // Void nothing;
-        return null;
+    public Long read(Bytes bytes, long size) {
+        return bytes.readLong();
     }
 
     @Override
-    public Void read(Bytes bytes, long size, Void aVoid) {
-        return null;
+    public Long read(Bytes bytes, long size, Long e) {
+        return bytes.readLong();
     }
-
 }

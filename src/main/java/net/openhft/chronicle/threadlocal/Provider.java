@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.threadlocal;
+package net.openhft.chronicle.threadlocal;
 
 public abstract class Provider<T> {
 

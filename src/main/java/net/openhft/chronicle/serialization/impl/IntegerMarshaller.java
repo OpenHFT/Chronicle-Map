@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization.impl;
+package net.openhft.chronicle.serialization.impl;
 
-import net.openhft.chronicle.map.serialization.AgileBytesMarshaller;
-import net.openhft.chronicle.map.serialization.Hasher;
+import net.openhft.chronicle.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.serialization.Hasher;
 import net.openhft.lang.io.Bytes;
 
-import static java.lang.Double.doubleToLongBits;
-
-public enum DoubleMarshaller implements AgileBytesMarshaller<Double> {
+public enum IntegerMarshaller implements AgileBytesMarshaller<Integer> {
     INSTANCE;
 
     @Override
-    public long size(Double e) {
-        return 8L;
+    public long size(Integer e) {
+        return 4L;
     }
 
     @Override
@@ -41,32 +39,32 @@ public enum DoubleMarshaller implements AgileBytesMarshaller<Double> {
     }
 
     @Override
-    public boolean startsWith(Bytes bytes, Double e) {
-        return doubleToLongBits(e) == bytes.readLong(0);
+    public boolean startsWith(Bytes bytes, Integer e) {
+        return e == bytes.readInt(0);
     }
 
     @Override
-    public long hash(Double e) {
-        return Hasher.hash(doubleToLongBits(e));
+    public long hash(Integer e) {
+        return Hasher.hash(e);
     }
 
     @Override
-    public void write(Bytes bytes, Double e) {
-        bytes.writeLong(doubleToLongBits(e));
+    public void write(Bytes bytes, Integer e) {
+        bytes.writeInt(e);
     }
 
     @Override
     public long readSize(Bytes bytes) {
-        return 8L;
+        return 4L;
     }
 
     @Override
-    public Double read(Bytes bytes, long size) {
-        return Double.longBitsToDouble(bytes.readLong());
+    public Integer read(Bytes bytes, long size) {
+        return bytes.readInt();
     }
 
     @Override
-    public Double read(Bytes bytes, long size, Double e) {
-        return read(bytes, size);
+    public Integer read(Bytes bytes, long size, Integer e) {
+        return bytes.readInt();
     }
 }

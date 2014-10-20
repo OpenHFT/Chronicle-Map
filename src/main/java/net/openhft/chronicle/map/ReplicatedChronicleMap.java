@@ -18,10 +18,10 @@ package net.openhft.chronicle.map;
 
 
 import net.openhft.chronicle.TimeProvider;
-import net.openhft.chronicle.map.serialization.BytesReader;
-import net.openhft.chronicle.map.serialization.MetaBytesInterop;
-import net.openhft.chronicle.map.serialization.MetaBytesWriter;
-import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.serialization.BytesReader;
+import net.openhft.chronicle.serialization.MetaBytesInterop;
+import net.openhft.chronicle.serialization.MetaBytesWriter;
+import net.openhft.chronicle.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.Bytes;
@@ -38,7 +38,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-import static net.openhft.chronicle.map.serialization.Hasher.hash;
+import static net.openhft.chronicle.serialization.Hasher.hash;
 import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 
 /**

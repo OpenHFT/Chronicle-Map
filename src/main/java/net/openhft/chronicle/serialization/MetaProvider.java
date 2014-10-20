@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.serialization;
+package net.openhft.chronicle.serialization;
 
-import net.openhft.chronicle.map.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.threadlocal.ThreadLocalCopies;
 
 import java.io.Serializable;
 
