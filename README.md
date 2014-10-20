@@ -645,8 +645,7 @@ final ChronicleMap<Integer, CharSequence> statelessMap;
 
 // stateless client
 {
-    statelessMap = ChronicleMapBuilder.of(Integer
-            .class, CharSequence.class)
+    statelessMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
             .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
 
     Assert.assertEquals("EXAMPLE-10", statelessMap.get(10));
