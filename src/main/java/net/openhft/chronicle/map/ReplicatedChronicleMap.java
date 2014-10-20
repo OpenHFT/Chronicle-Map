@@ -1535,21 +1535,23 @@ abstract class Replicator {
 
     /**
      * Applies the replicator to the map instance and returns a Closeable token to manage resources,
-     * associated with the replication.
-     * <p/>
-     * <p>This method isn't intended to be called from the client code.
+     * associated with the replication. <p/> <p>This method isn't intended to be called from the
+     * client code.
      *
-     * @param builder             the builder from which the map was constructed. The replicator may obtain some
-     *                            map configurations, not accessible via the map instance.
-     * @param map                 a replicated map instance. Provides basic tools for replication implementation.
+     * @param builder             the builder from which the map was constructed. The replicator may
+     *                            obtain some map configurations, not accessible via the map
+     *                            instance.
+     * @param map                 a replicated map instance. Provides basic tools for replication
+     *                            implementation.
      * @param entryExternalizable the callback for ser/deser implementation in the replicator
      * @param chronicleMap
-     * @return a {@code Closeable} token to control replication resources.
-     * It should be closed on closing the replicated map.
+     * @return a {@code Closeable} token to control replication resources. It should be closed on
+     * closing the replicated map.
      * @throws java.io.IOException   if an io error occurred during the replicator setup
-     * @throws IllegalStateException if this replicator doesn't support application to more than
-     *                               one map (or the specified number of maps), and this replicator has already been
-     *                               applied to a map (or the specified number of maps)
+     * @throws IllegalStateException if this replicator doesn't support application to more than one
+     *                               map (or the specified number of maps), and this replicator has
+     *                               already been applied to a map (or the specified number of
+     *                               maps)
      */
     protected abstract Closeable applyTo(ChronicleMapBuilder builder,
                                          Replica map, Replica.EntryExternalizable entryExternalizable, final ChronicleMap chronicleMap)

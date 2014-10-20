@@ -29,7 +29,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private final CloseablesManager closeables = new CloseablesManager();
     private final StatelessBuilder builder;
 
-    public static enum EventId {
+    static enum EventId {
         HEARTBEAT,
         STATEFUL_UPDATE,
         LONG_SIZE, SIZE,
@@ -48,16 +48,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         REMOVE_WITH_VALUE
     }
 
-    // private final ThreadLocal<Buffer> sourceBuffer = new ThreadLocal<Buffer>();
-
-
     private final AtomicLong transactionID = new AtomicLong();
 
-    // private long timeoutMs = TimeUnit.SECONDS.toMillis(20);
-
-
-    public StatelessChronicleMap(final KeyValueSerializer<K, V> keyValueSerializer,
-                                 final StatelessBuilder builder) throws IOException {
+    StatelessChronicleMap(final KeyValueSerializer<K, V> keyValueSerializer,
+                          final StatelessBuilder builder) throws IOException {
 
         this.keyValueSerializer = keyValueSerializer;
         this.builder = builder;
@@ -514,7 +508,7 @@ interface Buffer {
 
 class RuntimeIOException extends RuntimeException {
 
-    public RuntimeIOException(IOException e) {
+    RuntimeIOException(IOException e) {
         super(e);
     }
 
@@ -522,7 +516,7 @@ class RuntimeIOException extends RuntimeException {
 
 class TimeoutException extends RuntimeException {
 
-    public TimeoutException() {
+    TimeoutException() {
 
     }
 

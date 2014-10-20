@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,14 +71,14 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
      *                                 set smaller the buffer will over flow, it can be larger then
      *                                 the entry, but setting it too large reduces the workable
      *                                 space in the buffer.
-     * @param statelessServerConnector
+     * @param statelessServerConnector set to NULL if not required
      * @throws IOException
      */
     TcpReplicator(@NotNull final Replica replica,
                   @NotNull final Replica.EntryExternalizable externalizable,
                   @NotNull final TcpReplicationConfig replicationConfig,
                   final int maxEntrySizeBytes,
-                  StatelessServerConnector statelessServerConnector) throws IOException {
+                  @Nullable StatelessServerConnector statelessServerConnector) throws IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig(),
                 maxEntrySizeBytes);
@@ -1192,19 +1193,21 @@ interface Work {
  */
 class StatelessServerConnector<K, V> {
 
-
     private final KeyValueSerializer<K, V> keyValueSerializer;
     private final ChronicleMap<K, V> map;
     private double maxEntrySizeBytes;
 
-    StatelessServerConnector(KeyValueSerializer<K, V> keyValueSerializer, ChronicleMap<K,
-            V> map, int maxEntrySizeBytes) {
+    StatelessServerConnector(@NotNull KeyValueSerializer<K, V> keyValueSerializer,
+                             @NotNull ChronicleMap<K, V> map,
+                             int maxEntrySizeBytes) {
         this.keyValueSerializer = keyValueSerializer;
         this.map = map;
         this.maxEntrySizeBytes = maxEntrySizeBytes;
     }
 
-    Work processStatelessEvent(byte eventId, @net.openhft.lang.model.constraints.NotNull Bytes in, @net.openhft.lang.model.constraints.NotNull Bytes out) {
+    Work processStatelessEvent(byte eventId,
+                               @NotNull Bytes in,
+                               @NotNull Bytes out) {
 
         final StatelessChronicleMap.EventId event = StatelessChronicleMap.EventId.values()[eventId];
 
@@ -1290,28 +1293,28 @@ class StatelessServerConnector<K, V> {
     }
 
 
-    public Work longSize(Bytes in, Bytes out) {
+    private Work longSize(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
         out.writeLong(map.longSize());
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
 
-    public Work size(Bytes in, Bytes out) {
+    private Work size(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
         out.writeInt(map.size());
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
 
-    public Work isEmpty(Bytes in, Bytes out) {
+    private Work isEmpty(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
         out.writeBoolean(map.isEmpty());
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
 
-    public Work containsKey(Bytes in, Bytes out) {
+    private Work containsKey(Bytes in, Bytes out) {
         K k = readKey(in);
         long sizeLocation = reflectTransactionId(in, out);
         out.writeBoolean(map.containsKey(k));
@@ -1319,7 +1322,7 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    public Work containsValue(Bytes in, Bytes out) {
+    private Work containsValue(Bytes in, Bytes out) {
         V v = readValue(in);
         long sizeLocation = reflectTransactionId(in, out);
         out.writeBoolean(map.containsValue(v));
@@ -1327,7 +1330,7 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    public Work get(Bytes in, Bytes out) {
+    private Work get(Bytes in, Bytes out) {
         K k = readKey(in);
         long sizeLocation = reflectTransactionId(in, out);
         try {
@@ -1342,8 +1345,7 @@ class StatelessServerConnector<K, V> {
 
     }
 
-
-    public Work put(Bytes in, Bytes out) {
+    private Work put(Bytes in, Bytes out) {
         K k = readKey(in);
         V v = readValue(in);
         long sizeLocation = reflectTransactionId(in, out);
@@ -1352,7 +1354,7 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    public Work remove(Bytes in, Bytes out) {
+    private Work remove(Bytes in, Bytes out) {
         final V value = map.remove(readKey(in));
         long sizeLocation = reflectTransactionId(in, out);
         writeValue(value, out);
@@ -1360,7 +1362,7 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    public Work putAll(Bytes in, Bytes out) {
+    private Work putAll(Bytes in, Bytes out) {
         map.putAll(readEntries(in));
         long sizeLocation = reflectTransactionId(in, out);
         writeSizeAndFlags(sizeLocation, false, out);
@@ -1368,14 +1370,14 @@ class StatelessServerConnector<K, V> {
     }
 
 
-    public Work clear(Bytes in, Bytes out) {
+    private Work clear(Bytes in, Bytes out) {
         map.clear();
         long sizeLocation = reflectTransactionId(in, out);
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
 
-    public Work keySet(Bytes in, final Bytes out) {
+    private Work keySet(Bytes in, final Bytes out) {
         final long sizeLocation = reflectTransactionId(in, out);
 
         final Set<K> ks = map.keySet();
@@ -1405,7 +1407,7 @@ class StatelessServerConnector<K, V> {
         };
     }
 
-    public Work values(Bytes in, Bytes out) {
+    private Work values(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
         final Collection<V> values = map.values();
         out.writeStopBit(values.size());
@@ -1416,7 +1418,7 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    public Work entrySet(Bytes in, Bytes out) {
+    private Work entrySet(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
 
         final Set<Map.Entry<K, V>> entries = map.entrySet();
@@ -1428,7 +1430,7 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    public Work putIfAbsent(Bytes in, Bytes out) {
+    private Work putIfAbsent(Bytes in, Bytes out) {
         K key = readKey(in);
         V v = readValue(in);
         long sizeLocation = reflectTransactionId(in, out);
@@ -1438,7 +1440,7 @@ class StatelessServerConnector<K, V> {
     }
 
 
-    public Work replace(Bytes in, Bytes out) {
+    private Work replace(Bytes in, Bytes out) {
         K k = readKey(in);
         V v = readValue(in);
 
@@ -1546,7 +1548,6 @@ class KeyValueSerializer<K, V> {
         if (value != null)
             valueSerializer.writeMarshallable(value, out);
     }
-
 
 }
 
