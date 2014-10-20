@@ -1,6 +1,6 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.StatelessBuilder;
+import net.openhft.chronicle.common.StatelessBuilder;
 import net.openhft.chronicle.exceptions.IORuntimeException;
 import net.openhft.chronicle.exceptions.TimeoutRuntimeException;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -155,7 +155,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     public synchronized int size() {
-
         long sizeLocation = writeEvent(SIZE);
 
         // get the data back from the server

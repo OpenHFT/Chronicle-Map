@@ -53,7 +53,8 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
 * [Channels and the Channel Provider](https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider)
-  
+* [Stateless Client](https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider)
+
 #### Miscellaneous
 
  * [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
@@ -614,6 +615,43 @@ once you have finished, this will close everything in the ChannelProvider
 
 ``` java
 replicator.close();
+```
+
+#### Stateless Client
+
+
+ stateless client is an instance of a ChronicleMap or a Set that does not hold any data locally, 
+ all the Map operations are 
+ delegated via a Remote Procedure Calls ( RPC ) to another {@link ChronicleMap} or {@link 
+ ChronicleSet} which we will refer to as the server. The server will hold all your data, 
+ the server can not it’s self be a stateless client. Your stateless client must be connected to 
+ the server via TCP/IP. The stateless client will delegate all your method calls to the remote 
+ server. The stateless client operations will block, in other words the stateless client will wait
+  for the server to send a response before continuing to the next operation. The stateless client
+   could be  consider to be a ClientProxy to  {@link ChronicleMap} or {@link ChronicleSet}  
+   running on another host.
+
+``` java
+// server
+{
+    final ChronicleMap<Integer, CharSequence> serverMap;
+    serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+            .entries(20000L)
+            .replicators((byte) 2, of(8076).heartBeatInterval(1L, SECONDS)).create();
+
+    serverMap.put(10, "EXAMPLE-10");
+}
+
+// stateless client
+{
+    final ChronicleMap<Integer, CharSequence> statelessMap;
+    statelessMap = ChronicleMapBuilder.of(Integer
+            .class, CharSequence.class)
+            .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+
+    Assert.assertEquals("EXAMPLE-10", statelessMap.get(10));
+    Assert.assertEquals(1, statelessMap.size());
+}
 ```
 
 ####  Known Issues

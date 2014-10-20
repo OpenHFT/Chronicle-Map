@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.TimeProvider;
+import net.openhft.chronicle.common.TimeProvider;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 import org.junit.Test;
 import org.mockito.Mockito;

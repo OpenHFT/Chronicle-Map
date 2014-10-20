@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.*;
+import net.openhft.chronicle.common.*;
 import net.openhft.chronicle.serialization.AgileBytesMarshaller;
 import net.openhft.chronicle.serialization.MetaBytesInterop;
 import net.openhft.chronicle.serialization.MetaBytesWriter;
@@ -64,7 +64,7 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
  *
  * <p>Use static {@link #of(Class, Class)} method to obtain a {@code ChronicleMapBuilder} instance.
  *
- * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
+ * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link net.openhft.chronicle.common.ChronicleHashBuilder} interface
  * documentation.
  *
  * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code

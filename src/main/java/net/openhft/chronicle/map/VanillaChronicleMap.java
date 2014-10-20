@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.ChronicleHashErrorListener;
+import net.openhft.chronicle.common.ChronicleHashErrorListener;
 import net.openhft.chronicle.threadlocal.Provider;
 import net.openhft.chronicle.threadlocal.ThreadLocalCopies;
 import net.openhft.chronicle.serialization.*;

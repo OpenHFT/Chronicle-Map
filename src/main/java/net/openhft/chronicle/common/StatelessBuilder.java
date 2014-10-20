@@ -1,4 +1,4 @@
-package net.openhft.chronicle;
+package net.openhft.chronicle.common;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
