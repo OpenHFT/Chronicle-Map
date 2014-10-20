@@ -652,22 +652,18 @@ A stateless client is an instance of a ChronicleMap or a ChronicleSet that does 
 }
 ```
 
-This example above, create an Chornicle Map ( statefull instance ) running on port 8076, 
-we then create a "statelessMap" and connect this stateless map to it via :
+This example above, creates an Chronicle Map ( statefull instance ) running on port 8076, 
+It creates a "statelessMap" and connects to it via :
 
 ``` java
 .stateless(remoteAddress(new InetSocketAddress("localhost", 8076)))
 ```
-the ".stateless(..)" method less ChronicleMap that is going be build a stateless client. If you 
-dont add this line a normal statefull ChronicleMap will be created. For this example we ran both 
-the cleint an the server on the same host ( hence the localhost setting ), 
-but in a real life example the stateless client will typically be on a diffent server than the 
-statefull host. If for your configuration your client and server are on the same host, 
-it better not to use the stateless client as this work via TCP/IP, 
-you would get better performance if you use shared heap memory by sharing a file, 
-to read more about this click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps ) 
-
-####  Known Issues
+the ".stateless(..)" method tells ChronicleMap that its going to build a stateless client. If you 
+don’t add this line a normal state-full ChronicleMap will be created. For this example we ran both 
+the client an the server on the same host ( hence the “localhost" setting ), 
+but in a real life example the stateless client will typically be on a different server than the state-full host. If you are aiming to create a stateless client and server on the same host, its better not to do this, as the stateless client connects to the server via TCP/IP, 
+you would get better performance if you connect to the server via heap memory , to read more about sharing a map with heap memory this click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps ) 
+#  Known Issues
 
 ##### Memory issue on Windows
 
