@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
-import static net.openhft.chronicle.map.StatelessMapClient.EventId.HEARTBEAT;
+import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 /**
  * Used with a {@see net.openhft.map.ReplicatedSharedHashMap} to send data between the maps using a
@@ -1206,7 +1206,7 @@ class StatelessServerConnector<K, V> {
 
     Work processStatelessEvent(byte eventId, @net.openhft.lang.model.constraints.NotNull Bytes in, @net.openhft.lang.model.constraints.NotNull Bytes out) {
 
-        final StatelessMapClient.EventId event = StatelessMapClient.EventId.values()[eventId];
+        final StatelessChronicleMap.EventId event = StatelessChronicleMap.EventId.values()[eventId];
 
         switch (event) {
 

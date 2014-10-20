@@ -15,16 +15,14 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static net.openhft.chronicle.map.StatelessMapClient.EventId.*;
+import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
 
 /**
- * **** THIS IS VERY MUCH IN DRAFT ***
- *
  * @author Rob Austin.
  */
-class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
+class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StatelessMapClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
 
     private final SocketChannel clientChannel;
     public static final ByteBuffer STATELESS_CLIENT_IDENTIFER = ByteBuffer.wrap(new byte[]{-127});
@@ -58,8 +56,8 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
     // private long timeoutMs = TimeUnit.SECONDS.toMillis(20);
 
 
-    public StatelessMapClient(final KeyValueSerializer<K, V> keyValueSerializer,
-                              final StatelessBuilder builder) throws IOException {
+    public StatelessChronicleMap(final KeyValueSerializer<K, V> keyValueSerializer,
+                                 final StatelessBuilder builder) throws IOException {
 
         this.keyValueSerializer = keyValueSerializer;
         this.builder = builder;
@@ -365,7 +363,7 @@ class StatelessMapClient<K, V> implements ChronicleMap<K, V>, Closeable {
         public final V setValue(V newValue) {
             V oldValue = value;
 
-            StatelessMapClient.this.put((K) getKey(), (V) newValue);
+            StatelessChronicleMap.this.put((K) getKey(), (V) newValue);
 
             return oldValue;
         }

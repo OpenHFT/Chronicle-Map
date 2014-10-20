@@ -668,7 +668,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> stateless(StatelessBuilder statelessBuilder) {
+    public ChronicleMapBuilder<K, V> stateless(@NotNull StatelessBuilder statelessBuilder) {
         this.statelessBuilder = statelessBuilder;
         return this;
     }
@@ -837,7 +837,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         final KeyValueSerializer<K, V> keyValueSerializer
                 = new KeyValueSerializer<K, V>(keyBuilder, valueBuilder);
 
-        return new StatelessMapClient<K, V>(keyValueSerializer, statelessBuilder);
+        return new StatelessChronicleMap<K, V>(keyValueSerializer, statelessBuilder);
     }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {

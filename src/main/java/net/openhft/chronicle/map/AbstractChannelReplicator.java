@@ -285,7 +285,7 @@ abstract class AbstractChannelReplicator implements Closeable {
             long pos0 = in.position();
 
             // used to denote that this is not a stateless map event
-            in.writeByte(StatelessMapClient.EventId.STATEFUL_UPDATE.ordinal());
+            in.writeByte(StatelessChronicleMap.EventId.STATEFUL_UPDATE.ordinal());
 
             long sizeLocation = in.position();
 
