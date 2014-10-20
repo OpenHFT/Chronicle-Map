@@ -621,7 +621,8 @@ replicator.close();
 
 ![](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-remote-stateless-map_04_vB.jpg)
 
-A stateless client is an instance of a `ChronicleMap` or a ChronicleSet that does not hold any data
+A stateless client is an instance of a `ChronicleMap` or a `ChronicleSet` that does not hold any 
+data
  locally, all the Map or Set operations are delegated via a Remote Procedure Calls ( RPC ) to 
  another `ChronicleMap` or  `ChronicleSet`  which we will refer to as the server. The server will hold all your data, the server can not it’s self be a stateless client. Your stateless client must be connected to the server via TCP/IP. The stateless client will delegate all your method calls to the remote server. The stateless client operations will block, in other words the stateless client will wait for the server to send a response before continuing to the next operation. The stateless client could be  consider to be a ClientProxy to `ChronicleMap` or  `ChronicleSet`  running on another host.
  
