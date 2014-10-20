@@ -624,6 +624,8 @@ replicator.close();
 A stateless client is an instance of a ChronicleMap or a ChronicleSet that does not hold any data
  locally, all the Map or Set operations are delegated via a Remote Procedure Calls ( RPC ) to 
  another ChronicleMap or ChronicleSet which we will refer to as the server. The server will hold all your data, the server can not it’s self be a stateless client. Your stateless client must be connected to the server via TCP/IP. The stateless client will delegate all your method calls to the remote server. The stateless client operations will block, in other words the stateless client will wait for the server to send a response before continuing to the next operation. The stateless client could be  consider to be a ClientProxy to ChronicleMap or ChronicleSet running on another host.
+ 
+ Below is an example of how to configure a stateless client.
 
 ``` java
 // server
@@ -631,7 +633,8 @@ A stateless client is an instance of a ChronicleMap or a ChronicleSet that does 
     final ChronicleMap<Integer, CharSequence> serverMap;
     serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
             .entries(20000L)
-            .replicators((byte) 2, of(8076).heartBeatInterval(1L, SECONDS)).create();
+            .replicators((byte) 2, of(8076).heartBeatInterval(1L, SECONDS))
+            .create();
 
     serverMap.put(10, "EXAMPLE-10");
 }
@@ -641,12 +644,28 @@ A stateless client is an instance of a ChronicleMap or a ChronicleSet that does 
     final ChronicleMap<Integer, CharSequence> statelessMap;
     statelessMap = ChronicleMapBuilder.of(Integer
             .class, CharSequence.class)
-            .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+            .stateless(remoteAddress(new InetSocketAddress("localhost", 8076)))
+            .create();
 
     Assert.assertEquals("EXAMPLE-10", statelessMap.get(10));
     Assert.assertEquals(1, statelessMap.size());
 }
 ```
+
+This example above, create an Chornicle Map ( statefull instance ) running on port 8076, 
+we then create a "statelessMap" and connect this stateless map to it via :
+
+``` java
+.stateless(remoteAddress(new InetSocketAddress("localhost", 8076)))
+```
+the ".stateless(..)" method less ChronicleMap that is going be build a stateless client. If you 
+dont add this line a normal statefull ChronicleMap will be created. For this example we ran both 
+the cleint an the server on the same host ( hence the localhost setting ), 
+but in a real life example the stateless client will typically be on a diffent server than the 
+statefull host. If for your configuration your client and server are on the same host, 
+it better not to use the stateless client as this work via TCP/IP, 
+you would get better performance if you use shared heap memory by sharing a file, 
+to read more about this click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps ) 
 
 ####  Known Issues
 
