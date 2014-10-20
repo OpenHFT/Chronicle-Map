@@ -188,7 +188,7 @@ or value objects that are created through, a directClass interface, for example 
 ``` java
       ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
                .of(String.class, directClassFor(BondVOInterface.class))
-               .create(file);
+               .create();
 
 ```
 
@@ -213,7 +213,7 @@ try {
 
     ChronicleMapBuilder<Integer, CharSequence> builder =
         ChronicleMapBuilder.of(Integer.class, CharSequence.class);
-    ConcurrentMap<Integer, CharSequence> map = builder.create(file);
+    ConcurrentMap<Integer, CharSequence> map = builder.file(file).create();
  
 } catch (IOException e) {
     e.printStackTrace();
@@ -247,10 +247,10 @@ between processes by just using memory and in around 40 nanoseconds.
 ConcurrentMap<Integer, CharSequence> map1, map2;
 
 // this could could be on one process
-map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).create(file);
+map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).file(file).create();
 
 // this could be on the other process
-map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).create(file);
+map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).file(file).create();
 ```
 Note: In order to share data between map1 and map2, the file has to point to the same file location
 on your server.
@@ -270,7 +270,7 @@ You set the maximum number of entries by the builder:
 ConcurrentMap<Integer, CharSequence> map =
     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
     .entries(1000) // set the max number of entries here
-    .create(file);
+    .create();
 ```
 In this example above we have set 1000 entries.
 
@@ -307,7 +307,7 @@ the ChronicleMapBuilder can also be used to return the ChronicleMap, see the exa
 
 ``` java
 ChronicleMap<Integer, CharSequence> map =
-    ChronicleMapBuilder.of(Integer.class, CharSequence.class).create(file);
+    ChronicleMapBuilder.of(Integer.class, CharSequence.class).create();
 ```
 One way to achieve good performance is to focus on unnecessary object creation as this reduces
 the amount of work that has to be carried out by the Garbage Collector. As such ChronicleMap
