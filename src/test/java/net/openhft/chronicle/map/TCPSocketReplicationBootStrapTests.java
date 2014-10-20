@@ -83,7 +83,6 @@ public class TCPSocketReplicationBootStrapTests {
     }
 
 
-    // todo we have to fix this
     @Test
     public void testBootstrapAndHeartbeat() throws IOException, InterruptedException {
         map1 = newTcpSocketShmIntString((byte) 1, 8079, new InetSocketAddress("localhost", 8076));

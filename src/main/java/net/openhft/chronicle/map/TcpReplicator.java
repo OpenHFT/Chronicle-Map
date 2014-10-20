@@ -506,6 +506,17 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
 
+        if (attached.entryWriter.hasIncompletWork()) {
+
+            boolean completed = attached.entryWriter.doWork();
+
+            if (completed)
+                attached.entryWriter.workCompleted();
+
+            return;
+        }
+
+
         if (attached.remoteModificationIterator != null)
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
@@ -531,6 +542,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
+
+        if (attached.entryWriter.hasIncompletWork())
+            return;
 
         try {
             if (attached.entryReader.readSocketToBuffer(socketChannel) <= 0)
@@ -743,10 +757,10 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         public long remoteHeartbeatInterval = heartBeatIntervalMillis;
         public boolean handShakingComplete;
 
+
         boolean isHandShakingComplete() {
             return handShakingComplete;
         }
-
 
         void clearHandShaking() {
             handShakingComplete = false;
@@ -770,7 +784,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 TcpReplicator.this.opWriteUpdater.set(remoteIdentifier);
         }
 
-
     }
 
     /**
@@ -783,12 +796,23 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         private final EntryCallback entryCallback;
         private long lastSentTime;
 
+        // if uncompletedWork is set ( not null ) , this must be completed before any further work
+        // is  carried out
+        public Work uncompletedWork;
+
         private TcpSocketChannelEntryWriter() {
             out = ByteBuffer.allocateDirect(replicationConfig.packetSize() + maxEntrySizeBytes);
             in = new ByteBufferBytes(out);
             entryCallback = new EntryCallback(externalizable, in);
         }
 
+        public boolean hasIncompletWork() {
+            return uncompletedWork != null;
+        }
+
+        public void workCompleted() {
+            uncompletedWork = null;
+        }
 
         /**
          * @return the buffer messages can be written to
@@ -936,6 +960,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         }
 
 
+        public boolean doWork() {
+            return uncompletedWork.doWork(in);
+        }
     }
 
     /**
@@ -985,13 +1012,12 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
                 // its set to MIN_VALUE when it should be read again
                 if (state == NOT_SET) {
-                    if (out.remaining() < SIZE_OF_SHORT + 1 ) {
+                    if (out.remaining() < SIZE_OF_SHORT + 1) {
                         return;
                     }
 
                     // state is used for both heartbeat and stateless
                     state = out.readByte();
-
 
 
                     sizeInBytes = out.readUnsignedShort();
@@ -1009,13 +1035,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 }
 
 
-
                 if (out.remaining() < sizeInBytes) {
                     return;
-                }
-
-                if (sizeInBytes == 0) {
-                    int j = 1;
                 }
 
 
@@ -1031,20 +1052,31 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                         LOG.error("", new IllegalArgumentException("received an event " +
                                 "from a stateless map, stateless maps are not " +
                                 "currently supported when using Chronicle Channels"));
-                    } else
+                    } else {
 
-                        statelessServerConnector.processStatelessEvent(state,
+                        final Work futureWork = statelessServerConnector.processStatelessEvent(state,
                                 out, attached.entryWriter.buffer());
-                    // to allow the sizeInBytes to be read the next time around
 
+                        // in some cases it may not be possible to send out all the data before we
+                        // fill out the write buffer, so this data will be send when the buffer
+                        // is no longer full, and as such is treated as future work
+                        if (futureWork != null) {
+
+                            // we will complete what we can now
+                            boolean isComplete = futureWork.doWork(attached.entryWriter.buffer());
+
+                            if (!isComplete)
+                                attached.entryWriter.uncompletedWork = futureWork;
+                        }
+                    }
 
                 } else
                     externalizable.readExternalEntry(out);
 
                 out.limit(limit);
+
                 // skip onto the next entry
                 out.position(nextEntryPos);
-
 
                 state = NOT_SET;
                 sizeInBytes = 0;
@@ -1087,7 +1119,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             else
                 return Long.MIN_VALUE;
 
-          //  return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
+            //  return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
         }
 
         public long remoteHeartbeatIntervalFromBuffer() {
@@ -1095,4 +1127,14 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         }
     }
 }
+
+interface Work {
+
+    /**
+     * @param in the buffer that we will fill up
+     * @return true when all the work is complete
+     */
+    boolean doWork(Bytes in);
+}
+
 
