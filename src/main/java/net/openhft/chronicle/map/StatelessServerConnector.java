@@ -192,7 +192,6 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-
     public Work keySet(Bytes in, final Bytes out) {
         final long sizeLocation = reflectTransactionId(in, out);
 
