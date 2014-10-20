@@ -99,6 +99,9 @@ final class SerializationBuilder<E> implements Cloneable {
         } else if (eClass == byte[].class) {
             reader((BytesReader<E>) ByteArrayMarshaller.INSTANCE, factory);
             interop((BytesInterop<E>) ByteArrayMarshaller.INSTANCE);
+        } else if (eClass == char[].class) {
+            reader((BytesReader<E>) CharArrayMarshaller.INSTANCE, factory);
+            interop((BytesInterop<E>) CharArrayMarshaller.INSTANCE);
         } else if (concreteClass(eClass)) {
             BytesMarshaller<E> marshaller = chooseMarshaller(eClass, eClass);
             if (marshaller != null)
