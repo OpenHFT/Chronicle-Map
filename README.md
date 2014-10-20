@@ -682,7 +682,7 @@ you would get better performance if you connect to the server via heap memory , 
 
 ##### Close
 
-its always important to close Chronicle Map and chronicleSets when you have finished with them
+its always important to close ChronicleMap's and ChronicleSet's when you have finished with them
 ``` java
 serverMap.close();
 statelessMap.close();6
