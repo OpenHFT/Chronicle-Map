@@ -6,10 +6,8 @@ import org.testng.Assert;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.common.StatelessBuilder.remoteAddress;
-import static net.openhft.chronicle.map.Builder.getPersistenceFile;
-import static net.openhft.chronicle.map.TcpReplicationConfig.of;
+
 
 /**
  * @author Rob Austin.
@@ -23,21 +21,16 @@ public class StatelessClientTest {
         final ChronicleMap<Integer, CharSequence> serverMap;
         final ChronicleMap<Integer, CharSequence> statelessMap;
 
-        // server
+// server
         {
-
-            ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(20000L)
-                        .replicators((byte) 2, of(8076).heartBeatInterval(1L, SECONDS)).file(getPersistenceFile());
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(20000L)
-                    .replicators((byte) 2, of(8076).heartBeatInterval(1L, SECONDS)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
 
             serverMap.put(10, "EXAMPLE-10");
         }
 
 
-        // stateless client
+// stateless client
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
