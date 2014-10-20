@@ -658,7 +658,7 @@ statelessMap.close();
 ```
 
 The example above, creates a Chronicle Map sever ( state-full) and connects a stateless client 
-to it, this connection is made over Tcp, the server TCP/IP port is defined using the 
+to it, this connection is made over TCP/IP, the server TCP/IP port is defined using the 
 TcpReplicationConfig :
 
 ``` java
@@ -811,7 +811,7 @@ between them, this is how we could set it up
 ```
 
 
-# Example : Replicating data between process on different servers via TCP
+# Example : Replicating data between process on different servers via TCP/IP
 
 Lets assume that we had two server, lets call them server1 and server2, if we wished to share a map
 between them, this is how we could set it up
@@ -837,7 +837,7 @@ public class YourClass {
 //  ----------  SERVER1 1 ----------
         {
 
-            // we connect the maps via a TCP socket connection on port 8077
+            // we connect the maps via a TCP/IP socket connection on port 8077
 
             TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
                     .heartBeatInterval(1L, TimeUnit.SECONDS);
