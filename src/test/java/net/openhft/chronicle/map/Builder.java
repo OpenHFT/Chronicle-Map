@@ -54,7 +54,7 @@ public class Builder {
     }
 
 
-    public static <T extends ChronicleMap<Integer, Void>> T newTcpSocketShmIntString(
+    public static <T extends ChronicleMap<Integer, Void>> T newMapVoid(
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
