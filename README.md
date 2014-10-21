@@ -336,6 +336,39 @@ a key, but unlike `getUsing()` if there is not an entry in the map for this key 
 added and the value return will we the same value which you provided.
 
 
+
+#### Why Use getUsing(..) or acquireUsing(..)
+
+The point of these methods is to avoid creating any objects.
+
+Pattern 1
+``` java
+// get or create/initialise add needed
+// assumption: I need this key value to exist or be initialised.
+map.acquireUsing(key, value);
+
+// use value
+
+if (changed)
+     map.put(key, value);
+
+```
+
+Pattern 2
+``` java
+// get or don't do anything else.
+// assumption: I only need the value if it exists, otherwise I will do something else, or nothing.
+if (map.getUsing(key, value) != null) {
+     // use value
+
+     if (changed)
+         map.put(key, value);
+} else {
+     // don't use value
+}
+```
+ 
+
 ## Oversized Entries Support
 
 It is possible for the size of your entry to be twice as large as the maximum entry size, 
