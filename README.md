@@ -676,7 +676,6 @@ final ChronicleMap<Integer, CharSequence> statelessMap;
     serverMap.put(10, "EXAMPLE-10");
 }
 
-
 // stateless client
 {
     statelessMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
