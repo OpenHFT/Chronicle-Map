@@ -28,8 +28,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
     private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
 
     private final SocketChannel clientChannel;
-    public static final ByteBuffer STATELESS_CLIENT_IDENTIFER = ByteBuffer.wrap(new byte[]{-127});
-    private final CloseablesManager closeables = new CloseablesManager();
+    public static final byte STATELESS_CLIENT_IDENTIFER = (byte) -127;
+    private CloseablesManager closeables;
     private final StatelessBuilder builder;
 
     static enum EventId {
@@ -48,7 +48,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
         REPLACE,
         REPLACE_WITH_OLD_AND_NEW_VALUE,
         PUT_IF_ABSENT,
-        REMOVE_WITH_VALUE
+        REMOVE_WITH_VALUE,
+        TO_STRING
     }
 
     private final AtomicLong transactionID = new AtomicLong();
@@ -65,8 +66,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
         IOException exception = null;
         SocketChannel clientChannel0 = null;
 
-        for (int i = 1; i < 5; i++) {
+        long timeoutAt = System.currentTimeMillis() + builder.timeoutMs();
+        for (; ; ) {
 
+            if (System.currentTimeMillis() > timeoutAt) {
+                clientChannel0.close();
+                close();
+                throw new RuntimeException("unable to connect to remote server");
+            }
+
+            closeables = new CloseablesManager();
             clientChannel0 = AbstractChannelReplicator.openSocketChannel(closeables);
 
             try {
@@ -75,8 +84,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
                 exception = null;
                 break;
             } catch (IOException e) {
-                closeables.closeQuietly();
-                Thread.yield();
+
+                clientChannel0.close();
+                close();
+
             }
 
         }
@@ -84,6 +95,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
         if (exception != null)
             throw exception;
 
+        if (clientChannel0 == null)
+            throw new IOException("unable to connect to remote server");
 
         return clientChannel0;
     }
@@ -91,11 +104,22 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
 
     private void doHandShaking(final SocketChannel clientChannel) throws IOException {
 
-        while (STATELESS_CLIENT_IDENTIFER.remaining() > 0) {
-            clientChannel.write(STATELESS_CLIENT_IDENTIFER);
+        out.clear();
+        out.writeByte(STATELESS_CLIENT_IDENTIFER);
+
+
+        ByteBuffer buffer = out.buffer().slice();
+        buffer.position(0);
+        buffer.limit(1);
+        while (buffer.hasRemaining()) {
+            clientChannel.write(buffer);
         }
 
+
         in.buffer().clear();
+        in.clear();
+        out.buffer().clear();
+        out.clear();
 
         while (in.buffer().position() <= 0) {
             clientChannel.read(in.buffer());
@@ -115,6 +139,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
 
     public void close() {
         closeables.closeQuietly();
+        clearBuffers();
     }
 
 
@@ -191,6 +216,15 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
     }
 
 
+    public synchronized String toString() {
+        long sizeLocation = writeEvent(TO_STRING);
+
+        // get the data back from the server
+        return blockingFetch(sizeLocation).readObject(String.class);
+
+    }
+
+
     public synchronized boolean isEmpty() {
         long sizeLocation = writeEvent(IS_EMPTY);
 
@@ -255,6 +289,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
 
         return readKey(sizeLocation);
 
+
+    }
+
+    private void compact() {
+        in.buffer().compact();
 
     }
 
@@ -422,17 +461,27 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
         try {
             return blockingFetchThrowable(sizeLocation, this.builder.timeoutMs());
         } catch (IOException e) {
-            closeables.closeQuietly();
+            close();
             throw new IORuntimeException(e);
         } catch (Exception e) {
-            closeables.closeQuietly();
+            close();
             throw e;
         }
 
     }
 
+    private void clearBuffers() {
+        out.clear();
+        out.buffer().clear();
+        in.clear();
+        in.buffer().clear();
+    }
+
 
     private Bytes blockingFetchThrowable(long sizeLocation, long timeOutMs) throws IOException {
+
+        // free up space in the buffer
+        //   compact();
 
         long startTime = System.currentTimeMillis();
         long transactionId = nextUniqueTransaction(startTime);
@@ -453,18 +502,25 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
         in.clear();
         in.buffer().clear();
 
+       /* in.buffer().limit(in.buffer().capacity());
+        in.limit(in.buffer().position());
+*/
         // read size
         while (in.buffer().position() < 2) {
             clientChannel.read(in.buffer());
             checkTimeout(timeoutTime);
         }
 
+        in.limit(in.buffer().position());
         int size = in.readUnsignedShort();
+
+        LOG.info("size=" + size);
 
         while (in.buffer().position() < size) {
             clientChannel.read(in.buffer());
             checkTimeout(timeoutTime);
         }
+        in.limit(in.buffer().position());
 
         boolean isException = in.readBoolean();
 

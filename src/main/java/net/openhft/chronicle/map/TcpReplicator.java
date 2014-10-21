@@ -60,7 +60,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     private final int maxEntrySizeBytes;
     private final Replica.EntryExternalizable externalizable;
     private final TcpReplicationConfig replicationConfig;
-
     private final StatelessServerConnector statelessServerConnector;
 
     private long selectorTimeout;
@@ -201,6 +200,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
      * @param approxTime the approximate time in milliseconds
      */
     void heartBeatMonitor(long approxTime) {
+
         for (int i = activeKeys.nextSetBit(0); i >= 0; i = activeKeys.nextSetBit(i + 1)) {
             try {
                 final SelectionKey key = selectionKeysStore[i];
@@ -208,6 +208,11 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                     activeKeys.clear(i);
                     continue;
                 }
+
+                final Attached attachment = (Attached) key.attachment();
+                if (!attachment.hasRemoteHeartbeatInterval)
+                    continue;
+
                 try {
                     sendHeartbeatIfRequired(approxTime, key);
                 } catch (Exception e) {
@@ -442,6 +447,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
             if (remoteIdentifier == STATELESS_CLIENT) {
                 attached.handShakingComplete = true;
+                attached.hasRemoteHeartbeatInterval = false;
                 return;
             }
 
@@ -530,13 +536,14 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
 
-        if (attached.entryWriter.hasIncompletWork()) {
+        if (attached.entryWriter.isWorkIncomplete()) {
 
             boolean completed = attached.entryWriter.doWork();
 
             if (completed)
                 attached.entryWriter.workCompleted();
 
+            attached.hasRemoteHeartbeatInterval = false;
             return;
         }
 
@@ -567,7 +574,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
 
-        if (attached.entryWriter.hasIncompletWork())
+        if (attached.entryWriter.isWorkIncomplete())
             return;
 
         try {
@@ -820,8 +827,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             remoteHeartbeatInterval = heartBeatIntervalMillis;
             hasRemoteHeartbeatInterval = false;
             remoteModificationIterator = null;
-
-
         }
 
         /**
@@ -856,7 +861,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             entryCallback = new EntryCallback(externalizable, in);
         }
 
-        public boolean hasIncompletWork() {
+        public boolean isWorkIncomplete() {
             return uncompletedWork != null;
         }
 
@@ -1068,13 +1073,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
                     // state is used for both heartbeat and stateless
                     state = out.readByte();
-
-
                     sizeInBytes = out.readUnsignedShort();
-
-                    if (state == 0 && sizeInBytes != 0) {
-                        int i = 1;
-                    }
 
                     // this is the :
                     //  -- heartbeat if its 0
@@ -1211,6 +1210,8 @@ class StatelessServerConnector<K, V> {
 
         final StatelessChronicleMap.EventId event = StatelessChronicleMap.EventId.values()[eventId];
 
+        System.out.println("got remote event to StatelessChronicleMap");
+
         switch (event) {
 
             case LONG_SIZE:
@@ -1261,6 +1262,9 @@ class StatelessServerConnector<K, V> {
             case SIZE:
                 return size(in, out);
 
+            case TO_STRING:
+                return toString(in, out);
+
             default:
                 throw new IllegalStateException("unsupported event=" + event);
 
@@ -1268,8 +1272,18 @@ class StatelessServerConnector<K, V> {
 
     }
 
+
     private Work removeWithValue(Bytes in, Bytes out) {
-        boolean result = map.remove(readKey(in), readValue(in));
+
+        K key = readKey(in);
+        V readValue = readValue(in);
+        long sizeLocation = reflectTransactionId(in, out);
+        boolean result;
+        try {
+            result = map.remove(key, readValue);
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
         out.writeBoolean(result);
         return null;
     }
@@ -1279,15 +1293,14 @@ class StatelessServerConnector<K, V> {
         final K key = readKey(in);
         V oldValue = readValue(in);
         V newValue = readValue(in);
-
+        boolean replaced;
         long sizeLocation = reflectTransactionId(in, out);
         try {
-            map.replace(key, oldValue, newValue);
+            replaced = map.replace(key, oldValue, newValue);
         } catch (RuntimeException e) {
-            writeException(e, out);
-            writeSizeAndFlags(sizeLocation, true, out);
-            return null;
+            return sendException(out, sizeLocation, e);
         }
+        out.writeBoolean(replaced);
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
@@ -1295,21 +1308,53 @@ class StatelessServerConnector<K, V> {
 
     private Work longSize(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
-        out.writeLong(map.longSize());
+        try {
+            out.writeLong(map.longSize());
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
 
     private Work size(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
-        out.writeInt(map.size());
+        try {
+            out.writeInt(map.size());
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
 
+
+    private Work toString(Bytes in, Bytes out) {
+        long sizeLocation = reflectTransactionId(in, out);
+        try {
+            out.writeObject(map.toString());
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+
+    private Work sendException(Bytes out, long sizeLocation, RuntimeException e) {
+        writeException(e, out);
+        writeSizeAndFlags(sizeLocation, true, out);
+        return null;
+    }
+
+
     private Work isEmpty(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
-        out.writeBoolean(map.isEmpty());
+        try {
+            out.writeBoolean(map.isEmpty());
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
@@ -1317,7 +1362,11 @@ class StatelessServerConnector<K, V> {
     private Work containsKey(Bytes in, Bytes out) {
         K k = readKey(in);
         long sizeLocation = reflectTransactionId(in, out);
-        out.writeBoolean(map.containsKey(k));
+        try {
+            out.writeBoolean(map.containsKey(k));
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
@@ -1325,7 +1374,11 @@ class StatelessServerConnector<K, V> {
     private Work containsValue(Bytes in, Bytes out) {
         V v = readValue(in);
         long sizeLocation = reflectTransactionId(in, out);
-        out.writeBoolean(map.containsValue(v));
+        try {
+            out.writeBoolean(map.containsValue(v));
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
@@ -1336,9 +1389,7 @@ class StatelessServerConnector<K, V> {
         try {
             writeValue(map.get(k), out);
         } catch (RuntimeException e) {
-            writeException(e, out);
-            writeSizeAndFlags(sizeLocation, true, out);
-            return null;
+            return sendException(out, sizeLocation, e);
         }
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
@@ -1349,30 +1400,54 @@ class StatelessServerConnector<K, V> {
         K k = readKey(in);
         V v = readValue(in);
         long sizeLocation = reflectTransactionId(in, out);
-        writeValue(map.put(k, v), out);
+        try {
+            writeValue(map.put(k, v), out);
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
 
     private Work remove(Bytes in, Bytes out) {
-        final V value = map.remove(readKey(in));
+        K key = readKey(in);
         long sizeLocation = reflectTransactionId(in, out);
-        writeValue(value, out);
+
+        try {
+            writeValue(map.remove(key), out);
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
+
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
+
+
     }
 
     private Work putAll(Bytes in, Bytes out) {
-        map.putAll(readEntries(in));
+        Map<K, V> m = readEntries(in);
+
         long sizeLocation = reflectTransactionId(in, out);
+        try {
+            map.putAll(m);
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
+
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
 
 
     private Work clear(Bytes in, Bytes out) {
-        map.clear();
+
         long sizeLocation = reflectTransactionId(in, out);
+        try {
+            map.clear();
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
@@ -1409,7 +1484,14 @@ class StatelessServerConnector<K, V> {
 
     private Work values(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
-        final Collection<V> values = map.values();
+        final Collection<V> values;
+        try {
+            values = map.values();
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
+
+
         out.writeStopBit(values.size());
         for (final V value : values) {
             writeValue(value, out);
@@ -1421,7 +1503,13 @@ class StatelessServerConnector<K, V> {
     private Work entrySet(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
 
-        final Set<Map.Entry<K, V>> entries = map.entrySet();
+        final Set<Map.Entry<K, V>> entries;
+        try {
+
+            entries = map.entrySet();
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
         out.writeStopBit(entries.size());
         for (Map.Entry<K, V> e : entries) {
             writeKey(e.getKey(), out);
@@ -1434,7 +1522,15 @@ class StatelessServerConnector<K, V> {
         K key = readKey(in);
         V v = readValue(in);
         long sizeLocation = reflectTransactionId(in, out);
-        writeValue(map.putIfAbsent(key, v), out);
+        V value;
+
+        try {
+            value = map.putIfAbsent(key, v);
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
+
+        writeValue(value, out);
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
@@ -1443,9 +1539,14 @@ class StatelessServerConnector<K, V> {
     private Work replace(Bytes in, Bytes out) {
         K k = readKey(in);
         V v = readValue(in);
-
+        V replaced;
         long sizeLocation = reflectTransactionId(in, out);
-        map.replace(k, v);
+        try {
+            replaced = map.replace(k, v);
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
+        writeValue(replaced, out);
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
@@ -1455,6 +1556,7 @@ class StatelessServerConnector<K, V> {
      *
      * @param key the key of the map
      */
+
     private void writeKey(K key, Bytes out) {
         keyValueSerializer.writeKey(key, out);
     }
