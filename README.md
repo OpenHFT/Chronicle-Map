@@ -691,7 +691,7 @@ statelessMap.close();
 ```
 
 When used with a stateless client, Each state-full server has to be configured with TCP 
-replication ( ), when you set up TCP Replication you must define a port for the replication to 
+replication, when you set up TCP Replication you must define a port for the replication to 
 run on, the port you choose is up to you, but you should pick a free port that is not currently 
 being used by another application. In this example we choose the port 8076
 
