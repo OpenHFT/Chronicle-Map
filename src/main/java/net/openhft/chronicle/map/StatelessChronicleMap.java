@@ -111,8 +111,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
         ByteBuffer buffer = out.buffer().slice();
         buffer.position(0);
         buffer.limit(1);
+        long timeoutTime = System.currentTimeMillis() + builder.timeoutMs();
         while (buffer.hasRemaining()) {
             clientChannel.write(buffer);
+            checkTimeout(timeoutTime);
         }
 
 
@@ -123,6 +125,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
 
         while (in.buffer().position() <= 0) {
             clientChannel.read(in.buffer());
+            checkTimeout(timeoutTime);
         }
 
         in.limit(in.buffer().position());
