@@ -277,7 +277,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             try (ChronicleMap empty = newStrStrMap(8078)) {
                 assertNull(map.get(notPresent));
 
-                empty.close();
+             
             }
         }
     }
@@ -296,7 +296,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 assertTrue(empty.isEmpty());
                 assertFalse(map.isEmpty());
 
-                empty.close();
+              
             }
         }
     }
@@ -427,7 +427,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 assertTrue(empty.containsKey(four));
                 assertTrue(empty.containsKey(five));
 
-                empty.close();
+              
             }
         }
     }
@@ -551,7 +551,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 ;
                 assertEquals(5, map.size());
 
-                empty.close();
+              
             }
         }
     }
