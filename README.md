@@ -642,13 +642,7 @@ chronicle channels.
 If you inadvertently got the chronicle channels around the wrong way, then chronicle would attempt
 to replicate the wrong maps data. The chronicle channels don't have to be in order but they must be
 unique for each map you have.
-
-Once you have created the ChannelProvider you may wish to hold onto the reference so that you can call close
-once you have finished, this will close everything in the ChannelProvider 
-
-``` java
-channelProvider.close();
-```
+ 
 
 # Stateless Client
 
