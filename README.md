@@ -12,7 +12,7 @@ Replicate your Key Value Store across your network, with consistency, durability
 
 #### Maven Artifact Download
 ```xml
-<dependency>
+<dependency>                                   
   <groupId>net.openhft</groupId>
   <artifactId>chronicle-map</artifactId>
   <version><!--replace with the latest version--></version>
@@ -53,7 +53,8 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
 * [Channels and the Channel Provider](https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider)
-  
+* [Stateless Client](https://github.com/OpenHFT/Chronicle-Map#stateless-client)
+
 #### Miscellaneous
 
  * [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
@@ -188,7 +189,7 @@ or value objects that are created through, a directClass interface, for example 
 ``` java
       ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
                .of(String.class, directClassFor(BondVOInterface.class))
-               .create(file);
+               .create();
 
 ```
 
@@ -213,7 +214,7 @@ try {
 
     ChronicleMapBuilder<Integer, CharSequence> builder =
         ChronicleMapBuilder.of(Integer.class, CharSequence.class);
-    ConcurrentMap<Integer, CharSequence> map = builder.create(file);
+    ConcurrentMap<Integer, CharSequence> map = builder.file(file).create();
  
 } catch (IOException e) {
     e.printStackTrace();
@@ -247,10 +248,10 @@ between processes by just using memory and in around 40 nanoseconds.
 ConcurrentMap<Integer, CharSequence> map1, map2;
 
 // this could could be on one process
-map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).create(file);
+map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).file(file).create();
 
 // this could be on the other process
-map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).create(file);
+map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).file(file).create();
 ```
 Note: In order to share data between map1 and map2, the file has to point to the same file location
 on your server.
@@ -270,7 +271,7 @@ You set the maximum number of entries by the builder:
 ConcurrentMap<Integer, CharSequence> map =
     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
     .entries(1000) // set the max number of entries here
-    .create(file);
+    .create();
 ```
 In this example above we have set 1000 entries.
 
@@ -307,7 +308,7 @@ the ChronicleMapBuilder can also be used to return the ChronicleMap, see the exa
 
 ``` java
 ChronicleMap<Integer, CharSequence> map =
-    ChronicleMapBuilder.of(Integer.class, CharSequence.class).create(file);
+    ChronicleMapBuilder.of(Integer.class, CharSequence.class).create();
 ```
 One way to achieve good performance is to focus on unnecessary object creation as this reduces
 the amount of work that has to be carried out by the Garbage Collector. As such ChronicleMap
@@ -334,6 +335,39 @@ Exactly like `map.getUsing()`, `acquireUsing()` will give you back a reference t
 a key, but unlike `getUsing()` if there is not an entry in the map for this key the entry will be
 added and the value return will we the same value which you provided.
 
+
+
+#### Use getUsing(..) or acquireUsing(..) to avoid Object creation
+
+The point of these methods is to avoid creating any objects.
+
+Pattern 1
+``` java
+// get or create/initialise add needed
+// assumption: I need this key value to exist or be initialised.
+map.acquireUsing(key, value);
+
+// use value
+
+if (changed)
+     map.put(key, value);
+
+```
+
+Pattern 2
+``` java
+// get or don't do anything else.
+// assumption: I only need the value if it exists, otherwise I will do something else, or nothing.
+if (map.getUsing(key, value) != null) {
+     // use value
+
+     if (changed)
+         map.put(key, value);
+} else {
+     // don't use value
+}
+```
+ 
 
 ## Oversized Entries Support
 
@@ -488,7 +522,7 @@ TcpReplicationConfig tcpConfig = ...
 map = ChronicleMapBuilder
     .of(Integer.class, CharSequence.class)
     .addReplicator(Replicators.tcp(identifier, tcpConfig))
-    .create(file);
+    .create();
 ```
 
 ### Bootstrapping 
@@ -564,7 +598,7 @@ when using Chronicle Channels its the channels that are given the unique identif
 
 ``` java
 int maxEntrySize = 1024;
-byte identifier= 1;
+byte identifier= 2;
 ChannelProvider channelProvider = new ChannelProviderBuilder()
                     .maxEntrySize(maxEntrySize)
                     .replicators(identifier, tcpReplicationConfig).create();
@@ -592,8 +626,8 @@ Attaching ChannelProvider replication to the map:
 ``` java
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
   .entries(1000)
-  .channel(channelProviderA.createChannel((short) 1))
-  .create(getPersistenceFile());
+  .channel(channelProvider.createChannel((short) 1))
+  .create();
 ```
 
 The chronicle channel is use to identify which map is to be replicated to which other map on
@@ -608,15 +642,87 @@ chronicle channels.
 If you inadvertently got the chronicle channels around the wrong way, then chronicle would attempt
 to replicate the wrong maps data. The chronicle channels don't have to be in order but they must be
 unique for each map you have.
+ 
 
-Once you have created the ChannelProvider you may wish to hold onto the reference so that you can call close
-once you have finished, this will close everything in the ChannelProvider 
+# Stateless Client
+
+![](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-remote-stateless-map_04_vB.jpg)
+
+A stateless client is an instance of a `ChronicleMap` or a `ChronicleSet` that does not hold any 
+data
+ locally, all the Map or Set operations are delegated via a Remote Procedure Calls ( RPC ) to 
+ another `ChronicleMap` or  `ChronicleSet`  which we will refer to as the server. The server will hold all your data, the server can not it’s self be a stateless client. Your stateless client must be connected to the server via TCP/IP. The stateless client will delegate all your method calls to the remote server. The stateless client operations will block, in other words the stateless client will wait for the server to send a response before continuing to the next operation. The stateless client could be  consider to be a ClientProxy to `ChronicleMap` or  `ChronicleSet`  running on another host.
+ 
+ Below is an example of how to configure a stateless client.
 
 ``` java
-replicator.close();
+final ChronicleMap<Integer, CharSequence> serverMap;
+final ChronicleMap<Integer, CharSequence> statelessMap;
+
+// server
+{
+
+    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+            .replicators((byte) 2, TcpReplicationConfig.of(8076))
+            .create();            
+                       
+    serverMap.put(10, "EXAMPLE-10");
+}
+
+// stateless client
+{
+    statelessMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+            .stateless(StatelessBuilder.remoteAddress(new InetSocketAddress("localhost", 8076)))
+            .create();
+
+    Assert.assertEquals("EXAMPLE-10", statelessMap.get(10));
+    Assert.assertEquals(1, statelessMap.size());
+}
+
+serverMap.close();
+statelessMap.close();
 ```
 
-####  Known Issues
+When used with a stateless client, Each state-full server has to be configured with TCP 
+replication, when you set up TCP Replication you must define a port for the replication to 
+run on, the port you choose is up to you, but you should pick a free port that is not currently 
+being used by another application. In this example we choose the port 8076
+
+
+``` java
+.replicators((byte) 2, TcpReplicationConfig.of(8076))  // sets the server to run on localhost:8076
+``` 
+  
+On the "stateless client" we connect to the server via TCP/IP on localhost:8076 : 
+
+``` java
+.stateless(remoteAddress(new InetSocketAddress("localhost", 8076)))
+```
+
+but in your example you should choose the host of the state-full server and the port you allocated
+ it. 
+
+``` java
+.stateless(StatelessBuilder.remoteAddress(new InetSocketAddress(<host of state-full server>, 
+<port of state-full server>)))
+```
+
+the ".stateless(..)" method tells `ChronicleMap` that its going to build a stateless client. If you 
+don’t add this line a normal state-full `ChronicleMap` will be created. For this example we ran both 
+the client an the server on the same host ( hence the “localhost" setting ), 
+but in a real life example the stateless client will typically be on a different server than the state-full host. If you are aiming to create a stateless client and server on the same host, its better not to do this, as the stateless client connects to the server via TCP/IP, 
+you would get better performance if you connect to the server via heap memory, to read more about sharing a map with heap memory click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps ) 
+
+##### Close
+
+its always important to close ChronicleMap's and `ChronicleSet` 's when you have finished with them
+``` java
+serverMap.close();
+statelessMap.close();
+``` 
+
+
+#  Known Issues
 
 ##### Memory issue on Windows
 
@@ -741,7 +847,7 @@ between them, this is how we could set it up
 ```
 
 
-# Example : Replicating data between process on different servers via TCP
+# Example : Replicating data between process on different servers via TCP/IP
 
 Lets assume that we had two server, lets call them server1 and server2, if we wished to share a map
 between them, this is how we could set it up
@@ -767,7 +873,7 @@ public class YourClass {
 //  ----------  SERVER1 1 ----------
         {
 
-            // we connect the maps via a TCP socket connection on port 8077
+            // we connect the maps via a TCP/IP socket connection on port 8077
 
             TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
                     .heartBeatInterval(1L, TimeUnit.SECONDS);
@@ -905,7 +1011,7 @@ public class YourClass {
 
 # Example : Creating a Chronicle Set and adding data to it
 
-This project also provideds the Chronicle Set, Chronicle Set is built on Chronicle Map, so the builder configuration are almost identical to Chronicle Map ( see above ), this example shows how to create a simple off heap set
+This project also provides the Chronicle Set, `ChronicleSet` is built on Chronicle Map, so the builder configuration are almost identical to `ChronicleMap` ( see above ), this example shows how to create a simple off heap set
 ``` java 
         Set<Integer> set = ChronicleSetBuilder.of(Integer.class).create();
         
@@ -919,13 +1025,13 @@ and just like map it support shared memory and TCP replication.
 
 ### Tuning Chronicle Map with Large Data 
 
-Generally speaking Chronicle Map is slower then ConcurrentHashMap for a small number of entries, but
+Generally speaking `ChronicleMap` is slower then ConcurrentHashMap for a small number of entries, but
 for a large number of entries ConcurrentHashMap doesn't scale as well as Chronicle Map, especially
 when you start running low on heap. ConcurrentHashMap quickly becomes unusable whereas Chronicle Map
 can still work when it is 20 times the size of a ConcurrentHashMap with an Out of Memory Error.
   
 For example with a heap of 3/4 of say 32 GB main memory, you might get say 100 million entries but
-when using most of the heap you might see 20-40 second gc pauses with Chronicle Map you could have
+when using most of the heap you might see 20-40 second gc pauses with `ChronicleMap` you could have
 1000 million entries and see < 100 ms pauses (depending on your disk subsystem and how fast you
 write your data)
 
@@ -950,12 +1056,12 @@ overhead per entry of 16 - 24 bytes adding another 20 GB.
 So while the virtual memory is 270 GB, it is expected that for 500 M entries you will be trying to
 use no more than 20 GB (overhead/hash tables) + ~120 GB (entries)
 
-When Chronicle Map has exhausted all the memory on your server, its not going to be so fast, for a
+When `ChronicleMap` has exhausted all the memory on your server, its not going to be so fast, for a
 random access pattern you are entirely dependant on how fast your underlying disk is. If your home
 directory is an HDD and its performance is around 125 IOPS (I/Os per second). Each lookup takes two
 memory accesses so you might get around 65 lookups per second. For 100-200K operations you can
 expect around 1600 seconds or 25-50 minutes. If you use an SSD, it can get around 230 K IOPS, or
-about 115 K Chronicle Map lookups per second.
+about 115 K `ChronicleMap` lookups per second.
 
 
 ### Lock contention
@@ -1001,9 +1107,9 @@ Chronicle Map assumes every entry is the same size and if you have 10kB-20kB ent
 can be using 20 kB of virtual memory or at least 12 KB of actual memory (since virtual memory turns
 into physical memory in multiples of a page)
 
-As the Chronicle Map gets larger the most important factor is the use of CPU cache rather than main
+As the `ChronicleMap` gets larger the most important factor is the use of CPU cache rather than main
 memory, performance is constrained by the number of cache lines you have to touch to update/read an
-entry. For large entries this is much the same as ConcurrentHashMap.  In this case, Chronicle Map is
+entry. For large entries this is much the same as ConcurrentHashMap.  In this case, `ChronicleMap` is
 not worse than ConcurrentHashMap but not much better.
 
 For large key/values it is not total memory use but other factors which matter such as;
@@ -1022,7 +1128,7 @@ For large key/values it is not total memory use but other factors which matter s
 
 
 ### ConcurrentHashMap v ChronicleMap
-ConcurrentHashMap ( CHM ) outperforms Chronicle Map ( CM ) on throughput.  If you don't need
+ConcurrentHashMap ( CHM ) outperforms `ChronicleMap` ( CM ) on throughput.  If you don't need
 the extra features SharedHashMap gives you, it is not worth the extra complexity it brings.
 i.e. don't use it just because you think it is cool. The test can be found in
 [ChronicleMapTest](https://github.com/OpenHFT/Chronicle-Map/blob/master/src/test/java/net/openhft/chronicle/map/ChronicleMapTest.java)
@@ -1047,10 +1153,10 @@ counter.  The update increments the counter once in each thread, creating an new
 _*HashMap refers to ConcurrentHashMap, Chronicle refers to Chronicle Map_
 
 Notes:
-* Chronicle Map was tested with a 32 MB heap, CHM was test with a 100 GB heap.
-* The Chronicle Map test had a small minor GC on startup of 0.5 ms, but not during the test.
+* `ChronicleMap` was tested with a 32 MB heap, CHM was test with a 100 GB heap.
+* The `ChronicleMap` test had a small minor GC on startup of 0.5 ms, but not during the test.
   This is being investigated.
-* Chronicle Map was tested "writing" to a tmpfs file system.
+* `ChronicleMap` was tested "writing" to a tmpfs file system.
 
 #### How does it perform when persisted?
 

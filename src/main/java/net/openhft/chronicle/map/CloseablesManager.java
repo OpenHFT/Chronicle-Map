@@ -21,15 +21,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Set;
 
 final class CloseablesManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(CloseablesManager.class.getName());
 
     private boolean isClosed = false;
-    private final List<Closeable> closeables = new ArrayList<Closeable>();
+    private final Set<Closeable> closeables = new HashSet<Closeable>();
 
     private void checkState() {
         if (isClosed)

@@ -59,7 +59,7 @@ public class Builder {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         return (T) newTcpSocketShmBuilder(Integer.class, Void.class,
-                identifier, serverPort, endpoints).create(getPersistenceFile());
+                identifier, serverPort, endpoints).create();
     }
 
     public static <K, V> ChronicleMapBuilder<K, V> newTcpSocketShmBuilder(
@@ -70,7 +70,6 @@ public class Builder {
         TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(serverPort, endpoints)
                 .heartBeatInterval(1L, TimeUnit.SECONDS);
         return ChronicleMapBuilder.of(kClass, vClass)
-                .entries(20000L)
                 .replicators(identifier,  tcpConfig);
     }
 

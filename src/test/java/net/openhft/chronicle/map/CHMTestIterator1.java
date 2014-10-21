@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import java.io.File;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -31,8 +30,8 @@ public class CHMTestIterator1 {
         int runs = 3000000;
         ChronicleMapBuilder<String, Long> builder = ChronicleMapBuilder.of(String.class, Long.class)
                 .entries(runs);
-        String chmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "CHMTestIterator1";
-        ChronicleMap<String, Long> chm = builder.create(new File(chmPath));
+
+        ChronicleMap<String, Long> chm = builder.create();
         /*chm.put("k1", alValue.incrementAndGet());
         chm.put("k2", alValue.incrementAndGet());
         chm.put("k3", alValue.incrementAndGet());

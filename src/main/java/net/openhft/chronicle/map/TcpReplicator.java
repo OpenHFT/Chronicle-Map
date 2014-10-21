@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,13 +28,12 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.BitSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
-import static net.openhft.chronicle.map.StatelessMapClient.EventId.HEARTBEAT;
+import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 /**
  * Used with a {@see net.openhft.map.ReplicatedSharedHashMap} to send data between the maps using a
@@ -71,14 +71,14 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
      *                                 set smaller the buffer will over flow, it can be larger then
      *                                 the entry, but setting it too large reduces the workable
      *                                 space in the buffer.
-     * @param statelessServerConnector
+     * @param statelessServerConnector set to NULL if not required
      * @throws IOException
      */
     TcpReplicator(@NotNull final Replica replica,
                   @NotNull final Replica.EntryExternalizable externalizable,
                   @NotNull final TcpReplicationConfig replicationConfig,
                   final int maxEntrySizeBytes,
-                  StatelessServerConnector statelessServerConnector) throws IOException {
+                  @Nullable StatelessServerConnector statelessServerConnector) throws IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig(),
                 maxEntrySizeBytes);
@@ -316,7 +316,14 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     private void onConnect(@NotNull final SelectionKey key)
             throws IOException, InterruptedException {
 
-        final SocketChannel channel = (SocketChannel) key.channel();
+        SocketChannel channel = null;
+
+        try {
+            channel = (SocketChannel) key.channel();
+        } finally {
+            closeables.add(channel);
+        }
+
         final Attached attached = (Attached) key.attachment();
 
         try {
@@ -328,7 +335,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
             // when node discovery is used ( by nodes broadcasting out their host:port over UDP ),
             // when new or restarted nodes are started up. they attempt to find the nodes
-            // on the grid by listening to the host and ports of the other nodes, so these nodes will establish the connection when they come back up,
+            // on the grid by listening to the host and ports of the other nodes,
+            // so these nodes will establish the connection when they come back up,
             // hence under these circumstances, polling a dropped node to attempt to reconnect is no-longer
             // required as the remote node will establish the connection its self on startup.
             if (replicationConfig.autoReconnectedUponDroppedConnection())
@@ -363,9 +371,25 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
      * called when the selector receives a OP_ACCEPT message
      */
     private void onAccept(@NotNull final SelectionKey key) throws IOException {
+        ServerSocketChannel server = null;
 
-        final ServerSocketChannel server = (ServerSocketChannel) key.channel();
-        final SocketChannel channel = server.accept();
+        try {
+            server = (ServerSocketChannel) key.channel();
+        } finally {
+            if (server != null)
+                closeables.add(server);
+        }
+
+        SocketChannel channel = null;
+
+        try {
+            channel = server.accept();
+        } finally {
+            if (channel != null)
+                closeables.add(channel);
+        }
+
+
         channel.configureBlocking(false);
         channel.socket().setReuseAddress(true);
         channel.socket().setTcpNoDelay(true);
@@ -506,6 +530,17 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
 
+        if (attached.entryWriter.hasIncompletWork()) {
+
+            boolean completed = attached.entryWriter.doWork();
+
+            if (completed)
+                attached.entryWriter.workCompleted();
+
+            return;
+        }
+
+
         if (attached.remoteModificationIterator != null)
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
@@ -531,6 +566,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
+
+        if (attached.entryWriter.hasIncompletWork())
+            return;
 
         try {
             if (attached.entryReader.readSocketToBuffer(socketChannel) <= 0)
@@ -617,11 +655,21 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         SelectableChannel doConnect() throws
                 IOException, InterruptedException {
 
-            final ServerSocketChannel serverChannel = ServerSocketChannel.open();
+
+            final ServerSocketChannel serverChannel = openServerSocketChannel();
 
             serverChannel.socket().setReceiveBufferSize(BUFFER_SIZE);
             serverChannel.configureBlocking(false);
-            final ServerSocket serverSocket = serverChannel.socket();
+            ServerSocket serverSocket = null;
+
+            try {
+                serverSocket = serverChannel.socket();
+            } finally {
+                if (serverSocket != null)
+                    closeables.add(serverSocket);
+            }
+
+
             serverSocket.setReuseAddress(true);
 
             serverSocket.bind(details.address());
@@ -647,6 +695,18 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         }
     }
 
+    private ServerSocketChannel openServerSocketChannel() throws IOException {
+        ServerSocketChannel result = null;
+
+        try {
+            result = ServerSocketChannel.open();
+        } finally {
+            if (result != null)
+                closeables.add(result);
+        }
+        return result;
+    }
+
     private class ClientConnector extends AbstractConnector {
 
         private final Details details;
@@ -668,7 +728,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         @Override
         SelectableChannel doConnect() throws IOException, InterruptedException {
             boolean success = false;
-            final SocketChannel socketChannel = SocketChannel.open();
+
+            final SocketChannel socketChannel = openSocketChannel(TcpReplicator.this.closeables);
+
             try {
                 socketChannel.configureBlocking(false);
                 socketChannel.socket().setReuseAddress(true);
@@ -723,6 +785,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 }
             }
         }
+
+
     }
 
     /**
@@ -743,10 +807,10 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         public long remoteHeartbeatInterval = heartBeatIntervalMillis;
         public boolean handShakingComplete;
 
+
         boolean isHandShakingComplete() {
             return handShakingComplete;
         }
-
 
         void clearHandShaking() {
             handShakingComplete = false;
@@ -770,7 +834,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 TcpReplicator.this.opWriteUpdater.set(remoteIdentifier);
         }
 
-
     }
 
     /**
@@ -783,12 +846,23 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         private final EntryCallback entryCallback;
         private long lastSentTime;
 
+        // if uncompletedWork is set ( not null ) , this must be completed before any further work
+        // is  carried out
+        public Work uncompletedWork;
+
         private TcpSocketChannelEntryWriter() {
             out = ByteBuffer.allocateDirect(replicationConfig.packetSize() + maxEntrySizeBytes);
             in = new ByteBufferBytes(out);
             entryCallback = new EntryCallback(externalizable, in);
         }
 
+        public boolean hasIncompletWork() {
+            return uncompletedWork != null;
+        }
+
+        public void workCompleted() {
+            uncompletedWork = null;
+        }
 
         /**
          * @return the buffer messages can be written to
@@ -936,6 +1010,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         }
 
 
+        public boolean doWork() {
+            return uncompletedWork.doWork(in);
+        }
     }
 
     /**
@@ -985,13 +1062,12 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
                 // its set to MIN_VALUE when it should be read again
                 if (state == NOT_SET) {
-                    if (out.remaining() < SIZE_OF_SHORT + 1 ) {
+                    if (out.remaining() < SIZE_OF_SHORT + 1) {
                         return;
                     }
 
                     // state is used for both heartbeat and stateless
                     state = out.readByte();
-
 
 
                     sizeInBytes = out.readUnsignedShort();
@@ -1009,13 +1085,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 }
 
 
-
                 if (out.remaining() < sizeInBytes) {
                     return;
-                }
-
-                if (sizeInBytes == 0) {
-                    int j = 1;
                 }
 
 
@@ -1031,20 +1102,31 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                         LOG.error("", new IllegalArgumentException("received an event " +
                                 "from a stateless map, stateless maps are not " +
                                 "currently supported when using Chronicle Channels"));
-                    } else
+                    } else {
 
-                        statelessServerConnector.processStatelessEvent(state,
+                        final Work futureWork = statelessServerConnector.processStatelessEvent(state,
                                 out, attached.entryWriter.buffer());
-                    // to allow the sizeInBytes to be read the next time around
 
+                        // in some cases it may not be possible to send out all the data before we
+                        // fill out the write buffer, so this data will be send when the buffer
+                        // is no longer full, and as such is treated as future work
+                        if (futureWork != null) {
+
+                            // we will complete what we can now
+                            boolean isComplete = futureWork.doWork(attached.entryWriter.buffer());
+
+                            if (!isComplete)
+                                attached.entryWriter.uncompletedWork = futureWork;
+                        }
+                    }
 
                 } else
                     externalizable.readExternalEntry(out);
 
                 out.limit(limit);
+
                 // skip onto the next entry
                 out.position(nextEntryPos);
-
 
                 state = NOT_SET;
                 sizeInBytes = 0;
@@ -1087,7 +1169,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             else
                 return Long.MIN_VALUE;
 
-          //  return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
+            //  return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
         }
 
         public long remoteHeartbeatIntervalFromBuffer() {
@@ -1095,4 +1177,378 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
         }
     }
 }
+
+interface Work {
+
+    /**
+     * @param in the buffer that we will fill up
+     * @return true when all the work is complete
+     */
+    boolean doWork(Bytes in);
+}
+
+
+/**
+ * @author Rob Austin.
+ */
+class StatelessServerConnector<K, V> {
+
+    private final KeyValueSerializer<K, V> keyValueSerializer;
+    private final ChronicleMap<K, V> map;
+    private double maxEntrySizeBytes;
+
+    StatelessServerConnector(@NotNull KeyValueSerializer<K, V> keyValueSerializer,
+                             @NotNull ChronicleMap<K, V> map,
+                             int maxEntrySizeBytes) {
+        this.keyValueSerializer = keyValueSerializer;
+        this.map = map;
+        this.maxEntrySizeBytes = maxEntrySizeBytes;
+    }
+
+    Work processStatelessEvent(byte eventId,
+                               @NotNull Bytes in,
+                               @NotNull Bytes out) {
+
+        final StatelessChronicleMap.EventId event = StatelessChronicleMap.EventId.values()[eventId];
+
+        switch (event) {
+
+            case LONG_SIZE:
+                return longSize(in, out);
+
+            case IS_EMPTY:
+                return isEmpty(in, out);
+
+            case CONTAINS_KEY:
+                return containsKey(in, out);
+
+            case CONTAINS_VALUE:
+                return containsValue(in, out);
+
+            case GET:
+                return get(in, out);
+
+            case PUT:
+                return put(in, out);
+
+            case REMOVE:
+                return remove(in, out);
+
+            case CLEAR:
+                return clear(in, out);
+
+            case KEY_SET:
+                return keySet(in, out);
+
+            case VALUES:
+                return values(in, out);
+
+            case ENTRY_SET:
+                return entrySet(in, out);
+
+            case REPLACE:
+                return replace(in, out);
+
+            case REPLACE_WITH_OLD_AND_NEW_VALUE:
+                return replaceWithOldAndNew(in, out);
+
+            case PUT_IF_ABSENT:
+                return putIfAbsent(in, out);
+
+            case REMOVE_WITH_VALUE:
+                return removeWithValue(in, out);
+
+            case SIZE:
+                return size(in, out);
+
+            default:
+                throw new IllegalStateException("unsupported event=" + event);
+
+        }
+
+    }
+
+    private Work removeWithValue(Bytes in, Bytes out) {
+        boolean result = map.remove(readKey(in), readValue(in));
+        out.writeBoolean(result);
+        return null;
+    }
+
+    private Work replaceWithOldAndNew(Bytes in, Bytes out) {
+
+        final K key = readKey(in);
+        V oldValue = readValue(in);
+        V newValue = readValue(in);
+
+        long sizeLocation = reflectTransactionId(in, out);
+        try {
+            map.replace(key, oldValue, newValue);
+        } catch (RuntimeException e) {
+            writeException(e, out);
+            writeSizeAndFlags(sizeLocation, true, out);
+            return null;
+        }
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+
+    private Work longSize(Bytes in, Bytes out) {
+        long sizeLocation = reflectTransactionId(in, out);
+        out.writeLong(map.longSize());
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+    private Work size(Bytes in, Bytes out) {
+        long sizeLocation = reflectTransactionId(in, out);
+        out.writeInt(map.size());
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+    private Work isEmpty(Bytes in, Bytes out) {
+        long sizeLocation = reflectTransactionId(in, out);
+        out.writeBoolean(map.isEmpty());
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+    private Work containsKey(Bytes in, Bytes out) {
+        K k = readKey(in);
+        long sizeLocation = reflectTransactionId(in, out);
+        out.writeBoolean(map.containsKey(k));
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+    private Work containsValue(Bytes in, Bytes out) {
+        V v = readValue(in);
+        long sizeLocation = reflectTransactionId(in, out);
+        out.writeBoolean(map.containsValue(v));
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+    private Work get(Bytes in, Bytes out) {
+        K k = readKey(in);
+        long sizeLocation = reflectTransactionId(in, out);
+        try {
+            writeValue(map.get(k), out);
+        } catch (RuntimeException e) {
+            writeException(e, out);
+            writeSizeAndFlags(sizeLocation, true, out);
+            return null;
+        }
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+
+    }
+
+    private Work put(Bytes in, Bytes out) {
+        K k = readKey(in);
+        V v = readValue(in);
+        long sizeLocation = reflectTransactionId(in, out);
+        writeValue(map.put(k, v), out);
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+    private Work remove(Bytes in, Bytes out) {
+        final V value = map.remove(readKey(in));
+        long sizeLocation = reflectTransactionId(in, out);
+        writeValue(value, out);
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+    private Work putAll(Bytes in, Bytes out) {
+        map.putAll(readEntries(in));
+        long sizeLocation = reflectTransactionId(in, out);
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+
+    private Work clear(Bytes in, Bytes out) {
+        map.clear();
+        long sizeLocation = reflectTransactionId(in, out);
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+    private Work keySet(Bytes in, final Bytes out) {
+        final long sizeLocation = reflectTransactionId(in, out);
+
+        final Set<K> ks = map.keySet();
+        out.writeStopBit(ks.size());
+
+        final Iterator<K> iterator = ks.iterator();
+
+        // this allows us to write more data than the buffer will allow
+        return new Work() {
+
+            @Override
+            public boolean doWork(Bytes out) {
+
+                while (iterator.hasNext()) {
+
+                    // we've filled up the buffer, so lets give another channel a chance to send
+                    // some data, we don't know the max key size, we will use the entrySize instead
+                    if (out.remaining() <= maxEntrySizeBytes)
+                        return false;
+
+                    writeKey(iterator.next(), out);
+                }
+
+                writeSizeAndFlags(sizeLocation, false, out);
+                return true;
+            }
+        };
+    }
+
+    private Work values(Bytes in, Bytes out) {
+        long sizeLocation = reflectTransactionId(in, out);
+        final Collection<V> values = map.values();
+        out.writeStopBit(values.size());
+        for (final V value : values) {
+            writeValue(value, out);
+        }
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+    private Work entrySet(Bytes in, Bytes out) {
+        long sizeLocation = reflectTransactionId(in, out);
+
+        final Set<Map.Entry<K, V>> entries = map.entrySet();
+        out.writeStopBit(entries.size());
+        for (Map.Entry<K, V> e : entries) {
+            writeKey(e.getKey(), out);
+            writeValue(e.getValue(), out);
+        }
+        return null;
+    }
+
+    private Work putIfAbsent(Bytes in, Bytes out) {
+        K key = readKey(in);
+        V v = readValue(in);
+        long sizeLocation = reflectTransactionId(in, out);
+        writeValue(map.putIfAbsent(key, v), out);
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+
+    private Work replace(Bytes in, Bytes out) {
+        K k = readKey(in);
+        V v = readValue(in);
+
+        long sizeLocation = reflectTransactionId(in, out);
+        map.replace(k, v);
+        writeSizeAndFlags(sizeLocation, false, out);
+        return null;
+    }
+
+    /**
+     * write the keysize and the key to the the {@code target} buffer
+     *
+     * @param key the key of the map
+     */
+    private void writeKey(K key, Bytes out) {
+        keyValueSerializer.writeKey(key, out);
+    }
+
+    private long reflectTransactionId(Bytes in, Bytes out) {
+        long sizeLocation = out.position();
+        out.skip(3);
+        long transactionId = in.readLong();
+        out.writeLong(transactionId);
+        return sizeLocation;
+    }
+
+    private void writeValue(V value, final Bytes out) {
+        keyValueSerializer.writeValue(value, out);
+    }
+
+    private K readKey(Bytes in) {
+        return keyValueSerializer.readKey(in);
+    }
+
+    private V readValue(Bytes in) {
+        return keyValueSerializer.readValue(in);
+    }
+
+    private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
+        long size = out.position() - locationOfSize;
+        out.writeUnsignedShort(0L, (int) size);
+        out.writeBoolean(2L, isException);
+    }
+
+    private void writeException(RuntimeException e, Bytes out) {
+
+        long start = out.position();
+        out.skip(2);
+        out.writeObject(e);
+        long len = out.position() - (start + 2L);
+        out.writeUnsignedShort(start, (int) len);
+    }
+
+
+    private Map<K, V> readEntries(Bytes in) {
+
+        long size = in.readStopBit();
+        final HashMap<K, V> result = new HashMap<K, V>();
+
+        for (long i = 0; i < size; i++) {
+            result.put(readKey(in), readValue(in));
+        }
+        return result;
+    }
+}
+
+class KeyValueSerializer<K, V> {
+
+    private final Serializer<V> valueSerializer;
+    private final Serializer<K> keySerializer;
+
+    KeyValueSerializer(SerializationBuilder<K> keySerializer,
+                       SerializationBuilder<V> valueSerializer) {
+        this.keySerializer = new Serializer<K>(keySerializer);
+        this.valueSerializer = new Serializer<V>(valueSerializer);
+    }
+
+    V readValue(Bytes in) {
+        if (in.readBoolean())
+            return null;
+        return valueSerializer.readMarshallable(in);
+    }
+
+    K readKey(Bytes in) {
+        if (in.readBoolean())
+            return null;
+
+        return keySerializer.readMarshallable(in);
+    }
+
+    /**
+     * write the keysize and the key to the the {@code target} buffer
+     *
+     * @param key the key of the map
+     */
+    void writeKey(K key, Bytes out) {
+
+        out.writeBoolean(key == null);
+        if (key != null)
+            keySerializer.writeMarshallable(key, out);
+    }
+
+    void writeValue(V value, Bytes out) {
+        out.writeBoolean(value == null);
+        if (value != null)
+            valueSerializer.writeMarshallable(value, out);
+    }
+
+}
+
 

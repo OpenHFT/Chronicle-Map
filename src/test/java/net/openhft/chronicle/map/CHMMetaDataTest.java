@@ -35,8 +35,7 @@ public class CHMMetaDataTest {
                 new StringStringMapEventListener(new AtomicLong(1));
         ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class)
                 .metaDataBytes(8)
-                .eventListener(listener)
-                .create(file);
+                .eventListener(listener).create();
 
         try {
             map.put("a", "aye");

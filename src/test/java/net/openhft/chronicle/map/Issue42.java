@@ -22,7 +22,6 @@ import org.testng.Assert;
 import java.io.IOException;
 
 import static net.openhft.chronicle.map.Alignment.NO_ALIGNMENT;
-import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 
 public class Issue42 {
 
@@ -44,8 +43,7 @@ public class Issue42 {
                 .entryAndValueAlignment(NO_ALIGNMENT)
                 .entrySize(18)
                 .entries(15000000)
-                .minSegments(128)
-                .create(getPersistenceFile());
+                .minSegments(128).create();
 
         for (int i = 0; i < 10000000; ++i) {
             String s = String.valueOf(i);

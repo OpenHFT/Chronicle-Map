@@ -46,7 +46,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
                 .entries(size).replicators((byte) 1);
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(size)
-                .create(getPersistenceFile());
+                .create();
 
     }
 
@@ -55,7 +55,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
                 .entries(size).replicators((byte) 1);
         return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
                 .entries(size)
-                .create(getPersistenceFile());
+                .create();
 
     }
 
@@ -63,7 +63,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     ChronicleMap<ArrayList, CharSequence> newShmListBoolean() throws IOException {
         ChronicleMapBuilder.of(ArrayList.class, CharSequence.class).replicators((byte) 1);
         return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
-                .create(getPersistenceFile());
+                .create();
 
     }
 
@@ -72,7 +72,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
                 .entries(size).replicators((byte) 1);
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(size)
-                .create(getPersistenceFile());
+                .create();
 
     }
 
@@ -80,13 +80,13 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
         ChronicleMapBuilder.of(Integer.class, CharSequence.class).replicators((byte) 1);
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .create(getPersistenceFile());
+                .create();
 
     }
 
     ChronicleMap<BI, Boolean> newShmBiBoolean() throws IOException {
         ChronicleMapBuilder.of(BI.class, Boolean.class).replicators((byte) 1);
-        return ChronicleMapBuilder.of(BI.class, Boolean.class).create(getPersistenceFile());
+        return ChronicleMapBuilder.of(BI.class, Boolean.class).create();
 
     }
 

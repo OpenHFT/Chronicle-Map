@@ -19,7 +19,6 @@ package net.openhft.chronicle.map;
 import org.junit.Test;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -31,10 +30,8 @@ import static org.junit.Assert.assertEquals;
 public class KeySizesTest {
     @Test
     public void testDifferentKeySizes() throws IOException {
-        File tempFile = File.createTempFile("delete", "me");
-        Map<String, String> map = ChronicleMapBuilder.of(String.class, String.class)
 
-                .create(tempFile);
+        Map<String, String> map = ChronicleMapBuilder.of(String.class, String.class).create();
 
         String k = "";
         for (int i = 0; i < 100; i++) {
@@ -51,6 +48,6 @@ public class KeySizesTest {
         }
 
         ((Closeable) map).close();
-        tempFile.delete();
+
     }
 }

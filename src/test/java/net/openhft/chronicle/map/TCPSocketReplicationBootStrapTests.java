@@ -49,7 +49,7 @@ public class TCPSocketReplicationBootStrapTests {
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
                         (byte) 2, 8076, new InetSocketAddress("localhost", 8079));
         final ChronicleMap<Integer, CharSequence> map2a =
-                map2aBuilder.create(getPersistenceFile());
+                map2aBuilder.file(getPersistenceFile()).create();
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2
 
         long lastModificationTime;
@@ -67,14 +67,16 @@ public class TCPSocketReplicationBootStrapTests {
             // restart map 2 but don't doConnect it to map one
             final ChronicleMap<Integer, CharSequence> map2b =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .create(map2File);
+                            .file(map2File)
+            .create();
             // add data into it
             map2b.put(11, "ADDED WHEN DISCONNECTED TO MAP1");
             map2b.close();
         }
 
         // now restart map2a and doConnect it to map1, map1 should bootstrap the missing entry
-        map2 = map2aBuilder.create(map2File);
+        map2aBuilder.file(map2File);
+        map2 = map2aBuilder.create();
 
         // add data into it
         waitTillEqual(5000);
@@ -83,15 +85,15 @@ public class TCPSocketReplicationBootStrapTests {
     }
 
 
-    // todo we have to fix this
     @Test
     public void testBootstrapAndHeartbeat() throws IOException, InterruptedException {
         map1 = newTcpSocketShmIntString((byte) 1, 8079, new InetSocketAddress("localhost", 8076));
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8076);
+
         final ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map2a =
                 (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>)
-                        map2aBuilder.create(getPersistenceFile());
+                        map2aBuilder.file(getPersistenceFile()).create();
 
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2
 
@@ -108,16 +110,18 @@ public class TCPSocketReplicationBootStrapTests {
 
         {
             // restart map 2 but don't doConnect it to map one
+            ChronicleMapBuilder.of(Integer.class, CharSequence.class).file(map2File);
             final ChronicleMap<Integer, CharSequence> map2b =
-                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .create(map2File);
+                    ChronicleMapBuilder.of(Integer.class, CharSequence.class).file(map2File).
+            create();
             // add data into it
             map2b.put(11, "ADDED WHEN DISCONNECTED TO MAP1");
             map2b.close();
         }
 
         // now restart map2a and doConnect it to map1, map1 should bootstrap the missing entry
-        map2 = map2aBuilder.create(map2File);
+        map2aBuilder.file(map2File);
+        map2 = map2aBuilder.create();
 
         // add data into it
         waitTillEqual(20000);

@@ -19,7 +19,6 @@ package net.openhft.chronicle.map.fromdocs;
 import net.openhft.affinity.AffinitySupport;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.lang.io.serialization.impl.NewInstanceObjectFactory;
 import net.openhft.lang.model.DataValueClasses;
 import org.junit.Test;
 
@@ -57,7 +56,8 @@ public class OpenJDKAndHashMapExamplesTest {
         ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
                 .of(String.class, directClassFor(BondVOInterface.class))
                 .keySize(10)
-                .create(file);
+                .file(file)
+                .create();
 
 
         BondVOInterface bondVO = DataValueClasses.newDirectReference(BondVOInterface.class);
@@ -74,11 +74,11 @@ public class OpenJDKAndHashMapExamplesTest {
         mpx1030.setAskPx(109.7);
         mpx1030.setBidPx(107.6);
 
-
         ChronicleMap<String, BondVOInterface> chmB = ChronicleMapBuilder
                 .of(String.class, directClassFor(BondVOInterface.class))
                 .keySize(10)
-                .create(file);
+                .file(file)
+                .create();
 
         // ZERO Copy but creates a new off heap reference each time
 

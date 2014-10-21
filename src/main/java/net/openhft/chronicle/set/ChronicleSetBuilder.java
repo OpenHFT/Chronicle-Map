@@ -16,9 +16,10 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.ChronicleHashBuilder;
-import net.openhft.chronicle.ChronicleHashErrorListener;
-import net.openhft.chronicle.TimeProvider;
+import net.openhft.chronicle.common.ChronicleHashBuilder;
+import net.openhft.chronicle.common.ChronicleHashErrorListener;
+import net.openhft.chronicle.common.StatelessBuilder;
+import net.openhft.chronicle.common.TimeProvider;
 import net.openhft.chronicle.map.*;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.BytesMarshallerFactory;
@@ -30,7 +31,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-
+/**
+ * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could
+ * be used as a classic builder and/or factory.
+ *
+ * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
+ * documentation.
+ *
+ * @param <E> element type of the sets, created by this builder
+ * @see ChronicleSet
+ * @see ChronicleMapBuilder
+ */
 public class ChronicleSetBuilder<E>
         implements ChronicleHashBuilder<E, ChronicleSet<E>, ChronicleSetBuilder<E>> {
 
@@ -87,9 +98,9 @@ public class ChronicleSetBuilder<E>
      *     .keySize(10)
      *     .create();}</pre>
      *
-     * <p>(Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded (and each
-     * character takes 2 bytes on-heap), because default off-heap {@link String} encoding is UTF-8 in {@code
-     * ChronicleSet}.)
+     * <p>(Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded
+     * (and each character takes 2 bytes on-heap), because default off-heap {@link String} encoding
+     * is UTF-8 in {@code ChronicleSet}.)
      *
      * @see #constantKeySizeBySample(Object)
      * @see #entrySize(int)
@@ -119,13 +130,13 @@ public class ChronicleSetBuilder<E>
     /**
      * {@inheritDoc}
      *
-     * <p>In fully default case you can expect entry size to be about 120-130 bytes. But it is strongly
-     * recommended always to configure {@linkplain #keySize(int) key size}, if they couldn't be derived
-     * statically.
+     * <p>In fully default case you can expect entry size to be about 120-130 bytes. But it is
+     * strongly recommended always to configure {@linkplain #keySize(int) key size}, if they
+     * couldn't be derived statically.
      *
      * <p>If entry size is not configured explicitly by calling this method, it is computed based on
-     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size}, plus a few
-     * bytes required by implementations.
+     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size},
+     * plus a few bytes required by implementations.
      */
     @Override
     public ChronicleSetBuilder<E> entrySize(int entrySize) {
@@ -175,6 +186,12 @@ public class ChronicleSetBuilder<E>
         return this;
     }
 
+    @Override
+    public ChronicleSetBuilder<E> disableReplication() {
+        chronicleMapBuilder.disableReplication();
+        return this;
+    }
+
 
     @Override
     public String toString() {
@@ -209,6 +226,16 @@ public class ChronicleSetBuilder<E>
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p> Example: <pre>{@code Set<Key> set = ChronicleSetBuilder.of(Key.class)
+     *     .entries(1_000_000)
+     *     .keySize(100)
+     *     // this class hasn't implemented yet, just for example
+     *     .objectSerializer(new KryoObjectSerializer())
+     *     .create();}</pre>
+     */
     @Override
     public ChronicleSetBuilder<E> objectSerializer(ObjectSerializer objectSerializer) {
         chronicleMapBuilder.objectSerializer(objectSerializer);
@@ -228,9 +255,15 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSet<E> create(File file) throws IOException {
-        final ChronicleMap<E, DummyValue> map = chronicleMapBuilder.create(file);
-        return new SetFromMap<E>(map);
+    public ChronicleSetBuilder<E> stateless(StatelessBuilder statelessBuilder) {
+        chronicleMapBuilder.stateless(statelessBuilder);
+        return this;
+    }
+
+    @Override
+    public ChronicleSetBuilder<E> file(File file) throws IOException {
+        chronicleMapBuilder.file(file);
+        return this;
     }
 
     @Override
@@ -238,6 +271,8 @@ public class ChronicleSetBuilder<E>
         final ChronicleMap<E, DummyValue> map = chronicleMapBuilder.create();
         return new SetFromMap<E>(map);
     }
+
+
 
 }
 

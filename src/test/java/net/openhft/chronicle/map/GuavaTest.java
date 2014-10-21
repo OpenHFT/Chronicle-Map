@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.google.common.collect.testing.features.MapFeature.*;
-import static net.openhft.chronicle.map.ChronicleMapTest.getPersistenceFile;
 
 
 public class GuavaTest extends TestCase {
@@ -106,7 +105,7 @@ public class GuavaTest extends TestCase {
         @Override
         Map<CharSequence, CharSequence> newMap() {
             try {
-                return builder.create(getPersistenceFile());
+                return builder.create();
             } catch (IOException e) {
                 throw new AssertionError(e);
             }
