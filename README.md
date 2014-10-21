@@ -691,7 +691,7 @@ serverMap.close();
 statelessMap.close();
 ```
 
-The example above, creates a Chronicle Map sever ( state-full) and connects a stateless client 
+The example above, creates a Chronicle Map sever ( state-full ) and connects a stateless client 
 to it, this connection is made over TCP/IP, the server TCP/IP port is defined using the 
 TcpReplicationConfig :
 
