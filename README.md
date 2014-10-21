@@ -626,7 +626,7 @@ Attaching ChannelProvider replication to the map:
 ``` java
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
   .entries(1000)
-  .channel(channelProviderA.createChannel((short) 1))
+  .channel(channelProvider.createChannel((short) 1))
   .create();
 ```
 
