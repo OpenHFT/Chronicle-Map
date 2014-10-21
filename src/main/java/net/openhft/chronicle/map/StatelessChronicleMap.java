@@ -1,6 +1,5 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.common.ClosableHolder;
 import net.openhft.chronicle.common.StatelessBuilder;
 import net.openhft.chronicle.common.exceptions.IORuntimeException;
 import net.openhft.chronicle.common.exceptions.TimeoutRuntimeException;
@@ -23,7 +22,7 @@ import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
 /**
  * @author Rob Austin.
  */
-class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, ClosableHolder {
+class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
 
@@ -145,7 +144,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
     }
 
 
-    public void addCloseable(final Closeable closeable) {
+    private void addCloseable(final Closeable closeable) {
         try {
             closeables.add(closeable);
         } catch (IllegalStateException e) {
