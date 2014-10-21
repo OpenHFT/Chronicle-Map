@@ -117,7 +117,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
             checkTimeout(timeoutTime);
         }
 
-
         in.buffer().clear();
         in.clear();
         out.buffer().clear();
@@ -129,7 +128,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clos
         }
 
         in.limit(in.buffer().position());
-        in.position(0);
+
         byte remoteIdentifier = in.readByte();
 
         LOG.info("Attached to a map with a remote identifier=" + remoteIdentifier);
