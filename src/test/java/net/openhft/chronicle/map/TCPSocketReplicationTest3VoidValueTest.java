@@ -24,7 +24,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import static net.openhft.chronicle.map.Builder.newTcpSocketShmIntString;
+import static net.openhft.chronicle.map.Builder.newMapVoid;
 import static org.junit.Assert.*;
 
 /**
@@ -35,23 +35,20 @@ import static org.junit.Assert.*;
 
 public class TCPSocketReplicationTest3VoidValueTest {
 
-
     private ChronicleMap<Integer, Void> map1;
     private ChronicleMap<Integer, Void> map2;
     private ChronicleMap<Integer, Void> map3;
 
-
     @Before
     public void setup() throws IOException {
-        map1 = newTcpSocketShmIntString((byte) 1, 8076, new InetSocketAddress("localhost", 8077),
-                new InetSocketAddress("localhost", 8079));
-        map2 = newTcpSocketShmIntString((byte) 2, 8077, new InetSocketAddress("localhost", 8079));
-        map3 = newTcpSocketShmIntString((byte) 3, 8079);
+        map1 = newMapVoid((byte) 1, 8086, new InetSocketAddress("localhost", 8087),
+                new InetSocketAddress("localhost", 8089));
+        map2 = newMapVoid((byte) 2, 8087, new InetSocketAddress("localhost", 8089));
+        map3 = newMapVoid((byte) 3, 8089);
     }
 
     @After
     public void tearDown() throws InterruptedException {
-        Thread.sleep(5);
         for (final Closeable closeable : new Closeable[]{map1, map2, map3}) {
             try {
                 closeable.close();
@@ -130,8 +127,8 @@ public class TCPSocketReplicationTest3VoidValueTest {
                 break;
             Thread.sleep(1);
         }
-
     }
+
 }
 
 
