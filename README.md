@@ -598,7 +598,7 @@ when using Chronicle Channels its the channels that are given the unique identif
 
 ``` java
 int maxEntrySize = 1024;
-byte identifier= 1;
+byte identifier= 2;
 ChannelProvider channelProvider = new ChannelProviderBuilder()
                     .maxEntrySize(maxEntrySize)
                     .replicators(identifier, tcpReplicationConfig).create();
