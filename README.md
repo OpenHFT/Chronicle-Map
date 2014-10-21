@@ -669,7 +669,6 @@ final ChronicleMap<Integer, CharSequence> statelessMap;
 {
 
     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-            .entries(20000L)
             .replicators((byte) 2, TcpReplicationConfig.of(8076))
             .create();            
                        
@@ -679,7 +678,7 @@ final ChronicleMap<Integer, CharSequence> statelessMap;
 // stateless client
 {
     statelessMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-            .stateless(remoteAddress(new InetSocketAddress("localhost", 8076)))
+            .stateless(StatelessBuilder.remoteAddress(new InetSocketAddress("localhost", 8076)))
             .create();
 
     Assert.assertEquals("EXAMPLE-10", statelessMap.get(10));
@@ -710,7 +709,7 @@ but in your example you should choose the host of the state-full server and the 
  it. 
 
 ``` java
-.stateless(remoteAddress(new InetSocketAddress(<host of state-full server>, 
+.stateless(StatelessBuilder.remoteAddress(new InetSocketAddress(<host of state-full server>, 
 <port of state-full server>)))
 ```
 
