@@ -647,7 +647,7 @@ Once you have created the ChannelProvider you may wish to hold onto the referenc
 once you have finished, this will close everything in the ChannelProvider 
 
 ``` java
-replicator.close();
+channelProvider.close();
 ```
 
 # Stateless Client
