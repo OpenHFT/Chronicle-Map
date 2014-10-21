@@ -81,14 +81,18 @@ abstract class AbstractChannelReplicator implements Closeable {
         return result;
     }
 
-   static SocketChannel openSocketChannel(final CloseablesManager closeables) throws IOException {
+    static SocketChannel openSocketChannel(final CloseablesManager closeables) throws IOException {
         SocketChannel result = null;
 
         try {
             result = SocketChannel.open();
         } finally {
             if (result != null)
-                closeables.add(result);
+                try {
+                    closeables.add(result);
+                } catch (IllegalStateException e) {
+                    // already closed
+                }
         }
         return result;
     }

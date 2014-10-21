@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.common.ClosableHolder;
 import net.openhft.chronicle.common.StatelessBuilder;
 import net.openhft.chronicle.common.exceptions.IORuntimeException;
 import net.openhft.chronicle.common.exceptions.TimeoutRuntimeException;
@@ -22,7 +23,7 @@ import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
 /**
  * @author Rob Austin.
  */
-class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
+class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, ClosableHolder {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
 
@@ -57,20 +58,38 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         this.keyValueSerializer = keyValueSerializer;
         this.builder = builder;
+        this.clientChannel = connect(builder);
+    }
 
-        try {
-            clientChannel = AbstractChannelReplicator.openSocketChannel(closeables);
-            clientChannel.connect(builder.remoteAddress());
+    private SocketChannel connect(StatelessBuilder builder) throws IOException {
+        IOException exception = null;
+        SocketChannel clientChannel0 = null;
 
-            doHandShaking();
-        } catch (IOException e) {
-            closeables.closeQuietly();
-            throw e;
+        for (int i = 1; i < 5; i++) {
+
+            clientChannel0 = AbstractChannelReplicator.openSocketChannel(closeables);
+
+            try {
+                clientChannel0.connect(builder.remoteAddress());
+                doHandShaking(clientChannel0);
+                exception = null;
+                break;
+            } catch (IOException e) {
+                closeables.closeQuietly();
+                Thread.yield();
+            }
+
         }
+
+        if (exception != null)
+            throw exception;
+
+
+        return clientChannel0;
     }
 
 
-    private void doHandShaking() throws IOException {
+    private void doHandShaking(final SocketChannel clientChannel) throws IOException {
 
         while (STATELESS_CLIENT_IDENTIFER.remaining() > 0) {
             clientChannel.write(STATELESS_CLIENT_IDENTIFER);
@@ -97,6 +116,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     public void close() {
         closeables.closeQuietly();
     }
+
+
+    public void addCloseable(final Closeable closeable) {
+        try {
+            closeables.add(closeable);
+        } catch (IllegalStateException e) {
+            // already closed
+        }
+    }
+
 
     long nextUniqueTransaction(long time) {
 
@@ -389,6 +418,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private Bytes blockingFetch(long sizeLocation) {
+
         try {
             return blockingFetchThrowable(sizeLocation, this.builder.timeoutMs());
         } catch (IOException e) {
