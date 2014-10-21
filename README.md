@@ -691,9 +691,11 @@ serverMap.close();
 statelessMap.close();
 ```
 
-The example above, creates a Chronicle Map sever ( state-full ) and connects a stateless client 
-to it, this connection is made over TCP/IP, the server TCP/IP port is defined using the 
-TcpReplicationConfig :
+When used with a stateless client, Each state-full server has to be configured with TCP 
+replication ( ), when you set up TCP Replication you must define a port for the replication to 
+run on, the port you choose is up to you, but you should pick a free port that is not currently 
+being used by another application. In this example we choose the port 8076
+
 
 ``` java
 .replicators((byte) 2, TcpReplicationConfig.of(8076))  // sets the server to run on localhost:8076
@@ -703,6 +705,14 @@ On the "stateless client" we connect to the server via TCP/IP on localhost:8076 
 
 ``` java
 .stateless(remoteAddress(new InetSocketAddress("localhost", 8076)))
+```
+
+but in your example you should choose the host of the state-full server and the port you allocated
+ it. 
+
+``` java
+.stateless(remoteAddress(new InetSocketAddress(<host of state-full server>, 
+<port of state-full server>)))
 ```
 
 the ".stateless(..)" method tells `ChronicleMap` that its going to build a stateless client. If you 
