@@ -63,9 +63,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     StatelessChronicleMap(final KeyValueSerializer<K, V> keyValueSerializer,
                           final StatelessBuilder builder) throws IOException {
-
         this.keyValueSerializer = keyValueSerializer;
         this.builder = builder;
+        attemptConnect(builder.remoteAddress());
     }
 
 
@@ -74,21 +74,21 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         LOG.debug("attempting to connect to " + remoteAddress);
 
-        SocketChannel clientChannel0 = null;
-        assert out.position() != 0;
+        SocketChannel result = null;
+
         long timeoutAt = System.currentTimeMillis() + timeoutMs;
 
         for (; ; ) {
 
             checkTimeout(timeoutAt);
 
-            // ensures that the excising closeables are close
+            // ensures that the excising connection are closed
             closeExisting();
 
             try {
-                clientChannel0 = AbstractChannelReplicator.openSocketChannel(closeables);
-                clientChannel0.connect(builder.remoteAddress());
-                doHandShaking(clientChannel0);
+                result = AbstractChannelReplicator.openSocketChannel(closeables);
+                result.connect(builder.remoteAddress());
+                doHandShaking(result);
                 break;
             } catch (IOException e) {
                 closeables.closeQuietly();
@@ -99,12 +99,40 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         }
 
-        return clientChannel0;
+        return result;
     }
 
 
+    /**
+     * attempts a single connect without a timeout and eat any IOException used typically in the
+     * constructor, its possible the server is not running with this instance is created, {@link
+     * StatelessChronicleMap#lazyConnect(long, java.net.InetSocketAddress)} will attempt to
+     * establish the connection when the client make the first map method call.
+     *
+     * @param remoteAddress
+     * @return
+     * @throws IOException
+     * @see StatelessChronicleMap#lazyConnect(long, java.net.InetSocketAddress)
+     */
+    private void attemptConnect(final InetSocketAddress remoteAddress) throws IOException {
+
+        // ensures that the excising connection are closed
+        closeExisting();
+
+        try {
+            clientChannel = AbstractChannelReplicator.openSocketChannel(closeables);
+            clientChannel.connect(remoteAddress);
+            doHandShaking(clientChannel);
+
+        } catch (IOException e) {
+            closeables.closeQuietly();
+        }
+
+    }
+
 
     private void closeExisting() {
+
         // ensure that any excising connection are first closed
         if (closeables != null)
             closeables.closeQuietly();
@@ -115,12 +143,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private void doHandShaking(@NotNull final SocketChannel clientChannel) throws IOException {
 
-        ByteBuffer connectionb = ByteBuffer.allocate
-                (1024);
+        ByteBuffer connectionb = ByteBuffer.allocate(1024);
         final ByteBufferBytes connectionOut = new ByteBufferBytes(connectionb.slice());
 
-        final ByteBufferBytes connectionIn = new ByteBufferBytes(ByteBuffer.allocate
-                (1024));
+        final ByteBufferBytes connectionIn = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
 
 
         connectionOut.clear();
