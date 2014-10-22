@@ -30,10 +30,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.*;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 import static java.lang.Math.round;
 import static java.nio.channels.SelectionKey.OP_WRITE;
@@ -135,6 +132,19 @@ abstract class AbstractChannelReplicator implements Closeable {
         isClosed = true;
         closeables.closeQuietly();
         executorService.shutdownNow();
+
+
+        try {
+            // we HAVE to be sure we have terminated before calling close() on the
+            // ReplicatedChronicleMap
+            // if this thread is still running and you close() the ReplicatedChronicleMap without
+            // fulling terminating this, you can cause the ReplicatedChronicleMap to attempt to
+            // process data on a map that has been closed, which would result in a
+            // core dump.
+            executorService.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            LOG.error("",e);
+        }
     }
 
     void closeEarlyAndQuietly(SelectableChannel channel) {
