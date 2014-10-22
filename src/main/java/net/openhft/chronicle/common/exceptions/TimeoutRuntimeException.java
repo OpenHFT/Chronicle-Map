@@ -6,4 +6,11 @@ package net.openhft.chronicle.common.exceptions;
 public class TimeoutRuntimeException extends RuntimeException {
 
 
+    public TimeoutRuntimeException(String s) {
+        super(s);
+    }
+
+    public TimeoutRuntimeException() {
+        super();
+    }
 }

@@ -57,7 +57,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             this.d = statelessMap;
         }
 
-
         @Override
         public File file() {
             return null;
@@ -181,7 +180,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         return new SingleCloseMap(statelessMap, statelessMap, serverMap);
 
     }
-
 
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int port) throws
             IOException {
@@ -530,6 +528,33 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
      */
     @Test
     public void testSize() throws IOException {
+        try (ChronicleMap map = map5(8076)) {
+
+            try (ChronicleMap empty = newShmIntString(8078)) {
+                assertEquals(0, empty.size()) ;
+                assertEquals(5, map.size());
+            }
+        }
+    }
+
+    /**
+     * size returns the correct values
+     */
+    @Test
+    public void testSize2() throws IOException {
+        try (ChronicleMap map = map5(8076)) {
+
+            try (ChronicleMap empty = newShmIntString(8078)) {
+                assertEquals(0, empty.size()) ;
+                assertEquals(5, map.size());
+            }
+        }
+    }
+    /**
+     * size returns the correct values
+     */
+    @Test
+    public void testSize3() throws IOException {
         try (ChronicleMap map = map5(8076)) {
 
             try (ChronicleMap empty = newShmIntString(8078)) {
