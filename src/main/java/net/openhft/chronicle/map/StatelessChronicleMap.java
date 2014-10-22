@@ -503,9 +503,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         in.clear();
         in.buffer().clear();
 
-       /* in.buffer().limit(in.buffer().capacity());
-        in.limit(in.buffer().position());
-*/
         // read size
         while (in.buffer().position() < 2) {
             clientChannel.read(in.buffer());
@@ -527,20 +524,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         long inTransactionId = in.readLong();
 
-        if (inTransactionId != transactionId) {
+        if (inTransactionId != transactionId)
             throw new IllegalStateException("the received transaction-id=" + inTransactionId +
                     ", does not match the expected transaction-id=" + transactionId);
-        }
 
-        if (isException) {
-            int len = in.readUnsignedShort();
-
-            in.limit(in.position() + len);
-
-            Object o = in.readObject();
-            RuntimeException runtimeException = (RuntimeException) o;
-            throw runtimeException;
-        }
+        if (isException)
+            throw (RuntimeException) in.readObject();
 
         return in;
     }

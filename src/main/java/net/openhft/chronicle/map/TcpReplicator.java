@@ -1588,12 +1588,7 @@ class StatelessServerConnector<K, V> {
     }
 
     private void writeException(RuntimeException e, Bytes out) {
-
-        long start = out.position();
-        out.skip(2);
         out.writeObject(e);
-        long len = out.position() - (start + 2L);
-        out.writeUnsignedShort(start, (int) len);
     }
 
 
