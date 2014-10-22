@@ -19,6 +19,7 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
 
 /**
@@ -28,14 +29,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
 
-    private final ByteBufferBytes connectionOut = new ByteBufferBytes(ByteBuffer.allocate
-            (1024));
+    public static final byte STATELESS_CLIENT_IDENTIFIER = (byte) -127;
 
-    private final ByteBufferBytes connectionIn = new ByteBufferBytes(ByteBuffer.allocate
-            (1024));
+    private final byte[] connectionByte = new byte[1];
+    private final ByteBuffer connectionOutBuffer = ByteBuffer.wrap(connectionByte);
+
+
+    // private final ByteBufferBytes connectionIn = new ByteBufferBytes(allocateDirect(1024));
 
     private volatile SocketChannel clientChannel;
-    public static final byte STATELESS_CLIENT_IDENTIFER = (byte) -127;
+
     private CloseablesManager closeables;
     private final StatelessBuilder builder;
 
@@ -72,7 +75,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private SocketChannel lazyConnect(final long timeoutMs,
                                       final InetSocketAddress remoteAddress) throws IOException {
 
-        LOG.debug("attempting to connect to " + remoteAddress);
+        if (LOG.isDebugEnabled())
+            LOG.debug("attempting to connect to " + remoteAddress);
 
         SocketChannel result = null;
 
@@ -131,6 +135,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
+    /**
+     * closes the existing connections and establishes a new closeables
+     */
     private void closeExisting() {
 
         // ensure that any excising connection are first closed
@@ -141,43 +148,39 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
+    /**
+     * initiates a very simple level of handshaking with the remote server, we send a special ID of
+     * -127 ( when the server receives this it knows its dealing with a stateless client, receive
+     * back an identifier from the server
+     *
+     * @param clientChannel
+     * @throws IOException
+     */
     private void doHandShaking(@NotNull final SocketChannel clientChannel) throws IOException {
 
-        ByteBuffer connectionb = ByteBuffer.allocate(1024);
-        final ByteBufferBytes connectionOut = new ByteBufferBytes(connectionb.slice());
+        connectionByte[0] = STATELESS_CLIENT_IDENTIFIER;
+        this.connectionOutBuffer.clear();
 
-        final ByteBufferBytes connectionIn = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
-
-
-        connectionOut.clear();
-        connectionOut.writeByte(STATELESS_CLIENT_IDENTIFER);
-
-        ByteBuffer buffer = connectionb.slice();
-        buffer.position(0);
-        buffer.limit(1);
         long timeoutTime = System.currentTimeMillis() + builder.timeoutMs();
 
-        System.out.println("sending handshaing bytes=>" + toString(buffer));
-        while (buffer.hasRemaining()) {
-            clientChannel.write(buffer);
-            checkTimeout((long) timeoutTime);
+        // write a single byte
+        while (connectionOutBuffer.hasRemaining()) {
+            clientChannel.write(connectionOutBuffer);
+            checkTimeout(timeoutTime);
         }
 
-        connectionIn.buffer().clear();
-        connectionIn.clear();
-        connectionb.clear();
-        connectionOut.clear();
+        this.connectionOutBuffer.clear();
 
-        while (connectionIn.buffer().position() <= 0) {
-            clientChannel.read(connectionIn.buffer());
-            checkTimeout((long) timeoutTime);
+        // read a single  byte back
+        while (this.connectionOutBuffer.position() <= 0) {
+            clientChannel.read(this.connectionOutBuffer);
+            checkTimeout(timeoutTime);
         }
 
-        connectionIn.limit(connectionIn.buffer().position());
-        byte remoteIdentifier = connectionIn.readByte();
-        connectionIn.clear();
+        byte remoteIdentifier = connectionByte[0];
 
-        LOG.info("Attached to a map with a remote identifier=" + remoteIdentifier);
+        if (LOG.isDebugEnabled())
+            LOG.debug("Attached to a map with a remote identifier=" + remoteIdentifier);
 
     }
 
@@ -204,10 +207,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         return transactionID.incrementAndGet();
     }
 
-    ByteBuffer b = ByteBuffer.allocateDirect(1024);
+    ByteBuffer b = allocateDirect(1024);
     private final ByteBufferBytes out = new ByteBufferBytes(b.slice());
 
-    private final ByteBufferBytes in = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
+    private final ByteBufferBytes in = new ByteBufferBytes(allocateDirect(1024));
     private final KeyValueSerializer<K, V> keyValueSerializer;
 
     public synchronized V putIfAbsent(K key, V value) {
@@ -592,11 +595,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         b.limit((int) out.position());
         b.position(0);
 
-        System.out.println("sending bytes=>" + toString(b));
-
         while (b.remaining() > 0) {
             clientChannel.write(b);
-            checkTimeout((long) timeoutTime);
+            checkTimeout(timeoutTime);
         }
         out.clear();
         b.clear();
