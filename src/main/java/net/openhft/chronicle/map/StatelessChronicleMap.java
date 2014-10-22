@@ -17,7 +17,6 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
@@ -34,6 +33,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private final byte[] connectionByte = new byte[1];
     private final ByteBuffer connectionOutBuffer = ByteBuffer.wrap(connectionByte);
 
+    private final ByteBuffer outBuffer = allocateDirect(1024);
+    private final ByteBufferBytes out = new ByteBufferBytes(outBuffer.slice());
+    private final ByteBufferBytes in = new ByteBufferBytes(allocateDirect(1024));
+
+    private final KeyValueSerializer<K, V> keyValueSerializer;
 
     // private final ByteBufferBytes connectionIn = new ByteBufferBytes(allocateDirect(1024));
 
@@ -62,7 +66,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         TO_STRING
     }
 
-    private final AtomicLong transactionID = new AtomicLong();
+    private long transactionID;
 
     StatelessChronicleMap(final KeyValueSerializer<K, V> keyValueSerializer,
                           final StatelessBuilder builder) throws IOException {
@@ -185,36 +189,28 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     public File file() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     public void close() {
         if (closeables != null)
             closeables.closeQuietly();
         closeables = null;
-        // clearBuffers();
     }
 
-
-    long nextUniqueTransaction(long time) {
-
-        long l = transactionID.get();
-        if (time > l) {
-            boolean b = transactionID.compareAndSet(l, time);
-            if (b) return time;
-        }
-
-        return transactionID.incrementAndGet();
+    /**
+     * the transaction id are generated as unique timestamps
+     *
+     * @param time in milliseconds
+     * @return a unique transactionId
+     */
+    private long nextUniqueTransaction(long time) {
+        transactionID = (time == transactionID) ? time + 1 : time;
+        return transactionID;
     }
 
-    ByteBuffer b = allocateDirect(1024);
-    private final ByteBufferBytes out = new ByteBufferBytes(b.slice());
-
-    private final ByteBufferBytes in = new ByteBufferBytes(allocateDirect(1024));
-    private final KeyValueSerializer<K, V> keyValueSerializer;
 
     public synchronized V putIfAbsent(K key, V value) {
-
         long sizeLocation = writeEvent(PUT_IF_ABSENT);
         writeKey(key);
         writeValue(value);
@@ -229,7 +225,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         // get the data back from the server
         return blockingFetch(sizeLocation).readBoolean();
-
     }
 
 
@@ -357,7 +352,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private void writeEntries(Map<? extends K, ? extends V> map) {
 
         final HashMap<K, V> safeCopy = new HashMap<K, V>(map);
-
         out.writeStopBit(safeCopy.size());
 
         final Set<Entry> entries = (Set) safeCopy.entrySet();
@@ -432,7 +426,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         in.clear();
         out.clear();
 
-        b.clear();
+        outBuffer.clear();
 
         out.write((byte) event.ordinal());
         long sizeLocation = markSizeLocation();
@@ -509,17 +503,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private void clearBuffers() {
         out.clear();
-        b.clear();
+        outBuffer.clear();
         in.clear();
         in.buffer().clear();
     }
 
 
     private Bytes blockingFetchThrowable(long sizeLocation, long timeOutMs) throws IOException {
-
-
-        // free up space in the buffer
-        //   compact();
 
         long startTime = System.currentTimeMillis();
         long timeoutTime = startTime + timeOutMs + 1000000;
@@ -592,15 +582,15 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private void send(final ByteBufferBytes out, long timeoutTime) throws IOException {
-        b.limit((int) out.position());
-        b.position(0);
+        outBuffer.limit((int) out.position());
+        outBuffer.position(0);
 
-        while (b.remaining() > 0) {
-            clientChannel.write(b);
+        while (outBuffer.remaining() > 0) {
+            clientChannel.write(outBuffer);
             checkTimeout(timeoutTime);
         }
         out.clear();
-        b.clear();
+        outBuffer.clear();
     }
 
     public String toString(ByteBuffer b) {
