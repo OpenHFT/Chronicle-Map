@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import com.sun.jdi.connect.spi.ClosedConnectionException;
 import net.openhft.chronicle.common.StatelessBuilder;
 import net.openhft.chronicle.common.exceptions.IORuntimeException;
 import net.openhft.chronicle.common.exceptions.TimeoutRuntimeException;
@@ -26,7 +27,14 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
 
-    private final SocketChannel clientChannel;
+    private final ByteBufferBytes connectionOut = new ByteBufferBytes(ByteBuffer.allocate
+            (1024));
+
+    private final ByteBufferBytes connectionIn = new ByteBufferBytes(ByteBuffer.allocate
+            (1024));
+
+
+    private volatile SocketChannel clientChannel;
     public static final byte STATELESS_CLIENT_IDENTIFER = (byte) -127;
     private CloseablesManager closeables;
     private final StatelessBuilder builder;
@@ -58,10 +66,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         this.keyValueSerializer = keyValueSerializer;
         this.builder = builder;
-        this.clientChannel = connect(builder);
+        this.clientChannel = connect();
     }
 
-    private SocketChannel connect(StatelessBuilder builder) throws IOException {
+    private SocketChannel connect() throws IOException {
+
+        LOG.debug("attempting to connect to " + builder.remoteAddress());
         IOException exception = null;
         SocketChannel clientChannel0 = null;
 
@@ -69,10 +79,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         for (; ; ) {
 
             if (System.currentTimeMillis() > timeoutAt) {
-                clientChannel0.close();
                 close();
-                throw new RuntimeException("unable to connect to remote server");
+                throw new TimeoutRuntimeException("unable to connect to remote server");
             }
+
+
+            if (closeables != null)
+                closeables.closeQuietly();
 
             closeables = new CloseablesManager();
             clientChannel0 = AbstractChannelReplicator.openSocketChannel(closeables);
@@ -83,10 +96,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                 exception = null;
                 break;
             } catch (IOException e) {
+                clientChannel0.close();
+                close();
+            } catch (Exception e) {
 
                 clientChannel0.close();
                 close();
-
+                throw e;
             }
 
         }
@@ -97,17 +113,24 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         if (clientChannel0 == null)
             throw new IOException("unable to connect to remote server");
 
+
         return clientChannel0;
     }
 
 
-    private void doHandShaking(final SocketChannel clientChannel) throws IOException {
+    private void doHandShaking(@NotNull final SocketChannel clientChannel) throws IOException {
 
-        out.clear();
-        out.writeByte(STATELESS_CLIENT_IDENTIFER);
+        final ByteBufferBytes connectionOut = new ByteBufferBytes(ByteBuffer.allocate
+                (1024));
+
+        final ByteBufferBytes connectionIn = new ByteBufferBytes(ByteBuffer.allocate
+                (1024));
 
 
-        ByteBuffer buffer = out.buffer().slice();
+        connectionOut.clear();
+        connectionOut.writeByte(STATELESS_CLIENT_IDENTIFER);
+
+        ByteBuffer buffer = connectionOut.buffer().slice();
         buffer.position(0);
         buffer.limit(1);
         long timeoutTime = System.currentTimeMillis() + builder.timeoutMs();
@@ -116,19 +139,19 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             checkTimeout(timeoutTime);
         }
 
-        in.buffer().clear();
-        in.clear();
-        out.buffer().clear();
-        out.clear();
+        connectionIn.buffer().clear();
+        connectionIn.clear();
+        connectionOut.buffer().clear();
+        connectionOut.clear();
 
-        while (in.buffer().position() <= 0) {
-            clientChannel.read(in.buffer());
+        while (connectionIn.buffer().position() <= 0) {
+            clientChannel.read(connectionIn.buffer());
             checkTimeout(timeoutTime);
         }
 
-        in.limit(in.buffer().position());
-
-        byte remoteIdentifier = in.readByte();
+        connectionIn.limit(connectionIn.buffer().position());
+        byte remoteIdentifier = connectionIn.readByte();
+        connectionIn.clear();
 
         LOG.info("Attached to a map with a remote identifier=" + remoteIdentifier);
 
@@ -139,17 +162,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     public void close() {
-        closeables.closeQuietly();
+        if (closeables != null)
+            closeables.closeQuietly();
+        closeables = null;
         clearBuffers();
-    }
-
-
-    private void addCloseable(final Closeable closeable) {
-        try {
-            closeables.add(closeable);
-        } catch (IllegalStateException e) {
-            // already closed
-        }
     }
 
 
@@ -164,7 +180,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         return transactionID.incrementAndGet();
     }
 
-    private final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocate(1024));
+    ByteBuffer b = ByteBuffer.allocate(1024);
+    private final ByteBufferBytes out = new ByteBufferBytes(b);
+
     private final ByteBufferBytes in = new ByteBufferBytes(ByteBuffer.allocate(1024));
     private final KeyValueSerializer<K, V> keyValueSerializer;
 
@@ -395,7 +413,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     private long writeEvent(EventId event) {
+        in.clear();
         out.clear();
+
         out.buffer().clear();
 
         out.write((byte) event.ordinal());
@@ -481,57 +501,83 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private Bytes blockingFetchThrowable(long sizeLocation, long timeOutMs) throws IOException {
 
+
         // free up space in the buffer
         //   compact();
 
         long startTime = System.currentTimeMillis();
+        long timeoutTime = startTime + timeOutMs + 1000000;
         long transactionId = nextUniqueTransaction(startTime);
-        long timeoutTime = startTime + timeOutMs;
+        //  clientChannel =null;
+        for (; ; ) {
+            //      System.out.print(clientChannel);
+            // if (clientChannel == null)
+            //        clientChannel = connect();
 
-        if (LOG.isDebugEnabled())
-            LOG.debug("sending data with transactionId=" + transactionId);
+            try {
 
+                if (LOG.isDebugEnabled())
+                    LOG.debug("sending data with transactionId=" + transactionId);
+
+                write(transactionId);
+
+                writeSizeAt(sizeLocation);
+
+                // send out all the bytes
+                send(out, timeoutTime);
+
+                in.clear();
+                in.buffer().clear();
+
+                // the number of bytes in the response
+                int size = receive(2, timeoutTime).readUnsignedShort();
+
+                LOG.info("size=" + size);
+
+                receive(size, timeoutTime);
+
+                boolean isException = in.readBoolean();
+                long inTransactionId = in.readLong();
+
+                if (inTransactionId != transactionId)
+                    throw new IllegalStateException("the received transaction-id=" + inTransactionId +
+                            ", does not match the expected transaction-id=" + transactionId);
+
+                if (isException)
+                    throw (RuntimeException) in.readObject();
+
+                return in;
+            } catch (java.nio.channels.ClosedChannelException e) {
+                checkTimeout(timeoutTime);
+                clientChannel = connect();
+            } catch (ClosedConnectionException e) {
+                checkTimeout(timeoutTime);
+                clientChannel = connect();
+            }
+        }
+    }
+
+    private void write(long transactionId) {
         out.writeLong(transactionId);
-        writeSizeAt(sizeLocation);
+    }
 
+    private ByteBufferBytes receive(int requiredNumberOfBytes, long timeoutTime) throws IOException {
+
+        while (in.buffer().position() < requiredNumberOfBytes) {
+            clientChannel.read(in.buffer());
+            checkTimeout(timeoutTime);
+        }
+
+        in.limit(in.buffer().position());
+        return in;
+    }
+
+    private void send(final ByteBufferBytes out, long timeoutTime) throws IOException {
         out.buffer().limit((int) out.position());
         while (out.buffer().remaining() > 0) {
             clientChannel.write(out.buffer());
             checkTimeout(timeoutTime);
         }
-
-        in.clear();
-        in.buffer().clear();
-
-        // read size
-        while (in.buffer().position() < 2) {
-            clientChannel.read(in.buffer());
-            checkTimeout(timeoutTime);
-        }
-
-        in.limit(in.buffer().position());
-        int size = in.readUnsignedShort();
-
-        LOG.info("size=" + size);
-
-        while (in.buffer().position() < size) {
-            clientChannel.read(in.buffer());
-            checkTimeout(timeoutTime);
-        }
-        in.limit(in.buffer().position());
-
-        boolean isException = in.readBoolean();
-
-        long inTransactionId = in.readLong();
-
-        if (inTransactionId != transactionId)
-            throw new IllegalStateException("the received transaction-id=" + inTransactionId +
-                    ", does not match the expected transaction-id=" + transactionId);
-
-        if (isException)
-            throw (RuntimeException) in.readObject();
-
-        return in;
     }
 
     private void checkTimeout(long timeoutTime) {

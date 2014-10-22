@@ -572,7 +572,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
      */
     @Test
     public void testContainsKey_NullPointerException() throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+        try (ChronicleMap c = newShmIntString(8079)) {
             c.containsKey(null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -713,7 +713,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     @Test
     public void testRemove2_NullPointerException
     () throws IOException {
-        try (ChronicleMap c = newStrStrMap(8076)) {
+        try (ChronicleMap c = newStrStrMap(8086)) {
             c.put("sadsdf", "asdads");
             c.remove(null, "whatever");
             shouldThrow();
