@@ -349,7 +349,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     }
 
-    private void writeEntries(Map<? extends K, ? extends V> map) {
+/*    private void writeEntries(Map<? extends K, ? extends V> map) {
 
         final HashMap<K, V> safeCopy = new HashMap<K, V>(map);
         out.writeStopBit(safeCopy.size());
@@ -360,7 +360,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             writeKey(e.getKey());
             writeValue(e.getValue());
         }
-    }
+    }*/
 
 
     public synchronized void clear() {
@@ -456,9 +456,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         public final V setValue(V newValue) {
             V oldValue = value;
-
             StatelessChronicleMap.this.put((K) getKey(), (V) newValue);
-
             return oldValue;
         }
 
@@ -501,14 +499,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     }
 
-    private void clearBuffers() {
-        out.clear();
-        outBuffer.clear();
-        in.clear();
-        in.buffer().clear();
-    }
-
-
     private Bytes blockingFetchThrowable(long sizeLocation, long timeOutMs) throws IOException {
 
         long startTime = System.currentTimeMillis();
@@ -516,8 +506,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         long transactionId = nextUniqueTransaction(startTime);
 
         for (; ; ) {
-
-            assert out.position() != 0;
 
             if (clientChannel == null)
                 clientChannel = lazyConnect(builder.timeoutMs(), builder.remoteAddress());
@@ -527,9 +515,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                 if (LOG.isDebugEnabled())
                     LOG.debug("sending data with transactionId=" + transactionId);
 
-
                 write(transactionId);
-                System.out.println("out.position()=" + out.position());
                 writeSizeAt(sizeLocation);
 
                 // send out all the bytes
@@ -540,8 +526,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
                 // the number of bytes in the response
                 int size = receive(2, timeoutTime).readUnsignedShort();
-
-                LOG.info("size=" + size);
 
                 receive(size, timeoutTime);
 
@@ -557,10 +541,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
                 return in;
             } catch (java.nio.channels.ClosedChannelException e) {
-                checkTimeout((long) timeoutTime);
+                checkTimeout(timeoutTime);
                 clientChannel = lazyConnect(builder.timeoutMs(), builder.remoteAddress());
             } catch (ClosedConnectionException e) {
-                checkTimeout((long) timeoutTime);
+                checkTimeout(timeoutTime);
                 clientChannel = lazyConnect(builder.timeoutMs(), builder.remoteAddress());
             }
         }
@@ -574,7 +558,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         while (in.buffer().position() < requiredNumberOfBytes) {
             clientChannel.read(in.buffer());
-            checkTimeout((long) timeoutTime);
+            checkTimeout(timeoutTime);
         }
 
         in.limit(in.buffer().position());
@@ -589,22 +573,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             clientChannel.write(outBuffer);
             checkTimeout(timeoutTime);
         }
+
         out.clear();
         outBuffer.clear();
     }
 
-    public String toString(ByteBuffer b) {
-        StringBuilder builder1 = new StringBuilder();
-        int i = 0;
-
-        int position = b.position();
-        for (int j = b.position(); j < b.limit(); j++) {
-            byte b1 = b.get();
-            builder1.append((char) b1 + "[" + (int) b1 + "],");
-        }
-        b.position(position);
-        return builder1.toString();
-    }
 
     private void checkTimeout(long timeoutTime) {
         if (timeoutTime < System.currentTimeMillis())

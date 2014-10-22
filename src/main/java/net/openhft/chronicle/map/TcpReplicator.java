@@ -1210,8 +1210,6 @@ class StatelessServerConnector<K, V> {
 
         final StatelessChronicleMap.EventId event = StatelessChronicleMap.EventId.values()[eventId];
 
-        System.out.println("got remote event to StatelessChronicleMap");
-
         switch (event) {
 
             case LONG_SIZE:
