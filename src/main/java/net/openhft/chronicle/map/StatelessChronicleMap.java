@@ -32,17 +32,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private final byte[] connectionByte = new byte[1];
     private final ByteBuffer connectionOutBuffer = ByteBuffer.wrap(connectionByte);
 
-    private final ByteBuffer outBuffer = allocateDirect(1024);
-    private final ByteBufferBytes out = new ByteBufferBytes(outBuffer.slice());
-
-    // if you want you could change this later so that "in" has its own buffer.
-    private ByteBufferBytes in = out;
+    private ByteBuffer buffer;
+    private ByteBufferBytes bytes;
 
     private final KeyValueSerializer<K, V> keyValueSerializer;
     private volatile SocketChannel clientChannel;
 
     private CloseablesManager closeables;
     private final StatelessBuilder builder;
+    private int maxEntrySize;
+    private int headroom = 1024;
 
     static enum EventId {
         HEARTBEAT,
@@ -61,16 +60,23 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         REPLACE_WITH_OLD_AND_NEW_VALUE,
         PUT_IF_ABSENT,
         REMOVE_WITH_VALUE,
-        TO_STRING
+        TO_STRING,
+        PUT_ALL
     }
 
     private long transactionID;
 
     StatelessChronicleMap(final KeyValueSerializer<K, V> keyValueSerializer,
-                          final StatelessBuilder builder) throws IOException {
+                          final StatelessBuilder builder,
+                          int maxEntrySize) throws IOException {
         this.keyValueSerializer = keyValueSerializer;
         this.builder = builder;
+        this.maxEntrySize = maxEntrySize;
         attemptConnect(builder.remoteAddress());
+        headroom = 1024 + maxEntrySize;
+        buffer = allocateDirect(headroom);
+        bytes = new ByteBufferBytes(buffer.slice());
+
     }
 
 
@@ -339,16 +345,85 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     public synchronized void putAll(Map<? extends K, ? extends V> map) {
 
-        for (Map.Entry<? extends K, ? extends V> e : map.entrySet()) {
-            put(e.getKey(), e.getValue());
+        final long sizeLocation = writeEvent(PUT_ALL);
+        final int numberOfEntries = map.size();
+        int numberOfEntriesReadSoFar = 0;
+
+        bytes.writeStopBit(numberOfEntries);
+
+        for (final Map.Entry<? extends K, ? extends V> e : map.entrySet()) {
+
+            numberOfEntriesReadSoFar++;
+
+            // putAll if a bit more complicated than the others
+            // as the volume of data could cause us to have to resize our buffers
+            resizeIfRequired(numberOfEntries, numberOfEntriesReadSoFar);
+
+            long start = bytes.position();
+            writeKey(e.getKey());
+            writeValue(e.getValue());
+            int len = (int) (bytes.position() - start);
+
+            if (len > maxEntrySize)
+                maxEntrySize = len;
         }
+
+        blockingFetch(sizeLocation);
+
+    }
+
+    private void resizeIfRequired(int numberOfEntries, int numberOfEntriesReadSoFar) {
+        if (bytes.remaining() < maxEntrySize) {
+            long estimatedRequiredSize = estimateSize(numberOfEntries, numberOfEntriesReadSoFar);
+            resizeBuffer(estimatedRequiredSize + headroom);
+        }
+    }
+
+    /**
+     * estimates the size based on what been completed so far
+     *
+     * @param numberOfEntries
+     * @param numberOfEntriesReadSoFar
+     */
+    private long estimateSize(int numberOfEntries, int numberOfEntriesReadSoFar) {
+        // we will back the size estimate on what we have so far
+        double percentageComplete = numberOfEntries / numberOfEntriesReadSoFar;
+        return (long) ((double) bytes.position() / percentageComplete);
+    }
+
+
+    void resizeBuffer(long size) {
+        if (size < buffer.capacity())
+            throw new IllegalStateException("it not possible to resize the buffer smaller");
+
+        ByteBuffer result = ByteBuffer.allocateDirect((int) size);
+        buffer.clear();
+
+        int bufferPosition = buffer.position();
+        int bufferLimit = buffer.limit();
+
+        long bytesPosition = bytes.position();
+        long bytesLimit = bytes.limit();
+
+        buffer.position(0);
+
+        for (int i = 0; i < bufferLimit; i++) {
+            result.put(buffer.get());
+        }
+
+        buffer.limit(bufferLimit);
+        buffer.position(bufferPosition);
+
+        bytes = new ByteBufferBytes(result.slice());
+        bytes.limit(bytesLimit);
+        bytes.position(bytesPosition);
 
     }
 
 /*    private void writeEntries(Map<? extends K, ? extends V> map) {
 
         final HashMap<K, V> safeCopy = new HashMap<K, V>(map);
-        out.writeStopBit(safeCopy.size());
+        bytes.writeStopBit(safeCopy.size());
 
         final Set<Entry> entries = (Set) safeCopy.entrySet();
 
@@ -419,12 +494,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     private long writeEvent(EventId event) {
-        in.clear();
-        out.clear();
+        bytes.clear();
+        buffer.clear();
 
-        outBuffer.clear();
-
-        out.write((byte) event.ordinal());
+        bytes.write((byte) event.ordinal());
         long sizeLocation = markSizeLocation();
         return sizeLocation;
     }
@@ -515,30 +588,30 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                 writeSizeAt(sizeLocation);
 
                 // send out all the bytes
-                send(out, timeoutTime);
+                send(bytes, timeoutTime);
 
-                in.clear();
-                in.buffer().clear();
+                bytes.clear();
+                bytes.buffer().clear();
 
                 // the number of bytes in the response
                 int size = receive(2, timeoutTime).readUnsignedShort();
 
-                if (in.capacity() < size)
-                    in = new ByteBufferBytes(allocateDirect(size));
+                if (bytes.capacity() < size)
+                    bytes = new ByteBufferBytes(allocateDirect(size));
 
                 receive(size, timeoutTime);
 
-                boolean isException = in.readBoolean();
-                long inTransactionId = in.readLong();
+                boolean isException = bytes.readBoolean();
+                long inTransactionId = bytes.readLong();
 
                 if (inTransactionId != transactionId)
                     throw new IllegalStateException("the received transaction-id=" + inTransactionId +
                             ", does not match the expected transaction-id=" + transactionId);
 
                 if (isException)
-                    throw (RuntimeException) in.readObject();
+                    throw (RuntimeException) bytes.readObject();
 
-                return in;
+                return bytes;
             } catch (java.nio.channels.ClosedChannelException e) {
                 checkTimeout(timeoutTime);
                 clientChannel = lazyConnect(builder.timeoutMs(), builder.remoteAddress());
@@ -550,31 +623,31 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private void write(long transactionId) {
-        out.writeLong(transactionId);
+        bytes.writeLong(transactionId);
     }
 
     private ByteBufferBytes receive(int requiredNumberOfBytes, long timeoutTime) throws IOException {
 
-        while (in.buffer().position() < requiredNumberOfBytes) {
-            clientChannel.read(in.buffer());
+        while (bytes.buffer().position() < requiredNumberOfBytes) {
+            clientChannel.read(bytes.buffer());
             checkTimeout(timeoutTime);
         }
 
-        in.limit(in.buffer().position());
-        return in;
+        bytes.limit(bytes.buffer().position());
+        return bytes;
     }
 
     private void send(final ByteBufferBytes out, long timeoutTime) throws IOException {
-        outBuffer.limit((int) out.position());
-        outBuffer.position(0);
+        buffer.limit((int) out.position());
+        buffer.position(0);
 
-        while (outBuffer.remaining() > 0) {
-            clientChannel.write(outBuffer);
+        while (buffer.remaining() > 0) {
+            clientChannel.write(buffer);
             checkTimeout(timeoutTime);
         }
 
         out.clear();
-        outBuffer.clear();
+        buffer.clear();
     }
 
 
@@ -584,18 +657,18 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private void writeSizeAt(long locationOfSize) {
-        long size = out.position() - locationOfSize;
-        out.writeUnsignedShort(locationOfSize, (int) size - 2);
+        long size = bytes.position() - locationOfSize;
+        bytes.writeUnsignedShort(locationOfSize, (int) size - 2);
     }
 
     private long markSizeLocation() {
-        long position = out.position();
-        out.skip(2);
+        long position = bytes.position();
+        bytes.skip(2);
         return position;
     }
 
     private void writeKey(K key) {
-        keyValueSerializer.writeKey(key, out);
+        keyValueSerializer.writeKey(key, bytes);
     }
 
     private V readKey(final long sizeLocation) {
@@ -603,7 +676,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private void writeValue(V value) {
-        keyValueSerializer.writeValue(value, out);
+        keyValueSerializer.writeValue(value, bytes);
     }
 
     private Set<K> readKeySet(Bytes in) {

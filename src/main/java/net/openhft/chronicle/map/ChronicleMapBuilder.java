@@ -64,8 +64,8 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
  *
  * <p>Use static {@link #of(Class, Class)} method to obtain a {@code ChronicleMapBuilder} instance.
  *
- * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link net.openhft.chronicle.common.ChronicleHashBuilder} interface
- * documentation.
+ * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link net.openhft.chronicle.common.ChronicleHashBuilder}
+ * interface documentation.
  *
  * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
  * ChronicleMapBuilder}", unless specified different, because theoretically someone might provide
@@ -819,8 +819,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         if (statelessBuilder != null)
             return createStatelessMap(statelessBuilder);
 
-            return (file != null) ? createWithFile(file) : createWithoutFile();
-
+        return (file != null) ? createWithFile(file) : createWithoutFile();
     }
 
     private ChronicleMap<K, V> createWithoutFile() throws IOException {
@@ -837,7 +836,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         final KeyValueSerializer<K, V> keyValueSerializer
                 = new KeyValueSerializer<K, V>(keyBuilder, valueBuilder);
 
-        return new StatelessChronicleMap<K, V>(keyValueSerializer, statelessBuilder);
+        return new StatelessChronicleMap<K, V>(keyValueSerializer, statelessBuilder, entrySize);
     }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {

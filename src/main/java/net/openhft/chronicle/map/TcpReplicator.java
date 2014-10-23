@@ -1036,17 +1036,18 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
 
         void resizeBuffer(long size) {
+
             if (size < in.capacity())
                 throw new IllegalStateException("it not possible to resize the buffer smaller");
 
-            ByteBuffer buffer = ByteBuffer.allocateDirect((int) size);
+            final ByteBuffer buffer = ByteBuffer.allocateDirect((int) size);
             buffer.clear();
 
-            long outPosition = out.position();
-            long outLimit = out.limit();
+            final long outPosition = out.position();
+            final long outLimit = out.limit();
 
-            int inPosition = in.position();
-            int inLimit = in.limit();
+            final int inPosition = in.position();
+            final int inLimit = in.limit();
 
             in.position(0);
 
@@ -1054,12 +1055,15 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 buffer.put(in.get());
             }
 
-            buffer.position(inPosition);
             buffer.limit(inLimit);
+            buffer.position(inPosition);
+
             in = buffer;
             out = new ByteBufferBytes(in.slice());
-            out.position(outPosition);
+
             out.limit(outLimit);
+            out.position(outPosition);
+
         }
 
         /**
@@ -1293,6 +1297,10 @@ class StatelessServerConnector<K, V> {
             case TO_STRING:
                 return toString(in, out);
 
+            case PUT_ALL:
+                return putAll(in, out);
+
+
             default:
                 throw new IllegalStateException("unsupported event=" + event);
 
@@ -1468,6 +1476,7 @@ class StatelessServerConnector<K, V> {
     private Work putAll(Bytes in, Bytes out) {
         final Map<K, V> m = readEntries(in);
         final long sizeLocation = reflectTransactionId(in, out);
+
         try {
             map.putAll(m);
         } catch (RuntimeException e) {
@@ -1674,15 +1683,14 @@ class StatelessServerConnector<K, V> {
 
     private Map<K, V> readEntries(Bytes in) {
 
-        final long size = in.readStopBit();
+        final long numberOfEntries = in.readStopBit();
         final HashMap<K, V> result = new HashMap<K, V>();
 
-        for (long i = 0; i < size; i++) {
+        for (long i = 0; i < numberOfEntries; i++) {
             result.put(readKey(in), readValue(in));
         }
         return result;
     }
-
 
 }
 
@@ -1727,6 +1735,7 @@ class KeyValueSerializer<K, V> {
         if (value != null)
             valueSerializer.writeMarshallable(value, out);
     }
+
 
 }
 
