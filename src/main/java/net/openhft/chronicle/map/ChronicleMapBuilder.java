@@ -390,10 +390,10 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         if (actualEntriesPerSegment > 0)
             return actualEntriesPerSegment;
         int as = actualSegments();
-        long actualEntries =
-                as == 1 ? entries + 1 :        // The extra 1 might not be needed.
-                        as <= 4 ? entries * 10L / 9 :  // 10%, assumes you are trying to be tight.
-                                entries * 5L / 4;      // 25%
+        long actualEntries = entries +
+                (as == 1 ? 1 :        // The extra 1 might not be needed.
+                        as <= 8 ? entries / 12 :  // 6%, (3% was min for tests)
+                                entries / 6);      // 16% (8% was min for tests)
 
         // round up to the next multiple of 64.
         return (int) (Math.max(1, actualEntries / as) + 63) & ~63;

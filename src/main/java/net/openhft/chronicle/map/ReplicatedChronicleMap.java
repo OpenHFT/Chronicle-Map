@@ -262,7 +262,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         int segmentNum = getSegment(hash);
         int segmentHash = segmentHash(hash);
         return segment(segmentNum).acquire(copies, metaKeyWriter, keyWriter, key, value,
-                segmentHash, create, timeProvider.currentTimeMillis());
+                segmentHash, create, create ? timeProvider.currentTimeMillis() : 0L);
     }
 
     @Override
