@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.lang.values.LongValue;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -85,6 +86,23 @@ public class EntryCountMapTest {
             s = 256;
             testEntriesMaxSize(s, 64000, 79800, i);
             testEntriesMaxSize(s, 129000, 160000, i);
+        }
+        // hyperbolic average gives more weight to small numbers.
+        System.out.printf("Score: %.2f%n", scoreCount / score);
+    }
+
+    @Test
+    @Ignore
+    public void testLarge() throws Exception {
+        int s = 8 * 1024;
+        for (int i = 0; i < 10; i++) {
+            System.out.println("i:" + i);
+            int entries = s * s;
+            testEntriesMaxSize(s, entries * 4 / 5, entries * 4 / 3, i);
+//            testEntriesMaxSize(s, entries + 100, entries * 3 / 2, i);
+            entries *= 2;
+            testEntriesMaxSize(s, entries * 4 / 5, entries * 4 / 3, i);
+//            testEntriesMaxSize(s, entries + 100, entries * 3 / 2, i);
         }
         // hyperbolic average gives more weight to small numbers.
         System.out.printf("Score: %.2f%n", scoreCount / score);
