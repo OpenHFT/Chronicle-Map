@@ -1329,11 +1329,25 @@ class StatelessServerConnector<K, V> {
 
     private Work toString(Bytes in, Bytes out) {
         long sizeLocation = reflectTransactionId(in, out);
+
+        String str;
+        long remaining = out.remaining();
         try {
-            out.writeObject(map.toString());
+            str = map.toString();
         } catch (RuntimeException e) {
             return sendException(out, sizeLocation, e);
         }
+
+        assert remaining > 4;
+
+        // this stops the toString overflowing the buffer
+        final String result = (str.length() < remaining) ?
+                str :
+                str.substring(0, (int) (remaining - 4)) + "...";
+
+        out.writeObject(str);
+
+        out.writeObject(result);
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
     }
