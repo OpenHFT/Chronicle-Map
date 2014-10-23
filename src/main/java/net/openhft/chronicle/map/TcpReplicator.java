@@ -1345,8 +1345,6 @@ class StatelessServerConnector<K, V> {
                 str :
                 str.substring(0, (int) (remaining - 4)) + "...";
 
-        out.writeObject(str);
-
         out.writeObject(result);
         writeSizeAndFlags(sizeLocation, false, out);
         return null;
@@ -1467,7 +1465,13 @@ class StatelessServerConnector<K, V> {
     private Work keySet(Bytes in, final Bytes out) {
         final long sizeLocation = reflectTransactionId(in, out);
 
-        final Set<K> ks = map.keySet();
+        final Set<K> ks;
+        try {
+            ks = map.keySet();
+        } catch (RuntimeException e) {
+            return sendException(out, sizeLocation, e);
+        }
+
         out.writeStopBit(ks.size());
 
         final Iterator<K> iterator = ks.iterator();
@@ -1495,39 +1499,75 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work values(Bytes in, Bytes out) {
-        long sizeLocation = reflectTransactionId(in, out);
+        final long sizeLocation = reflectTransactionId(in, out);
         final Collection<V> values;
+
         try {
             values = map.values();
         } catch (RuntimeException e) {
             return sendException(out, sizeLocation, e);
         }
 
-
         out.writeStopBit(values.size());
-        for (final V value : values) {
-            writeValue(value, out);
-        }
-        writeSizeAndFlags(sizeLocation, false, out);
-        return null;
+
+        final Iterator<V> iterator = values.iterator();
+
+        // this allows us to write more data than the buffer will allow
+        return new Work() {
+
+            @Override
+            public boolean doWork(Bytes out) {
+
+                while (iterator.hasNext()) {
+
+                    // we've filled up the buffer, so lets give another channel a chance to send
+                    // some data, we don't know the max key size, we will use the entrySize instead
+                    if (out.remaining() <= maxEntrySizeBytes)
+                        return false;
+
+                    writeValue(iterator.next(), out);
+                }
+
+                writeSizeAndFlags(sizeLocation, false, out);
+                return true;
+            }
+        };
     }
 
     private Work entrySet(Bytes in, Bytes out) {
-        long sizeLocation = reflectTransactionId(in, out);
+        final long sizeLocation = reflectTransactionId(in, out);
 
         final Set<Map.Entry<K, V>> entries;
         try {
-
             entries = map.entrySet();
         } catch (RuntimeException e) {
             return sendException(out, sizeLocation, e);
         }
         out.writeStopBit(entries.size());
-        for (Map.Entry<K, V> e : entries) {
-            writeKey(e.getKey(), out);
-            writeValue(e.getValue(), out);
-        }
-        return null;
+
+        final Iterator<Map.Entry<K, V>> iterator = entries.iterator();
+
+        // this allows us to write more data than the buffer will allow
+        return new Work() {
+
+            @Override
+            public boolean doWork(Bytes out) {
+
+                while (iterator.hasNext()) {
+
+                    // we've filled up the buffer, so lets give another channel a chance to send
+                    // some data, we don't know the max key size, we will use the entrySize instead
+                    if (out.remaining() <= maxEntrySizeBytes)
+                        return false;
+                    Map.Entry<K, V> next = iterator.next();
+                    writeKey(next.getKey(), out);
+                    writeValue(next.getValue(), out);
+                }
+
+                writeSizeAndFlags(sizeLocation, false, out);
+                return true;
+            }
+        };
     }
 
     private Work putIfAbsent(Bytes in, Bytes out) {

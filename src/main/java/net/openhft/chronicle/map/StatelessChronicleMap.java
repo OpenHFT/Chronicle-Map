@@ -35,7 +35,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private final ByteBuffer outBuffer = allocateDirect(1024);
     private final ByteBufferBytes out = new ByteBufferBytes(outBuffer.slice());
-    private final ByteBufferBytes in = new ByteBufferBytes(allocateDirect(1024));
+    private ByteBufferBytes in = new ByteBufferBytes(allocateDirect(1024));
 
     private final KeyValueSerializer<K, V> keyValueSerializer;
 
@@ -327,9 +327,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         writeValue(value);
 
         // get the data back from the server
-
         return readKey(sizeLocation);
-
     }
 
     public synchronized V remove(Object key) {
@@ -526,6 +524,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
                 // the number of bytes in the response
                 int size = receive(2, timeoutTime).readUnsignedShort();
+
+                if (in.capacity() < size)
+                    in = new ByteBufferBytes(allocateDirect(size));
 
                 receive(size, timeoutTime);
 
