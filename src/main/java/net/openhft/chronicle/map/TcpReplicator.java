@@ -1104,11 +1104,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                         continue;
                 }
 
-
                 if (out.remaining() < sizeInBytes) {
                     return;
                 }
-
 
                 final long nextEntryPos = out.position() + sizeInBytes;
                 final long limit = out.limit();
