@@ -458,7 +458,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         if (remoteIdentifier == ReplicatedChronicleMap.this.identifier()) {
-            // this may occur when working with UDP, as we will receive our own data
+            // this may occur when working with UDP, as we may receive our own data
             return;
         }
 
