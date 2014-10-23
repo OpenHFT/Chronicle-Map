@@ -27,7 +27,6 @@ import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
 class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
-
     public static final byte STATELESS_CLIENT_IDENTIFIER = (byte) -127;
 
     private final byte[] connectionByte = new byte[1];
@@ -35,12 +34,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private final ByteBuffer outBuffer = allocateDirect(1024);
     private final ByteBufferBytes out = new ByteBufferBytes(outBuffer.slice());
-    private ByteBufferBytes in = new ByteBufferBytes(allocateDirect(1024));
+
+    // if you want you could change this later so that "in" has its own buffer.
+    private ByteBufferBytes in = out;
 
     private final KeyValueSerializer<K, V> keyValueSerializer;
-
-    // private final ByteBufferBytes connectionIn = new ByteBufferBytes(allocateDirect(1024));
-
     private volatile SocketChannel clientChannel;
 
     private CloseablesManager closeables;
