@@ -847,7 +847,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     private class TcpSocketChannelEntryWriter {
 
         private final ByteBuffer out;
-        private final ByteBufferBytes in;
+        final ByteBufferBytes in;
         private final EntryCallback entryCallback;
         private long lastSentTime;
 
@@ -869,12 +869,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             uncompletedWork = null;
         }
 
-        /**
-         * @return the buffer messages can be written to
-         */
-        Bytes buffer() {
-            return in;
-        }
 
         /**
          * writes the timestamp into the buffer
@@ -1023,19 +1017,46 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
     /**
      * Reads map entries from a socket, this could be a client or server socket
      */
-    private class TcpSocketChannelEntryReader {
-        private final ByteBuffer in;
-        private final ByteBufferBytes out;
+    class TcpSocketChannelEntryReader {
+        ByteBuffer in;
+        ByteBufferBytes out;
         public long lastHeartBeatReceived = System.currentTimeMillis();
 
         private int sizeInBytes;
         private byte state;
 
+
         private TcpSocketChannelEntryReader() {
             in = ByteBuffer.allocateDirect(replicationConfig.packetSize() + maxEntrySizeBytes);
-            out = new ByteBufferBytes(in);
+            out = new ByteBufferBytes(in.slice());
             out.limit(0);
             in.clear();
+        }
+
+
+        void resizeBuffer(int size) {
+            if (size < in.capacity())
+                throw new IllegalStateException("it not possible to resize the buffer smaller");
+
+            ByteBuffer buffer = ByteBuffer.allocateDirect(size);
+            buffer.clear();
+
+            long outPosition = out.position();
+            long outLimit = out.limit();
+
+            int inPosition = in.position();
+            int inLimit = in.limit();
+
+            in.position(0);
+            for (int i = 0; i < inLimit; i++) {
+                buffer.put(in.get());
+            }
+            buffer.position(inPosition);
+            buffer.limit(inLimit);
+            in = buffer;
+            out = new ByteBufferBytes(in.slice());
+            out.position(outPosition);
+            out.limit(outLimit);
         }
 
         /**
@@ -1104,7 +1125,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                     } else {
 
                         final Work futureWork = statelessServerConnector.processStatelessEvent(state,
-                                out, attached.entryWriter.buffer());
+                                attached.entryWriter.in, attached.entryReader);
 
                         // in some cases it may not be possible to send out all the data before we
                         // fill out the write buffer, so this data will be send when the buffer
@@ -1112,7 +1133,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                         if (futureWork != null) {
 
                             // we will complete what we can now
-                            boolean isComplete = futureWork.doWork(attached.entryWriter.buffer());
+                            boolean isComplete = futureWork.doWork(attached.entryWriter.in);
 
                             if (!isComplete)
                                 attached.entryWriter.uncompletedWork = futureWork;
@@ -1205,8 +1226,10 @@ class StatelessServerConnector<K, V> {
     }
 
     Work processStatelessEvent(byte eventId,
-                               @NotNull Bytes in,
-                               @NotNull Bytes out) {
+                               @NotNull Bytes out,
+                               TcpReplicator.TcpSocketChannelEntryReader reader) {
+
+        ByteBufferBytes in = reader.out;
 
         final StatelessChronicleMap.EventId event = StatelessChronicleMap.EventId.values()[eventId];
 
@@ -1643,7 +1666,6 @@ class StatelessServerConnector<K, V> {
         out.writeObject(e);
     }
 
-
     private Map<K, V> readEntries(Bytes in) {
 
         long size = in.readStopBit();
@@ -1654,6 +1676,8 @@ class StatelessServerConnector<K, V> {
         }
         return result;
     }
+
+
 }
 
 class KeyValueSerializer<K, V> {
