@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -627,9 +629,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
 
-        public void lock() throws IllegalStateException {
+        public void readLock() throws IllegalStateException {
             while (true) {
-                final boolean success = bytes.tryLockNanosLong(LOCK_OFFSET, lockTimeOutNS);
+                final boolean success = bytes.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
                 if (success) return;
                 if (currentThread().isInterrupted()) {
                     throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
@@ -640,9 +642,30 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             }
         }
 
-        public void unlock() {
+        public void writeLock() throws IllegalStateException {
+            while (true) {
+                final boolean success = bytes.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+                if (success) return;
+                if (currentThread().isInterrupted()) {
+                    throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
+                } else {
+                    errorListener.onLockTimeout(bytes.threadIdForLockLong(LOCK_OFFSET));
+                    bytes.resetLockLong(LOCK_OFFSET);
+                }
+            }
+        }
+
+        public void readUnlock() {
             try {
-                bytes.unlockLong(LOCK_OFFSET);
+                bytes.unlockRWReadLock(LOCK_OFFSET);
+            } catch (IllegalMonitorStateException e) {
+                errorListener.errorOnUnlock(e);
+            }
+        }
+
+        public void writeUnlock() {
+            try {
+                bytes.unlockRWWriteLock(LOCK_OFFSET);
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);
             }
@@ -692,10 +715,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Used to acquire an object of type V from the Segment. <p/> {@code usingValue} is reused to read the
-         * value if key is present in this Segment, if key is absent in this Segment: <p/> <ol><li>If {@code
+         * Used to acquire an object of type V from the Segment.  {@code usingValue} is reused to read the
+         * value if key is present in this Segment, if key is absent in this Segment:  <ol><li>If {@code
          * create == false}, just {@code null} is returned (except when event listener provides a value "on
-         * get missing" - then it is put into this Segment for the key).</li> <p/> <li>If {@code create ==
+         * get missing" - then it is put into this Segment for the key).</li>  <li>If {@code create ==
          * true}, {@code usingValue} or a newly created instance of value class, if {@code usingValue ==
          * null}, is put into this Segment for the key.</li></ol>
          *
@@ -705,7 +728,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         V acquire(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
                   int hash2, boolean create) {
-            lock();
+            if (create)
+                writeLock();
+            else
+                readLock();
             try {
                 long keySize = metaKeyInterop.size(keyInterop, key);
                 MultiStoreBytes entry = tmpBytes;
@@ -732,7 +758,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     }
                 }
             } finally {
-                unlock();
+                if (create)
+                    writeUnlock();
+                else
+                    readUnlock();
             }
         }
 
@@ -788,7 +817,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         V put(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V value,
               int hash2, boolean replaceIfPresent) {
-            lock();
+            writeLock();
             try {
                 long keySize = metaKeyInterop.size(keyInterop, key);
                 hashLookup.startSearch(hash2);
@@ -813,7 +842,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 notifyPut(offset, true, key, value, posFromOffset(offset));
                 return null;
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -970,7 +999,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         /**
          * Removes a key (or key-value pair) from the Segment.
-         * <p/>
+         *
          * <p>The entry will only be removed if {@code expectedValue} equals to {@code null}
          * or the value previously corresponding to the specified key.
          *
@@ -980,7 +1009,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         V remove(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
                  V expectedValue, int hash2) {
-            lock();
+            writeLock();
             try {
                 long keySize = metaKeyInterop.size(keyInterop, key);
                 hashLookup.startSearch(hash2);
@@ -1006,12 +1035,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 // key is not found
                 return null;
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
         boolean containsKey(KI keyInterop, MKI metaKeyInterop, K key, int hash2) {
-            lock();
+            readLock();
             try {
                 long keySize = metaKeyInterop.size(keyInterop, key);
                 IntIntMultiMap hashLookup = containsKeyHashLookup();
@@ -1023,7 +1052,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 }
                 return false;
             } finally {
-                unlock();
+                readUnlock();
             }
         }
 
@@ -1032,7 +1061,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Replaces the specified value for the key with the given value. <p/> {@code newValue} is set only if
+         * Replaces the specified value for the key with the given value.  {@code newValue} is set only if
          * the existing value corresponding to the specified key is equal to {@code expectedValue} or {@code
          * expectedValue == null}.
          *
@@ -1041,7 +1070,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         V replace(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
                   V expectedValue, V newValue, int hash2) {
-            lock();
+            writeLock();
             try {
                 long keySize = metaKeyInterop.size(keyInterop, key);
                 hashLookup.startSearch(hash2);
@@ -1058,7 +1087,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 // key is not found
                 return null;
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -1199,14 +1228,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         void clear() {
-            lock();
+            writeLock();
             try {
                 hashLookup.clear();
                 freeList.clear();
                 nextPosToSearchFrom = 0;
                 resetSize();
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -1229,7 +1258,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * Check there is no garbage in freeList.
          */
         void checkConsistency() {
-            lock();
+            readLock();
             try {
                 IntIntMultiMap hashLookup = checkConsistencyHashLookup();
                 for (int pos = 0; (pos = (int) freeList.nextSetBit(pos)) >= 0; ) {
@@ -1250,7 +1279,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     pos += entrySizeInBlocks;
                 }
             } finally {
-                unlock();
+                readUnlock();
             }
         }
 
@@ -1318,7 +1347,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     throw new NoSuchElementException();
                 final Segment segment = segments[segIndex];
                 try {
-                    segment.lock();
+                    segment.readLock();
                     if (segment.getHashLookup().getPositions().isClear(pos)) {
                         // the pos was removed after the previous advance
                         advance(segIndex, pos);
@@ -1327,7 +1356,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     advance(returnedSeg = segIndex, returnedPos = pos);
                     return returnedEntry = segment.getEntry(pos);
                 } finally {
-                    segment.unlock();
+                    segment.readUnlock();
                 }
             }
         }
@@ -1340,21 +1369,23 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             final Segment segment = segments[segIndex];
             final int pos = (int) returnedPos;
             try {
-                segment.lock();
+                segment.writeLock();
                 if (segment.getHashLookup().getPositions().isClear(pos)) {
                     // The case:
                     // 1. iterator.next() - thread 1
                     // 2. map.put() which cause relocation of the key, returned in above - thread 2
                     // OR map.remove() which remove this key - thread 2
                     // 3. iterator.remove() - thread 1
+                    segment.writeUnlock(); // not re-entrant.
                     VanillaChronicleMap.this.remove(returnedEntry.getKey());
+                    segment.writeLock();
                 } else {
                     removePresent(segment, pos);
                 }
                 returnedSeg = -1;
                 returnedEntry = null;
             } finally {
-                segment.unlock();
+                segment.writeUnlock();
             }
         }
 

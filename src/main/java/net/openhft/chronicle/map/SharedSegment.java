@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +28,15 @@ import java.util.Map;
  */
 interface SharedSegment<K, V> {
 
-    void lock();
+    void readLock();
+
+    void writeLock();
 
     Map.Entry<K, V> getEntry(long pos);
 
-    void unlock();
+    void readUnlock();
+
+    void writeUnlock();
 
     NativeBytes entry(long pos);
 

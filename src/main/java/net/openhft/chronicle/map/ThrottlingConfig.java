@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +108,7 @@ public class ThrottlingConfig {
 
 
     /**
-     * Returns the throttle bucketing interval in the given time units. <p/> <p>Default throttle bucketing
+     * Returns the throttle bucketing interval in the given time units.  <p>Default throttle bucketing
      * interval is 100 millis.
      *
      * @param unit the time unit of the interval

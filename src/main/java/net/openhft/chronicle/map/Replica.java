@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +58,7 @@ public interface Replica extends Closeable {
 
     /**
      * Returns the timestamp of the last change from the specified remote node, already replicated to this
-     * Replica. <p/> <p>Used in conjunction with replication, to back fill data from a remote node. This node
+     * Replica.  <p>Used in conjunction with replication, to back fill data from a remote node. This node
      * may have missed updates while it was not been running or connected via TCP.
      *
      * @param remoteIdentifier the identifier of the remote node to check last replicated update time from
@@ -108,7 +110,7 @@ public interface Replica extends Closeable {
         /**
          * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer. It means all
          * these entries will be considered as "new" by this ModificationIterator and iterated once again no
-         * matter if they have already been. <p/> <p>This functionality is used to publish recently modified
+         * matter if they have already been.  <p>This functionality is used to publish recently modified
          * entries to a new remote node as it connects.
          *
          * @param fromTimeStamp the timestamp from which all entries should be dirty

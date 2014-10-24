@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +41,7 @@ import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 /**
  * Used with a {@see net.openhft.map.ReplicatedSharedHashMap} to send data between the maps using a
- * socket connection <p/> {@see net.openhft.map.OutSocketReplicator}
+ * socket connection  {@see net.openhft.map.OutSocketReplicator}
  *
  * @author Rob Austin.
  */

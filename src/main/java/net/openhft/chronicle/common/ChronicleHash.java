@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +37,7 @@ public interface ChronicleHash extends Closeable {
      *
      * @return the file this {@link ChronicleMap} or {@link ChronicleSet} is mapped to,
      *         or {@code null} if it is not mapped to any file
-     * @see ChronicleHashBuilder#create(File)
+     * @see ChronicleHashBuilder#file(java.io.File)
      * @see ChronicleHashBuilder#create()
      */
     File file();

@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +44,8 @@ import static net.openhft.chronicle.common.serialization.Hasher.hash;
 import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 
 /**
- * A Replicating Multi Master HashMap <p/> <p>Each remote hash map, mirrors its changes over to
+ * <h2>A Replicating Multi Master HashMap</h2>
+ * <p>Each remote hash map, mirrors its changes over to
  * another remote hash map, neither hash map is considered the master store of data, each hash map
  * uses timestamps to reconcile changes. We refer to an instance of a remote hash-map as a node. A
  * node will be connected to any number of other nodes, for the first implementation the maximum
@@ -54,8 +57,10 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * nature of this multi master implementation,  this return value will only be the old value on the
  * nodes local data store. In other words the nodes are only concurrent locally. Its worth realising
  * that another node performing exactly the same operation may return a different value. However
- * reconciliation will ensure the maps themselves become eventually consistent. <p/>
- * <p>Reconciliation <p/> <p>If two ( or more nodes ) were to receive a change to their maps for the
+ * reconciliation will ensure the maps themselves become eventually consistent.
+ * </p>
+ * <h2>Reconciliation </h2>
+ * <p>If two ( or more nodes ) were to receive a change to their maps for the
  * same key but different values, say by a user of the maps, calling the put(key, value). Then,
  * initially each node will update its local store and each local store will hold a different value,
  * but the aim of multi master replication is to provide eventual consistency across the nodes. So,
@@ -65,7 +70,8 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * and value. Eventual consistency is achieved by looking at the timestamp from the remote node, if
  * for a given key, the remote nodes timestamp is newer than the local nodes timestamp, then the
  * event from the remote node will be applied to the local node, otherwise the event will be
- * ignored. <p/> <p>However there is an edge case that we have to concern ourselves with, If two
+ * ignored. </p>
+ * <p>However there is an edge case that we have to concern ourselves with, If two
  * nodes update their map at the same time with different values, we have to deterministically
  * resolve which update wins, because of eventual consistency both nodes should end up locally
  * holding the same data. Although it is rare two remote nodes could receive an update to their maps
@@ -75,6 +81,7 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * made to one node should be identical to the decision made to the other. We resolve this simple
  * dilemma by using a node identifier, each node will have a unique identifier, the update from the
  * node with the smallest identifier wins.
+ * </p>
  *
  * @param <K> the entries key type
  * @param <V> the entries value type
@@ -607,7 +614,10 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         V acquire(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
                   K key, V usingValue, int hash2, boolean create, long timestamp) {
-            lock();
+            if (create)
+                writeLock();
+            else
+                readLock();
             try {
                 long keySize = metaKeyWriter.size(keyWriter, key);
                 MultiStoreBytes entry = tmpBytes;
@@ -636,7 +646,10 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     }
                 }
             } finally {
-                unlock();
+                if (create)
+                    writeUnlock();
+                else
+                    readUnlock();
             }
         }
 
@@ -654,7 +667,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         private void remoteRemove(Bytes keyBytes, int hash2,
                                   final long timestamp, final byte identifier) {
-            lock();
+            writeLock();
             try {
                 long keySize = keyBytes.remaining();
                 hashLookupLiveAndDeleted.startSearch(hash2);
@@ -693,7 +706,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     LOG.debug("Segment.remoteRemove() : key=" + keyBytes.toString().trim() + " was not " +
                             "found");
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -704,7 +717,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         private void remotePut(@NotNull final Bytes inBytes, int hash2,
                                final byte identifier, final long timestamp,
                                long valuePos, long valueLimit) {
-            lock();
+            writeLock();
             try {
                 // inBytes position and limit correspond to the key
                 final long keySize = inBytes.remaining();
@@ -784,7 +797,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 incrementSize();
 
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -795,7 +808,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         V put(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
               K key, V value, int hash2, boolean replaceIfPresent,
               final byte identifier, final long timestamp) {
-            lock();
+            writeLock();
             try {
                 IntIntMultiMap hashLookup = hashLookupLiveAndDeleted;
                 long keySize = metaKeyWriter.size(keyWriter, key);
@@ -850,14 +863,14 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 notifyPut(offset, true, key, value, posFromOffset(offset));
                 return null;
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
         /**
          * Used only with replication, its sometimes possible to receive an old ( or stale update )
          * from a remote map. This method is used to determine if we should ignore such updates.
-         * <p/> <p>We can reject put() and removes() when comparing times stamps with remote
+         *  <p>We can reject put() and removes() when comparing times stamps with remote
          * systems
          *
          * @param entry      the maps entry
@@ -961,7 +974,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                  K key, V expectedValue, int hash2,
                  final long timestamp, final byte identifier) {
             assert identifier > 0;
-            lock();
+            writeLock();
             try {
                 long keySize = metaKeyWriter.size(keyWriter, key);
                 final IntIntMultiMap multiMap = hashLookupLiveAndDeleted;
@@ -1015,7 +1028,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 // key is not found
                 return null;
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -1029,7 +1042,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         V replace(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
                   K key, V expectedValue, V newValue, int hash2, long timestamp) {
-            lock();
+            writeLock();
             try {
                 long keySize = metaKeyWriter.size(keyWriter, key);
                 hashLookupLiveOnly.startSearch(hash2);
@@ -1052,7 +1065,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 // key is not found
                 return null;
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -1068,7 +1081,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         public void dirtyEntries(final long timeStamp,
                                  final ModificationIterator.EntryModifiableCallback callback) {
 
-            this.lock();
+            this.readLock();
             try {
                 final int index = Segment.this.getIndex();
                 hashLookupLiveAndDeleted.forEach(new IntIntMultiMap.EntryConsumer() {
@@ -1088,7 +1101,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 });
 
             } finally {
-                unlock();
+                readUnlock();
             }
         }
 
@@ -1331,15 +1344,18 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     /**
-     * Once a change occurs to a map, map replication requires that these changes are picked up by
-     * another thread, this class provides an iterator like interface to poll for such changes. <p/>
+     * <p>Once a change occurs to a map, map replication requires that these changes are picked up by
+     * another thread, this class provides an iterator like interface to poll for such changes.
+     * </p>
      * <p>In most cases the thread that adds data to the node is unlikely to be the same thread that
      * replicates the data over to the other nodes, so data will have to be marshaled between the
-     * main thread storing data to the map, and the thread running the replication. <p/> <p>One way
-     * to perform this marshalling, would be to pipe the data into a queue. However, This class
+     * main thread storing data to the map, and the thread running the replication.
+     * </p>
+     * <p>One way to perform this marshalling, would be to pipe the data into a queue. However, This class
      * takes another approach. It uses a bit set, and marks bits which correspond to the indexes of
      * the entries that have changed. It then provides an iterator like interface to poll for such
      * changes.
+     * </p>
      *
      * @author Rob Austin.
      */
@@ -1452,7 +1468,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
                 this.position = position;
                 final SharedSegment segment = segment((int) (position >>> segmentIndexShift));
-                segment.lock();
+                segment.readLock();
                 try {
                     if (changes.clearIfSet(position)) {
 
@@ -1473,7 +1489,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     // while we were trying to obtain segment lock (for example, in onReplication()),
                     // go to pick up next (next iteration in while (true) loop)
                 } finally {
-                    segment.unlock();
+                    segment.readUnlock();
                 }
             }
         }
@@ -1535,7 +1551,7 @@ abstract class Replicator {
 
     /**
      * Applies the replicator to the map instance and returns a Closeable token to manage resources,
-     * associated with the replication. <p/> <p>This method isn't intended to be called from the
+     * associated with the replication.  <p>This method isn't intended to be called from the
      * client code.
      *
      * @param builder             the builder from which the map was constructed. The replicator may
@@ -1544,7 +1560,7 @@ abstract class Replicator {
      * @param map                 a replicated map instance. Provides basic tools for replication
      *                            implementation.
      * @param entryExternalizable the callback for ser/deser implementation in the replicator
-     * @param chronicleMap
+     * @param chronicleMap        to wrap.
      * @return a {@code Closeable} token to control replication resources. It should be closed on
      * closing the replicated map.
      * @throws java.io.IOException   if an io error occurred during the replicator setup
@@ -1554,7 +1570,8 @@ abstract class Replicator {
      *                               maps)
      */
     protected abstract Closeable applyTo(ChronicleMapBuilder builder,
-                                         Replica map, Replica.EntryExternalizable entryExternalizable, final ChronicleMap chronicleMap)
+                                         Replica map, Replica.EntryExternalizable entryExternalizable,
+                                         final ChronicleMap chronicleMap)
             throws IOException;
 }
 

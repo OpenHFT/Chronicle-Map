@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +42,9 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * cause the associated test that generated them to itself Assert.fail (which
  * JUnit does not otherwise arrange).  The rules for creating such
  * tests are:
- * <p/>
+ *
  * <ol>
- * <p/>
+ *
  * <li> All assertions in code running in generated threads must use
  * the forms {@link #threadFail}, {@link #threadAssertTrue}, {@link
  * #threadAssertEquals}, or {@link #threadAssertNull}, (not
@@ -50,12 +52,12 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * particularly recommended) for other code to use these forms too.
  * Only the most typically used JUnit assertion methods are defined
  * this way, but enough to live with.</li>
- * <p/>
+ *
  * <li> If you override {@link #setUp} or {@link #tearDown}, make sure
  * to invoke {@code super.setUp} and {@code super.tearDown} within
  * them. These methods are used to clear and check for thread
  * assertion Assert.failures.</li>
- * <p/>
+ *
  * <li>All delays and timeouts must use one of the constants {@code
  * SHORT_DELAY_MS}, {@code SMALL_DELAY_MS}, {@code MEDIUM_DELAY_MS},
  * {@code LONG_DELAY_MS}. The idea here is that a SHORT is always
@@ -66,17 +68,17 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * MEDIUM.  And so on. These constants are set to conservative values,
  * but even so, if there is ever any doubt, they can all be increased
  * in one spot to rerun tests on slower platforms.</li>
- * <p/>
+ *
  * <li> All threads generated must be joined inside each test case
  * method (or {@code Assert.fail} to do so) before returning from the
  * method. The {@code joinPool} method can be used to do this when
  * using Executors.</li>
- * <p/>
+ *
  * </ol>
- * <p/>
+ *
  * <p><b>Other notes</b>
  * <ul>
- * <p/>
+ *
  * <li> Usually, there is one testcase method per JSR166 method
  * covering "normal" operation, and then as many exception-testing
  * methods as there are exceptions the method can throw. Sometimes
@@ -84,26 +86,26 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * "normal" behaviors differ significantly. And sometimes testcases
  * cover multiple methods when they cannot be tested in
  * isolation.</li>
- * <p/>
+ *
  * <li> The documentation style for testcases is to provide as javadoc
  * a simple sentence or two describing the property that the testcase
  * method purports to test. The javadocs do not say anything about how
  * the property is tested. To find out, read the code.</li>
- * <p/>
+ *
  * <li> These tests are "conformance tests", and do not attempt to
  * test throughput, latency, scalability or other performance factors
  * (see the separate "jtreg" tests for a set intended to check these
  * for the most central aspects of functionality.) So, most tests use
  * the smallest sensible numbers of threads, collection sizes, etc
  * needed to check basic conformance.</li>
- * <p/>
+ *
  * <li>The test classes currently do not declare inclusion in
  * any particular package to simplify things for people integrating
  * them in TCK test suites.</li>
- * <p/>
+ *
  * <li> As a convenience, the {@code main} of this class (JSR166TestCase)
  * runs all JSR166 unit tests.</li>
- * <p/>
+ *
  * </ul>
  */
 public class JSR166TestCase {
@@ -253,11 +255,11 @@ public class JSR166TestCase {
 
     /**
      * Extra checks that get done for all test cases.
-     * <p/>
+     *
      * Triggers test case Assert.failure if any thread assertions have Assert.failed,
      * by rethrowing, in the test harness thread, any exception recorded
      * earlier by threadRecordFailure.
-     * <p/>
+     *
      * Triggers test case Assert.failure if interrupt status is set in the main thread.
      */
     @After
