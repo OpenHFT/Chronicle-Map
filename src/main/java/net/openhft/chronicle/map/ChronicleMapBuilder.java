@@ -95,6 +95,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     public static final short UDP_REPLICATION_MODIFICATION_ITERATOR_ID = 128;
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
 
+
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
 
@@ -133,7 +134,9 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     private File file;
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
+
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
+
         valueBuilder = new SerializationBuilder<V>(valueClass, SerializationBuilder.Role.VALUE);
     }
 
@@ -836,7 +839,15 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         final KeyValueSerializer<K, V> keyValueSerializer
                 = new KeyValueSerializer<K, V>(keyBuilder, valueBuilder);
 
-        return new StatelessChronicleMap<K, V>(keyValueSerializer, statelessBuilder, entrySize);
+        final Class<K> kClass = keyBuilder.eClass;
+        final Class<V> vClass = valueBuilder.eClass;
+
+        return new StatelessChronicleMap<K, V>(
+                keyValueSerializer,
+                statelessBuilder,
+                entrySize(),
+                kClass,
+                vClass);
     }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {

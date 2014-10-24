@@ -76,6 +76,7 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
 
     @Override
     public void write(W writer, Bytes bytes, E e) {
+        assert bytes.limit() == bytes.capacity();
         bytes.write(buffer.buffer);
     }
 

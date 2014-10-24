@@ -26,7 +26,9 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.*;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +46,7 @@ import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
+
     private static final int BUFFER_SIZE = 0x100000; // 1MB
     public static final int STATELESS_CLIENT = -127;
     public static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
@@ -1037,32 +1040,54 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
         void resizeBuffer(long size) {
 
+            assert size < Integer.MAX_VALUE;
+
+
+            LOG.info("in before position=" + in.position() +
+                    ", " +
+                    "limit=" + in.limit() + ",capacity=" + in.capacity());
+
+
+            LOG.info("out before position=" + out.position() +
+                    ", " +
+                    "limit=" + out.limit() + ",capacity=" + out.capacity());
+
+
             if (size < in.capacity())
                 throw new IllegalStateException("it not possible to resize the buffer smaller");
 
-            final ByteBuffer buffer = ByteBuffer.allocateDirect((int) size);
-            buffer.clear();
+            final ByteBuffer buffer = ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder());
 
-            final long outPosition = out.position();
-            final long outLimit = out.limit();
 
             final int inPosition = in.position();
-            final int inLimit = in.limit();
+
+
+            long outPosition = out.position();
+            long outLimit = out.limit();
+
+            out = new ByteBufferBytes(buffer.slice());
 
             in.position(0);
-
-            for (int i = 0; i < inLimit; i++) {
+            for (int i = 0; i < inPosition; i++) {
                 buffer.put(in.get());
             }
 
-            buffer.limit(inLimit);
-            buffer.position(inPosition);
-
             in = buffer;
-            out = new ByteBufferBytes(in.slice());
+            in.limit(in.capacity());
+            in.position(inPosition);
 
             out.limit(outLimit);
             out.position(outPosition);
+
+            LOG.info("after in position=" + in.position() +
+                    ", " +
+                    "limit=" + in.limit() + ",capacity=" + in.capacity());
+
+
+            LOG.info("after out position=" + out.position() +
+                    ", " +
+                    "limit=" + out.limit() + ",capacity=" + out.capacity());
+
 
         }
 
@@ -1226,6 +1251,9 @@ interface Work {
  */
 class StatelessServerConnector<K, V> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(StatelessServerConnector.class
+            .getName());
+    ;
     private final KeyValueSerializer<K, V> keyValueSerializer;
     private final ChronicleMap<K, V> map;
     private double maxEntrySizeBytes;
@@ -1239,66 +1267,83 @@ class StatelessServerConnector<K, V> {
     }
 
     Work processStatelessEvent(final byte eventId,
-                               @NotNull final Bytes out,
-                               @NotNull final ByteBufferBytes in) {
+                               @NotNull final Bytes writer,
+                               @NotNull final ByteBufferBytes reader) {
+
+
+        LOG.info("processStatelessEvent - writer   position=" + reader.position() +
+                ", " +
+                "limit=" + reader.limit() + ",capacity=" + reader.capacity());
+
+
+        LOG.info("StatelessServerConnector- reader   position=" + writer.position() +
+                ", " +
+                "limit=" + writer.limit() + ",capacity=" + writer.capacity());
+
 
         final StatelessChronicleMap.EventId event = StatelessChronicleMap.EventId.values()[eventId];
 
         switch (event) {
 
             case LONG_SIZE:
-                return longSize(in, out);
+                return longSize(reader, writer);
 
             case IS_EMPTY:
-                return isEmpty(in, out);
+                return isEmpty(reader, writer);
 
             case CONTAINS_KEY:
-                return containsKey(in, out);
+                return containsKey(reader, writer);
 
             case CONTAINS_VALUE:
-                return containsValue(in, out);
+                return containsValue(reader, writer);
 
             case GET:
-                return get(in, out);
+                return get(reader, writer);
 
             case PUT:
-                return put(in, out);
+                return put(reader, writer);
 
             case REMOVE:
-                return remove(in, out);
+                return remove(reader, writer);
 
             case CLEAR:
-                return clear(in, out);
+                return clear(reader, writer);
 
             case KEY_SET:
-                return keySet(in, out);
+                return keySet(reader, writer);
 
             case VALUES:
-                return values(in, out);
+                return values(reader, writer);
 
             case ENTRY_SET:
-                return entrySet(in, out);
+                return entrySet(reader, writer);
 
             case REPLACE:
-                return replace(in, out);
+                return replace(reader, writer);
 
             case REPLACE_WITH_OLD_AND_NEW_VALUE:
-                return replaceWithOldAndNew(in, out);
+                return replaceWithOldAndNew(reader, writer);
 
             case PUT_IF_ABSENT:
-                return putIfAbsent(in, out);
+                return putIfAbsent(reader, writer);
 
             case REMOVE_WITH_VALUE:
-                return removeWithValue(in, out);
+                return removeWithValue(reader, writer);
 
             case SIZE:
-                return size(in, out);
+                return size(reader, writer);
 
             case TO_STRING:
-                return toString(in, out);
+                return toString(reader, writer);
 
             case PUT_ALL:
-                return putAll(in, out);
+                return putAll(reader, writer);
+
+            case HASH_CODE:
+                return hashCode(reader, writer);
+
+            case EQUALS:
+                return equals(reader, writer);
 
 
             default:
@@ -1309,71 +1354,83 @@ class StatelessServerConnector<K, V> {
     }
 
 
-    private Work removeWithValue(Bytes in, Bytes out) {
+    private Work removeWithValue(Bytes reader, Bytes writer) {
 
-        final K key = readKey(in);
-        final V readValue = readValue(in);
-        final long sizeLocation = reflectTransactionId(in, out);
+        final K key = readKey(reader);
+        final V readValue = readValue(reader);
+        final long sizeLocation = reflectTransactionId(reader, writer);
         final boolean result;
         try {
             result = map.remove(key, readValue);
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        out.writeBoolean(result);
+        writer.writeBoolean(result);
         return null;
     }
 
-    private Work replaceWithOldAndNew(Bytes in, Bytes out) {
+    private Work replaceWithOldAndNew(Bytes reader, Bytes writer) {
 
-        final K key = readKey(in);
-        final V oldValue = readValue(in);
-        final V newValue = readValue(in);
+        final K key = readKey(reader);
+        final V oldValue = readValue(reader);
+        final V newValue = readValue(reader);
         boolean replaced;
-        long sizeLocation = reflectTransactionId(in, out);
+        long sizeLocation = reflectTransactionId(reader, writer);
         try {
             replaced = map.replace(key, oldValue, newValue);
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        out.writeBoolean(replaced);
-        writeSizeAndFlags(sizeLocation, false, out);
+        writer.writeBoolean(replaced);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
 
-    private Work longSize(Bytes in, Bytes out) {
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work longSize(Bytes reader, Bytes writer) {
+        final long sizeLocation = reflectTransactionId(reader, writer);
         try {
-            out.writeLong(map.longSize());
+            writer.writeLong(map.longSize());
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
-    private Work size(Bytes in, Bytes out) {
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work size(Bytes reader, Bytes writer) {
+        final long sizeLocation = reflectTransactionId(reader, writer);
         try {
-            out.writeInt(map.size());
+            writer.writeInt(map.size());
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
 
-    private Work toString(Bytes in, Bytes out) {
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work hashCode(ByteBufferBytes reader, Bytes writer) {
+        final long sizeLocation = reflectTransactionId(reader, writer);
+        try {
+            writer.writeInt(map.hashCode());
+        } catch (RuntimeException e) {
+            return sendException(writer, sizeLocation, e);
+        }
+        writeSizeAndFlags(sizeLocation, false, writer);
+        return null;
+    }
+
+
+    private Work toString(Bytes reader, Bytes writer) {
+        final long sizeLocation = reflectTransactionId(reader, writer);
         final String str;
 
-        final long remaining = out.remaining();
+        final long remaining = writer.remaining();
         try {
             str = map.toString();
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
 
         assert remaining > 4;
@@ -1383,133 +1440,150 @@ class StatelessServerConnector<K, V> {
                 str :
                 str.substring(0, (int) (remaining - 4)) + "...";
 
-        out.writeObject(result);
-        writeSizeAndFlags(sizeLocation, false, out);
+        writer.writeObject(result);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
 
-    private Work sendException(Bytes out, long sizeLocation, RuntimeException e) {
-        writeException(e, out);
-        writeSizeAndFlags(sizeLocation, true, out);
+    private Work sendException(Bytes writer, long sizeLocation, RuntimeException e) {
+        writeException(e, writer);
+        writeSizeAndFlags(sizeLocation, true, writer);
         return null;
     }
 
 
-    private Work isEmpty(Bytes in, Bytes out) {
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work isEmpty(Bytes reader, Bytes writer) {
+        final long sizeLocation = reflectTransactionId(reader, writer);
         try {
-            out.writeBoolean(map.isEmpty());
+            writer.writeBoolean(map.isEmpty());
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
-    private Work containsKey(Bytes in, Bytes out) {
-        final K k = readKey(in);
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work containsKey(Bytes reader, Bytes writer) {
+        final K k = readKey(reader);
+        final long sizeLocation = reflectTransactionId(reader, writer);
         try {
-            out.writeBoolean(map.containsKey(k));
+            writer.writeBoolean(map.containsKey(k));
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
-    private Work containsValue(Bytes in, Bytes out) {
-        final V v = readValue(in);
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work containsValue(Bytes reader, Bytes writer) {
+        final V v = readValue(reader);
+        final long sizeLocation = reflectTransactionId(reader, writer);
         try {
-            out.writeBoolean(map.containsValue(v));
+            writer.writeBoolean(map.containsValue(v));
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
-    private Work get(Bytes in, Bytes out) {
-        final K k = readKey(in);
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work get(Bytes reader, Bytes writer) {
+        final K k = readKey(reader);
+        final long sizeLocation = reflectTransactionId(reader, writer);
         try {
-            writeValue(map.get(k), out);
+            writeValue(map.get(k), writer);
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
 
     }
 
-    private Work put(Bytes in, Bytes out) {
-        final K k = readKey(in);
-        final V v = readValue(in);
-        long sizeLocation = reflectTransactionId(in, out);
+    private Work put(Bytes reader, Bytes writer) {
+        final K k = readKey(reader);
+        final V v = readValue(reader);
+        long sizeLocation = reflectTransactionId(reader, writer);
         try {
-            writeValue(map.put(k, v), out);
+            writeValue(map.put(k, v), writer);
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
-    private Work remove(Bytes in, Bytes out) {
-        final K key = readKey(in);
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work remove(Bytes reader, Bytes writer) {
+        final K key = readKey(reader);
+        final long sizeLocation = reflectTransactionId(reader, writer);
 
         try {
-            writeValue(map.remove(key), out);
+            writeValue(map.remove(key), writer);
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
 
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
 
 
     }
 
-    private Work putAll(Bytes in, Bytes out) {
-        final Map<K, V> m = readEntries(in);
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work putAll(Bytes reader, Bytes writer) {
+        final Map<K, V> m = readEntries(reader);
+        final long sizeLocation = reflectTransactionId(reader, writer);
 
         try {
             map.putAll(m);
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
 
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
 
-    private Work clear(Bytes in, Bytes out) {
+    private Work equals(Bytes reader, Bytes writer) {
+        final Map<K, V> m = readEntries(reader);
+        final long sizeLocation = reflectTransactionId(reader, writer);
 
-        final long sizeLocation = reflectTransactionId(in, out);
+        boolean result;
+        try {
+            result = map.equals(m);
+        } catch (RuntimeException e) {
+            return sendException(writer, sizeLocation, e);
+        }
+
+        writer.writeBoolean(result);
+        writeSizeAndFlags(sizeLocation, false, writer);
+        return null;
+    }
+
+
+    private Work clear(Bytes reader, Bytes writer) {
+
+        final long sizeLocation = reflectTransactionId(reader, writer);
         try {
             map.clear();
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
-    private Work keySet(Bytes in, final Bytes out) {
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work keySet(Bytes reader, final Bytes writer) {
+        final long sizeLocation = reflectTransactionId(reader, writer);
         final Set<K> ks;
         try {
             ks = map.keySet();
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
 
-        out.writeStopBit(ks.size());
+        writer.writeStopBit(ks.size());
 
         final Iterator<K> iterator = ks.iterator();
 
@@ -1517,35 +1591,35 @@ class StatelessServerConnector<K, V> {
         return new Work() {
 
             @Override
-            public boolean doWork(@NotNull final Bytes out) {
+            public boolean doWork(@NotNull final Bytes writer) {
 
                 while (iterator.hasNext()) {
 
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
-                    if (out.remaining() <= maxEntrySizeBytes)
+                    if (writer.remaining() <= maxEntrySizeBytes)
                         return false;
 
-                    writeKey(iterator.next(), out);
+                    writeKey(iterator.next(), writer);
                 }
 
-                writeSizeAndFlags(sizeLocation, false, out);
+                writeSizeAndFlags(sizeLocation, false, writer);
                 return true;
             }
         };
     }
 
-    private Work values(Bytes in, Bytes out) {
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work values(Bytes reader, Bytes writer) {
+        final long sizeLocation = reflectTransactionId(reader, writer);
         final Collection<V> values;
 
         try {
             values = map.values();
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
 
-        out.writeStopBit(values.size());
+        writer.writeStopBit(values.size());
 
         final Iterator<V> iterator = values.iterator();
 
@@ -1553,35 +1627,35 @@ class StatelessServerConnector<K, V> {
         return new Work() {
 
             @Override
-            public boolean doWork(Bytes out) {
+            public boolean doWork(Bytes writer) {
 
                 while (iterator.hasNext()) {
 
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
-                    if (out.remaining() <= maxEntrySizeBytes)
+                    if (writer.remaining() <= maxEntrySizeBytes)
                         return false;
 
-                    writeValue(iterator.next(), out);
+                    writeValue(iterator.next(), writer);
                 }
 
-                writeSizeAndFlags(sizeLocation, false, out);
+                writeSizeAndFlags(sizeLocation, false, writer);
                 return true;
             }
         };
     }
 
-    private Work entrySet(Bytes in, Bytes out) {
+    private Work entrySet(Bytes reader, Bytes writer) {
 
-        final long sizeLocation = reflectTransactionId(in, out);
+        final long sizeLocation = reflectTransactionId(reader, writer);
         final Set<Map.Entry<K, V>> entries;
 
         try {
             entries = map.entrySet();
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        out.writeStopBit(entries.size());
+        writer.writeStopBit(entries.size());
 
         final Iterator<Map.Entry<K, V>> iterator = entries.iterator();
 
@@ -1589,55 +1663,55 @@ class StatelessServerConnector<K, V> {
         return new Work() {
 
             @Override
-            public boolean doWork(Bytes out) {
+            public boolean doWork(Bytes writer) {
 
                 while (iterator.hasNext()) {
 
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
-                    if (out.remaining() <= maxEntrySizeBytes)
+                    if (writer.remaining() <= maxEntrySizeBytes)
                         return false;
                     final Map.Entry<K, V> next = iterator.next();
-                    writeKey(next.getKey(), out);
-                    writeValue(next.getValue(), out);
+                    writeKey(next.getKey(), writer);
+                    writeValue(next.getValue(), writer);
                 }
 
-                writeSizeAndFlags(sizeLocation, false, out);
+                writeSizeAndFlags(sizeLocation, false, writer);
                 return true;
             }
         };
     }
 
-    private Work putIfAbsent(Bytes in, Bytes out) {
-        final K key = readKey(in);
-        final V v = readValue(in);
-        final long sizeLocation = reflectTransactionId(in, out);
+    private Work putIfAbsent(Bytes reader, Bytes writer) {
+        final K key = readKey(reader);
+        final V v = readValue(reader);
+        final long sizeLocation = reflectTransactionId(reader, writer);
         final V value;
 
         try {
             value = map.putIfAbsent(key, v);
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
 
-        writeValue(value, out);
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeValue(value, writer);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
 
-    private Work replace(Bytes in, Bytes out) {
-        final K k = readKey(in);
-        final V v = readValue(in);
+    private Work replace(Bytes reader, Bytes writer) {
+        final K k = readKey(reader);
+        final V v = readValue(reader);
         final V replaced;
-        long sizeLocation = reflectTransactionId(in, out);
+        long sizeLocation = reflectTransactionId(reader, writer);
         try {
             replaced = map.replace(k, v);
         } catch (RuntimeException e) {
-            return sendException(out, sizeLocation, e);
+            return sendException(writer, sizeLocation, e);
         }
-        writeValue(replaced, out);
-        writeSizeAndFlags(sizeLocation, false, out);
+        writeValue(replaced, writer);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
@@ -1647,28 +1721,28 @@ class StatelessServerConnector<K, V> {
      * @param key the key of the map
      */
 
-    private void writeKey(K key, Bytes out) {
-        keyValueSerializer.writeKey(key, out);
+    private void writeKey(K key, Bytes writer) {
+        keyValueSerializer.writeKey(key, writer);
     }
 
-    private long reflectTransactionId(Bytes in, Bytes out) {
-        final long sizeLocation = out.position();
-        out.skip(3);
-        final long transactionId = in.readLong();
-        out.writeLong(transactionId);
+    private long reflectTransactionId(Bytes reader, Bytes writer) {
+        final long sizeLocation = writer.position();
+        writer.skip(3);
+        final long transactionId = reader.readLong();
+        writer.writeLong(transactionId);
         return sizeLocation;
     }
 
-    private void writeValue(V value, final Bytes out) {
-        keyValueSerializer.writeValue(value, out);
+    private void writeValue(V value, final Bytes writer) {
+        keyValueSerializer.writeValue(value, writer);
     }
 
-    private K readKey(Bytes in) {
-        return keyValueSerializer.readKey(in);
+    private K readKey(Bytes reader) {
+        return keyValueSerializer.readKey(reader);
     }
 
-    private V readValue(Bytes in) {
-        return keyValueSerializer.readValue(in);
+    private V readValue(Bytes reader) {
+        return keyValueSerializer.readValue(reader);
     }
 
     private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
@@ -1681,13 +1755,13 @@ class StatelessServerConnector<K, V> {
         out.writeObject(e);
     }
 
-    private Map<K, V> readEntries(Bytes in) {
+    private Map<K, V> readEntries(Bytes reader) {
 
-        final long numberOfEntries = in.readStopBit();
+        final long numberOfEntries = reader.readStopBit();
         final HashMap<K, V> result = new HashMap<K, V>();
 
         for (long i = 0; i < numberOfEntries; i++) {
-            result.put(readKey(in), readValue(in));
+            result.put(readKey(reader), readValue(reader));
         }
         return result;
     }
@@ -1696,8 +1770,8 @@ class StatelessServerConnector<K, V> {
 
 class KeyValueSerializer<K, V> {
 
-    private final Serializer<V> valueSerializer;
-    private final Serializer<K> keySerializer;
+    final Serializer<V> valueSerializer;
+    final Serializer<K> keySerializer;
 
     KeyValueSerializer(SerializationBuilder<K> keySerializer,
                        SerializationBuilder<V> valueSerializer) {
@@ -1705,17 +1779,27 @@ class KeyValueSerializer<K, V> {
         this.valueSerializer = new Serializer<V>(valueSerializer);
     }
 
-    V readValue(Bytes in) {
-        if (in.readBoolean())
-            return null;
-        return valueSerializer.readMarshallable(in);
+    V readValue(Bytes reader) {
+        if (nullCheck(reader)) return null;
+        return valueSerializer.readMarshallable(reader);
     }
 
-    K readKey(Bytes in) {
-        if (in.readBoolean())
-            return null;
+    private boolean nullCheck(Bytes in) {
+        try {
+            return in.readBoolean();
+        } catch (BufferUnderflowException e) {
 
-        return keySerializer.readMarshallable(in);
+
+            e.printStackTrace();
+            throw e;
+        }
+
+    }
+
+    K readKey(Bytes reader) {
+        if (nullCheck(reader)) return null;
+
+        return keySerializer.readMarshallable(reader);
     }
 
     /**
@@ -1723,17 +1807,21 @@ class KeyValueSerializer<K, V> {
      *
      * @param key the key of the map
      */
-    void writeKey(K key, Bytes out) {
+    void writeKey(K key, Bytes writer) {
 
-        out.writeBoolean(key == null);
+        writer.writeBoolean(key == null);
         if (key != null)
-            keySerializer.writeMarshallable(key, out);
+            keySerializer.writeMarshallable(key, writer);
     }
 
-    void writeValue(V value, Bytes out) {
-        out.writeBoolean(value == null);
-        if (value != null)
-            valueSerializer.writeMarshallable(value, out);
+    void writeValue(V value, Bytes writer) {
+        assert writer.limit() == writer.capacity();
+        writer.writeBoolean(value == null);
+        assert writer.limit() == writer.capacity();
+        if (value != null) {
+            assert writer.limit() == writer.capacity();
+            valueSerializer.writeMarshallable(value, writer);
+        }
     }
 
 
