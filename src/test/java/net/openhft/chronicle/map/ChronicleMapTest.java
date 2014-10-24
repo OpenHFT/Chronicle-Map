@@ -1133,7 +1133,7 @@ public class ChronicleMapTest {
     private ChronicleMap<Integer, CharSequence> getViewTestMap(int noOfElements) throws IOException {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(noOfElements * 2)
+                        .entries(noOfElements * 2 + 100)
                         .valueSize((noOfElements + "").length())
                         .putReturnsNull(true)
                         .removeReturnsNull(true).create();
