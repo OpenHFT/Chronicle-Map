@@ -85,7 +85,7 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> actualEntriesPerSegment(int actualEntriesPerSegment) {
+    public ChronicleSetBuilder<E> actualEntriesPerSegment(long actualEntriesPerSegment) {
         chronicleMapBuilder.actualEntriesPerSegment(actualEntriesPerSegment);
         return this;
     }
@@ -161,12 +161,6 @@ public class ChronicleSetBuilder<E>
     @Override
     public ChronicleSetBuilder<E> errorListener(ChronicleHashErrorListener errorListener) {
         chronicleMapBuilder.errorListener(errorListener);
-        return this;
-    }
-
-    @Override
-    public ChronicleSetBuilder<E> largeSegments(boolean largeSegments) {
-        chronicleMapBuilder.largeSegments(largeSegments);
         return this;
     }
 

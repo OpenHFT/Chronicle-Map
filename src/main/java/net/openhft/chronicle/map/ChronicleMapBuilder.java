@@ -94,7 +94,10 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     private static final Bytes EMPTY_BYTES = new ByteBufferBytes(ByteBuffer.allocate(0));
     private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
 
-    public static final short UDP_REPLICATION_MODIFICATION_ITERATOR_ID = 128;
+    private static final int MAX_SEGMENTS = (1 << 30);
+    private static final int MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS = (1 << 20);
+
+    static final short UDP_REPLICATION_MODIFICATION_ITERATOR_ID = 128;
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
 
 
@@ -107,21 +110,21 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     private int minSegments = -1;
     private int actualSegments = -1;
     // used when reading the number of entries per
-    private int actualEntriesPerSegment = -1;
+    private long actualEntriesPerSegment = -1L;
     private int keySize = 0;
     private K sampleKey;
     private int valueSize = 0;
     private V sampleValue;
     private int entrySize = 0;
     private Alignment alignment = Alignment.OF_4_BYTES;
-    private long entries = 1 << 20;
+    private long entries = 1 << 20; // 1 million by default
     private long lockTimeOut = 2000;
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
     private int metaDataBytes = 0;
     private ChronicleHashErrorListener errorListener = ChronicleHashErrorListeners.logging();
     private boolean putReturnsNull = false;
     private boolean removeReturnsNull = false;
-    private boolean largeSegments = false;
+
     // replication
     private TimeProvider timeProvider = TimeProvider.SYSTEM;
     private BytesMarshallerFactory bytesMarshallerFactory;
@@ -164,25 +167,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         } catch (CloneNotSupportedException e) {
             throw new AssertionError(e);
         }
-    }
-
-
-    @Override
-    public ChronicleMapBuilder<K, V> minSegments(int minSegments) {
-        this.minSegments = minSegments;
-        return this;
-    }
-
-    int minSegments() {
-        return minSegments < 1 ? tryMinSegments(4, 65536) : minSegments;
-    }
-
-    private int tryMinSegments(int min, int max) {
-        for (int i = min; i < max; i <<= 1) {
-            if (i * i * i >= entries * 5 / 4)
-                return i;
-        }
-        return max;
     }
 
     /**
@@ -377,6 +361,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
 
     @Override
     public ChronicleMapBuilder<K, V> entries(long entries) {
+        if (entries <= 0L)
+            throw new IllegalArgumentException("Entries should be positive, " + entries + " given");
         this.entries = entries;
         return this;
     }
@@ -386,43 +372,112 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> actualEntriesPerSegment(int actualEntriesPerSegment) {
+    public ChronicleMapBuilder<K, V> actualEntriesPerSegment(long actualEntriesPerSegment) {
+        if (actualEntriesPerSegment <= 0L)
+            throw new IllegalArgumentException("entries per segment should be positive, " +
+                    actualEntriesPerSegment + " given");
+        if (tooManyEntriesPerSegment(actualEntriesPerSegment))
+            throw new IllegalArgumentException("max entries per segment is " +
+                    VanillaIntIntMultiMap.MAX_CAPACITY + ", " + actualEntriesPerSegment + " given");
         this.actualEntriesPerSegment = actualEntriesPerSegment;
         return this;
     }
 
-    int actualEntriesPerSegment() {
-        if (actualEntriesPerSegment > 0)
-            return actualEntriesPerSegment;
-        int as = actualSegments();
-        long actualEntries = entries +
-                (as == 1 ? 1 :        // The extra 1 might not be needed.
-                        as <= 8 ? entries / 12 :  // 6%, (3% was min for tests)
-                                as <= 128 ? entries / 7 : // 14% (7% was min for tests)
-                                        entries / 5); // 20% (10% was min for tests)
+    private boolean tooManyEntriesPerSegment(long entriesPerSegment) {
+        return entriesPerSegment > VanillaIntIntMultiMap.MAX_CAPACITY;
+    }
 
-        // round up to the next multiple of 64.
-        return (int) (Math.max(1, actualEntries / as) + 63) & ~63;
+    long actualEntriesPerSegment() {
+        if (actualEntriesPerSegment > 0L)
+            return actualEntriesPerSegment;
+        int actualSegments = actualSegments();
+        long actualEntries = totalEntriesIfPoorDistribution(actualSegments);
+        long actualEntriesPerSegment = divideUpper(actualEntries, actualSegments);
+        if (tooManyEntriesPerSegment(actualEntriesPerSegment))
+            throw new IllegalStateException("max entries per segment is " +
+                    VanillaIntIntMultiMap.MAX_CAPACITY + " configured entries() and " +
+                    "actualSegments() so that there should be " + actualEntriesPerSegment +
+                    " entries per segment");
+        return actualEntriesPerSegment;
+    }
+
+    private long totalEntriesIfPoorDistribution(int segments) {
+        if (segments == 1)
+            return entries;
+        if (segments <= 8)
+            return entries * 13L / 12L; // 6%, (3% was min for tests)
+        if (segments <= 128)
+            return entries * 8L / 7L; // 14% (7% was min for tests)
+        return entries * 6L / 5L; // 20% (10% was min for tests)
+    }
+
+    @Override
+    public ChronicleMapBuilder<K, V> minSegments(int minSegments) {
+        checkSegments(minSegments);
+        this.minSegments = minSegments;
+        return this;
+    }
+
+    int minSegments() {
+        return Math.max(estimateSegments(), minSegments);
+    }
+
+    /**
+     * Heuristic -- number of segments ~= cube root from number of entries seems optimal
+     */
+    private int estimateSegments() {
+        int maxSegments = 65536;
+        for (int i = 4; i < maxSegments; i <<= 1) {
+            if (((long) i) * i * i >= entries)
+                return i;
+        }
+        return maxSegments;
     }
 
     @Override
     public ChronicleMapBuilder<K, V> actualSegments(int actualSegments) {
+        checkSegments(actualSegments);
         this.actualSegments = actualSegments;
         return this;
+    }
+
+    private static void checkSegments(int segments) {
+        if (segments <= 0 || segments > MAX_SEGMENTS)
+            throw new IllegalArgumentException("segments should be positive, " +
+                    segments + " given");
+        if (segments > MAX_SEGMENTS)
+            throw new IllegalArgumentException("Max segments is " + MAX_SEGMENTS + ", " +
+                    segments + " given");
     }
 
     int actualSegments() {
         if (actualSegments > 0)
             return actualSegments;
+        long shortMMapSegments = trySegments(VanillaShortShortMultiMap.MAX_CAPACITY,
+                MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS);
+        if (shortMMapSegments > 0L)
+            return (int) shortMMapSegments;
+        long intMMapSegments = trySegments(VanillaIntIntMultiMap.MAX_CAPACITY, MAX_SEGMENTS);
+        if (intMMapSegments > 0L)
+            return (int) intMMapSegments;
+        throw new IllegalStateException("Max segments is " + MAX_SEGMENTS + ", configured so much" +
+                " entries() that builder automatically decided to use " +
+                (-intMMapSegments) + " segments");
+    }
 
-        long entriesWithMostHeadroom = entries + entries / 5;
-        if (!largeSegments && entriesWithMostHeadroom > (long) minSegments() << 16) {
-            long segments = Maths.nextPower2(entries * 5 / 6 >> 16, 128);
-            if (segments < 1 << 20)
-                return (int) segments;
-        }
-        // try to keep it 16-bit sizes segments
-        return (int) Maths.nextPower2(Math.max((entries >> 30) + 1, minSegments()), 1);
+    private long trySegments(long maxSegmentCapacity, int maxSegments) {
+        long segments = divideUpper(totalEntriesIfPoorDistribution(minSegments()),
+                maxSegmentCapacity);
+        segments = Maths.nextPower2(Math.max(segments, minSegments()), 1L);
+        return segments <= maxSegments ? segments : -segments;
+    }
+
+    private static long divideUpper(long dividend, long divisor) {
+        return ((dividend - 1L) / divisor) + 1L;
+    }
+
+    private boolean canSupportShortShort() {
+        return entries > (long) minSegments() << 15;
     }
 
     public ChronicleMapBuilder<K, V> lockTimeOut(long lockTimeOut, TimeUnit unit) {
@@ -497,16 +552,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return removeReturnsNull;
     }
 
-    boolean largeSegments() {
-        return entries > 1L << (20 + 15) || largeSegments;
-    }
-
-    @Override
-    public ChronicleMapBuilder<K, V> largeSegments(boolean largeSegments) {
-        this.largeSegments = largeSegments;
-        return this;
-    }
-
     @Override
     public ChronicleMapBuilder<K, V> metaDataBytes(int metaDataBytes) {
         if ((metaDataBytes & 0xFF) != metaDataBytes)
@@ -538,7 +583,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
                 ", errorListener=" + errorListener() +
                 ", putReturnsNull=" + putReturnsNull() +
                 ", removeReturnsNull=" + removeReturnsNull() +
-                ", largeSegments=" + (largeSegments ? "true" : "not configured") +
                 ", timeProvider=" + timeProvider() +
                 ", bytesMarshallerFactory=" + pretty(bytesMarshallerFactory) +
                 ", objectSerializer=" + pretty(objectSerializer) +

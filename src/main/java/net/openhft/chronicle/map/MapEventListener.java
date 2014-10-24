@@ -95,7 +95,7 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
     }
 
     void onRemove(M map, Bytes entry, int metaDataBytes, K key, V value,
-                  int pos, SharedSegment segment) {
+                  long pos, SharedSegment segment) {
         onRemove(map, entry, metaDataBytes, key, value);
     }
 
@@ -112,7 +112,7 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
         // do nothing
     }
 
-    void onRelocation(int pos, SharedSegment segment) {
+    void onRelocation(long pos, SharedSegment segment) {
         // do nothing
     }
 }

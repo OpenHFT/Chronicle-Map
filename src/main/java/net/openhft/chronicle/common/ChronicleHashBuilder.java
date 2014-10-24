@@ -139,7 +139,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * number of chunks could be taken by an entry is 64. {@link IllegalArgumentException} is thrown
      * on attempt to insert too large entry, compared to the configured or computed entry size.</li>
      * <li>The number of "entries" {@linkplain #entries(long) in the whole map} and {@linkplain
-     * #actualEntriesPerSegment(int) per segment} is actually the number "chunks".</li> </ul>
+     * #actualEntriesPerSegment(long) per segment} is actually the number "chunks".</li> </ul>
      *
      * <p>Example: if values in your {@code ChronicleMap} are adjacency lists of some social graph,
      * where nodes are represented as {@code long} ids, and adjacency lists are serialized in
@@ -195,7 +195,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      */
     B entries(long entries);
 
-    B actualEntriesPerSegment(int actualEntriesPerSegment);
+    B actualEntriesPerSegment(long actualEntriesPerSegment);
 
     B actualSegments(int actualSegments);
 
@@ -218,8 +218,6 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
     B lockTimeOut(long lockTimeOut, TimeUnit unit);
 
     B errorListener(ChronicleHashErrorListener errorListener);
-
-    B largeSegments(boolean largeSegments);
 
     B metaDataBytes(int metaDataBytes);
 

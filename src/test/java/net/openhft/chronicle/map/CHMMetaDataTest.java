@@ -91,7 +91,7 @@ public class CHMMetaDataTest {
 
         @Override
         public void onRemove(ChronicleMap<String, String> map, Bytes entry, int metaDataBytes,
-                             String key, String value, int pos, SharedSegment segment) {
+                             String key, String value, long pos, SharedSegment segment) {
             assertEquals(8, metaDataBytes);
             System.out.println("Removed " + key + "/" + value + " with ts of " + entry.readLong(0));
         }

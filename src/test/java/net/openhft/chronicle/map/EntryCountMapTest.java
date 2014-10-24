@@ -144,7 +144,7 @@ public class EntryCountMapTest {
                 map.acquireUsing(key, longValue);
                 longValue.setValue(1);
             }
-            int[] a = ((VanillaChronicleMap) map).segmentSizes();
+            long[] a = ((VanillaChronicleMap) map).segmentSizes();
             System.out.println("segs: " + segments + " min: " + minSize + " was " + map.size() + " "
                     + Arrays.toString(a)
                     + " sum: " + sum(a));
@@ -155,7 +155,7 @@ public class EntryCountMapTest {
             scoreCount++;
             boolean condition = minSize <= map.size() && map.size() <= maxSize;
             if (!condition) {
-                int[] a = ((VanillaChronicleMap) map).segmentSizes();
+                long[] a = ((VanillaChronicleMap) map).segmentSizes();
                 System.out.println("segs: " + segments + " min: " + minSize + " was " + map.size() + " "
                         + Arrays.toString(a)
                         + " sum: " + sum(a));
@@ -166,9 +166,9 @@ public class EntryCountMapTest {
         }
     }
 
-    private long sum(int[] ints) {
+    private long sum(long[] longs) {
         long sum = 0;
-        for (int i : ints) {
+        for (long i : longs) {
             sum += i;
         }
         return sum;
