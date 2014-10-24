@@ -63,8 +63,12 @@ enum DirectLongValueFactory implements ObjectFactory<LongValue> {
     INSTANCE;
 
     @Override
-    public LongValue create() throws Exception {
-        return (LongValue) NativeBytes.UNSAFE.allocateInstance(ByteableLongValueMarshaller.DIRECT);
+    public LongValue create() {
+        try {
+            return (LongValue) NativeBytes.UNSAFE.allocateInstance(ByteableLongValueMarshaller.DIRECT);
+        } catch (InstantiationException e) {
+            throw new AssertionError(e);
+        }
     }
 }
 

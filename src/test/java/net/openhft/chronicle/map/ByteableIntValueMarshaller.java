@@ -63,7 +63,11 @@ enum DirectIntValueFactory implements ObjectFactory<IntValue> {
     INSTANCE;
 
     @Override
-    public IntValue create() throws Exception {
-        return (IntValue) NativeBytes.UNSAFE.allocateInstance(ByteableIntValueMarshaller.DIRECT);
+    public IntValue create() {
+        try {
+            return (IntValue) NativeBytes.UNSAFE.allocateInstance(ByteableIntValueMarshaller.DIRECT);
+        } catch (InstantiationException e) {
+            throw new AssertionError(e);
+        }
     }
 }

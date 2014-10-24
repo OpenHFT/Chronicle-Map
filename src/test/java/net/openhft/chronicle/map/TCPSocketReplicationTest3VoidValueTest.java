@@ -25,7 +25,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import static net.openhft.chronicle.map.Builder.newMapVoid;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test  ReplicatedChronicleMap where the Replicated is over a TCP Socket
@@ -65,9 +66,8 @@ public class TCPSocketReplicationTest3VoidValueTest {
         assertEquals(null, map3.put(5, null));
 
         // allow time for the recompilation to resolve
-        waitTillEqual(15000);
+        assertTrue(waitTillEqual(15000));
 
-        assertEquals(map1, map2);
         assertEquals(map3, map2);
         assertTrue(!map1.isEmpty());
 
@@ -88,9 +88,8 @@ public class TCPSocketReplicationTest3VoidValueTest {
         map2.put(5,null);
 
         // allow time for the recompilation to resolve
-        waitTillEqual(5000);
+        assertTrue(waitTillEqual(5000));
 
-        assertEquals(map1, map2);
         assertEquals(map3, map3);
         assertTrue(!map1.isEmpty());
 
@@ -111,22 +110,22 @@ public class TCPSocketReplicationTest3VoidValueTest {
         map2.put(5, null);
 
         // allow time for the recompilation to resolve
-        waitTillEqual(5000);
+        assertTrue(waitTillEqual(5000));
 
-        assertEquals(map1, map2);
         assertEquals(map3, map3);
         assertTrue(!map1.isEmpty());
 
     }
 
-    private void waitTillEqual(final int timeOutMs) throws InterruptedException {
+    private boolean waitTillEqual(final int timeOutMs) throws InterruptedException {
         int t = 0;
         for (; t < timeOutMs; t++) {
             if (map1.equals(map2) &&
                     map1.equals(map3))
-                break;
+                return true;
             Thread.sleep(1);
         }
+        return false;
     }
 
 }

@@ -17,9 +17,9 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.common.ChronicleHashErrorListener;
+import net.openhft.chronicle.common.serialization.*;
 import net.openhft.chronicle.common.threadlocal.Provider;
 import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
-import net.openhft.chronicle.common.serialization.*;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
@@ -910,10 +910,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 ret = (int) freeList.setNextNContinuousClearBits(0, blocks);
                 if (ret == DirectBitSet.NOT_FOUND) {
                     if (blocks == 1) {
-                        throw new IllegalArgumentException(
+                        throw new IllegalStateException(
                                 "Segment is full, no free entries found");
                     } else {
-                        throw new IllegalArgumentException(
+                        throw new IllegalStateException(
                                 "Segment is full or has no ranges of " + blocks
                                         + " continuous free blocks"
                         );
@@ -970,7 +970,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         /**
          * Removes a key (or key-value pair) from the Segment.
-         *
+         * <p/>
          * <p>The entry will only be removed if {@code expectedValue} equals to {@code null}
          * or the value previously corresponding to the specified key.
          *
@@ -1445,5 +1445,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             put(getKey(), value);
             return super.setValue(value);
         }
+    }
+
+    int[] segmentSizes() {
+        int[] sizes = new int[segments.length];
+        for (int i = 0; i < segments.length; i++)
+            sizes[i] = segments[i].getSize();
+        return sizes;
     }
 }
