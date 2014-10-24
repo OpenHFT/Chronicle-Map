@@ -977,7 +977,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             in.writeByte(HEARTBEAT.ordinal());
 
             // denotes the size in bytes
-            in.writeUnsignedShort(0);
+            in.writeInt(0);
         }
 
         private void writeRemoteHeartbeatInterval(long localHeartbeatInterval) {
@@ -1121,17 +1121,17 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                 // its set to MIN_VALUE when it should be read again
                 if (state == NOT_SET) {
 
-                    if (out.remaining() < SIZE_OF_SHORT + 1) {
+                    if (out.remaining() < SIZE_OF_SIZE + 1) {
                         return;
                     }
 
                     // state is used for both heartbeat and stateless
                     state = out.readByte();
-                    sizeInBytes = out.readUnsignedShort();
+                    sizeInBytes = out.readInt();
 
                     // if the buffer is too small to read this payload we will have to grow the
                     // size of the buffer
-                    long requiredSize = sizeInBytes + 3;
+                    long requiredSize = sizeInBytes + SIZE_OF_SIZE + 1;
                     if (out.capacity() < requiredSize) {
                         attached.entryReader.resizeBuffer(requiredSize + HEADROOM);
                     }
@@ -1727,7 +1727,7 @@ class StatelessServerConnector<K, V> {
 
     private long reflectTransactionId(Bytes reader, Bytes writer) {
         final long sizeLocation = writer.position();
-        writer.skip(3);
+        writer.skip(1 + AbstractChannelReplicator.SIZE_OF_SIZE); // event size +  SIZE_OF_SIZE
         final long transactionId = reader.readLong();
         writer.writeLong(transactionId);
         return sizeLocation;
@@ -1747,8 +1747,8 @@ class StatelessServerConnector<K, V> {
 
     private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
         final long size = out.position() - locationOfSize;
-        out.writeUnsignedShort(0L, (int) size);
-        out.writeBoolean(2L, isException);
+        out.writeInt(0L, (int) size);
+        out.writeBoolean(AbstractChannelReplicator.SIZE_OF_SIZE, isException);
     }
 
     private void writeException(RuntimeException e, Bytes out) {

@@ -36,7 +36,6 @@ import static java.lang.Math.round;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static net.openhft.chronicle.map.ReplicatedChronicleMap.MAX_UNSIGNED_SHORT;
 
 /**
  * @author Rob Austin.
@@ -44,7 +43,8 @@ import static net.openhft.chronicle.map.ReplicatedChronicleMap.MAX_UNSIGNED_SHOR
 abstract class AbstractChannelReplicator implements Closeable {
 
     public static final int BITS_IN_A_BYTE = 8;
-    public static final int SIZE_OF_SHORT = 2;
+
+    public static final int SIZE_OF_SIZE = 4;
     private static final Logger LOG = LoggerFactory.getLogger(AbstractChannelReplicator.class);
     final Selector selector;
     final CloseablesManager closeables = new CloseablesManager();
@@ -143,7 +143,7 @@ abstract class AbstractChannelReplicator implements Closeable {
             // core dump.
             executorService.awaitTermination(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            LOG.error("",e);
+            LOG.error("", e);
         }
     }
 
@@ -304,7 +304,7 @@ abstract class AbstractChannelReplicator implements Closeable {
             long sizeLocation = in.position();
 
             // this is where we will store the size of the entry
-            in.skip(SIZE_OF_SHORT);
+            in.skip(SIZE_OF_SIZE);
 
             final long start = in.position();
             externalizable.writeExternalEntry(entry, in, chronicleId);
@@ -316,14 +316,17 @@ abstract class AbstractChannelReplicator implements Closeable {
 
             // write the length of the entry, just before the start, so when we read it back
             // we read the length of the entry first and hence know how many preceding writer to read
-            final int entrySize = (int) (in.position() - start);
-            if (entrySize > MAX_UNSIGNED_SHORT)
+            final long entrySize = (int) (in.position() - start);
+            if (entrySize > Integer.MAX_VALUE)
                 throw new IllegalStateException("entry too large, the entry size=" + entrySize + ", " +
-                        "entries are limited to a size of " + MAX_UNSIGNED_SHORT);
+                        "entries are limited to a size of " + Integer.MAX_VALUE);
 
+
+            int entrySize1 = (int) entrySize;
             if (LOG.isDebugEnabled())
-                LOG.debug("sending entry of entrySize=" + entrySize);
-            in.writeUnsignedShort(sizeLocation, entrySize);
+                LOG.debug("sending entry of entrySize=" + entrySize1);
+
+            in.writeInt(sizeLocation, entrySize1);
 
             return true;
         }

@@ -1,6 +1,5 @@
 package net.openhft.chronicle.map;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testng.Assert;
 
@@ -86,7 +85,6 @@ public class StatelessClientTest {
 
 
     @Test
-    @Ignore
     public void testBufferOverFlowPutAll() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap;
@@ -98,15 +96,12 @@ public class StatelessClientTest {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
-
-
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
-
         }
 
 
@@ -128,7 +123,6 @@ public class StatelessClientTest {
     }
 
 
-
     @Test
     public void testEquals() throws IOException, InterruptedException {
 
@@ -136,7 +130,6 @@ public class StatelessClientTest {
         final ChronicleMap<Integer, CharSequence> serverMap2;
         final ChronicleMap<Integer, CharSequence> statelessMap1;
         final ChronicleMap<Integer, CharSequence> statelessMap2;
-
 
         // stateless client
         {
@@ -146,8 +139,6 @@ public class StatelessClientTest {
             statelessMap2 = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .stateless(remoteAddress(new InetSocketAddress("localhost", 8077))).create();
-
-
         }
 
         // server
