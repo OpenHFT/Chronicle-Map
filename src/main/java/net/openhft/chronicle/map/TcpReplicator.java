@@ -41,7 +41,7 @@ import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 /**
  * Used with a {@see net.openhft.map.ReplicatedSharedHashMap} to send data between the maps using a
- * socket connection <p/> {@see net.openhft.map.OutSocketReplicator}
+ * socket connection  {@see net.openhft.map.OutSocketReplicator}
  *
  * @author Rob Austin.
  */

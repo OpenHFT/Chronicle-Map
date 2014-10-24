@@ -715,10 +715,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Used to acquire an object of type V from the Segment. <p/> {@code usingValue} is reused to read the
-         * value if key is present in this Segment, if key is absent in this Segment: <p/> <ol><li>If {@code
+         * Used to acquire an object of type V from the Segment.  {@code usingValue} is reused to read the
+         * value if key is present in this Segment, if key is absent in this Segment:  <ol><li>If {@code
          * create == false}, just {@code null} is returned (except when event listener provides a value "on
-         * get missing" - then it is put into this Segment for the key).</li> <p/> <li>If {@code create ==
+         * get missing" - then it is put into this Segment for the key).</li>  <li>If {@code create ==
          * true}, {@code usingValue} or a newly created instance of value class, if {@code usingValue ==
          * null}, is put into this Segment for the key.</li></ol>
          *
@@ -999,7 +999,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         /**
          * Removes a key (or key-value pair) from the Segment.
-         * <p/>
+         *
          * <p>The entry will only be removed if {@code expectedValue} equals to {@code null}
          * or the value previously corresponding to the specified key.
          *
@@ -1061,7 +1061,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Replaces the specified value for the key with the given value. <p/> {@code newValue} is set only if
+         * Replaces the specified value for the key with the given value.  {@code newValue} is set only if
          * the existing value corresponding to the specified key is equal to {@code expectedValue} or {@code
          * expectedValue == null}.
          *

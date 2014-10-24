@@ -390,6 +390,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @param file the file with existing hash container or a desired location of a new off-heap
      *             persisted hash container
      * @return this builder back
+     * @throws IOException If the file cannot be created and read.
      * @see ChronicleHash#file()
      * @see ChronicleHash#close()
      */

@@ -211,6 +211,7 @@ public final class ChannelProvider implements Closeable {
      * per channel could be obtained from a single {@code ReplicatingChannel}. The returned replicator could
      * be applied to a map at most once.
      *
+     * @param channel number to create
      * @return a replicator, dedicated to the specified channel
      */
     public ChronicleChannel createChannel(short channel) {

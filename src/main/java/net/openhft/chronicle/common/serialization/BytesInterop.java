@@ -25,7 +25,7 @@ import net.openhft.lang.model.Byteable;
  * Marshaller for byte sequences, which are copied to off-heap {@link Bytes}
  * in a very straightforward manner, e. g. {@link Byteable Byteables}, {@code byte[]} arrays,
  * {@code Bytes} themselves. The criterion of this interface applicability --
- * {@link #equals} implementation shouldn't require deserialization and any garbage creation.
+ * {@link Object#equals(Object)} implementation shouldn't require deserialization and any garbage creation.
  *
  * @param <E> type of marshalled objects
  */

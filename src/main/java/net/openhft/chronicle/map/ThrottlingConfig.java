@@ -108,7 +108,7 @@ public class ThrottlingConfig {
 
 
     /**
-     * Returns the throttle bucketing interval in the given time units. <p/> <p>Default throttle bucketing
+     * Returns the throttle bucketing interval in the given time units.  <p>Default throttle bucketing
      * interval is 100 millis.
      *
      * @param unit the time unit of the interval
