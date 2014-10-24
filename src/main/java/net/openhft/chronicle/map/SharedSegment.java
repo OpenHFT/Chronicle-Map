@@ -26,11 +26,15 @@ import java.util.Map;
  */
 interface SharedSegment<K, V> {
 
-    void lock();
+    void readLock();
+
+    void writeLock();
 
     Map.Entry<K, V> getEntry(long pos);
 
-    void unlock();
+    void readUnlock();
+
+    void writeUnlock();
 
     NativeBytes entry(long pos);
 

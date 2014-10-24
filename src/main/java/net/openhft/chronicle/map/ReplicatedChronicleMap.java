@@ -607,7 +607,10 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         V acquire(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
                   K key, V usingValue, int hash2, boolean create, long timestamp) {
-            lock();
+            if (create)
+                writeLock();
+            else
+                readLock();
             try {
                 long keySize = metaKeyWriter.size(keyWriter, key);
                 MultiStoreBytes entry = tmpBytes;
@@ -636,7 +639,10 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     }
                 }
             } finally {
-                unlock();
+                if (create)
+                    writeUnlock();
+                else
+                    readUnlock();
             }
         }
 
@@ -654,7 +660,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         private void remoteRemove(Bytes keyBytes, int hash2,
                                   final long timestamp, final byte identifier) {
-            lock();
+            writeLock();
             try {
                 long keySize = keyBytes.remaining();
                 hashLookupLiveAndDeleted.startSearch(hash2);
@@ -693,7 +699,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     LOG.debug("Segment.remoteRemove() : key=" + keyBytes.toString().trim() + " was not " +
                             "found");
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -704,7 +710,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         private void remotePut(@NotNull final Bytes inBytes, int hash2,
                                final byte identifier, final long timestamp,
                                long valuePos, long valueLimit) {
-            lock();
+            writeLock();
             try {
                 // inBytes position and limit correspond to the key
                 final long keySize = inBytes.remaining();
@@ -784,7 +790,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 incrementSize();
 
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -795,7 +801,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         V put(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
               K key, V value, int hash2, boolean replaceIfPresent,
               final byte identifier, final long timestamp) {
-            lock();
+            writeLock();
             try {
                 IntIntMultiMap hashLookup = hashLookupLiveAndDeleted;
                 long keySize = metaKeyWriter.size(keyWriter, key);
@@ -850,7 +856,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 notifyPut(offset, true, key, value, posFromOffset(offset));
                 return null;
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -961,7 +967,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                  K key, V expectedValue, int hash2,
                  final long timestamp, final byte identifier) {
             assert identifier > 0;
-            lock();
+            writeLock();
             try {
                 long keySize = metaKeyWriter.size(keyWriter, key);
                 final IntIntMultiMap multiMap = hashLookupLiveAndDeleted;
@@ -1015,7 +1021,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 // key is not found
                 return null;
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -1029,7 +1035,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         V replace(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
                   K key, V expectedValue, V newValue, int hash2, long timestamp) {
-            lock();
+            writeLock();
             try {
                 long keySize = metaKeyWriter.size(keyWriter, key);
                 hashLookupLiveOnly.startSearch(hash2);
@@ -1052,7 +1058,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 // key is not found
                 return null;
             } finally {
-                unlock();
+                writeUnlock();
             }
         }
 
@@ -1068,7 +1074,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         public void dirtyEntries(final long timeStamp,
                                  final ModificationIterator.EntryModifiableCallback callback) {
 
-            this.lock();
+            this.readLock();
             try {
                 final int index = Segment.this.getIndex();
                 hashLookupLiveAndDeleted.forEach(new IntIntMultiMap.EntryConsumer() {
@@ -1088,7 +1094,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 });
 
             } finally {
-                unlock();
+                readUnlock();
             }
         }
 
@@ -1452,7 +1458,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
                 this.position = position;
                 final SharedSegment segment = segment((int) (position >>> segmentIndexShift));
-                segment.lock();
+                segment.readLock();
                 try {
                     if (changes.clearIfSet(position)) {
 
@@ -1473,7 +1479,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     // while we were trying to obtain segment lock (for example, in onReplication()),
                     // go to pick up next (next iteration in while (true) loop)
                 } finally {
-                    segment.unlock();
+                    segment.readUnlock();
                 }
             }
         }
