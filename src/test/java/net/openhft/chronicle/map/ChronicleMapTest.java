@@ -1133,8 +1133,7 @@ public class ChronicleMapTest {
     private ChronicleMap<Integer, CharSequence> getViewTestMap(int noOfElements) throws IOException {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(noOfElements)
-                        .minSegments(16)
+                        .entries(noOfElements * 2)
                         .valueSize((noOfElements + "").length())
                         .putReturnsNull(true)
                         .removeReturnsNull(true).create();
@@ -1154,7 +1153,7 @@ public class ChronicleMapTest {
     @Test
     public void testOversizeEntriesPutRemoveReplace() throws IOException {
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(2)
+                .entries(10)
                 .minSegments(1)
                 .entrySize(10);
         builder.entryAndValueAlignment(NO_ALIGNMENT);

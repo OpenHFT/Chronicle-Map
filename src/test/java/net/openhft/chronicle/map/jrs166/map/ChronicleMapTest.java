@@ -106,7 +106,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
      */
     private static ChronicleMap map5() throws IOException {
-        ChronicleMap<Integer, CharSequence> map = newShmIntString(5);
+        ChronicleMap<Integer, CharSequence> map = newShmIntString(10);
         assertTrue(map.isEmpty());
         map.put(one, "A");
         map.put(two, "B");
