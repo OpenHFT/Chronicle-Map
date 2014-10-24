@@ -96,17 +96,17 @@ class UdpReplicator extends UdpChannelReplicator implements Replica.Modification
 
             final int bytesRead = in.position();
 
-            if (bytesRead < SIZE_OF_SHORT + SIZE_OF_SHORT)
+            if (bytesRead < SIZE_OF_SIZE + SIZE_OF_SIZE)
                 return;
 
             out.limit(in.position());
 
-            final short invertedSize = out.readShort();
-            final int size = out.readUnsignedShort();
+            final int invertedSize = out.readInt();
+            final int size = out.readInt();
 
             // check the the first 4 bytes are the inverted len followed by the len
             // we do this to check that this is a valid start of entry, otherwise we throw it away
-            if (((short) ~size) != invertedSize)
+            if ( ~size != invertedSize)
                 return;
 
             if (out.remaining() != size)
@@ -159,7 +159,7 @@ class UdpReplicator extends UdpChannelReplicator implements Replica.Modification
 
             out.clear();
             in.clear();
-            in.skip(SIZE_OF_SHORT);
+            in.skip(SIZE_OF_SIZE);
 
             final boolean wasDataRead = modificationIterator.nextEntry(entryCallback, 0);
 
@@ -169,7 +169,7 @@ class UdpReplicator extends UdpChannelReplicator implements Replica.Modification
             }
 
             // we'll write the size inverted at the start
-            in.writeShort(0, ~(in.readUnsignedShort(SIZE_OF_SHORT)));
+            in.writeShort(0, ~(in.readUnsignedShort(SIZE_OF_SIZE)));
             out.limit((int) in.position());
 
             return socketChannel.write(out);

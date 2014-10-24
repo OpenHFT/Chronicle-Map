@@ -38,6 +38,7 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
 
 /**
@@ -98,8 +99,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         this.kClass = kClass;
         this.vClass = vClass;
         attemptConnect(builder.remoteAddress());
-        headroom = 1024 + maxEntrySize;
-        buffer = allocateDirect(headroom*1024).order(ByteOrder.nativeOrder());
+        //  headroom = 1024 + maxEntrySize;
+        buffer = allocateDirect(maxEntrySize).order(ByteOrder.nativeOrder());
 
         bytes = new ByteBufferBytes(buffer.slice());
 
@@ -299,7 +300,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
-        if (object == null ||  object.getClass().isAssignableFrom(Map.class))
+        if (object == null || object.getClass().isAssignableFrom(Map.class))
             return false;
 
         final Map<? extends K, ? extends V> that = (Map<? extends K, ? extends V>) object;
@@ -327,7 +328,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         blockingFetch(sizeLocation);
 
     }
-
 
 
     @Override
@@ -418,8 +418,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
-
-
     private void writeEntries(Map<? extends K, ? extends V> map) {
         final int numberOfEntries = map.size();
         int numberOfEntriesReadSoFar = 0;
@@ -462,10 +460,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
             } catch (
-                   Exception e4) {
+                    Exception e4) {
                 LOG.info("bytes position=" + bytes.position() + ",capacity=" + bytes.capacity() +
                         ", " +
-                "limit=" + bytes.limit());
+                        "limit=" + bytes.limit());
                 assert bytes.limit() == bytes.capacity();
 
                 writeValue(value);
@@ -487,12 +485,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         long remaining = bytes.remaining();
 
-        /*LOG.info("bytes position=" + bytes.position() + ",capacity=" + bytes.capacity() + ", " +
-                "limit=" + bytes.limit());
-*/
+
         if (remaining < maxEntrySize) {
+
+            // todo check this again as I  think it may have a bug
             long estimatedRequiredSize = estimateSize(numberOfEntries, numberOfEntriesReadSoFar);
-            resizeBuffer(estimatedRequiredSize * 2);
+            resizeBuffer(estimatedRequiredSize + maxEntrySize * 128);
         }
     }
 
@@ -519,14 +517,14 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         assert size < Integer.MAX_VALUE;
 
-         LOG.info("bytes before position=" + bytes.position()  +
-                 ", " +
-         "limit=" + bytes.limit()+ ",capacity=" + bytes.capacity() );
 
+        LOG.info("resizing to=" + size);
 
-        LOG.info("buffer before position=" + buffer.position() +
+        LOG.info("bytes before position=" + bytes.position() +
                 ", " +
-                "limit=" + buffer.limit()+ ",capacity=" + buffer.capacity() );
+                "limit=" + bytes.limit() + ",capacity=" + bytes.capacity());
+
+        LOG.info("buffer before");
 
         LOG.info("resize buffer to " + size + " bytes");
         final ByteBuffer result = ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder());
@@ -538,7 +536,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         bytes = new ByteBufferBytes(result.slice());
 
         buffer.position(0);
-
+        buffer.limit((int) bytesPosition);
+        LOG.info("bytesPosition to=" + bytesPosition + ", buffer.position=" + buffer.position() +
+                ", " +
+                "limit=" + buffer.limit() + ",capacity=" + buffer.capacity());
         for (int i = 0; i < bytesPosition; i++) {
             result.put(buffer.get());
         }
@@ -552,21 +553,19 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         bytes.limit(bytes.capacity());
         bytes.position(bytesPosition);
 
-
-
         assert buffer.capacity() == size;
         assert buffer.capacity() == bytes.capacity();
         assert bytes.limit() == bytes.capacity();
 
 
-        LOG.info("bytes after position=" + bytes.position()  +
+        LOG.info("bytes after position=" + bytes.position() +
                 ", " +
-                "limit=" + bytes.limit()+ ",capacity=" + bytes.capacity() );
+                "limit=" + bytes.limit() + ",capacity=" + bytes.capacity());
 
 
         LOG.info("buffer after position=" + buffer.position() +
                 ", " +
-                "limit=" + buffer.limit()+ ",capacity=" + buffer.capacity() );
+                "limit=" + buffer.limit() + ",capacity=" + buffer.capacity());
 
     }
 
@@ -734,7 +733,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                 bytes.buffer().clear();
 
                 // the number of bytes in the response
-                int size = receive(2, timeoutTime).readUnsignedShort();
+                int size = receive(SIZE_OF_SIZE, timeoutTime).readInt();
 
                 if (bytes.capacity() < size)
                     bytes = new ByteBufferBytes(allocateDirect(size));
@@ -796,12 +795,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private void writeSizeAt(long locationOfSize) {
         long size = bytes.position() - locationOfSize;
-        bytes.writeUnsignedShort(locationOfSize, (int) size - 2);
+        LOG.info("writing size = " + size);
+        bytes.writeInt(locationOfSize, (int) size - SIZE_OF_SIZE);
     }
 
     private long markSizeLocation() {
         long position = bytes.position();
-        bytes.skip(2);
+        bytes.skip(SIZE_OF_SIZE);
         return position;
     }
 

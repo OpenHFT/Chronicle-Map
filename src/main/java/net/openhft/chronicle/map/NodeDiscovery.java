@@ -256,8 +256,8 @@ public class NodeDiscovery {
 
 
     /**
-     * bitwise OR's the two bit sets or put another way, merges the source bitset into the destination bitset
-     * and returns the destination
+     * bitwise OR's the two bit sets or put another way, merges the source bitset into the
+     * destination bitset and returns the destination
      *
      * @param source
      * @param destination
@@ -323,8 +323,8 @@ public class NodeDiscovery {
 }
 
 /**
- * Broadcast the nodes host ports and identifiers over UDP, to make it easy to join a grid of remote nodes
- * just by name, this functionality requires UDP
+ * Broadcast the nodes host ports and identifiers over UDP, to make it easy to join a grid of remote
+ * nodes just by name, this functionality requires UDP
  *
  * @author Rob Austin.
  */
@@ -412,17 +412,17 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
 
             final int bytesRead = in.position();
 
-            if (bytesRead < SIZE_OF_SHORT + SIZE_OF_SHORT)
+            if (bytesRead < SIZE_OF_SIZE + SIZE_OF_SIZE)
                 return;
 
             out.limit(in.position());
 
-            final short invertedSize = out.readShort();
-            final int size = out.readUnsignedShort();
+            final int invertedSize = out.readInt();
+            final int size = out.readInt();
 
             // check the the first 4 bytes are the inverted len followed by the len
             // we do this to check that this is a valid start of entry, otherwise we throw it away
-            if (((short) ~size) != invertedSize)
+            if (~size != invertedSize)
                 return;
 
             if (out.remaining() != size)
@@ -468,10 +468,10 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
             in.clear();
 
             // skip the size inverted
-            in.skip(SIZE_OF_SHORT);
+            in.skip(SIZE_OF_SIZE);
 
             // skip the size
-            in.skip(SIZE_OF_SHORT);
+            in.skip(SIZE_OF_SIZE);
 
             long start = in.position();
 
@@ -481,8 +481,8 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
             long size = in.position() - start;
 
             // we'll write the size inverted at the start
-            in.writeShort(0, ~((int) size));
-            in.writeUnsignedShort(SIZE_OF_SHORT, (int) size);
+            in.writeInt(0, ~((int) size));
+            in.writeInt(SIZE_OF_SIZE, (int) size);
 
             out.limit((int) in.position());
 
@@ -735,8 +735,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
     }
 
     /**
-     * this is used to tell nodes that are connecting to us which host and ports are in our grid, along with
-     * all the identifiers.
+     * this is used to tell nodes that are connecting to us which host and ports are in our grid,
+     * along with all the identifiers.
      */
     @Override
     public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
@@ -926,8 +926,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
 
     /**
-     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the host:port
-     * and perhaps even proposed identifier of the node that sent it.
+     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the
+     * host:port and perhaps even proposed identifier of the node that sent it.
      *
      * @param proposedNodes
      */
