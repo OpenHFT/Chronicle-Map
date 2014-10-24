@@ -557,7 +557,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             createHashLookups(start);
             start += align64(sizeOfMultiMap() + sizeOfMultiMapBitSet()) * multiMapsPerSegment();
             final NativeBytes bsBytes = new NativeBytes(tmpBytes.objectSerializer(),
-                    start, start + ((entriesPerSegment + 7L) / 8L), null);
+                    start, start + sizeOfBitSets() / 8L, null);
             freeList = new SingleThreadedDirectBitSet(bsBytes);
             start += numberOfBitSets() * sizeOfBitSets();
             entriesOffset = start - bytes.startAddr();
@@ -924,14 +924,19 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 bytes.zeroOut(offset, offset + metaDataBytes);
         }
 
+        //TODO refactor/optimize
         long alloc(int blocks) {
             if (blocks > MAX_ENTRY_OVERSIZE_FACTOR)
                 throw new IllegalArgumentException("Entry is too large: requires " + blocks +
                         " entry size chucks, " + MAX_ENTRY_OVERSIZE_FACTOR + " is maximum.");
             long ret = freeList.setNextNContinuousClearBits(nextPosToSearchFrom, blocks);
-            if (ret == DirectBitSet.NOT_FOUND) {
+            if (ret == DirectBitSet.NOT_FOUND || ret + blocks > entriesPerSegment) {
+                if (ret + blocks > entriesPerSegment)
+                    freeList.clear(ret, ret + blocks);
                 ret = freeList.setNextNContinuousClearBits(0L, blocks);
-                if (ret == DirectBitSet.NOT_FOUND) {
+                if (ret == DirectBitSet.NOT_FOUND || ret + blocks > entriesPerSegment) {
+                    if (ret + blocks > entriesPerSegment)
+                        freeList.clear(ret, ret + blocks);
                     if (blocks == 1) {
                         throw new IllegalStateException(
                                 "Segment is full, no free entries found");
@@ -955,7 +960,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         private void updateNextPosToSearchFrom(long allocated, int blocks) {
-            if ((nextPosToSearchFrom = allocated + blocks) >= freeList.size())
+            if ((nextPosToSearchFrom = allocated + blocks) >= entriesPerSegment)
                 nextPosToSearchFrom = 0L;
         }
 
