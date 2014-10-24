@@ -71,9 +71,10 @@ class Serializer<O> {
 
         sizeMarshaller.writeSize(out, valueSize);
 
-        if (metaValueWriter != null)
+        if (metaValueWriter != null) {
+            assert out.limit() == out.capacity();
             metaValueWriter.write(valueWriter, out, value);
-        else
+        }  else
             throw new UnsupportedOperationException("");
 
     }

@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 
@@ -41,6 +42,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private CloseablesManager closeables;
     private final StatelessBuilder builder;
     private int maxEntrySize;
+    private final Class<K> kClass;
+    private final Class<V> vClass;
     private int headroom = 1024;
 
     static enum EventId {
@@ -61,20 +64,25 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         PUT_IF_ABSENT,
         REMOVE_WITH_VALUE,
         TO_STRING,
-        PUT_ALL
+        PUT_ALL,
+        EQUALS,
+        HASH_CODE
     }
 
     private long transactionID;
 
     StatelessChronicleMap(final KeyValueSerializer<K, V> keyValueSerializer,
                           final StatelessBuilder builder,
-                          int maxEntrySize) throws IOException {
+                          int maxEntrySize, Class<K> kClass, Class<V> vClass) throws IOException {
         this.keyValueSerializer = keyValueSerializer;
         this.builder = builder;
         this.maxEntrySize = maxEntrySize;
+        this.kClass = kClass;
+        this.vClass = vClass;
         attemptConnect(builder.remoteAddress());
         headroom = 1024 + maxEntrySize;
-        buffer = allocateDirect(headroom);
+        buffer = allocateDirect(headroom*1024).order(ByteOrder.nativeOrder());
+
         bytes = new ByteBufferBytes(buffer.slice());
 
     }
@@ -261,6 +269,57 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
+    /**
+     * calling this method should be avoided at all cost, as the entire {@code object} is
+     * serialized. This equals can be used to compare map that extends ChronicleMap.  So two
+     * Chronicle Maps that contain the same data are considered equal, even if the instances of the
+     * chronicle maps were of different types
+     *
+     * @param object the object that you are comparing against
+     * @return true if the contain the same data
+     */
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null ||  object.getClass().isAssignableFrom(Map.class))
+            return false;
+
+        final Map<? extends K, ? extends V> that = (Map<? extends K, ? extends V>) object;
+
+        long sizeLocation = writeEvent(EQUALS);
+
+        try {
+            writeEntries(that);
+        } catch (ClassCastException e) {
+            if (LOG.isDebugEnabled())
+                LOG.debug("failed equals() due to a difference in types", e);
+            return false;
+        }
+
+        // get the data back from the server
+        return blockingFetch(sizeLocation).readBoolean();
+    }
+
+
+    public synchronized void putAll(Map<? extends K, ? extends V> map) {
+
+        final long sizeLocation = writeEvent(PUT_ALL);
+        writeEntries(map);
+
+        blockingFetch(sizeLocation);
+
+    }
+
+
+
+    @Override
+    public int hashCode() {
+        long sizeLocation = writeEvent(HASH_CODE);
+
+        // get the data back from the server
+        return blockingFetch(sizeLocation).readInt();
+    }
+
     public synchronized String toString() {
         long sizeLocation = writeEvent(TO_STRING);
 
@@ -313,7 +372,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     }
 
-
     public synchronized V getUsing(K key, V value) {
         throw new UnsupportedOperationException("getUsing is not supported for stateless clients");
     }
@@ -322,7 +380,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     public synchronized V acquireUsing(K key, V value) {
         throw new UnsupportedOperationException("getUsing is not supported for stateless clients");
     }
-
 
     public synchronized V put(K key, V value) {
 
@@ -343,39 +400,81 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
-    public synchronized void putAll(Map<? extends K, ? extends V> map) {
 
-        final long sizeLocation = writeEvent(PUT_ALL);
+
+    private void writeEntries(Map<? extends K, ? extends V> map) {
         final int numberOfEntries = map.size();
         int numberOfEntriesReadSoFar = 0;
 
         bytes.writeStopBit(numberOfEntries);
-
+        assert bytes.limit() == bytes.capacity();
         for (final Map.Entry<? extends K, ? extends V> e : map.entrySet()) {
 
             numberOfEntriesReadSoFar++;
-
+            assert bytes.limit() == bytes.capacity();
             // putAll if a bit more complicated than the others
             // as the volume of data could cause us to have to resize our buffers
             resizeIfRequired(numberOfEntries, numberOfEntriesReadSoFar);
 
-            long start = bytes.position();
-            writeKey(e.getKey());
-            writeValue(e.getValue());
-            int len = (int) (bytes.position() - start);
+            assert bytes.limit() == bytes.capacity();
 
+            final long start = bytes.position();
+            final K key = e.getKey();
+
+            final Class<?> keyClass = key.getClass();
+            if (!kClass.isAssignableFrom(keyClass))
+                throw new ClassCastException("key=" + key + " is of type=" + keyClass + " " +
+                        "and should" +
+                        " be of type=" + kClass);
+
+            writeKey(key);
+            assert bytes.limit() == bytes.capacity();
+            final V value = e.getValue();
+
+            final Class<?> valueClass = value.getClass();
+            if (!vClass.isAssignableFrom(valueClass))
+                throw new ClassCastException("value=" + value + " is of type=" + valueClass +
+                        " and " +
+                        "should  be of type=" + vClass);
+
+
+            try {
+                assert bytes.limit() == bytes.capacity();
+                writeValue(value);
+
+
+            } catch (
+                   Exception e4) {
+                LOG.info("bytes position=" + bytes.position() + ",capacity=" + bytes.capacity() +
+                        ", " +
+                "limit=" + bytes.limit());
+                assert bytes.limit() == bytes.capacity();
+
+                writeValue(value);
+                int i = 0;
+                throw e4;
+            }
+
+
+            final int len = (int) (bytes.position() - start);
+            assert bytes.limit() == bytes.capacity();
             if (len > maxEntrySize)
                 maxEntrySize = len;
         }
-
-        blockingFetch(sizeLocation);
-
     }
 
     private void resizeIfRequired(int numberOfEntries, int numberOfEntriesReadSoFar) {
-        if (bytes.remaining() < maxEntrySize) {
+
+        //  System.out.println("bytes=" + bytes.position());
+
+        long remaining = bytes.remaining();
+
+        /*LOG.info("bytes position=" + bytes.position() + ",capacity=" + bytes.capacity() + ", " +
+                "limit=" + bytes.limit());
+*/
+        if (remaining < maxEntrySize) {
             long estimatedRequiredSize = estimateSize(numberOfEntries, numberOfEntriesReadSoFar);
-            resizeBuffer(estimatedRequiredSize + headroom);
+            resizeBuffer(estimatedRequiredSize * 2);
         }
     }
 
@@ -387,8 +486,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
      */
     private long estimateSize(int numberOfEntries, int numberOfEntriesReadSoFar) {
         // we will back the size estimate on what we have so far
-        double percentageComplete = numberOfEntries / numberOfEntriesReadSoFar;
+        double percentageComplete = (double) numberOfEntriesReadSoFar / (double) numberOfEntries;
         return (long) ((double) bytes.position() / percentageComplete);
+
+        // LOG.info("bytes position=" + bytes.position() + ",capacity=" + bytes.capacity() + ", " +
+        //"limit=" + bytes.limit());
+        // return bytes.position() + (maxEntrySize * 128);
     }
 
 
@@ -396,42 +499,58 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         if (size < buffer.capacity())
             throw new IllegalStateException("it not possible to resize the buffer smaller");
 
-        ByteBuffer result = ByteBuffer.allocateDirect((int) size);
-        buffer.clear();
+        assert size < Integer.MAX_VALUE;
+
+         LOG.info("bytes before position=" + bytes.position()  +
+                 ", " +
+         "limit=" + bytes.limit()+ ",capacity=" + bytes.capacity() );
+
+
+        LOG.info("buffer before position=" + buffer.position() +
+                ", " +
+                "limit=" + buffer.limit()+ ",capacity=" + buffer.capacity() );
+
+        LOG.info("resize buffer to " + size + " bytes");
+        final ByteBuffer result = ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder());
 
         int bufferPosition = buffer.position();
         int bufferLimit = buffer.limit();
 
         long bytesPosition = bytes.position();
-        long bytesLimit = bytes.limit();
+        bytes = new ByteBufferBytes(result.slice());
 
         buffer.position(0);
 
-        for (int i = 0; i < bufferLimit; i++) {
+        for (int i = 0; i < bytesPosition; i++) {
             result.put(buffer.get());
         }
+        buffer = result;
 
         buffer.limit(bufferLimit);
         buffer.position(bufferPosition);
 
-        bytes = new ByteBufferBytes(result.slice());
-        bytes.limit(bytesLimit);
+        assert buffer.capacity() == bytes.capacity();
+
+        bytes.limit(bytes.capacity());
         bytes.position(bytesPosition);
 
+
+
+        assert buffer.capacity() == size;
+        assert buffer.capacity() == bytes.capacity();
+        assert bytes.limit() == bytes.capacity();
+
+
+        LOG.info("bytes after position=" + bytes.position()  +
+                ", " +
+                "limit=" + bytes.limit()+ ",capacity=" + bytes.capacity() );
+
+
+        LOG.info("buffer after position=" + buffer.position() +
+                ", " +
+                "limit=" + buffer.limit()+ ",capacity=" + buffer.capacity() );
+
     }
-
-/*    private void writeEntries(Map<? extends K, ? extends V> map) {
-
-        final HashMap<K, V> safeCopy = new HashMap<K, V>(map);
-        bytes.writeStopBit(safeCopy.size());
-
-        final Set<Entry> entries = (Set) safeCopy.entrySet();
-
-        for (Entry e : entries) {
-            writeKey(e.getKey());
-            writeValue(e.getValue());
-        }
-    }*/
 
 
     public synchronized void clear() {
@@ -494,8 +613,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     private long writeEvent(EventId event) {
-        bytes.clear();
+
         buffer.clear();
+        bytes.clear();
+
+        //bytes.limit(buffer.capacity());
 
         bytes.write((byte) event.ordinal());
         long sizeLocation = markSizeLocation();
@@ -612,10 +734,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                     throw (RuntimeException) bytes.readObject();
 
                 return bytes;
-            } catch (java.nio.channels.ClosedChannelException e) {
-                checkTimeout(timeoutTime);
-                clientChannel = lazyConnect(builder.timeoutMs(), builder.remoteAddress());
-            } catch (ClosedConnectionException e) {
+            } catch (java.nio.channels.ClosedChannelException | ClosedConnectionException e) {
                 checkTimeout(timeoutTime);
                 clientChannel = lazyConnect(builder.timeoutMs(), builder.remoteAddress());
             }
@@ -638,6 +757,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private void send(final ByteBufferBytes out, long timeoutTime) throws IOException {
+
         buffer.limit((int) out.position());
         buffer.position(0);
 
@@ -676,6 +796,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private void writeValue(V value) {
+        //  LOG.info("bytes position=" + bytes.position() + ",capacity=" + bytes.capacity() + ", " +
+        //             "limit=" + bytes.limit());
         keyValueSerializer.writeValue(value, bytes);
     }
 
