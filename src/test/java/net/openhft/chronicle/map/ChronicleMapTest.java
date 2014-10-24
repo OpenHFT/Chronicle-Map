@@ -1131,12 +1131,11 @@ public class ChronicleMapTest {
     }
 
     private ChronicleMap<Integer, CharSequence> getViewTestMap(int noOfElements) throws IOException {
-        int entries = 100 * 1000;
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(entries)
+                        .entries(noOfElements)
                         .minSegments(16)
-                        .entrySize(32)
+                        .valueSize((noOfElements + "").length())
                         .putReturnsNull(true)
                         .removeReturnsNull(true).create();
 

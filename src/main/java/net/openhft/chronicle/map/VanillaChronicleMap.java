@@ -134,8 +134,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         this.removeReturnsNull = builder.removeReturnsNull();
 
         this.actualSegments = builder.actualSegments();
-        // align by 8 because otherwise sizeOfBitSets() might address less blocks than specified
-        this.entriesPerSegment = align8(builder.actualEntriesPerSegment());
+        this.entriesPerSegment = builder.actualEntriesPerSegment();
         this.metaDataBytes = builder.metaDataBytes();
         this.eventListener = builder.eventListener();
 
@@ -254,7 +253,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     long sizeOfBitSets() {
-        return align64(entriesPerSegment / 8L);
+        return align64(align8(entriesPerSegment) / 8L);
     }
 
     int numberOfBitSets() {
@@ -557,7 +556,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             createHashLookups(start);
             start += align64(sizeOfMultiMap() + sizeOfMultiMapBitSet()) * multiMapsPerSegment();
             final NativeBytes bsBytes = new NativeBytes(tmpBytes.objectSerializer(),
-                    start, start + sizeOfBitSets() / 8L, null);
+                    start, start + align8(align8(entriesPerSegment) / 8L), null);
             freeList = new SingleThreadedDirectBitSet(bsBytes);
             start += numberOfBitSets() * sizeOfBitSets();
             entriesOffset = start - bytes.startAddr();
