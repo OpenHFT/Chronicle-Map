@@ -422,14 +422,16 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return Math.max(estimateSegments(), minSegments);
     }
 
-    /**
-     * Heuristic -- number of segments ~= cube root from number of entries seems optimal
-     */
     private int estimateSegments() {
+        for (int power = 0; power < 7; power++) {
+            if (entries < (1L << (7 + (2 * power))))
+                return 1 << power;
+        }
+        // Heuristic -- number of segments ~= cube root from number of entries seems optimal
         int maxSegments = 65536;
-        for (int i = 4; i < maxSegments; i <<= 1) {
-            if (((long) i) * i * i >= entries)
-                return i;
+        for (int segments = 4; segments < maxSegments; segments <<= 1) {
+            if (((long) segments) * segments * segments >= entries)
+                return segments;
         }
         return maxSegments;
     }
