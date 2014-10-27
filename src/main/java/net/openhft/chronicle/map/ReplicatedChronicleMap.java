@@ -106,7 +106,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     private transient ModificationDelegator modificationDelegator;
     private transient long startOfModificationIterators;
 
-    public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder)
+    public ReplicatedChronicleMap(@NotNull AbstractChronicleMapBuilder<K, V, ?> builder)
             throws IOException {
         super(builder);
         this.timeProvider = builder.timeProvider();
@@ -613,38 +613,39 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         /**
          * @see VanillaChronicleMap.Segment#acquire
          */
-        V acquire(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
+        V acquire(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop,
                   K key, V usingValue, long hash2, boolean create, long timestamp) {
             if (create)
                 writeLock();
             else
                 readLock();
             try {
-                long keySize = metaKeyWriter.size(keyWriter, key);
+                long keySize = metaKeyInterop.size(keyInterop, key);
                 MultiStoreBytes entry = acquireTmpBytes();
-                long offset = searchKey(keyWriter, metaKeyWriter, key, keySize, hash2, entry,
+                long offset = searchKey(keyInterop, metaKeyInterop, key, keySize, hash2, entry,
                         hashLookupLiveOnly);
-                if (offset >= 0) {
-
-                    // skip the timestamp, identifier and is deleted flag
-                    entry.skip(ADDITIONAL_ENTRY_BYTES);
-
+                if (offset >= 0L) {
                     return onKeyPresentOnAcquire(copies, key, usingValue, offset, entry);
                 } else {
-                    boolean usingValuePassed = usingValue != null;
-                    usingValue = tryObtainUsingValueOnAcquire(key, usingValue, create);
-                    if (usingValue != null) {
-                        // see VanillaChronicleMap.Segment.acquire() for explanation
-                        // why `usingValue` is `create`.
-                        offset = putEntryOnAcquire(copies, metaKeyWriter, keyWriter, key, keySize,
-                                hash2, usingValue, create, timestamp);
-                        incrementSize();
-                        if (usingValuePassed || !create)
-                            notifyPut(offset, true, key, usingValue, posFromOffset(offset));
-                        return usingValue;
-                    } else {
+                    if (!create)
                         return null;
+                    if (defaultValueProvider != null) {
+                        V defaultValue = defaultValueProvider.get(key);
+                        copies = valueWriterProvider.getCopies(copies);
+                        VW valueWriter = valueWriterProvider.get(copies, originalValueWriter);
+                        copies = metaValueWriterProvider.getCopies(copies);
+                        MetaBytesWriter<V, VW> metaValueWriter = metaValueWriterProvider.get(
+                                copies, originalMetaValueWriter, valueWriter, defaultValue);
+
+                        offset = putEntry(metaKeyInterop, keyInterop, key, keySize, hash2,
+                                localIdentifier, timestamp, hashLookupLiveOnly,
+                                metaValueWriter, valueWriter, defaultValue);
+                    } else {
+                        offset = putEntry(metaKeyInterop, keyInterop, key, keySize, hash2,
+                                localIdentifier, timestamp, hashLookupLiveOnly,
+                                prepareValueBytesAsWriter, null, key);
                     }
+                    return onKeyAbsentOnAcquire(copies, key, keySize, usingValue, offset);
                 }
             } finally {
                 if (create)
@@ -654,14 +655,10 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             }
         }
 
-        private long putEntryOnAcquire(ThreadLocalCopies copies,
-                                       MKI metaKeyWriter, KI keyWriter, K key,
-                                       long keySize, long hash2, V value, boolean usingValue,
-                                       long timestamp) {
-            return putEntry(copies, metaKeyWriter, keyWriter, key, keySize, hash2, value,
-                    usingValue, localIdentifier, timestamp, hashLookupLiveOnly);
+        @Override
+        void skipReplicationBytes(Bytes bytes) {
+            bytes.skip(ADDITIONAL_ENTRY_BYTES);
         }
-
 
         /**
          * called from a remote node as part of replication
@@ -858,7 +855,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
                 // key is not found
                 long offset = putEntry(copies, metaKeyWriter, keyWriter, key, keySize, hash2, value,
-                        false, identifier, timestamp, hashLookup);
+                        identifier, timestamp, hashLookup);
                 incrementSize();
                 notifyPut(offset, true, key, value, posFromOffset(offset));
                 return null;
@@ -905,9 +902,6 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * @param hash2              a hash of the {@code keyBytes}. Caller was searching for the
          *                           key in the {@code searchedHashLookup} using this hash.
          * @param value              the value to put
-         * @param usingValue         {@code true} if the value should be backed with the bytes of
-         *                           the entry, if it implements {@link Byteable} interface, {@code
-         *                           false} if it should put itself
          * @param identifier         the identifier of the outer CHM node
          * @param timestamp          the timestamp when the entry was put <s>(this could be later if
          *                           it was a remote put)</s> this method is called only from usual
@@ -916,30 +910,25 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * @return offset of the written entry in the Segment bytes
          * @see VanillaChronicleMap.Segment#putEntry
          */
-        private long putEntry(ThreadLocalCopies copies, MKI metaKeyWriter,
-                              KI keyWriter, K key, long keySize, long hash2, V value,
-                              boolean usingValue, final int identifier, final long timestamp,
-                              MultiMap searchedHashLookup) {
+        private long putEntry(ThreadLocalCopies copies,
+                              MKI metaKeyInterop, KI keyInterop, K key, long keySize, long hash2,
+                              V value,
+                              int identifier, long timestamp, MultiMap searchedHashLookup) {
+            copies = valueWriterProvider.getCopies(copies);
+            VW valueWriter = valueWriterProvider.get(copies, originalValueWriter);
+            copies = metaValueWriterProvider.getCopies(copies);
+            MetaBytesWriter<V, VW> metaValueWriter = metaValueWriterProvider.get(
+                    copies, originalMetaValueWriter, valueWriter, value);
 
-            // "if-else polymorphism" is not very beautiful, but allows to
-            // reuse the rest code of this method and doesn't hurt performance.
-            boolean byteableValue = usingValue && value instanceof Byteable;
-            long valueSize;
-            MetaBytesWriter<V, VW> metaValueWriter = null;
-            VW valueWriter = null;
-            Byteable valueAsByteable = null;
-            if (!byteableValue) {
-                copies = valueWriterProvider.getCopies(copies);
-                valueWriter = valueWriterProvider.get(copies, originalValueWriter);
-                copies = metaValueWriterProvider.getCopies(copies);
-                metaValueWriter = metaValueWriterProvider.get(
-                        copies, originalMetaValueWriter, valueWriter, value);
-                valueSize = metaValueWriter.size(valueWriter, value);
-            } else {
-                valueAsByteable = (Byteable) value;
-                valueSize = valueAsByteable.maxSize();
-            }
+            return putEntry(metaKeyInterop, keyInterop, key, keySize, hash2,
+                    identifier, timestamp, searchedHashLookup, metaValueWriter, valueWriter, value);
+        }
 
+        private <E, EW> long putEntry(
+                MKI metaKeyInterop, KI keyInterop, K key, long keySize, long hash2,
+                final int identifier, final long timestamp, MultiMap searchedHashLookup,
+                MetaBytesWriter<E, EW> metaElemWriter, EW elemWriter, E elem) {
+            long valueSize = metaElemWriter.size(elemWriter, elem);
             long entrySize = entrySize(keySize, valueSize);
             long pos = alloc(inBlocks(entrySize));
             long offset = offsetFromPos(pos);
@@ -947,14 +936,15 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             NativeBytes entry = entry(offset);
 
             keySizeMarshaller.writeSize(entry, keySize);
-            metaKeyWriter.write(keyWriter, entry, key);
+            metaKeyInterop.write(keyInterop, entry, key);
 
             entry.writeLong(timestamp);
             entry.writeByte(identifier);
             entry.writeBoolean(false);
 
-            writeValueOnPutEntry(valueSize, metaValueWriter, valueWriter, value, valueAsByteable,
-                    entry);
+            valueSizeMarshaller.writeSize(entry, valueSize);
+            alignment.alignPositionAddr(entry);
+            metaElemWriter.write(elemWriter, entry, elem);
 
             // we have to add it both to the live
             if (searchedHashLookup == hashLookupLiveAndDeleted) {
@@ -1573,7 +1563,7 @@ abstract class Replicator {
      *                               already been applied to a map (or the specified number of
      *                               maps)
      */
-    protected abstract Closeable applyTo(ChronicleMapBuilder builder,
+    protected abstract Closeable applyTo(AbstractChronicleMapBuilder builder,
                                          Replica map, Replica.EntryExternalizable entryExternalizable,
                                          final ChronicleMap chronicleMap)
             throws IOException;
@@ -1589,7 +1579,7 @@ final class Replicators {
         return new Replicator() {
 
             @Override
-            protected Closeable applyTo(ChronicleMapBuilder builder,
+            protected Closeable applyTo(AbstractChronicleMapBuilder builder,
                                         Replica replica, Replica.EntryExternalizable entryExternalizable,
                                         final ChronicleMap chronicleMap) throws IOException {
 
@@ -1610,7 +1600,7 @@ final class Replicators {
         return new Replicator() {
 
             @Override
-            protected Closeable applyTo(ChronicleMapBuilder builder,
+            protected Closeable applyTo(AbstractChronicleMapBuilder builder,
                                         Replica map, Replica.EntryExternalizable entryExternalizable, final ChronicleMap chronicleMap)
                     throws IOException {
                 return new UdpReplicator(map, entryExternalizable, replicationConfig,

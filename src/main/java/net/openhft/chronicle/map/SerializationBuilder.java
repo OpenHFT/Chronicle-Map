@@ -78,12 +78,9 @@ final class SerializationBuilder<E> implements Cloneable {
         this.eClass = eClass;
         instancesAreMutable = instancesAreMutable(eClass);
 
-        ObjectFactory<E> factory = null;
-        if (role == Role.VALUE) {
-            factory = concreteClass(eClass) && marshallerUseFactory(eClass) ?
-                    new NewInstanceObjectFactory<E>(eClass) :
-                    (ObjectFactory<E>) NullObjectFactory.<E>of();
-        }
+        ObjectFactory<E> factory = concreteClass(eClass) && marshallerUseFactory(eClass) ?
+                new NewInstanceObjectFactory<E>(eClass) :
+                NullObjectFactory.<E>of();
 
         if (concreteClass(eClass) && Byteable.class.isAssignableFrom(eClass)) {
             agileMarshaller(ByteableMarshaller.of((Class) eClass), factory);
@@ -109,7 +106,7 @@ final class SerializationBuilder<E> implements Cloneable {
             if (marshaller != null)
                 marshaller(marshaller, factory);
         }
-        if (role == Role.VALUE && concreteClass(eClass) && marshallerUseFactory(eClass)) {
+        if (concreteClass(eClass) && marshallerUseFactory(eClass)) {
             factory(factory);
         }
     }

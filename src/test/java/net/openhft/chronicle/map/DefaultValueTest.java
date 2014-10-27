@@ -41,17 +41,17 @@ public class DefaultValueTest {
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
                     .defaultValue(defaultValue).file(file).create()) {
 
-                assertEquals(defaultValue, map.get("a"));
+                assertEquals(defaultValue, map.acquireUsing("a", null));
                 assertEquals(1, map.size());
 
                 map.put("b", Arrays.asList(1, 2));
-                assertEquals(Arrays.asList(1, 2), map.get("b"));
+                assertEquals(Arrays.asList(1, 2), map.acquireUsing("b", null));
             }
 
             try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class)).file(file).
                  create()) {
-                assertEquals(defaultValue, map.get("c"));
+                assertEquals(defaultValue, map.acquireUsing("c", null));
             }
         } finally {
             file.delete();

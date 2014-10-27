@@ -25,6 +25,7 @@ import net.openhft.chronicle.common.TimeProvider;
 import net.openhft.chronicle.map.*;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.BytesMarshallerFactory;
+import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.io.serialization.impl.NullObjectFactory;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +53,7 @@ public class ChronicleSetBuilder<E>
     ChronicleSetBuilder(Class<E> keyClass) {
         chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
                 .entryAndValueAlignment(Alignment.NO_ALIGNMENT)
-                .valueMarshallerAndFactory(DummyValueMarshaller.INSTANCE,
-                        NullObjectFactory.<DummyValue>of());
+                .valueMarshaller(DummyValueMarshaller.INSTANCE);
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
@@ -241,6 +241,23 @@ public class ChronicleSetBuilder<E>
     @Override
     public ChronicleSetBuilder<E> keyMarshaller(@NotNull BytesMarshaller<E> keyMarshaller) {
         chronicleMapBuilder.keyMarshaller(keyMarshaller);
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Actually this is just a convenience method supporting key marshaller configurations, made
+     * initially during {@link #of(Class)} call. Because if you {@linkplain
+     * #keyMarshaller(BytesMarshaller) configure} own custom key marshaller, this method doesn't
+     * take any effect on the maps constructed by this builder.
+     *
+     * @see #of(Class)
+     */
+    @Override
+    public ChronicleSetBuilder<E> keyDeserializationFactory(
+            @NotNull ObjectFactory<E> keyDeserializationFactory) {
+        chronicleMapBuilder.keyDeserializationFactory(keyDeserializationFactory);
         return this;
     }
 
