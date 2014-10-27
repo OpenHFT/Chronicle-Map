@@ -419,6 +419,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     private void writeEntries(Map<? extends K, ? extends V> map) {
+
         final int numberOfEntries = map.size();
         int numberOfEntriesReadSoFar = 0;
 
@@ -605,20 +606,25 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         long sizeLocation = writeEvent(ENTRY_SET);
 
         // get the data back from the server
-        Bytes in = blockingFetch(sizeLocation);
+        final Bytes in = blockingFetch(sizeLocation);
+        final Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
 
-        long size = in.readStopBit();
-         LOG.info("size="+size);
-        Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
+        boolean hasMoreEntries;
+        do {
+            hasMoreEntries = in.readBoolean();
 
-        for (int i = 0; i < size; i++) {
-            K k = keyValueSerializer.readKey(in);
-            V v = keyValueSerializer.readValue(in);
-            LOG.info("k="+k);
+            // number of entries in the chunk
+            long size = in.readUnsignedShort();
 
-            LOG.info("v="+v);
-            result.add(new Entry(k, v));
-        }
+            LOG.info("size=" + size);
+
+            for (int i = 0; i < size; i++) {
+                K k = keyValueSerializer.readKey(in);
+                V v = keyValueSerializer.readValue(in);
+                result.add(new Entry(k, v));
+            }
+
+        } while (hasMoreEntries);
 
         return result;
     }
@@ -730,9 +736,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                 // the number of bytes in the response
                 int size = receive(SIZE_OF_SIZE, timeoutTime).readInt();
 
-                if (bytes.capacity() < size)
-                    bytes = new ByteBufferBytes(allocateDirect(size));
+                int requiredSize = size + SIZE_OF_SIZE;
+                if (bytes.capacity() < requiredSize) {
+                    bytes = new ByteBufferBytes(allocateDirect(requiredSize));
+                }
 
+                // block until we have received all the byte in this chunk
                 receive(size, timeoutTime);
 
                 boolean isException = bytes.readBoolean();

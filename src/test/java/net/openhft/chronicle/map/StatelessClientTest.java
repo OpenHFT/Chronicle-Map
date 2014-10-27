@@ -72,10 +72,7 @@ public class StatelessClientTest {
 
         Set<Map.Entry<Integer, CharSequence>> entries = statelessMap.entrySet();
 
-
-
         Map.Entry<Integer, CharSequence> next = entries.iterator().next();
-
         Assert.assertEquals("some value=" + next.getKey(), next.getValue());
 
 
