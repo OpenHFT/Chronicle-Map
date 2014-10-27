@@ -530,8 +530,7 @@ map = ChronicleMapBuilder
 ![TCP/IP Replication 3Way](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-27-at-18.19.05.png)
 
 
-Below is example of what to set the tcpReplicationConfig for each host when setting up three 
-way.
+Below is example how to set up tcpReplicationConfig for three host
 
 ```java
 String hostServer1 = "localhost"; // change this to your host
@@ -548,14 +547,14 @@ InetSocketAddress inetSocketAddress3 = new InetSocketAddress(hostServer3, server
 
 
 // this is to go on server 1
-TcpReplicationConfig tcpConfigServer1 = TcpReplicationConfig.of(serverPort1);
+TcpReplicationConfig tcpReplicationConfigServer1 = TcpReplicationConfig.of(serverPort1);
 
 // this is to go on server 2
-TcpReplicationConfig tcpConfigServer2 = TcpReplicationConfig.of(serverPort2,
+TcpReplicationConfig tcpReplicationConfigServer2 = TcpReplicationConfig.of(serverPort2,
         inetSocketAddress1);
 
 // this is to go on server 3
-TcpReplicationConfig tcpConfigServer3 = TcpReplicationConfig.of(serverPort3,
+TcpReplicationConfig tcpReplicationConfigServer3 = TcpReplicationConfig.of(serverPort3,
         inetSocketAddress1,inetSocketAddress2);        
 ```     
    
