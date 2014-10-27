@@ -546,11 +546,12 @@ InetSocketAddress inetSocketAddress3 = new InetSocketAddress(hostServer3, server
 TcpReplicationConfig tcpConfigServer1 = TcpReplicationConfig.of(serverPort1);
 
 // this is to go on server 2
-TcpReplicationConfig tcpConfigServer2 = TcpReplicationConfig.of(serverPort2,inetSocketAddress1);
+TcpReplicationConfig tcpConfigServer2 = TcpReplicationConfig.of(serverPort2,
+        inetSocketAddress1);
 
 // this is to go on server 3
 TcpReplicationConfig tcpConfigServer3 = TcpReplicationConfig.of(serverPort3,
-        inetSocketAddress1,inetSocketAddress3);        
+        inetSocketAddress1,inetSocketAddress2);        
 ```     
    
 ### Bootstrapping 
