@@ -647,7 +647,7 @@ unique for each map you have.
 ### Channels and ChannelProvider - Example
 
 ``` java
-    // server 1 with  identifier = 1
+    // server 1 with identifier = 1
     {
         byte identifier = (byte) 1;
 
@@ -680,7 +680,7 @@ unique for each map you have.
 
     }
 
-    // server 2 with  identifier = 2
+    // server 2 with identifier = 2
     {
 
         byte identifier = (byte) 2;
@@ -730,12 +730,11 @@ unique for each map you have.
 
     assertEquals(favoriteColourServer1, favoriteColourServer2);
     Assert.assertEquals(2, favoriteColourServer1.size());
-
-
-    favoriteColourServer1.close();
+    
+    favoriteComputerServer1.close();
     favoriteComputerServer2.close();
-    favoriteColourServer2.close();
     favoriteColourServer1.close();
+    favoriteColourServer2.close();
 }
 ``` 
 
