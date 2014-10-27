@@ -594,7 +594,9 @@ not ideal. This is why we created Chronicle Channels. Channels let you replicate
 Chronicle Maps via a single point to point socket connection.
 
 Chronicle Channels are similar to TCP replication, where each map has to be given a unique identifier, but
-when using Chronicle Channels its the channels that are given the unique identifier not the map.
+when using Chronicle Channels its the channels that are used to identify the map. 
+The identifier is used to identify the host/server. Each host must be give a unique identifier.
+
 
 ``` java
 int maxEntrySize = 1024;
@@ -668,7 +670,6 @@ unique for each map you have.
                 .entries(1000)
                 .channel(channelProviderServer1.createChannel(channel1)).create();
 
-        favoriteColourServer1.put("peter", "green");
 
         // this demotes favoriteComputer
         short channel2 = (short) 2;
@@ -676,6 +677,9 @@ unique for each map you have.
         favoriteComputerServer1 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(1000)
                 .channel(channelProviderServer1.createChannel(channel2)).create();
+
+      
+        favoriteColourServer1.put("peter", "green");
 
         favoriteComputerServer1.put("peter", "dell");
 
@@ -701,15 +705,15 @@ unique for each map you have.
                 .entries(1000)
                 .channel(channelProviderServer2.createChannel(channel1)).create();
 
-
-        favoriteColourServer2.put("rob", "blue");
-
         // this demotes favoriteComputer
         short channel2 = (short) 2;
 
         favoriteComputerServer2 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(1000)
                 .channel(channelProviderServer2.createChannel(channel2)).create();
+
+
+        favoriteColourServer2.put("rob", "blue");
 
         favoriteComputerServer2.put("rob", "mac");
         favoriteComputerServer2.put("daniel", "mac");
