@@ -45,7 +45,6 @@ public class BigData {
 
     //    static AtomicInteger Highwatermark = new AtomicInteger(0);
     static {
-        builder.largeSegments(true);
         builder.actualSegments(8 * 1024);
         builder.entries(MAXSIZE);
         String dir = System.getProperty("dir", "/ocz/tmp");

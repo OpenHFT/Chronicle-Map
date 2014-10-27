@@ -139,12 +139,13 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     long modIterBitSetSizeInBytes() {
-        return align64(bitsPerSegmentInModIterBitSet() * segments.length / 8);
+        return align64(bitsPerSegmentInModIterBitSet() * segments.length / 8L);
     }
 
     private long bitsPerSegmentInModIterBitSet() {
         // min 128 * 8 to prevent false sharing on updating bits from different segments
-        return Maths.nextPower2((long) entriesPerSegment, 128 * 8);
+        // TODO this doesn't prevent false sharing. There should be GAPS between per-segment bits
+        return Maths.nextPower2(entriesPerSegment, 128L * 8L);
     }
 
     @Override
@@ -244,7 +245,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyWriter, key);
         long hash = metaKeyWriter.hash(keyWriter, key);
         int segmentNum = getSegment(hash);
-        int segmentHash = segmentHash(hash);
+        long segmentHash = segmentHash(hash);
         return segment(segmentNum).put(copies, metaKeyWriter, keyWriter, key, value, segmentHash,
                 replaceIfPresent, identifier, timeStamp);
     }
@@ -267,7 +268,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyWriter, key);
         long hash = metaKeyWriter.hash(keyWriter, key);
         int segmentNum = getSegment(hash);
-        int segmentHash = segmentHash(hash);
+        long segmentHash = segmentHash(hash);
         return segment(segmentNum).acquire(copies, metaKeyWriter, keyWriter, key, value,
                 segmentHash, create, create ? timeProvider.currentTimeMillis() : 0L);
     }
@@ -326,7 +327,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     @Override
-    public boolean remove(@net.openhft.lang.model.constraints.NotNull final Object key, final Object value) {
+    public boolean remove(@NotNull final Object key, final Object value) {
         if (value == null)
             return false; // CHM compatibility; I would throw NPE
         return removeIfValueIs(key, (V) value,
@@ -344,13 +345,13 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyWriter, key);
         long hash = metaKeyWriter.hash(keyWriter, key);
         int segmentNum = getSegment(hash);
-        int segmentHash = segmentHash(hash);
+        long segmentHash = segmentHash(hash);
         return segment(segmentNum).remove(copies, metaKeyWriter, keyWriter, key, expectedValue,
                 segmentHash, timestamp, identifier);
     }
 
     @Override
-    V replaceIfValueIs(@net.openhft.lang.model.constraints.NotNull final K key, final V existingValue, final V newValue) {
+    V replaceIfValueIs(@NotNull final K key, final V existingValue, final V newValue) {
         checkKey(key);
         checkValue(newValue);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
@@ -360,7 +361,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyWriter, key);
         long hash = metaKeyWriter.hash(keyWriter, key);
         int segmentNum = getSegment(hash);
-        int segmentHash = segmentHash(hash);
+        long segmentHash = segmentHash(hash);
         return segment(segmentNum).replace(copies, metaKeyWriter, keyWriter, key, existingValue,
                 newValue, segmentHash, timeProvider.currentTimeMillis());
     }
@@ -392,7 +393,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         if (!isDeleted) {
             valueSize = valueSizeMarshaller.readSize(entry);
         } else {
-            valueSize = 0;
+            valueSize = 0L;
         }
 
         final long valuePosition = entry.position();
@@ -476,7 +477,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         long hash = hash(source);
 
         int segmentNum = getSegment(hash);
-        int segmentHash = segmentHash(hash);
+        long segmentHash = segmentHash(hash);
 
         boolean debugEnabled = LOG.isDebugEnabled();
 
@@ -568,7 +569,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     public boolean wasRemoved(@NotNull Bytes entry) {
         final long start = entry.position();
         try {
-            return entry.readBoolean(keySizeMarshaller.readSize(entry) + 9);
+            return entry.readBoolean(keySizeMarshaller.readSize(entry) + 9L);
         } finally {
             entry.position(start);
         }
@@ -576,8 +577,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     class Segment extends VanillaChronicleMap<K, KI, MKI, V, VW, MVW>.Segment {
 
-        private volatile IntIntMultiMap hashLookupLiveAndDeleted;
-        private volatile IntIntMultiMap hashLookupLiveOnly;
+        private volatile MultiMap hashLookupLiveAndDeleted;
+        private volatile MultiMap hashLookupLiveOnly;
 
         Segment(NativeBytes bytes, int index) {
             super(bytes, index);
@@ -590,7 +591,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             hashLookupLiveOnly = createMultiMap(start);
         }
 
-        public IntIntMultiMap getHashLookup() {
+        public MultiMap getHashLookup() {
             return hashLookupLiveOnly;
         }
 
@@ -613,7 +614,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * @see VanillaChronicleMap.Segment#acquire
          */
         V acquire(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
-                  K key, V usingValue, int hash2, boolean create, long timestamp) {
+                  K key, V usingValue, long hash2, boolean create, long timestamp) {
             if (create)
                 writeLock();
             else
@@ -655,7 +656,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         private long putEntryOnAcquire(ThreadLocalCopies copies,
                                        MKI metaKeyWriter, KI keyWriter, K key,
-                                       long keySize, int hash2, V value, boolean usingValue,
+                                       long keySize, long hash2, V value, boolean usingValue,
                                        long timestamp) {
             return putEntry(copies, metaKeyWriter, keyWriter, key, keySize, hash2, value,
                     usingValue, localIdentifier, timestamp, hashLookupLiveOnly);
@@ -665,13 +666,13 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         /**
          * called from a remote node as part of replication
          */
-        private void remoteRemove(Bytes keyBytes, int hash2,
+        private void remoteRemove(Bytes keyBytes, long hash2,
                                   final long timestamp, final byte identifier) {
             writeLock();
             try {
                 long keySize = keyBytes.remaining();
                 hashLookupLiveAndDeleted.startSearch(hash2);
-                for (int pos; (pos = hashLookupLiveAndDeleted.nextPos()) >= 0; ) {
+                for (long pos; (pos = hashLookupLiveAndDeleted.nextPos()) >= 0L; ) {
                     long offset = offsetFromPos(pos);
                     NativeBytes entry = entry(offset);
                     if (!remoteKeyEquals(keyBytes, keySize, entry))
@@ -703,8 +704,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 }
                 // key is not found
                 if (LOG.isDebugEnabled())
-                    LOG.debug("Segment.remoteRemove() : key=" + keyBytes.toString().trim() + " was not " +
-                            "found");
+                    LOG.debug("Segment.remoteRemove() : key=" + keyBytes.toString().trim() +
+                            " was not found");
             } finally {
                 writeUnlock();
             }
@@ -714,7 +715,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         /**
          * called from a remote node when it wishes to propagate a remove event
          */
-        private void remotePut(@NotNull final Bytes inBytes, int hash2,
+        private void remotePut(@NotNull final Bytes inBytes, long hash2,
                                final byte identifier, final long timestamp,
                                long valuePos, long valueLimit) {
             writeLock();
@@ -723,7 +724,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 final long keySize = inBytes.remaining();
 
                 hashLookupLiveAndDeleted.startSearch(hash2);
-                for (int pos; (pos = hashLookupLiveAndDeleted.nextPos()) >= 0; ) {
+                for (long pos; (pos = hashLookupLiveAndDeleted.nextPos()) >= 0L; ) {
 
                     long offset = offsetFromPos(pos);
                     NativeBytes entry = entry(offset);
@@ -768,7 +769,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
                 // key is not found
                 long valueSize = valueLimit - valuePos;
-                int pos = alloc(inBlocks(entrySize(keySize, valueSize)));
+                long pos = alloc(inBlocks(entrySize(keySize, valueSize)));
                 long offset = offsetFromPos(pos);
                 clearMetaData(offset);
                 NativeBytes entry = entry(offset);
@@ -806,15 +807,14 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         V put(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
-              K key, V value, int hash2, boolean replaceIfPresent,
+              K key, V value, long hash2, boolean replaceIfPresent,
               final byte identifier, final long timestamp) {
             writeLock();
             try {
-                IntIntMultiMap hashLookup = hashLookupLiveAndDeleted;
+                MultiMap hashLookup = hashLookupLiveAndDeleted;
                 long keySize = metaKeyWriter.size(keyWriter, key);
                 hashLookup.startSearch(hash2);
-                int pos;
-                while ((pos = hashLookup.nextPos()) >= 0) {
+                for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
                     long offset = offsetFromPos(pos);
                     NativeBytes entry = entry(offset);
                     if (!keyEquals(keyWriter, metaKeyWriter, key, keySize, entry))
@@ -878,7 +878,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * @param identifier the unique identifier relating to this map
          * @return true if the entry should not be processed
          */
-        private boolean shouldIgnore(@NotNull final NativeBytes entry, final long timestamp, final byte identifier) {
+        private boolean shouldIgnore(@NotNull final NativeBytes entry, final long timestamp,
+                                     final byte identifier) {
 
             final long lastModifiedTimeStamp = entry.readLong();
 
@@ -916,9 +917,9 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * @see VanillaChronicleMap.Segment#putEntry
          */
         private long putEntry(ThreadLocalCopies copies, MKI metaKeyWriter,
-                              KI keyWriter, K key, long keySize, int hash2, V value,
+                              KI keyWriter, K key, long keySize, long hash2, V value,
                               boolean usingValue, final int identifier, final long timestamp,
-                              IntIntMultiMap searchedHashLookup) {
+                              MultiMap searchedHashLookup) {
 
             // "if-else polymorphism" is not very beautiful, but allows to
             // reuse the rest code of this method and doesn't hurt performance.
@@ -940,7 +941,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             }
 
             long entrySize = entrySize(keySize, valueSize);
-            int pos = alloc(inBlocks(entrySize));
+            long pos = alloc(inBlocks(entrySize));
             long offset = offsetFromPos(pos);
             clearMetaData(offset);
             NativeBytes entry = entry(offset);
@@ -971,15 +972,15 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * @see VanillaChronicleMap.Segment#remove
          */
         V remove(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
-                 K key, V expectedValue, int hash2,
+                 K key, V expectedValue, long hash2,
                  final long timestamp, final byte identifier) {
             assert identifier > 0;
             writeLock();
             try {
                 long keySize = metaKeyWriter.size(keyWriter, key);
-                final IntIntMultiMap multiMap = hashLookupLiveAndDeleted;
+                final MultiMap multiMap = hashLookupLiveAndDeleted;
                 multiMap.startSearch(hash2);
-                for (int pos; (pos = multiMap.nextPos()) >= 0; ) {
+                for (long pos; (pos = multiMap.nextPos()) >= 0L; ) {
                     long offset = offsetFromPos(pos);
                     NativeBytes entry = entry(offset);
                     if (!keyEquals(keyWriter, metaKeyWriter, key, keySize, entry))
@@ -1033,7 +1034,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         @Override
-        IntIntMultiMap containsKeyHashLookup() {
+        MultiMap containsKeyHashLookup() {
             return hashLookupLiveOnly;
         }
 
@@ -1041,12 +1042,12 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * @see VanillaChronicleMap.Segment#replace
          */
         V replace(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
-                  K key, V expectedValue, V newValue, int hash2, long timestamp) {
+                  K key, V expectedValue, V newValue, long hash2, long timestamp) {
             writeLock();
             try {
                 long keySize = metaKeyWriter.size(keyWriter, key);
                 hashLookupLiveOnly.startSearch(hash2);
-                for (int pos; (pos = hashLookupLiveOnly.nextPos()) >= 0; ) {
+                for (long pos; (pos = hashLookupLiveOnly.nextPos()) >= 0L; ) {
                     long offset = offsetFromPos(pos);
                     NativeBytes entry = entry(offset);
                     if (!keyEquals(keyWriter, metaKeyWriter, key, keySize, entry))
@@ -1070,10 +1071,11 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         @Override
-        void replacePosInHashLookupOnRelocation(IntIntMultiMap searchedHashLookup, int prevPos, int pos) {
+        void replacePosInHashLookupOnRelocation(MultiMap searchedHashLookup,
+                                                long prevPos, long pos) {
             searchedHashLookup.replacePrevPos(pos);
-            int hash = searchedHashLookup.getSearchHash();
-            IntIntMultiMap anotherLookup = searchedHashLookup == hashLookupLiveAndDeleted ?
+            long hash = searchedHashLookup.getSearchHash();
+            MultiMap anotherLookup = searchedHashLookup == hashLookupLiveAndDeleted ?
                     hashLookupLiveOnly : hashLookupLiveAndDeleted;
             anotherLookup.replace(hash, prevPos, pos);
         }
@@ -1084,10 +1086,10 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             this.readLock();
             try {
                 final int index = Segment.this.getIndex();
-                hashLookupLiveAndDeleted.forEach(new IntIntMultiMap.EntryConsumer() {
+                hashLookupLiveAndDeleted.forEach(new MultiMap.EntryConsumer() {
 
                     @Override
-                    public void accept(int hash, int pos) {
+                    public void accept(long hash, long pos) {
                         final NativeBytes entry = entry(offsetFromPos(pos));
                         long keySize = keySizeMarshaller.readSize(entry);
                         entry.skip(keySize);
@@ -1154,7 +1156,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     class EntryIterator extends VanillaChronicleMap<K, KI, MKI, V, VW, MVW>.EntryIterator {
         @Override
-        void removePresent(VanillaChronicleMap.Segment seg, int pos) {
+        void removePresent(VanillaChronicleMap.Segment seg, long pos) {
             @SuppressWarnings("unchecked")
             Segment segment = (Segment) seg;
 
@@ -1189,7 +1191,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     return;
                 }
             }
-            final int segmentHash = segmentHash(hash(entry, keyPosition, keyPosition + keySize));
+            final long segmentHash = segmentHash(hash(entry, keyPosition, keyPosition + keySize));
 
             segment.hashLookupLiveOnly.remove(segmentHash, pos);
             segment.decrementSize();
@@ -1285,7 +1287,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         @Override
         public void onRemove(ChronicleMap<K, V> map, Bytes entry, int metaDataBytes,
-                             K key, V value, int pos, SharedSegment segment) {
+                             K key, V value, long pos, SharedSegment segment) {
             assert ReplicatedChronicleMap.this == map :
                     "ModificationIterator.onRemove() is called from outside of the parent map";
             try {
@@ -1306,7 +1308,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         @Override
-        void onRelocation(int pos, SharedSegment segment) {
+        void onRelocation(long pos, SharedSegment segment) {
             for (long next = modIterSet.nextSetBit(0); next > 0; next = modIterSet.nextSetBit(next + 1)) {
                 try {
                     final ModificationIterator modificationIterator = modificationIterators.get((int) next);
@@ -1371,7 +1373,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         private final EntryModifiableCallback entryModifiableCallback = new EntryModifiableCallback();
 
         // records the current position of the cursor in the bitset
-        private long position = -1;
+        private long position = -1L;
 
         /**
          * @param bytes                the back the bitset, used to mark which entries have changed
@@ -1383,7 +1385,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             this.modificationNotifier = modificationNotifier;
             long bitsPerSegment = bitsPerSegmentInModIterBitSet();
             segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
-            posMask = bitsPerSegment - 1;
+            posMask = bitsPerSegment - 1L;
             changes = new ATSDirectBitSet(bytes);
         }
 
@@ -1413,7 +1415,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         @Override
         public void onRemove(ChronicleMap<K, V> map, Bytes entry, int metaDataBytes,
-                             K key, V value, int pos, SharedSegment segment) {
+                             K key, V value, long pos, SharedSegment segment) {
             assert ReplicatedChronicleMap.this == map :
                     "ModificationIterator.onRemove() is called from outside of the parent map";
 
@@ -1427,7 +1429,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * Ensures that garbage in the old entry's location won't be broadcast as changed entry.
          */
         @Override
-        void onRelocation(int pos, SharedSegment segment) {
+        void onRelocation(long pos, SharedSegment segment) {
             changes.clear(combine(segment.getIndex(), pos));
             // don't call nextListener.onRelocation(),
             // because no one event listener else overrides this method.
@@ -1443,8 +1445,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         public boolean hasNext() {
             final long position = this.position;
-            return changes.nextSetBit(position == NOT_FOUND ? 0 : position) != NOT_FOUND ||
-                    (position > 0 && changes.nextSetBit(0) != NOT_FOUND);
+            return changes.nextSetBit(position == NOT_FOUND ? 0L : position) != NOT_FOUND ||
+                    (position > 0L && changes.nextSetBit(0L) != NOT_FOUND);
         }
 
 
@@ -1456,7 +1458,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             long position = this.position;
             while (true) {
                 long oldPosition = position;
-                position = changes.nextSetBit(oldPosition + 1);
+                position = changes.nextSetBit(oldPosition + 1L);
 
                 if (position == NOT_FOUND) {
                     if (oldPosition == NOT_FOUND) {
@@ -1532,7 +1534,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
              * @param segmentIndex the segment relating to the bit to set
              * @param pos          the position relating to the bit to set
              */
-            public void set(int segmentIndex, int pos) {
+            public void set(int segmentIndex, long pos) {
                 final long combine = combine(segmentIndex, pos);
                 changes.set(combine);
             }

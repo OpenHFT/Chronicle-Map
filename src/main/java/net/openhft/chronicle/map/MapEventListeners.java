@@ -71,7 +71,7 @@ public final class MapEventListeners {
 
         @Override
         public void onRemove(ChronicleMap map, Bytes entry, int metaDataBytes,
-                             Object key, Object value, int pos, SharedSegment segment) {
+                             Object key, Object value, long pos, SharedSegment segment) {
             logOperation(map, entry, metaDataBytes, " remove ");
         }
     };
@@ -93,7 +93,7 @@ public final class MapEventListeners {
 
         @Override
         public void onRemove(ChronicleMap map, Bytes entry, int metaDataBytes,
-                             Object key, Object value, int pos, SharedSegment segment) {
+                             Object key, Object value, long pos, SharedSegment segment) {
             LOGGER.info("{} remove {} was {}", map.file(), key, value);
         }
     };
