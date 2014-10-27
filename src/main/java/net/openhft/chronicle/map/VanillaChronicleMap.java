@@ -562,7 +562,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             long start = bytes.startAddr() + SEGMENT_HEADER;
             createHashLookups(start);
             start += align64(sizeOfMultiMap() + sizeOfMultiMapBitSet()) * multiMapsPerSegment();
-            final NativeBytes bsBytes = new NativeBytes(tmpBytes.objectSerializer(),
+            final NativeBytes bsBytes = new NativeBytes(ms.objectSerializer(),
                     start, start + ((entriesPerSegment + 7) / 8), null);
             freeList = new SingleThreadedDirectBitSet(bsBytes);
             start += numberOfBitSets() * sizeOfBitSets();
@@ -631,7 +631,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         public void readLock() throws IllegalStateException {
             while (true) {
-                final boolean success = bytes.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
+                final boolean success = bytes.tryLockNanosLong(LOCK_OFFSET, lockTimeOutNS);
                 if (success) return;
                 if (currentThread().isInterrupted()) {
                     throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
@@ -644,7 +644,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         public void writeLock() throws IllegalStateException {
             while (true) {
-                final boolean success = bytes.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+                final boolean success = bytes.tryLockNanosLong(LOCK_OFFSET, lockTimeOutNS);
                 if (success) return;
                 if (currentThread().isInterrupted()) {
                     throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
@@ -657,7 +657,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         public void readUnlock() {
             try {
-                bytes.unlockRWReadLock(LOCK_OFFSET);
+                bytes.unlockLong(LOCK_OFFSET);
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);
             }
@@ -665,7 +665,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         public void writeUnlock() {
             try {
-                bytes.unlockRWWriteLock(LOCK_OFFSET);
+                bytes.unlockLong(LOCK_OFFSET);
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);
             }
