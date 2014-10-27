@@ -42,6 +42,8 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.Long.numberOfTrailingZeros;
+import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
 
 
@@ -269,23 +271,19 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 + sizeOfEntriesInSegment();
         if ((ss & 63L) != 0)
             throw new AssertionError();
+        return breakL1CacheAssociativityContention(ss);
+    }
 
-        // Say, there is 32 KB L1 cache with 2(4, 8) way set associativity, 64-byte lines.
-        // It means there are 32 * 1024 / 64 / 2(4, 8) = 256(128, 64) sets,
-        // i. e. each way (bank) contains 256(128, 64) lines. (L2 and L3 caches has more sets.)
-        // If segment size in lines multiplied by 2^n is divisible by set size,
-        // every 2^n-th segment header fall into the same set.
-        // To break this up we make segment size odd in lines, in this case only each
-        // 256(128, 64)-th segment header fall into the same set.
-
-        // If there are 64 sets in L1, it should be 8- or much less likely 4-way, and segments
-        // collision by pairs is not so terrible.
-
-        // if the size is a multiple of 4096 or slightly more. Make sure it is at least 64 more than a multiple.
-        if ((ss & 4093) < 64)
-            ss = (ss & ~63) + 64;
-
-        return ss;
+    private long breakL1CacheAssociativityContention(long segmentSize) {
+        // Conventional alignment to break is 4096 (given Intel's 32KB 8-way L1 cache),
+        // for any case break 2 times smaller alignment
+        int alignmentToBreak = 2048;
+        int eachNthSegmentFallIntoTheSameSet =
+                max(1, alignmentToBreak >> numberOfTrailingZeros(segmentSize));
+        if (eachNthSegmentFallIntoTheSameSet < actualSegments) {
+            segmentSize |= 64L; // make segment size "odd" (in cache lines)
+        }
+        return segmentSize;
     }
 
     int multiMapsPerSegment() {
@@ -625,7 +623,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         long getSize() {
             // any negative value is in error state.
-            return Math.max(0L, this.bytes.readVolatileLong(SIZE_OFFSET));
+            return max(0L, this.bytes.readVolatileLong(SIZE_OFFSET));
         }
 
 
