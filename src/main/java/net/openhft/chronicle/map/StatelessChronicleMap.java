@@ -790,7 +790,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private void writeSizeAt(long locationOfSize) {
         long size = bytes.position() - locationOfSize;
-        LOG.info("writing size = " + size);
+//        LOG.info("writing size = " + size);
         bytes.writeInt(locationOfSize, (int) size - SIZE_OF_SIZE);
     }
 

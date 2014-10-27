@@ -259,9 +259,9 @@ public class NodeDiscovery {
      * bitwise OR's the two bit sets or put another way, merges the source bitset into the
      * destination bitset and returns the destination
      *
-     * @param source
-     * @param destination
-     * @return
+     * @param source to or
+     * @param destination to or
+     * @return result.
      */
     private DirectBitSet orBitSets(@NotNull final DirectBitSet source,
                                    @NotNull final DirectBitSet destination) {

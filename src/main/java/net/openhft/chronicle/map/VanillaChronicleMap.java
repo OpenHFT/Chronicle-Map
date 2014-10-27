@@ -523,6 +523,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         return valueSize;
     }
 
+    static final ThreadLocal<MultiStoreBytes> tmpBytes = new ThreadLocal<>();
+    protected MultiStoreBytes acquireTmpBytes() {
+        MultiStoreBytes b = tmpBytes.get();
+        if (b == null)
+            tmpBytes.set(b = new MultiStoreBytes());
+        return b;
+    }
+
     // these methods should be package local, not public or private.
     class Segment implements SharedSegment {
         /*
@@ -537,7 +545,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         static final long SIZE_OFFSET = LOCK_OFFSET + 8L; // 32-bit
 
         final NativeBytes bytes;
-        final MultiStoreBytes tmpBytes = new MultiStoreBytes();
         final long entriesOffset;
         private final int index;
         private final SingleThreadedDirectBitSet freeList;
@@ -555,7 +562,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             long start = bytes.startAddr() + SEGMENT_HEADER;
             createHashLookups(start);
             start += align64(sizeOfMultiMap() + sizeOfMultiMapBitSet()) * multiMapsPerSegment();
-            final NativeBytes bsBytes = new NativeBytes(tmpBytes.objectSerializer(),
+            final NativeBytes bsBytes = new NativeBytes(ms.objectSerializer(),
                     start, start + align8(align8(entriesPerSegment) / 8L), null);
             freeList = new SingleThreadedDirectBitSet(bsBytes);
             start += numberOfBitSets() * sizeOfBitSets();
@@ -624,7 +631,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         public void readLock() throws IllegalStateException {
             while (true) {
-                final boolean success = bytes.tryLockNanosLong(LOCK_OFFSET, lockTimeOutNS);
+                final boolean success = bytes.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
                 if (success) return;
                 if (currentThread().isInterrupted()) {
                     throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
@@ -637,7 +644,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         public void writeLock() throws IllegalStateException {
             while (true) {
-                final boolean success = bytes.tryLockNanosLong(LOCK_OFFSET, lockTimeOutNS);
+                final boolean success = bytes.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
                 if (success) return;
                 if (currentThread().isInterrupted()) {
                     throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
@@ -650,7 +657,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         public void readUnlock() {
             try {
-                bytes.unlockLong(LOCK_OFFSET);
+                bytes.unlockRWReadLock(LOCK_OFFSET);
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);
             }
@@ -658,7 +665,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         public void writeUnlock() {
             try {
-                bytes.unlockLong(LOCK_OFFSET);
+                bytes.unlockRWWriteLock(LOCK_OFFSET);
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);
             }
@@ -675,15 +682,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
 
         public MultiStoreBytes entry(long offset) {
-            return reuse(tmpBytes, offset);
+            return reuse(acquireTmpBytes(), offset);
         }
 
         private MultiStoreBytes reuse(MultiStoreBytes entry, long offset) {
             offset += metaDataBytes;
-            entry.storePositionAndSize(bytes, offset,
-                    // "Infinity". Limit not used when treating entries as
-                    // possibly oversized
-                    bytes.limit() - offset);
+            entry.setBytesOffset(bytes, offset);
             return entry;
         }
 
@@ -728,7 +732,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 readLock();
             try {
                 long keySize = metaKeyInterop.size(keyInterop, key);
-                MultiStoreBytes entry = tmpBytes;
+                MultiStoreBytes entry = acquireTmpBytes();
                 long offset = searchKey(keyInterop, metaKeyInterop, key, keySize, hash2, entry,
                         hashLookup);
                 if (offset >= 0L) {
@@ -776,7 +780,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         V onKeyPresentOnAcquire(ThreadLocalCopies copies, K key, V usingValue, long offset,
-                                NativeBytes entry) {
+                                MultiStoreBytes entry) {
             V v = readValue(copies, entry, usingValue);
             notifyGet(offset, key, v);
             return v;
@@ -817,7 +821,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 hashLookup.startSearch(hash2);
                 for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
                     long offset = offsetFromPos(pos);
-                    NativeBytes entry = entry(offset);
+                    MultiStoreBytes entry = entry(offset);
                     if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                         continue;
                     // key is found
@@ -840,7 +844,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             }
         }
 
-        V replaceValueOnPut(ThreadLocalCopies copies, K key, V value, NativeBytes entry, long pos,
+        V replaceValueOnPut(ThreadLocalCopies copies, K key, V value, MultiStoreBytes entry, long pos,
                             long offset, boolean readPrevValue, MultiMap searchedHashLookup) {
             long valueSizePos = entry.position();
             long valueSize = readValueSize(entry);
@@ -978,15 +982,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 nextPosToSearchFrom = fromPos;
         }
 
-        V readValue(ThreadLocalCopies copies, NativeBytes entry, V value) {
+        V readValue(ThreadLocalCopies copies, MultiStoreBytes entry, V value) {
             return readValue(copies, entry, value, readValueSize(entry));
         }
 
-        V readValue(ThreadLocalCopies copies, NativeBytes entry, V value, long valueSize) {
+        V readValue(ThreadLocalCopies copies, MultiStoreBytes entry, V value, long valueSize) {
             copies = valueReaderProvider.getCopies(copies);
             BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
-            bytes.positionAddr(entry.positionAddr());
-            return valueReader.read(bytes, valueSize, value);
+            return valueReader.read(entry, valueSize, value);
         }
 
         boolean keyEquals(KI keyInterop, MKI metaKeyInterop, K key,
@@ -1013,7 +1016,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 hashLookup.startSearch(hash2);
                 for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
                     long offset = offsetFromPos(pos);
-                    NativeBytes entry = entry(offset);
+                    MultiStoreBytes entry = entry(offset);
                     if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                         continue;
                     // key is found
@@ -1074,7 +1077,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 hashLookup.startSearch(hash2);
                 for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
                     long offset = offsetFromPos(pos);
-                    NativeBytes entry = entry(offset);
+                    MultiStoreBytes entry = entry(offset);
                     if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                         continue;
                     // key is found
@@ -1090,7 +1093,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         V onKeyPresentOnReplace(ThreadLocalCopies copies, K key, V expectedValue, V newValue,
-                                long pos, long offset, NativeBytes entry,
+                                long pos, long offset, MultiStoreBytes entry,
                                 MultiMap searchedHashLookup) {
             long valueSizePos = entry.position();
             long valueSize = readValueSize(entry);
@@ -1111,24 +1114,27 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         void notifyPut(long offset, boolean added, K key, V value, final long pos) {
             if (eventListener() != MapEventListeners.NOP) {
-                tmpBytes.storePositionAndSize(bytes, offset, entrySize);
-                eventListener().onPut(VanillaChronicleMap.this, tmpBytes, metaDataBytes,
+                MultiStoreBytes b = acquireTmpBytes();
+                b.storePositionAndSize(bytes, offset, entrySize);
+                eventListener().onPut(VanillaChronicleMap.this, b, metaDataBytes,
                         added, key, value, pos, this);
             }
         }
 
         void notifyGet(long offset, K key, V value) {
             if (eventListener() != MapEventListeners.NOP) {
-                tmpBytes.storePositionAndSize(bytes, offset, entrySize);
-                eventListener().onGetFound(VanillaChronicleMap.this, tmpBytes, metaDataBytes,
+                MultiStoreBytes b = acquireTmpBytes();
+                b.storePositionAndSize(bytes, offset, entrySize);
+                eventListener().onGetFound(VanillaChronicleMap.this, b, metaDataBytes,
                         key, value);
             }
         }
 
         void notifyRemoved(long offset, K key, V value, final long pos) {
             if (eventListener() != MapEventListeners.NOP) {
-                tmpBytes.storePositionAndSize(bytes, offset, entrySize);
-                eventListener().onRemove(VanillaChronicleMap.this, tmpBytes, metaDataBytes,
+                MultiStoreBytes b = acquireTmpBytes();
+                b.storePositionAndSize(bytes, offset, entrySize);
+                eventListener().onRemove(VanillaChronicleMap.this, b, metaDataBytes,
                         key, value, pos, this);
             }
         }

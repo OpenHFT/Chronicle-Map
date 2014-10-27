@@ -1270,14 +1270,14 @@ class StatelessServerConnector<K, V> {
                                @NotNull final ByteBufferBytes reader) {
 
 
-        LOG.info("processStatelessEvent - writer   position=" + reader.position() +
+/*        LOG.info("processStatelessEvent - writer   position=" + reader.position() +
                 ", " +
                 "limit=" + reader.limit() + ",capacity=" + reader.capacity());
 
 
         LOG.info("StatelessServerConnector- reader   position=" + writer.position() +
                 ", " +
-                "limit=" + writer.limit() + ",capacity=" + writer.capacity());
+                "limit=" + writer.limit() + ",capacity=" + writer.capacity());*/
 
 
         final StatelessChronicleMap.EventId event = StatelessChronicleMap.EventId.values()[eventId];

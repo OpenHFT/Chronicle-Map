@@ -23,10 +23,13 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.DirectStore;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -51,8 +54,8 @@ public class IntIntMultiMapTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
+                {VanillaShortShortMultiMap.class},
                 {VanillaIntIntMultiMap.class},
-                {VanillaShortShortMultiMap.class}
         });
     }
 
@@ -150,13 +153,14 @@ public class IntIntMultiMapTest {
     }
 
     @Test
+    @Ignore("Very long running test")
     public void testMaxCapacity() throws NoSuchFieldException, IllegalAccessException {
         Field maxCapacityField = c.getDeclaredField("MAX_CAPACITY");
         long maxCapacity = maxCapacityField.getLong(null);
         Field entrySizeField = c.getDeclaredField("ENTRY_SIZE");
         entrySizeField.setAccessible(true);
         long entrySize = entrySizeField.getLong(null);
-        if (Runtime.getRuntime().maxMemory() < maxCapacity * entrySize * 3L / 2L) {
+        if (maxMemory() * 1024L < maxCapacity * entrySize * 3L / 2L) {
             System.out.println("Skipped " + c + " maxCapacity test because there is not enough " +
                     "memory in system");
             return;
@@ -176,5 +180,17 @@ public class IntIntMultiMapTest {
             }
         });
         assertTrue(bs.allSet(0L, maxCapacity));
+    }
+
+    private long maxMemory() {
+        File meminfo = new File("/proc/meminfo");
+        try {
+            try (Scanner sc = new Scanner(meminfo)) {
+                sc.next();
+                return sc.nextLong();
+            }
+        } catch (FileNotFoundException e) {
+            return -1;
+        }
     }
 }

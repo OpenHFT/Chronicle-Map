@@ -470,8 +470,8 @@ public class ChronicleMapTest {
 
     @Test
     public void testGetWithoutAcquireFirst() throws Exception {
-        ChronicleMap<CharSequence, LongValue> map = getSharedMap(10 * 1000, 128, 24);
-        assertNull(map.getUsing("key", new LongValue$$Native()));
+        ChronicleMap<CharSequence, LongValue> map = getSharedMap(10 , 1, 24);
+        assertNull(map.getUsing("key", DataValueClasses.newDirectReference(LongValue.class)));
 
         map.close();
     }
@@ -491,10 +491,10 @@ public class ChronicleMapTest {
     @Test
     public void testAcquireAndGet() throws IOException, ClassNotFoundException,
             IllegalAccessException, InstantiationException {
-        int entries = 100 * 1000;
-        testAcquireAndGet(getSharedMap(entries, 128, 24, NO_ALIGNMENT), entries);
-        testAcquireAndGet(getSharedMap(entries, 128, 24, OF_4_BYTES), entries);
-        testAcquireAndGet(getSharedMap(entries, 128, 24, OF_8_BYTES), entries);
+        int entries = 3/*00 * 1000*/;
+        testAcquireAndGet(getSharedMap(entries, 1, 24, OF_4_BYTES), entries);
+        testAcquireAndGet(getSharedMap(entries, 1, 24, NO_ALIGNMENT), entries);
+        testAcquireAndGet(getSharedMap(entries, 1, 24, OF_8_BYTES), entries);
     }
 
     public void testAcquireAndGet(ChronicleMap<CharSequence, LongValue> map, int entries)
