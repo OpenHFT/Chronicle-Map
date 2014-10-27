@@ -602,41 +602,36 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     @NotNull
     public synchronized Set<Map.Entry<K, V>> entrySet() {
-        long sizeLocation = writeEvent(ENTRY_SET);
+        final long sizeLocation = writeEvent(ENTRY_SET);
 
-        long startTime = System.currentTimeMillis();
-        long transactionId = nextUniqueTransaction(startTime);
-
+        final long startTime = System.currentTimeMillis();
+        final long transactionId = nextUniqueTransaction(startTime);
+        final long timeoutTime = System.currentTimeMillis() + builder.timeoutMs();
 
         // get the data back from the server
         Bytes in = blockingFetch0(sizeLocation, transactionId, startTime);
 
         final Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
 
-        boolean hasMoreEntries;
-        do {
-            hasMoreEntries = in.readBoolean();
+        for (; ; ) {
+
+            boolean hasMoreEntries = in.readBoolean();
             LOG.info("entrySet - hasMoreEntries=" + hasMoreEntries);
+
             // number of entries in the chunk
             long size = in.readInt();
-
-            LOG.info("entrySet - size=" + size);
 
             for (int i = 0; i < size; i++) {
                 K k = keyValueSerializer.readKey(in);
                 V v = keyValueSerializer.readValue(in);
-                //     LOG.info("v="+v);
                 result.add(new Entry(k, v));
             }
 
-            if (hasMoreEntries)
-                try {
-                    in = blockingFetch(System.currentTimeMillis() + builder.timeoutMs(), transactionId);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            if (!hasMoreEntries)
+                break;
 
-        } while (hasMoreEntries);
+            in = blockingFetchReadOnly(timeoutTime, transactionId);
+        }
 
         return result;
     }
@@ -766,6 +761,21 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             }
         }
     }
+
+    private Bytes blockingFetchReadOnly(long timeoutTime, final long transactionId) {
+
+        try {
+            return blockingFetch(timeoutTime, transactionId);
+        } catch (IOException e) {
+            close();
+            throw new IORuntimeException(e);
+        } catch (Exception e) {
+            close();
+            throw e;
+        }
+
+    }
+
 
     private Bytes blockingFetch(long timeoutTime, long transactionId) throws IOException {
         bytes.clear();

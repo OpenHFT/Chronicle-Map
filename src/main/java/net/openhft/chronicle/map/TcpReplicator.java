@@ -1667,18 +1667,7 @@ class StatelessServerConnector<K, V> {
             @Override
             public boolean doWork(Bytes writer) {
 
-                final long sizeLocation = writer.position();
-
-                writer.skip(AbstractChannelReplicator.SIZE_OF_SIZE + 1); //  SIZE_OF_SIZE  + is
-
-                // exception
-                writer.writeLong(transactionId);
-
-                //  hasAnotherChunk
-                writer.skip(1);
-
-                // count
-                writer.skip(4);
+                final long sizeLocation = header(writer, transactionId);
 
                 int count = 0;
                 while (iterator.hasNext()) {
@@ -1703,26 +1692,7 @@ class StatelessServerConnector<K, V> {
                 return true;
             }
 
-            private void writeHeader(Bytes writer, long sizeLocation, int count, final boolean hasAnotherChunk) {
-                final long end = writer.position();
-                final int size = (int) (end - sizeLocation);
-                writer.position(sizeLocation);
 
-                // size in bytes
-                writer.writeInt(size);
-
-                // is exception
-                writer.writeBoolean(false);
-
-                //transaction id;
-                writer.skip(8);
-
-                writer.writeBoolean(hasAnotherChunk);
-
-                // count
-                writer.writeInt(count);
-                writer.position(end);
-            }
         };
     }
 
@@ -1732,6 +1702,43 @@ class StatelessServerConnector<K, V> {
 
     private void entryCount(long location, int count, Bytes out) {
 
+    }
+
+    private long header(Bytes writer, final long transactionId) {
+        final long sizeLocation = writer.position();
+
+        writer.skip(AbstractChannelReplicator.SIZE_OF_SIZE + 1); //  SIZE_OF_SIZE  + is
+
+        // exception
+        writer.writeLong(transactionId);
+
+        //  hasAnotherChunk
+        writer.skip(1);
+
+        // count
+        writer.skip(4);
+        return sizeLocation;
+    }
+
+    private void writeHeader(Bytes writer, long sizeLocation, int count, final boolean hasAnotherChunk) {
+        final long end = writer.position();
+        final int size = (int) (end - sizeLocation);
+        writer.position(sizeLocation);
+
+        // size in bytes
+        writer.writeInt(size);
+
+        // is exception
+        writer.writeBoolean(false);
+
+        //transaction id;
+        writer.skip(8);
+
+        writer.writeBoolean(hasAnotherChunk);
+
+        // count
+        writer.writeInt(count);
+        writer.position(end);
     }
 
     private Work putIfAbsent(Bytes reader, Bytes writer) {
