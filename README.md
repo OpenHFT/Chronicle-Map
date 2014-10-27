@@ -642,7 +642,102 @@ chronicle channels.
 If you inadvertently got the chronicle channels around the wrong way, then chronicle would attempt
 to replicate the wrong maps data. The chronicle channels don't have to be in order but they must be
 unique for each map you have.
- 
+
+
+### Channels and ChannelProvider - Example
+
+``` java
+    // server 1 with  identifier = 1
+    {
+        byte identifier = (byte) 1;
+
+        TcpReplicationConfig tcpConfig = TcpReplicationConfig
+                .of(8086, new InetSocketAddress("localhost", 8087))
+                .heartBeatInterval(1, java.util.concurrent.TimeUnit.SECONDS);
+
+
+        channelProviderServer1 = new ChannelProviderBuilder()
+                .replicators(identifier, tcpConfig)
+                .create();
+
+        // this demotes favoriteColour
+        short channel1 = (short) 1;
+
+        favoriteColourServer1 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(1000)
+                .channel(channelProviderServer1.createChannel(channel1)).create();
+
+        favoriteColourServer1.put("peter", "green");
+
+        // this demotes favoriteComputer
+        short channel2 = (short) 2;
+
+        favoriteComputerServer1 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(1000)
+                .channel(channelProviderServer1.createChannel(channel2)).create();
+
+        favoriteComputerServer1.put("peter", "dell");
+
+    }
+
+    // server 2 with  identifier = 2
+    {
+
+        byte identifier = (byte) 2;
+
+        TcpReplicationConfig tcpConfig =
+                TcpReplicationConfig.of(8087).heartBeatInterval(1, java.util.concurrent.TimeUnit.SECONDS);
+
+        channelProviderServer2 = new ChannelProviderBuilder()
+                .replicators(identifier, tcpConfig)
+                .create();
+
+
+        // this demotes favoriteColour
+        short channel1 = (short) 1;
+
+        favoriteColourServer2 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(1000)
+                .channel(channelProviderServer2.createChannel(channel1)).create();
+
+
+        favoriteColourServer2.put("rob", "blue");
+
+        // this demotes favoriteComputer
+        short channel2 = (short) 2;
+
+        favoriteComputerServer2 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(1000)
+                .channel(channelProviderServer2.createChannel(channel2)).create();
+
+        favoriteComputerServer2.put("rob", "mac");
+        favoriteComputerServer2.put("daniel", "mac");
+    }
+
+
+    // allow time for the recompilation to resolve
+    for (int t = 0; t < 2500; t++) {
+        if (favoriteComputerServer2.equals(favoriteComputerServer1) &&
+                favoriteColourServer2.equals(favoriteColourServer1))
+            break;
+        Thread.sleep(1);
+    }
+
+
+    assertEquals(favoriteComputerServer1, favoriteComputerServer2);
+    Assert.assertEquals(3, favoriteComputerServer2.size());
+
+
+    assertEquals(favoriteColourServer1, favoriteColourServer2);
+    Assert.assertEquals(2, favoriteColourServer1.size());
+
+
+    favoriteColourServer1.close();
+    favoriteComputerServer2.close();
+    favoriteColourServer2.close();
+    favoriteColourServer1.close();
+}
+``` 
 
 # Stateless Client
 
