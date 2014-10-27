@@ -527,9 +527,7 @@ map = ChronicleMapBuilder
 
 ### Configuring Three Way TCP/IP Replication
 
-![TCP/IP Replication 3Way](http://openhft
-.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-27-at-18
-.19.05.png)
+![TCP/IP Replication 3Way](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-27-at-18.19.05.png)
 
 
 and example of setting up three server with TCP Replication, ideally they would be on different 
