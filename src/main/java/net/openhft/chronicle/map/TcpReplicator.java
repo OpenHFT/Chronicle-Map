@@ -548,7 +548,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             if (completed)
                 attached.entryWriter.workCompleted();
 
-            //   attached.hasRemoteHeartbeatInterval = false;
+              attached.hasRemoteHeartbeatInterval = false;
 
         } else if (attached.remoteModificationIterator != null)
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
@@ -1654,8 +1654,7 @@ class StatelessServerConnector<K, V> {
         try {
             entries = map.entrySet();
         } catch (RuntimeException e) {
-            final long sizeLocation = reflectTransactionId(reader, writer);
-            return sendException(writer, sizeLocation, e);
+            return sendException(reader, writer, e);
         }
 
 
@@ -1676,7 +1675,6 @@ class StatelessServerConnector<K, V> {
                     // some data, we don't know the max key size, we will use the entrySize instead
                     if (writer.remaining() <= maxEntrySizeBytes) {
                         writeHeader(writer, sizeLocation, count, true);
-                         LOG.info("One more chunk !");
                         return false;
                     }
 
@@ -1687,13 +1685,16 @@ class StatelessServerConnector<K, V> {
                 }
 
                 writeHeader(writer, sizeLocation, count, false);
-
-                LOG.info("Last chunk !");
                 return true;
             }
 
 
         };
+    }
+
+    private Work sendException(Bytes reader, Bytes writer, RuntimeException e) {
+        final long sizeLocation = reflectTransactionId(reader, writer);
+        return sendException(writer, sizeLocation, e);
     }
 
     private void writeMoreData(long location, boolean hasMoreData, Bytes out) {
