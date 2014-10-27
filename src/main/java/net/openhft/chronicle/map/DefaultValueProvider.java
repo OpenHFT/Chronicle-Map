@@ -33,8 +33,7 @@ public interface DefaultValueProvider<K, V> extends Serializable {
      * for the specified key, if it is absent in the map.
      *
      * @param key key absent in the map
-     * @return value to be put for the specified key in the map, or {@code null}, if the key should
-     * remain absent in the map
+     * @return value to be put for the specified key in the map
      */
     V get(K key);
 }
