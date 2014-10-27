@@ -22,7 +22,6 @@ import net.openhft.chronicle.common.ChronicleHashErrorListener;
 import net.openhft.chronicle.common.serialization.*;
 import net.openhft.chronicle.common.threadlocal.Provider;
 import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
-import net.openhft.lang.Maths;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
@@ -90,6 +89,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     final boolean putReturnsNull;
     final boolean removeReturnsNull;
 
+    final boolean useSmallMultiMaps;
+
     private final long lockTimeOutNS;
     private final ChronicleHashErrorListener errorListener;
     transient Segment[] segments; // non-final for close()
@@ -139,7 +140,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         this.eventListener = builder.eventListener();
 
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
-
+        useSmallMultiMaps = useSmallMultiMaps();
         initTransients();
     }
 
@@ -237,19 +238,19 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     long sizeOfMultiMap() {
-        return useSmallMultiMaps() ?
+        return useSmallMultiMaps ?
                 VanillaShortShortMultiMap.sizeInBytes(entriesPerSegment) :
                 VanillaIntIntMultiMap.sizeInBytes(entriesPerSegment);
     }
 
     long sizeOfMultiMapBitSet() {
-        return useSmallMultiMaps() ?
+        return useSmallMultiMaps ?
                 VanillaShortShortMultiMap.sizeOfBitSetInBytes(entriesPerSegment) :
                 VanillaIntIntMultiMap.sizeOfBitSetInBytes(entriesPerSegment);
     }
 
     boolean useSmallMultiMaps() {
-        return entriesPerSegment <= VanillaShortShortMultiMap.MAX_CAPACITY;
+        return entriesPerSegment * 2L <= VanillaShortShortMultiMap.MAX_CAPACITY;
     }
 
     long sizeOfBitSets() {
@@ -588,7 +589,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     new NativeBytes(new VanillaBytesMarshallerFactory(), start,
                             start + sizeOfMultiMapBitSet(), null);
             multiMapBytes.load();
-            return useSmallMultiMaps() ?
+            return useSmallMultiMaps ?
                     new VanillaShortShortMultiMap(multiMapBytes, sizeOfMultiMapBitSetBytes) :
                     new VanillaIntIntMultiMap(multiMapBytes, sizeOfMultiMapBitSetBytes);
         }
