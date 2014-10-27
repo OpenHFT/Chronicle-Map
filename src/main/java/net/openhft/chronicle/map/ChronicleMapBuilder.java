@@ -404,11 +404,11 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     private long totalEntriesIfPoorDistribution(int segments) {
         if (segments == 1)
             return entries;
+        double poorDistEntriesScale = Math.log(segments) * entries;
         if (segments <= 8)
-            return entries * 13L / 12L; // 6%, (3% was min for tests)
-        if (segments <= 128)
-            return entries * 8L / 7L; // 14% (7% was min for tests)
-        return entries * 6L / 5L; // 20% (10% was min for tests)
+            return Math.min(entries * segments,
+                    (long) (entries  + poorDistEntriesScale * 0.08 + 64)); // 8% was min for tests
+        return (long) (entries  + poorDistEntriesScale * 0.11 + 80); // 11% was min for tests
     }
 
     @Override
@@ -903,11 +903,11 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {
         preMapConstruction();
-        if (!useReplication()) {
-            return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
+        if (useReplication()) {
+            return new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                     V, Object, MetaBytesWriter<V, Object>>(this);
         } else {
-            return new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
+            return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                     V, Object, MetaBytesWriter<V, Object>>(this);
         }
     }

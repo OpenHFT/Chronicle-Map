@@ -556,7 +556,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             createHashLookups(start);
             start += align64(sizeOfMultiMap() + sizeOfMultiMapBitSet()) * multiMapsPerSegment();
             final NativeBytes bsBytes = new NativeBytes(tmpBytes.objectSerializer(),
-                    start, start + ((entriesPerSegment + 7) / 8), null);
+                    start, start + align8(align8(entriesPerSegment) / 8L), null);
             freeList = new SingleThreadedDirectBitSet(bsBytes);
             start += numberOfBitSets() * sizeOfBitSets();
             entriesOffset = start - bytes.startAddr();
