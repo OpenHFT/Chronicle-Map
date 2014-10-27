@@ -525,12 +525,68 @@ map = ChronicleMapBuilder
     .create();
 ```
 
+
+   
+### Bootstrapping 
+When a node is connected over the network to an active grid of nodes. It must first receive any data
+that it does not have from the other nodes. Eventually, all the nodes in the grid have to hold a
+copy of exactly the same data. We refer to this initial data load phase as bootstrapping.
+Bootstrapping by its very nature is point to point, so it is only performed over TCP replication.
+For architectures that wish to use UDP replication it is advised you use TCP Replication as well. A
+grid which only uses UDP replication will miss out on the bootstrapping, possibly leaving the nodes
+in an inconsistent state. To avoid this, if you would rather reduce the amount of TCP traffic on
+your network, we suggest you consider using a throttle TCP replication along with UDP replication.
+Bootstrapping is not used when the nodes are on the same server, so for this case, TCP replication
+is not required.
+
+### Identifier
+Each map is allocated a unique identifier
+
+Server 1 has:
+```
+.replicators((byte) 1, tcpReplicationConfigServer1)
+```
+
+Server 2 has:
+```
+.replicators((byte) 2, tcpReplicationConfigServer2)
+```
+
+Server 3 has:
+```
+.replicators((byte) 3, tcpReplicationConfigServer3)
+```
+
+If you fail to allocate a unique identifier replication will not work correctly.
+
+### Port
+Each map must be allocated a unique port, the port has to be unique per server, if the maps are
+running on different hosts they could be allocated the same port, but in our example we allocated
+them different ports, we allocated map1 port 8076 and map2 port 8077. Currently we don't support
+data forwarding, so it important to connect every remote map, to every other remote map, in other
+words you can't have a hub configuration where all the data passes through a single map which every
+other map is connected to. So currently, if you had 4 servers each with a Chronicle Map, you would
+require 6 connections.
+
+In our case we are only using 2 maps, this is how we connected map1 to map 2.
+```
+TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
+                    .heartBeatInterval(1, SECONDS);
+```
+you could have put this instruction on map2 instead, like this 
+```
+TcpReplicationConfig.of(8077, new InetSocketAddress("localhost", 8076))
+                    .heartBeatInterval(1, SECONDS);
+```
+even though data flows from map1 to map2 and map2 to map1 it doesn't matter which way you connected
+this, in other words its a bidirectional connection. 
+
 ### Configuring Three Way TCP/IP Replication
 
 ![TCP/IP Replication 3Way](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-27-at-18.19.05.png)
 
 
-Below is example how to set up tcpReplicationConfig for three host
+Below is example how to set up tcpReplicationConfig for 3 host
 
 ```java
 String hostServer1 = "localhost"; // change this to your host
@@ -557,54 +613,6 @@ TcpReplicationConfig tcpReplicationConfigServer2 = TcpReplicationConfig.of(serve
 TcpReplicationConfig tcpReplicationConfigServer3 = TcpReplicationConfig.of(serverPort3,
         inetSocketAddress1,inetSocketAddress2);        
 ```     
-   
-### Bootstrapping 
-When a node is connected over the network to an active grid of nodes. It must first receive any data
-that it does not have from the other nodes. Eventually, all the nodes in the grid have to hold a
-copy of exactly the same data. We refer to this initial data load phase as bootstrapping.
-Bootstrapping by its very nature is point to point, so it is only performed over TCP replication.
-For architectures that wish to use UDP replication it is advised you use TCP Replication as well. A
-grid which only uses UDP replication will miss out on the bootstrapping, possibly leaving the nodes
-in an inconsistent state. To avoid this, if you would rather reduce the amount of TCP traffic on
-your network, we suggest you consider using a throttle TCP replication along with UDP replication.
-Bootstrapping is not used when the nodes are on the same server, so for this case, TCP replication
-is not required.
-
-### Identifier
-Each map is allocated a unique identifier
-
-Server 1 has:
-```
-.addReplicator(Replicators.tcp((byte) 1, tcpConfig))
-```
-
-Server 2 has:
-```
-.addReplicator(Replicators.tcp((byte) 2, tcpConfig))
-```
-If you fail to allocate a unique identifier replication will not work correctly.
-
-### Port
-Each map must be allocated a unique port, the port has to be unique per server, if the maps are
-running on different hosts they could be allocated the same port, but in our example we allocated
-them different ports, we allocated map1 port 8076 and map2 port 8077. Currently we don't support
-data forwarding, so it important to connect every remote map, to every other remote map, in other
-words you can't have a hub configuration where all the data passes through a single map which every
-other map is connected to. So currently, if you had 4 servers each with a Chronicle Map, you would
-require 6 connections.
-
-In our case we are only using 2 maps, this is how we connected map1 to map 2.
-```
-TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
-                    .heartBeatInterval(1, SECONDS);
-```
-you could have put this instruction on map2 instead, like this 
-```
-TcpReplicationConfig.of(8077, new InetSocketAddress("localhost", 8076))
-                    .heartBeatInterval(1, SECONDS);
-```
-even though data flows from map1 to map2 and map2 to map1 it doesn't matter which way you connected
-this, in other words its a bidirectional connection. 
 
 ### Heart Beat Interval
 We set a heartBeatInterval, in our example to 1 second
