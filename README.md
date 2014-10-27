@@ -525,6 +525,17 @@ map = ChronicleMapBuilder
     .create();
 ```
 
+and example of setting up three maps with TCP Replication, ideally they would be on different 
+servers, but for this example they are on the same host :
+
+```java
+map1 = newTcpSocketShmIntString((byte) 1, 8076, new InetSocketAddress("localhost", 8077),
+        new InetSocketAddress("localhost", 8079));
+map2 = newTcpSocketShmIntString((byte) 2, 8077, new InetSocketAddress("localhost", 8079));
+map3 = newTcpSocketShmIntString((byte) 3, 8079);
+        
+```     
+   
 ### Bootstrapping 
 When a node is connected over the network to an active grid of nodes. It must first receive any data
 that it does not have from the other nodes. Eventually, all the nodes in the grid have to hold a
