@@ -725,7 +725,8 @@ unique for each map you have.
         byte identifier = (byte) 2;
 
         TcpReplicationConfig tcpConfig =
-                TcpReplicationConfig.of(8087).heartBeatInterval(1, java.util.concurrent.TimeUnit.SECONDS);
+                TcpReplicationConfig.of(8087)
+                .heartBeatInterval(1, java.util.concurrent.TimeUnit.SECONDS);
 
         channelProviderServer2 = new ChannelProviderBuilder()
                 .replicators(identifier, tcpConfig)
