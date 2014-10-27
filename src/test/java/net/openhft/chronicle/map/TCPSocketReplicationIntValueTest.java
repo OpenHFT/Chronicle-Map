@@ -19,8 +19,9 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.ByteBufferBytes;
+import net.openhft.lang.model.Byteable;
+import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
-import net.openhft.lang.values.IntValue$$Native;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,16 +46,15 @@ import static org.junit.Assert.assertTrue;
 
 public class TCPSocketReplicationIntValueTest {
 
-
     private ChronicleMapBuilder<IntValue, CharSequence> map1Builder;
     private ChronicleMap<IntValue, CharSequence> map1;
     private ChronicleMap<IntValue, CharSequence> map2;
-    private IntValue$$Native value;
+    private IntValue value;
 
     @Before
     public void setup() throws IOException {
-        value = new IntValue$$Native();
-        value.bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
+        value = DataValueClasses.newDirectReference(IntValue.class);
+        ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
         map1Builder = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 (byte) 1, 8076, new InetSocketAddress("localhost", 8077));
         map1Builder.keyMarshaller(ByteableIntValueMarshaller.INSTANCE).file(getPersistenceFile());
@@ -88,7 +88,7 @@ public class TCPSocketReplicationIntValueTest {
         assertTrue(!map1.isEmpty());
     }
 
-    private IntValue$$Native set(int x) {
+    private IntValue set(int x) {
 
         value.setValue(x);
         return value;

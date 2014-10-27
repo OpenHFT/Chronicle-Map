@@ -621,7 +621,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 readLock();
             try {
                 long keySize = metaKeyWriter.size(keyWriter, key);
-                MultiStoreBytes entry = tmpBytes;
+                MultiStoreBytes entry = acquireTmpBytes();
                 long offset = searchKey(keyWriter, metaKeyWriter, key, keySize, hash2, entry,
                         hashLookupLiveOnly);
                 if (offset >= 0) {
@@ -816,7 +816,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 hashLookup.startSearch(hash2);
                 for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
                     long offset = offsetFromPos(pos);
-                    NativeBytes entry = entry(offset);
+                    MultiStoreBytes entry = entry(offset);
                     if (!keyEquals(keyWriter, metaKeyWriter, key, keySize, entry))
                         continue;
                     // key is found
@@ -982,7 +982,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 multiMap.startSearch(hash2);
                 for (long pos; (pos = multiMap.nextPos()) >= 0L; ) {
                     long offset = offsetFromPos(pos);
-                    NativeBytes entry = entry(offset);
+                    MultiStoreBytes entry = entry(offset);
                     if (!keyEquals(keyWriter, metaKeyWriter, key, keySize, entry))
                         continue;
                     // key is found
@@ -1049,7 +1049,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 hashLookupLiveOnly.startSearch(hash2);
                 for (long pos; (pos = hashLookupLiveOnly.nextPos()) >= 0L; ) {
                     long offset = offsetFromPos(pos);
-                    NativeBytes entry = entry(offset);
+                    MultiStoreBytes entry = entry(offset);
                     if (!keyEquals(keyWriter, metaKeyWriter, key, keySize, entry))
                         continue;
                     // key is found
@@ -1109,19 +1109,21 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         @Override
         public Entry<K, V> getEntry(long pos) {
-            bytes.position(offsetFromPos(pos) + metaDataBytes);
+            MultiStoreBytes entry = acquireTmpBytes();
+            long offset = offsetFromPos(pos) + metaDataBytes;
+            entry.setBytesOffset(bytes, offset);
 
-            long keySize = keySizeMarshaller.readSize(bytes);
+            long keySize = keySizeMarshaller.readSize(entry);
             ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
-            K key = keyReaderProvider.get(copies, originalKeyReader).read(bytes, keySize);
+            K key = keyReaderProvider.get(copies, originalKeyReader).read(entry, keySize);
 
-            long timestamp = bytes.readLong();
-            bytes.skip(2L); // identifier and isDeleted flag
+            long timestamp = entry.readLong();
+            entry.skip(2L); // identifier and isDeleted flag
 
-            long valueSize = valueSizeMarshaller.readSize(bytes);
-            alignment.alignPositionAddr(bytes);
+            long valueSize = valueSizeMarshaller.readSize(entry);
+            alignment.alignPositionAddr(entry);
             copies = valueReaderProvider.getCopies(copies);
-            V value = valueReaderProvider.get(copies, originalValueReader).read(bytes, valueSize);
+            V value = valueReaderProvider.get(copies, originalValueReader).read(entry, valueSize);
 
             return new TimestampTrackingEntry(key, value, timestamp);
         }

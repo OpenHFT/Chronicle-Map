@@ -21,6 +21,7 @@ package net.openhft.chronicle.common.serialization.impl;
 import net.openhft.chronicle.common.serialization.AgileBytesMarshaller;
 import net.openhft.chronicle.common.serialization.Hasher;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.MultiStoreBytes;
 import net.openhft.lang.io.NativeBytes;
 import net.openhft.lang.io.serialization.*;
 import net.openhft.lang.io.serialization.impl.AllocateInstanceObjectFactory;
@@ -117,11 +118,22 @@ public class ByteableMarshaller<E extends Byteable> implements AgileBytesMarshal
         try {
             if (e == null)
                 e = getInstance();
-            e.bytes(bytes, bytes.position());
+            setBytesAndOffset(e, bytes);
             bytes.skip(size);
             return e;
         } catch (Exception ex) {
             throw new IllegalStateException(ex);
+        }
+    }
+
+    public static void setBytesAndOffset(Byteable e, Bytes bytes) {
+        // use the unshifting underlying Bytes (the position never changes)
+        // if you use a Bytes where the position changes, you risk concurrency issues.
+        if (bytes instanceof MultiStoreBytes) {
+            MultiStoreBytes msb = (MultiStoreBytes) bytes;
+            e.bytes(msb.underlyingBytes(), msb.underlyingOffset() + msb.position());
+        } else {
+            e.bytes(bytes, bytes.position());
         }
     }
 

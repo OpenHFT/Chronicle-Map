@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.common.serialization.impl.ByteableMarshaller;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.NativeBytes;
 import net.openhft.lang.io.serialization.BytesMarshaller;
@@ -51,7 +52,7 @@ enum ByteableIntValueMarshaller implements BytesMarshaller<IntValue> {
             if (intValue == null)
                 intValue = (IntValue) NativeBytes.UNSAFE.allocateInstance(DIRECT);
             Byteable biv = (Byteable) intValue;
-            biv.bytes(bytes, bytes.position());
+            ByteableMarshaller.setBytesAndOffset(biv, bytes);
             bytes.skip(biv.maxSize());
             return intValue;
         } catch (Exception e) {

@@ -112,7 +112,7 @@ public class TCPSocketReplicationTest3VoidValueTest {
         map2.put(5, null);
 
         // allow time for the recompilation to resolve
-        assertTrue(waitTillEqual(5000));
+        assertTrue("test timed out", waitTillEqual(5000));
 
         assertEquals(map3, map3);
         assertTrue(!map1.isEmpty());
