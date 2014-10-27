@@ -36,7 +36,7 @@ import static net.openhft.chronicle.common.StatelessBuilder.remoteAddress;
 public class StatelessClientTest {
 
 
-    public static final int SIZE = 100;
+    public static final int SIZE = 1000;
 
 
     @Test

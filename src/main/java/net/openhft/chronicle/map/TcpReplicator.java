@@ -1670,6 +1670,7 @@ class StatelessServerConnector<K, V> {
                 final long sizeLocation = writer.position();
 
                 writer.skip(AbstractChannelReplicator.SIZE_OF_SIZE + 1); //  SIZE_OF_SIZE  + is
+
                 // exception
                 writer.writeLong(transactionId);
 
@@ -1677,7 +1678,7 @@ class StatelessServerConnector<K, V> {
                 writer.skip(1);
 
                 // count
-                writer.skip(2);
+                writer.skip(4);
 
                 int count = 0;
                 while (iterator.hasNext()) {
@@ -1686,7 +1687,7 @@ class StatelessServerConnector<K, V> {
                     // some data, we don't know the max key size, we will use the entrySize instead
                     if (writer.remaining() <= maxEntrySizeBytes) {
                         writeHeader(writer, sizeLocation, count, true);
-
+                         LOG.info("One more chunk !");
                         return false;
                     }
 
@@ -1698,6 +1699,7 @@ class StatelessServerConnector<K, V> {
 
                 writeHeader(writer, sizeLocation, count, false);
 
+                LOG.info("Last chunk !");
                 return true;
             }
 
@@ -1718,7 +1720,7 @@ class StatelessServerConnector<K, V> {
                 writer.writeBoolean(hasAnotherChunk);
 
                 // count
-                writer.writeUnsignedShort(count);
+                writer.writeInt(count);
                 writer.position(end);
             }
         };
