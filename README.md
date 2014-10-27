@@ -521,19 +521,36 @@ The identifier is setup on the builder as follows.
 TcpReplicationConfig tcpConfig = ...
 map = ChronicleMapBuilder
     .of(Integer.class, CharSequence.class)
-    .addReplicator(Replicators.tcp(identifier, tcpConfig))
+    .replicators(identifier, tcpReplicationConfig)
     .create();
 ```
 
-and example of setting up three maps with TCP Replication, ideally they would be on different 
+and example of setting up three server with TCP Replication, ideally they would be on different 
 servers, but for this example they are on the same host :
 
 ```java
-map1 = newTcpSocketShmIntString((byte) 1, 8076, new InetSocketAddress("localhost", 8077),
-        new InetSocketAddress("localhost", 8079));
-map2 = newTcpSocketShmIntString((byte) 2, 8077, new InetSocketAddress("localhost", 8079));
-map3 = newTcpSocketShmIntString((byte) 3, 8079);
-        
+String hostServer1 = "localhost"; // change this to your host
+int serverPort1 = 8076;           // change this to your port
+InetSocketAddress inetSocketAddress1 = new InetSocketAddress(hostServer1, serverPort1);
+
+String hostServer2 = "localhost"; // change this to your host
+int  serverPort2= 8076;           // change this to your port
+InetSocketAddress inetSocketAddress2 = new InetSocketAddress(hostServer2, serverPort2);
+
+String hostServer3 = "localhost"; // change this to your host
+int serverPort3 = 8076;           // change this to your port
+InetSocketAddress inetSocketAddress3 = new InetSocketAddress(hostServer3, serverPort3);
+
+
+// this is to go on server 1
+TcpReplicationConfig tcpConfigServer1 = TcpReplicationConfig.of(serverPort1);
+
+// this is to go on server 2
+TcpReplicationConfig tcpConfigServer2 = TcpReplicationConfig.of(serverPort2,inetSocketAddress1);
+
+// this is to go on server 3
+TcpReplicationConfig tcpConfigServer3 = TcpReplicationConfig.of(serverPort3,
+        inetSocketAddress1,inetSocketAddress3);        
 ```     
    
 ### Bootstrapping 
