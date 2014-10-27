@@ -1134,6 +1134,22 @@ and just like map it support shared memory and TCP replication.
         
 # Performance Topics
 
+
+There are general principles we can give direction on - for specific advise we believe consulting
+ to be the most productive solution.
+
+We want the Map to be reasonably general purpose, so in broad terms we can say
+- the key and values have to be self contained, ideally trees, rather than graphs.
+- ideally values are similar lengths, however we support varying lengths.
+- ideally you want to use primitives and use object recycling for performance, though this is not a requirement.
+- ideally you have some idea as to the maximum number of entries, though it is not too important if the maximum entries is above what you need.
+- if for example you are working with, market depth, this  can be supported via an array of nested 
+types.
+- we support code generation of efficient custom serializes - See the examples where you provide 
+an interface as the data type, the map will generate the implementation.
+
+
+
 ### Tuning Chronicle Map with Large Data 
 
 Generally speaking `ChronicleMap` is slower then ConcurrentHashMap for a small number of entries, but
