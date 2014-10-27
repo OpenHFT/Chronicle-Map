@@ -548,12 +548,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             if (completed)
                 attached.entryWriter.workCompleted();
 
-            attached.hasRemoteHeartbeatInterval = false;
-            return;
-        }
+         //   attached.hasRemoteHeartbeatInterval = false;
 
-
-        if (attached.remoteModificationIterator != null)
+        }   else   if (attached.remoteModificationIterator != null)
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
         try {

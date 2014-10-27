@@ -558,14 +558,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         assert bytes.limit() == bytes.capacity();
 
 
-        LOG.info("bytes after position=" + bytes.position() +
-                ", " +
-                "limit=" + bytes.limit() + ",capacity=" + bytes.capacity());
-
-
-        LOG.info("buffer after position=" + buffer.position() +
-                ", " +
-                "limit=" + buffer.limit() + ",capacity=" + buffer.capacity());
 
     }
 
@@ -616,12 +608,15 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         Bytes in = blockingFetch(sizeLocation);
 
         long size = in.readStopBit();
-
+         LOG.info("size="+size);
         Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
 
         for (int i = 0; i < size; i++) {
             K k = keyValueSerializer.readKey(in);
             V v = keyValueSerializer.readValue(in);
+            LOG.info("k="+k);
+
+            LOG.info("v="+v);
             result.add(new Entry(k, v));
         }
 
