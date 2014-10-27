@@ -624,9 +624,10 @@ ChannelProvider channelProvider = new ChannelProviderBuilder()
 Attaching ChannelProvider replication to the map:
 
 ``` java
+short channel = (short) 2;
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-  .entries(1000)
-  .channel(channelProvider.createChannel((short) 1))
+  .entries(1000)  
+  .channel(channelProvider.createChannel(channel)
   .create();
 ```
 
