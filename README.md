@@ -188,7 +188,7 @@ this for best performance.
 or value objects that are created through, a directClass interface, for example : 
 ``` java
       ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
-               .of(String.class, directClassFor(BondVOInterface.class))
+               .of(String.class, DataValueClasses.directClassFor(BondVOInterface.class))
                .create();
 
 ```
