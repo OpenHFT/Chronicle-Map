@@ -1,7 +1,5 @@
 /*
- * Copyright 2014 Higher Frequency Trading
- *
- * http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +16,19 @@
 
 package net.openhft.chronicle.map;
 
-enum NullValueProvider implements DefaultValueProvider {
-    INSTANCE;
+import net.openhft.lang.io.Bytes;
+
+final class ZeroOutValueBytes<K> implements PrepareValueBytes<K> {
+    private static final long serialVersionUID = 0L;
+    private final long valueSize;
+
+    ZeroOutValueBytes(long valueSize) {
+        this.valueSize = valueSize;
+    }
 
     @Override
-    public Object get(Object key) {
-        return null;
+    public void prepare(Bytes bytes, K key) {
+        long pos = bytes.position();
+        bytes.zeroOut(pos, pos + valueSize);
     }
 }

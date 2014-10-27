@@ -33,7 +33,7 @@ import java.io.Serializable;
  * class and override only methods corresponding the events you are interested in.
  *
  * <p>To configure {@code MapEventListener} for {@code ChronicleMap}, use
- * {@link ChronicleMapBuilder#eventListener(MapEventListener)} method.
+ * {@link AbstractChronicleMapBuilder#eventListener(MapEventListener)} method.
  *
  * <p>{@link MapEventListeners} uninstantiable class contains several logging implementations and
  * the default {@linkplain MapEventListeners#nop() no-op implementation}.
@@ -44,7 +44,7 @@ import java.io.Serializable;
  * @param <K> key type of the maps, trackable by this event listener
  * @param <V> value type of the maps, trackable by this event listener
  * @param <M> {@code ChronicleMap} subtype, trackable by this event listener
- * @see ChronicleMapBuilder#eventListener(MapEventListener)
+ * @see AbstractChronicleMapBuilder#eventListener(MapEventListener)
  * @see MapEventListeners
  */
 public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
@@ -75,7 +75,7 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
      * This method is call whenever a new value is put for the key in the map during calls of such
      * methods as {@link ChronicleMap#put put}, {@link ChronicleMap#putIfAbsent putIfAbsent},
      * {@link ChronicleMap#replace(Object, Object, Object) replace}, etc. When a new value is
-     * {@linkplain ChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during
+     * {@linkplain AbstractChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during
      * {@link ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method is called
      * as well.
      *

@@ -36,7 +36,7 @@ import static net.openhft.chronicle.common.StatelessBuilder.remoteAddress;
 public class StatelessClientTest {
 
 
-    public static final int SIZE = 100;
+    public static final int SIZE = 100000;
 
 
     @Test
@@ -72,19 +72,55 @@ public class StatelessClientTest {
 
         Set<Map.Entry<Integer, CharSequence>> entries = statelessMap.entrySet();
 
-
-
         Map.Entry<Integer, CharSequence> next = entries.iterator().next();
-
         Assert.assertEquals("some value=" + next.getKey(), next.getValue());
 
 
         serverMap.close();
         statelessMap.close();
-
-        //  System.out.print("" + entries);
-
     }
+
+
+    @Test
+    public void testBufferOverFlowPutAllAndKeySet() throws IOException, InterruptedException {
+
+        final ChronicleMap<Integer, CharSequence> serverMap;
+        final ChronicleMap<Integer, CharSequence> statelessMap;
+
+
+        // stateless client
+        {
+            statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, CharSequence.class)
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+        }
+
+        // server
+        {
+            serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
+        }
+
+
+        Map<Integer, CharSequence> payload = new HashMap<Integer, CharSequence>();
+
+        for (int i = 0; i < SIZE; i++) {
+            payload.put(i, "some value=" + i);
+        }
+
+
+        statelessMap.putAll(payload);
+
+
+        final Set<Integer> keys = statelessMap.keySet();
+
+        Assert.assertEquals(keys.size(), payload.size());
+
+
+        serverMap.close();
+        statelessMap.close();
+    }
+
 
     @Test
     public void test() throws IOException, InterruptedException {
@@ -188,9 +224,6 @@ public class StatelessClientTest {
         statelessMap.close();
 
     }
-
-
-
 
 
     @Test

@@ -521,20 +521,11 @@ The identifier is setup on the builder as follows.
 TcpReplicationConfig tcpConfig = ...
 map = ChronicleMapBuilder
     .of(Integer.class, CharSequence.class)
-    .addReplicator(Replicators.tcp(identifier, tcpConfig))
+    .replicators(identifier, tcpReplicationConfig)
     .create();
 ```
 
-and example of setting up three maps with TCP Replication, ideally they would be on different 
-servers, but for this example they are on the same host :
 
-```java
-map1 = newTcpSocketShmIntString((byte) 1, 8076, new InetSocketAddress("localhost", 8077),
-        new InetSocketAddress("localhost", 8079));
-map2 = newTcpSocketShmIntString((byte) 2, 8077, new InetSocketAddress("localhost", 8079));
-map3 = newTcpSocketShmIntString((byte) 3, 8079);
-        
-```     
    
 ### Bootstrapping 
 When a node is connected over the network to an active grid of nodes. It must first receive any data
@@ -553,13 +544,19 @@ Each map is allocated a unique identifier
 
 Server 1 has:
 ```
-.addReplicator(Replicators.tcp((byte) 1, tcpConfig))
+.replicators((byte) 1, tcpReplicationConfigServer1)
 ```
 
 Server 2 has:
 ```
-.addReplicator(Replicators.tcp((byte) 2, tcpConfig))
+.replicators((byte) 2, tcpReplicationConfigServer2)
 ```
+
+Server 3 has:
+```
+.replicators((byte) 3, tcpReplicationConfigServer3)
+```
+
 If you fail to allocate a unique identifier replication will not work correctly.
 
 ### Port
@@ -583,6 +580,39 @@ TcpReplicationConfig.of(8077, new InetSocketAddress("localhost", 8076))
 ```
 even though data flows from map1 to map2 and map2 to map1 it doesn't matter which way you connected
 this, in other words its a bidirectional connection. 
+
+### Configuring Three Way TCP/IP Replication
+
+![TCP/IP Replication 3Way](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-27-at-18.19.05.png)
+
+
+Below is example how to set up tcpReplicationConfig for 3 host
+
+```java
+String hostServer1 = "localhost"; // change this to your host
+int serverPort1 = 8076;           // change this to your port
+InetSocketAddress inetSocketAddress1 = new InetSocketAddress(hostServer1, serverPort1);
+
+String hostServer2 = "localhost"; // change this to your host
+int  serverPort2= 8077;           // change this to your port
+InetSocketAddress inetSocketAddress2 = new InetSocketAddress(hostServer2, serverPort2);
+
+String hostServer3 = "localhost"; // change this to your host
+int serverPort3 = 8078;           // change this to your port
+InetSocketAddress inetSocketAddress3 = new InetSocketAddress(hostServer3, serverPort3);
+
+
+// this is to go on server 1
+TcpReplicationConfig tcpReplicationConfigServer1 = TcpReplicationConfig.of(serverPort1);
+
+// this is to go on server 2
+TcpReplicationConfig tcpReplicationConfigServer2 = TcpReplicationConfig.of(serverPort2,
+        inetSocketAddress1);
+
+// this is to go on server 3
+TcpReplicationConfig tcpReplicationConfigServer3 = TcpReplicationConfig.of(serverPort3,
+        inetSocketAddress1,inetSocketAddress2);        
+```     
 
 ### Heart Beat Interval
 We set a heartBeatInterval, in our example to 1 second
@@ -703,7 +733,8 @@ unique for each map you have.
         byte identifier = (byte) 2;
 
         TcpReplicationConfig tcpConfig =
-                TcpReplicationConfig.of(8087).heartBeatInterval(1, java.util.concurrent.TimeUnit.SECONDS);
+                TcpReplicationConfig.of(8087)
+                .heartBeatInterval(1, java.util.concurrent.TimeUnit.SECONDS);
 
         channelProviderServer2 = new ChannelProviderBuilder()
                 .replicators(identifier, tcpConfig)
@@ -1133,6 +1164,22 @@ and just like map it support shared memory and TCP replication.
         
         
 # Performance Topics
+
+
+There are general principles we can give direction on - for specific advise we believe consulting
+ to be the most productive solution.
+
+We want the Map to be reasonably general purpose, so in broad terms we can say
+- the key and values have to be self contained, ideally trees, rather than graphs.
+- ideally values are similar lengths, however we support varying lengths.
+- ideally you want to use primitives and use object recycling for performance, though this is not a requirement.
+- ideally you have some idea as to the maximum number of entries, though it is not too important if the maximum entries is above what you need.
+- if for example you are working with, market depth, this  can be supported via an array of nested 
+types.
+- we support code generation of efficient custom serializes - See the examples where you provide 
+an interface as the data type, the map will generate the implementation.
+
+
 
 ### Tuning Chronicle Map with Large Data 
 

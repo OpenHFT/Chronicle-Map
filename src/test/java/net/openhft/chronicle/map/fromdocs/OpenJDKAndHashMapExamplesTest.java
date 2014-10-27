@@ -21,6 +21,7 @@ package net.openhft.chronicle.map.fromdocs;
 import net.openhft.affinity.AffinitySupport;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.OffHeapUpdatableChronicleMapBuilder;
 import net.openhft.lang.model.DataValueClasses;
 import org.junit.Test;
 
@@ -55,8 +56,8 @@ public class OpenJDKAndHashMapExamplesTest {
 
         File file = new File(TMP + "/chm-myBondPortfolioCHM-" + System.nanoTime());
         file.deleteOnExit();
-        ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
-                .of(String.class, directClassFor(BondVOInterface.class))
+        ChronicleMap<String, BondVOInterface> chm = OffHeapUpdatableChronicleMapBuilder
+                .of(String.class, BondVOInterface.class)
                 .keySize(10)
                 .file(file)
                 .create();
@@ -76,8 +77,8 @@ public class OpenJDKAndHashMapExamplesTest {
         mpx1030.setAskPx(109.7);
         mpx1030.setBidPx(107.6);
 
-        ChronicleMap<String, BondVOInterface> chmB = ChronicleMapBuilder
-                .of(String.class, directClassFor(BondVOInterface.class))
+        ChronicleMap<String, BondVOInterface> chmB = OffHeapUpdatableChronicleMapBuilder
+                .of(String.class, BondVOInterface.class)
                 .keySize(10)
                 .file(file)
                 .create();

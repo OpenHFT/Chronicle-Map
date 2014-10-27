@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.LongValue;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 import static net.openhft.chronicle.map.Alignment.OF_4_BYTES;
+import static net.openhft.lang.model.DataValueClasses.newDirectReference;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -138,7 +140,7 @@ public class EntryCountMapTest {
     private void testEntriesMaxSize(int segments, int minSize, int maxSize, int seed) throws IOException {
         int counter = minSize + new Random(seed + segments * 1000).nextInt(9999);
         ChronicleMap<CharSequence, LongValue> map = getSharedMap(minSize, segments, 32);
-        LongValue longValue = DirectLongValueFactory.INSTANCE.create();
+        LongValue longValue = newDirectReference(LongValue.class);
         try {
             for (int j = 0; j < maxSize * 12 / 10 + 300; j++) {
                 String key = "key:" + counter++;
@@ -195,13 +197,11 @@ public class EntryCountMapTest {
     private static ChronicleMap<CharSequence, LongValue> getSharedMap(
             long entries, int segments, int entrySize, Alignment alignment)
             throws IOException {
-        ChronicleMapBuilder<CharSequence, LongValue> mapBuilder = ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+        OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> mapBuilder = OffHeapUpdatableChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                 .entries(entries)
                 .minSegments(segments)
                 .entrySize(entrySize)
                 .entryAndValueAlignment(alignment)
-                .valueMarshallerAndFactory(ByteableLongValueMarshaller.INSTANCE,
-                        DirectLongValueFactory.INSTANCE)
                 .file(getPersistenceFile());
         return mapBuilder.create();
     }

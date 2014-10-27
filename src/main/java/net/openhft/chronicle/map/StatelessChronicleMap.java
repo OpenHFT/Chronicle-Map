@@ -390,12 +390,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     }
 
-    public synchronized V getUsing(K key, V value) {
+    public synchronized V getUsing(K key, V usingValue) {
         throw new UnsupportedOperationException("getUsing is not supported for stateless clients");
     }
 
 
-    public synchronized V acquireUsing(K key, V value) {
+    public synchronized V acquireUsing(K key, V usingValue) {
         throw new UnsupportedOperationException("getUsing is not supported for stateless clients");
     }
 
@@ -419,6 +419,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     private void writeEntries(Map<? extends K, ? extends V> map) {
+
         final int numberOfEntries = map.size();
         int numberOfEntriesReadSoFar = 0;
 
@@ -558,7 +559,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         assert bytes.limit() == bytes.capacity();
 
 
-
     }
 
 
@@ -602,22 +602,35 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     @NotNull
     public synchronized Set<Map.Entry<K, V>> entrySet() {
-        long sizeLocation = writeEvent(ENTRY_SET);
+        final long sizeLocation = writeEvent(ENTRY_SET);
+
+        final long startTime = System.currentTimeMillis();
+        final long transactionId = nextUniqueTransaction(startTime);
+        final long timeoutTime = System.currentTimeMillis() + builder.timeoutMs();
 
         // get the data back from the server
-        Bytes in = blockingFetch(sizeLocation);
+        Bytes in = blockingFetch0(sizeLocation, transactionId, startTime);
 
-        long size = in.readStopBit();
-         LOG.info("size="+size);
-        Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
+        final Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
 
-        for (int i = 0; i < size; i++) {
-            K k = keyValueSerializer.readKey(in);
-            V v = keyValueSerializer.readValue(in);
-            LOG.info("k="+k);
+        for (; ; ) {
 
-            LOG.info("v="+v);
-            result.add(new Entry(k, v));
+            boolean hasMoreEntries = in.readBoolean();
+            LOG.info("entrySet - hasMoreEntries=" + hasMoreEntries);
+
+            // number of entries in the chunk
+            long size = in.readInt();
+
+            for (int i = 0; i < size; i++) {
+                K k = keyValueSerializer.readKey(in);
+                V v = keyValueSerializer.readValue(in);
+                result.add(new Entry(k, v));
+            }
+
+            if (!hasMoreEntries)
+                break;
+
+            in = blockingFetchReadOnly(timeoutTime, transactionId);
         }
 
         return result;
@@ -691,7 +704,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private Bytes blockingFetch(long sizeLocation) {
 
         try {
-            return blockingFetchThrowable(sizeLocation, this.builder.timeoutMs());
+            long startTime = System.currentTimeMillis();
+            return blockingFetchThrowable(sizeLocation, this.builder.timeoutMs(),
+                    nextUniqueTransaction(startTime), startTime);
         } catch (IOException e) {
             close();
             throw new IORuntimeException(e);
@@ -702,11 +717,25 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     }
 
-    private Bytes blockingFetchThrowable(long sizeLocation, long timeOutMs) throws IOException {
 
-        long startTime = System.currentTimeMillis();
+    private Bytes blockingFetch0(long sizeLocation, final long transactionId, long startTime) {
+
+        try {
+            return blockingFetchThrowable(sizeLocation, this.builder.timeoutMs(), transactionId, startTime);
+        } catch (IOException e) {
+            close();
+            throw new IORuntimeException(e);
+        } catch (Exception e) {
+            close();
+            throw e;
+        }
+
+    }
+
+
+    private Bytes blockingFetchThrowable(long sizeLocation, long timeOutMs, final long transactionId, final long startTime) throws IOException {
+
         long timeoutTime = startTime + timeOutMs + 1000000;
-        long transactionId = nextUniqueTransaction(startTime);
 
         for (; ; ) {
 
@@ -724,33 +753,56 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                 // send out all the bytes
                 send(bytes, timeoutTime);
 
-                bytes.clear();
-                bytes.buffer().clear();
+                return blockingFetch(timeoutTime, transactionId);
 
-                // the number of bytes in the response
-                int size = receive(SIZE_OF_SIZE, timeoutTime).readInt();
-
-                if (bytes.capacity() < size)
-                    bytes = new ByteBufferBytes(allocateDirect(size));
-
-                receive(size, timeoutTime);
-
-                boolean isException = bytes.readBoolean();
-                long inTransactionId = bytes.readLong();
-
-                if (inTransactionId != transactionId)
-                    throw new IllegalStateException("the received transaction-id=" + inTransactionId +
-                            ", does not match the expected transaction-id=" + transactionId);
-
-                if (isException)
-                    throw (RuntimeException) bytes.readObject();
-
-                return bytes;
             } catch (java.nio.channels.ClosedChannelException | ClosedConnectionException e) {
                 checkTimeout(timeoutTime);
                 clientChannel = lazyConnect(builder.timeoutMs(), builder.remoteAddress());
             }
         }
+    }
+
+    private Bytes blockingFetchReadOnly(long timeoutTime, final long transactionId) {
+
+        try {
+            return blockingFetch(timeoutTime, transactionId);
+        } catch (IOException e) {
+            close();
+            throw new IORuntimeException(e);
+        } catch (Exception e) {
+            close();
+            throw e;
+        }
+
+    }
+
+
+    private Bytes blockingFetch(long timeoutTime, long transactionId) throws IOException {
+        bytes.clear();
+        bytes.buffer().clear();
+
+        // the number of bytes in the response
+        int size = receive(SIZE_OF_SIZE, timeoutTime).readInt();
+
+        int requiredSize = size + SIZE_OF_SIZE;
+        if (bytes.capacity() < requiredSize) {
+            bytes = new ByteBufferBytes(allocateDirect(requiredSize));
+        }
+
+        // block until we have received all the byte in this chunk
+        receive(size, timeoutTime);
+
+        boolean isException = bytes.readBoolean();
+        long inTransactionId = bytes.readLong();
+
+        if (inTransactionId != transactionId)
+            throw new IllegalStateException("the received transaction-id=" + inTransactionId +
+                    ", does not match the expected transaction-id=" + transactionId);
+
+        if (isException)
+            throw (RuntimeException) bytes.readObject();
+
+        return bytes;
     }
 
     private void write(long transactionId) {

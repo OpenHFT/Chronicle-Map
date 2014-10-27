@@ -75,7 +75,7 @@ public class CHMLatencyTestMain {
         File file = File.createTempFile("testCHMLatency", "deleteme");
 //        File file = new File("testCHMLatency.deleteme");
         file.delete();
-        ChronicleMap<LongValue, LongValue> countersMap = ChronicleMapBuilder.of(LongValue.class, LongValue.class)
+        ChronicleMap<LongValue, LongValue> countersMap = OffHeapUpdatableChronicleMapBuilder.of(LongValue.class, LongValue.class)
                 .entries(KEYS)
                 .entrySize(24).create();
 

@@ -548,9 +548,9 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             if (completed)
                 attached.entryWriter.workCompleted();
 
-         //   attached.hasRemoteHeartbeatInterval = false;
+            //   attached.hasRemoteHeartbeatInterval = false;
 
-        }   else   if (attached.remoteModificationIterator != null)
+        } else if (attached.remoteModificationIterator != null)
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
         try {
@@ -1646,15 +1646,18 @@ class StatelessServerConnector<K, V> {
 
     private Work entrySet(Bytes reader, Bytes writer) {
 
-        final long sizeLocation = reflectTransactionId(reader, writer);
+        final long transactionId = reader.readLong();
+
+
         final Set<Map.Entry<K, V>> entries;
 
         try {
             entries = map.entrySet();
         } catch (RuntimeException e) {
+            final long sizeLocation = reflectTransactionId(reader, writer);
             return sendException(writer, sizeLocation, e);
         }
-        writer.writeStopBit(entries.size());
+
 
         final Iterator<Map.Entry<K, V>> iterator = entries.iterator();
 
@@ -1664,21 +1667,78 @@ class StatelessServerConnector<K, V> {
             @Override
             public boolean doWork(Bytes writer) {
 
+                final long sizeLocation = header(writer, transactionId);
+
+                int count = 0;
                 while (iterator.hasNext()) {
 
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
-                    if (writer.remaining() <= maxEntrySizeBytes)
+                    if (writer.remaining() <= maxEntrySizeBytes) {
+                        writeHeader(writer, sizeLocation, count, true);
+                         LOG.info("One more chunk !");
                         return false;
+                    }
+
+                    count++;
                     final Map.Entry<K, V> next = iterator.next();
                     writeKey(next.getKey(), writer);
                     writeValue(next.getValue(), writer);
                 }
 
-                writeSizeAndFlags(sizeLocation, false, writer);
+                writeHeader(writer, sizeLocation, count, false);
+
+                LOG.info("Last chunk !");
                 return true;
             }
+
+
         };
+    }
+
+    private void writeMoreData(long location, boolean hasMoreData, Bytes out) {
+        out.writeBoolean(location, hasMoreData);
+    }
+
+    private void entryCount(long location, int count, Bytes out) {
+
+    }
+
+    private long header(Bytes writer, final long transactionId) {
+        final long sizeLocation = writer.position();
+
+        writer.skip(AbstractChannelReplicator.SIZE_OF_SIZE + 1); //  SIZE_OF_SIZE  + is
+
+        // exception
+        writer.writeLong(transactionId);
+
+        //  hasAnotherChunk
+        writer.skip(1);
+
+        // count
+        writer.skip(4);
+        return sizeLocation;
+    }
+
+    private void writeHeader(Bytes writer, long sizeLocation, int count, final boolean hasAnotherChunk) {
+        final long end = writer.position();
+        final int size = (int) (end - sizeLocation);
+        writer.position(sizeLocation);
+
+        // size in bytes
+        writer.writeInt(size);
+
+        // is exception
+        writer.writeBoolean(false);
+
+        //transaction id;
+        writer.skip(8);
+
+        writer.writeBoolean(hasAnotherChunk);
+
+        // count
+        writer.writeInt(count);
+        writer.position(end);
     }
 
     private Work putIfAbsent(Bytes reader, Bytes writer) {
@@ -1726,7 +1786,7 @@ class StatelessServerConnector<K, V> {
 
     private long reflectTransactionId(Bytes reader, Bytes writer) {
         final long sizeLocation = writer.position();
-        writer.skip(1 + AbstractChannelReplicator.SIZE_OF_SIZE); // event size +  SIZE_OF_SIZE
+        writer.skip(AbstractChannelReplicator.SIZE_OF_SIZE + 1); // isException +  SIZE_OF_SIZE
         final long transactionId = reader.readLong();
         writer.writeLong(transactionId);
         return sizeLocation;

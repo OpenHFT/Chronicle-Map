@@ -1,7 +1,5 @@
 /*
- * Copyright 2014 Higher Frequency Trading
- *
- * http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +14,8 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
-
-enum NullValueProvider implements DefaultValueProvider {
-    INSTANCE;
-
-    @Override
-    public Object get(Object key) {
-        return null;
-    }
-}
+/**
+ * Contains {@link net.openhft.chronicle.set.ChronicleSet} interface and
+ * {@link net.openhft.chronicle.set.ChronicleSetBuilder} class.
+ */
+package net.openhft.chronicle.set;
