@@ -548,7 +548,7 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             if (completed)
                 attached.entryWriter.workCompleted();
 
-              attached.hasRemoteHeartbeatInterval = false;
+            attached.hasRemoteHeartbeatInterval = false;
 
         } else if (attached.remoteModificationIterator != null)
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
@@ -1573,40 +1573,6 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work keySet(Bytes reader, final Bytes writer) {
-        final long sizeLocation = reflectTransactionId(reader, writer);
-        final Set<K> ks;
-        try {
-            ks = map.keySet();
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
-        }
-
-        writer.writeStopBit(ks.size());
-
-        final Iterator<K> iterator = ks.iterator();
-
-        // this allows us to write more data than the buffer will allow
-        return new Work() {
-
-            @Override
-            public boolean doWork(@NotNull final Bytes writer) {
-
-                while (iterator.hasNext()) {
-
-                    // we've filled up the buffer, so lets give another channel a chance to send
-                    // some data, we don't know the max key size, we will use the entrySize instead
-                    if (writer.remaining() <= maxEntrySizeBytes)
-                        return false;
-
-                    writeKey(iterator.next(), writer);
-                }
-
-                writeSizeAndFlags(sizeLocation, false, writer);
-                return true;
-            }
-        };
-    }
 
     private Work values(Bytes reader, Bytes writer) {
         final long sizeLocation = reflectTransactionId(reader, writer);
@@ -1639,6 +1605,50 @@ class StatelessServerConnector<K, V> {
                 }
 
                 writeSizeAndFlags(sizeLocation, false, writer);
+                return true;
+            }
+        };
+    }
+
+    private Work keySet(Bytes reader, final Bytes writer) {
+        final long transactionId = reader.readLong();
+
+        Set<K> ks;
+
+
+        try {
+            ks = map.keySet();
+        } catch (RuntimeException e) {
+            return sendException(reader, writer, e);
+        }
+
+
+        final Iterator<K> iterator = ks.iterator();
+
+        // this allows us to write more data than the buffer will allow
+        return new Work() {
+
+            @Override
+            public boolean doWork(Bytes writer) {
+
+                final long sizeLocation = header(writer, transactionId);
+
+                int count = 0;
+                while (iterator.hasNext()) {
+
+                    // we've filled up the buffer, so lets give another channel a chance to send
+                    // some data, we don't know the max key size, we will use the entrySize instead
+                    if (writer.remaining() <= maxEntrySizeBytes) {
+                        writeHeader(writer, sizeLocation, count, true);
+                        return false;
+                    }
+
+                    count++;
+                    K key = iterator.next();
+                    writeKey(key, writer);
+                }
+
+                writeHeader(writer, sizeLocation, count, false);
                 return true;
             }
         };
