@@ -595,7 +595,8 @@ Chronicle Maps via a single point to point socket connection.
 
 Chronicle Channels are similar to TCP replication, where each map has to be given a unique identifier, but
 when using Chronicle Channels its the channels that are used to identify the map. 
-The identifier is used to identify the host/server. Each host must be give a unique identifier.
+The identifier is used to identify the host/server. Each host must be given a unique identifier. 
+Each map must be given a unique Channel.
 
 
 ``` java
