@@ -390,12 +390,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     }
 
-    public synchronized V getUsing(K key, V value) {
+    public synchronized V getUsing(K key, V usingValue) {
         throw new UnsupportedOperationException("getUsing is not supported for stateless clients");
     }
 
 
-    public synchronized V acquireUsing(K key, V value) {
+    public synchronized V acquireUsing(K key, V usingValue) {
         throw new UnsupportedOperationException("getUsing is not supported for stateless clients");
     }
 

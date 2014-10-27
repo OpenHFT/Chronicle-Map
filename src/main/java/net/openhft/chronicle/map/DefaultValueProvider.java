@@ -22,26 +22,19 @@ import java.io.Serializable;
 
 /**
  * Default value computation strategy, used
- * in {@link ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)} configuration.
+ * in {@link AbstractChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)} configuration.
  *
  * @param <K> map key class
  * @param <V> map value class
  */
 public interface DefaultValueProvider<K, V> extends Serializable {
     /**
-     * Returns a value to be put and returned from {@link ChronicleMap#get(Object)}  get()} or
-     * {@link ChronicleMap#getUsing(Object, Object)} call for the specified key, if it is absent
-     * in the map.
-     *
-     * <p>If this method returns {@code null}, it isn't put for the key in the map.
+     * Returns a value to be put during {@link ChronicleMap#acquireUsing(Object, Object)} call
+     * for the specified key, if it is absent in the map.
      *
      * @param key key absent in the map
-     * @param usingValue an object provided as second parameter of current
-     * {@link ChronicleMap#getUsing(Object, Object)} call, or {@code null}, if this method is called
-     * within {@code get()} call. This object might be optionally initialized and returned back
-     * from this method.
      * @return value to be put for the specified key in the map, or {@code null}, if the key should
      * remain absent in the map
      */
-    V get(K key, V usingValue);
+    V get(K key);
 }

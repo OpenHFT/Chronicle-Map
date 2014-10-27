@@ -110,13 +110,12 @@ public class ChronicleMapTest {
     private static ChronicleMap<CharSequence, LongValue> getSharedMap(
             long entries, int segments, int entrySize, Alignment alignment)
             throws IOException {
-        return ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+        return OffHeapUpdatableChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                 .entries(entries)
                 .minSegments(segments)
                 .entrySize(entrySize)
                 .entryAndValueAlignment(alignment)
-                .valueMarshallerAndFactory(ByteableLongValueMarshaller.INSTANCE,
-                        DirectLongValueFactory.INSTANCE).create();
+                .create();
     }
 
     private static void printStatus() {
@@ -578,13 +577,11 @@ public class ChronicleMapTest {
 //        int runs = Integer.getInteger("runs", 10);
         for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
             final long entries = runs * 1000 * 1000L;
-            ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
+            OffHeapUpdatableChronicleMapBuilder<CharSequence, IntValue> builder = OffHeapUpdatableChronicleMapBuilder
                     .of(CharSequence.class, IntValue.class)
                     .entries(entries)
                     .minSegments(1024)
-                    .entrySize(20)
-                    .valueMarshallerAndFactory(ByteableIntValueMarshaller.INSTANCE,
-                            DirectIntValueFactory.INSTANCE);
+                    .entrySize(20);
 
             final ChronicleMap<CharSequence, IntValue> map = builder.create();
 

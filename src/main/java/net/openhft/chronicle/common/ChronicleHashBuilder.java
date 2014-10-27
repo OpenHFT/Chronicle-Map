@@ -21,7 +21,10 @@ package net.openhft.chronicle.common;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
+import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.*;
+import net.openhft.lang.io.serialization.impl.AllocateInstanceObjectFactory;
+import net.openhft.lang.io.serialization.impl.NewInstanceObjectFactory;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.model.Byteable;
 import org.jetbrains.annotations.NotNull;
@@ -344,6 +347,29 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @see #objectSerializer(ObjectSerializer)
      */
     B keyMarshaller(@NotNull BytesMarshaller<K> keyMarshaller);
+
+    /**
+     * Configures factory which is used to create a new key instance, if key class is either
+     * {@link Byteable}, {@link BytesMarshallable} or {@link Externalizable} subclass in maps,
+     * created by this builder. If {@linkplain #keyMarshaller(BytesMarshaller) custom key
+     * marshaller} is configured, this configuration is unused, because it is incapsulated in
+     * {@link BytesMarshaller#read(Bytes)} method (without provided instance to read the data into),
+     * i. e. it's is the user-side responsibility.
+     *
+     * <p>Default key deserialization factory is {@link NewInstanceObjectFactory}, which creates
+     * a new key instance using {@link Class#newInstance()} default constructor. You could provide
+     * an {@link AllocateInstanceObjectFactory}, which uses {@code Unsafe.allocateInstance(Class)}
+     * (you might want to do this for better performance or if you don't want to initialize fields),
+     * or a factory which calls a key class constructor with some arguments, or a factory which
+     * internally delegates to instance pool or {@link ThreadLocal}, to reduce allocations.
+     *
+     * @param keyDeserializationFactory the key factory used to produce instances to deserialize
+     *                                  data in
+     * @return this builder back
+     * @throws IllegalStateException if custom key marshaller is specified or key class is not
+     *         either {@code Byteable}, {@code BytesMarshallable} or {@code Externalizable}
+     */
+    B keyDeserializationFactory(@NotNull ObjectFactory<K> keyDeserializationFactory);
 
     /**
      * Specifies that key objects, queried with the hash containers, created by this builder, are

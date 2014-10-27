@@ -22,7 +22,6 @@ import net.openhft.chronicle.common.ChronicleHashErrorListener;
 import net.openhft.chronicle.common.serialization.*;
 import net.openhft.chronicle.common.threadlocal.Provider;
 import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
-import net.openhft.lang.Maths;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
@@ -77,6 +76,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     final MetaProvider<V, VW, MVW> metaValueWriterProvider;
     final ObjectFactory<V> valueFactory;
     final DefaultValueProvider<K, V> defaultValueProvider;
+    final PrepareValueBytesAsWriter<K> prepareValueBytesAsWriter;
 
     final int metaDataBytes;
     //   private final int replicas;
@@ -100,7 +100,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     private final HashSplitting hashSplitting;
 
-    public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
+    public VanillaChronicleMap(AbstractChronicleMapBuilder<K, V, ?> builder) throws IOException {
 
         SerializationBuilder<K> keyBuilder = builder.keyBuilder;
         kClass = keyBuilder.eClass;
@@ -122,6 +122,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         metaValueWriterProvider = (MetaProvider) valueBuilder.metaInteropProvider();
         valueFactory = valueBuilder.factory();
         defaultValueProvider = builder.defaultValueProvider();
+        prepareValueBytesAsWriter = builder.prepareValueBytesAsWriter();
 
         lockTimeOutNS = builder.lockTimeOut(TimeUnit.NANOSECONDS);
 
@@ -355,13 +356,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     @Override
-    public V getUsing(K key, V value) {
-        return lookupUsing(key, value, false);
+    public V getUsing(K key, V usingValue) {
+        return lookupUsing(key, usingValue, false);
     }
 
     @Override
-    public V acquireUsing(K key, V value) {
-        return lookupUsing(key, value, true);
+    public V acquireUsing(K key, V usingValue) {
+        return lookupUsing(key, usingValue, true);
     }
 
     V lookupUsing(K key, V value, boolean create) {
@@ -712,18 +713,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             return (int) (sizeInBytes / entrySize) + 1;
         }
 
-        /**
-         * Used to acquire an object of type V from the Segment.  {@code usingValue} is reused to read the
-         * value if key is present in this Segment, if key is absent in this Segment:  <ol><li>If {@code
-         * create == false}, just {@code null} is returned (except when event listener provides a value "on
-         * get missing" - then it is put into this Segment for the key).</li>  <li>If {@code create ==
-         * true}, {@code usingValue} or a newly created instance of value class, if {@code usingValue ==
-         * null}, is put into this Segment for the key.</li></ol>
-         *
-         * @param hash2 a hash code related to the {@code keyBytes}
-         * @return the value which is finally associated with the given key in this Segment after execution of
-         * this method, or {@code null}.
-         */
         V acquire(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
                   long hash2, boolean create) {
             if (create)
@@ -738,22 +727,23 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 if (offset >= 0L) {
                     return onKeyPresentOnAcquire(copies, key, usingValue, offset, entry);
                 } else {
-                    boolean usingValuePassed = usingValue != null;
-                    usingValue = tryObtainUsingValueOnAcquire(key, usingValue, create);
-                    if (usingValue != null) {
-                        // If `create` is false, this method was called from get() or getUsing()
-                        // and non-null `usingValue` was returned by notifyMissed() method.
-                        // This "missed" default value is considered as genuine value
-                        // rather than "using" container to fill up, even if it implements Byteable.
-                        offset = putEntry(copies, metaKeyInterop, keyInterop, key, keySize,
-                                usingValue, create);
-                        incrementSize();
-                        if (usingValuePassed || !create)
-                            notifyPut(offset, true, key, usingValue, posFromOffset(offset));
-                        return usingValue;
-                    } else {
+                    if (!create)
                         return null;
+                    if (defaultValueProvider != null) {
+                        V defaultValue = defaultValueProvider.get(key);
+                        copies = valueWriterProvider.getCopies(copies);
+                        VW valueWriter = valueWriterProvider.get(copies, originalValueWriter);
+                        copies = metaValueWriterProvider.getCopies(copies);
+                        MetaBytesWriter<V, VW> metaValueWriter = metaValueWriterProvider.get(
+                                copies, originalMetaValueWriter, valueWriter, defaultValue);
+
+                        offset = putEntry(metaKeyInterop, keyInterop, key, keySize,
+                                metaValueWriter, valueWriter, defaultValue);
+                    } else {
+                        offset = putEntry(metaKeyInterop, keyInterop, key, keySize,
+                                prepareValueBytesAsWriter, null, key);
                     }
+                    return onKeyAbsentOnAcquire(copies, key, keySize, usingValue, offset);
                 }
             } finally {
                 if (create)
@@ -781,36 +771,25 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         V onKeyPresentOnAcquire(ThreadLocalCopies copies, K key, V usingValue, long offset,
                                 MultiStoreBytes entry) {
+            skipReplicationBytes(entry);
             V v = readValue(copies, entry, usingValue);
             notifyGet(offset, key, v);
             return v;
         }
 
-        V tryObtainUsingValueOnAcquire(K key, V usingValue, boolean create) {
-            if (create) {
-                if (usingValue != null) {
-                    return usingValue;
-                } else {
-                    try {
-                        usingValue = valueFactory.create();
-                        if (usingValue == null) {
-                            throw new IllegalStateException("acquireUsing() method requires" +
-                                    "valueFactory.create() result to be non-null. " +
-                                    "By default it is so when value class is" +
-                                    "a Byteable/BytesMarshallable/Externalizable subclass." +
-                                    "Note that acquireUsing() anyway makes very little sense " +
-                                    "when value class is not a Byteable subclass.");
-                        }
-                        return usingValue;
-                    } catch (Exception e) {
-                        throw new IllegalStateException(e);
-                    }
-                }
-            } else {
-                if (usingValue instanceof Byteable)
-                    ((Byteable) usingValue).bytes(null, 0L);
-                return defaultValueProvider.get(key, usingValue);
-            }
+        V onKeyAbsentOnAcquire(ThreadLocalCopies copies, K key, long keySize, V usingValue,
+                               long offset) {
+            NativeBytes entry = entry(offset);
+            entry.skip(keySizeMarshaller.sizeEncodingSize(keySize) + keySize);
+            skipReplicationBytes(entry);
+            V v = readValue(copies, entry, usingValue);
+            notifyPut(offset, true, key, v, posFromOffset(offset));
+            notifyGet(offset, key, v);
+            return v;
+        }
+
+        void skipReplicationBytes(Bytes bytes) {
+            // don't skip
         }
 
         V put(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V value,
@@ -834,8 +813,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     }
                 }
                 // key is not found
-                long offset = putEntry(copies, metaKeyInterop, keyInterop, key, keySize, value,
-                        false);
+                long offset = putEntry(copies, metaKeyInterop, keyInterop, key, keySize, value);
                 incrementSize();
                 notifyPut(offset, true, key, value, posFromOffset(offset));
                 return null;
@@ -860,37 +838,22 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             return prevValue;
         }
 
-        /**
-         * Puts entry. If {@code value} implements {@link Byteable} interface and {@code usingValue} is {@code
-         * true}, the value is backed with the bytes of this entry.
-         *
-         * @param value      the value to put
-         * @param usingValue {@code true} if the value should be backed with the bytes of the entry, if it
-         *                   implements {@link Byteable} interface, {@code false} if it should put itself
-         * @return offset of the written entry in the Segment bytes
-         */
         private long putEntry(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
-                              long keySize, V value, boolean usingValue) {
+                              long keySize, V value) {
+            copies = valueWriterProvider.getCopies(copies);
+            VW valueWriter = valueWriterProvider.get(copies, originalValueWriter);
+            copies = metaValueWriterProvider.getCopies(copies);
+            MetaBytesWriter<V, VW> metaValueWriter = metaValueWriterProvider.get(
+                    copies, originalMetaValueWriter, valueWriter, value);
 
-            // "if-else polymorphism" is not very beautiful, but allows to
-            // reuse the rest code of this method and doesn't hurt performance.
-            boolean byteableValue = usingValue && value instanceof Byteable;
-            long valueSize;
-            MetaBytesWriter<V, VW> metaValueWriter = null;
-            VW valueWriter = null;
-            Byteable valueAsByteable = null;
-            if (!byteableValue) {
-                copies = valueWriterProvider.getCopies(copies);
-                valueWriter = valueWriterProvider.get(copies, originalValueWriter);
-                copies = metaValueWriterProvider.getCopies(copies);
-                metaValueWriter = metaValueWriterProvider.get(
-                        copies, originalMetaValueWriter, valueWriter, value);
-                valueSize = metaValueWriter.size(valueWriter, value);
-            } else {
-                valueAsByteable = (Byteable) value;
-                valueSize = valueAsByteable.maxSize();
-            }
+            return putEntry(metaKeyInterop, keyInterop, key, keySize,
+                    metaValueWriter, valueWriter, value);
+        }
 
+        private <E, EW> long putEntry(MKI metaKeyInterop, KI keyInterop, K key, long keySize,
+                                      MetaBytesWriter<E, EW> metaElemWriter, EW elemWriter,
+                                      E elem) {
+            long valueSize = metaElemWriter.size(elemWriter, elem);
             long entrySize = entrySize(keySize, valueSize);
             long pos = alloc(inBlocks(entrySize));
             long offset = offsetFromPos(pos);
@@ -899,27 +862,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
             keySizeMarshaller.writeSize(entry, keySize);
             metaKeyInterop.write(keyInterop, entry, key);
-
-            writeValueOnPutEntry(valueSize, metaValueWriter, valueWriter, value, valueAsByteable,
-                    entry);
-            hashLookup.putAfterFailedSearch(pos);
-            return offset;
-        }
-
-        void writeValueOnPutEntry(long valueSize, MetaBytesWriter<V, VW> metaValueWriter,
-                                  VW valueWriter, V value, Byteable valueAsByteable,
-                                  NativeBytes entry) {
             valueSizeMarshaller.writeSize(entry, valueSize);
             alignment.alignPositionAddr(entry);
+            metaElemWriter.write(elemWriter, entry, elem);
 
-            if (metaValueWriter != null) {
-                metaValueWriter.write(valueWriter, entry, value);
-            } else {
-                assert valueAsByteable != null;
-                long valueOffset = entry.positionAddr() - bytes.address();
-                bytes.zeroOut(valueOffset, valueOffset + valueSize);
-                valueAsByteable.bytes(bytes, valueOffset);
-            }
+            hashLookup.putAfterFailedSearch(pos);
+
+            return offset;
         }
 
         void clearMetaData(long offset) {

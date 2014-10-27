@@ -48,7 +48,7 @@ final class ConstantValueProvider<K, V> implements DefaultValueProvider<K, V> {
     }
 
     @Override
-    public V get(K key, V usingValue) {
+    public V get(K key) {
         return value;
     }
 }
