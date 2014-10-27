@@ -538,11 +538,11 @@ int serverPort1 = 8076;           // change this to your port
 InetSocketAddress inetSocketAddress1 = new InetSocketAddress(hostServer1, serverPort1);
 
 String hostServer2 = "localhost"; // change this to your host
-int  serverPort2= 8076;           // change this to your port
+int  serverPort2= 8077;           // change this to your port
 InetSocketAddress inetSocketAddress2 = new InetSocketAddress(hostServer2, serverPort2);
 
 String hostServer3 = "localhost"; // change this to your host
-int serverPort3 = 8076;           // change this to your port
+int serverPort3 = 8078;           // change this to your port
 InetSocketAddress inetSocketAddress3 = new InetSocketAddress(hostServer3, serverPort3);
 
 
