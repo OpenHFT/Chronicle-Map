@@ -779,7 +779,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         V onKeyAbsentOnAcquire(ThreadLocalCopies copies, K key, long keySize, V usingValue,
                                long offset) {
-            NativeBytes entry = entry(offset);
+            incrementSize();
+            MultiStoreBytes entry = entry(offset);
             entry.skip(keySizeMarshaller.sizeEncodingSize(keySize) + keySize);
             skipReplicationBytes(entry);
             V v = readValue(copies, entry, usingValue);
