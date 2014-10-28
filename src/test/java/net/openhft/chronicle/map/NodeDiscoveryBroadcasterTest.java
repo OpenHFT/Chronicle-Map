@@ -20,8 +20,8 @@ package net.openhft.chronicle.map;
 
 import junit.framework.TestCase;
 import net.openhft.lang.io.ByteBufferBytes;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 
 import java.io.IOException;
 import java.net.Inet4Address;

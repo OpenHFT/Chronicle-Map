@@ -49,6 +49,6 @@ abstract class Replicator {
      */
     protected abstract Closeable applyTo(AbstractChronicleMapBuilder builder,
                                          Replica map, Replica.EntryExternalizable entryExternalizable,
-                                         final ChronicleMap chronicleMap)
+                                         final VanillaChronicleMap chronicleMap)
             throws IOException;
 }

@@ -1238,16 +1238,17 @@ class StatelessServerConnector<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessServerConnector.class
             .getName());
-    public static final int SIZE_OF_SIZE = 4;
+
     public static final int TRANSACTION_ID_OFFSET = AbstractChannelReplicator.SIZE_OF_SIZE + 1;
-    public static final int TRANSACTIONID_OFFSET = AbstractChannelReplicator.SIZE_OF_SIZE + 1;
-    ;
+    public static final boolean MAP_SUPPORTS_BYTES = Boolean.valueOf(System.getProperty
+            ("mapSupportsBytes"));
+
     private final KeyValueSerializer<K, V> keyValueSerializer;
-    private final ChronicleMap<K, V> map;
+    private final VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
     private double maxEntrySizeBytes;
 
     StatelessServerConnector(@NotNull KeyValueSerializer<K, V> keyValueSerializer,
-                             @NotNull ChronicleMap<K, V> map,
+                             @NotNull VanillaChronicleMap<K, ?, ?, V, ?, ?> map,
                              int maxEntrySizeBytes) {
         this.keyValueSerializer = keyValueSerializer;
         this.map = map;
@@ -1304,7 +1305,6 @@ class StatelessServerConnector<K, V> {
             case CLEAR:
                 return clear(reader, writer, sizeLocation);
 
-
             case REPLACE:
                 return replace(reader, writer, sizeLocation);
 
@@ -1329,9 +1329,6 @@ class StatelessServerConnector<K, V> {
             case HASH_CODE:
                 return hashCode(reader, writer, sizeLocation);
 
-            case EQUALS:
-                return equals(reader, writer, sizeLocation);
-
 
             default:
                 throw new IllegalStateException("unsupported event=" + event);
@@ -1342,33 +1339,40 @@ class StatelessServerConnector<K, V> {
 
 
     private Work removeWithValue(Bytes reader, Bytes writer, final long sizeLocation) {
+        if (MAP_SUPPORTS_BYTES) {
+            map.removeWithValue(reader, writer);
+        } else {
+            final K key = readKey(reader);
+            final V readValue = readValue(reader);
 
-        final K key = readKey(reader);
-        final V readValue = readValue(reader);
-
-        final boolean result;
-        try {
-            result = map.remove(key, readValue);
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+            final boolean result;
+            try {
+                result = map.remove(key, readValue);
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
+            writer.writeBoolean(result);
         }
-        writer.writeBoolean(result);
+        writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
     private Work replaceWithOldAndNew(Bytes reader, Bytes writer, final long sizeLocation) {
+        if (MAP_SUPPORTS_BYTES) {
+            map.replaceWithOldAndNew(reader, writer);
+        } else {
+            final K key = readKey(reader);
+            final V oldValue = readValue(reader);
+            final V newValue = readValue(reader);
+            boolean replaced;
 
-        final K key = readKey(reader);
-        final V oldValue = readValue(reader);
-        final V newValue = readValue(reader);
-        boolean replaced;
-
-        try {
-            replaced = map.replace(key, oldValue, newValue);
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+            try {
+                replaced = map.replace(key, oldValue, newValue);
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
+            writer.writeBoolean(replaced);
         }
-        writer.writeBoolean(replaced);
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
@@ -1397,13 +1401,14 @@ class StatelessServerConnector<K, V> {
     }
 
 
-    private Work hashCode(ByteBufferBytes reader, Bytes writer, final long sizeLocation) {
+    private Work hashCode(Bytes reader, Bytes writer, final long sizeLocation) {
 
         try {
             writer.writeInt(map.hashCode());
         } catch (RuntimeException e) {
             return sendException(writer, sizeLocation, e);
         }
+
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
@@ -1441,24 +1446,30 @@ class StatelessServerConnector<K, V> {
 
 
     private Work isEmpty(Bytes reader, Bytes writer, final long sizeLocation) {
-
-        try {
-            writer.writeBoolean(map.isEmpty());
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+        if (MAP_SUPPORTS_BYTES) {
+            map.isEmpty(reader, writer);
+        } else {
+            try {
+                writer.writeBoolean(map.isEmpty());
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
     private Work containsKey(Bytes reader, Bytes writer, final long sizeLocation) {
+        if (MAP_SUPPORTS_BYTES) {
+            map.containsKey(reader, writer);
+        } else {
+            final K k = readKey(reader);
 
-        final K k = readKey(reader);
-
-        try {
-            writer.writeBoolean(map.containsKey(k));
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+            try {
+                writer.writeBoolean(map.containsKey(k));
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
@@ -1466,27 +1477,33 @@ class StatelessServerConnector<K, V> {
 
     private Work containsValue(Bytes reader, Bytes writer, final long sizeLocation) {
 
+        if (MAP_SUPPORTS_BYTES) {
+            map.containsValue(reader, writer);
+        } else {
+            final V v = readValue(reader);
 
-        final V v = readValue(reader);
-
-        try {
-            writer.writeBoolean(map.containsValue(v));
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+            try {
+                writer.writeBoolean(map.containsValue(v));
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
     private Work get(Bytes reader, Bytes writer, final long sizeLocation) {
+        if (MAP_SUPPORTS_BYTES) {
+            map.get(reader, writer);
+        } else {
 
+            final K k = readKey(reader);
 
-        final K k = readKey(reader);
-
-        try {
-            writeValue(map.get(k), writer);
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+            try {
+                writeValue(map.get(k), writer);
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
@@ -1494,28 +1511,35 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work put(Bytes reader, Bytes writer, final long sizeLocation) {
+        if (MAP_SUPPORTS_BYTES) {
+            map.put(reader, writer);
+        } else {
+            final K k = readKey(reader);
+            final V v = readValue(reader);
 
-        final K k = readKey(reader);
-        final V v = readValue(reader);
-
-        try {
-            writeValue(map.put(k, v), writer);
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+            try {
+                writeValue(map.put(k, v), writer);
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
     private Work remove(Bytes reader, Bytes writer, final long sizeLocation) {
-        final K key = readKey(reader);
+        if (MAP_SUPPORTS_BYTES) {
+            map.remove(reader, writer);
+        } else {
+            final K key = readKey(reader);
 
-        try {
-            writeValue(map.remove(key), writer);
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+            try {
+                writeValue(map.remove(key), writer);
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
+
         }
-
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
 
@@ -1524,43 +1548,31 @@ class StatelessServerConnector<K, V> {
 
     private Work putAll(Bytes reader, Bytes writer, final long sizeLocation) {
 
+        if (MAP_SUPPORTS_BYTES) {
+            map.putAll(reader, writer);
+        } else {
+            final Map<K, V> m = readEntries(reader);
 
-        final Map<K, V> m = readEntries(reader);
+            try {
+                map.putAll(m);
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
 
-        try {
-            map.putAll(m);
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
         }
-
-        writeSizeAndFlags(sizeLocation, false, writer);
-        return null;
-    }
-
-
-    private Work equals(Bytes reader, Bytes writer, final long sizeLocation) {
-
-        final Map<K, V> m = readEntries(reader);
-
-        boolean result;
-        try {
-            result = map.equals(m);
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
-        }
-
-        writer.writeBoolean(result);
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
 
     private Work clear(Bytes reader, Bytes writer, final long sizeLocation) {
+
         try {
             map.clear();
         } catch (RuntimeException e) {
             return sendException(writer, sizeLocation, e);
         }
+
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
@@ -1704,81 +1716,49 @@ class StatelessServerConnector<K, V> {
         };
     }
 
-    private Work sendException(Bytes reader, Bytes writer, RuntimeException e) {
-        final long sizeLocation = reflectTransactionId(reader, writer);
-        return sendException(writer, sizeLocation, e);
-    }
-
-
-    private long header(Bytes writer, final long transactionId) {
-        final long sizeLocation = writer.position();
-
-        writer.skip(TRANSACTION_ID_OFFSET); //  SIZE_OF_SIZE  + is
-
-        // exception
-        writer.writeLong(transactionId);
-
-        //  hasAnotherChunk
-        writer.skip(1);
-
-        // count
-        writer.skip(4);
-        return sizeLocation;
-    }
-
-    private void writeHeader(Bytes writer, long sizeLocation, int count,
-                             final boolean hasAnotherChunk) {
-        final long end = writer.position();
-        final int size = (int) (end - sizeLocation);
-        writer.position(sizeLocation);
-
-        // size in bytes
-        writer.writeInt(size);
-
-        // is exception
-        writer.writeBoolean(false);
-
-        //transaction id;
-        writer.skip(8);
-
-        writer.writeBoolean(hasAnotherChunk);
-
-        // count
-        writer.writeInt(count);
-        writer.position(end);
-    }
 
     private Work putIfAbsent(Bytes reader, Bytes writer, final long sizeLocation) {
 
+        if (MAP_SUPPORTS_BYTES) {
+            map.putIfAbsent(reader, writer);
+        } else {
 
-        final K key = readKey(reader);
-        final V v = readValue(reader);
+            final K key = readKey(reader);
+            final V v = readValue(reader);
 
-        final V value;
+            final V result;
 
-        try {
-            value = map.putIfAbsent(key, v);
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+            try {
+                result = map.putIfAbsent(key, v);
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
+
+            writeValue(result, writer);
         }
-
-        writeValue(value, writer);
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
 
     private Work replace(Bytes reader, Bytes writer, final long sizeLocation) {
-        final K k = readKey(reader);
-        final V v = readValue(reader);
-        final V replaced;
 
-        try {
-            replaced = map.replace(k, v);
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+        if (MAP_SUPPORTS_BYTES) {
+            map.replaceKV(reader, writer);
+        } else {
+
+            final K k = readKey(reader);
+            final V v = readValue(reader);
+            final V replaced;
+
+            try {
+                replaced = map.replace(k, v);
+            } catch (RuntimeException e) {
+                return sendException(writer, sizeLocation, e);
+            }
+            writeValue(replaced, writer);
         }
-        writeValue(replaced, writer);
+
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
@@ -1834,6 +1814,51 @@ class StatelessServerConnector<K, V> {
             result.put(readKey(reader), readValue(reader));
         }
         return result;
+    }
+
+
+    private Work sendException(Bytes reader, Bytes writer, RuntimeException e) {
+        final long sizeLocation = reflectTransactionId(reader, writer);
+        return sendException(writer, sizeLocation, e);
+    }
+
+
+    private long header(Bytes writer, final long transactionId) {
+        final long sizeLocation = writer.position();
+
+        writer.skip(TRANSACTION_ID_OFFSET); //  SIZE_OF_SIZE  + is
+
+        // exception
+        writer.writeLong(transactionId);
+
+        //  hasAnotherChunk
+        writer.skip(1);
+
+        // count
+        writer.skip(4);
+        return sizeLocation;
+    }
+
+    private void writeHeader(Bytes writer, long sizeLocation, int count,
+                             final boolean hasAnotherChunk) {
+        final long end = writer.position();
+        final int size = (int) (end - sizeLocation);
+        writer.position(sizeLocation);
+
+        // size in bytes
+        writer.writeInt(size);
+
+        // is exception
+        writer.writeBoolean(false);
+
+        //transaction id;
+        writer.skip(8);
+
+        writer.writeBoolean(hasAnotherChunk);
+
+        // count
+        writer.writeInt(count);
+        writer.position(end);
     }
 
 }

@@ -30,7 +30,7 @@ final class Replicators {
             @Override
             protected Closeable applyTo(AbstractChronicleMapBuilder builder,
                                         Replica replica, Replica.EntryExternalizable entryExternalizable,
-                                        final ChronicleMap chronicleMap) throws IOException {
+                                        final VanillaChronicleMap chronicleMap) throws IOException {
 
                 final KeyValueSerializer keyValueSerializer = new KeyValueSerializer(builder
                         .keyBuilder, builder.valueBuilder);
@@ -50,7 +50,7 @@ final class Replicators {
 
             @Override
             protected Closeable applyTo(AbstractChronicleMapBuilder builder,
-                                        Replica map, Replica.EntryExternalizable entryExternalizable, final ChronicleMap chronicleMap)
+                                        Replica map, Replica.EntryExternalizable entryExternalizable, final VanillaChronicleMap chronicleMap)
                     throws IOException {
                 return new UdpReplicator(map, entryExternalizable, replicationConfig,
                         builder.entrySize());

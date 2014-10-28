@@ -85,7 +85,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         REMOVE_WITH_VALUE,
         TO_STRING,
         PUT_ALL,
-        EQUALS,
+
         HASH_CODE
     }
 
@@ -309,25 +309,23 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
      * @return true if the contain the same data
      */
     @Override
-    public boolean equals(Object object) {
+    public synchronized boolean equals(Object object) {
+
         if (this == object) return true;
         if (object == null || object.getClass().isAssignableFrom(Map.class))
             return false;
 
         final Map<? extends K, ? extends V> that = (Map<? extends K, ? extends V>) object;
 
-        long sizeLocation = writeEvent(EQUALS);
+        int size = size();
 
-        try {
-            writeEntries(that);
-        } catch (ClassCastException e) {
-            if (LOG.isDebugEnabled())
-                LOG.debug("failed equals() due to a difference in types", e);
+        if (that.size() != size)
             return false;
-        }
 
-        // get the data back from the server
-        return blockingFetch(sizeLocation).readBoolean();
+        final Set<Map.Entry<K, V>> entries = entrySet();
+
+        return that.entrySet().equals(entries);
+
     }
 
 
@@ -342,7 +340,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     @Override
-    public int hashCode() {
+    public synchronized int hashCode() {
         long sizeLocation = writeEvent(HASH_CODE);
 
         // get the data back from the server

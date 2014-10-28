@@ -900,7 +900,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
             valueBuilder.constantSizeBySample(sampleValue);
     }
 
-    private ChronicleMap<K, V> establishReplication(ChronicleMap<K, V> map)
+    private ChronicleMap<K, V> establishReplication(VanillaChronicleMap<K, ?, ?, V, ?, ?>  map)
             throws IOException {
         if (map instanceof ReplicatedChronicleMap) {
             ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;

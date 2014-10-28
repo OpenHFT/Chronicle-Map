@@ -18,8 +18,8 @@
 
 package net.openhft.chronicle.map;
 
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

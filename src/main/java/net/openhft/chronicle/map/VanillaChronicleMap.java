@@ -54,7 +54,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
 
     /**
-     * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set bits.
+     * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set
+     * bits.
      */
     static final int MAX_ENTRY_OVERSIZE_FACTOR = 64;
 
@@ -256,7 +257,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     long segmentSize() {
         long ss = SEGMENT_HEADER
                 + (CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
-                    * multiMapsPerSegment())
+                * multiMapsPerSegment())
                 + numberOfBitSets() * sizeOfBitSets() // the free list and 0+ dirty lists.
                 + sizeOfEntriesInSegment();
         if ((ss & 63L) != 0)
@@ -414,9 +415,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
 
     /**
-     * removes ( if there exists ) an entry from the map, if the {@param key} and {@param expectedValue} match
-     * that of a maps.entry. If the {@param expectedValue} equals null then ( if there exists ) an entry whose
-     * key equals {@param key} this is removed.
+     * removes ( if there exists ) an entry from the map, if the {@param key} and {@param
+     * expectedValue} match that of a maps.entry. If the {@param expectedValue} equals null then (
+     * if there exists ) an entry whose key equals {@param key} this is removed.
      *
      * @param k             the key of the entry to remove
      * @param expectedValue null if not required
@@ -476,8 +477,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
      * replace the value in a map, only if the existing entry equals {@param existingValue}
      *
      * @param key           the key into the map
-     * @param existingValue the expected existing value in the map ( could be null when we don't wish to do
-     *                      this check )
+     * @param existingValue the expected existing value in the map ( could be null when we don't
+     *                      wish to do this check )
      * @param newValue      the new value you wish to store in the map
      * @return the value that was replaced
      */
@@ -513,12 +514,61 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     static final ThreadLocal<MultiStoreBytes> tmpBytes = new ThreadLocal<>();
+
     protected MultiStoreBytes acquireTmpBytes() {
         MultiStoreBytes b = tmpBytes.get();
         if (b == null)
             tmpBytes.set(b = new MultiStoreBytes());
         return b;
     }
+
+    void replace(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    void isEmpty(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    void containsKey(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    void containsValue(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    void get(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    void putAll(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    void put(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    void putIfAbsent(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    void replaceKV(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    //  for boolean replace(K key, V oldValue, V newValue);
+    void replaceWithOldAndNew(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    // for boolean remove(Object key, Object value);
+    void removeWithValue(Bytes reader, Bytes writer) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+
 
     // these methods should be package local, not public or private.
     class Segment implements SharedSegment {
@@ -551,7 +601,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             long start = bytes.startAddr() + SEGMENT_HEADER;
             createHashLookups(start);
             start += CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
-                        * multiMapsPerSegment();
+                    * multiMapsPerSegment();
             final NativeBytes bsBytes = new NativeBytes(ms.objectSerializer(),
                     start,
                     start + LONGS.align(BYTES.alignAndConvert(entriesPerSegment, BITS), BYTES),
@@ -942,12 +992,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         /**
          * Removes a key (or key-value pair) from the Segment.
          *
-         * <p>The entry will only be removed if {@code expectedValue} equals to {@code null}
-         * or the value previously corresponding to the specified key.
+         * <p>The entry will only be removed if {@code expectedValue} equals to {@code null} or the
+         * value previously corresponding to the specified key.
          *
          * @param hash2 a hash code related to the {@code keyBytes}
-         * @return the value of the entry that was removed if the entry corresponding to the {@code keyBytes}
-         * exists and {@link #removeReturnsNull} is {@code false}, {@code null} otherwise
+         * @return the value of the entry that was removed if the entry corresponding to the {@code
+         * keyBytes} exists and {@link #removeReturnsNull} is {@code false}, {@code null} otherwise
          */
         V remove(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
                  V expectedValue, long hash2) {
@@ -1003,9 +1053,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Replaces the specified value for the key with the given value.  {@code newValue} is set only if
-         * the existing value corresponding to the specified key is equal to {@code expectedValue} or {@code
-         * expectedValue == null}.
+         * Replaces the specified value for the key with the given value.  {@code newValue} is set
+         * only if the existing value corresponding to the specified key is equal to {@code
+         * expectedValue} or {@code expectedValue == null}.
          *
          * @param hash2 a hash code related to the {@code keyBytes}
          * @return the replaced value or {@code null} if the value was not replaced
@@ -1081,17 +1131,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Replaces value in existing entry. May cause entry relocation, because there may be not enough space
-         * for new value in location already allocated for this entry.
+         * Replaces value in existing entry. May cause entry relocation, because there may be not
+         * enough space for new value in location already allocated for this entry.
          *
          * @param pos          index of the first block occupied by the entry
-         * @param offset       relative offset of the entry in Segment bytes (before, i. e. including
-         *                     metaData)
+         * @param offset       relative offset of the entry in Segment bytes (before, i. e.
+         *                     including metaData)
          * @param entry        relative pointer in Segment bytes
          * @param valueSizePos relative position of value size in entry
          * @param entryEndAddr absolute address of the entry end
-         * @return relative offset of the entry in Segment bytes after putting value (that may cause entry
-         * relocation)
+         * @return relative offset of the entry in Segment bytes after putting value (that may cause
+         * entry relocation)
          */
         long putValue(long pos, long offset, NativeBytes entry, long valueSizePos,
                       long entryEndAddr, ThreadLocalCopies copies, V value, Bytes valueBytes,
