@@ -598,14 +598,13 @@ public class MapCheck {
     static void initFloats(Object[] key, Object[] absent, int size) {
         Map m = newMap();
         for (int i = 0; i < size; ++i) {
-            float r = Float.valueOf(i);
+            float r = (float) i;
             key[i] = r;
             m.put(r, r);
         }
         int k = 0;
         while (k < size) {
-            float r = rng.nextFloat();
-            Float ir = Float.valueOf(r);
+            Float ir = rng.nextFloat();
             if (m.put(ir, ir) == null)
                 absent[k++] = ir;
         }
@@ -615,14 +614,13 @@ public class MapCheck {
     static void initDoubles(Object[] key, Object[] absent, int size) {
         Map m = newMap();
         for (int i = 0; i < size; ++i) {
-            double r = Double.valueOf(i);
+            double r = (double) i;
             key[i] = r;
             m.put(r, r);
         }
         int k = 0;
         while (k < size) {
-            double r = rng.nextDouble();
-            Double ir = Double.valueOf(r);
+            Double ir = rng.nextDouble();
             if (m.put(ir, ir) == null)
                 absent[k++] = ir;
         }
@@ -639,7 +637,7 @@ public class MapCheck {
             FileInputStream fr = new FileInputStream(fileName);
             BufferedInputStream in = new BufferedInputStream(fr);
             while (ki < size || ai < size) {
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 for (; ; ) {
                     int c = in.read();
                     if (c < 0) {
