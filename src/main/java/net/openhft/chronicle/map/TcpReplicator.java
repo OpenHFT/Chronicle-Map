@@ -1814,9 +1814,11 @@ class StatelessServerConnector<K, V> {
     }
 
     private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
+        long currentPosition = out.position();
         final long size = out.position() - locationOfSize;
-        out.writeInt(0L, (int) size);
-        out.writeBoolean(AbstractChannelReplicator.SIZE_OF_SIZE, isException);
+        out.writeInt(locationOfSize, (int) size);
+        out.writeBoolean(locationOfSize + AbstractChannelReplicator.SIZE_OF_SIZE, isException);
+        out.position(currentPosition);
     }
 
     private void writeException(RuntimeException e, Bytes out) {
