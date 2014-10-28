@@ -1561,18 +1561,18 @@ class StatelessServerConnector<K, V> {
 
 
     private Work values(Bytes reader, Bytes writer) {
-        final long sizeLocation = reflectTransactionId(reader, writer);
-        final Collection<V> values;
+        final long transactionId = reader.readLong();
+
+        Collection<V> ks;
 
         try {
-            values = map.values();
+            ks = map.values();
         } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
+            return sendException(reader, writer, e);
         }
 
-        writer.writeStopBit(values.size());
 
-        final Iterator<V> iterator = values.iterator();
+        final Iterator<V> iterator = ks.iterator();
 
         // this allows us to write more data than the buffer will allow
         return new Work() {
@@ -1580,17 +1580,24 @@ class StatelessServerConnector<K, V> {
             @Override
             public boolean doWork(Bytes writer) {
 
+                final long sizeLocation = header(writer, transactionId);
+
+                int count = 0;
                 while (iterator.hasNext()) {
 
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
-                    if (writer.remaining() <= maxEntrySizeBytes)
+                    if (writer.remaining() <= maxEntrySizeBytes) {
+                        writeHeader(writer, sizeLocation, count, true);
                         return false;
+                    }
+
+                    count++;
 
                     writeValue(iterator.next(), writer);
                 }
 
-                writeSizeAndFlags(sizeLocation, false, writer);
+                writeHeader(writer, sizeLocation, count, false);
                 return true;
             }
         };
@@ -1600,7 +1607,6 @@ class StatelessServerConnector<K, V> {
         final long transactionId = reader.readLong();
 
         Set<K> ks;
-
 
         try {
             ks = map.keySet();

@@ -546,7 +546,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         assert buffer.capacity() == bytes.capacity();
         assert bytes.limit() == bytes.capacity();
 
-
     }
 
 
@@ -561,21 +560,38 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     @NotNull
     public synchronized Collection<V> values() {
-        long sizeLocation = writeEvent(VALUES);
+        final long sizeLocation = writeEvent(VALUES);
+
+        final long startTime = System.currentTimeMillis();
+        final long transactionId = nextUniqueTransaction(startTime);
+        final long timeoutTime = System.currentTimeMillis() + builder.timeoutMs();
 
         // get the data back from the server
-        final Bytes in = blockingFetch(sizeLocation);
+        Bytes in = blockingFetch0(sizeLocation, transactionId, startTime);
 
-        final long size = in.readStopBit();
+        final Collection<V> result = new ArrayList<V>();
 
-        if (size > Integer.MAX_VALUE)
-            throw new IllegalStateException("size=" + size + " is too large.");
+        for (; ; ) {
 
-        final ArrayList<V> result = new ArrayList<V>((int) size);
+            boolean hasMoreEntries = in.readBoolean();
 
-        for (int i = 0; i < size; i++) {
-            result.add(keyValueSerializer.readValue(in));
+            // number of entries in the chunk
+            long size = in.readInt();
+
+            for (int i = 0; i < size; i++) {
+                V v = keyValueSerializer.readValue(in);
+                result.add(v);
+            }
+
+            if (!hasMoreEntries)
+                break;
+
+            compact(in);
+
+            in = blockingFetchReadOnly(timeoutTime, transactionId);
         }
+
+
         return result;
     }
 

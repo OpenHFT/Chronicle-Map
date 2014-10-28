@@ -23,6 +23,7 @@ import org.testng.Assert;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -76,6 +77,47 @@ public class StatelessClientTest {
         Assert.assertEquals("some value=" + next.getKey(), next.getValue());
 
         Assert.assertEquals(entries.size(), SIZE);
+
+        serverMap.close();
+        statelessMap.close();
+    }
+
+
+    @Test
+    public void testBufferOverFlowPutAllAndValues() throws IOException, InterruptedException {
+
+        final ChronicleMap<Integer, CharSequence> serverMap;
+        final ChronicleMap<Integer, CharSequence> statelessMap;
+
+
+        // stateless client
+        {
+            statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, CharSequence.class)
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+        }
+
+        // server
+        {
+            serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
+        }
+
+
+        Map<Integer, CharSequence> payload = new HashMap<Integer, CharSequence>();
+
+        for (int i = 0; i < SIZE; i++) {
+            payload.put(i, "some value=" + i);
+        }
+
+
+        statelessMap.putAll(payload);
+
+
+        Collection<CharSequence> values = statelessMap.values();
+
+
+        Assert.assertEquals(values.size(), SIZE);
 
         serverMap.close();
         statelessMap.close();
