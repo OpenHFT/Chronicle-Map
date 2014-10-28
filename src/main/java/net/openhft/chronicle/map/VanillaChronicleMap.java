@@ -22,6 +22,7 @@ import net.openhft.chronicle.common.ChronicleHashErrorListener;
 import net.openhft.chronicle.common.serialization.*;
 import net.openhft.chronicle.common.threadlocal.Provider;
 import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
+import net.openhft.lang.MemoryUnit;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
@@ -45,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
+import static net.openhft.lang.MemoryUnit.*;
 
 
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
@@ -153,17 +155,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         return hashSplitting.segmentIndex(hash);
     }
 
-    /**
-     * Cache line alignment, assuming 64-byte cache lines.
-     */
-    static long align64(long l) {
-        return (l + 63L) & ~63L;
-    }
-
-    static long align8(long n) {
-        return (n + 7L) & ~7L;
-    }
-
     void initTransients() {
         keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
         keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
@@ -255,7 +246,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     long sizeOfBitSets() {
-        return align64(align8(entriesPerSegment) / 8L);
+        return CACHE_LINES.align(BYTES.alignAndConvert(entriesPerSegment, BITS), BYTES);
     }
 
     int numberOfBitSets() {
@@ -266,7 +257,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     long segmentSize() {
         long ss = SEGMENT_HEADER
-                + align64(sizeOfMultiMap() + sizeOfMultiMapBitSet()) * multiMapsPerSegment()
+                + (CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
+                    * multiMapsPerSegment())
                 + numberOfBitSets() * sizeOfBitSets() // the free list and 0+ dirty lists.
                 + sizeOfEntriesInSegment();
         if ((ss & 63L) != 0)
@@ -291,7 +283,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     private long sizeOfEntriesInSegment() {
-        return align64(entriesPerSegment * entrySize);
+        return CACHE_LINES.align(entriesPerSegment * entrySize, BYTES);
     }
 
     @Override
@@ -559,9 +551,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
             long start = bytes.startAddr() + SEGMENT_HEADER;
             createHashLookups(start);
-            start += align64(sizeOfMultiMap() + sizeOfMultiMapBitSet()) * multiMapsPerSegment();
+            start += CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
+                        * multiMapsPerSegment();
             final NativeBytes bsBytes = new NativeBytes(ms.objectSerializer(),
-                    start, start + align8(align8(entriesPerSegment) / 8L), null);
+                    start,
+                    start + LONGS.align(BYTES.alignAndConvert(entriesPerSegment, BITS), BYTES),
+                    null);
             freeList = new SingleThreadedDirectBitSet(bsBytes);
             start += numberOfBitSets() * sizeOfBitSets();
             entriesOffset = start - bytes.startAddr();

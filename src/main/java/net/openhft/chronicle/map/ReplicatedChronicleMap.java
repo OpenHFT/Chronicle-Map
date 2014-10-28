@@ -25,6 +25,7 @@ import net.openhft.chronicle.common.serialization.MetaBytesInterop;
 import net.openhft.chronicle.common.serialization.MetaBytesWriter;
 import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.Maths;
+import net.openhft.lang.MemoryUnit;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.MultiStoreBytes;
@@ -41,6 +42,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static net.openhft.chronicle.common.serialization.Hasher.hash;
+import static net.openhft.lang.MemoryUnit.BITS;
+import static net.openhft.lang.MemoryUnit.BYTES;
+import static net.openhft.lang.MemoryUnit.CACHE_LINES;
 import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 
 /**
@@ -120,7 +124,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     private int assignedModIterBitSetSizeInBytes() {
-        return (int) align64((127 + RESERVED_MOD_ITER) / 8);
+        return (int) CACHE_LINES.align(BYTES.alignAndConvert(127 + RESERVED_MOD_ITER, BITS), BYTES);
     }
 
     @Override
@@ -139,7 +143,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     long modIterBitSetSizeInBytes() {
-        return align64(bitsPerSegmentInModIterBitSet() * segments.length / 8L);
+        long bytes = BITS.toBytes(bitsPerSegmentInModIterBitSet() * segments.length);
+        return CACHE_LINES.align(bytes, BYTES);
     }
 
     private long bitsPerSegmentInModIterBitSet() {
@@ -587,7 +592,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         @Override
         void createHashLookups(long start) {
             hashLookupLiveAndDeleted = createMultiMap(start);
-            start += align64(sizeOfMultiMap() + sizeOfMultiMapBitSet());
+            start += CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES);
             hashLookupLiveOnly = createMultiMap(start);
         }
 
