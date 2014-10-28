@@ -1563,16 +1563,16 @@ class StatelessServerConnector<K, V> {
     private Work values(Bytes reader, Bytes writer) {
         final long transactionId = reader.readLong();
 
-        Collection<V> ks;
+        Collection<V> values;
 
         try {
-            ks = map.values();
+            values = map.values();
         } catch (RuntimeException e) {
             return sendException(reader, writer, e);
         }
 
 
-        final Iterator<V> iterator = ks.iterator();
+        final Iterator<V> iterator = values.iterator();
 
         // this allows us to write more data than the buffer will allow
         return new Work() {
