@@ -22,6 +22,7 @@ import net.openhft.chronicle.common.ChronicleHashErrorListener;
 import net.openhft.chronicle.common.serialization.*;
 import net.openhft.chronicle.common.threadlocal.Provider;
 import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
+import net.openhft.lang.MemoryUnit;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
@@ -42,7 +43,10 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.Long.numberOfTrailingZeros;
+import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
+import static net.openhft.lang.MemoryUnit.*;
 
 
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
@@ -89,8 +93,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     // rather than as returning the Object can be expensive for something you probably don't use.
     final boolean putReturnsNull;
     final boolean removeReturnsNull;
-
-    final boolean useSmallMultiMaps;
 
     private final long lockTimeOutNS;
     private final ChronicleHashErrorListener errorListener;
@@ -142,7 +144,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         this.eventListener = builder.eventListener();
 
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
-        useSmallMultiMaps = useSmallMultiMaps();
         initTransients();
     }
 
@@ -152,17 +153,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     int getSegment(long hash) {
         return hashSplitting.segmentIndex(hash);
-    }
-
-    /**
-     * Cache line alignment, assuming 64-byte cache lines.
-     */
-    static long align64(long l) {
-        return (l + 63L) & ~63L;
-    }
-
-    static long align8(long n) {
-        return (n + 7L) & ~7L;
     }
 
     void initTransients() {
@@ -240,23 +230,23 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     long sizeOfMultiMap() {
-        return useSmallMultiMaps ?
+        return useSmallMultiMaps() ?
                 VanillaShortShortMultiMap.sizeInBytes(entriesPerSegment) :
                 VanillaIntIntMultiMap.sizeInBytes(entriesPerSegment);
     }
 
     long sizeOfMultiMapBitSet() {
-        return useSmallMultiMaps ?
+        return useSmallMultiMaps() ?
                 VanillaShortShortMultiMap.sizeOfBitSetInBytes(entriesPerSegment) :
                 VanillaIntIntMultiMap.sizeOfBitSetInBytes(entriesPerSegment);
     }
 
     boolean useSmallMultiMaps() {
-        return entriesPerSegment * 2L <= VanillaShortShortMultiMap.MAX_CAPACITY;
+        return entriesPerSegment <= VanillaShortShortMultiMap.MAX_CAPACITY;
     }
 
     long sizeOfBitSets() {
-        return align64(align8(entriesPerSegment) / 8L);
+        return CACHE_LINES.align(BYTES.alignAndConvert(entriesPerSegment, BITS), BYTES);
     }
 
     int numberOfBitSets() {
@@ -267,28 +257,25 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     long segmentSize() {
         long ss = SEGMENT_HEADER
-                + align64(sizeOfMultiMap() + sizeOfMultiMapBitSet()) * multiMapsPerSegment()
+                + (CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
+                    * multiMapsPerSegment())
                 + numberOfBitSets() * sizeOfBitSets() // the free list and 0+ dirty lists.
                 + sizeOfEntriesInSegment();
         if ((ss & 63L) != 0)
             throw new AssertionError();
+        return breakL1CacheAssociativityContention(ss);
+    }
 
-        // Say, there is 32 KB L1 cache with 2(4, 8) way set associativity, 64-byte lines.
-        // It means there are 32 * 1024 / 64 / 2(4, 8) = 256(128, 64) sets,
-        // i. e. each way (bank) contains 256(128, 64) lines. (L2 and L3 caches has more sets.)
-        // If segment size in lines multiplied by 2^n is divisible by set size,
-        // every 2^n-th segment header fall into the same set.
-        // To break this up we make segment size odd in lines, in this case only each
-        // 256(128, 64)-th segment header fall into the same set.
-
-        // If there are 64 sets in L1, it should be 8- or much less likely 4-way, and segments
-        // collision by pairs is not so terrible.
-
-        // if the size is a multiple of 4096 or slightly more. Make sure it is at least 64 more than a multiple.
-        if ((ss & 4093) < 64)
-            ss = (ss & ~63) + 64;
-
-        return ss;
+    private long breakL1CacheAssociativityContention(long segmentSize) {
+        // Conventional alignment to break is 4096 (given Intel's 32KB 8-way L1 cache),
+        // for any case break 2 times smaller alignment
+        int alignmentToBreak = 2048;
+        int eachNthSegmentFallIntoTheSameSet =
+                max(1, alignmentToBreak >> numberOfTrailingZeros(segmentSize));
+        if (eachNthSegmentFallIntoTheSameSet < actualSegments) {
+            segmentSize |= 64L; // make segment size "odd" (in cache lines)
+        }
+        return segmentSize;
     }
 
     int multiMapsPerSegment() {
@@ -296,7 +283,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     private long sizeOfEntriesInSegment() {
-        return align64(entriesPerSegment * entrySize);
+        return CACHE_LINES.align(entriesPerSegment * entrySize, BYTES);
     }
 
     @Override
@@ -564,9 +551,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
             long start = bytes.startAddr() + SEGMENT_HEADER;
             createHashLookups(start);
-            start += align64(sizeOfMultiMap() + sizeOfMultiMapBitSet()) * multiMapsPerSegment();
+            start += CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
+                        * multiMapsPerSegment();
             final NativeBytes bsBytes = new NativeBytes(ms.objectSerializer(),
-                    start, start + align8(align8(entriesPerSegment) / 8L), null);
+                    start,
+                    start + LONGS.align(BYTES.alignAndConvert(entriesPerSegment, BITS), BYTES),
+                    null);
             freeList = new SingleThreadedDirectBitSet(bsBytes);
             start += numberOfBitSets() * sizeOfBitSets();
             entriesOffset = start - bytes.startAddr();
@@ -591,7 +581,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     new NativeBytes(new VanillaBytesMarshallerFactory(), start,
                             start + sizeOfMultiMapBitSet(), null);
             multiMapBytes.load();
-            return useSmallMultiMaps ?
+            return useSmallMultiMaps() ?
                     new VanillaShortShortMultiMap(multiMapBytes, sizeOfMultiMapBitSetBytes) :
                     new VanillaIntIntMultiMap(multiMapBytes, sizeOfMultiMapBitSetBytes);
         }
@@ -628,7 +618,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         long getSize() {
             // any negative value is in error state.
-            return Math.max(0L, this.bytes.readVolatileLong(SIZE_OFFSET));
+            return max(0L, this.bytes.readVolatileLong(SIZE_OFFSET));
         }
 
 

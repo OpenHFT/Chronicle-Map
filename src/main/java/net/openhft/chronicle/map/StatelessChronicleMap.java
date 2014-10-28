@@ -570,14 +570,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     }
 
-    @NotNull
-    public synchronized Set<K> keySet() {
-        long sizeLocation = writeEvent(KEY_SET);
-
-        // get the data back from the server
-        return readKeySet(blockingFetch(sizeLocation));
-    }
-
 
     @NotNull
     public synchronized Collection<V> values() {
@@ -625,6 +617,42 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                 K k = keyValueSerializer.readKey(in);
                 V v = keyValueSerializer.readValue(in);
                 result.add(new Entry(k, v));
+            }
+
+            if (!hasMoreEntries)
+                break;
+
+            in = blockingFetchReadOnly(timeoutTime, transactionId);
+        }
+
+        return result;
+    }
+
+
+    @NotNull
+    public synchronized Set<K> keySet() {
+        final long sizeLocation = writeEvent(KEY_SET);
+
+        final long startTime = System.currentTimeMillis();
+        final long transactionId = nextUniqueTransaction(startTime);
+        final long timeoutTime = System.currentTimeMillis() + builder.timeoutMs();
+
+        // get the data back from the server
+        Bytes in = blockingFetch0(sizeLocation, transactionId, startTime);
+
+        final Set<K> result = new HashSet<>();
+
+        for (; ; ) {
+
+            boolean hasMoreEntries = in.readBoolean();
+            LOG.info("entrySet - hasMoreEntries=" + hasMoreEntries);
+
+            // number of entries in the chunk
+            long size = in.readInt();
+
+            for (int i = 0; i < size; i++) {
+                K k = keyValueSerializer.readKey(in);
+                result.add(k);
             }
 
             if (!hasMoreEntries)

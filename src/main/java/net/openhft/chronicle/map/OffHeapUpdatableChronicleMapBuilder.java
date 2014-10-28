@@ -91,7 +91,7 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
      * @see #defaultValueProvider(DefaultValueProvider)
      */
     @Override
-    OffHeapUpdatableChronicleMapBuilder<K, V> prepareValueBytesOnAcquire(
+    public OffHeapUpdatableChronicleMapBuilder<K, V> prepareValueBytesOnAcquire(
             @NotNull PrepareValueBytes<K> prepareValueBytes) {
         return super.prepareValueBytesOnAcquire(prepareValueBytes);
     }

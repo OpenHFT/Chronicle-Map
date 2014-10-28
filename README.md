@@ -187,8 +187,8 @@ this for best performance.
 
 or value objects that are created through, a directClass interface, for example : 
 ``` java
-      ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
-               .of(String.class, DataValueClasses.directClassFor(BondVOInterface.class))
+      ChronicleMap<String, BondVOInterface> chm = OffHeapUpdatableChronicleMapBuilder
+               .of(String.class, BondVOInterface.class)
                .create();
 
 ```
@@ -277,9 +277,13 @@ In this example above we have set 1000 entries.
 
 We have optimised chronicle, So that you can have situations where you either don't use;
 
-- all the entries you have allowed for.  This works best on Unix where the disk space and memory used reflect the number of actual entries, not the number you allowed for.
+- all the entries you have allowed for.  This works best on Unix where the disk space and memory
+used reflect the number of actual entries, not the number you allowed for.
 
-- all the space you allow for each entry.  This helps if you have entries which are multiple cache lines (128 bytes +), only the lines you touch sit in your CPU cache and if you have multiple pages (8+ Kbytes) only the pages you touch use memory or disk.  The CPU cache usage matters as it can be 10000x smaller than main memory.
+- all the space you allow for each entry.  This helps if you have entries which are multiple cache
+lines (128 bytes +), only the lines you touch sit in your CPU cache and if you have multiple pages
+(8+ Kbytes) only the pages you touch use memory or disk.  The CPU cache usage matters as it can be
+10000x smaller than main memory.
 
 ### Size of space reserved on disk
 
@@ -793,7 +797,13 @@ unique for each map you have.
 A stateless client is an instance of a `ChronicleMap` or a `ChronicleSet` that does not hold any 
 data
  locally, all the Map or Set operations are delegated via a Remote Procedure Calls ( RPC ) to 
- another `ChronicleMap` or  `ChronicleSet`  which we will refer to as the server. The server will hold all your data, the server can not it’s self be a stateless client. Your stateless client must be connected to the server via TCP/IP. The stateless client will delegate all your method calls to the remote server. The stateless client operations will block, in other words the stateless client will wait for the server to send a response before continuing to the next operation. The stateless client could be  consider to be a ClientProxy to `ChronicleMap` or  `ChronicleSet`  running on another host.
+ another `ChronicleMap` or  `ChronicleSet`  which we will refer to as the server. The server will
+ hold all your data, the server can not it’s self be a stateless client. Your stateless client must
+ be connected to the server via TCP/IP. The stateless client will delegate all your method calls to
+ the remote server. The stateless client operations will block, in other words the stateless client
+ will wait for the server to send a response before continuing to the next operation. The stateless
+ client could be  consider to be a ClientProxy to `ChronicleMap` or  `ChronicleSet`  running
+ on another host.
  
  Below is an example of how to configure a stateless client.
 
@@ -852,8 +862,12 @@ but in your example you should choose the host of the state-full server and the 
 the ".stateless(..)" method tells `ChronicleMap` that its going to build a stateless client. If you 
 don’t add this line a normal state-full `ChronicleMap` will be created. For this example we ran both 
 the client an the server on the same host ( hence the “localhost" setting ), 
-but in a real life example the stateless client will typically be on a different server than the state-full host. If you are aiming to create a stateless client and server on the same host, its better not to do this, as the stateless client connects to the server via TCP/IP, 
-you would get better performance if you connect to the server via heap memory, to read more about sharing a map with heap memory click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps ) 
+but in a real life example the stateless client will typically be on a different server than the
+state-full host. If you are aiming to create a stateless client and server on the same host, its
+better not to do this, as the stateless client connects to the server via TCP/IP, 
+you would get better performance if you connect to the server via heap memory, to read more about
+sharing a map with heap memory
+click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps ) 
 
 ##### Close
 
@@ -952,7 +966,8 @@ public void test() throws IOException, InterruptedException {
 
 # Example : Simple Hello World
 
-This simple chronicle map, works just like ConcurrentHashMap but stores its data off-heap. If you want to use Chronicle Map to share data between java process you should look at the next exampl 
+This simple chronicle map, works just like ConcurrentHashMap but stores its data off-heap. If you
+want to use Chronicle Map to share data between java process you should look at the next exampl 
 
 ``` java 
 Map<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class,
@@ -1063,7 +1078,11 @@ public class YourClass {
 
 # Example : Replicating data between process on different servers using UDP
 
-This example is the same as the one above, but it uses a slow throttled TCP/IP connection to fill in updates that may have been missed when sent over UDP. Usually on a good network, for example a wired LAN, UDP won’t miss updates. But UDP does not support guaranteed delivery, we recommend also running a TCP connection along side to ensure the data becomes eventually consistent.  Note : It is possible to use Chronicle without the TCP replication and just use UDP (  that’s if you like living dangerously ! )
+This example is the same as the one above, but it uses a slow throttled TCP/IP connection to fill in
+updates that may have been missed when sent over UDP. Usually on a good network, for example a wired
+LAN, UDP won’t miss updates. But UDP does not support guaranteed delivery, we recommend also running
+a TCP connection along side to ensure the data becomes eventually consistent.  Note : It is possible
+to use Chronicle without the TCP replication and just use UDP (  that’s if you like living dangerously ! )
 
 
 
@@ -1153,7 +1172,9 @@ public class YourClass {
 
 # Example : Creating a Chronicle Set and adding data to it
 
-This project also provides the Chronicle Set, `ChronicleSet` is built on Chronicle Map, so the builder configuration are almost identical to `ChronicleMap` ( see above ), this example shows how to create a simple off heap set
+This project also provides the Chronicle Set, `ChronicleSet` is built on Chronicle Map, so the builder
+configuration are almost identical to `ChronicleMap` ( see above ), this example shows how to create
+a simple off heap set
 ``` java 
         Set<Integer> set = ChronicleSetBuilder.of(Integer.class).create();
         
@@ -1173,7 +1194,8 @@ We want the Map to be reasonably general purpose, so in broad terms we can say
 - the key and values have to be self contained, ideally trees, rather than graphs.
 - ideally values are similar lengths, however we support varying lengths.
 - ideally you want to use primitives and use object recycling for performance, though this is not a requirement.
-- ideally you have some idea as to the maximum number of entries, though it is not too important if the maximum entries is above what you need.
+- ideally you have some idea as to the maximum number of entries, though it is not too important if
+the maximum entries is above what you need.
 - if for example you are working with, market depth, this  can be supported via an array of nested 
 types.
 - we support code generation of efficient custom serializes - See the examples where you provide 
