@@ -22,14 +22,12 @@ import net.openhft.chronicle.common.ChronicleHashErrorListener;
 import net.openhft.chronicle.common.serialization.*;
 import net.openhft.chronicle.common.threadlocal.Provider;
 import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
-import net.openhft.lang.MemoryUnit;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
 import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
-import net.openhft.lang.model.Byteable;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -483,7 +481,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
      * @param newValue      the new value you wish to store in the map
      * @return the value that was replaced
      */
-    V replaceIfValueIs(@NotNull final K key, final V existingValue, final V newValue) {
+    V replaceIfValueIs(@net.openhft.lang.model.constraints.NotNull final K key,
+                       final V existingValue, final V newValue) {
         checkKey(key);
         checkValue(newValue);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);

@@ -93,6 +93,7 @@ public class TCPSocketReplicationBootStrapTests {
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8076);
 
+
         final ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map2a =
                 (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>)
                         map2aBuilder.file(getPersistenceFile()).create();

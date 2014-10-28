@@ -21,7 +21,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -36,67 +35,27 @@ import static org.junit.Assert.*;
  */
 public class ReplicatedChronicleMapTest extends JSR166TestCase {
 
-    private static File getPersistenceFile() {
-        String TMP = System.getProperty("java.io.tmpdir");
-        File file = new File(TMP + "/chm-test" + System.nanoTime());
-        file.deleteOnExit();
-        return file;
-    }
-
-    ChronicleMap<Integer, CharSequence> newShmIntString(int size) throws IOException {
-        ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .entries(size).replicators((byte) 1);
-        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .entries(size)
-                .create();
-
-    }
-
-    ChronicleMap<ArrayList, CharSequence> newShmListBoolean(int size) throws IOException {
-        ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
-                .entries(size).replicators((byte) 1);
-        return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
-                .entries(size)
-                .create();
-
-    }
-
-
-    ChronicleMap<ArrayList, CharSequence> newShmListBoolean() throws IOException {
-        ChronicleMapBuilder.of(ArrayList.class, CharSequence.class).replicators((byte) 1);
-        return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
-                .create();
-
-    }
-
-    ChronicleMap<CharSequence, CharSequence> newShmStringString(int size) throws IOException {
-        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(size).replicators((byte) 1);
-        return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(size)
-                .create();
-
-    }
 
 
     ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
-        ChronicleMapBuilder.of(Integer.class, CharSequence.class).replicators((byte) 1);
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .create();
 
     }
 
-    ChronicleMap<BI, Boolean> newShmBiBoolean() throws IOException {
-        ChronicleMapBuilder.of(BI.class, Boolean.class).replicators((byte) 1);
-        return ChronicleMapBuilder.of(BI.class, Boolean.class).create();
+
+    ChronicleMap<CharSequence, CharSequence> newShmStringString() throws IOException {
+        return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .create();
 
     }
+
 
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
      */
     private ChronicleMap map5() throws IOException {
-        ChronicleMap<Integer, CharSequence> map = newShmIntString(10);
+        ChronicleMap<Integer, CharSequence> map = newShmIntString();
         assertTrue(map.isEmpty());
         map.put(JSR166TestCase.one, "A");
         map.put(JSR166TestCase.two, "B");
@@ -503,7 +462,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testGet_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.get(null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -516,7 +475,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testContainsKey_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.containsKey(null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -529,7 +488,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testPut1_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.put(null, "whatever");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -542,7 +501,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testPut2_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.put(JSR166TestCase.notPresent, null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -555,7 +514,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testPutIfAbsent1_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.putIfAbsent(null, "whatever");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -603,7 +562,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testReplace_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.replace(null, "whatever");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -616,7 +575,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testReplaceValue_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.replace(null, "A", "whatever");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -655,7 +614,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testPutIfAbsent2_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.putIfAbsent(JSR166TestCase.notPresent, null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -668,7 +627,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testReplace2_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.replace(JSR166TestCase.notPresent, null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -681,7 +640,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testReplaceValue2_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.replace(JSR166TestCase.notPresent, null, "A");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -694,7 +653,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testReplaceValue3_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmIntString(5);
+            ChronicleMap c = newShmIntString();
             c.replace(JSR166TestCase.notPresent, "A", null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -707,7 +666,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testRemove1_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmStringString(5);
+            ChronicleMap c = newShmStringString();
             c.put("sadsdf", "asdads");
             c.remove(null);
             shouldThrow();
@@ -721,7 +680,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testRemove2_NullPointerException() throws IOException {
         try {
-            ChronicleMap c = newShmStringString(5);
+            ChronicleMap c = newShmStringString();
             c.put("sadsdf", "asdads");
             c.remove(null, "whatever");
             shouldThrow();
@@ -734,7 +693,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      */
     @Test
     public void testRemove3() throws IOException {
-        ChronicleMap c = newShmStringString(5);
+        ChronicleMap c = newShmStringString();
         c.put("sadsdf", "asdads");
         assertFalse(c.remove("sadsdf", null));
     }
