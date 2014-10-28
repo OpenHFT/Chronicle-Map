@@ -256,16 +256,11 @@ public class StatelessClientTest {
 
 
         Map<Integer, CharSequence> payload = new HashMap<Integer, CharSequence>();
-
-        // todo still fails for large values
         for (int i = 0; i < 1000; i++) {
             payload.put(i, "some value=" + i);
         }
 
-
         statelessMap1.putAll(payload);
-
-
         Assert.assertTrue(statelessMap1.equals(payload));
 
 

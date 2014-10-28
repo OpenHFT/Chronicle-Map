@@ -1647,7 +1647,7 @@ class StatelessServerConnector<K, V> {
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
                     if (writer.remaining() <= maxEntrySizeBytes) {
-                        writeHeader(writer, sizeLocation, count, true, 0);
+                        writeHeader(writer, sizeLocation, count, true);
                         return false;
                     }
 
@@ -1656,7 +1656,7 @@ class StatelessServerConnector<K, V> {
                     writeKey(key, writer);
                 }
 
-                writeHeader(writer, sizeLocation, count, false, 0);
+                writeHeader(writer, sizeLocation, count, false);
                 return true;
             }
         };
@@ -1695,7 +1695,7 @@ class StatelessServerConnector<K, V> {
                     // some data, we don't know the max key size, we will use the entrySize instead
                     if (writer.remaining() <= maxEntrySizeBytes) {
 
-                        writeHeader(writer, sizeLocation, count, true, i.incrementAndGet());
+                        writeHeader(writer, sizeLocation, count, true);
                         return false;
                     }
 
@@ -1706,7 +1706,7 @@ class StatelessServerConnector<K, V> {
                 }
 
 
-                writeHeader(writer, sizeLocation, count, false, i.incrementAndGet());
+                writeHeader(writer, sizeLocation, count, false);
                 return true;
             }
 
@@ -1737,7 +1737,7 @@ class StatelessServerConnector<K, V> {
     }
 
     private void writeHeader(Bytes writer, long sizeLocation, int count,
-                             final boolean hasAnotherChunk, int seq) {
+                             final boolean hasAnotherChunk) {
         final long end = writer.position();
         final int size = (int) (end - sizeLocation);
         writer.position(sizeLocation);
