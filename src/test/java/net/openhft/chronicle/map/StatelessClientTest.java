@@ -75,6 +75,7 @@ public class StatelessClientTest {
         Map.Entry<Integer, CharSequence> next = entries.iterator().next();
         Assert.assertEquals("some value=" + next.getKey(), next.getValue());
 
+        Assert.assertEquals(entries.size(), SIZE);
 
         serverMap.close();
         statelessMap.close();

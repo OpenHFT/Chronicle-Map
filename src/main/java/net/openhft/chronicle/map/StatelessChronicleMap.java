@@ -605,15 +605,20 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         final Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
 
+        int count = 0;
+        long total = 0;
         for (; ; ) {
 
             boolean hasMoreEntries = in.readBoolean();
-            LOG.info("entrySet - hasMoreEntries=" + hasMoreEntries);
+
+
+            count++;
 
             // number of entries in the chunk
             long size = in.readInt();
 
             for (int i = 0; i < size; i++) {
+                total++;
                 K k = keyValueSerializer.readKey(in);
                 V v = keyValueSerializer.readValue(in);
                 result.add(new Entry(k, v));
@@ -622,9 +627,17 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             if (!hasMoreEntries)
                 break;
 
+            if (in.remaining() == 0) {
+                bytes.clear();
+                bytes.buffer().clear();
+            } else {
+                buffer.compact();
+            }
+
             in = blockingFetchReadOnly(timeoutTime, transactionId);
         }
 
+        LOG.info("total=" + total);
         return result;
     }
 
@@ -763,7 +776,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private Bytes blockingFetchThrowable(long sizeLocation, long timeOutMs, final long transactionId, final long startTime) throws IOException {
 
-        long timeoutTime = startTime + timeOutMs + 1000000;
+        long timeoutTime = startTime + timeOutMs;
 
         for (; ; ) {
 
@@ -780,6 +793,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
                 // send out all the bytes
                 send(bytes, timeoutTime);
+
+                bytes.clear();
+                bytes.buffer().clear();
 
                 return blockingFetch(timeoutTime, transactionId);
 
@@ -806,8 +822,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     private Bytes blockingFetch(long timeoutTime, long transactionId) throws IOException {
-        bytes.clear();
-        bytes.buffer().clear();
+
 
         // the number of bytes in the response
         int size = receive(SIZE_OF_SIZE, timeoutTime).readInt();

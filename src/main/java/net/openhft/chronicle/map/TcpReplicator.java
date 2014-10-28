@@ -35,6 +35,7 @@ import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.channels.SelectionKey.*;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
@@ -557,7 +558,8 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
             int bytesJustWritten = attached.entryWriter.writeBufferToSocket(socketChannel,
                     approxTime);
 
-            contemplateThrottleWrites(bytesJustWritten);
+            if (bytesJustWritten > 0)
+                contemplateThrottleWrites(bytesJustWritten);
 
         } catch (IOException e) {
             quietClose(key, e);
@@ -946,14 +948,17 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
             // if we still have some unwritten writer from last time
             lastSentTime = approxTime;
-            out.limit((int) in.position());
+            int size = (int) in.position();
+            out.limit(size);
+
 
             final int len = socketChannel.write(out);
 
             if (LOG.isDebugEnabled())
                 LOG.debug("bytes-written=" + len);
 
-            if (out.remaining() == 0) {
+            if (len == size) {
+                //      assert len == size;
                 out.clear();
                 in.clear();
             } else {
@@ -1169,11 +1174,14 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
                         // is no longer full, and as such is treated as future work
                         if (futureWork != null) {
 
-                            // we will complete what we can now
-                            boolean isComplete = futureWork.doWork(attached.entryWriter.in);
+                            try {  // we will complete what we can for now
+                                boolean isComplete = futureWork.doWork(attached.entryWriter.in);
+                                if (!isComplete)
+                                    attached.entryWriter.uncompletedWork = futureWork;
+                            } catch (Exception e) {
+                                LOG.error("", e);
+                            }
 
-                            if (!isComplete)
-                                attached.entryWriter.uncompletedWork = futureWork;
                         }
                     }
 
@@ -1639,7 +1647,7 @@ class StatelessServerConnector<K, V> {
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
                     if (writer.remaining() <= maxEntrySizeBytes) {
-                        writeHeader(writer, sizeLocation, count, true);
+                        writeHeader(writer, sizeLocation, count, true, 0);
                         return false;
                     }
 
@@ -1648,17 +1656,15 @@ class StatelessServerConnector<K, V> {
                     writeKey(key, writer);
                 }
 
-                writeHeader(writer, sizeLocation, count, false);
+                writeHeader(writer, sizeLocation, count, false, 0);
                 return true;
             }
         };
     }
 
-    private Work entrySet(Bytes reader, Bytes writer) {
+    private Work entrySet(final Bytes reader, Bytes writer) {
 
         final long transactionId = reader.readLong();
-
-
         final Set<Map.Entry<K, V>> entries;
 
         try {
@@ -1667,7 +1673,8 @@ class StatelessServerConnector<K, V> {
             return sendException(reader, writer, e);
         }
 
-
+        LOG.info("MAP SIZE=" + map.size());
+        final AtomicInteger i = new AtomicInteger(0);
         final Iterator<Map.Entry<K, V>> iterator = entries.iterator();
 
         // this allows us to write more data than the buffer will allow
@@ -1675,6 +1682,9 @@ class StatelessServerConnector<K, V> {
 
             @Override
             public boolean doWork(Bytes writer) {
+
+                if (writer.remaining() <= maxEntrySizeBytes)
+                    return false;
 
                 final long sizeLocation = header(writer, transactionId);
 
@@ -1684,7 +1694,8 @@ class StatelessServerConnector<K, V> {
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
                     if (writer.remaining() <= maxEntrySizeBytes) {
-                        writeHeader(writer, sizeLocation, count, true);
+
+                        writeHeader(writer, sizeLocation, count, true, i.incrementAndGet());
                         return false;
                     }
 
@@ -1694,7 +1705,8 @@ class StatelessServerConnector<K, V> {
                     writeValue(next.getValue(), writer);
                 }
 
-                writeHeader(writer, sizeLocation, count, false);
+
+                writeHeader(writer, sizeLocation, count, false, i.incrementAndGet());
                 return true;
             }
 
@@ -1707,13 +1719,6 @@ class StatelessServerConnector<K, V> {
         return sendException(writer, sizeLocation, e);
     }
 
-    private void writeMoreData(long location, boolean hasMoreData, Bytes out) {
-        out.writeBoolean(location, hasMoreData);
-    }
-
-    private void entryCount(long location, int count, Bytes out) {
-
-    }
 
     private long header(Bytes writer, final long transactionId) {
         final long sizeLocation = writer.position();
@@ -1731,7 +1736,8 @@ class StatelessServerConnector<K, V> {
         return sizeLocation;
     }
 
-    private void writeHeader(Bytes writer, long sizeLocation, int count, final boolean hasAnotherChunk) {
+    private void writeHeader(Bytes writer, long sizeLocation, int count,
+                             final boolean hasAnotherChunk, int seq) {
         final long end = writer.position();
         final int size = (int) (end - sizeLocation);
         writer.position(sizeLocation);

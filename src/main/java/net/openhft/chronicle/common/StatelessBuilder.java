@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class StatelessBuilder {
 
-    private long timeoutMs = TimeUnit.SECONDS.toMillis(1);
+    private long timeoutMs = TimeUnit.SECONDS.toMillis(10);
 
     private InetSocketAddress remoteAddress;
 
