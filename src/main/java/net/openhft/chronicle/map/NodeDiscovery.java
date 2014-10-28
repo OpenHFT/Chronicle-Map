@@ -653,7 +653,7 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
             return (src[0] & 0xff) + "." + (src[1] & 0xff) + "." + (src[2] & 0xff) + "." + (src[3] & 0xff);
         }
 
-        StringBuffer sb = new StringBuffer(39);
+        StringBuilder sb = new StringBuilder(39);
         for (int i = 0; i < (INADDRSZ / INT16SZ); i++) {
             sb.append(Integer.toHexString(((src[i << 1] << 8) & 0xff00)
                     | (src[(i << 1) + 1] & 0xff)));
