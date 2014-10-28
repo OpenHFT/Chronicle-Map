@@ -1046,17 +1046,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
             assert size < Integer.MAX_VALUE;
 
-
-            LOG.info("in before position=" + in.position() +
-                    ", " +
-                    "limit=" + in.limit() + ",capacity=" + in.capacity());
-
-
-            LOG.info("out before position=" + out.position() +
-                    ", " +
-                    "limit=" + out.limit() + ",capacity=" + out.capacity());
-
-
             if (size < in.capacity())
                 throw new IllegalStateException("it not possible to resize the buffer smaller");
 
@@ -1082,17 +1071,6 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
             out.limit(outLimit);
             out.position(outPosition);
-
-            LOG.info("after in position=" + in.position() +
-                    ", " +
-                    "limit=" + in.limit() + ",capacity=" + in.capacity());
-
-
-            LOG.info("after out position=" + out.position() +
-                    ", " +
-                    "limit=" + out.limit() + ",capacity=" + out.capacity());
-
-
         }
 
         /**

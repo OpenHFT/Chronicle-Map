@@ -518,16 +518,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         assert size < Integer.MAX_VALUE;
 
-
-        LOG.info("resizing to=" + size);
-
-        LOG.info("bytes before position=" + bytes.position() +
-                ", " +
-                "limit=" + bytes.limit() + ",capacity=" + bytes.capacity());
-
-        LOG.info("buffer before");
-
-        LOG.info("resize buffer to " + size + " bytes");
         final ByteBuffer result = ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder());
 
         int bufferPosition = buffer.position();
@@ -538,9 +528,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         buffer.position(0);
         buffer.limit((int) bytesPosition);
-        LOG.info("bytesPosition to=" + bytesPosition + ", buffer.position=" + buffer.position() +
-                ", " +
-                "limit=" + buffer.limit() + ",capacity=" + buffer.capacity());
+
         for (int i = 0; i < bytesPosition; i++) {
             result.put(buffer.get());
         }
