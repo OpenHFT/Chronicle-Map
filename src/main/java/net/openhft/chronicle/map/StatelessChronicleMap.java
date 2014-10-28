@@ -39,6 +39,7 @@ import java.util.*;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
+import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTIONID;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
 
 /**
@@ -250,6 +251,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     public synchronized boolean remove(Object key, Object value) {
+
+        if (key == null)
+            throw new NullPointerException("key can not be null");
+
         long sizeLocation = writeEvent(REMOVE_WITH_VALUE);
         writeKey((K) key);
         writeValue((V) value);
@@ -260,6 +265,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     public synchronized boolean replace(K key, V oldValue, V newValue) {
+        if (key == null)
+            throw new NullPointerException("key can not be null");
+
         long sizeLocation = writeEvent(REPLACE_WITH_OLD_AND_NEW_VALUE);
         writeKey(key);
         writeValue(oldValue);
@@ -271,6 +279,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     public synchronized V replace(K key, V value) {
+        if (key == null)
+            throw new NullPointerException("key can not be null");
+
         long sizeLocation = writeEvent(REPLACE);
         writeKey(key);
         writeValue(value);
@@ -793,8 +804,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                 if (LOG.isDebugEnabled())
                     LOG.debug("sending data with transactionId=" + transactionId);
 
-                write(transactionId);
-                writeSizeAt(sizeLocation);
+                writeSizeAndTransactionIdAt(sizeLocation, transactionId);
 
                 // send out all the bytes
                 send(bytes, timeoutTime);
@@ -888,15 +898,20 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             throw new TimeoutRuntimeException();
     }
 
-    private void writeSizeAt(long locationOfSize) {
+    private void writeSizeAndTransactionIdAt(long locationOfSize, final long transactionId) {
         long size = bytes.position() - locationOfSize;
-//        LOG.info("writing size = " + size);
-        bytes.writeInt(locationOfSize, (int) size - SIZE_OF_SIZE);
+        long pos = bytes.position();
+        bytes.position(locationOfSize);
+        bytes.writeInt((int) size - SIZE_OF_SIZE);
+        bytes.writeLong(transactionId);
+        bytes.position(pos);
+
     }
 
     private long markSizeLocation() {
         long position = bytes.position();
         bytes.skip(SIZE_OF_SIZE);
+        bytes.skip(SIZE_OF_TRANSACTIONID);
         return position;
     }
 

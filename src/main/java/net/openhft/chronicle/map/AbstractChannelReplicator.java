@@ -47,6 +47,8 @@ abstract class AbstractChannelReplicator implements Closeable {
     public static final int BITS_IN_A_BYTE = 8;
 
     public static final int SIZE_OF_SIZE = 4;
+    public static final int SIZE_OF_TRANSACTIONID =8;
+
     private static final Logger LOG = LoggerFactory.getLogger(AbstractChannelReplicator.class);
     final Selector selector;
     final CloseablesManager closeables = new CloseablesManager();
