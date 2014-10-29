@@ -18,9 +18,9 @@
 
 package net.openhft.chronicle.hash.serialization;
 
-import net.openhft.chronicle.hash.threadlocal.Provider;
-import net.openhft.chronicle.hash.threadlocal.StatefulCopyable;
-import net.openhft.chronicle.hash.threadlocal.ThreadLocalCopies;
+import net.openhft.lang.threadlocal.Provider;
+import net.openhft.lang.threadlocal.StatefulCopyable;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;

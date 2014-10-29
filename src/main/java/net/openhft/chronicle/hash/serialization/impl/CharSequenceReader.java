@@ -22,7 +22,7 @@ import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.pool.CharSequenceInterner;
-import net.openhft.chronicle.hash.threadlocal.StatefulCopyable;
+import net.openhft.lang.threadlocal.StatefulCopyable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
