@@ -20,7 +20,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.TcpReplicationConfig;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -29,7 +28,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.hash.StatelessBuilder.remoteAddress;
 
@@ -41,12 +39,9 @@ public class StatelessClientTest {
 
 
     public static final int SIZE = 100000;
-    private static final AtomicInteger PORT_COUNTER = new AtomicInteger(58076);
-    public final int port = PORT_COUNTER.getAndIncrement();
 
 
     @Test
-    @Ignore
     public void testBufferOverFlowPutAllAndEntrySet() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap;
@@ -57,13 +52,13 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8086))).create();
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(8086)).create();
         }
 
 
@@ -90,7 +85,6 @@ public class StatelessClientTest {
 
 
     @Test
-    @Ignore
     public void testBufferOverFlowPutAllAndValues() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap;
@@ -101,13 +95,13 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8086))).create();
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(8086)).create();
         }
 
 
@@ -132,7 +126,6 @@ public class StatelessClientTest {
 
 
     @Test
-    @Ignore
     public void testBufferOverFlowPutAllAndKeySet() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap;
@@ -143,13 +136,13 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8086))).create();
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(8086)).create();
         }
 
 
@@ -174,7 +167,6 @@ public class StatelessClientTest {
 
 
     @Test
-    @Ignore
     public void test() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap;
@@ -183,7 +175,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(8086)).create();
 
             serverMap.put(10, "EXAMPLE-10");
         }
@@ -193,7 +185,7 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8086))).create();
 
             Assert.assertEquals("EXAMPLE-10", statelessMap.get(10));
             Assert.assertEquals(1, statelessMap.size());
@@ -206,7 +198,6 @@ public class StatelessClientTest {
 
 
     @Test
-    @Ignore
     public void testClientCreatedBeforeServer() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap;
@@ -217,13 +208,13 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8086))).create();
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(8086)).create();
 
             serverMap.put(10, "EXAMPLE-10");
         }
@@ -239,7 +230,6 @@ public class StatelessClientTest {
 
 
     @Test
-    @Ignore
     public void testBufferOverFlowPutAll() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap;
@@ -250,13 +240,13 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8086))).create();
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(8086)).create();
         }
 
 
@@ -281,7 +271,6 @@ public class StatelessClientTest {
 
 
     @Test
-    @Ignore
     public void testEquals() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap1;
@@ -293,7 +282,7 @@ public class StatelessClientTest {
         {
             statelessMap1 = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8086))).create();
             statelessMap2 = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .stateless(remoteAddress(new InetSocketAddress("localhost", 8077))).create();
@@ -302,7 +291,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(8086)).create();
             serverMap2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .replicators((byte) 2, TcpReplicationConfig.of(8077)).create();
 
