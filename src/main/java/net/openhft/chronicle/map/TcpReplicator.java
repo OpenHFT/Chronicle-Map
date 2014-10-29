@@ -505,7 +505,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
 
         if (!attached.hasRemoteHeartbeatInterval) {
 
-            long value = reader.remoteHeartbeatIntervalFromBuffer();
+            final  long value = reader.remoteHeartbeatIntervalFromBuffer();
 
             if (value == Long.MIN_VALUE)
                 return;
@@ -544,18 +544,16 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
 
         if (attached.entryWriter.isWorkIncomplete()) {
 
-            boolean completed = attached.entryWriter.doWork();
+            final boolean completed = attached.entryWriter.doWork();
 
             if (completed)
                 attached.entryWriter.workCompleted();
-
-            attached.hasRemoteHeartbeatInterval = false;
 
         } else if (attached.remoteModificationIterator != null)
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
         try {
-            int bytesJustWritten = attached.entryWriter.writeBufferToSocket(socketChannel,
+            final    int bytesJustWritten = attached.entryWriter.writeBufferToSocket(socketChannel,
                     approxTime);
 
             if (bytesJustWritten > 0)
@@ -1318,9 +1316,6 @@ class StatelessServerConnector<K, V> {
             case REMOVE_WITH_VALUE:
                 return removeWithValue(reader, writer, sizeLocation);
 
-            case SIZE:
-                return size(reader, writer, sizeLocation);
-
             case TO_STRING:
                 return toString(reader, writer, sizeLocation);
 
@@ -1388,18 +1383,6 @@ class StatelessServerConnector<K, V> {
         } catch (RuntimeException e) {
             return sendException(writer, sizeLocation, e);
         }
-        writeSizeAndFlags(sizeLocation, false, writer);
-        return null;
-    }
-
-    private Work size(Bytes reader, Bytes writer, final long sizeLocation) {
-
-        try {
-            writer.writeInt(map.size());
-        } catch (RuntimeException e) {
-            return sendException(writer, sizeLocation, e);
-        }
-
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
