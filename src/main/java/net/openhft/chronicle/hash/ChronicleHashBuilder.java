@@ -399,7 +399,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * consider to be a ClientProxy to  {@link ChronicleMap} or {@link ChronicleSet}  running on
      * another host
      *
-     * @param statelessBuilder true if you want your container to hold no data
+     * @param statelessBuilder Stateless Client Config
      * @return this builder back
      */
     B stateless(StatelessBuilder statelessBuilder);

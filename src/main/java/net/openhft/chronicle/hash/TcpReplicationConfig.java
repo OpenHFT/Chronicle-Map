@@ -19,7 +19,7 @@
 package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.map.IdentifierListener;
-import net.openhft.chronicle.map.ThrottlingConfig;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
@@ -38,7 +38,6 @@ public class TcpReplicationConfig implements ReplicationConfig {
     private static final int DEFAULT_PACKET_SIZE = 1024 * 8;
     private static final long DEFAULT_HEART_BEAT_INTERVAL = 20;
     private static final TimeUnit DEFAULT_HEART_BEAT_INTERVAL_UNIT = SECONDS;
-
 
     private int serverPort = DEFAULT_PACKET_SIZE;
     private Set<InetSocketAddress> endpoints;

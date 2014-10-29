@@ -19,6 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.hash.ThrottlingConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;

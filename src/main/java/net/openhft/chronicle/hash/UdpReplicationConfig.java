@@ -17,8 +17,6 @@
  */
 
 package net.openhft.chronicle.hash;
-
-import net.openhft.chronicle.map.ThrottlingConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

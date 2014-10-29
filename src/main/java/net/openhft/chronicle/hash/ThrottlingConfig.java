@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash;
 
 
 import java.util.concurrent.TimeUnit;
@@ -143,11 +143,11 @@ public class ThrottlingConfig {
     }
 
 
-    long bucketInterval() {
+    public long bucketInterval() {
         return bucketInterval;
     }
 
-    TimeUnit bucketIntervalUnit() {
+    public TimeUnit bucketIntervalUnit() {
         return bucketIntervalUnit;
     }
 
