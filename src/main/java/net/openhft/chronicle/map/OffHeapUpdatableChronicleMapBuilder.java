@@ -47,6 +47,44 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     /**
+     * {@inheritDoc} With respect to {@linkplain #entryAndValueAlignment(Alignment) alignment}.
+     *
+     * <p>Note that the actual entrySize will be aligned to 4 (default {@linkplain
+     * #entryAndValueAlignment(Alignment) entry alignment}). I. e. if you set entry size to 30,
+     * and entry alignment is set to {@link Alignment#OF_4_BYTES}, the actual entry size will be 32
+     * (30 aligned to 4 bytes).
+     *
+     * @see #entryAndValueAlignment(Alignment)
+     * @see #entries(long)
+     */
+    @Override
+    public OffHeapUpdatableChronicleMapBuilder<K, V> entrySize(int entrySize) {
+        return super.entrySize(entrySize);
+    }
+
+    /**
+     * Configures alignment strategy of address in memory of entries and independently of address in
+     * memory of values within entries in ChronicleMaps, created by this builder.
+     *
+     * <p>Useful when values of the map are updated intensively, particularly fields with volatile
+     * access, because it doesn't work well if the value crosses cache lines. Also, on some
+     * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
+     *
+     * <p>Note that {@linkplain #entrySize(int) entry size} will be aligned according to this
+     * alignment. I. e. if you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual
+     * entry size will be 24 (20 aligned to 8 bytes).
+     *
+     * <p>Default is {@link Alignment#NO_ALIGNMENT}.
+     *
+     * @param alignment the new alignment of the maps constructed by this builder
+     * @return this {@code ChronicleMapBuilder} back
+     */
+    @Override
+    public OffHeapUpdatableChronicleMapBuilder<K, V> entryAndValueAlignment(Alignment alignment) {
+        return super.entryAndValueAlignment(alignment);
+    }
+
+    /**
      * {@inheritDoc} Also, it overrides any previous {@link #prepareValueBytesOnAcquire}
      * configuration to this {@code OffHeapUpdatableChronicleMapBuilder}.
      *

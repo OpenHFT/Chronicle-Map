@@ -42,7 +42,6 @@ public class Issue42 {
 
         final ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
-                .entryAndValueAlignment(NO_ALIGNMENT)
                 .entrySize(18)
                 .entries(15000000)
                 .minSegments(128).create();
