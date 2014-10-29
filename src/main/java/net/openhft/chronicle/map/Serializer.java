@@ -53,18 +53,7 @@ class Serializer<O> {
         writerProvider = Provider.of((Class) originalWriter.getClass());
     }
 
-    public O readMarshallable(@NotNull Bytes in) throws IllegalStateException {
 
-        final ThreadLocalCopies copies = readerProvider.getCopies(null);
-        final BytesReader<O> valueReader = readerProvider.get(copies, originalReader);
-
-        try {
-            long valueSize = sizeMarshaller.readSize(in);
-            return valueReader.read(in, valueSize, null);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public O readMarshallable(@NotNull Bytes in, ThreadLocalCopies local) throws
             IllegalStateException {
@@ -85,11 +74,8 @@ class Serializer<O> {
     }
 
 
-    public ThreadLocalCopies writeMarshallable(O value, @NotNull Bytes out) {
-        return writeMarshallable(value, out, null);
-    }
 
-    private ThreadLocalCopies writeMarshallable(O value, Bytes out, ThreadLocalCopies copies0) {
+      ThreadLocalCopies writeMarshallable(O value, Bytes out, ThreadLocalCopies copies0) {
 
         ThreadLocalCopies copies = (copies0 == null) ? threadLocalCopies() : copies0;
 

@@ -31,12 +31,10 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.*;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -1249,12 +1247,14 @@ class StatelessServerConnector<K, V> {
     private final VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
     private double maxEntrySizeBytes;
 
+
     StatelessServerConnector(@NotNull KeyValueSerializer<K, V> keyValueSerializer,
                              @NotNull VanillaChronicleMap<K, ?, ?, V, ?, ?> map,
                              int maxEntrySizeBytes) {
         this.keyValueSerializer = keyValueSerializer;
         this.map = map;
         this.maxEntrySizeBytes = maxEntrySizeBytes;
+
     }
 
     Work processStatelessEvent(final byte eventId,
@@ -1343,8 +1343,9 @@ class StatelessServerConnector<K, V> {
         if (MAP_SUPPORTS_BYTES) {
             map.removeWithValue(reader, writer);
         } else {
-            final K key = readKey(reader);
-            final V readValue = readValue(reader);
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final K key = readKey(reader, local);
+            final V readValue = readValue(reader, local);
 
             final boolean result;
             try {
@@ -1362,9 +1363,10 @@ class StatelessServerConnector<K, V> {
         if (MAP_SUPPORTS_BYTES) {
             map.replaceWithOldAndNew(reader, writer);
         } else {
-            final K key = readKey(reader);
-            final V oldValue = readValue(reader);
-            final V newValue = readValue(reader);
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final K key = readKey(reader, local);
+            final V oldValue = readValue(reader, local);
+            final V newValue = readValue(reader, local);
             boolean replaced;
 
             try {
@@ -1463,7 +1465,8 @@ class StatelessServerConnector<K, V> {
         if (MAP_SUPPORTS_BYTES) {
             map.containsKey(reader, writer);
         } else {
-            final K k = readKey(reader);
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final K k = readKey(reader, local);
 
             try {
                 writer.writeBoolean(map.containsKey(k));
@@ -1480,7 +1483,8 @@ class StatelessServerConnector<K, V> {
         if (MAP_SUPPORTS_BYTES) {
             map.containsValue(reader, writer);
         } else {
-            final V v = readValue(reader);
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final V v = readValue(reader, local);
 
             try {
                 writer.writeBoolean(map.containsValue(v));
@@ -1496,11 +1500,11 @@ class StatelessServerConnector<K, V> {
         if (MAP_SUPPORTS_BYTES) {
             map.get(reader, writer);
         } else {
-
-            final K k = readKey(reader);
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final K k = readKey(reader, local);
 
             try {
-                writeValue(map.get(k), writer);
+                writeValue(map.get(k), writer, local);
             } catch (RuntimeException e) {
                 return sendException(writer, sizeLocation, e);
             }
@@ -1514,11 +1518,12 @@ class StatelessServerConnector<K, V> {
         if (MAP_SUPPORTS_BYTES) {
             map.put(reader, writer);
         } else {
-            final K k = readKey(reader);
-            final V v = readValue(reader);
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final K k = readKey(reader, local);
+            final V v = readValue(reader, local);
 
             try {
-                writeValue(map.put(k, v), writer);
+                writeValue(map.put(k, v), writer, local);
             } catch (RuntimeException e) {
                 return sendException(writer, sizeLocation, e);
             }
@@ -1531,10 +1536,11 @@ class StatelessServerConnector<K, V> {
         if (MAP_SUPPORTS_BYTES) {
             map.remove(reader, writer);
         } else {
-            final K key = readKey(reader);
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final K key = readKey(reader, local);
 
             try {
-                writeValue(map.remove(key), writer);
+                writeValue(map.remove(key), writer, local);
             } catch (RuntimeException e) {
                 return sendException(writer, sizeLocation, e);
             }
@@ -1550,7 +1556,8 @@ class StatelessServerConnector<K, V> {
         if (MAP_SUPPORTS_BYTES) {
             map.putAll(reader, writer);
         } else {
-            final Map<K, V> m = readEntries(reader);
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final Map<K, V> m = readEntries(reader, local);
 
             try {
                 map.putAll(m);
@@ -1590,6 +1597,7 @@ class StatelessServerConnector<K, V> {
         }
 
         final Iterator<V> iterator = values.iterator();
+        final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
 
         // this allows us to write more data than the buffer will allow
         return new Work() {
@@ -1611,7 +1619,7 @@ class StatelessServerConnector<K, V> {
 
                     count++;
 
-                    writeValue(iterator.next(), writer);
+                    writeValue(iterator.next(), writer, local);
                 }
 
                 writeHeader(writer, sizeLocation, count, false);
@@ -1631,7 +1639,7 @@ class StatelessServerConnector<K, V> {
             return sendException(reader, writer, e);
         }
 
-
+        final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         final Iterator<K> iterator = ks.iterator();
 
         // this allows us to write more data than the buffer will allow
@@ -1654,7 +1662,7 @@ class StatelessServerConnector<K, V> {
 
                     count++;
                     K key = iterator.next();
-                    writeKey(key, writer);
+                    writeKey(key, writer, local);
                 }
 
                 writeHeader(writer, sizeLocation, count, false);
@@ -1678,6 +1686,7 @@ class StatelessServerConnector<K, V> {
         LOG.info("MAP SIZE=" + map.size());
         final AtomicInteger i = new AtomicInteger(0);
         final Iterator<Map.Entry<K, V>> iterator = entries.iterator();
+        final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
 
         // this allows us to write more data than the buffer will allow
         return new Work() {
@@ -1703,8 +1712,8 @@ class StatelessServerConnector<K, V> {
 
                     count++;
                     final Map.Entry<K, V> next = iterator.next();
-                    writeKey(next.getKey(), writer);
-                    writeValue(next.getValue(), writer);
+                    writeKey(next.getKey(), writer, local);
+                    writeValue(next.getValue(), writer, local);
                 }
 
 
@@ -1721,9 +1730,9 @@ class StatelessServerConnector<K, V> {
         if (MAP_SUPPORTS_BYTES) {
             map.putIfAbsent(reader, writer);
         } else {
-
-            final K key = readKey(reader);
-            final V v = readValue(reader);
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final K key = readKey(reader, local);
+            final V v = readValue(reader, local);
 
             final V result;
 
@@ -1733,7 +1742,7 @@ class StatelessServerConnector<K, V> {
                 return sendException(writer, sizeLocation, e);
             }
 
-            writeValue(result, writer);
+            writeValue(result, writer, local);
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
@@ -1745,9 +1754,9 @@ class StatelessServerConnector<K, V> {
         if (MAP_SUPPORTS_BYTES) {
             map.replaceKV(reader, writer);
         } else {
-
-            final K k = readKey(reader);
-            final V v = readValue(reader);
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final K k = readKey(reader, local);
+            final V v = readValue(reader, local);
             final V replaced;
 
             try {
@@ -1755,7 +1764,7 @@ class StatelessServerConnector<K, V> {
             } catch (RuntimeException e) {
                 return sendException(writer, sizeLocation, e);
             }
-            writeValue(replaced, writer);
+            writeValue(replaced, writer, local);
         }
 
         writeSizeAndFlags(sizeLocation, false, writer);
@@ -1765,11 +1774,12 @@ class StatelessServerConnector<K, V> {
     /**
      * write the keysize and the key to the the {@code target} buffer
      *
-     * @param key the key of the map
+     * @param local
+     * @param key   the key of the map
      */
 
-    private void writeKey(K key, Bytes writer) {
-        keyValueSerializer.writeKey(key, writer);
+    private void writeKey(K key, Bytes writer, final ThreadLocalCopies local) {
+        keyValueSerializer.writeKey(key, writer, local);
     }
 
     private long reflectTransactionId(Bytes reader, Bytes writer) {
@@ -1780,16 +1790,16 @@ class StatelessServerConnector<K, V> {
         return sizeLocation;
     }
 
-    private void writeValue(V value, final Bytes writer) {
-        keyValueSerializer.writeValue(value, writer);
+    private void writeValue(V value, final Bytes writer, ThreadLocalCopies local) {
+        keyValueSerializer.writeValue(value, writer, local);
     }
 
-    private K readKey(Bytes reader) {
-        return keyValueSerializer.readKey(reader);
+    private K readKey(Bytes reader, ThreadLocalCopies local) {
+        return keyValueSerializer.readKey(reader, local);
     }
 
-    private V readValue(Bytes reader) {
-        return keyValueSerializer.readValue(reader);
+    private V readValue(Bytes reader, ThreadLocalCopies local) {
+        return keyValueSerializer.readValue(reader, local);
     }
 
     private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
@@ -1804,13 +1814,13 @@ class StatelessServerConnector<K, V> {
         out.writeObject(e);
     }
 
-    private Map<K, V> readEntries(Bytes reader) {
+    private Map<K, V> readEntries(Bytes reader, final ThreadLocalCopies local) {
 
         final long numberOfEntries = reader.readStopBit();
         final HashMap<K, V> result = new HashMap<K, V>();
 
         for (long i = 0; i < numberOfEntries; i++) {
-            result.put(readKey(reader), readValue(reader));
+            result.put(readKey(reader, local), readValue(reader, local));
         }
         return result;
     }
@@ -1875,7 +1885,7 @@ class KeyValueSerializer<K, V> {
 
     V readValue(Bytes reader) {
         if (nullCheck(reader)) return null;
-        return valueSerializer.readMarshallable(reader);
+        return valueSerializer.readMarshallable(reader, null);
     }
 
 
@@ -1892,7 +1902,7 @@ class KeyValueSerializer<K, V> {
     K readKey(Bytes reader) {
         if (nullCheck(reader)) return null;
 
-        return keySerializer.readMarshallable(reader);
+        return keySerializer.readMarshallable(reader, null);
     }
 
     K readKey(Bytes reader, ThreadLocalCopies local) {
@@ -1910,7 +1920,7 @@ class KeyValueSerializer<K, V> {
 
         writer.writeBoolean(key == null);
         if (key != null)
-            return keySerializer.writeMarshallable(key, writer);
+            return keySerializer.writeMarshallable(key, writer, null);
         return null;
     }
 
@@ -1919,7 +1929,7 @@ class KeyValueSerializer<K, V> {
         writer.writeBoolean(value == null);
 
         if (value != null) {
-            return valueSerializer.writeMarshallable(value, writer);
+            return valueSerializer.writeMarshallable(value, writer, null);
         }
         return null;
     }
@@ -1929,7 +1939,7 @@ class KeyValueSerializer<K, V> {
 
         writer.writeBoolean(key == null);
         if (key != null)
-            return keySerializer.writeMarshallable(key, writer);
+            return keySerializer.writeMarshallable(key, writer, threadLocal);
         return null;
     }
 
@@ -1938,7 +1948,7 @@ class KeyValueSerializer<K, V> {
         writer.writeBoolean(value == null);
 
         if (value != null) {
-            return valueSerializer.writeMarshallable(value, writer);
+            return valueSerializer.writeMarshallable(value, writer, threadLocal);
         }
         return null;
     }

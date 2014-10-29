@@ -933,7 +933,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private V readKey(final long sizeLocation) {
-        return keyValueSerializer.readValue(blockingFetch(sizeLocation));
+        return keyValueSerializer.readValue(blockingFetch(sizeLocation), null);
     }
 
     private V readKey(final long sizeLocation, ThreadLocalCopies local) {
