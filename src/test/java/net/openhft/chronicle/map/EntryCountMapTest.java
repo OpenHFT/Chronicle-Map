@@ -55,7 +55,7 @@ public class EntryCountMapTest {
 
     @Test
     public void testSmall() throws Exception {
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < 6; i++) {
             // regression test.
             for (int s : new int[]{1, 2, 4, 8}) {
                 if (s <= 4)
@@ -77,7 +77,7 @@ public class EntryCountMapTest {
 
     @Test
     public void testMedium() throws Exception {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1; i++) {
             // regression test.
             int s = 16;
             testEntriesMaxSize(s, 512, 1000, i);

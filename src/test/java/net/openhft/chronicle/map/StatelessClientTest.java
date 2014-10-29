@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.hash.StatelessBuilder.remoteAddress;
 
@@ -39,6 +40,8 @@ public class StatelessClientTest {
 
 
     public static final int SIZE = 100000;
+    private static final AtomicInteger PORT_COUNTER = new AtomicInteger(58076);
+    public final int port = PORT_COUNTER.getAndIncrement();
 
 
     @Test
@@ -52,13 +55,13 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
         }
 
 
@@ -95,13 +98,13 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
         }
 
 
@@ -136,13 +139,13 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
         }
 
 
@@ -175,7 +178,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
 
             serverMap.put(10, "EXAMPLE-10");
         }
@@ -185,7 +188,7 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
 
             Assert.assertEquals("EXAMPLE-10", statelessMap.get(10));
             Assert.assertEquals(1, statelessMap.size());
@@ -208,13 +211,13 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
 
             serverMap.put(10, "EXAMPLE-10");
         }
@@ -240,13 +243,13 @@ public class StatelessClientTest {
         {
             statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
         }
 
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
         }
 
 
@@ -282,7 +285,7 @@ public class StatelessClientTest {
         {
             statelessMap1 = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8076))).create();
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
             statelessMap2 = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .stateless(remoteAddress(new InetSocketAddress("localhost", 8077))).create();
@@ -291,7 +294,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replicators((byte) 2, TcpReplicationConfig.of(8076)).create();
+                    .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
             serverMap2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .replicators((byte) 2, TcpReplicationConfig.of(8077)).create();
 

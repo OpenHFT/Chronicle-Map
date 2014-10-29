@@ -22,8 +22,10 @@ import net.openhft.lang.model.constraints.MaxSize;
 
 public interface BondVOInterface {
     /* add support for entry based locking */
+    @Deprecated()
     void busyLockEntry() throws InterruptedException;
 
+    @Deprecated()
     void unlockEntry();
 
     long getIssueDate();

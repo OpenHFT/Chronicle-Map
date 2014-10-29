@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.hash.serialization;
 
+import net.openhft.lang.Maths;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.NativeBytes;
 import sun.misc.Unsafe;
@@ -75,8 +76,6 @@ public enum Hasher {
     }
 
     public static long hash(long value) {
-        value ^= (value >>> 41) - (value >>> 21);
-        value ^= (value >>> 15) + (value >>> 7);
-        return value;
+        return Maths.hash(value);
     }
 }

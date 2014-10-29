@@ -1879,15 +1879,7 @@ class KeyValueSerializer<K, V> {
     }
 
     private boolean nullCheck(Bytes in) {
-        try {
-            return in.readBoolean();
-        } catch (BufferUnderflowException e) {
-
-
-            e.printStackTrace();
-            throw e;
-        }
-
+        return in.readBoolean();
     }
 
     K readKey(Bytes reader) {
