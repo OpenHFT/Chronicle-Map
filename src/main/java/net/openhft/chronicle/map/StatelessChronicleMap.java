@@ -245,7 +245,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     public synchronized V putIfAbsent(K key, V value) {
         long sizeLocation = writeEvent(PUT_IF_ABSENT);
-        ThreadLocalCopies local = writeKey(key);
+        ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+        writeKey(key, local);
         writeValue(value, local);
         return readKey(sizeLocation, local);
     }
@@ -257,7 +258,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             throw new NullPointerException("key can not be null");
 
         long sizeLocation = writeEvent(REMOVE_WITH_VALUE);
-        ThreadLocalCopies local = writeKey((K) key);
+        ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+        writeKey((K) key, local);
         writeValue((V) value, local);
 
         // get the data back from the server
@@ -270,7 +272,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             throw new NullPointerException("key can not be null");
 
         long sizeLocation = writeEvent(REPLACE_WITH_OLD_AND_NEW_VALUE);
-        ThreadLocalCopies local = writeKey(key);
+        ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+        writeKey(key, local);
         writeValue(oldValue, local);
         writeValue(newValue, local);
 
@@ -284,7 +287,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             throw new NullPointerException("key can not be null");
 
         long sizeLocation = writeEvent(REPLACE);
-        ThreadLocalCopies local = writeKey(key);
+        ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+        writeKey(key, local);
         writeValue(value, local);
 
         // get the data back from the server
@@ -391,7 +395,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     public synchronized V get(Object key) {
         long sizeLocation = writeEvent(GET);
-        ThreadLocalCopies local = writeKey((K) key);
+        ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+        writeKey((K) key, local);
 
         // get the data back from the server
         return readKey(sizeLocation, local);
@@ -410,7 +415,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     public synchronized V put(K key, V value) {
 
         long sizeLocation = writeEvent(PUT);
-        ThreadLocalCopies local = writeKey(key);
+        ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+        writeKey(key, local);
         writeValue(value, local);
 
         // get the data back from the server
@@ -434,19 +440,18 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         final int numberOfEntries = map.size();
         int numberOfEntriesReadSoFar = 0;
-        ThreadLocalCopies local = null;
+        ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
 
         bytes.writeStopBit(numberOfEntries);
         assert bytes.limit() == bytes.capacity();
         for (final Map.Entry<? extends K, ? extends V> e : map.entrySet()) {
 
             numberOfEntriesReadSoFar++;
-            assert bytes.limit() == bytes.capacity();
+
             // putAll if a bit more complicated than the others
             // as the volume of data could cause us to have to resize our buffers
             resizeIfRequired(numberOfEntries, numberOfEntriesReadSoFar);
 
-            assert bytes.limit() == bytes.capacity();
 
             final long start = bytes.position();
             final K key = e.getKey();
@@ -458,9 +463,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                         " be of type=" + kClass);
 
 
-            local = writeKey(key, local);
+            writeKey(key, local);
 
-            assert bytes.limit() == bytes.capacity();
+
             final V value = e.getValue();
 
             final Class<?> valueClass = value.getClass();
@@ -470,21 +475,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                         "should  be of type=" + vClass);
 
 
-            try {
-                assert bytes.limit() == bytes.capacity();
-                writeValue(value, local);
-            } catch (Exception e4) {
-
-                assert bytes.limit() == bytes.capacity();
-
-                writeValue(value, local);
-
-                throw e4;
-            }
-
+            writeValue(value, local);
 
             final int len = (int) (bytes.position() - start);
-            assert bytes.limit() == bytes.capacity();
+
             if (len > maxEntrySize)
                 maxEntrySize = len;
         }
@@ -500,7 +494,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
             // todo check this again as I  think it may have a bug
             long estimatedRequiredSize = estimateSize(numberOfEntries, numberOfEntriesReadSoFar);
-            resizeBuffer(estimatedRequiredSize + maxEntrySize * 128);
+            resizeBuffer(estimatedRequiredSize + maxEntrySize);
         }
     }
 
@@ -515,9 +509,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         double percentageComplete = (double) numberOfEntriesReadSoFar / (double) numberOfEntries;
         return (long) ((double) bytes.position() / percentageComplete);
 
-        // LOG.info("bytes position=" + bytes.position() + ",capacity=" + bytes.capacity() + ", " +
-        //"limit=" + bytes.limit());
-        // return bytes.position() + (maxEntrySize * 128);
+
     }
 
 
@@ -541,8 +533,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         for (int i = 0; i < bytesPosition; i++) {
             result.put(buffer.get());
         }
-        buffer = result;
 
+        buffer = result;
         buffer.limit(bufferLimit);
         buffer.position(bufferPosition);
 
@@ -582,15 +574,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         for (; ; ) {
 
-            boolean hasMoreEntries = in.readBoolean();
+            final boolean hasMoreEntries = in.readBoolean();
 
-            // number of entries in the chunk
-            long size = in.readInt();
+            // number of entries in this chunk
+            final long size = in.readInt();
 
             for (int i = 0; i < size; i++) {
-
-                V v = keyValueSerializer.readValue(in, local);
-                result.add(v);
+                result.add(keyValueSerializer.readValue(in, local));
             }
 
             if (!hasMoreEntries)
@@ -621,10 +611,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         for (; ; ) {
 
-            boolean hasMoreEntries = in.readBoolean();
+            final boolean hasMoreEntries = in.readBoolean();
 
-            // number of entries in the chunk
-            long size = in.readInt();
+            // number of entries in this chunk
+            final long size = in.readInt();
 
             for (int i = 0; i < size; i++) {
 
@@ -671,14 +661,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         for (; ; ) {
 
             boolean hasMoreEntries = in.readBoolean();
-            LOG.info("entrySet - hasMoreEntries=" + hasMoreEntries);
 
             // number of entries in the chunk
             long size = in.readInt();
 
             for (int i = 0; i < size; i++) {
-                K k = keyValueSerializer.readKey(in, local);
-                result.add(k);
+                result.add(keyValueSerializer.readKey(in, local));
             }
 
             if (!hasMoreEntries)
@@ -915,23 +903,22 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
-    private ThreadLocalCopies writeKey(K key) {
+    private void writeKey(K key) {
         try {
-            return keyValueSerializer.writeKey(key, bytes);
+            keyValueSerializer.writeKey(key, bytes);
         } catch (IllegalArgumentException e) {
             resizeBuffer(bytes.capacity() + maxEntrySize);
-            return null;
+
         }
 
     }
 
 
-    private ThreadLocalCopies writeKey(K key, ThreadLocalCopies local) {
+    private void writeKey(K key, ThreadLocalCopies local) {
         try {
-            return keyValueSerializer.writeKey(key, bytes, local);
+            keyValueSerializer.writeKey(key, bytes, local);
         } catch (IllegalArgumentException e) {
             resizeBuffer(bytes.capacity() + maxEntrySize);
-            return null;
         }
 
     }
@@ -944,22 +931,20 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         return keyValueSerializer.readValue(blockingFetch(sizeLocation), local);
     }
 
-    private ThreadLocalCopies writeValue(V value) {
+    private void writeValue(V value) {
         try {
-            return keyValueSerializer.writeValue(value, bytes, null);
+            keyValueSerializer.writeValue(value, bytes, null);
         } catch (IllegalArgumentException e) {
             resizeBuffer(bytes.capacity() + maxEntrySize);
-            return null;
         }
 
     }
 
-    private ThreadLocalCopies writeValue(V value, ThreadLocalCopies local) {
+    private void writeValue(V value, ThreadLocalCopies local) {
         try {
-            return keyValueSerializer.writeValue(value, bytes, local);
+            keyValueSerializer.writeValue(value, bytes, local);
         } catch (IllegalArgumentException e) {
             resizeBuffer(bytes.capacity() + maxEntrySize);
-            return null;
         }
 
     }

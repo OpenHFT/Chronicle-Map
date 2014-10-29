@@ -1916,41 +1916,41 @@ class KeyValueSerializer<K, V> {
      *
      * @param key the key of the map
      */
-    ThreadLocalCopies writeKey(K key, Bytes writer) {
+    void writeKey(K key, Bytes writer) {
 
         writer.writeBoolean(key == null);
         if (key != null)
-            return keySerializer.writeMarshallable(key, writer, null);
-        return null;
+            keySerializer.writeMarshallable(key, writer, null);
+
     }
 
-    ThreadLocalCopies writeValue(V value, Bytes writer) {
+    void writeValue(V value, Bytes writer) {
         assert writer.limit() == writer.capacity();
         writer.writeBoolean(value == null);
 
         if (value != null) {
-            return valueSerializer.writeMarshallable(value, writer, null);
+            valueSerializer.writeMarshallable(value, writer, null);
         }
-        return null;
+
     }
 
 
-    ThreadLocalCopies writeKey(K key, Bytes writer, ThreadLocalCopies threadLocal) {
+    void writeKey(K key, Bytes writer, ThreadLocalCopies threadLocal) {
 
         writer.writeBoolean(key == null);
         if (key != null)
-            return keySerializer.writeMarshallable(key, writer, threadLocal);
-        return null;
+            keySerializer.writeMarshallable(key, writer, threadLocal);
+
     }
 
-    ThreadLocalCopies writeValue(V value, Bytes writer, ThreadLocalCopies threadLocal) {
+    void writeValue(V value, Bytes writer, ThreadLocalCopies threadLocal) {
         assert writer.limit() == writer.capacity();
         writer.writeBoolean(value == null);
 
         if (value != null) {
-            return valueSerializer.writeMarshallable(value, writer, threadLocal);
+            valueSerializer.writeMarshallable(value, writer, threadLocal);
         }
-        return null;
+
     }
 
 
