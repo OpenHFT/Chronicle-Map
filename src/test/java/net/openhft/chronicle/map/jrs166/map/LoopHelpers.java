@@ -123,6 +123,7 @@ class LoopHelpers {
         return x;
     }
 
+
     public static String rightJustify(long n) {
         // There's probably a better way to do this...
         String field = "         ";
