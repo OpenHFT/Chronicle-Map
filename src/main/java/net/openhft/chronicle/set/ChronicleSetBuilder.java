@@ -50,7 +50,6 @@ public class ChronicleSetBuilder<E>
 
     ChronicleSetBuilder(Class<E> keyClass) {
         chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
-                .entryAndValueAlignment(Alignment.NO_ALIGNMENT)
                 .valueMarshaller(DummyValueMarshaller.INSTANCE);
     }
 

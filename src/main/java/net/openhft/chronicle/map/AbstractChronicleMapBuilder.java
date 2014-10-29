@@ -121,7 +121,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     private int valueSize = 0;
     private V sampleValue;
     private int entrySize = 0;
-    private Alignment alignment = Alignment.OF_4_BYTES;
+    private Alignment alignment = Alignment.NO_ALIGNMENT;
     private long entries = 1 << 20; // 1 million by default
     private long lockTimeOut = 2000;
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
@@ -253,15 +253,8 @@ public abstract class AbstractChronicleMapBuilder<K, V,
      *
      * <p>If entry size is not configured explicitly by calling this method, it is computed based on
      * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size},
-     * plus {@linkplain #valueSize(int) value size}, plus a few bytes required by implementations,
-     * with respect to {@linkplain #entryAndValueAlignment(Alignment) alignment}.
+     * plus {@linkplain #valueSize(int) value size}, plus a few bytes required by implementations.
      *
-     * <p>Note that the actual entrySize will be aligned to 4 (default {@linkplain
-     * #entryAndValueAlignment(Alignment) entry alignment}). I. e. if you set entry size to 30, the
-     * actual entry size will be 32 (30 aligned to 4 bytes). If you don't want entry size to be
-     * aligned, set {@code entryAndValueAlignment(Alignment.NO_ALIGNMENT)}.
-     *
-     * @see #entryAndValueAlignment(Alignment)
      * @see #entries(long)
      */
     @Override
@@ -300,24 +293,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return entryAndValueAlignment().alignSize(size);
     }
 
-    /**
-     * Configures alignment strategy of address in memory of entries and independently of address in
-     * memory of values within entries in ChronicleMaps, created by this builder.
-     *
-     * <p>Useful when values of the map are updated intensively, particularly fields with volatile
-     * access, because it doesn't work well if the value crosses cache lines. Also, on some
-     * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
-     *
-     * <p>Note that {@linkplain #entrySize(int) entry size} will be aligned according to this
-     * alignment. I. e. if you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual
-     * entry size will be 24 (20 aligned to 8 bytes).
-     *
-     * <p>Default is {@link Alignment#OF_4_BYTES}.
-     *
-     * @param alignment the new alignment of the maps constructed by this builder
-     * @return this {@code ChronicleMapBuilder} back
-     */
-    public B entryAndValueAlignment(Alignment alignment) {
+    B entryAndValueAlignment(Alignment alignment) {
         this.alignment = alignment;
         return self();
     }

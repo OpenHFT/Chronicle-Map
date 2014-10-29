@@ -1153,19 +1153,6 @@ public class ChronicleMapTest {
                 .entries(10)
                 .minSegments(1)
                 .entrySize(10);
-        builder.entryAndValueAlignment(NO_ALIGNMENT);
-        builder.file(getPersistenceFile());
-        testOversizeEntriesPutRemoveReplace(
-                (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
-                        builder.create()
-        );
-        builder.entryAndValueAlignment(Alignment.OF_4_BYTES);
-        builder.file(getPersistenceFile());
-        testOversizeEntriesPutRemoveReplace(
-                (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
-                        builder.create()
-        );
-        builder.entryAndValueAlignment(OF_8_BYTES);
         builder.file(getPersistenceFile());
         testOversizeEntriesPutRemoveReplace(
                 (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
