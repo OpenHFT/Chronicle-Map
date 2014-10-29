@@ -29,9 +29,9 @@ import static java.nio.ByteOrder.nativeOrder;
 public enum Hasher {
     ;
 
-    private static final long LONG_LEVEL_PRIME_MULTIPLE = 1011001110001111L;
-    private static final short SHORT_LEVEL_PRIME_MULTIPLE = 10191;
-    private static final byte BYTE_LEVEL_PRIME_MULTIPLE = 109;
+    private static final long LONG_LEVEL_PRIME_MULTIPLE = 0x9ddfea08eb382d69L;
+    private static final short SHORT_LEVEL_PRIME_MULTIPLE = 0x404f;
+    private static final byte BYTE_LEVEL_PRIME_MULTIPLE = 0x57;
 
     private static final int INT_HASH_LOW_SHORT_MULTIPLE =
             nativeOrder() == LITTLE_ENDIAN ? SHORT_LEVEL_PRIME_MULTIPLE : 1;

@@ -55,7 +55,7 @@ public class EntryCountMapTest {
 
     @Test
     public void testSmall() throws Exception {
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 10; i++) {
             // regression test.
             for (int s : new int[]{1, 2, 4, 8}) {
                 if (s <= 4)
@@ -77,7 +77,7 @@ public class EntryCountMapTest {
 
     @Test
     public void testMedium() throws Exception {
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 2; i++) {
             // regression test.
             int s = 16;
             testEntriesMaxSize(s, 512, 1000, i);
@@ -85,7 +85,7 @@ public class EntryCountMapTest {
             testEntriesMaxSize(s, 2000, 3100, i);
             testEntriesMaxSize(s, 4000, 5100, i);
             testEntriesMaxSize(s, 5000, 7100, i);
-            testEntriesMaxSize(s, 8000, 10100, i);
+            testEntriesMaxSize(s, 8000, 10200, i);
             testEntriesMaxSize(s, 12000, 16000, i);
             testEntriesMaxSize(s, 16000, 21000, i);
             s = 32;
@@ -94,8 +94,8 @@ public class EntryCountMapTest {
             testEntriesMaxSize(s, 5000, 7900, i);
             testEntriesMaxSize(s, 8000, 12000, i);
             testEntriesMaxSize(s, 12000, 15900, i);
-            testEntriesMaxSize(s, 16000, 21000, i);
-            testEntriesMaxSize(s, 32000, 42000, i);
+            testEntriesMaxSize(s, 16000, 21200, i);
+            testEntriesMaxSize(s, 32000, 42200, i);
             s = 64;
             testEntriesMaxSize(s, 5000, 7550, i);
             testEntriesMaxSize(s, 8000, 11400, i);
@@ -105,13 +105,13 @@ public class EntryCountMapTest {
             testEntriesMaxSize(s, 40000, 54000, i);
             s = 128;
             testEntriesMaxSize(s, 16000, 23000, i);
-            testEntriesMaxSize(s, 32000, 43000, i);
-            testEntriesMaxSize(s, 40000, 55200, i);
-            testEntriesMaxSize(s, 64000, 90000, i);
+            testEntriesMaxSize(s, 32000, 44200, i);
+            testEntriesMaxSize(s, 40000, 56000, i);
+            testEntriesMaxSize(s, 64000, 92000, i);
             testEntriesMaxSize(s, 129000, 190000, i);
             s = 256;
-            testEntriesMaxSize(s, 64000, 90000, i);
-            testEntriesMaxSize(s, 129000, 190000, i);
+            testEntriesMaxSize(s, 64000, 92000, i);
+            testEntriesMaxSize(s, 129000, 192000, i);
         }
         // hyperbolic average gives more weight to small numbers.
         System.out.printf("Score: %.2f%n", scoreCount / score);
