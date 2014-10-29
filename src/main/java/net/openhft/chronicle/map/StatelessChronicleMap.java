@@ -914,7 +914,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private void writeKey(K key) {
-        keyValueSerializer.writeKey(key, bytes);
+        try {
+            keyValueSerializer.writeKey(key, bytes);
+        } catch (IllegalArgumentException e) {
+            resizeBuffer(bytes.capacity() + maxEntrySize);
+        }
     }
 
     private V readKey(final long sizeLocation) {
@@ -922,9 +926,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     private void writeValue(V value) {
-        //  LOG.info("bytes position=" + bytes.position() + ",capacity=" + bytes.capacity() + ", " +
-        //             "limit=" + bytes.limit());
-        keyValueSerializer.writeValue(value, bytes);
+        try {
+            keyValueSerializer.writeValue(value, bytes);
+        } catch (IllegalArgumentException e) {
+            resizeBuffer(bytes.capacity() + maxEntrySize);
+        }
     }
 
     private Set<K> readKeySet(Bytes in) {
