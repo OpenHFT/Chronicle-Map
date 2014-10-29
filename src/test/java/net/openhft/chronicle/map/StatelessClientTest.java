@@ -308,7 +308,7 @@ public class StatelessClientTest {
 
 
         statelessMap1.close();
-        statelessMap1.close();
+        statelessMap2.close();
 
         serverMap1.close();
         serverMap2.close();
