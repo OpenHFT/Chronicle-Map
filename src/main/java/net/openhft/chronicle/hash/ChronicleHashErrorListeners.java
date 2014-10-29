@@ -19,7 +19,6 @@
 package net.openhft.chronicle.hash;
 
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class ChronicleHashErrorListeners {
@@ -39,21 +38,20 @@ public final class ChronicleHashErrorListeners {
 
     private static enum LoggingErrorListener implements ChronicleHashErrorListener {
         INSTANCE;
-        final Logger LOG = LoggerFactory.getLogger(getClass());
 
         @Override
         public void onLockTimeout(long threadId) throws IllegalStateException {
             if (threadId > 1L << 32) {
-                LOG.warn("Grabbing lock held by processId: {}, threadId: {}",
+                LoggerFactory.getLogger(getClass()).warn("Grabbing lock held by processId: {}, threadId: {}",
                         (threadId >>> 33), (threadId & 0xFFFFFFL));
             } else {
-                LOG.warn("Grabbing lock held by threadId: {}", threadId);
+                LoggerFactory.getLogger(getClass()).warn("Grabbing lock held by threadId: {}", threadId);
             }
         }
 
         @Override
         public void errorOnUnlock(IllegalMonitorStateException e) {
-            LOG.warn("Failed to unlock as expected", e);
+            LoggerFactory.getLogger(getClass()).warn("Failed to unlock as expected", e);
         }
     }
 

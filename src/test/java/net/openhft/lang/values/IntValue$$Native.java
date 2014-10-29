@@ -34,7 +34,6 @@ public class IntValue$$Native implements IntValue, BytesMarshallable, Byteable, 
     private long _offset;
 
 
-
     public void setValue(int $) {
         _bytes.writeInt(_offset + VALUE, $);
     }
@@ -42,7 +41,6 @@ public class IntValue$$Native implements IntValue, BytesMarshallable, Byteable, 
     public int getValue() {
         return _bytes.readInt(_offset + VALUE);
     }
-
 
 
     public void setOrderedValue(int $) {
@@ -55,20 +53,36 @@ public class IntValue$$Native implements IntValue, BytesMarshallable, Byteable, 
 
     public int addValue(int $) {
         return _bytes.addInt(_offset + VALUE, $);
-    }    public int addAtomicValue(int $) {
+    }
+
+    public int addAtomicValue(int $) {
         return _bytes.addAtomicInt(_offset + VALUE, $);
-    }    public boolean compareAndSwapValue(int _1, int _2) {
+    }
+
+    public boolean compareAndSwapValue(int _1, int _2) {
         return _bytes.compareAndSwapInt(_offset + VALUE, _1, _2);
-    }    public boolean tryLockNanosValue(long nanos) {
+    }
+
+    public boolean tryLockNanosValue(long nanos) {
         return _bytes.tryLockNanosInt(_offset + VALUE, nanos);
-    }    public boolean tryLockValue() {
+    }
+
+    public boolean tryLockValue() {
         return _bytes.tryLockInt(_offset + VALUE);
-    }    public void unlockValue() {
+    }
+
+    @Deprecated()
+    public void unlockValue() {
         _bytes.unlockInt(_offset + VALUE);
-    }    public void busyLockValue() throws InterruptedException {
+    }
+
+    @Deprecated()
+    public void busyLockValue() throws InterruptedException {
         _bytes.busyLockInt(_offset + VALUE);
-    }    @Override
-         public void copyFrom(net.openhft.lang.values.IntValue from) {
+    }
+
+    @Override
+    public void copyFrom(net.openhft.lang.values.IntValue from) {
         setValue(from.getValue());
     }
 
@@ -76,27 +90,33 @@ public class IntValue$$Native implements IntValue, BytesMarshallable, Byteable, 
     public void writeMarshallable(Bytes out) {
         out.writeInt(getValue());
     }
+
     @Override
     public void readMarshallable(Bytes in) {
         setValue(in.readInt());
     }
+
     @Override
     public void bytes(Bytes bytes, long offset) {
         this._bytes = bytes;
         this._offset = offset;
     }
+
     @Override
     public Bytes bytes() {
         return _bytes;
     }
+
     @Override
     public long offset() {
         return _offset;
     }
+
     @Override
     public int maxSize() {
         return 4;
     }
+
     public int hashCode() {
         long lhc = longHashCode();
         return (int) ((lhc >>> 32) ^ lhc);
@@ -111,7 +131,7 @@ public class IntValue$$Native implements IntValue, BytesMarshallable, Byteable, 
         if (!(o instanceof IntValue)) return false;
         IntValue that = (IntValue) o;
 
-        if(!isEqual(getValue(), that.getValue())) return false;
+        if (!isEqual(getValue(), that.getValue())) return false;
         return true;
     }
 

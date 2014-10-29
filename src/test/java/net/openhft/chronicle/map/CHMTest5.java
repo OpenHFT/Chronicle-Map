@@ -245,12 +245,16 @@ public class CHMTest5 {
 
         boolean compareAndSwapMaxNumberOfProcessesAllowed(int expected, int value);
 
+        @Deprecated()
         void busyLockEntry() throws InterruptedException, IllegalStateException;
 
+        @Deprecated()
         boolean tryLockNanosEntry(long nanos);
 
+        @Deprecated()
         boolean tryLockEntry();
 
+        @Deprecated()
         void unlockEntry() throws IllegalMonitorStateException;
     }
 }
