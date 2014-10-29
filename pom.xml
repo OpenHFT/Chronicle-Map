@@ -17,13 +17,15 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
         <version>1.1.2</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -46,7 +48,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>lang</artifactId>
-                <version>6.4.11-SNAPSHOT</version>
+                <version>6.4.11</version>
             </dependency>
 
             <dependency>
@@ -61,11 +63,17 @@
                 <version>2.2.0</version>
             </dependency>
 
+
         </dependencies>
 
     </dependencyManagement>
 
     <dependencies>
+
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>compiler</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>net.openhft</groupId>
@@ -75,6 +83,11 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.intellij</groupId>
+            <artifactId>annotations</artifactId>
         </dependency>
 
         <!-- test dependencies -->
@@ -118,7 +131,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-scm-publish-plugin</artifactId>
                 <configuration>
-                    <checkoutDirectory>${project.build.directory}/scmpublish/javadoc</checkoutDirectory>
+                    <checkoutDirectory>${project.build.directory}/scmpublish/javadoc
+                    </checkoutDirectory>
                     <checkinComment>Publishing javadoc for ${project.artifactId}:${project.version}
                     </checkinComment>
                     <content>${project.reporting.outputDirectory}</content>

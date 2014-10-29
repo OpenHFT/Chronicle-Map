@@ -584,7 +584,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         // get the data back from the server
         Bytes in = blockingFetch0(sizeLocation, transactionId, startTime);
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-        final Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
+        final Map<K, V> result = new HashMap<K, V>();
 
         for (; ; ) {
 
@@ -594,10 +594,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             final long size = in.readInt();
 
             for (int i = 0; i < size; i++) {
-
-                K k = keyValueSerializer.readKey(in, local);
-                V v = keyValueSerializer.readValue(in, local);
-                result.add(new Entry(k, v));
+                final K k = keyValueSerializer.readKey(in, local);
+                final V v = keyValueSerializer.readValue(in, local);
+                result.put(k, v);
             }
 
             if (!hasMoreEntries)
@@ -609,7 +608,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         }
 
 
-        return result;
+        return result.entrySet();
     }
 
     private void compact(Bytes in) {
