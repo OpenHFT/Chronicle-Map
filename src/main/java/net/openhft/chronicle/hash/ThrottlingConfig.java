@@ -103,7 +103,7 @@ public class ThrottlingConfig {
      * @return maximum bits per the given time unit, or {@code 0} if there is no throttling
      */
     public final long throttling(TimeUnit perUnit) {
-        return throttlePerUnit().convert(throttle(), perUnit);
+        return throttlePerUnit.convert(throttle, perUnit);
     }
 
 
@@ -115,7 +115,7 @@ public class ThrottlingConfig {
      * @return the bucketing interval for throttling in the given time units
      */
     public long bucketInterval(TimeUnit unit) {
-        return unit.convert(bucketInterval(), bucketIntervalUnit());
+        return unit.convert(bucketInterval, bucketIntervalUnit);
     }
 
     /**
@@ -129,26 +129,7 @@ public class ThrottlingConfig {
     public ThrottlingConfig bucketInterval(long throttleBucketInterval, TimeUnit unit) {
         if (throttleBucketInterval <= 0L)
             throw new IllegalArgumentException();
-        return create(throttle(), throttlePerUnit(), throttleBucketInterval, unit);
-    }
-
-
-    long throttle() {
-        return throttle;
-    }
-
-
-    TimeUnit throttlePerUnit() {
-        return throttlePerUnit;
-    }
-
-
-    public long bucketInterval() {
-        return bucketInterval;
-    }
-
-    public TimeUnit bucketIntervalUnit() {
-        return bucketIntervalUnit;
+        return create(throttle, throttlePerUnit, throttleBucketInterval, unit);
     }
 
     @Override
@@ -168,10 +149,10 @@ public class ThrottlingConfig {
         }
         if (o instanceof ThrottlingConfig) {
             ThrottlingConfig that = (ThrottlingConfig) o;
-            return (this.throttle == that.throttle())
-                    && (this.throttlePerUnit.equals(that.throttlePerUnit()))
-                    && (this.bucketInterval == that.bucketInterval())
-                    && (this.bucketIntervalUnit.equals(that.bucketIntervalUnit()));
+            return (this.throttle == that.throttle)
+                    && (this.throttlePerUnit.equals(that.throttlePerUnit))
+                    && (this.bucketInterval == that.bucketInterval)
+                    && (this.bucketIntervalUnit.equals(that.bucketIntervalUnit));
         }
         return false;
     }

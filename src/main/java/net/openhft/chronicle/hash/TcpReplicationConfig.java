@@ -80,13 +80,8 @@ public class TcpReplicationConfig implements ReplicationConfig {
         return this;
     }
 
-
-    public long heartBeatInterval() {
-        return heartBeatInterval;
-    }
-
-    public TimeUnit heartBeatIntervalUnit() {
-        return heartBeatIntervalUnit;
+    public long heartBeatInterval(TimeUnit unit) {
+        return unit.convert(heartBeatInterval, heartBeatIntervalUnit);
     }
 
     public int serverPort() {

@@ -265,7 +265,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return self();
     }
 
-    public int entrySize() {
+    int entrySize() {
         if (entrySize > 0)
             return entryAndValueAlignment().alignSize(entrySize);
         int size = metaDataBytes;
@@ -881,6 +881,17 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         if (map instanceof ReplicatedChronicleMap) {
             ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;
             for (Replicator replicator : replicators.values()) {
+                if (replicator instanceof ChannelProvider.ChronicleChannel) {
+                    ChannelProvider.ChronicleChannel channel =
+                            (ChannelProvider.ChronicleChannel) replicator;
+                    if (entrySize() > channel.provider().maxEntrySize()) {
+                        throw new IllegalArgumentException("During ChannelProviderBuilder setup, " +
+                                "maxEntrySize=" + channel.provider().maxEntrySize() +
+                                " was specified, but map with " +
+                                "entrySize=" + entrySize() + " is attempted to apply" +
+                                "to the replicator");
+                    }
+                }
                 Closeable token = replicator.applyTo(this, result, result, map);
                 if (replicators.size() == 1 && token.getClass() == UdpReplicator.class) {
                     LOG.warn(

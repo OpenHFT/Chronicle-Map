@@ -43,7 +43,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * @author Rob Austin.
  */
-public abstract class AbstractChannelReplicator implements Closeable {
+abstract class AbstractChannelReplicator implements Closeable {
 
     public static final int BITS_IN_A_BYTE = 8;
 

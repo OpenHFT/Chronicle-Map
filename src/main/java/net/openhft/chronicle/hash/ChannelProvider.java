@@ -169,8 +169,7 @@ public final class ChannelProvider implements Closeable {
             newBitSet(systemModificationIterator.length());
     private final AtomicReferenceArray<ModificationIterator> modificationIterator =
             new AtomicReferenceArray<ModificationIterator>(128);
-    private final Set<AbstractChannelReplicator> replicators =
-            new CopyOnWriteArraySet<AbstractChannelReplicator>();
+    private final Set<Closeable> replicators = new CopyOnWriteArraySet<Closeable>();
 
     ChannelProvider(ChannelProviderBuilder builder) {
         localIdentifier = builder.identifier;
@@ -193,6 +192,10 @@ public final class ChannelProvider implements Closeable {
         SystemQueue systemMessageQueue = new SystemQueue(
                 systemModificationIteratorBitSet, systemModificationIterator, systemMessageHandler);
         add((short) 0, systemMessageQueue.asReplica, systemMessageQueue.asEntryExternalizable);
+    }
+
+    public int maxEntrySize() {
+        return maxEntrySize;
     }
 
     /**
@@ -271,7 +274,7 @@ public final class ChannelProvider implements Closeable {
 
     @Override
     public void close() throws IOException {
-        for (AbstractChannelReplicator replicator : replicators) {
+        for (Closeable replicator : replicators) {
             replicator.close();
         }
         // indexed reverse loop to avoid ConcurrentModificationException and remove elements from
@@ -282,7 +285,7 @@ public final class ChannelProvider implements Closeable {
         }
     }
 
-    void add(AbstractChannelReplicator replicator) {
+    void add(Closeable replicator) {
         replicators.add(replicator);
     }
 
@@ -413,14 +416,12 @@ public final class ChannelProvider implements Closeable {
         protected Closeable applyTo(AbstractChronicleMapBuilder builder,
                                     Replica map, EntryExternalizable entryExternalizable,
                                     final ChronicleMap chronicleMap) {
-            if (builder.entrySize() > maxEntrySize) {
-                throw new IllegalArgumentException("During ReplicatingChannelBuilder setup, " +
-                        "maxEntrySize=" + maxEntrySize + " was specified, but map with " +
-                        "entrySize=" + builder.entrySize() + " is attempted to apply" +
-                        "to the replicator");
-            }
             add(chronicleChannel, map, entryExternalizable);
             return this;
+        }
+
+        public ChannelProvider provider() {
+            return ChannelProvider.this;
         }
 
         @Override

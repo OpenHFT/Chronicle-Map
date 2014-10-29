@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.channels.SelectionKey.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 /**
@@ -93,11 +94,9 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
         this.statelessServerConnector = statelessServerConnector;
 
         final ThrottlingConfig throttlingConfig = replicationConfig.throttlingConfig();
-        long throttleBucketInterval = TimeUnit.MILLISECONDS.convert(throttlingConfig
-                .bucketInterval(), throttlingConfig.bucketIntervalUnit());
+        long throttleBucketInterval = throttlingConfig.bucketInterval(MILLISECONDS);
 
-        heartBeatIntervalMillis = TimeUnit.MILLISECONDS.convert(replicationConfig.heartBeatInterval(),
-                replicationConfig.heartBeatIntervalUnit());
+        heartBeatIntervalMillis = replicationConfig.heartBeatInterval(MILLISECONDS);
 
         selectorTimeout = Math.min(heartBeatIntervalMillis, throttleBucketInterval);
 
