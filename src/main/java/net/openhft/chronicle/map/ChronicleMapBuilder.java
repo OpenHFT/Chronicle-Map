@@ -16,8 +16,8 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.common.ChronicleHashBuilder;
-import net.openhft.chronicle.common.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.io.serialization.BytesMarshaller;

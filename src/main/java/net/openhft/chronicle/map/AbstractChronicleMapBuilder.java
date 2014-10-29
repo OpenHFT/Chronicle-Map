@@ -18,12 +18,12 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.common.*;
-import net.openhft.chronicle.common.serialization.MetaBytesInterop;
-import net.openhft.chronicle.common.serialization.MetaBytesWriter;
-import net.openhft.chronicle.common.serialization.MetaProvider;
-import net.openhft.chronicle.common.threadlocal.Provider;
-import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.hash.*;
+import net.openhft.chronicle.hash.serialization.MetaBytesInterop;
+import net.openhft.chronicle.hash.serialization.MetaBytesWriter;
+import net.openhft.chronicle.hash.serialization.MetaProvider;
+import net.openhft.chronicle.hash.threadlocal.Provider;
+import net.openhft.chronicle.hash.threadlocal.ThreadLocalCopies;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.Maths;
 import net.openhft.lang.io.ByteBufferBytes;

@@ -16,12 +16,16 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.hash.exceptions;
 
-import net.openhft.chronicle.hash.ChronicleHash;
+import java.io.IOException;
 
-import java.util.Set;
+/**
+ * @author Rob Austin.
+ */
+public class IORuntimeException extends RuntimeException{
 
-public interface ChronicleSet<E> extends Set<E>, ChronicleHash {
-    public long longSize();
+    public IORuntimeException(IOException e) {
+        super(e);
+    }
 }

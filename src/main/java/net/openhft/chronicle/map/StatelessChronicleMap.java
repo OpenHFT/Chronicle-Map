@@ -19,9 +19,9 @@
 package net.openhft.chronicle.map;
 
 import com.sun.jdi.connect.spi.ClosedConnectionException;
-import net.openhft.chronicle.common.StatelessBuilder;
-import net.openhft.chronicle.common.exceptions.IORuntimeException;
-import net.openhft.chronicle.common.exceptions.TimeoutRuntimeException;
+import net.openhft.chronicle.hash.StatelessBuilder;
+import net.openhft.chronicle.hash.exceptions.IORuntimeException;
+import net.openhft.chronicle.hash.exceptions.TimeoutRuntimeException;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;

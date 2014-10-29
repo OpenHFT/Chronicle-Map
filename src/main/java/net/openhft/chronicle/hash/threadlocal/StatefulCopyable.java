@@ -16,12 +16,10 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.hash.threadlocal;
 
-import net.openhft.chronicle.hash.ChronicleHash;
+public interface StatefulCopyable<S extends StatefulCopyable<S>> {
+    Object stateIdentity();
 
-import java.util.Set;
-
-public interface ChronicleSet<E> extends Set<E>, ChronicleHash {
-    public long longSize();
+    S copy();
 }

@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
 
-import static net.openhft.chronicle.common.StatelessBuilder.remoteAddress;
+import static net.openhft.chronicle.hash.StatelessBuilder.remoteAddress;
 import static org.junit.Assert.*;
 
 /*

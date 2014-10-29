@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static net.openhft.chronicle.common.StatelessBuilder.remoteAddress;
+import static net.openhft.chronicle.hash.StatelessBuilder.remoteAddress;
 
 
 /**

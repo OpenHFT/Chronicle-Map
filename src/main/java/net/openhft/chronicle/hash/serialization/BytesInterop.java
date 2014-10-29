@@ -16,12 +16,22 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.hash.serialization;
 
-import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.lang.io.Bytes;
+import net.openhft.lang.model.Byteable;
 
-import java.util.Set;
+/**
+ * Marshaller for byte sequences, which are copied to off-heap {@link Bytes}
+ * in a very straightforward manner, e. g. {@link Byteable Byteables}, {@code byte[]} arrays,
+ * {@code Bytes} themselves. The criterion of this interface applicability --
+ * {@link Object#equals(Object)} implementation shouldn't require deserialization and any garbage creation.
+ *
+ * @param <E> type of marshalled objects
+ */
+public interface BytesInterop<E> extends BytesWriter<E> {
 
-public interface ChronicleSet<E> extends Set<E>, ChronicleHash {
-    public long longSize();
+    boolean startsWith(Bytes bytes, E e);
+
+    long hash(E e);
 }

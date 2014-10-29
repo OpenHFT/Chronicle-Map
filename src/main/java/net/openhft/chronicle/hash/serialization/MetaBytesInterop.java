@@ -16,12 +16,14 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.hash.serialization;
 
-import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.lang.io.Bytes;
 
-import java.util.Set;
+public interface MetaBytesInterop<E, I> extends MetaBytesWriter<E, I> {
 
-public interface ChronicleSet<E> extends Set<E>, ChronicleHash {
-    public long longSize();
+    boolean startsWith(I interop, Bytes bytes, E e);
+
+    long hash(I interop, E e);
+
 }

@@ -16,44 +16,18 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.hash.serialization.Hasher;
 import net.openhft.lang.io.Bytes;
 
-import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;
-
-enum DummyValueMarshaller implements AgileBytesMarshaller<DummyValue> {
+public enum IntegerMarshaller implements AgileBytesMarshaller<Integer> {
     INSTANCE;
 
     @Override
-    public boolean startsWith(Bytes bytes, DummyValue dummyValue) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public long hash(DummyValue dummyValue) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public DummyValue read(Bytes bytes, long size) {
-        return DUMMY_VALUE;
-    }
-
-    @Override
-    public DummyValue read(Bytes bytes, long size, DummyValue dummyValue) {
-        return DUMMY_VALUE;
-    }
-
-    @Override
-    public long size(DummyValue dummyValue) {
-        return 0L;
-    }
-
-    @Override
-    public void write(Bytes bytes, DummyValue dummyValue) {
-        // do nothing
+    public long size(Integer e) {
+        return 4L;
     }
 
     @Override
@@ -67,7 +41,32 @@ enum DummyValueMarshaller implements AgileBytesMarshaller<DummyValue> {
     }
 
     @Override
+    public boolean startsWith(Bytes bytes, Integer e) {
+        return e == bytes.readInt(0);
+    }
+
+    @Override
+    public long hash(Integer e) {
+        return Hasher.hash(e);
+    }
+
+    @Override
+    public void write(Bytes bytes, Integer e) {
+        bytes.writeInt(e);
+    }
+
+    @Override
     public long readSize(Bytes bytes) {
-        return 0L;
+        return 4L;
+    }
+
+    @Override
+    public Integer read(Bytes bytes, long size) {
+        return bytes.readInt();
+    }
+
+    @Override
+    public Integer read(Bytes bytes, long size, Integer e) {
+        return bytes.readInt();
     }
 }

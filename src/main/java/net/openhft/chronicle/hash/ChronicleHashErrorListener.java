@@ -16,12 +16,12 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.hash.ChronicleHash;
+import java.io.Serializable;
 
-import java.util.Set;
+public interface ChronicleHashErrorListener extends Serializable {
+    void onLockTimeout(long threadId) throws IllegalStateException;
 
-public interface ChronicleSet<E> extends Set<E>, ChronicleHash {
-    public long longSize();
+    void errorOnUnlock(IllegalMonitorStateException e);
 }

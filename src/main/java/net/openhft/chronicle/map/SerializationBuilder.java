@@ -18,10 +18,10 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.common.threadlocal.Provider;
-import net.openhft.chronicle.common.threadlocal.ThreadLocalCopies;
-import net.openhft.chronicle.common.serialization.*;
-import net.openhft.chronicle.common.serialization.impl.*;
+import net.openhft.chronicle.hash.threadlocal.Provider;
+import net.openhft.chronicle.hash.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.hash.serialization.*;
+import net.openhft.chronicle.hash.serialization.impl.*;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.io.serialization.BytesMarshaller;
@@ -38,7 +38,7 @@ import java.io.Serializable;
 import java.lang.reflect.Modifier;
 
 import static net.openhft.chronicle.map.Objects.hash;
-import static net.openhft.chronicle.common.serialization.SizeMarshallers.stopBit;
+import static net.openhft.chronicle.hash.serialization.SizeMarshallers.stopBit;
 
 final class SerializationBuilder<E> implements Cloneable {
 
