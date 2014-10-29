@@ -86,12 +86,12 @@ class Serializer<O> {
 
 
     public ThreadLocalCopies writeMarshallable(O value, @NotNull Bytes out) {
-        return getThreadLocalCopies(value, out, null);
+        return writeMarshallable(value, out, null);
     }
 
-    private ThreadLocalCopies getThreadLocalCopies(O value, Bytes out, ThreadLocalCopies copies0) {
+    private ThreadLocalCopies writeMarshallable(O value, Bytes out, ThreadLocalCopies copies0) {
 
-        ThreadLocalCopies copies = (copies0 == null) ? readerProvider.getCopies(null) : copies0;
+        ThreadLocalCopies copies = (copies0 == null) ? threadLocalCopies() : copies0;
 
         Object valueWriter = writerProvider.get(copies, originalWriter);
         copies = writerProvider.getCopies(copies);
