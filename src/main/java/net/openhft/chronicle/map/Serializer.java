@@ -18,12 +18,12 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.threadlocal.Provider;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.constraints.NotNull;
+import net.openhft.lang.threadlocal.Provider;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 
 /**
  * uses a {@code SerializationBuilder} to read and write object(s) as bytes
@@ -66,9 +66,33 @@ class Serializer<O> {
         }
     }
 
-    public void writeMarshallable(O value, @NotNull Bytes out) {
+    public O readMarshallable(@NotNull Bytes in, ThreadLocalCopies local) throws
+            IllegalStateException {
+        final ThreadLocalCopies copies = (local == null) ? threadLocalCopies() : local;
 
-        ThreadLocalCopies copies = readerProvider.getCopies(null);
+        final BytesReader<O> valueReader = readerProvider.get(copies, originalReader);
+
+        try {
+            long valueSize = sizeMarshaller.readSize(in);
+            return valueReader.read(in, valueSize, null);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+     public ThreadLocalCopies threadLocalCopies() {
+        return readerProvider.getCopies(null);
+    }
+
+
+    public ThreadLocalCopies writeMarshallable(O value, @NotNull Bytes out) {
+        return getThreadLocalCopies(value, out, null);
+    }
+
+    private ThreadLocalCopies getThreadLocalCopies(O value, Bytes out, ThreadLocalCopies copies0) {
+
+        ThreadLocalCopies copies = (copies0 == null) ? readerProvider.getCopies(null) : copies0;
+
         Object valueWriter = writerProvider.get(copies, originalWriter);
         copies = writerProvider.getCopies(copies);
 
@@ -92,9 +116,10 @@ class Serializer<O> {
         if (metaValueWriter != null) {
             assert out.limit() == out.capacity();
             metaValueWriter.write(valueWriter, out, value);
-        }  else
+        } else
             throw new UnsupportedOperationException("");
 
+        return copies;
     }
 
 }

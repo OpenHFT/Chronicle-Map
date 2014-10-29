@@ -22,6 +22,7 @@ import net.openhft.chronicle.hash.TcpReplicationConfig;
 import net.openhft.chronicle.hash.ThrottlingConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -1878,6 +1879,13 @@ class KeyValueSerializer<K, V> {
         return valueSerializer.readMarshallable(reader);
     }
 
+
+    V readValue(Bytes reader, ThreadLocalCopies local) {
+        if (nullCheck(reader)) return null;
+        return valueSerializer.readMarshallable(reader, local);
+    }
+
+
     private boolean nullCheck(Bytes in) {
         try {
             return in.readBoolean();
@@ -1896,29 +1904,58 @@ class KeyValueSerializer<K, V> {
         return keySerializer.readMarshallable(reader);
     }
 
+    K readKey(Bytes reader, ThreadLocalCopies local) {
+        if (nullCheck(reader)) return null;
+
+        return keySerializer.readMarshallable(reader, local);
+    }
+
     /**
      * write the keysize and the key to the the {@code target} buffer
      *
      * @param key the key of the map
      */
-    void writeKey(K key, Bytes writer) {
+    ThreadLocalCopies writeKey(K key, Bytes writer) {
 
         writer.writeBoolean(key == null);
         if (key != null)
-            keySerializer.writeMarshallable(key, writer);
+            return keySerializer.writeMarshallable(key, writer);
+        return null;
     }
 
-    void writeValue(V value, Bytes writer) {
+    ThreadLocalCopies writeValue(V value, Bytes writer) {
         assert writer.limit() == writer.capacity();
         writer.writeBoolean(value == null);
-        assert writer.limit() == writer.capacity();
+
         if (value != null) {
-            assert writer.limit() == writer.capacity();
-            valueSerializer.writeMarshallable(value, writer);
+            return valueSerializer.writeMarshallable(value, writer);
         }
+        return null;
     }
 
 
+    ThreadLocalCopies writeKey(K key, Bytes writer, ThreadLocalCopies threadLocal) {
+
+        writer.writeBoolean(key == null);
+        if (key != null)
+            return keySerializer.writeMarshallable(key, writer);
+        return null;
+    }
+
+    ThreadLocalCopies writeValue(V value, Bytes writer, ThreadLocalCopies threadLocal) {
+        assert writer.limit() == writer.capacity();
+        writer.writeBoolean(value == null);
+
+        if (value != null) {
+            return valueSerializer.writeMarshallable(value, writer);
+        }
+        return null;
+    }
+
+
+    public ThreadLocalCopies threadLocalCopies() {
+        return valueSerializer.threadLocalCopies();
+    }
 }
 
 
