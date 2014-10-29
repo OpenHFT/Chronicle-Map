@@ -77,13 +77,13 @@ public class SerializerTest {
 
         Serializer v = new Serializer(builder.valueBuilder);
 
-        v.writeMarshallable(value, out);
+        v.writeMarshallable(value, out, null);
 
         long position = out.position();
         in.limit(position);
 
 
-        Object actual = v.readMarshallable(in);
+        Object actual = v.readMarshallable(in, null);
         Assert.assertEquals(actual, value);
     }
 
@@ -101,12 +101,12 @@ public class SerializerTest {
             Serializer v = new Serializer(builder.keyBuilder);
 
 
-            v.writeMarshallable(key, out);
+            v.writeMarshallable(key, out, null);
 
             long position = out.position();
             in.limit(position);
 
-            Object actual = v.readMarshallable(in);
+            Object actual = v.readMarshallable(in, null);
             Assert.assertEquals(actual, key);
 
         }
