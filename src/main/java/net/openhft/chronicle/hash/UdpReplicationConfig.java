@@ -16,10 +16,62 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash;
+
+import net.openhft.chronicle.map.ThrottlingConfig;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+
+
+public abstract class UdpReplicationConfig implements ReplicationConfig {
+
+    /**
+     * Package-private constructor forbids subclassing from outside of the package
+     */
+    UdpReplicationConfig() {
+        // nothing to do
+    }
+
+    public static UdpReplicationConfig simple(@NotNull InetAddress address, int port) {
+        if (address.isMulticastAddress())
+            throw new IllegalArgumentException();
+
+
+        return create(address, port, null, ThrottlingConfig.noThrottling());
+    }
+
+    public static UdpReplicationConfig multiCast(@NotNull InetAddress address, int port,
+                                                 @NotNull NetworkInterface networkInterface) {
+        if (!address.isMulticastAddress() || networkInterface == null)
+            throw new IllegalArgumentException();
+        return create(address, port, networkInterface, ThrottlingConfig.noThrottling());
+    }
+
+    static UdpReplicationConfig create(InetAddress address, int port,
+                                       NetworkInterface networkInterface,
+                                       ThrottlingConfig throttlingConfig) {
+        return new UdpReplicationConfigBean(address, port, networkInterface,
+                throttlingConfig);
+    }
+
+    public abstract InetAddress address();
+
+    public abstract int port();
+
+    @Nullable
+    public abstract NetworkInterface networkInterface();
+
+    public abstract ThrottlingConfig throttlingConfig();
+
+    public UdpReplicationConfig throttlingConfig(ThrottlingConfig throttlingConfig) {
+        ThrottlingConfig.checkMillisecondBucketInterval(throttlingConfig, "UDP");
+        return create(address(), port(), networkInterface(), throttlingConfig);
+    }
+}
+
 
 
 final class UdpReplicationConfigBean extends UdpReplicationConfig {

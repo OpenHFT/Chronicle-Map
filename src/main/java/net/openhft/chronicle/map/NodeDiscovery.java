@@ -18,6 +18,8 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.hash.UdpReplicationConfig;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -39,11 +41,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.openhft.chronicle.hash.UdpReplicationConfig.simple;
 import static net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress;
 import static net.openhft.chronicle.map.DiscoveryNodeBytesMarshallable.ProposedNodes;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
-import static net.openhft.chronicle.map.UdpReplicationConfig.simple;
 
 /**
  * @author Rob Austin.
@@ -259,7 +261,7 @@ public class NodeDiscovery {
      * bitwise OR's the two bit sets or put another way, merges the source bitset into the
      * destination bitset and returns the destination
      *
-     * @param source to or
+     * @param source      to or
      * @param destination to or
      * @return result.
      */
@@ -357,7 +359,7 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
      * @throws java.io.IOException
      */
     NodeDiscoveryBroadcaster(
-            @NotNull final UdpReplicationConfig replicationConfig,
+            final UdpReplicationConfig replicationConfig,
             final int serializedEntrySize,
             final BytesMarshallable externalizable)
             throws IOException {

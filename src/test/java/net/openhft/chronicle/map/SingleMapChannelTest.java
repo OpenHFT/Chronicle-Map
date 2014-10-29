@@ -19,6 +19,9 @@
 package net.openhft.chronicle.map;
 
 
+import net.openhft.chronicle.hash.ChannelProvider;
+import net.openhft.chronicle.hash.ChannelProviderBuilder;
+import net.openhft.chronicle.hash.TcpReplicationConfig;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

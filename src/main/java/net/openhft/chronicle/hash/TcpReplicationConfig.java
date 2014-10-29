@@ -16,8 +16,10 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash;
 
+import net.openhft.chronicle.map.IdentifierListener;
+import net.openhft.chronicle.map.ThrottlingConfig;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
@@ -70,7 +72,7 @@ public class TcpReplicationConfig implements ReplicationConfig {
         return this;
     }
 
-    public ThrottlingConfig throttlingConfig() {
+      public ThrottlingConfig throttlingConfig() {
         return throttlingConfig;
     }
 

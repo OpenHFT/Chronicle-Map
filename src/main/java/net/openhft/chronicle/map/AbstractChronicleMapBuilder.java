@@ -272,7 +272,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return self();
     }
 
-    int entrySize() {
+    public int entrySize() {
         if (entrySize > 0)
             return entryAndValueAlignment().alignSize(entrySize);
         int size = metaDataBytes;

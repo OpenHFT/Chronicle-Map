@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.TcpReplicationConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +30,7 @@ import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
-import static net.openhft.chronicle.map.TcpReplicationConfig.of;
+import static net.openhft.chronicle.hash.TcpReplicationConfig.of;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

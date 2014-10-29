@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.UdpReplicationConfig;
 import org.junit.After;
 import org.junit.Before;
 

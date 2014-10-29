@@ -16,7 +16,10 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash;
+
+import net.openhft.chronicle.map.TcpReplicator;
+import net.openhft.chronicle.map.UdpReplicator;
 
 import java.io.IOException;
 

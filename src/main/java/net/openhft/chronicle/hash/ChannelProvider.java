@@ -16,9 +16,10 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash;
 
 
+import net.openhft.chronicle.map.*;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -411,7 +412,7 @@ public final class ChannelProvider implements Closeable {
         @Override
         protected Closeable applyTo(AbstractChronicleMapBuilder builder,
                                     Replica map, EntryExternalizable entryExternalizable,
-                                    final VanillaChronicleMap chronicleMap) {
+                                    final ChronicleMap chronicleMap) {
             if (builder.entrySize() > maxEntrySize) {
                 throw new IllegalArgumentException("During ReplicatingChannelBuilder setup, " +
                         "maxEntrySize=" + maxEntrySize + " was specified, but map with " +
@@ -429,5 +430,6 @@ public final class ChannelProvider implements Closeable {
             chronicleChannels[chronicleChannel] = null;
             channelEntryExternalizables[chronicleChannel] = null;
         }
+
     }
 }

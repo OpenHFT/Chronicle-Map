@@ -18,11 +18,10 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.hash.ChronicleHashErrorListener;
-import net.openhft.chronicle.hash.StatelessBuilder;
-import net.openhft.chronicle.hash.TimeProvider;
-import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.hash.*;
+import net.openhft.chronicle.map.Alignment;
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.BytesMarshallerFactory;
 import net.openhft.lang.io.serialization.ObjectFactory;

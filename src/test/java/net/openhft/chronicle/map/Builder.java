@@ -19,6 +19,8 @@
 package net.openhft.chronicle.map;
 
 
+import net.openhft.chronicle.hash.TcpReplicationConfig;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;

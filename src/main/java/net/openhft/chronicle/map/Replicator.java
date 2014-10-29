@@ -19,7 +19,7 @@ package net.openhft.chronicle.map;
 import java.io.Closeable;
 import java.io.IOException;
 
-abstract class Replicator {
+public abstract class Replicator {
 
     /**
      * A constructor for use in subclasses.
@@ -29,8 +29,8 @@ abstract class Replicator {
 
     /**
      * Applies the replicator to the map instance and returns a Closeable token to manage resources,
-     * associated with the replication.  <p>This method isn't intended to be called from the
-     * client code.
+     * associated with the replication.  <p>This method isn't intended to be called from the client
+     * code.
      *
      * @param builder             the builder from which the map was constructed. The replicator may
      *                            obtain some map configurations, not accessible via the map
@@ -49,6 +49,5 @@ abstract class Replicator {
      */
     protected abstract Closeable applyTo(AbstractChronicleMapBuilder builder,
                                          Replica map, Replica.EntryExternalizable entryExternalizable,
-                                         final VanillaChronicleMap chronicleMap)
-            throws IOException;
+                                         final ChronicleMap chronicleMap) throws IOException;
 }

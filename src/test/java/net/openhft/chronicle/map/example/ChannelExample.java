@@ -1,6 +1,10 @@
 package net.openhft.chronicle.map.example;
 
-import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.hash.ChannelProvider;
+import net.openhft.chronicle.hash.ChannelProviderBuilder;
+import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 

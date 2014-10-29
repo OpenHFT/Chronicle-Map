@@ -16,6 +16,10 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.hash.UdpReplicationConfig;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Closeable;
 import java.io.IOException;
 
@@ -28,15 +32,17 @@ final class Replicators {
         return new Replicator() {
 
             @Override
-            protected Closeable applyTo(AbstractChronicleMapBuilder builder,
-                                        Replica replica, Replica.EntryExternalizable entryExternalizable,
-                                        final VanillaChronicleMap chronicleMap) throws IOException {
+            protected Closeable applyTo(@NotNull final AbstractChronicleMapBuilder builder,
+                                        @NotNull final Replica replica,
+                                        @NotNull final Replica.EntryExternalizable entryExternalizable,
+                                        final ChronicleMap chronicleMap)
+                    throws IOException {
 
                 final KeyValueSerializer keyValueSerializer = new KeyValueSerializer(builder
                         .keyBuilder, builder.valueBuilder);
 
                 StatelessServerConnector statelessServer = new StatelessServerConnector
-                        (keyValueSerializer, chronicleMap, builder.entrySize());
+                        (keyValueSerializer, (VanillaChronicleMap) chronicleMap, builder.entrySize());
 
                 return new TcpReplicator(replica, entryExternalizable, replicationConfig,
                         builder.entrySize(), statelessServer);
@@ -49,8 +55,10 @@ final class Replicators {
         return new Replicator() {
 
             @Override
-            protected Closeable applyTo(AbstractChronicleMapBuilder builder,
-                                        Replica map, Replica.EntryExternalizable entryExternalizable, final VanillaChronicleMap chronicleMap)
+            protected Closeable applyTo(@NotNull final AbstractChronicleMapBuilder builder,
+                                        @NotNull final Replica map,
+                                        @NotNull final Replica.EntryExternalizable entryExternalizable,
+                                        final ChronicleMap chronicleMap)
                     throws IOException {
                 return new UdpReplicator(map, entryExternalizable, replicationConfig,
                         builder.entrySize());

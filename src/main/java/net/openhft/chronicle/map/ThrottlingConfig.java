@@ -79,7 +79,7 @@ public class ThrottlingConfig {
         return create(maxBits, perUnit, DEFAULT_BUCKET_INTERVAL, DEFAULT_BUCKET_INTERVAL_UNIT);
     }
 
-    static void checkMillisecondBucketInterval(ThrottlingConfig config, String replicator) {
+    public static void checkMillisecondBucketInterval(ThrottlingConfig config, String replicator) {
         if (config.bucketInterval(MILLISECONDS) < 1) {
             throw new IllegalArgumentException(
                     "Minimum throttle bucketing interval of 1 millisecond is supported by " +

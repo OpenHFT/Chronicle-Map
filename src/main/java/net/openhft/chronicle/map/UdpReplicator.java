@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.UdpReplicationConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -35,15 +36,15 @@ import java.nio.channels.DatagramChannel;
  * it becomes available on TCP/IP. In order to not miss data, UdpReplicator should be used in conjunction with
  * the TCP Replicator.
  */
-class UdpReplicator extends UdpChannelReplicator implements Replica.ModificationNotifier, Closeable {
+public class UdpReplicator extends UdpChannelReplicator implements Replica.ModificationNotifier, Closeable {
 
     private static final Logger LOG =
             LoggerFactory.getLogger(UdpReplicator.class.getName());
 
-    UdpReplicator(@NotNull final Replica replica,
-                  @NotNull final Replica.EntryExternalizable entryExternalizable,
-                  @NotNull final UdpReplicationConfig replicationConfig,
-                  final int serializedEntrySize)
+    public UdpReplicator(@NotNull final Replica replica,
+                         @NotNull final Replica.EntryExternalizable entryExternalizable,
+                         @NotNull final UdpReplicationConfig replicationConfig,
+                         final int serializedEntrySize)
             throws IOException {
 
         super(replicationConfig, serializedEntrySize, replica.identifier());

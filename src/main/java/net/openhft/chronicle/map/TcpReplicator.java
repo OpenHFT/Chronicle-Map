@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.TcpReplicationConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
  *
  * @author Rob Austin.
  */
-class TcpReplicator extends AbstractChannelReplicator implements Closeable {
+public class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
 
@@ -79,11 +80,11 @@ class TcpReplicator extends AbstractChannelReplicator implements Closeable {
      * @param statelessServerConnector set to NULL if not required
      * @throws IOException
      */
-    TcpReplicator(@NotNull final Replica replica,
-                  @NotNull final Replica.EntryExternalizable externalizable,
-                  @NotNull final TcpReplicationConfig replicationConfig,
-                  final int maxEntrySizeBytes,
-                  @Nullable StatelessServerConnector statelessServerConnector) throws IOException {
+    public TcpReplicator(@NotNull final Replica replica,
+                         @NotNull final Replica.EntryExternalizable externalizable,
+                         @NotNull final TcpReplicationConfig replicationConfig,
+                         final int maxEntrySizeBytes,
+                         @Nullable StatelessServerConnector statelessServerConnector) throws IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig(),
                 maxEntrySizeBytes);

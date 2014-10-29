@@ -20,7 +20,7 @@ package net.openhft.chronicle.map.jrs166.map;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.TcpReplicationConfig;
+import net.openhft.chronicle.hash.TcpReplicationConfig;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
