@@ -418,6 +418,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     public synchronized V remove(Object key) {
+
+        if (key == null)
+            throw new NullPointerException("key can not be null");
+
         long sizeLocation = writeEvent(REMOVE);
         writeKey((K) key);
 
@@ -624,8 +628,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
             for (int i = 0; i < size; i++) {
 
-                K k = keyValueSerializer.readKey(in,local);
-                V v = keyValueSerializer.readValue(in,local);
+                K k = keyValueSerializer.readKey(in, local);
+                V v = keyValueSerializer.readValue(in, local);
                 result.add(new Entry(k, v));
             }
 
@@ -673,7 +677,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             long size = in.readInt();
 
             for (int i = 0; i < size; i++) {
-                K k = keyValueSerializer.readKey(in,local);
+                K k = keyValueSerializer.readKey(in, local);
                 result.add(k);
             }
 
