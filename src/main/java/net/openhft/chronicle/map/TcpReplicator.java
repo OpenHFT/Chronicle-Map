@@ -36,7 +36,6 @@ import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -1666,8 +1665,6 @@ class StatelessServerConnector<K, V> {
             return sendException(reader, writer, e);
         }
 
-        LOG.info("MAP SIZE=" + map.size());
-        final AtomicInteger i = new AtomicInteger(0);
         final Iterator<Map.Entry<K, V>> iterator = entries.iterator();
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
 
