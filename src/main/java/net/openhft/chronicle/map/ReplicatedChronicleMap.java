@@ -23,7 +23,7 @@ import net.openhft.chronicle.hash.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.MetaBytesWriter;
-import net.openhft.chronicle.hash.threadlocal.ThreadLocalCopies;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.Bytes;

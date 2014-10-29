@@ -20,8 +20,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
 import net.openhft.chronicle.hash.serialization.*;
-import net.openhft.chronicle.hash.threadlocal.Provider;
-import net.openhft.chronicle.hash.threadlocal.ThreadLocalCopies;
+import net.openhft.lang.threadlocal.Provider;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;

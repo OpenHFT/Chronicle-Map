@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map.fromdocs;
 
-import net.openhft.chronicle.hash.threadlocal.StatefulCopyable;
+import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.io.Bytes;

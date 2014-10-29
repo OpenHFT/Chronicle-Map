@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.hash.serialization;
 
-import net.openhft.chronicle.hash.threadlocal.ThreadLocalCopies;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 
 import java.io.Serializable;
 
