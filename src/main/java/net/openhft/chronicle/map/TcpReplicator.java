@@ -1276,7 +1276,6 @@ class StatelessServerConnector<K, V> {
 
         }
 
-
         final long sizeLocation = reflectTransactionId(reader, writer);
 
         switch (event) {
@@ -1396,6 +1395,7 @@ class StatelessServerConnector<K, V> {
         } catch (RuntimeException e) {
             return sendException(writer, sizeLocation, e);
         }
+
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
@@ -1446,15 +1446,13 @@ class StatelessServerConnector<K, V> {
 
 
     private Work isEmpty(Bytes reader, Bytes writer, final long sizeLocation) {
-        if (MAP_SUPPORTS_BYTES) {
-            map.isEmpty(reader, writer);
-        } else {
-            try {
-                writer.writeBoolean(map.isEmpty());
-            } catch (RuntimeException e) {
-                return sendException(writer, sizeLocation, e);
-            }
+
+        try {
+            writer.writeBoolean(map.isEmpty());
+        } catch (RuntimeException e) {
+            return sendException(writer, sizeLocation, e);
         }
+
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
@@ -1540,10 +1538,9 @@ class StatelessServerConnector<K, V> {
             }
 
         }
+
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
-
-
     }
 
     private Work putAll(Bytes reader, Bytes writer, final long sizeLocation) {

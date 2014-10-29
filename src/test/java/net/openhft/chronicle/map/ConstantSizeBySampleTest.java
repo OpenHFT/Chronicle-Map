@@ -18,9 +18,9 @@
 
 package net.openhft.chronicle.map;
 
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.testng.Assert;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -62,7 +62,7 @@ public class ConstantSizeBySampleTest {
 
         value[42] = 1;
         map.put(1L, value);
-        Assert.assertEquals(map.get(1L), value);
+        Assert.assertTrue(Arrays.equals(map.get(1L), value));
     }
 
     static class ExternalizableData implements Externalizable {
@@ -90,10 +90,10 @@ public class ConstantSizeBySampleTest {
     public void testUnexpectedlyLongConstantExternalizableValues() throws IOException {
         ChronicleMap<Long, ExternalizableData> map =
                 ChronicleMapBuilder.of(Long.class, ExternalizableData.class)
-                .constantValueSizeBySample(new ExternalizableData())
-                .entries(100)
-                .actualSegments(1)
-                .create();
+                        .constantValueSizeBySample(new ExternalizableData())
+                        .entries(100)
+                        .actualSegments(1)
+                        .create();
 
         ExternalizableData value = new ExternalizableData();
         value.data[42] = 1;
