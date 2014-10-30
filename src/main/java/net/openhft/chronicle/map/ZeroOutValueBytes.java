@@ -18,7 +18,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.Bytes;
 
-final class ZeroOutValueBytes<K> implements PrepareValueBytes<K> {
+final class ZeroOutValueBytes<K, V> implements PrepareValueBytes<K, V> {
     private static final long serialVersionUID = 0L;
     private final long valueSize;
 
@@ -30,5 +30,6 @@ final class ZeroOutValueBytes<K> implements PrepareValueBytes<K> {
     public void prepare(Bytes bytes, K key) {
         long pos = bytes.position();
         bytes.zeroOut(pos, pos + valueSize);
+        bytes.skip(valueSize);
     }
 }

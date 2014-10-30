@@ -138,7 +138,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
             MapEventListeners.nop();
     private V defaultValue = null;
     private DefaultValueProvider<K, V> defaultValueProvider = NullValueProvider.INSTANCE;
-    private PrepareValueBytes<K> prepareValueBytes = null;
+    private PrepareValueBytes<K, V> prepareValueBytes = null;
     private byte identifier = -1;
 
     private StatelessBuilder statelessBuilder;
@@ -735,7 +735,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return self();
     }
 
-    B prepareValueBytesOnAcquire(@NotNull PrepareValueBytes<K> prepareValueBytes) {
+    B prepareValueBytesOnAcquire(@NotNull PrepareValueBytes<K, V> prepareValueBytes) {
         this.prepareValueBytes = prepareValueBytes;
         this.defaultValue = null;
         this.defaultValueProvider = null;

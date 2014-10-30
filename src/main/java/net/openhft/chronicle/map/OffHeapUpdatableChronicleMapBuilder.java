@@ -38,7 +38,7 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
 
     OffHeapUpdatableChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         super(keyClass, valueClass);
-        prepareValueBytesOnAcquire(new ZeroOutValueBytes<K>(valueSize()));
+        prepareValueBytesOnAcquire(new ZeroOutValueBytes<K, V>(valueSize()));
     }
 
     @Override
@@ -118,19 +118,21 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
     /**
      * Configures the procedure which is called on the bytes, which later the returned value is
      * pointing to, if the key is absent, on {@link ChronicleMap#acquireUsing(Object, Object)
-     * acquireUsing()} call on maps, created by this builder.
+     * acquireUsing()} call on maps, created by this builder. See {@link PrepareValueBytes} for
+     * more information.
      *
      * <p>The default preparation callback zeroes out the value bytes.
      *
      * @param prepareValueBytes what to do with the value bytes before assigning them into the
      *                          {@link Byteable} value to return from {@code acquireUsing()} call
      * @return this builder back
+     * @see PrepareValueBytes
      * @see #defaultValue(Object)
      * @see #defaultValueProvider(DefaultValueProvider)
      */
     @Override
     public OffHeapUpdatableChronicleMapBuilder<K, V> prepareValueBytesOnAcquire(
-            @NotNull PrepareValueBytes<K> prepareValueBytes) {
+            @NotNull PrepareValueBytes<K, V> prepareValueBytes) {
         return super.prepareValueBytesOnAcquire(prepareValueBytes);
     }
 }
