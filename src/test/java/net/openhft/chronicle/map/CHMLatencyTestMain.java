@@ -78,7 +78,8 @@ public class CHMLatencyTestMain {
         ChronicleMap<LongValue, LongValue> countersMap =
                 OffHeapUpdatableChronicleMapBuilder.of(LongValue.class, LongValue.class)
                 .entries(KEYS)
-                .entrySize(16).create();
+                .entrySize(16)
+                .createWithFile(file);
 
         // add keys
         LongValue key = DataValueClasses.newInstance(LongValue.class);
