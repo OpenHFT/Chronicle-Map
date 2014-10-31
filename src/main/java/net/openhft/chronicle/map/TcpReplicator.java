@@ -41,20 +41,27 @@ import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
+interface Work {
+
+    /**
+     * @param in the buffer that we will fill up
+     * @return true when all the work is complete
+     */
+    boolean doWork(@NotNull Bytes in);
+}
+
 /**
- * Used with a {@see net.openhft.map.ReplicatedSharedHashMap} to send data between the maps using a
- * socket connection  {@see net.openhft.map.OutSocketReplicator}
+ * Used with a {@link net.openhft.chronicle.map.ReplicatedChronicleMap} to send data between the maps using a socket
+ * connection {@link net.openhft.chronicle.map.TcpReplicator}
  *
  * @author Rob Austin.
  */
 public class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
-
-    private static final int BUFFER_SIZE = 0x100000; // 1MB
     public static final int STATELESS_CLIENT = -127;
     public static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
-
+    private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
+    private static final int BUFFER_SIZE = 0x100000; // 1MB
     private final SelectionKey[] selectionKeysStore = new SelectionKey[Byte.MAX_VALUE + 1];
     // used to instruct the selector thread to set OP_WRITE on a key correlated by the bit index in the
     // bitset
@@ -78,7 +85,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
      *                                 the entry, but setting it too large reduces the workable
      *                                 space in the buffer.
      * @param statelessServerConnector set to NULL if not required
-     * @throws IOException
+     * @throws IOException             on an io error.
      */
     public TcpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable externalizable,
@@ -271,8 +278,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
     }
 
     /**
-     * check to see if we have lost connection with the remote node and if we have attempts a
-     * reconnect.
+     * check to see if we have lost connection with the remote node and if we have attempts a reconnect.
      *
      * @param key               the key relating to the heartbeat that we are checking
      * @param approxTimeOutTime the approximate time in milliseconds
@@ -419,8 +425,8 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
     }
 
     /**
-     * this can be called when a new CHM is added to a cluster, we have to rebootstrap so will clear
-     * all the old bootstrap information
+     * this can be called when a new CHM is added to a cluster, we have to rebootstrap so will clear all the old
+     * bootstrap information
      *
      * @param key the nio SelectionKey
      */
@@ -432,8 +438,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
     }
 
     /**
-     * used to exchange identifiers and timestamps and heartbeat intervals between the server and
-     * client
+     * used to exchange identifiers and timestamps and heartbeat intervals between the server and client
      *
      * @param key           the SelectionKey relating to the this cha
      * @param socketChannel
@@ -504,7 +509,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
 
         if (!attached.hasRemoteHeartbeatInterval) {
 
-            final  long value = reader.remoteHeartbeatIntervalFromBuffer();
+            final long value = reader.remoteHeartbeatIntervalFromBuffer();
 
             if (value == Long.MIN_VALUE)
                 return;
@@ -552,7 +557,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
         try {
-            final    int bytesJustWritten = attached.entryWriter.writeBufferToSocket(socketChannel,
+            final int bytesJustWritten = attached.entryWriter.writeBufferToSocket(socketChannel,
                     approxTime);
 
             if (bytesJustWritten > 0)
@@ -600,11 +605,22 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
         }
     }
 
+    private ServerSocketChannel openServerSocketChannel() throws IOException {
+        ServerSocketChannel result = null;
+
+        try {
+            result = ServerSocketChannel.open();
+        } finally {
+            if (result != null)
+                closeables.add(result);
+        }
+        return result;
+    }
+
     /**
-     * sets interestOps to "selector keys",The change to interestOps much be on the same thread as
-     * the selector. This  class, allows via {@link AbstractChannelReplicator
-     * .KeyInterestUpdater#set(int)}  to holds a pending change  in interestOps ( via a bitset ),
-     * this change is processed later on the same thread as the selector
+     * sets interestOps to "selector keys",The change to interestOps much be on the same thread as the selector. This
+     * class, allows via {@link AbstractChannelReplicator .KeyInterestUpdater#set(int)}  to holds a pending change  in
+     * interestOps ( via a bitset ), this change is processed later on the same thread as the selector
      */
     private static class KeyInterestUpdater {
 
@@ -635,8 +651,8 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
         }
 
         /**
-         * @param keyIndex the index of the key that has changed, the list of keys is provided by
-         *                 the constructor {@link KeyInterestUpdater(int, SelectionKey[])}
+         * @param keyIndex the index of the key that has changed, the list of keys is provided by the constructor {@link
+         *                 KeyInterestUpdater(int, SelectionKey[])}
          */
         public void set(int keyIndex) {
             changeOfOpWriteRequired.set(keyIndex);
@@ -701,18 +717,6 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
 
             return serverChannel;
         }
-    }
-
-    private ServerSocketChannel openServerSocketChannel() throws IOException {
-        ServerSocketChannel result = null;
-
-        try {
-            result = ServerSocketChannel.open();
-        } finally {
-            if (result != null)
-                closeables.add(result);
-        }
-        return result;
     }
 
     private class ClientConnector extends AbstractConnector {
@@ -812,9 +816,8 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
         public boolean hasRemoteHeartbeatInterval;
         // true if its socket is a ServerSocket
         public boolean isServer;        // the frequency the remote node will send a heartbeat
-        public long remoteHeartbeatInterval = heartBeatIntervalMillis;
         public boolean handShakingComplete;
-
+        public long remoteHeartbeatInterval = heartBeatIntervalMillis;
 
         boolean isHandShakingComplete() {
             return handShakingComplete;
@@ -840,6 +843,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
                 TcpReplicator.this.opWriteUpdater.set(remoteIdentifier);
         }
 
+
     }
 
     /**
@@ -847,14 +851,13 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
      */
     private class TcpSocketChannelEntryWriter {
 
-        private final ByteBuffer out;
         final ByteBufferBytes in;
+        private final ByteBuffer out;
         private final EntryCallback entryCallback;
-        private long lastSentTime;
-
         // if uncompletedWork is set ( not null ) , this must be completed before any further work
         // is  carried out
         public Work uncompletedWork;
+        private long lastSentTime;
 
         private TcpSocketChannelEntryWriter() {
             out = ByteBuffer.allocateDirect(replicationConfig.packetSize() + maxEntrySizeBytes);
@@ -890,8 +893,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
         }
 
         /**
-         * writes all the entries that have changed, to the buffer which will later be written to
-         * TCP/IP
+         * writes all the entries that have changed, to the buffer which will later be written to TCP/IP
          *
          * @param modificationIterator a record of which entries have modification
          * @param selectionKey
@@ -969,8 +971,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
         }
 
         /**
-         * used to send an single zero byte if we have not send any data for up to the
-         * localHeartbeatInterval
+         * used to send an single zero byte if we have not send any data for up to the localHeartbeatInterval
          */
         private void writeHeartbeatToBuffer() {
 
@@ -987,8 +988,8 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
 
 
         /**
-         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE
-         * will get added back in as soon as we have data to write
+         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE will get added back
+         * in as soon as we have data to write
          *
          * @param socketChannel the socketChannel we wish to stop writing to
          * @param attached      data associated with the socketChannels key
@@ -1023,10 +1024,9 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
      */
     class TcpSocketChannelEntryReader {
         public static final int HEADROOM = 1024;
+        public long lastHeartBeatReceived = System.currentTimeMillis();
         ByteBuffer in;
         ByteBufferBytes out;
-        public long lastHeartBeatReceived = System.currentTimeMillis();
-
         private long sizeInBytes;
         private byte state;
 
@@ -1218,28 +1218,16 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
     }
 }
 
-interface Work {
-
-    /**
-     * @param in the buffer that we will fill up
-     * @return true when all the work is complete
-     */
-    boolean doWork(@NotNull Bytes in);
-}
-
-
 /**
  * @author Rob Austin.
  */
 class StatelessServerConnector<K, V> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StatelessServerConnector.class
-            .getName());
-
     public static final int TRANSACTION_ID_OFFSET = AbstractChannelReplicator.SIZE_OF_SIZE + 1;
     public static final boolean MAP_SUPPORTS_BYTES = Boolean.valueOf(System.getProperty
             ("mapSupportsBytes"));
-
+    private static final Logger LOG = LoggerFactory.getLogger(StatelessServerConnector.class
+            .getName());
     private final KeyValueSerializer<K, V> keyValueSerializer;
     private final VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
     private double maxEntrySizeBytes;

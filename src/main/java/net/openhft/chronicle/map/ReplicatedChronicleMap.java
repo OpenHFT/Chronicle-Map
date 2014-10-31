@@ -23,13 +23,13 @@ import net.openhft.chronicle.hash.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.MetaBytesWriter;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.MultiStoreBytes;
 import net.openhft.lang.io.NativeBytes;
 import net.openhft.lang.model.Byteable;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,9 +41,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static net.openhft.chronicle.hash.serialization.Hasher.hash;
-import static net.openhft.lang.MemoryUnit.BITS;
-import static net.openhft.lang.MemoryUnit.BYTES;
-import static net.openhft.lang.MemoryUnit.CACHE_LINES;
+import static net.openhft.lang.MemoryUnit.*;
 import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 
 /**
@@ -96,11 +94,11 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         Replica, Replica.EntryExternalizable, Replica.EntryResolver<K, V>, Closeable {
     // for file, jdbc and UDP replication
     public static final int RESERVED_MOD_ITER = 8;
+    public static final int ADDITIONAL_ENTRY_BYTES = 10;
     static final int MAX_UNSIGNED_SHORT = Character.MAX_VALUE;
     private static final long serialVersionUID = 0L;
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
     private static final long LAST_UPDATED_HEADER_SIZE = 128L * 8L;
-    public static final int ADDITIONAL_ENTRY_BYTES = 10;
     private final TimeProvider timeProvider;
     private final byte localIdentifier;
     transient Set<Closeable> closeables;
@@ -127,8 +125,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     @Override
-    Segment createSegment(NativeBytes bytes, int index) {
-        return new Segment(bytes, index);
+    VanillaChronicleMap<K, KI, MKI, V, VW, MVW>.Segment createSegment(NativeBytes segmentHeader, NativeBytes bytes, int index) {
+        return new Segment(segmentHeader, bytes, index);
     }
 
     Class segmentType() {
@@ -584,8 +582,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         private volatile MultiMap hashLookupLiveAndDeleted;
         private volatile MultiMap hashLookupLiveOnly;
 
-        Segment(NativeBytes bytes, int index) {
-            super(bytes, index);
+        Segment(NativeBytes segmentHeader, NativeBytes bytes, int index) {
+            super(segmentHeader, bytes, index);
         }
 
         @Override
@@ -1219,14 +1217,15 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         // the assigned modification iterators
         private final ATSDirectBitSet modIterSet;
         private final MapEventListener<K, V, ChronicleMap<K, V>> nextListener;
-        private final AtomicReferenceArray<ModificationIterator> modificationIterators =
-                new AtomicReferenceArray<ModificationIterator>(127 + RESERVED_MOD_ITER);
 
         public ModificationDelegator(@NotNull final MapEventListener<K, V, ChronicleMap<K, V>> nextListener,
                                      final Bytes bytes) {
             this.nextListener = nextListener;
             modIterSet = new ATSDirectBitSet(bytes);
         }
+
+        private final AtomicReferenceArray<ModificationIterator> modificationIterators =
+                new AtomicReferenceArray<ModificationIterator>(127 + RESERVED_MOD_ITER);
 
         public ModificationIterator acquireModificationIterator(
                 final short remoteIdentifier,
@@ -1322,8 +1321,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Always throws {@code NotSerializableException} since instances of this class are not
-         * intended to be serializable.
+         * Always throws {@code NotSerializableException} since instances of this class are not intended to be
+         * serializable.
          */
         private void writeObject(ObjectOutputStream out) throws IOException {
             throw new NotSerializableException(getClass().getCanonicalName());
