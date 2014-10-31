@@ -387,13 +387,13 @@ public abstract class AbstractChronicleMapBuilder<K, V,
                 return power;
         }
         long size = entrySize * entries;
-        if (size < 200L * 1000 * 1000) // 200 MB
+        if (size < 20L * 1000 * 1000) // 20 MB
             return 64;
-        if (size < 2000L * 1000 * 1000) // 2 GB
+        if (size < 200L * 1000 * 1000) // 200 MB
             return 128;
-        if (size < 8000L * 1000 * 1000) // 8 GB
+        if (size < 800L * 1000 * 1000) // 800 MB
             return 256;
-        if (size < 20L * 1000 * 1000 * 1000) // 20 GB
+        if (size < 2L * 1000 * 1000 * 1000) // 2 GB
             return 512;
         return 1024;
     }
@@ -916,8 +916,8 @@ public abstract class AbstractChronicleMapBuilder<K, V,
 
     public int segmentHeaderSize() {
         int segments = actualSegments();
-        // reduce false sharing unless we have alot of segments.
-        return segments > 8192 ? 16 : segments > 1024 ? 32 : 64;
+        // reduce false sharing unless we have a lot of segments.
+        return segments <= 8192 ? 64 : 16;
     }
 }
 
