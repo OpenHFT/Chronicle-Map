@@ -580,10 +580,11 @@ public class ChronicleMapTest {
             OffHeapUpdatableChronicleMapBuilder<CharSequence, IntValue> builder = OffHeapUpdatableChronicleMapBuilder
                     .of(CharSequence.class, IntValue.class)
                     .entries(entries)
-                    .minSegments(1024)
                     .entrySize(20);
 
-            final ChronicleMap<CharSequence, IntValue> map = builder.create();
+            File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
+            tmpFile.deleteOnExit();
+            final ChronicleMap<CharSequence, IntValue> map = builder.createWithFile(tmpFile);
 
             int procs = Runtime.getRuntime().availableProcessors();
             int threads = procs * 2; // runs > 100 ? procs / 2 : procs;
