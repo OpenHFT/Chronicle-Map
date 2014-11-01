@@ -65,6 +65,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private int maxEntrySize;
     private final Class<K> kClass;
     private final Class<V> vClass;
+    private final boolean putReturnsNull;
+    private final boolean removeReturnsNull;
 
 
     static enum EventId {
@@ -74,8 +76,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         IS_EMPTY,
         CONTAINS_KEY,
         CONTAINS_VALUE,
-        GET, PUT,
+        GET,
+        PUT,
+        PUT_WITHOUT_ACC,
         REMOVE,
+        REMOVE_WITHOUT_ACC,
         CLEAR,
         KEY_SET,
         VALUES,
@@ -86,6 +91,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         REMOVE_WITH_VALUE,
         TO_STRING,
         PUT_ALL,
+        PUT_ALL_WITHOUT_ACC,
         HASH_CODE
     }
 
@@ -93,12 +99,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     StatelessChronicleMap(final KeyValueSerializer<K, V> keyValueSerializer,
                           final StatelessBuilder builder,
-                          int maxEntrySize, Class<K> kClass, Class<V> vClass) throws IOException {
+                          int maxEntrySize, Class<K> kClass, Class<V> vClass,
+                          boolean putReturnsNull,
+                          boolean removeReturnsNull) throws IOException {
         this.keyValueSerializer = keyValueSerializer;
         this.builder = builder;
         this.maxEntrySize = maxEntrySize;
         this.kClass = kClass;
         this.vClass = vClass;
+        this.putReturnsNull = putReturnsNull;
+        this.removeReturnsNull = removeReturnsNull;
         attemptConnect(builder.remoteAddress());
 
         buffer = allocateDirect(maxEntrySize).order(ByteOrder.nativeOrder());
@@ -242,7 +252,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     public synchronized V putIfAbsent(K key, V value) {
-        final long sizeLocation = writeEvent(PUT_IF_ABSENT);
+        final long sizeLocation = writeEventAnSkip(PUT_IF_ABSENT);
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         writeKey(key, local);
         writeValue(value, local);
@@ -255,7 +265,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         if (key == null)
             throw new NullPointerException("key can not be null");
 
-        final long sizeLocation = writeEvent(REMOVE_WITH_VALUE);
+        final long sizeLocation = writeEventAnSkip(REMOVE_WITH_VALUE);
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         writeKey((K) key, local);
         writeValue((V) value, local);
@@ -269,7 +279,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         if (key == null)
             throw new NullPointerException("key can not be null");
 
-        final long sizeLocation = writeEvent(REPLACE_WITH_OLD_AND_NEW_VALUE);
+        final long sizeLocation = writeEventAnSkip(REPLACE_WITH_OLD_AND_NEW_VALUE);
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         writeKey(key, local);
         writeValue(oldValue, local);
@@ -284,7 +294,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         if (key == null)
             throw new NullPointerException("key can not be null");
 
-        final long sizeLocation = writeEvent(REPLACE);
+        final long sizeLocation = writeEventAnSkip(REPLACE);
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         writeKey(key, local);
         writeValue(value, local);
@@ -329,31 +339,23 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
-    public synchronized void putAll(Map<? extends K, ? extends V> map) {
-
-        final long sizeLocation = writeEvent(PUT_ALL);
-        writeEntries(map);
-        blockingFetch(sizeLocation);
-    }
-
-
     @Override
     public synchronized int hashCode() {
-        return blockingFetch(writeEvent(HASH_CODE)).readInt();
+        return blockingFetch(writeEventAnSkip(HASH_CODE)).readInt();
     }
 
     public synchronized String toString() {
-        return blockingFetch(writeEvent(TO_STRING)).readObject(String.class);
+        return blockingFetch(writeEventAnSkip(TO_STRING)).readObject(String.class);
     }
 
 
     public synchronized boolean isEmpty() {
-        return blockingFetch(writeEvent(IS_EMPTY)).readBoolean();
+        return blockingFetch(writeEventAnSkip(IS_EMPTY)).readBoolean();
     }
 
 
     public synchronized boolean containsKey(Object key) {
-        final long sizeLocation = writeEvent(CONTAINS_KEY);
+        final long sizeLocation = writeEventAnSkip(CONTAINS_KEY);
         writeKey((K) key);
 
         // get the data back from the server
@@ -363,7 +365,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     public synchronized boolean containsValue(Object value) {
-        final long sizeLocation = writeEvent(CONTAINS_VALUE);
+        final long sizeLocation = writeEventAnSkip(CONTAINS_VALUE);
         writeValue((V) value);
 
         // get the data back from the server
@@ -372,12 +374,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     public synchronized long longSize() {
-        return blockingFetch(writeEvent(LONG_SIZE)).readLong();
+        return blockingFetch(writeEventAnSkip(LONG_SIZE)).readLong();
     }
 
 
     public synchronized V get(Object key) {
-        final long sizeLocation = writeEvent(GET);
+        final long sizeLocation = writeEventAnSkip(GET);
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         writeKey((K) key, local);
 
@@ -387,35 +389,102 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     public synchronized V getUsing(K key, V usingValue) {
-        throw new UnsupportedOperationException("getUsing is not supported for stateless clients");
+        throw new UnsupportedOperationException("getUsing() is not supported for stateless " +
+                "clients");
     }
 
 
     public synchronized V acquireUsing(K key, V usingValue) {
-        throw new UnsupportedOperationException("getUsing is not supported for stateless clients");
+        throw new UnsupportedOperationException("acquireUsing() is not supported for stateless " +
+                "clients");
     }
 
-    public synchronized V put(K key, V value) {
-
-        final long sizeLocation = writeEvent(PUT);
-        final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-        writeKey(key, local);
-        writeValue(value, local);
-
-        // get the data back from the server
-        return readKey(sizeLocation, local);
+    @Override
+    public SegmentLock acquireUsingReadLocked(K key, V usingValue) {
+        throw new UnsupportedOperationException();
     }
+
+    @Override
+    public SegmentLock acquireUsingWriteLocked(K key, V usingValue) {
+        throw new UnsupportedOperationException();
+    }
+
 
     public synchronized V remove(Object key) {
 
         if (key == null)
             throw new NullPointerException("key can not be null");
 
-        final long sizeLocation = writeEvent(REMOVE);
+        final long sizeLocation = (removeReturnsNull) ? writeEvent(REMOVE_WITHOUT_ACC) : writeEventAnSkip(REMOVE);
+
+
         writeKey((K) key);
 
-        // get the data back from the server
-        return readKey(sizeLocation);
+        if (removeReturnsNull) {
+            sendWithoutAcc(bytes, sizeLocation);
+            return null;
+        } else
+            // get the data back from the server
+            return readKey(sizeLocation);
+    }
+
+
+    public synchronized V put(K key, V value) {
+
+        final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+
+        final long sizeLocation = (putReturnsNull) ? writeEvent(PUT_WITHOUT_ACC) : writeEventAnSkip(PUT);
+
+        writeKey(key, local);
+        writeValue(value, local);
+
+
+        if (putReturnsNull) {
+            sendWithoutAcc(bytes, sizeLocation);
+            return null;
+        } else
+            // get the data back from the server
+            return readKey(sizeLocation, local);
+
+    }
+
+
+    public synchronized void putAll(Map<? extends K, ? extends V> map) {
+
+        final long sizeLocation = (putReturnsNull) ? writeEvent(PUT_ALL_WITHOUT_ACC) : writeEventAnSkip(PUT_ALL);
+
+        writeEntries(map);
+
+        if (putReturnsNull)
+            sendWithoutAcc(bytes, sizeLocation);
+        else
+            blockingFetch(sizeLocation);
+
+    }
+
+
+    private void sendWithoutAcc(final Bytes bytes, long sizeLocation) {
+        writeSizeAt(sizeLocation);
+        long timeoutTime = builder.timeoutMs() + System.currentTimeMillis();
+        try {
+            for (; ; ) {
+
+                if (clientChannel == null)
+                    clientChannel = lazyConnect(builder.timeoutMs(), builder.remoteAddress());
+
+                try {
+
+                    send(bytes, timeoutTime);
+                    return;
+                } catch (java.nio.channels.ClosedChannelException | ClosedConnectionException e) {
+                    checkTimeout(timeoutTime);
+                    clientChannel = lazyConnect(builder.timeoutMs(), builder.remoteAddress());
+                }
+            }
+        } catch (IOException e) {
+            close();
+            throw new IORuntimeException(e);
+        }
     }
 
 
@@ -534,13 +603,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     public synchronized void clear() {
 
         // get the data back from the server
-        blockingFetch(writeEvent(CLEAR));
+        blockingFetch(writeEventAnSkip(CLEAR));
     }
 
 
     @NotNull
     public synchronized Collection<V> values() {
-        final long sizeLocation = writeEvent(VALUES);
+        final long sizeLocation = writeEventAnSkip(VALUES);
 
         final long startTime = System.currentTimeMillis();
         final long transactionId = nextUniqueTransaction(startTime);
@@ -575,7 +644,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     @NotNull
     public synchronized Set<Map.Entry<K, V>> entrySet() {
-        final long sizeLocation = writeEvent(ENTRY_SET);
+        final long sizeLocation = writeEventAnSkip(ENTRY_SET);
 
         final long startTime = System.currentTimeMillis();
         final long transactionId = nextUniqueTransaction(startTime);
@@ -623,7 +692,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     @NotNull
     public synchronized Set<K> keySet() {
-        final long sizeLocation = writeEvent(KEY_SET);
+        final long sizeLocation = writeEventAnSkip(KEY_SET);
 
         final long startTime = System.currentTimeMillis();
         final long transactionId = nextUniqueTransaction(startTime);
@@ -656,9 +725,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         return result;
     }
 
-
     private long writeEvent(EventId event) {
-
         buffer.clear();
         bytes.clear();
 
@@ -666,8 +733,27 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         bytes.write((byte) event.ordinal());
         long sizeLocation = markSizeLocation();
+
+
         return sizeLocation;
     }
+
+
+    /**
+     * skips for the transactionid
+     *
+     * @param event
+     * @return
+     */
+    private long writeEventAnSkip(EventId event) {
+
+        long sizeLocation = writeEvent(event);
+
+        // skips for the transaction id
+        bytes.skip(SIZE_OF_TRANSACTIONID);
+        return sizeLocation;
+    }
+
 
     class Entry implements Map.Entry<K, V> {
 
@@ -828,7 +914,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
-    private ByteBufferBytes receive(int requiredNumberOfBytes, long timeoutTime) throws IOException {
+    private Bytes receive(int requiredNumberOfBytes, long timeoutTime) throws IOException {
 
         while (bytes.buffer().position() < requiredNumberOfBytes) {
             clientChannel.read(bytes.buffer());
@@ -839,7 +925,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         return bytes;
     }
 
-    private void send(final ByteBufferBytes out, long timeoutTime) throws IOException {
+    private void send(final Bytes out, long timeoutTime) throws IOException {
 
         buffer.limit((int) out.position());
         buffer.position(0);
@@ -869,10 +955,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     }
 
+
+    private void writeSizeAt(long locationOfSize) {
+        final long size = bytes.position() - locationOfSize;
+        bytes.writeInt(locationOfSize, (int) size - SIZE_OF_SIZE);
+    }
+
+
     private long markSizeLocation() {
         final long position = bytes.position();
         bytes.skip(SIZE_OF_SIZE);
-        bytes.skip(SIZE_OF_TRANSACTIONID);
         return position;
     }
 

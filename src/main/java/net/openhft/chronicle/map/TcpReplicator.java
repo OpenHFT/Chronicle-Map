@@ -1261,6 +1261,16 @@ class StatelessServerConnector<K, V> {
             case ENTRY_SET:
                 return entrySet(reader, writer);
 
+            case PUT_WITHOUT_ACC:
+                return put(reader);
+
+
+            case PUT_ALL_WITHOUT_ACC:
+                return putAll(reader);
+
+            case REMOVE_WITHOUT_ACC:
+                return remove(reader);
+
         }
 
         final long sizeLocation = reflectTransactionId(reader, writer);
@@ -1484,6 +1494,20 @@ class StatelessServerConnector<K, V> {
 
     }
 
+
+    private Work put(Bytes reader) {
+        if (MAP_SUPPORTS_BYTES) {
+            map.put(reader);
+        } else {
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final K k = readKey(reader, local);
+            final V v = readValue(reader, local);
+            map.put(k, v);
+        }
+
+        return null;
+    }
+
     private Work put(Bytes reader, Bytes writer, final long sizeLocation) {
         if (MAP_SUPPORTS_BYTES) {
             map.put(reader, writer);
@@ -1501,6 +1525,19 @@ class StatelessServerConnector<K, V> {
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
+
+    private Work remove(Bytes reader) {
+        if (MAP_SUPPORTS_BYTES) {
+            map.removeWithBytes(reader);
+        } else {
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            final K key = readKey(reader, local);
+            map.remove(key);
+        }
+
+        return null;
+    }
+
 
     private Work remove(Bytes reader, Bytes writer, final long sizeLocation) {
         if (MAP_SUPPORTS_BYTES) {
@@ -1537,6 +1574,18 @@ class StatelessServerConnector<K, V> {
 
         }
         writeSizeAndFlags(sizeLocation, false, writer);
+        return null;
+    }
+
+    private Work putAll(Bytes reader) {
+
+        if (MAP_SUPPORTS_BYTES) {
+            map.putAll(reader);
+        } else {
+            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+            map.putAll(readEntries(reader, local));
+        }
+
         return null;
     }
 
@@ -1788,7 +1837,9 @@ class StatelessServerConnector<K, V> {
         final HashMap<K, V> result = new HashMap<K, V>();
 
         for (long i = 0; i < numberOfEntries; i++) {
-            result.put(readKey(reader, local), readValue(reader, local));
+            K key = readKey(reader, local);
+            V value = readValue(reader, local);
+            result.put(key, value);
         }
         return result;
     }

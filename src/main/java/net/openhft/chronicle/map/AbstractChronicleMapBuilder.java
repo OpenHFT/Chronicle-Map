@@ -843,7 +843,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
                 statelessBuilder,
                 entrySize(),
                 kClass,
-                vClass);
+                vClass, putReturnsNull,removeReturnsNull);
     }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {

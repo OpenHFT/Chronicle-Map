@@ -271,6 +271,133 @@ public class StatelessClientTest {
 
 
     @Test
+    public void testBufferOverFlowPutAllWherePutReturnsNull() throws IOException,
+            InterruptedException {
+
+        final ChronicleMap<Integer, CharSequence> serverMap;
+        final ChronicleMap<Integer, CharSequence> statelessMap;
+
+
+        // stateless client
+        {
+            statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, CharSequence.class)
+                    .putReturnsNull(true)
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8086))).create();
+        }
+
+        // server
+        {
+            serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .replicators((byte) 2, TcpReplicationConfig.of(8086))
+                    .putReturnsNull(true)
+                    .create();
+        }
+
+
+        Map<Integer, CharSequence> payload = new HashMap<Integer, CharSequence>();
+
+        for (int i = 0; i < SIZE; i++) {
+            payload.put(i, "some value=" + i);
+        }
+
+
+        statelessMap.putAll(payload);
+
+        int value = SIZE - 10;
+
+        Assert.assertEquals("some value=" + value, statelessMap.get(value));
+        Assert.assertEquals(SIZE, statelessMap.size());
+
+        serverMap.close();
+        statelessMap.close();
+
+    }
+
+
+    @Test
+    public void testPutWherePutReturnsNull() throws IOException,
+            InterruptedException {
+
+        final ChronicleMap<Integer, CharSequence> serverMap;
+        final ChronicleMap<Integer, CharSequence> statelessMap;
+
+
+        // stateless client
+        {
+            statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, CharSequence.class)
+                    .putReturnsNull(true)
+                    .removeReturnsNull(true)
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8086))).create();
+        }
+
+        // server
+        {
+            serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .replicators((byte) 2, TcpReplicationConfig.of(8086))
+                    .putReturnsNull(true)
+                    .removeReturnsNull(true)
+                    .create();
+        }
+
+
+        statelessMap.put(1, "some value");
+
+        Assert.assertEquals("some value", statelessMap.get(1));
+        Assert.assertEquals(1, statelessMap.size());
+
+
+        serverMap.close();
+        statelessMap.close();
+
+    }
+
+
+
+    @Test
+    public void testRemoveWhereRemoveReturnsNull() throws IOException,
+            InterruptedException {
+
+        final ChronicleMap<Integer, CharSequence> serverMap;
+        final ChronicleMap<Integer, CharSequence> statelessMap;
+
+
+        // stateless client
+        {
+            statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, CharSequence.class)
+                    .putReturnsNull(true)
+                    .removeReturnsNull(true)
+                    .stateless(remoteAddress(new InetSocketAddress("localhost", 8086))).create();
+        }
+
+        // server
+        {
+            serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .replicators((byte) 2, TcpReplicationConfig.of(8086))
+                    .putReturnsNull(true)
+                    .removeReturnsNull(true)
+                    .create();
+        }
+
+
+        statelessMap.put(1, "some value");
+
+        Assert.assertEquals("some value", statelessMap.get(1));
+        Assert.assertEquals(1, statelessMap.size());
+
+        statelessMap.remove(1);
+
+        Assert.assertEquals(null, statelessMap.get(1));
+        Assert.assertEquals(0, statelessMap.size());
+
+        serverMap.close();
+        statelessMap.close();
+
+    }
+
+    @Test
     public void testEquals() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap1;

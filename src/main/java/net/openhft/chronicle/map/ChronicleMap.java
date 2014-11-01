@@ -23,6 +23,7 @@ import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.model.Byteable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.util.Map;
@@ -100,7 +101,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @see #acquireUsing(Object, Object)
      * @see ChronicleMapBuilder#valueMarshaller(BytesMarshaller)
      */
-    V getUsing(K key, V usingValue);
+     V getUsing(K key, V usingValue);
 
     /**
      * Acquire a value for a key, creating if absent.
@@ -137,6 +138,13 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @return value to which the given key is mapping after this call, either found or created
      * @see #getUsing(Object, Object)
      */
-    V acquireUsing(K key, V usingValue);
+    public V acquireUsing(K key, V usingValue) ;
 
+
+    // todo document
+    SegmentLock acquireUsingReadLocked(@NotNull  K key, @NotNull V usingValue);
+
+    // todo document
+    SegmentLock acquireUsingWriteLocked(@NotNull  K key, @NotNull V usingValue);
 }
+

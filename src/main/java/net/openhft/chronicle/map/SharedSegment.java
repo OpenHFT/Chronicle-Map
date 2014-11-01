@@ -28,9 +28,9 @@ import java.util.Map;
  */
 interface SharedSegment<K, V> {
 
-    void readLock();
+    AutoCloseable readLock();
 
-    void writeLock();
+    AutoCloseable writeLock();
 
     Map.Entry<K, V> getEntry(long pos);
 

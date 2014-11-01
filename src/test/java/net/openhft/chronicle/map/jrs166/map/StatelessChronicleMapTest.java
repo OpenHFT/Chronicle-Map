@@ -21,6 +21,7 @@ package net.openhft.chronicle.map.jrs166.map;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.map.SegmentLock;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -147,6 +148,16 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         @Override
         public V acquireUsing(K key, V usingValue) {
             return d.acquireUsing(key, usingValue);
+        }
+
+        @Override
+        public SegmentLock acquireUsingReadLocked(K key, V usingValue) {
+           throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public SegmentLock acquireUsingWriteLocked(K key, V usingValue) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
