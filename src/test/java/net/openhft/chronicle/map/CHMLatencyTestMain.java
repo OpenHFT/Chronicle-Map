@@ -75,17 +75,19 @@ public class CHMLatencyTestMain {
         File file = File.createTempFile("testCHMLatency", "deleteme");
 //        File file = new File("testCHMLatency.deleteme");
         file.delete();
-        ChronicleMap<LongValue, LongValue> countersMap = OffHeapUpdatableChronicleMapBuilder.of(LongValue.class, LongValue.class)
+        ChronicleMap<LongValue, LongValue> countersMap =
+                OffHeapUpdatableChronicleMapBuilder.of(LongValue.class, LongValue.class)
                 .entries(KEYS)
-                .entrySize(24).create();
+                .entrySize(16)
+                .createWithFile(file);
 
         // add keys
         LongValue key = DataValueClasses.newInstance(LongValue.class);
-        LongValue value = DataValueClasses.newInstance(LongValue.class);
+        LongValue value = DataValueClasses.newDirectReference(LongValue.class);
         for (long i = 0; i < KEYS; i++) {
             key.setValue(i);
+            countersMap.acquireUsing(key, value);
             value.setValue(0);
-            countersMap.put(key, value);
         }
         System.out.println("Keys created");
 //        Monitor monitor = new Monitor();

@@ -577,13 +577,14 @@ public class ChronicleMapTest {
 //        int runs = Integer.getInteger("runs", 10);
         for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
             final long entries = runs * 1000 * 1000L;
-            OffHeapUpdatableChronicleMapBuilder<CharSequence, IntValue> builder = OffHeapUpdatableChronicleMapBuilder
-                    .of(CharSequence.class, IntValue.class)
+            OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+                    .of(CharSequence.class, LongValue.class)
                     .entries(entries)
-                    .minSegments(1024)
-                    .entrySize(20);
+                    .entrySize(24);
 
-            final ChronicleMap<CharSequence, IntValue> map = builder.create();
+            File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
+            tmpFile.deleteOnExit();
+            final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
 
             int procs = Runtime.getRuntime().availableProcessors();
             int threads = procs * 2; // runs > 100 ? procs / 2 : procs;
@@ -599,7 +600,7 @@ public class ChronicleMapTest {
                     futures.add(es.submit(new Runnable() {
                         @Override
                         public void run() {
-                            IntValue value = nativeIntValue();
+                            LongValue value = nativeLongValue();
                             StringBuilder sb = new StringBuilder();
                             long next = 50 * 1000 * 1000;
                             // use a factor to give up to 10 digit numbers.

@@ -20,17 +20,15 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
 import net.openhft.chronicle.hash.serialization.*;
-import net.openhft.lang.threadlocal.Provider;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
 import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
+import net.openhft.lang.threadlocal.Provider;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,36 +48,28 @@ import static net.openhft.lang.MemoryUnit.*;
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         V, VW, MVW extends MetaBytesWriter<V, VW>> extends AbstractMap<K, V>
         implements ChronicleMap<K, V>, Serializable {
-    private static final long serialVersionUID = 2L;
-
     /**
      * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set
      * bits.
      */
     static final int MAX_ENTRY_OVERSIZE_FACTOR = 64;
-
-    private static final int SEGMENT_HEADER = 64;
+    static final ThreadLocal<MultiStoreBytes> tmpBytes = new ThreadLocal<>();
+    private static final long serialVersionUID = 2L;
     final Class<K> kClass;
     final SizeMarshaller keySizeMarshaller;
     final BytesReader<K> originalKeyReader;
-    transient Provider<BytesReader<K>> keyReaderProvider;
     final KI originalKeyInterop;
-    transient Provider<KI> keyInteropProvider;
     final MKI originalMetaKeyInterop;
     final MetaProvider<K, KI, MKI> metaKeyInteropProvider;
-
     final Class<V> vClass;
     final SizeMarshaller valueSizeMarshaller;
     final BytesReader<V> originalValueReader;
-    transient Provider<BytesReader<V>> valueReaderProvider;
     final VW originalValueWriter;
-    transient Provider<VW> valueWriterProvider;
     final MVW originalMetaValueWriter;
     final MetaProvider<V, VW, MVW> metaValueWriterProvider;
     final ObjectFactory<V> valueFactory;
     final DefaultValueProvider<K, V> defaultValueProvider;
     final PrepareValueBytesAsWriter<K> prepareValueBytesAsWriter;
-
     final int metaDataBytes;
     //   private final int replicas;
     final long entrySize;
@@ -91,16 +81,19 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     // rather than as returning the Object can be expensive for something you probably don't use.
     final boolean putReturnsNull;
     final boolean removeReturnsNull;
-
     private final long lockTimeOutNS;
     private final ChronicleHashErrorListener errorListener;
+    private final int segmentHeaderSize;
+    private final HashSplitting hashSplitting;
+    transient Provider<BytesReader<K>> keyReaderProvider;
+    transient Provider<KI> keyInteropProvider;
+    transient Provider<BytesReader<V>> valueReaderProvider;
+    transient Provider<VW> valueWriterProvider;
     transient Segment[] segments; // non-final for close()
     // non-final for close() and because it is initialized out of constructor
     transient BytesStore ms;
     transient long headerSize;
     transient Set<Map.Entry<K, V>> entrySet;
-
-    private final HashSplitting hashSplitting;
 
     public VanillaChronicleMap(AbstractChronicleMapBuilder<K, V, ?> builder) throws IOException {
 
@@ -140,6 +133,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         this.entriesPerSegment = builder.actualEntriesPerSegment();
         this.metaDataBytes = builder.metaDataBytes();
         this.eventListener = builder.eventListener();
+        this.segmentHeaderSize = builder.segmentHeaderSize();
 
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
         initTransients();
@@ -185,9 +179,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         onHeaderCreated();
 
         long offset = getHeaderSize();
+        long segmentHeaderSize = getSegmentHeaderSize();
+        long segmentHeadersSize = segments.length * segmentHeaderSize;
+        Bytes segmentHeaders = ms.bytes(offset, segmentHeadersSize);
+        offset += segmentHeadersSize;
         long segmentSize = segmentSize();
+        long headerOffset = 0;
         for (int i = 0; i < this.segments.length; i++) {
-            this.segments[i] = createSegment((NativeBytes) ms.bytes(offset, segmentSize), i);
+            NativeBytes segmentHeader = (NativeBytes) segmentHeaders.bytes(headerOffset, segmentHeaderSize);
+            NativeBytes segmentData = (NativeBytes) ms.bytes(offset, segmentSize);
+            this.segments[i] = createSegment(segmentHeader, segmentData, i);
+            headerOffset += segmentHeaderSize;
             offset += segmentSize;
         }
         return offset;
@@ -214,8 +216,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         return headerSize;
     }
 
-    Segment createSegment(NativeBytes bytes, int index) {
-        return new Segment(bytes, index);
+    long getSegmentHeaderSize() {
+        return segmentHeaderSize;
+    }
+
+    Segment createSegment(NativeBytes segmentHeader, NativeBytes bytes, int index) {
+        return new Segment(segmentHeader, bytes, index);
     }
 
     @Override
@@ -224,7 +230,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     long sizeInBytes() {
-        return getHeaderSize() + segments.length * segmentSize();
+        return getHeaderSize()
+                + segments.length * getSegmentHeaderSize()
+                + segments.length * segmentSize();
     }
 
     long sizeOfMultiMap() {
@@ -254,8 +262,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     long segmentSize() {
-        long ss = SEGMENT_HEADER
-                + (CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
+        long ss = (CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
                 * multiMapsPerSegment())
                 + numberOfBitSets() * sizeOfBitSets() // the free list and 0+ dirty lists.
                 + sizeOfEntriesInSegment();
@@ -393,7 +400,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         return (entrySet != null) ? entrySet : (entrySet = new EntrySet());
     }
 
-
     /**
      * @throws NullPointerException if the specified key is null
      */
@@ -411,7 +417,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             return false; // CHM compatibility; I would throw NPE
         return removeIfValueIs(key, (V) value) != null;
     }
-
 
     /**
      * removes ( if there exists ) an entry from the map, if the {@param key} and {@param
@@ -445,7 +450,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         checkValue(oldValue);
         return oldValue.equals(replaceIfValueIs(key, oldValue, newValue));
     }
-
 
     /**
      * @throws NullPointerException if the specified key or value is null
@@ -512,8 +516,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         return valueSize;
     }
 
-    static final ThreadLocal<MultiStoreBytes> tmpBytes = new ThreadLocal<>();
-
     protected MultiStoreBytes acquireTmpBytes() {
         MultiStoreBytes b = tmpBytes.get();
         if (b == null)
@@ -567,7 +569,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         throw new UnsupportedOperationException("todo");
     }
 
-
+    long[] segmentSizes() {
+        long[] sizes = new long[segments.length];
+        for (int i = 0; i < segments.length; i++)
+            sizes[i] = segments[i].getSize();
+        return sizes;
+    }
 
     // these methods should be package local, not public or private.
     class Segment implements SharedSegment {
@@ -582,6 +589,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         static final long LOCK_OFFSET = 0L; // 64-bit
         static final long SIZE_OFFSET = LOCK_OFFSET + 8L; // 32-bit
 
+        final NativeBytes segmentHeader;
         final NativeBytes bytes;
         final long entriesOffset;
         private final int index;
@@ -593,11 +601,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         /**
          * @param index the index of this segment held by the map
          */
-        Segment(NativeBytes bytes, int index) {
+        Segment(NativeBytes segmentHeader, NativeBytes bytes, int index) {
+            this.segmentHeader = segmentHeader;
             this.bytes = bytes;
             this.index = index;
 
-            long start = bytes.startAddr() + SEGMENT_HEADER;
+            long start = bytes.startAddr();
             createHashLookups(start);
             start += CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
                     * multiMapsPerSegment();
@@ -647,18 +656,18 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * increments the size by one
          */
         void incrementSize() {
-            this.bytes.addLong(SIZE_OFFSET, 1L);
+            this.segmentHeader.addLong(SIZE_OFFSET, 1L);
         }
 
         void resetSize() {
-            this.bytes.writeLong(SIZE_OFFSET, 0L);
+            this.segmentHeader.writeLong(SIZE_OFFSET, 0L);
         }
 
         /**
          * decrements the size by one
          */
         void decrementSize() {
-            this.bytes.addLong(SIZE_OFFSET, -1L);
+            this.segmentHeader.addLong(SIZE_OFFSET, -1L);
         }
 
         /**
@@ -666,39 +675,39 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          */
         long getSize() {
             // any negative value is in error state.
-            return max(0L, this.bytes.readVolatileLong(SIZE_OFFSET));
+            return max(0L, this.segmentHeader.readVolatileLong(SIZE_OFFSET));
         }
 
 
         public void readLock() throws IllegalStateException {
             while (true) {
-                final boolean success = bytes.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
+                final boolean success = segmentHeader.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
                 if (success) return;
                 if (currentThread().isInterrupted()) {
                     throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
                 } else {
-                    errorListener.onLockTimeout(bytes.threadIdForLockLong(LOCK_OFFSET));
-                    bytes.resetLockLong(LOCK_OFFSET);
+                    errorListener.onLockTimeout(segmentHeader.threadIdForLockLong(LOCK_OFFSET));
+                    segmentHeader.resetLockLong(LOCK_OFFSET);
                 }
             }
         }
 
         public void writeLock() throws IllegalStateException {
             while (true) {
-                final boolean success = bytes.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+                final boolean success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
                 if (success) return;
                 if (currentThread().isInterrupted()) {
                     throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
                 } else {
-                    errorListener.onLockTimeout(bytes.threadIdForLockLong(LOCK_OFFSET));
-                    bytes.resetLockLong(LOCK_OFFSET);
+                    errorListener.onLockTimeout(segmentHeader.threadIdForLockLong(LOCK_OFFSET));
+                    segmentHeader.resetLockLong(LOCK_OFFSET);
                 }
             }
         }
 
         public void readUnlock() {
             try {
-                bytes.unlockRWReadLock(LOCK_OFFSET);
+                segmentHeader.unlockRWReadLock(LOCK_OFFSET);
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);
             }
@@ -706,7 +715,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         public void writeUnlock() {
             try {
-                bytes.unlockRWWriteLock(LOCK_OFFSET);
+                segmentHeader.unlockRWWriteLock(LOCK_OFFSET);
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);
             }
@@ -754,6 +763,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         V acquire(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
+                  long hash2, boolean create) {
+            V v = acquire0(copies, metaKeyInterop, keyInterop, key, usingValue, hash2, false);
+            if (create && v == null)
+               v = acquire0(copies, metaKeyInterop, keyInterop, key, usingValue, hash2, true);
+            return v;
+        }
+        V acquire0(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
                   long hash2, boolean create) {
             if (create)
                 writeLock();
@@ -991,12 +1007,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         /**
          * Removes a key (or key-value pair) from the Segment.
          *
-         * <p>The entry will only be removed if {@code expectedValue} equals to {@code null} or the
-         * value previously corresponding to the specified key.
+         * <p>The entry will only be removed if {@code expectedValue} equals to {@code null} or the value previously
+         * corresponding to the specified key.
          *
          * @param hash2 a hash code related to the {@code keyBytes}
-         * @return the value of the entry that was removed if the entry corresponding to the {@code
-         * keyBytes} exists and {@link #removeReturnsNull} is {@code false}, {@code null} otherwise
+         * @return the value of the entry that was removed if the entry corresponding to the {@code keyBytes} exists and
+         * {@link #removeReturnsNull} is {@code false}, {@code null} otherwise
          */
         V remove(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
                  V expectedValue, long hash2) {
@@ -1052,9 +1068,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Replaces the specified value for the key with the given value.  {@code newValue} is set
-         * only if the existing value corresponding to the specified key is equal to {@code
-         * expectedValue} or {@code expectedValue == null}.
+         * Replaces the specified value for the key with the given value.  {@code newValue} is set only if the existing
+         * value corresponding to the specified key is equal to {@code expectedValue} or {@code expectedValue == null}.
          *
          * @param hash2 a hash code related to the {@code keyBytes}
          * @return the replaced value or {@code null} if the value was not replaced
@@ -1130,17 +1145,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Replaces value in existing entry. May cause entry relocation, because there may be not
-         * enough space for new value in location already allocated for this entry.
+         * Replaces value in existing entry. May cause entry relocation, because there may be not enough space for new
+         * value in location already allocated for this entry.
          *
          * @param pos          index of the first block occupied by the entry
-         * @param offset       relative offset of the entry in Segment bytes (before, i. e.
-         *                     including metaData)
+         * @param offset       relative offset of the entry in Segment bytes (before, i. e. including metaData)
          * @param entry        relative pointer in Segment bytes
          * @param valueSizePos relative position of value size in entry
          * @param entryEndAddr absolute address of the entry end
-         * @return relative offset of the entry in Segment bytes after putting value (that may cause
-         * entry relocation)
+         * @return relative offset of the entry in Segment bytes after putting value (that may cause entry relocation)
          */
         long putValue(long pos, long offset, NativeBytes entry, long valueSizePos,
                       long entryEndAddr, ThreadLocalCopies copies, V value, Bytes valueBytes,
@@ -1471,12 +1484,5 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             put(getKey(), value);
             return super.setValue(value);
         }
-    }
-
-    long[] segmentSizes() {
-        long[] sizes = new long[segments.length];
-        for (int i = 0; i < segments.length; i++)
-            sizes[i] = segments[i].getSize();
-        return sizes;
     }
 }

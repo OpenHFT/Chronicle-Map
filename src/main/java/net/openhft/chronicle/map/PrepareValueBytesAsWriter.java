@@ -26,10 +26,10 @@ final class PrepareValueBytesAsWriter<K>
         implements BytesWriter<K>, MetaBytesWriter<K, PrepareValueBytesAsWriter<K>>,
         Serializable {
     private static final long serialVersionUID = 0L;
-    private final PrepareValueBytes<K> prepareValueBytes;
+    private final PrepareValueBytes<K, ?> prepareValueBytes;
     private final long valueSize;
 
-    PrepareValueBytesAsWriter(PrepareValueBytes<K> prepareValueBytes, long valueSize) {
+    PrepareValueBytesAsWriter(PrepareValueBytes<K, ?> prepareValueBytes, long valueSize) {
         this.prepareValueBytes = prepareValueBytes;
         this.valueSize = valueSize;
     }

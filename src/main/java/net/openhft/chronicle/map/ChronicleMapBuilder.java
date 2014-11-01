@@ -73,7 +73,11 @@ public final class ChronicleMapBuilder<K, V>
     }
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
-        super(keyClass, valueClass);
+        super(keyClass, valueClass, getAlignmentFor(valueClass));
+    }
+
+    private static <V> Alignment getAlignmentFor(Class<V> valueClass) {
+        return offHeapReference(valueClass) ? Alignment.OF_4_BYTES : Alignment.NO_ALIGNMENT;
     }
 
     @Override
