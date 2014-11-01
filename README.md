@@ -869,9 +869,61 @@ you would get better performance if you connect to the server via heap memory, t
 sharing a map with heap memory
 click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps ) 
 
+### How to speed up the Chronicle Map Stateless Client 
+
+By default when you make a method call to a `ChronicleMap` stateless client, 
+your method call is wrapped into an event which is sent over tcp and processed by the server, 
+your stateless client will block until an acknowledgement has been received from the server that 
+your event was processed. When you are calling methods that return a value like get() this 
+blocking adds no additional overhead, because you have to wait for the return value anyway, 
+In some cases you could get better performance if you don't have to wait for the acknowledgement, This maybe the case when you are calling the `put()` method, but the problem with this method is it returns the old value even though you may not use it.
+
+For in memory data-structures like a HashMap this isn’t a big problem. But in a distributed environment things are a bit more complicated. Blocking for an old value that you don’t require adds additional network overhead and additional processing overhead of serialising the old value on the server and deserialising it on the client
+
+So if you don’t require the old value and don’t wish to block until your `put()` has been received by the server, then you may wish to consider using the following configuration :
+
+``` java
+.putReturnsNull
+```
+  
+and also for the `remove()` method
+
+``` java
+.removeReturnsNull
+```
+
+
+
+``` java
+statelessClientMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+     .stateless(StatelessBuilder.remoteAddress(new InetSocketAddress("localhost", 8076)))
+     .putReturnsNull(true)
+     .removeReturnsNull(true)
+     .create();
+```
+
+For the very best performance you should also set these properties on the server as well
+
+
+``` java
+ 
+
+ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+    .replicators((byte) 2, TcpReplicationConfig.of(8076))
+    .putReturnsNull(true)
+    .removeReturnsNull(true)
+    .create();            
+                   
+serverMap.put(10, "EXAMPLE-10");
+
+```
+
+
+
 ##### Close
 
-its always important to close ChronicleMap's and `ChronicleSet` 's when you have finished with them
+its always important to close `ChronicleMap`'s and `ChronicleSet` 's when you have finished with them
+
 ``` java
 serverMap.close();
 statelessMap.close();
