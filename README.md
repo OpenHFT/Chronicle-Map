@@ -906,16 +906,11 @@ For the very best performance you should also set these properties on the server
 
 
 ``` java
- 
-
 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
     .replicators((byte) 2, TcpReplicationConfig.of(8076))
     .putReturnsNull(true)
     .removeReturnsNull(true)
     .create();            
-                   
-serverMap.put(10, "EXAMPLE-10");
-
 ```
 
 
