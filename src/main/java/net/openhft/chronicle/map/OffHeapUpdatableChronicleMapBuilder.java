@@ -25,7 +25,7 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
 
     public static <K, V> OffHeapUpdatableChronicleMapBuilder<K, V> of(
             @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
-        if (!Byteable.class.isAssignableFrom(valueClass)) {
+        if (!offHeapReference(valueClass)) {
             if (!valueClass.isInterface()) {
                 throw new IllegalArgumentException(
                         "Value class should be either Byteable subclass or interface," +
@@ -37,7 +37,7 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     OffHeapUpdatableChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
-        super(keyClass, valueClass);
+        super(keyClass, valueClass, Alignment.OF_4_BYTES);
         prepareValueBytesOnAcquire(new ZeroOutValueBytes<K, V>(valueSize()));
     }
 

@@ -764,6 +764,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         V acquire(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
                   long hash2, boolean create) {
+            V v = acquire0(copies, metaKeyInterop, keyInterop, key, usingValue, hash2, false);
+            if (create && v == null)
+               v = acquire0(copies, metaKeyInterop, keyInterop, key, usingValue, hash2, true);
+            return v;
+        }
+        V acquire0(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
+                  long hash2, boolean create) {
             if (create)
                 writeLock();
             else

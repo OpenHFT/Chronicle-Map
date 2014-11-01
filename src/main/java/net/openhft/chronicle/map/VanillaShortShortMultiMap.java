@@ -62,7 +62,7 @@ class VanillaShortShortMultiMap implements MultiMap {
     public VanillaShortShortMultiMap(Bytes multiMapBytes, Bytes multiMapBitSetBytes) {
         long capacity = multiMapBytes.capacity() / ENTRY_SIZE;
         assert isPowerOf2(capacity);
-        assert (capacity / 2L) < MAX_CAPACITY;
+        assert (capacity / 2L) <= MAX_CAPACITY;
         this.capacity = (int) capacity;
         capacityMask = capacity - 1L;
         capacityMask2 = (capacity - 1L) * ENTRY_SIZE;

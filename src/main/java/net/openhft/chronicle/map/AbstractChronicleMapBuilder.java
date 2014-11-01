@@ -119,7 +119,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     private int valueSize = 0;
     private V sampleValue;
     private int entrySize = 0;
-    private Alignment alignment = Alignment.NO_ALIGNMENT;
+    private Alignment alignment;
     private long entries = 1 << 20; // 1 million by default
     private long lockTimeOut = 2000;
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
@@ -142,9 +142,14 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     private StatelessBuilder statelessBuilder;
     private File file;
 
-    AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
+    AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass, Alignment alignment) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
         valueBuilder = new SerializationBuilder<V>(valueClass, SerializationBuilder.Role.VALUE);
+        this.alignment = alignment;
+    }
+
+    protected static boolean offHeapReference(Class valueClass) {
+        return Byteable.class.isAssignableFrom(valueClass);
     }
 
 
