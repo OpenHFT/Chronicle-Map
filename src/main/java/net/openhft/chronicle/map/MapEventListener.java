@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.lang.io.Bytes;
 
 import java.io.Serializable;
@@ -41,6 +42,9 @@ import java.io.Serializable;
  * <p>All these calls are synchronous while a {@code ChronicleMap} lock is held so make them
  * as quick as possible.
  *
+ * <p>The {@code entry} passed to the methods is {@code Bytes} instance positioned at meta data
+ * area. See {@link ChronicleHashBuilder#metaDataBytes(int)} for more information.
+ *
  * @param <K> key type of the maps, trackable by this event listener
  * @param <V> value type of the maps, trackable by this event listener
  * @param <M> {@code ChronicleMap} subtype, trackable by this event listener
@@ -58,7 +62,8 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
      *
      * @param map           the accessed map
      * @param entry         bytes of the entry
-     * @param metaDataBytes length of meta data for this map
+     * @param metaDataBytes length of {@link ChronicleHashBuilder#metaDataBytes(int) meta data}
+     *                      for this map
      * @param key           the key looked up
      * @param value         the value found for the key
      */
@@ -72,23 +77,24 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
     }
 
     /**
-     * This method is call whenever a new value is put for the key in the map during calls of such
+     * This method is called whenever a new value is put for the key in the map during calls of such
      * methods as {@link ChronicleMap#put put}, {@link ChronicleMap#putIfAbsent putIfAbsent},
      * {@link ChronicleMap#replace(Object, Object, Object) replace}, etc. When a new value is
-     * {@linkplain AbstractChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during
-     * {@link ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method is called
-     * as well.
+     * {@linkplain AbstractChronicleMapBuilder#defaultValue(Object) default} for the map or obtained
+     * during {@link ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method
+     * is called as well.
      *
      * <p>This method is called when put is already happened.
      *
      * @param map           the accessed map
      * @param entry         bytes of the entry (with the value already written to)
-     * @param metaDataBytes length of meta data for this map
+     * @param metaDataBytes length of {@link ChronicleHashBuilder#metaDataBytes(int) meta data}
+     *                      for this map
      * @param added         {@code true} is the key was absent in the map before current
      *                      {@code ChronicleMap} method call, led to putting a value and inherently
      *                      calling this listener method
-     * @param key           the key the value is put for
-     * @param value         the value which was associated with the key
+     * @param key           the key the given value is put for
+     * @param value         the value which is now associated with the given key
      */
     public void onPut(M map, Bytes entry, int metaDataBytes, boolean added, K key, V value) {
         // do nothing
@@ -100,13 +106,15 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
     }
 
     /**
-     * This is called when an entry is removed. Misses are not notified.
+     * This is called when an entry is removed. Misses, i. e. when {@code map.remove(key)}
+     * is called, but key is already absent in the map, are not notified.
      *
      * @param map           accessed
-     * @param entry         removed
-     * @param metaDataBytes length of meta data
-     * @param key           removed
-     * @param value         removed
+     * @param entry         bytes of the entry just removed, but any data is not yet erased
+     * @param metaDataBytes length of {@link ChronicleHashBuilder#metaDataBytes(int) meta data}
+     *                      for this map
+     * @param key           the key removed from the map
+     * @param value         the value which was associated with the given key
      */
     public void onRemove(M map, Bytes entry, int metaDataBytes, K key, V value) {
         // do nothing
