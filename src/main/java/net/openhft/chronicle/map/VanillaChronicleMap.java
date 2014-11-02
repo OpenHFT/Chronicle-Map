@@ -353,7 +353,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 replaceIfPresent);
     }
 
-    private enum LockType {READ_LOCK, WRITE_LOCK}
+    enum LockType {READ_LOCK, WRITE_LOCK}
 
     @Override
     public V get(Object key) {
