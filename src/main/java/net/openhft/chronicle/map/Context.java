@@ -21,7 +21,7 @@ package net.openhft.chronicle.map;
 /**
  * @author Rob Austin.
  */
-interface Context<K, V> extends AutoCloseable {
+public interface Context<K, V> extends AutoCloseable {
 
     /**
      * call this to unlock the maps segment
