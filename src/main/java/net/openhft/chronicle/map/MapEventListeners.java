@@ -23,6 +23,9 @@ import net.openhft.lang.io.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Methods returning useful implementations of {@link MapEventListener}.
+ */
 public final class MapEventListeners {
 
     /**
@@ -101,16 +104,48 @@ public final class MapEventListeners {
     private MapEventListeners() {
     }
 
+    /**
+     * Returns the no-op event listener, i. e. all it's method implementations have empty bodies.
+     *
+     * @param <K> the map key type
+     * @param <V> the map value type
+     * @param <M> the {@code ChronicleMap} subclass, or {@code ChronicleMap} type itself.
+     *           Typically this type should be just {@code ChronicleMap}.
+     * @return the no-op event listener
+     */
     @SuppressWarnings("unchecked")
     public static <K, V, M extends ChronicleMap<K, V>> MapEventListener<K, V, M> nop() {
         return NOP;
     }
 
+    /**
+     * Returns the map event listener, which logs strings like
+     * "Meta: [meta bytes] | [key bytes] = [value bytes]", where bytes are meta, key and value
+     * areas from {@link Bytes} passed to {@code MapEventListener} methods, printed in ASCII
+     * coding.
+     *
+     * @param <K> the map key type
+     * @param <V> the map value type
+     * @param <M> the {@code ChronicleMap} subclass, or {@code ChronicleMap} type itself.
+     *           Typically this type should be just {@code ChronicleMap}.
+     * @return the bytes logging event listener
+     */
     @SuppressWarnings("unchecked")
     public static <K, V, M extends ChronicleMap<K, V>> MapEventListener<K, V, M> bytesLogging() {
         return BYTES_LOGGING;
     }
 
+    /**
+     * Returns the map event listener, which logs strings like
+     * "{@linkplain ChronicleMap#file() map file} opType key value", where opType is either "get",
+     * "put" or "remove", to the logger provided by SLF4J.
+     *
+     * @param <K> the map key type
+     * @param <V> the map value type
+     * @param <M> the {@code ChronicleMap} subclass, or {@code ChronicleMap} type itself.
+     *           Typically this type should be just {@code ChronicleMap}.
+     * @return the logging event listener
+     */
     @SuppressWarnings("unchecked")
     public static <K, V, M extends ChronicleMap<K, V>> MapEventListener<K, V, M> keyValueLogging() {
         return KEY_VALUE_LOGGING;
