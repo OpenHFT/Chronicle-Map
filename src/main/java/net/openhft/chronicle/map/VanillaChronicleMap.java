@@ -412,15 +412,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         V v = segment.acquireWithoutLock(copies, metaKeyInterop, keyInterop, key, value,
                 segmentHash, lockTypeType == LockType.WRITE_LOCK);
 
-
         lock.copies = copies;
         lock.metaKeyInterop = metaKeyInterop;
         lock.keyInterop = keyInterop;
         lock.segmentHash = segmentHash;
+        lock.value = null;
 
-        if (v == null && lockTypeType == LockType.WRITE_LOCK) {
+        if (!isNativeValueClass && lockTypeType == LockType.WRITE_LOCK && v == null)
             v = value;
-        }
 
         lock.value(v);
         lock.key(key);
@@ -705,30 +704,30 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         final MutableLockedEntry<K, V, MKI, KI>
                 heapWriteUnlock = new WriteLocked<K, V, MKI, KI>() {
 
-            boolean dontPutOnClose;
+            private boolean putOnClose = true;
+
 
             @Override
             public void close() {
-                if (copies != null && !dontPutOnClose)
+                if (putOnClose)
                     putWithoutLock(copies, metaKeyInterop, keyInterop, key(), value(),
                             segmentHash, true);
 
                 copies = null;
-                dontPutOnClose = false;
+                putOnClose = true;
+
                 Segment.this.writeUnlock();
             }
 
             @Override
             public void dontPutOnClose() {
-                dontPutOnClose = true;
+                putOnClose = false;
             }
 
             @Override
             public void removeEntry() {
-                dontPutOnClose = true;
-                if (copies != null)
-                    removeWithoutLock(copies, metaKeyInterop, keyInterop, key(), null, segmentHash);
-
+                putOnClose = false;
+                removeWithoutLock(copies, metaKeyInterop, keyInterop, key(), null, segmentHash);
             }
 
 
@@ -1634,6 +1633,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         KI keyInterop;
         long segmentHash;
 
+
         private K key;
         private V value;
 
@@ -1678,6 +1678,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     private static abstract class WriteLocked<K, V, MKI, KI> extends MutableLockedEntry<K, V, MKI,
             KI> implements WriteContext<K, V> {
+
     }
 }
 
