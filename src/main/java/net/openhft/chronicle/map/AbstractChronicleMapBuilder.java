@@ -48,18 +48,18 @@ import java.util.concurrent.TimeUnit;
 import static net.openhft.chronicle.map.Objects.builderEquals;
 
 /**
- * {@code AbstractChronicleMapBuilder} manages most of {@link ChronicleMap} configurations; has two concrete subclasses:
- * {@link ChronicleMapBuilder} should be used to create maps with ordinary values, {@link
- * OffHeapUpdatableChronicleMapBuilder} -- maps with {@link Byteable} values, which point directly to off-heap memory;
- * could be used as a classic builder and/or factory. This means
+ * {@code AbstractChronicleMapBuilder} manages most of {@link ChronicleMap} configurations; has two
+ * concrete subclasses: {@link ChronicleMapBuilder} should be used to create maps with ordinary
+ * values, {@link OffHeapUpdatableChronicleMapBuilder} -- maps with {@link Byteable} values, which
+ * point directly to off-heap memory; could be used as a classic builder and/or factory. This means
  * that in addition to the standard builder usage pattern: <pre>{@code
  * ChronicleMap<Key, Value> map = ChronicleMapBuilder
  *     .of(Key.class, Value.class)
  *     .entries(100500)
  *     // ... other configurations
  *     .create();}</pre>
- * one of concrete {@code AbstractChronicleMapBuilder} subclasses, {@link ChronicleMapBuilder} or {@link
- * OffHeapUpdatableChronicleMapBuilder}, could be prepared and used to create many similar
+ * one of concrete {@code AbstractChronicleMapBuilder} subclasses, {@link ChronicleMapBuilder} or
+ * {@link OffHeapUpdatableChronicleMapBuilder}, could be prepared and used to create many similar
  * maps: <pre>{@code
  * OffHeapUpdatableChronicleMapBuilder<Key, Value> builder = OffHeapUpdatableChronicleMapBuilder
  *     .of(Key.class, Value.class)
@@ -69,22 +69,18 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
  * ChronicleMap<Key, Value> map2 = builder.create();}</pre>
  * i. e. created {@code ChronicleMap} instances don't depend on the builder.
  *
- * <p>{@code AbstractChronicleMapBuilder} and it's subclasses are mutable, see a note in {@link ChronicleHashBuilder}
- * interface documentation.
- * </p>
- * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code AbstractChronicleMapBuilder}",
- * unless specified different, because theoretically someone might provide {@code ChronicleMap} implementations with
- * completely different properties.
- * </p>
- * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code AbstractChronicleMapBuilder}") currently doesn't support
- * resizing. That is why you should <i>always</i> configure {@linkplain #entries(long) number of entries} you are going
- * to insert into the created map <i>at most</i>. See {@link #entries(long)} method documentation for more information
- * on this.
- * </p>
- * <p>{@code ChronicleMap} allocates memory by equally sized chunks. This size is called {@linkplain #entrySize(int)
- * entry size}, you are strongly recommended to configure it to achieve least memory consumption and best speed. See
- * {@link #entrySize(int)} method documentation for more information on this.
- * </p>
+ * <p>{@code AbstractChronicleMapBuilder} and it's subclasses are mutable, see a note in {@link
+ * ChronicleHashBuilder} interface documentation. </p> <p>Later in this documentation,
+ * "ChronicleMap" means "ChronicleMaps, created by {@code AbstractChronicleMapBuilder}", unless
+ * specified different, because theoretically someone might provide {@code ChronicleMap}
+ * implementations with completely different properties. </p> <p>{@code ChronicleMap}
+ * ("ChronicleMaps, created by {@code AbstractChronicleMapBuilder}") currently doesn't support
+ * resizing. That is why you should <i>always</i> configure {@linkplain #entries(long) number of
+ * entries} you are going to insert into the created map <i>at most</i>. See {@link #entries(long)}
+ * method documentation for more information on this. </p> <p>{@code ChronicleMap} allocates memory
+ * by equally sized chunks. This size is called {@linkplain #entrySize(int) entry size}, you are
+ * strongly recommended to configure it to achieve least memory consumption and best speed. See
+ * {@link #entrySize(int)} method documentation for more information on this. </p>
  *
  * @param <K> key type of the maps, produced by this builder
  * @param <V> value type of the maps, produced by this builder
@@ -207,8 +203,9 @@ public abstract class AbstractChronicleMapBuilder<K, V,
      *     .keySize(10)
      *     // shouldn't specify valueSize(), because it is statically known
      *     .create();}</pre>
-     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded (and each character takes
-     * 2 bytes on-heap), because default off-heap {@link String} encoding is UTF-8 in {@code ChronicleMap}.)
+     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded (and
+     * each character takes 2 bytes on-heap), because default off-heap {@link String} encoding is
+     * UTF-8 in {@code ChronicleMap}.)
      *
      * @see #constantKeySizeBySample(Object)
      * @see #entrySize(int)
@@ -270,10 +267,11 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     /**
      * {@inheritDoc}
      *
-     * <p>In fully default case you can expect entry size to be about 256 bytes. But it is strongly recommended always
-     * to configure {@linkplain #keySize(int) key size} and {@linkplain #valueSize(int) value size}, if they couldn't be
-     * derived statically. </p> <p>If entry size is not configured explicitly by calling this method, it is computed
-     * based on {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size}, plus
+     * <p>In fully default case you can expect entry size to be about 256 bytes. But it is strongly
+     * recommended always to configure {@linkplain #keySize(int) key size} and {@linkplain
+     * #valueSize(int) value size}, if they couldn't be derived statically. </p> <p>If entry size is
+     * not configured explicitly by calling this method, it is computed based on {@linkplain
+     * #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size}, plus
      * {@linkplain #valueSize(int) value size}, plus a few bytes required by implementations. </p>
      *
      * @see #entries(long)
@@ -457,19 +455,20 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     /**
-     * Configures if the maps created by this builder should return {@code null} instead of previous mapped values on
-     * {@link ChronicleMap#put(Object, Object) ChornicleMap.put(key, value)} calls.
+     * Configures if the maps created by this builder should return {@code null} instead of previous
+     * mapped values on {@link ChronicleMap#put(Object, Object) ChornicleMap.put(key, value)}
+     * calls.
      *
-     * <p>{@link Map#put(Object, Object) Map.put()} returns the previous value, functionality which is rarely used but
-     * fairly cheap for {@link HashMap}. In the case, for an off heap collection, it has to create a new object and
-     * deserialize the data from off-heap memory. It's expensive for something you probably don't use.
-     * </p>
-     * <p>By default, of cause, {@code ChronicleMap} conforms the general {@code Map} contract and returns the previous
-     * mapped value on {@code put()} calls.
-     * </p>
+     * <p>{@link Map#put(Object, Object) Map.put()} returns the previous value, functionality which
+     * is rarely used but fairly cheap for {@link HashMap}. In the case, for an off heap collection,
+     * it has to create a new object and deserialize the data from off-heap memory. It's expensive
+     * for something you probably don't use. </p> <p>By default, of cause, {@code ChronicleMap}
+     * conforms the general {@code Map} contract and returns the previous mapped value on {@code
+     * put()} calls. </p>
      *
-     * @param putReturnsNull {@code true} if you want {@link ChronicleMap#put(Object, Object) ChronicleMap.put()} to not
-     *                       return the value that was replaced but instead return {@code null}
+     * @param putReturnsNull {@code true} if you want {@link ChronicleMap#put(Object, Object)
+     *                       ChronicleMap.put()} to not return the value that was replaced but
+     *                       instead return {@code null}
      * @return an instance of the map builder back
      * @see #removeReturnsNull(boolean)
      */
@@ -483,16 +482,17 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     /**
-     * Configures if the maps created by this builder should return {@code null} instead of the last mapped value on
-     * {@link ChronicleMap#remove(Object) ChronicleMap.remove(key)} calls.
+     * Configures if the maps created by this builder should return {@code null} instead of the last
+     * mapped value on {@link ChronicleMap#remove(Object) ChronicleMap.remove(key)} calls.
      *
-     * <p>{@link Map#remove(Object) Map.remove()} returns the previous value, functionality which is rarely used but
-     * fairly cheap for {@link HashMap}. In the case, for an off heap collection, it has to create a new object and
-     * deserialize the data from off-heap memory. It's expensive for something you probably don't use.
-     * </p>
+     * <p>{@link Map#remove(Object) Map.remove()} returns the previous value, functionality which is
+     * rarely used but fairly cheap for {@link HashMap}. In the case, for an off heap collection, it
+     * has to create a new object and deserialize the data from off-heap memory. It's expensive for
+     * something you probably don't use. </p>
      *
-     * @param removeReturnsNull {@code true} if you want {@link ChronicleMap#remove(Object) ChronicleMap.remove()} to
-     *                          not return the value of the removed entry but instead return {@code null}
+     * @param removeReturnsNull {@code true} if you want {@link ChronicleMap#remove(Object)
+     *                          ChronicleMap.remove()} to not return the value of the removed entry
+     *                          but instead return {@code null}
      * @return an instance of the map builder back
      * @see #putReturnsNull(boolean)
      */
@@ -667,18 +667,19 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     /**
-     * Configures factory which is used to create a new value instance, if value class is either {@link Byteable},
-     * {@link BytesMarshallable} or {@link Externalizable} subclass in maps, created by this builder.
+     * Configures factory which is used to create a new value instance, if value class is either
+     * {@link Byteable}, {@link BytesMarshallable} or {@link Externalizable} subclass in maps,
+     * created by this builder.
      *
-     * <p>Default value deserialization factory is {@link NewInstanceObjectFactory}, which creates a new value instance
-     * using {@link Class#newInstance()} default constructor. You could provide an {@link
-     * AllocateInstanceObjectFactory}, which uses {@code Unsafe.allocateInstance(Class)} (you might want to do this for
-     * better performance or if you don't want to initialize fields), or a factory which calls a value class constructor
-     * with some arguments, or a factory which internally delegates to instance pool or {@link ThreadLocal}, to reduce
-     * allocations.
-     * </p>
+     * <p>Default value deserialization factory is {@link NewInstanceObjectFactory}, which creates a
+     * new value instance using {@link Class#newInstance()} default constructor. You could provide
+     * an {@link AllocateInstanceObjectFactory}, which uses {@code Unsafe.allocateInstance(Class)}
+     * (you might want to do this for better performance or if you don't want to initialize fields),
+     * or a factory which calls a value class constructor with some arguments, or a factory which
+     * internally delegates to instance pool or {@link ThreadLocal}, to reduce allocations. </p>
      *
-     * @param valueDeserializationFactory the value factory used to produce instances to deserialize data in
+     * @param valueDeserializationFactory the value factory used to produce instances to deserialize
+     *                                    data in
      * @return this builder back
      */
     public B valueDeserializationFactory(@NotNull ObjectFactory<V> valueDeserializationFactory) {
@@ -696,14 +697,14 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     /**
-     * Specifies the value to be put for each key queried in {@link ChronicleMap#acquireUsing acquireUsing()} method, if
-     * the key is absent in the map, created by this builder.
+     * Specifies the value to be put for each key queried in {@link ChronicleMap#acquireUsing
+     * acquireUsing()} method, if the key is absent in the map, created by this builder.
      *
-     * <p>This configuration overrides any previous {@link #defaultValueProvider(DefaultValueProvider)} configuration
-     * to this {@code AbstractChronicleMapBuilder}.
-     * </p>
+     * <p>This configuration overrides any previous {@link #defaultValueProvider(DefaultValueProvider)}
+     * configuration to this {@code AbstractChronicleMapBuilder}. </p>
      *
-     * @param defaultValue the default value to be put to the map for absent keys during {@code acquireUsing()} calls
+     * @param defaultValue the default value to be put to the map for absent keys during {@code
+     *                     acquireUsing()} calls
      * @return this builder object back
      */
     public B defaultValue(V defaultValue) {
@@ -716,12 +717,11 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     /**
-     * Specifies the function to obtain a value for the key during {@link ChronicleMap#acquireUsing acquireUsing()}
-     * calls, if the key is absent in the map, created by this builder.
+     * Specifies the function to obtain a value for the key during {@link ChronicleMap#acquireUsing
+     * acquireUsing()} calls, if the key is absent in the map, created by this builder.
      *
-     * <p>This configuration overrides any previous {@link #defaultValue(Object)} configuration to this {@code
-     * AbstractChronicleMapBuilder}.
-     * </p>
+     * <p>This configuration overrides any previous {@link #defaultValue(Object)} configuration to
+     * this {@code AbstractChronicleMapBuilder}. </p>
      *
      * @param defaultValueProvider the strategy to obtain a default value by the absent key
      * @return this builder object back
@@ -831,19 +831,9 @@ public abstract class AbstractChronicleMapBuilder<K, V,
 
     private ChronicleMap<K, V> createStatelessMap(StatelessBuilder statelessBuilder) throws IOException {
         preMapConstruction();
-
-        final KeyValueSerializer<K, V> keyValueSerializer
-                = new KeyValueSerializer<K, V>(keyBuilder, valueBuilder);
-
-        final Class<K> kClass = keyBuilder.eClass;
-        final Class<V> vClass = valueBuilder.eClass;
-
         return new StatelessChronicleMap<K, V>(
-                keyValueSerializer,
                 statelessBuilder,
-                entrySize(),
-                kClass,
-                vClass, putReturnsNull,removeReturnsNull);
+                this);
     }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {

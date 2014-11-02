@@ -707,7 +707,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
                     try {
                         serverChannel.register(TcpReplicator.this.selector, OP_ACCEPT, attached);
                     } catch (ClosedChannelException e) {
-                        LOG.error("", e);
+                        LOG.debug("", e);
                     }
 
                 }

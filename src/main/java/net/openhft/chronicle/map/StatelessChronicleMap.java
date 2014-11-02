@@ -97,18 +97,19 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private long transactionID;
 
-    StatelessChronicleMap(final KeyValueSerializer<K, V> keyValueSerializer,
-                          final StatelessBuilder builder,
-                          int maxEntrySize, Class<K> kClass, Class<V> vClass,
-                          boolean putReturnsNull,
-                          boolean removeReturnsNull) throws IOException {
-        this.keyValueSerializer = keyValueSerializer;
+    StatelessChronicleMap(final StatelessBuilder builder,
+                          final AbstractChronicleMapBuilder chronicleMapBuilder) throws IOException {
+
         this.builder = builder;
-        this.maxEntrySize = maxEntrySize;
-        this.kClass = kClass;
-        this.vClass = vClass;
-        this.putReturnsNull = putReturnsNull;
-        this.removeReturnsNull = removeReturnsNull;
+        this.keyValueSerializer = new KeyValueSerializer<K, V>(chronicleMapBuilder.keyBuilder,
+                chronicleMapBuilder.valueBuilder);
+        this.putReturnsNull = chronicleMapBuilder.putReturnsNull();
+        this.removeReturnsNull = chronicleMapBuilder.removeReturnsNull();
+        this.maxEntrySize = chronicleMapBuilder.entrySize();
+        this.vClass = chronicleMapBuilder.valueBuilder.eClass;
+        this.kClass = chronicleMapBuilder.keyBuilder.eClass;
+        // this.putReturnsNull = putReturnsNull;
+        // this.removeReturnsNull = removeReturnsNull;
         attemptConnect(builder.remoteAddress());
 
         buffer = allocateDirect(maxEntrySize).order(ByteOrder.nativeOrder());
