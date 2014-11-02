@@ -91,6 +91,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     private final ChronicleHashErrorListener errorListener;
     private final int segmentHeaderSize;
     private final HashSplitting hashSplitting;
+    final boolean isNativeValueClass;
     transient Provider<BytesReader<K>> keyReaderProvider;
     transient Provider<KI> keyInteropProvider;
     transient Provider<BytesReader<V>> valueReaderProvider;
@@ -115,6 +116,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         SerializationBuilder<V> valueBuilder = builder.valueBuilder;
         vClass = valueBuilder.eClass;
+        isNativeValueClass = vClass.getName().endsWith("$$Native");
         valueSizeMarshaller = valueBuilder.sizeMarshaller();
         originalValueReader = valueBuilder.reader();
 
@@ -331,7 +333,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     @Override
-    public V putIfAbsent( K key, V value) {
+    public V putIfAbsent(K key, V value) {
         return put0(key, value, false);
     }
 
@@ -353,21 +355,29 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     @Override
     public V get(Object key) {
-        return lookupUsing((K) key, null, false);
+
+        try (LockedEntry<K, V> kvLockedEntry = acquireUsing((K) key, null,
+                          LockType.READ_LOCK)) {
+            return kvLockedEntry.value();
+        }
     }
 
     @Override
     public V getUsing(K key, V usingValue) {
-        return lookupUsing(key, usingValue, false);
+
+        try (LockedEntry<K, V> kvLockedEntry = acquireUsing(key, usingValue,
+                LockType.READ_LOCK)) {
+            return kvLockedEntry.value();
+        }
     }
 
     @Override
-    public SegmentLock acquireUsingReadLocked(K key, V usingValue) {
+    public LockedEntry<K, V> acquireUsingReadLocked(K key, V usingValue) {
         return this.acquireUsing(key, usingValue, LockType.READ_LOCK);
     }
 
     @Override
-    public SegmentLock acquireUsingWriteLocked(K key, V usingValue) {
+    public LockedEntry<K, V> acquireUsingWriteLocked(K key, V usingValue) {
         return this.acquireUsing(key, usingValue, LockType.WRITE_LOCK);
 
         //todo call put() on close of a on-heap value
@@ -379,13 +389,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     // todo remove
     @Override
     public V acquireUsing(K key, V usingValue) {
-        return lookupUsing(key, usingValue, true);
+
+        try (LockedEntry<K, V> kvLockedEntry = acquireUsing(key, usingValue, LockType.WRITE_LOCK)) {
+            return kvLockedEntry.value();
+        }
     }
 
 
-    private enum LockType {READ_LOCK, WRITE_LOCK}
+    enum LockType {READ_LOCK, WRITE_LOCK}
 
-    SegmentLock acquireUsing(K key, V value, LockType lockTypeType) {
+    LockedEntry<K, V> acquireUsing(K key, V value, LockType lockTypeType) {
         checkKey(key);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
@@ -397,16 +410,31 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         long segmentHash = segmentHash(hash);
 
         Segment segment = segments[segmentNum];
-        SegmentLock lock = (lockTypeType == LockType.WRITE_LOCK) ? segment.writeLock() : segment.readLock();
+        MutableLockedEntry<K, V, MKI, KI> lock = (lockTypeType == LockType.WRITE_LOCK)
+                ? segment.writeLock()
+                : segment.readLock();
+
+        V v = segment.acquireWithoutLock(copies, metaKeyInterop, keyInterop, key, value,
+                segmentHash, lockTypeType == LockType.WRITE_LOCK);
 
 
-        segment.acquireWithoutLock(copies, metaKeyInterop, keyInterop, key, value,
-                segmentHash, false);
+        // we want to call put on heap objects that don't currently exist in the map
+        if (v == null && !isNativeValueClass && lockTypeType == LockType.WRITE_LOCK) {
+            lock.copies = copies;
+            lock.metaKeyInterop = metaKeyInterop;
+            lock.keyInterop = keyInterop;
+            lock.segmentHash = segmentHash;
+            v = value;
+        }
+
+        lock.value(v);
+        lock.key(key);
+
         return lock;
 
     }
 
-    V lookupUsing(K key, V value, boolean create) {
+    /*
         checkKey(key);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
@@ -418,12 +446,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         long segmentHash = segmentHash(hash);
         Segment segment = segments[segmentNum];
 
-        try (SegmentLock lock = create ? segment.writeLock() : segment.readLock()) {
+        try (LockedEntry lock = create ? segment.writeLock() : segment.readLock()) {
             return segment.acquireWithoutLock(copies, metaKeyInterop, keyInterop, key, value,
                     segmentHash, create);
-        }
+        }*/
 
-    }
+    // }
 
     @Override
     public boolean containsKey(final Object k) {
@@ -664,19 +692,41 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         private MultiMap hashLookup;
         private long nextPosToSearchFrom = 0L;
 
-        final SegmentLock readUnlock = new SegmentLock() {
+        final MutableLockedEntry<K, V, MKI, KI> readUnlock = new MutableLockedEntry<K, V, MKI, KI>() {
             @Override
             public void close() {
                 Segment.this.readUnlock();
             }
         };
 
-        final SegmentLock writeUnlock = new SegmentLock() {
+        /**
+         * close for native values does not call put on close
+         */
+        final MutableLockedEntry<K, V, MKI, KI> nativeWriteUnlock = new MutableLockedEntry<K, V,
+                MKI, KI>() {
             @Override
             public void close() {
                 Segment.this.writeUnlock();
             }
         };
+
+        /**
+         * close for heap values calls put on close
+         */
+        final MutableLockedEntry<K, V, MKI, KI>
+                heapWriteUnlock = new MutableLockedEntry<K, V, MKI, KI>() {
+            @Override
+            public void close() {
+
+                if (copies != null)
+                    putWithoutLock(copies, metaKeyInterop, keyInterop, key(), value(),
+                            segmentHash, true);
+
+                copies = null;
+                Segment.this.writeUnlock();
+            }
+        };
+
 
         /**
          * @param index the index of this segment held by the map
@@ -759,7 +809,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
 
-        public SegmentLock readLock() throws IllegalStateException {
+        public MutableLockedEntry<K, V, MKI, KI> readLock() throws IllegalStateException {
             while (true) {
                 final boolean success = segmentHeader.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
                 if (success) return readUnlock;
@@ -772,10 +822,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             }
         }
 
-        public SegmentLock writeLock() throws IllegalStateException {
+        public MutableLockedEntry<K, V, MKI, KI> writeLock() throws IllegalStateException {
             while (true) {
                 final boolean success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
-                if (success) return writeUnlock;
+                if (success) return isNativeValueClass ? nativeWriteUnlock : heapWriteUnlock;
+
                 if (currentThread().isInterrupted()) {
                     throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
                 } else {
@@ -926,30 +977,34 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
               long hash2, boolean replaceIfPresent) {
             writeLock();
             try {
-                long keySize = metaKeyInterop.size(keyInterop, key);
-                hashLookup.startSearch(hash2);
-                for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
-                    long offset = offsetFromPos(pos);
-                    MultiStoreBytes entry = entry(offset);
-                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
-                        continue;
-                    // key is found
-                    entry.skip(keySize);
-                    if (replaceIfPresent) {
-                        return replaceValueOnPut(copies, key, value, entry, pos, offset,
-                                !putReturnsNull, hashLookup);
-                    } else {
-                        return putReturnsNull ? null : readValue(copies, entry, null);
-                    }
-                }
-                // key is not found
-                long offset = putEntry(copies, metaKeyInterop, keyInterop, key, keySize, value);
-                incrementSize();
-                notifyPut(offset, true, key, value, posFromOffset(offset));
-                return null;
+                return putWithoutLock(copies, metaKeyInterop, keyInterop, key, value, hash2, replaceIfPresent);
             } finally {
                 writeUnlock();
             }
+        }
+
+        private V putWithoutLock(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V value, long hash2, boolean replaceIfPresent) {
+            long keySize = metaKeyInterop.size(keyInterop, key);
+            hashLookup.startSearch(hash2);
+            for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
+                long offset = offsetFromPos(pos);
+                MultiStoreBytes entry = entry(offset);
+                if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
+                    continue;
+                // key is found
+                entry.skip(keySize);
+                if (replaceIfPresent) {
+                    return replaceValueOnPut(copies, key, value, entry, pos, offset,
+                            !putReturnsNull, hashLookup);
+                } else {
+                    return putReturnsNull ? null : readValue(copies, entry, null);
+                }
+            }
+            // key is not found
+            long offset = putEntry(copies, metaKeyInterop, keyInterop, key, keySize, value);
+            incrementSize();
+            notifyPut(offset, true, key, value, posFromOffset(offset));
+            return null;
         }
 
         V replaceValueOnPut(ThreadLocalCopies copies, K key, V value, MultiStoreBytes entry, long pos,
@@ -1561,4 +1616,32 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             return super.setValue(value);
         }
     }
+
+    static abstract class MutableLockedEntry<K, V, MKI, KI> implements LockedEntry<K, V> {
+        ThreadLocalCopies copies;
+        MKI metaKeyInterop;
+        KI keyInterop;
+        long segmentHash;
+
+        private K key;
+        private V value;
+
+        public K key() {
+            return key;
+        }
+
+        public void key(K key) {
+            this.key = key;
+        }
+
+        public V value() {
+            return value;
+        }
+
+        public void value(V value) {
+            this.value = value;
+        }
+
+    }
 }
+

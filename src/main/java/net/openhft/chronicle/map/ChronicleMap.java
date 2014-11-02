@@ -142,9 +142,9 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
 
 
     // todo document
-    SegmentLock acquireUsingReadLocked(@NotNull  K key, @NotNull V usingValue);
+    LockedEntry<K,V> acquireUsingReadLocked(@NotNull  K key, @NotNull V usingValue);
 
     // todo document
-    SegmentLock acquireUsingWriteLocked(@NotNull  K key, @NotNull V usingValue);
+    LockedEntry<K,V> acquireUsingWriteLocked(@NotNull  K key, @NotNull V usingValue);
 }
 

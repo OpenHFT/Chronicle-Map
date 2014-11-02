@@ -45,8 +45,7 @@ import static net.openhft.lang.MemoryUnit.*;
 import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 
 /**
- * <h2>A Replicating Multi Master HashMap</h2>
- * <p>Each remote hash map, mirrors its changes over to
+ * <h2>A Replicating Multi Master HashMap</h2> <p>Each remote hash map, mirrors its changes over to
  * another remote hash map, neither hash map is considered the master store of data, each hash map
  * uses timestamps to reconcile changes. We refer to an instance of a remote hash-map as a node. A
  * node will be connected to any number of other nodes, for the first implementation the maximum
@@ -58,11 +57,9 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * nature of this multi master implementation,  this return value will only be the old value on the
  * nodes local data store. In other words the nodes are only concurrent locally. Its worth realising
  * that another node performing exactly the same operation may return a different value. However
- * reconciliation will ensure the maps themselves become eventually consistent.
- * </p>
- * <h2>Reconciliation </h2>
- * <p>If two ( or more nodes ) were to receive a change to their maps for the
- * same key but different values, say by a user of the maps, calling the put(key, value). Then,
+ * reconciliation will ensure the maps themselves become eventually consistent. </p>
+ * <h2>Reconciliation </h2> <p>If two ( or more nodes ) were to receive a change to their maps for
+ * the same key but different values, say by a user of the maps, calling the put(key, value). Then,
  * initially each node will update its local store and each local store will hold a different value,
  * but the aim of multi master replication is to provide eventual consistency across the nodes. So,
  * with multi master when ever a node is changed it will notify the other nodes of its change. We
@@ -71,8 +68,7 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * and value. Eventual consistency is achieved by looking at the timestamp from the remote node, if
  * for a given key, the remote nodes timestamp is newer than the local nodes timestamp, then the
  * event from the remote node will be applied to the local node, otherwise the event will be
- * ignored. </p>
- * <p>However there is an edge case that we have to concern ourselves with, If two
+ * ignored. </p> <p>However there is an edge case that we have to concern ourselves with, If two
  * nodes update their map at the same time with different values, we have to deterministically
  * resolve which update wins, because of eventual consistency both nodes should end up locally
  * holding the same data. Although it is rare two remote nodes could receive an update to their maps
@@ -81,8 +77,7 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * newest timestamp should win, but in this example both timestamps are the same, and the decision
  * made to one node should be identical to the decision made to the other. We resolve this simple
  * dilemma by using a node identifier, each node will have a unique identifier, the update from the
- * node with the smallest identifier wins.
- * </p>
+ * node with the smallest identifier wins. </p>
  *
  * @param <K> the entries key type
  * @param <V> the entries value type
@@ -260,19 +255,41 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         return (Segment) segments[segmentNum];
     }
 
-    @Override
-    V lookupUsing(K key, V value, boolean create) {
+    LockedEntry<K, V> acquireUsing(K key, V value, LockType lockTypeType) {
         checkKey(key);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
-        KI keyWriter = keyInteropProvider.get(copies, originalKeyInterop);
+        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
         copies = metaKeyInteropProvider.getCopies(copies);
-        MKI metaKeyWriter =
-                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyWriter, key);
-        long hash = metaKeyWriter.hash(keyWriter, key);
+        MKI metaKeyInterop =
+                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
+        long hash = metaKeyInterop.hash(keyInterop, key);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
-        return segment(segmentNum).acquire(copies, metaKeyWriter, keyWriter, key, value,
-                segmentHash, create, create ? timeProvider.currentTimeMillis() : 0L);
+
+        Segment segment = segment(segmentNum);
+        MutableLockedEntry<K, V, MKI, KI> lock = (lockTypeType == LockType.WRITE_LOCK)
+                ? segment.writeLock()
+                : segment.readLock();
+
+        V v = segment.acquireWithoutLock(copies, metaKeyInterop, keyInterop, key, value,
+                segmentHash, lockTypeType == LockType.WRITE_LOCK,
+                (lockTypeType == LockType.WRITE_LOCK) ? timeProvider.currentTimeMillis() : 0L);
+
+
+        // we want to call put on heap objects that don't currently exist in the map
+        if (v == null && !isNativeValueClass && lockTypeType == LockType.WRITE_LOCK) {
+            lock.copies = copies;
+            lock.metaKeyInterop = metaKeyInterop;
+            lock.keyInterop = keyInterop;
+            lock.segmentHash = segmentHash;
+            v = value;
+        }
+
+        lock.value(v);
+        lock.key(key);
+
+        return lock;
+
     }
 
     @Override
@@ -611,50 +628,38 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             return result;
         }
 
+        V acquireWithoutLock(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
+                             long hash2, boolean create, long timestamp) {
 
-        /**
-         * @see VanillaChronicleMap.Segment#acquire
-         */
-        V acquire(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop,
-                  K key, V usingValue, long hash2, boolean create, long timestamp) {
-            if (create)
-                writeLock();
-            else
-                readLock();
-            try {
-                long keySize = metaKeyInterop.size(keyInterop, key);
-                MultiStoreBytes entry = acquireTmpBytes();
-                long offset = searchKey(keyInterop, metaKeyInterop, key, keySize, hash2, entry,
-                        hashLookupLiveOnly);
-                if (offset >= 0L) {
-                    return onKeyPresentOnAcquire(copies, key, usingValue, offset, entry);
+
+            long keySize = metaKeyInterop.size(keyInterop, key);
+            MultiStoreBytes entry = acquireTmpBytes();
+            long offset = searchKey(keyInterop, metaKeyInterop, key, keySize, hash2, entry,
+                    hashLookupLiveOnly);
+            if (offset >= 0L) {
+                return onKeyPresentOnAcquire(copies, key, usingValue, offset, entry);
+            } else {
+                if (!create)
+                    return null;
+                if (defaultValueProvider != null) {
+                    V defaultValue = defaultValueProvider.get(key);
+                    copies = valueWriterProvider.getCopies(copies);
+                    VW valueWriter = valueWriterProvider.get(copies, originalValueWriter);
+                    copies = metaValueWriterProvider.getCopies(copies);
+                    MetaBytesWriter<V, VW> metaValueWriter = metaValueWriterProvider.get(
+                            copies, originalMetaValueWriter, valueWriter, defaultValue);
+
+                    offset = putEntry(metaKeyInterop, keyInterop, key, keySize, hash2,
+                            localIdentifier, timestamp, hashLookupLiveOnly,
+                            metaValueWriter, valueWriter, defaultValue);
                 } else {
-                    if (!create)
-                        return null;
-                    if (defaultValueProvider != null) {
-                        V defaultValue = defaultValueProvider.get(key);
-                        copies = valueWriterProvider.getCopies(copies);
-                        VW valueWriter = valueWriterProvider.get(copies, originalValueWriter);
-                        copies = metaValueWriterProvider.getCopies(copies);
-                        MetaBytesWriter<V, VW> metaValueWriter = metaValueWriterProvider.get(
-                                copies, originalMetaValueWriter, valueWriter, defaultValue);
-
-                        offset = putEntry(metaKeyInterop, keyInterop, key, keySize, hash2,
-                                localIdentifier, timestamp, hashLookupLiveOnly,
-                                metaValueWriter, valueWriter, defaultValue);
-                    } else {
-                        offset = putEntry(metaKeyInterop, keyInterop, key, keySize, hash2,
-                                localIdentifier, timestamp, hashLookupLiveOnly,
-                                prepareValueBytesAsWriter, null, key);
-                    }
-                    return onKeyAbsentOnAcquire(copies, key, keySize, usingValue, offset);
+                    offset = putEntry(metaKeyInterop, keyInterop, key, keySize, hash2,
+                            localIdentifier, timestamp, hashLookupLiveOnly,
+                            prepareValueBytesAsWriter, null, key);
                 }
-            } finally {
-                if (create)
-                    writeUnlock();
-                else
-                    readUnlock();
+                return onKeyAbsentOnAcquire(copies, key, keySize, usingValue, offset);
             }
+
         }
 
         @Override
@@ -869,8 +874,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         /**
          * Used only with replication, its sometimes possible to receive an old ( or stale update )
          * from a remote map. This method is used to determine if we should ignore such updates.
-         *  <p>We can reject put() and removes() when comparing times stamps with remote
-         * systems
+         * <p>We can reject put() and removes() when comparing times stamps with remote systems
          *
          * @param entry      the maps entry
          * @param timestamp  the time the entry was created or updated
@@ -1321,8 +1325,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Always throws {@code NotSerializableException} since instances of this class are not intended to be
-         * serializable.
+         * Always throws {@code NotSerializableException} since instances of this class are not
+         * intended to be serializable.
          */
         private void writeObject(ObjectOutputStream out) throws IOException {
             throw new NotSerializableException(getClass().getCanonicalName());
@@ -1341,18 +1345,15 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     /**
-     * <p>Once a change occurs to a map, map replication requires that these changes are picked up by
-     * another thread, this class provides an iterator like interface to poll for such changes.
-     * </p>
-     * <p>In most cases the thread that adds data to the node is unlikely to be the same thread that
-     * replicates the data over to the other nodes, so data will have to be marshaled between the
-     * main thread storing data to the map, and the thread running the replication.
-     * </p>
-     * <p>One way to perform this marshalling, would be to pipe the data into a queue. However, This class
+     * <p>Once a change occurs to a map, map replication requires that these changes are picked up
+     * by another thread, this class provides an iterator like interface to poll for such changes.
+     * </p> <p>In most cases the thread that adds data to the node is unlikely to be the same thread
+     * that replicates the data over to the other nodes, so data will have to be marshaled between
+     * the main thread storing data to the map, and the thread running the replication. </p> <p>One
+     * way to perform this marshalling, would be to pipe the data into a queue. However, This class
      * takes another approach. It uses a bit set, and marks bits which correspond to the indexes of
      * the entries that have changed. It then provides an iterator like interface to poll for such
-     * changes.
-     * </p>
+     * changes. </p>
      *
      * @author Rob Austin.
      */

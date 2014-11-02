@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.map.Alignment.*;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
 public class ChronicleMapTest {
@@ -469,7 +470,7 @@ public class ChronicleMapTest {
 
     @Test
     public void testGetWithoutAcquireFirst() throws Exception {
-        ChronicleMap<CharSequence, LongValue> map = getSharedMap(10 , 1, 24);
+        ChronicleMap<CharSequence, LongValue> map = getSharedMap(10, 1, 24);
         assertNull(map.getUsing("key", DataValueClasses.newDirectReference(LongValue.class)));
 
         map.close();
@@ -1249,4 +1250,59 @@ public class ChronicleMapTest {
             }
         }
     }
+
+    @Test
+    public void testOffheapAcquireUsingLocked() throws IOException {
+        OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+                .of(CharSequence.class, LongValue.class)
+                .entries(1000)
+                .entrySize(16);
+        File tmpFile = File.createTempFile("testAcquireUsingLocked", ".deleteme");
+        tmpFile.deleteOnExit();
+        final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
+
+        LongValue value = nativeLongValue();
+        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingWriteLocked("one", value)) {
+            lockedEntry.value().addValue(1);
+        }
+
+        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingReadLocked("two", value)) {
+            assertEquals(null, lockedEntry.value());
+        }
+
+        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingReadLocked("one", value)) {
+            assertEquals(1, lockedEntry.value().getValue());
+        }
+        map.close();
+    }
+
+    @Test
+    public void testOnheapAcquireUsingLocked() throws IOException {
+        ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
+                .of(CharSequence.class, LongValue.class)
+                .entries(1000)
+                .entrySize(40);
+        File tmpFile = File.createTempFile("testAcquireUsingLocked", ".deleteme");
+        tmpFile.deleteOnExit();
+        final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
+
+        LongValue value = DataValueClasses.newInstance(LongValue.class);
+
+
+        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingWriteLocked("one", value)) {
+            lockedEntry.value().addValue(1);
+        }
+
+        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingReadLocked("two", value)) {
+            assertEquals(null, lockedEntry.value());
+        }
+
+        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingReadLocked("one", value)) {
+            assertEquals(1, lockedEntry.value().getValue());
+        }
+
+        map.close();
+    }
 }
+
+

@@ -252,12 +252,12 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public SegmentLock acquireUsingReadLocked(K key, V usingValue) {
+    public LockedEntry acquireUsingReadLocked(K key, V usingValue) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public SegmentLock acquireUsingWriteLocked(K key, V usingValue) {
+    public LockedEntry acquireUsingWriteLocked(K key, V usingValue) {
         throw new UnsupportedOperationException();
     }
 
