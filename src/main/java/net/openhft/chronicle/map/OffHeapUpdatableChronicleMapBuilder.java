@@ -37,7 +37,7 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     OffHeapUpdatableChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
-        super(keyClass, valueClass, Alignment.OF_4_BYTES);
+        super(keyClass, valueClass);
         prepareValueBytesOnAcquire(new ZeroOutValueBytes<K, V>(valueSize()));
     }
 
@@ -74,7 +74,7 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
      * alignment. I. e. if you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual
      * entry size will be 24 (20 aligned to 8 bytes).
      *
-     * <p>Default is {@link Alignment#NO_ALIGNMENT}.
+     * <p>Default is {@link Alignment#OF_4_BYTES} for Byteable values.
      *
      * @param alignment the new alignment of the maps constructed by this builder
      * @return this {@code ChronicleMapBuilder} back

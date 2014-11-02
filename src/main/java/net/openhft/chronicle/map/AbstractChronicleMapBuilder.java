@@ -115,7 +115,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     private int valueSize = 0;
     private V sampleValue;
     private int entrySize = 0;
-    private Alignment alignment;
+    private Alignment alignment = null;
     private long entries = 1 << 20; // 1 million by default
     private long lockTimeOut = 2000;
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
@@ -138,10 +138,9 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     private StatelessBuilder statelessBuilder;
     private File file;
 
-    AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass, Alignment alignment) {
+    AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
         valueBuilder = new SerializationBuilder<V>(valueClass, SerializationBuilder.Role.VALUE);
-        this.alignment = alignment;
     }
 
     protected static boolean offHeapReference(Class valueClass) {
@@ -318,7 +317,9 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     Alignment entryAndValueAlignment() {
-        return alignment;
+        if (alignment != null)
+            return alignment;
+        return offHeapReference(valueBuilder.eClass) ? Alignment.OF_4_BYTES : Alignment.NO_ALIGNMENT;
     }
 
     @Override
