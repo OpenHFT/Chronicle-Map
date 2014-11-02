@@ -761,7 +761,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         public MutableLockedEntry<K, V, MKI, KI> readLock() throws IllegalStateException {
             while (true) {
                 final boolean success = segmentHeader.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
-                if (success) return readUnlock;
+                if (success) {
+                    ReadLocked<K, V, MKI, KI> readLocked = readUnlockTL.get();
+                    if (readLocked == null)
+                        readUnlockTL.set(readLocked = new TLReadLocked());
+                    return readLocked;
+                }
                 if (currentThread().isInterrupted()) {
                     throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
                 } else {
@@ -774,7 +779,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         public MutableLockedEntry<K, V, MKI, KI> writeLock() throws IllegalStateException {
             while (true) {
                 final boolean success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
-                if (success) return isNativeValueClass ? nativeWriteUnlock : heapWriteUnlock;
+                if (success) return writeUnlock;
 
                 if (currentThread().isInterrupted()) {
                     throw new IllegalStateException(new InterruptedException("Unable to obtain lock, interrupted"));
@@ -1382,7 +1387,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             return hashLookup;
         }
 
-        private class PosPresentOnce implements MultiMap.EntryConsumer {
+        class PosPresentOnce implements MultiMap.EntryConsumer {
             long pos;
             int count = 0;
 
@@ -1393,6 +1398,60 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             @Override
             public void accept(long hash, long pos) {
                 if (this.pos == pos) count++;
+            }
+        }
+
+        class NativeWriteLocked extends VanillaChronicleMap.WriteLocked<K, V, MKI, KI> {
+            @Override
+            public void close() {
+                Segment.this.writeUnlock();
+            }
+
+            @Override
+            public void dontPutOnClose() {
+                throw new IllegalStateException(
+                        "This method is not supported for native value classes");
+            }
+
+            @Override
+            public void removeEntry() {
+                if (copies != null)
+                    removeWithoutLock(copies, metaKeyInterop, keyInterop, key(), null, segmentHash);
+            }
+        }
+
+        class HeapWriteLocked extends VanillaChronicleMap.WriteLocked<K, V, MKI, KI> {
+
+            private boolean putOnClose = true;
+
+            @Override
+            public void close() {
+                if (putOnClose)
+                    putWithoutLock(copies, metaKeyInterop, keyInterop, key(), value(),
+                            segmentHash, true);
+
+                copies = null;
+                putOnClose = true;
+
+                Segment.this.writeUnlock();
+            }
+
+            @Override
+            public void dontPutOnClose() {
+                putOnClose = false;
+            }
+
+            @Override
+            public void removeEntry() {
+                putOnClose = false;
+                removeWithoutLock(copies, metaKeyInterop, keyInterop, key(), null, segmentHash);
+            }
+        }
+
+        class TLReadLocked extends VanillaChronicleMap.ReadLocked<K, V, MKI, KI> {
+            @Override
+            public void close() {
+                Segment.this.readUnlock();
             }
         }
     }
@@ -1493,7 +1552,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             final long offset = segment.offsetFromPos(pos);
             final NativeBytes entry = segment.entry(offset);
 
-            final long limit = entry.limit();
             final long keySize = keySizeMarshaller.readSize(entry);
             long position = entry.position();
             final long segmentHash = segmentHash(Hasher.hash(entry, position, position + keySize));
@@ -1614,8 +1672,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         public boolean present() {
             return present;
         }
-
-
     }
 
     private static abstract class WriteLocked<K, V, MKI, KI> extends MutableLockedEntry<K, V, MKI,
