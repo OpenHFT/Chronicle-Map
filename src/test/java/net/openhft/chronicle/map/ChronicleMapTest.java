@@ -575,25 +575,28 @@ public class ChronicleMapTest {
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
 //        int runs = Integer.getInteger("runs", 10);
+        int procs = Runtime.getRuntime().availableProcessors();
+        int threads = procs * 2; // runs > 100 ? procs / 2 : procs;
+        ExecutorService es = Executors.newFixedThreadPool(procs);
         for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
+            // JAVA 8 produces more garbage than previous versions for internal work.
+//            System.gc();
             final long entries = runs * 1000 * 1000L;
             OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
                     .of(CharSequence.class, LongValue.class)
                     .entries(entries)
+                    .entryAndValueAlignment(OF_8_BYTES)
                     .entrySize(24);
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
             final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
 
-            int procs = Runtime.getRuntime().availableProcessors();
-            int threads = procs * 2; // runs > 100 ? procs / 2 : procs;
-            int count = runs > 500 ? runs > 1200 ? 1 : 3 : 5;
-            final int independence = 8; // Math.min(procs, runs > 500 ? 8 : 4);
+            int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
+            final int independence = Math.min(procs, runs > 500 ? 8 : 4);
             System.out.println("\nKey size: " + runs + " Million entries. " + builder);
             for (int j = 0; j < count; j++) {
                 long start = System.currentTimeMillis();
-                ExecutorService es = Executors.newFixedThreadPool(procs);
                 List<Future> futures = new ArrayList<Future>();
                 for (int i = 0; i < threads; i++) {
                     final int t = i;
@@ -625,8 +628,6 @@ public class ChronicleMapTest {
                 for (Future future : futures) {
                     future.get();
                 }
-                es.shutdown();
-                es.awaitTermination(runs / 10 + 1, TimeUnit.MINUTES);
                 long time = System.currentTimeMillis() - start;
                 System.out.printf("Throughput %.1f M ops/sec%n", threads * entries / independence / 1000.0 / time);
             }
@@ -635,21 +636,95 @@ public class ChronicleMapTest {
             map.close();
             file.delete();
         }
+        es.shutdown();
+        es.awaitTermination(1, TimeUnit.MINUTES);
+    }
+    @Test
+    @Ignore
+    public void testAcquireLockedPerf()
+            throws IOException, ClassNotFoundException, IllegalAccessException,
+            InstantiationException, InterruptedException, ExecutionException {
+//        int runs = Integer.getInteger("runs", 10);
+        int procs = Runtime.getRuntime().availableProcessors();
+        int threads = procs * 2; // runs > 100 ? procs / 2 : procs;
+        ExecutorService es = Executors.newFixedThreadPool(procs);
+        for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
+            // JAVA 8 produces more garbage than previous versions for internal work.
+//            System.gc();
+            final long entries = runs * 1000 * 1000L;
+            OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+                    .of(CharSequence.class, LongValue.class)
+                    .entries(entries)
+                    .entryAndValueAlignment(OF_8_BYTES)
+                    .entrySize(24);
+
+            File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
+            tmpFile.deleteOnExit();
+            final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
+
+            int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
+            final int independence = Math.min(procs, runs > 500 ? 8 : 4);
+            System.out.println("\nKey size: " + runs + " Million entries. " + builder);
+            for (int j = 0; j < count; j++) {
+                long start = System.currentTimeMillis();
+                List<Future> futures = new ArrayList<Future>();
+                for (int i = 0; i < threads; i++) {
+                    final int t = i;
+                    futures.add(es.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            LongValue value = nativeLongValue();
+                            StringBuilder sb = new StringBuilder();
+                            long next = 50 * 1000 * 1000;
+                            // use a factor to give up to 10 digit numbers.
+                            int factor = Math.max(1, (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
+                            for (long j = t % independence; j < entries + independence - 1; j += independence) {
+                                sb.setLength(0);
+                                sb.append("us:");
+                                sb.append(j * factor);
+                                long n;
+                                try(WriteContext wc = map.acquireUsingLocked(sb, value)) {
+                                    n = value.addValue(1);
+                                }
+                                assert n > 0 && n < 1000 : "Counter corrupted " + n;
+                                if (t == 0 && j >= next) {
+                                    long size = map.longSize();
+                                    if (size < 0) throw new AssertionError("size: " + size);
+                                    System.out.println(j + ", size: " + size);
+                                    next += 50 * 1000 * 1000;
+                                }
+                            }
+                        }
+                    }));
+                }
+                for (Future future : futures) {
+                    future.get();
+                }
+                long time = System.currentTimeMillis() - start;
+                System.out.printf("Throughput %.1f M ops/sec%n", threads * entries / independence / 1000.0 / time);
+            }
+            printStatus();
+            File file = map.file();
+            map.close();
+            file.delete();
+        }
+        es.shutdown();
+        es.awaitTermination(1, TimeUnit.MINUTES);
     }
 
     @Test
     @Ignore
     public void testCHMAcquirePerf() throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException, InterruptedException {
-        for (int runs : new int[]{10, 50, 250, 1000, 2500}) {
+        for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
             System.out.println("Testing " + runs + " million entries");
             final long entries = runs * 1000 * 1000L;
-            final ConcurrentMap<String, AtomicInteger> map = new ConcurrentHashMap<String, AtomicInteger>((int) (entries * 5 / 4), 1.0f, 1024);
 
             int procs = Runtime.getRuntime().availableProcessors();
             int threads = procs * 2;
-            int count = runs > 500 ? runs > 1200 ? 1 : 2 : 3;
+            int count = runs > 500 ? runs > 1200 ? 1 : 2 : 5;
             final int independence = Math.min(procs, runs > 500 ? 8 : 4);
             for (int j = 0; j < count; j++) {
+                final ConcurrentMap<String, AtomicInteger> map = new ConcurrentHashMap<String, AtomicInteger>((int) (entries * 5 / 4), 1.0f, 1024);
                 long start = System.currentTimeMillis();
                 ExecutorService es = Executors.newFixedThreadPool(procs);
                 for (int i = 0; i < threads; i++) {
@@ -668,7 +743,7 @@ public class ChronicleMapTest {
                                 String key = sb.toString();
                                 AtomicInteger count = map.get(key);
                                 if (count == null) {
-                                    map.put(key, new AtomicInteger());
+                                    map.putIfAbsent(key, new AtomicInteger());
                                     count = map.get(key);
                                 }
                                 count.getAndIncrement();
