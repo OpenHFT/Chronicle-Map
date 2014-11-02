@@ -1449,12 +1449,14 @@ public class ChronicleMapTest {
         }
 
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            context.value().addValue(1);
+            LongValue value1 = context.value();
+            value1.addValue(1);
         }
 
         // check that the entry was removed
         try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
-            assertEquals(2, context.value().getValue());
+            LongValue value1 = context.value();
+            assertEquals(2, value1.getValue());
         }
 
         map.close();
