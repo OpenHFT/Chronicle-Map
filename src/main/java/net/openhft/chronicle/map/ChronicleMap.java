@@ -103,6 +103,9 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      */
      V getUsing(K key, V usingValue);
 
+    // todo document
+    ReadContext<K,V> getUsingLocked(@NotNull K key, @NotNull V usingValue);
+
     /**
      * Acquire a value for a key, creating if absent.
      *
@@ -142,9 +145,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
 
 
     // todo document
-    LockedEntry<K,V> acquireUsingReadLocked(@NotNull  K key, @NotNull V usingValue);
+    WriteContext<K,V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);
 
-    // todo document
-    LockedEntry<K,V> acquireUsingWriteLocked(@NotNull  K key, @NotNull V usingValue);
+
 }
 

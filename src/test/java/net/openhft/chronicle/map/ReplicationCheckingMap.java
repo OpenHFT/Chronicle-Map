@@ -225,7 +225,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @Override
     public Set<Entry<K, V>> entrySet() {
 
-
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {
@@ -252,12 +251,12 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public LockedEntry acquireUsingReadLocked(K key, V usingValue) {
+    public WriteContext<K, V> acquireUsingLocked(K key, V usingValue) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public LockedEntry acquireUsingWriteLocked(K key, V usingValue) {
+    public ReadContext<K, V> getUsingLocked(K key, V usingValue) {
         throw new UnsupportedOperationException();
     }
 

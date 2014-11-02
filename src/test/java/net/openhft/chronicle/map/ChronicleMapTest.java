@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.map.Alignment.*;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
 public class ChronicleMapTest {
@@ -1251,6 +1250,7 @@ public class ChronicleMapTest {
         }
     }
 
+
     @Test
     public void testOffheapAcquireUsingLocked() throws IOException {
         OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
@@ -1262,17 +1262,49 @@ public class ChronicleMapTest {
         final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
 
         LongValue value = nativeLongValue();
-        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingWriteLocked("one", value)) {
-            lockedEntry.value().addValue(1);
+
+
+        // this will add the entry
+        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            assertEquals(0, context.value().getValue());
+
+            LongValue value1 = context.value();
+            value1.addValue(1);
         }
 
-        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingReadLocked("two", value)) {
-            assertEquals(null, lockedEntry.value());
+        // check that the entry was added
+        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assertEquals(true, context.present());
+            assertEquals(1, context.value().getValue());
         }
 
-        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingReadLocked("one", value)) {
-            assertEquals(1, lockedEntry.value().getValue());
+
+        // this will remove the entry
+        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            context.removeEntry();
         }
+
+        // check that the entry was removed
+        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assertEquals(false, context.present());
+            assertEquals(null, context.value());
+        }
+
+
+        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            assertEquals(0, context.value().getValue());
+        }
+
+
+        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            context.value().addValue(1);
+        }
+
+        // check that the entry was removed
+        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assertEquals(1, context.value().getValue());
+        }
+
         map.close();
     }
 
@@ -1289,16 +1321,65 @@ public class ChronicleMapTest {
         LongValue value = DataValueClasses.newInstance(LongValue.class);
 
 
-        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingWriteLocked("one", value)) {
-            lockedEntry.value().addValue(1);
+        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assertEquals(false, context.present());
+            assertEquals(null, context.value());
         }
 
-        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingReadLocked("two", value)) {
-            assertEquals(null, lockedEntry.value());
+        // this wont add the entry
+        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            context.value().addValue(1);
+            context.dontPutOnClose();
         }
 
-        try (LockedEntry<?, LongValue> lockedEntry = map.acquireUsingReadLocked("one", value)) {
+        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assertEquals(false, context.present());
+            assertEquals(null, context.value());
+        }
+
+        value.setValue(10);
+
+        // this will add the entry
+        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            LongValue value1 = context.value();
+            value1.addValue(1);
+        }
+
+        // check that the entry was added
+        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assertEquals(true, context.present());
+            assertEquals(11, context.value().getValue());
+        }
+
+
+        // this will remove the entry
+        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            context.removeEntry();
+        }
+
+        // check that the entry was removed
+        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assertEquals(false, context.present());
+            assertEquals(null, context.value());
+        }
+
+        value.setValue(1);
+
+        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            assertEquals(1, context.value().getValue());
+        }
+
+        try (ReadContext<?, LongValue> lockedEntry = map.getUsingLocked("one", value)) {
             assertEquals(1, lockedEntry.value().getValue());
+        }
+
+        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            context.value().addValue(1);
+        }
+
+        // check that the entry was removed
+        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assertEquals(2, context.value().getValue());
         }
 
         map.close();

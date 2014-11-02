@@ -401,12 +401,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
     @Override
-    public LockedEntry acquireUsingReadLocked(K key, V usingValue) {
+    public WriteContext<K,V> acquireUsingLocked(K key, V usingValue) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public LockedEntry acquireUsingWriteLocked(K key, V usingValue) {
+    public ReadContext<K,V> getUsingLocked(K key, V usingValue) {
         throw new UnsupportedOperationException();
     }
 

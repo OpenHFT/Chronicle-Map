@@ -255,7 +255,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         return (Segment) segments[segmentNum];
     }
 
-    LockedEntry<K, V> acquireUsing(K key, V value, LockType lockTypeType) {
+    <T extends Context> T lookupUsing(K key, V value, LockType lockTypeType) {
         checkKey(key);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
@@ -285,10 +285,12 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             v = value;
         }
 
+        //todo set dirty when using replication on
+
         lock.value(v);
         lock.key(key);
 
-        return lock;
+        return (T) lock;
 
     }
 
