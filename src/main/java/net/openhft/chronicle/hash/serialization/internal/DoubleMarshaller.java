@@ -18,13 +18,15 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.hash.serialization.BytesInterop;
+import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.Hasher;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
 
 import static java.lang.Double.doubleToLongBits;
 
-public enum DoubleMarshaller implements AgileBytesMarshaller<Double> {
+public enum DoubleMarshaller implements BytesInterop<Double>, BytesReader<Double>, SizeMarshaller {
     INSTANCE;
 
     @Override

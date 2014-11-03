@@ -18,12 +18,15 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.hash.serialization.BytesInterop;
+import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
 
 import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;
 
-enum DummyValueMarshaller implements AgileBytesMarshaller<DummyValue> {
+enum DummyValueMarshaller
+        implements BytesInterop<DummyValue>, BytesReader<DummyValue>, SizeMarshaller {
     INSTANCE;
 
     @Override

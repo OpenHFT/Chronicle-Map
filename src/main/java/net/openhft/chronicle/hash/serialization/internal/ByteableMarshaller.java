@@ -18,8 +18,10 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.hash.serialization.BytesInterop;
+import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.Hasher;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.MultiStoreBytes;
 import net.openhft.lang.io.NativeBytes;
@@ -28,7 +30,8 @@ import net.openhft.lang.io.serialization.impl.AllocateInstanceObjectFactory;
 import net.openhft.lang.model.Byteable;
 import org.jetbrains.annotations.NotNull;
 
-public class ByteableMarshaller<E extends Byteable> implements AgileBytesMarshaller<E> {
+public class ByteableMarshaller<E extends Byteable>
+        implements BytesInterop<E>, BytesReader<E>, SizeMarshaller {
     private static final long serialVersionUID = 0L;
 
     public static <E extends Byteable> ByteableMarshaller<E> of(@NotNull Class<E> eClass) {

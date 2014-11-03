@@ -53,7 +53,7 @@ public class ChronicleSetBuilder<E>
 
     ChronicleSetBuilder(Class<E> keyClass) {
         chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
-                .valueMarshaller(DummyValueMarshaller.INSTANCE);
+                .valueMarshallers(DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE);
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
