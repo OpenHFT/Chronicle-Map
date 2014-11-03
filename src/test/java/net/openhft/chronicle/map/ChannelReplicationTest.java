@@ -54,7 +54,7 @@ public class ChannelReplicationTest {
     public void setup() throws IOException {
         {
             TcpConfig tcpConfig = TcpConfig
-                    .of(8086, new InetSocketAddress("localhost", 8087))
+                    .forSendingNode(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
             hubA = ReplicationHub.builder()
@@ -68,7 +68,7 @@ public class ChannelReplicationTest {
 
         {
             TcpConfig tcpConfig =
-                    TcpConfig.of(8087).heartBeatInterval(1, SECONDS);
+                    TcpConfig.forReceivingOnlyNode(8087).heartBeatInterval(1, SECONDS);
 
             hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
                     .create((byte) 2);

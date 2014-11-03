@@ -30,6 +30,8 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static net.openhft.chronicle.hash.replication.TcpConfig.forSendingNode;
+
 /**
  * Test  ReplicatedChronicleMap where the Replicated is over a TCP Socket
  *
@@ -85,7 +87,7 @@ public class EventListenerTestWithTCPSocketReplication {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            TcpConfig tcpConfig = TcpConfig.of(8076, new InetSocketAddress("localhost", 8077));
+            TcpConfig tcpConfig = forSendingNode(8076, new InetSocketAddress("localhost", 8077));
             ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
@@ -96,7 +98,7 @@ public class EventListenerTestWithTCPSocketReplication {
         // ---------- SERVER2 2 on the same server as ----------
 
         {
-            TcpConfig tcpConfig = TcpConfig.of(8077);
+            TcpConfig tcpConfig = TcpConfig.forReceivingOnlyNode(8077);
             ChronicleMapBuilder<Integer, CharSequence> map2Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
@@ -158,7 +160,7 @@ public class EventListenerTestWithTCPSocketReplication {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            TcpConfig tcpConfig = TcpConfig.of(8076, new InetSocketAddress("localhost", 8077));
+            TcpConfig tcpConfig = forSendingNode(8076, new InetSocketAddress("localhost", 8077));
             ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
@@ -170,7 +172,7 @@ public class EventListenerTestWithTCPSocketReplication {
         // ---------- SERVER2 2 on the same server as ----------
 
         {
-            TcpConfig tcpConfig = TcpConfig.of(8077);
+            TcpConfig tcpConfig = TcpConfig.forReceivingOnlyNode(8077);
             ChronicleMapBuilder<Integer, CharSequence> map2Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
@@ -233,7 +235,7 @@ public class EventListenerTestWithTCPSocketReplication {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            TcpConfig tcpConfig = TcpConfig.of(8076, new InetSocketAddress("localhost", 8077));
+            TcpConfig tcpConfig = forSendingNode(8076, new InetSocketAddress("localhost", 8077));
             ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
@@ -245,7 +247,7 @@ public class EventListenerTestWithTCPSocketReplication {
         // ---------- SERVER2 2 on the same server as ----------
 
         {
-            TcpConfig tcpConfig = TcpConfig.of(8077);
+            TcpConfig tcpConfig = TcpConfig.forReceivingOnlyNode(8077);
             ChronicleMapBuilder<Integer, CharSequence> map2Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)

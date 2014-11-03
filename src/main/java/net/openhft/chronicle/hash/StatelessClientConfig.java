@@ -38,8 +38,8 @@ import java.util.concurrent.TimeUnit;
  * @param <C> the type of {@code ChronicleHash} accessed remotely, {@code ChronicleMap} or
  *           {@code ChronicleSet}
  */
-public interface StatelessClientBuilder<C extends ChronicleHash> {
-    StatelessClientBuilder<C> timeout(long timeout, TimeUnit units);
+public interface StatelessClientConfig<C extends ChronicleHash> {
+    StatelessClientConfig<C> timeout(long timeout, TimeUnit units);
 
     C create() throws IOException;
 }

@@ -26,6 +26,7 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -47,7 +48,7 @@ public class TCPSocketReplicationTest3wayPutReturnsNull {
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        TcpConfig tcpConfig = TcpConfig.of(serverPort, endpoints);
+        TcpConfig tcpConfig = TcpConfig.unknownTopology(serverPort, Arrays.asList(endpoints));
 
         return (T) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .putReturnsNull(true)

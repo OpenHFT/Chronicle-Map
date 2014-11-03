@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-
 public class ThrottlingConfig {
 
     private static final long DEFAULT_BUCKET_INTERVAL = 100L;
@@ -79,7 +78,7 @@ public class ThrottlingConfig {
         return create(maxBits, perUnit, DEFAULT_BUCKET_INTERVAL, DEFAULT_BUCKET_INTERVAL_UNIT);
     }
 
-    public static void checkMillisecondBucketInterval(ThrottlingConfig config, String replicator) {
+    static void checkMillisecondBucketInterval(ThrottlingConfig config, String replicator) {
         if (config.bucketInterval(MILLISECONDS) < 1) {
             throw new IllegalArgumentException(
                     "Minimum throttle bucketing interval of 1 millisecond is supported by " +

@@ -619,9 +619,9 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     @Override
-    public StatelessClientBuilder<ChronicleMap<K, V>> statelessClient(
+    public StatelessClientConfig<ChronicleMap<K, V>> statelessClient(
             InetSocketAddress remoteAddress) {
-        return new StatelessMapBuilder<>(this.clone(), remoteAddress);
+        return new StatelessMapConfig<>(this.clone(), remoteAddress);
     }
 
     /**
@@ -736,8 +736,8 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleMap<K, V>> instance() {
-        return new InstanceBuilder<>(this.clone(), simpleReplication, null, null);
+    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> instance() {
+        return new InstanceConfig<>(this.clone(), simpleReplication, null, null);
     }
 
     @Override
@@ -750,7 +750,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return createWithoutFile(simpleReplication, null);
     }
 
-    ChronicleMap<K, V> create(InstanceBuilder<K, V> ib) throws IOException {
+    ChronicleMap<K, V> create(InstanceConfig<K, V> ib) throws IOException {
         if (ib.file != null) {
             return createWithFile(ib.file, ib.simpleReplication, ib.channel);
         } else {
@@ -830,7 +830,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return establishReplication(map, simpleReplication, channel);
     }
 
-    ChronicleMap<K, V> createStatelessMap(StatelessMapBuilder<K, V> statelessBuilder)
+    ChronicleMap<K, V> createStatelessMap(StatelessMapConfig<K, V> statelessBuilder)
             throws IOException {
         preMapConstruction(false);
         return new StatelessChronicleMap<K, V>(

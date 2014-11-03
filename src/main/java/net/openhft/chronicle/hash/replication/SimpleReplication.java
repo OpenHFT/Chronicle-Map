@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.replication;
 
+//TODO better name
 public final class SimpleReplication extends AbstractReplication {
 
     public static Builder builder() {

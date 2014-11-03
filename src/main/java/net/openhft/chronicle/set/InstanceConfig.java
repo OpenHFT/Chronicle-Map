@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
+import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.SimpleReplication;
 import net.openhft.chronicle.hash.replication.TcpConfig;
@@ -25,38 +25,38 @@ import net.openhft.chronicle.map.ChronicleMap;
 import java.io.File;
 import java.io.IOException;
 
-final class InstanceBuilder<E> implements ChronicleHashInstanceBuilder<ChronicleSet<E>> {
+final class InstanceConfig<E> implements ChronicleHashInstanceConfig<ChronicleSet<E>> {
 
-    private final ChronicleHashInstanceBuilder<ChronicleMap<E, DummyValue>> mapBuilder;
+    private final ChronicleHashInstanceConfig<ChronicleMap<E, DummyValue>> mapConfig;
 
-    InstanceBuilder(ChronicleHashInstanceBuilder<ChronicleMap<E, DummyValue>> mapBuilder) {
-        this.mapBuilder = mapBuilder;
+    InstanceConfig(ChronicleHashInstanceConfig<ChronicleMap<E, DummyValue>> mapConfig) {
+        this.mapConfig = mapConfig;
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleSet<E>> replicated(
+    public ChronicleHashInstanceConfig<ChronicleSet<E>> replicated(
             byte identifier, TcpConfig tcpTransportAndNetwork) {
-        return new InstanceBuilder<>(mapBuilder.replicated(identifier, tcpTransportAndNetwork));
+        return new InstanceConfig<>(mapConfig.replicated(identifier, tcpTransportAndNetwork));
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleSet<E>> replicated(SimpleReplication replication) {
-        return new InstanceBuilder<>(mapBuilder.replicated(replication));
+    public ChronicleHashInstanceConfig<ChronicleSet<E>> replicated(SimpleReplication replication) {
+        return new InstanceConfig<>(mapConfig.replicated(replication));
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleSet<E>> replicatedViaChannel(
+    public ChronicleHashInstanceConfig<ChronicleSet<E>> replicatedViaChannel(
             ReplicationChannel channel) {
-        return new InstanceBuilder<>(mapBuilder.replicatedViaChannel(channel));
+        return new InstanceConfig<>(mapConfig.replicatedViaChannel(channel));
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleSet<E>> persistedTo(File file) {
-        return new InstanceBuilder<>(mapBuilder.persistedTo(file));
+    public ChronicleHashInstanceConfig<ChronicleSet<E>> persistedTo(File file) {
+        return new InstanceConfig<>(mapConfig.persistedTo(file));
     }
 
     @Override
     public ChronicleSet<E> create() throws IOException {
-        return new SetFromMap<>(mapBuilder.create());
+        return new SetFromMap<>(mapConfig.create());
     }
 }

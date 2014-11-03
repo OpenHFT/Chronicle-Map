@@ -16,23 +16,23 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.hash.StatelessClientBuilder;
+import net.openhft.chronicle.hash.StatelessClientConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-final class StatelessSetBuilder<E> implements StatelessClientBuilder<ChronicleSet<E>> {
+final class StatelessSetConfig<E> implements StatelessClientConfig<ChronicleSet<E>> {
 
-    private final StatelessClientBuilder<ChronicleMap<E, DummyValue>> mapClientBuilder;
+    private final StatelessClientConfig<ChronicleMap<E, DummyValue>> mapClientBuilder;
 
-    StatelessSetBuilder(StatelessClientBuilder<ChronicleMap<E, DummyValue>> mapClientBuilder) {
+    StatelessSetConfig(StatelessClientConfig<ChronicleMap<E, DummyValue>> mapClientBuilder) {
         this.mapClientBuilder = mapClientBuilder;
     }
 
     @Override
-    public StatelessClientBuilder<ChronicleSet<E>> timeout(long timeout, TimeUnit units) {
-        return new StatelessSetBuilder<>(mapClientBuilder.timeout(timeout, units));
+    public StatelessClientConfig<ChronicleSet<E>> timeout(long timeout, TimeUnit units) {
+        return new StatelessSetConfig<>(mapClientBuilder.timeout(timeout, units));
     }
 
     @Override

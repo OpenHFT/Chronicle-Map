@@ -16,8 +16,6 @@
 
 package net.openhft.chronicle.hash.replication;
 
-import net.openhft.chronicle.hash.ReplicationConfig;
-
 import java.io.IOException;
 
 public final class ReplicationHub extends AbstractReplication {

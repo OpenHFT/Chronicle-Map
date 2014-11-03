@@ -63,7 +63,7 @@ public class PostChannelCreationTest {
 
         {
             final TcpConfig tcpConfig = TcpConfig
-                    .of(8086, new InetSocketAddress("localhost", 8087))
+                    .forSendingNode(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
             hubA = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
@@ -82,7 +82,7 @@ public class PostChannelCreationTest {
 
         {
             final TcpConfig tcpConfig = TcpConfig
-                    .of(8087, new InetSocketAddress("localhost", 8086))
+                    .forSendingNode(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 
             hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)

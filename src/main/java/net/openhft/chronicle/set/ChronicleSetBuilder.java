@@ -261,14 +261,14 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public StatelessClientBuilder<ChronicleSet<E>> statelessClient(
+    public StatelessClientConfig<ChronicleSet<E>> statelessClient(
             InetSocketAddress remoteAddress) {
-        return new StatelessSetBuilder<>(chronicleMapBuilder.statelessClient(remoteAddress));
+        return new StatelessSetConfig<>(chronicleMapBuilder.statelessClient(remoteAddress));
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleSet<E>> instance() {
-        return new InstanceBuilder<>(chronicleMapBuilder.instance());
+    public ChronicleHashInstanceConfig<ChronicleSet<E>> instance() {
+        return new InstanceConfig<>(chronicleMapBuilder.instance());
     }
 
     @Override

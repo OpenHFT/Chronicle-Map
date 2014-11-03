@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.StatelessClientBuilder;
+import net.openhft.chronicle.hash.StatelessClientConfig;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -27,14 +27,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Rob Austin.
  */
-class StatelessMapBuilder<K, V> implements StatelessClientBuilder<ChronicleMap<K, V>> {
+class StatelessMapConfig<K, V> implements StatelessClientConfig<ChronicleMap<K, V>> {
 
     private final AbstractChronicleMapBuilder<K, V, ?> mapBuilder;
     private final InetSocketAddress remoteAddress;
     private long timeoutMs = TimeUnit.SECONDS.toMillis(10);
 
-    StatelessMapBuilder(AbstractChronicleMapBuilder<K, V, ?> mapBuilder,
-                        InetSocketAddress remoteAddress) {
+    StatelessMapConfig(AbstractChronicleMapBuilder<K, V, ?> mapBuilder,
+                       InetSocketAddress remoteAddress) {
         this.mapBuilder = mapBuilder;
         this.remoteAddress = remoteAddress;
     }
@@ -48,7 +48,7 @@ class StatelessMapBuilder<K, V> implements StatelessClientBuilder<ChronicleMap<K
     }
 
     @Override
-    public StatelessMapBuilder<K, V> timeout(long timeout, TimeUnit units) {
+    public StatelessMapConfig<K, V> timeout(long timeout, TimeUnit units) {
         this.timeoutMs = units.toMillis(timeout);
         return this;
     }

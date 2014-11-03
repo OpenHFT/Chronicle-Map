@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.hash.replication;
 
-import net.openhft.chronicle.hash.ReplicationConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +25,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 
 
-public final class UdpConfig implements ReplicationConfig {
+public final class UdpConfig {
     private final InetAddress address;
     private final int port;
     private final NetworkInterface networkInterface;
@@ -50,6 +49,7 @@ public final class UdpConfig implements ReplicationConfig {
         this.throttlingConfig = throttlingConfig;
     }
 
+    // TODO better name
     public static UdpConfig simple(@NotNull InetAddress address, int port) {
         if (address.isMulticastAddress())
             throw new IllegalArgumentException();

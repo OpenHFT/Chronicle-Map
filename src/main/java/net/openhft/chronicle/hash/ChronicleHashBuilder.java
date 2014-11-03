@@ -340,7 +340,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      *
      * @param replication the replication config
      * @return this builder back
-     * @see ChronicleHashInstanceBuilder#replicated(SimpleReplication)
+     * @see ChronicleHashInstanceConfig#replicated(SimpleReplication)
      * @see #replication(byte, TcpConfig)
      */
     B replication(SimpleReplication replication);
@@ -353,13 +353,13 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @param tcpTransportAndNetwork configuration of tcp connection and network
      * @return this builder back
      * @see #replication(SimpleReplication)
-     * @see ChronicleHashInstanceBuilder#replicated(byte, TcpConfig)
+     * @see ChronicleHashInstanceConfig#replicated(byte, TcpConfig)
      */
     B replication(byte identifier, TcpConfig tcpTransportAndNetwork);
 
-    StatelessClientBuilder<C> statelessClient(InetSocketAddress remoteAddress);
+    StatelessClientConfig<C> statelessClient(InetSocketAddress remoteAddress);
 
-    ChronicleHashInstanceBuilder<C> instance();
+    ChronicleHashInstanceConfig<C> instance();
 
     /**
      * Creates a new hash container, storing it's data in off-heap memory, not mapped to any file.
@@ -401,7 +401,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @see ChronicleHash#file()
      * @see ChronicleHash#close()
      * @see #create()
-     * @see ChronicleHashInstanceBuilder#persistedTo(File)
+     * @see ChronicleHashInstanceConfig#persistedTo(File)
      */
     C createPersistedTo(File file) throws IOException;
 

@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
+import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.SimpleReplication;
 import net.openhft.chronicle.hash.replication.TcpConfig;
@@ -24,18 +24,18 @@ import net.openhft.chronicle.hash.replication.TcpConfig;
 import java.io.File;
 import java.io.IOException;
 
-final class InstanceBuilder<K, V>
-        implements ChronicleHashInstanceBuilder<ChronicleMap<K, V>> {
+final class InstanceConfig<K, V>
+        implements ChronicleHashInstanceConfig<ChronicleMap<K, V>> {
 
     final AbstractChronicleMapBuilder<K, V, ?> mapBuilder;
     final SimpleReplication simpleReplication;
     final ReplicationChannel channel;
     final File file;
 
-    InstanceBuilder(AbstractChronicleMapBuilder<K, V, ?> mapBuilder,
-                    SimpleReplication simpleReplication,
-                    ReplicationChannel channel,
-                    File file) {
+    InstanceConfig(AbstractChronicleMapBuilder<K, V, ?> mapBuilder,
+                   SimpleReplication simpleReplication,
+                   ReplicationChannel channel,
+                   File file) {
         this.mapBuilder = mapBuilder;
         this.simpleReplication = simpleReplication;
         this.channel = channel;
@@ -43,27 +43,27 @@ final class InstanceBuilder<K, V>
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleMap<K, V>> replicated(
+    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> replicated(
             byte identifier, TcpConfig tcpTransportAndNetwork) {
         return replicated(SimpleReplication.builder()
                 .tcpTransportAndNetwork(tcpTransportAndNetwork).create(identifier));
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleMap<K, V>> replicated(
+    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> replicated(
             SimpleReplication replication) {
-        return new InstanceBuilder<>(mapBuilder, replication, null, file);
+        return new InstanceConfig<>(mapBuilder, replication, null, file);
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleMap<K, V>> replicatedViaChannel(
+    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> replicatedViaChannel(
             ReplicationChannel channel) {
-        return new InstanceBuilder<>(mapBuilder, null, channel, file);
+        return new InstanceConfig<>(mapBuilder, null, channel, file);
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleMap<K, V>> persistedTo(File file) {
-        return new InstanceBuilder<>(mapBuilder, simpleReplication, channel, file);
+    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> persistedTo(File file) {
+        return new InstanceConfig<>(mapBuilder, simpleReplication, channel, file);
     }
 
     @Override

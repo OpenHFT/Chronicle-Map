@@ -222,8 +222,10 @@ public class NodeDiscovery {
         knownNodes.add(ourAddressAndPort, identifier);
 
         final TcpConfig tcpConfig = TcpConfig
-                .of(ourAddressAndPort.getPort(), toInetSocketArray(knownHostPorts))
-                .heartBeatInterval(1, SECONDS).nonUniqueIdentifierListener(identifierListener);
+                .unknownTopology(ourAddressAndPort.getPort(),
+                        toInetSocketCollection(knownHostPorts))
+                .heartBeatInterval(1, SECONDS)
+                .nonUniqueIdentifierListener(identifierListener);
 
 
         LOG.info("Using Remote identifier=" + identifier);
@@ -236,24 +238,22 @@ public class NodeDiscovery {
 
     }
 
-    private InetSocketAddress[] toInetSocketArray(Set<AddressAndPort> source) throws
-            UnknownHostException {
+    private static Collection<InetSocketAddress> toInetSocketCollection(Set<AddressAndPort> source)
+            throws UnknownHostException {
 
         // make a safe copy
         final HashSet<AddressAndPort> addressAndPorts = new HashSet<AddressAndPort>(source);
 
         if (addressAndPorts.isEmpty())
-            return new InetSocketAddress[0];
+            return Collections.emptyList();
 
-        final InetSocketAddress[] addresses = new InetSocketAddress[addressAndPorts.size()];
-
-        int i = 0;
+        ArrayList<InetSocketAddress> addresses =
+                new ArrayList<InetSocketAddress>(addressAndPorts.size());
 
         for (final AddressAndPort addressAndPort : addressAndPorts) {
-            addresses[i++] = new InetSocketAddress(InetAddress.getByAddress(addressAndPort.address())
-                    .getHostAddress(), addressAndPort.port());
+            addresses.add(new InetSocketAddress(InetAddress.getByAddress(addressAndPort.address())
+                    .getHostAddress(), addressAndPort.port()));
         }
-
         return addresses;
     }
 

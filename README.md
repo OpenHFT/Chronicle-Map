@@ -1023,7 +1023,7 @@ but in your example you should choose the host of the state-full server and the 
 .statelessClient(new InetSocketAddress(<host of state-full server>, <port of state-full server>))
 ```
 
-the ".statelessClient(..)" returns an instance of `StatelessClientBuilder`, which has only a few
+the ".statelessClient(..)" returns an instance of `StatelessClientConfig`, which has only a few
 own configurations and `create()` method to create a new stateless client.
 method tells `ChronicleMap` that its going to build a stateless client.
 If you don’t add this line a normal state-full `ChronicleMap` will be created. For this example

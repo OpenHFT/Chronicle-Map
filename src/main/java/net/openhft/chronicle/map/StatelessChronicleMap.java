@@ -60,7 +60,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private volatile SocketChannel clientChannel;
 
     private CloseablesManager closeables;
-    private final StatelessMapBuilder builder;
+    private final StatelessMapConfig builder;
     private int maxEntrySize;
     private final Class<K> kClass;
     private final Class<V> vClass;
@@ -96,7 +96,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private long transactionID;
 
-    StatelessChronicleMap(final StatelessMapBuilder builder,
+    StatelessChronicleMap(final StatelessMapConfig builder,
                           final AbstractChronicleMapBuilder chronicleMapBuilder) throws IOException {
         this.builder = builder;
         this.keyValueSerializer = new KeyValueSerializer<K, V>(chronicleMapBuilder.keyBuilder,
