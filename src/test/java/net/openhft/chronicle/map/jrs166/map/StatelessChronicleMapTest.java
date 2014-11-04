@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map.jrs166.map;
 
-import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.hash.replication.TcpConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.ReadContext;
@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
 
-import static net.openhft.chronicle.hash.StatelessBuilder.remoteAddress;
 import static org.junit.Assert.*;
 
 /*
@@ -184,12 +183,13 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
     static ChronicleMap<Integer, String> newShmIntString(int port) throws IOException {
 
-        final ChronicleMap<Integer, String> serverMap = ChronicleMapBuilder.of(Integer.class, String.class)
-                .replicators((byte) 1, TcpReplicationConfig.of(port)).create();
+        final ChronicleMap<Integer, String> serverMap =
+                ChronicleMapBuilder.of(Integer.class, String.class)
+                .replication((byte) 1, TcpConfig.forReceivingOnlyNode(port)).create();
 
         final ChronicleMap<Integer, String> statelessMap = ChronicleMapBuilder.of(Integer
                 .class, String.class)
-                .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
+                .statelessClient(new InetSocketAddress("localhost", port)).create();
 
         return new SingleCloseMap(statelessMap, statelessMap, serverMap);
 
@@ -199,12 +199,12 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             IOException {
 
         final ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .replicators((byte) 2, TcpReplicationConfig.of(port)).create();
+                .replication((byte) 2, TcpConfig.forReceivingOnlyNode(port)).create();
 
 
         final ChronicleMap<CharSequence, CharSequence> statelessMap = ChronicleMapBuilder.of(CharSequence
                 .class, CharSequence.class)
-                .stateless(remoteAddress(new InetSocketAddress("localhost", port))).create();
+                .statelessClient(new InetSocketAddress("localhost", port)).create();
 
         return new SingleCloseMap(statelessMap, statelessMap, serverMap);
     }

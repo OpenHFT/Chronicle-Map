@@ -1,8 +1,7 @@
 package net.openhft.chronicle.map.example;
 
-import net.openhft.chronicle.hash.ChannelProvider;
-import net.openhft.chronicle.hash.ChannelProviderBuilder;
-import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.hash.replication.ReplicationHub;
+import net.openhft.chronicle.hash.replication.TcpConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;
@@ -11,6 +10,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -54,8 +54,8 @@ public class ChannelExample {
         private ChronicleMap<CharSequence, CharSequence> favoriteColourServer1;
 
 
-        private ChannelProvider channelProviderServer1;
-        private ChannelProvider channelProviderServer2;
+        private ReplicationHub hubOnServer1;
+        private ReplicationHub hubOnServer2;
 
 
         @Test
@@ -63,32 +63,34 @@ public class ChannelExample {
 
     // server 1 with  identifier = 1
     {
+        ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
+                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                        .entries(1000);
+
         byte identifier = (byte) 1;
 
-        TcpReplicationConfig tcpConfig = TcpReplicationConfig
-                .of(8086, new InetSocketAddress("localhost", 8087))
-                .heartBeatInterval(1, java.util.concurrent.TimeUnit.SECONDS);
+        TcpConfig tcpConfig = TcpConfig
+                .forSendingNode(8086, new InetSocketAddress("localhost", 8087))
+                .heartBeatInterval(1, SECONDS);
 
 
-        channelProviderServer1 = new ChannelProviderBuilder()
-                .replicators(identifier, tcpConfig)
-                .create();
+        hubOnServer1 = ReplicationHub.builder()
+                .tcpTransportAndNetwork(tcpConfig)
+                .create(identifier);
 
         // this demotes favoriteColour
         short channel1 = (short) 1;
 
-        favoriteColourServer1 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(1000)
-                .channel(channelProviderServer1.createChannel(channel1)).create();
+        favoriteColourServer1 = smallStringToStringMapBuilder.instance()
+                .replicatedViaChannel(hubOnServer1.createChannel(channel1)).create();
 
         favoriteColourServer1.put("peter", "green");
 
         // this demotes favoriteComputer
         short channel2 = (short) 2;
 
-        favoriteComputerServer1 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(1000)
-                .channel(channelProviderServer1.createChannel(channel2)).create();
+        favoriteComputerServer1 = smallStringToStringMapBuilder.instance()
+                .replicatedViaChannel(hubOnServer1.createChannel(channel2)).create();
 
         favoriteComputerServer1.put("peter", "dell");
 
@@ -96,23 +98,25 @@ public class ChannelExample {
 
     // server 2 with  identifier = 2
     {
+        ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
+                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                        .entries(1000);
 
         byte identifier = (byte) 2;
 
-        TcpReplicationConfig tcpConfig =
-                TcpReplicationConfig.of(8087).heartBeatInterval(1, java.util.concurrent.TimeUnit.SECONDS);
+        TcpConfig tcpConfig =
+                TcpConfig.forReceivingOnlyNode(8087).heartBeatInterval(1, SECONDS);
 
-        channelProviderServer2 = new ChannelProviderBuilder()
-                .replicators(identifier, tcpConfig)
-                .create();
+        hubOnServer2 = ReplicationHub.builder()
+                .tcpTransportAndNetwork(tcpConfig)
+                .create(identifier);
 
 
         // this demotes favoriteColour
         short channel1 = (short) 1;
 
-        favoriteColourServer2 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(1000)
-                .channel(channelProviderServer2.createChannel(channel1)).create();
+        favoriteColourServer2 = smallStringToStringMapBuilder.instance()
+                .replicatedViaChannel(hubOnServer2.createChannel(channel1)).create();
 
 
         favoriteColourServer2.put("rob", "blue");
@@ -120,9 +124,8 @@ public class ChannelExample {
         // this demotes favoriteComputer
         short channel2 = (short) 2;
 
-        favoriteComputerServer2 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(1000)
-                .channel(channelProviderServer2.createChannel(channel2)).create();
+        favoriteComputerServer2 = smallStringToStringMapBuilder.instance()
+                .replicatedViaChannel(hubOnServer2.createChannel(channel2)).create();
 
         favoriteComputerServer2.put("rob", "mac");
         favoriteComputerServer2.put("daniel", "mac");

@@ -18,6 +18,9 @@
 
 package net.openhft.chronicle.hash;
 
+import net.openhft.chronicle.hash.replication.SimpleReplication;
+import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
@@ -32,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -225,67 +229,6 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
     B metaDataBytes(int metaDataBytes);
 
     /**
-     * Configures replication of the hash containers, created by this builder (via independent
-     * replicators). See <a href="https://github.com/OpenHFT/Chronicle-Map#tcp--udp-replication">
-     * the section about replication in ChronicleMap manual</a> for more information.
-     *
-     * <p>Another way to establish replication is {@link #channel(ChannelProvider.ChronicleChannel)}
-     * method.
-     *
-     * <p>By default, hash containers, created by this builder doesn't replicate their data.
-     *
-     * <p>This method call overrides all previous replication configurations of this builder, made
-     * either by this method or {@link #channel(ChannelProvider.ChronicleChannel)} method.
-     *
-     * @param identifier  the new {@linkplain Replica#identifier() identifier} of the containers,
-     *                    created by this builder
-     * @param replicators several replicators, used to sync the data across replicating nodes
-     *                    independently
-     * @return this builder back
-     * @see #channel(ChannelProvider.ChronicleChannel)
-     * @see #disableReplication()
-     */
-    B replicators(byte identifier, ReplicationConfig... replicators);
-
-    /**
-     * Configures replication of the hash containers, created by this builder, via so called
-     * "channels". See <a href="https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider">the
-     * section about Channels and ChannelProvider in ChronicleMap manual</a> for more information.
-     *
-     * <p>Another way to establish replication if {@link #replicators(byte, ReplicationConfig[])}
-     * method.
-     *
-     * <p>By default, hash containers, created by this builder doesn't replicate their data.
-     *
-     * <p>This method call overrides all previous replication configurations of this builder, made
-     * either by means of this method or {@link #replicators(byte, ReplicationConfig[])} method
-     * calls.
-     *
-     * @param chronicleChannel the channel responsible for gathering updates of hash containers,
-     *                         created by this builder, and replicating them over network
-     * @return this builder object back
-     * @see #replicators(byte, ReplicationConfig[])
-     * @see #disableReplication()
-     */
-    B channel(ChannelProvider.ChronicleChannel chronicleChannel);
-
-    /**
-     * Specifies that hash containers, created by this builder, shouldn't replicate their data over
-     * network. This method call clears any replication configurations, made via {@link
-     * #replicators(byte, ReplicationConfig[])} or {@link #channel(ChannelProvider.ChronicleChannel)}
-     * method call.
-     *
-     * <p>By default replication is not configured, so this method is useful <i>only</i> to ensure
-     * that hash containers, created by some inherited or passed builder, wouldn't replicate. I. e.
-     * in rare cases.
-     *
-     * @return this builder back
-     * @see #replicators(byte, ReplicationConfig[])
-     * @see #channel(ChannelProvider.ChronicleChannel)
-     */
-    B disableReplication();
-
-    /**
      * Configures a time provider, used by hash containers, created by this builder, for needs of
      * replication consensus protocol (conflicting data updates resolution).
      *
@@ -293,8 +236,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      *
      * @param timeProvider a new time provider for replication needs
      * @return this builder back
-     * @see #replicators(byte, ReplicationConfig[])
-     * @see #channel(ChannelProvider.ChronicleChannel)
+     * @see #replication(SimpleReplication)
      */
     B timeProvider(TimeProvider timeProvider);
 
@@ -387,38 +329,37 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
     B immutableKeys();
 
     /**
-     * Specifies that hash containers, created by this builder, should be a stateless
-     * implementation, this stateless implementation will be referred to as a stateless client as it
-     * will not hold any of its own data locally, the stateless client will perform Remote Procedure
-     * Calls ( RPC ) to another {@link ChronicleMap} or {@link ChronicleSet} which we will refer to
-     * as the server. The server will hold all your data, the server can not it’s self be a
-     * stateless client. Your stateless client must be connected to the server via TCP/IP. The
-     * stateless client will delegate all your method calls to the remote sever. The stateless
-     * client operations will block, in other words the stateless client will wait for the server to
-     * send a response before continuing to the next operation. The stateless client could be
-     * consider to be a ClientProxy to  {@link ChronicleMap} or {@link ChronicleSet}  running on
-     * another host
+     * Configures replication of the hash containers, created by this builder.
+     * See <a href="https://github.com/OpenHFT/Chronicle-Map#tcp--udp-replication">
+     * the section about replication in ChronicleMap manual</a> for more information.
      *
-     * @param statelessBuilder Stateless Client Config, {@code null} demotes no statelessBuilder
+     * <p>By default, hash containers, created by this builder doesn't replicate their data.
+     *
+     * <p>This method call overrides all previous replication configurations of this builder, made
+     * either by this method or {@link #replication(byte, TcpConfig)} shortcut method.
+     *
+     * @param replication the replication config
      * @return this builder back
+     * @see ChronicleHashInstanceConfig#replicated(SimpleReplication)
+     * @see #replication(byte, TcpConfig)
      */
-    B stateless(StatelessBuilder statelessBuilder);
-
+    B replication(SimpleReplication replication);
 
     /**
-     * Specifies that hash containers us the specified file, if create is called and this is not set
-     * the map will be created in off-heap memory, and changes will not be persisted to disk. If a
-     * file is provided all  changes to the map are  persisted to disk (this is an operating system
-     * guarantee) independently from JVM process lifecycle.
+     * Shortcut for {@code replication(SimpleReplication.builder()
+     * .tcpTransportAndNetwork(tcpTransportAndNetwork).create(identifier))}.
      *
-     * @param file the file with existing hash container or a desired location of a new off-heap
-     *             persisted hash container
+     * @param identifier the network-wide identifier of the containers, created by this builder
+     * @param tcpTransportAndNetwork configuration of tcp connection and network
      * @return this builder back
-     * @throws IOException If the file cannot be created and read.
-     * @see ChronicleHash#file()
-     * @see ChronicleHash#close()
+     * @see #replication(SimpleReplication)
+     * @see ChronicleHashInstanceConfig#replicated(byte, TcpConfig)
      */
-    B file(File file) throws IOException;
+    B replication(byte identifier, TcpConfig tcpTransportAndNetwork);
+
+    StatelessClientConfig<C> statelessClient(InetSocketAddress remoteAddress);
+
+    ChronicleHashInstanceConfig<C> instance();
 
     /**
      * Creates a new hash container, storing it's data in off-heap memory, not mapped to any file.
@@ -426,15 +367,42 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * object is collected during GC, or on JVM shutdown the off-heap memory used by the returned
      * container is freed.
      *
+     * <p>This method is a shortcut for {@code instance().create()}.
+     *
      * @return a new off-heap hash container
      * @throws IOException if any IO error relates to off-heap memory allocation occurs
-     * @see #create()
+     * @see #createPersistedTo(File)
+     * @see #instance()
      */
     C create() throws IOException;
 
-
-
-
-
+    /**
+     * Opens a hash container residing the specified file, or creates a new one if the file not yet
+     * exists and maps its off-heap memory to the file. All changes to the map are persisted to disk
+     * (this is an operating system guarantee) independently from JVM process lifecycle.
+     *
+     * <p>Multiple containers could give access to the same data simultaneously, either inside a
+     * single JVM or across processes. Access is synchronized correctly across all instances, i. e.
+     * hash container mapping the data from the first JVM isn't able to modify the data,
+     * concurrently accessed from the second JVM by another hash container instance, mapping the
+     * same data.
+     *
+     * <p>On container's {@link ChronicleHash#close() close()} the data isn't removed, it remains on
+     * disk and available to be opened again (given the same file name) or during different JVM
+     * run.
+     *
+     * <p>This method is shortcut for {@code instance().persistedTo(file).create()}.
+     *
+     * @param file the file with existing hash container or a desired location of a new off-heap
+     *             persisted hash container
+     * @return a hash container mapped to the given file
+     * @throws IOException if any IO error, related to off-heap memory allocation or file mapping
+     *                     occurs
+     * @see ChronicleHash#file()
+     * @see ChronicleHash#close()
+     * @see #create()
+     * @see ChronicleHashInstanceConfig#persistedTo(File)
+     */
+    C createPersistedTo(File file) throws IOException;
 
 }

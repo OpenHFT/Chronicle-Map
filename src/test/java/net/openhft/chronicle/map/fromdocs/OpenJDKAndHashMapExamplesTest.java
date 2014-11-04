@@ -59,8 +59,7 @@ public class OpenJDKAndHashMapExamplesTest {
         ChronicleMap<String, BondVOInterface> chm = OffHeapUpdatableChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
                 .keySize(10)
-                .file(file)
-                .create();
+                .createPersistedTo(file);
 
 
         BondVOInterface bondVO = DataValueClasses.newDirectReference(BondVOInterface.class);
@@ -80,8 +79,7 @@ public class OpenJDKAndHashMapExamplesTest {
         ChronicleMap<String, BondVOInterface> chmB = OffHeapUpdatableChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
                 .keySize(10)
-                .file(file)
-                .create();
+                .createPersistedTo(file);
 
         // ZERO Copy but creates a new off heap reference each time
 

@@ -18,10 +18,13 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.hash.serialization.BytesInterop;
+import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
 
-public enum VoidMarshaller implements AgileBytesMarshaller<Void> {
+public enum VoidMarshaller
+        implements BytesInterop<Void>, BytesReader<Void>, SizeMarshaller {
     INSTANCE;
 
     @Override
@@ -66,7 +69,7 @@ public enum VoidMarshaller implements AgileBytesMarshaller<Void> {
     }
 
     @Override
-    public Void read(Bytes bytes, long size, Void aVoid) {
+    public Void read(Bytes bytes, long size, Void toReuse) {
         return null;
     }
 

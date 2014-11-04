@@ -29,7 +29,7 @@ final class ZeroOutValueBytes<K, V> implements PrepareValueBytes<K, V> {
     @Override
     public void prepare(Bytes bytes, K key) {
         long pos = bytes.position();
-        bytes.zeroOut(pos, pos + valueSize);
+        bytes.zeroOut(pos, pos + valueSize, true);
         bytes.skip(valueSize);
     }
 }

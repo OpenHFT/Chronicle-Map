@@ -34,7 +34,6 @@ import java.util.Random;
 
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
-import static net.openhft.chronicle.map.TCPSocketReplication4WayMapTest.newTcpSocketShmIntValueString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -57,9 +56,14 @@ public class TCPSocketReplicationIntValueTest {
         ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
         map1Builder = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 (byte) 1, 8076, new InetSocketAddress("localhost", 8077));
-        map1Builder.keyMarshaller(ByteableIntValueMarshaller.INSTANCE).file(getPersistenceFile());
-        map1 = map1Builder.keyMarshaller(ByteableIntValueMarshaller.INSTANCE).create();
-        map2 = newTcpSocketShmIntValueString((byte) 2, 8077);
+        map1Builder.keyMarshaller(ByteableIntValueMarshaller.INSTANCE);
+        map1 = map1Builder.keyMarshaller(ByteableIntValueMarshaller.INSTANCE)
+                .createPersistedTo(getPersistenceFile());
+        map2 = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
+                (byte) 2, 8077)
+                .entries(20000L)
+                .keyMarshaller(ByteableIntValueMarshaller.INSTANCE)
+                .create();
     }
 
 

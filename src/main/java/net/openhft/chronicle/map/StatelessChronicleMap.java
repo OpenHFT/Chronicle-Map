@@ -19,7 +19,6 @@
 package net.openhft.chronicle.map;
 
 import com.sun.jdi.connect.spi.ClosedConnectionException;
-import net.openhft.chronicle.hash.StatelessBuilder;
 import net.openhft.chronicle.hash.exceptions.IORuntimeException;
 import net.openhft.chronicle.hash.exceptions.TimeoutRuntimeException;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -61,13 +60,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private volatile SocketChannel clientChannel;
 
     private CloseablesManager closeables;
-    private final StatelessBuilder builder;
+    private final StatelessMapConfig builder;
     private int maxEntrySize;
     private final Class<K> kClass;
     private final Class<V> vClass;
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
-
 
     static enum EventId {
         HEARTBEAT,
@@ -92,20 +90,20 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         TO_STRING,
         PUT_ALL,
         PUT_ALL_WITHOUT_ACC,
-        HASH_CODE
+        HASH_CODE,
+        ACQUIRE_USING
     }
 
     private long transactionID;
 
-    StatelessChronicleMap(final StatelessBuilder builder,
+    StatelessChronicleMap(final StatelessMapConfig builder,
                           final AbstractChronicleMapBuilder chronicleMapBuilder) throws IOException {
-
         this.builder = builder;
         this.keyValueSerializer = new KeyValueSerializer<K, V>(chronicleMapBuilder.keyBuilder,
                 chronicleMapBuilder.valueBuilder);
         this.putReturnsNull = chronicleMapBuilder.putReturnsNull();
         this.removeReturnsNull = chronicleMapBuilder.removeReturnsNull();
-        this.maxEntrySize = chronicleMapBuilder.entrySize();
+        this.maxEntrySize = chronicleMapBuilder.entrySize(false);
         this.vClass = chronicleMapBuilder.valueBuilder.eClass;
         this.kClass = chronicleMapBuilder.keyBuilder.eClass;
         // this.putReturnsNull = putReturnsNull;
@@ -395,6 +393,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
+    /**
+     * @param key        the key whose associated value is to be returned
+     * @param usingValue the object to read value data in, if possible
+     * @return
+     */
     public synchronized V acquireUsing(K key, V usingValue) {
         throw new UnsupportedOperationException("acquireUsing() is not supported for stateless " +
                 "clients");

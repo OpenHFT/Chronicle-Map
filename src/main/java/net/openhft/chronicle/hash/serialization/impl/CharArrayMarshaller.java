@@ -49,11 +49,11 @@ public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<cha
     }
 
     @Override
-    public char[] read(Bytes bytes, long size, char[] chars) {
-        if (chars == null || chars.length != size)
-            chars = new char[(int) size];
-        bytes.readFully(chars);
-        return chars;
+    public char[] read(Bytes bytes, long size, char[] toReuse) {
+        if (toReuse == null || toReuse.length != size)
+            toReuse = new char[(int) size];
+        bytes.readFully(toReuse);
+        return toReuse;
     }
 
     @Override

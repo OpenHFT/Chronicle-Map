@@ -39,7 +39,7 @@ public class DefaultValueTest {
             defaultValue.add(42);
             try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
-                    .defaultValue(defaultValue).file(file).create()) {
+                    .defaultValue(defaultValue).createPersistedTo(file)) {
 
                 assertEquals(defaultValue, map.acquireUsing("a", null));
                 assertEquals(1, map.size());
@@ -49,8 +49,8 @@ public class DefaultValueTest {
             }
 
             try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
-                    .of(String.class, (Class<List<Integer>>) ((Class) List.class)).file(file).
-                 create()) {
+                    .of(String.class, (Class<List<Integer>>) ((Class) List.class))
+                    .createPersistedTo(file)) {
                 assertEquals(defaultValue, map.acquireUsing("c", null));
             }
         } finally {

@@ -32,6 +32,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *   [Maven Download](https://github.com/OpenHFT/Chronicle-Map#maven-artifact-download-1)
  *   [Snapshot Download](https://github.com/OpenHFT/Chronicle-Map#maven-snapshot-download)
  *   [Key Value Object Types](https://github.com/OpenHFT/Chronicle-Map#key-value-object-types)
+ *   [Off Heap and How to improve performance]()
  *   [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
  *   [Entries](https://github.com/OpenHFT/Chronicle-Map#entries)
  *   [Size of Space Reserved on Disk](https://github.com/OpenHFT/Chronicle-Map#size-of-space-reserved-on-disk)
@@ -45,15 +46,16 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [TCP / UDP Background.](https://github.com/OpenHFT/Chronicle-Map#tcp--udp-background)
  *   [How to setup UDP Replication](https://github.com/OpenHFT/Chronicle-Map#how-to-setup-udp-replication)
  *  [TCP/IP Throttling](https://github.com/OpenHFT/Chronicle-Map#tcpip--throttling)
- *   [Replication How it works](https://github.com/OpenHFT/Chronicle-Map#replication-how-it-works)
- *  [Multiple Chronicle Maps on a the same server with Replication](https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps-on-a-the-same-server-with-replication)
- *   [Identifier for Replication](https://github.com/OpenHFT/Chronicle-Map#identifier-for-replication)
- *   [Bootstrapping](https://github.com/OpenHFT/Chronicle-Map#bootstrapping)
- *      [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
+ *  [Replication How it works](https://github.com/OpenHFT/Chronicle-Map#replication-how-it-works)
+ *  [Multiple Processes on the same server with Replication](https://github.com/OpenHFT/Chronicle-Map#multiple-processes-on-the-same-server-with-replication)
+ *  [Identifier for Replication](https://github.com/OpenHFT/Chronicle-Map#identifier-for-replication)
+ *  [Bootstrapping](https://github.com/OpenHFT/Chronicle-Map#bootstrapping)
+ *    [Identifier](https://github.com/OpenHFT/Chronicle-Map#identifier)
  * [Port](https://github.com/OpenHFT/Chronicle-Map#port)
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
-* [Channels and the Channel Provider](https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider)
+* [Multi Chronicle Maps - Network Distributed](https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed)
 * [Stateless Client](https://github.com/OpenHFT/Chronicle-Map#stateless-client)
+* [Questions/Answers](https://github.com/OpenHFT/Chronicle-Map#questions-and-answers)
 
 #### Miscellaneous
 
@@ -61,7 +63,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Stackoverflow](http://stackoverflow.com/tags/chronicle/info)
  * [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
  * [Use Case Which include Chronicle Map] (http://openhft.net/products/chronicle-engine/)
-
+ 
 #### Examples
 
  * [Hello World - A map which stores data off heap](https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#example--simple-hello-world)
@@ -87,7 +89,7 @@ java map, ChronicleMap is able to share your entries accross processes:
 #### When to use HashMap
 If you compare `HashMap`, `ConcurrentHashMap` and `ChronicleMap`, most of the maps in your system
 are likely to be HashMap.  This is because `HashMap` is lightweight and synchronized HashMap works
-well for lightly contended use cases.  By contention I mean, how many threads on average are trying
+well for lightly contended use cases.  By contention we mean, how many threads on average are trying
 to use a Map.  One reason you can't have many contended resources, is that you only have so many
 CPUs and they can only be accessing so many resources at once (ideally no more than one or two
 per thread at a time).
@@ -196,6 +198,8 @@ or value objects that are created through, a directClass interface, for example 
 Object graphs can also be included as long as the outer object supports Serializable, Externalizable or BytesMarshallable.
 
 
+
+
 #### Java Class Construction
 
 Creating an instance of Chronicle Map is a little more complexed than just calling a constructor.
@@ -214,7 +218,7 @@ try {
 
     ChronicleMapBuilder<Integer, CharSequence> builder =
         ChronicleMapBuilder.of(Integer.class, CharSequence.class);
-    ConcurrentMap<Integer, CharSequence> map = builder.file(file).create();
+    ConcurrentMap<Integer, CharSequence> map = builder.createPersistedTo(file);
  
 } catch (IOException e) {
     e.printStackTrace();
@@ -227,13 +231,8 @@ the instances of Chronicle Map on the same server. The name and location of the 
 up to you.  For the best performance on many unix systems we recommend using
 [tmpfs](http://en.wikipedia.org/wiki/Tmpfs).
 
-If instead, you do not wish to replicate between processes on the same server or if you are only
-using TCP replication to replicate between servers, you do not have to provide the "file",
-so you can call the `create()` method on you ChronicleMapBuilder without providing the file 
-parameter:
-```
-ConcurrentMap<Integer, CharSequence> map = builder.create();
-```
+
+
 
 ### Sharing Data Between Two or More Maps
 Since this file is memory mapped, if you were to create another instance of the Chronicle Map,
@@ -248,10 +247,10 @@ between processes by just using memory and in around 40 nanoseconds.
 ConcurrentMap<Integer, CharSequence> map1, map2;
 
 // this could could be on one process
-map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).file(file).create();
+map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).createPersistedTo(file);
 
 // this could be on the other process
-map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).file(file).create();
+map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).createPersistedTo(file);
 ```
 Note: In order to share data between map1 and map2, the file has to point to the same file location
 on your server.
@@ -325,53 +324,216 @@ These methods let you provide the object which the data will be written to, even
 immutable. For example 
 
 ``` java
-StringBuilder myString = new StringBuilder(); 
-StringBuilder myResult = map.getUsing("key", myString);
+String myString = ""; 
+String myResult = map.getUsing("key", myString);
 // at this point the myString and myResult will both point to the same object
 ```
 
-The `map.getUsing()` method is similar to `get()`, but because Chronicle Map stores its data off
+The `map.getUsing()` method is similar to `map.get()`, but because Chronicle Map stores its data off
 heap, if you were to call get("key"), a new object would be created each time, map.getUsing() works
 by reusing the heap memory which was used by the original Object "myString". This technique provides
 you with better control over your object creation.
 
-Exactly like `map.getUsing()`, `acquireUsing()` will give you back a reference to an value based on
-a key, but unlike `getUsing()` if there is not an entry in the map for this key the entry will be
-added and the value return will we the same value which you provided.
+Exactly like `map.getUsing()`, `map.acquireUsing()` will give you back a reference to an value 
+based on
+a key, but unlike `map.getUsing()` if there is not an entry in the map for this key the entry 
+will be added and the value return will we the same value which you provided. ( The section below
+ covers `map.getUsing()`, `map.acquireUsing()` in greater details )
 
+####  Off Heap and How to Improve Performance
 
+Chronicle Map stores its data off heap. There are some distinct advantages in using off heap data storage
 
-#### Use getUsing(..) or acquireUsing(..) to avoid Object creation
+ * When the off heap data is backed by a memory mapped file, the entire map and its contents are automatically persisted. So if you have to restart your system, you won’t lose the content of your map.
+ * Off heap data structures are not visited by the garbage collector, with on heap maps like HashMap the garbage collector has to scan your entire object graph ( in fact just the live objects ) to remove garbage, if you are able to keep your on heap footprint low, the garbage collector has a lot less work to do, this in turn improves your performance.
+ * Your Chronicle map and your data contained within it is serialised so it can be stored in off 
+heap memory. When this memory is shared between processes on the same server, 
+the chronicle map is able to distribute entries between processes with extremely low overhead, 
+as both processes are sharing the same off heap memory space. Since your objects are already stored off heap ( as a series of bytes ), replication you entries over the network add relatively low over head.
 
-The point of these methods is to avoid creating any objects.
+One of the downsides of an Off Heap Map is that whenever you wish to get a value ( on heap ) from an entry
+ ``` java
+Value v= get(key)
+``` 
+that entry has to be deserialised onto the java heap so that you can use its value just like any other java object. So if you were to call get(key) ten times, 
+ ``` java
+for(int i=1;i<=10;i++) {
+  Value v= get(key)
+}
+``` 
+this would create 10 separate copies of the value. As each time get() is called the map has to 
+first create a Object to store the result in and then deserialise the value stored in the off 
+heap entry. If you want to get the value back on heap so that you can use it like a normal java 
+value, There is nothing we can do about the deserialisation as this has to occur every time, 
+( since the value may have been changed by another thread ), but we don’t have to create the 
+object each time. This is why we create getUsing(key,using). By reducing the number of objects 
+you create, you reduce the amount of work that the garbage collector has to carry out, 
+this in turn may, improve your overall performance. So back to getUsing(key,using), If you wish to reuse and existing object ( in this case the ‘using’ value ), you can instead call 
+ 
+ ``` java
+Value using = new Value();
 
-Pattern 1
+for(int i=1;i<=10;i++) {
+  Value v= map.getUsing(key,using); // this won’t create a new value each time.
+}
+``` 
+We can get a further performance improvement if we don't deserialize the whole object, 
+but only deserialize only the bytes that we are actually interested in, 
+
+Lets assume that we had the following interface :
+
 ``` java
-// get or create/initialise add needed
-// assumption: I need this key value to exist or be initialised.
-map.acquireUsing(key, value);
+public interface LongValue {
+    long getValue();
 
-// use value
+    void setValue(long value);
+}
+``` 
+It is possible to use chronicle as an off heap proxy that can go directly to the memory location off heap and just get back the long that you require. This is especially use full if the value object has a lot of fields in it like the BondVOInterface
+``` java
+public interface BondVOInterface {
+ ... 
 
-if (changed)
-     map.put(key, value);
+    long getIssueDate();
+    void setIssueDate(long issueDate);  /* time in millis */
+
+
+    long getMaturityDate();
+    void setMaturityDate(long maturityDate);  /* time in millis */
+
+
+    double getCoupon();
+    void setCoupon(double coupon);
+
+
+    String getSymbol();
+    void setSymbol(@MaxSize(20) String symbol);
+ ... 
+}
+``` 
+If for example you want to just do the following
+
+``` java
+BondVOInterface  bond = map.get(key);
+bond.getCoupon()
 
 ```
-
-Pattern 2
+if its only the coupon that you are interested in then it would be better if we did not have to 
+deserialize the whole object that implements the BondVOInterface. This is why we created the 
+OffHeapUpdatableChronicleMapBuilder
 ``` java
-// get or don't do anything else.
-// assumption: I only need the value if it exists, otherwise I will do something else, or nothing.
-if (map.getUsing(key, value) != null) {
-     // use value
+        ChronicleMap<String, BondVOInterface> chm = OffHeapUpdatableChronicleMapBuilder
+                .of(String.class, BondVOInterface.class)
+                .keySize(10)
+                .create();
+``` 
 
-     if (changed)
-         map.put(key, value);
-} else {
-     // don't use value
+notice that the 
+``` java
+.of(String.class, BondVOInterface.class)
+``` 
+
+value class is an interface,  now like before, we can use the getUsing(key,using) method, 
+but this time we have to create the ‘using’ instance slightly differently
+
+``` java
+BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
+``` 
+
+now we can call
+
+``` java
+BondVOInterface  bond = map.getUsing(key,value);
+```
+
+this won’t create any on heap objects, and it won’t deserialize the ‘bond’ from off heap to on
+heap, all it does is sets the bond as a proxy object created by DataValueClasses
+.newDirectReference(BondVOInterface.class) to point to the off heap storage,
+under the covers,  moves a pointer to point at the start of the value in off heap memory, so
+calling :
+
+``` java
+bond.getCoupon()
+```
+
+its only the coupon which gets deserialized.
+
+###### Locking
+
+Just like any other concurrent map, chronicle map uses segment locking, if you wish to hold onto the segment log when calling getUsing(key,using) you can do this :
+
+``` java
+try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,using)) {
+	BondVOInterface bond =  context.value().getValue();
+
+   long issueDate =  bond.getIssueDate();
+   String symbol = bond.getSymbol();
+
+	// add your logic here ( the lock will ensure this bond can not be changed by another thread )
+
+} // the lock is released here
+
+To ensure that you can read the 'issueDate' and 'symbol' can be read atomically, these values
+must be read while the segment lock is in place.
+
+
+```
+when you call map.getUsingLocked(key,using) we return a ReadContext, the ReadContext extends
+AutoCloseable so will automatically unlock the segment when the try block is exited.
+
+If you wish not to use a try block you must manually release the segment lock by calling
+``` java
+context.close()
+```
+when you wish to unlock the segment.
+
+#### what is acquireUsing() and  acquireUsingLocked()
+
+just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
+code is a pattern that you will often come across, acquireUsing(key,value) offers this
+functionality with a single method call
+ ``` java
+V acquireUsing(key,value) {
+    Lock l = ...; // the segement lock of the map
+    l.lock();
+    try {
+          V v = map.getUsing(key,value)
+           if (v == null) {
+               map.put(key,value)
+               return v;
+           } else
+               return v
+    } finally {
+        l.unlock();
+    }
 }
 ```
- 
+
+if you are only accessing ChronicleMap from a single thread and you are not doing replication
+and don't are about atomic reads then its simpler ( and faster ) to use acquireUsing() otherwise we
+recommend acquireUsingLocked(key,value)
+
+you use
+
+because acquireUsing can end up creating an entry the acquireUsingLocked(key,value) method holds
+a segment write lock, this is unlike the getUsing(key,using) method that holds a segment read lock.
+
+``` java
+try (WriteContext<?, BondVOInterface> context = map.acquireUsingLocked("one", value)) {
+
+ BondVOInterface bond = context.value();
+ long issueDate =  bond.getIssueDate();
+ String symbol = bond.getSymbol();
+
+  if (condition)
+    context.removeEntry();
+}
+```
+
+if after you have read the 'issueDate' and  'symbol' you wish to remove the entry based on some
+business logic, it more efficient to use the 'context' to remove the entry, as the contents is
+already aware when the entry is in memory.
+
 
 ## Oversized Entries Support
 
@@ -489,14 +651,12 @@ to the other. This dilemma is resolved by using a node identifier, the node iden
 identifier is smaller than the local nodes identifier, this update will be accepted otherwise it
 will be ignored.
 
-### Multiple Chronicle Maps on a the same server with Replication
-If two or more Chronicle Maps are on the same server, they exchange data via shared memory rather
-than TCP or UDP replication. So if a Chronicle Map which is not performing TCP Replication is
-updated, this update can be picked up by another Chronicle Map, this other Chronicle Hash Map could
-be a TCP replicated Chronicle Map, In this example the TCP replicated Chronicle Map would then push
-the update to the remote nodes.
+### Multiple Processes on the same server with Replication
+
+On a server if you have a number of java processes and then within each java process you create a  instance of the same Chronicle map which binds to the same underline 'file', they exchange data via shared memory rather than TCP or UDP replication. So if a Chronicle Map which is not performing TCP Replication is updated, this update can be picked up by another Chronicle Map, this other Chronicle Hash Map could be a TCP replicated Chronicle Map, In this example the TCP replicated Chronicle Map would then push the update to the remote nodes.
 
 Likewise, If the TCP replicated Chronicle Map was to received an update from a remote node, then
+
 this update would be immediately available to all the Chronicle Maps on the server.
 
 ### Identifier for Replication
@@ -522,10 +682,10 @@ information on identifiers and how they are used in replication. )
 The identifier is setup on the builder as follows.
 
 ```java
-TcpReplicationConfig tcpConfig = ...
+TcpConfig tcpConfig = ...
 map = ChronicleMapBuilder
     .of(Integer.class, CharSequence.class)
-    .replicators(identifier, tcpReplicationConfig)
+    .replication(identifier, tcpConfig)
     .create();
 ```
 
@@ -548,17 +708,17 @@ Each map is allocated a unique identifier
 
 Server 1 has:
 ```
-.replicators((byte) 1, tcpReplicationConfigServer1)
+.replication((byte) 1, tcpConfigServer1)
 ```
 
 Server 2 has:
 ```
-.replicators((byte) 2, tcpReplicationConfigServer2)
+.replication((byte) 2, tcpConfigServer2)
 ```
 
 Server 3 has:
 ```
-.replicators((byte) 3, tcpReplicationConfigServer3)
+.replication((byte) 3, tcpConfigServer3)
 ```
 
 If you fail to allocate a unique identifier replication will not work correctly.
@@ -574,12 +734,12 @@ require 6 connections.
 
 In our case we are only using 2 maps, this is how we connected map1 to map 2.
 ```
-TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
+TcpConfig.of(8076, new InetSocketAddress("localhost", 8077))
                     .heartBeatInterval(1, SECONDS);
 ```
 you could have put this instruction on map2 instead, like this 
 ```
-TcpReplicationConfig.of(8077, new InetSocketAddress("localhost", 8076))
+TcpConfig.of(8077, new InetSocketAddress("localhost", 8076))
                     .heartBeatInterval(1, SECONDS);
 ```
 even though data flows from map1 to map2 and map2 to map1 it doesn't matter which way you connected
@@ -590,7 +750,7 @@ this, in other words its a bidirectional connection.
 ![TCP/IP Replication 3Way](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-27-at-18.19.05.png)
 
 
-Below is example how to set up tcpReplicationConfig for 3 host
+Below is example how to set up tcpConfig for 3 host
 
 ```java
 String hostServer1 = "localhost"; // change this to your host
@@ -607,14 +767,14 @@ InetSocketAddress inetSocketAddress3 = new InetSocketAddress(hostServer3, server
 
 
 // this is to go on server 1
-TcpReplicationConfig tcpReplicationConfigServer1 = TcpReplicationConfig.of(serverPort1);
+TcpConfig tcpConfigServer1 = TcpConfig.of(serverPort1);
 
 // this is to go on server 2
-TcpReplicationConfig tcpReplicationConfigServer2 = TcpReplicationConfig.of(serverPort2,
+TcpConfig tcpConfigServer2 = TcpConfig.of(serverPort2,
         inetSocketAddress1);
 
 // this is to go on server 3
-TcpReplicationConfig tcpReplicationConfigServer3 = TcpReplicationConfig.of(serverPort3,
+TcpConfig tcpConfigServer3 = TcpConfig.of(serverPort3,
         inetSocketAddress1,inetSocketAddress2);        
 ```     
 
@@ -627,7 +787,11 @@ A heartbeat will only be send if no data is transmitted, if the maps are constan
 no heartbeat message is sent. If a map does not receive either data of a heartbeat the connection
 is dropped and re-established.
 
-# Channels and ChannelProvider
+# Multiple Chronicle Maps - Network Distributed
+
+![Chronicle Maps Network Distributed](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map_channels_diagram_02.jpg)
+
+
 
 Chronicle Map TCP Replication lets you distribute a single Chronicle Map, to a number of servers
 across your network. Replication is point to point and the data transfer is bidirectional, so in the
@@ -647,9 +811,10 @@ Each map must be given a unique Channel.
 ``` java
 int maxEntrySize = 1024;
 byte identifier= 2;
-ChannelProvider channelProvider = new ChannelProviderBuilder()
+ReplicationHub replicationHub = ReplicationHub.builder()
                     .maxEntrySize(maxEntrySize)
-                    .replicators(identifier, tcpReplicationConfig).create();
+                    .tcpTransportAndNetwork(tcpConfig)
+                    .create(identifier);
 ```
 
 In this example above the channel is given the identifier of 2
@@ -664,9 +829,10 @@ When creating the ChannelProvider you should attach your tcp or udp configuratio
 ``` java
 int maxEntrySize = 1024;
 byte identifier = 1;
-ChannelProvider channelProvider = new ChannelProviderBuilder()
+ReplicationHub replicationHub = ReplicationHub.builder()
                     .maxEntrySize(maxEntrySize)
-                    .replicators(identifier, tcpReplicationConfig).create();
+                    .tcpTransportAndNetwork(tcpConfig)
+                    .create(identifier);
 ```
 
 Attaching ChannelProvider replication to the map:
@@ -674,8 +840,9 @@ Attaching ChannelProvider replication to the map:
 ``` java
 short channel = (short) 2;
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-  .entries(1000)  
-  .channel(channelProvider.createChannel(channel)
+  .entries(1000)
+  .instance()
+  .replicatedViaChannel(replicationHub.createChannel(channel))
   .create();
 ```
 
@@ -696,71 +863,71 @@ unique for each map you have.
 ### Channels and ChannelProvider - Example
 
 ``` java
-    // server 1 with identifier = 1
+    // server 1 with  identifier = 1
     {
+        ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
+                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                        .entries(1000);
+
         byte identifier = (byte) 1;
 
-        TcpReplicationConfig tcpConfig = TcpReplicationConfig
+        TcpConfig tcpConfig = TcpConfig
                 .of(8086, new InetSocketAddress("localhost", 8087))
-                .heartBeatInterval(1, java.util.concurrent.TimeUnit.SECONDS);
+                .heartBeatInterval(1, SECONDS);
 
 
-        channelProviderServer1 = new ChannelProviderBuilder()
-                .replicators(identifier, tcpConfig)
-                .create();
+        hubOnServer1 = ReplicationHub.builder()
+                .tcpTransportAndNetwork(tcpConfig)
+                .create(identifier);
 
         // this demotes favoriteColour
         short channel1 = (short) 1;
 
-        favoriteColourServer1 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(1000)
-                .channel(channelProviderServer1.createChannel(channel1)).create();
+        favoriteColourServer1 = smallStringToStringMapBuilder.instance()
+                .replicatedViaChannel(hubOnServer1.createChannel(channel1)).create();
 
+        favoriteColourServer1.put("peter", "green");
 
         // this demotes favoriteComputer
         short channel2 = (short) 2;
 
-        favoriteComputerServer1 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(1000)
-                .channel(channelProviderServer1.createChannel(channel2)).create();
-
-      
-        favoriteColourServer1.put("peter", "green");
+        favoriteComputerServer1 = smallStringToStringMapBuilder.instance()
+                .replicatedViaChannel(hubOnServer1.createChannel(channel2)).create();
 
         favoriteComputerServer1.put("peter", "dell");
 
     }
 
-    // server 2 with identifier = 2
+    // server 2 with  identifier = 2
     {
+        ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
+                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                        .entries(1000);
 
         byte identifier = (byte) 2;
 
-        TcpReplicationConfig tcpConfig =
-                TcpReplicationConfig.of(8087)
-                .heartBeatInterval(1, java.util.concurrent.TimeUnit.SECONDS);
+        TcpConfig tcpConfig =
+                TcpConfig.of(8087).heartBeatInterval(1, SECONDS);
 
-        channelProviderServer2 = new ChannelProviderBuilder()
-                .replicators(identifier, tcpConfig)
-                .create();
+        hubOnServer2 = ReplicationHub.builder()
+                .tcpTransportAndNetwork(tcpConfig)
+                .create(identifier);
 
 
         // this demotes favoriteColour
         short channel1 = (short) 1;
 
-        favoriteColourServer2 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(1000)
-                .channel(channelProviderServer2.createChannel(channel1)).create();
+        favoriteColourServer2 = smallStringToStringMapBuilder.instance()
+                .replicatedViaChannel(hubOnServer2.createChannel(channel1)).create();
+
+
+        favoriteColourServer2.put("rob", "blue");
 
         // this demotes favoriteComputer
         short channel2 = (short) 2;
 
-        favoriteComputerServer2 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(1000)
-                .channel(channelProviderServer2.createChannel(channel2)).create();
-
-
-        favoriteColourServer2.put("rob", "blue");
+        favoriteComputerServer2 = smallStringToStringMapBuilder.instance()
+                .replicatedViaChannel(hubOnServer2.createChannel(channel2)).create();
 
         favoriteComputerServer2.put("rob", "mac");
         favoriteComputerServer2.put("daniel", "mac");
@@ -782,11 +949,12 @@ unique for each map you have.
 
     assertEquals(favoriteColourServer1, favoriteColourServer2);
     Assert.assertEquals(2, favoriteColourServer1.size());
-    
-    favoriteComputerServer1.close();
-    favoriteComputerServer2.close();
+
+
     favoriteColourServer1.close();
+    favoriteComputerServer2.close();
     favoriteColourServer2.close();
+    favoriteColourServer1.close();
 }
 ``` 
 
@@ -815,7 +983,7 @@ final ChronicleMap<Integer, CharSequence> statelessMap;
 {
 
     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-            .replicators((byte) 2, TcpReplicationConfig.of(8076))
+            .replication((byte) 2, TcpConfig.of(8076))
             .create();            
                        
     serverMap.put(10, "EXAMPLE-10");
@@ -824,7 +992,7 @@ final ChronicleMap<Integer, CharSequence> statelessMap;
 // stateless client
 {
     statelessMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-            .stateless(StatelessBuilder.remoteAddress(new InetSocketAddress("localhost", 8076)))
+            .statelessClient(new InetSocketAddress("localhost", 8076))
             .create();
 
     Assert.assertEquals("EXAMPLE-10", statelessMap.get(10));
@@ -842,25 +1010,27 @@ being used by another application. In this example we choose the port 8076
 
 
 ``` java
-.replicators((byte) 2, TcpReplicationConfig.of(8076))  // sets the server to run on localhost:8076
+.replication((byte) 2, TcpConfig.of(8076))  // sets the server to run on localhost:8076
 ``` 
   
 On the "stateless client" we connect to the server via TCP/IP on localhost:8076 : 
 
 ``` java
-.stateless(remoteAddress(new InetSocketAddress("localhost", 8076)))
+.statelessClient(new InetSocketAddress("localhost", 8076))
 ```
 
 but in your example you should choose the host of the state-full server and the port you allocated
  it. 
 
 ``` java
-.stateless(StatelessBuilder.remoteAddress(new InetSocketAddress(<host of state-full server>, 
-<port of state-full server>)))
+.statelessClient(new InetSocketAddress(<host of state-full server>, <port of state-full server>))
 ```
 
-the ".stateless(..)" method tells `ChronicleMap` that its going to build a stateless client. If you 
-don’t add this line a normal state-full `ChronicleMap` will be created. For this example we ran both 
+the ".statelessClient(..)" returns an instance of `StatelessClientConfig`, which has only a few
+own configurations and `create()` method to create a new stateless client.
+method tells `ChronicleMap` that its going to build a stateless client.
+If you don’t add this line a normal state-full `ChronicleMap` will be created. For this example
+we ran both 
 the client an the server on the same host ( hence the “localhost" setting ), 
 but in a real life example the stateless client will typically be on a different server than the
 state-full host. If you are aiming to create a stateless client and server on the same host, its
@@ -896,9 +1066,9 @@ and also for the `remove()` method
 
 ``` java
 statelessClientMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-     .stateless(StatelessBuilder.remoteAddress(new InetSocketAddress("localhost", 8076)))
      .putReturnsNull(true)
      .removeReturnsNull(true)
+     .statelessClient(new InetSocketAddress("localhost", 8076))
      .create();
 ```
 
@@ -907,7 +1077,7 @@ For the very best performance you should also set these properties on the server
 
 ``` java
 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-    .replicators((byte) 2, TcpReplicationConfig.of(8076))
+    .replication((byte) 2, TcpConfig.of(8076))
     .putReturnsNull(true)
     .removeReturnsNull(true)
     .create();            
@@ -1035,16 +1205,16 @@ between them, this is how we could set it up
 // --- RUN ON ONE JAVA PROCESS ( BUT ON THE SAME SERVER )
 {
     File file = new File("a-new-file-on-your-sever");	
-    Map<Integer, CharSequence> map1 = ChronicleMapBuilder.of(Integer.class,
-            CharSequence.class).create(file); // this has to be the same file as used by map 2
+    Map<Integer, CharSequence> map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+            .createPersistedTo(file); // this has to be the same file as used by map 2
     map1.put(1, "hello world");
 }
 
 // --- RUN ON THE OTHER JAVA PROCESS ( BUT ON THE SAME SERVER )
 {
     File file = new File("a-new-file-on-your-sever");  // this has to be the same file as used by map 1
-    Map<Integer, CharSequence> map1 = ChronicleMapBuilder.of(Integer.class,
-            CharSequence.class).create(file);
+    Map<Integer, CharSequence> map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+            .createPersistedTo(file);
 
     System.out.println(map1.get(1));
 }
@@ -1079,12 +1249,12 @@ public class YourClass {
 
             // we connect the maps via a TCP/IP socket connection on port 8077
 
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
+            TcpConfig tcpConfig = TcpConfig.of(8076, new InetSocketAddress("localhost", 8077))
                     .heartBeatInterval(1L, TimeUnit.SECONDS);
             ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
-                            .replicators((byte) 1, tcpConfig);
+                            .replication((byte) 1, tcpConfig);
 
 
             map1 = map1Builder.create();
@@ -1092,12 +1262,12 @@ public class YourClass {
 //  ----------  SERVER2 on the same server as ----------
 
         {
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
+            TcpConfig tcpConfig = TcpConfig.of(8077)
                     .heartBeatInterval(1L, TimeUnit.SECONDS);
             ChronicleMapBuilder<Integer, CharSequence> map2Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
-                            .replicators((byte) 2, tcpConfig);
+                            .replication((byte) 2, tcpConfig);
             map2 = map2Builder.create();
 
             // we will stores some data into one map here
@@ -1159,20 +1329,23 @@ public class YourClass {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077))
+            TcpConfig tcpConfig = TcpConfig.of(8076, new InetSocketAddress("localhost", 8077))
                     .heartBeatInterval(1L, TimeUnit.SECONDS)
 
                             // a maximum of 1024 bits per millisecond
                     .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
 
 
-            UdpReplicationConfig udpConfig = UdpReplicationConfig
+            UdpConfig udpConfig = UdpConfig
                     .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
 
             ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
-                            .replicators((byte) 1, tcpConfig, udpConfig);
+                            .replication(SimpleReplication.builder()
+                                    .tcpTransportAndNetwork(tcpConfig)
+                                    .udpTransport(udpConfig)
+                                    .create((byte) 1));
 
 
             map1 = map1Builder.create();
@@ -1180,17 +1353,20 @@ public class YourClass {
 //  ----------  SERVER2 2 on the same server as ----------
 
         {
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077)
+            TcpConfig tcpConfig = TcpConfig.of(8077)
                     .heartBeatInterval(1L, TimeUnit.SECONDS)
                     .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
 
-            UdpReplicationConfig udpConfig = UdpReplicationConfig
+            UdpConfig udpConfig = UdpConfig
                     .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
 
             ChronicleMapBuilder<Integer, CharSequence> map2Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
-                            .replicators((byte) 2, tcpConfig, udpConfig);
+                            .replication(SimpleReplication.builder()
+                                    .tcpTransportAndNetwork(tcpConfig)
+                                    .udpTransport(udpConfig)
+                                    .create((byte) 2));
 
             map2 = map2Builder.create();
 
@@ -1409,3 +1585,84 @@ to be performed in memory as possible.
     vm.dirty_expire_centisecs = 30000
     vm.dirty_ratio = 90
     vm.dirty_writeback_centisecs = 5000
+
+# Questions and Answers
+
+#### Question
+I'm searching for a Map implementation that is backed by either direct off-heap or a memory 
+mapped file. I want to use it as write-once, read-n-times kind of cache.
+#### Answer
+The latest version of chronicle map has been optimised for this use case. Ie for heavy read to write ratios. 
+Note: heavy writers will see about the same performance.
+
+---
+
+#### Question
+The backing of to off-heap is only needed to prevent OOM-situations. Otherwise the process  can use a big part of the available memory for the map.
+
+#### Answer
+Chronicle Map can be larger than main memory. In fact you might want to reduce the heap size to give chronicle map more memory in extreme cases. Ie because the map can't utilise on heap memory much.
+
+---
+
+#### Question
+I stumbled over chronicle-map and it looks like it could do most of those things. Correct me if i'm wrong but
+``` java
+// would create the off-heap version 
+ChronicleMapBuilder.of(A.class, B.class).create();
+```
+#### Answer
+Yes.
+
+---
+
+#### Question
+``` java
+// the memory-mapped file version ?
+ ChronicleMapBuilder.of(A.class, B.class).file(mapFile).create();
+```
+#### Answer
+Yes.
+
+---
+
+#### Question
+But both versions write the complete map at every single moment to off-heap, right ?
+
+#### Answer
+Every key/value is off heap. There is no cache of objects on heap.
+
+---
+
+#### Question
+Is there something in chronicle map which can have part of the map-content still in on-heap memory.
+
+#### Answer
+There are data structures which are on heap to manahe the off heap data. This is typically less than 100 kB.
+
+---
+
+#### Question
+Either serialized or deserialized. Performance wise do you think that would even matter ?
+#### Answer
+It matter a lot but you can get the performance close to on heap objects without the long GC pause times. Ie only the bit on the heap makes any difference.
+
+---
+
+#### Question
+Last but not least... do you think chronicle is suitable for this simple purpose ?
+
+#### Answer
+Actually this is all it does really. We try to make it fast by keeping it simple. 
+Eg it is not a cache and doesn't have expiries etc. There is no background thread managing it.
+In fact it is so simple that many methods are completely in lined. 
+Ie if you look at a crash dump the chronicle methods have been completely in lined and don't appear in the stack trace any more. (The still appear in java stack traces)
+
+---
+
+#### Question
+Or is there a lot of overhead for other functionality which i do not intend to use (yet) !?
+
+#### Answer
+You can share the data between processes on the same machine but this doesn't add overhead.
+You can add replication between machines. But this uses extra classes which are not used in the simple case ie it is as if they were not there, only an option.

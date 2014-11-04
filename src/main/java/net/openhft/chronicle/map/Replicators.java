@@ -16,8 +16,8 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.TcpReplicationConfig;
-import net.openhft.chronicle.hash.UdpReplicationConfig;
+import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.UdpConfig;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -25,10 +25,18 @@ import java.io.IOException;
 
 final class Replicators {
 
+    static final String ONLY_UDP_WARN_MESSAGE =
+            "MISSING TCP REPLICATION : The UdpReplicator only attempts to read data " +
+            "(it does not enforce or guarantee delivery), you should use" +
+            "the UdpReplicator if you have a large number of nodes, and you wish" +
+            "to receive the data before it becomes available on TCP/IP. Since data" +
+            "delivery is not guaranteed, it is recommended that you only use" +
+            "the UDP Replicator in conjunction with a TCP Replicator";
+
     private Replicators() {
     }
 
-    static Replicator tcp(final TcpReplicationConfig replicationConfig) {
+    static Replicator tcp(final TcpConfig replicationConfig) {
         return new Replicator() {
 
             @Override
@@ -42,16 +50,17 @@ final class Replicators {
                         .keyBuilder, builder.valueBuilder);
 
                 StatelessServerConnector statelessServer = new StatelessServerConnector
-                        (keyValueSerializer, (VanillaChronicleMap) chronicleMap, builder.entrySize());
+                        (keyValueSerializer, (VanillaChronicleMap) chronicleMap,
+                                builder.entrySize(true));
 
                 return new TcpReplicator(replica, entryExternalizable, replicationConfig,
-                        builder.entrySize(), statelessServer);
+                        builder.entrySize(true), statelessServer);
             }
         };
     }
 
     static Replicator udp(
-            final UdpReplicationConfig replicationConfig) {
+            final UdpConfig replicationConfig) {
         return new Replicator() {
 
             @Override
@@ -61,7 +70,7 @@ final class Replicators {
                                         final ChronicleMap chronicleMap)
                     throws IOException {
                 return new UdpReplicator(map, entryExternalizable, replicationConfig,
-                        builder.entrySize());
+                        builder.entrySize(true));
             }
         };
     }

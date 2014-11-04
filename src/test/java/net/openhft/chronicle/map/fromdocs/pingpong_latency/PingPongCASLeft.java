@@ -90,14 +90,7 @@ public class PingPongCASLeft {
     static ChronicleMap<String, BondVOInterface> acquireCHM() throws IOException {
         // ensure thread ids are globally unique.
         AffinitySupport.setThreadId();
-
-        String TMP = System.getProperty("java.io.tmpdir");
-        ChronicleMapBuilder.of(String.class, BondVOInterface.class)
-
-                .entries(16)
-                .entrySize(64).file(new File(TMP + "/BondPortfolioCHM"));
         return ChronicleMapBuilder.of(String.class, BondVOInterface.class)
-
                 .entries(16)
                 .entrySize(64).create();
     }

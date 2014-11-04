@@ -19,12 +19,13 @@
 package net.openhft.chronicle.map;
 
 
-import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.hash.replication.TcpConfig;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,10 +72,10 @@ public class Builder {
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(serverPort, endpoints)
+        TcpConfig tcpConfig = TcpConfig.unknownTopology(serverPort, Arrays.asList(endpoints))
                 .heartBeatInterval(1L, TimeUnit.SECONDS);
         return ChronicleMapBuilder.of(kClass, vClass)
-                .replicators(identifier,  tcpConfig);
+                .replication(identifier,  tcpConfig);
     }
 
 

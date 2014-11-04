@@ -22,15 +22,30 @@ import net.openhft.lang.io.Bytes;
 import net.openhft.lang.model.Byteable;
 
 /**
- * Marshaller for byte sequences, which are copied to off-heap {@link Bytes}
- * in a very straightforward manner, e. g. {@link Byteable Byteables}, {@code byte[]} arrays,
- * {@code Bytes} themselves. The criterion of this interface applicability --
- * {@link Object#equals(Object)} implementation shouldn't require deserialization and any garbage creation.
+ * Writer for objects, which themselves are bytes sequence in some sense:
+ * {@link Byteable Byteables}, {@code byte[]} arrays, other primitive arrays, "flat" objects
+ * (with primitives fields only), particularly boxed primitive types.
+ *
+ * <p>This interface is called "BytesInterop" because it allows to work with object as they
+ * are already marshalled to {@code Bytes}: {@linkplain #startsWith(Bytes, Object) compare}
+ * with other {@code Bytes}, i. e. interoperate objects and {@code Bytes}.
  *
  * @param <E> type of marshalled objects
  */
 public interface BytesInterop<E> extends BytesWriter<E> {
 
+    /**
+     * Checks if the given {@code bytes} starts (from the {@code bytes}' {@linkplain
+     * Bytes#position() position}) with the byte sequence the given object
+     * {@linkplain #write(Bytes, Object) is serialized} to, without actual serialization.
+     *
+     * @param bytes the bytes to check if starts with the serialized form of the given object.
+     *              {@code bytes}' is positioned at the first byte to compare. {@code bytes}' limit
+     *              is unspecified. {@code bytes}' position and limit shouldn't be altered during
+     *              this call.
+     * @param e the object to serialize virtually and compare with the given {@code bytes}
+     * @return if the given {@code bytes} starts with the given {@code e} object's serialized form
+     */
     boolean startsWith(Bytes bytes, E e);
 
     long hash(E e);

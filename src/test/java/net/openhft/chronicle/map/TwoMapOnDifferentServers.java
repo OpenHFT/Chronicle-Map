@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.hash.replication.TcpConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +30,6 @@ import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
-import static net.openhft.chronicle.hash.TcpReplicationConfig.of;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -46,19 +45,20 @@ public class TwoMapOnDifferentServers {
     @Before
     public void setup() throws IOException {
 
-        final TcpReplicationConfig tcpConfig =
-                of(8076, new InetSocketAddress("localhost", 8077))
+        final TcpConfig tcpConfig =
+                TcpConfig.forSendingNode(8076, new InetSocketAddress("localhost", 8077))
                         .heartBeatInterval(1, SECONDS);
 
 
         File persistenceFile = getPersistenceFile();
         map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
-                .replicators((byte) 1, tcpConfig).create();
+                .replication((byte) 1, tcpConfig).create();
 
         map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
-                .replicators((byte) 2, of(8077).heartBeatInterval(1, SECONDS)).create();
+                .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8077)
+                        .heartBeatInterval(1, SECONDS)).create();
     }
 
     @After
