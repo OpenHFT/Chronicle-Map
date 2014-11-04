@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.TimeProvider;
+import net.openhft.chronicle.hash.TimeProvider;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -49,10 +49,12 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALatePut() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10).replicators((byte) 1);
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).create();
 
         current(timeProvider);
 
@@ -78,10 +80,11 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALatePutIfAbsent() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10).replicators((byte) 1);
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).create();
 
         current(timeProvider);
 
@@ -108,10 +111,11 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALateReplace() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10).replicators((byte) 1);
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).create();
 
         current(timeProvider);
 
@@ -141,10 +145,14 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALateReplaceWithValue() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10).replicators((byte) 1);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).file(getPersistenceFile());
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).create();
 
         current(timeProvider);
 
@@ -171,10 +179,13 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALateRemoveWithValue() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).replicators((byte) 1);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).file(getPersistenceFile());
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).create();
 
         current(timeProvider);
 
@@ -200,10 +211,13 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreALateRemove() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).replicators((byte) 1);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).file(getPersistenceFile());
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).create();
 
         current(timeProvider);
 
@@ -229,10 +243,13 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testIgnoreWithRemoteRemove() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).replicators((byte) 1);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).file(getPersistenceFile());
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).create();
 
         current(timeProvider);
 
@@ -259,10 +276,13 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
 
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).replicators((byte) 1);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).file(getPersistenceFile());
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replicators((byte) 1)
+                .timeProvider(timeProvider).create();
 
         current(timeProvider);
 
@@ -289,10 +309,16 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testRemoveFollowedByLatePut() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10)
+                .replicators((byte) 1)
+                .entries(10)
+                .timeProvider(timeProvider).file(getPersistenceFile());
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
-                .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replicators((byte) 1)
+                .entries(10)
+                .timeProvider(timeProvider).create();
 
         current(timeProvider);
 
@@ -317,10 +343,16 @@ public class TimeBasedReplicationTests extends JSR166TestCase {
     public void testPutRemovePut() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10).replicators((byte) 1);
+        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(10)
+                .entries(10)
+                .timeProvider(timeProvider).file(getPersistenceFile());
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
-                .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .entries(10)
+                .timeProvider(timeProvider).create();
 
         current(timeProvider);
 

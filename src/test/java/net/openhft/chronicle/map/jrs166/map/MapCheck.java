@@ -123,6 +123,9 @@ public class MapCheck {
 
     static Map newMap() {
         try {
+
+//            return new ConcurrentHashMap();
+            ChronicleMapBuilder.of(Object.class, Object.class).file(getPersistenceFile());
             return ChronicleMapBuilder.of(Object.class, Object.class).create();
 
         } catch (Exception e) {

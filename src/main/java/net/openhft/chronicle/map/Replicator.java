@@ -19,7 +19,7 @@ package net.openhft.chronicle.map;
 import java.io.Closeable;
 import java.io.IOException;
 
-abstract class Replicator {
+public abstract class Replicator {
 
     /**
      * A constructor for use in subclasses.

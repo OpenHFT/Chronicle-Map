@@ -79,8 +79,9 @@ public class TCPSocketReplicationTestPostConnection {
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
                         (byte) 2, 8077, new InetSocketAddress("localhost", 8076));
+        map2aBuilder.file(Builder.getPersistenceFile());
         final ChronicleMap<Integer, CharSequence> map2a =
-                map2aBuilder.createPersistedTo(Builder.getPersistenceFile());
+                map2aBuilder.create();
         map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, 8076);
 
         Thread.sleep(1);
@@ -93,7 +94,8 @@ public class TCPSocketReplicationTestPostConnection {
         map1.put(6, "EXAMPLE-1");
 
         // recreate map2 with new unique file
-        map2 = map2aBuilder.createPersistedTo(Builder.getPersistenceFile());
+        map2aBuilder.file(Builder.getPersistenceFile());
+        map2 = map2aBuilder.create();
 
 
         // allow time for the recompilation to resolve

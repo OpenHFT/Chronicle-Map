@@ -17,8 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.io.serialization.BytesMarshaller;
@@ -224,10 +223,9 @@ public final class ChronicleMapBuilder<K, V>
         return this;
     }
 
-    public ChronicleMapBuilder<K, V> valueMarshallers(
-            BytesWriter<V> valueWriter, BytesReader<V> valueReader) {
-        valueBuilder.writer(valueWriter);
-        valueBuilder.reader(valueReader, valueBuilder.factory());
+    public ChronicleMapBuilder<K, V> valueMarshaller(
+            @NotNull AgileBytesMarshaller<V> valueMarshaller) {
+        valueBuilder.agileMarshaller(valueMarshaller, null);
         return this;
     }
 }

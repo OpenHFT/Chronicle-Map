@@ -18,9 +18,8 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.IdentifierListener;
-import net.openhft.chronicle.hash.replication.TcpConfig;
-import net.openhft.chronicle.hash.replication.ThrottlingConfig;
+import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.hash.ThrottlingConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -52,12 +51,12 @@ interface Work {
 }
 
 /**
- * Used with a {@link net.openhft.chronicle.map.ReplicatedChronicleMap} to send data between the
- * maps using a socket connection {@link net.openhft.chronicle.map.TcpReplicator}
+ * Used with a {@link net.openhft.chronicle.map.ReplicatedChronicleMap} to send data between the maps using a socket
+ * connection {@link net.openhft.chronicle.map.TcpReplicator}
  *
  * @author Rob Austin.
  */
-final class TcpReplicator extends AbstractChannelReplicator implements Closeable {
+public class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
     public static final int STATELESS_CLIENT = -127;
     public static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
@@ -74,7 +73,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private final byte localIdentifier;
     private final int maxEntrySizeBytes;
     private final Replica.EntryExternalizable externalizable;
-    private final TcpConfig replicationConfig;
+    private final TcpReplicationConfig replicationConfig;
     private final StatelessServerConnector statelessServerConnector;
 
     private long selectorTimeout;
@@ -86,11 +85,11 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      *                                 the entry, but setting it too large reduces the workable
      *                                 space in the buffer.
      * @param statelessServerConnector set to NULL if not required
-     * @throws IOException on an io error.
+     * @throws IOException             on an io error.
      */
     public TcpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable externalizable,
-                         @NotNull final TcpConfig replicationConfig,
+                         @NotNull final TcpReplicationConfig replicationConfig,
                          final int maxEntrySizeBytes,
                          @Nullable StatelessServerConnector statelessServerConnector) throws IOException {
 
@@ -279,8 +278,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     }
 
     /**
-     * check to see if we have lost connection with the remote node and if we have attempts a
-     * reconnect.
+     * check to see if we have lost connection with the remote node and if we have attempts a reconnect.
      *
      * @param key               the key relating to the heartbeat that we are checking
      * @param approxTimeOutTime the approximate time in milliseconds
@@ -427,8 +425,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     }
 
     /**
-     * this can be called when a new CHM is added to a cluster, we have to rebootstrap so will clear
-     * all the old bootstrap information
+     * this can be called when a new CHM is added to a cluster, we have to rebootstrap so will clear all the old
+     * bootstrap information
      *
      * @param key the nio SelectionKey
      */
@@ -440,8 +438,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     }
 
     /**
-     * used to exchange identifiers and timestamps and heartbeat intervals between the server and
-     * client
+     * used to exchange identifiers and timestamps and heartbeat intervals between the server and client
      *
      * @param key           the SelectionKey relating to the this cha
      * @param socketChannel
@@ -481,8 +478,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             // this can occur sometimes when if 2 or more remote node attempt to use node discovery at the
             // same time
 
-            final IdentifierListener identifierListener =
-                    replicationConfig.nonUniqueIdentifierListener();
+            final IdentifierListener identifierListener = replicationConfig.identifierListener;
             final SocketAddress remoteAddress = socketChannel.getRemoteAddress();
 
 
@@ -622,10 +618,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     }
 
     /**
-     * sets interestOps to "selector keys",The change to interestOps much be on the same thread as
-     * the selector. This class, allows via {@link AbstractChannelReplicator
-     * .KeyInterestUpdater#set(int)}  to holds a pending change  in interestOps ( via a bitset ),
-     * this change is processed later on the same thread as the selector
+     * sets interestOps to "selector keys",The change to interestOps much be on the same thread as the selector. This
+     * class, allows via {@link AbstractChannelReplicator .KeyInterestUpdater#set(int)}  to holds a pending change  in
+     * interestOps ( via a bitset ), this change is processed later on the same thread as the selector
      */
     private static class KeyInterestUpdater {
 
@@ -656,8 +651,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
 
         /**
-         * @param keyIndex the index of the key that has changed, the list of keys is provided by
-         *                 the constructor {@link KeyInterestUpdater(int, SelectionKey[])}
+         * @param keyIndex the index of the key that has changed, the list of keys is provided by the constructor {@link
+         *                 KeyInterestUpdater(int, SelectionKey[])}
          */
         public void set(int keyIndex) {
             changeOfOpWriteRequired.set(keyIndex);
@@ -898,8 +893,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
 
         /**
-         * writes all the entries that have changed, to the buffer which will later be written to
-         * TCP/IP
+         * writes all the entries that have changed, to the buffer which will later be written to TCP/IP
          *
          * @param modificationIterator a record of which entries have modification
          * @param selectionKey
@@ -977,8 +971,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
 
         /**
-         * used to send an single zero byte if we have not send any data for up to the
-         * localHeartbeatInterval
+         * used to send an single zero byte if we have not send any data for up to the localHeartbeatInterval
          */
         private void writeHeartbeatToBuffer() {
 
@@ -995,8 +988,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
 
         /**
-         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE
-         * will get added back in as soon as we have data to write
+         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE will get added back
+         * in as soon as we have data to write
          *
          * @param socketChannel the socketChannel we wish to stop writing to
          * @param attached      data associated with the socketChannels key
@@ -1284,7 +1277,6 @@ class StatelessServerConnector<K, V> {
 
         switch (event) {
 
-
             case LONG_SIZE:
                 return longSize(reader, writer, sizeLocation);
 
@@ -1299,10 +1291,6 @@ class StatelessServerConnector<K, V> {
 
             case GET:
                 return get(reader, writer, sizeLocation);
-
-            case ACQUIRE_USING:
-                return acquireUsing(reader, writer, sizeLocation);
-
 
             case PUT:
                 return put(reader, writer, sizeLocation);
@@ -1486,26 +1474,6 @@ class StatelessServerConnector<K, V> {
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
-    }
-
-
-    private Work acquireUsing(Bytes reader, Bytes writer, final long sizeLocation) {
-        if (MAP_SUPPORTS_BYTES) {
-            map.acquireUsing(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final K k = readKey(reader, local);
-            final V v = readValue(reader, local);
-
-            try {
-                writeValue(map.acquireUsing(k, v), writer, local);
-            } catch (RuntimeException e) {
-                return sendException(writer, sizeLocation, e);
-            }
-        }
-        writeSizeAndFlags(sizeLocation, false, writer);
-        return null;
-
     }
 
     private Work get(Bytes reader, Bytes writer, final long sizeLocation) {

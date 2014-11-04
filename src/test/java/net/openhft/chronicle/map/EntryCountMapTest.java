@@ -55,8 +55,9 @@ public class EntryCountMapTest {
                 .entries(entries)
                 .minSegments(segments)
                 .entrySize(entrySize)
-                .entryAndValueAlignment(alignment);
-        return mapBuilder.createPersistedTo(getPersistenceFile());
+                .entryAndValueAlignment(alignment)
+                .file(getPersistenceFile());
+        return mapBuilder.create();
     }
 
     @Test

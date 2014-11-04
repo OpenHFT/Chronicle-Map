@@ -41,6 +41,7 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
 import static net.openhft.lang.MemoryUnit.*;
@@ -128,8 +129,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         lockTimeOutNS = builder.lockTimeOut(TimeUnit.NANOSECONDS);
 
-        boolean replicated = getClass() == ReplicatedChronicleMap.class;
-        this.entrySize = builder.entrySize(replicated);
+        //  this.replicas = builder.replicas();
+        this.entrySize = builder.entrySize();
         this.alignment = builder.entryAndValueAlignment();
 
         this.errorListener = builder.errorListener();
@@ -275,7 +276,19 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 + sizeOfEntriesInSegment();
         if ((ss & 63L) != 0)
             throw new AssertionError();
-        return ss;
+        return breakL1CacheAssociativityContention(ss);
+    }
+
+    private long breakL1CacheAssociativityContention(long segmentSize) {
+        // Conventional alignment to break is 4096 (given Intel's 32KB 8-way L1 cache),
+        // for any case break 2 times smaller alignment
+        int alignmentToBreak = 2048;
+        int eachNthSegmentFallIntoTheSameSet =
+                max(1, alignmentToBreak >> numberOfTrailingZeros(segmentSize));
+        if (eachNthSegmentFallIntoTheSameSet < actualSegments) {
+            segmentSize |= 64L; // make segment size "odd" (in cache lines)
+        }
+        return segmentSize;
     }
 
     int multiMapsPerSegment() {
@@ -581,10 +594,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     void containsValue(Bytes reader, Bytes writer) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    public V acquireUsing(Bytes reader, Bytes writer) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -1406,7 +1415,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
             @Override
             public void removeEntry() {
-                removeWithoutLock(copies, metaKeyInterop, keyInterop, key(), null, segmentHash);
+                if (copies != null)
+                    removeWithoutLock(copies, metaKeyInterop, keyInterop, key(), null, segmentHash);
             }
         }
 
@@ -1420,7 +1430,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     putWithoutLock(copies, metaKeyInterop, keyInterop, key(), value(),
                             segmentHash, true);
 
+                copies = null;
                 putOnClose = true;
+
                 Segment.this.writeUnlock();
             }
 

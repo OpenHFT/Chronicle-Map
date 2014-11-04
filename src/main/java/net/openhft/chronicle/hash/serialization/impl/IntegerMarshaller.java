@@ -18,11 +18,11 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.hash.serialization.*;
+import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
+import net.openhft.chronicle.hash.serialization.Hasher;
 import net.openhft.lang.io.Bytes;
 
-public enum IntegerMarshaller
-        implements BytesInterop<Integer>, BytesReader<Integer>, SizeMarshaller {
+public enum IntegerMarshaller implements AgileBytesMarshaller<Integer> {
     INSTANCE;
 
     @Override
@@ -66,7 +66,7 @@ public enum IntegerMarshaller
     }
 
     @Override
-    public Integer read(Bytes bytes, long size, Integer toReuse) {
+    public Integer read(Bytes bytes, long size, Integer e) {
         return bytes.readInt();
     }
 }

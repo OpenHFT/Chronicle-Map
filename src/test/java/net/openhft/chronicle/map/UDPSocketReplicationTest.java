@@ -18,8 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.SimpleReplication;
-import net.openhft.chronicle.hash.replication.UdpConfig;
+import net.openhft.chronicle.hash.UdpReplicationConfig;
 import org.junit.After;
 import org.junit.Before;
 
@@ -41,13 +40,12 @@ public class UDPSocketReplicationTest {
             final int identifier,
             final int udpPort) throws IOException {
 
-        UdpConfig udpConfig = UdpConfig
+        UdpReplicationConfig udpConfig = UdpReplicationConfig
                 .simple(Inet4Address.getByName("255.255.255.255"), udpPort);
 
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
-                .replication(SimpleReplication.builder().udpTransport(udpConfig)
-                                .create((byte) identifier)).create();
+                .replicators((byte) identifier, udpConfig).create();
     }
 
     @Before

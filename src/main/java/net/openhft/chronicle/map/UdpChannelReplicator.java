@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.UdpConfig;
+import net.openhft.chronicle.hash.UdpReplicationConfig;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,7 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
      * @param localIdentifier   just used for logging
      * @throws IOException
      */
-    UdpChannelReplicator(@NotNull final UdpConfig replicationConfig,
+    UdpChannelReplicator(@NotNull final UdpReplicationConfig replicationConfig,
                          final int maxPayloadSize,
                          final byte localIdentifier)
             throws IOException {

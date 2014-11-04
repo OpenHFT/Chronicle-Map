@@ -19,8 +19,9 @@
 package net.openhft.chronicle.map;
 
 
-import net.openhft.chronicle.hash.replication.ReplicationHub;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.ChannelProvider;
+import net.openhft.chronicle.hash.ChannelProviderBuilder;
+import net.openhft.chronicle.hash.TcpReplicationConfig;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,8 +46,8 @@ public class SingleMapChannelTest {
 
     private ChronicleMap<Integer, CharSequence> map1b;
 
-    private ReplicationHub hubA;
-    private ReplicationHub hubB;
+    private ChannelProvider channelProviderA;
+    private ChannelProvider channelProviderB;
 
     public static File getPersistenceFile() {
         String TMP = System.getProperty("java.io.tmpdir");
@@ -60,41 +61,40 @@ public class SingleMapChannelTest {
     public void setup() throws IOException {
 
         {
-            final TcpConfig tcpConfig = TcpConfig
-                    .forSendingNode(8086, new InetSocketAddress("localhost", 8087))
+            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
+                    .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
             int maxEntrySize = 1024;
             byte identifier= 1;
-            hubA = ReplicationHub.builder()
+            channelProviderA = new ChannelProviderBuilder()
                     .maxEntrySize(maxEntrySize)
-                    .tcpTransportAndNetwork(tcpConfig)
-                    .create(identifier);
+                    .replicators(identifier, tcpReplicationConfig).create();
             // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .instance().replicatedViaChannel(hubA.createChannel((short) 1)).create();
+                    .channel(channelProviderA.createChannel((short) 1)).create();
         }
 
 
         {
-            final TcpConfig tcpConfig = TcpConfig
-                    .forSendingNode(8087, new InetSocketAddress("localhost", 8086))
+            final TcpReplicationConfig tcpReplicationConfig = TcpReplicationConfig
+                    .of(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 
-            hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig).create((byte) 2);
+            channelProviderB = new ChannelProviderBuilder()
+                    .replicators((byte) 2, tcpReplicationConfig).create();
 
             // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(1000)
-                    .instance().replicatedViaChannel(hubB.createChannel((short) 1))
-                    .create();
+                    .channel(channelProviderB.createChannel((short) 1))
+                    .entries(1000).create();
         }
     }
 
     @After
     public void tearDown() throws InterruptedException {
 
-        for (final Closeable closeable : new Closeable[]{map1a, map1b}) {
+        for (final Closeable closeable : new Closeable[]{channelProviderA, channelProviderB}) {
             try {
                 closeable.close();
             } catch (IOException e) {

@@ -29,17 +29,15 @@ import java.util.Arrays;
 /**
  * This example shows that the OS resizes the usage of a CHM as needed.  It is not as critical to worry about this.
  * <p>
- * System memory: 7.7 GB, Extents of map: 100000.0 GB, disk used: 104MB, addressRange: 24e02a7fc000-7fd33c000000
+ * System memory: 7.7 GB, Extents of map: 2199.0 GB, disk used: 13MB, addressRange: 7d380b7bd000-7f380c000000
  * </p>
  */
 public class OSResizesMain {
     public static void main(String[] args) throws IOException, InterruptedException {
         File file = File.createTempFile("over-sized", "deleteme");
         ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class)
-                .entrySize(100 * 1000 * 1000)
-                .entries(1000 * 1000)
-                .actualSegments(1)
-                .createPersistedTo(file);
+                .entrySize(100 * 1024 * 1024)
+                .entries(1000000).create();
         for (int i = 0; i < 10000; i++) {
             char[] chars = new char[i];
             Arrays.fill(chars, '+');

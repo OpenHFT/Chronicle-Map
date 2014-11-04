@@ -83,29 +83,18 @@ final class SerializationBuilder<E> implements Cloneable {
                 NullObjectFactory.<E>of();
 
         if (concreteClass(eClass) && Byteable.class.isAssignableFrom(eClass)) {
-            ByteableMarshaller agileBytesMarshaller = ByteableMarshaller.of((Class) eClass);
-            sizeMarshaller(agileBytesMarshaller)
-                    .reader(agileBytesMarshaller, factory)
-                    .interop(agileBytesMarshaller);
+            agileMarshaller(ByteableMarshaller.of((Class) eClass), factory);
         } else if (eClass == CharSequence.class || eClass == String.class) {
             reader((BytesReader<E>) CharSequenceReader.of(), factory);
             writer((BytesWriter<E>) CharSequenceWriter.instance());
         } else if (eClass == Void.class) {
-            sizeMarshaller(VoidMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) VoidMarshaller.INSTANCE, factory)
-                    .interop((BytesInterop<E>) VoidMarshaller.INSTANCE);
+            agileMarshaller((AgileBytesMarshaller<E>) VoidMarshaller.INSTANCE, factory);
         } else if (eClass == Long.class) {
-            sizeMarshaller(LongMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) LongMarshaller.INSTANCE, factory)
-                    .interop((BytesInterop<E>) LongMarshaller.INSTANCE);
+            agileMarshaller((AgileBytesMarshaller<E>) LongMarshaller.INSTANCE, factory);
         } else if (eClass == Double.class) {
-            sizeMarshaller(DoubleMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) DoubleMarshaller.INSTANCE, factory)
-                    .interop((BytesInterop<E>) DoubleMarshaller.INSTANCE);
+            agileMarshaller((AgileBytesMarshaller<E>) DoubleMarshaller.INSTANCE, factory);
         } else if (eClass == Integer.class) {
-            sizeMarshaller(IntegerMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) IntegerMarshaller.INSTANCE, factory)
-                    .interop((BytesInterop<E>) IntegerMarshaller.INSTANCE);
+            agileMarshaller((AgileBytesMarshaller<E>) IntegerMarshaller.INSTANCE, factory);
         } else if (eClass == byte[].class) {
             reader((BytesReader<E>) ByteArrayMarshaller.INSTANCE, factory);
             interop((BytesInterop<E>) ByteArrayMarshaller.INSTANCE);
@@ -136,6 +125,14 @@ final class SerializationBuilder<E> implements Cloneable {
         return this;
     }
 
+    public SerializationBuilder<E> agileMarshaller(AgileBytesMarshaller<E> agileBytesMarshaller,
+                                                   ObjectFactory<E> factory) {
+        if (factory == null) factory = this.factory;
+        return sizeMarshaller(agileBytesMarshaller)
+                .reader(agileBytesMarshaller, factory)
+                .interop(agileBytesMarshaller);
+    }
+
     public SerializationBuilder<E> interop(BytesInterop<E> interop) {
         return copyingInterop(null)
                 .setInterop(interop)
@@ -145,8 +142,6 @@ final class SerializationBuilder<E> implements Cloneable {
     }
 
     public SerializationBuilder<E> writer(BytesWriter<E> writer) {
-        if (writer instanceof BytesInterop)
-            return interop((BytesInterop<E>) writer);
         return copyingInterop(CopyingInterop.FROM_WRITER)
                 .setInterop(writer)
                 .metaInterop(CopyingMetaBytesInterop
@@ -292,19 +287,10 @@ final class SerializationBuilder<E> implements Cloneable {
                     " value don't use object factory");
         } else if (interop instanceof ByteableMarshaller) {
             if (factory instanceof AllocateInstanceObjectFactory) {
-                ByteableMarshaller agileBytesMarshaller =
-                        ByteableMarshaller.of((Class) eClass);
-                sizeMarshaller(agileBytesMarshaller)
-                        .reader(agileBytesMarshaller, factory)
-                        .interop(agileBytesMarshaller);
+                agileMarshaller(ByteableMarshaller.of((Class) eClass), factory);
             } else {
-                ByteableMarshaller agileBytesMarshaller =
-                        ByteableMarshaller.of((Class) eClass, (ObjectFactory) factory);
-                ObjectFactory<E> factory1 = factory;
-                if (factory1 == null) factory1 = this.factory;
-                sizeMarshaller(agileBytesMarshaller)
-                        .reader(agileBytesMarshaller, factory1)
-                        .interop(agileBytesMarshaller);
+                agileMarshaller(ByteableMarshaller.of((Class) eClass, (ObjectFactory) factory),
+                        factory);
             }
         } else if (interop instanceof BytesMarshallableMarshaller) {
             if (factory instanceof AllocateInstanceObjectFactory) {

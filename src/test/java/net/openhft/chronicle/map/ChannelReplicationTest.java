@@ -19,8 +19,9 @@
 package net.openhft.chronicle.map;
 
 
-import net.openhft.chronicle.hash.replication.ReplicationHub;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.ChannelProvider;
+import net.openhft.chronicle.hash.ChannelProviderBuilder;
+import net.openhft.chronicle.hash.TcpReplicationConfig;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,44 +47,44 @@ public class ChannelReplicationTest {
     private ChronicleMap<Integer, CharSequence> map1b;
     private ChronicleMap<Integer, CharSequence> map2b;
 
-    private ReplicationHub hubA;
-    private ReplicationHub hubB;
+    private ChannelProvider channelProviderA;
+    private ChannelProvider channelProviderB;
 
 
     @Before
 
     public void setup() throws IOException {
         {
-            TcpConfig tcpConfig = TcpConfig
-                    .forSendingNode(8086, new InetSocketAddress("localhost", 8087))
+            TcpReplicationConfig tcpConfig = TcpReplicationConfig
+                    .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
-            hubA = ReplicationHub.builder()
-                    .tcpTransportAndNetwork(tcpConfig)
-                    .create((byte) 1);
+            channelProviderA = new ChannelProviderBuilder()
+                    .replicators((byte) 1, tcpConfig)
+                    .create();
 
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .instance().replicatedViaChannel(hubA.createChannel((short) 1)).create();
+                    .channel(channelProviderA.createChannel((short) 1)).create();
         }
 
         {
-            TcpConfig tcpConfig =
-                    TcpConfig.forReceivingOnlyNode(8087).heartBeatInterval(1, SECONDS);
+            TcpReplicationConfig tcpConfig =
+                    TcpReplicationConfig.of(8087).heartBeatInterval(1, SECONDS);
 
-            hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
-                    .create((byte) 2);
+            channelProviderB = new ChannelProviderBuilder().replicators((byte) 2, tcpConfig)
+                    .create();
 
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
-                    .instance().replicatedViaChannel(hubB.createChannel((short) 1)).create();
+                    .channel(channelProviderB.createChannel((short) 1)).create();
         }
     }
 
     @After
     public void tearDown() throws InterruptedException {
 
-        for (final Closeable closeable : new Closeable[]{map1a, map1b, map2a, map2b}) {
+        for (final Closeable closeable : new Closeable[]{channelProviderA, channelProviderB}) {
             try {
                 closeable.close();
             } catch (IOException e) {
@@ -98,12 +99,12 @@ public class ChannelReplicationTest {
 
         map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
-                .instance().replicatedViaChannel(hubB.createChannel((short) 2)).create();
+                .channel(channelProviderB.createChannel((short) 2)).create();
 
 
         map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
-                .instance().replicatedViaChannel(hubA.createChannel((short) 2)).create();
+                .channel(channelProviderA.createChannel((short) 2)).create();
 
         map2a.put(1, "EXAMPLE-2");
         map1a.put(1, "EXAMPLE-1");

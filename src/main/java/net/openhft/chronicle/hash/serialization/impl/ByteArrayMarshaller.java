@@ -59,10 +59,10 @@ public enum ByteArrayMarshaller implements BytesInterop<byte[]>, BytesReader<byt
     }
 
     @Override
-    public byte[] read(Bytes bytes, long size, byte[] toReuse) {
-        if (toReuse == null || size != toReuse.length)
-            toReuse = new byte[(int) size];
-        bytes.read(toReuse);
-        return toReuse;
+    public byte[] read(Bytes bytes, long size, byte[] ba) {
+        if (ba == null || size != ba.length)
+            ba = new byte[(int) size];
+        bytes.read(ba);
+        return ba;
     }
 }

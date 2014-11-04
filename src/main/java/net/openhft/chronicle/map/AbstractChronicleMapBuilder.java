@@ -19,7 +19,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.*;
-import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.MetaProvider;
@@ -41,11 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -107,6 +103,8 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
 
+    private Map<Class<? extends Replicator>, Replicator> replicators = new HashMap<Class<? extends Replicator>, Replicator>();
+
     // used when configuring the number of segments.
     private int minSegments = -1;
     private int actualSegments = -1;
@@ -135,8 +133,10 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     private V defaultValue = null;
     private DefaultValueProvider<K, V> defaultValueProvider = NullValueProvider.INSTANCE;
     private PrepareValueBytes<K, V> prepareValueBytes = null;
+    private byte identifier = -1;
 
-    private SimpleReplication simpleReplication = null;
+    private StatelessBuilder statelessBuilder;
+    private File file;
 
     AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
@@ -283,14 +283,14 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return self();
     }
 
-    int entrySize(boolean replicated) {
+    int entrySize() {
         if (entrySize > 0)
             return entryAndValueAlignment().alignSize(entrySize);
         int size = metaDataBytes;
         int keySize = keySize();
         size += keyBuilder.sizeMarshaller().sizeEncodingSize(keySize);
         size += keySize;
-        if (replicated)
+        if (useReplication())
             size += ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
         int valueSize = valueSize();
         size += valueBuilder.sizeMarshaller().sizeEncodingSize(valueSize);
@@ -559,6 +559,43 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return toString().hashCode();
     }
 
+    public B replicators(byte identifier, ReplicationConfig... replicationConfigs) {
+
+        this.identifier = identifier;
+        this.replicators.clear();
+        for (ReplicationConfig replicationConfig : replicationConfigs) {
+
+            Replicator replicator;
+            if (replicationConfig instanceof TcpReplicationConfig) {
+                replicator = Replicators.tcp((TcpReplicationConfig) replicationConfig);
+            } else if (replicationConfig instanceof UdpReplicationConfig) {
+                replicator = Replicators.udp((UdpReplicationConfig) replicationConfig);
+            } else
+                throw new UnsupportedOperationException();
+
+
+            this.replicators.put(replicator.getClass(), replicator);
+        }
+
+        return self();
+    }
+
+
+    public B channel(ChannelProvider.ChronicleChannel chronicleChannel) {
+        this.identifier = chronicleChannel.identifier();
+        this.replicators.clear();
+        replicators.put(chronicleChannel.getClass(), chronicleChannel);
+
+        return self();
+    }
+
+    @Override
+    public B disableReplication() {
+        identifier = -1;
+        replicators.clear();
+        return self();
+    }
+
     @Override
     public B timeProvider(TimeProvider timeProvider) {
         this.timeProvider = timeProvider;
@@ -619,9 +656,15 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     @Override
-    public StatelessClientConfig<ChronicleMap<K, V>> statelessClient(
-            InetSocketAddress remoteAddress) {
-        return new StatelessMapConfig<>(this.clone(), remoteAddress);
+    public B stateless(@NotNull StatelessBuilder statelessBuilder) {
+        this.statelessBuilder = statelessBuilder;
+        return self();
+    }
+
+    @Override
+    public B file(File file) throws IOException {
+        this.file = file;
+        return self();
     }
 
     /**
@@ -705,7 +748,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
 
 
     /**
-     * Non-public because should be called only after {@link #preMapConstruction(boolean)}
+     * Non-public because should be called only after {@link #preMapConstruction()}
      */
     DefaultValueProvider<K, V> defaultValueProvider() {
         if (defaultValueProvider != null)
@@ -723,43 +766,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return new ConstantValueProvider<K, V>(defaultValue, metaValueWriter, valueWriter);
     }
 
-    @Override
-    public B replication(SimpleReplication replication) {
-        this.simpleReplication = replication;
-        return self();
-    }
-
-    @Override
-    public B replication(byte identifier, TcpConfig tcpTransportAndNetwork) {
-        return replication(SimpleReplication.builder()
-                .tcpTransportAndNetwork(tcpTransportAndNetwork).create(identifier));
-    }
-
-    @Override
-    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> instance() {
-        return new InstanceConfig<>(this.clone(), simpleReplication, null, null);
-    }
-
-    @Override
-    public ChronicleMap<K, V> createPersistedTo(File file) throws IOException {
-        return createWithFile(file, simpleReplication, null);
-    }
-
-    @Override
-    public ChronicleMap<K, V> create() throws IOException {
-        return createWithoutFile(simpleReplication, null);
-    }
-
-    ChronicleMap<K, V> create(InstanceConfig<K, V> ib) throws IOException {
-        if (ib.file != null) {
-            return createWithFile(ib.file, ib.simpleReplication, ib.channel);
-        } else {
-            return createWithoutFile(ib.simpleReplication, ib.channel);
-        }
-    }
-
-    ChronicleMap<K, V> createWithFile(File file, SimpleReplication simpleReplication,
-                                      ReplicationChannel channel) throws IOException {
+    public ChronicleMap<K, V> createWithFile(File file) throws IOException {
         for (int i = 0; i < 10; i++) {
             if (file.exists() && file.length() > 0) {
                 FileInputStream fis = new FileInputStream(file);
@@ -769,7 +776,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
                             (VanillaChronicleMap<K, ?, ?, V, ?, ?>) ois.readObject();
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
                     map.createMappedStoreAndSegments(file);
-                    return establishReplication(map, simpleReplication, channel);
+                    return establishReplication(map);
                 } catch (ClassNotFoundException e) {
                     throw new IOException(e);
                 } finally {
@@ -789,7 +796,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         if (!file.exists())
             throw new FileNotFoundException("Unable to create " + file);
 
-        VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(simpleReplication, channel);
+        VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap();
 
         FileOutputStream fos = new FileOutputStream(file);
         ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -802,66 +809,54 @@ public abstract class AbstractChronicleMapBuilder<K, V,
             oos.close();
         }
 
-        return establishReplication(map, simpleReplication, channel);
+        return establishReplication(map);
     }
 
-    /**
-     * Only for testing.
-     *
-     * @param identifier id
-     * @return map
-     */
-    ChronicleMap<K, V> createReplicated(byte identifier) throws IOException {
-        VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
-                new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
-                        V, Object, MetaBytesWriter<V, Object>>(this, identifier);
+
+    @Override
+    public ChronicleMap<K, V> create() throws IOException {
+
+        if (statelessBuilder != null)
+            return createStatelessMap(statelessBuilder);
+
+        return (file != null) ? createWithFile(file) : createWithoutFile();
+    }
+
+    private ChronicleMap<K, V> createWithoutFile() throws IOException {
+        VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap();
         BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
                 map.sizeInBytes(), true);
         map.createMappedStoreAndSegments(bytesStore);
-        return map;
+        return establishReplication(map);
     }
 
-    private ChronicleMap<K, V> createWithoutFile(
-            SimpleReplication simpleReplication, ReplicationChannel channel) throws IOException {
-        VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(simpleReplication, channel);
-        BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
-                map.sizeInBytes(), true);
-        map.createMappedStoreAndSegments(bytesStore);
-        return establishReplication(map, simpleReplication, channel);
-    }
-
-    ChronicleMap<K, V> createStatelessMap(StatelessMapConfig<K, V> statelessBuilder)
-            throws IOException {
-        preMapConstruction(false);
+    private ChronicleMap<K, V> createStatelessMap(StatelessBuilder statelessBuilder) throws IOException {
+        preMapConstruction();
         return new StatelessChronicleMap<K, V>(
                 statelessBuilder,
                 this);
     }
 
-    private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap(
-            SimpleReplication simpleReplication, ReplicationChannel channel) throws IOException {
-        boolean replicated = simpleReplication != null || channel != null;
-        preMapConstruction(replicated);
-        if (replicated) {
-            byte identifier;
-            if (simpleReplication != null) {
-                identifier = simpleReplication.identifier();
-            } else {
-                identifier = channel.hub().identifier();
-            }
+    private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap() throws IOException {
+        preMapConstruction();
+        if (useReplication()) {
             return new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
-                    V, Object, MetaBytesWriter<V, Object>>(this, identifier);
+                    V, Object, MetaBytesWriter<V, Object>>(this);
         } else {
             return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                     V, Object, MetaBytesWriter<V, Object>>(this);
         }
     }
 
-    void preMapConstruction(boolean replicated) {
+    private boolean useReplication() {
+        return identifier != -1;
+    }
+
+    void preMapConstruction() {
         keyBuilder.objectSerializer(objectSerializer());
         valueBuilder.objectSerializer(objectSerializer());
 
-        long maxSize = (long) entrySize(replicated) * figureBufferAllocationFactor();
+        long maxSize = (long) entrySize() * figureBufferAllocationFactor();
         keyBuilder.maxSize(maxSize);
         valueBuilder.maxSize(maxSize);
 
@@ -871,37 +866,32 @@ public abstract class AbstractChronicleMapBuilder<K, V,
             valueBuilder.constantSizeBySample(sampleValue);
     }
 
-    private ChronicleMap<K, V> establishReplication(
-            VanillaChronicleMap<K, ?, ?, V, ?, ?> map, SimpleReplication simpleReplication,
-            ReplicationChannel channel) throws IOException {
+    private ChronicleMap<K, V> establishReplication(VanillaChronicleMap<K, ?, ?, V, ?, ?> map)
+            throws IOException {
         if (map instanceof ReplicatedChronicleMap) {
-            if (simpleReplication != null && channel != null) {
-                throw new AssertionError("Only one non-null replication should be passed");
-            }
             ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;
-            List<Replicator> replicators = new ArrayList<>(2);
-            if (simpleReplication != null) {
-                if (simpleReplication.tcpTransportAndNetwork() != null)
-                    replicators.add(Replicators.tcp(simpleReplication.tcpTransportAndNetwork()));
-                if (simpleReplication.udpTransport() != null)
-                    replicators.add(Replicators.udp(simpleReplication.udpTransport()));
-            } else {
-                ReplicationHub hub = channel.hub();
-                int entrySize = entrySize(true);
-                if (entrySize > hub.maxEntrySize()) {
-                    throw new IllegalArgumentException("During ChannelProviderBuilder setup, " +
-                            "maxEntrySize=" + hub.maxEntrySize() +
-                            " was specified, but map with " +
-                            "entrySize=" + entrySize + " is attempted to apply to the replicator");
+            for (Replicator replicator : replicators.values()) {
+                if (replicator instanceof ChannelProvider.ChronicleChannel) {
+                    ChannelProvider.ChronicleChannel channel =
+                            (ChannelProvider.ChronicleChannel) replicator;
+                    if (entrySize() > channel.provider().maxEntrySize()) {
+                        throw new IllegalArgumentException("During ChannelProviderBuilder setup, " +
+                                "maxEntrySize=" + channel.provider().maxEntrySize() +
+                                " was specified, but map with " +
+                                "entrySize=" + entrySize() + " is attempted to apply" +
+                                "to the replicator");
+                    }
                 }
-                ChannelProvider provider = ChannelProvider.getProvider(hub);
-                ChannelProvider.ChronicleChannel ch = provider.createChannel(channel.channelId());
-                replicators.add(ch);
-            }
-            for (Replicator replicator : replicators) {
                 Closeable token = replicator.applyTo(this, result, result, map);
                 if (replicators.size() == 1 && token.getClass() == UdpReplicator.class) {
-                    LOG.warn(Replicators.ONLY_UDP_WARN_MESSAGE);
+                    LOG.warn(
+                            "MISSING TCP REPLICATION : The UdpReplicator only attempts to read data " +
+                                    "(it does not enforce or guarantee delivery), you should use" +
+                                    "the UdpReplicator if you have a large number of nodes, and you wish" +
+                                    "to receive the data before it becomes available on TCP/IP. Since data" +
+                                    "delivery is not guaranteed, it is recommended that you only use" +
+                                    "the UDP Replicator in conjunction with a TCP Replicator"
+                    );
                 }
                 result.addCloseable(token);
             }
@@ -916,7 +906,11 @@ public abstract class AbstractChronicleMapBuilder<K, V,
                 VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR);
     }
 
-    int segmentHeaderSize() {
+    public byte identifier() {
+        return identifier;
+    }
+
+    public int segmentHeaderSize() {
         int segments = actualSegments();
         // reduce false sharing unless we have a lot of segments.
         return segments <= 8192 ? 64 : 16;

@@ -530,79 +530,6 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore
-    public void testLeanEntrySizeInt() throws IOException {
-        File file = File.createTempFile("testLeanEntrySize-Int", ".deleteme");
-        file.deleteOnExit();
-        int entries = 1000000;
-        int entrySize = 8;
-        ChronicleMap<IntValue, IntValue> map = OffHeapUpdatableChronicleMapBuilder
-                .of(IntValue.class, IntValue.class)
-                .entrySize(entrySize)
-                .entries(entries)
-                .create();
-        IntValue key = DataValueClasses.newInstance(IntValue.class);
-        IntValue value = DataValueClasses.newDirectReference(IntValue.class);
-        for (int i = 0; i < entries; i++) {
-            key.setValue(i);
-            try (WriteContext wc = map.acquireUsingLocked(key, value)) {
-                value.setValue(i);
-            }
-        }
-        for (int i = 0; i < entries; i++) {
-            key.setValue(i);
-            try (ReadContext rc = map.getUsingLocked(key, value)) {
-                assertTrue(rc.present());
-                assertEquals(i, value.getValue());
-            }
-        }
-        map.close();
-
-        // check the extents of the map.
-        int hashSize = 8; // assume short-short hashing
-        int sizePerEntry = hashSize * 2 + entrySize * 5 / 4 /* + 25% */;
-        long fileSizeExpected = entries * sizePerEntry;
-        long length = file.length();
-        assertTrue(length > fileSizeExpected);
-        assertTrue(length < fileSizeExpected * 12 / 10);
-    }
-
-    @Test
-    @Ignore
-    public void testLeanEntrySizeLong() throws IOException {
-        File file = File.createTempFile("testLeanEntrySize-Long", ".deleteme");
-        file.deleteOnExit();
-        int entries = 1000000;
-        int entrySize = 16;
-        ChronicleMap<LongValue, LongValue> map = OffHeapUpdatableChronicleMapBuilder
-                .of(LongValue.class, LongValue.class)
-                .entrySize(entrySize)
-                .entries(entries)
-                .create();
-        LongValue key = DataValueClasses.newInstance(LongValue.class);
-        LongValue value = DataValueClasses.newDirectReference(LongValue.class);
-        for (long i = 0; i < entries; i++) {
-            key.setValue(i);
-            map.acquireUsing(key, value);
-            value.setValue(i);
-        }
-        for (long i = 0; i < entries; i++) {
-            key.setValue(i);
-            assertNotNull(map.getUsing(key, value));
-            assertEquals(i, value.getValue());
-        }
-        map.close();
-
-        // check the extents of the map.
-        int hashSize = 8; // assume short-short hashing
-        int sizePerEntry = hashSize * 2 + entrySize * 5 / 4 /* + 25% */;
-        long fileSizeExpected = entries * sizePerEntry;
-        long length = file.length();
-        assertTrue(length > fileSizeExpected);
-        assertTrue(length < fileSizeExpected * 12 / 10);
-    }
-
-    @Test
     public void testAcquireFromMultipleThreads() throws Exception {
         int entries = 1000 * 1000;
         testAcquireFromMultipleThreads(getSharedMap(entries, 128, 24, NO_ALIGNMENT));
@@ -651,19 +578,19 @@ public class ChronicleMapTest {
         int procs = Runtime.getRuntime().availableProcessors();
         int threads = procs * 2; // runs > 100 ? procs / 2 : procs;
         ExecutorService es = Executors.newFixedThreadPool(procs);
-        for (int runs : new int[]{10, 25, 50, 250, 500, 1000, 2500}) {
+        for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
             // JAVA 8 produces more garbage than previous versions for internal work.
 //            System.gc();
             final long entries = runs * 1000 * 1000L;
-            OffHeapUpdatableChronicleMapBuilder<LongValue, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
-                    .of(LongValue.class, LongValue.class)
+            OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+                    .of(CharSequence.class, LongValue.class)
                     .entries(entries)
                     .entryAndValueAlignment(OF_8_BYTES)
-                    .entrySize(16);
+                    .entrySize(24);
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
-            final ChronicleMap<LongValue, LongValue> map = builder.createPersistedTo(tmpFile);
+            final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
 
             int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
             final int independence = Math.min(procs, runs > 500 ? 8 : 4);
@@ -676,14 +603,16 @@ public class ChronicleMapTest {
                     futures.add(es.submit(new Runnable() {
                         @Override
                         public void run() {
-                            LongValue key = DataValueClasses.newDirectInstance(LongValue.class);
                             LongValue value = nativeLongValue();
+                            StringBuilder sb = new StringBuilder();
                             long next = 50 * 1000 * 1000;
                             // use a factor to give up to 10 digit numbers.
                             int factor = Math.max(1, (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
                             for (long j = t % independence; j < entries + independence - 1; j += independence) {
-                                key.setValue(j * factor);
-                                map.acquireUsing(key, value);
+                                sb.setLength(0);
+                                sb.append("us:");
+                                sb.append(j * factor);
+                                map.acquireUsing(sb, value);
                                 long n = value.addAtomicValue(1);
                                 assert n > 0 && n < 1000 : "Counter corrupted " + n;
                                 if (t == 0 && j >= next) {
@@ -710,7 +639,6 @@ public class ChronicleMapTest {
         es.shutdown();
         es.awaitTermination(1, TimeUnit.MINUTES);
     }
-
     @Test
     @Ignore
     public void testAcquireLockedPerf()
@@ -732,7 +660,7 @@ public class ChronicleMapTest {
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
-            final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
+            final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
 
             int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
             final int independence = Math.min(procs, runs > 500 ? 8 : 4);
@@ -755,7 +683,7 @@ public class ChronicleMapTest {
                                 sb.append("us:");
                                 sb.append(j * factor);
                                 long n;
-                                try (WriteContext wc = map.acquireUsingLocked(sb, value)) {
+                                try(WriteContext wc = map.acquireUsingLocked(sb, value)) {
                                     n = value.addValue(1);
                                 }
                                 assert n > 0 && n < 1000 : "Counter corrupted " + n;
@@ -1301,9 +1229,10 @@ public class ChronicleMapTest {
                 .entries(10)
                 .minSegments(1)
                 .entrySize(10);
+        builder.file(getPersistenceFile());
         testOversizeEntriesPutRemoveReplace(
                 (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
-                        builder.createPersistedTo(getPersistenceFile())
+                        builder.create()
         );
     }
 
@@ -1405,7 +1334,7 @@ public class ChronicleMapTest {
                 .entrySize(16);
         File tmpFile = File.createTempFile("testAcquireUsingLocked", ".deleteme");
         tmpFile.deleteOnExit();
-        final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
+        final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
 
         LongValue value = nativeLongValue();
 
@@ -1462,7 +1391,7 @@ public class ChronicleMapTest {
                 .entrySize(40);
         File tmpFile = File.createTempFile("testAcquireUsingLocked", ".deleteme");
         tmpFile.deleteOnExit();
-        final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
+        final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
 
         LongValue value = DataValueClasses.newInstance(LongValue.class);
 

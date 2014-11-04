@@ -25,8 +25,6 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
 
     public static <K, V> OffHeapUpdatableChronicleMapBuilder<K, V> of(
             @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
-        if (keyClass != CharSequence.class && keyClass.isInterface())
-            keyClass = DataValueClasses.directClassFor(keyClass);
         if (!offHeapReference(valueClass)) {
             if (!valueClass.isInterface()) {
                 throw new IllegalArgumentException(

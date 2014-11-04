@@ -78,14 +78,14 @@ public final class CharSequenceReader<S extends CharSequence>
     }
 
     @Override
-    public S read(Bytes bytes, long size, S toReuse) {
+    public S read(Bytes bytes, long size, S s) {
         Appendable appendable;
-        if (toReuse instanceof Appendable) {
-            appendable = (Appendable) toReuse;
-            if (toReuse instanceof StringBuilder) {
-                ((StringBuilder) toReuse).setLength(0);
-            } else if (toReuse instanceof StringBuffer) {
-                ((StringBuffer) toReuse).setLength(0);
+        if (s instanceof Appendable) {
+            appendable = (Appendable) s;
+            if (s instanceof StringBuilder) {
+                ((StringBuilder) s).setLength(0);
+            } else if (s instanceof StringBuffer) {
+                ((StringBuffer) s).setLength(0);
             }
         } else {
             sb.setLength(0);
@@ -96,8 +96,8 @@ public final class CharSequenceReader<S extends CharSequence>
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-        if (appendable == toReuse)
-            return toReuse;
+        if (appendable == s)
+            return s;
         return interner.intern(sb);
     }
 

@@ -73,7 +73,7 @@ public class SerializerTest {
         ByteBufferBytes in = out.slice();
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(Integer.class, valueClass);
-        builder.preMapConstruction(false);
+        builder.preMapConstruction();
 
         Serializer v = new Serializer(builder.valueBuilder);
 
@@ -96,7 +96,7 @@ public class SerializerTest {
         ByteBufferBytes in = out.slice();
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(clazz, Integer.class);
-        builder.preMapConstruction(false);
+        builder.preMapConstruction();
         {
             Serializer v = new Serializer(builder.keyBuilder);
 
