@@ -383,11 +383,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         return this.lookupUsing(key, usingValue, LockType.READ_LOCK);
     }
 
-    // todo remove
+
     @Override
     public V acquireUsing(K key, V usingValue) {
 
-        try (Context<K, V> kvContext = lookupUsing(key, usingValue, LockType.WRITE_LOCK)) {
+        try (WriteContext<K, V> kvContext = lookupUsing(key, usingValue, LockType.WRITE_LOCK)) {
+
+            if (!isNativeValueClass)
+                kvContext.dontPutOnClose();
+
             return kvContext.value();
         }
     }
