@@ -420,7 +420,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         lock.metaKeyInterop = metaKeyInterop;
         lock.keyInterop = keyInterop;
         lock.segmentHash = segmentHash;
-        lock.value = null; // todo is this really needed?
 
         if (!isNativeValueClass && lockTypeType == LockType.WRITE_LOCK && v == null)
             v = value;
@@ -1419,8 +1418,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
             @Override
             public void removeEntry() {
-                if (copies != null)
-                    removeWithoutLock(copies, metaKeyInterop, keyInterop, key(), null, segmentHash);
+                removeWithoutLock(copies, metaKeyInterop, keyInterop, key(), null, segmentHash);
             }
         }
 
@@ -1434,9 +1432,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     putWithoutLock(copies, metaKeyInterop, keyInterop, key(), value(),
                             segmentHash, true);
 
-                copies = null;
                 putOnClose = true;
-
                 Segment.this.writeUnlock();
             }
 
@@ -1637,6 +1633,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         MKI metaKeyInterop;
         KI keyInterop;
         long segmentHash;
+
 
         private K key;
         private V value;

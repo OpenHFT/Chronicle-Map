@@ -255,44 +255,46 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         return (Segment) segments[segmentNum];
     }
 
+    @Override
     <T extends Context> T lookupUsing(K key, V value, LockType lockTypeType) {
         checkKey(key);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
-        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
+        KI keyWriter = keyInteropProvider.get(copies, originalKeyInterop);
         copies = metaKeyInteropProvider.getCopies(copies);
-        MKI metaKeyInterop =
-                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
-        long hash = metaKeyInterop.hash(keyInterop, key);
+        MKI metaKeyWriter =
+                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyWriter, key);
+        long hash = metaKeyWriter.hash(keyWriter, key);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
 
+        boolean create =lockTypeType == LockType.WRITE_LOCK;
         Segment segment = segment(segmentNum);
+
         MutableLockedEntry<K, V, MKI, KI> lock = (lockTypeType == LockType.WRITE_LOCK)
                 ? segment.writeLock()
                 : segment.readLock();
 
-        V v = segment.acquireWithoutLock(copies, metaKeyInterop, keyInterop, key, value,
-                segmentHash, lockTypeType == LockType.WRITE_LOCK,
-                (lockTypeType == LockType.WRITE_LOCK) ? timeProvider.currentTimeMillis() : 0L);
+        V v =    segment.acquireWithoutLock(copies, metaKeyWriter, keyWriter, key,
+                value,
+                segmentHash, create, create ? timeProvider.currentTimeMillis() : 0L);
 
+        lock.copies = copies;
+        lock.metaKeyInterop = metaKeyWriter;
+        lock.keyInterop = keyWriter;
+        lock.segmentHash = segmentHash;
 
-        // we want to call put on heap objects that don't currently exist in the map
-        if (v == null && !isNativeValueClass && lockTypeType == LockType.WRITE_LOCK) {
-            lock.copies = copies;
-            lock.metaKeyInterop = metaKeyInterop;
-            lock.keyInterop = keyInterop;
-            lock.segmentHash = segmentHash;
+        if (!isNativeValueClass && lockTypeType == LockType.WRITE_LOCK && v == null)
             v = value;
-        }
-
-        //todo set dirty when using replication on
 
         lock.value(v);
         lock.key(key);
 
         return (T) lock;
-
     }
+
+
+
+
 
     @Override
     public V remove(final Object key) {
