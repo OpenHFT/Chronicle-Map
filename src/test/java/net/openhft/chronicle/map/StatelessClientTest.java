@@ -41,7 +41,7 @@ public class StatelessClientTest {
     public static final int SIZE = 100000;
 
 
-    @Test
+    @Test(timeout = 5000)
     public void testBufferOverFlowPutAllAndEntrySet() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap;
@@ -352,7 +352,6 @@ public class StatelessClientTest {
         statelessMap.close();
 
     }
-
 
 
     @Test
