@@ -101,8 +101,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     V getUsing(K key, V usingValue);
 
     /**
-     * The method is similar {@link  V getUsing(K key, V usingValue);}  but in addition locks the
-     * map segment to operations to be performed atomically. ( see the example below )
+     * The method is similar {@link  V getUsing(K key, V usingValue);}  but in addition read locks
+     * the map segment to operations to be performed atomically. ( see the example below )
      *
      * Returns the  ReadContext which holds a map segment lock and provides method to get the value
      * ( to which the specified key is mapped)  atomically ( see example below for an explanation ),
@@ -125,7 +125,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * // add your logic here ( the lock will ensure this bond can not be changed by another thread
      * )
      *
-     * } // the lock is released here </p>
+     * } // the read lock is released here </p>
      *
      * To ensure that you can read the 'issueDate' and 'symbol' can be read atomically, these values
      * must be read while the segment lock is in place.
