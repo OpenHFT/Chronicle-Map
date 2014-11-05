@@ -373,13 +373,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
     }
 
+    @NotNull
     @Override
-    public WriteContext<K, V> acquireUsingLocked(K key, V usingValue) {
+    public WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue) {
         return this.lookupUsing(key, usingValue, LockType.WRITE_LOCK);
     }
 
+    @NotNull
     @Override
-    public ReadContext<K, V> getUsingLocked(K key, V usingValue) {
+    public ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue) {
         return this.lookupUsing(key, usingValue, LockType.READ_LOCK);
     }
 
