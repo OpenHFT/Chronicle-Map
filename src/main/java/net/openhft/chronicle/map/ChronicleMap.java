@@ -109,7 +109,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * read to the provided {@code value} object, if possible, or returns {@code null}, if this map
      * contains no mapping for the key.
      *
-     * <p>If the specified key is present in the map, the value readContext.value() uses the
+     * <p>If the specified key is present in the map, the readContext.value() uses the
      * provided {@code usingValue} object via value marshaller's {@link BytesMarshaller#read(Bytes,
      * Object) read(Bytes, value)} or value reader's {@link BytesReader#read(Bytes, long, Object)
      * read(Bytes, size, value)} method, depending on what deserialization strategy is configured on
@@ -133,17 +133,14 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      *
      * <p>The provided {@code value} object is allowed to be {@code null}, in this case
      *
-     * {@code map.getUsing(key, null)} call is semantically equivalent to simple
-     *
-     * {@code map.get(key)} call.
-     *
+
      * @param key        the key whose associated value is to be returned
      * @param usingValue the object to read value data in, if possible
      * @return the read context containing the value to which the specified key is mapped
      *
      * no mapping for the key
      * @see #get(Object)
-     * @see #acquireUsing(Object, Object)
+     * @see #getUsing(Object, Object)
      * @see ChronicleMapBuilder#valueMarshaller(BytesMarshaller)
      */
     @NotNull
