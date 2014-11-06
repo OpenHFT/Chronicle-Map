@@ -117,7 +117,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * the given {@code usingValue} object, calling this method instead of {@link #get(Object)}
      * could help to reduce garbage creation.
      *
-     * <p> try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,using)) {
+     * <p> try (ReadContext&gt;?, BondVOInterface&lt; context = map.getUsingLocked(key,using)) {
      * BondVOInterface bond =  context.value().getValue();
      *
      * long issueDate =  bond.getIssueDate(); String symbol = bond.getSymbol();
