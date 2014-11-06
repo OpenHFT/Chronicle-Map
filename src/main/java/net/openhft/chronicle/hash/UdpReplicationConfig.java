@@ -24,61 +24,13 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 
 
-public abstract class UdpReplicationConfig implements ReplicationConfig {
-
-    /**
-     * Package-private constructor forbids subclassing from outside of the package
-     */
-    UdpReplicationConfig() {
-        // nothing to do
-    }
-
-    public static UdpReplicationConfig simple(@NotNull InetAddress address, int port) {
-        if (address.isMulticastAddress())
-            throw new IllegalArgumentException();
-
-
-        return create(address, port, null, ThrottlingConfig.noThrottling());
-    }
-
-    public static UdpReplicationConfig multiCast(@NotNull InetAddress address, int port,
-                                                 @NotNull NetworkInterface networkInterface) {
-        if (!address.isMulticastAddress() || networkInterface == null)
-            throw new IllegalArgumentException();
-        return create(address, port, networkInterface, ThrottlingConfig.noThrottling());
-    }
-
-    static UdpReplicationConfig create(InetAddress address, int port,
-                                       NetworkInterface networkInterface,
-                                       ThrottlingConfig throttlingConfig) {
-        return new UdpReplicationConfigBean(address, port, networkInterface,
-                throttlingConfig);
-    }
-
-    public abstract InetAddress address();
-
-    public abstract int port();
-
-    @Nullable
-    public abstract NetworkInterface networkInterface();
-
-    public abstract ThrottlingConfig throttlingConfig();
-
-    public UdpReplicationConfig throttlingConfig(ThrottlingConfig throttlingConfig) {
-        ThrottlingConfig.checkMillisecondBucketInterval(throttlingConfig, "UDP");
-        return create(address(), port(), networkInterface(), throttlingConfig);
-    }
-}
-
-
-
-final class UdpReplicationConfigBean extends UdpReplicationConfig {
+public final class UdpReplicationConfig implements ReplicationConfig {
     private final InetAddress address;
     private final int port;
     private final NetworkInterface networkInterface;
     private final ThrottlingConfig throttlingConfig;
 
-    UdpReplicationConfigBean(
+    private UdpReplicationConfig(
             InetAddress address,
             int port,
             NetworkInterface networkInterface,
@@ -96,22 +48,40 @@ final class UdpReplicationConfigBean extends UdpReplicationConfig {
         this.throttlingConfig = throttlingConfig;
     }
 
-    @Override
+    public static UdpReplicationConfig simple(@NotNull InetAddress address, int port) {
+        if (address.isMulticastAddress())
+            throw new IllegalArgumentException();
+        return create(address, port, null, ThrottlingConfig.noThrottling());
+    }
+
+    public static UdpReplicationConfig multiCast(@NotNull InetAddress address, int port,
+                                                 @NotNull NetworkInterface networkInterface) {
+        if (!address.isMulticastAddress() || networkInterface == null)
+            throw new IllegalArgumentException();
+        return create(address, port, networkInterface, ThrottlingConfig.noThrottling());
+    }
+
+    static UdpReplicationConfig create(InetAddress address, int port,
+                                       NetworkInterface networkInterface,
+                                       ThrottlingConfig throttlingConfig) {
+        return new UdpReplicationConfig(address, port, networkInterface, throttlingConfig);
+    }
+
+    @NotNull
     public InetAddress address() {
         return address;
     }
 
-    @Override
     public int port() {
         return port;
     }
 
-    @Override
+    @Nullable
     public NetworkInterface networkInterface() {
         return networkInterface;
     }
 
-    @Override
+    @NotNull
     public ThrottlingConfig throttlingConfig() {
         return throttlingConfig;
     }
@@ -153,5 +123,10 @@ final class UdpReplicationConfigBean extends UdpReplicationConfig {
         h *= 1000003;
         h ^= throttlingConfig.hashCode();
         return h;
+    }
+
+    public UdpReplicationConfig throttlingConfig(@NotNull ThrottlingConfig throttlingConfig) {
+        ThrottlingConfig.checkMillisecondBucketInterval(throttlingConfig, "UDP");
+        return create(address(), port(), networkInterface(), throttlingConfig);
     }
 }
