@@ -51,8 +51,8 @@ interface Work {
 }
 
 /**
- * Used with a {@link net.openhft.chronicle.map.ReplicatedChronicleMap} to send data between the maps using a socket
- * connection {@link net.openhft.chronicle.map.TcpReplicator}
+ * Used with a {@link net.openhft.chronicle.map.ReplicatedChronicleMap} to send data between the maps using a
+ * socket connection {@link net.openhft.chronicle.map.TcpReplicator}
  *
  * @author Rob Austin.
  */
@@ -79,13 +79,12 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
     private long selectorTimeout;
 
     /**
-     * @param maxEntrySizeBytes        used to check that the last entry will fit into the buffer,
-     *                                 it can not be smaller than the size of and entry, if it is
-     *                                 set smaller the buffer will over flow, it can be larger then
-     *                                 the entry, but setting it too large reduces the workable
-     *                                 space in the buffer.
+     * @param maxEntrySizeBytes        used to check that the last entry will fit into the buffer, it can not
+     *                                 be smaller than the size of and entry, if it is set smaller the buffer
+     *                                 will over flow, it can be larger then the entry, but setting it too
+     *                                 large reduces the workable space in the buffer.
      * @param statelessServerConnector set to NULL if not required
-     * @throws IOException             on an io error.
+     * @throws IOException on an io error.
      */
     public TcpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable externalizable,
@@ -425,8 +424,8 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
     }
 
     /**
-     * this can be called when a new CHM is added to a cluster, we have to rebootstrap so will clear all the old
-     * bootstrap information
+     * this can be called when a new CHM is added to a cluster, we have to rebootstrap so will clear all the
+     * old bootstrap information
      *
      * @param key the nio SelectionKey
      */
@@ -480,7 +479,6 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
 
             final IdentifierListener identifierListener = replicationConfig.identifierListener;
             final SocketAddress remoteAddress = socketChannel.getRemoteAddress();
-
 
             if ((identifierListener != null && !identifierListener.isIdentifierUnique(remoteIdentifier,
                     remoteAddress)) || remoteIdentifier == localIdentifier)
@@ -618,9 +616,10 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
     }
 
     /**
-     * sets interestOps to "selector keys",The change to interestOps much be on the same thread as the selector. This
-     * class, allows via {@link AbstractChannelReplicator .KeyInterestUpdater#set(int)}  to holds a pending change  in
-     * interestOps ( via a bitset ), this change is processed later on the same thread as the selector
+     * sets interestOps to "selector keys",The change to interestOps much be on the same thread as the
+     * selector. This class, allows via {@link AbstractChannelReplicator .KeyInterestUpdater#set(int)}  to
+     * holds a pending change  in interestOps ( via a bitset ), this change is processed later on the same
+     * thread as the selector
      */
     private static class KeyInterestUpdater {
 
@@ -651,8 +650,8 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
         }
 
         /**
-         * @param keyIndex the index of the key that has changed, the list of keys is provided by the constructor {@link
-         *                 KeyInterestUpdater(int, SelectionKey[])}
+         * @param keyIndex the index of the key that has changed, the list of keys is provided by the
+         *                 constructor {@link KeyInterestUpdater(int, SelectionKey[])}
          */
         public void set(int keyIndex) {
             changeOfOpWriteRequired.set(keyIndex);
@@ -988,8 +987,8 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
 
 
         /**
-         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE will get added back
-         * in as soon as we have data to write
+         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE will get
+         * added back in as soon as we have data to write
          *
          * @param socketChannel the socketChannel we wish to stop writing to
          * @param attached      data associated with the socketChannels key
