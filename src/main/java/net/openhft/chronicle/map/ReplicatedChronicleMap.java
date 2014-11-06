@@ -811,7 +811,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     }
 
                     // this is just like notifyPut, but it won't trigger the modification iterators
-                    notifyRemotePut(offset, false, posFromOffset(offset), keySize, inBytes, valueSize,
+                    notifyRemotePut(offset, false, posFromOffset(offset), keySize, inBytes, valueLimit
+                                    -valuePos,
                             valuePos, keyPosition);
                     return;
                 }
