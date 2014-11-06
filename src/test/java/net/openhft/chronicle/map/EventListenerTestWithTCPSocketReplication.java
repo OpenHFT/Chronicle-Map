@@ -130,6 +130,7 @@ public class EventListenerTestWithTCPSocketReplication {
     }
 
 
+    @Test
     public void testAddedOriginalValueToBeOverWritten() throws IOException, InterruptedException {
 
 
