@@ -29,7 +29,9 @@ import static org.junit.Assert.fail;
 public class AcquireGetUsingMain {
     public static void main(String[] args) throws Exception {
         File file = new File(System.getProperty("java.io.tmpdir") + "/test1");
-        ChronicleMap<String, Data> theSharedMap = OffHeapUpdatableChronicleMapBuilder.of(String.class, Data.class).file(file).create();
+        ChronicleMap<String, Data> theSharedMap =
+                OffHeapUpdatableChronicleMapBuilder.of(String.class, Data.class)
+                        .createPersistedTo(file);
         Data data = DataValueClasses.newDirectReference(Data.class);
         String processType = "testkey";
         if (theSharedMap.getUsing(processType, data) == null) {

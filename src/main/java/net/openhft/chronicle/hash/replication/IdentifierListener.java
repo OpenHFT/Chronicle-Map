@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.replication;
 
 import java.net.SocketAddress;
 

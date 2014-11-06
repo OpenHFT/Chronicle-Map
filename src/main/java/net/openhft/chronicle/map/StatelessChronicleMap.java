@@ -19,7 +19,6 @@
 package net.openhft.chronicle.map;
 
 import com.sun.jdi.connect.spi.ClosedConnectionException;
-import net.openhft.chronicle.hash.StatelessBuilder;
 import net.openhft.chronicle.hash.exceptions.IORuntimeException;
 import net.openhft.chronicle.hash.exceptions.TimeoutRuntimeException;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -60,8 +59,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private final KeyValueSerializer<K, V> keyValueSerializer;
     private volatile SocketChannel clientChannel;
 
-    private volatile CloseablesManager closeables;
-    private final StatelessBuilder builder;
+    private CloseablesManager closeables;
+    private final StatelessMapBuilder builder;
     private int maxEntrySize;
     private final Class<K> kClass;
     private final Class<V> vClass;
@@ -97,15 +96,14 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private long transactionID;
 
-    StatelessChronicleMap(final StatelessBuilder builder,
+    StatelessChronicleMap(final StatelessMapBuilder builder,
                           final AbstractChronicleMapBuilder chronicleMapBuilder) throws IOException {
-
         this.builder = builder;
         this.keyValueSerializer = new KeyValueSerializer<K, V>(chronicleMapBuilder.keyBuilder,
                 chronicleMapBuilder.valueBuilder);
         this.putReturnsNull = chronicleMapBuilder.putReturnsNull();
         this.removeReturnsNull = chronicleMapBuilder.removeReturnsNull();
-        this.maxEntrySize = chronicleMapBuilder.entrySize();
+        this.maxEntrySize = chronicleMapBuilder.entrySize(true);
         this.vClass = chronicleMapBuilder.valueBuilder.eClass;
         this.kClass = chronicleMapBuilder.keyBuilder.eClass;
         // this.putReturnsNull = putReturnsNull;

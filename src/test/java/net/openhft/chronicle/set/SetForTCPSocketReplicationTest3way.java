@@ -28,7 +28,7 @@ import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
-import static net.openhft.chronicle.hash.TcpReplicationConfig.of;
+import static net.openhft.chronicle.hash.replication.TcpConfig.of;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -51,10 +51,9 @@ public class SetForTCPSocketReplicationTest3way {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         return (T) ChronicleSetBuilder.of(Integer.class)
-                .file(getPersistenceFile())
-                .replicators(identifier, of(serverPort, endpoints)
+                .replication(identifier, of(serverPort, endpoints)
                         .heartBeatInterval(1L, SECONDS))
-                .create();
+                .createPersistedTo(getPersistenceFile());
     }
 
 
@@ -72,7 +71,7 @@ public class SetForTCPSocketReplicationTest3way {
         for (final Closeable closeable : new Closeable[]{set1, set2, set3}) {
             try {
                 closeable.close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

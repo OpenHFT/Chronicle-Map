@@ -19,7 +19,9 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.*;
-import net.openhft.chronicle.map.Alignment;
+import net.openhft.chronicle.hash.replication.SimpleReplication;
+import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.io.serialization.BytesMarshaller;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -168,25 +171,6 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> replicators(byte identifier, ReplicationConfig... replicators) {
-        chronicleMapBuilder.replicators(identifier, replicators);
-        return this;
-    }
-
-    @Override
-    public ChronicleSetBuilder<E> channel(ChannelProvider.ChronicleChannel chronicleChannel) {
-        chronicleMapBuilder.channel(chronicleChannel);
-        return this;
-    }
-
-    @Override
-    public ChronicleSetBuilder<E> disableReplication() {
-        chronicleMapBuilder.disableReplication();
-        return this;
-    }
-
-
-    @Override
     public String toString() {
         return " ChronicleSetBuilder{" +
                 "chronicleMapBuilder=" + chronicleMapBuilder +
@@ -265,15 +249,26 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> stateless(StatelessBuilder statelessBuilder) {
-        chronicleMapBuilder.stateless(statelessBuilder);
+    public ChronicleSetBuilder<E> replication(SimpleReplication replication) {
+        chronicleMapBuilder.replication(replication);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> file(File file) throws IOException {
-        chronicleMapBuilder.file(file);
+    public ChronicleSetBuilder<E> replication(byte identifier, TcpConfig tcpTransportAndNetwork) {
+        chronicleMapBuilder.replication(identifier, tcpTransportAndNetwork);
         return this;
+    }
+
+    @Override
+    public StatelessClientBuilder<ChronicleSet<E>> statelessClient(
+            InetSocketAddress remoteAddress) {
+        return new StatelessSetBuilder<>(chronicleMapBuilder.statelessClient(remoteAddress));
+    }
+
+    @Override
+    public ChronicleHashInstanceBuilder<ChronicleSet<E>> instance() {
+        return new InstanceBuilder<>(chronicleMapBuilder.instance());
     }
 
     @Override
@@ -282,6 +277,11 @@ public class ChronicleSetBuilder<E>
         return new SetFromMap<E>(map);
     }
 
+    @Override
+    public ChronicleSet<E> createPersistedTo(File file) throws IOException {
+        ChronicleMap<E, DummyValue> map = chronicleMapBuilder.createPersistedTo(file);
+        return new SetFromMap<E>(map);
+    }
 
 
 }

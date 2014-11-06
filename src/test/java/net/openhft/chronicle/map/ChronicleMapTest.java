@@ -590,7 +590,7 @@ public class ChronicleMapTest {
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
-            final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
+            final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
 
             int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
             final int independence = Math.min(procs, runs > 500 ? 8 : 4);
@@ -660,7 +660,7 @@ public class ChronicleMapTest {
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
-            final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
+            final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
 
             int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
             final int independence = Math.min(procs, runs > 500 ? 8 : 4);
@@ -1229,10 +1229,9 @@ public class ChronicleMapTest {
                 .entries(10)
                 .minSegments(1)
                 .entrySize(10);
-        builder.file(getPersistenceFile());
         testOversizeEntriesPutRemoveReplace(
                 (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
-                        builder.create()
+                        builder.createPersistedTo(getPersistenceFile())
         );
     }
 
@@ -1334,7 +1333,7 @@ public class ChronicleMapTest {
                 .entrySize(16);
         File tmpFile = File.createTempFile("testAcquireUsingLocked", ".deleteme");
         tmpFile.deleteOnExit();
-        final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
+        final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
 
         LongValue value = nativeLongValue();
 
@@ -1391,7 +1390,7 @@ public class ChronicleMapTest {
                 .entrySize(40);
         File tmpFile = File.createTempFile("testAcquireUsingLocked", ".deleteme");
         tmpFile.deleteOnExit();
-        final ChronicleMap<CharSequence, LongValue> map = builder.createWithFile(tmpFile);
+        final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
 
         LongValue value = DataValueClasses.newInstance(LongValue.class);
 

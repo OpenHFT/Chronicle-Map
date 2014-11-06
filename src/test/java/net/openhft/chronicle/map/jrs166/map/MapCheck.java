@@ -123,9 +123,6 @@ public class MapCheck {
 
     static Map newMap() {
         try {
-
-//            return new ConcurrentHashMap();
-            ChronicleMapBuilder.of(Object.class, Object.class).file(getPersistenceFile());
             return ChronicleMapBuilder.of(Object.class, Object.class).create();
 
         } catch (Exception e) {
@@ -138,7 +135,7 @@ public class MapCheck {
             ChronicleMap chm = (ChronicleMap) map;
             try {
                 chm.close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException("Can't close CHM : " + e);
             }
         }

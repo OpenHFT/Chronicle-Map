@@ -16,10 +16,12 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash;
+package net.openhft.chronicle.map;
 
 
-import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.hash.replication.ReplicationHub;
+import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.UdpConfig;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -31,13 +33,12 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.lang.Math.min;
 import static java.nio.ByteBuffer.wrap;
@@ -48,8 +49,38 @@ import static net.openhft.chronicle.map.Replica.ModificationNotifier.NOP;
 /**
  * @author Rob Austin.
  */
-public final class ChannelProvider implements Closeable {
+final class ChannelProvider implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(ChannelProvider.class.getName());
+
+    static final Map<ReplicationHub, ChannelProvider> implMapping = new IdentityHashMap<>();
+    static synchronized ChannelProvider getProvider(ReplicationHub hub) throws IOException {
+        ChannelProvider channelProvider = implMapping.get(hub);
+        if (channelProvider != null)
+            return channelProvider;
+        channelProvider = new ChannelProvider(hub);
+        TcpConfig tcpConfig = hub.tcpTransportAndNetwork();
+        if (tcpConfig != null) {
+            final TcpReplicator tcpReplicator = new TcpReplicator(
+                    channelProvider.asReplica,
+                    channelProvider.asEntryExternalizable,
+                    tcpConfig, hub.maxEntrySize(), null);
+            channelProvider.add(tcpReplicator);
+        }
+
+        UdpConfig udpConfig = hub.udpTransport();
+        if (udpConfig != null) {
+            final UdpReplicator udpReplicator =
+                    new UdpReplicator(
+                            channelProvider.asReplica,
+                            channelProvider.asEntryExternalizable,
+                            udpConfig, hub.maxEntrySize());
+            channelProvider.add(udpReplicator);
+            if (tcpConfig == null)
+                LOG.warn(Replicators.ONLY_UDP_WARN_MESSAGE);
+        }
+        implMapping.put(hub, channelProvider);
+        return channelProvider;
+    }
 
     private static final byte BOOTSTRAP_MESSAGE = 'B';
     final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
@@ -65,18 +96,28 @@ public final class ChannelProvider implements Closeable {
         @Override
         public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
                                        int chronicleChannel) {
-            destination.writeStopBit(chronicleChannel);
-            channelEntryExternalizables[chronicleChannel]
-                    .writeExternalEntry(entry, destination, chronicleChannel);
+            channelDataLock.readLock().lock();
+            try {
+                destination.writeStopBit(chronicleChannel);
+                channelEntryExternalizables[chronicleChannel]
+                        .writeExternalEntry(entry, destination, chronicleChannel);
+            } finally {
+                channelDataLock.readLock().unlock();
+            }
         }
 
         @Override
         public void readExternalEntry(@NotNull Bytes source) {
-            final int chronicleId = (int) source.readStopBit();
-            if (chronicleId < chronicleChannels.length)
-                channelEntryExternalizables[chronicleId].readExternalEntry(source);
-            else
-                LOG.info("skipped entry with chronicleId=" + chronicleId + ", ");
+            channelDataLock.readLock().lock();
+            try {
+                final int chronicleId = (int) source.readStopBit();
+                if (chronicleId < chronicleChannels.length)
+                    channelEntryExternalizables[chronicleId].readExternalEntry(source);
+                else
+                    LOG.info("skipped entry with chronicleId=" + chronicleId + ", ");
+            } finally {
+                channelDataLock.readLock().unlock();
+            }
         }
     };
     private final byte localIdentifier;
@@ -90,53 +131,73 @@ public final class ChannelProvider implements Closeable {
         @Override
         public ModificationIterator acquireModificationIterator(
                 final short remoteIdentifier, final ModificationNotifier notifier) {
-            final ModificationIterator result = modificationIterator.get(remoteIdentifier);
-            if (result != null)
-                return result;
+            channelDataLock.writeLock().lock();
+            try {
+                final ModificationIterator result = modificationIterator.get(remoteIdentifier);
+                if (result != null)
+                    return result;
 
-            final ModificationIterator result0 = new ModificationIterator() {
+                final ModificationIterator result0 = new ModificationIterator() {
 
-                @Override
-                public boolean hasNext() {
-                    // old-style iteration to avoid 1) iterator object creation
-                    // 2) ConcurrentModificationException
-                    for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
-                        final ModificationIterator modificationIterator =
-                                chronicleChannelList.get(i)
+                    @Override
+                    public boolean hasNext() {
+                        channelDataLock.readLock().lock();
+                        try {
+                            // old-style iteration to avoid 1) iterator object creation
+                            // 2) ConcurrentModificationException
+                            for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
+                                final ModificationIterator modificationIterator =
+                                        chronicleChannelList.get(i).acquireModificationIterator(
+                                                remoteIdentifier, notifier);
+                                if (modificationIterator.hasNext())
+                                    return true;
+                            }
+                            return false;
+                        } finally {
+                            channelDataLock.readLock().unlock();
+                        }
+                    }
+
+                    @Override
+                    public boolean nextEntry(@NotNull EntryCallback callback,
+                                             final int na) {
+                        channelDataLock.readLock().lock();
+                        try {
+                            for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
+                                Replica chronicleChannel = chronicleChannelList.get(i);
+                                final ModificationIterator modificationIterator = chronicleChannel
                                         .acquireModificationIterator(remoteIdentifier, notifier);
-                        if (modificationIterator.hasNext())
-                            return true;
+                                if (modificationIterator
+                                        .nextEntry(callback, chronicleChannelIds.get(i)))
+                                    return true;
+                            }
+                            return false;
+                        } finally {
+                            channelDataLock.readLock().unlock();
+                        }
                     }
-                    return false;
-                }
 
-                @Override
-                public boolean nextEntry(@NotNull EntryCallback callback,
-                                         final int na) {
-                    for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
-                        Replica chronicleChannel = chronicleChannelList.get(i);
-                        final ModificationIterator modificationIterator = chronicleChannel
-                                .acquireModificationIterator(remoteIdentifier, notifier);
-                        if (modificationIterator.nextEntry(callback, chronicleChannelIds.get(i)))
-                            return true;
+                    @Override
+                    public void dirtyEntries(long fromTimeStamp) {
+                        channelDataLock.readLock().lock();
+                        try {
+                            for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
+                                chronicleChannelList.get(i)
+                                        .acquireModificationIterator(remoteIdentifier, notifier)
+                                        .dirtyEntries(fromTimeStamp);
+                                notifier.onChange();
+                            }
+                        } finally {
+                            channelDataLock.readLock().unlock();
+                        }
                     }
-                    return false;
-                }
+                };
 
-                @Override
-                public void dirtyEntries(long fromTimeStamp) {
-                    for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
-                        chronicleChannelList.get(i)
-                                .acquireModificationIterator(remoteIdentifier, notifier)
-                                .dirtyEntries(fromTimeStamp);
-                        notifier.onChange();
-                    }
-                }
-            };
-
-            modificationIterator.set((int) remoteIdentifier, result0);
-            return result0;
-
+                modificationIterator.set((int) remoteIdentifier, result0);
+                return result0;
+            } finally {
+                channelDataLock.writeLock().unlock();
+            }
         }
 
         /**
@@ -144,13 +205,19 @@ public final class ChannelProvider implements Closeable {
          */
         @Override
         public long lastModificationTime(byte remoteIdentifier) {
-            long t = 0;
-            // not including the SystemQueue at index 0
-            for (int i = 1, len = chronicleChannelList.size(); i < len; i++) {
-                t = (t == 0) ? chronicleChannels[i].lastModificationTime(remoteIdentifier) :
-                        min(t, chronicleChannels[i].lastModificationTime(remoteIdentifier));
+            channelDataLock.readLock().lock();
+            try {
+                long t = 0;
+                // not including the SystemQueue at index 0
+                for (int i = 1, len = chronicleChannelList.size(); i < len; i++) {
+                    Replica channel = chronicleChannelList.get(i);
+                    t = (t == 0) ? channel.lastModificationTime(remoteIdentifier) :
+                            min(t, channel.lastModificationTime(remoteIdentifier));
+                }
+                return t;
+            } finally {
+                channelDataLock.readLock().unlock();
             }
-            return t;
         }
 
         @Override
@@ -158,7 +225,13 @@ public final class ChannelProvider implements Closeable {
             ChannelProvider.this.close();
         }
     };
+
+    private final ReplicationHub hub;
     private final int maxEntrySize;
+
+    private final ReadWriteLock channelDataLock = new ReentrantReadWriteLock();
+
+    // start of channel data
     private final Replica[] chronicleChannels;
     private final List<Replica> chronicleChannelList;
     private final List<Integer> chronicleChannelIds;
@@ -169,13 +242,18 @@ public final class ChannelProvider implements Closeable {
             newBitSet(systemModificationIterator.length());
     private final AtomicReferenceArray<ModificationIterator> modificationIterator =
             new AtomicReferenceArray<ModificationIterator>(128);
+    // end of channel data
+
     private final Set<Closeable> replicators = new CopyOnWriteArraySet<Closeable>();
 
-    ChannelProvider(ChannelProviderBuilder builder) {
-        localIdentifier = builder.identifier;
-        maxEntrySize = builder.maxEntrySize;
-        chronicleChannels = new Replica[builder.maxNumberOfChronicles];
-        channelEntryExternalizables = new EntryExternalizable[builder.maxNumberOfChronicles];
+    private volatile boolean isClosed = false;
+
+    private ChannelProvider(ReplicationHub hub) {
+        localIdentifier = hub.identifier();
+        this.hub = hub;
+        maxEntrySize = hub.maxEntrySize();
+        chronicleChannels = new Replica[hub.maxNumberOfChannels()];
+        channelEntryExternalizables = new EntryExternalizable[hub.maxNumberOfChannels()];
         chronicleChannelList = new ArrayList<Replica>();
         chronicleChannelIds = new ArrayList<Integer>();
         MessageHandler systemMessageHandler = new MessageHandler() {
@@ -209,15 +287,6 @@ public final class ChannelProvider implements Closeable {
         return new SingleThreadedDirectBitSet(bytes);
     }
 
-    /**
-     * Returns a replicator, dedicated to the specified channel. Channel is basically just a number, that
-     * should correspond on different servers for instances of the same replicated map. Only one replicator
-     * per channel could be obtained from a single {@code ReplicatingChannel}. The returned replicator could
-     * be applied to a map at most once.
-     *
-     * @param channel number to create
-     * @return a replicator, dedicated to the specified channel
-     */
     public ChronicleChannel createChannel(short channel) {
         return new ChronicleChannel(channel);
     }
@@ -249,39 +318,49 @@ public final class ChannelProvider implements Closeable {
 
     private void add(short chronicleChannel,
                      Replica replica, EntryExternalizable entryExternalizable) {
-        if (chronicleChannels[chronicleChannel] != null) {
-            throw new IllegalStateException("chronicleId=" + chronicleChannel +
-                    " is already in use.");
+        channelDataLock.writeLock().lock();
+        try {
+            if (chronicleChannels[chronicleChannel] != null) {
+                throw new IllegalStateException("chronicleId=" + chronicleChannel +
+                        " is already in use.");
+            }
+            chronicleChannels[chronicleChannel] = replica;
+            chronicleChannelList.add(replica);
+            chronicleChannelIds.add((int) chronicleChannel);
+            channelEntryExternalizables[chronicleChannel] = entryExternalizable;
+
+            if (chronicleChannel == 0)
+                return;
+
+            for (int i = (int) systemModificationIteratorBitSet.nextSetBit(0); i > 0;
+                 i = (int) systemModificationIteratorBitSet.nextSetBit(i + 1)) {
+                byte remoteIdentifier = (byte) i;
+                final long lastModificationTime = replica.lastModificationTime(remoteIdentifier);
+                final ByteBufferBytes message =
+                        toBootstrapMessage(chronicleChannel, lastModificationTime);
+                systemModificationIterator.get(remoteIdentifier).addPayload(message);
+            }
+        } finally {
+            channelDataLock.writeLock().unlock();
         }
-        chronicleChannels[chronicleChannel] = replica;
-        chronicleChannelList.add(replica);
-        chronicleChannelIds.add((int) chronicleChannel);
-        channelEntryExternalizables[chronicleChannel] = entryExternalizable;
-
-        if (chronicleChannel == 0)
-            return;
-
-        for (int i = (int) systemModificationIteratorBitSet.nextSetBit(0); i > 0;
-             i = (int) systemModificationIteratorBitSet.nextSetBit(i + 1)) {
-            byte remoteIdentifier = (byte) i;
-            final long lastModificationTime = replica.lastModificationTime(remoteIdentifier);
-            final ByteBufferBytes message =
-                    toBootstrapMessage(chronicleChannel, lastModificationTime);
-            systemModificationIterator.get(remoteIdentifier).addPayload(message);
-        }
-
     }
 
     @Override
     public void close() throws IOException {
-        for (Closeable replicator : replicators) {
-            replicator.close();
-        }
-        // indexed reverse loop to avoid ConcurrentModificationException and remove elements from
-        // the end of the loop for correct iteration
-        for (int i = chronicleChannelList.size() - 1; i >= 0; i--) {
-            Replica chronicleChannel = chronicleChannelList.get(i);
-            chronicleChannel.close();
+        if (isClosed)
+            return;
+        // to be synchronized with #getProvider()
+        synchronized (ChannelProvider.class) {
+            isClosed = true;
+            for (Closeable replicator : replicators) {
+                try {
+                    replicator.close();
+                } catch (IOException e) {
+                    LOG.error("", e);
+                }
+            }
+
+            implMapping.remove(hub);
         }
     }
 
@@ -420,16 +499,22 @@ public final class ChannelProvider implements Closeable {
             return this;
         }
 
-        public ChannelProvider provider() {
-            return ChannelProvider.this;
-        }
-
         @Override
         public void close() throws IOException {
-            chronicleChannelList.remove(chronicleChannels[chronicleChannel]);
-            chronicleChannelIds.remove(chronicleChannel);
-            chronicleChannels[chronicleChannel] = null;
-            channelEntryExternalizables[chronicleChannel] = null;
+            // synchronized on parent instance to prevent possible (but very unlikely) contention
+            // between close() calls on different channels
+            channelDataLock.writeLock().lock();
+            try {
+                chronicleChannelList.remove(chronicleChannels[chronicleChannel]);
+                chronicleChannelIds.remove((Integer) (int) chronicleChannel);
+                chronicleChannels[chronicleChannel] = null;
+                channelEntryExternalizables[chronicleChannel] = null;
+
+                if (chronicleChannelList.size() == 1) // i. e. only SystemQueue is left
+                    ChannelProvider.this.close();
+            } finally {
+                channelDataLock.writeLock().unlock();
+            }
         }
 
     }

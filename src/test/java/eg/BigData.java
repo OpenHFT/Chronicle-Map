@@ -52,7 +52,7 @@ public class BigData {
         String chmPath = dir + "/testmap-" + Long.toString(System.nanoTime(), 36);
         new File(chmPath).deleteOnExit();
         try {
-            theMap =  builder.file(new File(chmPath)).create();
+            theMap =  builder.createPersistedTo(new File(chmPath));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

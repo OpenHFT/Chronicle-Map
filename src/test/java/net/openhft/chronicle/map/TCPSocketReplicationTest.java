@@ -50,8 +50,7 @@ public class TCPSocketReplicationTest {
         ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
                         (byte) 1, 8076, new InetSocketAddress("localhost", 8077));
-        map1Builder.file(getPersistenceFile());
-        map1 = map1Builder.create();
+        map1 = map1Builder.createPersistedTo(getPersistenceFile());
         map2 = newTcpSocketShmIntString((byte) 2, 8077);
     }
 
@@ -61,7 +60,7 @@ public class TCPSocketReplicationTest {
         for (final Closeable closeable : new Closeable[]{map1, map2}) {
             try {
                 closeable.close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

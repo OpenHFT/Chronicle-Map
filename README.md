@@ -231,9 +231,6 @@ the instances of Chronicle Map on the same server. The name and location of the 
 up to you.  For the best performance on many unix systems we recommend using
 [tmpfs](http://en.wikipedia.org/wiki/Tmpfs).
 
-
-
-
 ### Sharing Data Between Two or More Maps
 Since this file is memory mapped, if you were to create another instance of the Chronicle Map,
 pointing to the same file, both Chronicle Maps use this file as a common memory store, which they
@@ -1026,7 +1023,7 @@ but in your example you should choose the host of the state-full server and the 
 .statelessClient(new InetSocketAddress(<host of state-full server>, <port of state-full server>))
 ```
 
-the ".statelessClient(..)" returns an instance of `StatelessClientConfig`, which has only a few
+the ".statelessClient(..)" returns an instance of `StatelessClientBuilder`, which has only a few
 own configurations and `create()` method to create a new stateless client.
 method tells `ChronicleMap` that its going to build a stateless client.
 If you don’t add this line a normal state-full `ChronicleMap` will be created. For this example

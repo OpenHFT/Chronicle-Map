@@ -53,18 +53,6 @@ public class TCPSocketReplication4WayMapTest {
     }
 
 
-
-    static ChronicleMap<IntValue, CharSequence> newTcpSocketShmIntValueString(
-            final byte identifier,
-            final int serverPort,
-            final InetSocketAddress... endpoints) throws IOException {
-        return newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
-                identifier, serverPort, endpoints)
-                .entries(20000L)
-                .keyMarshaller(ByteableIntValueMarshaller.INSTANCE).create();
-    }
-
-
     @Before
     public void setup() throws IOException {
 
@@ -82,7 +70,7 @@ public class TCPSocketReplication4WayMapTest {
         for (final Closeable closeable : new Closeable[]{map1, map2, map3, map4}) {
             try {
                 closeable.close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.hash.replication.TcpConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,11 +47,11 @@ public class TCPSocketReplicationTest3wayPutReturnsNull {
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(serverPort, endpoints);
+        TcpConfig tcpConfig = TcpConfig.of(serverPort, endpoints);
 
         return (T) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .putReturnsNull(true)
-                .replicators(identifier, tcpConfig).create();
+                .replication(identifier, tcpConfig).create();
     }
 
 
@@ -69,7 +69,7 @@ public class TCPSocketReplicationTest3wayPutReturnsNull {
         for (final Closeable closeable : new Closeable[]{map1, map2, map3}) {
             try {
                 closeable.close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

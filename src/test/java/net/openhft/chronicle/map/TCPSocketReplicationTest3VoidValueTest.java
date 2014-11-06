@@ -55,7 +55,7 @@ public class TCPSocketReplicationTest3VoidValueTest {
         for (final Closeable closeable : new Closeable[]{map1, map2, map3}) {
             try {
                 closeable.close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

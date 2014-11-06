@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.TcpReplicationConfig;
+import net.openhft.chronicle.hash.replication.TcpConfig;
 import net.openhft.lang.io.Bytes;
 import org.junit.After;
 import org.junit.Assert;
@@ -48,7 +48,7 @@ public class EventListenerTestWithTCPSocketReplication {
         for (final Closeable closeable : new Closeable[]{map1, map2}) {
             try {
                 closeable.close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -85,22 +85,22 @@ public class EventListenerTestWithTCPSocketReplication {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077));
+            TcpConfig tcpConfig = TcpConfig.of(8076, new InetSocketAddress("localhost", 8077));
             ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
-                            .replicators((byte) 2, tcpConfig);
+                            .replication((byte) 2, tcpConfig);
 
             map1 = map1Builder.create();
         }
         // ---------- SERVER2 2 on the same server as ----------
 
         {
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077);
+            TcpConfig tcpConfig = TcpConfig.of(8077);
             ChronicleMapBuilder<Integer, CharSequence> map2Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
-                            .replicators((byte) 1, tcpConfig)
+                            .replication((byte) 1, tcpConfig)
                             .eventListener(eventListener);
 
             map2 = map2Builder.create();
@@ -158,11 +158,11 @@ public class EventListenerTestWithTCPSocketReplication {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077));
+            TcpConfig tcpConfig = TcpConfig.of(8076, new InetSocketAddress("localhost", 8077));
             ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
-                            .replicators((byte) 2, tcpConfig);
+                            .replication((byte) 2, tcpConfig);
 
             map1 = map1Builder.create();
 
@@ -170,11 +170,11 @@ public class EventListenerTestWithTCPSocketReplication {
         // ---------- SERVER2 2 on the same server as ----------
 
         {
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077);
+            TcpConfig tcpConfig = TcpConfig.of(8077);
             ChronicleMapBuilder<Integer, CharSequence> map2Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
-                            .replicators((byte) 1, tcpConfig)
+                            .replication((byte) 1, tcpConfig)
                             .eventListener(eventListener);
 
             map2 = map2Builder.create();
@@ -233,11 +233,11 @@ public class EventListenerTestWithTCPSocketReplication {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8076, new InetSocketAddress("localhost", 8077));
+            TcpConfig tcpConfig = TcpConfig.of(8076, new InetSocketAddress("localhost", 8077));
             ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
-                            .replicators((byte) 2, tcpConfig);
+                            .replication((byte) 2, tcpConfig);
 
             map1 = map1Builder.create();
             map1.put(5, "WILL_GET_OVERWRITEN");
@@ -245,11 +245,11 @@ public class EventListenerTestWithTCPSocketReplication {
         // ---------- SERVER2 2 on the same server as ----------
 
         {
-            TcpReplicationConfig tcpConfig = TcpReplicationConfig.of(8077);
+            TcpConfig tcpConfig = TcpConfig.of(8077);
             ChronicleMapBuilder<Integer, CharSequence> map2Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
-                            .replicators((byte) 1, tcpConfig)
+                            .replication((byte) 1, tcpConfig)
                             .eventListener(eventListener);
 
             map2 = map2Builder.create();

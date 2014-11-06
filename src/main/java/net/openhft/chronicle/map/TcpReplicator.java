@@ -18,8 +18,9 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.TcpReplicationConfig;
-import net.openhft.chronicle.hash.ThrottlingConfig;
+import net.openhft.chronicle.hash.replication.IdentifierListener;
+import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -56,7 +57,7 @@ interface Work {
  *
  * @author Rob Austin.
  */
-public class TcpReplicator extends AbstractChannelReplicator implements Closeable {
+final class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
     public static final int STATELESS_CLIENT = -127;
     public static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
@@ -73,7 +74,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
     private final byte localIdentifier;
     private final int maxEntrySizeBytes;
     private final Replica.EntryExternalizable externalizable;
-    private final TcpReplicationConfig replicationConfig;
+    private final TcpConfig replicationConfig;
     private final StatelessServerConnector statelessServerConnector;
 
     private long selectorTimeout;
@@ -88,7 +89,7 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
      */
     public TcpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable externalizable,
-                         @NotNull final TcpReplicationConfig replicationConfig,
+                         @NotNull final TcpConfig replicationConfig,
                          final int maxEntrySizeBytes,
                          @Nullable StatelessServerConnector statelessServerConnector) throws IOException {
 
@@ -477,7 +478,8 @@ public class TcpReplicator extends AbstractChannelReplicator implements Closeabl
             // this can occur sometimes when if 2 or more remote node attempt to use node discovery at the
             // same time
 
-            final IdentifierListener identifierListener = replicationConfig.identifierListener;
+            final IdentifierListener identifierListener =
+                    replicationConfig.nonUniqueIdentifierListener();
             final SocketAddress remoteAddress = socketChannel.getRemoteAddress();
 
             if ((identifierListener != null && !identifierListener.isIdentifierUnique(remoteIdentifier,

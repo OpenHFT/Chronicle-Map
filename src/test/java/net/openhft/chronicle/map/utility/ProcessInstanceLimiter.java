@@ -138,8 +138,7 @@ public class ProcessInstanceLimiter implements Runnable {
                 ChronicleMapBuilder.of(String.class, Data.class);
         builder.entries(1000);
         builder.entrySize(1024);
-        builder.file(new File(sharedMapPath));
-        this.theSharedMap = builder.create();
+        this.theSharedMap = builder.createPersistedTo(new File(sharedMapPath));
         Thread t = new Thread(this, "ProcessInstanceLimiter updater");
         t.setDaemon(true);
         t.start();

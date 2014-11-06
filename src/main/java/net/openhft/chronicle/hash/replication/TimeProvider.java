@@ -16,8 +16,9 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash;
+package net.openhft.chronicle.hash.replication;
 
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 

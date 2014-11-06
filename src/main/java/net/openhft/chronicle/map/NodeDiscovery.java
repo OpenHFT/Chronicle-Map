@@ -18,8 +18,9 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.TcpReplicationConfig;
-import net.openhft.chronicle.hash.UdpReplicationConfig;
+import net.openhft.chronicle.hash.replication.IdentifierListener;
+import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.UdpConfig;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -41,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.chronicle.hash.UdpReplicationConfig.simple;
+import static net.openhft.chronicle.hash.replication.UdpConfig.simple;
 import static net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress;
 import static net.openhft.chronicle.map.DiscoveryNodeBytesMarshallable.ProposedNodes;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
@@ -55,7 +56,7 @@ import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
 public class NodeDiscovery {
 
     private final AddressAndPort ourAddressAndPort;
-    private final UdpReplicationConfig udpConfig;
+    private final UdpConfig udpConfig;
     private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
     private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListenerAtomicReference =
             new AtomicReference<NodeDiscoveryEventListener>();
@@ -220,7 +221,7 @@ public class NodeDiscovery {
         // add our identifier and host:port to the list of known identifiers
         knownNodes.add(ourAddressAndPort, identifier);
 
-        final TcpReplicationConfig tcpConfig = TcpReplicationConfig
+        final TcpConfig tcpConfig = TcpConfig
                 .of(ourAddressAndPort.getPort(), toInetSocketArray(knownHostPorts))
                 .heartBeatInterval(1, SECONDS).nonUniqueIdentifierListener(identifierListener);
 
@@ -231,7 +232,7 @@ public class NodeDiscovery {
         return ChronicleMapBuilder.of(Integer.class,
                 CharSequence.class)
                 .entries(20000L)
-                .replicators(identifier, tcpConfig).create();
+                .replication(identifier, tcpConfig).create();
 
     }
 
@@ -359,7 +360,7 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
      * @throws java.io.IOException
      */
     NodeDiscoveryBroadcaster(
-            final UdpReplicationConfig replicationConfig,
+            final UdpConfig replicationConfig,
             final int serializedEntrySize,
             final BytesMarshallable externalizable)
             throws IOException {

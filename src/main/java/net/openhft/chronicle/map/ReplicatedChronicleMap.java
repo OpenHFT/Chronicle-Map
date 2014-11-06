@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 
-import net.openhft.chronicle.hash.TimeProvider;
+import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.MetaBytesWriter;
@@ -79,7 +79,7 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * @param <K> the entries key type
  * @param <V> the entries value type
  */
-class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
+final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         V, VW, MVW extends MetaBytesWriter<V, VW>>
         extends VanillaChronicleMap<K, KI, MKI, V, VW, MVW>
         implements ChronicleMap<K, V>,
@@ -99,12 +99,13 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     private transient ModificationDelegator modificationDelegator;
     private transient long startOfModificationIterators;
 
-    public ReplicatedChronicleMap(@NotNull AbstractChronicleMapBuilder<K, V, ?> builder)
+    public ReplicatedChronicleMap(@NotNull AbstractChronicleMapBuilder<K, V, ?> builder,
+                                  byte identifier)
             throws IOException {
         super(builder);
         this.timeProvider = builder.timeProvider();
 
-        this.localIdentifier = builder.identifier();
+        this.localIdentifier = identifier;
 
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
@@ -642,8 +643,6 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         V acquireWithoutLock(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
                              long hash2, boolean create, long timestamp) {
-
-
             long keySize = metaKeyInterop.size(keyInterop, key);
             MultiStoreBytes entry = acquireTmpBytes();
             long offset = searchKey(keyInterop, metaKeyInterop, key, keySize, hash2, entry,
