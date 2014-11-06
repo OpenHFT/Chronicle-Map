@@ -60,7 +60,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private final KeyValueSerializer<K, V> keyValueSerializer;
     private volatile SocketChannel clientChannel;
 
-    private CloseablesManager closeables;
+    private volatile CloseablesManager closeables;
     private final StatelessBuilder builder;
     private int maxEntrySize;
     private final Class<K> kClass;
@@ -154,10 +154,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     /**
-     * attempts a single connect without a timeout and eat any IOException used typically in the
-     * constructor, its possible the server is not running with this instance is created, {@link
-     * StatelessChronicleMap#lazyConnect(long, java.net.InetSocketAddress)} will attempt to
-     * establish the connection when the client make the first map method call.
+     * attempts a single connect without a timeout and eat any IOException used typically in the constructor,
+     * its possible the server is not running with this instance is created, {@link
+     * StatelessChronicleMap#lazyConnect(long, java.net.InetSocketAddress)} will attempt to establish the
+     * connection when the client make the first map method call.
      *
      * @param remoteAddress
      * @return
@@ -195,9 +195,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     /**
-     * initiates a very simple level of handshaking with the remote server, we send a special ID of
-     * -127 ( when the server receives this it knows its dealing with a stateless client, receive
-     * back an identifier from the server
+     * initiates a very simple level of handshaking with the remote server, we send a special ID of -127 (
+     * when the server receives this it knows its dealing with a stateless client, receive back an identifier
+     * from the server
      *
      * @param clientChannel
      * @throws IOException
@@ -234,7 +234,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         throw new UnsupportedOperationException();
     }
 
-    public void close() {
+    public synchronized void close() {
         if (closeables != null)
             closeables.closeQuietly();
         closeables = null;
@@ -311,10 +311,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     /**
-     * calling this method should be avoided at all cost, as the entire {@code object} is
-     * serialized. This equals can be used to compare map that extends ChronicleMap.  So two
-     * Chronicle Maps that contain the same data are considered equal, even if the instances of the
-     * chronicle maps were of different types
+     * calling this method should be avoided at all cost, as the entire {@code object} is serialized. This
+     * equals can be used to compare map that extends ChronicleMap.  So two Chronicle Maps that contain the
+     * same data are considered equal, even if the instances of the chronicle maps were of different types
      *
      * @param object the object that you are comparing against
      * @return true if the contain the same data
@@ -402,13 +401,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     @NotNull
     @Override
-    public WriteContext<K,V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue) {
+    public WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue) {
         throw new UnsupportedOperationException();
     }
 
     @NotNull
     @Override
-    public ReadContext<K,V> getUsingLocked(@NotNull K key, @NotNull V usingValue) {
+    public ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue) {
         throw new UnsupportedOperationException();
     }
 
