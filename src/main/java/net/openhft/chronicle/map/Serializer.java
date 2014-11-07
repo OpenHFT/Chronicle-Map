@@ -19,6 +19,9 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.serialization.*;
+import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
+import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
+import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.constraints.NotNull;

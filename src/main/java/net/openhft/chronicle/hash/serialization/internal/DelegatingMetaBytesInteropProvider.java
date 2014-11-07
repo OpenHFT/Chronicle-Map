@@ -16,42 +16,35 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.serialization;
+package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.lang.io.Bytes;
+import net.openhft.chronicle.hash.serialization.BytesInterop;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 
 import java.io.ObjectStreamException;
 
-public final class DelegatingMetaBytesInterop<E, I extends BytesInterop<E>>
-        implements MetaBytesInterop<E, I> {
+public final class DelegatingMetaBytesInteropProvider<E, I extends BytesInterop<E>>
+        implements MetaProvider<E, I, MetaBytesInterop<E, I>> {
     private static final long serialVersionUID = 0L;
-    private static final DelegatingMetaBytesInterop INSTANCE = new DelegatingMetaBytesInterop();
+    private static final DelegatingMetaBytesInteropProvider INSTANCE =
+            new DelegatingMetaBytesInteropProvider();
 
     public static <E, I extends BytesInterop<E>>
-    DelegatingMetaBytesInterop<E, I> instance() {
+    MetaProvider<E, I, MetaBytesInterop<E, I>> instance() {
         return INSTANCE;
     }
 
-    private DelegatingMetaBytesInterop() {}
+    private DelegatingMetaBytesInteropProvider() {}
 
     @Override
-    public long size(I interop, E e) {
-        return interop.size(e);
+    public MetaBytesInterop<E, I> get(ThreadLocalCopies copies,
+                                      MetaBytesInterop<E, I> originalMetaWriter, I writer, E e) {
+        return originalMetaWriter;
     }
 
     @Override
-    public boolean startsWith(I interop, Bytes bytes, E e) {
-        return interop.startsWith(bytes, e);
-    }
-
-    @Override
-    public long hash(I interop, E e) {
-        return interop.hash(e);
-    }
-
-    @Override
-    public void write(I interop, Bytes bytes, E e) {
-        interop.write(bytes, e);
+    public ThreadLocalCopies getCopies(ThreadLocalCopies copies) {
+        return copies;
     }
 
     private Object readResolve() throws ObjectStreamException {

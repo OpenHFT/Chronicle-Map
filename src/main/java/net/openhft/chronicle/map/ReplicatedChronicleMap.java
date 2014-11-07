@@ -21,8 +21,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.MetaBytesInterop;
-import net.openhft.chronicle.hash.serialization.MetaBytesWriter;
+import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
+import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.Bytes;

@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.MetaBytesWriter;
+import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.lang.io.ByteBufferBytes;
 
 import java.nio.ByteBuffer;
