@@ -87,7 +87,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     // for file, jdbc and UDP replication
     public static final int RESERVED_MOD_ITER = 8;
     public static final int ADDITIONAL_ENTRY_BYTES = 10;
-    static final int MAX_UNSIGNED_SHORT = Character.MAX_VALUE;
     private static final long serialVersionUID = 0L;
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
     private static final long LAST_UPDATED_HEADER_SIZE = 128L * 8L;
@@ -632,12 +631,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     keySizeMarshaller.sizeEncodingSize(keySize) + keySize + ADDITIONAL_ENTRY_BYTES +
                     valueSizeMarshaller.sizeEncodingSize(valueSize)) + valueSize;
             // replication enforces that the entry size will never be larger than an unsigned short
-            if (result > MAX_UNSIGNED_SHORT)
+            if (result > Integer.MAX_VALUE)
                 throw new IllegalStateException("ENTRY WRITE_BUFFER_SIZE TOO LARGE : Replicated " +
                         "ChronicleMap's" +
                         " are restricted to an " +
-                        "entry size of " + MAX_UNSIGNED_SHORT + ", " +
+                        "entry size of " +  Integer.MAX_VALUE + ", " +
                         "your entry size=" + result);
+
             return result;
         }
 

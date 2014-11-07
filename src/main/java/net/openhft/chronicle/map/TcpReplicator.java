@@ -1052,7 +1052,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             final int inPosition = in.position();
 
-
             long outPosition = out.position();
             long outLimit = out.limit();
 
@@ -1792,7 +1791,6 @@ class StatelessServerConnector<K, V> {
     /**
      * write the keysize and the key to the the {@code target} buffer
      *
-     * @param local
      * @param key   the key of the map
      */
 
@@ -1855,7 +1853,7 @@ class StatelessServerConnector<K, V> {
     private long header(Bytes writer, final long transactionId) {
         final long sizeLocation = writer.position();
 
-        writer.skip(TRANSACTION_ID_OFFSET); //  SIZE_OF_SIZE  + is
+        writer.skip(TRANSACTION_ID_OFFSET);
 
         // exception
         writer.writeLong(transactionId);
