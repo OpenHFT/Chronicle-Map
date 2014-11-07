@@ -44,6 +44,27 @@ public class EventListenerTestWithTCPSocketReplication {
     ChronicleMap<Integer, CharSequence> map1;
     ChronicleMap<Integer, CharSequence> map2;
 
+    final AtomicReference<Integer> keyRef = new AtomicReference<Integer>();
+
+    final AtomicReference<CharSequence> replacedValueRef = new AtomicReference<CharSequence>();
+    final AtomicReference<CharSequence> valueRef = new AtomicReference<CharSequence>();
+    final AtomicBoolean putWasCalled = new AtomicBoolean(false);
+
+    final MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>> eventListener = new
+            MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public void onPut(ChronicleMap<Integer, CharSequence> map, Bytes entry, int metaDataBytes, boolean added, Integer key,
+                                  CharSequence value, CharSequence replacedValue) {
+                    putWasCalled.getAndSet(true);
+                    keyRef.set(key);
+                    valueRef.set(value);
+                    replacedValueRef.set(replacedValue);
+                }
+            };
+
+
     @After
     public void tearDown() throws InterruptedException {
 
@@ -55,7 +76,12 @@ public class EventListenerTestWithTCPSocketReplication {
             }
         }
 
-        // Thread.sleep(1600);
+        putWasCalled.set(false);
+        valueRef.set(null);
+        replacedValueRef.set(null);
+        keyRef.set(null);
+
+
     }
 
 
@@ -63,60 +89,26 @@ public class EventListenerTestWithTCPSocketReplication {
     public void testAdded() throws IOException, InterruptedException {
 
 
-        final AtomicBoolean putWasCalled = new AtomicBoolean(false);
-
-        final AtomicReference<Integer> keyRef = new AtomicReference<Integer>();
-
-
-        final AtomicReference<CharSequence> valueRef = new AtomicReference<CharSequence>();
-
-        MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>> eventListener = new MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>>() {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public void onPut(ChronicleMap<Integer, CharSequence> map, Bytes entry, int metaDataBytes, boolean added, Integer key,
-                              CharSequence value) {
-                putWasCalled.getAndSet(true);
-                keyRef.set(key);
-                valueRef.set(value);
-            }
-        };
-
         // ---------- SERVER1 1 ----------
         {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            TcpConfig tcpConfig = forSendingNode(8076, new InetSocketAddress("localhost", 8077));
-            ChronicleMapBuilder<Integer, CharSequence> map1Builder =
-                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .entries(20000L)
-                            .replication((byte) 2, tcpConfig);
+            ChronicleMapBuilder<Integer, CharSequence> map1Builder = serverBuilder();
 
             map1 = map1Builder.create();
         }
         // ---------- SERVER2 2 on the same server as ----------
 
         {
-            TcpConfig tcpConfig = TcpConfig.forReceivingOnlyNode(8077);
-            ChronicleMapBuilder<Integer, CharSequence> map2Builder =
-                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .entries(20000L)
-                            .replication((byte) 1, tcpConfig)
-                            .eventListener(eventListener);
+            ChronicleMapBuilder<Integer, CharSequence> map2Builder = clientBuilder();
 
             map2 = map2Builder.create();
         }
 
         // we will stores some data into one map here
         map1.put(5, "EXAMPLE");
-        int t = 0;
-        for (; t < 5000; t++) {
-            if (map1.equals(map2)) {
-                break;
-            }
-            Thread.sleep(1);
-        }
+        waitTillReplicated();
 
         Assert.assertEquals("Maps should be equal", map1, map2);
         Assert.assertTrue("Map 1 should not be empty", !map1.isEmpty());
@@ -126,8 +118,6 @@ public class EventListenerTestWithTCPSocketReplication {
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
         Assert.assertEquals("EXAMPLE", valueRef.get());
 
-        keyRef.set(null);
-        valueRef.set(null);
 
     }
 
@@ -135,63 +125,29 @@ public class EventListenerTestWithTCPSocketReplication {
     @Test
     public void testAddedOriginalValueToBeOverWritten() throws IOException, InterruptedException {
 
-
-        final AtomicBoolean putWasCalled = new AtomicBoolean(false);
-
-        final AtomicReference<Integer> keyRef = new AtomicReference<Integer>();
-
-
-        final AtomicReference<CharSequence> valueRef = new AtomicReference<CharSequence>();
-
-        MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>> eventListener = new MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>>() {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public void onPut(ChronicleMap<Integer, CharSequence> map, Bytes entry, int metaDataBytes, boolean added, Integer key,
-                              CharSequence value) {
-                putWasCalled.getAndSet(true);
-                keyRef.set(key);
-                valueRef.set(value);
-            }
-        };
-
         // ---------- SERVER1 1 ----------
         {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            TcpConfig tcpConfig = forSendingNode(8076, new InetSocketAddress("localhost", 8077));
-            ChronicleMapBuilder<Integer, CharSequence> map1Builder =
-                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .entries(20000L)
-                            .replication((byte) 2, tcpConfig);
+            ChronicleMapBuilder<Integer, CharSequence> map1Builder = serverBuilder();
 
             map1 = map1Builder.create();
+
 
         }
         // ---------- SERVER2 2 on the same server as ----------
 
         {
-            TcpConfig tcpConfig = TcpConfig.forReceivingOnlyNode(8077);
-            ChronicleMapBuilder<Integer, CharSequence> map2Builder =
-                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .entries(20000L)
-                            .replication((byte) 1, tcpConfig)
-                            .eventListener(eventListener);
 
-            map2 = map2Builder.create();
+            map2 = clientBuilder().create();
             map2.put(5, "WILL_GET_OVER-WRITTEN");
         }
 
+
         // we will stores some data into one map here
         map1.put(5, "EXAMPLE");
-        int t = 0;
-        for (; t < 5000; t++) {
-            if (map1.equals(map2)) {
-                break;
-            }
-            Thread.sleep(1);
-        }
+        waitTillReplicated();
 
         Assert.assertEquals("Maps should be equal", map1, map2);
         Assert.assertTrue("Map 1 should not be empty", !map1.isEmpty());
@@ -200,74 +156,37 @@ public class EventListenerTestWithTCPSocketReplication {
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
         Assert.assertEquals("EXAMPLE", valueRef.get());
-
-        keyRef.set(null);
-        valueRef.set(null);
+        Assert.assertEquals("WILL_GET_OVER-WRITTEN", replacedValueRef.get());
 
     }
+
 
 
     @Test
     public void testAlreadyAddedWithSmallInitialValue() throws IOException, InterruptedException {
 
 
-        final AtomicBoolean putWasCalled = new AtomicBoolean(false);
-
-        final AtomicReference<Integer> keyRef = new AtomicReference<Integer>();
-
-
-        final AtomicReference<CharSequence> valueRef = new AtomicReference<CharSequence>();
-
-        MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>> eventListener = new MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>>() {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public void onPut(ChronicleMap<Integer, CharSequence> map, Bytes entry, int metaDataBytes, boolean added, Integer key,
-                              CharSequence value) {
-                putWasCalled.getAndSet(true);
-                keyRef.set(key);
-                valueRef.set(value);
-            }
-        };
-
         // ---------- SERVER1 1 ----------
         {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            TcpConfig tcpConfig = forSendingNode(8076, new InetSocketAddress("localhost", 8077));
-            ChronicleMapBuilder<Integer, CharSequence> map1Builder =
-                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .entries(20000L)
-                            .replication((byte) 2, tcpConfig);
+            map1 = serverBuilder().create();
 
-            map1 = map1Builder.create();
-            map1.put(5, "WILL_GET_OVERWRITEN");
         }
         // ---------- SERVER2 2 on the same server as ----------
 
         {
-            TcpConfig tcpConfig = TcpConfig.forReceivingOnlyNode(8077);
-            ChronicleMapBuilder<Integer, CharSequence> map2Builder =
-                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .entries(20000L)
-                            .replication((byte) 1, tcpConfig)
-                            .eventListener(eventListener);
 
-            map2 = map2Builder.create();
+            map2 = clientBuilder().create();
             map2.put(5, "small");
         }
 
 
         // we will stores some data into one map here
         map1.put(5, "EXAMPLE");
-        int t = 0;
-        for (; t < 5000; t++) {
-            if (map1.equals(map2)) {
-                break;
-            }
-            Thread.sleep(1);
-        }
+
+        waitTillReplicated();
 
         Assert.assertEquals("Maps should be equal", map1, map2);
         Assert.assertTrue("Map 1 should not be empty", !map1.isEmpty());
@@ -275,10 +194,35 @@ public class EventListenerTestWithTCPSocketReplication {
 
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
+        Assert.assertEquals("small", replacedValueRef.get());
         Assert.assertEquals("EXAMPLE", valueRef.get());
 
-        keyRef.set(null);
-        valueRef.set(null);
+    }
+
+    private ChronicleMapBuilder<Integer, CharSequence> clientBuilder() {
+        TcpConfig tcpConfig = TcpConfig.forReceivingOnlyNode(8077);
+        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .entries(20000L)
+                .replication((byte) 1, tcpConfig)
+                .eventListener(eventListener);
+    }
+
+
+    private void waitTillReplicated() throws InterruptedException {
+        int t = 0;
+        for (; t < 5000; t++) {
+            if (map1.equals(map2)) {
+                break;
+            }
+            Thread.sleep(1);
+        }
+    }
+
+    private ChronicleMapBuilder<Integer, CharSequence> serverBuilder() {
+        TcpConfig tcpConfig = forSendingNode(8076, new InetSocketAddress("localhost", 8077));
+        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .entries(20000L)
+                .replication((byte) 2, tcpConfig);
     }
 
 }

@@ -20,30 +20,28 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
 /**
- * Contains methods which are called when {@link ChronicleMap} key events occur. Typical use cases:
- * <ul>
- *     <li>Map data backup / replication.</li>
- *     <li>Logging, monitoring, debugging.</li>
- * </ul>
+ * Contains methods which are called when {@link ChronicleMap} key events occur. Typical use cases: <ul>
+ * <li>Map data backup / replication.</li> <li>Logging, monitoring, debugging.</li> </ul>
  *
- * <p>This is an adapter class - all methods have default implementations as no-ops. Extend this
- * class and override only methods corresponding the events you are interested in.
+ * <p>This is an adapter class - all methods have default implementations as no-ops. Extend this class and
+ * override only methods corresponding the events you are interested in.
  *
- * <p>To configure {@code MapEventListener} for {@code ChronicleMap}, use
- * {@link AbstractChronicleMapBuilder#eventListener(MapEventListener)} method.
+ * <p>To configure {@code MapEventListener} for {@code ChronicleMap}, use {@link
+ * AbstractChronicleMapBuilder#eventListener(MapEventListener)} method.
  *
- * <p>{@link MapEventListeners} uninstantiable class contains several logging implementations and
- * the default {@linkplain MapEventListeners#nop() no-op implementation}.
+ * <p>{@link MapEventListeners} uninstantiable class contains several logging implementations and the default
+ * {@linkplain MapEventListeners#nop() no-op implementation}.
  *
- * <p>All these calls are synchronous while a {@code ChronicleMap} lock is held so make them
- * as quick as possible.
+ * <p>All these calls are synchronous while a {@code ChronicleMap} lock is held so make them as quick as
+ * possible.
  *
- * <p>The {@code entry} passed to the methods is {@code Bytes} instance positioned at meta data
- * area. See {@link ChronicleHashBuilder#metaDataBytes(int)} for more information.
+ * <p>The {@code entry} passed to the methods is {@code Bytes} instance positioned at meta data area. See
+ * {@link ChronicleHashBuilder#metaDataBytes(int)} for more information.
  *
  * @param <K> key type of the maps, trackable by this event listener
  * @param <V> value type of the maps, trackable by this event listener
@@ -56,14 +54,12 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
     private static final long serialVersionUID = 0L;
 
     /**
-     * This method is called if the key is found in the map during {@link ChronicleMap#get get},
-     * {@link ChronicleMap#getUsing getUsing} or {@link ChronicleMap#acquireUsing acquireUsing}
-     * method call.
+     * This method is called if the key is found in the map during {@link ChronicleMap#get get}, {@link
+     * ChronicleMap#getUsing getUsing} or {@link ChronicleMap#acquireUsing acquireUsing} method call.
      *
      * @param map           the accessed map
      * @param entry         bytes of the entry
-     * @param metaDataBytes length of {@link ChronicleHashBuilder#metaDataBytes(int) meta data}
-     *                      for this map
+     * @param metaDataBytes length of {@link ChronicleHashBuilder#metaDataBytes(int) meta data} for this map
      * @param key           the key looked up
      * @param value         the value found for the key
      */
@@ -71,32 +67,32 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
         // do nothing
     }
 
-    void onPut(M map, Bytes entry, int metaDataBytes, boolean added, K key, V value,
+    void onPut(M map, Bytes entry, int metaDataBytes, boolean added, K key, V replacedValue, V value,
                long pos, SharedSegment segment) {
-        onPut(map, entry, metaDataBytes, added, key, value);
+        onPut(map, entry, metaDataBytes, added, key, value, replacedValue);
     }
 
     /**
-     * This method is called whenever a new value is put for the key in the map during calls of such
-     * methods as {@link ChronicleMap#put put}, {@link ChronicleMap#putIfAbsent putIfAbsent},
-     * {@link ChronicleMap#replace(Object, Object, Object) replace}, etc. When a new value is
-     * {@linkplain AbstractChronicleMapBuilder#defaultValue(Object) default} for the map or obtained
-     * during {@link ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method
-     * is called as well.
+     * This method is called whenever a new value is put for the key in the map during calls of such methods
+     * as {@link ChronicleMap#put put}, {@link ChronicleMap#putIfAbsent putIfAbsent}, {@link
+     * ChronicleMap#replace(Object, Object, Object) replace}, etc. When a new value is {@linkplain
+     * AbstractChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during {@link
+     * ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method is called as well.
      *
      * <p>This method is called when put is already happened.
      *
      * @param map           the accessed map
      * @param entry         bytes of the entry (with the value already written to)
-     * @param metaDataBytes length of {@link ChronicleHashBuilder#metaDataBytes(int) meta data}
-     *                      for this map
-     * @param added         {@code true} is the key was absent in the map before current
-     *                      {@code ChronicleMap} method call, led to putting a value and inherently
-     *                      calling this listener method
+     * @param metaDataBytes length of {@link net.openhft.chronicle.hash.ChronicleHashBuilder#metaDataBytes(int)
+     *                      meta data} for this map
+     * @param added         {@code true} is the key was absent in the map before current {@code ChronicleMap}
+     *                      method call, led to putting a value and inherently calling this listener method
      * @param key           the key the given value is put for
      * @param value         the value which is now associated with the given key
+     * @param replacedValue the value which was replaced by {@code value}, is NULL if {@code added} is true
      */
-    public void onPut(M map, Bytes entry, int metaDataBytes, boolean added, K key, V value) {
+    public void onPut(M map, Bytes entry, int metaDataBytes, boolean added, K key, V value,
+                      @Nullable V replacedValue) {
         // do nothing
     }
 
@@ -106,13 +102,12 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
     }
 
     /**
-     * This is called when an entry is removed. Misses, i. e. when {@code map.remove(key)}
-     * is called, but key is already absent in the map, are not notified.
+     * This is called when an entry is removed. Misses, i. e. when {@code map.remove(key)} is called, but key
+     * is already absent in the map, are not notified.
      *
      * @param map           accessed
      * @param entry         bytes of the entry just removed, but any data is not yet erased
-     * @param metaDataBytes length of {@link ChronicleHashBuilder#metaDataBytes(int) meta data}
-     *                      for this map
+     * @param metaDataBytes length of {@link ChronicleHashBuilder#metaDataBytes(int) meta data} for this map
      * @param key           the key removed from the map
      * @param value         the value which was associated with the given key
      */

@@ -199,12 +199,19 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
      * as this will trigger the modification iterators to send out another replication event. So instead with
      * call this method            iterators
      *
-     * @return
+     * @return the event listener added by the user
      */
-    MapEventListener<K, V, ChronicleMap<K, V>> eventListenerWithoutModIterators() {
+    MapEventListener<K, V, ChronicleMap<K, V>> attachedEventListener() {
         return eventListener;
     }
 
+
+    /**
+     * @return true if the user has added an event listerner
+     */
+    boolean hasAttachedEventListener() {
+        return eventListener != null;
+    }
 
     @Override
     public V put(K key, V value) {
@@ -635,7 +642,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 throw new IllegalStateException("ENTRY WRITE_BUFFER_SIZE TOO LARGE : Replicated " +
                         "ChronicleMap's" +
                         " are restricted to an " +
-                        "entry size of " +  Integer.MAX_VALUE + ", " +
+                        "entry size of " + Integer.MAX_VALUE + ", " +
                         "your entry size=" + result);
 
             return result;
@@ -728,7 +735,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
 
         void notifyRemotePut(long offset, boolean added, final long pos, long keySize, final Bytes inBytes,
-                             final long valueSize, final long valuePosition, final long keyPosition) {
+                             final long valueSize, final long valuePosition,
+                             final long keyPosition, final V replacedValue) {
             if (eventListener() != MapEventListeners.NOP) {
                 final MultiStoreBytes b = acquireTmpBytes();
                 b.storePositionAndSize(bytes, offset, entrySize);
@@ -747,8 +755,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 inBytes.position(valuePosition);
                 final V value = valueReaderProvider.get(copiesV, originalValueReader).read(inBytes, valueSize);
 
-                eventListener().onPut(ReplicatedChronicleMap.this, b, metaDataBytes,
-                        added, key, value, pos, this);
+                attachedEventListener().onPut(ReplicatedChronicleMap.this, b, metaDataBytes,
+                        added, key, replacedValue, value, pos, this);
             }
         }
 
@@ -759,10 +767,19 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         private void remotePut(@NotNull final Bytes inBytes, long hash2,
                                final byte identifier, final long timestamp,
                                long valuePos, long valueLimit) {
+
+
             writeLock();
             try {
                 // inBytes position and limit correspond to the key
                 final long keySize = inBytes.remaining();
+                V replacedValue = null;
+
+                ThreadLocalCopies keyCopies = keyInteropProvider.getCopies(null);
+                BytesReader<K> keyReader = keyReaderProvider.get(keyCopies, originalKeyReader);
+
+                ThreadLocalCopies valueCopies = valueReaderProvider.getCopies(keyCopies);
+                BytesReader<V> valueReader = valueReaderProvider.get(valueCopies, originalValueReader);
 
                 hashLookupLiveAndDeleted.startSearch(hash2);
                 for (long pos; (pos = hashLookupLiveAndDeleted.nextPos()) >= 0L; ) {
@@ -774,6 +791,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                         continue;
 
                     // key is found
+
 
                     entry.skip(keySize);
 
@@ -793,12 +811,16 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     entry.writeBoolean(false);
 
                     long valueSizePos = entry.position();
-                    long valueSize = readValueSize(entry);
-                    long entryEndAddr = entry.positionAddr() + valueSize;
+                    long replacedValueSize = readValueSize(entry);
+                    long entryEndAddr = entry.positionAddr() + replacedValueSize;
 
                     // write the value
                     inBytes.limit(valueLimit);
                     inBytes.position(valuePos);
+
+                    // if we have event listeners attached we have to read back the old value
+                    if (hasAttachedEventListener())
+                        replacedValue = valueReader.read(entry, replacedValueSize, null);
 
                     putValue(pos, offset, entry, valueSizePos, entryEndAddr, null, null, inBytes,
                             hashLookupLiveAndDeleted);
@@ -809,10 +831,21 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                         incrementSize();
                     }
 
-                    // this is just like notifyPut, but it won't trigger the modification iterators
-                    notifyRemotePut(offset, false, posFromOffset(offset), keySize, inBytes, valueLimit
-                                    -valuePos,
-                            valuePos, keyPosition);
+                    if (hasAttachedEventListener()) {
+
+                        // this is just like notifyPut, but it won't trigger the modification iterators
+                        notifyRemotePut(offset,
+                                false,
+                                posFromOffset(offset),
+                                keySize,
+                                inBytes,
+                                valueLimit - valuePos,
+                                valuePos,
+                                keyPosition,
+                                replacedValue
+                        );
+                    }
+
                     return;
                 }
 
@@ -848,7 +881,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 incrementSize();
 
                 // this is just like notifyPut, but it won't trigger the modification iterators
-                notifyRemotePut(offset, true, posFromOffset(offset), keySize, inBytes, valueSize, valuePos, kPosition);
+                notifyRemotePut(offset, true, posFromOffset(offset), keySize, inBytes, valueSize, valuePos,
+                        kPosition, null);
 
             } finally {
                 writeUnlock();
@@ -913,12 +947,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 long offset = putEntry(copies, metaKeyWriter, keyWriter, key, keySize, hash2, value,
                         identifier, timestamp, hashLookup);
                 incrementSize();
-                notifyPut(offset, true, key, value, posFromOffset(offset));
+                notifyPut(offset, true, key, value, null, posFromOffset(offset));
                 return null;
             } finally {
                 writeUnlock();
             }
         }
+
 
         /**
          * Used only with replication, its sometimes possible to receive an old ( or stale update ) from a
@@ -1309,12 +1344,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         @Override
         public void onPut(ChronicleMap<K, V> map, Bytes entry, int metaDataBytes,
-                          boolean added, K key, V value, long pos, SharedSegment segment) {
+                          boolean added, K key, V replacedValue, V value, long pos, SharedSegment segment) {
 
             assert ReplicatedChronicleMap.this == map :
                     "ModificationIterator.onPut() is called from outside of the parent map";
             try {
-                nextListener.onPut(map, entry, metaDataBytes, added, key, value, pos, segment);
+                nextListener.onPut(map, entry, metaDataBytes, added, key, replacedValue, value, pos, segment);
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -1323,7 +1358,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 try {
                     final ModificationIterator modificationIterator = modificationIterators.get((int) next);
                     modificationIterator.onPut(map, entry, metaDataBytes,
-                            added, key, value, pos, segment);
+                            added, key, replacedValue, value, pos, segment);
                 } catch (Exception e) {
                     LOG.error("", e);
                 }
@@ -1445,7 +1480,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         @Override
         public void onPut(ChronicleMap<K, V> map, Bytes entry, int metaDataBytes,
-                          boolean added, K key, V value, long pos, SharedSegment segment) {
+                          boolean added, K key, V replacedValue, V value, long pos, SharedSegment segment) {
 
             assert ReplicatedChronicleMap.this == map :
                     "ModificationIterator.onPut() is called from outside of the parent map";

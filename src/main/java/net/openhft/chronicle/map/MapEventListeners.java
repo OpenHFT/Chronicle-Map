@@ -68,7 +68,7 @@ public final class MapEventListeners {
 
         @Override
         public void onPut(ChronicleMap map, Bytes entry, int metaDataBytes, boolean added,
-                          Object key, Object value, long pos, SharedSegment segment) {
+                          Object key, Object replacedValue, Object value, long pos, SharedSegment segment) {
             logOperation(map, entry, metaDataBytes, added ? " +put " : " put ");
         }
 
@@ -90,7 +90,7 @@ public final class MapEventListeners {
 
         @Override
         public void onPut(ChronicleMap map, Bytes entry, int metaDataBytes, boolean added,
-                          Object key, Object value, long pos, SharedSegment segment) {
+                          Object key, Object replacedValue, Object value, long pos, SharedSegment segment) {
             LOGGER.info("{} put {} => {}", map.file(), key, value);
         }
 
