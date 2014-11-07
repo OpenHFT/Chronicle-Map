@@ -37,7 +37,6 @@ import static net.openhft.chronicle.hash.replication.TcpConfig.forSendingNode;
  *
  * @author Rob Austin.
  */
-
 public class EventListenerTestWithTCPSocketReplication {
 
 
@@ -50,6 +49,9 @@ public class EventListenerTestWithTCPSocketReplication {
     final AtomicReference<CharSequence> valueRef = new AtomicReference<CharSequence>();
     final AtomicBoolean putWasCalled = new AtomicBoolean(false);
 
+    final AtomicBoolean wasRemoved = new AtomicBoolean(false);
+    final AtomicReference<CharSequence> valueRemoved = new AtomicReference<CharSequence>();
+
     final MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>> eventListener = new
             MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>>() {
                 private static final long serialVersionUID = 1L;
@@ -61,6 +63,12 @@ public class EventListenerTestWithTCPSocketReplication {
                     keyRef.set(key);
                     valueRef.set(value);
                     replacedValueRef.set(replacedValue);
+                }
+
+                @Override
+                public void onRemove(ChronicleMap<Integer, CharSequence> map, Bytes entry, int metaDataBytes, Integer key, CharSequence value) {
+                    wasRemoved.set(true);
+                    valueRemoved.set(value);
                 }
             };
 
@@ -75,13 +83,12 @@ public class EventListenerTestWithTCPSocketReplication {
                 e.printStackTrace();
             }
         }
-
+        wasRemoved.set(false);
+        valueRemoved.set(null);
         putWasCalled.set(false);
         valueRef.set(null);
         replacedValueRef.set(null);
         keyRef.set(null);
-
-
     }
 
 
@@ -123,7 +130,7 @@ public class EventListenerTestWithTCPSocketReplication {
 
 
     @Test
-    public void testAddedOriginalValueToBeOverWritten() throws IOException, InterruptedException {
+    public void testRemoteNotifyPutLargerValue() throws IOException, InterruptedException {
 
         // ---------- SERVER1 1 ----------
         {
@@ -149,9 +156,6 @@ public class EventListenerTestWithTCPSocketReplication {
         map1.put(5, "EXAMPLE");
         waitTillReplicated();
 
-        Assert.assertEquals("Maps should be equal", map1, map2);
-        Assert.assertTrue("Map 1 should not be empty", !map1.isEmpty());
-        Assert.assertTrue("Map 2 should not be empty", !map2.isEmpty());
 
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
@@ -161,9 +165,8 @@ public class EventListenerTestWithTCPSocketReplication {
     }
 
 
-
     @Test
-    public void testAlreadyAddedWithSmallInitialValue() throws IOException, InterruptedException {
+    public void testRemoteNotifyPutSmallerValue() throws IOException, InterruptedException {
 
 
         // ---------- SERVER1 1 ----------
@@ -188,15 +191,52 @@ public class EventListenerTestWithTCPSocketReplication {
 
         waitTillReplicated();
 
-        Assert.assertEquals("Maps should be equal", map1, map2);
-        Assert.assertTrue("Map 1 should not be empty", !map1.isEmpty());
-        Assert.assertTrue("Map 2 should not be empty", !map2.isEmpty());
 
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
         Assert.assertEquals("small", replacedValueRef.get());
         Assert.assertEquals("EXAMPLE", valueRef.get());
 
+    }
+
+
+    @Test
+    public void testRemoteNotifyRemove() throws IOException, InterruptedException {
+
+        // ---------- SERVER1 1 ----------
+        {
+
+            // we connect the maps via a TCP socket connection on port 8077
+
+            ChronicleMapBuilder<Integer, CharSequence> map1Builder = serverBuilder();
+
+            map1 = map1Builder.create();
+
+
+        }
+
+        // ---------- SERVER2 2 on the same server as ----------
+        {
+            map2 = clientBuilder().create();
+            map2.put(5, "WILL_GET_REMOVED");
+        }
+
+        // its we have to wait here for this entry to be removed - as removing an entry that you dont have
+        // on map 1 will have no effect
+        waitTillReplicated();
+
+        // no more puts after this point
+        putWasCalled.set(false);
+
+        // we will stores some data into one map here
+        map1.remove(5);
+
+        waitTillReplicated();
+
+        Assert.assertTrue(!putWasCalled.get());
+        Assert.assertTrue(wasRemoved.get());
+        Assert.assertEquals("WILL_GET_REMOVED", valueRemoved.get());
+        Assert.assertEquals(null, map2.get(5));
     }
 
     private ChronicleMapBuilder<Integer, CharSequence> clientBuilder() {

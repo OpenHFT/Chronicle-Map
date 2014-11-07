@@ -259,8 +259,8 @@ public class NodeDiscovery {
 
 
     /**
-     * bitwise OR's the two bit sets or put another way, merges the source bitset into the
-     * destination bitset and returns the destination
+     * bitwise OR's the two bit sets or put another way, merges the source bitset into the destination bitset
+     * and returns the destination
      *
      * @param source      to or
      * @param destination to or
@@ -326,8 +326,8 @@ public class NodeDiscovery {
 }
 
 /**
- * Broadcast the nodes host ports and identifiers over UDP, to make it easy to join a grid of remote
- * nodes just by name, this functionality requires UDP
+ * Broadcast the nodes host ports and identifiers over UDP, to make it easy to join a grid of remote nodes
+ * just by name, this functionality requires UDP
  *
  * @author Rob Austin.
  */
@@ -738,8 +738,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
     }
 
     /**
-     * this is used to tell nodes that are connecting to us which host and ports are in our grid,
-     * along with all the identifiers.
+     * this is used to tell nodes that are connecting to us which host and ports are in our grid, along with
+     * all the identifiers.
      */
     @Override
     public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
@@ -819,7 +819,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             if (bootstrap.addressAndPort().equals(this.ourAddressAndPort))
                 return;
 
-            LOG.info("Received Bootstrap from " + bootstrap);
+            if (LOG.isDebugEnabled())
+                LOG.debug("Received Bootstrap from " + bootstrap);
 
             proposedIdentifiersWithHost.put(bootstrap.addressAndPort, bootstrap);
 
@@ -839,7 +840,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         if (sourceAddressAndPort.equals(ourAddressAndPort))
             return;
 
-        LOG.info("Received Proposal");
+        LOG.debug("Received Proposal");
 
         this.remoteNode.readMarshallable(in);
         this.proposedIdentifiersWithHost.readMarshallable(in);
@@ -929,8 +930,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
 
     /**
-     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the
-     * host:port and perhaps even proposed identifier of the node that sent it.
+     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the host:port
+     * and perhaps even proposed identifier of the node that sent it.
      *
      * @param proposedNodes
      */

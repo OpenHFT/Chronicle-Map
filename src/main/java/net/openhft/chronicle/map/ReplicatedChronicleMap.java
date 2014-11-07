@@ -209,7 +209,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     /**
      * @return true if the user has added an event listerner
      */
-    boolean hasAttachedEventListener() {
+    boolean hasAttachedEventListeners() {
         return eventListener != null;
     }
 
@@ -440,7 +440,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         // we store the isDeleted flag in the identifier
         // ( when the identifier is negative it is deleted )
-        destination.writeByte(isDeleted ? -identifier : identifier);
+        destination.writeByte(identifier);
+        destination.writeBoolean(isDeleted);
 
         // write the key
         entry.position(keyPosition);
@@ -488,14 +489,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         final long valueSize = valueSizeMarshaller.readSize(source);
         final long timeStamp = source.readStopBit();
         final byte id = source.readByte();
-        final byte remoteIdentifier;
-        final boolean isDeleted;
+        final boolean isDeleted = source.readBoolean();
 
-        if (id < 0) {
-            isDeleted = true;
-            remoteIdentifier = (byte) -id;
-        } else if (id != 0) {
-            isDeleted = false;
+        final byte remoteIdentifier;
+
+        if (id != 0) {
+            //     isDeleted = false;
             remoteIdentifier = id;
         } else {
             throw new IllegalStateException("identifier can't be 0");
@@ -520,8 +519,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         if (isDeleted) {
 
             if (debugEnabled) {
-                LOG.debug(
-                        "READING FROM SOURCE -  into local-id={}, remote={}, remove(key={})",
+                LOG.debug("READING FROM SOURCE -  into local-id={}, remote={}, remove(key={})",
                         localIdentifier, remoteIdentifier, source.toString().trim()
                 );
             }
@@ -685,11 +683,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             bytes.skip(ADDITIONAL_ENTRY_BYTES);
         }
 
+
         /**
          * called from a remote node as part of replication
          */
         private void remoteRemove(Bytes keyBytes, long hash2,
                                   final long timestamp, final byte identifier) {
+
+
             writeLock();
             try {
                 long keySize = keyBytes.remaining();
@@ -701,6 +702,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                         continue;
 
                     // key is found
+
+                    long keyPosition = entry.position();
                     entry.skip(keySize);
 
                     long timeStampPos = entry.position();
@@ -709,7 +712,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                         return;
                     }
 
-                    // skip the is deleted flag
+                    // read the is deleted flag
                     boolean wasDeleted = entry.readBoolean();
 
                     if (!wasDeleted) {
@@ -721,9 +724,35 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     entry.writeLong(timestamp);
                     assert identifier > 0;
                     entry.writeByte(identifier);
+
                     // was deleted
                     entry.writeBoolean(true);
+
+                    long valuePosition = entry.position();
+
+                    if (hasAttachedEventListeners() && !wasDeleted) {
+                        entry.position(keyPosition);
+                        K key = null;
+                        ThreadLocalCopies keyCopies = null;
+
+                        if (hasAttachedEventListeners()) {
+                            keyCopies = keyInteropProvider.getCopies(null);
+                            BytesReader<K> keyReader = keyReaderProvider.get(keyCopies, originalKeyReader);
+                            key = keyReader.read(entry, keySize);
+                        }
+
+                        entry.position(valuePosition);
+                        ThreadLocalCopies valueCopies = valueReaderProvider.getCopies(keyCopies);
+                        BytesReader<V> valueReader = valueReaderProvider.get(valueCopies,
+                                originalValueReader);
+                        V value = valueReader.read(entry, readValueSize(entry));
+
+                        notifyRemoteRemove(offset, key, value, pos);
+                    }
+
+                    return;
                 }
+
                 // key is not found
                 if (LOG.isDebugEnabled())
                     LOG.debug("Segment.remoteRemove() : key=" + keyBytes.toString().trim() +
@@ -734,9 +763,20 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
 
+        void notifyRemoteRemove(long offset, K key, V value, final long pos) {
+            if (eventListener() != MapEventListeners.NOP) {
+                MultiStoreBytes b = acquireTmpBytes();
+                b.storePositionAndSize(bytes, offset, entrySize);
+                attachedEventListener().onRemove(ReplicatedChronicleMap.this, b, metaDataBytes,
+                        key, value, pos, this);
+            }
+        }
+
+
         void notifyRemotePut(long offset, boolean added, final long pos, long keySize, final Bytes inBytes,
                              final long valueSize, final long valuePosition,
-                             final long keyPosition, final V replacedValue) {
+                             final long keyPosition, final V replacedValue, BytesReader<V> valueReader,
+                             BytesReader<K> keyReader) {
             if (eventListener() != MapEventListeners.NOP) {
                 final MultiStoreBytes b = acquireTmpBytes();
                 b.storePositionAndSize(bytes, offset, entrySize);
@@ -744,16 +784,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 inBytes.limit(inBytes.capacity());
 
                 // deserialize the key
-                final ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
                 inBytes.position(keyPosition);
-                final K key = keyReaderProvider.get(copies, originalKeyReader).read(inBytes, keySize);
+                final K key = keyReader.read(inBytes, keySize);
 
                 // deserialize the value
-                final ThreadLocalCopies copiesV = valueReaderProvider.getCopies(copies);
-
                 inBytes.limit(inBytes.capacity());
                 inBytes.position(valuePosition);
-                final V value = valueReaderProvider.get(copiesV, originalValueReader).read(inBytes, valueSize);
+                final V value = valueReader.read(inBytes, valueSize);
 
                 attachedEventListener().onPut(ReplicatedChronicleMap.this, b, metaDataBytes,
                         added, key, replacedValue, value, pos, this);
@@ -769,17 +806,23 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                                long valuePos, long valueLimit) {
 
 
+            BytesReader<V> valueReader = null;
+            BytesReader<K> keyReader = null;
+
+            if (hasAttachedEventListeners()) {
+                ThreadLocalCopies keyCopies = keyInteropProvider.getCopies(null);
+                keyReader = keyReaderProvider.get(keyCopies, originalKeyReader);
+
+                ThreadLocalCopies valueCopies = valueReaderProvider.getCopies(keyCopies);
+                valueReader = valueReaderProvider.get(valueCopies, originalValueReader);
+            }
+
             writeLock();
             try {
                 // inBytes position and limit correspond to the key
                 final long keySize = inBytes.remaining();
                 V replacedValue = null;
 
-                ThreadLocalCopies keyCopies = keyInteropProvider.getCopies(null);
-                BytesReader<K> keyReader = keyReaderProvider.get(keyCopies, originalKeyReader);
-
-                ThreadLocalCopies valueCopies = valueReaderProvider.getCopies(keyCopies);
-                BytesReader<V> valueReader = valueReaderProvider.get(valueCopies, originalValueReader);
 
                 hashLookupLiveAndDeleted.startSearch(hash2);
                 for (long pos; (pos = hashLookupLiveAndDeleted.nextPos()) >= 0L; ) {
@@ -791,8 +834,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                         continue;
 
                     // key is found
-
-
                     entry.skip(keySize);
 
                     final long timeStampPos = entry.positionAddr();
@@ -819,7 +860,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     inBytes.position(valuePos);
 
                     // if we have event listeners attached we have to read back the old value
-                    if (hasAttachedEventListener())
+                    if (hasAttachedEventListeners())
                         replacedValue = valueReader.read(entry, replacedValueSize, null);
 
                     putValue(pos, offset, entry, valueSizePos, entryEndAddr, null, null, inBytes,
@@ -831,7 +872,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                         incrementSize();
                     }
 
-                    if (hasAttachedEventListener()) {
+                    if (hasAttachedEventListeners()) {
 
                         // this is just like notifyPut, but it won't trigger the modification iterators
                         notifyRemotePut(offset,
@@ -842,7 +883,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                                 valueLimit - valuePos,
                                 valuePos,
                                 keyPosition,
-                                replacedValue
+                                replacedValue,
+                                valueReader,
+                                keyReader
                         );
                     }
 
@@ -882,7 +925,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
                 // this is just like notifyPut, but it won't trigger the modification iterators
                 notifyRemotePut(offset, true, posFromOffset(offset), keySize, inBytes, valueSize, valuePos,
-                        kPosition, null);
+                        kPosition, null, valueReader, keyReader);
 
             } finally {
                 writeUnlock();
