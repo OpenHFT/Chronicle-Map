@@ -26,7 +26,6 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -53,7 +52,7 @@ public class SetForTCPSocketReplicationTest3way {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         return (T) ChronicleSetBuilder.of(Integer.class)
-                .replication(identifier, TcpConfig.unknownTopology(serverPort, asList(endpoints))
+                .replication(identifier, TcpConfig.forUnknownTopology(serverPort, asList(endpoints))
                         .heartBeatInterval(1L, SECONDS))
                 .createPersistedTo(getPersistenceFile());
     }

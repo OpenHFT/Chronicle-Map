@@ -78,7 +78,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     final VW originalValueWriter;
     final MVW originalMetaValueWriter;
     final MetaProvider<V, VW, MVW> metaValueWriterProvider;
-    final ObjectFactory<V> valueFactory;
     final DefaultValueProvider<K, V> defaultValueProvider;
     final PrepareValueBytesAsWriter<K> prepareValueBytesAsWriter;
     final int metaDataBytes;
@@ -128,7 +127,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         originalValueWriter = (VW) valueBuilder.interop();
         originalMetaValueWriter = (MVW) valueBuilder.metaInterop();
         metaValueWriterProvider = (MetaProvider) valueBuilder.metaInteropProvider();
-        valueFactory = valueBuilder.factory();
         defaultValueProvider = builder.defaultValueProvider();
         prepareValueBytesAsWriter = builder.prepareValueBytesAsWriter();
 

@@ -22,6 +22,9 @@ import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.replication.SimpleReplication;
 import net.openhft.chronicle.hash.replication.TcpConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
+import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.io.serialization.BytesMarshaller;
@@ -53,7 +56,8 @@ public class ChronicleSetBuilder<E>
 
     ChronicleSetBuilder(Class<E> keyClass) {
         chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
-                .valueMarshallers(DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE);
+                .valueMarshallers(DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE)
+                .valueSizeMarshaller(DummyValueMarshaller.INSTANCE);
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
@@ -222,6 +226,19 @@ public class ChronicleSetBuilder<E>
     @Override
     public ChronicleSetBuilder<E> keyMarshaller(@NotNull BytesMarshaller<E> keyMarshaller) {
         chronicleMapBuilder.keyMarshaller(keyMarshaller);
+        return this;
+    }
+
+    @Override
+    public ChronicleSetBuilder<E> keyMarshallers(@NotNull BytesWriter<E> keyWriter,
+                                                 @NotNull BytesReader<E> keyReader) {
+        chronicleMapBuilder.keyMarshallers(keyWriter, keyReader);
+        return this;
+    }
+
+    @Override
+    public ChronicleSetBuilder<E> keySizeMarshaller(@NotNull SizeMarshaller keySizeMarshaller) {
+        chronicleMapBuilder.keySizeMarshaller(keySizeMarshaller);
         return this;
     }
 

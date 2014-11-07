@@ -64,15 +64,15 @@ public final class TcpConfig {
                                            Collection<InetSocketAddress> endpoints) {
         if (endpoints.isEmpty())
             throw new IllegalArgumentException("There should be some endpoints");
-        return unknownTopology(serverPort, endpoints);
+        return forUnknownTopology(serverPort, endpoints);
     }
 
     public static TcpConfig forReceivingOnlyNode(int serverPort) {
-        return unknownTopology(serverPort, Collections.<InetSocketAddress>emptyList());
+        return forUnknownTopology(serverPort, Collections.<InetSocketAddress>emptyList());
     }
 
-    public static TcpConfig unknownTopology(int serverPort,
-                                            Collection<InetSocketAddress> endpoints) {
+    public static TcpConfig forUnknownTopology(int serverPort,
+                                               Collection<InetSocketAddress> endpoints) {
         for (final InetSocketAddress endpoint : endpoints) {
             if (endpoint.getPort() == serverPort && "localhost".equals(endpoint.getHostName()))
                 throw new IllegalArgumentException("endpoint=" + endpoint

@@ -72,7 +72,7 @@ public class Builder {
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        TcpConfig tcpConfig = TcpConfig.unknownTopology(serverPort, Arrays.asList(endpoints))
+        TcpConfig tcpConfig = TcpConfig.forUnknownTopology(serverPort, Arrays.asList(endpoints))
                 .heartBeatInterval(1L, TimeUnit.SECONDS);
         return ChronicleMapBuilder.of(kClass, vClass)
                 .replication(identifier,  tcpConfig);

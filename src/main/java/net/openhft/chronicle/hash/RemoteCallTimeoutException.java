@@ -16,16 +16,20 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.exceptions;
-
-import java.io.IOException;
+package net.openhft.chronicle.hash;
 
 /**
+ * TODO mention in docs
  * @author Rob Austin.
  */
-public class IORuntimeException extends RuntimeException{
+public class RemoteCallTimeoutException extends RuntimeException {
 
-    public IORuntimeException(IOException e) {
-        super(e);
+
+    public RemoteCallTimeoutException(String s) {
+        super(s);
+    }
+
+    public RemoteCallTimeoutException() {
+        super();
     }
 }
