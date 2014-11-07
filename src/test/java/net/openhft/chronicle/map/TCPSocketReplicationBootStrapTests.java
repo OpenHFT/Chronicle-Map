@@ -68,8 +68,7 @@ public class TCPSocketReplicationBootStrapTests {
         {
             // restart map 2 but don't doConnect it to map one
             final ChronicleMap<Integer, CharSequence> map2b =
-                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .createPersistedTo(map2File);
+                    map2aBuilder.createPersistedTo(map2File);
             // add data into it
             map2b.put(11, "ADDED WHEN DISCONNECTED TO MAP1");
             map2b.close();
@@ -112,8 +111,7 @@ public class TCPSocketReplicationBootStrapTests {
         {
             // restart map 2 but don't doConnect it to map one
             final ChronicleMap<Integer, CharSequence> map2b =
-                    ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .createPersistedTo(map2File);
+                    map2aBuilder.createPersistedTo(map2File);
             // add data into it
             map2b.put(11, "ADDED WHEN DISCONNECTED TO MAP1");
             map2b.close();
