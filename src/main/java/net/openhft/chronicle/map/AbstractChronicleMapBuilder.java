@@ -828,6 +828,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
      * @return map
      */
     ChronicleMap<K, V> createReplicated(byte identifier) throws IOException {
+        preMapConstruction(true);
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
                 new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                         V, Object, MetaBytesWriter<V, Object>>(this, identifier);
