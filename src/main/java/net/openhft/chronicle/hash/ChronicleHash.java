@@ -37,7 +37,7 @@ public interface ChronicleHash extends Closeable {
      *
      * @return the file this {@link ChronicleMap} or {@link ChronicleSet} is mapped to,
      *         or {@code null} if it is not mapped to any file
-     * @see ChronicleHashBuilder#file(java.io.File)
+     * @see ChronicleHashBuilder#createPersistedTo(File)
      * @see ChronicleHashBuilder#create()
      */
     File file();

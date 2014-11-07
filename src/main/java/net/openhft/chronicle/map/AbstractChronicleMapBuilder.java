@@ -20,6 +20,9 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.replication.*;
+import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
@@ -602,7 +605,20 @@ public abstract class AbstractChronicleMapBuilder<K, V,
      */
     @Override
     public B keyMarshaller(@NotNull BytesMarshaller<K> keyMarshaller) {
-        keyBuilder.marshaller(keyMarshaller, null);
+        keyBuilder.marshaller(keyMarshaller);
+        return self();
+    }
+
+    @Override
+    public B keyMarshallers(@NotNull BytesWriter<K> keyWriter, @NotNull BytesReader<K> keyReader) {
+        keyBuilder.writer(keyWriter);
+        keyBuilder.reader(keyReader);
+        return self();
+    }
+
+    @Override
+    public B keySizeMarshaller(@NotNull SizeMarshaller keySizeMarshaller) {
+        keyBuilder.sizeMarshaller(keySizeMarshaller);
         return self();
     }
 

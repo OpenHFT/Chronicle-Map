@@ -21,6 +21,7 @@ package net.openhft.chronicle.hash;
 import net.openhft.chronicle.hash.replication.SimpleReplication;
 import net.openhft.chronicle.hash.replication.TcpConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
+import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
@@ -212,7 +213,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * like iteration. If timeout expires, {@link ChronicleHashErrorListener#onLockTimeout(long)} is
      * called, and then thread tries to obtain the segment lock one more time, and so in a loop,
      * until thread is interrupted. However, you can configure {@linkplain #errorListener(
-     *ChronicleHashErrorListener) error listener} to throw an exception on the first (or n-th) lock
+     * ChronicleHashErrorListener) error listener} to throw an exception on the first (or n-th) lock
      * acquisition fail.
      *
      * <p>Default lock time out is 2 seconds.
@@ -286,9 +287,48 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      *
      * @param keyMarshaller the marshaller used to serialize keys
      * @return this builder back
+     * @see #keyMarshallers(BytesWriter, BytesReader)
      * @see #objectSerializer(ObjectSerializer)
      */
     B keyMarshaller(@NotNull BytesMarshaller<K> keyMarshaller);
+
+    /**
+     * Configures the marshallers, used to serialize/deserialize keys to/from off-heap
+     * memory in hash containers, created by this builder. See
+     * <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the section about
+     * serialization in ChronicleMap manual</a> for more information.
+     *
+     * <p>Configuring marshalling this way results to a little bit more compact in-memory layout
+     * of the map, comparing to a single interface configuration:
+     * {@link #keyMarshaller(BytesMarshaller)}.
+     *
+     * <p>Passing {@link BytesInterop} (which is a subinterface of {@link BytesWriter}) as the
+     * first argument is supported, and even more advantageous from performance perspective.
+     *
+     * @param keyWriter the new key object -> {@link Bytes} writer (interop) strategy
+     * @param keyReader the new {@link Bytes} -> key object reader strategy
+     * @return this builder back
+     * @see #keyMarshaller(BytesMarshaller)
+     */
+    B keyMarshallers(@NotNull BytesWriter<K> keyWriter, @NotNull BytesReader<K> keyReader);
+
+    /**
+     * Configures the marshaller used to serialize actual key sizes to off-heap memory
+     * in hash containers, created by this builder.
+     *
+     * <p>Default key size marshaller is so-called {@linkplain SizeMarshallers#stopBit()
+     * stop bit encoding marshalling}. If {@linkplain #constantKeySizeBySample(Object) constant key
+     * size} is configured, or defaulted if the key type is always constant and {@code
+     * ChronicleHashBuilder} implementation knows about it, this configuration takes no effect,
+     * because a special {@link SizeMarshaller} implementation, which doesn't actually do any
+     * marshalling, and just returns the known constant size on {@link SizeMarshaller#readSize(
+     * Bytes)} calls, is used instead of any {@code SizeMarshaller} configured using this method.
+     *
+     * @param keySizeMarshaller the new marshaller, used to serialize actual key sizes to off-heap
+     *                          memory
+     * @return this builder back
+     */
+    B keySizeMarshaller(@NotNull SizeMarshaller keySizeMarshaller);
 
     /**
      * Configures factory which is used to create a new key instance, if key class is either
