@@ -62,6 +62,16 @@ public final class ReplicationHub extends AbstractReplication {
 
         private Builder() {}
 
+        @Override
+        public Builder tcpTransportAndNetwork(TcpConfig tcpConfig) {
+            return super.tcpTransportAndNetwork(tcpConfig);
+        }
+
+        @Override
+        public Builder udpTransport(UdpConfig udpConfig) {
+            return super.udpTransport(udpConfig);
+        }
+
         public Builder maxEntrySize(int maxEntrySize) {
             this.maxEntrySize = maxEntrySize;
             return this;

@@ -222,7 +222,7 @@ public class NodeDiscovery {
         knownNodes.add(ourAddressAndPort, identifier);
 
         final TcpConfig tcpConfig = TcpConfig
-                .unknownTopology(ourAddressAndPort.getPort(),
+                .forUnknownTopology(ourAddressAndPort.getPort(),
                         toInetSocketCollection(knownHostPorts))
                 .heartBeatInterval(1, SECONDS)
                 .nonUniqueIdentifierListener(identifierListener);

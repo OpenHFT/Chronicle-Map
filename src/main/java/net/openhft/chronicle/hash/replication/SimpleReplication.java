@@ -34,5 +34,15 @@ public final class SimpleReplication extends AbstractReplication {
             check();
             return new SimpleReplication(identifier, this);
         }
+
+        @Override
+        public Builder tcpTransportAndNetwork(TcpConfig tcpConfig) {
+            return super.tcpTransportAndNetwork(tcpConfig);
+        }
+
+        @Override
+        public Builder udpTransport(UdpConfig udpConfig) {
+            return super.udpTransport(udpConfig);
+        }
     }
 }

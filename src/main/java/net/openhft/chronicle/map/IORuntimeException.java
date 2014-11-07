@@ -16,19 +16,16 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.exceptions;
+package net.openhft.chronicle.map;
+
+import java.io.IOException;
 
 /**
  * @author Rob Austin.
  */
-public class TimeoutRuntimeException extends RuntimeException {
+class IORuntimeException extends RuntimeException{
 
-
-    public TimeoutRuntimeException(String s) {
-        super(s);
-    }
-
-    public TimeoutRuntimeException() {
-        super();
+    public IORuntimeException(IOException e) {
+        super(e);
     }
 }
