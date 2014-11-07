@@ -146,6 +146,7 @@
                     <links>
                         <link>http://openhft.github.io/Java-Lang/apidocs/</link>
                     </links>
+                    <excludePackageNames>net.openhft.chronicle.hash.serialization.internal</excludePackageNames>
                 </configuration>
             </plugin>
 

@@ -16,18 +16,18 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.serialization.impl;
+package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
 import net.openhft.chronicle.hash.serialization.Hasher;
 import net.openhft.lang.io.Bytes;
 
-public enum LongMarshaller implements AgileBytesMarshaller<Long> {
+public enum IntegerMarshaller implements AgileBytesMarshaller<Integer> {
     INSTANCE;
 
     @Override
-    public long size(Long e) {
-        return 8L;
+    public long size(Integer e) {
+        return 4L;
     }
 
     @Override
@@ -41,32 +41,32 @@ public enum LongMarshaller implements AgileBytesMarshaller<Long> {
     }
 
     @Override
-    public boolean startsWith(Bytes bytes, Long e) {
-        return e == bytes.readLong(0);
+    public boolean startsWith(Bytes bytes, Integer e) {
+        return e == bytes.readInt(0);
     }
 
     @Override
-    public long hash(Long e) {
+    public long hash(Integer e) {
         return Hasher.hash(e);
     }
 
     @Override
-    public void write(Bytes bytes, Long e) {
-        bytes.writeLong(e);
+    public void write(Bytes bytes, Integer e) {
+        bytes.writeInt(e);
     }
 
     @Override
     public long readSize(Bytes bytes) {
-        return 8L;
+        return 4L;
     }
 
     @Override
-    public Long read(Bytes bytes, long size) {
-        return bytes.readLong();
+    public Integer read(Bytes bytes, long size) {
+        return bytes.readInt();
     }
 
     @Override
-    public Long read(Bytes bytes, long size, Long e) {
-        return bytes.readLong();
+    public Integer read(Bytes bytes, long size, Integer toReuse) {
+        return bytes.readInt();
     }
 }

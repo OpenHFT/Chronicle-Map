@@ -21,7 +21,7 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.chronicle.hash.serialization.*;
-import net.openhft.chronicle.hash.serialization.impl.*;
+import net.openhft.chronicle.hash.serialization.internal.*;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.io.serialization.BytesMarshaller;

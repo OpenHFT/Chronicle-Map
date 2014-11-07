@@ -42,7 +42,7 @@ enum DummyValueMarshaller implements AgileBytesMarshaller<DummyValue> {
     }
 
     @Override
-    public DummyValue read(Bytes bytes, long size, DummyValue dummyValue) {
+    public DummyValue read(Bytes bytes, long size, DummyValue toReuse) {
         return DUMMY_VALUE;
     }
 

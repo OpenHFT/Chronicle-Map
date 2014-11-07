@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.serialization.impl.ByteableMarshaller;
+import net.openhft.chronicle.hash.serialization.internal.ByteableMarshaller;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.NativeBytes;
 import net.openhft.lang.io.serialization.BytesMarshaller;

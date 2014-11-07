@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.serialization.impl;
+package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
 import net.openhft.chronicle.hash.serialization.Hasher;
@@ -114,13 +114,13 @@ public class ByteableMarshaller<E extends Byteable> implements AgileBytesMarshal
     }
 
     @Override
-    public E read(Bytes bytes, long size, E e) {
+    public E read(Bytes bytes, long size, E toReuse) {
         try {
-            if (e == null)
-                e = getInstance();
-            setBytesAndOffset(e, bytes);
+            if (toReuse == null)
+                toReuse = getInstance();
+            setBytesAndOffset(toReuse, bytes);
             bytes.skip(size);
-            return e;
+            return toReuse;
         } catch (Exception ex) {
             throw new IllegalStateException(ex);
         }

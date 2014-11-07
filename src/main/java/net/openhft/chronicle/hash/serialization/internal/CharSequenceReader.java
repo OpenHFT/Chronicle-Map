@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.serialization.impl;
+package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.AbstractBytes;
@@ -78,14 +78,14 @@ public final class CharSequenceReader<S extends CharSequence>
     }
 
     @Override
-    public S read(Bytes bytes, long size, S s) {
+    public S read(Bytes bytes, long size, S toReuse) {
         Appendable appendable;
-        if (s instanceof Appendable) {
-            appendable = (Appendable) s;
-            if (s instanceof StringBuilder) {
-                ((StringBuilder) s).setLength(0);
-            } else if (s instanceof StringBuffer) {
-                ((StringBuffer) s).setLength(0);
+        if (toReuse instanceof Appendable) {
+            appendable = (Appendable) toReuse;
+            if (toReuse instanceof StringBuilder) {
+                ((StringBuilder) toReuse).setLength(0);
+            } else if (toReuse instanceof StringBuffer) {
+                ((StringBuffer) toReuse).setLength(0);
             }
         } else {
             sb.setLength(0);
@@ -96,8 +96,8 @@ public final class CharSequenceReader<S extends CharSequence>
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-        if (appendable == s)
-            return s;
+        if (appendable == toReuse)
+            return toReuse;
         return interner.intern(sb);
     }
 

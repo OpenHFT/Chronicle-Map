@@ -16,20 +16,17 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.serialization.impl;
+package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.AgileBytesMarshaller;
-import net.openhft.chronicle.hash.serialization.Hasher;
 import net.openhft.lang.io.Bytes;
 
-import static java.lang.Double.doubleToLongBits;
-
-public enum DoubleMarshaller implements AgileBytesMarshaller<Double> {
+public enum VoidMarshaller implements AgileBytesMarshaller<Void> {
     INSTANCE;
 
     @Override
-    public long size(Double e) {
-        return 8L;
+    public long size(Void e) {
+        return 0L;
     }
 
     @Override
@@ -43,32 +40,34 @@ public enum DoubleMarshaller implements AgileBytesMarshaller<Double> {
     }
 
     @Override
-    public boolean startsWith(Bytes bytes, Double e) {
-        return doubleToLongBits(e) == bytes.readLong(0);
+    public boolean startsWith(Bytes bytes, Void e) {
+        return false;
     }
 
     @Override
-    public long hash(Double e) {
-        return Hasher.hash(doubleToLongBits(e));
+    public long hash(Void e) {
+        return 0;
     }
 
     @Override
-    public void write(Bytes bytes, Double e) {
-        bytes.writeLong(doubleToLongBits(e));
+    public void write(Bytes bytes, Void e) {
+        // do nothing;
     }
 
     @Override
     public long readSize(Bytes bytes) {
-        return 8L;
+        return 0L;
     }
 
     @Override
-    public Double read(Bytes bytes, long size) {
-        return Double.longBitsToDouble(bytes.readLong());
+    public Void read(Bytes bytes, long size) {
+        // Void nothing;
+        return null;
     }
 
     @Override
-    public Double read(Bytes bytes, long size, Double e) {
-        return read(bytes, size);
+    public Void read(Bytes bytes, long size, Void toReuse) {
+        return null;
     }
+
 }

@@ -16,13 +16,27 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.serialization;
+package net.openhft.chronicle.hash.serialization.internal;
 
+import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 
+/**
+ * Utility methods returning {@link BytesReader} implementations.
+ */
 public final class BytesReaders {
 
+    /**
+     * Returns a {@link BytesReader} wrapping the given {@link BytesMarshaller}. One of the
+     * bridge methods between general serialization API from {@link net.openhft.lang} and
+     * reader - writer - interop API, specific for ChronicleHashes,
+     * from {@link net.openhft.chronicle.hash.serialization} package.
+     *
+     * @param marshaller the actual reading implementation
+     * @param <E> type of the objects marshalled
+     * @return a {@code BytesReader} wrapping the given {@code BytesMarshaller}
+     */
     public static <E> BytesReader<E> fromBytesMarshaller(BytesMarshaller<E> marshaller) {
         return new SimpleBytesReader<E>(marshaller);
     }
@@ -42,8 +56,8 @@ public final class BytesReaders {
         }
 
         @Override
-        public E read(Bytes bytes, long size, E e) {
-            return marshaller.read(bytes, e);
+        public E read(Bytes bytes, long size, E toReuse) {
+            return marshaller.read(bytes, toReuse);
         }
     }
 
