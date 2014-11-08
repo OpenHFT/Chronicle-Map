@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.Set;
 
-public class Issue3 {
+public class Issue3Test {
 
     @Test
     public void test() throws IOException {
