@@ -76,7 +76,7 @@ public class ChannelExample {
 
         hubOnServer1 = ReplicationHub.builder()
                 .tcpTransportAndNetwork(tcpConfig)
-                .create(identifier);
+                .createWithId(identifier);
 
         // this demotes favoriteColour
         short channel1 = (short) 1;
@@ -109,7 +109,7 @@ public class ChannelExample {
 
         hubOnServer2 = ReplicationHub.builder()
                 .tcpTransportAndNetwork(tcpConfig)
-                .create(identifier);
+                .createWithId(identifier);
 
 
         // this demotes favoriteColour

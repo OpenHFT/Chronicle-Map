@@ -68,7 +68,7 @@ public class SingleMapChannelTest {
             hubA = ReplicationHub.builder()
                     .maxEntrySize(maxEntrySize)
                     .tcpTransportAndNetwork(tcpConfig)
-                    .create(identifier);
+                    .createWithId(identifier);
             // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
@@ -81,7 +81,7 @@ public class SingleMapChannelTest {
                     .forSendingNode(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 
-            hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig).create((byte) 2);
+            hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig).createWithId((byte) 2);
 
             // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)

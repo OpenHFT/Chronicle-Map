@@ -59,7 +59,7 @@ public class ChannelReplicationTest {
 
             hubA = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
-                    .create((byte) 1);
+                    .createWithId((byte) 1);
 
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
@@ -71,7 +71,7 @@ public class ChannelReplicationTest {
                     TcpTransportAndNetworkConfig.forReceivingOnlyNode(8087).heartBeatInterval(1, SECONDS);
 
             hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
-                    .create((byte) 2);
+                    .createWithId((byte) 2);
 
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)

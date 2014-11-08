@@ -387,7 +387,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
 
     /**
      * Shortcut for {@code replication(SimpleReplication.builder()
-     * .tcpTransportAndNetwork(tcpTransportAndNetwork).create(identifier))}.
+     * .tcpTransportAndNetwork(tcpTransportAndNetwork).createWithId(identifier))}.
      *
      * @param identifier the network-wide identifier of the containers, created by this builder
      * @param tcpTransportAndNetwork configuration of tcp connection and network

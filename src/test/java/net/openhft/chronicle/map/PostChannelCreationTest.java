@@ -67,7 +67,7 @@ public class PostChannelCreationTest {
                     .heartBeatInterval(1, SECONDS);
 
             hubA = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
-                    .create((byte) 1);
+                    .createWithId((byte) 1);
 
             // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -86,7 +86,7 @@ public class PostChannelCreationTest {
                     .heartBeatInterval(1, SECONDS);
 
             hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
-                    .create((byte) 2);
+                    .createWithId((byte) 2);
 
             // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
