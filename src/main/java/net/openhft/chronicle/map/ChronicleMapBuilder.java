@@ -248,8 +248,8 @@ public final class ChronicleMapBuilder<K, V>
      * <p>Passing {@link BytesInterop} instead of plain {@link BytesWriter} is, of cause, possible,
      * but currently pointless for values.
      *
-     * @param valueWriter the new value object -> {@link Bytes} writer (interop) strategy
-     * @param valueReader the new {@link Bytes} -> value object reader strategy
+     * @param valueWriter the new value object &rarr; {@link Bytes} writer (interop) strategy
+     * @param valueReader the new {@link Bytes} &rarr; value object reader strategy
      * @return this builder back
      * @see #valueMarshaller(BytesMarshaller)
      */

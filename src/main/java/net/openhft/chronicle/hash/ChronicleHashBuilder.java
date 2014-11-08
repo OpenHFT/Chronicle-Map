@@ -305,8 +305,8 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * <p>Passing {@link BytesInterop} (which is a subinterface of {@link BytesWriter}) as the
      * first argument is supported, and even more advantageous from performance perspective.
      *
-     * @param keyWriter the new key object -> {@link Bytes} writer (interop) strategy
-     * @param keyReader the new {@link Bytes} -> key object reader strategy
+     * @param keyWriter the new key object &rarr; {@link Bytes} writer (interop) strategy
+     * @param keyReader the new {@link Bytes} &rarr; key object reader strategy
      * @return this builder back
      * @see #keyMarshaller(BytesMarshaller)
      */
