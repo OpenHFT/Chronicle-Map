@@ -754,12 +754,18 @@ public abstract class AbstractChronicleMapBuilder<K, V,
 
     @Override
     public ChronicleMap<K, V> createPersistedTo(File file) throws IOException {
-        return createWithFile(file, singleHashReplication, null);
+        // clone() to make this builder instance thread-safe, because createWithFile() method
+        // computes some state based on configurations, but doesn't synchronize on configuration
+        // changes.
+        return clone().createWithFile(file, singleHashReplication, null);
     }
 
     @Override
     public ChronicleMap<K, V> create() throws IOException {
-        return createWithoutFile(singleHashReplication, null);
+        // clone() to make this builder instance thread-safe, because createWithoutFile() method
+        // computes some state based on configurations, but doesn't synchronize on configuration
+        // changes.
+        return clone().createWithoutFile(singleHashReplication, null);
     }
 
     ChronicleMap<K, V> create(InstanceConfig<K, V> ib) throws IOException {
@@ -812,7 +818,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     /**
-     * Only for testing.
+     * Only for testing. Shouldn't be called concurrently on a single builder instance.
      *
      * @param identifier id
      * @return map
@@ -828,7 +834,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return map;
     }
 
-    private ChronicleMap<K, V> createWithoutFile(
+    ChronicleMap<K, V> createWithoutFile(
             SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) throws IOException {
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
         BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
