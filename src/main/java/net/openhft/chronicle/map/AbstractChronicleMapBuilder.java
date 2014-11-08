@@ -774,9 +774,8 @@ public abstract class AbstractChronicleMapBuilder<K, V,
                                       ReplicationChannel channel) throws IOException {
         for (int i = 0; i < 10; i++) {
             if (file.exists() && file.length() > 0) {
-                FileInputStream fis = new FileInputStream(file);
-                ObjectInputStream ois = new ObjectInputStream(fis);
-                try {
+                try (FileInputStream fis = new FileInputStream(file);
+                     ObjectInputStream ois = new ObjectInputStream(fis)) {
                     VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
                             (VanillaChronicleMap<K, ?, ?, V, ?, ?>) ois.readObject();
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
@@ -784,8 +783,6 @@ public abstract class AbstractChronicleMapBuilder<K, V,
                     return establishReplication(map, singleHashReplication, channel);
                 } catch (ClassNotFoundException e) {
                     throw new IOException(e);
-                } finally {
-                    ois.close();
                 }
             }
             if (file.createNewFile() || file.length() == 0) {
@@ -803,15 +800,12 @@ public abstract class AbstractChronicleMapBuilder<K, V,
 
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
 
-        FileOutputStream fos = new FileOutputStream(file);
-        ObjectOutputStream oos = new ObjectOutputStream(fos);
-        try {
+        try (FileOutputStream fos = new FileOutputStream(file);
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(map);
             oos.flush();
             map.headerSize = roundUpMapHeaderSize(fos.getChannel().position());
             map.createMappedStoreAndSegments(file);
-        } finally {
-            oos.close();
         }
 
         return establishReplication(map, singleHashReplication, channel);
