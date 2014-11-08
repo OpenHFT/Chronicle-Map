@@ -20,7 +20,7 @@ package net.openhft.chronicle.map;
 
 
 import net.openhft.chronicle.hash.replication.ReplicationHub;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -60,7 +60,7 @@ public class SingleMapChannelTest {
     public void setup() throws IOException {
 
         {
-            final TcpConfig tcpConfig = TcpConfig
+            final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                     .forSendingNode(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
             int maxEntrySize = 1024;
@@ -77,7 +77,7 @@ public class SingleMapChannelTest {
 
 
         {
-            final TcpConfig tcpConfig = TcpConfig
+            final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                     .forSendingNode(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 

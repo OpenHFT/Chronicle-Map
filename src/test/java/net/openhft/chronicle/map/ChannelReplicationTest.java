@@ -20,7 +20,7 @@ package net.openhft.chronicle.map;
 
 
 import net.openhft.chronicle.hash.replication.ReplicationHub;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,7 +53,7 @@ public class ChannelReplicationTest {
     @Before
     public void setup() throws IOException {
         {
-            TcpConfig tcpConfig = TcpConfig
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                     .forSendingNode(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
 
@@ -67,8 +67,8 @@ public class ChannelReplicationTest {
         }
 
         {
-            TcpConfig tcpConfig =
-                    TcpConfig.forReceivingOnlyNode(8087).heartBeatInterval(1, SECONDS);
+            TcpTransportAndNetworkConfig tcpConfig =
+                    TcpTransportAndNetworkConfig.forReceivingOnlyNode(8087).heartBeatInterval(1, SECONDS);
 
             hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
                     .create((byte) 2);

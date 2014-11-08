@@ -63,12 +63,12 @@ public final class ReplicationHub extends AbstractReplication {
         private Builder() {}
 
         @Override
-        public Builder tcpTransportAndNetwork(TcpConfig tcpConfig) {
+        public Builder tcpTransportAndNetwork(TcpTransportAndNetworkConfig tcpConfig) {
             return super.tcpTransportAndNetwork(tcpConfig);
         }
 
         @Override
-        public Builder udpTransport(UdpConfig udpConfig) {
+        public Builder udpTransport(UdpTransportConfig udpConfig) {
             return super.udpTransport(udpConfig);
         }
 

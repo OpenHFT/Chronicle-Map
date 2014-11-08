@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +52,7 @@ public class SetForTCPSocketReplicationTest3way {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         return (T) ChronicleSetBuilder.of(Integer.class)
-                .replication(identifier, TcpConfig.forUnknownTopology(serverPort, asList(endpoints))
+                .replication(identifier, TcpTransportAndNetworkConfig.forUnknownTopology(serverPort, asList(endpoints))
                         .heartBeatInterval(1L, SECONDS))
                 .createPersistedTo(getPersistenceFile());
     }

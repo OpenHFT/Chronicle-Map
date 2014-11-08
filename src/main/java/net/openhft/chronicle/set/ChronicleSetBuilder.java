@@ -19,8 +19,8 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.*;
-import net.openhft.chronicle.hash.replication.SimpleReplication;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
@@ -266,13 +266,13 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> replication(SimpleReplication replication) {
+    public ChronicleSetBuilder<E> replication(SingleChronicleHashReplication replication) {
         chronicleMapBuilder.replication(replication);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> replication(byte identifier, TcpConfig tcpTransportAndNetwork) {
+    public ChronicleSetBuilder<E> replication(byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork) {
         chronicleMapBuilder.replication(identifier, tcpTransportAndNetwork);
         return this;
     }

@@ -16,8 +16,8 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.TcpConfig;
-import net.openhft.chronicle.hash.replication.UdpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -36,7 +36,7 @@ final class Replicators {
     private Replicators() {
     }
 
-    static Replicator tcp(final TcpConfig replicationConfig) {
+    static Replicator tcp(final TcpTransportAndNetworkConfig replicationConfig) {
         return new Replicator() {
 
             @Override
@@ -60,7 +60,7 @@ final class Replicators {
     }
 
     static Replicator udp(
-            final UdpConfig replicationConfig) {
+            final UdpTransportConfig replicationConfig) {
         return new Replicator() {
 
             @Override

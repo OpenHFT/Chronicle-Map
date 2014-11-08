@@ -19,8 +19,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.IdentifierListener;
-import net.openhft.chronicle.hash.replication.TcpConfig;
-import net.openhft.chronicle.hash.replication.UdpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.chronicle.hash.replication.UdpConfig.simple;
+import static net.openhft.chronicle.hash.replication.UdpTransportConfig.of;
 import static net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress;
 import static net.openhft.chronicle.map.DiscoveryNodeBytesMarshallable.ProposedNodes;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
@@ -56,7 +56,7 @@ import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
 public class NodeDiscovery {
 
     private final AddressAndPort ourAddressAndPort;
-    private final UdpConfig udpConfig;
+    private final UdpTransportConfig udpConfig;
     private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
     private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListenerAtomicReference =
             new AtomicReference<NodeDiscoveryEventListener>();
@@ -71,7 +71,7 @@ public class NodeDiscovery {
                          @NotNull InetAddress tcpAddress,
                          @NotNull InetAddress udpBroadcastAddress) throws IOException {
         this.ourAddressAndPort = new AddressAndPort(tcpAddress.getAddress(), tcpPort);
-        this.udpConfig = simple(udpBroadcastAddress, udpBroadcastPort);
+        this.udpConfig = of(udpBroadcastAddress, udpBroadcastPort);
         knownNodes = new KnownNodes();
 
         discoveryNodeBytesMarshallable = new DiscoveryNodeBytesMarshallable
@@ -221,7 +221,7 @@ public class NodeDiscovery {
         // add our identifier and host:port to the list of known identifiers
         knownNodes.add(ourAddressAndPort, identifier);
 
-        final TcpConfig tcpConfig = TcpConfig
+        final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .forUnknownTopology(ourAddressAndPort.getPort(),
                         toInetSocketCollection(knownHostPorts))
                 .heartBeatInterval(1, SECONDS)
@@ -360,7 +360,7 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
      * @throws java.io.IOException
      */
     NodeDiscoveryBroadcaster(
-            final UdpConfig replicationConfig,
+            final UdpTransportConfig replicationConfig,
             final int serializedEntrySize,
             final BytesMarshallable externalizable)
             throws IOException {

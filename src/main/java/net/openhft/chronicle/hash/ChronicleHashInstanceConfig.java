@@ -17,17 +17,17 @@
 package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
-import net.openhft.chronicle.hash.replication.SimpleReplication;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 
 import java.io.File;
 import java.io.IOException;
 
 public interface ChronicleHashInstanceConfig<C extends ChronicleHash> {
 
-    ChronicleHashInstanceConfig<C> replicated(byte identifier, TcpConfig tcpTransportAndNetwork);
+    ChronicleHashInstanceConfig<C> replicated(byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork);
 
-    ChronicleHashInstanceConfig<C> replicated(SimpleReplication replication);
+    ChronicleHashInstanceConfig<C> replicated(SingleChronicleHashReplication replication);
 
     /**
      * Configures replication of the hash containers, created by this builder, via so called
@@ -35,19 +35,19 @@ public interface ChronicleHashInstanceConfig<C extends ChronicleHash> {
      * <a href="https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider">the
      * section about Channels and ChannelProvider in ChronicleMap manual</a> for more information.
      *
-     * <p>Another way to establish replication is {@link #replicated(SimpleReplication)} method
-     * or it's shortcut: {@link #replicated(byte, TcpConfig)}.
+     * <p>Another way to establish replication is {@link #replicated(SingleChronicleHashReplication)} method
+     * or it's shortcut: {@link #replicated(byte, TcpTransportAndNetworkConfig)}.
      *
      * <p>By default, hash containers, created by this builder doesn't replicate their data.
      *
      * <p>This method call overrides all previous replication configurations of this builder, made
-     * either by means of this method, {@link #replicated(SimpleReplication)}
-     * or {@link #replicated(byte, TcpConfig)} method calls.
+     * either by means of this method, {@link #replicated(SingleChronicleHashReplication)}
+     * or {@link #replicated(byte, TcpTransportAndNetworkConfig)} method calls.
      *
      * @param channel the channel responsible for gathering updates of hash containers,
      *                created by this builder, and replicating them over network
      * @return this builder object back
-     * @see #replicated(SimpleReplication)
+     * @see #replicated(SingleChronicleHashReplication)
      */
     ChronicleHashInstanceConfig<C> replicatedViaChannel(ReplicationChannel channel);
 

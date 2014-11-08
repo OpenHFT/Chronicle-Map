@@ -18,8 +18,8 @@
 
 package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.hash.replication.SimpleReplication;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.*;
@@ -237,7 +237,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      *
      * @param timeProvider a new time provider for replication needs
      * @return this builder back
-     * @see #replication(SimpleReplication)
+     * @see #replication(SingleChronicleHashReplication)
      */
     B timeProvider(TimeProvider timeProvider);
 
@@ -376,14 +376,14 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * <p>By default, hash containers, created by this builder doesn't replicate their data.
      *
      * <p>This method call overrides all previous replication configurations of this builder, made
-     * either by this method or {@link #replication(byte, TcpConfig)} shortcut method.
+     * either by this method or {@link #replication(byte, TcpTransportAndNetworkConfig)} shortcut method.
      *
      * @param replication the replication config
      * @return this builder back
-     * @see ChronicleHashInstanceConfig#replicated(SimpleReplication)
-     * @see #replication(byte, TcpConfig)
+     * @see ChronicleHashInstanceConfig#replicated(SingleChronicleHashReplication)
+     * @see #replication(byte, TcpTransportAndNetworkConfig)
      */
-    B replication(SimpleReplication replication);
+    B replication(SingleChronicleHashReplication replication);
 
     /**
      * Shortcut for {@code replication(SimpleReplication.builder()
@@ -392,10 +392,10 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @param identifier the network-wide identifier of the containers, created by this builder
      * @param tcpTransportAndNetwork configuration of tcp connection and network
      * @return this builder back
-     * @see #replication(SimpleReplication)
-     * @see ChronicleHashInstanceConfig#replicated(byte, TcpConfig)
+     * @see #replication(SingleChronicleHashReplication)
+     * @see ChronicleHashInstanceConfig#replicated(byte, TcpTransportAndNetworkConfig)
      */
-    B replication(byte identifier, TcpConfig tcpTransportAndNetwork);
+    B replication(byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork);
 
     StatelessClientConfig<C> statelessClient(InetSocketAddress remoteAddress);
 

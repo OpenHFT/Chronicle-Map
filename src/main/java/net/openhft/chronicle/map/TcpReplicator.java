@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.IdentifierListener;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
@@ -74,7 +74,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private final byte localIdentifier;
     private final int maxEntrySizeBytes;
     private final Replica.EntryExternalizable externalizable;
-    private final TcpConfig replicationConfig;
+    private final TcpTransportAndNetworkConfig replicationConfig;
     private final StatelessServerConnector statelessServerConnector;
 
     private long selectorTimeout;
@@ -89,7 +89,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      */
     public TcpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable externalizable,
-                         @NotNull final TcpConfig replicationConfig,
+                         @NotNull final TcpTransportAndNetworkConfig replicationConfig,
                          final int maxEntrySizeBytes,
                          @Nullable StatelessServerConnector statelessServerConnector) throws IOException {
 

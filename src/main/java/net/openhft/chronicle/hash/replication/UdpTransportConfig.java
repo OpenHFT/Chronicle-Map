@@ -25,16 +25,16 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 
 
-public final class UdpConfig {
+public final class UdpTransportConfig {
     private final InetAddress address;
     private final int port;
-    private final NetworkInterface networkInterface;
+    private final @Nullable NetworkInterface networkInterface;
     private final ThrottlingConfig throttlingConfig;
 
-    private UdpConfig(
+    private UdpTransportConfig(
             InetAddress address,
             int port,
-            NetworkInterface networkInterface,
+            @Nullable NetworkInterface networkInterface,
             ThrottlingConfig throttlingConfig) {
         if (address == null) {
             throw new NullPointerException("Null address");
@@ -49,23 +49,16 @@ public final class UdpConfig {
         this.throttlingConfig = throttlingConfig;
     }
 
-    // TODO better name
-    public static UdpConfig simple(@NotNull InetAddress address, int port) {
+    public static UdpTransportConfig of(@NotNull InetAddress address, int port) {
         if (address.isMulticastAddress())
             throw new IllegalArgumentException();
         return create(address, port, null, ThrottlingConfig.noThrottling());
     }
 
-    public static UdpConfig multiCast(@NotNull InetAddress address, int port,
-                                      @NotNull NetworkInterface networkInterface) {
-        if (!address.isMulticastAddress() || networkInterface == null)
-            throw new IllegalArgumentException();
-        return create(address, port, networkInterface, ThrottlingConfig.noThrottling());
-    }
-
-    static UdpConfig create(InetAddress address, int port, NetworkInterface networkInterface,
-                            ThrottlingConfig throttlingConfig) {
-        return new UdpConfig(address, port, networkInterface, throttlingConfig);
+    static UdpTransportConfig create(InetAddress address, int port,
+                                     @Nullable NetworkInterface networkInterface,
+                                     ThrottlingConfig throttlingConfig) {
+        return new UdpTransportConfig(address, port, networkInterface, throttlingConfig);
     }
 
     @NotNull
@@ -102,8 +95,8 @@ public final class UdpConfig {
         if (o == this) {
             return true;
         }
-        if (o instanceof UdpConfig) {
-            UdpConfig that = (UdpConfig) o;
+        if (o instanceof UdpTransportConfig) {
+            UdpTransportConfig that = (UdpTransportConfig) o;
             return (this.address.equals(that.address()))
                     && (this.port == that.port())
                     && (this.networkInterface.equals(that.networkInterface()))
@@ -126,7 +119,14 @@ public final class UdpConfig {
         return h;
     }
 
-    public UdpConfig throttlingConfig(@NotNull ThrottlingConfig throttlingConfig) {
+    public UdpTransportConfig networkInterfaceForMulticast(
+            @Nullable NetworkInterface networkInterface) {
+        if (!address().isMulticastAddress())
+            throw new IllegalArgumentException();
+        return create(address(), port(), networkInterface, throttlingConfig());
+    }
+
+    public UdpTransportConfig throttlingConfig(@NotNull ThrottlingConfig throttlingConfig) {
         ThrottlingConfig.checkMillisecondBucketInterval(throttlingConfig, "UDP");
         return create(address(), port(), networkInterface(), throttlingConfig);
     }
