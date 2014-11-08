@@ -434,10 +434,6 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return segments <= maxSegments ? segments : -segments;
     }
 
-    private boolean canSupportShortShort() {
-        return entries > (long) minSegments() << 15;
-    }
-
     public B lockTimeOut(long lockTimeOut, TimeUnit unit) {
         this.lockTimeOut = lockTimeOut;
         lockTimeOutUnit = unit;
