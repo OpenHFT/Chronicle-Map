@@ -53,7 +53,7 @@ import java.io.Serializable;
  *         } else {
  *             res = new LongPair[resLen];
  *         }
- *         for (int i = 0; i < resLen; i++) {
+ *         for (int i = 0; i &lt; resLen; i++) {
  *             LongPair pair = res[i];
  *             if (pair == null)
  *                 res[i] = pair = new LongPair();

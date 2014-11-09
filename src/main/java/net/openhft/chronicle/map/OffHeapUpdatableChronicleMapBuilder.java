@@ -25,13 +25,15 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
 
     public static <K, V> OffHeapUpdatableChronicleMapBuilder<K, V> of(
             @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
-        if (!offHeapReference(valueClass)) {
-            if (!valueClass.isInterface()) {
-                throw new IllegalArgumentException(
-                        "Value class should be either Byteable subclass or interface," +
-                                "allowing direct Byteable implementation generation");
-            }
+        if (keyClass.isInterface() && keyClass != CharSequence.class) {
+            keyClass = DataValueClasses.directClassFor(keyClass);
+        }
+        if (valueClass.isInterface()) {
             valueClass = DataValueClasses.directClassFor(valueClass);
+        } else if (!offHeapReference(valueClass)) {
+            throw new IllegalArgumentException(
+                    "Value class should be either Byteable subclass or interface," +
+                            "allowing direct Byteable implementation generation");
         }
         return new OffHeapUpdatableChronicleMapBuilder<K, V>(keyClass, valueClass);
     }

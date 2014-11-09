@@ -390,16 +390,20 @@ public abstract class AbstractChronicleMapBuilder<K, V,
             if (entries <= power * power * power)
                 return power;
         }
-        long size = entrySize * entries;
-        if (size < 20L * 1000 * 1000) // 20 MB
+        long size = (entrySize + 32) * entries;
+        if (size < 10L * 1000 * 1000) // 10 MB
             return 64;
-        if (size < 200L * 1000 * 1000) // 200 MB
+        if (size < 100L * 1000 * 1000) // 100 MB
             return 128;
-        if (size < 800L * 1000 * 1000) // 800 MB
+        if (size < 400L * 1000 * 1000) // 400 MB
             return 256;
-        if (size < 2L * 1000 * 1000 * 1000) // 2 GB
+        if (size < 1L * 1000 * 1000 * 1000) // 1 GB
             return 512;
-        return 1024;
+        if (size < 10L * 1000 * 1000 * 1000) // 10 GB
+            return 1024;
+        if (size < 100L * 1000 * 1000 * 1000) // 100 GB
+            return 2048;
+        return 4096;
     }
 
     @Override
