@@ -55,6 +55,7 @@ public class IntIntMultiMapTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {VanillaShortShortMultiMap.class},
+                {VanillaI24I24MultiMap.class},
                 {VanillaIntIntMultiMap.class},
         });
     }
