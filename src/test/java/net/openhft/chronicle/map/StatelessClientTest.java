@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -56,7 +56,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8086)).create();
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8086)).create();
         }
 
 
@@ -99,7 +99,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8086)).create();
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8086)).create();
         }
 
 
@@ -140,7 +140,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8086)).create();
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8086)).create();
         }
 
 
@@ -173,7 +173,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8086)).create();
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8086)).create();
 
             serverMap.put(10, "EXAMPLE-10");
         }
@@ -212,7 +212,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8086)).create();
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8086)).create();
 
             serverMap.put(10, "EXAMPLE-10");
         }
@@ -244,7 +244,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8086)).create();
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8086)).create();
         }
 
 
@@ -287,7 +287,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8086))
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8086))
                     .putReturnsNull(true)
                     .create();
         }
@@ -333,7 +333,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8086))
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8086))
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
                     .create();
@@ -372,7 +372,7 @@ public class StatelessClientTest {
         // server
         {
             serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8086))
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8086))
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
                     .create();
@@ -415,9 +415,9 @@ public class StatelessClientTest {
         // server
         {
             serverMap1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8086)).create();
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8086)).create();
             serverMap2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .replication((byte) 2, TcpConfig.forReceivingOnlyNode(8077)).create();
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8077)).create();
 
         }
 

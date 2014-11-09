@@ -26,7 +26,7 @@ import static java.util.Collections.unmodifiableSet;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 
-public final class TcpConfig {
+public final class TcpTransportAndNetworkConfig {
 
     private static final int DEFAULT_PACKET_SIZE = 1024 * 8;
     private static final long DEFAULT_HEART_BEAT_INTERVAL = 20;
@@ -41,10 +41,12 @@ public final class TcpConfig {
     private final TimeUnit heartBeatIntervalUnit;
     private final IdentifierListener identifierListener;
 
-    private TcpConfig(int serverPort, Set<InetSocketAddress> endpoints, int packetSize,
-                      boolean autoReconnectedUponDroppedConnection,
-                      ThrottlingConfig throttlingConfig, long heartBeatInterval,
-                      TimeUnit heartBeatIntervalUnit, IdentifierListener identifierListener) {
+    private TcpTransportAndNetworkConfig(int serverPort, Set<InetSocketAddress> endpoints,
+                                         int packetSize,
+                                         boolean autoReconnectedUponDroppedConnection,
+                                         ThrottlingConfig throttlingConfig, long heartBeatInterval,
+                                         TimeUnit heartBeatIntervalUnit,
+                                         IdentifierListener identifierListener) {
         this.serverPort = serverPort;
         this.endpoints = endpoints;
         this.packetSize = packetSize;
@@ -56,29 +58,30 @@ public final class TcpConfig {
     }
 
 
-    public static TcpConfig forSendingNode(int serverPort, InetSocketAddress... endpoints) {
+    public static TcpTransportAndNetworkConfig forSendingNode(int serverPort,
+                                                              InetSocketAddress... endpoints) {
         return forSendingNode(serverPort, Arrays.asList(endpoints));
     }
 
-    public static TcpConfig forSendingNode(int serverPort,
+    public static TcpTransportAndNetworkConfig forSendingNode(int serverPort,
                                            Collection<InetSocketAddress> endpoints) {
         if (endpoints.isEmpty())
             throw new IllegalArgumentException("There should be some endpoints");
-        return unknownTopology(serverPort, endpoints);
+        return forUnknownTopology(serverPort, endpoints);
     }
 
-    public static TcpConfig forReceivingOnlyNode(int serverPort) {
-        return unknownTopology(serverPort, Collections.<InetSocketAddress>emptyList());
+    public static TcpTransportAndNetworkConfig forReceivingOnlyNode(int serverPort) {
+        return forUnknownTopology(serverPort, Collections.<InetSocketAddress>emptyList());
     }
 
-    public static TcpConfig unknownTopology(int serverPort,
-                                            Collection<InetSocketAddress> endpoints) {
+    public static TcpTransportAndNetworkConfig forUnknownTopology(int serverPort,
+                                               Collection<InetSocketAddress> endpoints) {
         for (final InetSocketAddress endpoint : endpoints) {
             if (endpoint.getPort() == serverPort && "localhost".equals(endpoint.getHostName()))
                 throw new IllegalArgumentException("endpoint=" + endpoint
                         + " can not point to the same port as the server");
         }
-        return new TcpConfig(
+        return new TcpTransportAndNetworkConfig(
                 serverPort, unmodifiableSet(new HashSet<InetSocketAddress>(endpoints)),
                 DEFAULT_PACKET_SIZE,
                 true, // autoReconnectedUponDroppedConnection
@@ -92,8 +95,9 @@ public final class TcpConfig {
         return identifierListener;
     }
 
-    public TcpConfig nonUniqueIdentifierListener(final IdentifierListener identifierListener) {
-        return new TcpConfig(serverPort, endpoints, packetSize,
+    public TcpTransportAndNetworkConfig nonUniqueIdentifierListener(
+            final IdentifierListener identifierListener) {
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit, identifierListener);
     }
@@ -102,8 +106,9 @@ public final class TcpConfig {
         return autoReconnectedUponDroppedConnection;
     }
 
-    public TcpConfig autoReconnectedUponDroppedConnection(boolean autoReconnectedUponDroppedConnection) {
-        return new TcpConfig(serverPort, endpoints, packetSize,
+    public TcpTransportAndNetworkConfig autoReconnectedUponDroppedConnection(
+            boolean autoReconnectedUponDroppedConnection) {
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit, identifierListener);
     }
@@ -112,9 +117,9 @@ public final class TcpConfig {
         return throttlingConfig;
     }
 
-    public TcpConfig throttlingConfig(ThrottlingConfig throttlingConfig) {
+    public TcpTransportAndNetworkConfig throttlingConfig(ThrottlingConfig throttlingConfig) {
         ThrottlingConfig.checkMillisecondBucketInterval(throttlingConfig, "TCP");
-        return new TcpConfig(serverPort, endpoints, packetSize,
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit, identifierListener);
     }
@@ -127,8 +132,8 @@ public final class TcpConfig {
         return serverPort;
     }
 
-    public TcpConfig serverPort(int serverPort) {
-        return new TcpConfig(serverPort, endpoints, packetSize,
+    public TcpTransportAndNetworkConfig serverPort(int serverPort) {
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit, identifierListener);
     }
@@ -137,13 +142,13 @@ public final class TcpConfig {
         return endpoints;
     }
 
-    public TcpConfig endpoints(Set<InetSocketAddress> endpoints) {
+    public TcpTransportAndNetworkConfig endpoints(Set<InetSocketAddress> endpoints) {
         for (final InetSocketAddress endpoint : endpoints) {
             if (endpoint.getPort() == serverPort && "localhost".equals(endpoint.getHostName()))
                 throw new IllegalArgumentException("endpoint=" + endpoint
                         + " can not point to the same port as the server");
         }
-        return new TcpConfig(serverPort, endpoints, packetSize,
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit, identifierListener);
     }
@@ -152,16 +157,17 @@ public final class TcpConfig {
         return packetSize;
     }
 
-    public TcpConfig packetSize(int packetSize) {
+    public TcpTransportAndNetworkConfig packetSize(int packetSize) {
         if (packetSize <= 0)
             throw new IllegalArgumentException();
-        return new TcpConfig(serverPort, endpoints, packetSize,
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit, identifierListener);
     }
 
-    public TcpConfig heartBeatInterval(long heartBeatInterval, TimeUnit heartBeatIntervalUnit) {
-        return new TcpConfig(serverPort, endpoints, packetSize,
+    public TcpTransportAndNetworkConfig heartBeatInterval(long heartBeatInterval,
+                                                          TimeUnit heartBeatIntervalUnit) {
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit, identifierListener);
     }
@@ -172,7 +178,7 @@ public final class TcpConfig {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        TcpConfig that = (TcpConfig) o;
+        TcpTransportAndNetworkConfig that = (TcpTransportAndNetworkConfig) o;
 
         if (autoReconnectedUponDroppedConnection != that.autoReconnectedUponDroppedConnection) return false;
         if (heartBeatInterval != that.heartBeatInterval) return false;

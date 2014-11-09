@@ -20,8 +20,8 @@ package net.openhft.chronicle.map;
 
 
 import net.openhft.chronicle.hash.replication.ReplicationHub;
-import net.openhft.chronicle.hash.replication.TcpConfig;
-import net.openhft.chronicle.hash.replication.UdpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -58,7 +58,7 @@ final class ChannelProvider implements Closeable {
         if (channelProvider != null)
             return channelProvider;
         channelProvider = new ChannelProvider(hub);
-        TcpConfig tcpConfig = hub.tcpTransportAndNetwork();
+        TcpTransportAndNetworkConfig tcpConfig = hub.tcpTransportAndNetwork();
         if (tcpConfig != null) {
             final TcpReplicator tcpReplicator = new TcpReplicator(
                     channelProvider.asReplica,
@@ -67,7 +67,7 @@ final class ChannelProvider implements Closeable {
             channelProvider.add(tcpReplicator);
         }
 
-        UdpConfig udpConfig = hub.udpTransport();
+        UdpTransportConfig udpConfig = hub.udpTransport();
         if (udpConfig != null) {
             final UdpReplicator udpReplicator =
                     new UdpReplicator(

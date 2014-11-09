@@ -19,8 +19,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.IdentifierListener;
-import net.openhft.chronicle.hash.replication.TcpConfig;
-import net.openhft.chronicle.hash.replication.UdpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.chronicle.hash.replication.UdpConfig.simple;
+import static net.openhft.chronicle.hash.replication.UdpTransportConfig.of;
 import static net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress;
 import static net.openhft.chronicle.map.DiscoveryNodeBytesMarshallable.ProposedNodes;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
@@ -56,7 +56,7 @@ import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
 public class NodeDiscovery {
 
     private final AddressAndPort ourAddressAndPort;
-    private final UdpConfig udpConfig;
+    private final UdpTransportConfig udpConfig;
     private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
     private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListenerAtomicReference =
             new AtomicReference<NodeDiscoveryEventListener>();
@@ -71,7 +71,7 @@ public class NodeDiscovery {
                          @NotNull InetAddress tcpAddress,
                          @NotNull InetAddress udpBroadcastAddress) throws IOException {
         this.ourAddressAndPort = new AddressAndPort(tcpAddress.getAddress(), tcpPort);
-        this.udpConfig = simple(udpBroadcastAddress, udpBroadcastPort);
+        this.udpConfig = of(udpBroadcastAddress, udpBroadcastPort);
         knownNodes = new KnownNodes();
 
         discoveryNodeBytesMarshallable = new DiscoveryNodeBytesMarshallable
@@ -221,8 +221,8 @@ public class NodeDiscovery {
         // add our identifier and host:port to the list of known identifiers
         knownNodes.add(ourAddressAndPort, identifier);
 
-        final TcpConfig tcpConfig = TcpConfig
-                .unknownTopology(ourAddressAndPort.getPort(),
+        final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
+                .forUnknownTopology(ourAddressAndPort.getPort(),
                         toInetSocketCollection(knownHostPorts))
                 .heartBeatInterval(1, SECONDS)
                 .nonUniqueIdentifierListener(identifierListener);
@@ -259,8 +259,8 @@ public class NodeDiscovery {
 
 
     /**
-     * bitwise OR's the two bit sets or put another way, merges the source bitset into the
-     * destination bitset and returns the destination
+     * bitwise OR's the two bit sets or put another way, merges the source bitset into the destination bitset
+     * and returns the destination
      *
      * @param source      to or
      * @param destination to or
@@ -326,8 +326,8 @@ public class NodeDiscovery {
 }
 
 /**
- * Broadcast the nodes host ports and identifiers over UDP, to make it easy to join a grid of remote
- * nodes just by name, this functionality requires UDP
+ * Broadcast the nodes host ports and identifiers over UDP, to make it easy to join a grid of remote nodes
+ * just by name, this functionality requires UDP
  *
  * @author Rob Austin.
  */
@@ -360,7 +360,7 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
      * @throws java.io.IOException
      */
     NodeDiscoveryBroadcaster(
-            final UdpConfig replicationConfig,
+            final UdpTransportConfig replicationConfig,
             final int serializedEntrySize,
             final BytesMarshallable externalizable)
             throws IOException {
@@ -738,8 +738,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
     }
 
     /**
-     * this is used to tell nodes that are connecting to us which host and ports are in our grid,
-     * along with all the identifiers.
+     * this is used to tell nodes that are connecting to us which host and ports are in our grid, along with
+     * all the identifiers.
      */
     @Override
     public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
@@ -819,7 +819,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             if (bootstrap.addressAndPort().equals(this.ourAddressAndPort))
                 return;
 
-            LOG.info("Received Bootstrap from " + bootstrap);
+            if (LOG.isDebugEnabled())
+                LOG.debug("Received Bootstrap from " + bootstrap);
 
             proposedIdentifiersWithHost.put(bootstrap.addressAndPort, bootstrap);
 
@@ -839,7 +840,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         if (sourceAddressAndPort.equals(ourAddressAndPort))
             return;
 
-        LOG.info("Received Proposal");
+        LOG.debug("Received Proposal");
 
         this.remoteNode.readMarshallable(in);
         this.proposedIdentifiersWithHost.readMarshallable(in);
@@ -929,8 +930,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
 
     /**
-     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the
-     * host:port and perhaps even proposed identifier of the node that sent it.
+     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the host:port
+     * and perhaps even proposed identifier of the node that sent it.
      *
      * @param proposedNodes
      */

@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.UdpConfig;
+import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -43,7 +43,7 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
 
     public UdpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable entryExternalizable,
-                         @NotNull final UdpConfig replicationConfig,
+                         @NotNull final UdpTransportConfig replicationConfig,
                          final int serializedEntrySize)
             throws IOException {
 

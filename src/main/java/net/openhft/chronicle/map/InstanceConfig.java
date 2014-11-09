@@ -18,8 +18,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
-import net.openhft.chronicle.hash.replication.SimpleReplication;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,30 +28,30 @@ final class InstanceConfig<K, V>
         implements ChronicleHashInstanceConfig<ChronicleMap<K, V>> {
 
     final AbstractChronicleMapBuilder<K, V, ?> mapBuilder;
-    final SimpleReplication simpleReplication;
+    final SingleChronicleHashReplication singleHashReplication;
     final ReplicationChannel channel;
     final File file;
 
     InstanceConfig(AbstractChronicleMapBuilder<K, V, ?> mapBuilder,
-                   SimpleReplication simpleReplication,
+                   SingleChronicleHashReplication singleHashReplication,
                    ReplicationChannel channel,
                    File file) {
         this.mapBuilder = mapBuilder;
-        this.simpleReplication = simpleReplication;
+        this.singleHashReplication = singleHashReplication;
         this.channel = channel;
         this.file = file;
     }
 
     @Override
     public ChronicleHashInstanceConfig<ChronicleMap<K, V>> replicated(
-            byte identifier, TcpConfig tcpTransportAndNetwork) {
-        return replicated(SimpleReplication.builder()
-                .tcpTransportAndNetwork(tcpTransportAndNetwork).create(identifier));
+            byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork) {
+        return replicated(SingleChronicleHashReplication.builder()
+                .tcpTransportAndNetwork(tcpTransportAndNetwork).createWithId(identifier));
     }
 
     @Override
     public ChronicleHashInstanceConfig<ChronicleMap<K, V>> replicated(
-            SimpleReplication replication) {
+            SingleChronicleHashReplication replication) {
         return new InstanceConfig<>(mapBuilder, replication, null, file);
     }
 
@@ -63,7 +63,7 @@ final class InstanceConfig<K, V>
 
     @Override
     public ChronicleHashInstanceConfig<ChronicleMap<K, V>> persistedTo(File file) {
-        return new InstanceConfig<>(mapBuilder, simpleReplication, channel, file);
+        return new InstanceConfig<>(mapBuilder, singleHashReplication, channel, file);
     }
 
     @Override

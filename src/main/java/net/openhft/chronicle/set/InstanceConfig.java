@@ -18,8 +18,8 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
-import net.openhft.chronicle.hash.replication.SimpleReplication;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 
 import java.io.File;
@@ -35,12 +35,12 @@ final class InstanceConfig<E> implements ChronicleHashInstanceConfig<ChronicleSe
 
     @Override
     public ChronicleHashInstanceConfig<ChronicleSet<E>> replicated(
-            byte identifier, TcpConfig tcpTransportAndNetwork) {
+            byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork) {
         return new InstanceConfig<>(mapConfig.replicated(identifier, tcpTransportAndNetwork));
     }
 
     @Override
-    public ChronicleHashInstanceConfig<ChronicleSet<E>> replicated(SimpleReplication replication) {
+    public ChronicleHashInstanceConfig<ChronicleSet<E>> replicated(SingleChronicleHashReplication replication) {
         return new InstanceConfig<>(mapConfig.replicated(replication));
     }
 

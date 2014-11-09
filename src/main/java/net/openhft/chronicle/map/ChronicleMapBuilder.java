@@ -17,8 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.io.serialization.BytesMarshaller;
@@ -218,16 +217,68 @@ public final class ChronicleMapBuilder<K, V>
         return super.defaultValueProvider(defaultValueProvider);
     }
 
+    /**
+     * Configures the {@code BytesMarshaller} used to serialize/deserialize values to/from off-heap
+     * memory in maps, created by this builder. See
+     * <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the
+     * section about serialization in ChronicleMap manual</a> for more information.
+     *
+     * @param valueMarshaller the marshaller used to serialize values
+     * @return this builder back
+     * @see #valueMarshallers(BytesWriter, BytesReader)
+     * @see OffHeapUpdatableChronicleMapBuilder
+     * @see #objectSerializer(ObjectSerializer)
+     */
     public ChronicleMapBuilder<K, V> valueMarshaller(
             @NotNull BytesMarshaller<V> valueMarshaller) {
-        valueBuilder.marshaller(valueMarshaller, null);
+        valueBuilder.marshaller(valueMarshaller);
         return this;
     }
 
+    /**
+     * Configures the marshallers, used to serialize/deserialize values to/from off-heap
+     * memory in maps, created by this builder. See
+     * <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the section about
+     * serialization in ChronicleMap manual</a> for more information.
+     *
+     * <p>Configuring marshalling this way results to a little bit more compact in-memory layout
+     * of the map, comparing to a single interface configuration:
+     * {@link #valueMarshaller(BytesMarshaller)}.
+     *
+     * <p>Passing {@link BytesInterop} instead of plain {@link BytesWriter} is, of cause, possible,
+     * but currently pointless for values.
+     *
+     * @param valueWriter the new value object &rarr; {@link Bytes} writer (interop) strategy
+     * @param valueReader the new {@link Bytes} &rarr; value object reader strategy
+     * @return this builder back
+     * @see #valueMarshaller(BytesMarshaller)
+     */
     public ChronicleMapBuilder<K, V> valueMarshallers(
-            BytesWriter<V> valueWriter, BytesReader<V> valueReader) {
+            @NotNull BytesWriter<V> valueWriter, @NotNull BytesReader<V> valueReader) {
         valueBuilder.writer(valueWriter);
-        valueBuilder.reader(valueReader, valueBuilder.factory());
+        valueBuilder.reader(valueReader);
+        return this;
+    }
+
+    /**
+     * Configures the marshaller used to serialize actual value sizes to off-heap memory in maps,
+     * created by this builder.
+     *
+     * <p>Default value size marshaller is so-called {@linkplain SizeMarshallers#stopBit()
+     * stop bit encoding marshalling}. If {@linkplain #constantValueSizeBySample(Object) constant
+     * value size} is configured, or defaulted if the value type is always constant and {@code
+     * ChronicleHashBuilder} implementation knows about it, this configuration takes no effect,
+     * because a special {@link SizeMarshaller} implementation, which doesn't actually do any
+     * marshalling, and just returns the known constant size on {@link SizeMarshaller#readSize(
+     * Bytes)} calls, is used instead of any {@code SizeMarshaller} configured using this method.
+     *
+     * @param valueSizeMarshaller the new marshaller, used to serialize actual value sizes to
+     *                            off-heap memory
+     * @return this builder back
+     */
+    public ChronicleMapBuilder<K, V> valueSizeMarshaller(
+            @NotNull SizeMarshaller valueSizeMarshaller) {
+        valueBuilder.sizeMarshaller(valueSizeMarshaller);
         return this;
     }
 }

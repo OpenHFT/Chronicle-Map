@@ -60,7 +60,7 @@ final class SerializationBuilder<E> implements Cloneable {
 
     private enum CopyingInterop {FROM_MARSHALLER, FROM_WRITER}
 
-    private final Serializable bufferIdentity;
+    private final Role role;
     final Class<E> eClass;
     private boolean instancesAreMutable;
     private SizeMarshaller sizeMarshaller = stopBit();
@@ -70,11 +70,10 @@ final class SerializationBuilder<E> implements Cloneable {
     private MetaBytesInterop<E, ?> metaInterop;
     private MetaProvider<E, ?, ?> metaInteropProvider;
     private long maxSize;
-    private ObjectFactory<E> factory;
 
     @SuppressWarnings("unchecked")
     SerializationBuilder(Class<E> eClass, Role role) {
-        this.bufferIdentity = role;
+        this.role = role;
         this.eClass = eClass;
         instancesAreMutable = instancesAreMutable(eClass);
 
@@ -83,39 +82,39 @@ final class SerializationBuilder<E> implements Cloneable {
                 NullObjectFactory.<E>of();
 
         if (concreteClass(eClass) && Byteable.class.isAssignableFrom(eClass)) {
-            ByteableMarshaller agileBytesMarshaller = ByteableMarshaller.of((Class) eClass);
-            sizeMarshaller(agileBytesMarshaller)
-                    .reader(agileBytesMarshaller, factory)
-                    .interop(agileBytesMarshaller);
+            ByteableMarshaller byteableMarshaller = ByteableMarshaller.of((Class) eClass);
+            sizeMarshaller(byteableMarshaller)
+                    .reader(byteableMarshaller)
+                    .interop(byteableMarshaller);
         } else if (eClass == CharSequence.class || eClass == String.class) {
-            reader((BytesReader<E>) CharSequenceReader.of(), factory);
+            reader((BytesReader<E>) CharSequenceReader.of());
             writer((BytesWriter<E>) CharSequenceWriter.instance());
         } else if (eClass == Void.class) {
             sizeMarshaller(VoidMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) VoidMarshaller.INSTANCE, factory)
+                    .reader((BytesReader<E>) VoidMarshaller.INSTANCE)
                     .interop((BytesInterop<E>) VoidMarshaller.INSTANCE);
         } else if (eClass == Long.class) {
             sizeMarshaller(LongMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) LongMarshaller.INSTANCE, factory)
+                    .reader((BytesReader<E>) LongMarshaller.INSTANCE)
                     .interop((BytesInterop<E>) LongMarshaller.INSTANCE);
         } else if (eClass == Double.class) {
             sizeMarshaller(DoubleMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) DoubleMarshaller.INSTANCE, factory)
+                    .reader((BytesReader<E>) DoubleMarshaller.INSTANCE)
                     .interop((BytesInterop<E>) DoubleMarshaller.INSTANCE);
         } else if (eClass == Integer.class) {
             sizeMarshaller(IntegerMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) IntegerMarshaller.INSTANCE, factory)
+                    .reader((BytesReader<E>) IntegerMarshaller.INSTANCE)
                     .interop((BytesInterop<E>) IntegerMarshaller.INSTANCE);
         } else if (eClass == byte[].class) {
-            reader((BytesReader<E>) ByteArrayMarshaller.INSTANCE, factory);
+            reader((BytesReader<E>) ByteArrayMarshaller.INSTANCE);
             interop((BytesInterop<E>) ByteArrayMarshaller.INSTANCE);
         } else if (eClass == char[].class) {
-            reader((BytesReader<E>) CharArrayMarshaller.INSTANCE, factory);
+            reader((BytesReader<E>) CharArrayMarshaller.INSTANCE);
             interop((BytesInterop<E>) CharArrayMarshaller.INSTANCE);
         } else if (concreteClass(eClass)) {
             BytesMarshaller<E> marshaller = chooseMarshaller(eClass, eClass);
             if (marshaller != null)
-                marshaller(marshaller, factory);
+                marshaller(marshaller);
         }
         if (concreteClass(eClass) && marshallerUseFactory(eClass)) {
             factory(factory);
@@ -150,17 +149,15 @@ final class SerializationBuilder<E> implements Cloneable {
         return copyingInterop(CopyingInterop.FROM_WRITER)
                 .setInterop(writer)
                 .metaInterop(CopyingMetaBytesInterop
-                        .<E, BytesWriter<E>>forBytesWriter(bufferIdentity));
+                        .<E, BytesWriter<E>>forBytesWriter(role));
     }
 
-    public SerializationBuilder<E> marshaller(BytesMarshaller<E> marshaller,
-                                              ObjectFactory<E> factory) {
-        if (factory == null) factory = this.factory;
+    public SerializationBuilder<E> marshaller(BytesMarshaller<E> marshaller) {
         return copyingInterop(CopyingInterop.FROM_MARSHALLER)
-                .reader(BytesReaders.fromBytesMarshaller(marshaller), factory)
+                .reader(BytesReaders.fromBytesMarshaller(marshaller))
                 .setInterop(marshaller)
                 .metaInterop(CopyingMetaBytesInterop
-                        .<E, BytesMarshaller<E>>forBytesMarshaller(bufferIdentity));
+                        .<E, BytesMarshaller<E>>forBytesMarshaller(role));
     }
 
     public SerializationBuilder<E> maxSize(long maxSize) {
@@ -218,10 +215,7 @@ final class SerializationBuilder<E> implements Cloneable {
 
     public SerializationBuilder<E> objectSerializer(ObjectSerializer serializer) {
         if (reader == null || interop == null) {
-            ObjectFactory<E> factory = this.factory;
-            if (factory == null)
-                factory = NullObjectFactory.INSTANCE;
-            marshaller(new SerializableMarshaller(serializer), factory);
+            marshaller(new SerializableMarshaller(serializer));
         }
         return this;
     }
@@ -244,10 +238,8 @@ final class SerializationBuilder<E> implements Cloneable {
         return reader;
     }
 
-    public SerializationBuilder<E> reader(BytesReader<E> reader, ObjectFactory<E> factory) {
+    public SerializationBuilder<E> reader(BytesReader<E> reader) {
         this.reader = reader;
-        if (factory != null)
-            this.factory = factory;
         return this;
 
     }
@@ -281,10 +273,6 @@ final class SerializationBuilder<E> implements Cloneable {
         return this;
     }
 
-    public ObjectFactory<E> factory() {
-        return factory;
-    }
-
     @SuppressWarnings("unchecked")
     public SerializationBuilder<E> factory(ObjectFactory<E> factory) {
         if (!marshallerUseFactory(eClass)) {
@@ -292,19 +280,17 @@ final class SerializationBuilder<E> implements Cloneable {
                     " value don't use object factory");
         } else if (interop instanceof ByteableMarshaller) {
             if (factory instanceof AllocateInstanceObjectFactory) {
-                ByteableMarshaller agileBytesMarshaller =
+                ByteableMarshaller byteableMarshaller =
                         ByteableMarshaller.of((Class) eClass);
-                sizeMarshaller(agileBytesMarshaller)
-                        .reader(agileBytesMarshaller, factory)
-                        .interop(agileBytesMarshaller);
+                sizeMarshaller(byteableMarshaller)
+                        .reader(byteableMarshaller)
+                        .interop(byteableMarshaller);
             } else {
-                ByteableMarshaller agileBytesMarshaller =
+                ByteableMarshaller byteableMarshaller =
                         ByteableMarshaller.of((Class) eClass, (ObjectFactory) factory);
-                ObjectFactory<E> factory1 = factory;
-                if (factory1 == null) factory1 = this.factory;
-                sizeMarshaller(agileBytesMarshaller)
-                        .reader(agileBytesMarshaller, factory1)
-                        .interop(agileBytesMarshaller);
+                sizeMarshaller(byteableMarshaller)
+                        .reader(byteableMarshaller)
+                        .interop(byteableMarshaller);
             }
         } else if (interop instanceof BytesMarshallableMarshaller) {
             if (factory instanceof AllocateInstanceObjectFactory) {
@@ -329,11 +315,12 @@ final class SerializationBuilder<E> implements Cloneable {
         } else {
             // interop is custom, it is user's responsibility to use the same factory inside
             // marshaller and standalone
+            String role = this.role.toString().toLowerCase();
             throw new IllegalStateException(
-                    "Change the value factory simultaneously with marshaller " +
-                            "using *AndFactory() method");
+                    role + "DeserializationFactory() should be called " +
+                            "only if the Map " + role + " type is Byteable, BytesMarshallable " +
+                            "or Externalizable subtype and no custom marshallers were configured.");
         }
-        this.factory = factory;
         return this;
     }
 

@@ -19,7 +19,9 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
-import net.openhft.chronicle.hash.serialization.*;
+import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.Hasher;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
@@ -32,6 +34,7 @@ import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,8 +61,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
 
     /**
-     * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set
-     * bits.
+     * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set bits.
      */
     static final int MAX_ENTRY_OVERSIZE_FACTOR = 64;
     static final ThreadLocal<MultiStoreBytes> tmpBytes = new ThreadLocal<>();
@@ -76,7 +78,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     final VW originalValueWriter;
     final MVW originalMetaValueWriter;
     final MetaProvider<V, VW, MVW> metaValueWriterProvider;
-    final ObjectFactory<V> valueFactory;
     final DefaultValueProvider<K, V> defaultValueProvider;
     final PrepareValueBytesAsWriter<K> prepareValueBytesAsWriter;
     final int metaDataBytes;
@@ -126,7 +127,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         originalValueWriter = (VW) valueBuilder.interop();
         originalMetaValueWriter = (MVW) valueBuilder.metaInterop();
         metaValueWriterProvider = (MetaProvider) valueBuilder.metaInteropProvider();
-        valueFactory = valueBuilder.factory();
         defaultValueProvider = builder.defaultValueProvider();
         prepareValueBytesAsWriter = builder.prepareValueBytesAsWriter();
 
@@ -484,9 +484,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
 
     /**
-     * removes ( if there exists ) an entry from the map, if the {@param key} and {@param
-     * expectedValue} match that of a maps.entry. If the {@param expectedValue} equals null then (
-     * if there exists ) an entry whose key equals {@param key} this is removed.
+     * removes ( if there exists ) an entry from the map, if the {@param key} and {@param expectedValue} match
+     * that of a maps.entry. If the {@param expectedValue} equals null then ( if there exists ) an entry whose
+     * key equals {@param key} this is removed.
      *
      * @param k             the key of the entry to remove
      * @param expectedValue null if not required
@@ -546,8 +546,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
      * replace the value in a map, only if the existing entry equals {@param existingValue}
      *
      * @param key           the key into the map
-     * @param existingValue the expected existing value in the map ( could be null when we don't
-     *                      wish to do this check )
+     * @param existingValue the expected existing value in the map ( could be null when we don't wish to do
+     *                      this check )
      * @param newValue      the new value you wish to store in the map
      * @return the value that was replaced
      */
@@ -680,7 +680,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         /**
          * close for native values does not call put on close
          */
-        final MutableLockedEntry<K, V, MKI, KI> writeUnlock = isNativeValueClass
+        final WriteLocked<K, V, MKI, KI> writeUnlock = isNativeValueClass
                 ? new NativeWriteLocked()
                 : new HeapWriteLocked();
 
@@ -766,7 +766,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
 
-        public MutableLockedEntry<K, V, MKI, KI> readLock() throws IllegalStateException {
+        public ReadLocked<K, V, MKI, KI> readLock() throws IllegalStateException {
             while (true) {
                 final boolean success = segmentHeader.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
                 if (success) {
@@ -784,7 +784,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             }
         }
 
-        public MutableLockedEntry<K, V, MKI, KI> writeLock() throws IllegalStateException {
+        public WriteLocked<K, V, MKI, KI> writeLock() throws IllegalStateException {
             while (true) {
                 final boolean success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
                 if (success) return writeUnlock;
@@ -926,7 +926,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             entry.skip(keySizeMarshaller.sizeEncodingSize(keySize) + keySize);
             skipReplicationBytes(entry);
             V v = readValue(copies, entry, usingValue);
-            notifyPut(offset, true, key, v, posFromOffset(offset));
+            notifyPut(offset, true, key, v, null, posFromOffset(offset));
             notifyGet(offset, key, v);
             return v;
         }
@@ -965,7 +965,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             // key is not found
             long offset = putEntry(copies, metaKeyInterop, keyInterop, key, keySize, value);
             incrementSize();
-            notifyPut(offset, true, key, value, posFromOffset(offset));
+            notifyPut(offset, true, key, value, null, posFromOffset(offset));
             return null;
         }
 
@@ -981,7 +981,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             // putValue may relocate entry and change offset
             offset = putValue(pos, offset, entry, valueSizePos, entryEndAddr, copies, value, null,
                     searchedHashLookup);
-            notifyPut(offset, false, key, value, posFromOffset(offset));
+            notifyPut(offset, false, key, value, prevValue, posFromOffset(offset));
             return prevValue;
         }
 
@@ -1082,7 +1082,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             return readValue(copies, entry, value, readValueSize(entry));
         }
 
-        V readValue(ThreadLocalCopies copies, MultiStoreBytes entry, V value, long valueSize) {
+        V readValue(ThreadLocalCopies copies, NativeBytes entry, V value, long valueSize) {
             copies = valueReaderProvider.getCopies(copies);
             BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
             return valueReader.read(entry, valueSize, value);
@@ -1097,12 +1097,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         /**
          * Removes a key (or key-value pair) from the Segment.
          *
-         * <p>The entry will only be removed if {@code expectedValue} equals to {@code null} or the
-         * value previously corresponding to the specified key.
+         * <p>The entry will only be removed if {@code expectedValue} equals to {@code null} or the value
+         * previously corresponding to the specified key.
          *
          * @param hash2 a hash code related to the {@code keyBytes}
-         * @return the value of the entry that was removed if the entry corresponding to the {@code
-         * keyBytes} exists and {@link #removeReturnsNull} is {@code false}, {@code null} otherwise
+         * @return the value of the entry that was removed if the entry corresponding to the {@code keyBytes}
+         * exists and {@link #removeReturnsNull} is {@code false}, {@code null} otherwise
          */
         V remove(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
                  V expectedValue, long hash2) {
@@ -1162,9 +1162,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Replaces the specified value for the key with the given value.  {@code newValue} is set
-         * only if the existing value corresponding to the specified key is equal to {@code
-         * expectedValue} or {@code expectedValue == null}.
+         * Replaces the specified value for the key with the given value.  {@code newValue} is set only if the
+         * existing value corresponding to the specified key is equal to {@code expectedValue} or {@code
+         * expectedValue == null}.
          *
          * @param hash2 a hash code related to the {@code keyBytes}
          * @return the replaced value or {@code null} if the value was not replaced
@@ -1205,19 +1205,20 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 // putValue may relocate entry and change offset
                 offset = putValue(pos, offset, entry, valueSizePos, entryEndAddr, copies, newValue,
                         null, searchedHashLookup);
-                notifyPut(offset, false, key, newValue, posFromOffset(offset));
+                notifyPut(offset, false, key, newValue, valueRead, posFromOffset(offset));
                 return valueRead;
             }
             return null;
         }
 
 
-        void notifyPut(long offset, boolean added, K key, V value, final long pos) {
+        void notifyPut(long offset, boolean added, K key, V value, @Nullable final V replacedValue,
+                       final long pos) {
             if (eventListener() != MapEventListeners.NOP) {
                 MultiStoreBytes b = acquireTmpBytes();
                 b.storePositionAndSize(bytes, offset, entrySize);
                 eventListener().onPut(VanillaChronicleMap.this, b, metaDataBytes,
-                        added, key, value, pos, this);
+                        added, key, replacedValue, value, pos, this);
             }
         }
 
@@ -1240,17 +1241,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Replaces value in existing entry. May cause entry relocation, because there may be not
-         * enough space for new value in location already allocated for this entry.
+         * Replaces value in existing entry. May cause entry relocation, because there may be not enough space
+         * for new value in location already allocated for this entry.
          *
          * @param pos          index of the first block occupied by the entry
-         * @param offset       relative offset of the entry in Segment bytes (before, i. e.
-         *                     including metaData)
+         * @param offset       relative offset of the entry in Segment bytes (before, i. e. including
+         *                     metaData)
          * @param entry        relative pointer in Segment bytes
          * @param valueSizePos relative position of value size in entry
          * @param entryEndAddr absolute address of the entry end
-         * @return relative offset of the entry in Segment bytes after putting value (that may cause
-         * entry relocation)
+         * @return relative offset of the entry in Segment bytes after putting value (that may cause entry
+         * relocation)
          */
         long putValue(long pos, long offset, NativeBytes entry, long valueSizePos,
                       long entryEndAddr, ThreadLocalCopies copies, V value, Bytes valueBytes,
@@ -1661,7 +1662,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     }
 
-    private static abstract class ReadLocked<K, V, MKI, KI> extends MutableLockedEntry<K, V, MKI,
+    static abstract class ReadLocked<K, V, MKI, KI> extends MutableLockedEntry<K, V, MKI,
             KI> implements ReadContext<K, V> {
 
         boolean present;
@@ -1680,7 +1681,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
     }
 
-    private static abstract class WriteLocked<K, V, MKI, KI> extends MutableLockedEntry<K, V, MKI,
+    static abstract class WriteLocked<K, V, MKI, KI> extends MutableLockedEntry<K, V, MKI,
             KI> implements WriteContext<K, V> {
     }
 }

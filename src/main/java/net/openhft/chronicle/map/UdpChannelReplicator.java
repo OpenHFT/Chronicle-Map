@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.UdpConfig;
+import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,7 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
      * @param localIdentifier   just used for logging
      * @throws IOException
      */
-    UdpChannelReplicator(@NotNull final UdpConfig replicationConfig,
+    UdpChannelReplicator(@NotNull final UdpTransportConfig replicationConfig,
                          final int maxPayloadSize,
                          final byte localIdentifier)
             throws IOException {
@@ -178,10 +178,17 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
         final InetSocketAddress hostAddress = new InetSocketAddress(port);
         client.configureBlocking(false);
         if (address.isMulticastAddress()) {
-            client.setOption(IP_MULTICAST_IF, networkInterface);
             client.setOption(SO_REUSEADDR, true);
             client.bind(hostAddress);
-            client.join(address, networkInterface);
+            if (networkInterface != null) {
+                // This is probably not needed, because client socket doesn't send datagrams,
+                // but since EVERYBODY on the internet configures this for any channels, and
+                // I don't see any harm this config could make, I leave it here
+                client.setOption(IP_MULTICAST_IF, networkInterface);
+                client.join(address, networkInterface);
+            } else {
+                client.join(address, NetworkInterface.getByInetAddress(hostAddress.getAddress()));
+            }
             if (LOG.isDebugEnabled())
                 LOG.debug("Connecting via multicast, group=" + address);
         } else {
@@ -264,6 +271,8 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
                     .setOption(StandardSocketOptions.IP_MULTICAST_LOOP, false)
                     .setOption(StandardSocketOptions.SO_BROADCAST, true)
                     .setOption(SO_REUSEADDR, true);
+            if (networkInterface != null)
+                server.setOption(StandardSocketOptions.IP_MULTICAST_IF, networkInterface);
 
             // the registration has be be run on the same thread as the selector
             addPendingRegistration(new Runnable() {

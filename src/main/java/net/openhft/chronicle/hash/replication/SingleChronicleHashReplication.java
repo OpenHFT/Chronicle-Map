@@ -16,23 +16,32 @@
 
 package net.openhft.chronicle.hash.replication;
 
-//TODO better name
-public final class SimpleReplication extends AbstractReplication {
+public final class SingleChronicleHashReplication extends AbstractReplication {
 
     public static Builder builder() {
         return new Builder();
     }
 
-    SimpleReplication(byte localIdentifier, Builder builder) {
+    SingleChronicleHashReplication(byte localIdentifier, Builder builder) {
         super(localIdentifier, builder);
     }
 
     public static final class Builder extends AbstractReplication.Builder<Builder> {
         private Builder() {}
 
-        public SimpleReplication create(byte identifier) {
+        public SingleChronicleHashReplication createWithId(byte identifier) {
             check();
-            return new SimpleReplication(identifier, this);
+            return new SingleChronicleHashReplication(identifier, this);
+        }
+
+        @Override
+        public Builder tcpTransportAndNetwork(TcpTransportAndNetworkConfig tcpConfig) {
+            return super.tcpTransportAndNetwork(tcpConfig);
+        }
+
+        @Override
+        public Builder udpTransport(UdpTransportConfig udpConfig) {
+            return super.udpTransport(udpConfig);
         }
     }
 }

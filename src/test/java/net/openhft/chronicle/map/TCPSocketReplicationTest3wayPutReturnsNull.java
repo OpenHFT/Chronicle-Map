@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +48,7 @@ public class TCPSocketReplicationTest3wayPutReturnsNull {
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        TcpConfig tcpConfig = TcpConfig.unknownTopology(serverPort, Arrays.asList(endpoints));
+        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.forUnknownTopology(serverPort, Arrays.asList(endpoints));
 
         return (T) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .putReturnsNull(true)

@@ -1,7 +1,7 @@
 package net.openhft.chronicle.map.example;
 
 import net.openhft.chronicle.hash.replication.ReplicationHub;
-import net.openhft.chronicle.hash.replication.TcpConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;
@@ -69,14 +69,14 @@ public class ChannelExample {
 
         byte identifier = (byte) 1;
 
-        TcpConfig tcpConfig = TcpConfig
+        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .forSendingNode(8086, new InetSocketAddress("localhost", 8087))
                 .heartBeatInterval(1, SECONDS);
 
 
         hubOnServer1 = ReplicationHub.builder()
                 .tcpTransportAndNetwork(tcpConfig)
-                .create(identifier);
+                .createWithId(identifier);
 
         // this demotes favoriteColour
         short channel1 = (short) 1;
@@ -104,12 +104,12 @@ public class ChannelExample {
 
         byte identifier = (byte) 2;
 
-        TcpConfig tcpConfig =
-                TcpConfig.forReceivingOnlyNode(8087).heartBeatInterval(1, SECONDS);
+        TcpTransportAndNetworkConfig tcpConfig =
+                TcpTransportAndNetworkConfig.forReceivingOnlyNode(8087).heartBeatInterval(1, SECONDS);
 
         hubOnServer2 = ReplicationHub.builder()
                 .tcpTransportAndNetwork(tcpConfig)
-                .create(identifier);
+                .createWithId(identifier);
 
 
         // this demotes favoriteColour

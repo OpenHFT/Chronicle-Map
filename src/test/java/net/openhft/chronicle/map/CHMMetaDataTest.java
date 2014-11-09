@@ -81,7 +81,7 @@ public class CHMMetaDataTest {
 
         @Override
         public void onPut(ChronicleMap<String, String> map, Bytes entry, int metaDataBytes,
-                          boolean added, String key, String value, long pos,
+                          boolean added, String key, String replacedValue, String value, long pos,
                           SharedSegment segment) {
             assertEquals(8, metaDataBytes);
             if (added)

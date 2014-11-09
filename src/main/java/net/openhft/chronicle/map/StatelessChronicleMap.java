@@ -19,8 +19,7 @@
 package net.openhft.chronicle.map;
 
 import com.sun.jdi.connect.spi.ClosedConnectionException;
-import net.openhft.chronicle.hash.exceptions.IORuntimeException;
-import net.openhft.chronicle.hash.exceptions.TimeoutRuntimeException;
+import net.openhft.chronicle.hash.RemoteCallTimeoutException;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -942,7 +941,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private void checkTimeout(long timeoutTime) {
         if (timeoutTime < System.currentTimeMillis())
-            throw new TimeoutRuntimeException();
+            throw new RemoteCallTimeoutException();
     }
 
     private void writeSizeAndTransactionIdAt(long locationOfSize, final long transactionId) {

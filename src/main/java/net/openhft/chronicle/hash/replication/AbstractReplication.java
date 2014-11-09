@@ -19,14 +19,14 @@ package net.openhft.chronicle.hash.replication;
 import org.jetbrains.annotations.Nullable;
 
 class AbstractReplication {
-    protected final byte localIdentifier;
-    protected final UdpConfig udpConfig;
-    protected final TcpConfig tcpConfig;
+    private final byte localIdentifier;
+    private final TcpTransportAndNetworkConfig tcpConfig;
+    private final UdpTransportConfig udpConfig;
 
     AbstractReplication(byte localIdentifier, Builder builder) {
-        udpConfig = builder.udpConfig;
         this.localIdentifier = localIdentifier;
         tcpConfig = builder.tcpConfig;
+        udpConfig = builder.udpConfig;
     }
 
     public byte identifier() {
@@ -34,25 +34,25 @@ class AbstractReplication {
     }
 
     @Nullable
-    public TcpConfig tcpTransportAndNetwork() {
+    public TcpTransportAndNetworkConfig tcpTransportAndNetwork() {
         return tcpConfig;
     }
 
     @Nullable
-    public UdpConfig udpTransport() {
+    public UdpTransportConfig udpTransport() {
         return udpConfig;
     }
 
     static abstract class Builder<B extends Builder> {
-        protected UdpConfig udpConfig = null;
-        protected TcpConfig tcpConfig = null;
+        private TcpTransportAndNetworkConfig tcpConfig = null;
+        private UdpTransportConfig udpConfig = null;
 
-        public B tcpTransportAndNetwork(TcpConfig tcpConfig) {
+        public B tcpTransportAndNetwork(TcpTransportAndNetworkConfig tcpConfig) {
             this.tcpConfig = tcpConfig;
             return (B) this;
         }
 
-        public B udpTransport(UdpConfig udpConfig) {
+        public B udpTransport(UdpTransportConfig udpConfig) {
             this.udpConfig = udpConfig;
             return (B) this;
         }
