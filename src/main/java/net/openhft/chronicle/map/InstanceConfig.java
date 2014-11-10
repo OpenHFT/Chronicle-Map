@@ -32,6 +32,8 @@ final class InstanceConfig<K, V>
     final ReplicationChannel channel;
     final File file;
 
+    private boolean used = false;
+
     InstanceConfig(AbstractChronicleMapBuilder<K, V, ?> mapBuilder,
                    SingleChronicleHashReplication singleHashReplication,
                    ReplicationChannel channel,
@@ -67,7 +69,15 @@ final class InstanceConfig<K, V>
     }
 
     @Override
-    public ChronicleMap<K, V> create() throws IOException {
+    public synchronized ChronicleMap<K, V> create() throws IOException {
+        if (used)
+            throw new IllegalStateException(
+                    "A ChronicleMap has already been created using this instance config. " +
+                            "Create a new instance config (builder.instance() or call any " +
+                            "configuration method on this instance config) to create a new " +
+                            "ChronicleMap instance");
+        used = true;
         return mapBuilder.create(this);
     }
+
 }
