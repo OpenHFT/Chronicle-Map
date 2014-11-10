@@ -172,7 +172,7 @@ public final class ReplicationHub extends AbstractReplication {
         @NotNull
         @Override
         public ReplicationHub createWithId(byte identifier) {
-            check();
+            check(identifier);
             return new ReplicationHub(identifier, this);
         }
     }

@@ -36,7 +36,7 @@ public final class SingleChronicleHashReplication extends AbstractReplication {
         @NotNull
         @Override
         public SingleChronicleHashReplication createWithId(byte identifier) {
-            check();
+            check(identifier);
             return new SingleChronicleHashReplication(identifier, this);
         }
     }
