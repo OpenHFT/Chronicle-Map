@@ -576,7 +576,7 @@ public class ChronicleMapTest {
             InstantiationException, InterruptedException, ExecutionException {
 //        int runs = Integer.getInteger("runs", 10);
         int procs = Runtime.getRuntime().availableProcessors();
-        int threads = procs * 2; // runs > 100 ? procs / 2 : procs;
+        int threads = procs * 3;
         ExecutorService es = Executors.newFixedThreadPool(procs);
         for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
             // JAVA 8 produces more garbage than previous versions for internal work.
@@ -585,6 +585,7 @@ public class ChronicleMapTest {
             OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
                     .of(CharSequence.class, LongValue.class)
                     .entries(entries)
+                    .actualSegments(8 * 1024)
                     .entryAndValueAlignment(OF_8_BYTES)
                     .entrySize(24);
 
