@@ -18,7 +18,8 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.IdentifierListener;
+import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import net.openhft.lang.collection.ATSDirectBitSet;
@@ -203,13 +204,13 @@ public class NodeDiscovery {
 
         // we should make a local copy as this may change
 
-        final IdentifierListener identifierListener = new IdentifierListener() {
+        final RemoteNodeValidator remoteNodeValidator = new RemoteNodeValidator() {
 
             private final ConcurrentMap<Byte, SocketAddress> identifiers = new ConcurrentHashMap<Byte,
                     SocketAddress>();
 
             @Override
-            public boolean isIdentifierUnique(byte remoteIdentifier, SocketAddress remoteAddress) {
+            public boolean validate(byte remoteIdentifier, SocketAddress remoteAddress) {
                 final SocketAddress lastKnownAddress = identifiers.putIfAbsent(remoteIdentifier, remoteAddress);
                 if (remoteAddress.equals(lastKnownAddress))
                     return true;
@@ -224,8 +225,7 @@ public class NodeDiscovery {
         final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .forUnknownTopology(ourAddressAndPort.getPort(),
                         toInetSocketCollection(knownHostPorts))
-                .heartBeatInterval(1, SECONDS)
-                .nonUniqueIdentifierListener(identifierListener);
+                .heartBeatInterval(1, SECONDS);
 
 
         LOG.info("Using Remote identifier=" + identifier);
@@ -234,7 +234,11 @@ public class NodeDiscovery {
         return ChronicleMapBuilder.of(Integer.class,
                 CharSequence.class)
                 .entries(20000L)
-                .replication(identifier, tcpConfig).create();
+                .replication(SingleChronicleHashReplication.builder()
+                        .tcpTransportAndNetwork(tcpConfig)
+                        .remoteNodeValidator(remoteNodeValidator)
+                        .createWithId(identifier))
+                .create();
 
     }
 

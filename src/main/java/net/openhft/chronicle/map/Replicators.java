@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ final class Replicators {
     private Replicators() {
     }
 
-    static Replicator tcp(final TcpTransportAndNetworkConfig replicationConfig) {
+    static Replicator tcp(final AbstractReplication replication) {
         return new Replicator() {
 
             @Override
@@ -53,8 +54,12 @@ final class Replicators {
                         (keyValueSerializer, (VanillaChronicleMap) chronicleMap,
                                 builder.entrySize(true));
 
-                return new TcpReplicator(replica, entryExternalizable, replicationConfig,
-                        builder.entrySize(true), statelessServer);
+                TcpTransportAndNetworkConfig tcpConfig = replication.tcpTransportAndNetwork();
+                assert tcpConfig != null;
+                return new TcpReplicator(replica, entryExternalizable,
+                        tcpConfig,
+                        builder.entrySize(true), statelessServer,
+                        replication.remoteNodeValidator());
             }
         };
     }

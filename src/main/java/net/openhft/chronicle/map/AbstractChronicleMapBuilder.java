@@ -899,7 +899,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
             List<Replicator> replicators = new ArrayList<>(2);
             if (singleHashReplication != null) {
                 if (singleHashReplication.tcpTransportAndNetwork() != null)
-                    replicators.add(Replicators.tcp(singleHashReplication.tcpTransportAndNetwork()));
+                    replicators.add(Replicators.tcp(singleHashReplication));
                 if (singleHashReplication.udpTransport() != null)
                     replicators.add(Replicators.udp(singleHashReplication.udpTransport()));
             } else {

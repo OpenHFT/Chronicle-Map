@@ -410,7 +410,8 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * <p>This method is a shortcut for {@code instance().create()}.
      *
      * @return a new off-heap hash container
-     * @throws IOException if any IO error relates to off-heap memory allocation occurs
+     * @throws IOException if any IO error relates to off-heap memory allocation,
+     *         or establishing replication connections, occurs
      * @see #createPersistedTo(File)
      * @see #instance()
      */
@@ -436,8 +437,8 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @param file the file with existing hash container or a desired location of a new off-heap
      *             persisted hash container
      * @return a hash container mapped to the given file
-     * @throws IOException if any IO error, related to off-heap memory allocation or file mapping
-     *                     occurs
+     * @throws IOException if any IO error, related to off-heap memory allocation or file mapping,
+     *         or establishing replication connections, occurs
      * @see ChronicleHash#file()
      * @see ChronicleHash#close()
      * @see #create()

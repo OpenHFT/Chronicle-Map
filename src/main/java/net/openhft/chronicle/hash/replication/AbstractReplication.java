@@ -16,17 +16,24 @@
 
 package net.openhft.chronicle.hash.replication;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class AbstractReplication {
+/**
+ * Common configurations of {@link SingleChronicleHashReplication} and {@link ReplicationHub}.
+ */
+public abstract class AbstractReplication {
     private final byte localIdentifier;
-    private final TcpTransportAndNetworkConfig tcpConfig;
-    private final UdpTransportConfig udpConfig;
+    private final @Nullable TcpTransportAndNetworkConfig tcpConfig;
+    private final @Nullable UdpTransportConfig udpConfig;
+    private final @Nullable RemoteNodeValidator remoteNodeValidator;
 
+    // package-private to forbid subclassing from outside of the package
     AbstractReplication(byte localIdentifier, Builder builder) {
         this.localIdentifier = localIdentifier;
         tcpConfig = builder.tcpConfig;
         udpConfig = builder.udpConfig;
+        remoteNodeValidator = builder.remoteNodeValidator;
     }
 
     public byte identifier() {
@@ -43,19 +50,47 @@ class AbstractReplication {
         return udpConfig;
     }
 
-    static abstract class Builder<B extends Builder> {
+    @Nullable
+    public RemoteNodeValidator remoteNodeValidator() {
+        return remoteNodeValidator;
+    }
+
+    /**
+     * Builder of {@link AbstractReplication} configurations.
+     *
+     * @param <R> the concrete {@link AbstractReplication} subclass: {@link
+     *            SingleChronicleHashReplication} or {@link ReplicationHub}
+     * @param <B> the concrete builder subclass: {@link SingleChronicleHashReplication.Builder} or
+     *            {@link ReplicationHub.Builder}
+     */
+    public static abstract class Builder<R extends AbstractReplication, B extends Builder<R, B>> {
         private TcpTransportAndNetworkConfig tcpConfig = null;
         private UdpTransportConfig udpConfig = null;
+        private RemoteNodeValidator remoteNodeValidator = null;
 
-        public B tcpTransportAndNetwork(TcpTransportAndNetworkConfig tcpConfig) {
+        // package-private to forbid subclassing from outside of the package
+        Builder() {}
+
+        @NotNull
+        public B tcpTransportAndNetwork(@Nullable TcpTransportAndNetworkConfig tcpConfig) {
             this.tcpConfig = tcpConfig;
             return (B) this;
         }
 
-        public B udpTransport(UdpTransportConfig udpConfig) {
+        @NotNull
+        public B udpTransport(@Nullable UdpTransportConfig udpConfig) {
             this.udpConfig = udpConfig;
             return (B) this;
         }
+
+        @NotNull
+        public B remoteNodeValidator(@Nullable RemoteNodeValidator remoteNodeValidator) {
+            this.remoteNodeValidator = remoteNodeValidator;
+            return (B) this;
+        }
+
+        @NotNull
+        public abstract R createWithId(byte identifier);
 
         void check() {
             if (udpConfig == null && tcpConfig == null)

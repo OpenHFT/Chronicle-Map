@@ -39,14 +39,12 @@ public final class TcpTransportAndNetworkConfig {
     private final ThrottlingConfig throttlingConfig;
     private final long heartBeatInterval;
     private final TimeUnit heartBeatIntervalUnit;
-    private final IdentifierListener identifierListener;
 
     private TcpTransportAndNetworkConfig(int serverPort, Set<InetSocketAddress> endpoints,
                                          int packetSize,
                                          boolean autoReconnectedUponDroppedConnection,
                                          ThrottlingConfig throttlingConfig, long heartBeatInterval,
-                                         TimeUnit heartBeatIntervalUnit,
-                                         IdentifierListener identifierListener) {
+                                         TimeUnit heartBeatIntervalUnit) {
         this.serverPort = serverPort;
         this.endpoints = endpoints;
         this.packetSize = packetSize;
@@ -54,9 +52,7 @@ public final class TcpTransportAndNetworkConfig {
         this.throttlingConfig = throttlingConfig;
         this.heartBeatInterval = heartBeatInterval;
         this.heartBeatIntervalUnit = heartBeatIntervalUnit;
-        this.identifierListener = identifierListener;
     }
-
 
     public static TcpTransportAndNetworkConfig forSendingNode(int serverPort,
                                                               InetSocketAddress... endpoints) {
@@ -87,19 +83,7 @@ public final class TcpTransportAndNetworkConfig {
                 true, // autoReconnectedUponDroppedConnection
                 ThrottlingConfig.noThrottling(),
                 DEFAULT_HEART_BEAT_INTERVAL,
-                DEFAULT_HEART_BEAT_INTERVAL_UNIT,
-                null); // identifierListener
-    }
-
-    public IdentifierListener nonUniqueIdentifierListener() {
-        return identifierListener;
-    }
-
-    public TcpTransportAndNetworkConfig nonUniqueIdentifierListener(
-            final IdentifierListener identifierListener) {
-        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
-                autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
-                heartBeatIntervalUnit, identifierListener);
+                DEFAULT_HEART_BEAT_INTERVAL_UNIT);
     }
 
     public boolean autoReconnectedUponDroppedConnection() {
@@ -110,7 +94,7 @@ public final class TcpTransportAndNetworkConfig {
             boolean autoReconnectedUponDroppedConnection) {
         return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
-                heartBeatIntervalUnit, identifierListener);
+                heartBeatIntervalUnit);
     }
 
     public ThrottlingConfig throttlingConfig() {
@@ -121,7 +105,7 @@ public final class TcpTransportAndNetworkConfig {
         ThrottlingConfig.checkMillisecondBucketInterval(throttlingConfig, "TCP");
         return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
-                heartBeatIntervalUnit, identifierListener);
+                heartBeatIntervalUnit);
     }
 
     public long heartBeatInterval(TimeUnit unit) {
@@ -135,7 +119,7 @@ public final class TcpTransportAndNetworkConfig {
     public TcpTransportAndNetworkConfig serverPort(int serverPort) {
         return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
-                heartBeatIntervalUnit, identifierListener);
+                heartBeatIntervalUnit);
     }
 
     public Set<InetSocketAddress> endpoints() {
@@ -150,7 +134,7 @@ public final class TcpTransportAndNetworkConfig {
         }
         return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
-                heartBeatIntervalUnit, identifierListener);
+                heartBeatIntervalUnit);
     }
 
     public int packetSize() {
@@ -162,14 +146,14 @@ public final class TcpTransportAndNetworkConfig {
             throw new IllegalArgumentException();
         return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
-                heartBeatIntervalUnit, identifierListener);
+                heartBeatIntervalUnit);
     }
 
     public TcpTransportAndNetworkConfig heartBeatInterval(long heartBeatInterval,
                                                           TimeUnit heartBeatIntervalUnit) {
         return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
-                heartBeatIntervalUnit, identifierListener);
+                heartBeatIntervalUnit);
     }
 
 

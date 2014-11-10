@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-public class ThrottlingConfig {
+public final class ThrottlingConfig {
 
     private static final long DEFAULT_BUCKET_INTERVAL = 100L;
     private static final TimeUnit DEFAULT_BUCKET_INTERVAL_UNIT = MILLISECONDS;
