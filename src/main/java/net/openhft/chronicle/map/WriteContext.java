@@ -22,9 +22,6 @@ package net.openhft.chronicle.map;
  */
 public interface WriteContext<K, V> extends Context<K, V> {
     void dontPutOnClose();
-
     void removeEntry();
 
-    // todo I have no idea why we have this, as this will always be done on when calling close()
-    // void update();
 }

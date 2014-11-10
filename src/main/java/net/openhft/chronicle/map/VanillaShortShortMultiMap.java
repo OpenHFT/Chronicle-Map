@@ -85,6 +85,8 @@ class VanillaShortShortMultiMap implements MultiMap {
      * constructor as the second argument
      */
     public static long sizeOfBitSetInBytes(long minCapacity) {
+
+
         return VanillaIntIntMultiMap.sizeOfBitSetInBytes(minCapacity);
     }
 

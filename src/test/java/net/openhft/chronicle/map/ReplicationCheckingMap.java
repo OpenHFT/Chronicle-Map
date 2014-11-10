@@ -246,7 +246,7 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public V acquireUsing(K key, V usingValue) {
+    public V acquireUsing(@NotNull K key, @NotNull V usingValue) {
         return map1.acquireUsing(key, usingValue);
     }
 

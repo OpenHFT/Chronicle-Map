@@ -151,7 +151,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
-        public V acquireUsing(K key, V usingValue) {
+        public V acquireUsing(@NotNull K key, @NotNull V usingValue) {
             return d.acquireUsing(key, usingValue);
         }
 

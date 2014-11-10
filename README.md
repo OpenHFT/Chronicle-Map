@@ -316,8 +316,11 @@ supports the following methods :
 
  - [`V getUsing(K key, V value);`](http://openhft.github.io/Chronicle-Map/apidocs/net/openhft/chronicle/map/ChronicleMap.html#getUsing-K-V-)
  - [`V acquireUsing(K key, V value);`](http://openhft.github.io/Chronicle-Map/apidocs/net/openhft/chronicle/map/ChronicleMap.html#acquireUsing-K-V-)
+ - ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);
+ - WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);
 
-These methods let you provide the object which the data will be written to, even if the object it
+
+These methods let you provide the object which the data will be written to, even if the object is
 immutable. For example 
 
 ``` java
@@ -335,9 +338,9 @@ Exactly like `map.getUsing()`, `map.acquireUsing()` will give you back a referen
 based on
 a key, but unlike `map.getUsing()` if there is not an entry in the map for this key the entry 
 will be added and the value return will we the same value which you provided. ( The section below
- covers `map.getUsing()`, `map.acquireUsing()` in greater details )
+ covers both `map.getUsing()` and `map.acquireUsing()` in more detail )
 
-####  Off Heap and How to Improve Performance
+#### Improve Performance using and Proxy Object to off heap memory
 
 Chronicle Map stores its data off heap. There are some distinct advantages in using off heap data storage
 
@@ -346,7 +349,8 @@ Chronicle Map stores its data off heap. There are some distinct advantages in us
  * Your Chronicle map and your data contained within it is serialised so it can be stored in off 
 heap memory. When this memory is shared between processes on the same server, 
 the chronicle map is able to distribute entries between processes with extremely low overhead, 
-as both processes are sharing the same off heap memory space. Since your objects are already stored off heap ( as a series of bytes ), replication you entries over the network add relatively low over head.
+as both processes are sharing the same off heap memory space. Since your objects are already stored off
+heap ( as a series of bytes ), replicating entries over the network add relatively low over head.
 
 One of the downsides of an Off Heap Map is that whenever you wish to get a value ( on heap ) from an entry
  ``` java
@@ -355,17 +359,17 @@ Value v= get(key)
 that entry has to be deserialised onto the java heap so that you can use its value just like any other java object. So if you were to call get(key) ten times, 
  ``` java
 for(int i=1;i<=10;i++) {
-  Value v= get(key)
+  Value v = get(key)
 }
 ``` 
-this would create 10 separate copies of the value. As each time get() is called the map has to 
+this would create 10 separate instances of the value. As each time get() is called the map has to
 first create a Object to store the result in and then deserialise the value stored in the off 
 heap entry. If you want to get the value back on heap so that you can use it like a normal java 
 value, There is nothing we can do about the deserialisation as this has to occur every time, 
 ( since the value may have been changed by another thread ), but we don’t have to create the 
 object each time. This is why we create getUsing(key,using). By reducing the number of objects 
 you create, you reduce the amount of work that the garbage collector has to carry out, 
-this in turn may, improve your overall performance. So back to getUsing(key,using), If you wish to reuse and existing object ( in this case the ‘using’ value ), you can instead call 
+this in turn may, improve your overall performance. So back to `getUsing(key,using)`, If you wish to reuse and existing object ( in this case the ‘using’ value ), you can instead call
  
  ``` java
 Value using = new Value();
