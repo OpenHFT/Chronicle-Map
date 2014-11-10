@@ -1,7 +1,5 @@
 /*
- * Copyright 2014 Higher Frequency Trading
- *
- * http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.map.utils;
 
 import net.openhft.lang.collection.DirectBitSet;
 
 /**
  * This is only used to store keys and positions, but it could store int/int key/values for another purpose.
  */
-interface IntIntMultiMap {
+public interface MultiMap {
 
     /**
      * @return gets all the active positions as a bitset
@@ -36,48 +34,44 @@ interface IntIntMultiMap {
      * @param key   to add
      * @param value to add
      */
-    void put(int key, int value);
+    void put(long key, long value);
 
     /**
      * Remove a key/value pair.
      *
      * @param key   to remove
      * @param value to remove
-     * @return whether a match was found.
+     * @throws RuntimeException if key-value pair is absent in the multi map
      */
-    boolean remove(int key, int value);
+    void remove(long key, long value);
 
-    boolean replace(int key, int oldValue, int newValue);
+    void replace(long key, long oldValue, long newValue);
 
     /**
      * Used for start a search for a given key
-     *
-     * @return normalized key value, better to be used in subsequent calls
      */
-    int startSearch(int key);
+    void startSearch(long key);
 
-    int getSearchHash();
+    long getSearchHash();
 
     /**
      * Used for getting the next position for a given key
      *
      * @return the next position for the last search or negative value
      */
-    int nextPos();
+    long nextPos();
 
     void removePrevPos();
 
-    void replacePrevPos(int newValue);
+    void replacePrevPos(long newValue);
 
-    void putAfterFailedSearch(int value);
+    void putAfterFailedSearch(long value);
 
     void clear();
 
     void forEach(EntryConsumer action);
 
     static interface EntryConsumer {
-        void accept(int key, int value);
+        void accept(long key, long value);
     }
-
-
 }

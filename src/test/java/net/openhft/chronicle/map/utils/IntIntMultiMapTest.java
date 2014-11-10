@@ -16,13 +16,14 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.map.utils;
 
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.DirectStore;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,9 +33,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.util.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * User: peter Date: 09/12/13
@@ -75,12 +73,12 @@ public class IntIntMultiMapTest {
             @Override
             public void accept(long key, long value) {
                 mapSize++;
-                assertTrue(referenceMap.containsEntry(key, value));
+                Assert.assertTrue(referenceMap.containsEntry(key, value));
             }
         }
         Action action = new Action();
         map.forEach(action);
-        assertEquals(referenceMap.size(), action.mapSize);
+        Assert.assertEquals(referenceMap.size(), action.mapSize);
     }
 
     private void valuesEqualsByKey(long k) {
@@ -90,8 +88,8 @@ public class IntIntMultiMapTest {
         while ((v = map.nextPos()) >= 0L)
             values.add(v);
         Set<Long> valueSet = new HashSet<Long>(values);
-        assertEquals(values.size(), valueSet.size());
-        assertEquals(new HashSet<Long>(referenceMap.get(k)), valueSet);
+        Assert.assertEquals(values.size(), valueSet.size());
+        Assert.assertEquals(new HashSet<Long>(referenceMap.get(k)), valueSet);
     }
 
     private void put(long k, long v) {
@@ -150,7 +148,7 @@ public class IntIntMultiMapTest {
         map.put(15, 1);
         map.remove(15, 1);
         map.startSearch(15);
-        assertTrue(map.nextPos() < 0);
+        Assert.assertTrue(map.nextPos() < 0);
     }
 
     @Test
@@ -180,7 +178,7 @@ public class IntIntMultiMapTest {
                 bs.set(value);
             }
         });
-        assertTrue(bs.allSet(0L, maxCapacity));
+        Assert.assertTrue(bs.allSet(0L, maxCapacity));
     }
 
     private long maxMemory() {

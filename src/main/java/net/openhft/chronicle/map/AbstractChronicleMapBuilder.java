@@ -26,6 +26,7 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
+import net.openhft.chronicle.map.utils.MultiMapFactory;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.Maths;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -344,13 +345,13 @@ public abstract class AbstractChronicleMapBuilder<K, V,
                     actualEntriesPerSegment + " given");
         if (tooManyEntriesPerSegment(actualEntriesPerSegment))
             throw new IllegalArgumentException("max entries per segment is " +
-                    VanillaIntIntMultiMap.MAX_CAPACITY + ", " + actualEntriesPerSegment + " given");
+                    MultiMapFactory.MAX_CAPACITY + ", " + actualEntriesPerSegment + " given");
         this.actualEntriesPerSegment = actualEntriesPerSegment;
         return self();
     }
 
     private boolean tooManyEntriesPerSegment(long entriesPerSegment) {
-        return entriesPerSegment > VanillaIntIntMultiMap.MAX_CAPACITY;
+        return entriesPerSegment > MultiMapFactory.MAX_CAPACITY;
     }
 
     long actualEntriesPerSegment() {
@@ -361,7 +362,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         long actualEntriesPerSegment = divideUpper(actualEntries, actualSegments);
         if (tooManyEntriesPerSegment(actualEntriesPerSegment))
             throw new IllegalStateException("max entries per segment is " +
-                    VanillaIntIntMultiMap.MAX_CAPACITY + " configured entries() and " +
+                    MultiMapFactory.MAX_CAPACITY + " configured entries() and " +
                     "actualSegments() so that there should be " + actualEntriesPerSegment +
                     " entries per segment");
         return actualEntriesPerSegment;
@@ -419,11 +420,11 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     int actualSegments() {
         if (actualSegments > 0)
             return actualSegments;
-        long shortMMapSegments = trySegments(VanillaShortShortMultiMap.MAX_CAPACITY,
+        long shortMMapSegments = trySegments(MultiMapFactory.I16_MAX_CAPACITY,
                 MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS);
         if (shortMMapSegments > 0L)
             return (int) shortMMapSegments;
-        long intMMapSegments = trySegments(VanillaIntIntMultiMap.MAX_CAPACITY, MAX_SEGMENTS);
+        long intMMapSegments = trySegments(MultiMapFactory.MAX_CAPACITY, MAX_SEGMENTS);
         if (intMMapSegments > 0L)
             return (int) intMMapSegments;
         throw new IllegalStateException("Max segments is " + MAX_SEGMENTS + ", configured so much" +
@@ -937,6 +938,10 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         int segments = actualSegments();
         // reduce false sharing unless we have a lot of segments.
         return segments <= 8192 ? 64 : 16;
+    }
+
+    public MultiMapFactory multiMapFactory() {
+        return MultiMapFactory.forCapacity(actualEntriesPerSegment());
     }
 }
 
