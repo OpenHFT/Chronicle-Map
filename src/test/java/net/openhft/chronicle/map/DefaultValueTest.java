@@ -40,18 +40,19 @@ public class DefaultValueTest {
             try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
                     .defaultValue(defaultValue).createPersistedTo(file)) {
-
-                assertEquals(defaultValue, map.acquireUsing("a", null));
+                ArrayList<Integer> using = new ArrayList<Integer>();
+                assertEquals(defaultValue, map.acquireUsing("a", using));
                 assertEquals(1, map.size());
 
                 map.put("b", Arrays.asList(1, 2));
-                assertEquals(Arrays.asList(1, 2), map.acquireUsing("b", null));
+                assertEquals(Arrays.asList(1, 2), map.acquireUsing("b", using));
             }
 
+            ArrayList<Integer> using = new ArrayList<Integer>();
             try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
                     .createPersistedTo(file)) {
-                assertEquals(defaultValue, map.acquireUsing("c", null));
+                assertEquals(defaultValue, map.acquireUsing("c", using));
             }
         } finally {
             file.delete();

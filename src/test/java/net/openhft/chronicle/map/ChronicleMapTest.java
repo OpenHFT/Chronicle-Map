@@ -418,7 +418,7 @@ public class ChronicleMapTest {
         map.close();
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testAcquireWithNullContainer() throws Exception {
         ChronicleMap<CharSequence, LongValue> map = getSharedMap(10 * 1000, 128, 24);
         map.acquireUsing("key", new LongValue$$Native());
