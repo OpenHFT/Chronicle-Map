@@ -879,6 +879,7 @@ If you inadvertently got the chronicle channels around the wrong way, then chron
 to replicate the wrong maps data. The chronicle channels don't have to be in order but they must be
 unique for each map you have.
 
+touch
 
 ### Channels and ReplicationChannel - Example
 
