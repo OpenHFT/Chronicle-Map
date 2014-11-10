@@ -25,16 +25,17 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
+import net.openhft.chronicle.map.utils.MultiMap;
+import net.openhft.chronicle.map.utils.MultiMapFactory;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
-import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
+import net.openhft.lang.model.constraints.Nullable;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +97,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     private final int segmentHeaderSize;
     private final HashSplitting hashSplitting;
     final boolean isNativeValueClass;
+    final MultiMapFactory multiMapFactory;
     transient Provider<BytesReader<K>> keyReaderProvider;
     transient Provider<KI> keyInteropProvider;
     transient Provider<BytesReader<V>> valueReaderProvider;
@@ -142,6 +144,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         this.actualSegments = builder.actualSegments();
         this.entriesPerSegment = builder.actualEntriesPerSegment();
+        this.multiMapFactory = builder.multiMapFactory();
         this.metaDataBytes = builder.metaDataBytes();
         this.eventListener = builder.eventListener();
         this.segmentHeaderSize = builder.segmentHeaderSize();
@@ -247,19 +250,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     long sizeOfMultiMap() {
-        return useSmallMultiMaps() ?
-                VanillaShortShortMultiMap.sizeInBytes(entriesPerSegment) :
-                VanillaIntIntMultiMap.sizeInBytes(entriesPerSegment);
+        return multiMapFactory.sizeInBytes(entriesPerSegment);
     }
 
     long sizeOfMultiMapBitSet() {
-        return useSmallMultiMaps() ?
-                VanillaShortShortMultiMap.sizeOfBitSetInBytes(entriesPerSegment) :
-                VanillaIntIntMultiMap.sizeOfBitSetInBytes(entriesPerSegment);
-    }
-
-    boolean useSmallMultiMaps() {
-        return entriesPerSegment <= VanillaShortShortMultiMap.MAX_CAPACITY;
+        return multiMapFactory.sizeOfBitSetInBytes(entriesPerSegment);
     }
 
     long sizeOfBitSets() {
@@ -725,9 +720,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     new NativeBytes(new VanillaBytesMarshallerFactory(), start,
                             start + sizeOfMultiMapBitSet(), null);
             multiMapBytes.load();
-            return useSmallMultiMaps() ?
-                    new VanillaShortShortMultiMap(multiMapBytes, sizeOfMultiMapBitSetBytes) :
-                    new VanillaIntIntMultiMap(multiMapBytes, sizeOfMultiMapBitSetBytes);
+            return multiMapFactory.create(multiMapBytes, sizeOfMultiMapBitSetBytes);
         }
 
         public int getIndex() {
