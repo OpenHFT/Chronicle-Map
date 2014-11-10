@@ -822,8 +822,12 @@ not ideal. This is why we created the `ReplicationHub`. The `ReplicationHub` let
 Chronicle Maps via a single point to point socket connection.
 
 The `ReplicationHub` encompasses TCP replication, where each map has to be given a
-unique identifier, but when using Chronicle Channels its the channels that are used to identify the map. The identifier is used to identify the host/server. Each host must be given a unique identifier.
-Each map must be given a unique channel.
+unique identifier, but when using `ReplicationHub` we use a channel to identify the map,
+rather than the identifier, As the identifier is used to identify the host/server broadcasted the update.
+Put simply:
+
+* Each host mustbe given a unique identifier.
+* Each map must be given a unique channel.
 
 
 ``` java
@@ -835,7 +839,7 @@ ReplicationHub replicationHub = ReplicationHub.builder()
                     .createWithId(identifier);
 ```
 
-In this example above the channel is given the identifier of 2.
+In this example above the `ReplicationHub` is given the identifier of 2.
 
 In addition to specifying the identifier we also have to set the maximum entry size, this sets
 the size of the memory buffers within the `ReplicationChannel`.  This has to be set manually, with channels you
