@@ -823,13 +823,13 @@ Chronicle Maps via a single point to point socket connection.
 
 The `ReplicationHub` encompasses TCP replication, where each map has to be given a
 unique identifier, but when using Chronicle Channels its the channels that are used to identify the map. The identifier is used to identify the host/server. Each host must be given a unique identifier.
-Each map must be given a unique Channel.
+Each map must be given a unique channel.
 
 
 ``` java
 int maxEntrySize = 1024;
 byte identifier= 2;
-`ReplicationHub` replicationHub = `ReplicationHub`.builder()
+ReplicationHub replicationHub = ReplicationHub.builder()
                     .maxEntrySize(maxEntrySize)
                     .tcpTransportAndNetwork(tcpConfig)
                     .createWithId(identifier);
@@ -853,7 +853,7 @@ ReplicationHub replicationHub = ReplicationHub.builder()
                     .createWithId(identifier);
 ```
 
-Attaching `ReplicationChannel` replication to the map:
+Attaching a `ReplicationChannel` to the replication to the map:
 
 ``` java
 short channel = (short) 2;
@@ -870,19 +870,17 @@ two maps, lets call them map1 and map2, you could assign them with chronicle
 channels 1 and 2 respectively. Map1 would have the chronicle channel of 1 on both servers. You
 should not confuse the Chronicle Channels with the identifiers, the identifiers are unique per
 replicating node ( in this case which host, the reason we say replicating node rather than host as it is
-possible to have more than one replicating node per host if each of the had a different TCP/IP port )
+possible to have more than one replicating node per host if each of them had a different TCP/IP port )
  ), where as the chronicle channels are used to identify which map you are referring. No additional socket
  connection is made per chronicle channel that
-you use, so we allow
-up to 32767
-chronicle channels.
+you use, so we allow up to 32767 chronicle channels.
 
 If you inadvertently got the chronicle channels around the wrong way, then chronicle would attempt
 to replicate the wrong maps data. The chronicle channels don't have to be in order but they must be
 unique for each map you have.
 
 
-### Channels and `ReplicationChannel` - Example
+### Channels and ReplicationChannel - Example
 
 ``` java
     // server 1 with  identifier = 1
@@ -968,10 +966,8 @@ unique for each map you have.
     assertEquals(favoriteComputerServer1, favoriteComputerServer2);
     Assert.assertEquals(3, favoriteComputerServer2.size());
 
-
     assertEquals(favoriteColourServer1, favoriteColourServer2);
     Assert.assertEquals(2, favoriteColourServer1.size());
-
 
     favoriteColourServer1.close();
     favoriteComputerServer2.close();
