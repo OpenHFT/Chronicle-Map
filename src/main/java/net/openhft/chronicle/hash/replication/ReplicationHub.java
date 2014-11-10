@@ -16,10 +16,11 @@
 
 package net.openhft.chronicle.hash.replication;
 
-import java.io.IOException;
+import org.jetbrains.annotations.NotNull;
 
 public final class ReplicationHub extends AbstractReplication {
 
+    @NotNull
     public static Builder builder() {
         return new Builder();
     }
@@ -55,34 +56,27 @@ public final class ReplicationHub extends AbstractReplication {
         return channel;
     }
 
-    public static final class Builder extends AbstractReplication.Builder<Builder> {
-
+    public static final class Builder extends AbstractReplication.Builder<ReplicationHub, Builder> {
         private int maxEntrySize = 1024;
         private int maxNumberOfChronicles = 128;
 
         private Builder() {}
 
-        @Override
-        public Builder tcpTransportAndNetwork(TcpTransportAndNetworkConfig tcpConfig) {
-            return super.tcpTransportAndNetwork(tcpConfig);
-        }
-
-        @Override
-        public Builder udpTransport(UdpTransportConfig udpConfig) {
-            return super.udpTransport(udpConfig);
-        }
-
+        @NotNull
         public Builder maxEntrySize(int maxEntrySize) {
             this.maxEntrySize = maxEntrySize;
             return this;
         }
 
+        @NotNull
         public Builder maxNumberOfChannels(int maxNumberOfChannels) {
             this.maxNumberOfChronicles = maxNumberOfChannels;
             return this;
         }
 
-        public ReplicationHub createWithId(byte identifier) throws IOException {
+        @NotNull
+        @Override
+        public ReplicationHub createWithId(byte identifier) {
             check();
             return new ReplicationHub(identifier, this);
         }

@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.replication;
 
+
 public final class ReplicationChannel {
     private ReplicationHub hub;
     private final short channelId;

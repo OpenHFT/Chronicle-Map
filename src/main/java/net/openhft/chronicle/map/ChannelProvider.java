@@ -63,7 +63,7 @@ final class ChannelProvider implements Closeable {
             final TcpReplicator tcpReplicator = new TcpReplicator(
                     channelProvider.asReplica,
                     channelProvider.asEntryExternalizable,
-                    tcpConfig, hub.maxEntrySize(), null);
+                    tcpConfig, hub.maxEntrySize(), null, hub.remoteNodeValidator());
             channelProvider.add(tcpReplicator);
         }
 

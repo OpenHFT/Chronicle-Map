@@ -23,7 +23,7 @@ import java.net.SocketAddress;
 /**
  * @author Rob Austin.
  */
-public interface IdentifierListener {
+public interface RemoteNodeValidator {
 
     /**
      * checks the identifier that is unique and we haven't seen it before, unless it comes from the same port
@@ -33,6 +33,6 @@ public interface IdentifierListener {
      * @param remoteAddress        remoteAddress
      * @return               true if unique
      */
-    boolean isIdentifierUnique(byte remoteIdentifier, SocketAddress remoteAddress);
+    boolean validate(byte remoteIdentifier, SocketAddress remoteAddress);
 
 }

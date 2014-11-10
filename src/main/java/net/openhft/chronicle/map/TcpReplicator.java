@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.IdentifierListener;
+import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -76,6 +76,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private final Replica.EntryExternalizable externalizable;
     private final TcpTransportAndNetworkConfig replicationConfig;
     private final StatelessServerConnector statelessServerConnector;
+    private final @Nullable RemoteNodeValidator remoteNodeValidator;
 
     private long selectorTimeout;
 
@@ -91,7 +92,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                          @NotNull final Replica.EntryExternalizable externalizable,
                          @NotNull final TcpTransportAndNetworkConfig replicationConfig,
                          final int maxEntrySizeBytes,
-                         @Nullable StatelessServerConnector statelessServerConnector) throws IOException {
+                         @Nullable StatelessServerConnector statelessServerConnector,
+                         @Nullable RemoteNodeValidator remoteNodeValidator) throws IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig(),
                 maxEntrySizeBytes);
@@ -109,6 +111,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         this.maxEntrySizeBytes = maxEntrySizeBytes;
         this.externalizable = externalizable;
         this.replicationConfig = replicationConfig;
+
+        this.remoteNodeValidator = remoteNodeValidator;
 
         start();
     }
@@ -478,12 +482,11 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             // this can occur sometimes when if 2 or more remote node attempt to use node discovery at the
             // same time
 
-            final IdentifierListener identifierListener =
-                    replicationConfig.nonUniqueIdentifierListener();
             final SocketAddress remoteAddress = socketChannel.getRemoteAddress();
 
-            if ((identifierListener != null && !identifierListener.isIdentifierUnique(remoteIdentifier,
-                    remoteAddress)) || remoteIdentifier == localIdentifier)
+            if ((remoteNodeValidator != null &&
+                    !remoteNodeValidator.validate(remoteIdentifier, remoteAddress))
+                    || remoteIdentifier == localIdentifier)
 
                 // throwing this exception will cause us to disconnect, both the client and server
                 // will be able to detect the the remote and local identifiers are the same,
