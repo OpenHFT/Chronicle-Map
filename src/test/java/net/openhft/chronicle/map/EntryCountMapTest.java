@@ -53,7 +53,7 @@ public class EntryCountMapTest {
             throws IOException {
         OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> mapBuilder = OffHeapUpdatableChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                 .entries(entries)
-                .minSegments(segments)
+                .actualSegments(segments)
                 .entrySize(entrySize)
                 .entryAndValueAlignment(alignment);
         return mapBuilder.createPersistedTo(getPersistenceFile());
@@ -103,33 +103,33 @@ public class EntryCountMapTest {
             testEntriesMaxSize(s, 2000, 3100, i);
             testEntriesMaxSize(s, 4000, 5100, i);
             testEntriesMaxSize(s, 5000, 7100, i);
-            testEntriesMaxSize(s, 8000, 10200, i);
-            testEntriesMaxSize(s, 12000, 16000, i);
-            testEntriesMaxSize(s, 16000, 21300, i);
+            testEntriesMaxSize(s, 8000, 11000, i);
+            testEntriesMaxSize(s, 12000, 17000, i);
+            testEntriesMaxSize(s, 16000, 22000, i);
             s = 32;
             testEntriesMaxSize(s, 2000, 3900, i);
             testEntriesMaxSize(s, 4000, 5900, i);
             testEntriesMaxSize(s, 5000, 7900, i);
             testEntriesMaxSize(s, 8000, 12000, i);
-            testEntriesMaxSize(s, 12000, 15900, i);
-            testEntriesMaxSize(s, 16000, 21300, i);
-            testEntriesMaxSize(s, 32000, 42200, i);
+            testEntriesMaxSize(s, 12000, 17000, i);
+            testEntriesMaxSize(s, 16000, 23000, i);
+            testEntriesMaxSize(s, 32000, 46000, i);
             s = 64;
             testEntriesMaxSize(s, 5000, 7550, i);
             testEntriesMaxSize(s, 8000, 11400, i);
-            testEntriesMaxSize(s, 12000, 16000, i);
-            testEntriesMaxSize(s, 16000, 22000, i);
-            testEntriesMaxSize(s, 32000, 43000, i);
-            testEntriesMaxSize(s, 40000, 54000, i);
+            testEntriesMaxSize(s, 12000, 18000, i);
+            testEntriesMaxSize(s, 16000, 24000, i);
+            testEntriesMaxSize(s, 32000, 47000, i);
+            testEntriesMaxSize(s, 40000, 60000, i);
             s = 128;
-            testEntriesMaxSize(s, 16000, 23000, i);
-            testEntriesMaxSize(s, 32000, 44200, i);
-            testEntriesMaxSize(s, 40000, 56000, i);
-            testEntriesMaxSize(s, 64000, 92000, i);
-            testEntriesMaxSize(s, 129000, 190000, i);
+            testEntriesMaxSize(s, 16000, 24000, i);
+            testEntriesMaxSize(s, 32000, 50000, i);
+            testEntriesMaxSize(s, 40000, 62000, i);
+            testEntriesMaxSize(s, 64000, 98000, i);
+            testEntriesMaxSize(s, 129000, 204000, i);
             s = 256;
-            testEntriesMaxSize(s, 64000, 92000, i);
-            testEntriesMaxSize(s, 129000, 192000, i);
+            testEntriesMaxSize(s, 64000, 100000, i);
+            testEntriesMaxSize(s, 129000, 213000, i);
         }
         // hyperbolic average gives more weight to small numbers.
         System.out.printf("Score: %.2f%n", scoreCount / score);

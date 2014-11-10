@@ -340,7 +340,7 @@ a key, but unlike `map.getUsing()` if there is not an entry in the map for this 
 will be added and the value return will we the same value which you provided. ( The section below
  covers both `map.getUsing()` and `map.acquireUsing()` in more detail )
 
-#### Off Heap Storage and how using a Proxy Object can Improve Performance
+#### Off heap storage and how using a Proxy Object can improve performance
 
 Chronicle Map stores its data off heap. There are some distinct advantages in using off heap data storage
 
@@ -350,7 +350,7 @@ Chronicle Map stores its data off heap. There are some distinct advantages in us
 heap memory. When this memory is shared between processes on the same server, 
 the chronicle map is able to distribute entries between processes with extremely low overhead, 
 as both processes are sharing the same off heap memory space. Since your objects are already stored off
-heap ( as a series of bytes ), replicating entries over the network add relatively low over head.
+heap ( as a series of bytes ), replicating entries over the network adds relatively low over head.
 
 One of the downsides of an Off Heap Map is that whenever you wish to get a value ( on heap ) from an entry
 which is off heap, for example calling :
@@ -364,6 +364,7 @@ that entry has to be deserialised onto the java heap so that you can use its val
  ``` java
 for(int i=1;i<=10;i++) {
   Value v = get(key)
+
 }
 ``` 
 this would create 10 separate instances of the value. As each time get() is called the map has to
@@ -380,7 +381,8 @@ and existing object ( in this case the ‘using’ value ), you can instead call
 Value using = new Value();
 
 for(int i=1;i<=10;i++) {
-  Value v = map.getUsing(key,using); // this won’t create a new value each time.
+  Value bond = map.getUsing(key,using); // this won’t create a new value each time.
+  assert using == bond; // this will always be the same instance and the Vaule type can not be immutable
 }
 ``` 
 We can get a further performance improvement if we don't deserialize the whole object, 
@@ -424,7 +426,10 @@ BondVOInterface  bond = map.get(key);
 bond.getCoupon()
 
 ```
-lets say that it is only the `coupon` field that we are interested in, then its better not to have to deserialize the whole object that implements the `BondVOInterface`. It would be more efficient to just deserialize the field(s) that we require, in this example just the coupon. This is why we created the`OffHeapUpdatableChronicleMapBuilder`, when you use this builder chronicle will not create on heap copies of your whole DataStructure. You can instead use proxy objects that can read and write into the off heap data structures, this reduced serialisation can give you a big performance boost. Below we show you how you can work directly with the off heap entries.
+lets say that it is only the `coupon` field that we are interested in, then its better not to have to
+deserialize the whole object that implements the `BondVOInterface`. It would be more efficient to just
+deserialize the field(s) that we require, in this example just the coupon. This is why we created
+the`OffHeapUpdatableChronicleMapBuilder`, when you use this builder chronicle will not create on heap copies of your whole data structure. You can instead use proxy objects that can read and write into the off heap data structures, this reduced serialisation can give you a big performance boost. Below we show you how you can work directly with the off heap entries.
 
 ``` java
         ChronicleMap<String, BondVOInterface> chm = OffHeapUpdatableChronicleMapBuilder
@@ -443,22 +448,24 @@ value class, in our case `BondVOInterface.class` is an `interface` rather than a
 class that class has to extend `Byteable`),  now
 like before, we can
 use the `getUsing(key,using)` method, but this time we have to create the ‘using’ instance slightly
-differently
+differently, we have to call the `newDirectReference(..)` method.
 
 ``` java
 BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
 ``` 
 
-now we can call
+the call to `getUsing(key,value)` is the same as we had in the earlier example
 
 ``` java
-BondVOInterface  bond = map.getUsing(key,value);
+BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
+BondVOInterface  bond = map.getUsing(key,using);
+assert using == bond; // this will always be the same instance
 ```
 
 this won’t create any on heap objects, and it won’t deserialize the ‘bond’ entry from off heap to on
 heap, all it does is sets the bond as a proxy to the off heap memory, this proxy object was created by
-`DataValueClasses.newDirectReference(BondVOInterface.class)` it allows us access the fileds for our entry
-directly from the off heap storage,
+`DataValueClasses.newDirectReference(BondVOInterface.class)`, it allows us access to the fields of our
+entry, directly into the off heap storage.
 
 so when you call :
 
@@ -468,13 +475,12 @@ bond.getCoupon()
 
 its only the coupon that gets deserialized.
 
-
 Just like any other concurrent map, chronicle map uses segment locking, if you wish to obtain a read lock
-when calling when calling getUsing(key,using) you can do this :
+when calling getUsing(key,using) you can do this :
 
 ``` java
-try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,using)) {
-	BondVOInterface bond =  context.value().getValue();
+BondVOInterface  bond = map.getUsing(key,value);
+try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,bond)) {
 
    long issueDate =  bond.getIssueDate();
    String symbol = bond.getSymbol();
@@ -497,7 +503,7 @@ If you wish not to use a try block you must manually release the segment lock by
 context.close() // the lock will get released when this is called
 ```
 
-#### what acquireUsingLocked()
+####  acquireUsingLocked()
 
 just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
 code is a pattern that you will often come across, acquireUsing(key,value) offers this
@@ -542,7 +548,7 @@ try (WriteContext<?, BondVOInterface> context = map.acquireUsingLocked("one", bo
 }
 ```
 
-if after you have read the 'issueDate' and  'symbol' you wish to remove the entry based on some
+if after you have read the 'issueDate' and  'symbol' and you wish to remove the entry based on some
 business logic, it more efficient to use the 'context' to remove the entry, as the contents is
 already aware when the entry is in memory.
 
