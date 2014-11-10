@@ -340,7 +340,7 @@ a key, but unlike `map.getUsing()` if there is not an entry in the map for this 
 will be added and the value return will we the same value which you provided. ( The section below
  covers both `map.getUsing()` and `map.acquireUsing()` in more detail )
 
-#### Off Heap Storage and how using a Proxy Object can Improve Performance
+#### Off heap storage and how using a Proxy Object can improve performance
 
 Chronicle Map stores its data off heap. There are some distinct advantages in using off heap data storage
 
@@ -350,7 +350,7 @@ Chronicle Map stores its data off heap. There are some distinct advantages in us
 heap memory. When this memory is shared between processes on the same server, 
 the chronicle map is able to distribute entries between processes with extremely low overhead, 
 as both processes are sharing the same off heap memory space. Since your objects are already stored off
-heap ( as a series of bytes ), replicating entries over the network add relatively low over head.
+heap ( as a series of bytes ), replicating entries over the network adds relatively low over head.
 
 One of the downsides of an Off Heap Map is that whenever you wish to get a value ( on heap ) from an entry
 which is off heap, for example calling :
@@ -364,6 +364,7 @@ that entry has to be deserialised onto the java heap so that you can use its val
  ``` java
 for(int i=1;i<=10;i++) {
   Value v = get(key)
+
 }
 ``` 
 this would create 10 separate instances of the value. As each time get() is called the map has to
@@ -380,7 +381,8 @@ and existing object ( in this case the ‘using’ value ), you can instead call
 Value using = new Value();
 
 for(int i=1;i<=10;i++) {
-  Value v = map.getUsing(key,using); // this won’t create a new value each time.
+  Value bond = map.getUsing(key,using); // this won’t create a new value each time.
+  assert using == bond; // this will always be the same instance and the Vaule type can not be immutable
 }
 ``` 
 We can get a further performance improvement if we don't deserialize the whole object, 
@@ -452,11 +454,12 @@ differently, we have to call the `newDirectReference(..)` method.
 BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
 ``` 
 
-the call to get using is the same
-
+the call to `getUsing(key,value)` is the same as we had in the earlier example
 
 ``` java
-BondVOInterface  bond = map.getUsing(key,value);
+BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
+BondVOInterface  bond = map.getUsing(key,using);
+assert using == bond; // this will always be the same instance
 ```
 
 this won’t create any on heap objects, and it won’t deserialize the ‘bond’ entry from off heap to on
@@ -472,13 +475,12 @@ bond.getCoupon()
 
 its only the coupon that gets deserialized.
 
-
 Just like any other concurrent map, chronicle map uses segment locking, if you wish to obtain a read lock
 when calling getUsing(key,using) you can do this :
 
 ``` java
-try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,using)) {
-	BondVOInterface bond =  context.value().getValue();
+BondVOInterface  bond = map.getUsing(key,value);
+try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,bond)) {
 
    long issueDate =  bond.getIssueDate();
    String symbol = bond.getSymbol();
