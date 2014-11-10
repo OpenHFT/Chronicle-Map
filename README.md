@@ -818,7 +818,7 @@ example of just two servers, they only have to be connected via a single tcp soc
 the data is transferred both ways. Which is great, however what if you wanted to replicate more than
 just one chronicle map, what if you were going to replicate two chronicle maps across your network,
 unfortunately with just TCP replication you would have to have two tcp socket connections, which is
-not ideal. This is why we created the ReplicationHub. The ReplicationHub let you replicate numerous
+not ideal. This is why we created the ReplicationHub. The ReplicationHub lets you replicate numerous
 Chronicle Maps via a single point to point socket connection.
 
 The ReplicationHub encompasses TCP replication, where each map has to be given a
@@ -835,15 +835,15 @@ ReplicationHub replicationHub = ReplicationHub.builder()
                     .createWithId(identifier);
 ```
 
-In this example above the channel is given the identifier of 2
+In this example above the channel is given the identifier of 2.
 
 In addition to specifying the identifier we also have to set the maximum entry size, this sets
-the size of the memory buffers within the ChannelProvider.  This has to be set manually, with channels you
-are able to attach additional maps to a ChannelProvider once its up and running, so the maximum size of each
+the size of the memory buffers within the ReplicationChannel.  This has to be set manually, with channels you
+are able to attach additional maps to a ReplicationChannel once its up and running, so the maximum size of each
 entry in the map can not be known in advance and we don’t currently support automatic resizing
 of buffers.
 
-When creating the ChannelProvider you should attach your tcp or udp configuration 
+When creating the ReplicationChannel you should attach your tcp or udp configuration 
 ``` java
 int maxEntrySize = 1024;
 byte identifier = 1;
@@ -853,7 +853,7 @@ ReplicationHub replicationHub = ReplicationHub.builder()
                     .createWithId(identifier);
 ```
 
-Attaching ChannelProvider replication to the map:
+Attaching ReplicationChannel replication to the map:
 
 ``` java
 short channel = (short) 2;
@@ -882,7 +882,7 @@ to replicate the wrong maps data. The chronicle channels don't have to be in ord
 unique for each map you have.
 
 
-### Channels and ChannelProvider - Example
+### Channels and ReplicationChannel - Example
 
 ``` java
     // server 1 with  identifier = 1
