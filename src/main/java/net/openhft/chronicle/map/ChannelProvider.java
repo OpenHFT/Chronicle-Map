@@ -501,8 +501,6 @@ final class ChannelProvider implements Closeable {
 
         @Override
         public void close() throws IOException {
-            // synchronized on parent instance to prevent possible (but very unlikely) contention
-            // between close() calls on different channels
             channelDataLock.writeLock().lock();
             try {
                 chronicleChannelList.remove(chronicleChannels[chronicleChannel]);

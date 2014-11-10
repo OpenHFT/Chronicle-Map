@@ -29,6 +29,8 @@ final class InstanceConfig<E> implements ChronicleHashInstanceConfig<ChronicleSe
 
     private final ChronicleHashInstanceConfig<ChronicleMap<E, DummyValue>> mapConfig;
 
+    private boolean used;
+
     InstanceConfig(ChronicleHashInstanceConfig<ChronicleMap<E, DummyValue>> mapConfig) {
         this.mapConfig = mapConfig;
     }
@@ -56,7 +58,14 @@ final class InstanceConfig<E> implements ChronicleHashInstanceConfig<ChronicleSe
     }
 
     @Override
-    public ChronicleSet<E> create() throws IOException {
+    public synchronized ChronicleSet<E> create() throws IOException {
+        if (used)
+            throw new IllegalStateException(
+                    "A ChronicleSet has already been created using this instance config. " +
+                            "Create a new instance config (builder.instance() or call any " +
+                            "configuration method on this instance config) to create a new " +
+                            "ChronicleSet instance");
+        used = true;
         return new SetFromMap<>(mapConfig.create());
     }
 }

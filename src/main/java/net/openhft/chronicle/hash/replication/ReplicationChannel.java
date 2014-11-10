@@ -17,6 +17,24 @@
 package net.openhft.chronicle.hash.replication;
 
 
+import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * A token which should be created via {@link ReplicationHub#createChannel(short)} call and passed
+ * to {@link ChronicleHashInstanceConfig#replicatedViaChannel(ReplicationChannel)} method, to
+ * establish a channel replication. See
+ * <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
+ * the corresponding section in ChronicleMap manual</a> for more information.
+ *
+ * <p>A {@code ReplicationChannel} could be used to replicate only one {@link ChronicleHash}
+ * instance.
+ *
+ * @see ReplicationHub
+ * @see ReplicationHub#createChannel(short)
+ */
 public final class ReplicationChannel {
     private ReplicationHub hub;
     private final short channelId;
@@ -26,10 +44,25 @@ public final class ReplicationChannel {
         this.channelId = channelId;
     }
 
+    /**
+     * Returns the {@link ReplicationHub} on which this {@code ReplicationChannel} was {@linkplain
+     * ReplicationHub#createChannel(short) created}.
+     *
+     * @return the {@code ReplicationHub} to which this {@code ReplicationChannel} belongs
+     * @see ReplicationHub#createChannel(short)
+     */
+    @NotNull
     public ReplicationHub hub() {
         return hub;
     }
 
+    /**
+     * Returns the identifier of this channel, with which was {@linkplain
+     * ReplicationHub#createChannel(short) created}.
+     *
+     * @return the identifier of this channel
+     * @see ReplicationHub#createChannel(short)
+     */
     public short channelId() {
         return channelId;
     }
