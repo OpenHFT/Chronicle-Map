@@ -340,7 +340,7 @@ a key, but unlike `map.getUsing()` if there is not an entry in the map for this 
 will be added and the value return will we the same value which you provided. ( The section below
  covers both `map.getUsing()` and `map.acquireUsing()` in more detail )
 
-#### Improve Performance using and Proxy Object to off heap memory
+#### Off Heap Storage and how using a Proxy Object can Improve Performance
 
 Chronicle Map stores its data off heap. There are some distinct advantages in using off heap data storage
 
@@ -353,10 +353,14 @@ as both processes are sharing the same off heap memory space. Since your objects
 heap ( as a series of bytes ), replicating entries over the network add relatively low over head.
 
 One of the downsides of an Off Heap Map is that whenever you wish to get a value ( on heap ) from an entry
+which is off heap, for example calling :
+
  ``` java
 Value v = get(key)
-``` 
+```
+
 that entry has to be deserialised onto the java heap so that you can use its value just like any other java object. So if you were to call get(key) ten times, 
+
  ``` java
 for(int i=1;i<=10;i++) {
   Value v = get(key)
@@ -367,7 +371,7 @@ first create a Object to store the result in and then deserialise the value stor
 heap entry. If you want to get the value back on heap so that you can use it like a normal java 
 value, There is nothing we can do about the deserialisation as this has to occur every time, 
 ( since the value may have been changed by another thread ), but we don’t have to create the 
-object each time. This is why we create getUsing(key,using). By reducing the number of objects 
+object each time. This is why we create `getUsing(key,using)`. By reducing the number of objects
 you create, you reduce the amount of work that the garbage collector has to carry out, 
 this in turn may, improve your overall performance. So back to `getUsing(key,using)`, If you wish to reuse
 and existing object ( in this case the ‘using’ value ), you can instead call :
@@ -420,9 +424,8 @@ BondVOInterface  bond = map.get(key);
 bond.getCoupon()
 
 ```
-if its only the coupon that you are interested in then it would be better if we did not have to 
-deserialize the whole object that implements the BondVOInterface. This is why we created the 
-OffHeapUpdatableChronicleMapBuilder
+lets say that it is only the `coupon` field that we are interested in, then its better not to have to deserialize the whole object that implements the `BondVOInterface`. It would be more efficient to just deserialize the field(s) that we require, in this example just the coupon. This is why we created the`OffHeapUpdatableChronicleMapBuilder`, when you use this builder chronicle will not create on heap copies of your whole DataStructure. You can instead use proxy objects that can read and write into the off heap data structures, this reduced serialisation can give you a big performance boost. Below we show you how you can work directly with the off heap entries.
+
 ``` java
         ChronicleMap<String, BondVOInterface> chm = OffHeapUpdatableChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
@@ -430,7 +433,8 @@ OffHeapUpdatableChronicleMapBuilder
                 .create();
 ``` 
 
-notice that the 
+notice that the
+
 ``` java
 .of(String.class, BondVOInterface.class)
 ``` 
