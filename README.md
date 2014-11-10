@@ -354,7 +354,7 @@ heap ( as a series of bytes ), replicating entries over the network add relative
 
 One of the downsides of an Off Heap Map is that whenever you wish to get a value ( on heap ) from an entry
  ``` java
-Value v= get(key)
+Value v = get(key)
 ``` 
 that entry has to be deserialised onto the java heap so that you can use its value just like any other java object. So if you were to call get(key) ten times, 
  ``` java
@@ -369,13 +369,14 @@ value, There is nothing we can do about the deserialisation as this has to occur
 ( since the value may have been changed by another thread ), but we don’t have to create the 
 object each time. This is why we create getUsing(key,using). By reducing the number of objects 
 you create, you reduce the amount of work that the garbage collector has to carry out, 
-this in turn may, improve your overall performance. So back to `getUsing(key,using)`, If you wish to reuse and existing object ( in this case the ‘using’ value ), you can instead call
+this in turn may, improve your overall performance. So back to `getUsing(key,using)`, If you wish to reuse
+and existing object ( in this case the ‘using’ value ), you can instead call :
  
  ``` java
 Value using = new Value();
 
 for(int i=1;i<=10;i++) {
-  Value v= map.getUsing(key,using); // this won’t create a new value each time.
+  Value v = map.getUsing(key,using); // this won’t create a new value each time.
 }
 ``` 
 We can get a further performance improvement if we don't deserialize the whole object, 
@@ -434,8 +435,11 @@ notice that the
 .of(String.class, BondVOInterface.class)
 ``` 
 
-value class is an interface,  now like before, we can use the getUsing(key,using) method, 
-but this time we have to create the ‘using’ instance slightly differently
+value class, in our case `BondVOInterface.class` is an `interface` rather than a `class` ( or if it is a
+class that class has to extend `Byteable`),  now
+like before, we can
+use the `getUsing(key,using)` method, but this time we have to create the ‘using’ instance slightly
+differently
 
 ``` java
 BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
@@ -447,21 +451,22 @@ now we can call
 BondVOInterface  bond = map.getUsing(key,value);
 ```
 
-this won’t create any on heap objects, and it won’t deserialize the ‘bond’ from off heap to on
-heap, all it does is sets the bond as a proxy object created by DataValueClasses
-.newDirectReference(BondVOInterface.class) to point to the off heap storage,
-under the covers,  moves a pointer to point at the start of the value in off heap memory, so
-calling :
+this won’t create any on heap objects, and it won’t deserialize the ‘bond’ entry from off heap to on
+heap, all it does is sets the bond as a proxy to the off heap memory, this proxy object was created by
+`DataValueClasses.newDirectReference(BondVOInterface.class)` it allows us access the fileds for our entry
+directly from the off heap storage,
+
+so when you call :
 
 ``` java
 bond.getCoupon()
 ```
 
-its only the coupon which gets deserialized.
+its only the coupon that gets deserialized.
 
-###### Locking
 
-Just like any other concurrent map, chronicle map uses segment locking, if you wish to hold onto the segment log when calling getUsing(key,using) you can do this :
+Just like any other concurrent map, chronicle map uses segment locking, if you wish to obtain a read lock
+when calling when calling getUsing(key,using) you can do this :
 
 ``` java
 try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,using)) {
@@ -472,38 +477,39 @@ try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,using)) {
 
 	// add your logic here ( the lock will ensure this bond can not be changed by another thread )
 
-} // the lock is released here
-
-To ensure that you can read the 'issueDate' and 'symbol' can be read atomically, these values
-must be read while the segment lock is in place.
+} // the lock is released here because close() is called
 
 
 ```
+
+To ensure that you can read the 'issueDate' and 'symbol' can be read atomically, these values
+must be read while the segment read lock is in place.
+
 when you call map.getUsingLocked(key,using) we return a ReadContext, the ReadContext extends
 AutoCloseable so will automatically unlock the segment when the try block is exited.
 
 If you wish not to use a try block you must manually release the segment lock by calling
 ``` java
-context.close()
+context.close() // the lock will get released when this is called
 ```
-when you wish to unlock the segment.
 
-#### what is acquireUsing() and  acquireUsingLocked()
+#### what acquireUsingLocked()
 
 just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
 code is a pattern that you will often come across, acquireUsing(key,value) offers this
-functionality with a single method call
+functionality with a single method call :
+
  ``` java
 V acquireUsing(key,value) {
     Lock l = ...; // the segement lock of the map
     l.lock();
     try {
-          V v = map.getUsing(key,value)
+           V v = map.getUsing(key,value)
            if (v == null) {
-               map.put(key,value)
-               return v;
+               map.put(key,value); // create a new entry
+               return value;
            } else
-               return v
+               return v; // return the value of the existing entry
     } finally {
         l.unlock();
     }
@@ -511,22 +517,23 @@ V acquireUsing(key,value) {
 ```
 
 if you are only accessing ChronicleMap from a single thread and you are not doing replication
-and don't are about atomic reads then its simpler ( and faster ) to use acquireUsing() otherwise we
+and don't care about atomic reads, then its simpler ( and faster ) to use acquireUsing() otherwise we
 recommend acquireUsingLocked(key,value)
 
-you use
 
 because acquireUsing can end up creating an entry the acquireUsingLocked(key,value) method holds
 a segment write lock, this is unlike the getUsing(key,using) method that holds a segment read lock.
 
 ``` java
-try (WriteContext<?, BondVOInterface> context = map.acquireUsingLocked("one", value)) {
+BondVOInterface bond = ... // create your instance
+try (WriteContext<?, BondVOInterface> context = map.acquireUsingLocked("one", bond)) {
 
- BondVOInterface bond = context.value();
+ assert bond ==  context.value();
+
  long issueDate =  bond.getIssueDate();
  String symbol = bond.getSymbol();
 
-  if (condition)
+ if (condition)  // based on your own business logic
     context.removeEntry();
 }
 ```

@@ -639,6 +639,7 @@ public class ChronicleMapTest {
         es.shutdown();
         es.awaitTermination(1, TimeUnit.MINUTES);
     }
+
     @Test
     @Ignore
     public void testAcquireLockedPerf()
@@ -683,7 +684,7 @@ public class ChronicleMapTest {
                                 sb.append("us:");
                                 sb.append(j * factor);
                                 long n;
-                                try(WriteContext wc = map.acquireUsingLocked(sb, value)) {
+                                try (WriteContext wc = map.acquireUsingLocked(sb, value)) {
                                     n = value.addValue(1);
                                 }
                                 assert n > 0 && n < 1000 : "Counter corrupted " + n;
@@ -1331,9 +1332,8 @@ public class ChronicleMapTest {
                 .of(CharSequence.class, LongValue.class)
                 .entries(1000)
                 .entrySize(16);
-        File tmpFile = File.createTempFile("testAcquireUsingLocked", ".deleteme");
-        tmpFile.deleteOnExit();
-        final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
+
+        final ChronicleMap<CharSequence, LongValue> map = builder.create();
 
         LongValue value = nativeLongValue();
 
@@ -1341,13 +1341,14 @@ public class ChronicleMapTest {
         // this will add the entry
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
             assertEquals(0, context.value().getValue());
-
+            assert value == context.value();
             LongValue value1 = context.value();
             value1.addValue(1);
         }
 
         // check that the entry was added
         try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assert value == context.value();
             assertEquals(true, context.present());
             assertEquals(1, context.value().getValue());
         }
@@ -1355,31 +1356,59 @@ public class ChronicleMapTest {
 
         // this will remove the entry
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            assert value == context.value();
             context.removeEntry();
         }
 
         // check that the entry was removed
         try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assert value == context.value();
             assertEquals(false, context.present());
             assertEquals(null, context.value());
         }
 
 
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            assert value == context.value();
             assertEquals(0, context.value().getValue());
         }
 
 
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+            assert value == context.value();
             context.value().addValue(1);
         }
 
         // check that the entry was removed
         try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
+            assert value == context.value();
             assertEquals(1, context.value().getValue());
         }
 
         map.close();
+    }
+
+
+    @Test(expected = IllegalAccessException.class)
+    public void testAcquireUsingLockedWithString() throws IOException {
+
+        ChronicleMapBuilder<CharSequence, String> builder = ChronicleMapBuilder
+                .of(CharSequence.class, String.class)
+                .entries(1000)
+                .entrySize(16);
+
+
+        try (final ChronicleMap<CharSequence, String> map = builder.create()) {
+
+
+            // this will add the entry
+            try (WriteContext<?, String> context = map.acquireUsingLocked("one", "")) {
+                // do nothing
+            }
+
+
+        }
+
     }
 
     @Test
