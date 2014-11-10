@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.utils;
+package net.openhft.chronicle.map;
 
 
 import net.openhft.lang.collection.ATSDirectBitSet;
@@ -24,13 +24,13 @@ import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectStore;
 
-import static net.openhft.chronicle.map.utils.VanillaIntIntMultiMap.multiMapCapacity;
+import static net.openhft.chronicle.map.IntIntMultiMap.multiMapCapacity;
 import static net.openhft.lang.Maths.isPowerOf2;
 
 /**
  * Supports a simple interface for int -> int[] off heap.
  */
-class VanillaShortShortMultiMap implements MultiMap {
+class ShortShortMultiMap implements MultiMap {
 
     static final long MAX_CAPACITY = (1L << 16);
 
@@ -47,7 +47,7 @@ class VanillaShortShortMultiMap implements MultiMap {
     private long searchHash = -1L;
     private long searchPos = -1L;
 
-    public VanillaShortShortMultiMap(long minCapacity) {
+    public ShortShortMultiMap(long minCapacity) {
         assert minCapacity <= MAX_CAPACITY;
         long capacity = multiMapCapacity(minCapacity);
         assert isPowerOf2(capacity);
@@ -55,11 +55,11 @@ class VanillaShortShortMultiMap implements MultiMap {
         capacityMask = capacity - 1L;
         capacityMask2 = (capacity - 1L) * ENTRY_SIZE;
         bytes = DirectStore.allocateLazy(capacity * ENTRY_SIZE).bytes();
-        positions = VanillaIntIntMultiMap.newPositions(capacity);
+        positions = IntIntMultiMap.newPositions(capacity);
         clear();
     }
 
-    public VanillaShortShortMultiMap(Bytes multiMapBytes, Bytes multiMapBitSetBytes) {
+    public ShortShortMultiMap(Bytes multiMapBytes, Bytes multiMapBitSetBytes) {
         long capacity = multiMapBytes.capacity() / ENTRY_SIZE;
         assert isPowerOf2(capacity);
         assert (capacity / 2L) <= MAX_CAPACITY;
@@ -71,8 +71,8 @@ class VanillaShortShortMultiMap implements MultiMap {
     }
 
     /**
-     * @param minCapacity as in {@link #VanillaShortShortMultiMap(long)} constructor
-     * @return size of {@link Bytes} to provide to {@link #VanillaShortShortMultiMap(Bytes, Bytes)}
+     * @param minCapacity as in {@link #ShortShortMultiMap(long)} constructor
+     * @return size of {@link Bytes} to provide to {@link #ShortShortMultiMap(Bytes, Bytes)}
      * constructor as the first argument
      */
     public static long sizeInBytes(long minCapacity) {
@@ -80,14 +80,14 @@ class VanillaShortShortMultiMap implements MultiMap {
     }
 
     /**
-     * @param minCapacity as in {@link #VanillaShortShortMultiMap(long)} constructor
-     * @return size of {@link Bytes} to provide to {@link #VanillaShortShortMultiMap(Bytes, Bytes)}
+     * @param minCapacity as in {@link #ShortShortMultiMap(long)} constructor
+     * @return size of {@link Bytes} to provide to {@link #ShortShortMultiMap(Bytes, Bytes)}
      * constructor as the second argument
      */
     public static long sizeOfBitSetInBytes(long minCapacity) {
 
 
-        return VanillaIntIntMultiMap.sizeOfBitSetInBytes(minCapacity);
+        return IntIntMultiMap.sizeOfBitSetInBytes(minCapacity);
     }
 
     private void checkValueForPut(long value) {
@@ -183,7 +183,7 @@ class VanillaShortShortMultiMap implements MultiMap {
             if (entryToShift == UNSET_ENTRY)
                 break;
             long insertPos = pos(key(entryToShift));
-            // see comment in VanillaIntIntMultiMap
+            // see comment in IntIntMultiMap
             boolean cond1 = insertPos <= posToRemove;
             boolean cond2 = posToRemove <= posToShift;
             if ((cond1 && cond2) ||

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.utils;
+package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.NativeBytes;
 
@@ -25,65 +25,65 @@ import net.openhft.lang.io.NativeBytes;
  *
  * In future we might support I32 -> I16 or similar.
  */
-public enum MultiMapFactory {
+enum MultiMapFactory {
     I16 {
         @Override
         public long sizeInBytes(long minCapacity) {
-            return VanillaShortShortMultiMap.sizeInBytes(minCapacity);
+            return ShortShortMultiMap.sizeInBytes(minCapacity);
         }
 
         @Override
         public long sizeOfBitSetInBytes(long minCapacity) {
-            return VanillaShortShortMultiMap.sizeOfBitSetInBytes(minCapacity);
+            return ShortShortMultiMap.sizeOfBitSetInBytes(minCapacity);
         }
 
         @Override
         public MultiMap create(NativeBytes bytes, NativeBytes bitSetBytes) {
-            return new VanillaShortShortMultiMap(bytes, bitSetBytes);
+            return new ShortShortMultiMap(bytes, bitSetBytes);
         }
     },
     I24 {
         @Override
         public long sizeInBytes(long minCapacity) {
-            return VanillaI24I24MultiMap.sizeInBytes(minCapacity);
+            return Int24Int24MultiMap.sizeInBytes(minCapacity);
         }
 
         @Override
         public long sizeOfBitSetInBytes(long minCapacity) {
-            return VanillaI24I24MultiMap.sizeOfBitSetInBytes(minCapacity);
+            return Int24Int24MultiMap.sizeOfBitSetInBytes(minCapacity);
         }
 
         @Override
         public MultiMap create(NativeBytes bytes, NativeBytes bitSetBytes) {
-            return new VanillaI24I24MultiMap(bytes, bitSetBytes);
+            return new Int24Int24MultiMap(bytes, bitSetBytes);
         }
     },
     I32 {
         @Override
         public long sizeInBytes(long minCapacity) {
-            return VanillaIntIntMultiMap.sizeInBytes(minCapacity);
+            return IntIntMultiMap.sizeInBytes(minCapacity);
         }
 
         @Override
         public long sizeOfBitSetInBytes(long minCapacity) {
-            return VanillaIntIntMultiMap.sizeOfBitSetInBytes(minCapacity);
+            return IntIntMultiMap.sizeOfBitSetInBytes(minCapacity);
         }
 
         @Override
         public MultiMap create(NativeBytes bytes, NativeBytes bitSetBytes) {
-            return new VanillaIntIntMultiMap(bytes, bitSetBytes);
+            return new IntIntMultiMap(bytes, bitSetBytes);
         }
     };
 
-    public static final long I16_MAX_CAPACITY = VanillaShortShortMultiMap.MAX_CAPACITY;
-    public static final long MAX_CAPACITY = VanillaIntIntMultiMap.MAX_CAPACITY;
+    public static final long I16_MAX_CAPACITY = ShortShortMultiMap.MAX_CAPACITY;
+    public static final long MAX_CAPACITY = IntIntMultiMap.MAX_CAPACITY;
 
     public static MultiMapFactory forCapacity(long capacity) {
-        if (capacity <= VanillaShortShortMultiMap.MAX_CAPACITY)
+        if (capacity <= ShortShortMultiMap.MAX_CAPACITY)
             return I16;
-//        if (capacity <= VanillaI24I24MultiMap.MAX_CAPACITY)
+//        if (capacity <= Int24Int24MultiMap.MAX_CAPACITY)
 //            return I24;
-        if (capacity <= VanillaIntIntMultiMap.MAX_CAPACITY)
+        if (capacity <= IntIntMultiMap.MAX_CAPACITY)
             return I32;
         throw new IllegalArgumentException("Capacity " + capacity + " not supported");
     }

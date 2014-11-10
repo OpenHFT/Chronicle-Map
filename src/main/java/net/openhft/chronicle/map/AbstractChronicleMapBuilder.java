@@ -26,7 +26,7 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
-import net.openhft.chronicle.map.utils.MultiMapFactory;
+import net.openhft.chronicle.map.MultiMapFactory;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.Maths;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -437,6 +437,17 @@ public abstract class AbstractChronicleMapBuilder<K, V,
                 maxSegmentCapacity);
         segments = Maths.nextPower2(Math.max(segments, minSegments()), 1L);
         return segments <= maxSegments ? segments : -segments;
+    }
+
+
+    int segmentHeaderSize() {
+        int segments = actualSegments();
+        // reduce false sharing unless we have a lot of segments.
+        return segments <= 8192 ? 64 : 16;
+    }
+
+    MultiMapFactory multiMapFactory() {
+        return MultiMapFactory.forCapacity(actualEntriesPerSegment());
     }
 
     public B lockTimeOut(long lockTimeOut, TimeUnit unit) {
@@ -932,16 +943,6 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         // key and value serialization buffers each x64 of expected entry size..
         return (int) Math.min(Math.max(2L, entries() >> 10),
                 VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR);
-    }
-
-    int segmentHeaderSize() {
-        int segments = actualSegments();
-        // reduce false sharing unless we have a lot of segments.
-        return segments <= 8192 ? 64 : 16;
-    }
-
-    public MultiMapFactory multiMapFactory() {
-        return MultiMapFactory.forCapacity(actualEntriesPerSegment());
     }
 }
 

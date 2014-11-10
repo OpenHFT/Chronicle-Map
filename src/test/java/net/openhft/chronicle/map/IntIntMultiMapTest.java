@@ -16,11 +16,14 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.utils;
+package net.openhft.chronicle.map;
 
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import net.openhft.chronicle.map.Int24Int24MultiMap;
+import net.openhft.chronicle.map.IntIntMultiMap;
+import net.openhft.chronicle.map.MultiMap;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.DirectStore;
 import org.junit.Assert;
@@ -52,9 +55,9 @@ public class IntIntMultiMapTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {VanillaShortShortMultiMap.class},
-                {VanillaI24I24MultiMap.class},
-                {VanillaIntIntMultiMap.class},
+                {ShortShortMultiMap.class},
+                {Int24Int24MultiMap.class},
+                {IntIntMultiMap.class},
         });
     }
 
