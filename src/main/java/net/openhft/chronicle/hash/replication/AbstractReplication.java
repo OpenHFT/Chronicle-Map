@@ -56,7 +56,8 @@ public abstract class AbstractReplication {
     }
 
     /**
-     * Builder of {@link AbstractReplication} configurations.
+     * Builder of {@link AbstractReplication} configurations. This class and it's subclasses are
+     * mutable, configuration methods mutate the builder and return it back for convenient chaining.
      *
      * @param <R> the concrete {@link AbstractReplication} subclass: {@link
      *            SingleChronicleHashReplication} or {@link ReplicationHub}
@@ -77,6 +78,14 @@ public abstract class AbstractReplication {
             return (B) this;
         }
 
+        /**
+         * Configures UDP transport settings, used by Replications, created by this builder.
+         * {@code null} means that UDP transport shouldn't being used.
+         *
+         * @param udpConfig the new UDP transport config for replications, created by this builder.
+         * @return this builder back, for chaining
+         * @see AbstractReplication#udpTransport()
+         */
         @NotNull
         public B udpTransport(@Nullable UdpTransportConfig udpConfig) {
             this.udpConfig = udpConfig;
@@ -89,10 +98,24 @@ public abstract class AbstractReplication {
             return (B) this;
         }
 
+        /**
+         * Creates a Replication instance with the given node (server) identifier.
+         *
+         * @param identifier the node (server) identifier of the returned replication
+         * @return a new Replication instance with the specified node (server) identifier
+         * @throws IllegalArgumentException if the given identifier is non-positive
+         * @throws IllegalStateException if neither {@link #tcpTransportAndNetwork(
+         * TcpTransportAndNetworkConfig)} nor {@link #udpTransport(UdpTransportConfig)} are
+         * configured to non-{@code null}. At least one of the transport-level configs should be
+         * specified.
+         */
         @NotNull
         public abstract R createWithId(byte identifier);
 
-        void check() {
+        void check(byte identifier) {
+            if (identifier <= 0)
+                throw new IllegalArgumentException("Identifier must be positive, " + identifier +
+                        " given");
             if (udpConfig == null && tcpConfig == null)
                 throw new IllegalStateException(
                         "At least one transport method (TCP or UDP) should be configured");
