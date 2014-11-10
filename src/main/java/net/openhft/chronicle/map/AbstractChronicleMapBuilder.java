@@ -26,7 +26,7 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
-import net.openhft.chronicle.map.utils.MultiMapFactory;
+import net.openhft.chronicle.map.MultiMapFactory;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.Maths;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -372,10 +372,8 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         if (segments == 1)
             return entries;
         double poorDistEntriesScale = Math.log(segments) * entries;
-        if (segments <= 8)
-            return Math.min(entries * segments,
-                    (long) (entries + poorDistEntriesScale * 0.11 + segments * 8)); // 11% was min for tests
-        return (long) (entries + poorDistEntriesScale * 0.11 + 80); // 11% was min for tests
+        return Math.min(entries * segments,
+                (long) (entries + poorDistEntriesScale * 0.14 + 32)); // 12% was min for tests
     }
 
     @Override
@@ -390,24 +388,22 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     private int estimateSegments() {
-        for (int power = 1; power < 64; power *= 2) {
-            if (entries <= power * power * power)
-                return power;
-        }
-        long size = (entrySize + 32) * entries;
-        if (size < 10L * 1000 * 1000) // 10 MB
-            return 64;
-        if (size < 100L * 1000 * 1000) // 100 MB
-            return 128;
-        if (size < 400L * 1000 * 1000) // 400 MB
-            return 256;
-        if (size < 1L * 1000 * 1000 * 1000) // 1 GB
+        return (int) Math.min(Maths.nextPower2(entries / 32, 1), estimateSegementBasedOnSize());
+
+    }
+
+    private int estimateSegementBasedOnSize() {
+        // based on entries with multimap of 100 bytes.
+        long size = (long) (Math.log10(entrySize + 32) / 2 * entries);
+        if (size < 10 * 1000)
             return 512;
-        if (size < 10L * 1000 * 1000 * 1000) // 10 GB
+        if (size < 100 * 1000)
             return 1024;
-        if (size < 100L * 1000 * 1000 * 1000) // 100 GB
+        if (size < 1000 * 1000)
             return 2048;
-        return 4096;
+        if (size < 10 * 1000 * 1000)
+            return 4096;
+        return 8192;
     }
 
     @Override
@@ -437,6 +433,17 @@ public abstract class AbstractChronicleMapBuilder<K, V,
                 maxSegmentCapacity);
         segments = Maths.nextPower2(Math.max(segments, minSegments()), 1L);
         return segments <= maxSegments ? segments : -segments;
+    }
+
+
+    int segmentHeaderSize() {
+        int segments = actualSegments();
+        // reduce false sharing unless we have a lot of segments.
+        return segments <= 8192 ? 128 : 64;
+    }
+
+    MultiMapFactory multiMapFactory() {
+        return MultiMapFactory.forCapacity(actualEntriesPerSegment());
     }
 
     public B lockTimeOut(long lockTimeOut, TimeUnit unit) {
@@ -932,16 +939,6 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         // key and value serialization buffers each x64 of expected entry size..
         return (int) Math.min(Math.max(2L, entries() >> 10),
                 VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR);
-    }
-
-    int segmentHeaderSize() {
-        int segments = actualSegments();
-        // reduce false sharing unless we have a lot of segments.
-        return segments <= 8192 ? 64 : 16;
-    }
-
-    public MultiMapFactory multiMapFactory() {
-        return MultiMapFactory.forCapacity(actualEntriesPerSegment());
     }
 }
 
