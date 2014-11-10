@@ -1389,12 +1389,13 @@ public class ChronicleMapTest {
     }
 
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testAcquireUsingLockedWithString() throws IOException {
 
         ChronicleMapBuilder<CharSequence, String> builder = ChronicleMapBuilder
                 .of(CharSequence.class, String.class)
                 .entries(1000)
+                .defaultValue("")
                 .entrySize(16);
 
 
