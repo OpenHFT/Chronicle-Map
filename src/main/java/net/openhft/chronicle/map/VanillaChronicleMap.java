@@ -25,8 +25,6 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
-import net.openhft.chronicle.map.MultiMap;
-import net.openhft.chronicle.map.MultiMapFactory;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
@@ -357,7 +355,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     public V get(Object key) {
 
         try (Context<K, V> entry = lookupUsing((K) key, null,
-                LockType.READ_LOCK)) {
+                LockType.READ_LOCK, false)) {
             return entry.value();
         }
     }
@@ -366,7 +364,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     public V getUsing(K key, V usingValue) {
 
         try (Context<K, V> entry = lookupUsing(key, usingValue,
-                LockType.READ_LOCK)) {
+                LockType.READ_LOCK, false)) {
             return entry.value();
         }
     }
@@ -374,20 +372,21 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     @NotNull
     @Override
     public WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue) {
-        return this.lookupUsing(key, usingValue, LockType.WRITE_LOCK);
+        return this.lookupUsing(key, usingValue, LockType.WRITE_LOCK, true);
     }
 
     @NotNull
     @Override
     public ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue) {
-        return this.lookupUsing(key, usingValue, LockType.READ_LOCK);
+        return this.lookupUsing(key, usingValue, LockType.READ_LOCK, true);
     }
 
 
     @Override
     public V acquireUsing(@NotNull K key, @NotNull V usingValue) {
 
-        try (WriteContext<K, V> kvContext = lookupUsing(key, usingValue, LockType.WRITE_LOCK)) {
+        try (WriteContext<K, V> kvContext =
+                     lookupUsing(key, usingValue, LockType.WRITE_LOCK, false)) {
 
             if (!isNativeValueClass)
                 kvContext.dontPutOnClose();
@@ -397,7 +396,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
 
-    <T extends Context> T lookupUsing(K key, V value, LockType lockTypeType) {
+    <T extends Context> T lookupUsing(K key, V usingValue, LockType lockType, boolean mustReuseValue) {
         checkKey(key);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
@@ -409,26 +408,34 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         long segmentHash = segmentHash(hash);
 
         Segment segment = segments[segmentNum];
-        MutableLockedEntry<K, V, MKI, KI> lock = (lockTypeType == LockType.WRITE_LOCK)
+        MutableLockedEntry<K, V, MKI, KI> lock = (lockType == LockType.WRITE_LOCK)
                 ? segment.writeLock()
                 : segment.readLock();
 
-        V v = segment.acquireWithoutLock(copies, metaKeyInterop, keyInterop, key, value,
-                segmentHash, lockTypeType == LockType.WRITE_LOCK);
+        V v = segment.acquireWithoutLock(copies, metaKeyInterop, keyInterop, key, usingValue,
+                segmentHash, lockType == LockType.WRITE_LOCK);
+
+        checkReallyUsingValue(usingValue, mustReuseValue, v);
 
         lock.copies = copies;
         lock.metaKeyInterop = metaKeyInterop;
         lock.keyInterop = keyInterop;
         lock.segmentHash = segmentHash;
 
-        if (!isNativeValueClass && lockTypeType == LockType.WRITE_LOCK && v == null)
-            v = value;
+        if (!isNativeValueClass && lockType == LockType.WRITE_LOCK && v == null)
+            v = usingValue;
 
         lock.value(v);
         lock.key(key);
 
         return (T) lock;
 
+    }
+
+    void checkReallyUsingValue(V usingValue, boolean mustReuseValue, V returnedValue) {
+        if (mustReuseValue && returnedValue != null && returnedValue != usingValue)
+            throw new IllegalArgumentException("acquireUsingLocked/getUsingLocked MUST reuse given " +
+                    "values. Given value" + usingValue + " cannot be reused to read " + returnedValue);
     }
 
     @Override
@@ -849,17 +856,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         V acquireWithoutLock(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
-                             long hash2, boolean create) {
-            V v = acquire0(copies, metaKeyInterop, keyInterop, key, usingValue, hash2, false);
-            if (create && v == null)
-                v = acquire0(copies, metaKeyInterop, keyInterop, key, usingValue, hash2, true);
-            return v;
-        }
-
-        V acquire0(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
                    long hash2, boolean create) {
-
-
             long keySize = metaKeyInterop.size(keyInterop, key);
             MultiStoreBytes entry = acquireTmpBytes();
             long offset = searchKey(keyInterop, metaKeyInterop, key, keySize, hash2, entry,

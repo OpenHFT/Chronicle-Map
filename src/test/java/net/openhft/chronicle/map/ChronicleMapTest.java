@@ -1362,7 +1362,6 @@ public class ChronicleMapTest {
 
         // check that the entry was removed
         try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
-            assert value == context.value();
             assertEquals(false, context.present());
             assertEquals(null, context.value());
         }
@@ -1389,7 +1388,7 @@ public class ChronicleMapTest {
     }
 
 
-    @Test(expected = IllegalAccessException.class)
+    @Test(expected = IllegalStateException.class)
     public void testAcquireUsingLockedWithString() throws IOException {
 
         ChronicleMapBuilder<CharSequence, String> builder = ChronicleMapBuilder

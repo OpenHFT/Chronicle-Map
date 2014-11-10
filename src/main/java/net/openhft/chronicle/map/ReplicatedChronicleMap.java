@@ -273,7 +273,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     @Override
-    <T extends Context> T lookupUsing(K key, V value, LockType lockTypeType) {
+    <T extends Context> T lookupUsing(K key, V usingValue, LockType lockType, boolean mustReuseValue) {
         checkKey(key);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         KI keyWriter = keyInteropProvider.get(copies, originalKeyInterop);
@@ -284,24 +284,26 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
 
-        boolean create = lockTypeType == LockType.WRITE_LOCK;
+        boolean create = lockType == LockType.WRITE_LOCK;
         Segment segment = segment(segmentNum);
 
-        MutableLockedEntry<K, V, MKI, KI> lock = (lockTypeType == LockType.WRITE_LOCK)
+        MutableLockedEntry<K, V, MKI, KI> lock = (lockType == LockType.WRITE_LOCK)
                 ? segment.writeLock()
                 : segment.readLock();
 
         V v = segment.acquireWithoutLock(copies, metaKeyWriter, keyWriter, key,
-                value,
+                usingValue,
                 segmentHash, create, create ? timeProvider.currentTimeMillis() : 0L);
+
+        checkReallyUsingValue(usingValue, mustReuseValue, v);
 
         lock.copies = copies;
         lock.metaKeyInterop = metaKeyWriter;
         lock.keyInterop = keyWriter;
         lock.segmentHash = segmentHash;
 
-        if (!isNativeValueClass && lockTypeType == LockType.WRITE_LOCK && v == null)
-            v = value;
+        if (!isNativeValueClass && lockType == LockType.WRITE_LOCK && v == null)
+            v = usingValue;
 
         lock.value(v);
         lock.key(key);
