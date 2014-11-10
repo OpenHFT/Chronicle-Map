@@ -1454,8 +1454,8 @@ an interface as the data type, the map will generate the implementation.
 
 ### Improving the performance of Chronicle Maps Serialization
 
-Are you finding that when using Chronicle Map the serialisation is slow, but you have a large object graph
-
+Are you finding that when using Chronicle Map the serialisation is slow, but you have a large object graph,
+if so -
 here are some steps that you can take to improve performance ( you may find that just one of these steps gives you the performance you require )
 
 * consider replacing java.io.Serializable with java.io.Externalizable ( java.io.Externalizable can be much
@@ -1463,7 +1463,11 @@ faster, but requires you do the the serialisation your self)
 * consider using net.openhft.lang.io.serialization.BytesMarshallable, working with this is like using java
 .io.Externalizable but in addition is supports some compressed types, which can give you slightly better performance.
 * try where possible to de-normalize your object graph, if you are able to limit your graph down to just a
-few types you can then look at using our off heap interface proxy object and have a map instance per type of object ( much like in a database where you would have a table per type ), could could then set up foreign key relationships between the maps.
+few types you can then look at using our off heap interface proxy objects and have a map instance per type
+of object
+ ( much like in a database where you would have a table per type ), you could then set up foreign key
+ relationships between the maps, by using for example integers or longs. This works especially well as
+ integers and longs have a good hash distribution.
 
 
 ### Tuning Chronicle Map with Large Data 
