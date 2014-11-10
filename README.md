@@ -818,12 +818,11 @@ example of just two servers, they only have to be connected via a single tcp soc
 the data is transferred both ways. Which is great, however what if you wanted to replicate more than
 just one chronicle map, what if you were going to replicate two chronicle maps across your network,
 unfortunately with just TCP replication you would have to have two tcp socket connections, which is
-not ideal. This is why we created Chronicle Channels. Channels let you replicate numerous
+not ideal. This is why we created the ReplicationHub. The ReplicationHub let you replicate numerous
 Chronicle Maps via a single point to point socket connection.
 
-Chronicle Channels are similar to TCP replication, where each map has to be given a unique identifier, but
-when using Chronicle Channels its the channels that are used to identify the map. 
-The identifier is used to identify the host/server. Each host must be given a unique identifier. 
+The ReplicationHub encompasses TCP replication, where each map has to be given a
+unique identifier, but when using Chronicle Channels its the channels that are used to identify the map. The identifier is used to identify the host/server. Each host must be given a unique identifier.
 Each map must be given a unique Channel.
 
 
@@ -870,8 +869,12 @@ the remote node, in the example above this is assigned to '(short) 1', so for ex
 two maps, lets call them map1 and map2, you could assign them with chronicle
 channels 1 and 2 respectively. Map1 would have the chronicle channel of 1 on both servers. You
 should not confuse the Chronicle Channels with the identifiers, the identifiers are unique per
-replicating node the chronicle channels are used to identify which map you are referring. No
-additional socket connection is made per chronicle channel that you use, so we allow up to 32767
+replicating node ( in this case which host, the reason we say replicating node rather than host as it is
+possible to have more than one replicating node per host if each of the had a different TCP/IP port )
+ ), where as the chronicle channels are used to identify which map you are referring. No additional socket
+ connection is made per chronicle channel that
+you use, so we allow
+up to 32767
 chronicle channels.
 
 If you inadvertently got the chronicle channels around the wrong way, then chronicle would attempt
