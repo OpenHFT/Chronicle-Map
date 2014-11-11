@@ -135,6 +135,7 @@ abstract class AbstractChannelReplicator implements Closeable {
     @Override
     public void close() {
         isClosed = true;
+        executorService.shutdown();
         closeables.closeQuietly();
         executorService.shutdownNow();
 

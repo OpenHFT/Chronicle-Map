@@ -30,9 +30,8 @@ import java.util.Set;
 final class CloseablesManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(CloseablesManager.class.getName());
 
-    private boolean isClosed = false;
-    private final Set<Closeable> closeables = new LinkedHashSet<Closeable>();
 
+    private final Set<Closeable> closeables = new LinkedHashSet<Closeable>();
 
 
     public synchronized void add(Closeable closeable) {
@@ -73,7 +72,7 @@ final class CloseablesManager implements Closeable {
             }
         }
         closeables.clear();
-        isClosed = true;
+
         if (ex != null)
             throw ex;
     }
@@ -86,9 +85,6 @@ final class CloseablesManager implements Closeable {
         }
     }
 
-    boolean isClosed() {
-        return isClosed;
-    }
 
     public boolean isEmpty() {
         return closeables.isEmpty();
