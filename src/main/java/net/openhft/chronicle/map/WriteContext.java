@@ -21,7 +21,19 @@ package net.openhft.chronicle.map;
  * @author Rob Austin.
  */
 public interface WriteContext<K, V> extends Context<K, V> {
+
+    /**
+     * Prevents the entry being put back back into the map when the Context is closed
+     *
+     * @throws java.lang.IllegalArgumentException if used in a native context
+     */
     void dontPutOnClose();
+
+
+    /**
+     * this is simular by more efficient than calling map.remove("key") as the entry is already available to
+     * the WriteContext
+     */
     void removeEntry();
 
 }

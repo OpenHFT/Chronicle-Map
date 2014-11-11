@@ -529,12 +529,6 @@ public class ChronicleMapTest {
         map.close();
     }
 
-
-    @Test
-    public void broken() {
-        fail();
-    }
-
     @Test
     public void testAcquireFromMultipleThreads() throws Exception {
         int entries = 1000 * 1000;

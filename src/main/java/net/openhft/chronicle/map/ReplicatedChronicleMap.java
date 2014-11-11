@@ -23,7 +23,6 @@ import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
-import net.openhft.chronicle.map.MultiMap;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.Bytes;
@@ -291,9 +290,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 ? segment.writeLock()
                 : segment.readLock();
 
+        boolean dirtyReplicationIfKeyPresent = lock instanceof VanillaChronicleMap.Segment.NativeWriteLocked;
+
         V v = segment.acquireWithoutLock(copies, metaKeyWriter, keyWriter, key,
                 usingValue,
-                segmentHash, create, create ? timeProvider.currentTimeMillis() : 0L);
+                segmentHash, create, create ? timeProvider.currentTimeMillis() : 0L,
+                dirtyReplicationIfKeyPresent);
 
         checkReallyUsingValue(usingValue, mustReuseValue, v);
 
@@ -650,13 +652,23 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         V acquireWithoutLock(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
-                             long hash2, boolean create, long timestamp) {
+                             long hash2, boolean create, long timestamp, final boolean
+                dirtyReplicationIfKeyPresent) {
             long keySize = metaKeyInterop.size(keyInterop, key);
             MultiStoreBytes entry = acquireTmpBytes();
             long offset = searchKey(keyInterop, metaKeyInterop, key, keySize, hash2, entry,
                     hashLookupLiveOnly);
+
             if (offset >= 0L) {
-                return onKeyPresentOnAcquire(copies, key, usingValue, offset, entry);
+
+                V v = onKeyPresentOnAcquire(copies, key, usingValue, offset, entry);
+
+                // require for acquireUsingLocked() when working with native
+                if (dirtyReplicationIfKeyPresent)
+                    modificationDelegator.dirty(ReplicatedChronicleMap.this, posFromOffset(offset), this);
+
+                return v;
+
             } else {
                 if (!create)
                     return null;
@@ -1400,17 +1412,22 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 LOG.error("", e);
             }
 
+            dirty(map, pos, segment);
+        }
+
+        /**
+         * used to dirty the entry for replication
+         */
+        void dirty(ChronicleMap<K, V> map, long pos, SharedSegment segment) {
             for (long next = modIterSet.nextSetBit(0); next > 0; next = modIterSet.nextSetBit(next + 1)) {
                 try {
                     final ModificationIterator modificationIterator = modificationIterators.get((int) next);
-                    modificationIterator.onPut(map, entry, metaDataBytes,
-                            added, key, replacedValue, value, pos, segment);
+                    modificationIterator.onPut(map, null, 0,
+                            false, null, null, null, pos, segment);
                 } catch (Exception e) {
                     LOG.error("", e);
                 }
             }
-
-
         }
 
         @Override

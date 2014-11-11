@@ -86,9 +86,9 @@ public class TCPSocketReplicationBootStrapTests {
 
     @Test
     public void testBootstrapAndHeartbeat() throws IOException, InterruptedException {
-        map1 = newTcpSocketShmIntString((byte) 1, 8079, new InetSocketAddress("localhost", 8076));
+        map1 = newTcpSocketShmIntString((byte) 1, 8080, new InetSocketAddress("localhost", 8081));
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
-                newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8076);
+                newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8081);
 
 
         final ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map2a =
