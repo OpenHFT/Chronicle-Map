@@ -52,7 +52,6 @@ public class TCPSocketReplication3wayTest {
 
     @After
     public void tearDown() throws InterruptedException {
-        Thread.sleep(5);
         for (final Closeable closeable : new Closeable[]{map1, map2, map3}) {
             try {
                 closeable.close();
