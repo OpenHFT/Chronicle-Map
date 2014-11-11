@@ -235,6 +235,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         if (closeables != null)
             closeables.closeQuietly();
         closeables = null;
+        try {
+            // give time to close
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            //
+        }
     }
 
     /**
