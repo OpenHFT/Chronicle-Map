@@ -384,6 +384,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     @Override
     public V acquireUsing(@NotNull K key, V usingValue) {
+        V value = getUsing(key, usingValue);
+
+        if (value != null)
+            return value;
 
         try (WriteContext<K, V> kvContext =
                      lookupUsing(key, usingValue, LockType.WRITE_LOCK, false)) {
