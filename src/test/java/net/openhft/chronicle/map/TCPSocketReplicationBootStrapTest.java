@@ -86,16 +86,15 @@ public class TCPSocketReplicationBootStrapTest {
 
     @Test
     public void testBootstrapAndHeartbeat() throws IOException, InterruptedException {
-        map1 = newTcpSocketShmIntString((byte) 1, 8068, new InetSocketAddress("localhost", 8067));
-        ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
-                newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8067);
 
+        map1 = newTcpSocketShmIntString((byte) 1, 8068, new InetSocketAddress("localhost", 8067));
 
         Thread.sleep(1);
+
         File persistenceFile = getPersistenceFile();
         final ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map2a =
                 (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>)
-                        map2aBuilder.createPersistedTo(persistenceFile);
+                        newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8067).createPersistedTo(persistenceFile);
 
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2
 
@@ -107,20 +106,22 @@ public class TCPSocketReplicationBootStrapTest {
             Thread.yield();
         } while (lastModificationTime == 0);
 
-        final File map2File = persistenceFile;
         map2a.close();
+     //   Thread.sleep(1);
 
         {
-            // restart map 2 but don't doConnect it to map one
-            final ChronicleMap<Integer, CharSequence> map2b =
-                    map2aBuilder.createPersistedTo(map2File);
+            // restart map 2 but does not connect it to map1
+            final ChronicleMap<Integer, CharSequence> map2b = ChronicleMapBuilder.of(Integer.class,
+                    CharSequence.class).replication((byte) 2).createPersistedTo(persistenceFile);
             // add data into it
             map2b.put(11, "ADDED WHEN DISCONNECTED TO MAP1");
             map2b.close();
         }
 
+     //   Thread.sleep(1);
+
         // now restart map2a and doConnect it to map1, map1 should bootstrap the missing entry
-        map2 = map2aBuilder.createPersistedTo(map2File);
+        map2 = newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8067).createPersistedTo(persistenceFile);
 
         // add data into it
         waitTillEqual(20000);
