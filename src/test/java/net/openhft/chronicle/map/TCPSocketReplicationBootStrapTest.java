@@ -89,8 +89,6 @@ public class TCPSocketReplicationBootStrapTest {
 
         map1 = newTcpSocketShmIntString((byte) 1, 8068, new InetSocketAddress("localhost", 8067));
 
-        Thread.sleep(1);
-
         File persistenceFile = getPersistenceFile();
         final ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map2a =
                 (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>)
@@ -107,7 +105,6 @@ public class TCPSocketReplicationBootStrapTest {
         } while (lastModificationTime == 0);
 
         map2a.close();
-     //   Thread.sleep(1);
 
         {
             // restart map 2 but does not connect it to map1
@@ -117,8 +114,6 @@ public class TCPSocketReplicationBootStrapTest {
             map2b.put(11, "ADDED WHEN DISCONNECTED TO MAP1");
             map2b.close();
         }
-
-     //   Thread.sleep(1);
 
         // now restart map2a and doConnect it to map1, map1 should bootstrap the missing entry
         map2 = newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8067).createPersistedTo(persistenceFile);

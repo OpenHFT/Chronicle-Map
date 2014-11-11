@@ -116,9 +116,6 @@ public abstract class AbstractReplication {
             if (identifier <= 0)
                 throw new IllegalArgumentException("Identifier must be positive, " + identifier +
                         " given");
-            if (udpConfig == null && tcpConfig == null)
-                throw new IllegalStateException(
-                        "At least one transport method (TCP or UDP) should be configured");
         }
     }
 }

@@ -397,6 +397,8 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      */
     B replication(byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork);
 
+    B replication(byte identifier);
+
     StatelessClientConfig<C> statelessClient(InetSocketAddress remoteAddress);
 
     ChronicleHashInstanceConfig<C> instance();

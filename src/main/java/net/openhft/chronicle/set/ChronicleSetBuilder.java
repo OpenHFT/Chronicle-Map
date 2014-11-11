@@ -18,7 +18,10 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.hash.*;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.ChronicleHashErrorListener;
+import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
+import net.openhft.chronicle.hash.StatelessClientConfig;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
@@ -39,8 +42,8 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could
- * be used as a classic builder and/or factory.
+ * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could be used as
+ * a classic builder and/or factory.
  *
  * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
  * documentation.
@@ -104,9 +107,9 @@ public class ChronicleSetBuilder<E>
      *     .keySize(10)
      *     .create();}</pre>
      *
-     * <p>(Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded
-     * (and each character takes 2 bytes on-heap), because default off-heap {@link String} encoding
-     * is UTF-8 in {@code ChronicleSet}.)
+     * <p>(Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded (and each
+     * character takes 2 bytes on-heap), because default off-heap {@link String} encoding is UTF-8 in {@code
+     * ChronicleSet}.)
      *
      * @see #constantKeySizeBySample(Object)
      * @see #entrySize(int)
@@ -136,13 +139,13 @@ public class ChronicleSetBuilder<E>
     /**
      * {@inheritDoc}
      *
-     * <p>In fully default case you can expect entry size to be about 120-130 bytes. But it is
-     * strongly recommended always to configure {@linkplain #keySize(int) key size}, if they
-     * couldn't be derived statically.
+     * <p>In fully default case you can expect entry size to be about 120-130 bytes. But it is strongly
+     * recommended always to configure {@linkplain #keySize(int) key size}, if they couldn't be derived
+     * statically.
      *
      * <p>If entry size is not configured explicitly by calling this method, it is computed based on
-     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size},
-     * plus a few bytes required by implementations.
+     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size}, plus a few
+     * bytes required by implementations.
      */
     @Override
     public ChronicleSetBuilder<E> entrySize(int entrySize) {
@@ -245,10 +248,10 @@ public class ChronicleSetBuilder<E>
     /**
      * {@inheritDoc}
      *
-     * <p>Actually this is just a convenience method supporting key marshaller configurations, made
-     * initially during {@link #of(Class)} call. Because if you {@linkplain
-     * #keyMarshaller(BytesMarshaller) configure} own custom key marshaller, this method doesn't
-     * take any effect on the maps constructed by this builder.
+     * <p>Actually this is just a convenience method supporting key marshaller configurations, made initially
+     * during {@link #of(Class)} call. Because if you {@linkplain #keyMarshaller(BytesMarshaller) configure}
+     * own custom key marshaller, this method doesn't take any effect on the maps constructed by this
+     * builder.
      *
      * @see #of(Class)
      */
@@ -274,6 +277,12 @@ public class ChronicleSetBuilder<E>
     @Override
     public ChronicleSetBuilder<E> replication(byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork) {
         chronicleMapBuilder.replication(identifier, tcpTransportAndNetwork);
+        return this;
+    }
+
+    @Override
+    public ChronicleSetBuilder<E> replication(byte identifier) {
+        chronicleMapBuilder.replication(identifier);
         return this;
     }
 
