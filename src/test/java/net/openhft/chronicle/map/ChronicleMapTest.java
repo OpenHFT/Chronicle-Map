@@ -758,7 +758,6 @@ public class ChronicleMapTest {
                         public void run() {
                             LongValue key = DataValueClasses.newDirectInstance(LongValue.class);
                             LongValue value = nativeLongValue();
-                            StringBuilder sb = new StringBuilder();
                             long next = 50 * 1000 * 1000;
                             // use a factor to give up to 10 digit numbers.
                             int factor = Math.max(1, (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
