@@ -173,7 +173,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @return value to which the given key is mapping after this call, either found or created
      * @see #getUsing(Object, Object)
      */
-    V acquireUsing(@NotNull K key, @NotNull V usingValue);
+    V acquireUsing(@NotNull K key, V usingValue);
 
 
     @NotNull

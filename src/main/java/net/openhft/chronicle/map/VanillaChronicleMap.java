@@ -383,7 +383,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
 
     @Override
-    public V acquireUsing(@NotNull K key, @NotNull V usingValue) {
+    public V acquireUsing(@NotNull K key, V usingValue) {
 
         try (WriteContext<K, V> kvContext =
                      lookupUsing(key, usingValue, LockType.WRITE_LOCK, false)) {
@@ -856,7 +856,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         V acquireWithoutLock(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V usingValue,
-                   long hash2, boolean create) {
+                             long hash2, boolean create) {
             long keySize = metaKeyInterop.size(keyInterop, key);
             MultiStoreBytes entry = acquireTmpBytes();
             long offset = searchKey(keyInterop, metaKeyInterop, key, keySize, hash2, entry,
