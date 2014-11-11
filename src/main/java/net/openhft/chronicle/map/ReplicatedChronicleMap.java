@@ -418,10 +418,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         final long initialLimit = entry.limit();
 
         final long keySize = keySizeMarshaller.readSize(entry);
+
+
         final long keyPosition = entry.position();
         entry.skip(keySize);
         final long keyLimit = entry.position();
         final long timeStamp = entry.readLong();
+
 
         final byte identifier = entry.readByte();
         if (identifier != localIdentifier) {
@@ -440,11 +443,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         final long valuePosition = entry.position();
 
         keySizeMarshaller.writeSize(destination, keySize);
+        System.out.println("keySize= " + keySize);
+
         valueSizeMarshaller.writeSize(destination, valueSize);
         destination.writeStopBit(timeStamp);
 
-        // we store the isDeleted flag in the identifier
-        // ( when the identifier is negative it is deleted )
+
         destination.writeByte(identifier);
         destination.writeBoolean(isDeleted);
 
@@ -491,8 +495,19 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     public void readExternalEntry(@NotNull Bytes source) {
 
         final long keySize = keySizeMarshaller.readSize(source);
+        System.out.println("read keySize= " + keySize);
+
+     //   long valueSize = source.readStopBit();
+
         final long valueSize = valueSizeMarshaller.readSize(source);
+        System.out.println("read valueSize= " + valueSize);
+
+
         final long timeStamp = source.readStopBit();
+
+
+        System.out.println("read timestamp= " + timeStamp);
+
         final byte id = source.readByte();
         final boolean isDeleted = source.readBoolean();
 
