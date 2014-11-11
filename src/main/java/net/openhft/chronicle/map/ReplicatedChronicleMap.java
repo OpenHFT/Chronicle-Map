@@ -443,8 +443,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         final long valuePosition = entry.position();
 
         keySizeMarshaller.writeSize(destination, keySize);
-        System.out.println("keySize= " + keySize);
-
         valueSizeMarshaller.writeSize(destination, valueSize);
         destination.writeStopBit(timeStamp);
 
@@ -495,18 +493,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     public void readExternalEntry(@NotNull Bytes source) {
 
         final long keySize = keySizeMarshaller.readSize(source);
-        System.out.println("read keySize= " + keySize);
-
-     //   long valueSize = source.readStopBit();
-
         final long valueSize = valueSizeMarshaller.readSize(source);
-        System.out.println("read valueSize= " + valueSize);
-
-
         final long timeStamp = source.readStopBit();
 
-
-        System.out.println("read timestamp= " + timeStamp);
 
         final byte id = source.readByte();
         final boolean isDeleted = source.readBoolean();

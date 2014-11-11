@@ -50,13 +50,13 @@ public class TCPSocketReplicationNativeTest {
     public void setup() throws IOException {
         InetSocketAddress endpoint = new InetSocketAddress("localhost", 8077);
 
-        TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.forSendingNode(8076, endpoint)
+        TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(8076, endpoint)
                 .heartBeatInterval(1L, TimeUnit.SECONDS);
 
         map1 = OffHeapUpdatableChronicleMapBuilder.of(Integer.class, LongValue.class)
                 .replication((byte) 1, tcpConfig1).create();
 
-        TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.forReceivingOnlyNode(8077)
+        TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of(8077)
                 .heartBeatInterval(1L, TimeUnit.SECONDS);
 
         map2 = OffHeapUpdatableChronicleMapBuilder.of(Integer.class, LongValue.class)
@@ -89,7 +89,6 @@ public class TCPSocketReplicationNativeTest {
         }
 
 
-
         // allow time for the recompilation to resolve
         waitTillEqual(5000);
 
@@ -97,7 +96,6 @@ public class TCPSocketReplicationNativeTest {
         assertTrue(!map1.isEmpty());
 
     }
-
 
 
     @Test
@@ -126,7 +124,6 @@ public class TCPSocketReplicationNativeTest {
     }
 
     /**
-     *
      * * waits until map1 and map2 show the same value
      *
      * @param timeOutMs timeout in milliseconds
