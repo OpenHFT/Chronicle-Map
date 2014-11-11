@@ -153,7 +153,7 @@ public final class ReplicationHub extends AbstractReplication {
         }
 
         /**
-         * Configures the maximum number of channels could be {@linkplain #createChannel(short)
+         * Configures the maximum number of channels could be {@linkplain #createChannel(short)}
          * created for {@code ReplicationHub}s, created by this builder.
          *
          * <p>Default value is {@code 128}.
