@@ -37,7 +37,8 @@ public class OSResizesMain {
         File file = File.createTempFile("over-sized", "deleteme");
         ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class)
                 .entrySize(100 * 1024 * 1024)
-                .entries(1000 * 1000).create();
+                .entries(1000 * 1000)
+                .createPersistedTo(file);
         for (int i = 0; i < 10000; i++) {
             char[] chars = new char[i];
             Arrays.fill(chars, '+');
