@@ -76,7 +76,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private final Replica.EntryExternalizable externalizable;
     private final TcpTransportAndNetworkConfig replicationConfig;
     private final StatelessServerConnector statelessServerConnector;
-    private final @Nullable RemoteNodeValidator remoteNodeValidator;
+    private final
+    @Nullable
+    RemoteNodeValidator remoteNodeValidator;
 
     private long selectorTimeout;
 
@@ -1794,7 +1796,7 @@ class StatelessServerConnector<K, V> {
     /**
      * write the keysize and the key to the the {@code target} buffer
      *
-     * @param key   the key of the map
+     * @param key the key of the map
      */
 
     private void writeKey(K key, Bytes writer, final ThreadLocalCopies local) {

@@ -33,20 +33,17 @@ final class CloseablesManager implements Closeable {
     private boolean isClosed = false;
     private final Set<Closeable> closeables = new LinkedHashSet<Closeable>();
 
-    private void checkState() {
-        if (isClosed)
-            throw new IllegalStateException();
-    }
+
 
     public synchronized void add(Closeable closeable) {
-        checkState();
+
         if (closeable == null)
             throw new NullPointerException();
         closeables.add(closeable);
     }
 
     public synchronized void close(Closeable closeable) throws IOException {
-        checkState();
+
         for (Iterator<Closeable> iterator = closeables.iterator(); iterator.hasNext(); ) {
             if (iterator.next() == closeable)
                 iterator.remove();
