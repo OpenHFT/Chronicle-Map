@@ -34,10 +34,7 @@ import java.util.Set;
  * @author Rob Austin.
  */
 public class StatelessClientTest {
-
-
     public static final int SIZE = 100000;
-
 
     @Test(timeout = 5000)
     public void testBufferOverFlowPutAllAndEntrySet() throws IOException, InterruptedException {
