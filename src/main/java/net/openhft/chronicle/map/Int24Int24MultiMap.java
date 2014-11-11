@@ -30,38 +30,40 @@ import static net.openhft.lang.Maths.isPowerOf2;
  */
 class Int24Int24MultiMap implements MultiMap {
 
-    static final int MAX_CAPACITY = (1 << 24);
+    static final long MAX_CAPACITY = (1L << 24);
 
-    private static final int ENTRY_SIZE = 6;
-    //    private static final int ENTRY_SIZE_SHIFT = 3;
+    private static final long ENTRY_SIZE = 6L;
     private static final int UNSET_KEY = 0;
-    private static final int MASK = 0xFFFFFF;
-    private static final int HASH_INSTEAD_OF_UNSET_KEY = MASK;
+    private static final long MASK = 0xFFFFFFL;
+    private static final long HASH_INSTEAD_OF_UNSET_KEY = MASK;
     private static final long UNSET_ENTRY = 0L;
 
     final DirectBitSet positions;
     private final int capacity;
-    private final int capacityMask;
-    private final int capacityMod2;
+    private final long capacityMask;
+    private final long capacityInBytes;
     private final Bytes bytes;
 
-    private int searchHash = -1;
-    private int searchPos = -1;
+    private long searchHash = -1L;
+    private long searchPos = -1L;
 
     public Int24Int24MultiMap(long minCapacity) {
-        capacity = (int) IntIntMultiMap.multiMapCapacity(minCapacity);
-        capacityMask = capacity - 1;
-        capacityMod2 = indexToPos(capacity - 1);
+        long capacity = MultiMapFactory.multiMapCapacity(minCapacity);
+        this.capacity = (int) capacity;
+        capacityMask = capacity - 1L;
+        capacityInBytes = indexToPos(capacity);
         bytes = DirectStore.allocateLazy(indexToPos(capacity)).bytes();
-        positions = newPositions(capacity);
+        positions = MultiMapFactory.newPositions(capacity);
         clear();
     }
 
     public Int24Int24MultiMap(Bytes multiMapBytes, Bytes multiMapBitSetBytes) {
-        capacity = (int) Math.min(MAX_CAPACITY, (multiMapBytes.capacity() / ENTRY_SIZE));
-        assert capacity <= MAX_CAPACITY;
-        capacityMask = capacity - 1;
-        capacityMod2 = indexToPos(capacity - 1);
+        long capacity = multiMapBytes.capacity() / ENTRY_SIZE;
+        assert isPowerOf2(capacity);
+        assert (capacity / 2L) <= MAX_CAPACITY;
+        this.capacity = (int) capacity;
+        capacityMask = capacity - 1L;
+        capacityInBytes = indexToPos(capacity);
         this.bytes = multiMapBytes;
         positions = new ATSDirectBitSet(multiMapBitSetBytes);
     }
@@ -72,29 +74,10 @@ class Int24Int24MultiMap implements MultiMap {
      * constructor as the first argument
      */
     public static long sizeInBytes(long minCapacity) {
-        return indexToPos((int) IntIntMultiMap.multiMapCapacity(minCapacity));
+        return indexToPos(MultiMapFactory.multiMapCapacity(minCapacity));
     }
 
-    /**
-     * @param minCapacity as in {@link #Int24Int24MultiMap(long)} constructor
-     * @return size of {@link Bytes} to provide to {@link #Int24Int24MultiMap(Bytes, Bytes)}
-     * constructor as the second argument
-     */
-    public static long sizeOfBitSetInBytes(long minCapacity) {
-        return (int) (Math.max(IntIntMultiMap.multiMapCapacity(minCapacity), 64L) * 6L + 63) / 64;
-    }
-
-    public static ATSDirectBitSet newPositions(int capacity) {
-        if (!isPowerOf2(capacity))
-            throw new AssertionError("capacity should be a power of 2");
-        // bit set size should be at least 1 native long (in bits)
-        capacity = Math.max(capacity, 64);
-        // no round-up, because capacity is already a power of 2
-        int bitSetSizeInBytes = capacity / 8;
-        return new ATSDirectBitSet(DirectStore.allocateLazy(bitSetSizeInBytes).bytes());
-    }
-
-    private static int indexToPos(int index) {
+    private static long indexToPos(long index) {
         return index * ENTRY_SIZE;
     }
 
@@ -112,35 +95,36 @@ class Int24Int24MultiMap implements MultiMap {
         assert positions.isSet(value) : "Shouldn't remove absent value";
     }
 
-    private static int key(long entry) {
-        return (int) (entry >>> 24);
+    private static long key(long entry) {
+        return entry >>> 24;
     }
 
-    private static int value(long entry) {
-        return (int) (entry & MASK);
+    private static long value(long entry) {
+        return entry & MASK;
     }
 
     private static long entry(long key, long value) {
         return (key << 24) | (value & MASK);
     }
 
-    private int pos(int key) {
+    private long pos(long key) {
         return indexToPos(key & capacityMask);
     }
 
-    private int step(int pos) {
-        return (pos + ENTRY_SIZE) % capacityMod2;
+    private long step(long pos) {
+        long t;
+        return (t = (pos += ENTRY_SIZE) - capacityInBytes) < 0L ? pos : t;
     }
 
-    private int stepBack(int pos) {
-        return (pos - ENTRY_SIZE) % capacityMod2;
+    private long stepBack(long pos) {
+        return (pos -= ENTRY_SIZE) >= 0L ? pos : pos + capacityInBytes;
     }
 
     @Override
     public void put(long key, long value) {
         key = maskUnsetKey(key);
         checkValueForPut(value);
-        for (int pos = pos((int) key); ; pos = step(pos)) {
+        for (long pos = pos(key); ; pos = step(pos)) {
             long entry = bytes.readInt48(pos);
             if (entry == UNSET_ENTRY) {
                 bytes.writeInt48(pos, entry(key, value));
@@ -154,8 +138,8 @@ class Int24Int24MultiMap implements MultiMap {
     public void remove(long key, long value) {
         key = maskUnsetKey(key);
         checkValueForRemove(value);
-        int posToRemove;
-        for (int pos = pos((int) key); ; pos = step(pos)) {
+        long posToRemove;
+        for (long pos = pos(key); ; pos = step(pos)) {
             long entry = bytes.readInt48(pos);
             if (key(entry) == key && value(entry) == value) {
                 posToRemove = pos;
@@ -171,7 +155,7 @@ class Int24Int24MultiMap implements MultiMap {
         key = maskUnsetKey(key);
         checkValueForRemove(oldValue);
         checkValueForPut(newValue);
-        for (int pos = pos((int) key); ; pos = step(pos)) {
+        for (long pos = pos(key); ; pos = step(pos)) {
             long entry = bytes.readInt48(pos);
             if (key(entry) == key && value(entry) == oldValue) {
                 positions.clear(oldValue);
@@ -182,8 +166,8 @@ class Int24Int24MultiMap implements MultiMap {
         }
     }
 
-    private void removePos(int posToRemove) {
-        int posToShift = posToRemove;
+    private void removePos(long posToRemove) {
+        long posToShift = posToRemove;
         while (true) {
             posToShift = step(posToShift);
             long entryToShift = bytes.readInt48(posToShift);
@@ -214,13 +198,13 @@ class Int24Int24MultiMap implements MultiMap {
     @Override
     public void startSearch(long key) {
         key = maskUnsetKey(key);
-        searchPos = pos((int) key);
-        searchHash = (int) key;
+        searchPos = pos(key);
+        searchHash = key;
     }
 
     @Override
     public long nextPos() {
-        int pos = searchPos;
+        long pos = searchPos;
         while (true) {
             long entry = bytes.readInt48(pos);
             if (entry == UNSET_ENTRY) {
@@ -237,7 +221,7 @@ class Int24Int24MultiMap implements MultiMap {
 
     @Override
     public void removePrevPos() {
-        int prevPos = stepBack(searchPos);
+        long prevPos = stepBack(searchPos);
         long entry = bytes.readInt48(prevPos);
         positions.clear(value(entry));
         removePos(prevPos);
@@ -270,7 +254,8 @@ class Int24Int24MultiMap implements MultiMap {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("{ ");
-        for (long i = 0L, pos = 0L; i < capacity; i++, pos += ENTRY_SIZE) {
+        long pos = 0L;
+        for (int i = 0; i < capacity; i++, pos += ENTRY_SIZE) {
             long entry = bytes.readInt48(pos);
             if (entry != UNSET_ENTRY)
                 sb.append(key(entry)).append('=').append(value(entry)).append(", ");
@@ -284,7 +269,8 @@ class Int24Int24MultiMap implements MultiMap {
 
     @Override
     public void forEach(EntryConsumer action) {
-        for (long i = 0L, pos = 0L; i < capacity; i++, pos += ENTRY_SIZE) {
+        long pos = 0L;
+        for (int i = 0; i < capacity; i++, pos += ENTRY_SIZE) {
             long entry = bytes.readInt48(pos);
             if (entry != UNSET_ENTRY)
                 action.accept(key(entry), value(entry));

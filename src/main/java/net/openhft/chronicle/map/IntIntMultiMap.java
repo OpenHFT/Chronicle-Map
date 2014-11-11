@@ -24,6 +24,8 @@ import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectStore;
 
+import static net.openhft.chronicle.map.MultiMapFactory.multiMapCapacity;
+import static net.openhft.chronicle.map.MultiMapFactory.newPositions;
 import static net.openhft.lang.Maths.isPowerOf2;
 
 /**
@@ -33,21 +35,11 @@ class IntIntMultiMap implements MultiMap {
 
     static final long MAX_CAPACITY = (1L << 32);
 
-    static long multiMapCapacity(long minCapacity) {
-        if (minCapacity < 0L)
-            throw new IllegalArgumentException("minCapacity should be positive");
-        long capacity = Maths.nextPower2(minCapacity, 16L);
-        if (((double) minCapacity) / capacity > 2./3.) {
-            // multi map shouldn't be too dense
-            capacity <<= 1L;
-        }
-        return capacity;
-    }
-
     private static final long ENTRY_SIZE = 8L;
     private static final int ENTRY_SIZE_SHIFT = 3;
     private static final long UNSET_KEY = 0L;
-    private static final long HASH_INSTEAD_OF_UNSET_KEY = 0xFFFFFFFFL;
+    private static final long MASK = 0xFFFFFFFFL;
+    private static final long HASH_INSTEAD_OF_UNSET_KEY = MASK;
     private static final long UNSET_ENTRY = 0L;
 
     final DirectBitSet positions;
@@ -62,7 +54,7 @@ class IntIntMultiMap implements MultiMap {
     public IntIntMultiMap(long minCapacity) {
         capacity = multiMapCapacity(minCapacity);
         capacityMask = capacity - 1L;
-        capacityMask2 = indexToPos(capacity - 1L);
+        capacityMask2 = indexToPos(capacityMask);
         bytes = DirectStore.allocateLazy(indexToPos(capacity)).bytes();
         positions = newPositions(capacity);
         clear();
@@ -70,9 +62,10 @@ class IntIntMultiMap implements MultiMap {
 
     public IntIntMultiMap(Bytes multiMapBytes, Bytes multiMapBitSetBytes) {
         capacity = multiMapBytes.capacity() / ENTRY_SIZE;
-        assert capacity == Maths.nextPower2(capacity, 16L);
+        assert isPowerOf2(capacity);
+        assert (capacity / 2L) <= MAX_CAPACITY;
         capacityMask = capacity - 1L;
-        capacityMask2 = indexToPos(capacity - 1L);
+        capacityMask2 = indexToPos(capacityMask);
         this.bytes = multiMapBytes;
         positions = new ATSDirectBitSet(multiMapBitSetBytes);
     }
@@ -86,40 +79,21 @@ class IntIntMultiMap implements MultiMap {
         return indexToPos(multiMapCapacity(minCapacity));
     }
 
-    /**
-     * @param minCapacity as in {@link #IntIntMultiMap(long)} constructor
-     * @return size of {@link Bytes} to provide to {@link #IntIntMultiMap(Bytes, Bytes)}
-     * constructor as the second argument
-     */
-    public static long sizeOfBitSetInBytes(long minCapacity) {
-        return Math.max(multiMapCapacity(minCapacity), 64L) / 8L;
-    }
-
-    public static ATSDirectBitSet newPositions(long capacity) {
-        if (!isPowerOf2(capacity))
-            throw new AssertionError("capacity should be a power of 2");
-        // bit set size should be at least 1 native long (in bits)
-        capacity = Math.max(capacity, 64L);
-        // no round-up, because capacity is already a power of 2
-        long bitSetSizeInBytes = capacity / 8L;
-        return new ATSDirectBitSet(DirectStore.allocateLazy(bitSetSizeInBytes).bytes());
-    }
-
     private static long indexToPos(long index) {
         return index << ENTRY_SIZE_SHIFT;
     }
 
     private static long maskUnsetKey(long key) {
-        return (key &= 0xFFFFFFFFL) != UNSET_KEY ? key : HASH_INSTEAD_OF_UNSET_KEY;
+        return (key &= MASK) != UNSET_KEY ? key : HASH_INSTEAD_OF_UNSET_KEY;
     }
 
     private void checkValueForPut(long value) {
-        assert (value & ~0xFFFFFFFFL) == 0L : "Value out of range, was " + value;
+        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
         assert positions.isClear(value) : "Shouldn't put existing value";
     }
 
     private void checkValueForRemove(long value) {
-        assert (value & ~0xFFFFFFFFL) == 0L : "Value out of range, was " + value;
+        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
         assert positions.isSet(value) : "Shouldn't remove absent value";
     }
 
@@ -128,7 +102,7 @@ class IntIntMultiMap implements MultiMap {
     }
 
     private static long value(long entry) {
-        return entry & 0xFFFFFFFFL;
+        return entry & MASK;
     }
 
     private static long entry(long key, long value) {
