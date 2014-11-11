@@ -36,7 +36,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 
-public class StringEncodingExamples {
+public class StringEncodingExamplesTest {
 
     static class CustomEncodingMarshaller implements BytesMarshaller<CharSequence>,
             StatefulCopyable<CustomEncodingMarshaller> {

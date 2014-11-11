@@ -39,7 +39,7 @@ import static org.junit.Assert.assertTrue;
  * @author Rob Austin.
  */
 
-public class SetForTCPSocketReplicationTest3way {
+public class SetForTCPSocketReplication3wayTest {
 
 
     private ChronicleSet<Integer> set1;

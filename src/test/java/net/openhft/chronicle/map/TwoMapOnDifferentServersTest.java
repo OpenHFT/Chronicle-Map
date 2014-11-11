@@ -34,7 +34,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Rob Austin.
  */
-public class TwoMapOnDifferentServers {
+public class TwoMapOnDifferentServersTest {
 
 
     private ChronicleMap<Integer, CharSequence> map1;

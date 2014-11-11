@@ -35,7 +35,7 @@ import static org.junit.Assert.assertTrue;
  * @author Rob Austin.
  */
 
-public class TCPSocketReplicationTestPostConnection {
+public class TCPSocketReplicationPostConnectionTest {
 
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;

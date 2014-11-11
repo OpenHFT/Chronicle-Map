@@ -25,7 +25,7 @@ import java.io.IOException;
 
 import static net.openhft.chronicle.map.Alignment.NO_ALIGNMENT;
 
-public class Issue42 {
+public class Issue42Test {
 
     private static String OS = System.getProperty("os.name").toLowerCase();
 

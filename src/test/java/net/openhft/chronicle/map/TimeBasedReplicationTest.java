@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
 /**
  * @author Rob Austin.
  */
-public class TimeBasedReplicationTests extends JSR166TestCase {
+public class TimeBasedReplicationTest extends JSR166TestCase {
 
 
     public static final byte IDENTIFIER = 1;
