@@ -61,7 +61,7 @@ public class SingleMapChannelTest {
 
         {
             final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .forSendingNode(8086, new InetSocketAddress("localhost", 8087))
+                    .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS);
             int maxEntrySize = 1024;
             byte identifier= 1;
@@ -78,7 +78,7 @@ public class SingleMapChannelTest {
 
         {
             final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .forSendingNode(8087, new InetSocketAddress("localhost", 8086))
+                    .of(8087, new InetSocketAddress("localhost", 8086))
                     .heartBeatInterval(1, SECONDS);
 
             hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig).createWithId((byte) 2);

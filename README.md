@@ -752,12 +752,12 @@ require 6 connections.
 
 In our case we are only using 2 maps, this is how we connected map1 to map 2.
 ```
-TcpTransportAndNetworkConfig.forSendingNode(8076, new InetSocketAddress("localhost", 8077))
+TcpTransportAndNetworkConfig.of(8076, new InetSocketAddress("localhost", 8077))
                     .heartBeatInterval(1, SECONDS);
 ```
 you could have put this instruction on map2 instead, like this 
 ```
-TcpTransportAndNetworkConfig.forSendingNode(8077, new InetSocketAddress("localhost", 8076))
+TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("localhost", 8076))
                     .heartBeatInterval(1, SECONDS);
 ```
 even though data flows from map1 to map2 and map2 to map1 it doesn't matter which way you connected
@@ -786,15 +786,15 @@ InetSocketAddress inetSocketAddress3 = new InetSocketAddress(hostServer3, server
 
 // this is to go on server 1
 TcpTransportAndNetworkConfig tcpConfigServer1 =
-        TcpTransportAndNetworkConfig.forReceivingOnlyNode(serverPort1);
+        TcpTransportAndNetworkConfig.of(serverPort1);
 
 // this is to go on server 2
 TcpTransportAndNetworkConfig tcpConfigServer2 = TcpTransportAndNetworkConfig
-        .forSendingNode(serverPort2, inetSocketAddress1);
+        .of(serverPort2, inetSocketAddress1);
 
 // this is to go on server 3
 TcpTransportAndNetworkConfig tcpConfigServer3 = TcpTransportAndNetworkConfig
-        .forSendingNode(serverPort3, inetSocketAddress1, inetSocketAddress2);
+        .of(serverPort3, inetSocketAddress1, inetSocketAddress2);
 ```     
 
 ### Heart Beat Interval
@@ -931,7 +931,7 @@ unique for each map you have.
         byte identifier = (byte) 2;
 
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                .forReceivingOnlyNode(8087).heartBeatInterval(1, SECONDS);
+                .of(8087).heartBeatInterval(1, SECONDS);
 
         hubOnServer2 = ReplicationHub.builder()
                 .tcpTransportAndNetwork(tcpConfig)
@@ -1005,7 +1005,7 @@ final ChronicleMap<Integer, CharSequence> statelessMap;
 {
 
     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-            .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8076))
+            .replication((byte) 2, TcpTransportAndNetworkConfig.of(8076))
             .create();            
                        
     serverMap.put(10, "EXAMPLE-10");
@@ -1033,7 +1033,7 @@ being used by another application. In this example we choose the port 8076
 
 ``` java
 // sets the server to run on localhost:8076
-.replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8076))
+.replication((byte) 2, TcpTransportAndNetworkConfig.of(8076))
 ``` 
   
 On the "stateless client" we connect to the server via TCP/IP on localhost:8076 : 
@@ -1100,7 +1100,7 @@ For the very best performance you should also set these properties on the server
 
 ``` java
 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-    .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8076))
+    .replication((byte) 2, TcpTransportAndNetworkConfig.of(8076))
     .putReturnsNull(true)
     .removeReturnsNull(true)
     .create();            
@@ -1273,7 +1273,7 @@ public class YourClass {
             // we connect the maps via a TCP/IP socket connection on port 8077
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .forSendingNode(8076, new InetSocketAddress("localhost", 8077))
+                    .of(8076, new InetSocketAddress("localhost", 8077))
                     .heartBeatInterval(1L, TimeUnit.SECONDS);
             ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -1287,7 +1287,7 @@ public class YourClass {
 
         {
             TcpTransportAndNetworkConfig tcpConfig =
-                    TcpTransportAndNetworkConfig.forReceivingOnlyNode(8077)
+                    TcpTransportAndNetworkConfig.of(8077)
                     .heartBeatInterval(1L, TimeUnit.SECONDS);
             ChronicleMapBuilder<Integer, CharSequence> map2Builder =
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -1355,7 +1355,7 @@ public class YourClass {
             // we connect the maps via a TCP socket connection on port 8077
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .forSendingNode(8076, new InetSocketAddress("localhost", 8077))
+                    .of(8076, new InetSocketAddress("localhost", 8077))
                     .heartBeatInterval(1L, TimeUnit.SECONDS)
 
                             // a maximum of 1024 bits per millisecond
@@ -1380,7 +1380,7 @@ public class YourClass {
 
         {
             TcpTransportAndNetworkConfig tcpConfig =
-                    TcpTransportAndNetworkConfig.forReceivingOnlyNode(8077)
+                    TcpTransportAndNetworkConfig.of(8077)
                     .heartBeatInterval(1L, TimeUnit.SECONDS)
                     .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
 

@@ -192,7 +192,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
         final ChronicleMap<Integer, String> serverMap =
                 ChronicleMapBuilder.of(Integer.class, String.class)
-                .replication((byte) 1, TcpTransportAndNetworkConfig.forReceivingOnlyNode(port)).create();
+                .replication((byte) 1, TcpTransportAndNetworkConfig.of(port)).create();
 
         final ChronicleMap<Integer, String> statelessMap = ChronicleMapBuilder.of(Integer
                 .class, String.class)
@@ -206,7 +206,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             IOException {
 
         final ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(port)).create();
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create();
 
 
         final ChronicleMap<CharSequence, CharSequence> statelessMap = ChronicleMapBuilder.of(CharSequence

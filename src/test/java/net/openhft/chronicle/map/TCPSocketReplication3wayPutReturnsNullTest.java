@@ -48,7 +48,7 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.forUnknownTopology(serverPort, Arrays.asList(endpoints));
+        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(serverPort, Arrays.asList(endpoints));
 
         return (T) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .putReturnsNull(true)

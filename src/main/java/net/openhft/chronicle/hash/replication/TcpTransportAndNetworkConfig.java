@@ -54,24 +54,13 @@ public final class TcpTransportAndNetworkConfig {
         this.heartBeatIntervalUnit = heartBeatIntervalUnit;
     }
 
-    public static TcpTransportAndNetworkConfig forSendingNode(int serverPort,
-                                                              InetSocketAddress... endpoints) {
-        return forSendingNode(serverPort, Arrays.asList(endpoints));
+    public static TcpTransportAndNetworkConfig of(int serverPort,
+                                                  InetSocketAddress... endpoints) {
+        return of(serverPort, Arrays.asList(endpoints));
     }
 
-    public static TcpTransportAndNetworkConfig forSendingNode(int serverPort,
-                                           Collection<InetSocketAddress> endpoints) {
-        if (endpoints.isEmpty())
-            throw new IllegalArgumentException("There should be some endpoints");
-        return forUnknownTopology(serverPort, endpoints);
-    }
-
-    public static TcpTransportAndNetworkConfig forReceivingOnlyNode(int serverPort) {
-        return forUnknownTopology(serverPort, Collections.<InetSocketAddress>emptyList());
-    }
-
-    public static TcpTransportAndNetworkConfig forUnknownTopology(int serverPort,
-                                               Collection<InetSocketAddress> endpoints) {
+    public static TcpTransportAndNetworkConfig of(int serverPort,
+                                                  Collection<InetSocketAddress> endpoints) {
         for (final InetSocketAddress endpoint : endpoints) {
             if (endpoint.getPort() == serverPort && "localhost".equals(endpoint.getHostName()))
                 throw new IllegalArgumentException("endpoint=" + endpoint

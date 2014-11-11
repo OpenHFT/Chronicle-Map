@@ -52,7 +52,7 @@ public class SetForTCPSocketReplication3wayTest {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         return (T) ChronicleSetBuilder.of(Integer.class)
-                .replication(identifier, TcpTransportAndNetworkConfig.forUnknownTopology(serverPort, asList(endpoints))
+                .replication(identifier, TcpTransportAndNetworkConfig.of(serverPort, asList(endpoints))
                         .heartBeatInterval(1L, SECONDS))
                 .createPersistedTo(getPersistenceFile());
     }

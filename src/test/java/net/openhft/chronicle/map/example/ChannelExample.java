@@ -70,7 +70,7 @@ public class ChannelExample {
         byte identifier = (byte) 1;
 
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                .forSendingNode(8086, new InetSocketAddress("localhost", 8087))
+                .of(8086, new InetSocketAddress("localhost", 8087))
                 .heartBeatInterval(1, SECONDS);
 
 
@@ -105,7 +105,7 @@ public class ChannelExample {
         byte identifier = (byte) 2;
 
         TcpTransportAndNetworkConfig tcpConfig =
-                TcpTransportAndNetworkConfig.forReceivingOnlyNode(8087).heartBeatInterval(1, SECONDS);
+                TcpTransportAndNetworkConfig.of(8087).heartBeatInterval(1, SECONDS);
 
         hubOnServer2 = ReplicationHub.builder()
                 .tcpTransportAndNetwork(tcpConfig)

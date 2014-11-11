@@ -44,7 +44,7 @@ public class TwoMapOnDifferentServersTest {
     public void setup() throws IOException {
 
         final TcpTransportAndNetworkConfig tcpConfig =
-                TcpTransportAndNetworkConfig.forSendingNode(8076, new InetSocketAddress("localhost", 8077))
+                TcpTransportAndNetworkConfig.of(8076, new InetSocketAddress("localhost", 8077))
                         .heartBeatInterval(1, SECONDS);
 
 
@@ -54,7 +54,7 @@ public class TwoMapOnDifferentServersTest {
 
         map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
-                .replication((byte) 2, TcpTransportAndNetworkConfig.forReceivingOnlyNode(8077)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8077)
                         .heartBeatInterval(1, SECONDS)).create();
     }
 

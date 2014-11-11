@@ -30,8 +30,6 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig.forSendingNode;
-
 /**
  * Test  ReplicatedChronicleMap where the Replicated is over a TCP Socket
  *
@@ -240,7 +238,7 @@ public class EventListenerTestWithTCPSocketReplication {
     }
 
     private ChronicleMapBuilder<Integer, CharSequence> clientBuilder() {
-        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.forReceivingOnlyNode(8077);
+        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8077);
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000L)
                 .replication((byte) 1, tcpConfig)
@@ -259,7 +257,7 @@ public class EventListenerTestWithTCPSocketReplication {
     }
 
     private ChronicleMapBuilder<Integer, CharSequence> serverBuilder() {
-        TcpTransportAndNetworkConfig tcpConfig = forSendingNode(8076, new InetSocketAddress("localhost", 8077));
+        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8076, new InetSocketAddress("localhost", 8077));
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000L)
                 .replication((byte) 2, tcpConfig);

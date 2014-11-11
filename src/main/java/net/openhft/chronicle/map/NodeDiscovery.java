@@ -223,7 +223,7 @@ public class NodeDiscovery {
         knownNodes.add(ourAddressAndPort, identifier);
 
         final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                .forUnknownTopology(ourAddressAndPort.getPort(),
+                .of(ourAddressAndPort.getPort(),
                         toInetSocketCollection(knownHostPorts))
                 .heartBeatInterval(1, SECONDS);
 
