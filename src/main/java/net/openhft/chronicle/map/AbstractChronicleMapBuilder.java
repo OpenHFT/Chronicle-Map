@@ -26,7 +26,6 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
-import net.openhft.chronicle.map.MultiMapFactory;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.Maths;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -400,10 +399,12 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         if (size < 100 * 1000)
             return 1024;
         if (size < 1000 * 1000)
-            return 2048;
+            return 2 * 1024;
         if (size < 10 * 1000 * 1000)
-            return 4096;
-        return 8192;
+            return 4 * 1024;
+        if (size < 100 * 1000 * 1000)
+            return 8 * 1024;
+        return 16 * 1024;
     }
 
     @Override
@@ -439,7 +440,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     int segmentHeaderSize() {
         int segments = actualSegments();
         // reduce false sharing unless we have a lot of segments.
-        return segments <= 8192 ? 128 : 64;
+        return segments <= 16 * 1024 ? 64 : 32;
     }
 
     MultiMapFactory multiMapFactory() {
