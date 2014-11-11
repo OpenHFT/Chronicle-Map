@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,9 +26,10 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 
-import static net.openhft.chronicle.map.TCPSocketReplication4WayMapTest.newTcpSocketShmIntString;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test  ReplicatedChronicleMap where the Replicated is over a TCP Socket
@@ -35,24 +37,36 @@ import static org.junit.Assert.*;
  * @author Rob Austin.
  */
 
-public class TCPSocketReplicationTest3way {
+public class TCPSocketReplication3wayPutReturnsNullTest {
 
 
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     private ChronicleMap<Integer, CharSequence> map3;
 
+    static <T extends ChronicleMap<Integer, CharSequence>> T newTcpSocketShmIntString(
+            final byte identifier,
+            final int serverPort,
+            final InetSocketAddress... endpoints) throws IOException {
+        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.forUnknownTopology(serverPort, Arrays.asList(endpoints));
+
+        return (T) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .putReturnsNull(true)
+                .replication(identifier, tcpConfig).create();
+    }
+
+
     @Before
     public void setup() throws IOException {
         map1 = newTcpSocketShmIntString((byte) 1, 8076, new InetSocketAddress("localhost", 8077),
-                new InetSocketAddress("localhost", 8079));
-        map2 = newTcpSocketShmIntString((byte) 2, 8077, new InetSocketAddress("localhost", 8079));
-        map3 = newTcpSocketShmIntString((byte) 3, 8079);
+                new InetSocketAddress("localhost", 8078));
+        map2 = newTcpSocketShmIntString((byte) 2, 8077, new InetSocketAddress("localhost", 8078));
+        map3 = newTcpSocketShmIntString((byte) 3, 8078);
     }
 
     @After
     public void tearDown() throws InterruptedException {
-        Thread.sleep(5);
+
         for (final Closeable closeable : new Closeable[]{map1, map2, map3}) {
             try {
                 closeable.close();
@@ -66,10 +80,10 @@ public class TCPSocketReplicationTest3way {
     @Test
     public void test3() throws IOException, InterruptedException {
 
-        assertEquals(null, map3.put(5, "EXAMPLE-2"));
+        map3.put(5, "EXAMPLE-2");
 
         // allow time for the recompilation to resolve
-        waitTillEqual(15000);
+        waitTillEqual(5000);
 
         assertEquals(map1, map2);
         assertEquals(map3, map2);
@@ -82,7 +96,7 @@ public class TCPSocketReplicationTest3way {
 
         assertEquals(null, map1.put(1, "EXAMPLE-1"));
         assertEquals(null, map1.put(2, "EXAMPLE-2"));
-        assertNotEquals(null, map1.put(2, "EXAMPLE-1"));
+        assertEquals(null, map1.put(2, "EXAMPLE-1"));
 
         assertEquals(null, map2.put(5, "EXAMPLE-2"));
         assertEquals(null, map2.put(6, "EXAMPLE-2"));
@@ -103,34 +117,10 @@ public class TCPSocketReplicationTest3way {
 
 
     @Test
-    public void testClear() throws IOException, InterruptedException {
-
-        assertEquals(null, map1.put(1, "EXAMPLE-1"));
-        assertEquals(null, map1.put(2, "EXAMPLE-2"));
-        assertNotEquals(null, map1.put(2, "EXAMPLE-1"));
-
-        assertEquals(null, map2.put(5, "EXAMPLE-2"));
-        assertEquals(null, map2.put(6, "EXAMPLE-2"));
-
-        map1.clear();
-
-        map2.put(5, "EXAMPLE-2");
-
-        // allow time for the recompilation to resolve
-        waitTillEqual(5000);
-
-        assertEquals(map1, map2);
-        assertEquals(map3, map3);
-        assertTrue(!map1.isEmpty());
-
-    }
-
-
-    @Test
     public void testPutIfAbsent() throws IOException, InterruptedException {
 
         assertEquals(null, map1.putIfAbsent(1, "EXAMPLE-1"));
-        assertNotEquals(null, map1.putIfAbsent(1, "EXAMPLE-2"));
+        assertEquals(null, map1.putIfAbsent(1, "EXAMPLE-2"));
         assertEquals(null, map1.putIfAbsent(2, "EXAMPLE-2"));
         assertEquals(null, map1.putIfAbsent(3, "EXAMPLE-1"));
 

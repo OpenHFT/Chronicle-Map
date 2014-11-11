@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
  * @author Rob Austin.
  */
 
-public class TCPSocketReplicationBootStrapTests {
+public class TCPSocketReplicationBootStrapTest {
 
     private ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map1;
     private ChronicleMap<Integer, CharSequence> map2;

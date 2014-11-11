@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue;
  * @author Rob Austin.
  */
 
-public class TCPSocketReplicationTest3VoidValueTest {
+public class TCPSocketReplication3VoidValueTest {
 
     private ChronicleMap<Integer, Void> map1;
     private ChronicleMap<Integer, Void> map2;
