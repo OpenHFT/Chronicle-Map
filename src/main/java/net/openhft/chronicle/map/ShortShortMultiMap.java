@@ -24,7 +24,8 @@ import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectStore;
 
-import static net.openhft.chronicle.map.IntIntMultiMap.multiMapCapacity;
+import static net.openhft.chronicle.map.MultiMapFactory.multiMapCapacity;
+import static net.openhft.chronicle.map.MultiMapFactory.newPositions;
 import static net.openhft.lang.Maths.isPowerOf2;
 
 /**
@@ -37,7 +38,8 @@ class ShortShortMultiMap implements MultiMap {
     private static final long ENTRY_SIZE = 4L;
     private static final int ENTRY_SIZE_SHIFT = 2;
     private static final int UNSET_KEY = 0;
-    private static final long HASH_INSTEAD_OF_UNSET_KEY = 0xFFFFL;
+    private static final long MASK = 0xFFFFL;
+    private static final long HASH_INSTEAD_OF_UNSET_KEY = MASK;
     private static final int UNSET_ENTRY = 0;
     private final int capacity;
     private final long capacityMask;
@@ -53,9 +55,9 @@ class ShortShortMultiMap implements MultiMap {
         assert isPowerOf2(capacity);
         this.capacity = (int) capacity;
         capacityMask = capacity - 1L;
-        capacityMask2 = (capacity - 1L) * ENTRY_SIZE;
+        capacityMask2 = capacityMask * ENTRY_SIZE;
         bytes = DirectStore.allocateLazy(capacity * ENTRY_SIZE).bytes();
-        positions = IntIntMultiMap.newPositions(capacity);
+        positions = newPositions(capacity);
         clear();
     }
 
@@ -65,7 +67,7 @@ class ShortShortMultiMap implements MultiMap {
         assert (capacity / 2L) <= MAX_CAPACITY;
         this.capacity = (int) capacity;
         capacityMask = capacity - 1L;
-        capacityMask2 = (capacity - 1L) * ENTRY_SIZE;
+        capacityMask2 = capacityMask * ENTRY_SIZE;
         this.bytes = multiMapBytes;
         positions = new ATSDirectBitSet(multiMapBitSetBytes);
     }
@@ -79,30 +81,19 @@ class ShortShortMultiMap implements MultiMap {
         return multiMapCapacity(minCapacity) * ENTRY_SIZE;
     }
 
-    /**
-     * @param minCapacity as in {@link #ShortShortMultiMap(long)} constructor
-     * @return size of {@link Bytes} to provide to {@link #ShortShortMultiMap(Bytes, Bytes)}
-     * constructor as the second argument
-     */
-    public static long sizeOfBitSetInBytes(long minCapacity) {
-
-
-        return IntIntMultiMap.sizeOfBitSetInBytes(minCapacity);
-    }
-
     private void checkValueForPut(long value) {
-        assert (value & ~0xFFFFL) == 0L : "Value out of range, was " + value;
+        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
         assert positions.isClear(value) : "Shouldn't put existing value";
     }
 
     private void checkValueForRemove(long value) {
-        assert (value & ~0xFFFFL) == 0L : "Value out of range, was " + value;
+        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
         assert positions.isSet(value) : "Shouldn't remove absent value";
     }
 
 
     private static long maskUnsetKey(long key) {
-        return (key &= 0xFFFFL) != UNSET_KEY ? key : HASH_INSTEAD_OF_UNSET_KEY;
+        return (key &= MASK) != UNSET_KEY ? key : HASH_INSTEAD_OF_UNSET_KEY;
     }
 
     private long step(long pos) {
