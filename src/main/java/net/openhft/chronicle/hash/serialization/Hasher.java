@@ -43,6 +43,8 @@ public enum Hasher {
     }
 
     public static long hash(Bytes bytes, long offset, long limit) {
+        if (limit - offset == 8)
+            return Maths.hash(bytes.readLong(offset));
         long h = 0;
         long i = offset;
         for (; i < limit - 7; i += 8)
