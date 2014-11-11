@@ -132,6 +132,8 @@ public class SetForTCPSocketReplication3wayTest {
 
         set2.add(5);
 
+        Thread.sleep(100);
+
         // allow time for the recompilation to resolve
         waitTillEqual(15000);
 
