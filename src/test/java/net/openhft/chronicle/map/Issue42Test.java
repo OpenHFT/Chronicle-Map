@@ -19,39 +19,31 @@
 package net.openhft.chronicle.map;
 
 import junit.framework.Assert;
+import net.openhft.lang.Jvm;
 import org.junit.Test;
 
 import java.io.IOException;
 
-import static net.openhft.chronicle.map.Alignment.NO_ALIGNMENT;
-
 public class Issue42Test {
-
-    private static String OS = System.getProperty("os.name").toLowerCase();
-
-    public static boolean isWindows() {
-        return (OS.indexOf("win") >= 0);
-    }
-
 
     @Test
     public void crashJVMWindowsTest() throws IOException {
 
-        if (!isWindows())
+        if (!Jvm.isWindows())
             return;
 
         final ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .entrySize(18)
-                .entries(15000000)
+                .entries(1500000)
                 .minSegments(128).create();
 
-        for (int i = 0; i < 10000000; ++i) {
+        for (int i = 0; i < 1000000; ++i) {
             String s = String.valueOf(i);
             map.put(s, s);
         }
 
-        for (int i = 0; i < 10000000; ++i) {
+        for (int i = 0; i < 1000000; ++i) {
             String s = String.valueOf(i);
             Assert.assertEquals(s, map.get(s));
         }
