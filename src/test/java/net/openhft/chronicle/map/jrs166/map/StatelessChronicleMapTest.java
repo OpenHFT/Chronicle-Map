@@ -561,7 +561,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * size returns the correct values
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testSize2() throws IOException {
         try (ChronicleMap map = map5(8076)) {
 
@@ -619,7 +619,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testContainsKey_NullPointerException() throws IOException {
-        try (ChronicleMap c = newShmIntString(8079)) {
+        try (ChronicleMap c = newShmIntString(8076)) {
             c.containsKey(null);
             shouldThrow();
         } catch (NullPointerException success) {
