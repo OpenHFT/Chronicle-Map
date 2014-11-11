@@ -68,7 +68,7 @@ public class SetForTCPSocketReplication3wayTest {
 
     @After
     public void tearDown() throws InterruptedException {
-        Thread.sleep(5);
+
         for (final Closeable closeable : new Closeable[]{set1, set2, set3}) {
             try {
                 closeable.close();
@@ -133,7 +133,7 @@ public class SetForTCPSocketReplication3wayTest {
         set2.add(5);
 
         // allow time for the recompilation to resolve
-        waitTillEqual(5000);
+        waitTillEqual(15000);
 
         assertEquals(set1, set2);
         assertEquals(set3, set3);

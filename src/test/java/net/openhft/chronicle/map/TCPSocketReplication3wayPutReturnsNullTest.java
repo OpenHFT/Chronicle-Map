@@ -83,7 +83,7 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
         map3.put(5, "EXAMPLE-2");
 
         // allow time for the recompilation to resolve
-        waitTillEqual(5000);
+        waitTillEqual(15000);
 
         assertEquals(map1, map2);
         assertEquals(map3, map2);
@@ -107,7 +107,7 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
         map2.put(5, "EXAMPLE-2");
 
         // allow time for the recompilation to resolve
-        waitTillEqual(5000);
+        waitTillEqual(15000);
 
         assertEquals(map1, map2);
         assertEquals(map3, map3);
@@ -133,7 +133,7 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
         map2.putIfAbsent(5, "EXAMPLE-2");
 
         // allow time for the recompilation to resolve
-        waitTillEqual(5000);
+        waitTillEqual(15000);
 
         assertEquals(map1, map2);
         assertEquals(map3, map3);
