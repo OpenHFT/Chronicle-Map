@@ -25,13 +25,12 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 
 /**
  * Created by peter on 12/11/14.
  */
-public class ServersMapMain {
-    static final int port = Integer.getInteger("port", 8989);
+public class StringsMapMain {
+    static final int port = Integer.getInteger("port", 8998);
     static final int entries = Integer.getInteger("entries", 100000);
     static final int runs = Integer.getInteger("runs", 5);
     static final boolean stateless = Boolean.getBoolean("stateless");
@@ -39,7 +38,8 @@ public class ServersMapMain {
     public static void startServer() throws IOException {
         File file = File.createTempFile("testServersMapMain", ".deleteme");
         file.deleteOnExit();
-        final ChronicleMap<byte[], byte[]> serverMap = ChronicleMapBuilder.of(byte[].class, byte[].class)
+        final ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
                 .putReturnsNull(true)
                 .entrySize(50)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
@@ -50,10 +50,10 @@ public class ServersMapMain {
     }
 
     public static void startRemoteClient(String hostname) throws IOException {
-        final ChronicleMap<byte[], byte[]> map;
+        final ChronicleMap<CharSequence, CharSequence> map;
         if (stateless) {
-            map = ChronicleMapBuilder.of(
-                    byte[].class, byte[].class)
+            map = ChronicleMapBuilder
+                    .of(CharSequence.class, CharSequence.class)
                     .putReturnsNull(true)
                     .statelessClient(new InetSocketAddress(hostname, port)).create();
         } else {
@@ -61,24 +61,27 @@ public class ServersMapMain {
             file.deleteOnExit();
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(port, new InetSocketAddress(hostname, port));
 
-            map = ChronicleMapBuilder.of(
-                    byte[].class, byte[].class)
+            map = ChronicleMapBuilder
+                    .of(CharSequence.class, CharSequence.class)
                     .putReturnsNull(true)
                     .replication((byte) 1, tcpConfig)
                     .createPersistedTo(file);
         }
-        ByteBuffer key = ByteBuffer.allocate(8);
-        ByteBuffer value = ByteBuffer.allocate(32);
+        StringBuilder key = new StringBuilder();
+        StringBuilder value = new StringBuilder();
+        StringBuilder value2 = new StringBuilder();
         double lastAveragePut = Double.POSITIVE_INFINITY, lastAverageGet = Double.POSITIVE_INFINITY;
         for (int i = 0; i < runs; i++) {
             long puts = 0, gets = 0;
             for (int j = 0; j < entries; j++) {
-                key.putLong(0, j);
-                value.putLong(0, j);
+                key.setLength(0);
+                key.append(j);
+                value.setLength(0);
+                value.append(j);
                 long t1 = System.nanoTime();
-                map.put(key.array(), value.array());
+                map.put(key, value);
                 long t2 = System.nanoTime();
-                map.get(key.array());
+                map.getUsing(key, value2);
                 long t3 = System.nanoTime();
                 puts += t2 - t1;
                 gets += t3 - t2;
