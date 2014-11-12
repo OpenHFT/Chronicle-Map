@@ -81,12 +81,17 @@ public class StringsMapMain {
                 long t1 = System.nanoTime();
                 map.put(key, value);
                 long t2 = System.nanoTime();
-                map.getUsing(key, value2);
+                if (stateless) {
+                    value.setLength(0);
+                    value.append(map.get(key));
+                } else {
+                    map.getUsing(key, value);
+                }
                 long t3 = System.nanoTime();
                 puts += t2 - t1;
                 gets += t3 - t2;
-                if (t2 - t1 > lastAveragePut * 100 || t3 - t2 > lastAverageGet * 100)
-                    System.out.printf("Took put/get took %.1f/%.1f us%n", (t2 - t1) / 1e3, (t3 - t2) / 1e3);
+//                if (t2 - t1 > lastAveragePut * 100 || t3 - t2 > lastAverageGet * 100)
+//                    System.out.printf("Took put/get took %.1f/%.1f us%n", (t2 - t1) / 1e3, (t3 - t2) / 1e3);
             }
             lastAveragePut = puts / entries;
             lastAverageGet = gets / entries;

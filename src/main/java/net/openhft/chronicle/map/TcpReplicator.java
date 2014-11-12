@@ -1096,7 +1096,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          * @param attached
          * @throws InterruptedException
          */
-        private void entriesFromBuffer(Attached attached) throws InterruptedException, IOException {
+        void entriesFromBuffer(Attached attached) throws InterruptedException, IOException {
             for (; ; ) {
 
                 out.limit(in.position());

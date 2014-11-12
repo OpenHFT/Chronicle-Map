@@ -820,7 +820,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         /**
          * called from a remote node when it wishes to propagate a remove event
          */
-        private void remotePut(@NotNull final Bytes inBytes, long hash2,
+        void remotePut(@NotNull final Bytes inBytes, long hash2,
                                final byte identifier, final long timestamp,
                                long valuePos, long valueLimit) {
 
