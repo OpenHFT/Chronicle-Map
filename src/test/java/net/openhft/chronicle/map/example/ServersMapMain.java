@@ -34,6 +34,7 @@ public class ServersMapMain {
     static final int port = Integer.getInteger("port", 8989);
     static final int entries = Integer.getInteger("entries", 100000);
     static final int runs = Integer.getInteger("runs", 5);
+    static final boolean stateless = Boolean.getBoolean("stateless");
 
     public static void startServer() throws IOException {
         File file = File.createTempFile("testServersMapMain", ".deleteme");
@@ -49,10 +50,23 @@ public class ServersMapMain {
     }
 
     public static void startRemoteClient(String hostname) throws IOException {
-        final ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(
-                byte[].class, byte[].class)
-                .putReturnsNull(true)
-                .statelessClient(new InetSocketAddress(hostname, port)).create();
+        final ChronicleMap<byte[], byte[]> map;
+        if (stateless) {
+            map = ChronicleMapBuilder.of(
+                    byte[].class, byte[].class)
+                    .putReturnsNull(true)
+                    .statelessClient(new InetSocketAddress(hostname, port)).create();
+        } else {
+            File file = File.createTempFile("testServersMapMain", ".deleteme");
+            file.deleteOnExit();
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(port, new InetSocketAddress(hostname, port));
+
+            map = ChronicleMapBuilder.of(
+                    byte[].class, byte[].class)
+                    .putReturnsNull(true)
+                    .replication((byte) 1, tcpConfig)
+                    .createPersistedTo(file);
+        }
         ByteBuffer key = ByteBuffer.allocate(8);
         ByteBuffer value = ByteBuffer.allocate(32);
         double lastAveragePut = Double.POSITIVE_INFINITY, lastAverageGet = Double.POSITIVE_INFINITY;
