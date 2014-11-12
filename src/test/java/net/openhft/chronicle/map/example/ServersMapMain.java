@@ -68,8 +68,8 @@ public class ServersMapMain {
                 long t3 = System.nanoTime();
                 puts += t2 - t1;
                 gets += t3 - t2;
-                if (t2 - t1 > lastAveragePut * 10 || t3 - t2 > lastAverageGet * 10)
-                    System.out.printf("Took put/get took %.1f/%.1f us%n", (t2 - t1) / 1e3, (t3 - t2) / 1e3);
+//                if (t2 - t1 > lastAveragePut * 10 || t3 - t2 > lastAverageGet * 10)
+//                    System.out.printf("Took put/get took %.1f/%.1f us%n", (t2 - t1) / 1e3, (t3 - t2) / 1e3);
             }
             lastAveragePut = puts / entries;
             lastAverageGet = gets / entries;
