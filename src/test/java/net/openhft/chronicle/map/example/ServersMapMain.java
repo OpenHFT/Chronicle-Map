@@ -32,7 +32,7 @@ import java.nio.ByteBuffer;
  */
 public class ServersMapMain {
     static final int port = Integer.getInteger("port", 8989);
-    static final int entries = Integer.getInteger("entries", 10000);
+    static final int entries = Integer.getInteger("entries", 100000);
     static final int runs = Integer.getInteger("runs", 5);
 
     public static void startServer() throws IOException {
