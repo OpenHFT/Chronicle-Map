@@ -25,12 +25,14 @@ import net.openhft.chronicle.map.ReadContext;
 import net.openhft.chronicle.map.WriteContext;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -151,7 +153,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
-        public V acquireUsing(@NotNull K key,V usingValue) {
+        public V acquireUsing(@NotNull K key, V usingValue) {
             return d.acquireUsing(key, usingValue);
         }
 
@@ -192,7 +194,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
         final ChronicleMap<Integer, String> serverMap =
                 ChronicleMapBuilder.of(Integer.class, String.class)
-                .replication((byte) 1, TcpTransportAndNetworkConfig.of(port)).create();
+                        .replication((byte) 1, TcpTransportAndNetworkConfig.of(port)).create();
 
         final ChronicleMap<Integer, String> statelessMap = ChronicleMapBuilder.of(Integer
                 .class, String.class)
@@ -216,6 +218,22 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         return new SingleCloseMap(statelessMap, statelessMap, serverMap);
     }
 
+    static ChronicleMap<byte[], byte[]> newByteArrayMap(int port) throws
+            IOException {
+
+        final ChronicleMap<byte[], byte[]> serverMap = ChronicleMapBuilder.of(byte[].class, byte[].class)
+                .putReturnsNull(true)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create();
+
+
+        final ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapBuilder.of(
+                byte[].class, byte[].class)
+                .putReturnsNull(true)
+                .statelessClient(new InetSocketAddress("localhost", port)).create();
+
+        return new SingleCloseMap(statelessMap, statelessMap, serverMap);
+    }
+
 
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
@@ -234,6 +252,37 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         assertEquals(5, map.size());
         return map;
 
+    }
+
+    @Test(timeout = 30000)
+    @Ignore
+    public void testByteArrayPerf() throws IOException {
+        ByteBuffer key = ByteBuffer.allocate(8);
+        ByteBuffer value = ByteBuffer.allocate(50);
+        int runs = 100000;
+        try (ChronicleMap<byte[], byte[]> map = newByteArrayMap(8077)) {
+            for (int t = 0; t < 5; t++) {
+                {
+                    long start = System.nanoTime();
+                    for (int i = 0; i < runs; i++) {
+                        key.putLong(0, i);
+                        value.putLong(0, i);
+                        map.put(key.array(), value.array());
+                    }
+                    long time = System.nanoTime() - start;
+                    System.out.printf("%d: Took %.1f us on average to put %n", t, time / 1e3 / runs);
+                }
+                {
+                    long start = System.nanoTime();
+                    for (int i = 0; i < runs; i++) {
+                        key.putLong(0, i);
+                        byte[] b = map.get(key.array());
+                    }
+                    long time = System.nanoTime() - start;
+                    System.out.printf("%d: Took %.1f us on average to get %n", t, time / 1e3 / runs);
+                }
+            }
+        }
     }
 
     /**
