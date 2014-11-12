@@ -754,7 +754,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 socketChannel.socket().setReuseAddress(true);
                 socketChannel.socket().setSoLinger(false, 0);
                 socketChannel.socket().setSoTimeout(0);
-                socketChannel.socket().setTcpNoDelay(true);
 
                 try {
                     socketChannel.connect(details.address());

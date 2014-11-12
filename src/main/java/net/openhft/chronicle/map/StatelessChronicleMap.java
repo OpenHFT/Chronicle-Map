@@ -135,6 +135,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             try {
                 result = AbstractChannelReplicator.openSocketChannel(closeables);
                 result.connect(builder.remoteAddress());
+                result.socket().setTcpNoDelay(true);
+
                 doHandShaking(result);
                 break;
             } catch (IOException e) {

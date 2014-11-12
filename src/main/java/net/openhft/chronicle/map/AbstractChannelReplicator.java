@@ -88,6 +88,8 @@ abstract class AbstractChannelReplicator implements Closeable {
 
         try {
             result = SocketChannel.open();
+            result.socket().setTcpNoDelay(true);
+
         } finally {
             if (result != null)
                 try {
