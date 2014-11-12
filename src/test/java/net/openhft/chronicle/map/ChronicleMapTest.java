@@ -1495,7 +1495,7 @@ public class ChronicleMapTest {
         tmpFile.deleteOnExit();
         final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
 
-        LongValue value = DataValueClasses.newInstance(LongValue.class);
+        LongValue value = DataValueClasses.newDirectReference(LongValue.class);
 
 
         try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
@@ -1503,18 +1503,9 @@ public class ChronicleMapTest {
             assertEquals(null, context.value());
         }
 
-        // this wont add the entry
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            context.value().addValue(1);
-            context.dontPutOnClose();
+            value.setValue(10);
         }
-
-        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
-            assertEquals(false, context.present());
-            assertEquals(null, context.value());
-        }
-
-        value.setValue(10);
 
         // this will add the entry
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
@@ -1540,11 +1531,11 @@ public class ChronicleMapTest {
             assertEquals(null, context.value());
         }
 
-        value.setValue(1);
-
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            assertEquals(1, context.value().getValue());
+            assertEquals(0, context.value().getValue());
         }
+
+        value.setValue(1);
 
         try (ReadContext<?, LongValue> lockedEntry = map.getUsingLocked("one", value)) {
             assertEquals(1, lockedEntry.value().getValue());

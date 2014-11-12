@@ -881,8 +881,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                     offset = putEntry(metaKeyInterop, keyInterop, key, keySize,
                             metaValueWriter, valueWriter, defaultValue);
                 } else {
-                    offset = putEntry(metaKeyInterop, keyInterop, key, keySize,
-                            prepareValueBytesAsWriter, null, key);
+                    if (prepareValueBytesAsWriter != null) {
+                        offset = putEntry(metaKeyInterop, keyInterop, key, keySize,
+                                prepareValueBytesAsWriter, null, key);
+                    } else {
+                        throw new IllegalStateException("To call acquire*() methods, " +
+                                "you should specify either default value, default value provider " +
+                                "or prepareBytes strategy during map building");
+                    }
                 }
                 return onKeyAbsentOnAcquire(copies, key, keySize, usingValue, offset);
             }

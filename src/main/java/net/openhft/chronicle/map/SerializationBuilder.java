@@ -29,6 +29,7 @@ import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.model.Byteable;
+import net.openhft.lang.values.LongValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.lang.reflect.Modifier;
 
 import static net.openhft.chronicle.map.Objects.hash;
 import static net.openhft.chronicle.hash.serialization.SizeMarshallers.stopBit;
+import static net.openhft.chronicle.map.SerializationBuilder.Role.KEY;
 
 final class SerializationBuilder<E> implements Cloneable {
 
@@ -83,34 +85,40 @@ final class SerializationBuilder<E> implements Cloneable {
 
         if (concreteClass(eClass) && Byteable.class.isAssignableFrom(eClass)) {
             ByteableMarshaller byteableMarshaller = ByteableMarshaller.of((Class) eClass);
-            sizeMarshaller(byteableMarshaller)
-                    .reader(byteableMarshaller)
-                    .interop(byteableMarshaller);
+            sizeMarshaller(byteableMarshaller);
+            reader(byteableMarshaller);
+            interop(byteableMarshaller);
         } else if (eClass == CharSequence.class || eClass == String.class) {
             reader((BytesReader<E>) CharSequenceReader.of());
             writer((BytesWriter<E>) CharSequenceWriter.instance());
         } else if (eClass == Void.class) {
-            sizeMarshaller(VoidMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) VoidMarshaller.INSTANCE)
-                    .interop((BytesInterop<E>) VoidMarshaller.INSTANCE);
+            sizeMarshaller(VoidMarshaller.INSTANCE);
+            reader((BytesReader<E>) VoidMarshaller.INSTANCE);
+            interop((BytesInterop<E>) VoidMarshaller.INSTANCE);
         } else if (eClass == Long.class) {
-            sizeMarshaller(LongMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) LongMarshaller.INSTANCE)
-                    .interop((BytesInterop<E>) LongMarshaller.INSTANCE);
+            sizeMarshaller(LongMarshaller.INSTANCE);
+            reader((BytesReader<E>) LongMarshaller.INSTANCE);
+            interop((BytesInterop<E>) LongMarshaller.INSTANCE);
         } else if (eClass == Double.class) {
-            sizeMarshaller(DoubleMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) DoubleMarshaller.INSTANCE)
-                    .interop((BytesInterop<E>) DoubleMarshaller.INSTANCE);
+            sizeMarshaller(DoubleMarshaller.INSTANCE);
+            reader((BytesReader<E>) DoubleMarshaller.INSTANCE);
+            interop((BytesInterop<E>) DoubleMarshaller.INSTANCE);
         } else if (eClass == Integer.class) {
-            sizeMarshaller(IntegerMarshaller.INSTANCE)
-                    .reader((BytesReader<E>) IntegerMarshaller.INSTANCE)
-                    .interop((BytesInterop<E>) IntegerMarshaller.INSTANCE);
+            sizeMarshaller(IntegerMarshaller.INSTANCE);
+            reader((BytesReader<E>) IntegerMarshaller.INSTANCE);
+            interop((BytesInterop<E>) IntegerMarshaller.INSTANCE);
         } else if (eClass == byte[].class) {
             reader((BytesReader<E>) ByteArrayMarshaller.INSTANCE);
             interop((BytesInterop<E>) ByteArrayMarshaller.INSTANCE);
         } else if (eClass == char[].class) {
             reader((BytesReader<E>) CharArrayMarshaller.INSTANCE);
             interop((BytesInterop<E>) CharArrayMarshaller.INSTANCE);
+        } else if (eClass == LongValue.class) {
+            LongValueKeyMarshaller marshaller = role == KEY ?
+                    LongValueKeyMarshaller.INSTANCE : LongValueValueMarshaller.INSTANCE;
+            sizeMarshaller(marshaller);
+            reader((BytesReader<E>) marshaller);
+            interop((BytesInterop<E>) marshaller);
         } else if (concreteClass(eClass)) {
             BytesMarshaller<E> marshaller = chooseMarshaller(eClass, eClass);
             if (marshaller != null)

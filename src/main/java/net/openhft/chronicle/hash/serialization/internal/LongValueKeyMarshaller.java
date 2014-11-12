@@ -23,12 +23,24 @@ import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.Hasher;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.LongValue;
 
-public enum LongValueMarshaller
+public class LongValueKeyMarshaller
         implements BytesInterop<LongValue>, BytesReader<LongValue>, SizeMarshaller {
-    INSTANCE;
+    private static final long serialVersionUID = 0L;
+
+    public static final LongValueKeyMarshaller INSTANCE = new LongValueKeyMarshaller();
+
+    private static final Class<LongValue> heapLongValueClass =
+            DataValueClasses.heapClassFor(LongValue.class);
+
+    LongValueKeyMarshaller() {}
+
+    private Object readResolve() {
+        return INSTANCE;
+    }
 
     @Override
     public long size(LongValue e) {
@@ -67,11 +79,19 @@ public enum LongValueMarshaller
 
     @Override
     public LongValue read(Bytes bytes, long size) {
-        return read(bytes, size, DataValueClasses.newInstance(LongValue.class));
+        return read(bytes, size, null);
     }
 
     @Override
     public LongValue read(Bytes bytes, long size, LongValue toReuse) {
+        if (toReuse == null ||
+                (toReuse instanceof Byteable && ((Byteable) toReuse).bytes() == null)) {
+            try {
+                toReuse = heapLongValueClass.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new AssertionError(e);
+            }
+        }
         toReuse.setValue(bytes.readLong());
         return toReuse;
     }

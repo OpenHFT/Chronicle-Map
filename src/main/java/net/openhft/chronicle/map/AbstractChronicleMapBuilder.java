@@ -39,6 +39,7 @@ import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
+import net.openhft.lang.values.LongValue;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -143,6 +144,8 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
         valueBuilder = new SerializationBuilder<V>(valueClass, SerializationBuilder.Role.VALUE);
+        if (valueClass == LongValue.class)
+            prepareValueBytesOnAcquire(new ZeroOutValueBytes<K, V>(valueSize()));
     }
 
     protected static boolean offHeapReference(Class valueClass) {
@@ -721,6 +724,8 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     PrepareValueBytesAsWriter<K> prepareValueBytesAsWriter() {
+        if (prepareValueBytes == null)
+            return null;
         return new PrepareValueBytesAsWriter<>(prepareValueBytes, valueSize());
     }
 
