@@ -3,7 +3,6 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 import net.openhft.lang.values.IntValue;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -14,12 +13,12 @@ import static org.junit.Assert.*;
 public class DemoChronicleMapTest {
 
     @Test
-    @Ignore
     public void testMap() throws Exception {
         File file = File.createTempFile("DummyOrders", ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
-        ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
+//        ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
+        ChronicleMap<IntValue, DemoOrderVOInterface> map = OffHeapUpdatableChronicleMapBuilder
                 .of(IntValue.class, DemoOrderVOInterface.class)
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
@@ -27,7 +26,7 @@ public class DemoChronicleMapTest {
                 .createPersistedTo(file);
 
 
-        IntValue key = DataValueClasses.newInstance(IntValue.class);
+        IntValue key = DataValueClasses.newDirectInstance(IntValue.class);
 
         DemoOrderVOInterface value = DataValueClasses.newDirectReference(DemoOrderVOInterface.class);
         DemoOrderVOInterface value2 = DataValueClasses.newDirectReference(DemoOrderVOInterface.class);
@@ -58,12 +57,12 @@ public class DemoChronicleMapTest {
     }
 
     @Test
-    @Ignore
     public void testMapLocked() throws Exception {
         File file = File.createTempFile("DummyOrders", ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
-        ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
+//        ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
+        ChronicleMap<IntValue, DemoOrderVOInterface> map = OffHeapUpdatableChronicleMapBuilder
                 .of(IntValue.class, DemoOrderVOInterface.class)
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
@@ -71,7 +70,7 @@ public class DemoChronicleMapTest {
                 .createPersistedTo(file);
 
 
-        IntValue key = DataValueClasses.newInstance(IntValue.class);
+        IntValue key = DataValueClasses.newDirectInstance(IntValue.class);
 
         DemoOrderVOInterface value = DataValueClasses.newDirectReference(DemoOrderVOInterface.class);
         DemoOrderVOInterface value2 = DataValueClasses.newDirectReference(DemoOrderVOInterface.class);
