@@ -153,14 +153,17 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * #getUsing}, {@code usingValue} could safely be {@code null}, in this case a new value instance is
      * created to deserialize the data.
      *
-     * <p>In code, {@code acquireUsing} is specified as <pre>{@code
+     * <pre>In code, {@code acquireUsing} is specified as  {@code
      * V acquireUsing(K key, V usingValue) {
      *     if (!containsKey(key))
      *         put(key, defaultValue(key));
      *     return getUsing(key, usingValue);
-     * }}</pre> Where {@code defaultValue(key)} returns either {@linkplain
-     * AbstractChronicleMapBuilder#defaultValue(Object) default value} or {@link
-     * AbstractChronicleMapBuilder#defaultValueProvider(DefaultValueProvider) defaultValueProvider.}
+     * }}</pre>
+     *
+     *
+     * Where {@code defaultValue(key)} returns either {@linkplain AbstractChronicleMapBuilder#defaultValue(Object)
+     * default value} or {@link AbstractChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
+     * defaultValueProvider.}
      *
      * <p>If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link
      * OffHeapUpdatableChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of
