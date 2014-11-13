@@ -237,12 +237,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         if (closeables != null)
             closeables.closeQuietly();
         closeables = null;
-        try {
-            // give time to close
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            //
-        }
+
     }
 
     /**
@@ -399,7 +394,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
-    public synchronized V acquireUsing(@NotNull K key,  V usingValue) {
+    public synchronized V acquireUsing(@NotNull K key, V usingValue) {
         throw new UnsupportedOperationException("acquireUsing() is not supported for stateless " +
                 "clients");
     }
