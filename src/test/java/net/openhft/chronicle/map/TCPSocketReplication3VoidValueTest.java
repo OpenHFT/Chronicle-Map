@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -99,6 +100,7 @@ public class TCPSocketReplication3VoidValueTest {
 
 
     @Test
+    @Ignore
     public void testClear() throws IOException, InterruptedException {
 
         assertEquals(null, map1.put(1, null));
