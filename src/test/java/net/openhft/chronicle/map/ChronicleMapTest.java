@@ -758,6 +758,10 @@ public class ChronicleMapTest {
                             for (long j = t % independence; j < entries + independence - 1; j += independence) {
                                 key.setValue(j * factor);
                                 long n;
+/*
+                                map.acquireUsing(key, value);
+                                n = value.addAtomicValue(1);
+*/
                                 try (WriteContext wc = map.acquireUsingLocked(key, value)) {
                                     n = value.addValue(1);
                                 }

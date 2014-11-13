@@ -23,38 +23,31 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 final class CloseablesManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(CloseablesManager.class.getName());
 
-
-    private final Set<Closeable> closeables = new LinkedHashSet<Closeable>();
+    private final List<Closeable> closeables = new ArrayList<>();
 
 
     public synchronized void add(Closeable closeable) {
 
         if (closeable == null)
             throw new NullPointerException();
-        closeables.add(closeable);
+        if (!closeables.contains(closeable))
+            closeables.add(closeable);
     }
 
     public synchronized void close(Closeable closeable) throws IOException {
-
-        for (Iterator<Closeable> iterator = closeables.iterator(); iterator.hasNext(); ) {
-            if (iterator.next() == closeable)
-                iterator.remove();
-        }
+        closeables.remove(closeable);
         closeable.close();
     }
 
     public synchronized void closeQuietly(Closeable closeable) {
         try {
             close(closeable);
-        } catch (IllegalStateException e) {
-            // this can occur if already closed ( for example closed is called from another thread )
         } catch (IOException e) {
             LOG.error("", e);
         }
@@ -63,7 +56,8 @@ final class CloseablesManager implements Closeable {
     @Override
     public synchronized void close() throws IOException {
         IOException ex = null;
-        for (Closeable closeable : closeables) {
+        for (int i = closeables.size() - 1; i >= 0; i--) {
+            Closeable closeable = closeables.get(i);
             try {
                 closeable.close();
             } catch (IOException e) {

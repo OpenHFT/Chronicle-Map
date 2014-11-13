@@ -58,10 +58,10 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
 
     @Before
     public void setup() throws IOException {
-        map1 = newTcpSocketShmIntString((byte) 1, 8076, new InetSocketAddress("localhost", 8077),
-                new InetSocketAddress("localhost", 8078));
-        map2 = newTcpSocketShmIntString((byte) 2, 8077, new InetSocketAddress("localhost", 8078));
-        map3 = newTcpSocketShmIntString((byte) 3, 8078);
+        map1 = newTcpSocketShmIntString((byte) 1, 8026, new InetSocketAddress("localhost", 8027),
+                new InetSocketAddress("localhost", 8028));
+        map2 = newTcpSocketShmIntString((byte) 2, 8027, new InetSocketAddress("localhost", 8028));
+        map3 = newTcpSocketShmIntString((byte) 3, 8028);
     }
 
     @After

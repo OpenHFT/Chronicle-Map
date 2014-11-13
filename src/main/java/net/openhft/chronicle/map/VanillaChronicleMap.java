@@ -945,7 +945,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             }
         }
 
-        private V putWithoutLock(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V value, long hash2, boolean replaceIfPresent) {
+        V putWithoutLock(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V value, long hash2, boolean replaceIfPresent) {
             long keySize = metaKeyInterop.size(keyInterop, key);
             hashLookup.startSearch(hash2);
             for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {

@@ -44,10 +44,10 @@ public class TCPSocketReplication3VoidValueTest {
 
     @Before
     public void setup() throws IOException {
-        map1 = newMapVoid((byte) 1, 8086, new InetSocketAddress("localhost", 8087),
-                new InetSocketAddress("localhost", 8089));
-        map2 = newMapVoid((byte) 2, 8087, new InetSocketAddress("localhost", 8089));
-        map3 = newMapVoid((byte) 3, 8089);
+        map1 = newMapVoid((byte) 1, 8036, new InetSocketAddress("localhost", 8037),
+                new InetSocketAddress("localhost", 8039));
+        map2 = newMapVoid((byte) 2, 8037, new InetSocketAddress("localhost", 8039));
+        map3 = newMapVoid((byte) 3, 8039);
     }
 
     @After
