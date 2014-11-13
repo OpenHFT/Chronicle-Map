@@ -86,7 +86,7 @@ final class CloseablesManager implements Closeable {
     }
 
 
-    public boolean isEmpty() {
+    public synchronized boolean isEmpty() {
         return closeables.isEmpty();
     }
 }
