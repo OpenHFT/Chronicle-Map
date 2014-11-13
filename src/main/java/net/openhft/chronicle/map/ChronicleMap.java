@@ -151,7 +151,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * #getUsing}, {@code usingValue} could safely be {@code null}, in this case a new value instance is
      * created to deserialize the data.
      *
-     * <pre>In code, {@code acquireUsing} is specified as  {@code
+     * In code, {@code acquireUsing} is specified as :
+     * <pre>
      * V acquireUsing(K key, V usingValue) {
      *     if (!containsKey(key))
      *         put(key, defaultValue(key));
