@@ -136,7 +136,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     private MapEventListener<K, V, ChronicleMap<K, V>> eventListener =
             MapEventListeners.nop();
     private V defaultValue = null;
-    private DefaultValueProvider<K, V> defaultValueProvider = NullValueProvider.INSTANCE;
+    private DefaultValueProvider<K, V> defaultValueProvider = null;
     private PrepareValueBytes<K, V> prepareValueBytes = null;
 
     private SingleChronicleHashReplication singleHashReplication = null;
