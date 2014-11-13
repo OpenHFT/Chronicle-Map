@@ -112,14 +112,14 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * method, depending on what deserialization strategy is configured on the builder, using which this map
      * was constructed. If the value deserializer is able to reuse the given {@code usingValue} object,
      * calling this method instead of {@link #get(Object)} could help to reduce garbage creation.
-     * <pre>
+     * <pre>{@code
      * try (ReadContext<BondVOInterface> context = map.getUsingLocked(key,using)) {
      *    BondVOInterface bond =  context.value().getValue();
      *    long issueDate =  bond.getIssueDate();
      *    String symbol = bond.getSymbol();
      *    // add your logic here (the lock will ensure this bond can not be changed by another thread)
      * }  // the read lock is released here.
-     * </pre>
+     * }</pre>
      * To ensure that you can read the 'issueDate' and 'symbol' can be read atomically, these values must be
      * read while the segment lock is in place.
      *
@@ -152,7 +152,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * created to deserialize the data.
      *
      * In code, {@code acquireUsing} is specified as :
-     * <pre>
+     * <pre>{@code
      * V acquireUsing(K key, V usingValue) {
      *     if (!containsKey(key))
      *         put(key, defaultValue(key));
