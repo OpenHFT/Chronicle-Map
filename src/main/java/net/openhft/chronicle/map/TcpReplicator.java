@@ -37,6 +37,8 @@ import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -1253,7 +1255,7 @@ class StatelessServerConnector<K, V> {
 
         final StatelessChronicleMap.EventId event = StatelessChronicleMap.EventId.values()[eventId];
 
-
+        // these methods don't return a result
         switch (event) {
 
             case KEY_SET:
@@ -1268,7 +1270,6 @@ class StatelessServerConnector<K, V> {
             case PUT_WITHOUT_ACC:
                 return put(reader);
 
-
             case PUT_ALL_WITHOUT_ACC:
                 return putAll(reader);
 
@@ -1278,6 +1279,9 @@ class StatelessServerConnector<K, V> {
         }
 
         final long sizeLocation = reflectTransactionId(reader, writer);
+
+
+        // these methods return a result
 
         switch (event) {
 
@@ -1326,11 +1330,45 @@ class StatelessServerConnector<K, V> {
             case HASH_CODE:
                 return hashCode(reader, writer, sizeLocation);
 
+            case MAP_FOR_KEY:
+                return mapForKey(reader, writer, sizeLocation);
 
             default:
                 throw new IllegalStateException("unsupported event=" + event);
 
         }
+
+    }
+
+    // an object poll of 1 using an atomic reference
+    private AtomicReference<V> using = new AtomicReference<V>();
+
+    public Work mapForKey(ByteBufferBytes reader, Bytes writer, long sizeLocation) {
+
+        final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+        final K key = readKey(reader, local);
+
+        V value = using.getAndSet(null);
+        if (value == null) {
+            // a simple way to create a value
+            value = map.getUsing(key, null);
+        }
+
+        final Function<V, ?> o = (Function<V, ?>) reader.readObject();
+
+        try (WriteContext<K, V> wc = map.acquireUsingLocked(key, value)) {
+            Object result = o.apply(value);
+            keyValueSerializer.writeObject(result, writer);
+
+        } catch (RuntimeException e) {
+            LOG.info("", e);
+            return sendException(writer, sizeLocation, e);
+        } finally {
+            using.set(value);
+        }
+
+        writeSizeAndFlags(sizeLocation, false, writer);
+        return null;
 
     }
 
@@ -1916,6 +1954,11 @@ class KeyValueSerializer<K, V> {
         return valueSerializer.readMarshallable(reader, local);
     }
 
+    <O> O readObject(Bytes reader) {
+        if (nullCheck(reader)) return null;
+        return (O) reader.readObject();
+    }
+
 
     private boolean nullCheck(Bytes in) {
         return in.readBoolean();
@@ -1975,6 +2018,16 @@ class KeyValueSerializer<K, V> {
 
     }
 
+
+    void writeObject(Object value, Bytes writer) {
+        assert writer.limit() == writer.capacity();
+        writer.writeBoolean(value == null);
+
+        if (value != null) {
+            writer.writeObject(value);
+        }
+
+    }
 
     public ThreadLocalCopies threadLocalCopies() {
         return valueSerializer.threadLocalCopies();

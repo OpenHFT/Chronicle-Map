@@ -23,11 +23,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 
 /**
@@ -37,6 +39,37 @@ public class StatelessClientTest {
 
 
     public static final int SIZE = 100000;
+
+
+    static class StringBuilderToStringFunction implements Function<StringBuilder, String>, Serializable {
+
+        @Override
+        public String apply(StringBuilder stringBuilder) {
+            return stringBuilder.toString();
+        }
+    }
+
+
+    @Test
+    public void testMapForKey() throws IOException, InterruptedException {
+
+
+        try (ChronicleMap<Integer, StringBuilder> serverMap = ChronicleMapBuilder.of(Integer.class,
+                StringBuilder.class)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+
+            serverMap.put(10, new StringBuilder("Hello World"));
+
+            try (ChronicleMap<Integer, StringBuilder> statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, StringBuilder.class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+
+                String actual = (String) ((StatelessChronicleMap) statelessMap).mapForKey(10, new StringBuilderToStringFunction());
+
+                Assert.assertEquals("Hello World", actual);
+            }
+        }
+    }
 
 
     @Test(timeout = 5000)
@@ -165,7 +198,6 @@ public class StatelessClientTest {
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
-
 
 
                 serverMap.put(10, "EXAMPLE-10");
@@ -299,7 +331,6 @@ public class StatelessClientTest {
         final ChronicleMap<Integer, CharSequence> serverMap2;
         final ChronicleMap<Integer, CharSequence> statelessMap1;
         final ChronicleMap<Integer, CharSequence> statelessMap2;
-
 
 
         // server

@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.function.Function;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
@@ -90,13 +91,15 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         TO_STRING,
         PUT_ALL,
         PUT_ALL_WITHOUT_ACC,
-        HASH_CODE
+        HASH_CODE,
+        MAP_FOR_KEY
     }
 
     private long transactionID;
 
     StatelessChronicleMap(final StatelessMapConfig builder,
-                          final AbstractChronicleMapBuilder chronicleMapBuilder) throws IOException {
+                          final AbstractChronicleMapBuilder chronicleMapBuilder) throws
+            IOException {
         this.builder = builder;
         this.keyValueSerializer = new KeyValueSerializer<K, V>(chronicleMapBuilder.keyBuilder,
                 chronicleMapBuilder.valueBuilder);
@@ -105,8 +108,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         this.maxEntrySize = chronicleMapBuilder.entrySize(true);
         this.vClass = chronicleMapBuilder.valueBuilder.eClass;
         this.kClass = chronicleMapBuilder.keyBuilder.eClass;
-        // this.putReturnsNull = putReturnsNull;
-        // this.removeReturnsNull = removeReturnsNull;
+
         attemptConnect(builder.remoteAddress());
 
         buffer = allocateDirect(maxEntrySize).order(ByteOrder.nativeOrder());
@@ -136,6 +138,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                 result = AbstractChannelReplicator.openSocketChannel(closeables);
                 result.connect(builder.remoteAddress());
                 result.socket().setTcpNoDelay(true);
+                result.socket().setReuseAddress(true);
 
                 doHandShaking(result);
                 break;
@@ -451,9 +454,44 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
+    public synchronized <R> R mapForKey(K key, @NotNull Function<V, R> function) {
+
+        final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+        final long sizeLocation = writeEventAnSkip(MAP_FOR_KEY);
+
+        writeKey(key, local);
+        writeObject(function);
+
+        final Bytes reader = blockingFetch(sizeLocation);
+        return (R) keyValueSerializer.readObject(reader);
+    }
+
+
+    private <R> void writeObject(@NotNull Function<V, R> function) {
+        for (; ; ) {
+            try {
+
+                bytes.writeObject(function);
+                return;
+            } catch (IllegalStateException e) {
+
+                Throwable cause = e.getCause();
+
+                if (cause instanceof IOException && cause.getMessage().contains("Not enough available space")) {
+                    LOG.debug("resizing buffer");
+                    resizeBuffer(buffer.capacity() + 1024);
+
+                } else
+                    throw e;
+
+            }
+        }
+    }
+
+
     public synchronized void putAll(Map<? extends K, ? extends V> map) {
 
-        final long sizeLocation = (putReturnsNull) ? writeEvent(PUT_ALL_WITHOUT_ACC) : writeEventAnSkip(PUT_ALL);
+        final long sizeLocation = putReturnsNull ? writeEvent(PUT_ALL_WITHOUT_ACC) : writeEventAnSkip(PUT_ALL);
 
         writeEntries(map);
 
@@ -560,8 +598,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         // we will back the size estimate on what we have so far
         final double percentageComplete = (double) numberOfEntriesReadSoFar / (double) numberOfEntries;
         return (long) ((double) bytes.position() / percentageComplete);
-
-
     }
 
 
@@ -571,30 +607,38 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         assert size < Integer.MAX_VALUE;
 
-        final ByteBuffer result = ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder());
+        final ByteBuffer result = ByteBuffer.allocate((int) size).order(ByteOrder.nativeOrder());
 
-        final int bufferPosition = buffer.position();
+ /*       final int bufferPosition = buffer.position();
         final int bufferLimit = buffer.limit();
-
+*/
         final long bytesPosition = bytes.position();
+
         bytes = new ByteBufferBytes(result.slice());
 
         buffer.position(0);
         buffer.limit((int) bytesPosition);
 
-        for (int i = 0; i < bytesPosition; i++) {
-            result.put(buffer.get());
+        int numberOfLongs = (int) bytesPosition / 8;
+
+        // chunk in longs first
+        for (int i = 0; i < numberOfLongs; i++) {
+            bytes.writeLong(buffer.getLong());
+        }
+
+        for (int i = numberOfLongs * 8; i < bytesPosition; i++) {
+            bytes.writeByte(buffer.get());
         }
 
         buffer = result;
-        buffer.limit(bufferLimit);
+ /*       buffer.limit(bufferLimit);
         buffer.position(bufferPosition);
-
+*/
         assert buffer.capacity() == bytes.capacity();
 
-        bytes.limit(bytes.capacity());
+     /*   bytes.limit(bytes.capacity());
         bytes.position(bytesPosition);
-
+*/
         assert buffer.capacity() == size;
         assert buffer.capacity() == bytes.capacity();
         assert bytes.limit() == bytes.capacity();
@@ -731,7 +775,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         buffer.clear();
         bytes.clear();
 
-        //bytes.limit(buffer.capacity());
 
         bytes.write((byte) event.ordinal());
         long sizeLocation = markSizeLocation();
@@ -807,6 +850,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         public final String toString() {
             return getKey() + "=" + getValue();
         }
+
     }
 
     private Bytes blockingFetch(long sizeLocation) {
@@ -954,7 +998,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         bytes.writeInt((int) size - SIZE_OF_SIZE);
         bytes.writeLong(transactionId);
         bytes.position(pos);
-
     }
 
 
@@ -978,7 +1021,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             resizeBuffer(bytes.capacity() + maxEntrySize);
 
         }
-
     }
 
 
@@ -988,7 +1030,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         } catch (IllegalArgumentException e) {
             resizeBuffer(bytes.capacity() + maxEntrySize);
         }
-
     }
 
     private V readKey(final long sizeLocation) {
@@ -1005,7 +1046,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         } catch (IllegalArgumentException e) {
             resizeBuffer(bytes.capacity() + maxEntrySize);
         }
-
     }
 
     private void writeValue(V value, ThreadLocalCopies local) {
@@ -1014,7 +1054,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         } catch (IllegalArgumentException e) {
             resizeBuffer(bytes.capacity() + maxEntrySize);
         }
-
     }
 
 }

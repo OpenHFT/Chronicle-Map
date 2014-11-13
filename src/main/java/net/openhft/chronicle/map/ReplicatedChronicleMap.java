@@ -955,65 +955,75 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             return keySize == keySizeMarshaller.readSize(entry) && entry.startsWith(keyBytes);
         }
 
+         @Override
+        V putWithoutLock(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V value, long hash2, boolean replaceIfPresent) {
+           return putWithoutLock(copies, metaKeyInterop, keyInterop, key, value, hash2, replaceIfPresent,
+                   localIdentifier, timeProvider.currentTimeMillis());
+        }
+
         V put(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
               K key, V value, long hash2, boolean replaceIfPresent,
               final byte identifier, final long timestamp) {
             writeLock();
             try {
-                MultiMap hashLookup = hashLookupLiveAndDeleted;
-                long keySize = metaKeyWriter.size(keyWriter, key);
-                hashLookup.startSearch(hash2);
-                for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
-                    long offset = offsetFromPos(pos);
-                    MultiStoreBytes entry = entry(offset);
-                    if (!keyEquals(keyWriter, metaKeyWriter, key, keySize, entry))
-                        continue;
-                    // key is found
-                    entry.skip(keySize);
-
-                    final long timeStampPos = entry.positionAddr();
-
-                    if (shouldIgnore(entry, timestamp, identifier))
-                        return null;
-
-                    boolean wasDeleted = entry.readBoolean();
-
-                    // if wasDeleted==true then we even if replaceIfPresent==false we can treat it
-                    // the same way as replaceIfPresent true
-                    if (replaceIfPresent || wasDeleted) {
-
-                        entry.positionAddr(timeStampPos);
-                        entry.writeLong(timestamp);
-                        entry.writeByte(identifier);
-                        // deleted flag
-                        entry.writeBoolean(false);
-
-                        final V prevValue = replaceValueOnPut(copies, key, value, entry, pos,
-                                offset, !wasDeleted && !putReturnsNull, hashLookup);
-
-                        if (wasDeleted) {
-                            // remove() would have got rid of this so we have to add it back in
-                            hashLookupLiveOnly.put(hash2, pos);
-                            incrementSize();
-                            return null;
-                        } else {
-                            return prevValue;
-                        }
-                    } else {
-                        // we wont replaceIfPresent and the entry is not deleted
-                        return putReturnsNull ? null : readValue(copies, entry, null);
-                    }
-                }
-
-                // key is not found
-                long offset = putEntry(copies, metaKeyWriter, keyWriter, key, keySize, hash2, value,
-                        identifier, timestamp, hashLookup);
-                incrementSize();
-                notifyPut(offset, true, key, value, null, posFromOffset(offset));
-                return null;
+                return putWithoutLock(copies, metaKeyWriter, keyWriter, key, value, hash2, replaceIfPresent, identifier, timestamp);
             } finally {
                 writeUnlock();
             }
+        }
+
+        private V putWithoutLock(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter, K key, V value, long hash2, boolean replaceIfPresent, byte identifier, long timestamp) {
+            MultiMap hashLookup = hashLookupLiveAndDeleted;
+            long keySize = metaKeyWriter.size(keyWriter, key);
+            hashLookup.startSearch(hash2);
+            for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
+                long offset = offsetFromPos(pos);
+                MultiStoreBytes entry = entry(offset);
+                if (!keyEquals(keyWriter, metaKeyWriter, key, keySize, entry))
+                    continue;
+                // key is found
+                entry.skip(keySize);
+
+                final long timeStampPos = entry.positionAddr();
+
+                if (shouldIgnore(entry, timestamp, identifier))
+                    return null;
+
+                boolean wasDeleted = entry.readBoolean();
+
+                // if wasDeleted==true then we even if replaceIfPresent==false we can treat it
+                // the same way as replaceIfPresent true
+                if (replaceIfPresent || wasDeleted) {
+
+                    entry.positionAddr(timeStampPos);
+                    entry.writeLong(timestamp);
+                    entry.writeByte(identifier);
+                    // deleted flag
+                    entry.writeBoolean(false);
+
+                    final V prevValue = replaceValueOnPut(copies, key, value, entry, pos,
+                            offset, !wasDeleted && !putReturnsNull, hashLookup);
+
+                    if (wasDeleted) {
+                        // remove() would have got rid of this so we have to add it back in
+                        hashLookupLiveOnly.put(hash2, pos);
+                        incrementSize();
+                        return null;
+                    } else {
+                        return prevValue;
+                    }
+                } else {
+                    // we wont replaceIfPresent and the entry is not deleted
+                    return putReturnsNull ? null : readValue(copies, entry, null);
+                }
+            }
+
+            // key is not found
+            long offset = putEntry(copies, metaKeyWriter, keyWriter, key, keySize, hash2, value,
+                    identifier, timestamp, hashLookup);
+            incrementSize();
+            notifyPut(offset, true, key, value, null, posFromOffset(offset));
+            return null;
         }
 
 
