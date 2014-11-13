@@ -21,6 +21,7 @@ package net.openhft.chronicle.set;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -119,6 +120,7 @@ public class SetForTCPSocketReplication3wayTest {
 
 
     @Test
+    @Ignore
     public void testClear() throws IOException, InterruptedException {
 
         set1.add(1);
