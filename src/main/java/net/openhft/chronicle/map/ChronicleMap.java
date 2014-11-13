@@ -113,7 +113,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * was constructed. If the value deserializer is able to reuse the given {@code usingValue} object,
      * calling this method instead of {@link #get(Object)} could help to reduce garbage creation.
      * <pre>{@code
-     * <p> try (ReadContext<BondVOInterface> context = map.getUsingLocked(key,using)) {
+     * try (ReadContext<BondVOInterface> context = map.getUsingLocked(key,using)) {
      *    BondVOInterface bond =  context.value().getValue();
      *    long issueDate =  bond.getIssueDate();
      *    String symbol = bond.getSymbol();
