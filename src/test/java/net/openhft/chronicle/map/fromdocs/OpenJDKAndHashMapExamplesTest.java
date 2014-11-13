@@ -18,10 +18,10 @@
 
 package net.openhft.chronicle.map.fromdocs;
 
-import net.openhft.affinity.AffinitySupport;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.OffHeapUpdatableChronicleMapBuilder;
+import net.openhft.chronicle.map.ReadContext;
+import net.openhft.chronicle.map.WriteContext;
 import net.openhft.lang.model.DataValueClasses;
 import org.junit.Test;
 
@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-import static net.openhft.lang.model.DataValueClasses.directClassFor;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -56,25 +55,26 @@ public class OpenJDKAndHashMapExamplesTest {
 
         File file = new File(TMP + "/chm-myBondPortfolioCHM-" + System.nanoTime());
         file.deleteOnExit();
+
         ChronicleMap<String, BondVOInterface> chm = OffHeapUpdatableChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
                 .keySize(10)
                 .createPersistedTo(file);
 
-
         BondVOInterface bondVO = DataValueClasses.newDirectReference(BondVOInterface.class);
-        chm.acquireUsing("369604103", bondVO);
-        bondVO.setIssueDate(parseYYYYMMDD("20130915"));
-        bondVO.setMaturityDate(parseYYYYMMDD("20140915"));
-        bondVO.setCoupon(5.0 / 100); // 5.0%
+        try (WriteContext wc = chm.acquireUsingLocked("369604103", bondVO)) {
+            bondVO.setIssueDate(parseYYYYMMDD("20130915"));
+            bondVO.setMaturityDate(parseYYYYMMDD("20140915"));
+            bondVO.setCoupon(5.0 / 100); // 5.0%
 
-        BondVOInterface.MarketPx mpx930 = bondVO.getMarketPxIntraDayHistoryAt(0);
-        mpx930.setAskPx(109.2);
-        mpx930.setBidPx(106.9);
+            BondVOInterface.MarketPx mpx930 = bondVO.getMarketPxIntraDayHistoryAt(0);
+            mpx930.setAskPx(109.2);
+            mpx930.setBidPx(106.9);
 
-        BondVOInterface.MarketPx mpx1030 = bondVO.getMarketPxIntraDayHistoryAt(1);
-        mpx1030.setAskPx(109.7);
-        mpx1030.setBidPx(107.6);
+            BondVOInterface.MarketPx mpx1030 = bondVO.getMarketPxIntraDayHistoryAt(1);
+            mpx1030.setAskPx(109.7);
+            mpx1030.setBidPx(107.6);
+        }
 
         ChronicleMap<String, BondVOInterface> chmB = OffHeapUpdatableChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
@@ -82,35 +82,33 @@ public class OpenJDKAndHashMapExamplesTest {
                 .createPersistedTo(file);
 
         // ZERO Copy but creates a new off heap reference each time
-
-
-        BondVOInterface bondVOB = chmB.get("369604103");
-        assertEquals(5.0 / 100, bondVOB.getCoupon(), 0.0);
-
-        BondVOInterface.MarketPx mpx930B = bondVOB.getMarketPxIntraDayHistoryAt(0);
-        assertEquals(109.2, mpx930B.getAskPx(), 0.0);
-        assertEquals(106.9, mpx930B.getBidPx(), 0.0);
-
-        BondVOInterface.MarketPx mpx1030B = bondVOB.getMarketPxIntraDayHistoryAt(1);
-        assertEquals(109.7, mpx1030B.getAskPx(), 0.0);
-        assertEquals(107.6, mpx1030B.getBidPx(), 0.0);
-
-
-        //ZERO-COPY
         // our reusable, mutable off heap reference, generated from the interface.
-        BondVOInterface bondZC = DataValueClasses.newDirectReference(BondVOInterface.class);
+        BondVOInterface bond = DataValueClasses.newDirectReference(BondVOInterface.class);
+        try (ReadContext rc = chmB.getUsingLocked("369604103", bond)) {
+            if (rc.present()) {
+                assertEquals(5.0 / 100, bond.getCoupon(), 0.0);
 
-        // lookup the key and give me a reference to the data.
-        if (chm.getUsing("369604103", bondZC) != null) {
-            // found a key and bondZC has been set
+                BondVOInterface.MarketPx mpx930B = bond.getMarketPxIntraDayHistoryAt(0);
+                assertEquals(109.2, mpx930B.getAskPx(), 0.0);
+                assertEquals(106.9, mpx930B.getBidPx(), 0.0);
+
+                BondVOInterface.MarketPx mpx1030B = bond.getMarketPxIntraDayHistoryAt(1);
+                assertEquals(109.7, mpx1030B.getAskPx(), 0.0);
+                assertEquals(107.6, mpx1030B.getBidPx(), 0.0);
+            }
+        }
+
+        // lookup the key and give me a reference I can update in a thread safe way.
+        try (WriteContext wc = chm.acquireUsingLocked("369604103", bond)) {
+            // found a key and bond has been set
             // get directly without touching the rest of the record.
-            long _matDate = bondZC.getMaturityDate();
+            long _matDate = bond.getMaturityDate();
             // write just this field, again we need to assume we are the only writer.
-            bondZC.setMaturityDate(parseYYYYMMDD("20440315"));
+            bond.setMaturityDate(parseYYYYMMDD("20440315"));
 
             //demo of how to do OpenHFT off-heap array[ ] processing
             int tradingHour = 2;  //current trading hour intra-day
-            BondVOInterface.MarketPx mktPx = bondZC.getMarketPxIntraDayHistoryAt(tradingHour);
+            BondVOInterface.MarketPx mktPx = bond.getMarketPxIntraDayHistoryAt(tradingHour);
             if (mktPx.getCallPx() < 103.50) {
                 mktPx.setParPx(100.50);
                 mktPx.setAskPx(102.00);
@@ -120,35 +118,19 @@ public class OpenJDKAndHashMapExamplesTest {
             }
         }
 
-        // bondZC will be full of default values and zero length string the first time.
+        // bond will be full of default values and zero length string the first time.
 
         // from this point, all operations are completely record/entry local,
         // no other resource is involved.
         // now perform thread safe operations on my reference
-        bondZC.addAtomicMaturityDate(16 * 24 * 3600 * 1000L);  //20440331
+        bond.addAtomicMaturityDate(16 * 24 * 3600 * 1000L);  //20440331
 
 
-        bondZC.addAtomicCoupon(-1 * bondZC.getCoupon()); //MT-safe! now a Zero Coupon Bond.
-
-        // say I need to do something more complicated
-        // set the Threads getId() to match the process id of the thread.
-        AffinitySupport.setThreadId();
-
-        bondZC.busyLockEntry();
-        try {
-            String str = bondZC.getSymbol();
-            if (str.equals("IBM_HY_2044"))
-                bondZC.setSymbol("OPENHFT_IG_2044");
-        } finally {
-            bondZC.unlockEntry();
-        }
+        bond.addAtomicCoupon(-1 * bond.getCoupon()); //MT-safe! now a Zero Coupon Bond.
 
         // cleanup.
         chm.close();
         chmB.close();
         file.delete();
-
     }
-
-
 }
