@@ -112,16 +112,14 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * method, depending on what deserialization strategy is configured on the builder, using which this map
      * was constructed. If the value deserializer is able to reuse the given {@code usingValue} object,
      * calling this method instead of {@link #get(Object)} could help to reduce garbage creation.
-     *
-     * <p> try (ReadContext&gt;?, BondVOInterface&lt; context = map.getUsingLocked(key,using)) {
-     * BondVOInterface bond =  context.value().getValue();
-     *
-     * long issueDate =  bond.getIssueDate(); String symbol = bond.getSymbol();
-     *
-     * // add your logic here ( the lock will ensure this bond can not be changed by another thread )
-     *
-     * } // the read lock is released here </p>
-     *
+     * <pre>{@code
+     * try (ReadContext<BondVOInterface> context = map.getUsingLocked(key,using)) {
+     *    BondVOInterface bond =  context.value().getValue();
+     *    long issueDate =  bond.getIssueDate();
+     *    String symbol = bond.getSymbol();
+     *    // add your logic here (the lock will ensure this bond can not be changed by another thread)
+     * }  // the read lock is released here.
+     * }</pre></>
      * To ensure that you can read the 'issueDate' and 'symbol' can be read atomically, these values must be
      * read while the segment lock is in place.
      *
@@ -143,7 +141,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     /**
      * Acquire a value for a key, creating if absent.
      *
-     * <p>If the specified key if absent in the map, {@linkplain AbstractChronicleMapBuilder#defaultValue(Object)
+     * <p>If the specified key is absent in the map, {@linkplain AbstractChronicleMapBuilder#defaultValue(Object)
      * default value} is taken or {@linkplain AbstractChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
      * default value provider} is called. Then this object is put to this map for the specified key.
      *
