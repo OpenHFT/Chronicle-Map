@@ -829,7 +829,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             BytesReader<K> keyReader = null;
 
             if (hasAttachedEventListeners()) {
-                ThreadLocalCopies keyCopies = keyInteropProvider.getCopies(null);
+                ThreadLocalCopies keyCopies = keyReaderProvider.getCopies(null);
                 keyReader = keyReaderProvider.get(keyCopies, originalKeyReader);
 
                 ThreadLocalCopies valueCopies = valueReaderProvider.getCopies(keyCopies);
