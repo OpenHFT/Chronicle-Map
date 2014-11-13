@@ -17,7 +17,6 @@ public class DemoChronicleMapTest {
         File file = File.createTempFile("DummyOrders", ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
-//        ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
         ChronicleMap<IntValue, DemoOrderVOInterface> map = OffHeapUpdatableChronicleMapBuilder
                 .of(IntValue.class, DemoOrderVOInterface.class)
                 .putReturnsNull(true)
@@ -37,7 +36,6 @@ public class DemoChronicleMapTest {
 
             map.acquireUsing(key, value);
 
-            // TODO Shouldn't throw an NPE, because acquire should set the value.
             value.setSymbol("IBM-" + i);
             value.addAtomicOrderQty(1000);
 
@@ -61,7 +59,6 @@ public class DemoChronicleMapTest {
         File file = File.createTempFile("DummyOrders", ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
-//        ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
         ChronicleMap<IntValue, DemoOrderVOInterface> map = OffHeapUpdatableChronicleMapBuilder
                 .of(IntValue.class, DemoOrderVOInterface.class)
                 .putReturnsNull(true)
@@ -80,7 +77,6 @@ public class DemoChronicleMapTest {
             key.setValue(i);
 
             try (WriteContext wc = map.acquireUsingLocked(key, value)) {
-                // TODO Shouldn't throw an NPE, because acquire should set the value.
                 value.setSymbol("IBM-" + i);
                 value.addAtomicOrderQty(1000);
             }

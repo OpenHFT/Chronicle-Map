@@ -82,12 +82,12 @@ public class TCPSocketReplication3VoidValueTest {
         assertEquals(null, map1.put(2, null));
 
         assertEquals(null, map2.put(5, null));
-        assertEquals(null, map2.put(6,null));
+        assertEquals(null, map2.put(6, null));
 
         map1.remove(2);
         map2.remove(3);
         map1.remove(3);
-        map2.put(5,null);
+        map2.put(5, null);
 
         // allow time for the recompilation to resolve
         assertTrue(waitTillEqual(5000));
@@ -102,7 +102,7 @@ public class TCPSocketReplication3VoidValueTest {
     public void testClear() throws IOException, InterruptedException {
 
         assertEquals(null, map1.put(1, null));
-        assertEquals(null, map1.put(2,null));
+        assertEquals(null, map1.put(2, null));
 
         assertEquals(null, map2.put(5, null));
         assertEquals(null, map2.put(6, null));
@@ -123,7 +123,8 @@ public class TCPSocketReplication3VoidValueTest {
         int t = 0;
         for (; t < timeOutMs; t++) {
             if (map1.equals(map2) &&
-                    map1.equals(map3))
+                    map1.equals(map3) &&
+                    map2.equals(map3))
                 return true;
             Thread.sleep(1);
         }
