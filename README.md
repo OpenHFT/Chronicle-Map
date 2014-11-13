@@ -310,14 +310,14 @@ the ChronicleMapBuilder can also be used to return the ChronicleMap, see the exa
 ChronicleMap<Integer, CharSequence> map =
     ChronicleMapBuilder.of(Integer.class, CharSequence.class).create();
 ```
-One way to achieve good performance is to focus on unnecessary object creation as this reduces
+One way to achieve good performance is to focus on unnecessary object creation, as this reduces
 the amount of work that has to be carried out by the Garbage Collector. As such ChronicleMap
 supports the following methods :
 
  - [`V getUsing(K key, V value);`](http://openhft.github.io/Chronicle-Map/apidocs/net/openhft/chronicle/map/ChronicleMap.html#getUsing-K-V-)
  - [`V acquireUsing(K key, V value);`](http://openhft.github.io/Chronicle-Map/apidocs/net/openhft/chronicle/map/ChronicleMap.html#acquireUsing-K-V-)
- - ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);
- - WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);
+ - [`ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);`]  (https://github.com/OpenHFT/Chronicle-Map#off-heap-storage-and-how-using-a-proxy-object-can-improve-performance)
+ - [`WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);`]    (https://github.com/OpenHFT/Chronicle-Map#acquireusinglocked)
 
 
 These methods let you provide the object which the data will be written to, even if the object is
