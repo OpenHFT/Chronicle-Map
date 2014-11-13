@@ -364,7 +364,6 @@ that entry has to be deserialised onto the java heap so that you can use its val
  ``` java
 for(int i=1;i<=10;i++) {
   Value v = get(key)
-
 }
 ``` 
 this would create 10 separate instances of the value. As each time get() is called the map has to
