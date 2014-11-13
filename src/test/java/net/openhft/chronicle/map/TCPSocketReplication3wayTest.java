@@ -154,7 +154,8 @@ public class TCPSocketReplication3wayTest {
         int t = 0;
         for (; t < timeOutMs; t++) {
             if (map1.equals(map2) &&
-                    map1.equals(map3))
+                    map1.equals(map3)
+                    && map2.equals(map3))
                 break;
             Thread.sleep(1);
         }

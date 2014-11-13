@@ -148,7 +148,8 @@ public class SetForTCPSocketReplication3wayTest {
         int t = 0;
         for (; t < timeOutMs; t++) {
             if (set1.equals(set2) &&
-                    set1.equals(set3))
+                    set1.equals(set3) &&
+                    set2.equals(set3))
                 break;
             Thread.sleep(1);
         }
