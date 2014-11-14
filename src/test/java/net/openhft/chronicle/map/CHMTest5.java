@@ -34,8 +34,8 @@ public class CHMTest5 {
 
     public static void main(String[] args) throws Exception {
         //First create (or access if already created) the shared map
-        OffHeapUpdatableChronicleMapBuilder<String, CHMTest5Data> builder =
-                OffHeapUpdatableChronicleMapBuilder.of(String.class, CHMTest5Data.class)
+        ChronicleMapBuilder<String, CHMTest5Data> builder =
+                ChronicleMapBuilder.of(String.class, CHMTest5Data.class)
                         .entries(1000);
 
         //// don't include this, just to check it is as expected.

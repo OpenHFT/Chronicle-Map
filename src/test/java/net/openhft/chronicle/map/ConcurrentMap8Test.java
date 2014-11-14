@@ -42,7 +42,7 @@ public class ConcurrentMap8Test extends JSR166TestCase {
    /* private static ConcurrentMap<Long, Long> newLongMap() {
         //First create (or access if already created) the shared map
 
-        final ChronicleMapBuilder<Long, Long> builder = ChronicleMapBuilder.of(Long.class, Long.class);
+        final ChronicleMapOnHeapUpdatableBuilder<Long, Long> builder = ChronicleMapOnHeapUpdatableBuilder.of(Long.class, Long.class);
 
 
         //// don't include this, just to check it is as expected.
@@ -64,7 +64,7 @@ public class ConcurrentMap8Test extends JSR166TestCase {
     private static ConcurrentMap newIntegerStringMap() {
 
 
-        final ChronicleMapBuilder<Integer, String> builder = ChronicleMapBuilder.of(Integer.class,
+        final ChronicleMapOnHeapUpdatableBuilder<Integer, String> builder = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class,
                 String.class);
 
 

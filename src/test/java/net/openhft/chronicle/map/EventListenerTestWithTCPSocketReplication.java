@@ -99,14 +99,14 @@ public class EventListenerTestWithTCPSocketReplication {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            ChronicleMapBuilder<Integer, CharSequence> map1Builder = serverBuilder();
+            ChronicleMapOnHeapUpdatableBuilder<Integer, CharSequence> map1Builder = serverBuilder();
 
             map1 = map1Builder.create();
         }
         // ---------- SERVER2 2 on the same server as ----------
 
         {
-            ChronicleMapBuilder<Integer, CharSequence> map2Builder = clientBuilder();
+            ChronicleMapOnHeapUpdatableBuilder<Integer, CharSequence> map2Builder = clientBuilder();
 
             map2 = map2Builder.create();
         }
@@ -135,7 +135,7 @@ public class EventListenerTestWithTCPSocketReplication {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            ChronicleMapBuilder<Integer, CharSequence> map1Builder = serverBuilder();
+            ChronicleMapOnHeapUpdatableBuilder<Integer, CharSequence> map1Builder = serverBuilder();
 
             map1 = map1Builder.create();
 
@@ -206,7 +206,7 @@ public class EventListenerTestWithTCPSocketReplication {
 
             // we connect the maps via a TCP socket connection on port 8077
 
-            ChronicleMapBuilder<Integer, CharSequence> map1Builder = serverBuilder();
+            ChronicleMapOnHeapUpdatableBuilder<Integer, CharSequence> map1Builder = serverBuilder();
 
             map1 = map1Builder.create();
 
@@ -237,9 +237,9 @@ public class EventListenerTestWithTCPSocketReplication {
         Assert.assertEquals(null, map2.get(5));
     }
 
-    private ChronicleMapBuilder<Integer, CharSequence> clientBuilder() {
+    private ChronicleMapOnHeapUpdatableBuilder<Integer, CharSequence> clientBuilder() {
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8077);
-        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+        return ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000L)
                 .replication((byte) 1, tcpConfig)
                 .eventListener(eventListener);
@@ -256,9 +256,9 @@ public class EventListenerTestWithTCPSocketReplication {
         }
     }
 
-    private ChronicleMapBuilder<Integer, CharSequence> serverBuilder() {
+    private ChronicleMapOnHeapUpdatableBuilder<Integer, CharSequence> serverBuilder() {
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8076, new InetSocketAddress("localhost", 8077));
-        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+        return ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000L)
                 .replication((byte) 2, tcpConfig);
     }

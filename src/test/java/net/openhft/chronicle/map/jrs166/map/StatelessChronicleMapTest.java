@@ -20,7 +20,7 @@ package net.openhft.chronicle.map.jrs166.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
 import net.openhft.chronicle.map.ReadContext;
 import net.openhft.chronicle.map.WriteContext;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
@@ -193,10 +193,10 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     static ChronicleMap<Integer, String> newShmIntString(int port) throws IOException {
 
         final ChronicleMap<Integer, String> serverMap =
-                ChronicleMapBuilder.of(Integer.class, String.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, String.class)
                         .replication((byte) 1, TcpTransportAndNetworkConfig.of(port)).create();
 
-        final ChronicleMap<Integer, String> statelessMap = ChronicleMapBuilder.of(Integer
+        final ChronicleMap<Integer, String> statelessMap = ChronicleMapOnHeapUpdatableBuilder.of(Integer
                 .class, String.class)
                 .statelessClient(new InetSocketAddress("localhost", port)).create();
 
@@ -207,11 +207,11 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int port) throws
             IOException {
 
-        final ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        final ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create();
 
 
-        final ChronicleMap<CharSequence, CharSequence> statelessMap = ChronicleMapBuilder.of(CharSequence
+        final ChronicleMap<CharSequence, CharSequence> statelessMap = ChronicleMapOnHeapUpdatableBuilder.of(CharSequence
                 .class, CharSequence.class)
                 .statelessClient(new InetSocketAddress("localhost", port)).create();
 
@@ -221,12 +221,12 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     static ChronicleMap<byte[], byte[]> newByteArrayMap(int port) throws
             IOException {
 
-        final ChronicleMap<byte[], byte[]> serverMap = ChronicleMapBuilder.of(byte[].class, byte[].class)
+        final ChronicleMap<byte[], byte[]> serverMap = ChronicleMapOnHeapUpdatableBuilder.of(byte[].class, byte[].class)
                 .putReturnsNull(true)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create();
 
 
-        final ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapBuilder.of(
+        final ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapOnHeapUpdatableBuilder.of(
                 byte[].class, byte[].class)
                 .putReturnsNull(true)
                 .statelessClient(new InetSocketAddress("localhost", port)).create();

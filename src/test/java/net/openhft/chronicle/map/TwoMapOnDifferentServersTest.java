@@ -48,11 +48,11 @@ public class TwoMapOnDifferentServersTest {
                         .heartBeatInterval(1, SECONDS);
 
 
-        map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+        map1 = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
                 .replication((byte) 1, tcpConfig).create();
 
-        map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+        map2 = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8077)
                         .heartBeatInterval(1, SECONDS)).create();

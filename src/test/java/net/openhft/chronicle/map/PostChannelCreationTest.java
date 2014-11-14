@@ -70,11 +70,11 @@ public class PostChannelCreationTest {
                     .createWithId((byte) 1);
 
             // this is how you add maps after the custer is created
-            map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+            map1a = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
                     .instance().replicatedViaChannel(hubA.createChannel((short) 1)).create();
 
-            map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+            map2a = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
                     .instance().replicatedViaChannel(hubA.createChannel((short) 2)).create();
         }
@@ -89,11 +89,11 @@ public class PostChannelCreationTest {
                     .createWithId((byte) 2);
 
             // this is how you add maps after the custer is created
-            map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+            map1b = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
                     .instance().replicatedViaChannel(hubB.createChannel((short) 1)).create();
 
-            map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+            map2b = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
                     .instance().replicatedViaChannel(hubB.createChannel((short) 2)).create();
         }

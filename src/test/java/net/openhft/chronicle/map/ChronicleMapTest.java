@@ -110,7 +110,7 @@ public class ChronicleMapTest {
     private static ChronicleMap<CharSequence, LongValue> getSharedMap(
             long entries, int segments, int entrySize, Alignment alignment)
             throws IOException {
-        return OffHeapUpdatableChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+        return ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                 .entries(entries)
                 .minSegments(segments)
                 .entrySize(entrySize)
@@ -136,7 +136,7 @@ public class ChronicleMapTest {
     public void testRemoveWithKey() throws Exception {
 
         final ChronicleMap<CharSequence, CharSequence> map =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
                         .minSegments(2).create();
 
         assertFalse(map.containsKey("key3"));
@@ -181,7 +181,7 @@ public class ChronicleMapTest {
     public void testSize() throws Exception {
 
         final ChronicleMap<CharSequence, CharSequence> map =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
                         .minSegments(1024)
                         .removeReturnsNull(true).create();
 
@@ -203,7 +203,7 @@ public class ChronicleMapTest {
     public void testRemoveInteger() throws IOException {
 
         int count = 300;
-        final ChronicleMap<Object, Object> map = ChronicleMapBuilder.of(Object.class, Object.class)
+        final ChronicleMap<Object, Object> map = ChronicleMapOnHeapUpdatableBuilder.of(Object.class, Object.class)
                 .entrySize(count)
                 .minSegments(2).create();
 
@@ -228,7 +228,7 @@ public class ChronicleMapTest {
     public void testRemoveWithKeyAndRemoveReturnsNull() throws Exception {
 
         final ChronicleMap<CharSequence, CharSequence> map =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
                         .minSegments(2)
                         .removeReturnsNull(true).create();
 
@@ -274,7 +274,7 @@ public class ChronicleMapTest {
     public void testReplaceWithKey() throws Exception {
 
         final ChronicleMap<CharSequence, CharSequence> map =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
                         .minSegments(2).create();
 
 
@@ -339,7 +339,7 @@ public class ChronicleMapTest {
     public void testReplaceWithKeyAnd2Params() throws Exception {
 
         final ChronicleMap<CharSequence, CharSequence> map =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
                         .minSegments(2).create();
 
         map.put("key1", "one");
@@ -381,7 +381,7 @@ public class ChronicleMapTest {
     public void testRemoveWithKeyAndValue() throws Exception {
 
         final ChronicleMap<CharSequence, CharSequence> map =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
                         .minSegments(2).create();
 
 
@@ -582,7 +582,7 @@ public class ChronicleMapTest {
             // JAVA 8 produces more garbage than previous versions for internal work.
 //            System.gc();
             final long entries = runs * 1000 * 1000L;
-            OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+            ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                     .of(CharSequence.class, LongValue.class)
                     .entries(entries)
                     .actualSegments(8 * 1024)
@@ -654,7 +654,7 @@ public class ChronicleMapTest {
             // JAVA 8 produces more garbage than previous versions for internal work.
 //            System.gc();
             final long entries = runs * 1000 * 1000L;
-            OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+            ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                     .of(CharSequence.class, LongValue.class)
                     .entries(entries)
                     .entryAndValueAlignment(OF_8_BYTES)
@@ -728,7 +728,7 @@ public class ChronicleMapTest {
             // JAVA 8 produces more garbage than previous versions for internal work.
 //            System.gc();
             final long entries = runs * 1000 * 1000L;
-            OffHeapUpdatableChronicleMapBuilder<LongValue, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+            ChronicleMapBuilder<LongValue, LongValue> builder = ChronicleMapBuilder
                     .of(LongValue.class, LongValue.class)
                     .entries(entries)
                     .entryAndValueAlignment(OF_8_BYTES)
@@ -855,7 +855,7 @@ public class ChronicleMapTest {
         String TMP = System.getProperty("java.io.tmpdir");
         int entries = 100 * 1000;
         ChronicleMap<CharSequence, CharSequence> map =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
                         .entries(entries)
                         .minSegments(16)
                         .entrySize(32)
@@ -1284,7 +1284,7 @@ public class ChronicleMapTest {
 
     private ChronicleMap<Integer, CharSequence> getViewTestMap(int noOfElements) throws IOException {
         ChronicleMap<Integer, CharSequence> map =
-                ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
                         .entries(noOfElements * 2 + 100)
                         .valueSize((noOfElements + "").length())
                         .putReturnsNull(true)
@@ -1304,7 +1304,7 @@ public class ChronicleMapTest {
 
     @Test
     public void testOversizeEntriesPutRemoveReplace() throws IOException {
-        ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        ChronicleMapOnHeapUpdatableBuilder builder = ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .minSegments(1)
                 .entrySize(10);
@@ -1356,13 +1356,13 @@ public class ChronicleMapTest {
 
     @Test
     public void equalsTest() throws IOException {
-        final ChronicleMap<Integer, String> map1 = ChronicleMapBuilder
+        final ChronicleMap<Integer, String> map1 = ChronicleMapOnHeapUpdatableBuilder
                 .of(Integer.class, String.class).create();
 
         map1.put(1, "one");
         map1.put(2, "two");
 
-        final ChronicleMap<Integer, String> map2 = ChronicleMapBuilder
+        final ChronicleMap<Integer, String> map2 = ChronicleMapOnHeapUpdatableBuilder
                 .of(Integer.class, String.class).create();
 
         map2.put(1, "one");
@@ -1406,7 +1406,7 @@ public class ChronicleMapTest {
 
     @Test
     public void testOffheapAcquireUsingLocked() throws IOException {
-        OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+        ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
                 .entries(1000)
                 .entrySize(16);
@@ -1469,7 +1469,7 @@ public class ChronicleMapTest {
     @Test(expected = IllegalArgumentException.class)
     public void testAcquireUsingLockedWithString() throws IOException {
 
-        ChronicleMapBuilder<CharSequence, String> builder = ChronicleMapBuilder
+        ChronicleMapOnHeapUpdatableBuilder<CharSequence, String> builder = ChronicleMapOnHeapUpdatableBuilder
                 .of(CharSequence.class, String.class)
                 .entries(1000)
                 .defaultValue("")
@@ -1494,7 +1494,7 @@ public class ChronicleMapTest {
     @Test
     public void testOnheapAcquireUsingLockedStringBuilder() throws IOException {
 
-        try (final ChronicleMap<CharSequence, StringBuilder> map = ChronicleMapBuilder
+        try (final ChronicleMap<CharSequence, StringBuilder> map = ChronicleMapOnHeapUpdatableBuilder
                 .of(CharSequence.class, StringBuilder.class)
                 .entries(1000)
 
@@ -1514,7 +1514,7 @@ public class ChronicleMapTest {
 
     @Test
     public void testOnheapAcquireUsingLocked() throws IOException {
-        ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
+        ChronicleMapOnHeapUpdatableBuilder<CharSequence, LongValue> builder = ChronicleMapOnHeapUpdatableBuilder
                 .of(CharSequence.class, LongValue.class)
                 .entries(1000)
                 .entrySize(40);

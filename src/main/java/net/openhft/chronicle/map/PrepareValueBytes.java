@@ -26,11 +26,11 @@ import java.io.Serializable;
  * value during {@link ChronicleMap#acquireUsing(Object, Object)
  * chronicleMap.acquireUsing()} call, when the given key is absent in the map. Example: if you
  * want {@code 1L} to be the off-heap updatable ChronicleMap's {@linkplain
- * OffHeapUpdatableChronicleMapBuilder#defaultValue(Object) default value}, the most simple way
- * to achieve this is to {@linkplain OffHeapUpdatableChronicleMapBuilder#prepareValueBytesOnAcquire(
+ * ChronicleMapBuilder#defaultValue(Object) default value}, the most simple way
+ * to achieve this is to {@linkplain ChronicleMapBuilder#prepareValueBytesOnAcquire(
  * PrepareValueBytes) configure} custom {@code PrepareValueBytes} strategy in {@link
- * OffHeapUpdatableChronicleMapBuilder}: <pre>{@code
- * OffHeapUpdatableChronicleMapBuilder.of(Key.class, LongValue.class)
+ * ChronicleMapBuilder}: <pre>{@code
+ * ChronicleMapBuilder.of(Key.class, LongValue.class)
  *     .prepareValueBytesOnAcquire((bytes, k) -> bytes.writeLong(1L))
  *     ...
  *     .create();}</pre>
@@ -41,7 +41,7 @@ import java.io.Serializable;
  *
  * @param <K> the key type of {@link ChronicleMap}, on which {@code acquireUsing()} is queried
  * @param <V> the value type of {@link ChronicleMap}, on which {@code acquireUsing()} is queried
- * @see OffHeapUpdatableChronicleMapBuilder#prepareValueBytesOnAcquire(PrepareValueBytes)
+ * @see ChronicleMapBuilder#prepareValueBytesOnAcquire(PrepareValueBytes)
  */
 public interface PrepareValueBytes<K, V> extends Serializable {
 

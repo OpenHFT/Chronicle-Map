@@ -32,7 +32,7 @@ public class ConstantSizeBySampleTest {
 
     @Test
     public void testConstantKeys() throws IOException {
-        ChronicleMap<byte[], Long> map = ChronicleMapBuilder.of(byte[].class, Long.class)
+        ChronicleMap<byte[], Long> map = ChronicleMapOnHeapUpdatableBuilder.of(byte[].class, Long.class)
                 .constantKeySizeBySample(new byte[8])
                 .immutableKeys()
                 .entries(100)
@@ -52,7 +52,7 @@ public class ConstantSizeBySampleTest {
 
     @Test
     public void testUnexpectedlyLongConstantByteArrayValues() throws IOException {
-        ChronicleMap<Long, byte[]> map = ChronicleMapBuilder.of(Long.class, byte[].class)
+        ChronicleMap<Long, byte[]> map = ChronicleMapOnHeapUpdatableBuilder.of(Long.class, byte[].class)
                 .constantValueSizeBySample(new byte[512 * 1024])
                 .entries(100)
                 .actualSegments(1)
@@ -89,7 +89,7 @@ public class ConstantSizeBySampleTest {
     @Test
     public void testUnexpectedlyLongConstantExternalizableValues() throws IOException {
         ChronicleMap<Long, ExternalizableData> map =
-                ChronicleMapBuilder.of(Long.class, ExternalizableData.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(Long.class, ExternalizableData.class)
                         .constantValueSizeBySample(new ExternalizableData())
                         .entries(100)
                         .actualSegments(1)
@@ -116,7 +116,7 @@ public class ConstantSizeBySampleTest {
     @Ignore
     public void testUnexpectedlyLongConstantSerializableValues() throws IOException {
         ChronicleMap<Long, SerializableData> map =
-                ChronicleMapBuilder.of(Long.class, SerializableData.class)
+                ChronicleMapOnHeapUpdatableBuilder.of(Long.class, SerializableData.class)
                         .constantValueSizeBySample(new SerializableData())
                         .entries(100)
                         .actualSegments(1)

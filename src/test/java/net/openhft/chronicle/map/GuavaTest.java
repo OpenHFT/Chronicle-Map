@@ -99,8 +99,8 @@ public class GuavaTest extends TestCase {
     }
 
     static class CHMTestGenerator extends TestGenerator {
-        ChronicleMapBuilder<CharSequence, CharSequence> builder =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        ChronicleMapOnHeapUpdatableBuilder<CharSequence, CharSequence> builder =
+                ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
                         .entries(100)
                         .minSegments(2);
 

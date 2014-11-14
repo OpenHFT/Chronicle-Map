@@ -67,14 +67,14 @@ public class Builder {
                 identifier, serverPort, endpoints).create();
     }
 
-    public static <K, V> ChronicleMapBuilder<K, V> newTcpSocketShmBuilder(
+    public static <K, V> ChronicleMapOnHeapUpdatableBuilder<K, V> newTcpSocketShmBuilder(
             Class<K> kClass, Class<V> vClass,
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(serverPort, Arrays.asList(endpoints))
                 .heartBeatInterval(1L, TimeUnit.SECONDS);
-        return ChronicleMapBuilder.of(kClass, vClass)
+        return ChronicleMapOnHeapUpdatableBuilder.of(kClass, vClass)
                 .replication(identifier,  tcpConfig);
     }
 

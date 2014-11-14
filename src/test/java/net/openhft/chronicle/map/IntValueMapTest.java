@@ -37,7 +37,7 @@ public class IntValueMapTest {
     @Test
     public void test() throws IOException {
 
-        final ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
+        final ChronicleMap<IntValue, CharSequence> map = ChronicleMapOnHeapUpdatableBuilder
                 .of(IntValue.class, CharSequence.class)
                 .entries(20000)
                 .keyMarshaller(ByteableIntValueMarshaller.INSTANCE).create();

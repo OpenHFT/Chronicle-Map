@@ -33,7 +33,7 @@ public class KeySizesTest {
     @Test
     public void testDifferentKeySizes() throws IOException {
 
-        Map<String, String> map = ChronicleMapBuilder.of(String.class, String.class).create();
+        Map<String, String> map = ChronicleMapOnHeapUpdatableBuilder.of(String.class, String.class).create();
 
         String k = "";
         for (int i = 0; i < 100; i++) {

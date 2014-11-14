@@ -47,7 +47,7 @@ public class TCPSocketReplicationTest {
 
     @Before
     public void setup() throws IOException {
-        ChronicleMapBuilder<Integer, CharSequence> map1Builder =
+        ChronicleMapOnHeapUpdatableBuilder<Integer, CharSequence> map1Builder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
                         (byte) 1, 8076, new InetSocketAddress("localhost", 8077));
         map1 = map1Builder.createPersistedTo(getPersistenceFile());

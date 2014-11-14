@@ -20,10 +20,9 @@ package net.openhft.chronicle.map.fromdocs.pingpong_latency;
 
 import net.openhft.affinity.AffinitySupport;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -90,7 +89,7 @@ public class PingPongCASLeft {
     static ChronicleMap<String, BondVOInterface> acquireCHM() throws IOException {
         // ensure thread ids are globally unique.
         AffinitySupport.setThreadId();
-        return ChronicleMapBuilder.of(String.class, BondVOInterface.class)
+        return ChronicleMapOnHeapUpdatableBuilder.of(String.class, BondVOInterface.class)
                 .entries(16)
                 .entrySize(64).create();
     }

@@ -47,7 +47,7 @@ public class TCPSocketReplicationBootStrapTest {
 
         map1 = newTcpSocketShmIntString((byte) 1, 8069);
 
-        ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
+        ChronicleMapOnHeapUpdatableBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
                         (byte) 2, 8066, new InetSocketAddress("localhost", 8069));
         final ChronicleMap<Integer, CharSequence> map2a =
@@ -108,7 +108,7 @@ public class TCPSocketReplicationBootStrapTest {
 
         {
             // restart map 2 but does not connect it to map1
-            final ChronicleMap<Integer, CharSequence> map2b = ChronicleMapBuilder.of(Integer.class,
+            final ChronicleMap<Integer, CharSequence> map2b = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class,
                     CharSequence.class).replication((byte) 2).createPersistedTo(persistenceFile);
             // add data into it
             map2b.put(11, "ADDED WHEN DISCONNECTED TO MAP1");

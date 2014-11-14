@@ -17,7 +17,7 @@ public class DemoChronicleMapTest {
         File file = File.createTempFile("DummyOrders", ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
-        ChronicleMap<IntValue, DemoOrderVOInterface> map = OffHeapUpdatableChronicleMapBuilder
+        ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
                 .of(IntValue.class, DemoOrderVOInterface.class)
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
@@ -59,7 +59,7 @@ public class DemoChronicleMapTest {
         File file = File.createTempFile("DummyOrders", ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
-        ChronicleMap<IntValue, DemoOrderVOInterface> map = OffHeapUpdatableChronicleMapBuilder
+        ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
                 .of(IntValue.class, DemoOrderVOInterface.class)
                 .putReturnsNull(true)
                 .removeReturnsNull(true)

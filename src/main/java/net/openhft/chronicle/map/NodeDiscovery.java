@@ -231,7 +231,7 @@ public class NodeDiscovery {
         LOG.info("Using Remote identifier=" + identifier);
         nodeDiscoveryEventListenerAtomicReference.set(null);
 
-        return ChronicleMapBuilder.of(Integer.class,
+        return ChronicleMapOnHeapUpdatableBuilder.of(Integer.class,
                 CharSequence.class)
                 .entries(20000L)
                 .replication(SingleChronicleHashReplication.builder()

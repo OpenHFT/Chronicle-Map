@@ -23,7 +23,7 @@ import net.openhft.lang.io.Bytes;
 /**
  * Memory addresses alignment strategies.
  *
- * @see OffHeapUpdatableChronicleMapBuilder#entryAndValueAlignment(Alignment)
+ * @see ChronicleMapBuilder#entryAndValueAlignment(Alignment)
  */
 public enum Alignment {
     /**
