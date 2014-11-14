@@ -49,27 +49,6 @@ public class StatelessClientTest {
     }
 
 
-  /* Java8 test only
-  public void testMapForKeyLambda() throws IOException, InterruptedException {
-
-        try (ChronicleMap<Integer, StringBuilder> serverMap = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class,
-                StringBuilder.class)
-                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-
-            serverMap.put(10, new StringBuilder("Hello World"));
-
-            try (ChronicleMap<Integer, StringBuilder> statelessMap = ChronicleMapOnHeapUpdatableBuilder.of(Integer
-                    .class, StringBuilder.class)
-                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
-
-                String actual = (String) ((StatelessChronicleMap) statelessMap).mapForKey(10, b -> b.toString());
-
-                Assert.assertEquals("Hello World", actual);
-            }
-        }
-    }*/
-
-
     @Test
     public void testMapForKeyWithEntry() throws IOException, InterruptedException {
 
