@@ -117,9 +117,9 @@ hardware or get more hardware. Chronicle Map on the other hand sends the latest 
 This will naturally drop updates and is a more natural choice for low bandwidth connections.
 
 #### What is the difference between [SharedHashMap](https://github.com/OpenHFT/HugeCollections) and Chronicle Map
-SharedHashMap is an outdated version of ChronicleMap project.
-Effectively SharedHashMap has just been renamed to ChronicleMap, to further enrich the Chronicle
-product suite. In addition, The original Chronicle has been renamed to Chronicle Queue.
+SharedHashMap was the old name given to ChronicleMap, Since the last release of SharedHashMap
+ we have added a lot of new features to ChronicleMap, most of these are listed in this readme.
+
 
 
 ## Getting Started
