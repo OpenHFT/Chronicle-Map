@@ -29,10 +29,7 @@ import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
-import net.openhft.lang.io.serialization.impl.AllocateInstanceObjectFactory;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
-import net.openhft.lang.model.Byteable;
-import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.Nullable;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -353,30 +350,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
 
-    V createValueInstance() {
 
-        if (vClass.isAssignableFrom(Byteable.class))
-            return DataValueClasses.newDirectReference(vClass);
-        else {
-
-
-            try {
-                return vClass.newInstance();
-            } catch (InstantiationException e) {
-                try {
-                    return (V) (new AllocateInstanceObjectFactory<V>(vClass)).create();
-                } catch (Exception e1) {
-                    LOG.error("", e);
-                    return null;
-                }
-            } catch (IllegalAccessException e) {
-                LOG.error("", e);
-                return null;
-            }
-
-
-        }
-    }
 
     enum LockType {READ_LOCK, WRITE_LOCK}
 

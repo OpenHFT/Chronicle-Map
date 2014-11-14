@@ -1348,21 +1348,12 @@ class StatelessServerConnector<K, V> {
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         final K key = readKey(reader, local);
 
-        V value = using.getAndSet(null);
-        if (value == null) {
-
-            //value = map.createValueInstance();
-
-            // todo replace this
-            value = map.acquireUsing(key, null);
-        }
-
-
-
+        final V value = using.getAndSet(null);
         final Function<V, ?> o = (Function<V, ?>) reader.readObject();
 
-        try (WriteContext<K, V> wc = map.acquireUsingLocked(key, value)) {
-            Object result = o.apply(value);
+        try (WriteContext<K, V> wc = map.lookupUsing(key, value, VanillaChronicleMap.LockType.WRITE_LOCK,
+                false)) {
+            Object result = o.apply(wc.value());
             keyValueSerializer.writeObject(result, writer);
 
         } catch (RuntimeException e) {

@@ -1494,16 +1494,16 @@ public class ChronicleMapTest {
     @Test
     public void testOnheapAcquireUsingLockedStringBuilder() throws IOException {
 
-        try (final ChronicleMap<CharSequence, StringBuilder> map = ChronicleMapOnHeapUpdatableBuilder
-                .of(CharSequence.class, StringBuilder.class)
+        try (final ChronicleMap<CharSequence, CharSequence> map = ChronicleMapOnHeapUpdatableBuilder
+                .of(CharSequence.class, CharSequence.class)
                 .entries(1000)
-
-                .entrySize(40).create()) {
+                .entrySize(40)
+                .defaultValue("")
+                .create()) {
 
             StringBuilder value = new StringBuilder();
 
-
-            try (WriteContext<?, StringBuilder> context = map.acquireUsingLocked("one", value)) {
+            try (WriteContext<?, CharSequence> context = map.acquireUsingLocked("one", value)) {
                 value.append("Hello World");
             }
 
