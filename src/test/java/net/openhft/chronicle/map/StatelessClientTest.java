@@ -71,11 +71,12 @@ public class StatelessClientTest {
 
 
     @Test
-    public void testMapForKey() throws IOException, InterruptedException {
+    public void testMapForKeyWithEntry() throws IOException, InterruptedException {
 
 
         try (ChronicleMap<Integer, StringBuilder> serverMap = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class,
                 StringBuilder.class)
+                .defaultValue(new StringBuilder())
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
 
             serverMap.put(10, new StringBuilder("Hello World"));
@@ -84,13 +85,38 @@ public class StatelessClientTest {
                     .class, StringBuilder.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
 
-                String actual = (String) ((StatelessChronicleMap) statelessMap).mapForKey(10, new StringBuilderToStringFunction());
+                String actual = (String) ((StatelessChronicleMap) statelessMap).mapForKey(10, new
+                        StringBuilderToStringFunction());
 
                 Assert.assertEquals("Hello World", actual);
             }
         }
     }
 
+
+
+    @Test
+    public void testMapForKeyWhenNoEntry() throws IOException, InterruptedException {
+
+
+        try (ChronicleMap<Integer, StringBuilder> serverMap = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class,
+                StringBuilder.class)
+                .defaultValue(new StringBuilder())
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+
+            serverMap.put(10, new StringBuilder("Hello World"));
+
+            try (ChronicleMap<Integer, StringBuilder> statelessMap = ChronicleMapOnHeapUpdatableBuilder.of(Integer
+                    .class, StringBuilder.class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+
+                String actual = (String) ((StatelessChronicleMap) statelessMap).mapForKey(11, new
+                        StringBuilderToStringFunction());
+
+                Assert.assertEquals("", actual);
+            }
+        }
+    }
 
     @Test(timeout = 5000)
     public void testBufferOverFlowPutAllAndEntrySet() throws IOException, InterruptedException {
