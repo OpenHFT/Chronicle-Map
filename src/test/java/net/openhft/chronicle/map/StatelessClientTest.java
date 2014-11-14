@@ -49,8 +49,8 @@ public class StatelessClientTest {
     }
 
 
-   /* @Test
-    public void testMapForKeyLambda() throws IOException, InterruptedException {
+  /* Java8 test only
+  public void testMapForKeyLambda() throws IOException, InterruptedException {
 
         try (ChronicleMap<Integer, StringBuilder> serverMap = ChronicleMapBuilder.of(Integer.class,
                 StringBuilder.class)
