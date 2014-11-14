@@ -1497,7 +1497,7 @@ public class ChronicleMapTest {
         try (final ChronicleMap<CharSequence, StringBuilder> map = ChronicleMapBuilder
                 .of(CharSequence.class, StringBuilder.class)
                 .entries(1000)
-                .defaultValue(new StringBuilder())
+
                 .entrySize(40).create()) {
 
             StringBuilder value = new StringBuilder();

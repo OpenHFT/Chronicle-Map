@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import com.sun.jdi.connect.spi.ClosedConnectionException;
 import net.openhft.chronicle.hash.RemoteCallTimeoutException;
+import net.openhft.chronicle.java8.Function;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -35,7 +36,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.*;
-import java.util.function.Function;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
@@ -468,9 +468,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     private <R> void writeObject(@NotNull Function<V, R> function) {
+        long start   = bytes.position();
         for (; ; ) {
             try {
-
                 bytes.writeObject(function);
                 return;
             } catch (IllegalStateException e) {
@@ -480,6 +480,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                 if (cause instanceof IOException && cause.getMessage().contains("Not enough available space")) {
                     LOG.debug("resizing buffer");
                     resizeBuffer(buffer.capacity() + 1024);
+                    bytes.limit(bytes.capacity());
+                    bytes.position(start);
 
                 } else
                     throw e;
@@ -556,7 +558,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
             writeKey(key, local);
-
 
             final V value = e.getValue();
 

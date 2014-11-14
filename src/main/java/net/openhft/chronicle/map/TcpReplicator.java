@@ -21,6 +21,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
+import net.openhft.chronicle.java8.Function;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -38,7 +39,6 @@ import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -1350,9 +1350,14 @@ class StatelessServerConnector<K, V> {
 
         V value = using.getAndSet(null);
         if (value == null) {
-            // a simple way to create a value
-            value = map.getUsing(key, null);
+
+            //value = map.createValueInstance();
+
+            // todo replace this
+            value = map.acquireUsing(key, null);
         }
+
+
 
         final Function<V, ?> o = (Function<V, ?>) reader.readObject();
 

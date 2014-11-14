@@ -19,17 +19,16 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.java8.Function;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 
 /**
@@ -41,13 +40,34 @@ public class StatelessClientTest {
     public static final int SIZE = 100000;
 
 
-    static class StringBuilderToStringFunction implements Function<StringBuilder, String>, Serializable {
+    static class StringBuilderToStringFunction implements Function<StringBuilder, String> {
 
         @Override
         public String apply(StringBuilder stringBuilder) {
             return stringBuilder.toString();
         }
     }
+
+
+   /* @Test
+    public void testMapForKeyLambda() throws IOException, InterruptedException {
+
+        try (ChronicleMap<Integer, StringBuilder> serverMap = ChronicleMapBuilder.of(Integer.class,
+                StringBuilder.class)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+
+            serverMap.put(10, new StringBuilder("Hello World"));
+
+            try (ChronicleMap<Integer, StringBuilder> statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, StringBuilder.class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+
+                String actual = (String) ((StatelessChronicleMap) statelessMap).mapForKey(10, b -> b.toString());
+
+                Assert.assertEquals("Hello World", actual);
+            }
+        }
+    }*/
 
 
     @Test
