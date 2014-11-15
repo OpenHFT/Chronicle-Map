@@ -22,6 +22,7 @@ import com.sun.jdi.connect.spi.ClosedConnectionException;
 import net.openhft.chronicle.hash.RemoteCallTimeoutException;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.NativeBytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -972,8 +974,26 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             throw new IllegalStateException("the received transaction-id=" + inTransactionId +
                     ", does not match the expected transaction-id=" + transactionId);
 
-        if (isException)
-            throw (RuntimeException) bytes.readObject();
+        if (isException) {
+            Throwable throwable = (Throwable) bytes.readObject();
+            try {
+                Field stackTrace = Throwable.class.getDeclaredField("stackTrace");
+                stackTrace.setAccessible(true);
+                List<StackTraceElement> stes = new ArrayList<>(Arrays.asList((StackTraceElement[]) stackTrace.get(throwable)));
+                // prune the end of the stack.
+                for (int i = stes.size() - 1; i > 0 && stes.get(i).getClassName().startsWith("Thread"); i--) {
+                    stes.remove(i);
+                }
+                InetSocketAddress address = builder.remoteAddress();
+                stes.add(new StackTraceElement("~ remote", "tcp ~", address.getHostName(), address.getPort()));
+                StackTraceElement[] stackTrace2 = Thread.currentThread().getStackTrace();
+                for (int i = 4; i < stackTrace2.length; i++)
+                    stes.add(stackTrace2[i]);
+                stackTrace.set(throwable, stes.toArray(new StackTraceElement[stes.size()]));
+            } catch (Exception ignore) {
+            }
+            NativeBytes.UNSAFE.throwException(throwable);
+        }
 
         return bytes;
     }

@@ -189,13 +189,15 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @param key      to apply the mapping to
      * @param function to calculate a result
      * @param <R>      return type.
-     * @return the result of the function.
+     * @return the result of the function, or null if there is no entry for the key.
      */
     <R> R mapForKey(K key, @NotNull Function<? super V, R> function);
 
     /**
      * Apply a mutator to the value for a key and return a result.
      * A write lock is assumed.
+     * <p>
+     *     If there is no entry for this key it will be created and the value empty.
      *
      * @param key     to apply the mapping to
      * @param mutator to alter the value and calculate a result

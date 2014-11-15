@@ -367,9 +367,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     @Override
     public <R> R mapForKey(K key, @NotNull Function<? super V, R> function) {
-        try (Context<K, V> entry = lookupUsing(key, null,
+        try (ReadContext<K, V> entry = lookupUsing(key, null,
                 LockType.READ_LOCK, false)) {
-            return function.apply(entry.value());
+            return entry.present() ? function.apply(entry.value()) : null;
         }
     }
 
