@@ -245,6 +245,11 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public <R> R mapForKey(K key, @NotNull Function<? super V, R> function) {
+        return map1.mapForKey(key, function);
+    }
+
+    @Override
     public V acquireUsing(@NotNull K key,  V usingValue) {
         return map1.acquireUsing(key, usingValue);
     }

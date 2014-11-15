@@ -35,15 +35,15 @@ import java.util.Set;
  */
 public class StatelessClientTest {
 
+    public static final int SIZE = 2500;
 
-    public static final int SIZE = 100000;
 
-
-    static class StringBuilderToStringFunction implements Function<StringBuilder, String> {
+    enum ToString implements Function<Object, String> {
+        INSTANCE;
 
         @Override
-        public String apply(StringBuilder stringBuilder) {
-            return stringBuilder.toString();
+        public String apply(Object obj) {
+            return obj.toString();
         }
     }
 
@@ -63,8 +63,7 @@ public class StatelessClientTest {
                     .class, StringBuilder.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
 
-                String actual = (String) ((StatelessChronicleMap) statelessMap).mapForKey(10, new
-                        StringBuilderToStringFunction());
+                String actual = statelessMap.mapForKey(10, ToString.INSTANCE);
 
                 Assert.assertEquals("Hello World", actual);
             }
@@ -87,8 +86,7 @@ public class StatelessClientTest {
                     .class, StringBuilder.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
 
-                String actual = (String) ((StatelessChronicleMap) statelessMap).mapForKey(11, new
-                        StringBuilderToStringFunction());
+                String actual = statelessMap.mapForKey(11, ToString.INSTANCE);
 
                 Assert.assertEquals("", actual);
             }

@@ -34,8 +34,6 @@ import net.openhft.lang.model.constraints.Nullable;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,9 +53,6 @@ import static net.openhft.lang.MemoryUnit.*;
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         V, VW, MVW extends MetaBytesWriter<V, VW>> extends AbstractMap<K, V>
         implements ChronicleMap<K, V>, Serializable {
-
-
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
 
     /**
      * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set bits.
@@ -369,6 +364,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         try (Context<K, V> entry = lookupUsing(key, usingValue,
                 LockType.READ_LOCK, false)) {
             return entry.value();
+        }
+    }
+
+    @Override
+    public <R> R mapForKey(K key, @NotNull Function<? super V, R> function) {
+        try (Context<K, V> entry = lookupUsing(key, null,
+                LockType.READ_LOCK, false)) {
+            return function.apply(entry.value());
         }
     }
 

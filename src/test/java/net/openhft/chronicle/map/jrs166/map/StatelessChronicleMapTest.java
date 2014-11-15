@@ -19,10 +19,7 @@
 package net.openhft.chronicle.map.jrs166.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.ReadContext;
-import net.openhft.chronicle.map.WriteContext;
+import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Ignore;
@@ -167,6 +164,11 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         @Override
         public ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <R> R mapForKey(K key, @NotNull Function<? super V, R> function) {
+            return d.mapForKey(key, function);
         }
 
         @Override

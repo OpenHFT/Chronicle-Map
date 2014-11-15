@@ -458,7 +458,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
-    public synchronized <R> R mapForKey(K key, @NotNull Function<V, R> function) {
+    public synchronized <R> R mapForKey(K key, @NotNull Function<? super V, R> function) {
 
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         final long sizeLocation = writeEventAnSkip(MAP_FOR_KEY);
@@ -471,7 +471,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
-    private <R> void writeObject(@NotNull Function<V, R> function) {
+    private <R> void writeObject(@NotNull Object function) {
         long start = bytes.position();
         for (; ; ) {
             try {
