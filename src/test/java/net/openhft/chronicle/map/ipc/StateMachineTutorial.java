@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map.ipc;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class StateMachineTutorial {
 
         try {
             File dataFile = new File(System.getProperty("java.io.tmpdir"), "hft-state-machine");
-            map = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, StateMachineData.class)
+            map = ChronicleMapBuilder.of(Integer.class, StateMachineData.class)
                     .entries(8).create();
 
             if (args.length > 0) {

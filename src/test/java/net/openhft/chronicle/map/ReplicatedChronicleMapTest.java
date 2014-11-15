@@ -38,14 +38,14 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
 
 
     ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
-        return ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
+        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .create();
 
     }
 
 
     ChronicleMap<CharSequence, CharSequence> newShmStringString() throws IOException {
-        return ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
+        return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .create();
 
     }

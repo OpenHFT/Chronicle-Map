@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map.example;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.LongValue;
 
@@ -30,7 +30,7 @@ public class DistributedSequenceMain {
     public static void main(String... ignored) throws IOException {
         Class<LongValue> longValueClass = DataValueClasses.directClassFor(LongValue.class);
         ChronicleMap<String, LongValue> map =
-                ChronicleMapOnHeapUpdatableBuilder.of(String.class, longValueClass)
+                ChronicleMapBuilder.of(String.class, longValueClass)
                         .entries(128)
                         .actualSegments(1).create();
         LongValue value = DataValueClasses.newDirectReference(longValueClass);

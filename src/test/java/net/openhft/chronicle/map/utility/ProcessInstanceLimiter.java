@@ -20,7 +20,7 @@ package net.openhft.chronicle.map.utility;
 
 import net.openhft.affinity.AffinitySupport;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 
@@ -134,8 +134,8 @@ public class ProcessInstanceLimiter implements Runnable {
     public ProcessInstanceLimiter(String sharedMapPath, Callback callback) throws IOException {
         this.sharedMapPath = sharedMapPath;
         this.callback = callback;
-        ChronicleMapOnHeapUpdatableBuilder<String, Data> builder =
-                ChronicleMapOnHeapUpdatableBuilder.of(String.class, Data.class);
+        ChronicleMapBuilder<String, Data> builder =
+                ChronicleMapBuilder.of(String.class, Data.class);
         builder.entries(1000);
         builder.entrySize(1024);
         this.theSharedMap = builder.createPersistedTo(new File(sharedMapPath));

@@ -30,7 +30,7 @@ public class CHMTestIterator1 {
         AtomicLong alValue = new AtomicLong();
         AtomicLong alKey = new AtomicLong();
         int runs = 3000000;
-        ChronicleMapOnHeapUpdatableBuilder<String, Long> builder = ChronicleMapOnHeapUpdatableBuilder.of(String.class, Long.class)
+        ChronicleMapBuilder<String, Long> builder = ChronicleMapBuilder.of(String.class, Long.class)
                 .entries(runs);
 
         ChronicleMap<String, Long> chm = builder.create();

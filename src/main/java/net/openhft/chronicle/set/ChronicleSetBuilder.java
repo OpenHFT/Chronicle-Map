@@ -29,7 +29,7 @@ import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.BytesMarshallerFactory;
 import net.openhft.lang.io.serialization.ObjectFactory;
@@ -55,10 +55,10 @@ import java.util.concurrent.TimeUnit;
 public class ChronicleSetBuilder<E>
         implements ChronicleHashBuilder<E, ChronicleSet<E>, ChronicleSetBuilder<E>> {
 
-    private ChronicleMapOnHeapUpdatableBuilder<E, DummyValue> chronicleMapBuilderOnHeap;
+    private ChronicleMapBuilder<E, DummyValue> chronicleMapBuilderOnHeap;
 
     ChronicleSetBuilder(Class<E> keyClass) {
-        chronicleMapBuilderOnHeap = ChronicleMapOnHeapUpdatableBuilder.of(keyClass, DummyValue.class)
+        chronicleMapBuilderOnHeap = ChronicleMapBuilder.of(keyClass, DummyValue.class)
                 .valueMarshallers(DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE)
                 .valueSizeMarshaller(DummyValueMarshaller.INSTANCE);
     }

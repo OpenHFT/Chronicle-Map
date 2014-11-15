@@ -124,8 +124,6 @@ public class NodeDiscovery {
 
                         if (proposedIdentifier == ourProposedIdentifier.get())
                             useAnotherIdentifier.set(true);
-
-
                     }
                 }
                 countDownLatch.get().countDown();
@@ -231,7 +229,7 @@ public class NodeDiscovery {
         LOG.info("Using Remote identifier=" + identifier);
         nodeDiscoveryEventListenerAtomicReference.set(null);
 
-        return ChronicleMapOnHeapUpdatableBuilder.of(Integer.class,
+        return ChronicleMapBuilder.of(Integer.class,
                 CharSequence.class)
                 .entries(20000L)
                 .replication(SingleChronicleHashReplication.builder()

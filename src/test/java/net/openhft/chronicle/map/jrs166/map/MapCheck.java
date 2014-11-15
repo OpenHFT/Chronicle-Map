@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map.jrs166.map;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 
 import java.io.*;
 import java.util.*;
@@ -123,7 +123,7 @@ public class MapCheck {
 
     static Map newMap() {
         try {
-            return ChronicleMapOnHeapUpdatableBuilder.of(Object.class, Object.class).create();
+            return ChronicleMapBuilder.of(Object.class, Object.class).create();
 
         } catch (Exception e) {
             throw new RuntimeException("Can't instantiate CHM : " + e);

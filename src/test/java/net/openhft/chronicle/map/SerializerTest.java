@@ -72,7 +72,13 @@ public class SerializerTest {
         final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
         ByteBufferBytes in = out.slice();
 
-        ChronicleMapOnHeapUpdatableBuilder builder = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, valueClass);
+
+        ChronicleMapBuilder cBuilder = ChronicleMapBuilder.of(Integer
+                .class, valueClass);
+
+        OnHeapUpdatableChronicleMapBuilder builder = (OnHeapUpdatableChronicleMapBuilder) cBuilder.delegate;
+
+
         builder.preMapConstruction(false);
 
         Serializer v = new Serializer(builder.valueBuilder);
@@ -95,7 +101,10 @@ public class SerializerTest {
         final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
         ByteBufferBytes in = out.slice();
 
-        ChronicleMapOnHeapUpdatableBuilder builder = ChronicleMapOnHeapUpdatableBuilder.of(clazz, Integer.class);
+        ChronicleMapBuilder cBuilder = ChronicleMapBuilder.of(clazz, Integer.class);
+
+        OnHeapUpdatableChronicleMapBuilder builder = (OnHeapUpdatableChronicleMapBuilder) cBuilder.delegate;
+
         builder.preMapConstruction(false);
         {
             Serializer v = new Serializer(builder.keyBuilder);

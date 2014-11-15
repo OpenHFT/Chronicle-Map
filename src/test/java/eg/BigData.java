@@ -19,7 +19,8 @@
 package eg;
 
 import net.openhft.affinity.AffinitySupport;
-import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.io.Bytes;
 
 import java.io.*;
@@ -40,8 +41,8 @@ public class BigData {
     //run 1st test with no map, and Highwatermark set to 0
     //then switch to Highwatermark set to MAXSIZE for subsequent test repeats
     static AtomicInteger Highwatermark = new AtomicInteger((int) MAXSIZE);
-    static final ChronicleMapOnHeapUpdatableBuilder<Long, BigDataStuff> builder =
-            ChronicleMapOnHeapUpdatableBuilder.of(Long.class, BigDataStuff.class);
+    static final ChronicleMapBuilder<Long, BigDataStuff> builder =
+            ChronicleMapBuilder.of(Long.class, BigDataStuff.class);
 
     //    static AtomicInteger Highwatermark = new AtomicInteger(0);
     static {

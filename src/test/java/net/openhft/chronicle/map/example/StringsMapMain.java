@@ -20,7 +20,7 @@ package net.openhft.chronicle.map.example;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +38,7 @@ public class StringsMapMain {
     public static void startServer() throws IOException {
         File file = File.createTempFile("testServersMapMain", ".deleteme");
         file.deleteOnExit();
-        final ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapOnHeapUpdatableBuilder
+        final ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .putReturnsNull(true)
                 .entrySize(50)
@@ -52,8 +52,7 @@ public class StringsMapMain {
     public static void startRemoteClient(String hostname) throws IOException {
         final ChronicleMap<CharSequence, CharSequence> map;
         if (stateless) {
-            map = ChronicleMapOnHeapUpdatableBuilder
-                    .of(CharSequence.class, CharSequence.class)
+            map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                     .putReturnsNull(true)
                     .statelessClient(new InetSocketAddress(hostname, port)).create();
         } else {
@@ -61,7 +60,7 @@ public class StringsMapMain {
             file.deleteOnExit();
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(port, new InetSocketAddress(hostname, port));
 
-            map = ChronicleMapOnHeapUpdatableBuilder
+            map = ChronicleMapBuilder
                     .of(CharSequence.class, CharSequence.class)
                     .putReturnsNull(true)
                     .replication((byte) 1, tcpConfig)

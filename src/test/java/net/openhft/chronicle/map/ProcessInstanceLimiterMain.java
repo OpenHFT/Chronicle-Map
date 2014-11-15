@@ -36,8 +36,8 @@ public class ProcessInstanceLimiterMain implements Runnable {
     public ProcessInstanceLimiterMain(String sharedMapName, Callback callback) throws IOException {
         this.sharedMapName = sharedMapName;
         this.callback = callback;
-        ChronicleMapOnHeapUpdatableBuilder<String, Data> builder =
-                ChronicleMapOnHeapUpdatableBuilder.of(String.class, Data.class);
+        ChronicleMapBuilder<String, Data> builder =
+                ChronicleMapBuilder.of(String.class, Data.class);
         builder.entries(10000);
         builder.minSegments(2);
         File file = new File(System.getProperty("java.io.tmpdir") + "/" + sharedMapName);

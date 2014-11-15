@@ -32,7 +32,7 @@ public class Issue42Test {
         if (!Jvm.isWindows())
             return;
 
-        final ChronicleMap<CharSequence, CharSequence> map = ChronicleMapOnHeapUpdatableBuilder
+        final ChronicleMap<CharSequence, CharSequence> map = OnHeapUpdatableChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .entrySize(18)
                 .entries(1500000)

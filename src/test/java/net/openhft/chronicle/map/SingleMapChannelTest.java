@@ -70,7 +70,7 @@ public class SingleMapChannelTest {
                     .tcpTransportAndNetwork(tcpConfig)
                     .createWithId(identifier);
             // this is how you add maps after the custer is created
-            map1a = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
+            map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
                     .instance().replicatedViaChannel(hubA.createChannel((short) 1)).create();
         }
@@ -84,7 +84,7 @@ public class SingleMapChannelTest {
             hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig).createWithId((byte) 2);
 
             // this is how you add maps after the custer is created
-            map1b = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
+            map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
                     .instance().replicatedViaChannel(hubB.createChannel((short) 1))
                     .create();

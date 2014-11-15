@@ -61,7 +61,7 @@ public class ChannelReplicationTest {
                     .tcpTransportAndNetwork(tcpConfig)
                     .createWithId((byte) 1);
 
-            map1a = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
+            map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
                     .instance().replicatedViaChannel(hubA.createChannel((short) 1)).create();
         }
@@ -73,7 +73,7 @@ public class ChannelReplicationTest {
             hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
                     .createWithId((byte) 2);
 
-            map1b = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
+            map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(1000)
                     .instance().replicatedViaChannel(hubB.createChannel((short) 1)).create();
         }
@@ -95,12 +95,12 @@ public class ChannelReplicationTest {
     @Test
     public void test() throws IOException, InterruptedException {
 
-        map2b = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
+        map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
                 .instance().replicatedViaChannel(hubB.createChannel((short) 2)).create();
 
 
-        map2a = ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
+        map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(1000)
                 .instance().replicatedViaChannel(hubA.createChannel((short) 2)).create();
 

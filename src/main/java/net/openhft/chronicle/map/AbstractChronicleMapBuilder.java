@@ -57,7 +57,7 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
 
 /**
  * {@code AbstractChronicleMapBuilder} manages most of {@link ChronicleMap} configurations; has two concrete
- * subclasses: {@link ChronicleMapOnHeapUpdatableBuilder} should be used to create maps with ordinary values, {@link
+ * subclasses: {@link OnHeapUpdatableChronicleMapBuilder} should be used to create maps with ordinary values, {@link
  * ChronicleMapBuilder} -- maps with {@link Byteable} values, which point directly to off-heap
  * memory; could be used as a classic builder and/or factory. This means
  * that in addition to the standard builder usage pattern: <pre>{@code
@@ -66,7 +66,7 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
  *     .entries(100500)
  *     // ... other configurations
  *     .create();}</pre>
- * one of concrete {@code AbstractChronicleMapBuilder} subclasses, {@link ChronicleMapOnHeapUpdatableBuilder} or {@link
+ * one of concrete {@code AbstractChronicleMapBuilder} subclasses, {@link OnHeapUpdatableChronicleMapBuilder} or {@link
  * ChronicleMapBuilder}, could be prepared and used to create many similar
  * maps: <pre>{@code
  * ChronicleMapBuilder<Key, Value> builder = ChronicleMapBuilder
@@ -227,7 +227,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
      *
      * <p>For example, if your keys are Git commit hashes:<pre>{@code
      * Map<byte[], String> gitCommitMessagesByHash =
-     *     ChronicleMapOnHeapUpdatableBuilder.of(byte[].class, String.class)
+     *     ChronicleMapBuilder.of(byte[].class, String.class)
      *     .constantKeySizeBySample(new byte[20])
      *     .create();}</pre>
      *
@@ -839,12 +839,10 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     /**
-     * Only for testing. Shouldn't be called concurrently on a single builder instance.
-     *
      * @param identifier id
      * @return map
      */
-    ChronicleMap<K, V> createReplicated(byte identifier) throws IOException {
+    public  ChronicleMap<K, V> createReplicated(byte identifier) throws IOException {
         preMapConstruction(true);
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
                 new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,

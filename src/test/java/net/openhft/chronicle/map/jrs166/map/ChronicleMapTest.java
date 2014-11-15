@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map.jrs166.map;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 import org.junit.Test;
 
@@ -49,33 +49,33 @@ public class ChronicleMapTest extends JSR166TestCase {
     }
 
     static ChronicleMap<Integer, CharSequence> newShmIntString(int size) throws IOException {
-        return ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class)
+        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(size).create();
 
     }
 
     static ChronicleMap<ArrayList, CharSequence> newShmListBoolean(int size) throws IOException {
-        return ChronicleMapOnHeapUpdatableBuilder.of(ArrayList.class, CharSequence.class)
+        return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
                 .entries(size).create();
     }
 
 
     static ChronicleMap<ArrayList, CharSequence> newShmListBoolean() throws IOException {
-        return ChronicleMapOnHeapUpdatableBuilder.of(ArrayList.class, CharSequence.class).create();
+        return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class).create();
     }
 
     static ChronicleMap<CharSequence, CharSequence> newShmStringString(int size) throws IOException {
-        return ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
+        return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(size).create();
     }
 
 
     static ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
-        return ChronicleMapOnHeapUpdatableBuilder.of(Integer.class, CharSequence.class).create();
+        return ChronicleMapBuilder.of(Integer.class, CharSequence.class).create();
     }
 
     static ChronicleMap<BI, Boolean> newShmBiBoolean() throws IOException {
-        return ChronicleMapOnHeapUpdatableBuilder.of(BI.class, Boolean.class).create();
+        return ChronicleMapBuilder.of(BI.class, Boolean.class).create();
     }
 
     /**

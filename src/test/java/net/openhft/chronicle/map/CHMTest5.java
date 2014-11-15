@@ -39,7 +39,7 @@ public class CHMTest5 {
                         .entries(1000);
 
         //// don't include this, just to check it is as expected.
-        assertEquals(8, builder.minSegments());
+        assertEquals(8, ((AbstractChronicleMapBuilder) builder.delegate).minSegments());
         //// end of test
 
         String chmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "CHMTest5";

@@ -3,7 +3,8 @@ package net.openhft.chronicle.map.example;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -63,8 +64,8 @@ public class ChannelExample {
 
     // server 1 with  identifier = 1
     {
-        ChronicleMapOnHeapUpdatableBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
-                ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
+        ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
+                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                         .entries(1000);
 
         byte identifier = (byte) 1;
@@ -98,8 +99,8 @@ public class ChannelExample {
 
     // server 2 with  identifier = 2
     {
-        ChronicleMapOnHeapUpdatableBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
-                ChronicleMapOnHeapUpdatableBuilder.of(CharSequence.class, CharSequence.class)
+        ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
+                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                         .entries(1000);
 
         byte identifier = (byte) 2;

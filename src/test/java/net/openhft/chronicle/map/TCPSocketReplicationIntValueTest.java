@@ -45,7 +45,7 @@ import static org.junit.Assert.assertTrue;
 
 public class TCPSocketReplicationIntValueTest {
 
-    private ChronicleMapOnHeapUpdatableBuilder<IntValue, CharSequence> map1Builder;
+    private ChronicleMapBuilder<IntValue, CharSequence> map1Builder;
     private ChronicleMap<IntValue, CharSequence> map1;
     private ChronicleMap<IntValue, CharSequence> map2;
     private IntValue value;

@@ -35,7 +35,7 @@ public class CHMMetaDataTest {
         File file = new File(TMP, "testAccessTimes");
         MapEventListener<String, String, ChronicleMap<String, String>> listener =
                 new StringStringMapEventListener(new AtomicLong(1));
-        ChronicleMap<String, String> map = ChronicleMapOnHeapUpdatableBuilder.of(String.class, String.class)
+        ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class)
                 .metaDataBytes(8)
                 .eventListener(listener).create();
 

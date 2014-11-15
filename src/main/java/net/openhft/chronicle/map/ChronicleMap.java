@@ -93,7 +93,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * for the key
      * @see #get(Object)
      * @see #acquireUsing(Object, Object)
-     * @see ChronicleMapOnHeapUpdatableBuilder#valueMarshaller(BytesMarshaller)
+     * @see OnHeapUpdatableChronicleMapBuilder#valueMarshaller(BytesMarshaller)
      */
     V getUsing(K key, V usingValue);
 
@@ -134,7 +134,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * no mapping for the key
      * @see #get(Object)
      * @see #getUsing(Object, Object)
-     * @see ChronicleMapOnHeapUpdatableBuilder#valueMarshaller(BytesMarshaller)
+     * @see OnHeapUpdatableChronicleMapBuilder#valueMarshaller(BytesMarshaller)
      */
     @NotNull
     ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);
