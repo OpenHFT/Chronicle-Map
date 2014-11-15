@@ -144,7 +144,7 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                     <links>
-                        <link>http://openhft.github.io/Java-Lang/apidocs/</link>
+                        <link>http://openhft.github.io/Chronicle-Map/apidocs/</link>
                     </links>
                     <excludePackageNames>net.openhft.chronicle.hash.serialization.internal</excludePackageNames>
                 </configuration>

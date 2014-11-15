@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This interface defines the meaning of configurations, common to {@link ChronicleMapBuilder} and
+ * This interface defines the meaning of configurations, common to {@link net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder} and
  * {@link ChronicleSetBuilder}, i. e. <i>Chronicle hash container</i> configurations.
  *
  * <p>{@code ChronicleHashBuilder} is mutable. Configuration methods mutate the builder and return
@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
  * @param <K> the type of keys in hash containers, created by this builder
  * @param <C> the container type, created by this builder, i. e. {@link ChronicleMap} or {@link
  *            ChronicleSet}
- * @param <B> the concrete builder type, i. e. {@link ChronicleMapBuilder} or {@link
+ * @param <B> the concrete builder type, i. e. {@link net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder} or {@link
  *            ChronicleSetBuilder}
  */
 public interface ChronicleHashBuilder<K, C extends ChronicleHash,
@@ -130,7 +130,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      *
      * <p>There are three major patterns of this configuration usage: <ol> <li>Key (and value, in
      * {@code ChronicleMap} case) sizes are constant. Configure them via {@link
-     * #constantKeySizeBySample(Object)} and {@link ChronicleMapBuilder#constantValueSizeBySample(Object)}
+     * #constantKeySizeBySample(Object)} and {@link net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder#constantValueSizeBySample(Object)}
      * methods, and you will experience no memory waste at all.</li> <li>Key (and/or value size, in
      * {@code ChronicleMap} case) varies moderately. Specify them using corresponding methods, or
      * specify entry size directly by calling this method, by sizes somewhere between average and
@@ -154,7 +154,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * efficient manner, for example as {@code long[]} arrays. Typical number of connections is
      * 100-300, maximum is 3000. In this case entry size of
      * 50 * (8 bytes for each id) = 400 bytes would be a good choice: <pre>{@code
-     * Map<Long, long[]> socialGraph = ChronicleMapBuilder
+     * Map<Long, long[]> socialGraph = ChronicleMapOnHeapUpdatableBuilder
      *     .of(Long.class, long[].class)
      *     // given that graph should have of 1 billion nodes, and 150 average adjacency list size
      *     // => values takes 3 chuncks on average
@@ -183,7 +183,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * memory unit).</li> <li>If key (and/or value, in {@code ChronicleMap} case) size varies
      * moderately, you should pass to this method the maximum number of entries + 5-25%, depending
      * on your data properties and configured {@linkplain #keySize(int) key}/{@linkplain
-     * ChronicleMapBuilder#valueSize(int) value}/{@linkplain #entrySize(int) entry} sizes.</li>
+     * net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder#valueSize(int) value}/{@linkplain #entrySize(int) entry} sizes.</li>
      * <li>If your data size varies in a wide range, pass the maximum number of entries multiplied
      * by average data size and divided by the configured "entry size" (i. e. chunk size). See an
      * example in the documentation to {@link #entrySize(int)} method.</li> </ol>

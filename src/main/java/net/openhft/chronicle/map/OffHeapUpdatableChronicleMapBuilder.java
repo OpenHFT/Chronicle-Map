@@ -16,24 +16,31 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
+import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import org.jetbrains.annotations.NotNull;
 
-public final class OffHeapUpdatableChronicleMapBuilder<K, V>
-        extends AbstractChronicleMapBuilder<K, V, OffHeapUpdatableChronicleMapBuilder<K, V>> {
+final class OffHeapUpdatableChronicleMapBuilder<K, V>
+        extends AbstractChronicleMapBuilder<K, V, OffHeapUpdatableChronicleMapBuilder<K, V>> implements ChronicleMapBuilderI<K, V> {
 
-    public static <K, V> OffHeapUpdatableChronicleMapBuilder<K, V> of(
+    public static <K, V> ChronicleMapBuilderI<K, V> of(
             @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
+
+        if (valueClass.isEnum())
+            return OnHeapUpdatableChronicleMapBuilder.of(keyClass, valueClass);
+
         if (keyClass.isInterface() && keyClass != CharSequence.class) {
             keyClass = DataValueClasses.directClassFor(keyClass);
         }
-        if (valueClass.isInterface()) {
+
+        if ((valueClass.isInterface() && valueClass != CharSequence.class)) {
             valueClass = DataValueClasses.directClassFor(valueClass);
         } else if (!offHeapReference(valueClass)) {
-            throw new IllegalArgumentException(
-                    "Value class should be either Byteable subclass or interface," +
-                            "allowing direct Byteable implementation generation");
+            return OnHeapUpdatableChronicleMapBuilder.of(keyClass, valueClass);
         }
         return new OffHeapUpdatableChronicleMapBuilder<K, V>(keyClass, valueClass);
     }
@@ -48,13 +55,18 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
         return this;
     }
 
+    @Override
+    public OffHeapUpdatableChronicleMapBuilder<K, V> valueSize(int valueSize) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * {@inheritDoc} With respect to {@linkplain #entryAndValueAlignment(Alignment) alignment}.
      *
      * <p>Note that the actual entrySize will be aligned to 4 (default {@linkplain
-     * #entryAndValueAlignment(Alignment) entry alignment}). I. e. if you set entry size to 30,
-     * and entry alignment is set to {@link Alignment#OF_4_BYTES}, the actual entry size will be 32
-     * (30 aligned to 4 bytes).
+     * #entryAndValueAlignment(Alignment) entry alignment}). I. e. if you set entry size to 30, and entry
+     * alignment is set to {@link Alignment#OF_4_BYTES}, the actual entry size will be 32 (30 aligned to 4
+     * bytes).
      *
      * @see #entryAndValueAlignment(Alignment)
      * @see #entries(long)
@@ -65,21 +77,21 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     /**
-     * Configures alignment strategy of address in memory of entries and independently of address in
-     * memory of values within entries in ChronicleMaps, created by this builder.
+     * Configures alignment strategy of address in memory of entries and independently of address in memory of
+     * values within entries in ChronicleMaps, created by this builder.
      *
-     * <p>Useful when values of the map are updated intensively, particularly fields with volatile
-     * access, because it doesn't work well if the value crosses cache lines. Also, on some
-     * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
+     * <p>Useful when values of the map are updated intensively, particularly fields with volatile access,
+     * because it doesn't work well if the value crosses cache lines. Also, on some (nowadays rare)
+     * architectures any misaligned memory access is more expensive than aligned.
      *
-     * <p>Note that {@linkplain #entrySize(int) entry size} will be aligned according to this
-     * alignment. I. e. if you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual
-     * entry size will be 24 (20 aligned to 8 bytes).
+     * <p>Note that {@linkplain #entrySize(int) entry size} will be aligned according to this alignment. I. e.
+     * if you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual entry size will be 24 (20
+     * aligned to 8 bytes).
      *
      * <p>Default is {@link Alignment#OF_4_BYTES} for Byteable values.
      *
      * @param alignment the new alignment of the maps constructed by this builder
-     * @return this {@code ChronicleMapBuilder} back
+     * @return this {@code ChronicleMapOnHeapUpdatableBuilder} back
      */
     @Override
     public OffHeapUpdatableChronicleMapBuilder<K, V> entryAndValueAlignment(Alignment alignment) {
@@ -87,11 +99,11 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     /**
-     * {@inheritDoc} Also, it overrides any previous {@link #prepareValueBytesOnAcquire}
-     * configuration to this {@code OffHeapUpdatableChronicleMapBuilder}.
+     * {@inheritDoc} Also, it overrides any previous {@link #prepareValueBytesOnAcquire} configuration to this
+     * {@code ChronicleMapBuilder}.
      *
-     * <p>By default, the default value is not specified, default {@linkplain
-     * #prepareValueBytesOnAcquire prepare value bytes routine} is specified instead.
+     * <p>By default, the default value is not specified, default {@linkplain #prepareValueBytesOnAcquire
+     * prepare value bytes routine} is specified instead.
      *
      * @see #defaultValueProvider(DefaultValueProvider)
      * @see #prepareValueBytesOnAcquire(PrepareValueBytes)
@@ -102,8 +114,8 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     /**
-     * {@inheritDoc} Also, it overrides any previous {@link #prepareValueBytesOnAcquire}
-     * configuration to this {@code OffHeapUpdatableChronicleMapBuilder}.
+     * {@inheritDoc} Also, it overrides any previous {@link #prepareValueBytesOnAcquire} configuration to this
+     * {@code ChronicleMapBuilder}.
      *
      * <p>By default, the default value provider is not specified, default {@linkplain
      * #prepareValueBytesOnAcquire prepare value bytes routine} is specified instead.
@@ -118,15 +130,14 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     /**
-     * Configures the procedure which is called on the bytes, which later the returned value is
-     * pointing to, if the key is absent, on {@link ChronicleMap#acquireUsing(Object, Object)
-     * acquireUsing()} call on maps, created by this builder. See {@link PrepareValueBytes} for
-     * more information.
+     * Configures the procedure which is called on the bytes, which later the returned value is pointing to,
+     * if the key is absent, on {@link ChronicleMap#acquireUsing(Object, Object) acquireUsing()} call on maps,
+     * created by this builder. See {@link PrepareValueBytes} for more information.
      *
      * <p>The default preparation callback zeroes out the value bytes.
      *
-     * @param prepareValueBytes what to do with the value bytes before assigning them into the
-     *                          {@link Byteable} value to return from {@code acquireUsing()} call
+     * @param prepareValueBytes what to do with the value bytes before assigning them into the {@link
+     *                          Byteable} value to return from {@code acquireUsing()} call
      * @return this builder back
      * @see PrepareValueBytes
      * @see #defaultValue(Object)
@@ -137,4 +148,25 @@ public final class OffHeapUpdatableChronicleMapBuilder<K, V>
             @NotNull PrepareValueBytes<K, V> prepareValueBytes) {
         return super.prepareValueBytesOnAcquire(prepareValueBytes);
     }
+
+    public ChronicleMapBuilderI<K, V> valueMarshaller(@NotNull BytesMarshaller<V> valueMarshaller) {
+        throw new UnsupportedOperationException("not supported for this combination of key/value type");
+    }
+
+
+    public ChronicleMapBuilderI<K, V> valueMarshallers(@NotNull BytesWriter<V> valueWriter, @NotNull BytesReader<V> valueReader) {
+        throw new UnsupportedOperationException("not supported for this combination of key/value type");
+    }
+
+
+    public ChronicleMapBuilderI<K, V> valueSizeMarshaller(@NotNull SizeMarshaller valueSizeMarshaller) {
+        throw new UnsupportedOperationException("not supported for this combination of key/value type");
+    }
+
+    @Override
+    public OffHeapUpdatableChronicleMapBuilder<K, V> constantValueSizeBySample(V sampleValue) {
+        throw new UnsupportedOperationException("not supported for this combination of key/value type");
+    }
+
+
 }

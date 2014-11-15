@@ -93,7 +93,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * for the key
      * @see #get(Object)
      * @see #acquireUsing(Object, Object)
-     * @see ChronicleMapBuilder#valueMarshaller(BytesMarshaller)
+     * @see OnHeapUpdatableChronicleMapBuilder#valueMarshaller(BytesMarshaller)
      */
     V getUsing(K key, V usingValue);
 
@@ -134,7 +134,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * no mapping for the key
      * @see #get(Object)
      * @see #getUsing(Object, Object)
-     * @see ChronicleMapBuilder#valueMarshaller(BytesMarshaller)
+     * @see OnHeapUpdatableChronicleMapBuilder#valueMarshaller(BytesMarshaller)
      */
     @NotNull
     ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);
@@ -166,8 +166,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * defaultValueProvider.}
      *
      * <p>If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link
-     * OffHeapUpdatableChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of
-     * what to do if the key is absent in the map, see {@link OffHeapUpdatableChronicleMapBuilder#prepareValueBytesOnAcquire(PrepareValueBytes)}.
+     * ChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of
+     * what to do if the key is absent in the map, see {@link ChronicleMapBuilder#prepareValueBytesOnAcquire(PrepareValueBytes)}.
      * By default, value bytes are just zeroed out, no default value, either provided for key or constant, is
      * put for the absent key.
      *

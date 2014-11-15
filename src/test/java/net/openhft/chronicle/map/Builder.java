@@ -75,9 +75,8 @@ public class Builder {
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(serverPort, Arrays.asList(endpoints))
                 .heartBeatInterval(1L, TimeUnit.SECONDS);
         return ChronicleMapBuilder.of(kClass, vClass)
-                .replication(identifier,  tcpConfig);
+                .replication(identifier, tcpConfig);
     }
-
 
 
 }

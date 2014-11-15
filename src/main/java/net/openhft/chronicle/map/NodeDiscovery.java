@@ -124,8 +124,6 @@ public class NodeDiscovery {
 
                         if (proposedIdentifier == ourProposedIdentifier.get())
                             useAnotherIdentifier.set(true);
-
-
                     }
                 }
                 countDownLatch.get().countDown();

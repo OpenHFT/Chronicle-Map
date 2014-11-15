@@ -37,7 +37,7 @@ public class DefaultValueTest {
 
             ArrayList<Integer> defaultValue = new ArrayList<Integer>();
             defaultValue.add(42);
-            try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
+            try (ChronicleMap<String, List<Integer>> map = OnHeapUpdatableChronicleMapBuilder
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
                     .defaultValue(defaultValue).createPersistedTo(file)) {
                 ArrayList<Integer> using = new ArrayList<Integer>();
@@ -49,7 +49,7 @@ public class DefaultValueTest {
             }
 
             ArrayList<Integer> using = new ArrayList<Integer>();
-            try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
+            try (ChronicleMap<String, List<Integer>> map = OnHeapUpdatableChronicleMapBuilder
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
                     .createPersistedTo(file)) {
                 assertEquals(defaultValue, map.acquireUsing("c", using));

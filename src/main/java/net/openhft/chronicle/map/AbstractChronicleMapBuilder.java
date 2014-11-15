@@ -57,19 +57,19 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
 
 /**
  * {@code AbstractChronicleMapBuilder} manages most of {@link ChronicleMap} configurations; has two concrete
- * subclasses: {@link ChronicleMapBuilder} should be used to create maps with ordinary values, {@link
- * OffHeapUpdatableChronicleMapBuilder} -- maps with {@link Byteable} values, which point directly to off-heap
+ * subclasses: {@link OnHeapUpdatableChronicleMapBuilder} should be used to create maps with ordinary values, {@link
+ * ChronicleMapBuilder} -- maps with {@link Byteable} values, which point directly to off-heap
  * memory; could be used as a classic builder and/or factory. This means
  * that in addition to the standard builder usage pattern: <pre>{@code
- * ChronicleMap<Key, Value> map = ChronicleMapBuilder
+ * ChronicleMap<Key, Value> map = ChronicleMapOnHeapUpdatableBuilder
  *     .of(Key.class, Value.class)
  *     .entries(100500)
  *     // ... other configurations
  *     .create();}</pre>
- * one of concrete {@code AbstractChronicleMapBuilder} subclasses, {@link ChronicleMapBuilder} or {@link
- * OffHeapUpdatableChronicleMapBuilder}, could be prepared and used to create many similar
+ * one of concrete {@code AbstractChronicleMapBuilder} subclasses, {@link OnHeapUpdatableChronicleMapBuilder} or {@link
+ * ChronicleMapBuilder}, could be prepared and used to create many similar
  * maps: <pre>{@code
- * OffHeapUpdatableChronicleMapBuilder<Key, Value> builder = OffHeapUpdatableChronicleMapBuilder
+ * ChronicleMapBuilder<Key, Value> builder = ChronicleMapBuilder
  *     .of(Key.class, Value.class)
  *     .entries(100500);
  *
@@ -201,7 +201,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
      *
      * <p>Example: if keys in your map(s) are English words in {@link String} form, keys size 10
      * (a bit more than average English word length) would be a good choice: <pre>{@code
-     * ChronicleMap<String, LongValue> wordFrequencies = OffHeapUpdatableChronicleMapBuilder
+     * ChronicleMap<String, LongValue> wordFrequencies = ChronicleMapBuilder
      *     .of(String.class, LongValue.class)
      *     .entries(50000)
      *     .keySize(10)
@@ -532,7 +532,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
 
     @Override
     public String toString() {
-        return "ChronicleMapBuilder{" +
+        return "ChronicleMapOnHeapUpdatableBuilder{" +
                 "actualSegments=" + pretty(actualSegments) +
                 ", minSegments=" + pretty(minSegments) +
                 ", actualEntriesPerSegment=" + pretty(actualEntriesPerSegment) +
@@ -839,12 +839,10 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     /**
-     * Only for testing. Shouldn't be called concurrently on a single builder instance.
-     *
      * @param identifier id
      * @return map
      */
-    ChronicleMap<K, V> createReplicated(byte identifier) throws IOException {
+    public  ChronicleMap<K, V> createReplicated(byte identifier) throws IOException {
         preMapConstruction(true);
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
                 new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,

@@ -110,7 +110,7 @@ public class ChronicleMapTest {
     private static ChronicleMap<CharSequence, LongValue> getSharedMap(
             long entries, int segments, int entrySize, Alignment alignment)
             throws IOException {
-        return OffHeapUpdatableChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+        return ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                 .entries(entries)
                 .minSegments(segments)
                 .entrySize(entrySize)
@@ -582,7 +582,7 @@ public class ChronicleMapTest {
             // JAVA 8 produces more garbage than previous versions for internal work.
 //            System.gc();
             final long entries = runs * 1000 * 1000L;
-            OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+            ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                     .of(CharSequence.class, LongValue.class)
                     .entries(entries)
                     .actualSegments(8 * 1024)
@@ -654,7 +654,7 @@ public class ChronicleMapTest {
             // JAVA 8 produces more garbage than previous versions for internal work.
 //            System.gc();
             final long entries = runs * 1000 * 1000L;
-            OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+            ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                     .of(CharSequence.class, LongValue.class)
                     .entries(entries)
                     .entryAndValueAlignment(OF_8_BYTES)
@@ -728,7 +728,7 @@ public class ChronicleMapTest {
             // JAVA 8 produces more garbage than previous versions for internal work.
 //            System.gc();
             final long entries = runs * 1000 * 1000L;
-            OffHeapUpdatableChronicleMapBuilder<LongValue, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+            ChronicleMapBuilder<LongValue, LongValue> builder = ChronicleMapBuilder
                     .of(LongValue.class, LongValue.class)
                     .entries(entries)
                     .entryAndValueAlignment(OF_8_BYTES)
@@ -1356,13 +1356,13 @@ public class ChronicleMapTest {
 
     @Test
     public void equalsTest() throws IOException {
-        final ChronicleMap<Integer, String> map1 = ChronicleMapBuilder
+        final ChronicleMap<Integer, String> map1 = OnHeapUpdatableChronicleMapBuilder
                 .of(Integer.class, String.class).create();
 
         map1.put(1, "one");
         map1.put(2, "two");
 
-        final ChronicleMap<Integer, String> map2 = ChronicleMapBuilder
+        final ChronicleMap<Integer, String> map2 = OnHeapUpdatableChronicleMapBuilder
                 .of(Integer.class, String.class).create();
 
         map2.put(1, "one");
@@ -1406,7 +1406,7 @@ public class ChronicleMapTest {
 
     @Test
     public void testOffheapAcquireUsingLocked() throws IOException {
-        OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> builder = OffHeapUpdatableChronicleMapBuilder
+        ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
                 .entries(1000)
                 .entrySize(16);
@@ -1487,7 +1487,30 @@ public class ChronicleMapTest {
 
         }
 
+
     }
+
+
+    @Test
+    public void testOnheapAcquireUsingLockedStringBuilder() throws IOException {
+
+        try (final ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
+                .entries(1000)
+                .entrySize(40)
+                .defaultValue("")
+                .create()) {
+
+            StringBuilder value = new StringBuilder();
+
+            try (WriteContext<?, CharSequence> context = map.acquireUsingLocked("one", value)) {
+                value.append("Hello World");
+            }
+
+            assertEquals("Hello World", value.toString());
+        }
+    }
+
 
     @Test
     public void testOnheapAcquireUsingLocked() throws IOException {

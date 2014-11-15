@@ -51,7 +51,8 @@ public class EntryCountMapTest {
     private static ChronicleMap<CharSequence, LongValue> getSharedMap(
             long entries, int segments, int entrySize, Alignment alignment)
             throws IOException {
-        OffHeapUpdatableChronicleMapBuilder<CharSequence, LongValue> mapBuilder = OffHeapUpdatableChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+        ChronicleMapBuilder<CharSequence, LongValue> mapBuilder = ChronicleMapBuilder.of(CharSequence
+                .class, LongValue.class)
                 .entries(entries)
                 .actualSegments(segments)
                 .entrySize(entrySize)

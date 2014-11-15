@@ -52,8 +52,7 @@ public class StringsMapMain {
     public static void startRemoteClient(String hostname) throws IOException {
         final ChronicleMap<CharSequence, CharSequence> map;
         if (stateless) {
-            map = ChronicleMapBuilder
-                    .of(CharSequence.class, CharSequence.class)
+            map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                     .putReturnsNull(true)
                     .statelessClient(new InetSocketAddress(hostname, port)).create();
         } else {

@@ -23,7 +23,6 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.LongValue;
 
-import java.io.File;
 import java.io.IOException;
 
 public class DistributedSequenceMain {

@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.OffHeapUpdatableChronicleMapBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.ReadContext;
 import net.openhft.chronicle.map.WriteContext;
 import net.openhft.lang.model.DataValueClasses;
@@ -56,7 +56,7 @@ public class OpenJDKAndHashMapExamplesTest {
         File file = new File(TMP + "/chm-myBondPortfolioCHM-" + System.nanoTime());
         file.deleteOnExit();
 
-        ChronicleMap<String, BondVOInterface> chm = OffHeapUpdatableChronicleMapBuilder
+        ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
                 .keySize(10)
                 .createPersistedTo(file);
@@ -76,7 +76,7 @@ public class OpenJDKAndHashMapExamplesTest {
             mpx1030.setBidPx(107.6);
         }
 
-        ChronicleMap<String, BondVOInterface> chmB = OffHeapUpdatableChronicleMapBuilder
+        ChronicleMap<String, BondVOInterface> chmB = ChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
                 .keySize(10)
                 .createPersistedTo(file);
