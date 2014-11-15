@@ -123,7 +123,7 @@ class SetFromMap<E> extends AbstractSet<E>
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         m.close();
     }
 }

@@ -23,7 +23,6 @@ import net.openhft.chronicle.set.ChronicleSet;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 
 /**
  * This interface defines common {@link ChronicleMap} and {@link ChronicleSet}, related to off-heap
@@ -61,5 +60,5 @@ public interface ChronicleHash extends Closeable {
      * <i>any</i> exception, or even JVM crash. Shortly speaking, don't call use map closing.
      */
     @Override
-    void close() throws IOException;
+    void close();
 }

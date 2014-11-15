@@ -782,7 +782,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     @Override
-    public ChronicleMap<K, V> create() throws IOException {
+    public ChronicleMap<K, V> create() {
         // clone() to make this builder instance thread-safe, because createWithoutFile() method
         // computes some state based on configurations, but doesn't synchronize on configuration
         // changes.
@@ -856,12 +856,17 @@ public abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     ChronicleMap<K, V> createWithoutFile(
-            SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) throws IOException {
-        VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
-        BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
-                map.sizeInBytes(), true);
-        map.createMappedStoreAndSegments(bytesStore);
-        return establishReplication(map, singleHashReplication, channel);
+            SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) {
+        try {
+            VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
+            BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
+                    map.sizeInBytes(), true);
+            map.createMappedStoreAndSegments(bytesStore);
+            return establishReplication(map, singleHashReplication, channel);
+        } catch (IOException e) {
+            // file-less version should never trigger an IOException.
+            throw new AssertionError(e);
+        }
     }
 
     ChronicleMap<K, V> createStatelessMap(StatelessMapConfig<K, V> statelessBuilder)

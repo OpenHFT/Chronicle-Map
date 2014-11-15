@@ -27,7 +27,6 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -106,22 +105,14 @@ public class GuavaTest extends TestCase {
 
         @Override
         Map<CharSequence, CharSequence> newMap() {
-            try {
-                return builder.create();
-            } catch (IOException e) {
-                throw new AssertionError(e);
-            }
+            return builder.create();
         }
     }
 
     static class HHMTestGenerator extends CHMTestGenerator {
         @Override
         Map<CharSequence, CharSequence> newMap() {
-            try {
-                return builder.create();
-            } catch (IOException e) {
-                throw new AssertionError(e);
-            }
+            return builder.create();
         }
     }
 }

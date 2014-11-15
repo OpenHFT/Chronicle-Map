@@ -68,7 +68,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             for (Closeable c : closeables) {
                 try {
                     c.close();
