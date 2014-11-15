@@ -189,7 +189,7 @@ this for best performance.
 
 or value objects that are created through, a directClass interface, for example : 
 ``` java
-      ChronicleMap<String, BondVOInterface> chm = OffHeapUpdatableChronicleMapBuilder
+      ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
                .of(String.class, BondVOInterface.class)
                .create();
 
@@ -428,10 +428,10 @@ bond.getCoupon()
 lets say that it is only the `coupon` field that we are interested in, then its better not to have to
 deserialize the whole object that implements the `BondVOInterface`. It would be more efficient to just
 deserialize the field(s) that we require, in this example just the coupon. This is why we created
-the`OffHeapUpdatableChronicleMapBuilder`, when you use this builder chronicle will not create on heap copies of your whole data structure. You can instead use proxy objects that can read and write into the off heap data structures, this reduced serialisation can give you a big performance boost. Below we show you how you can work directly with the off heap entries.
+the`ChronicleMapBuilder`, when you use this builder chronicle will not create on heap copies of your whole data structure. You can instead use proxy objects that can read and write into the off heap data structures, this reduced serialisation can give you a big performance boost. Below we show you how you can work directly with the off heap entries.
 
 ``` java
-        ChronicleMap<String, BondVOInterface> chm = OffHeapUpdatableChronicleMapBuilder
+        ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
                 .keySize(10)
                 .create();
