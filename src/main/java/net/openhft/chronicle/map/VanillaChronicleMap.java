@@ -345,8 +345,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
 
-
-
     enum LockType {READ_LOCK, WRITE_LOCK}
 
     @Override
@@ -372,6 +370,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         try (Context<K, V> entry = lookupUsing(key, null,
                 LockType.READ_LOCK, false)) {
             return function.apply(entry.value());
+        }
+    }
+
+    @Override
+    public <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator) {
+        try (Context<K, V> entry = lookupUsing(key, null,
+                LockType.WRITE_LOCK, false)) {
+            return mutator.update(entry.value());
         }
     }
 
@@ -1102,7 +1108,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         /**
          * Removes a key (or key-value pair) from the Segment.
-         *
+         * <p/>
          * <p>The entry will only be removed if {@code expectedValue} equals to {@code null} or the value
          * previously corresponding to the specified key.
          *

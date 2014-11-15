@@ -193,5 +193,16 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      */
     <R> R mapForKey(K key, @NotNull Function<? super V, R> function);
 
+    /**
+     * Apply a mutator to the value for a key and return a result.
+     * A write lock is assumed.
+     *
+     * @param key     to apply the mapping to
+     * @param mutator to alter the value and calculate a result
+     * @param <R>     return type.
+     * @return the result of the function.
+     */
+    <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator);
+
 }
 

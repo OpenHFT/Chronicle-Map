@@ -91,7 +91,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         PUT_ALL,
         PUT_ALL_WITHOUT_ACC,
         HASH_CODE,
-        MAP_FOR_KEY
+        MAP_FOR_KEY,
+        UPDATE_FOR_KEY
     }
 
     private long transactionID;
@@ -465,6 +466,19 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
         writeKey(key, local);
         writeObject(function);
+
+        final Bytes reader = blockingFetch(sizeLocation);
+        return (R) keyValueSerializer.readObject(reader);
+    }
+
+    @Override
+    public synchronized <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator) {
+
+        final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+        final long sizeLocation = writeEventAnSkip(UPDATE_FOR_KEY);
+
+        writeKey(key, local);
+        writeObject(mutator);
 
         final Bytes reader = blockingFetch(sizeLocation);
         return (R) keyValueSerializer.readObject(reader);

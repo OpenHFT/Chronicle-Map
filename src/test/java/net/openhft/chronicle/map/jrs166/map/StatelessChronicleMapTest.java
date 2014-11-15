@@ -172,6 +172,11 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
+        public <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator) {
+            return d.updateForKey(key, mutator);
+        }
+
+        @Override
         public V putIfAbsent(K key, V value) {
             return d.putIfAbsent(key, value);
         }
