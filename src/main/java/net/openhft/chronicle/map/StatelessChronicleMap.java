@@ -20,7 +20,6 @@ package net.openhft.chronicle.map;
 
 import com.sun.jdi.connect.spi.ClosedConnectionException;
 import net.openhft.chronicle.hash.RemoteCallTimeoutException;
-import net.openhft.chronicle.java8.Function;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -473,7 +472,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     private <R> void writeObject(@NotNull Function<V, R> function) {
-        long start   = bytes.position();
+        long start = bytes.position();
         for (; ; ) {
             try {
                 bytes.writeObject(function);

@@ -1,4 +1,4 @@
-package net.openhft.chronicle.java8;
+package net.openhft.chronicle.map;
 
 import java.io.Serializable;
 
@@ -10,7 +10,6 @@ import java.io.Serializable;
  *
  * @param <T> the type of the input to the function
  * @param <R> the type of the result of the function
- * @since 1.8
  */
 
 public interface Function<T, R> extends Serializable {

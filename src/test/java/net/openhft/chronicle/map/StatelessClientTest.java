@@ -19,7 +19,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.java8.Function;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -71,7 +70,6 @@ public class StatelessClientTest {
             }
         }
     }
-
 
 
     @Test

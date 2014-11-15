@@ -247,7 +247,7 @@ interface ChronicleMapBuilderI<K, V> {
 
     ChronicleMapBuilderI<K, V> replication(SingleChronicleHashReplication withId);
 
-    ChronicleMap<K, V> create() throws IOException;
+    ChronicleMap<K, V> create();
 
     ChronicleMapBuilderI<K, V> actualSegments(int actualSegments);
 

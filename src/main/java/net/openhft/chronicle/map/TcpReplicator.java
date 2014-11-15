@@ -21,7 +21,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
-import net.openhft.chronicle.java8.Function;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;

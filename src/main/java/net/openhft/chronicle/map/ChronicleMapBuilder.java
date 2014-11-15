@@ -338,7 +338,7 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
     }
 
     @Override
-    public ChronicleMap create() throws IOException {
+    public ChronicleMap<K, V> create() {
         return delegate.create();
     }
 
