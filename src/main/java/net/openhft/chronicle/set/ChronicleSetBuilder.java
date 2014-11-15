@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <E> element type of the sets, created by this builder
  * @see ChronicleSet
- * @see net.openhft.chronicle.map.ChronicleMapOnHeapUpdatableBuilder
+ * @see net.openhft.chronicle.map.OnHeapUpdatableChronicleMapBuilder
  */
 public class ChronicleSetBuilder<E>
         implements ChronicleHashBuilder<E, ChronicleSet<E>, ChronicleSetBuilder<E>> {

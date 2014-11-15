@@ -742,7 +742,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             final NativeBytes sizeOfMultiMapBitSetBytes =
                     new NativeBytes(new VanillaBytesMarshallerFactory(), start,
                             start + sizeOfMultiMapBitSet(), null);
-            multiMapBytes.load();
+//            multiMapBytes.load();
             return multiMapFactory.create(multiMapBytes, sizeOfMultiMapBitSetBytes);
         }
 

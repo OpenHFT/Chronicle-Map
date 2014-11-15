@@ -166,7 +166,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * defaultValueProvider.}
      *
      * <p>If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link
-     * ChronicleMapBuilder} builder (values are {@tlink Byteable}), there is one more option of
+     * ChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of
      * what to do if the key is absent in the map, see {@link ChronicleMapBuilder#prepareValueBytesOnAcquire(PrepareValueBytes)}.
      * By default, value bytes are just zeroed out, no default value, either provided for key or constant, is
      * put for the absent key.
