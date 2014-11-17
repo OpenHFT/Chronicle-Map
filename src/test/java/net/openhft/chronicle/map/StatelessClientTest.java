@@ -88,7 +88,7 @@ public class StatelessClientTest {
 
                 String actual = statelessMap.mapForKey(11, ToString.INSTANCE);
 
-                Assert.assertEquals("", actual);
+                Assert.assertEquals(null, actual);
             }
         }
     }

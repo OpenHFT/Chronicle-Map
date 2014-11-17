@@ -37,7 +37,6 @@ import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -1343,15 +1342,13 @@ class StatelessServerConnector<K, V> {
 
     }
 
-    // an object poll of 1 using an atomic reference
-    private AtomicReference<V> using = new AtomicReference<V>();
 
     public Work mapForKey(ByteBufferBytes reader, Bytes writer, long sizeLocation) {
 
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         final K key = readKey(reader, local);
 
-        final V value = using.getAndSet(null);
+
         final Function<V, ?> function = (Function<V, ?>) reader.readObject();
         try {
             Object result = map.mapForKey(key, function);
@@ -1360,8 +1357,6 @@ class StatelessServerConnector<K, V> {
         } catch (Throwable e) {
             LOG.info("", e);
             return sendException(writer, sizeLocation, e);
-        } finally {
-            using.set(value);
         }
 
         writeSizeAndFlags(sizeLocation, false, writer);
@@ -1373,7 +1368,7 @@ class StatelessServerConnector<K, V> {
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         final K key = readKey(reader, local);
 
-        final V value = using.getAndSet(null);
+
         final Mutator<V, ?> mutator = (Mutator<V, ?>) reader.readObject();
         try {
             Object result = map.updateForKey(key, mutator);
@@ -1382,8 +1377,6 @@ class StatelessServerConnector<K, V> {
         } catch (Throwable e) {
             LOG.info("", e);
             return sendException(writer, sizeLocation, e);
-        } finally {
-            using.set(value);
         }
 
         writeSizeAndFlags(sizeLocation, false, writer);
