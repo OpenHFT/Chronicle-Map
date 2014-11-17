@@ -53,11 +53,11 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         if (valueClass.isEnum())
             return new ChronicleMapBuilder<K, V>(OnHeapUpdatableChronicleMapBuilder.of(keyClass, valueClass));
 
-        if (keyClass.isInterface() && keyClass != CharSequence.class) {
+        if (keyClass.isInterface() && !builtInType(keyClass)) {
             keyClass = DataValueClasses.directClassFor(keyClass);
         }
 
-        if ((valueClass.isInterface() && valueClass != CharSequence.class)) {
+        if ((valueClass.isInterface() && !builtInType(valueClass))) {
             valueClass = DataValueClasses.directClassFor(valueClass);
         } else if (!offHeapReference(valueClass)) {
             return new ChronicleMapBuilder<K, V>(OnHeapUpdatableChronicleMapBuilder.of(keyClass, valueClass));
@@ -65,6 +65,10 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         OffHeapUpdatableChronicleMapBuilder<K, V> kvOffHeapUpdatableChronicleMapBuilder = new
                 OffHeapUpdatableChronicleMapBuilder<K, V>(keyClass, valueClass);
         return new ChronicleMapBuilder<K, V>(kvOffHeapUpdatableChronicleMapBuilder);
+    }
+
+    static boolean builtInType(Class clazz) {
+        return clazz.getClassLoader() == Class.class.getClassLoader();
     }
 
     ChronicleMapBuilder(ChronicleMapBuilderI<K, V> delegate) {
