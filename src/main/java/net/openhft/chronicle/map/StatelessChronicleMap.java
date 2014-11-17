@@ -101,8 +101,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private long transactionID;
 
     StatelessChronicleMap(final StatelessMapConfig builder,
-                          final AbstractChronicleMapBuilder chronicleMapBuilder) throws
-            IOException {
+                          final AbstractChronicleMapBuilder chronicleMapBuilder) throws IOException {
         this.builder = builder;
         this.keyValueSerializer = new KeyValueSerializer<K, V>(chronicleMapBuilder.keyBuilder,
                 chronicleMapBuilder.valueBuilder);
@@ -620,6 +619,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     private void resizeBuffer(int size, long start) {
+
+        if (LOG.isDebugEnabled())
+            LOG.debug("resizing buffer to size=" + size);
+
         if (size < buffer.capacity())
             throw new IllegalStateException("it not possible to resize the buffer smaller");
 
@@ -1124,7 +1127,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                     int i = substring.indexOf(' ');
                     if (i != -1) {
                         int size = Integer.parseInt(substring.substring(0, i));
-                        resizeBuffer(size+ maxEntrySize, start);
+                        resizeBuffer(size + maxEntrySize, start);
                     } else
                         resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
                 }
