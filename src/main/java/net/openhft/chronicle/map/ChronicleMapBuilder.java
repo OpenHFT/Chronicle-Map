@@ -330,6 +330,23 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         return this;
     }
 
+
+    /**
+     * each map can be identified by a name
+     * @param name the name of the map
+     * @return self
+     */
+    @Override
+    public ChronicleMapBuilder<K, V> name(String name) {
+        delegate.name(name);
+        return this;
+    }
+
+    @Override
+    public String name() {
+        return delegate.name()  ;
+    }
+
     @Override
     public ChronicleMapBuilder<K, V> replication(SingleChronicleHashReplication withId) {
         delegate.replication(withId);

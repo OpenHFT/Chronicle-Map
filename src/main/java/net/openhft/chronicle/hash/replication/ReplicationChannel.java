@@ -18,7 +18,6 @@ package net.openhft.chronicle.hash.replication;
 
 
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import org.jetbrains.annotations.NotNull;
 

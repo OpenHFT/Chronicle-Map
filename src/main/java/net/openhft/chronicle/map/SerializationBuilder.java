@@ -42,7 +42,7 @@ import static net.openhft.chronicle.map.Objects.hash;
 import static net.openhft.chronicle.hash.serialization.SizeMarshallers.stopBit;
 import static net.openhft.chronicle.map.SerializationBuilder.Role.KEY;
 
-final class SerializationBuilder<E> implements Cloneable {
+final class SerializationBuilder<E> implements Cloneable, Serializable{
 
     private static boolean concreteClass(Class c) {
         return !c.isInterface() && !Modifier.isAbstract(c.getModifiers());

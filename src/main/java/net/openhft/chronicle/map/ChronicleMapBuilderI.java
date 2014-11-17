@@ -17,13 +17,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Rob Austin.
  */
-interface ChronicleMapBuilderI<K, V> {
+interface ChronicleMapBuilderI<K, V> extends Serializable {
 
 
     /**
@@ -294,6 +295,11 @@ interface ChronicleMapBuilderI<K, V> {
     ChronicleMap<K, V> createReplicated(byte b) throws IOException;
 
     ChronicleMapBuilderI<K, V> removeReturnsNull(boolean b);
+
+
+    ChronicleMapBuilderI<K, V>  name(String name);
+
+    String name();
 
 
 }

@@ -57,17 +57,17 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
 
 /**
  * {@code AbstractChronicleMapBuilder} manages most of {@link ChronicleMap} configurations; has two concrete
- * subclasses: {@link OnHeapUpdatableChronicleMapBuilder} should be used to create maps with ordinary values, {@link
- * ChronicleMapBuilder} -- maps with {@link Byteable} values, which point directly to off-heap
- * memory; could be used as a classic builder and/or factory. This means
+ * subclasses: {@link OnHeapUpdatableChronicleMapBuilder} should be used to create maps with ordinary values,
+ * {@link ChronicleMapBuilder} -- maps with {@link Byteable} values, which point directly to off-heap memory;
+ * could be used as a classic builder and/or factory. This means
  * that in addition to the standard builder usage pattern: <pre>{@code
  * ChronicleMap<Key, Value> map = ChronicleMapOnHeapUpdatableBuilder
  *     .of(Key.class, Value.class)
  *     .entries(100500)
  *     // ... other configurations
  *     .create();}</pre>
- * one of concrete {@code AbstractChronicleMapBuilder} subclasses, {@link OnHeapUpdatableChronicleMapBuilder} or {@link
- * ChronicleMapBuilder}, could be prepared and used to create many similar
+ * one of concrete {@code AbstractChronicleMapBuilder} subclasses, {@link OnHeapUpdatableChronicleMapBuilder}
+ * or {@link ChronicleMapBuilder}, could be prepared and used to create many similar
  * maps: <pre>{@code
  * ChronicleMapBuilder<Key, Value> builder = ChronicleMapBuilder
  *     .of(Key.class, Value.class)
@@ -94,9 +94,9 @@ import static net.openhft.chronicle.map.Objects.builderEquals;
  * @see ChronicleMap
  * @see ChronicleSetBuilder
  */
-public abstract class AbstractChronicleMapBuilder<K, V,
+abstract class AbstractChronicleMapBuilder<K, V,
         B extends AbstractChronicleMapBuilder<K, V, B>>
-        implements Cloneable, ChronicleHashBuilder<K, ChronicleMap<K, V>, B> {
+        implements Cloneable, ChronicleHashBuilder<K, ChronicleMap<K, V>, B>, ChronicleMapBuilderI<K, V> {
 
     static final short UDP_REPLICATION_MODIFICATION_ITERATOR_ID = 128;
     private static final Bytes EMPTY_BYTES = new ByteBufferBytes(ByteBuffer.allocate(0));
@@ -109,6 +109,8 @@ public abstract class AbstractChronicleMapBuilder<K, V,
 
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
+
+    private String name;
 
     // used when configuring the number of segments.
     private int minSegments = -1;
@@ -243,14 +245,14 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return keyOrValueSize(keySize, keyBuilder);
     }
 
-    B valueSize(int valueSize) {
+    public B valueSize(int valueSize) {
         if (valueSize <= 0)
             throw new IllegalArgumentException("Value size must be positive");
         this.valueSize = valueSize;
         return self();
     }
 
-    B constantValueSizeBySample(V sampleValue) {
+    public B constantValueSizeBySample(V sampleValue) {
         this.sampleValue = sampleValue;
         return self();
     }
@@ -316,7 +318,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return entryAndValueAlignment().alignSize(size);
     }
 
-    B entryAndValueAlignment(Alignment alignment) {
+    public B entryAndValueAlignment(Alignment alignment) {
         this.alignment = alignment;
         return self();
     }
@@ -716,7 +718,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         return self();
     }
 
-    B prepareValueBytesOnAcquire(@NotNull PrepareValueBytes<K, V> prepareValueBytes) {
+    public B prepareValueBytesOnAcquire(@NotNull PrepareValueBytes<K, V> prepareValueBytes) {
         this.prepareValueBytes = prepareValueBytes;
         this.defaultValue = null;
         this.defaultValueProvider = null;
@@ -842,7 +844,7 @@ public abstract class AbstractChronicleMapBuilder<K, V,
      * @param identifier id
      * @return map
      */
-    public  ChronicleMap<K, V> createReplicated(byte identifier) throws IOException {
+    public ChronicleMap<K, V> createReplicated(byte identifier) throws IOException {
         preMapConstruction(true);
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
                 new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
@@ -951,6 +953,17 @@ public abstract class AbstractChronicleMapBuilder<K, V,
         // key and value serialization buffers each x64 of expected entry size..
         return (int) Math.min(Math.max(2L, entries() >> 10),
                 VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR);
+    }
+
+    @Override
+    public ChronicleMapBuilderI<K, V> name(String name) {
+        this.name = name;
+        return this;
+    }
+
+
+    public String name() {
+        return this.name;
     }
 }
 
