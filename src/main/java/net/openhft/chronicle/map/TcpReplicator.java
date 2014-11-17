@@ -2022,9 +2022,8 @@ class KeyValueSerializer<K, V> {
         assert writer.limit() == writer.capacity();
         writer.writeBoolean(value == null);
 
-        if (value != null) {
+        if (value != null)
             valueSerializer.writeMarshallable(value, writer, threadLocal);
-        }
 
     }
 

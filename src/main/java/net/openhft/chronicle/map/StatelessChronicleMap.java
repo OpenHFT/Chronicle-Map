@@ -267,7 +267,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         writeKey(key, local);
         writeValue(value, local);
-        return readKey(sizeLocation, local);
+        return readValue(sizeLocation, local);
     }
 
 
@@ -311,7 +311,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         writeValue(value, local);
 
         // get the data back from the server
-        return readKey(sizeLocation, local);
+        return readValue(sizeLocation, local);
     }
 
 
@@ -394,7 +394,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         writeKey((K) key, local);
 
         // get the data back from the server
-        return readKey(sizeLocation, local);
+        return readValue(sizeLocation, local);
 
     }
 
@@ -437,7 +437,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             return null;
         } else
             // get the data back from the server
-            return readKey(sizeLocation);
+            return readValue(sizeLocation);
     }
 
 
@@ -456,7 +456,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             return null;
         } else
             // get the data back from the server
-            return readKey(sizeLocation, local);
+            return readValue(sizeLocation, local);
 
     }
 
@@ -499,9 +499,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
                 if (cause instanceof IOException && cause.getMessage().contains("Not enough available space")) {
                     LOG.debug("resizing buffer");
-                    resizeBuffer(buffer.capacity() + 1024);
-                    bytes.limit(bytes.capacity());
-                    bytes.position(start);
+                    resizeBuffer(buffer.capacity() + maxEntrySize, start);
 
                 } else
                     throw e;
@@ -562,12 +560,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
             numberOfEntriesReadSoFar++;
 
+            long start = bytes.position();
+
             // putAll if a bit more complicated than the others
             // as the volume of data could cause us to have to resize our buffers
-            resizeIfRequired(numberOfEntries, numberOfEntriesReadSoFar);
+            resizeIfRequired(numberOfEntries, numberOfEntriesReadSoFar, start);
 
-
-            final long start = bytes.position();
             final K key = e.getKey();
 
             final Class<?> keyClass = key.getClass();
@@ -597,15 +595,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         }
     }
 
-    private void resizeIfRequired(int numberOfEntries, int numberOfEntriesReadSoFar) {
+    private void resizeIfRequired(int numberOfEntries, int numberOfEntriesReadSoFar, final long start) {
 
         final long remaining = bytes.remaining();
 
         if (remaining < maxEntrySize) {
-
-            // todo check this again as I  think it may have a bug
             long estimatedRequiredSize = estimateSize(numberOfEntries, numberOfEntriesReadSoFar);
-            resizeBuffer(estimatedRequiredSize + maxEntrySize);
+            resizeBuffer((int) (estimatedRequiredSize + maxEntrySize), start);
         }
     }
 
@@ -622,7 +618,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     }
 
 
-    void resizeBuffer(long size) {
+    private void resizeBuffer(int size, long start) {
         if (size < buffer.capacity())
             throw new IllegalStateException("it not possible to resize the buffer smaller");
 
@@ -663,7 +659,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         assert buffer.capacity() == size;
         assert buffer.capacity() == bytes.capacity();
         assert bytes.limit() == bytes.capacity();
-
+        bytes.position(start);
     }
 
 
@@ -964,6 +960,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
             bytes = new ByteBufferBytes(allocateDirect(requiredSize));
         }
 
+        bytes.limit(bytes.capacity());
+
         // block until we have received all the byte in this chunk
         receive(size, timeoutTime);
 
@@ -1054,45 +1052,82 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
 
     private void writeKey(K key) {
-        try {
-            keyValueSerializer.writeKey(key, bytes);
-        } catch (IllegalArgumentException e) {
-            resizeBuffer(bytes.capacity() + maxEntrySize);
-
+        long start = bytes.position();
+        for (; ; ) {
+            try {
+                keyValueSerializer.writeKey(key, bytes);
+                return;
+            } catch (IllegalArgumentException e) {
+                resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+            } catch (IllegalStateException e) {
+                if (e.getMessage().contains("Not enough available space"))
+                    resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                else
+                    throw e;
+            }
         }
     }
 
 
     private void writeKey(K key, ThreadLocalCopies local) {
-        try {
-            keyValueSerializer.writeKey(key, bytes, local);
-        } catch (IllegalArgumentException e) {
-            resizeBuffer(bytes.capacity() + maxEntrySize);
+        long start = bytes.position();
+        for (; ; ) {
+            try {
+                keyValueSerializer.writeKey(key, bytes, local);
+                return;
+            } catch (IllegalArgumentException e) {
+                resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+            } catch (IllegalStateException e) {
+                if (e.getMessage().contains("Not enough available space"))
+                    resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                else
+                    throw e;
+            }
         }
     }
 
-    private V readKey(final long sizeLocation) {
+    private V readValue(final long sizeLocation) {
         return keyValueSerializer.readValue(blockingFetch(sizeLocation), null);
     }
 
-    private V readKey(final long sizeLocation, ThreadLocalCopies local) {
+    private V readValue(final long sizeLocation, ThreadLocalCopies local) {
         return keyValueSerializer.readValue(blockingFetch(sizeLocation), local);
     }
 
     private void writeValue(V value) {
-        try {
-            keyValueSerializer.writeValue(value, bytes, null);
-        } catch (IllegalArgumentException e) {
-            resizeBuffer(bytes.capacity() + maxEntrySize);
+        long start = bytes.position();
+        for (; ; ) {
+            try {
+                keyValueSerializer.writeValue(value, bytes, null);
+                return;
+            } catch (IllegalArgumentException e) {
+                resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+            }
         }
     }
 
     private void writeValue(V value, ThreadLocalCopies local) {
-        try {
-            keyValueSerializer.writeValue(value, bytes, local);
-        } catch (IllegalArgumentException e) {
-            resizeBuffer(bytes.capacity() + maxEntrySize);
+
+
+        long start = bytes.position();
+        for (; ; ) {
+            try {
+
+                keyValueSerializer.writeValue(value, bytes, null);
+
+                return;
+            } catch (IllegalArgumentException e) {
+                resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+            } catch (IllegalStateException e) {
+                if (e.getMessage().contains("Not enough available space"))
+                    resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                else
+                    throw e;
+
+            }
         }
+
+
     }
 
 }

@@ -24,14 +24,12 @@ import net.openhft.chronicle.set.ChronicleSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This class holds all configurations of
- * <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
+ * This class holds all configurations of <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
  * multicontainer replication</a>, which is usable, when you want to replicate several {@linkplain
- * ChronicleHash ChronicleHashes} ({@linkplain ChronicleMap maps}, {@linkplain ChronicleSet sets},
- * etc.) between same servers. {@code ReplicationHub} allows to share TCP/UDP connection, sockets,
- * buffers, worker threads for that, considerably reducing resources usage and increasing cumulative
- * (for all replicated containers) replication throughput. See
- * <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
+ * ChronicleHash ChronicleHashes} ({@linkplain ChronicleMap maps}, {@linkplain ChronicleSet sets}, etc.)
+ * between same servers. {@code ReplicationHub} allows to share TCP/UDP connection, sockets, buffers, worker
+ * threads for that, considerably reducing resources usage and increasing cumulative (for all replicated
+ * containers) replication throughput. See <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
  * the corresponding section in ChronicleMap manual</a> for more information.
  *
  * <p>Create instances of this class using this pattern: <pre>{@code
@@ -67,14 +65,14 @@ public final class ReplicationHub extends AbstractReplication {
     private ReplicationHub(byte localIdentifier, Builder builder) {
         super(localIdentifier, builder);
         maxEntrySize = builder.maxEntrySize;
-        channels = new ReplicationChannel[builder.maxNumberOfChronicles];
+        channels = new ReplicationChannel[builder.maxNumberOfChannels];
     }
 
     /**
      * Returns the maximum {@linkplain ChronicleHashBuilder#entrySize(int) entry size} of {@link
-     * ChronicleHash}es, replicated by this {@code ReplicationHub}, could have. {@code
-     * RuntimeException} is thrown on attempt to replicate with this {@code ReplicationHub}
-     * a {@code ChronicleHash} with larger entry size.
+     * ChronicleHash}es, replicated by this {@code ReplicationHub}, could have. {@code RuntimeException} is
+     * thrown on attempt to replicate with this {@code ReplicationHub} a {@code ChronicleHash} with larger
+     * entry size.
      *
      * @return the maximum entry size
      * @see Builder#maxEntrySize(int)
@@ -84,35 +82,34 @@ public final class ReplicationHub extends AbstractReplication {
     }
 
     /**
-     * Returns the maximum number of channels could be {@linkplain #createChannel(short) created}
-     * for this {@code ReplicationHub}.
+     * Returns the maximum number of channels could be {@linkplain #createChannel(int) created} for this
+     * {@code ReplicationHub}.
      *
      * @return the maximum number of channels
      * @see Builder#maxNumberOfChannels()
-     * @see #createChannel(short)
+     * @see #createChannel(int)
      */
     public int maxNumberOfChannels() {
         return channels.length;
     }
 
     /**
-     * Creates a new {@link ReplicationChannel} in this {@code ReplicationHub} with the given
-     * identifier. Identifier shouldn't be lesser than zero and greater or equal to
-     * {@code maxNumberOfChannels() - 1}. On a {@code ReplicationHub} instance,
-     * {@code ReplicationChannel} could be created only once for each possible {@code channelId}
-     * value.
+     * Creates a new {@link ReplicationChannel} in this {@code ReplicationHub} with the given identifier.
+     * Identifier shouldn't be lesser than zero and greater or equal to {@code maxNumberOfChannels() - 1}. On
+     * a {@code ReplicationHub} instance, {@code ReplicationChannel} could be created only once for each
+     * possible {@code channelId} value.
      *
-     * @param channelId the identifier of the channel. Should be equal for replicated containers
-     *                  on different nodes (servers)
-     * @return a new {@code ReplicationChannel} instance, in fact just incapsulating the given
-     *         {@code channelId} for this {@code ReplicationHub}
-     * @throws IllegalArgumentException if the specified {@code channelId} is out of<br>
-     *         <code>[0, {@link #maxNumberOfChannels()})</code> range
-     * @throws IllegalStateException if {@code ReplicationChannel} with the specified
-     *         {@code channelId} has already been acquired on this {@code ReplicationHub}
+     * @param channelId the identifier of the channel. Should be equal for replicated containers on different
+     *                  nodes (servers)
+     * @return a new {@code ReplicationChannel} instance, in fact just incapsulating the given {@code
+     * channelId} for this {@code ReplicationHub}
+     * @throws IllegalArgumentException if the specified {@code channelId} is out of<br> <code>[0, {@link
+     *                                  #maxNumberOfChannels()})</code> range
+     * @throws IllegalStateException    if {@code ReplicationChannel} with the specified {@code channelId} has
+     *                                  already been acquired on this {@code ReplicationHub}
      * @see ReplicationChannel
      */
-    public synchronized ReplicationChannel createChannel(short channelId) {
+    public synchronized ReplicationChannel createChannel(int channelId) {
         if (channelId < 0)
             throw new IllegalArgumentException("channelId should be positive");
         if (channelId >= maxNumberOfChannels())
@@ -131,41 +128,42 @@ public final class ReplicationHub extends AbstractReplication {
      */
     public static final class Builder extends AbstractReplication.Builder<ReplicationHub, Builder> {
         private int maxEntrySize = 1024;
-        private int maxNumberOfChronicles = 128;
+        private int maxNumberOfChannels = 128;
 
-        private Builder() {}
+        private Builder() {
+        }
 
         /**
-         * Configures the maximum {@linkplain ChronicleHashBuilder#entrySize(int) entry size} of
-         * {@link ChronicleHash}es, replicated via {@code ReplicationHub}s, created by this builder.
+         * Configures the maximum {@linkplain ChronicleHashBuilder#entrySize(int) entry size} of {@link
+         * ChronicleHash}es, replicated via {@code ReplicationHub}s, created by this builder.
          *
          * <p>Default value is {@code 1024}.
          *
-         * @param maxEntrySize {@link ReplicationHub#maxEntrySize()} of {@link ReplicationHub}s,
-         *                     created by this builder
+         * @param maxEntrySize {@link ReplicationHub#maxEntrySize()} of {@link ReplicationHub}s, created by
+         *                     this builder
          * @return this builder object back, for chaining
          * @see ReplicationHub#maxEntrySize()
          */
         @NotNull
         public Builder maxEntrySize(int maxEntrySize) {
-            this.maxEntrySize = maxEntrySize;
+            this.maxEntrySize = maxEntrySize * 64;
             return this;
         }
 
         /**
-         * Configures the maximum number of channels could be {@linkplain #createChannel(short)}
-         * created for {@code ReplicationHub}s, created by this builder.
+         * Configures the maximum number of channels could be {@linkplain #createChannel(int)} created for
+         * {@code ReplicationHub}s, created by this builder.
          *
          * <p>Default value is {@code 128}.
          *
-         * @param maxNumberOfChannels {@link ReplicationHub#maxNumberOfChannels()} of
-         *                            {@link ReplicationHub}s, created by this builder
+         * @param maxNumberOfChannels {@link ReplicationHub#maxNumberOfChannels()} of {@link ReplicationHub}s,
+         *                            created by this builder
          * @return this builder object back, for chaining
          * @see ReplicationHub#maxNumberOfChannels()
          */
         @NotNull
         public Builder maxNumberOfChannels(int maxNumberOfChannels) {
-            this.maxNumberOfChronicles = maxNumberOfChannels;
+            this.maxNumberOfChannels = maxNumberOfChannels;
             return this;
         }
 

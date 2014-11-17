@@ -53,6 +53,7 @@ final class ChannelProvider implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(ChannelProvider.class.getName());
 
     static final Map<ReplicationHub, ChannelProvider> implMapping = new IdentityHashMap<>();
+
     static synchronized ChannelProvider getProvider(ReplicationHub hub) throws IOException {
         ChannelProvider channelProvider = implMapping.get(hub);
         if (channelProvider != null)
@@ -287,7 +288,7 @@ final class ChannelProvider implements Closeable {
         return new SingleThreadedDirectBitSet(bytes);
     }
 
-    public ChronicleChannel createChannel(short channel) {
+    public ChronicleChannel createChannel(int channel) {
         return new ChronicleChannel(channel);
     }
 
@@ -306,7 +307,7 @@ final class ChannelProvider implements Closeable {
         }
     }
 
-    private ByteBufferBytes toBootstrapMessage(short chronicleChannel, final long lastModificationTime) {
+    private ByteBufferBytes toBootstrapMessage(int chronicleChannel, final long lastModificationTime) {
         final ByteBufferBytes writeBuffer = new ByteBufferBytes(ByteBuffer.allocate(1 + 1 + 2 + 8));
         writeBuffer.writeByte(BOOTSTRAP_MESSAGE);
         writeBuffer.writeByte(localIdentifier);
@@ -316,7 +317,7 @@ final class ChannelProvider implements Closeable {
         return writeBuffer;
     }
 
-    private void add(short chronicleChannel,
+    private void add(int chronicleChannel,
                      Replica replica, EntryExternalizable entryExternalizable) {
         channelDataLock.writeLock().lock();
         try {
@@ -481,9 +482,9 @@ final class ChannelProvider implements Closeable {
 
     public class ChronicleChannel extends Replicator implements Closeable {
 
-        private final short chronicleChannel;
+        private final int chronicleChannel;
 
-        private ChronicleChannel(short chronicleChannel) {
+        private ChronicleChannel(int chronicleChannel) {
             this.chronicleChannel = chronicleChannel;
         }
 

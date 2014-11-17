@@ -17,6 +17,8 @@
 package net.openhft.chronicle.map;
 
 import junit.framework.Assert;
+import net.openhft.chronicle.hash.replication.ReplicationHub;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,13 +34,18 @@ public class MapByNameTest {
 
     @Before
     public void setUp() throws IOException {
-        findMapByName = new FindMapByName((byte) 2);
+        final ReplicationHub replicationHub = ReplicationHub.builder()
+                .maxEntrySize(10 * 1024)
+                .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(8243))
+                .createWithId((byte)1);
+
+        findMapByName = new FindMapByName(replicationHub);
     }
 
     @Test
-    public void testSerializingBuilder() throws IOException, InterruptedException {
+    public void testSerializingBuilder() {
         {
-            ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+            final ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                     .minSegments(2)
                     .name("map1")
                     .removeReturnsNull(true);
@@ -46,10 +53,15 @@ public class MapByNameTest {
             findMapByName.add(builder);
         }
 
-        ChronicleMap<CharSequence, CharSequence> map = findMapByName.get("map1").create();
+        final ChronicleMap<CharSequence, CharSequence> map = findMapByName.get("map1").create();
         map.put("hello", "world");
 
         Assert.assertEquals(map.get("hello"), "world");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSerializingBuilderUnknownMap() {
+        findMapByName.get("hello");
     }
 
 

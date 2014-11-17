@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
-import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
+import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import net.openhft.lang.collection.ATSDirectBitSet;
@@ -56,15 +56,33 @@ import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
  */
 public class NodeDiscovery {
 
+    public static final int DEFAULT_UDP_BROADCAST_PORT = 8124;
+    public static final short DEFAULT_TCP_PORT = (short) 8123;
+    public static final int SERIALIZED_ENTRY_SIZE = 1024;
     private final AddressAndPort ourAddressAndPort;
     private final UdpTransportConfig udpConfig;
+
+    public static final InetAddress DEFAULT_UDP_MASK;
+
+    static {
+        InetAddress mask = null;
+        try {
+            mask = Inet4Address.getByName("255.255.255.255");
+        } catch (Exception e) {
+            mask = null;
+        }
+        DEFAULT_UDP_MASK = mask;
+
+    }
+
+
     private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
     private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListenerAtomicReference =
             new AtomicReference<NodeDiscoveryEventListener>();
     private KnownNodes knownNodes;
 
     public NodeDiscovery() throws IOException {
-        this((short) 8124, (short) 8123, getDefaultAddress(), Inet4Address.getByName("255.255.255.255"));
+        this((short) DEFAULT_UDP_BROADCAST_PORT, DEFAULT_TCP_PORT, getDefaultAddress(), DEFAULT_UDP_MASK);
     }
 
     public NodeDiscovery(short udpBroadcastPort,
@@ -79,13 +97,13 @@ public class NodeDiscovery {
                 (knownNodes, nodeDiscoveryEventListenerAtomicReference, ourAddressAndPort);
 
         final NodeDiscoveryBroadcaster nodeDiscoveryBroadcaster
-                = new NodeDiscoveryBroadcaster(udpConfig, 1024, discoveryNodeBytesMarshallable);
+                = new NodeDiscoveryBroadcaster(udpConfig, SERIALIZED_ENTRY_SIZE, discoveryNodeBytesMarshallable);
 
         discoveryNodeBytesMarshallable.setModificationNotifier(nodeDiscoveryBroadcaster);
     }
 
 
-    public synchronized ChronicleMap<Integer, CharSequence> discoverMap() throws
+    public synchronized FindMapByName discoverMap() throws
             IOException, InterruptedException {
 
         final AtomicInteger ourProposedIdentifier = new AtomicInteger();
@@ -229,14 +247,12 @@ public class NodeDiscovery {
         LOG.info("Using Remote identifier=" + identifier);
         nodeDiscoveryEventListenerAtomicReference.set(null);
 
-        return ChronicleMapBuilder.of(Integer.class,
-                CharSequence.class)
-                .entries(20000L)
-                .replication(SingleChronicleHashReplication.builder()
-                        .tcpTransportAndNetwork(tcpConfig)
-                        .remoteNodeValidator(remoteNodeValidator)
-                        .createWithId(identifier))
-                .create();
+        final ReplicationHub replicationHub = ReplicationHub.builder()
+                .maxEntrySize(10 * 1024)
+                .tcpTransportAndNetwork(tcpConfig)
+                .createWithId(identifier);
+
+        return new FindMapByName(replicationHub);
 
     }
 

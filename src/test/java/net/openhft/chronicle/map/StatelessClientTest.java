@@ -24,10 +24,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -231,6 +228,62 @@ public class StatelessClientTest {
 
         }
 
+
+    }
+
+
+    @Test
+    public void testStringKeyMap() throws IOException, InterruptedException {
+
+        try (ChronicleMap<String, Map> serverMap = ChronicleMapBuilder.of(String.class, Map
+                .class)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+
+            try (ChronicleMap<String, Map> statelessMap = ChronicleMapBuilder.of(String.class, Map
+                    .class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+
+
+                serverMap.put("hello", Collections.singletonMap("hello", "world"));
+
+                Assert.assertEquals(Collections.singletonMap("hello", "world"), statelessMap.get("hello"));
+                Assert.assertEquals(1, statelessMap.size());
+
+            }
+
+
+        }
+
+
+    }
+
+
+    @Test
+    public void testStringKeyMapPutIntoStatelesMap() throws IOException, InterruptedException {
+
+        final Map<String, String> data = new HashMap<String, String>();
+
+        for (int i = 0; i < 60; i++) {
+            data.put("" + i, new String(new char[10]));
+        }
+
+        try (ChronicleMap<String, Map> serverMap = ChronicleMapBuilder.of(String.class, Map
+                .class)
+                .entrySize(1024)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+
+            try (ChronicleMap<String, Map> statelessMap = ChronicleMapBuilder.of(String.class, Map
+                    .class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+
+                statelessMap.put("hello", data);
+
+                Assert.assertEquals(data, serverMap.get("hello"));
+                Assert.assertEquals(1, statelessMap.size());
+
+            }
+
+        }
 
     }
 

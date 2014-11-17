@@ -22,33 +22,31 @@ import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A token which should be created via {@link ReplicationHub#createChannel(short)} call and passed
- * to {@link ChronicleHashInstanceConfig#replicatedViaChannel(ReplicationChannel)} method, to
- * establish a channel replication. See
- * <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
+ * A token which should be created via {@link ReplicationHub#createChannel(int)} call and passed to {@link
+ * ChronicleHashInstanceConfig#replicatedViaChannel(ReplicationChannel)} method, to establish a channel
+ * replication. See <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
  * the corresponding section in ChronicleMap manual</a> for more information.
  *
- * <p>A {@code ReplicationChannel} could be used to replicate only one {@link ChronicleHash}
- * instance.
+ * <p>A {@code ReplicationChannel} could be used to replicate only one {@link ChronicleHash} instance.
  *
  * @see ReplicationHub
- * @see ReplicationHub#createChannel(short)
+ * @see ReplicationHub#createChannel(int)
  */
 public final class ReplicationChannel {
     private ReplicationHub hub;
-    private final short channelId;
+    private final int channelId;
 
-    ReplicationChannel(ReplicationHub hub, short channelId) {
+    ReplicationChannel(ReplicationHub hub, int channelId) {
         this.hub = hub;
         this.channelId = channelId;
     }
 
     /**
      * Returns the {@link ReplicationHub} on which this {@code ReplicationChannel} was {@linkplain
-     * ReplicationHub#createChannel(short) created}.
+     * ReplicationHub#createChannel(int) created}.
      *
      * @return the {@code ReplicationHub} to which this {@code ReplicationChannel} belongs
-     * @see ReplicationHub#createChannel(short)
+     * @see ReplicationHub#createChannel(int)
      */
     @NotNull
     public ReplicationHub hub() {
@@ -56,13 +54,13 @@ public final class ReplicationChannel {
     }
 
     /**
-     * Returns the identifier of this channel, with which was {@linkplain
-     * ReplicationHub#createChannel(short) created}.
+     * Returns the identifier of this channel, with which was {@linkplain ReplicationHub#createChannel(int)
+     * created}.
      *
      * @return the identifier of this channel
-     * @see ReplicationHub#createChannel(short)
+     * @see ReplicationHub#createChannel(int)
      */
-    public short channelId() {
+    public int channelId() {
         return channelId;
     }
 }
