@@ -392,7 +392,6 @@ Lets assume that we had the following interface :
 ``` java
 public interface LongValue {
     long getValue();
-
     void setValue(long value);
 }
 ``` 
