@@ -36,25 +36,20 @@ public class MapByNameTest {
     }
 
     @Test
+    public void testSerializingBuilder() throws IOException, InterruptedException {
+        {
+            ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                    .minSegments(2)
+                    .name("map1")
+                    .removeReturnsNull(true);
 
-    public void test() throws IOException, InterruptedException {
+            findMapByName.add(builder);
+        }
 
-        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .minSegments(2)
-                .name("map1")
-                .removeReturnsNull(true);
+        ChronicleMap<CharSequence, CharSequence> map = findMapByName.get("map1").create();
+        map.put("hello", "world");
 
-        final ChronicleMap<CharSequence, CharSequence> map =
-                builder.create();
-
-
-        findMapByName.add(builder);
-        ChronicleMapBuilder map1 = findMapByName.get("map1");
-
-        ChronicleMap chronicleMap = map1.create();
-        chronicleMap.put("hello","world");
-
-        Assert.assertEquals(chronicleMap.get("hello"), "world");
+        Assert.assertEquals(map.get("hello"), "world");
     }
 
 
