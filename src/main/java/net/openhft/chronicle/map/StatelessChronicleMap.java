@@ -48,6 +48,7 @@ import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
  */
 class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
+    public static final String START_OF = "Attempt to write ";
     private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
     public static final byte STATELESS_CLIENT_IDENTIFIER = (byte) -127;
 
@@ -1112,12 +1113,23 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
         long start = bytes.position();
         for (; ; ) {
             try {
-
+                bytes.limit(bytes.capacity());
                 keyValueSerializer.writeValue(value, bytes, null);
 
                 return;
             } catch (IllegalArgumentException e) {
-                resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                String message = e.getMessage();
+                if (message.startsWith(START_OF)) {
+                    String substring = message.substring("Attempt to write ".length(), message.length());
+                    int i = substring.indexOf(' ');
+                    if (i != -1) {
+                        int size = Integer.parseInt(substring.substring(0, i));
+                        resizeBuffer(size+ maxEntrySize, start);
+                    } else
+                        resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                }
+
+
             } catch (IllegalStateException e) {
                 if (e.getMessage().contains("Not enough available space"))
                     resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);

@@ -263,13 +263,13 @@ public class StatelessClientTest {
 
         final Map<String, String> data = new HashMap<String, String>();
 
-        for (int i = 0; i < 60; i++) {
-            data.put("" + i, new String(new char[10]));
+        String value = new String(new char[10]);
+        for (int i = 0; i < 1000; i++) {
+            data.put("" + i, value);
         }
 
         try (ChronicleMap<String, Map> serverMap = ChronicleMapBuilder.of(String.class, Map
                 .class)
-                .entrySize(1024)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
 
             try (ChronicleMap<String, Map> statelessMap = ChronicleMapBuilder.of(String.class, Map

@@ -2019,6 +2019,7 @@ class KeyValueSerializer<K, V> {
     }
 
     void writeValue(V value, Bytes writer, ThreadLocalCopies threadLocal) {
+
         assert writer.limit() == writer.capacity();
         writer.writeBoolean(value == null);
 
