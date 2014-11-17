@@ -447,8 +447,7 @@ notice that the
 .of(String.class, BondVOInterface.class)
 ``` 
 
-value class, in our case `BondVOInterface.class` is an `interface` rather than a `class` ( or if it is a
-class that class has to extend `Byteable`),  now
+value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  now
 like before, we can
 use the `getUsing(key,using)` method, but this time we have to create the ‘using’ instance slightly
 differently, we have to call the `newDirectReference(..)` method.
