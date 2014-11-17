@@ -837,9 +837,9 @@ not ideal. This is why we created the `ReplicationHub`. The `ReplicationHub` let
 Chronicle Maps via a single point to point socket connection.
 
 The `ReplicationHub` encompasses TCP replication, where each map has to be given a
-unique identifier, but when using `ReplicationHub` we use a channel to identify the map,
-rather than the identifier, As the identifier is used to identify the host/server broadcasted the update.
-Put simply:
+unique identifier, but when using the `ReplicationHub` we use a channel to identify the map,
+rather than the identifier, As the identifier is used to identify the host/server which broadcasts the
+update. Put simply:
 
 * Each host mustbe given a unique identifier.
 * Each map must be given a unique channel.
