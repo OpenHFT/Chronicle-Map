@@ -430,13 +430,10 @@ deserialise the whole object that implements the `BondVOInterface`. The `Chronic
  and values that you use, If the value type is a simple accessor/mutator interface that is exposing a non nested pojo, which uses simple types
  like String and primitives with corresponding get..() and
  set..() methods, Chronicle is able to generate off heap poxies so the whole object is not desrialized each
-  time it is accessed,
-  So when you specify a simple Pojo interface you access the off heap memory via an internal proxy
-object, it is able to read
+  time it is accessed, The off heap poxies are able to read
 and write into
 the off heap data structures directly, this reduced serialisation can give you a big performance boost.
-Below we show you how
- you can work directly with the off heap entries.
+Below we show you how you can work directly with the off heap entries.
 
 ``` java
         ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
