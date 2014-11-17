@@ -434,11 +434,9 @@ deserialise the whole object that implements the `BondVOInterface`. The `Chronic
   So when you specify a simple Pojo interface you access the off heap memory via an internal proxy
 object, it is able to read
 and write into
-the off heap
-data
-structures directly, this reduced serialisation can give you a big performance boost. Below we show you how
- you can
- work directly with the off heap entries.
+the off heap data structures directly, this reduced serialisation can give you a big performance boost.
+Below we show you how
+ you can work directly with the off heap entries.
 
 ``` java
         ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
