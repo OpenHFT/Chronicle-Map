@@ -464,7 +464,7 @@ BondVOInterface  bond = map.getUsing(key,using);
 assert using == bond; // this will always be the same instance
 ```
 
-this won’t create any on heap objects, and it won’t deserialize the ‘bond’ entry from off heap to on
+`getUsing(key,using)` won’t create any on heap objects, and it won’t deserialize the ‘bond’ entry from off heap to on
 heap, all it does is sets the bond as a proxy to the off heap memory, this proxy object was created by
 `DataValueClasses.newDirectReference(BondVOInterface.class)`, it allows us access to the fields of our
 entry, directly into the off heap storage.
