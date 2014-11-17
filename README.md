@@ -469,18 +469,17 @@ heap, all it does is sets the bond as a proxy to the off heap memory, this proxy
 `DataValueClasses.newDirectReference(BondVOInterface.class)`, it allows us access to the fields of our
 entry, directly into the off heap storage.
 
-
-as above, ideally you would reuse the `using` variable.
+As above, ideally you would reuse the `using` variable.
 
  ``` java
 BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
 
 for(int i=1;i<=10;i++) {
   Value bond = map.getUsing(key,using); // this won’t create a new value each time.
+  double coupon = bond.getCoupon()
   assert using == bond; // this will always be the same instance
 }
 ```
-
 
 
 so when you call :
