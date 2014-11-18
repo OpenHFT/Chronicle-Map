@@ -64,7 +64,6 @@ class ReplicationHubFindByName implements FindByName {
         this.replicationHub = replicationHub;
         ReplicationChannel channel = replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL);
 
-
         MapEventListener listener = new MapEventListener() {
 
             @Override
