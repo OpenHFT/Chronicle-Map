@@ -87,4 +87,25 @@ public class MapByNameTest {
 
     }
 
+    public static void main(String... args) throws IOException, InterruptedException {
+        NodeDiscovery nodeDiscovery = new NodeDiscovery();
+
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
+                .class, CharSequence.class)
+                .minSegments(2)
+                .name("myMap")
+                .removeReturnsNull(true);
+
+
+        FindFindByName mapByName = nodeDiscovery.mapByName();
+        mapByName.add(builder);
+
+
+        // wait for ever
+        for (; ; ) {
+        }
+
+
+    }
+
 }
