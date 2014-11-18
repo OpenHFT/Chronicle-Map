@@ -356,7 +356,12 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
     public ChronicleMapBuilder<K, V> replication(SingleChronicleHashReplication withId) {
         delegate.replication(withId);
         return this;
+    }
 
+    @Override
+    public ChronicleMapBuilderI<K, V> pushTo(InetSocketAddress... addresses) {
+        delegate.pushTo(addresses);
+        return this;
     }
 
     @Override
