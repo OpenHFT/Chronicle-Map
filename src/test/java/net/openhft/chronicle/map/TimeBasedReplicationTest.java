@@ -52,7 +52,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replication((byte)1)
+                .create();
 
         current(timeProvider);
 
@@ -81,8 +82,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
-
+                .replication((byte)1)
+                .create();
         current(timeProvider);
 
         // we do a put at the current time
@@ -111,7 +112,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replication((byte)1)
+                .create();
 
         current(timeProvider);
 
@@ -144,7 +146,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replication((byte) 1)
+                .create();
 
         current(timeProvider);
 
@@ -174,7 +177,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replication((byte) 1)
+                .create();
 
         current(timeProvider);
 
@@ -203,7 +207,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replication((byte) 1)
+                .create();
 
         current(timeProvider);
 
@@ -232,7 +237,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replication((byte) 1)
+                .create();
 
         current(timeProvider);
 
@@ -262,7 +268,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replication((byte) 1)
+                .create();
 
         current(timeProvider);
 
@@ -292,7 +299,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
+                .replication((byte)1)
+                .create();
 
         current(timeProvider);
 
@@ -320,8 +328,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .createReplicated((byte) 1);
-
+                .replication((byte)1)
+                .create();
         current(timeProvider);
 
         // we do a put at the current time

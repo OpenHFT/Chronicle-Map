@@ -49,6 +49,14 @@ public final class UdpTransportConfig {
         this.throttlingConfig = throttlingConfig;
     }
 
+
+    public static UdpTransportConfig multiCast(@NotNull InetAddress address, int port,
+                                                 @NotNull NetworkInterface networkInterface) {
+        if (!address.isMulticastAddress() || networkInterface == null)
+            throw new IllegalArgumentException();
+        return create(address, port, networkInterface, ThrottlingConfig.noThrottling());
+    }
+
     public static UdpTransportConfig of(@NotNull InetAddress address, int port) {
         if (address.isMulticastAddress())
             throw new IllegalArgumentException();

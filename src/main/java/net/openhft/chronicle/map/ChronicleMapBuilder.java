@@ -16,6 +16,8 @@ import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,18 +55,17 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         if (valueClass.isEnum())
             return new ChronicleMapBuilder<K, V>(OnHeapUpdatableChronicleMapBuilder.of(keyClass, valueClass));
 
-        if (keyClass.isInterface() && !builtInType(keyClass)) {
+        if (keyClass.isInterface() && !builtInType(keyClass))
             keyClass = DataValueClasses.directClassFor(keyClass);
-        }
 
         if ((valueClass.isInterface() && !builtInType(valueClass))) {
             valueClass = DataValueClasses.directClassFor(valueClass);
         } else if (!offHeapReference(valueClass)) {
             return new ChronicleMapBuilder<K, V>(OnHeapUpdatableChronicleMapBuilder.of(keyClass, valueClass));
         }
-        OffHeapUpdatableChronicleMapBuilder<K, V> kvOffHeapUpdatableChronicleMapBuilder = new
-                OffHeapUpdatableChronicleMapBuilder<K, V>(keyClass, valueClass);
-        return new ChronicleMapBuilder<K, V>(kvOffHeapUpdatableChronicleMapBuilder);
+
+        ChronicleMapBuilderI<K, V> builder = new OffHeapUpdatableChronicleMapBuilder<K, V>(keyClass, valueClass);
+        return new ChronicleMapBuilder<K, V>(builder);
     }
 
     static boolean builtInType(Class clazz) {
@@ -337,6 +338,7 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
 
     /**
      * each map can be identified by a name
+     *
      * @param name the name of the map
      * @return self
      */
@@ -346,9 +348,10 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         return this;
     }
 
+
     @Override
     public String name() {
-        return delegate.name()  ;
+        return delegate.name();
     }
 
     @Override
@@ -361,6 +364,18 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
     @Override
     public ChronicleMap<K, V> create() {
         return delegate.create();
+
+    }
+
+    private void registerBuilderWithReplicationHub() {
+
+        try {
+            FindFindByName mapByName = new NodeDiscovery().mapByName();
+            mapByName.add(this);
+        } catch (Exception e) {
+            LOG.error("", e);
+        }
+
     }
 
     @Override
@@ -489,13 +504,8 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
     }
 
     @Override
-    public ChronicleMap<K, V> createReplicated(byte b) throws IOException {
-        return delegate.createReplicated(b);
-    }
-
-    @Override
     public ChronicleMap<K, V> createPersistedTo(File file) throws IOException {
-        return delegate.createPersistedTo(file);
+       return delegate.createPersistedTo(file);
     }
 
 }

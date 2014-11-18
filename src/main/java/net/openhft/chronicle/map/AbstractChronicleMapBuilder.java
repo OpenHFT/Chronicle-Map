@@ -534,8 +534,9 @@ abstract class AbstractChronicleMapBuilder<K, V,
 
     @Override
     public String toString() {
-        return "ChronicleMapOnHeapUpdatableBuilder{" +
-                "actualSegments=" + pretty(actualSegments) +
+        return "ChronicleMapBuilder{" +
+                "name=" + name +
+                ", actualSegments=" + pretty(actualSegments) +
                 ", minSegments=" + pretty(minSegments) +
                 ", actualEntriesPerSegment=" + pretty(actualEntriesPerSegment) +
                 ", keySize=" + pretty(keySize) +
@@ -960,7 +961,6 @@ abstract class AbstractChronicleMapBuilder<K, V,
         this.name = name;
         return this;
     }
-
 
     public String name() {
         return this.name;

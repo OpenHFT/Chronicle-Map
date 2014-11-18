@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
+import net.openhft.chronicle.hash.FindByName;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 
 import java.io.File;
@@ -30,7 +31,7 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 /**
  * @author Rob Austin.
  */
-class FindMapByName {
+class FindFindByName implements FindByName {
 
     public static final int MAP_BY_NAME_CHANNEL = 1;
     private final ReplicationHub replicationHub;
@@ -42,7 +43,7 @@ class FindMapByName {
     /**
      * @throws IOException
      */
-    public FindMapByName(ReplicationHub replicationHub) throws IOException {
+    public FindFindByName(ReplicationHub replicationHub) throws IOException {
         this.replicationHub = replicationHub;
         this.map = (Map) of(CharSequence.class, ChronicleMapBuilder.class)
                 .entrySize(300)
@@ -54,7 +55,7 @@ class FindMapByName {
 
         ChronicleMapBuilder chronicleMapBuilder = map.get(name);
         if (chronicleMapBuilder == null)
-            throw new IllegalArgumentException("A map of this name can not be found name=" + name);
+            throw new IllegalArgumentException("A map name=" + name + " can not be found.");
 
         return chronicleMapBuilder;
     }

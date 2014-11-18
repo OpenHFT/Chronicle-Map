@@ -19,11 +19,12 @@
 package net.openhft.chronicle.hash.replication;
 
 
+import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-public final class ThrottlingConfig {
+public final class ThrottlingConfig implements Serializable {
 
     private static final long DEFAULT_BUCKET_INTERVAL = 100L;
     private static final TimeUnit DEFAULT_BUCKET_INTERVAL_UNIT = MILLISECONDS;

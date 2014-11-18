@@ -37,10 +37,9 @@ import java.io.Serializable;
  * non-{@link Byteable} values, which don't point to off-heap memory directly, including primitives ({@link
  * Long}, {@link Double}, etc.), {@link String}s and {@link CharSequence}s, values implementing {@link
  * BytesMarshallable}, {@link Externalizable} or {@link Serializable} interface, or any other values for which
- * {@linkplain #valueMarshaller(BytesMarshaller) custom marshaller} is provided.
- * <p/>
- * <p>Use static {@link #of(Class, Class) of(Key.class, Value.class)} method to obtain a {@code
- * ChronicleMapOnHeapUpdatableBuilder} instance.
+ * {@linkplain #valueMarshaller(BytesMarshaller) custom marshaller} is provided. <p/> <p>Use static {@link
+ * #of(Class, Class) of(Key.class, Value.class)} method to obtain a {@code ChronicleMapOnHeapUpdatableBuilder}
+ * instance.
  *
  * @param <K> key type of the maps, created by this builder
  * @param <V> value type of the maps, created by this builder
@@ -49,15 +48,13 @@ import java.io.Serializable;
  * @see ChronicleHashBuilder
  */
 final class OnHeapUpdatableChronicleMapBuilder<K, V>
-        extends AbstractChronicleMapBuilder<K, V, OnHeapUpdatableChronicleMapBuilder<K, V>> implements
-        ChronicleMapBuilderI<K, V> {
+        extends AbstractChronicleMapBuilder<K, V, OnHeapUpdatableChronicleMapBuilder<K, V>> {
 
     /**
      * Returns a new {@code ChronicleMapOnHeapUpdatableBuilder} instance which is able to {@linkplain
-     * #create() create} maps with the specified key and value classes.
-     * <p/>
-     * <p>{@code ChronicleMapOnHeapUpdatableBuilder} analyzes provided key and value classes and automatically
-     * chooses the most specific and effective serializer which it is aware about. Read <a
+     * #create() create} maps with the specified key and value classes. <p/> <p>{@code
+     * ChronicleMapOnHeapUpdatableBuilder} analyzes provided key and value classes and automatically chooses
+     * the most specific and effective serializer which it is aware about. Read <a
      * href="https://github.com/OpenHFT/Chronicle-Map#serialization">the section about serialization in
      * Chronicle Map manual</a> for more information.
      *
@@ -107,14 +104,11 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     /**
      * Configures the optimal number of bytes, taken by serialized form of values, put into maps, created by
      * this builder. If value size is always the same, call {@link #constantValueSizeBySample(Object)} method
-     * instead of this one.
-     * <p/>
-     * <p>If value is a boxed primitive type, i. e. if value size is known statically, it is automatically
-     * accounted and shouldn't be specified by user.
-     * <p/>
-     * <p>If value size varies moderately, specify the size higher than average, but lower than the maximum
-     * possible, to minimize average memory overuse. If value size varies in a wide range, it's better to use
-     * {@linkplain #entrySize(int) entry size} in "chunk" mode and configure it directly.
+     * instead of this one. <p/> <p>If value is a boxed primitive type, i. e. if value size is known
+     * statically, it is automatically accounted and shouldn't be specified by user. <p/> <p>If value size
+     * varies moderately, specify the size higher than average, but lower than the maximum possible, to
+     * minimize average memory overuse. If value size varies in a wide range, it's better to use {@linkplain
+     * #entrySize(int) entry size} in "chunk" mode and configure it directly.
      *
      * @param valueSize number of bytes, taken by serialized form of values
      * @return this {@code ChronicleMapOnHeapUpdatableBuilder} back
@@ -130,13 +124,10 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     /**
      * Configures the constant number of bytes, taken by serialized form of values, put into maps, created by
      * this builder. This is done by providing the {@code sampleValue}, all values should take the same number
-     * of bytes in serialized form, as this sample object.
-     * <p/>
-     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is known
-     * statically, it is automatically accounted and this method shouldn't be called.
-     * <p/>
-     * <p>If value size varies, method {@link #valueSize(int)} or {@link #entrySize(int)} should be called
-     * instead of this one.
+     * of bytes in serialized form, as this sample object. <p/> <p>If values are of boxed primitive type or
+     * {@link Byteable} subclass, i. e. if value size is known statically, it is automatically accounted and
+     * this method shouldn't be called. <p/> <p>If value size varies, method {@link #valueSize(int)} or {@link
+     * #entrySize(int)} should be called instead of this one.
      *
      * @param sampleValue the sample value
      * @return this builder back
@@ -151,8 +142,7 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     /**
-     * {@inheritDoc}
-     * <p/>
+     * {@inheritDoc} <p/>
      * <p>Example: <pre>{@code Map<Key, Value> map =
      *     ChronicleMapBuilder.of(Key.class, Value.class)
      *     .entries(1_000_000)
@@ -160,9 +150,8 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
      *     // this class hasn't implemented yet, just for example
      *     .objectSerializer(new KryoObjectSerializer())
      *     .create();}</pre>
-     * <p/>
-     * <p>This serializer is used to serialize both keys and values, if they both require this: loosely typed,
-     * nullable, and custom {@linkplain #keyMarshaller(BytesMarshaller) key} and {@linkplain
+     * <p/> <p>This serializer is used to serialize both keys and values, if they both require this: loosely
+     * typed, nullable, and custom {@linkplain #keyMarshaller(BytesMarshaller) key} and {@linkplain
      * #valueMarshaller(BytesMarshaller) value} marshallers are not configured.
      */
     @Override
@@ -172,14 +161,12 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     /**
-     * {@inheritDoc}
-     * <p/>
-     * <p>If {@linkplain #valueMarshaller(BytesMarshaller) custom value marshaller} is configured, this
-     * configuration is unused, because it is incapsulated in {@link BytesMarshaller#read(Bytes)} method
-     * (without provided instance to read the data into), i. e. it's is the user-side responsibility. Actually
-     * this is just a convenience method supporting value marshaller configurations, made initially during
-     * {@link #of(Class, Class)} call, if the value class is {@link BytesMarshallable} or {@link
-     * Externalizable} subclass.
+     * {@inheritDoc} <p/> <p>If {@linkplain #valueMarshaller(BytesMarshaller) custom value marshaller} is
+     * configured, this configuration is unused, because it is incapsulated in {@link
+     * BytesMarshaller#read(Bytes)} method (without provided instance to read the data into), i. e. it's is
+     * the user-side responsibility. Actually this is just a convenience method supporting value marshaller
+     * configurations, made initially during {@link #of(Class, Class)} call, if the value class is {@link
+     * BytesMarshallable} or {@link Externalizable} subclass.
      *
      * @throws IllegalStateException if custom value marshaller is specified or value class is not either
      *                               {@code BytesMarshallable} or {@code Externalizable}
@@ -191,9 +178,7 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     /**
-     * {@inheritDoc}
-     * <p/>
-     * <p>By default, the default value is set to {@code null}.
+     * {@inheritDoc} <p/> <p>By default, the default value is set to {@code null}.
      *
      * @see #defaultValueProvider(DefaultValueProvider)
      */
@@ -203,10 +188,8 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     /**
-     * {@inheritDoc}
-     * <p/>
-     * <p>By default, default value provider is not specified, {@link #defaultValue(Object) default value} is
-     * specified instead.
+     * {@inheritDoc} <p/> <p>By default, default value provider is not specified, {@link #defaultValue(Object)
+     * default value} is specified instead.
      *
      * @see #defaultValue(Object)
      */
@@ -236,13 +219,11 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     /**
      * Configures the marshallers, used to serialize/deserialize values to/from off-heap memory in maps,
      * created by this builder. See <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the
-     * section about serialization in ChronicleMap manual</a> for more information.
-     * <p/>
-     * <p>Configuring marshalling this way results to a little bit more compact in-memory layout of the map,
-     * comparing to a single interface configuration: {@link #valueMarshaller(BytesMarshaller)}.
-     * <p/>
-     * <p>Passing {@link net.openhft.chronicle.hash.serialization.BytesInterop} instead of plain {@link
-     * BytesWriter} is, of cause, possible, but currently pointless for values.
+     * section about serialization in ChronicleMap manual</a> for more information. <p/> <p>Configuring
+     * marshalling this way results to a little bit more compact in-memory layout of the map, comparing to a
+     * single interface configuration: {@link #valueMarshaller(BytesMarshaller)}. <p/> <p>Passing {@link
+     * net.openhft.chronicle.hash.serialization.BytesInterop} instead of plain {@link BytesWriter} is, of
+     * cause, possible, but currently pointless for values.
      *
      * @param valueWriter the new value object &rarr; {@link Bytes} writer (interop) strategy
      * @param valueReader the new {@link Bytes} &rarr; value object reader strategy
@@ -258,15 +239,14 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
 
     /**
      * Configures the marshaller used to serialize actual value sizes to off-heap memory in maps, created by
-     * this builder.
-     * <p/>
-     * <p>Default value size marshaller is so-called {@linkplain net.openhft.chronicle.hash.serialization.SizeMarshallers#stopBit()
-     * stop bit encoding marshalling}. If {@linkplain #constantValueSizeBySample(Object) constant value size}
-     * is configured, or defaulted if the value type is always constant and {@code ChronicleHashBuilder}
-     * implementation knows about it, this configuration takes no effect, because a special {@link
-     * SizeMarshaller} implementation, which doesn't actually do any marshalling, and just returns the known
-     * constant size on {@link SizeMarshaller#readSize(Bytes)} calls, is used instead of any {@code
-     * SizeMarshaller} configured using this method.
+     * this builder. <p/> <p>Default value size marshaller is so-called {@linkplain
+     * net.openhft.chronicle.hash.serialization.SizeMarshallers#stopBit() stop bit encoding marshalling}. If
+     * {@linkplain #constantValueSizeBySample(Object) constant value size} is configured, or defaulted if the
+     * value type is always constant and {@code ChronicleHashBuilder} implementation knows about it, this
+     * configuration takes no effect, because a special {@link SizeMarshaller} implementation, which doesn't
+     * actually do any marshalling, and just returns the known constant size on {@link
+     * SizeMarshaller#readSize(Bytes)} calls, is used instead of any {@code SizeMarshaller} configured using
+     * this method.
      *
      * @param valueSizeMarshaller the new marshaller, used to serialize actual value sizes to off-heap memory
      * @return this builder back
@@ -280,9 +260,8 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     /**
      * Configures the procedure which is called on the bytes, which later the returned value is pointing to,
      * if the key is absent, on {@link ChronicleMap#acquireUsing(Object, Object) acquireUsing()} call on maps,
-     * created by this builder. See {@link PrepareValueBytes} for more information.
-     * <p/>
-     * <p>The default preparation callback zeroes out the value bytes.
+     * created by this builder. See {@link PrepareValueBytes} for more information. <p/> <p>The default
+     * preparation callback zeroes out the value bytes.
      *
      * @param prepareValueBytes what to do with the value bytes before assigning them into the {@link
      *                          Byteable} value to return from {@code acquireUsing()} call

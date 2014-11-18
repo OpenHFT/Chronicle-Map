@@ -20,6 +20,7 @@ import junit.framework.Assert;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -30,16 +31,16 @@ import java.io.IOException;
 public class MapByNameTest {
 
 
-    private FindMapByName findMapByName;
+    private FindFindByName findMapByName;
 
     @Before
     public void setUp() throws IOException {
         final ReplicationHub replicationHub = ReplicationHub.builder()
                 .maxEntrySize(10 * 1024)
                 .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(8243))
-                .createWithId((byte)1);
+                .createWithId((byte) 1);
 
-        findMapByName = new FindMapByName(replicationHub);
+        findMapByName = new FindFindByName(replicationHub);
     }
 
     @Test
@@ -48,6 +49,7 @@ public class MapByNameTest {
             final ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                     .minSegments(2)
                     .name("map1")
+                    .replication((byte) 1, TcpTransportAndNetworkConfig.of(8244))
                     .removeReturnsNull(true);
 
             findMapByName.add(builder);
@@ -64,5 +66,25 @@ public class MapByNameTest {
         findMapByName.get("hello");
     }
 
+
+    // currently work in progress
+    @Test
+    @Ignore
+    public void testConnectByName() throws IOException, InterruptedException {
+
+        NodeDiscovery nodeDiscovery = new NodeDiscovery();
+
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
+                .class, CharSequence.class)
+                .minSegments(2)
+                .name("myMap")
+                .removeReturnsNull(true);
+
+        FindFindByName mapByName = nodeDiscovery.mapByName();
+        mapByName.add(builder);
+
+        ChronicleMap<Object, Object> myMap2 = mapByName.create("myMap");
+
+    }
 
 }

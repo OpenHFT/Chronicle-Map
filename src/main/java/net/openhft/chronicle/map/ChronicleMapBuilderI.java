@@ -200,7 +200,7 @@ interface ChronicleMapBuilderI<K, V> extends Serializable {
      * @see ChronicleMapBuilder
      * @see #objectSerializer(ObjectSerializer)
      */
-   ChronicleMapBuilderI<K, V> valueMarshaller(
+    ChronicleMapBuilderI<K, V> valueMarshaller(
             @NotNull BytesMarshaller<V> valueMarshaller);
 
 
@@ -292,12 +292,12 @@ interface ChronicleMapBuilderI<K, V> extends Serializable {
 
     ChronicleMapBuilderI<K, V> putReturnsNull(boolean b);
 
-    ChronicleMap<K, V> createReplicated(byte b) throws IOException;
-
     ChronicleMapBuilderI<K, V> removeReturnsNull(boolean b);
 
+    ChronicleMapBuilderI<K, V> name(String name);
 
-    ChronicleMapBuilderI<K, V>  name(String name);
+
+
 
     String name();
 

@@ -25,7 +25,7 @@ import net.openhft.lang.model.DataValueClasses;
 import org.jetbrains.annotations.NotNull;
 
 final class OffHeapUpdatableChronicleMapBuilder<K, V>
-        extends AbstractChronicleMapBuilder<K, V, OffHeapUpdatableChronicleMapBuilder<K, V>> implements ChronicleMapBuilderI<K, V> {
+        extends AbstractChronicleMapBuilder<K, V, OffHeapUpdatableChronicleMapBuilder<K, V>> {
 
     public static <K, V> ChronicleMapBuilderI<K, V> of(
             @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {

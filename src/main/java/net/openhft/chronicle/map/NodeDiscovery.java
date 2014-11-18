@@ -43,7 +43,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.chronicle.hash.replication.UdpTransportConfig.of;
 import static net.openhft.chronicle.map.ConcurrentExpiryMap.getDefaultAddress;
 import static net.openhft.chronicle.map.DiscoveryNodeBytesMarshallable.ProposedNodes;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
@@ -56,22 +55,23 @@ import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
  */
 public class NodeDiscovery {
 
-    public static final int DEFAULT_UDP_BROADCAST_PORT = 8124;
+    public static final int DEFAULT_UDP_BROADCAST_PORT = 8129;
     public static final short DEFAULT_TCP_PORT = (short) 8123;
     public static final int SERIALIZED_ENTRY_SIZE = 1024;
+
     private final AddressAndPort ourAddressAndPort;
     private final UdpTransportConfig udpConfig;
 
-    public static final InetAddress DEFAULT_UDP_MASK;
+    public static final InetAddress IP_MULIT_CAST_GROUP;
 
     static {
         InetAddress mask = null;
         try {
-            mask = Inet4Address.getByName("255.255.255.255");
+            mask = Inet4Address.getByName("224.0.8.0");
         } catch (Exception e) {
             mask = null;
         }
-        DEFAULT_UDP_MASK = mask;
+        IP_MULIT_CAST_GROUP = mask;
 
     }
 
@@ -79,18 +79,21 @@ public class NodeDiscovery {
     private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
     private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListenerAtomicReference =
             new AtomicReference<NodeDiscoveryEventListener>();
+
+
     private KnownNodes knownNodes;
 
     public NodeDiscovery() throws IOException {
-        this((short) DEFAULT_UDP_BROADCAST_PORT, DEFAULT_TCP_PORT, getDefaultAddress(), DEFAULT_UDP_MASK);
+        this((short) DEFAULT_UDP_BROADCAST_PORT, DEFAULT_TCP_PORT, getDefaultAddress(), IP_MULIT_CAST_GROUP);
     }
 
     public NodeDiscovery(short udpBroadcastPort,
                          short tcpPort,
                          @NotNull InetAddress tcpAddress,
-                         @NotNull InetAddress udpBroadcastAddress) throws IOException {
+                         @NotNull InetAddress udpMultiCastGroup) throws IOException {
         this.ourAddressAndPort = new AddressAndPort(tcpAddress.getAddress(), tcpPort);
-        this.udpConfig = of(udpBroadcastAddress, udpBroadcastPort);
+        this.udpConfig = UdpTransportConfig.multiCast(udpMultiCastGroup, udpBroadcastPort,
+                ConcurrentExpiryMap.defaultNetworkInterface());
         knownNodes = new KnownNodes();
 
         discoveryNodeBytesMarshallable = new DiscoveryNodeBytesMarshallable
@@ -103,7 +106,7 @@ public class NodeDiscovery {
     }
 
 
-    public synchronized FindMapByName discoverMap() throws
+    public synchronized FindFindByName mapByName() throws
             IOException, InterruptedException {
 
         final AtomicInteger ourProposedIdentifier = new AtomicInteger();
@@ -252,7 +255,7 @@ public class NodeDiscovery {
                 .tcpTransportAndNetwork(tcpConfig)
                 .createWithId(identifier);
 
-        return new FindMapByName(replicationHub);
+        return new FindFindByName(replicationHub);
 
     }
 

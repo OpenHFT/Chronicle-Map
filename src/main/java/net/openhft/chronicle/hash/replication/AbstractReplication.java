@@ -19,10 +19,12 @@ package net.openhft.chronicle.hash.replication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
+
 /**
  * Common configurations of {@link SingleChronicleHashReplication} and {@link ReplicationHub}.
  */
-public abstract class AbstractReplication {
+public abstract class AbstractReplication implements Serializable{
     private final byte localIdentifier;
     private final @Nullable TcpTransportAndNetworkConfig tcpConfig;
     private final @Nullable UdpTransportConfig udpConfig;
