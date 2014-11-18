@@ -97,13 +97,13 @@ public class MapByNameTest {
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
                 .class, CharSequence.class)
                 .minSegments(2)
-                .name("myMap4")
+                .name("myMap5")
                 .removeReturnsNull(true);
 
-        //    ChronicleMap<String, String> map = mapByName.create(builder);
-        //  map.put("hello", "world");
+           ChronicleMap<String, String> map = mapByName.create(builder);
+         map.put("hello", "world");
 
-        final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap4");
+       // final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap4");
 
 
         // allow time for replication
