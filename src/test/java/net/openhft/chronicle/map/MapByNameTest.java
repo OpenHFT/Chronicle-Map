@@ -89,6 +89,7 @@ public class MapByNameTest {
 
     public static void main(String... args) throws IOException, InterruptedException {
         NodeDiscovery nodeDiscovery = new NodeDiscovery();
+/*
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
                 .class, CharSequence.class)
@@ -96,14 +97,13 @@ public class MapByNameTest {
                 .name("myMap")
                 .removeReturnsNull(true);
 
+*/
 
         ReplicationHubFindByName mapByName = nodeDiscovery.mapByName();
-        mapByName.add(builder);
 
 
-        // wait for ever
-        for (; ; ) {
-        }
+        ChronicleMapBuilder myMap = mapByName.get("myMap");
+
 
 
     }

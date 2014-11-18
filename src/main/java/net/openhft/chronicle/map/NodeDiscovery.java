@@ -1139,7 +1139,13 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
     public static InetAddress getDefaultAddress() throws SocketException {
         NetworkInterface networkInterface = ConcurrentExpiryMap.defaultNetworkInterface();
         Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
-        InetAddress inetAddress = inetAddresses.nextElement();
+
+        // we will take the last one as this is likely to be an ipv address which is easier to work with
+        InetAddress inetAddress = null;
+        for (; inetAddresses.hasMoreElements(); ) {
+            inetAddress = inetAddresses.nextElement();
+        }
+
 
         if (inetAddress == null)
             throw new IllegalStateException();

@@ -46,7 +46,7 @@ class ReplicationHubFindByName implements FindByName {
     public ReplicationHubFindByName(ReplicationHub replicationHub) throws IOException {
         this.replicationHub = replicationHub;
         this.map = (Map) of(CharSequence.class, ChronicleMapBuilder.class)
-                .entrySize(300)
+                .entrySize(2500)
                 .entries(128)
                 .instance()
                 .replicatedViaChannel(replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL)).create();
