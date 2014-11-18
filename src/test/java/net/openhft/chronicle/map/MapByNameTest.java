@@ -54,7 +54,7 @@ public class MapByNameTest {
                     .replication((byte) 1, TcpTransportAndNetworkConfig.of(8244))
                     .removeReturnsNull(true);
 
-          //  findMapByName.add(builder);
+            //  findMapByName.add(builder);
         }
 
         final ChronicleMap<CharSequence, CharSequence> map = findMapByName.from("map1");
@@ -63,10 +63,10 @@ public class MapByNameTest {
         Assert.assertEquals(map.get("hello"), "world");
     }
 
-  //  @Test(expected = IllegalArgumentException.class)
-  //  public void testSerializingBuilderUnknownMap() throws TimeoutException, InterruptedException {
-  //      findMapByName.get("hello");
-  //  }
+    //  @Test(expected = IllegalArgumentException.class)
+    //  public void testSerializingBuilderUnknownMap() throws TimeoutException, InterruptedException {
+    //      findMapByName.get("hello");
+    //  }
 
 
     // currently work in progress
@@ -83,7 +83,7 @@ public class MapByNameTest {
                 .removeReturnsNull(true);
 
         ReplicationHubFindByName mapByName = nodeDiscovery.mapByName();
-      //  mapByName.add(builder);
+        //  mapByName.add(builder);
 
         ChronicleMap<Object, Object> myMap2 = mapByName.from("myMap");
 
@@ -94,7 +94,7 @@ public class MapByNameTest {
 
 
         final ReplicationHubFindByName mapByName = nodeDiscovery.mapByName();
-
+        Thread.sleep(2000);
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
                 .class, CharSequence.class)
@@ -102,17 +102,15 @@ public class MapByNameTest {
                 .name("myMap4")
                 .removeReturnsNull(true);
 
-        ChronicleMap<String, String> chronicleHash = mapByName.create(builder);
-        chronicleHash.put("hello", "world");
+        //  ChronicleMap<String, String> map = mapByName.create(builder);
+        //   map.put("hello", "world");
 
-        final ChronicleMap<CharSequence, CharSequence> myMap = mapByName.from("myMap3");
-
-        //  myMap.put("hello", "world");
+        final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap4");
 
 
-        System.out.print(myMap);
-
+        // allow time for replication
         Thread.sleep(2000);
+        System.out.print(map);
 
     }
 

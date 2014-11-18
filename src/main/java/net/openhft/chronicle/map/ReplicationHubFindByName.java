@@ -21,6 +21,8 @@ import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import net.openhft.chronicle.hash.FindByName;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
+import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,9 +64,19 @@ class ReplicationHubFindByName implements FindByName {
         this.replicationHub = replicationHub;
         ReplicationChannel channel = replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL);
 
+
+        MapEventListener listener = new MapEventListener() {
+
+            @Override
+            public void onPut(ChronicleMap map, Bytes entry, int metaDataBytes, boolean added, Object key, Object value, @Nullable Object replacedValue) {
+                LOG.info("key=" + key);
+            }
+        };
+
         this.map = (Map) of(CharSequence.class, ChronicleMapBuilderWithChannelId.class)
                 .entrySize(2500)
                 .entries(128)
+                .eventListener(listener)
                 .instance()
                 .replicatedViaChannel(channel)
                 .create();
@@ -96,7 +108,7 @@ class ReplicationHubFindByName implements FindByName {
             TimeoutException,
             InterruptedException {
 
-        ChronicleMapBuilderWithChannelId chronicleMapBuilder = waitTillEntryReceived(1000, name);
+        ChronicleMapBuilderWithChannelId chronicleMapBuilder = waitTillEntryReceived(5000, name);
         if (chronicleMapBuilder == null)
             throw new IllegalArgumentException("A map name=" + name + " can not be found.");
 
