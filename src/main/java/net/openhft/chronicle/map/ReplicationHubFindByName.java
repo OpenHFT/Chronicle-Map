@@ -19,11 +19,16 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import net.openhft.chronicle.hash.FindByName;
+import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
@@ -32,29 +37,66 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
  * @author Rob Austin.
  */
 class ReplicationHubFindByName implements FindByName {
+    public static final Logger LOG = LoggerFactory.getLogger(ReplicationHubFindByName.class.getName());
 
     public static final int MAP_BY_NAME_CHANNEL = 1;
-    private final ReplicationHub replicationHub;
-    int maxEntrySize = 10 * 1024;
 
     private final AtomicInteger nextFreeChannel = new AtomicInteger(1);
-    private final Map<String, ChronicleMapBuilder> map;
+    private final Map<String, ChronicleMapBuilderWithChannelId> map;
+    private final ReplicationHub replicationHub;
+
+
+    public static class ChronicleMapBuilderWithChannelId implements Serializable {
+        ChronicleMapBuilder chronicleMapBuilder;
+        int channelId;
+    }
 
     /**
      * @throws IOException
      */
     public ReplicationHubFindByName(ReplicationHub replicationHub) throws IOException {
+
+
+        LOG.info("connecting to replicationHub=" + replicationHub);
+
         this.replicationHub = replicationHub;
-        this.map = (Map) of(CharSequence.class, ChronicleMapBuilder.class)
+        ReplicationChannel channel = replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL);
+
+        this.map = (Map) of(CharSequence.class, ChronicleMapBuilderWithChannelId.class)
                 .entrySize(2500)
                 .entries(128)
                 .instance()
-                .replicatedViaChannel(replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL)).create();
+                .replicatedViaChannel(channel)
+                .create();
     }
 
-    ChronicleMapBuilder get(String name) throws IllegalArgumentException {
 
-        ChronicleMapBuilder chronicleMapBuilder = map.get(name);
+    public <T extends ChronicleHash> T create(ChronicleMapBuilder builder) throws IllegalArgumentException,
+            IOException, TimeoutException, InterruptedException {
+
+        int withChannelId = nextFreeChannel.incrementAndGet();
+        T result = (T) toReplicatedViaChannel(builder, withChannelId).create();
+        ChronicleMapBuilderWithChannelId builderWithChannelId = new
+                ChronicleMapBuilderWithChannelId();
+
+        builderWithChannelId.channelId = withChannelId;
+        builderWithChannelId.chronicleMapBuilder = builder;
+        map.put(builder.name(), builderWithChannelId);
+        return result;
+    }
+
+
+    public <T extends ChronicleHash> T from(String name) throws IllegalArgumentException,
+            IOException, TimeoutException, InterruptedException {
+        return (T) replicatedViaChannel(name).create();
+    }
+
+
+    ChronicleMapBuilderWithChannelId get(String name) throws IllegalArgumentException,
+            TimeoutException,
+            InterruptedException {
+
+        ChronicleMapBuilderWithChannelId chronicleMapBuilder = waitTillEntryReceived(1000, name);
         if (chronicleMapBuilder == null)
             throw new IllegalArgumentException("A map name=" + name + " can not be found.");
 
@@ -62,13 +104,29 @@ class ReplicationHubFindByName implements FindByName {
     }
 
 
-    public <T extends ChronicleHash> T create(String name) throws IllegalArgumentException,
-            IOException {
-        return (T) replicatedViaChannel(name).create();
+    /**
+     * * waits until map1 and map2 show the same value
+     *
+     * @param timeOutMs timeout in milliseconds
+     * @throws InterruptedException
+     */
+    private ChronicleMapBuilderWithChannelId waitTillEntryReceived(final int timeOutMs, String name) throws TimeoutException, InterruptedException {
+        int t = 0;
+        for (; t < timeOutMs; t++) {
+            ChronicleMapBuilderWithChannelId builder = map.get(name);
+
+            if (builder != null)
+                return builder;
+            Thread.sleep(1);
+        }
+        throw new TimeoutException("timed out wait for map name=" + name);
+
     }
 
-    private ChronicleHashInstanceConfig replicatedViaChannel(String name) {
-        return toReplicatedViaChannel(get(name));
+
+    private ChronicleHashInstanceConfig replicatedViaChannel(String name) throws TimeoutException, InterruptedException {
+        ChronicleMapBuilderWithChannelId builder = get(name);
+        return toReplicatedViaChannel(builder.chronicleMapBuilder, builder.channelId);
     }
 
     /**
@@ -83,7 +141,7 @@ class ReplicationHubFindByName implements FindByName {
      * @see ChronicleMapBuilder#createPersistedTo(File file)
      */
     public <T extends ChronicleHash> T createPersistedTo(String name, File file) throws IllegalArgumentException,
-            IOException {
+            IOException, TimeoutException, InterruptedException {
         return (T) replicatedViaChannel(name).persistedTo(file).create();
     }
 
@@ -95,7 +153,11 @@ class ReplicationHubFindByName implements FindByName {
         return builder.instance().replicatedViaChannel(replicationHub.createChannel((short) channelId));
     }
 
-    public void add(ChronicleMapBuilder builder) {
-        this.map.put(builder.name(), builder);
+    private ChronicleHashInstanceConfig toReplicatedViaChannel(ChronicleMapBuilder builder, int
+            withChannelId) {
+
+        return builder.instance().replicatedViaChannel(replicationHub.createChannel((short) withChannelId));
     }
+
+
 }

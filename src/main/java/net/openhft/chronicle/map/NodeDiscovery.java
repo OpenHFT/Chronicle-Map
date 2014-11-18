@@ -238,12 +238,16 @@ public class NodeDiscovery {
             }
         };
 
+        // remove self
+        final HashSet<AddressAndPort> knownHostPorts0 = new HashSet<>(knownHostPorts);
+        knownHostPorts0.remove(ourAddressAndPort);
+
         // add our identifier and host:port to the list of known identifiers
         knownNodes.add(ourAddressAndPort, identifier);
 
         final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .of(ourAddressAndPort.getPort(),
-                        toInetSocketCollection(knownHostPorts))
+                        toInetSocketCollection(knownHostPorts0))
                 .heartBeatInterval(1, SECONDS);
 
 

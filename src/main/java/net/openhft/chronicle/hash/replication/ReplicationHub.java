@@ -23,6 +23,8 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 /**
  * This class holds all configurations of <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
  * multicontainer replication</a>, which is usable, when you want to replicate several {@linkplain
@@ -67,6 +69,16 @@ public final class ReplicationHub extends AbstractReplication {
         maxEntrySize = builder.maxEntrySize;
         channels = new ReplicationChannel[builder.maxNumberOfChannels];
     }
+
+    @Override
+    public String toString() {
+        return "ReplicationHub{" +
+                "maxEntrySize=" + maxEntrySize +
+                ", channels=" + Arrays.toString(channels) +
+                super.toString() +
+                '}';
+    }
+
 
     /**
      * Returns the maximum {@linkplain ChronicleHashBuilder#entrySize(int) entry size} of {@link
@@ -173,5 +185,8 @@ public final class ReplicationHub extends AbstractReplication {
             check(identifier);
             return new ReplicationHub(identifier, this);
         }
+
+
     }
+
 }

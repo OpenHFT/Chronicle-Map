@@ -1,6 +1,7 @@
 package net.openhft.chronicle.hash;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Rob Austin.
@@ -14,6 +15,6 @@ public interface FindByName {
      * @throws IllegalArgumentException if a map with this name can not be found
      * @throws IOException              if it not possible to create the map or set
      */
-    <T extends ChronicleHash> T create(String name) throws IllegalArgumentException,
-            IOException;
+    <T extends ChronicleHash> T from(String name) throws IllegalArgumentException,
+            IOException, TimeoutException, InterruptedException;
 }
