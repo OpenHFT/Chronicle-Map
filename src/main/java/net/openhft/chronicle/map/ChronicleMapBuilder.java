@@ -16,8 +16,6 @@ import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -364,17 +362,6 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
     @Override
     public ChronicleMap<K, V> create() {
         return delegate.create();
-
-    }
-
-    private void registerBuilderWithReplicationHub() {
-
-        try {
-            FindFindByName mapByName = new NodeDiscovery().mapByName();
-            mapByName.add(this);
-        } catch (Exception e) {
-            LOG.error("", e);
-        }
 
     }
 
