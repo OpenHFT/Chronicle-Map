@@ -359,7 +359,7 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
     }
 
     @Override
-    public ChronicleMapBuilderI<K, V> pushTo(InetSocketAddress... addresses) {
+    public ChronicleMapBuilder<K, V> pushTo(InetSocketAddress... addresses) {
         delegate.pushTo(addresses);
         return this;
     }

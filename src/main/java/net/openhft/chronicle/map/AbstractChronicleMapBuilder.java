@@ -887,7 +887,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
             return;
         }
         try {
-            Class<?> pmel = Class.forName("com.higherfrequencytrading.chronicle.engine.map.PushingMapEventListener");
+            Class<?> pmel = Class.forName("com.higherfrequencytrading.chronicle.enterprise.map.PushingMapEventListener");
             Constructor<?> constructor = pmel.getConstructor(ChronicleMap[].class);
             // create a stateless client for each address
             ChronicleMap[] statelessClients = new ChronicleMap[pushToAddresses.length];
@@ -897,7 +897,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
                 cmb.statelessClient(pushToAddresses[i]);
                 statelessClients[i] = cmb.create();
             }
-            eventListener = (MapEventListener<K, V, ChronicleMap<K, V>>) constructor.newInstance(statelessClients);
+            eventListener = (MapEventListener<K, V, ChronicleMap<K, V>>) constructor.newInstance((Object) statelessClients);
         } catch (ClassNotFoundException e) {
             LoggerFactory.getLogger(getClass().getName()).warn("Chronicle Enterprise not found in the class path");
         } catch (Exception e) {
