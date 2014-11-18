@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -142,6 +143,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
     private PrepareValueBytes<K, V> prepareValueBytes = null;
 
     private SingleChronicleHashReplication singleHashReplication = null;
+    private InetSocketAddress[] pushToAddresses;
     public boolean bootstapOnlyLocalEntries = false;
 
     AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
@@ -182,6 +184,12 @@ abstract class AbstractChronicleMapBuilder<K, V,
 
     private static String pretty(Object obj) {
         return obj != null ? obj + "" : "not configured";
+    }
+
+    @Override
+    public ChronicleMapBuilderI<K, V> pushTo(InetSocketAddress... addresses) {
+        this.pushToAddresses = addresses;
+        return this;
     }
 
     @Override
@@ -803,6 +811,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
 
     ChronicleMap<K, V> createWithFile(File file, SingleChronicleHashReplication singleHashReplication,
                                       ReplicationChannel channel) throws IOException {
+        pushingToMapEventListener();
         for (int i = 0; i < 10; i++) {
             if (file.exists() && file.length() > 0) {
                 try (FileInputStream fis = new FileInputStream(file);
@@ -847,6 +856,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
      * @return map
      */
     public ChronicleMap<K, V> createReplicated(byte identifier) throws IOException {
+        pushingToMapEventListener();
         preMapConstruction(true);
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
                 new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
@@ -859,6 +869,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
 
     ChronicleMap<K, V> createWithoutFile(
             SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) {
+        pushingToMapEventListener();
         try {
             VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
             BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
@@ -871,8 +882,32 @@ abstract class AbstractChronicleMapBuilder<K, V,
         }
     }
 
+    private void pushingToMapEventListener() {
+        if (pushToAddresses == null || pushToAddresses.length == 0) {
+            return;
+        }
+        try {
+            Class<?> pmel = Class.forName("com.higherfrequencytrading.chronicle.engine.map.PushingMapEventListener");
+            Constructor<?> constructor = pmel.getConstructor(ChronicleMap[].class);
+            // create a stateless client for each address
+            ChronicleMap[] statelessClients = new ChronicleMap[pushToAddresses.length];
+            ChronicleMapBuilderI<K, V> cmb = clone();
+            cmb.pushTo((InetSocketAddress[]) null);
+            for (int i = 0; i < pushToAddresses.length; i++) {
+                cmb.statelessClient(pushToAddresses[i]);
+                statelessClients[i] = cmb.create();
+            }
+            eventListener = (MapEventListener<K, V, ChronicleMap<K, V>>) constructor.newInstance(statelessClients);
+        } catch (ClassNotFoundException e) {
+            LoggerFactory.getLogger(getClass().getName()).warn("Chronicle Enterprise not found in the class path");
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass().getName()).error("PushingMapEventListener failed to load", e);
+        }
+    }
+
     ChronicleMap<K, V> createStatelessMap(StatelessMapConfig<K, V> statelessBuilder)
             throws IOException {
+        pushingToMapEventListener();
         preMapConstruction(false);
         return new StatelessChronicleMap<K, V>(
                 statelessBuilder,

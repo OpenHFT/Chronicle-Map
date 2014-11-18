@@ -248,6 +248,8 @@ interface ChronicleMapBuilderI<K, V> extends Serializable {
 
     ChronicleMapBuilderI<K, V> replication(SingleChronicleHashReplication withId);
 
+    ChronicleMapBuilderI<K, V> pushTo(InetSocketAddress... addresses);
+
     ChronicleMap<K, V> create();
 
     ChronicleMapBuilderI<K, V> actualSegments(int actualSegments);
