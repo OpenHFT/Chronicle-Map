@@ -31,7 +31,7 @@ import java.io.IOException;
 public class MapByNameTest {
 
 
-    private FindFindByName findMapByName;
+    private ReplicationHubFindByName findMapByName;
 
     @Before
     public void setUp() throws IOException {
@@ -40,7 +40,7 @@ public class MapByNameTest {
                 .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(8243))
                 .createWithId((byte) 1);
 
-        findMapByName = new FindFindByName(replicationHub);
+        findMapByName = new ReplicationHubFindByName(replicationHub);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class MapByNameTest {
                 .name("myMap")
                 .removeReturnsNull(true);
 
-        FindFindByName mapByName = nodeDiscovery.mapByName();
+        ReplicationHubFindByName mapByName = nodeDiscovery.mapByName();
         mapByName.add(builder);
 
         ChronicleMap<Object, Object> myMap2 = mapByName.create("myMap");
@@ -97,7 +97,7 @@ public class MapByNameTest {
                 .removeReturnsNull(true);
 
 
-        FindFindByName mapByName = nodeDiscovery.mapByName();
+        ReplicationHubFindByName mapByName = nodeDiscovery.mapByName();
         mapByName.add(builder);
 
 

@@ -106,7 +106,7 @@ public class NodeDiscovery {
     }
 
 
-    public synchronized FindFindByName mapByName() throws
+    public synchronized ReplicationHubFindByName mapByName() throws
             IOException, InterruptedException {
 
         final AtomicInteger ourProposedIdentifier = new AtomicInteger();
@@ -255,7 +255,7 @@ public class NodeDiscovery {
                 .tcpTransportAndNetwork(tcpConfig)
                 .createWithId(identifier);
 
-        return new FindFindByName(replicationHub);
+        return new ReplicationHubFindByName(replicationHub);
 
     }
 

@@ -31,7 +31,7 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 /**
  * @author Rob Austin.
  */
-class FindFindByName implements FindByName {
+class ReplicationHubFindByName implements FindByName {
 
     public static final int MAP_BY_NAME_CHANNEL = 1;
     private final ReplicationHub replicationHub;
@@ -43,10 +43,11 @@ class FindFindByName implements FindByName {
     /**
      * @throws IOException
      */
-    public FindFindByName(ReplicationHub replicationHub) throws IOException {
+    public ReplicationHubFindByName(ReplicationHub replicationHub) throws IOException {
         this.replicationHub = replicationHub;
         this.map = (Map) of(CharSequence.class, ChronicleMapBuilder.class)
                 .entrySize(300)
+                .entries(128)
                 .instance()
                 .replicatedViaChannel(replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL)).create();
     }
