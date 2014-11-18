@@ -402,9 +402,6 @@ final class ChannelProvider implements Closeable {
 
                 final PayloadProvider iterator = new PayloadProvider() {
 
-
-                    // todo it maybe possibel to replace this with a single atomic refernce,
-                    // todo this way no aditional objects will be created
                     final Queue<Bytes> payloads = new LinkedTransferQueue<Bytes>();
 
                     @Override

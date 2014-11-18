@@ -97,6 +97,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     private transient ModificationDelegator modificationDelegator;
     private transient long startOfModificationIterators;
+    private boolean bootstapOnlyLocalEntries;
 
     public ReplicatedChronicleMap(@NotNull AbstractChronicleMapBuilder<K, V, ?> builder,
                                   byte identifier)
@@ -105,6 +106,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         this.timeProvider = builder.timeProvider();
 
         this.localIdentifier = identifier;
+        this.bootstapOnlyLocalEntries = builder.bootstapOnlyLocalEntries;
 
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
@@ -821,8 +823,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
          * called from a remote node when it wishes to propagate a remove event
          */
         void remotePut(@NotNull final Bytes inBytes, long hash2,
-                               final byte identifier, final long timestamp,
-                               long valuePos, long valueLimit) {
+                       final byte identifier, final long timestamp,
+                       long valuePos, long valueLimit) {
 
 
             BytesReader<V> valueReader = null;
@@ -955,10 +957,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             return keySize == keySizeMarshaller.readSize(entry) && entry.startsWith(keyBytes);
         }
 
-         @Override
+        @Override
         V putWithoutLock(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key, V value, long hash2, boolean replaceIfPresent) {
-           return putWithoutLock(copies, metaKeyInterop, keyInterop, key, value, hash2, replaceIfPresent,
-                   localIdentifier, timeProvider.currentTimeMillis());
+            return putWithoutLock(copies, metaKeyInterop, keyInterop, key, value, hash2, replaceIfPresent,
+                    localIdentifier, timeProvider.currentTimeMillis());
         }
 
         V put(ThreadLocalCopies copies, MKI metaKeyWriter, KI keyWriter,
@@ -1231,8 +1233,16 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             anotherLookup.replace(hash, prevPos, pos);
         }
 
+
+        /**
+         * @param timeStamp
+         * @param callback
+         * @param bootstapOnlyLocalEntries if true - only entries that have been create from this node will be
+         *                                 published during a bootstrap
+         */
         public void dirtyEntries(final long timeStamp,
-                                 final ModificationIterator.EntryModifiableCallback callback) {
+                                 final ModificationIterator.EntryModifiableCallback callback,
+                                 final boolean bootstapOnlyLocalEntries) {
 
             this.readLock();
             try {
@@ -1247,8 +1257,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
                         final long entryTimestamp = entry.readLong();
 
-                        if (entryTimestamp >= timeStamp &&
-                                entry.readByte() == ReplicatedChronicleMap.this.identifier())
+                        if (entryTimestamp >= timeStamp && (!bootstapOnlyLocalEntries ||
+                                entry.readByte() == ReplicatedChronicleMap.this.identifier()))
                             callback.set(index, pos);
                     }
                 });
@@ -1655,7 +1665,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             // iterate over all the segments and mark bit in the modification iterator
             // that correspond to entries with an older timestamp
             for (final Segment segment : (Segment[]) segments) {
-                segment.dirtyEntries(fromTimeStamp, entryModifiableCallback);
+                segment.dirtyEntries(fromTimeStamp, entryModifiableCallback, bootstapOnlyLocalEntries);
             }
         }
 

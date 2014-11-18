@@ -163,6 +163,8 @@ final class OffHeapUpdatableChronicleMapBuilder<K, V>
         throw new UnsupportedOperationException("not supported for this combination of key/value type");
     }
 
+
+
     @Override
     public OffHeapUpdatableChronicleMapBuilder<K, V> constantValueSizeBySample(V sampleValue) {
         throw new UnsupportedOperationException("not supported for this combination of key/value type");
