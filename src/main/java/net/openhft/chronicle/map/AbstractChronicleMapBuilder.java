@@ -901,7 +901,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
         } catch (ClassNotFoundException e) {
             LoggerFactory.getLogger(getClass().getName()).warn("Chronicle Enterprise not found in the class path");
         } catch (Exception e) {
-            LoggerFactory.getLogger(getClass().getName()).warn("PushingMapEventListener failed to load", e);
+            LoggerFactory.getLogger(getClass().getName()).error("PushingMapEventListener failed to load", e);
         }
     }
 
