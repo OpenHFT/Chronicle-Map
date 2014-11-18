@@ -22,7 +22,6 @@ import net.openhft.chronicle.hash.FindByName;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.lang.io.Bytes;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,13 +63,34 @@ class ReplicationHubFindByName implements FindByName {
         this.replicationHub = replicationHub;
         ReplicationChannel channel = replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL);
 
-        MapEventListener listener = new MapEventListener() {
+        final MapEventListener<CharSequence, ChronicleMapBuilderWithChannelId, ChronicleMap<CharSequence, ChronicleMapBuilderWithChannelId>> listener = new
+                MapEventListener<CharSequence, ChronicleMapBuilderWithChannelId, ChronicleMap<CharSequence, ChronicleMapBuilderWithChannelId>>() {
 
-            @Override
-            public void onPut(ChronicleMap map, Bytes entry, int metaDataBytes, boolean added, Object key, Object value, @Nullable Object replacedValue) {
-                LOG.info("key=" + key);
-            }
-        };
+                    // creates a map based on the details that are sent to the map of builders
+                    @Override
+                    void onPut(ChronicleMap<CharSequence, ChronicleMapBuilderWithChannelId> map, Bytes
+                            entry, int metaDataBytes, boolean added, CharSequence key,
+                               ChronicleMapBuilderWithChannelId builder, ChronicleMapBuilderWithChannelId
+                            value, long pos, SharedSegment segment) {
+                        super.onPut(map, entry, metaDataBytes, added, key, builder, value, pos, segment);
+
+                        if (!added)
+                            return;
+
+                        // establish the new map based on this channel ID
+                        LOG.info("create new map for name=" + builder.chronicleMapBuilder.name()
+                                + ",channelId=" + builder.channelId);
+
+                        try {
+                            toReplicatedViaChannel(builder.chronicleMapBuilder, builder.channelId).create();
+                        } catch (IOException e) {
+                            LOG.error("", e);
+                        }
+
+                    }
+
+
+                };
 
         this.map = (Map) of(CharSequence.class, ChronicleMapBuilderWithChannelId.class)
                 .entrySize(3000)
