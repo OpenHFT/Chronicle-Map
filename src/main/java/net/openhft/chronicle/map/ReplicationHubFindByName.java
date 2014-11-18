@@ -70,19 +70,23 @@ class ReplicationHubFindByName implements FindByName {
                     @Override
                     void onPut(ChronicleMap<CharSequence, ChronicleMapBuilderWithChannelId> map, Bytes
                             entry, int metaDataBytes, boolean added, CharSequence key,
-                               ChronicleMapBuilderWithChannelId builder, ChronicleMapBuilderWithChannelId
+                               ChronicleMapBuilderWithChannelId replaced, ChronicleMapBuilderWithChannelId
                             value, long pos, SharedSegment segment) {
-                        super.onPut(map, entry, metaDataBytes, added, key, builder, value, pos, segment);
+                        super.onPut(map, entry, metaDataBytes, added, key, replaced, value, pos, segment);
 
-                        if (!added)
+                        if (!added || value == null)
                             return;
 
                         // establish the new map based on this channel ID
-                        LOG.info("create new map for name=" + builder.chronicleMapBuilder.name()
-                                + ",channelId=" + builder.channelId);
+                        LOG.info("create new map for name=" + value.chronicleMapBuilder.name()
+                                + ",channelId=" + value.channelId);
 
                         try {
-                            toReplicatedViaChannel(builder.chronicleMapBuilder, builder.channelId).create();
+                            toReplicatedViaChannel(value.chronicleMapBuilder, value.channelId).create();
+                        } catch (IllegalStateException e) {
+                            // channel is already created
+                            LOG.debug("while creating channel for name=" + value.chronicleMapBuilder.name()
+                                    + ",channelId=" + value.channelId, e);
                         } catch (IOException e) {
                             LOG.error("", e);
                         }
