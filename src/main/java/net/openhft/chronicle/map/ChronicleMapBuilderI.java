@@ -298,6 +298,17 @@ interface ChronicleMapBuilderI<K, V> extends Serializable {
 
     ChronicleMapBuilderI<K, V> name(String name);
 
+    /**
+     * @param bootstapOnlyLocalEntries if set to true - when a new node joins a TCP replication grid, the new
+     *                                 node will be populated with data, only for the nodes that created that
+     *                                 data. Otherwise, all the nodes will publish all the data they have (
+     *                                 potentially swamping the new node with duplicates ) however this does
+     *                                 guarantee that all the data is replicated over to the new node, and is
+     *                                 useful especially in the case that the originating node is not
+     *                                 currently running.
+     */
+    ChronicleMapBuilderI<K, V> bootstapOnlyLocalEntries(boolean bootstapOnlyLocalEntries);
+
     String name();
 
 

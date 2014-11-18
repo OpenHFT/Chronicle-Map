@@ -144,6 +144,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
 
     private SingleChronicleHashReplication singleHashReplication = null;
     private InetSocketAddress[] pushToAddresses;
+    public boolean bootstapOnlyLocalEntries = false;
 
     AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
@@ -994,6 +995,13 @@ abstract class AbstractChronicleMapBuilder<K, V,
     @Override
     public ChronicleMapBuilderI<K, V> name(String name) {
         this.name = name;
+        return this;
+    }
+
+
+    @Override
+    public ChronicleMapBuilderI<K, V> bootstapOnlyLocalEntries(boolean bootstapOnlyLocalEntries) {
+        this.bootstapOnlyLocalEntries = bootstapOnlyLocalEntries;
         return this;
     }
 

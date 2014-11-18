@@ -318,7 +318,10 @@ final class ChannelProvider implements Closeable {
     }
 
     private void add(int chronicleChannel,
-                     Replica replica, EntryExternalizable entryExternalizable) {
+                     Replica replica,
+                     @NotNull EntryExternalizable entryExternalizable) {
+
+        LOG.info("adding chronicleChannel=" + chronicleChannel + ",entryExternalizable=" + entryExternalizable);
         channelDataLock.writeLock().lock();
         try {
             if (chronicleChannels[chronicleChannel] != null) {
@@ -327,7 +330,7 @@ final class ChannelProvider implements Closeable {
             }
             chronicleChannels[chronicleChannel] = replica;
             chronicleChannelList.add(replica);
-            chronicleChannelIds.add((int) chronicleChannel);
+            chronicleChannelIds.add(chronicleChannel);
             channelEntryExternalizables[chronicleChannel] = entryExternalizable;
 
             if (chronicleChannel == 0)
@@ -402,9 +405,6 @@ final class ChannelProvider implements Closeable {
 
                 final PayloadProvider iterator = new PayloadProvider() {
 
-
-                    // todo it maybe possibel to replace this with a single atomic refernce,
-                    // todo this way no aditional objects will be created
                     final Queue<Bytes> payloads = new LinkedTransferQueue<Bytes>();
 
                     @Override

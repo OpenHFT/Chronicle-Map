@@ -248,6 +248,7 @@ public class NodeDiscovery {
         final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .of(ourAddressAndPort.getPort(),
                         toInetSocketCollection(knownHostPorts0))
+
                 .heartBeatInterval(1, SECONDS);
 
 
@@ -257,6 +258,7 @@ public class NodeDiscovery {
         final ReplicationHub replicationHub = ReplicationHub.builder()
                 .maxEntrySize(10 * 1024)
                 .tcpTransportAndNetwork(tcpConfig)
+                .remoteNodeValidator(remoteNodeValidator)
                 .createWithId(identifier);
 
         return new ReplicationHubFindByName(replicationHub);

@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import junit.framework.Assert;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.Before;
@@ -25,6 +24,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
+
+import static junit.framework.Assert.assertEquals;
 
 /**
  * @author Rob Austin.
@@ -45,22 +46,19 @@ public class MapByNameTest {
     }
 
     @Test
-    @Ignore
     public void testSerializingBuilder() throws TimeoutException, InterruptedException, IOException {
-        {
-            final ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                    .minSegments(2)
-                    .name("map1")
-                    .replication((byte) 1, TcpTransportAndNetworkConfig.of(8244))
-                    .removeReturnsNull(true);
 
-            //  findMapByName.add(builder);
-        }
+        final ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .entries(2)
+                .minSegments(2)
+                .name("map1")
+                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8244))
+                .removeReturnsNull(true);
 
-        final ChronicleMap<CharSequence, CharSequence> map = findMapByName.from("map1");
+        final ChronicleMap<CharSequence, CharSequence> map = findMapByName.create(builder);
         map.put("hello", "world");
 
-        Assert.assertEquals(map.get("hello"), "world");
+        assertEquals(map.get("hello"), "world");
     }
 
     //  @Test(expected = IllegalArgumentException.class)
@@ -99,13 +97,13 @@ public class MapByNameTest {
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
                 .class, CharSequence.class)
                 .minSegments(2)
-                .name("myMap4")
+                .name("myMap5")
                 .removeReturnsNull(true);
 
-        //  ChronicleMap<String, String> map = mapByName.create(builder);
-        //   map.put("hello", "world");
+           ChronicleMap<String, String> map = mapByName.create(builder);
+         map.put("hello", "world");
 
-        final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap4");
+       // final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap4");
 
 
         // allow time for replication

@@ -43,7 +43,7 @@ class ReplicationHubFindByName implements FindByName {
 
     public static final int MAP_BY_NAME_CHANNEL = 1;
 
-    private final AtomicInteger nextFreeChannel = new AtomicInteger(1);
+    private final AtomicInteger nextFreeChannel = new AtomicInteger(2);
     private final Map<String, ChronicleMapBuilderWithChannelId> map;
     private final ReplicationHub replicationHub;
 
@@ -64,7 +64,6 @@ class ReplicationHubFindByName implements FindByName {
         this.replicationHub = replicationHub;
         ReplicationChannel channel = replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL);
 
-
         MapEventListener listener = new MapEventListener() {
 
             @Override
@@ -74,7 +73,7 @@ class ReplicationHubFindByName implements FindByName {
         };
 
         this.map = (Map) of(CharSequence.class, ChronicleMapBuilderWithChannelId.class)
-                .entrySize(2500)
+                .entrySize(3000)
                 .entries(128)
                 .eventListener(listener)
                 .instance()
