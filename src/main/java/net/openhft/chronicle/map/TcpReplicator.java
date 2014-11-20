@@ -589,11 +589,22 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
 
-        if (attached.entryWriter.isWorkIncomplete())
-            return;
-
         try {
-            if (attached.entryReader.readSocketToBuffer(socketChannel) <= 0)
+
+            int len = attached.entryReader.readSocketToBuffer(socketChannel);
+            if (len == -1) {
+                socketChannel.shutdownInput();
+                socketChannel.shutdownOutput();
+
+                //todo we should call close, but if we do it breaks the bootstrap test case, further
+                // investigation required
+                return;
+            }
+
+            if (len == 0)
+                return;
+
+            if (attached.entryWriter.isWorkIncomplete())
                 return;
 
         } catch (IOException e) {
@@ -1108,9 +1119,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 // its set to MIN_VALUE when it should be read again
                 if (state == NOT_SET) {
 
-                    if (out.remaining() < SIZE_OF_SIZE + 1) {
+                    if (out.remaining() < SIZE_OF_SIZE + 1)
                         return;
-                    }
 
                     // state is used for both heartbeat and stateless
                     state = out.readByte();

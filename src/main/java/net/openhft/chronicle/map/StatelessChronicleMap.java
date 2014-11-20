@@ -996,7 +996,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
     private Bytes receive(int requiredNumberOfBytes, long timeoutTime) throws IOException {
 
         while (bytes.buffer().position() < requiredNumberOfBytes) {
-            clientChannel.read(bytes.buffer());
+            int len = clientChannel.read(bytes.buffer());
+
+            if (len == -1)
+                throw new IORuntimeException("Disconnected to remote server");
+
             checkTimeout(timeoutTime);
         }
 

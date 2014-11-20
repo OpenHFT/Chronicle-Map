@@ -24,11 +24,17 @@ import java.io.Serializable;
 /**
  * Common configurations of {@link SingleChronicleHashReplication} and {@link ReplicationHub}.
  */
-public abstract class AbstractReplication implements Serializable{
+public abstract class AbstractReplication implements Serializable {
     private final byte localIdentifier;
-    private final @Nullable TcpTransportAndNetworkConfig tcpConfig;
-    private final @Nullable UdpTransportConfig udpConfig;
-    private final @Nullable RemoteNodeValidator remoteNodeValidator;
+    private final
+    @Nullable
+    TcpTransportAndNetworkConfig tcpConfig;
+    private final
+    @Nullable
+    UdpTransportConfig udpConfig;
+    private final
+    @Nullable
+    RemoteNodeValidator remoteNodeValidator;
 
     // package-private to forbid subclassing from outside of the package
     AbstractReplication(byte localIdentifier, Builder builder) {
@@ -36,6 +42,16 @@ public abstract class AbstractReplication implements Serializable{
         tcpConfig = builder.tcpConfig;
         udpConfig = builder.udpConfig;
         remoteNodeValidator = builder.remoteNodeValidator;
+    }
+
+
+    @Override
+    public String toString() {
+        return ", localIdentifier=" + localIdentifier +
+                ", tcpConfig=" + tcpConfig +
+                ", udpConfig=" + udpConfig +
+                ", remoteNodeValidator=" + remoteNodeValidator;
+
     }
 
     public byte identifier() {
@@ -58,13 +74,13 @@ public abstract class AbstractReplication implements Serializable{
     }
 
     /**
-     * Builder of {@link AbstractReplication} configurations. This class and it's subclasses are
-     * mutable, configuration methods mutate the builder and return it back for convenient chaining.
+     * Builder of {@link AbstractReplication} configurations. This class and it's subclasses are mutable,
+     * configuration methods mutate the builder and return it back for convenient chaining.
      *
-     * @param <R> the concrete {@link AbstractReplication} subclass: {@link
-     *            SingleChronicleHashReplication} or {@link ReplicationHub}
-     * @param <B> the concrete builder subclass: {@link SingleChronicleHashReplication.Builder} or
-     *            {@link ReplicationHub.Builder}
+     * @param <R> the concrete {@link AbstractReplication} subclass: {@link SingleChronicleHashReplication} or
+     *            {@link ReplicationHub}
+     * @param <B> the concrete builder subclass: {@link SingleChronicleHashReplication.Builder} or {@link
+     *            ReplicationHub.Builder}
      */
     public static abstract class Builder<R extends AbstractReplication, B extends Builder<R, B>> {
         private TcpTransportAndNetworkConfig tcpConfig = null;
@@ -72,7 +88,8 @@ public abstract class AbstractReplication implements Serializable{
         private RemoteNodeValidator remoteNodeValidator = null;
 
         // package-private to forbid subclassing from outside of the package
-        Builder() {}
+        Builder() {
+        }
 
         @NotNull
         public B tcpTransportAndNetwork(@Nullable TcpTransportAndNetworkConfig tcpConfig) {
@@ -81,8 +98,8 @@ public abstract class AbstractReplication implements Serializable{
         }
 
         /**
-         * Configures UDP transport settings, used by Replications, created by this builder.
-         * {@code null} means that UDP transport shouldn't being used.
+         * Configures UDP transport settings, used by Replications, created by this builder. {@code null}
+         * means that UDP transport shouldn't being used.
          *
          * @param udpConfig the new UDP transport config for replications, created by this builder.
          * @return this builder back, for chaining
@@ -106,10 +123,10 @@ public abstract class AbstractReplication implements Serializable{
          * @param identifier the node (server) identifier of the returned replication
          * @return a new Replication instance with the specified node (server) identifier
          * @throws IllegalArgumentException if the given identifier is non-positive
-         * @throws IllegalStateException if neither {@link #tcpTransportAndNetwork(
-         * TcpTransportAndNetworkConfig)} nor {@link #udpTransport(UdpTransportConfig)} are
-         * configured to non-{@code null}. At least one of the transport-level configs should be
-         * specified.
+         * @throws IllegalStateException    if neither {@link #tcpTransportAndNetwork(TcpTransportAndNetworkConfig)}
+         *                                  nor {@link #udpTransport(UdpTransportConfig)} are configured to
+         *                                  non-{@code null}. At least one of the transport-level configs
+         *                                  should be specified.
          */
         @NotNull
         public abstract R createWithId(byte identifier);
@@ -120,12 +137,11 @@ public abstract class AbstractReplication implements Serializable{
                         " given");
         }
 
+
         @Override
         public String toString() {
-            return
-                    "tcpConfig=" + tcpConfig +
-                    ", udpConfig=" + udpConfig +
-                    ", remoteNodeValidator=" + remoteNodeValidator ;
+            return ", udpConfig=" + udpConfig +
+                    ", remoteNodeValidator=" + remoteNodeValidator;
 
         }
     }

@@ -23,9 +23,13 @@ import java.io.IOException;
 /**
  * @author Rob Austin.
  */
-class IORuntimeException extends RuntimeException{
+class IORuntimeException extends RuntimeException {
 
     public IORuntimeException(IOException e) {
         super(e);
+    }
+
+    public IORuntimeException(String message) {
+        super(message);
     }
 }
