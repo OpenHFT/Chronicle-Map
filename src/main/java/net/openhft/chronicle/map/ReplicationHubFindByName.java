@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import net.openhft.chronicle.hash.FindByName;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
@@ -37,7 +38,7 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 /**
  * @author Rob Austin.
  */
-class ReplicationHubFindByName implements FindByName {
+class ReplicationHubFindByName<K> implements FindByName {
     public static final Logger LOG = LoggerFactory.getLogger(ReplicationHubFindByName.class.getName());
 
     public static final int MAP_BY_NAME_CHANNEL = 1;
@@ -47,8 +48,8 @@ class ReplicationHubFindByName implements FindByName {
     private final ReplicationHub replicationHub;
 
 
-    public static class ChronicleMapBuilderWithChannelId implements Serializable {
-        ChronicleMapBuilder chronicleMapBuilder;
+    public static class ChronicleMapBuilderWithChannelId<K, V> implements Serializable {
+        ChronicleHashBuilder<K, ChronicleMap<K, V>, ?> chronicleMapBuilder;
         int channelId;
     }
 
@@ -103,21 +104,24 @@ class ReplicationHubFindByName implements FindByName {
                 .instance()
                 .replicatedViaChannel(channel)
                 .create();
+        if (LOG.isDebugEnabled())
+            LOG.debug("map=" + map);
     }
 
 
-    public <T extends ChronicleHash> T create(ChronicleMapBuilder builder) throws IllegalArgumentException,
+    public <T extends ChronicleHash> T create(ChronicleMapBuilder<CharSequence, CharSequence> builder) throws IllegalArgumentException,
             IOException, TimeoutException, InterruptedException {
 
         int withChannelId = nextFreeChannel.incrementAndGet();
-        T result = (T) toReplicatedViaChannel(builder, withChannelId).create();
         ChronicleMapBuilderWithChannelId builderWithChannelId = new
                 ChronicleMapBuilderWithChannelId();
-
         builderWithChannelId.channelId = withChannelId;
-        builderWithChannelId.chronicleMapBuilder = builder;
+        builderWithChannelId.chronicleMapBuilder = (ChronicleHashBuilder)builder;
+
         map.put(builder.name(), builderWithChannelId);
-        return result;
+
+        return (T) get(builder.name()).chronicleMapBuilder.create();
+
     }
 
 
@@ -188,7 +192,7 @@ class ReplicationHubFindByName implements FindByName {
         return builder.instance().replicatedViaChannel(replicationHub.createChannel((short) channelId));
     }
 
-    private ChronicleHashInstanceConfig toReplicatedViaChannel(ChronicleMapBuilder builder, int
+    private ChronicleHashInstanceConfig toReplicatedViaChannel(ChronicleHashBuilder<K, ?, ?> builder, int
             withChannelId) {
 
         return builder.instance().replicatedViaChannel(replicationHub.createChannel((short) withChannelId));

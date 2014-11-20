@@ -362,7 +362,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     @Override
     public Replica.ModificationIterator acquireModificationIterator
-            (short remoteIdentifier,
+            (byte remoteIdentifier,
              @NotNull final ModificationNotifier modificationNotifier) {
 
         return modificationDelegator

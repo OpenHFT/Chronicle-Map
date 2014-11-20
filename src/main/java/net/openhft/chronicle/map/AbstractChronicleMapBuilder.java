@@ -99,7 +99,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
         B extends AbstractChronicleMapBuilder<K, V, B>>
         implements Cloneable, ChronicleHashBuilder<K, ChronicleMap<K, V>, B>, ChronicleMapBuilderI<K, V> {
 
-    static final short UDP_REPLICATION_MODIFICATION_ITERATOR_ID = 128;
+    static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte)128;
     private static final Bytes EMPTY_BYTES = new ByteBufferBytes(ByteBuffer.allocate(0));
     private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
     private static final int MAX_SEGMENTS = (1 << 30);

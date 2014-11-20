@@ -112,9 +112,12 @@ final class ChannelProvider implements Closeable {
             channelDataLock.readLock().lock();
             try {
                 final int chronicleId = (int) source.readStopBit();
-                if (chronicleId < chronicleChannels.length)
-                    channelEntryExternalizables[chronicleId].readExternalEntry(source);
-                else
+                if (chronicleId < chronicleChannels.length) {
+
+                    // this channel is has not currently been created so it updates will be ignored
+                   if (channelEntryExternalizables[chronicleId] != null)
+                        channelEntryExternalizables[chronicleId].readExternalEntry(source);
+                } else
                     LOG.info("skipped entry with chronicleId=" + chronicleId + ", ");
             } finally {
                 channelDataLock.readLock().unlock();
@@ -131,7 +134,8 @@ final class ChannelProvider implements Closeable {
 
         @Override
         public ModificationIterator acquireModificationIterator(
-                final short remoteIdentifier, final ModificationNotifier notifier) {
+                final byte remoteIdentifier, final ModificationNotifier notifier) {
+
             channelDataLock.writeLock().lock();
             try {
                 final ModificationIterator result = modificationIterator.get(remoteIdentifier);
@@ -248,6 +252,7 @@ final class ChannelProvider implements Closeable {
     private final Set<Closeable> replicators = new CopyOnWriteArraySet<Closeable>();
 
     private volatile boolean isClosed = false;
+    private final SystemQueue systemMessageQueue;
 
     private ChannelProvider(ReplicationHub hub) {
         localIdentifier = hub.identifier();
@@ -268,7 +273,7 @@ final class ChannelProvider implements Closeable {
                 }
             }
         };
-        SystemQueue systemMessageQueue = new SystemQueue(
+        systemMessageQueue = new SystemQueue(
                 systemModificationIteratorBitSet, systemModificationIterator, systemMessageHandler);
         add((short) 0, systemMessageQueue.asReplica, systemMessageQueue.asEntryExternalizable);
     }
@@ -296,9 +301,14 @@ final class ChannelProvider implements Closeable {
      * called whenever we receive a bootstrap message
      */
     private void onBootstrapMessage(Bytes bytes) {
-        final short remoteIdentifier = bytes.readByte();
+        final byte remoteIdentifier = bytes.readByte();
         final int chronicleChannel = bytes.readUnsignedShort();
         final long lastModificationTime = bytes.readLong();
+
+        if (LOG.isDebugEnabled())
+            LOG.debug("received bootstrap message received for localIdentifier=" + this.localIdentifier + ", " +
+                    "remoteIdentifier=" + remoteIdentifier + ",chronicleChannel=" + chronicleChannel + "," +
+                    "lastModificationTime=" + lastModificationTime);
 
         // this could be null if one node has a chronicle channel before the other
         if (chronicleChannels[chronicleChannel] != null) {
@@ -307,7 +317,9 @@ final class ChannelProvider implements Closeable {
         }
     }
 
-    private ByteBufferBytes toBootstrapMessage(int chronicleChannel, final long lastModificationTime) {
+    private static ByteBufferBytes toBootstrapMessage(int chronicleChannel, final long lastModificationTime, final byte localIdentifier) {
+
+
         final ByteBufferBytes writeBuffer = new ByteBufferBytes(ByteBuffer.allocate(1 + 1 + 2 + 8));
         writeBuffer.writeByte(BOOTSTRAP_MESSAGE);
         writeBuffer.writeByte(localIdentifier);
@@ -320,8 +332,9 @@ final class ChannelProvider implements Closeable {
     private void add(int chronicleChannel,
                      Replica replica,
                      @NotNull EntryExternalizable entryExternalizable) {
-
-        LOG.info("adding chronicleChannel=" + chronicleChannel + ",entryExternalizable=" + entryExternalizable);
+        if (LOG.isDebugEnabled())
+            LOG.debug("adding chronicleChannel=" + chronicleChannel + ",entryExternalizable=" +
+                    entryExternalizable);
         channelDataLock.writeLock().lock();
         try {
             if (chronicleChannels[chronicleChannel] != null) {
@@ -336,13 +349,21 @@ final class ChannelProvider implements Closeable {
             if (chronicleChannel == 0)
                 return;
 
+            // send bootstap message
+
             for (int i = (int) systemModificationIteratorBitSet.nextSetBit(0); i > 0;
                  i = (int) systemModificationIteratorBitSet.nextSetBit(i + 1)) {
                 byte remoteIdentifier = (byte) i;
                 final long lastModificationTime = replica.lastModificationTime(remoteIdentifier);
                 final ByteBufferBytes message =
-                        toBootstrapMessage(chronicleChannel, lastModificationTime);
+                        toBootstrapMessage(chronicleChannel, lastModificationTime, localIdentifier);
                 systemModificationIterator.get(remoteIdentifier).addPayload(message);
+
+                if (LOG.isDebugEnabled())
+                    LOG.debug("sending bootstrap message received for localIdentifier=" + localIdentifier + ", " +
+                            "remoteIdentifier=" + remoteIdentifier + ",chronicleChannel=" + chronicleChannel + "," +
+                            "lastModificationTime=" + lastModificationTime);
+
             }
         } finally {
             channelDataLock.writeLock().unlock();
@@ -384,19 +405,20 @@ final class ChannelProvider implements Closeable {
      * used to send system messages such as bootstrap from one remote node to another, it also can be used in
      * a broadcast context
      */
-    static class SystemQueue {
+    class SystemQueue {
 
 
         final Replica asReplica = new Replica() {
 
             @Override
             public byte identifier() {
-                return 0;
+                throw new UnsupportedOperationException();
             }
 
             @Override
             public ModificationIterator acquireModificationIterator(
-                    final short remoteIdentifier, final ModificationNotifier modificationNotifier) {
+                    final byte remoteIdentifier, final ModificationNotifier modificationNotifier) {
+
 
                 final ModificationIterator result = systemModificationIterator.get(remoteIdentifier);
 

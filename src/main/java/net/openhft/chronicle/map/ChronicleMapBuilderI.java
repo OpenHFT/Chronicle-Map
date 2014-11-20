@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Rob Austin.
  */
-interface ChronicleMapBuilderI<K, V> extends Serializable {
+public interface ChronicleMapBuilderI<K, V> extends Serializable {
 
 
     /**

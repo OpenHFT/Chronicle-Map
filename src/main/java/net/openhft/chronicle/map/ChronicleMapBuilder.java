@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
 import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import net.openhft.chronicle.hash.StatelessClientConfig;
@@ -30,7 +31,8 @@ import java.util.concurrent.TimeUnit;
  * @see AbstractChronicleMapBuilder
  * @see net.openhft.chronicle.hash.ChronicleHashBuilder
  */
-public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, V> {
+public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, V>, ChronicleHashBuilder<K,
+        ChronicleMap<K, V>, ChronicleMapBuilder<K, V>> {
 
     final ChronicleMapBuilderI<K, V> delegate;
 

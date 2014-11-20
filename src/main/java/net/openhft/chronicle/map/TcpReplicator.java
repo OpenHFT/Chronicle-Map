@@ -496,6 +496,10 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 // methods
                 throw new IllegalStateException("dropping connection, " +
                         "as the remote-identifier is already being used, identifier=" + remoteIdentifier);
+            if (LOG.isDebugEnabled())
+                LOG.debug("handshaking for localIdentifier=" + localIdentifier + "," +
+                        "remoteIdentifier=" + remoteIdentifier);
+
 
             attached.remoteModificationIterator = replica.acquireModificationIterator(remoteIdentifier,
                     attached);

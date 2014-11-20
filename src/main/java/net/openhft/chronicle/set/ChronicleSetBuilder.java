@@ -45,8 +45,8 @@ import java.util.concurrent.TimeUnit;
  * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could be used as
  * a classic builder and/or factory.
  *
- * <p>{@code ChronicleMapOnHeapUpdatableBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
- * documentation.
+ * <p>{@code ChronicleMapOnHeapUpdatableBuilder} is mutable, see a note in {@link ChronicleHashBuilder}
+ * interface documentation.
  *
  * @param <E> element type of the sets, created by this builder
  * @see ChronicleSet
@@ -309,6 +309,15 @@ public class ChronicleSetBuilder<E>
         return new SetFromMap<E>(map);
     }
 
+    @Override
+    public String name() {
+        return chronicleMapBuilderOnHeap.name();
+    }
+
+    public ChronicleSetBuilder<E> name(String name) {
+        chronicleMapBuilderOnHeap.name(name);
+        return this;
+    }
 
 }
 

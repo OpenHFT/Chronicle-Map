@@ -53,7 +53,7 @@ interface Replica extends Closeable {
      * @return the ModificationIterator dedicated for replication to the remote node with the given identifier
      * @see #identifier()
      */
-    ModificationIterator acquireModificationIterator(short remoteIdentifier,
+    ModificationIterator acquireModificationIterator(byte remoteIdentifier,
                                                      ModificationNotifier modificationNotifier);
 
     /**

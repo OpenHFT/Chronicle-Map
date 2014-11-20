@@ -33,7 +33,7 @@ import static junit.framework.Assert.assertEquals;
 public class MapByNameTest {
 
 
-    private ReplicationHubFindByName findMapByName;
+    private ReplicationHubFindByName<CharSequence> findMapByName;
 
     @Before
     public void setUp() throws IOException {
@@ -80,10 +80,10 @@ public class MapByNameTest {
                 .name("myMap")
                 .removeReturnsNull(true);
 
-        ReplicationHubFindByName mapByName = nodeDiscovery.mapByName();
+        ReplicationHubFindByName<CharSequence> mapByName = nodeDiscovery.mapByName();
         //  mapByName.add(builder);
 
-        ChronicleMap<Object, Object> myMap2 = mapByName.from("myMap");
+        ChronicleMap<CharSequence, CharSequence> myMap2 = mapByName.from("myMap");
 
     }
 
@@ -91,19 +91,20 @@ public class MapByNameTest {
         NodeDiscovery nodeDiscovery = new NodeDiscovery();
 
 
-        final ReplicationHubFindByName mapByName = nodeDiscovery.mapByName();
+        final ReplicationHubFindByName<CharSequence> mapByName = nodeDiscovery.mapByName();
         Thread.sleep(2000);
 
-        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
+/*        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
                 .class, CharSequence.class)
                 .minSegments(2)
+                .entries(2)
                 .name("myMap5")
                 .removeReturnsNull(true);
 
-           ChronicleMap<String, String> map = mapByName.create(builder);
-         map.put("hello", "world");
+        ChronicleMap<String, String> map = mapByName.create(builder);
+        map.put("hello", "world");*/
 
-       // final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap4");
+       final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap5");
 
 
         // allow time for replication
