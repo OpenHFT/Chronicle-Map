@@ -894,8 +894,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
             ChronicleMapBuilderI<K, V> cmb = clone();
             cmb.pushTo((InetSocketAddress[]) null);
             for (int i = 0; i < pushToAddresses.length; i++) {
-                cmb.statelessClient(pushToAddresses[i]);
-                statelessClients[i] = cmb.create();
+                statelessClients[i] = cmb.statelessClient(pushToAddresses[i]).create();
             }
             eventListener = (MapEventListener<K, V, ChronicleMap<K, V>>) constructor.newInstance((Object) statelessClients);
         } catch (ClassNotFoundException e) {
