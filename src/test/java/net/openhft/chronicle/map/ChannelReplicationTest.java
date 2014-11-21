@@ -55,7 +55,7 @@ public class ChannelReplicationTest {
         {
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                     .of(8086, new InetSocketAddress("localhost", 8087))
-                    .heartBeatInterval(1, SECONDS);
+                    .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
 
             hubA = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -68,7 +68,8 @@ public class ChannelReplicationTest {
 
         {
             TcpTransportAndNetworkConfig tcpConfig =
-                    TcpTransportAndNetworkConfig.of(8087).heartBeatInterval(1, SECONDS);
+                    TcpTransportAndNetworkConfig.of(8087).heartBeatInterval(1, SECONDS)
+                    .autoReconnectedUponDroppedConnection(true);
 
             hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
                     .createWithId((byte) 2);
