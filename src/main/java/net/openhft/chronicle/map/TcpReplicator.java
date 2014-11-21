@@ -79,6 +79,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private final
     @Nullable
     RemoteNodeValidator remoteNodeValidator;
+    private final String name;
 
     private long selectorTimeout;
 
@@ -115,7 +116,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         this.replicationConfig = replicationConfig;
 
         this.remoteNodeValidator = remoteNodeValidator;
-
+        this.name = replicationConfig.name();
         start();
     }
 
@@ -159,11 +160,17 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                         if (!key.isValid())
                             continue;
 
-                        if (key.isAcceptable())
+                        if (key.isAcceptable()) {
+                            if (LOG.isDebugEnabled())
+                                LOG.info("onAccept - " + name);
                             onAccept(key);
+                        }
 
-                        if (key.isConnectable())
+                        if (key.isConnectable()) {
+                            if (LOG.isDebugEnabled())
+                                LOG.debug("onConnect - " + name);
                             onConnect(key);
+                        }
 
                         if (key.isReadable())
                             onRead(key, approxTime);
@@ -206,6 +213,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         } catch (Exception e) {
             LOG.error("", e);
         } finally {
+            if (LOG.isDebugEnabled())
+                LOG.debug("closing name=" + name);
             if (!isClosed) {
                 close();
             }
@@ -593,11 +602,13 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             int len = attached.entryReader.readSocketToBuffer(socketChannel);
             if (len == -1) {
-                socketChannel.shutdownInput();
-                socketChannel.shutdownOutput();
 
-                //todo we should call close, but if we do it breaks the bootstrap test case, further
-                // investigation required
+                if (replicationConfig.autoReconnectedUponDroppedConnection()) {
+                    AbstractConnector connector = attached.connector;
+                    if (connector != null)
+                        connector.connectLater();
+                } else
+                    socketChannel.close();
                 return;
             }
 

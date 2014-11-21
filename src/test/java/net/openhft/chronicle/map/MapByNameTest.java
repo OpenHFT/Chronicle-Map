@@ -94,22 +94,24 @@ public class MapByNameTest {
         final ReplicationHubFindByName<CharSequence> mapByName = nodeDiscovery.mapByName();
         Thread.sleep(2000);
 
-      ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
                 .class, CharSequence.class)
                 .minSegments(2)
                 .entries(2)
-                .name("myMap5")
+                .name("myMap6")
                 .removeReturnsNull(true);
 
-      ChronicleMap<String, String> map = mapByName.create(builder);
-    map.put("hello", "world");
+        ChronicleMap<String, String> map = mapByName.create(builder);
+        map.put("hello", "world");
 
-    //   final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap5");
+        //    final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap5");
 
 
         // allow time for replication
         Thread.sleep(2000);
         System.out.print(map);
+
+        map.close();
 
     }
 

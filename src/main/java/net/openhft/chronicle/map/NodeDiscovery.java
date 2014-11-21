@@ -172,7 +172,7 @@ public class NodeDiscovery {
         // the identifiers will come back to the callback on the nio thread, the update arrives at the
         // onRemoteNodeEvent
 
-        Thread.sleep(200);
+        Thread.sleep(1000);
 
         byte identifier;
 
@@ -191,7 +191,7 @@ public class NodeDiscovery {
             final ProposedNodes proposedNodes = new
                     ProposedNodes(ourAddressAndPort, identifier);
 
-            Thread.sleep(100);
+            Thread.sleep(1000);
 
             countDownLatch.set(new CountDownLatch(1));
 
@@ -245,15 +245,17 @@ public class NodeDiscovery {
         // add our identifier and host:port to the list of known identifiers
         knownNodes.add(ourAddressAndPort, identifier);
 
-        final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
+    /*  final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .of(ourAddressAndPort.getPort(),
-                        toInetSocketCollection(knownHostPorts0))
-
-                .heartBeatInterval(1, SECONDS);
-
+                        toInetSocketCollection(knownHostPorts0));
+*/
 
         LOG.info("Using Remote identifier=" + identifier);
         nodeDiscoveryEventListenerAtomicReference.set(null);
+
+
+        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8123, new
+                InetSocketAddress("192.168.1.253", 8123));
 
         final ReplicationHub replicationHub = ReplicationHub.builder()
                 .maxEntrySize(10 * 1024)

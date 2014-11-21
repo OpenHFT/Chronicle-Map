@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Test;
 
@@ -25,6 +26,8 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
@@ -87,12 +90,22 @@ public class TCPSocketReplicationBootStrapTest {
     @Test
     public void testBootstrapAndHeartbeat() throws IOException, InterruptedException {
 
-        map1 = newTcpSocketShmIntString((byte) 1, 8068, new InetSocketAddress("localhost", 8067));
+        TcpTransportAndNetworkConfig map1Config = TcpTransportAndNetworkConfig.of(8068, Arrays.asList(new InetSocketAddress("localhost", 8067)))
+                .heartBeatInterval(1L, TimeUnit.SECONDS).name("map1").autoReconnectedUponDroppedConnection
+                        (true);
+
+        map1 = (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .replication((byte) 1, map1Config).create();
 
         File persistenceFile = getPersistenceFile();
+
+        TcpTransportAndNetworkConfig map2Config = TcpTransportAndNetworkConfig.of(8067)
+                .heartBeatInterval(1L, TimeUnit.SECONDS).name("map2");
+
         final ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map2a =
                 (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>)
-                        newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8067).createPersistedTo(persistenceFile);
+                        ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                                .replication((byte) 2, map2Config).createPersistedTo(persistenceFile);
 
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2
 
@@ -106,6 +119,7 @@ public class TCPSocketReplicationBootStrapTest {
 
         map2a.close();
 
+
         {
             // restart map 2 but does not connect it to map1
             final ChronicleMap<Integer, CharSequence> map2b = ChronicleMapBuilder.of(Integer.class,
@@ -116,10 +130,13 @@ public class TCPSocketReplicationBootStrapTest {
         }
 
         // now restart map2a and doConnect it to map1, map1 should bootstrap the missing entry
-        map2 = newTcpSocketShmBuilder(Integer.class, CharSequence.class, (byte) 2, 8067).createPersistedTo(persistenceFile);
+        TcpTransportAndNetworkConfig tcpConfigNewMap2 = TcpTransportAndNetworkConfig.of(8067)
+                .heartBeatInterval(1L, TimeUnit.SECONDS).name("newMap2");
+        map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .replication((byte) 2, tcpConfigNewMap2).createPersistedTo(persistenceFile);
 
         // add data into it
-        waitTillEqual(20000);
+        waitTillEqual(20000000);
         assertEquals("ADDED WHEN DISCONNECTED TO MAP1", map1.get(11));
 
 

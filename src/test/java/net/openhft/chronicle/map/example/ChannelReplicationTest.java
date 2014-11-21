@@ -62,7 +62,7 @@ public class ChannelReplicationTest {
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                     .of(8086, new InetSocketAddress("localhost", 8087))
-                    .heartBeatInterval(1, SECONDS);
+                    .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
 
 
             hubOnServer1 = ReplicationHub.builder()
@@ -96,7 +96,8 @@ public class ChannelReplicationTest {
             byte identifier = (byte) 2;
 
             TcpTransportAndNetworkConfig tcpConfig =
-                    TcpTransportAndNetworkConfig.of(8087).heartBeatInterval(1, SECONDS);
+                    TcpTransportAndNetworkConfig.of(8087).heartBeatInterval(1, SECONDS)
+                            .autoReconnectedUponDroppedConnection(true);
 
             hubOnServer2 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -166,7 +167,7 @@ public class ChannelReplicationTest {
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                     .of(8086)
-                    .heartBeatInterval(1, SECONDS);
+                    .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
 
 
             hubOnServer1 = ReplicationHub.builder()
@@ -201,7 +202,9 @@ public class ChannelReplicationTest {
             byte identifier = (byte) 6;
 
             TcpTransportAndNetworkConfig tcpConfig =
-                    TcpTransportAndNetworkConfig.of(8087, new InetSocketAddress("localhost", 8086)).heartBeatInterval(1, SECONDS);
+                    TcpTransportAndNetworkConfig.of(8087, new InetSocketAddress("localhost", 8086))
+                            .heartBeatInterval(1, SECONDS)
+                            .autoReconnectedUponDroppedConnection(true);
 
             ReplicationHub hubOnServer = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -224,7 +227,9 @@ public class ChannelReplicationTest {
             byte identifier = (byte) 3;
 
             TcpTransportAndNetworkConfig tcpConfig =
-                    TcpTransportAndNetworkConfig.of(8088, new InetSocketAddress("localhost", 8086)).heartBeatInterval(1, SECONDS);
+                    TcpTransportAndNetworkConfig.of(8088, new InetSocketAddress("localhost", 8086))
+                            .heartBeatInterval(1, SECONDS)
+                            .autoReconnectedUponDroppedConnection(true);
 
             ReplicationHub hubOnServer3 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -290,7 +295,8 @@ public class ChannelReplicationTest {
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                     .of(8086, new InetSocketAddress("localhost", 8087))
-                    .heartBeatInterval(1, SECONDS);
+                    .heartBeatInterval(1, SECONDS)
+                    .autoReconnectedUponDroppedConnection(true);
 
 
             hubOnServer1 = ReplicationHub.builder()
@@ -324,7 +330,8 @@ public class ChannelReplicationTest {
             byte identifier = (byte) 2;
 
             TcpTransportAndNetworkConfig tcpConfig =
-                    TcpTransportAndNetworkConfig.of(8087).heartBeatInterval(1, SECONDS);
+                    TcpTransportAndNetworkConfig.of(8087).heartBeatInterval(1, SECONDS)
+                            .autoReconnectedUponDroppedConnection(true);
 
             hubOnServer2 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)

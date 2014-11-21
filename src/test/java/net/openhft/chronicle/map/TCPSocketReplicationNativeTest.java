@@ -51,13 +51,13 @@ public class TCPSocketReplicationNativeTest {
         InetSocketAddress endpoint = new InetSocketAddress("localhost", 8077);
 
         TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(8076, endpoint)
-                .heartBeatInterval(1L, TimeUnit.SECONDS);
+                .heartBeatInterval(1L, TimeUnit.SECONDS).autoReconnectedUponDroppedConnection(true);
 
         map1 = ChronicleMapBuilder.of(Integer.class, LongValue.class)
                 .replication((byte) 1, tcpConfig1).create();
 
         TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of(8077)
-                .heartBeatInterval(1L, TimeUnit.SECONDS);
+                .heartBeatInterval(1L, TimeUnit.SECONDS).autoReconnectedUponDroppedConnection(true);
 
         map2 = ChronicleMapBuilder.of(Integer.class, LongValue.class)
                 .replication((byte) 2, tcpConfig2).create();

@@ -73,7 +73,7 @@ public class Builder {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(serverPort, Arrays.asList(endpoints))
-                .heartBeatInterval(1L, TimeUnit.SECONDS);
+                .heartBeatInterval(1L, TimeUnit.SECONDS).autoReconnectedUponDroppedConnection(true);
         return ChronicleMapBuilder.of(kClass, vClass)
                 .replication(identifier, tcpConfig);
     }

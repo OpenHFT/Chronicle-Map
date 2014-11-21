@@ -45,17 +45,19 @@ public class TwoMapOnDifferentServersTest {
 
         final TcpTransportAndNetworkConfig tcpConfig =
                 TcpTransportAndNetworkConfig.of(8076, new InetSocketAddress("localhost", 8077))
-                        .heartBeatInterval(1, SECONDS);
+                        .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
 
 
         map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
                 .replication((byte) 1, tcpConfig).create();
 
+        TcpTransportAndNetworkConfig config2 = TcpTransportAndNetworkConfig.of(8077)
+                .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
+
         map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
-                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8077)
-                        .heartBeatInterval(1, SECONDS)).create();
+                .replication((byte) 2, config2).create();
     }
 
     @After

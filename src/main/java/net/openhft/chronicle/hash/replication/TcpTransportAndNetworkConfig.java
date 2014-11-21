@@ -20,7 +20,10 @@ package net.openhft.chronicle.hash.replication;
 
 import java.io.Serializable;
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.unmodifiableSet;
@@ -40,6 +43,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
     private final ThrottlingConfig throttlingConfig;
     private final long heartBeatInterval;
     private final TimeUnit heartBeatIntervalUnit;
+    private String name = "(unknown)";
 
     private TcpTransportAndNetworkConfig(int serverPort, Set<InetSocketAddress> endpoints,
                                          int packetSize,
@@ -70,7 +74,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
         return new TcpTransportAndNetworkConfig(
                 serverPort, unmodifiableSet(new HashSet<InetSocketAddress>(endpoints)),
                 DEFAULT_PACKET_SIZE,
-                true, // autoReconnectedUponDroppedConnection
+                false, // autoReconnectedUponDroppedConnection
                 ThrottlingConfig.noThrottling(),
                 DEFAULT_HEART_BEAT_INTERVAL,
                 DEFAULT_HEART_BEAT_INTERVAL_UNIT);
@@ -131,6 +135,14 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
         return packetSize;
     }
 
+    /**
+     * @param name the name used here is reflected in the Tcp Replicator and is typically used when debugging
+     */
+    public TcpTransportAndNetworkConfig name(String name) {
+        this.name = name;
+        return this;
+    }
+
     public TcpTransportAndNetworkConfig packetSize(int packetSize) {
         if (packetSize <= 0)
             throw new IllegalArgumentException();
@@ -181,7 +193,8 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
     @Override
     public String toString() {
         return "TcpReplicationConfig{" +
-                "serverPort=" + serverPort +
+                "name=" + name() +
+                ", serverPort=" + serverPort +
                 ", endpoints=" + endpoints +
                 ", packetSize=" + packetSize +
                 ", autoReconnectedUponDroppedConnection=" + autoReconnectedUponDroppedConnection +
@@ -189,5 +202,12 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
                 ", heartBeatInterval=" + heartBeatInterval +
                 ", heartBeatIntervalUnit=" + heartBeatIntervalUnit +
                 '}';
+    }
+
+    /**
+     * @return the name of this configuration
+     */
+    public String name() {
+        return this.name;
     }
 }
