@@ -314,7 +314,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     void checkValue(Object value) {
         if (vClass != Void.class && !vClass.isInstance(value)) {
             throw new ClassCastException("Value must be a " + vClass.getName() +
-                    " but was a " + value.getClass());
+                    " but was a "+ value.getClass());
         }
     }
 
@@ -1107,10 +1107,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Removes a key (or key-value pair) from the Segment.
-         * <p/>
-         * <p>The entry will only be removed if {@code expectedValue} equals to {@code null} or the value
-         * previously corresponding to the specified key.
+         * Removes a key (or key-value pair) from the Segment. <p/> <p>The entry will only be removed if
+         * {@code expectedValue} equals to {@code null} or the value previously corresponding to the specified
+         * key.
          *
          * @param hash2 a hash code related to the {@code keyBytes}
          * @return the value of the entry that was removed if the entry corresponding to the {@code keyBytes}
