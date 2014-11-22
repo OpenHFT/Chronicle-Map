@@ -888,13 +888,15 @@ abstract class AbstractChronicleMapBuilder<K, V,
         }
         try {
             Class<?> pmel = Class.forName("com.higherfrequencytrading.chronicle.enterprise.map.PushingMapEventListener");
-            Constructor<?> constructor = pmel.getConstructor(ChronicleMap[].class);
+            Constructor<?> constructor = pmel.getConstructor(ChronicleMapBuilderI[].class);
             // create a stateless client for each address
-            ChronicleMap[] statelessClients = new ChronicleMap[pushToAddresses.length];
+            ChronicleMapBuilderI[] statelessClients = new ChronicleMapBuilderI[pushToAddresses.length];
             ChronicleMapBuilderI<K, V> cmb = clone();
             cmb.pushTo((InetSocketAddress[]) null);
             for (int i = 0; i < pushToAddresses.length; i++) {
-                statelessClients[i] = cmb.statelessClient(pushToAddresses[i]).create();
+                ChronicleMapBuilderI<K, V> clientBuilder = cmb.clone();
+                clientBuilder.statelessClient(pushToAddresses[i]);
+                statelessClients[i] = clientBuilder;
             }
             eventListener = (MapEventListener<K, V, ChronicleMap<K, V>>) constructor.newInstance((Object) statelessClients);
         } catch (ClassNotFoundException e) {
