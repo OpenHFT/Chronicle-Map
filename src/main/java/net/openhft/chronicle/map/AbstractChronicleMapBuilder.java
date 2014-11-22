@@ -125,7 +125,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
     private int entrySize = 0;
     private Alignment alignment = null;
     private long entries = 1 << 20; // 1 million by default
-    private long lockTimeOut = 2000;
+    private long lockTimeOut = 20000;
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
     private int metaDataBytes = 0;
     private ChronicleHashErrorListener errorListener = ChronicleHashErrorListeners.logging();
