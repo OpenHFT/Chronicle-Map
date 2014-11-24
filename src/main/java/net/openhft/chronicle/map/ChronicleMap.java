@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
 
 /**
  * Extension of {@link ConcurrentMap} interface, stores the data off-heap.
@@ -165,11 +166,11 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * default value} or {@link AbstractChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
      * defaultValueProvider.}
      *
-     * <p>If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link
-     * ChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of
-     * what to do if the key is absent in the map, see {@link ChronicleMapBuilder#prepareValueBytesOnAcquire(PrepareValueBytes)}.
-     * By default, value bytes are just zeroed out, no default value, either provided for key or constant, is
-     * put for the absent key.
+     * <p>If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link ChronicleMapBuilder}
+     * builder (values are {@link Byteable}), there is one more option of what to do if the key is absent in
+     * the map, see {@link ChronicleMapBuilder#prepareValueBytesOnAcquire(PrepareValueBytes)}. By default,
+     * value bytes are just zeroed out, no default value, either provided for key or constant, is put for the
+     * absent key.
      *
      * @param key        the key whose associated value is to be returned
      * @param usingValue the object to read value data in, if present. Can not be null
@@ -183,8 +184,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);
 
     /**
-     * Apply a mapping to the value returned by a key and return a result.
-     * A read lock is assumed.
+     * Apply a mapping to the value returned by a key and return a result. A read lock is assumed.
      *
      * @param key      to apply the mapping to
      * @param function to calculate a result
@@ -194,10 +194,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     <R> R mapForKey(K key, @NotNull Function<? super V, R> function);
 
     /**
-     * Apply a mutator to the value for a key and return a result.
-     * A write lock is assumed.
-     * <p>
-     *     If there is no entry for this key it will be created and the value empty.
+     * Apply a mutator to the value for a key and return a result. A write lock is assumed. <p> If there is no
+     * entry for this key it will be created and the value empty.
      *
      * @param key     to apply the mapping to
      * @param mutator to alter the value and calculate a result
@@ -205,6 +203,18 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @return the result of the function.
      */
     <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator);
+
+
+    /**
+     * Returns a {@link java.util.concurrent.Future} containing the value to which the specified key is
+     * mapped, or {@code null} if this map contains no mapping for the key. This method behaves the same as
+     * {@link java.util.Map#get(java.lang.Object)} yet wraps result in a future a {@link
+     * java.util.concurrent.Future}.
+     *
+     * @see java.util.Map#get(java.lang.Object)
+     * @see java.util.concurrent.Future
+     */
+    Future<V> getLater(K key);
 
 }
 

@@ -233,7 +233,7 @@ public class StatelessClientTest {
 
 
     @Test
-    public void testStringKeyMap() throws IOException, InterruptedException {
+    public void testServerPutStringKeyMap() throws IOException, InterruptedException {
 
         try (ChronicleMap<String, Map> serverMap = ChronicleMapBuilder.of(String.class, Map
                 .class)
@@ -259,7 +259,7 @@ public class StatelessClientTest {
 
 
     @Test
-    public void testStringKeyMapPutIntoStatelesMap() throws IOException, InterruptedException {
+    public void testStringKeyMapPutIntoStatelessMap() throws IOException, InterruptedException {
 
         final Map<String, String> data = new HashMap<String, String>();
 

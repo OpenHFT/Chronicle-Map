@@ -42,7 +42,10 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.nio.channels.FileChannel;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
@@ -80,7 +83,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     final Alignment alignment;
     final int actualSegments;
     final long entriesPerSegment;
-    final MapEventListener<K, V, ChronicleMap<K, V>> eventListener;
+    final transient MapEventListener<K, V, ChronicleMap<K, V>> eventListener;
     // if set the ReturnsNull fields will cause some functions to return NULL
     // rather than as returning the Object can be expensive for something you probably don't use.
     final boolean putReturnsNull;
@@ -314,7 +317,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     void checkValue(Object value) {
         if (vClass != Void.class && !vClass.isInstance(value)) {
             throw new ClassCastException("Value must be a " + vClass.getName() +
-                    " but was a "+ value.getClass());
+                    " but was a " + value.getClass());
         }
     }
 
@@ -379,6 +382,38 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
                 LockType.WRITE_LOCK, false)) {
             return mutator.update(entry.value());
         }
+    }
+
+    @Override
+    public Future<V> getLater(K key) {
+        final V v = get(key);
+        return new Future<V>() {
+
+            @Override
+            public boolean cancel(boolean mayInterruptIfRunning) {
+                return false;
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return false;
+            }
+
+            @Override
+            public boolean isDone() {
+                return true;
+            }
+
+            @Override
+            public V get() throws InterruptedException, ExecutionException {
+                return v;
+            }
+
+            @Override
+            public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                return v;
+            }
+        };
     }
 
     @NotNull

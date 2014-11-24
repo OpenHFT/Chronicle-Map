@@ -37,6 +37,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.concurrent.Future;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
@@ -390,6 +391,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     public synchronized long longSize() {
         return blockingFetch(writeEventAnSkip(LONG_SIZE)).readLong();
+    }
+
+    public synchronized Future<V> getLater(K key) {
+        throw new UnsupportedOperationException();
     }
 
 
@@ -951,8 +956,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
 
     private Bytes blockingFetch(long timeoutTime, long transactionId) throws IOException {
 
-     //   bytes.buffer().position(0);
-
         // the number of bytes in the response
         final int size = receive(SIZE_OF_SIZE, timeoutTime).readInt();
 
@@ -979,7 +982,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable {
                     ", does not match the expected transaction-id=" + transactionId);
 
         if (isException) {
-           Throwable throwable = (Throwable) bytes.readObject();
+            Throwable throwable = (Throwable) bytes.readObject();
             try {
                 Field stackTrace = Throwable.class.getDeclaredField("stackTrace");
                 stackTrace.setAccessible(true);

@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
+import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTIONID;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 interface Work {
@@ -1252,12 +1254,16 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
  */
 class StatelessServerConnector<K, V> {
 
-    public static final int TRANSACTION_ID_OFFSET = AbstractChannelReplicator.SIZE_OF_SIZE + 1;
+    public static final int TRANSACTION_ID_OFFSET = SIZE_OF_SIZE + 1;
     public static final boolean MAP_SUPPORTS_BYTES = Boolean.valueOf(System.getProperty
             ("mapSupportsBytes"));
     private static final Logger LOG = LoggerFactory.getLogger(StatelessServerConnector.class
             .getName());
     public static final StatelessChronicleMap.EventId[] VALUES = StatelessChronicleMap.EventId.values();
+    public static final int SIZE_OF_IS_EXCEPTION = 1;
+    public static final int HEADER_SIZE = SIZE_OF_SIZE + SIZE_OF_IS_EXCEPTION + SIZE_OF_TRANSACTIONID;
+
+
     private final KeyValueSerializer<K, V> keyValueSerializer;
     private final VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
     private double maxEntrySizeBytes;
@@ -1500,7 +1506,12 @@ class StatelessServerConnector<K, V> {
 
 
     private Work sendException(Bytes writer, long sizeLocation, Throwable e) {
+
+        // move the position to ignore any bytes written so far
+        writer.position(sizeLocation + HEADER_SIZE);
+
         writeException(writer, e);
+
         writeSizeAndFlags(sizeLocation, true, writer);
         return null;
     }
@@ -1898,8 +1909,8 @@ class StatelessServerConnector<K, V> {
     private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
         long currentPosition = out.position();
         final long size = out.position() - locationOfSize;
-        out.writeInt(locationOfSize, (int) size);
-        out.writeBoolean(locationOfSize + AbstractChannelReplicator.SIZE_OF_SIZE, isException);
+        out.writeInt(locationOfSize, (int) size); // size
+        out.writeBoolean(locationOfSize + SIZE_OF_SIZE, isException); // isException
         out.position(currentPosition);
     }
 
