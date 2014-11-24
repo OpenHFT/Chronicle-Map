@@ -385,8 +385,40 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     @Override
-    public Future<V> getLater(K key) {
+    public Future<V> getLater(@NotNull K key) {
         final V v = get(key);
+        return new Future<V>() {
+
+            @Override
+            public boolean cancel(boolean mayInterruptIfRunning) {
+                return false;
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return false;
+            }
+
+            @Override
+            public boolean isDone() {
+                return true;
+            }
+
+            @Override
+            public V get() throws InterruptedException, ExecutionException {
+                return v;
+            }
+
+            @Override
+            public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                return v;
+            }
+        };
+    }
+
+    @Override
+    public Future<V> putLater(@NotNull K key, @NotNull V value) {
+        final V v = put(key, value);
         return new Future<V>() {
 
             @Override

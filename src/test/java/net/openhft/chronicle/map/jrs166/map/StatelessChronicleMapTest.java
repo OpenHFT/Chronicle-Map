@@ -178,8 +178,13 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
-        public Future<V> getLater(K key) {
+        public Future<V> getLater(@NotNull K key) {
             return d.getLater(key);
+        }
+
+        @Override
+        public Future<V> putLater(@NotNull K key, @NotNull V value) {
+            return d.putLater(key, value);
         }
 
         @Override

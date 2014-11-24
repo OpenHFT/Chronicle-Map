@@ -497,7 +497,12 @@ class StatelessChronicleMapUnsynchronized<K, V> implements ChronicleMap<K, V>, C
     }
 
     @Override
-    public Future<V> getLater(K key) {
+    public Future<V> getLater(@NotNull K key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Future<V> putLater(@NotNull K key, @NotNull V value) {
         throw new UnsupportedOperationException();
     }
 

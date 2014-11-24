@@ -40,8 +40,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     private final AbstractChronicleMapBuilder chronicleMapBuilder;
     private final StatelessMapConfig builder;
-    ChronicleMap<K, V> statelessClient;
+    private final ChronicleMap<K, V> statelessClient;
 
+    private ChronicleMap<K, V> asyncStatelessClient;
+    private ExecutorService executorService;
 
     public StatelessChronicleMap(final StatelessMapConfig builder,
                                  final AbstractChronicleMapBuilder chronicleMapBuilder) throws IOException {
@@ -53,7 +55,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
     @Override
-    public synchronized Future<V> getLater(final K key) {
+    public Future<V> getLater(@NotNull final K key) {
         return lazyExecutorService().submit(new Callable<V>() {
             @Override
             public V call() throws Exception {
@@ -62,7 +64,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         });
     }
 
-    private ExecutorService executorService = null;
+    @Override
+    public Future<V> putLater(@NotNull final K key, @NotNull final V value) {
+        return lazyExecutorService().submit(new Callable<V>() {
+            @Override
+            public V call() throws Exception {
+                return lazyAsyncStatelessClient().put(key, value);
+            }
+        });
+    }
+
 
     private ExecutorService lazyExecutorService() {
 
@@ -79,8 +90,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
 
-    private ChronicleMap<K, V> asyncStatelessClient;
-
     /**
      * @return a lazily created instance of the StatelessClient used for the async calls.
      */
@@ -90,7 +99,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             synchronized (this) {
                 if (asyncStatelessClient == null)
                     try {
-                        asyncStatelessClient = new StatelessChronicleMapUnsynchronized<K,V>(builder,
+                        asyncStatelessClient = new StatelessChronicleMapUnsynchronized<K, V>(builder,
                                 chronicleMapBuilder);
                     } catch (IOException e) {
                         throw new RuntimeException(e);

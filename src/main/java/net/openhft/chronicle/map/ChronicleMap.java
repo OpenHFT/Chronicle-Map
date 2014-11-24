@@ -204,17 +204,33 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      */
     <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator);
 
-
     /**
      * Returns a {@link java.util.concurrent.Future} containing the value to which the specified key is
      * mapped, or {@code null} if this map contains no mapping for the key. This method behaves the same as
      * {@link java.util.Map#get(java.lang.Object)} yet wraps result in a future a {@link
      * java.util.concurrent.Future}.
      *
+     * @return a future containing the value to which the specified key is mapped after this method call, or
+     * {@code null} if no value is mapped
      * @see java.util.Map#get(java.lang.Object)
      * @see java.util.concurrent.Future
      */
-    Future<V> getLater(K key);
+    Future<V> getLater(@NotNull K key);
+
+
+    /**
+     * Associates the specified value with the specified key in this map (optional operation).  If the map
+     * previously contained a mapping for the key, the old value is replaced by the specified value.  (A map
+     * <tt>m</tt> is said to contain a mapping for a key <tt>k</tt> if and only if {@link #containsKey(Object)
+     * m.containsKey(k)} would return <tt>true</tt>.)
+     *
+     * @return a future containing the previous value associated with <tt>key</tt>, or <tt>null</tt> if there
+     * was no mapping for <tt>key</tt>. (A <tt>null</tt> return can also indicate that the map previously
+     * associated <tt>null</tt> with <tt>key</tt>, if the implementation supports <tt>null</tt> values.)
+     * @see java.util.Map#get(java.lang.Object)
+     * @see java.util.concurrent.Future
+     */
+    Future<V> putLater(@NotNull K key,@NotNull  V value);
 
 }
 
