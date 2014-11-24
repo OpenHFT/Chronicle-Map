@@ -31,7 +31,6 @@ import net.openhft.lang.io.NativeBytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -189,7 +188,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
         startOfModificationIterators = offset;
 
-        modificationDelegator = new ModificationDelegator(eventListener, modDelBytes);
+        modificationDelegator = new ModificationDelegator(attachedEventListener(), modDelBytes);
     }
 
     @Override
@@ -205,7 +204,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
      * @return the event listener added by the user
      */
     MapEventListener<K, V, ChronicleMap<K, V>> attachedEventListener() {
-        return eventListener;
+        return eventListener == null ? MapEventListeners.NOP : eventListener;
     }
 
 
@@ -1388,7 +1387,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         private final ATSDirectBitSet modIterSet;
         private final MapEventListener<K, V, ChronicleMap<K, V>> nextListener;
 
-        public ModificationDelegator(@Nullable final MapEventListener<K, V, ChronicleMap<K, V>> nextListener,
+        public ModificationDelegator(@NotNull final MapEventListener<K, V, ChronicleMap<K, V>> nextListener,
                                      final Bytes bytes) {
             this.nextListener = nextListener;
             modIterSet = new ATSDirectBitSet(bytes);
@@ -1431,12 +1430,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
             assert ReplicatedChronicleMap.this == map :
                     "ModificationIterator.onPut() is called from outside of the parent map";
-            if (nextListener != null)
-                try {
-                    nextListener.onPut(map, entry, metaDataBytes, added, key, replacedValue, value, pos, segment);
-                } catch (Exception e) {
-                    LOG.error("", e);
-                }
+
+            try {
+                nextListener.onPut(map, entry, metaDataBytes, added, key, replacedValue, value, pos, segment);
+            } catch (Exception e) {
+                LOG.error("", e);
+            }
 
             dirty(map, pos, segment);
         }
@@ -1462,8 +1461,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             assert ReplicatedChronicleMap.this == map :
                     "ModificationIterator.onRemove() is called from outside of the parent map";
 
-            if (nextListener != null)
-                try {
+            try {
                 nextListener.onRemove(map, entry, metaDataBytes, key, value, pos, segment);
             } catch (Exception e) {
                 LOG.error("", e);
@@ -1495,8 +1493,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         @Override
         public void onGetFound(ChronicleMap<K, V> map, Bytes entry, int metaDataBytes,
                                K key, V value) {
-            if (nextListener != null)
-                nextListener.onGetFound(map, entry, metaDataBytes, key, value);
+            nextListener.onGetFound(map, entry, metaDataBytes, key, value);
         }
 
         /**
