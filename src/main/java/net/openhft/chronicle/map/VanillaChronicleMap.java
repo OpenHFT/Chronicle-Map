@@ -303,7 +303,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     }
 
     MapEventListener<K, V, ChronicleMap<K, V>> eventListener() {
-        return eventListener;
+        return eventListener == null ? MapEventListeners.NOP : eventListener;
     }
 
     void checkKey(Object key) {

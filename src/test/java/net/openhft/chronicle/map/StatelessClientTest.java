@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -397,6 +398,37 @@ public class StatelessClientTest {
         }
 
     }
+
+
+    @Test
+    public void testGetLater() throws IOException,
+            InterruptedException, ExecutionException {
+
+        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+
+            try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, CharSequence.class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+
+                statelessMap.put(1, "some value");
+
+                Assert.assertEquals("some value", statelessMap.getLater(1).get());
+                Assert.assertEquals(1, statelessMap.size());
+
+                statelessMap.remove(1);
+
+
+                Assert.assertEquals(null, statelessMap.getLater(1).get());
+
+
+                Assert.assertEquals(0, statelessMap.size());
+
+            }
+        }
+
+    }
+
 
     @Test
     public void testEquals() throws IOException, InterruptedException {

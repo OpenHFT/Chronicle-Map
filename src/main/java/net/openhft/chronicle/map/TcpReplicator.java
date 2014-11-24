@@ -42,7 +42,7 @@ import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTIONID;
-import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
+import static net.openhft.chronicle.map.StatelessChronicleMapUnsynchronized.EventId.HEARTBEAT;
 
 interface Work {
 
@@ -1259,7 +1259,8 @@ class StatelessServerConnector<K, V> {
             ("mapSupportsBytes"));
     private static final Logger LOG = LoggerFactory.getLogger(StatelessServerConnector.class
             .getName());
-    public static final StatelessChronicleMap.EventId[] VALUES = StatelessChronicleMap.EventId.values();
+    public static final StatelessChronicleMapUnsynchronized.EventId[] VALUES
+            = StatelessChronicleMapUnsynchronized.EventId.values();
     public static final int SIZE_OF_IS_EXCEPTION = 1;
     public static final int HEADER_SIZE = SIZE_OF_SIZE + SIZE_OF_IS_EXCEPTION + SIZE_OF_TRANSACTIONID;
 
@@ -1283,7 +1284,7 @@ class StatelessServerConnector<K, V> {
                                @NotNull final ByteBufferBytes reader) {
 
 
-        final StatelessChronicleMap.EventId event = VALUES[eventId];
+        final StatelessChronicleMapUnsynchronized.EventId event = VALUES[eventId];
 
         // these methods don't return a result
         switch (event) {
