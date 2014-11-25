@@ -449,6 +449,27 @@ public class StatelessClientTest {
 
 
     @Test
+    public void testRemoveLater() throws IOException,
+            InterruptedException, ExecutionException {
+
+        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+
+            try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, CharSequence.class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+                statelessMap.put(1, "some value");
+                statelessMap.removeLater(1).get();
+                Assert.assertEquals(null, statelessMap.get(1));
+                Assert.assertEquals(0, statelessMap.size());
+
+            }
+        }
+
+    }
+
+
+    @Test
     public void testEquals() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap1;

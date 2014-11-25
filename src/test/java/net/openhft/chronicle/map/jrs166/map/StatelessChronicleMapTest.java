@@ -188,6 +188,11 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
+        public Future<V> removeLater(@NotNull K key) {
+            return d.removeLater(key);
+        }
+
+        @Override
         public V putIfAbsent(K key, V value) {
             return d.putIfAbsent(key, value);
         }

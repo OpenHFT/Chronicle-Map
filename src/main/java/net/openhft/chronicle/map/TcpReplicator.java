@@ -1641,6 +1641,7 @@ class StatelessServerConnector<K, V> {
             final K key = readKey(reader, local);
 
             try {
+                LOG.info("removing entry key="+key);
                 writeValue(map.remove(key), writer, local);
             } catch (Throwable e) {
                 return sendException(writer, sizeLocation, e);

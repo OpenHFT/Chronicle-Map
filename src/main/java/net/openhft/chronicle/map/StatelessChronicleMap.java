@@ -155,6 +155,18 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         });
     }
 
+    @Override
+    public Future<V> removeLater(@NotNull final K key) {
+        return lazyExecutorService().submit(new Callable<V>() {
+            @Override
+            public V call() throws Exception {
+
+                V oldValue = StatelessChronicleMap.this.remove(key);
+                return oldValue;
+            }
+        });
+    }
+
 
     private ExecutorService lazyExecutorService() {
 
@@ -485,7 +497,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         if (key == null)
             throw new NullPointerException("key can not be null");
 
-        final long sizeLocation = (removeReturnsNull) ? writeEvent(REMOVE_WITHOUT_ACC) : writeEventAnSkip(REMOVE);
+        final long sizeLocation = removeReturnsNull ? writeEvent(REMOVE_WITHOUT_ACC) : writeEventAnSkip(REMOVE);
 
 
         writeKey((K) key);

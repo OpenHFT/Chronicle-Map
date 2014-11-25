@@ -58,7 +58,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         implements ChronicleMap<K, V>, Serializable {
 
     /**
-     * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set bits.
+     * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set
+     * bits.
      */
     static final int MAX_ENTRY_OVERSIZE_FACTOR = 64;
     static final ThreadLocal<MultiStoreBytes> tmpBytes = new ThreadLocal<>();
@@ -448,6 +449,38 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         };
     }
 
+    @Override
+    public Future<V> removeLater(@NotNull K key) {
+        final V v = remove(key);
+        return new Future<V>() {
+
+            @Override
+            public boolean cancel(boolean mayInterruptIfRunning) {
+                return false;
+            }
+
+            @Override
+            public boolean isCancelled() {
+                return false;
+            }
+
+            @Override
+            public boolean isDone() {
+                return true;
+            }
+
+            @Override
+            public V get() throws InterruptedException, ExecutionException {
+                return v;
+            }
+
+            @Override
+            public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                return v;
+            }
+        };
+    }
+
     @NotNull
     @Override
     public WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue) {
@@ -569,9 +602,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
 
     /**
-     * removes ( if there exists ) an entry from the map, if the {@param key} and {@param expectedValue} match
-     * that of a maps.entry. If the {@param expectedValue} equals null then ( if there exists ) an entry whose
-     * key equals {@param key} this is removed.
+     * removes ( if there exists ) an entry from the map, if the {@param key} and {@param
+     * expectedValue} match that of a maps.entry. If the {@param expectedValue} equals null then (
+     * if there exists ) an entry whose key equals {@param key} this is removed.
      *
      * @param k             the key of the entry to remove
      * @param expectedValue null if not required
@@ -631,8 +664,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
      * replace the value in a map, only if the existing entry equals {@param existingValue}
      *
      * @param key           the key into the map
-     * @param existingValue the expected existing value in the map ( could be null when we don't wish to do
-     *                      this check )
+     * @param existingValue the expected existing value in the map ( could be null when we don't
+     *                      wish to do this check )
      * @param newValue      the new value you wish to store in the map
      * @return the value that was replaced
      */
@@ -1174,13 +1207,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Removes a key (or key-value pair) from the Segment. <p/> <p>The entry will only be removed if
-         * {@code expectedValue} equals to {@code null} or the value previously corresponding to the specified
-         * key.
+         * Removes a key (or key-value pair) from the Segment. <p/> <p>The entry will only be
+         * removed if {@code expectedValue} equals to {@code null} or the value previously
+         * corresponding to the specified key.
          *
          * @param hash2 a hash code related to the {@code keyBytes}
-         * @return the value of the entry that was removed if the entry corresponding to the {@code keyBytes}
-         * exists and {@link #removeReturnsNull} is {@code false}, {@code null} otherwise
+         * @return the value of the entry that was removed if the entry corresponding to the {@code
+         * keyBytes} exists and {@link #removeReturnsNull} is {@code false}, {@code null} otherwise
          */
         V remove(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop, K key,
                  V expectedValue, long hash2) {
@@ -1240,9 +1273,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Replaces the specified value for the key with the given value.  {@code newValue} is set only if the
-         * existing value corresponding to the specified key is equal to {@code expectedValue} or {@code
-         * expectedValue == null}.
+         * Replaces the specified value for the key with the given value.  {@code newValue} is set
+         * only if the existing value corresponding to the specified key is equal to {@code
+         * expectedValue} or {@code expectedValue == null}.
          *
          * @param hash2 a hash code related to the {@code keyBytes}
          * @return the replaced value or {@code null} if the value was not replaced
@@ -1319,17 +1352,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         }
 
         /**
-         * Replaces value in existing entry. May cause entry relocation, because there may be not enough space
-         * for new value in location already allocated for this entry.
+         * Replaces value in existing entry. May cause entry relocation, because there may be not
+         * enough space for new value in location already allocated for this entry.
          *
          * @param pos          index of the first block occupied by the entry
-         * @param offset       relative offset of the entry in Segment bytes (before, i. e. including
-         *                     metaData)
+         * @param offset       relative offset of the entry in Segment bytes (before, i. e.
+         *                     including metaData)
          * @param entry        relative pointer in Segment bytes
          * @param valueSizePos relative position of value size in entry
          * @param entryEndAddr absolute address of the entry end
-         * @return relative offset of the entry in Segment bytes after putting value (that may cause entry
-         * relocation)
+         * @return relative offset of the entry in Segment bytes after putting value (that may cause
+         * entry relocation)
          */
         long putValue(long pos, long offset, NativeBytes entry, long valueSizePos,
                       long entryEndAddr, ThreadLocalCopies copies, V value, Bytes valueBytes,
