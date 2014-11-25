@@ -38,10 +38,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
@@ -309,6 +306,19 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         if (closeables != null)
             closeables.closeQuietly();
         closeables = null;
+
+        if (executorService != null) {
+            executorService.shutdown();
+            try {
+                if (!executorService.awaitTermination(20, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                LOG.error("", e);
+            }
+        }
+
+
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
