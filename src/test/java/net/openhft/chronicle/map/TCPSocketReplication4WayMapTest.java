@@ -19,7 +19,6 @@
 package net.openhft.chronicle.map;
 
 
-import net.openhft.lang.values.IntValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -147,11 +146,12 @@ public class TCPSocketReplication4WayMapTest {
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
         int t = 0;
         for (; t < timeOutMs; t++) {
-            if (map1.equals(map2) &&
-                    map1.equals(map3) &&
-                    map2.equals(map3) &&
-                    map4.equals(map3) &&
-                    map1.equals(map4))
+            if ( map1.equals(map2) &&
+                            map1.equals(map3) &&
+                            map1.equals(map4) &&
+                            map2.equals(map3) &&
+                            map2.equals(map4) &&
+                            map3.equals(map4))
                 break;
             Thread.sleep(1);
         }

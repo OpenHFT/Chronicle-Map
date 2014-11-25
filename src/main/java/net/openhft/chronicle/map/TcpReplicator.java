@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.*;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.*;
@@ -65,6 +66,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     public static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
     private static final int BUFFER_SIZE = 0x100000; // 1MB
+    public static final int SPIN_LOOP_COUNT = 100000;
     private final SelectionKey[] selectionKeysStore = new SelectionKey[Byte.MAX_VALUE + 1];
     // used to instruct the selector thread to set OP_WRITE on a key correlated by the bit index in the
     // bitset
@@ -140,7 +142,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                 registerPendingRegistrations();
 
-                final int nSelectedKeys = selector.select(selectorTimeout);
+                final int nSelectedKeys = select();
 
                 // its less resource intensive to set this less frequently and use an approximation
                 final long approxTime = System.currentTimeMillis();
@@ -153,53 +155,42 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 // set the OP_WRITE when data is ready to send
                 opWriteUpdater.applyUpdates();
 
-                if (nSelectedKeys == 0)
-                    continue;    // go back and check pendingRegistrations
 
-                final Set<SelectionKey> selectionKeys = selector.selectedKeys();
-                for (final SelectionKey key : selectionKeys) {
-                    try {
+                if (selectedKeys == null) {
 
-                        if (!key.isValid())
-                            continue;
+                    // use the standard java nio selector
 
-                        if (key.isAcceptable()) {
-                            if (LOG.isDebugEnabled())
-                                LOG.info("onAccept - " + name);
-                            onAccept(key);
-                        }
+                    if (nSelectedKeys == 0)
+                        continue;    // go back and check pendingRegistrations
 
-                        if (key.isConnectable()) {
-                            if (LOG.isDebugEnabled())
-                                LOG.debug("onConnect - " + name);
-                            onConnect(key);
-                        }
-
-                        if (key.isReadable())
-                            onRead(key, approxTime);
-
-                        if (key.isWritable())
-                            onWrite(key, approxTime);
-
-                    } catch (CancelledKeyException e) {
-                        if (!isClosed)
-                            quietClose(key, e);
-                    } catch (ClosedSelectorException e) {
-                        if (!isClosed)
-                            quietClose(key, e);
-                    } catch (IOException e) {
-                        if (!isClosed)
-                            quietClose(key, e);
-                    } catch (InterruptedException e) {
-                        if (!isClosed)
-                            quietClose(key, e);
-                    } catch (Exception e) {
-                        LOG.info("", e);
-                        if (!isClosed)
-                            closeEarlyAndQuietly(key.channel());
+                    final Set<SelectionKey> selectionKeys = selector.selectedKeys();
+                    for (final SelectionKey key : selectionKeys) {
+                        processKey(approxTime, key);
                     }
+                    selectionKeys.clear();
+                } else {
+                    // use the netty like selector
+
+                    final SelectionKey[] keys = selectedKeys.flip();
+
+                    if (keys.length == 0)
+                        continue;
+
+                    for (int i = 0; ; i++) {
+                        final SelectionKey key = keys[i];
+                        if (key == null)
+                            break;
+                        try {
+                            processKey(approxTime, key);
+                        } catch (BufferUnderflowException e) {
+                            if (!isClosed)
+                                LOG.error("", e);
+                        }
+
+                    }
+
                 }
-                selectionKeys.clear();
+
             }
         } catch (CancelledKeyException e) {
             if (LOG.isDebugEnabled())
@@ -216,6 +207,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         } catch (Exception e) {
             LOG.error("", e);
         } finally {
+            selectedKeys = null;
             if (LOG.isDebugEnabled())
                 LOG.debug("closing name=" + name);
             if (!isClosed) {
@@ -223,6 +215,73 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             }
         }
     }
+
+    private void processKey(long approxTime, SelectionKey key) {
+
+        try {
+
+            if (!key.isValid())
+                return;
+
+            if (key.isAcceptable()) {
+                if (LOG.isDebugEnabled())
+                    LOG.info("onAccept - " + name);
+                onAccept(key);
+            }
+
+            if (key.isConnectable()) {
+                if (LOG.isDebugEnabled())
+                    LOG.debug("onConnect - " + name);
+                onConnect(key);
+            }
+
+            if (key.isReadable()) {
+                onRead(key, approxTime);
+            }
+            if (key.isWritable()) {
+                onWrite(key, approxTime);
+            }
+        } catch (BufferUnderflowException e) {
+            if (!isClosed)
+                quietClose(key, e);
+        } catch (CancelledKeyException e) {
+            if (!isClosed)
+                quietClose(key, e);
+        } catch (ClosedSelectorException e) {
+            if (!isClosed)
+                quietClose(key, e);
+        } catch (IOException e) {
+            if (!isClosed)
+                quietClose(key, e);
+        } catch (InterruptedException e) {
+            if (!isClosed)
+                quietClose(key, e);
+        } catch (Exception e) {
+            LOG.info("", e);
+            if (!isClosed)
+                closeEarlyAndQuietly(key.channel());
+        }
+
+    }
+
+    /**
+     * spin loops 100000 times first before calling the selector with timeout
+     *
+     * @return
+     * @throws IOException
+     */
+    private int select() throws IOException {
+
+        // spin loop 100000 times
+        for (int i = 0; i < SPIN_LOOP_COUNT; i++) {
+            final int keys = selector.selectNow();
+            if (keys != 0)
+                return keys;
+        }
+
+        return selector.select(selectorTimeout);
+    }
+
 
     /**
      * checks that we receive heartbeats and send out heart beats.
@@ -557,7 +616,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             // now we're finished we can get on with reading the entries
             attached.handShakingComplete = true;
             attached.remoteModificationIterator.dirtyEntries(attached.remoteBootstrapTimestamp);
-            reader.entriesFromBuffer(attached);
+            reader.entriesFromBuffer(attached, key);
         }
     }
 
@@ -578,6 +637,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
         } else if (attached.remoteModificationIterator != null)
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
+        if (attached.isHandShakingComplete() && !attached.entryWriter.isWorkIncomplete())
+            // TURN OP_WRITE_OFF
+            key.interestOps(key.interestOps() & ~OP_WRITE);
 
         try {
             final int bytesJustWritten = attached.entryWriter.writeBufferToSocket(socketChannel,
@@ -635,7 +697,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         attached.entryReader.lastHeartBeatReceived = approxTime;
 
         if (attached.isHandShakingComplete()) {
-            attached.entryReader.entriesFromBuffer(attached);
+            attached.entryReader.entriesFromBuffer(attached, key);
         } else {
             doHandShaking(key, socketChannel);
         }
@@ -974,6 +1036,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          *
          * @param socketChannel the socket to publish the buffer to
          * @param approxTime    an approximation of the current time in millis
+         * @param key           the selectors key
          * @throws IOException
          */
         private int writeBufferToSocket(@NotNull final SocketChannel socketChannel,
@@ -1127,9 +1190,10 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          * reads entries from the buffer till empty
          *
          * @param attached
+         * @param key
          * @throws InterruptedException
          */
-        void entriesFromBuffer(Attached attached) throws InterruptedException, IOException {
+        void entriesFromBuffer(Attached attached, SelectionKey key) throws InterruptedException, IOException {
             for (; ; ) {
 
                 out.limit(in.position());
@@ -1179,6 +1243,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                         final Work futureWork = statelessServerConnector.processStatelessEvent(state,
                                 attached.entryWriter.in, attached.entryReader.out);
+
+                        // turn the OP_WRITE on
+                        key.interestOps(key.interestOps() | OP_WRITE);
 
                         // in some cases it may not be possible to send out all the data before we
                         // fill out the write buffer, so this data will be send when the buffer

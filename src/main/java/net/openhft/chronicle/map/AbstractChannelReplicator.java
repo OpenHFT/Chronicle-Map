@@ -29,8 +29,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.nio.channels.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -58,6 +61,10 @@ abstract class AbstractChannelReplicator implements Closeable {
     @Nullable
     private final Throttler throttler;
     volatile boolean isClosed = false;
+    SelectedSelectionKeySet selectedKeys;
+
+    // currently this is not safe to use as it wont work with the stateless client
+    private boolean useOptimizedSelectedKeys = Boolean.valueOf(System.getProperty("useOptimizedSelectedKeys"));
 
     AbstractChannelReplicator(String name, ThrottlingConfig throttlingConfig,
                               int maxEntrySizeBytes)
@@ -72,10 +79,16 @@ abstract class AbstractChannelReplicator implements Closeable {
                         maxEntrySizeBytes, throttlingConfig.throttling(DAYS)) : null;
     }
 
-    static Selector openSelector(final CloseablesManager closeables) throws IOException {
+    Selector openSelector(final CloseablesManager closeables) throws IOException {
         Selector result = null;
         try {
-            result = Selector.open();
+            if (useOptimizedSelectedKeys) {
+                Selector selector = Selector.open();
+                closeables.add(selector);
+                result = openSelector(selector);
+            } else
+                result = Selector.open();
+
         } finally {
             if (result != null)
                 closeables.add(result);
@@ -99,6 +112,60 @@ abstract class AbstractChannelReplicator implements Closeable {
                 }
         }
         return result;
+    }
+
+
+    /**
+     * this is similar to the code in Netty
+     *
+     * @param selector
+     * @return
+     */
+    private Selector openSelector(Selector selector) {
+
+
+        try {
+            SelectedSelectionKeySet selectedKeySet = new SelectedSelectionKeySet();
+
+            Class<?> selectorImplClass =
+                    Class.forName("sun.nio.ch.SelectorImpl", false, getSystemClassLoader());
+
+            // Ensure the current selector implementation is what we can instrument.
+            if (!selectorImplClass.isAssignableFrom(selector.getClass())) {
+                return selector;
+            }
+
+            Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys");
+            Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");
+
+            selectedKeysField.setAccessible(true);
+            publicSelectedKeysField.setAccessible(true);
+
+            selectedKeysField.set(selector, selectedKeySet);
+            publicSelectedKeysField.set(selector, selectedKeySet);
+
+            this.selectedKeys = selectedKeySet;
+            //   logger.trace("Instrumented an optimized java.util.Set into: {}", selector);
+        } catch (Exception e) {
+            LOG.error("", e);
+            this.selectedKeys = null;
+            //   logger.trace("Failed to instrument an optimized java.util.Set into: {}", selector, t);
+        }
+
+        return selector;
+    }
+
+    static ClassLoader getSystemClassLoader() {
+        if (System.getSecurityManager() == null) {
+            return ClassLoader.getSystemClassLoader();
+        } else {
+            return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+                @Override
+                public ClassLoader run() {
+                    return ClassLoader.getSystemClassLoader();
+                }
+            });
+        }
     }
 
     void addPendingRegistration(Runnable registration) {
