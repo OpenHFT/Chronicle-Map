@@ -42,7 +42,7 @@ import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTIONID;
-import static net.openhft.chronicle.map.StatelessChronicleMapUnsynchronized.EventId.HEARTBEAT;
+import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 interface Work {
 
@@ -54,8 +54,8 @@ interface Work {
 }
 
 /**
- * Used with a {@link net.openhft.chronicle.map.ReplicatedChronicleMap} to send data between the maps using a
- * socket connection {@link net.openhft.chronicle.map.TcpReplicator}
+ * Used with a {@link net.openhft.chronicle.map.ReplicatedChronicleMap} to send data between the
+ * maps using a socket connection {@link net.openhft.chronicle.map.TcpReplicator}
  *
  * @author Rob Austin.
  */
@@ -86,10 +86,11 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private long selectorTimeout;
 
     /**
-     * @param maxEntrySizeBytes        used to check that the last entry will fit into the buffer, it can not
-     *                                 be smaller than the size of and entry, if it is set smaller the buffer
-     *                                 will over flow, it can be larger then the entry, but setting it too
-     *                                 large reduces the workable space in the buffer.
+     * @param maxEntrySizeBytes        used to check that the last entry will fit into the buffer,
+     *                                 it can not be smaller than the size of and entry, if it is
+     *                                 set smaller the buffer will over flow, it can be larger then
+     *                                 the entry, but setting it too large reduces the workable
+     *                                 space in the buffer.
      * @param statelessServerConnector set to NULL if not required
      * @throws IOException on an io error.
      */
@@ -295,7 +296,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     }
 
     /**
-     * check to see if we have lost connection with the remote node and if we have attempts a reconnect.
+     * check to see if we have lost connection with the remote node and if we have attempts a
+     * reconnect.
      *
      * @param key               the key relating to the heartbeat that we are checking
      * @param approxTimeOutTime the approximate time in milliseconds
@@ -442,8 +444,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     }
 
     /**
-     * this can be called when a new CHM is added to a cluster, we have to rebootstrap so will clear all the
-     * old bootstrap information
+     * this can be called when a new CHM is added to a cluster, we have to rebootstrap so will clear
+     * all the old bootstrap information
      *
      * @param key the nio SelectionKey
      */
@@ -455,7 +457,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     }
 
     /**
-     * used to exchange identifiers and timestamps and heartbeat intervals between the server and client
+     * used to exchange identifiers and timestamps and heartbeat intervals between the server and
+     * client
      *
      * @param key           the SelectionKey relating to the this cha
      * @param socketChannel
@@ -651,10 +654,10 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     }
 
     /**
-     * sets interestOps to "selector keys",The change to interestOps much be on the same thread as the
-     * selector. This class, allows via {@link AbstractChannelReplicator .KeyInterestUpdater#set(int)}  to
-     * holds a pending change  in interestOps ( via a bitset ), this change is processed later on the same
-     * thread as the selector
+     * sets interestOps to "selector keys",The change to interestOps much be on the same thread as
+     * the selector. This class, allows via {@link AbstractChannelReplicator
+     * .KeyInterestUpdater#set(int)}  to holds a pending change  in interestOps ( via a bitset ),
+     * this change is processed later on the same thread as the selector
      */
     private static class KeyInterestUpdater {
 
@@ -685,8 +688,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
 
         /**
-         * @param keyIndex the index of the key that has changed, the list of keys is provided by the
-         *                 constructor {@link KeyInterestUpdater(int, SelectionKey[])}
+         * @param keyIndex the index of the key that has changed, the list of keys is provided by
+         *                 the constructor {@link KeyInterestUpdater(int, SelectionKey[])}
          */
         public void set(int keyIndex) {
             changeOfOpWriteRequired.set(keyIndex);
@@ -926,7 +929,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
 
         /**
-         * writes all the entries that have changed, to the buffer which will later be written to TCP/IP
+         * writes all the entries that have changed, to the buffer which will later be written to
+         * TCP/IP
          *
          * @param modificationIterator a record of which entries have modification
          * @param selectionKey
@@ -1004,7 +1008,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
 
         /**
-         * used to send an single zero byte if we have not send any data for up to the localHeartbeatInterval
+         * used to send an single zero byte if we have not send any data for up to the
+         * localHeartbeatInterval
          */
         private void writeHeartbeatToBuffer() {
 
@@ -1021,8 +1026,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
 
         /**
-         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE will get
-         * added back in as soon as we have data to write
+         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE
+         * will get added back in as soon as we have data to write
          *
          * @param socketChannel the socketChannel we wish to stop writing to
          * @param attached      data associated with the socketChannels key
@@ -1259,8 +1264,8 @@ class StatelessServerConnector<K, V> {
             ("mapSupportsBytes"));
     private static final Logger LOG = LoggerFactory.getLogger(StatelessServerConnector.class
             .getName());
-    public static final StatelessChronicleMapUnsynchronized.EventId[] VALUES
-            = StatelessChronicleMapUnsynchronized.EventId.values();
+    public static final StatelessChronicleMap.EventId[] VALUES
+            = StatelessChronicleMap.EventId.values();
     public static final int SIZE_OF_IS_EXCEPTION = 1;
     public static final int HEADER_SIZE = SIZE_OF_SIZE + SIZE_OF_IS_EXCEPTION + SIZE_OF_TRANSACTIONID;
 
@@ -1284,7 +1289,7 @@ class StatelessServerConnector<K, V> {
                                @NotNull final ByteBufferBytes reader) {
 
 
-        final StatelessChronicleMapUnsynchronized.EventId event = VALUES[eventId];
+        final StatelessChronicleMap.EventId event = VALUES[eventId];
 
         // these methods don't return a result
         switch (event) {
