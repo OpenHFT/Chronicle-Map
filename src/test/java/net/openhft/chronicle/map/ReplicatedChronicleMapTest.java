@@ -36,9 +36,6 @@ import static org.junit.Assert.*;
  */
 @Ignore
 public class ReplicatedChronicleMapTest extends JSR166TestCase {
-
-
-
     ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .create();
