@@ -42,7 +42,7 @@ import java.util.concurrent.*;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
-import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTIONID;
+import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTION_ID;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
 
 /**
@@ -888,7 +888,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         long sizeLocation = writeEvent(event);
 
         // skips for the transaction id
-        bytes.skip(SIZE_OF_TRANSACTIONID);
+        bytes.skip(SIZE_OF_TRANSACTION_ID);
         return sizeLocation;
     }
 

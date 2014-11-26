@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
-import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTIONID;
+import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTION_ID;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 interface Work {
@@ -142,7 +142,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                 registerPendingRegistrations();
 
-                final int nSelectedKeys = select();
+                final int nSelectedKeys = selector.selectNow();
 
                 // its less resource intensive to set this less frequently and use an approximation
                 final long approxTime = System.currentTimeMillis();
@@ -155,8 +155,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 // set the OP_WRITE when data is ready to send
                 opWriteUpdater.applyUpdates();
 
-
-                if (selectedKeys == null) {
+                if (useJavaNIOSelectionKeys) {
 
                     // use the standard java nio selector
 
@@ -173,10 +172,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                     final SelectionKey[] keys = selectedKeys.flip();
 
-                    if (keys.length == 0)
-                        continue;
+
                     try {
-                        for (int i = 0; i< keys.length && keys[i] != null; i++) {
+                        for (int i = 0; i < keys.length && keys[i] != null; i++) {
                             final SelectionKey key = keys[i];
 
                             try {
@@ -188,11 +186,12 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                         }
                     } finally {
-                        for (int i = 0; i< keys.length && keys[i] != null; i++) {
+                        for (int i = 0; i < keys.length && keys[i] != null; i++) {
                             keys[i] = null;
                         }
                     }
 
+                    //  Thread.sleep(100);
                 }
 
             }
@@ -229,7 +228,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             if (key.isAcceptable()) {
                 if (LOG.isDebugEnabled())
-                    LOG.info("onAccept - " + name);
+                    LOG.debug("onAccept - " + name);
                 onAccept(key);
             }
 
@@ -240,9 +239,13 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             }
 
             if (key.isReadable()) {
+                if (LOG.isDebugEnabled())
+                    LOG.debug("onRead - " + name);
                 onRead(key, approxTime);
             }
             if (key.isWritable()) {
+                if (LOG.isDebugEnabled())
+                    LOG.debug("onWrite - " + name);
                 onWrite(key, approxTime);
             }
         } catch (BufferUnderflowException e) {
@@ -495,7 +498,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         channel.socket().setSoLinger(false, 0);
 
         final Attached attached = new Attached();
-        channel.register(selector, OP_WRITE | OP_READ, attached);
+        channel.register(selector, OP_READ, attached);
 
         throttle(channel);
 
@@ -534,7 +537,10 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         final TcpSocketChannelEntryWriter writer = attached.entryWriter;
         final TcpSocketChannelEntryReader reader = attached.entryReader;
 
+        socketChannel.register(selector, OP_READ | OP_WRITE, attached);
+
         if (attached.remoteIdentifier == Byte.MIN_VALUE) {
+
 
             final byte remoteIdentifier = reader.identifierFromBuffer();
 
@@ -641,9 +647,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
         } else if (attached.remoteModificationIterator != null)
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
-        if (attached.isHandShakingComplete() && !attached.entryWriter.isWorkIncomplete())
-            // TURN OP_WRITE_OFF
-            key.interestOps(key.interestOps() & ~OP_WRITE);
 
         try {
             final int bytesJustWritten = attached.entryWriter.writeBufferToSocket(socketChannel,
@@ -651,6 +654,10 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             if (bytesJustWritten > 0)
                 contemplateThrottleWrites(bytesJustWritten);
+
+            if (!attached.entryWriter.hasBytesToWrite() && !attached.entryWriter.isWorkIncomplete())
+                // TURN OP_WRITE_OFF
+                key.interestOps(key.interestOps() & ~OP_WRITE);
 
         } catch (IOException e) {
             quietClose(key, e);
@@ -663,6 +670,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     /**
      * called when the selector receives a OP_READ message
      */
+
     private void onRead(final SelectionKey key,
                         final long approxTime) throws IOException, InterruptedException {
 
@@ -1122,6 +1130,10 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         public boolean doWork() {
             return uncompletedWork.doWork(in);
         }
+
+        public boolean hasBytesToWrite() {
+            return in.position() > 0;
+        }
     }
 
     /**
@@ -1338,7 +1350,7 @@ class StatelessServerConnector<K, V> {
     public static final StatelessChronicleMap.EventId[] VALUES
             = StatelessChronicleMap.EventId.values();
     public static final int SIZE_OF_IS_EXCEPTION = 1;
-    public static final int HEADER_SIZE = SIZE_OF_SIZE + SIZE_OF_IS_EXCEPTION + SIZE_OF_TRANSACTIONID;
+    public static final int HEADER_SIZE = SIZE_OF_SIZE + SIZE_OF_IS_EXCEPTION + SIZE_OF_TRANSACTION_ID;
 
 
     private final KeyValueSerializer<K, V> keyValueSerializer;

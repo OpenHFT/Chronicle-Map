@@ -51,27 +51,29 @@ abstract class AbstractChannelReplicator implements Closeable {
     public static final int BITS_IN_A_BYTE = 8;
 
     public static final int SIZE_OF_SIZE = 4;
-    public static final int SIZE_OF_TRANSACTIONID = 8;
+    public static final int SIZE_OF_TRANSACTION_ID = 8;
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractChannelReplicator.class);
-    final Selector selector;
+
+    // currently this is not safe to use as it wont work with the stateless client
+    static boolean useJavaNIOSelectionKeys = Boolean.valueOf(System.getProperty("useJavaNIOSelectionKeys"));
+
+    final SelectedSelectionKeySet selectedKeys = new SelectedSelectionKeySet();
+
     final CloseablesManager closeables = new CloseablesManager();
+    final Selector selector = openSelector(closeables);
     private final ExecutorService executorService;
     private final Queue<Runnable> pendingRegistrations = new ConcurrentLinkedQueue<Runnable>();
     @Nullable
     private final Throttler throttler;
     volatile boolean isClosed = false;
-    SelectedSelectionKeySet selectedKeys;
 
-    // currently this is not safe to use as it wont work with the stateless client
-    private boolean useOptimizedSelectedKeys = Boolean.valueOf(System.getProperty("useOptimizedSelectedKeys"));
 
     AbstractChannelReplicator(String name, ThrottlingConfig throttlingConfig,
                               int maxEntrySizeBytes)
             throws IOException {
         executorService = Executors.newSingleThreadExecutor(
                 new NamedThreadFactory(name, true));
-        selector = openSelector(closeables);
 
         throttler = throttlingConfig.throttling(DAYS) > 0 ?
                 new Throttler(selector,
@@ -84,7 +86,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         Selector result = Selector.open();
         closeables.add(result);
 
-        if (useOptimizedSelectedKeys) {
+        if (!useJavaNIOSelectionKeys) {
             closeables.add(new Closeable() {
                                @Override
                                public void close() throws IOException {
@@ -105,7 +107,7 @@ abstract class AbstractChannelReplicator implements Closeable {
 
                            }
             );
-            return openSelector(result);
+            return openSelector(result, selectedKeys);
 
         }
 
@@ -137,11 +139,13 @@ abstract class AbstractChannelReplicator implements Closeable {
      * @param selector
      * @return
      */
-    private Selector openSelector(Selector selector) {
+    private Selector openSelector(@NotNull final Selector selector, @NotNull final
+    SelectedSelectionKeySet
+            selectedKeySet) {
 
 
         try {
-            SelectedSelectionKeySet selectedKeySet = new SelectedSelectionKeySet();
+
 
             Class<?> selectorImplClass =
                     Class.forName("sun.nio.ch.SelectorImpl", false, getSystemClassLoader());
@@ -154,17 +158,17 @@ abstract class AbstractChannelReplicator implements Closeable {
             Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys");
             Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");
 
+
             selectedKeysField.setAccessible(true);
             publicSelectedKeysField.setAccessible(true);
+            Object old = selectedKeysField.get(selector);
 
             selectedKeysField.set(selector, selectedKeySet);
             publicSelectedKeysField.set(selector, selectedKeySet);
 
-            this.selectedKeys = selectedKeySet;
             //   logger.trace("Instrumented an optimized java.util.Set into: {}", selector);
         } catch (Exception e) {
             LOG.error("", e);
-            this.selectedKeys = null;
             //   logger.trace("Failed to instrument an optimized java.util.Set into: {}", selector, t);
         }
 
