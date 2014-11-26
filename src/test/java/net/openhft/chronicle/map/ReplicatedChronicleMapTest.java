@@ -19,7 +19,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -34,7 +33,7 @@ import static org.junit.Assert.*;
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd. Then modified by the Open HFT team.
  */
-@Ignore
+
 public class ReplicatedChronicleMapTest extends JSR166TestCase {
     ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
