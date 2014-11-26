@@ -607,8 +607,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
 
     ObjectSerializer acquireObjectSerializer(ObjectSerializer defaultSerializer) {
         return objectSerializer == null ?
-                objectSerializer = BytesMarshallableSerializer.create(
-                        bytesMarshallerFactory(), defaultSerializer) :
+                BytesMarshallableSerializer.create(bytesMarshallerFactory(), defaultSerializer) :
                 objectSerializer;
     }
 
