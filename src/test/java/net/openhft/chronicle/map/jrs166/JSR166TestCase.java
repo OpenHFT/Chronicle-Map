@@ -284,6 +284,7 @@ public class JSR166TestCase {
             throw new AssertionFailedError("interrupt status set in main thread");
 
         checkForkJoinPoolThreadLeaks();
+        System.gc();
     }
 
     /**

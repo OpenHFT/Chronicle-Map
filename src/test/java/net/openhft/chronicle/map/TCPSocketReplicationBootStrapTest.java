@@ -152,6 +152,7 @@ public class TCPSocketReplicationBootStrapTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

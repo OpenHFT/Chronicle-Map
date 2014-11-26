@@ -75,6 +75,7 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

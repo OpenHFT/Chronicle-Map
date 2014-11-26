@@ -32,22 +32,22 @@ public class Issue42Test {
         if (!Jvm.isWindows())
             return;
 
-        final ChronicleMap<CharSequence, CharSequence> map = OnHeapUpdatableChronicleMapBuilder
+        try (final ChronicleMap<CharSequence, CharSequence> map = OnHeapUpdatableChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .entrySize(18)
                 .entries(1500000)
-                .minSegments(128).create();
+                .minSegments(128).create()) {
 
-        for (int i = 0; i < 1000000; ++i) {
-            String s = String.valueOf(i);
-            map.put(s, s);
+            for (int i = 0; i < 1000000; ++i) {
+                String s = String.valueOf(i);
+                map.put(s, s);
+            }
+
+            for (int i = 0; i < 1000000; ++i) {
+                String s = String.valueOf(i);
+                Assert.assertEquals(s, map.get(s));
+            }
         }
 
-        for (int i = 0; i < 1000000; ++i) {
-            String s = String.valueOf(i);
-            Assert.assertEquals(s, map.get(s));
-        }
-
-        map.close();
     }
 }

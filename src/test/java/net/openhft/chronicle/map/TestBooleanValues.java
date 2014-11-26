@@ -34,10 +34,11 @@ public class TestBooleanValues {
      */
     @Test
     public void testTestBooleanValues() throws IOException, InterruptedException {
-        ChronicleMap<Integer, Boolean> map =
-                ChronicleMapBuilder.of(Integer.class, Boolean.class).create();
-        map.put(7, true);
-        Assert.assertEquals(true, map.get(7));
+        try (ChronicleMap<Integer, Boolean> map =
+                     ChronicleMapBuilder.of(Integer.class, Boolean.class).create()) {
+            map.put(7, true);
+            Assert.assertEquals(true, map.get(7));
+        }
     }
 }
 

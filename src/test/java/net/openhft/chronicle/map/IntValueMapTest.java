@@ -37,22 +37,24 @@ public class IntValueMapTest {
     @Test
     public void test() throws IOException {
 
-        final ChronicleMap<IntValue, CharSequence> map = OnHeapUpdatableChronicleMapBuilder
+        try (final ChronicleMap<IntValue, CharSequence> map = OnHeapUpdatableChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class)
                 .entries(20000)
-                .keyMarshaller(ByteableIntValueMarshaller.INSTANCE).create();
+                .keyMarshaller(ByteableIntValueMarshaller.INSTANCE).create()) {
 
-        IntValue$$Native value = new IntValue$$Native();
-        value.bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
+            IntValue$$Native value = new IntValue$$Native();
+            value.bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
 
-        value.setValue(1);
-        final String expected = "test";
-        map.put(value, expected);
+            value.setValue(1);
+            final String expected = "test";
+            map.put(value, expected);
 
-        final CharSequence actual = map.get(value);
-        assertEquals(expected, actual);
+            final CharSequence actual = map.get(value);
+            assertEquals(expected, actual);
 
-        // this will fail
-        map.toString();
+            // this will fail
+
+            map.toString();
+        }
     }
 }

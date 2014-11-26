@@ -52,17 +52,18 @@ public class ConstantSizeBySampleTest {
 
     @Test
     public void testUnexpectedlyLongConstantByteArrayValues() throws IOException {
-        ChronicleMap<Long, byte[]> map = ChronicleMapBuilder.of(Long.class, byte[].class)
+        try (ChronicleMap<Long, byte[]> map = ChronicleMapBuilder.of(Long.class, byte[].class)
                 .constantValueSizeBySample(new byte[512 * 1024])
                 .entries(100)
                 .actualSegments(1)
-                .create();
+                .create()) {
 
-        byte[] value = new byte[512 * 1024];
+            byte[] value = new byte[512 * 1024];
 
-        value[42] = 1;
-        map.put(1L, value);
-        Assert.assertTrue(Arrays.equals(map.get(1L), value));
+            value[42] = 1;
+            map.put(1L, value);
+            Assert.assertTrue(Arrays.equals(map.get(1L), value));
+        }
     }
 
     static class ExternalizableData implements Externalizable {
@@ -88,17 +89,18 @@ public class ConstantSizeBySampleTest {
 
     @Test
     public void testUnexpectedlyLongConstantExternalizableValues() throws IOException {
-        ChronicleMap<Long, ExternalizableData> map =
+        try (  ChronicleMap<Long, ExternalizableData> map =
                 ChronicleMapBuilder.of(Long.class, ExternalizableData.class)
                         .constantValueSizeBySample(new ExternalizableData())
                         .entries(100)
                         .actualSegments(1)
-                        .create();
+                        .create()) {
 
-        ExternalizableData value = new ExternalizableData();
-        value.data[42] = 1;
-        map.put(1L, value);
-        Assert.assertEquals(map.get(1L), value);
+            ExternalizableData value = new ExternalizableData();
+            value.data[42] = 1;
+            map.put(1L, value);
+            Assert.assertEquals(map.get(1L), value);
+        }
     }
 
     static class SerializableData implements Serializable {
@@ -115,16 +117,17 @@ public class ConstantSizeBySampleTest {
     @Test
     @Ignore
     public void testUnexpectedlyLongConstantSerializableValues() throws IOException {
-        ChronicleMap<Long, SerializableData> map =
+        try (   ChronicleMap<Long, SerializableData> map =
                 ChronicleMapBuilder.of(Long.class, SerializableData.class)
                         .constantValueSizeBySample(new SerializableData())
                         .entries(100)
                         .actualSegments(1)
-                        .create();
+                        .create()) {
 
-        SerializableData value = new SerializableData();
-        value.data[42] = 1;
-        map.put(1L, value);
-        Assert.assertEquals(map.get(1L), value);
+            SerializableData value = new SerializableData();
+            value.data[42] = 1;
+            map.put(1L, value);
+            Assert.assertEquals(map.get(1L), value);
+        }
     }
 }

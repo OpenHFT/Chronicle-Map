@@ -117,6 +117,7 @@ public class TCPSocketReplicationPostConnectionTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

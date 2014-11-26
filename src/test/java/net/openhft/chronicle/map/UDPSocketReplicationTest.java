@@ -72,11 +72,12 @@ public class UDPSocketReplicationTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 
   /*  @Test
-  //  @Ignore
+     @Ignore
     public void testBufferOverflow() throws IOException, InterruptedException {
 
         for (int i = 0; i < 1024; i++) {
@@ -85,8 +86,7 @@ public class UDPSocketReplicationTest {
             System.out.println("" + map2);
         }
 
-    }
-*/
+    }*/
 
 }
 

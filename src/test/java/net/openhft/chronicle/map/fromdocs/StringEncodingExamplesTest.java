@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map.fromdocs;
 
-import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.io.Bytes;
@@ -26,12 +25,16 @@ import net.openhft.lang.io.CharBuffers;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.model.constraints.NotNull;
 import net.openhft.lang.pool.CharSequenceInterner;
+import net.openhft.lang.threadlocal.StatefulCopyable;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.*;
-import java.nio.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
@@ -186,18 +189,19 @@ public class StringEncodingExamplesTest {
 
     private void testCustomKeyMarshaller(BytesMarshaller<CharSequence> marshaller)
             throws IOException {
-        ChronicleSet<CharSequence> chineseWordSet = ChronicleSetBuilder.of(CharSequence.class)
+        try (ChronicleSet<CharSequence> chineseWordSet = ChronicleSetBuilder.of(CharSequence.class)
                 .keyMarshaller(marshaller)
                 .actualSegments(1)
                 .actualEntriesPerSegment(1000)
-                .create();
+                .create()) {
 
-        chineseWordSet.add("新闻");
-        chineseWordSet.add("地图");
-        chineseWordSet.add("贴吧");
-        chineseWordSet.add("登录");
-        chineseWordSet.add("设置");
-        Assert.assertEquals(5, chineseWordSet.size());
-        System.out.println(chineseWordSet);
+            chineseWordSet.add("新闻");
+            chineseWordSet.add("地图");
+            chineseWordSet.add("贴吧");
+            chineseWordSet.add("登录");
+            chineseWordSet.add("设置");
+            Assert.assertEquals(5, chineseWordSet.size());
+            System.out.println(chineseWordSet);
+        }
     }
 }

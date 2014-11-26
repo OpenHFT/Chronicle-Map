@@ -77,6 +77,8 @@ public class TCPSocketReplicationIntValueTest {
                 e.printStackTrace();
             }
         }
+
+        System.gc();
     }
 
 

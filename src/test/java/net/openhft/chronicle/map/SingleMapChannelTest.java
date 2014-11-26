@@ -104,6 +104,7 @@ public class SingleMapChannelTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

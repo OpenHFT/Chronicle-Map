@@ -49,154 +49,156 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     public void testIgnoreALatePut() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .replication((byte)1)
-                .create();
+                .replication((byte) 1)
+                .create()) {
 
-        current(timeProvider);
+            current(timeProvider);
 
-        // we do a put at the current time
-        map.put("key-1", "value-1");
-        assertEquals(map.size(), 1);
-        assertEquals(map.get("key-1"), "value-1");
+            // we do a put at the current time
+            map.put("key-1", "value-1");
+            assertEquals(map.size(), 1);
+            assertEquals(map.get("key-1"), "value-1");
 
-        // now test assume that we receive a late update to the map, the following update should be ignored
-        late(timeProvider);
+            // now test assume that we receive a late update to the map, the following update should be ignored
+            late(timeProvider);
 
 
-        map.put("key-1", "value-2");
+            map.put("key-1", "value-2");
 
-        // we'll now flip the time back to the current in order to do the read the result
-        current(timeProvider);
-        assertEquals(map.size(), 1);
-        assertEquals(map.get("key-1"), "value-1");
-
+            // we'll now flip the time back to the current in order to do the read the result
+            current(timeProvider);
+            assertEquals(map.size(), 1);
+            assertEquals(map.get("key-1"), "value-1");
+        }
     }
 
     @Test
     public void testIgnoreALatePutIfAbsent() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .replication((byte)1)
-                .create();
-        current(timeProvider);
+                .replication((byte) 1)
+                .create()) {
+            current(timeProvider);
 
-        // we do a put at the current time
-        map.put("key-1", "value-1");
-        assertEquals(map.size(), 1);
-        assertEquals(map.get("key-1"), "value-1");
+            // we do a put at the current time
+            map.put("key-1", "value-1");
+            assertEquals(map.size(), 1);
+            assertEquals(map.get("key-1"), "value-1");
 
-        // now test assume that we receive a late update to the map, the following update should be ignored
-        late(timeProvider);
+            // now test assume that we receive a late update to the map, the following update should be ignored
+            late(timeProvider);
 
 
-        final Object o = map.putIfAbsent("key-1", "value-2");
-        assertEquals(o, null);
+            final Object o = map.putIfAbsent("key-1", "value-2");
+            assertEquals(o, null);
 
-        // we'll now flip the time back to the current in order to do the read the result
-        current(timeProvider);
-        assertEquals(1, map.size());
-        assertEquals(map.get("key-1"), "value-1");
-
+            // we'll now flip the time back to the current in order to do the read the result
+            current(timeProvider);
+            assertEquals(1, map.size());
+            assertEquals(map.get("key-1"), "value-1");
+        }
     }
 
     @Test
     public void testIgnoreALateReplace() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .replication((byte)1)
-                .create();
+                .replication((byte) 1)
+                .create()) {
 
-        current(timeProvider);
-
-
-        // we do a put at the current time
-        map.put("key-1", "value-1");
-        assertEquals(1, map.size());
-        assertEquals("value-1", map.get("key-1"));
+            current(timeProvider);
 
 
-        // now test assume that we receive a late update to the map,
-        // the following update should be ignored
-        late(timeProvider);
+            // we do a put at the current time
+            map.put("key-1", "value-1");
+            assertEquals(1, map.size());
+            assertEquals("value-1", map.get("key-1"));
 
 
-        final Object o = map.replace("key-1", "value-2");
-        assertEquals(o, null);
+            // now test assume that we receive a late update to the map,
+            // the following update should be ignored
+            late(timeProvider);
 
-        // we'll now flip the time back to the current in order to do the read the result
-        current(timeProvider);
-        assertEquals(map.size(), 1);
-        assertEquals("value-1", map.get("key-1"));
 
+            final Object o = map.replace("key-1", "value-2");
+            assertEquals(o, null);
+
+            // we'll now flip the time back to the current in order to do the read the result
+            current(timeProvider);
+            assertEquals(map.size(), 1);
+            assertEquals("value-1", map.get("key-1"));
+
+        }
     }
 
     @Test
     public void testIgnoreALateReplaceWithValue() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
-                .create();
+                .create()) {
 
-        current(timeProvider);
+            current(timeProvider);
 
-        // we do a put at the current time
-        map.put("key-1", "value-1");
-        assertEquals(1, map.size());
-        assertEquals("value-1", map.get("key-1"));
+            // we do a put at the current time
+            map.put("key-1", "value-1");
+            assertEquals(1, map.size());
+            assertEquals("value-1", map.get("key-1"));
 
-        // now test assume that we receive a late update to the map, the following update should be ignored
-        late(timeProvider);
-
-
-        assertEquals(null, map.replace("key-1", "value-2"));
+            // now test assume that we receive a late update to the map, the following update should be ignored
+            late(timeProvider);
 
 
-        // we'll now flip the time back to the current in order to do the read the result
-        current(timeProvider);
-        assertEquals(1, map.size());
-        assertEquals("value-1", map.get("key-1"));
+            assertEquals(null, map.replace("key-1", "value-2"));
 
+
+            // we'll now flip the time back to the current in order to do the read the result
+            current(timeProvider);
+            assertEquals(1, map.size());
+            assertEquals("value-1", map.get("key-1"));
+        }
     }
 
     @Test
     public void testIgnoreALateRemoveWithValue() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
-                .create();
+                .create()) {
 
-        current(timeProvider);
+            current(timeProvider);
 
-        // we do a put at the current time
-        map.put("key-1", "value-1");
-        assertEquals(1, map.size());
-        assertEquals("value-1", map.get("key-1"));
+            // we do a put at the current time
+            map.put("key-1", "value-1");
+            assertEquals(1, map.size());
+            assertEquals("value-1", map.get("key-1"));
 
-        // now test assume that we receive a late update to the map, the following update should be ignored
-        late(timeProvider);
+            // now test assume that we receive a late update to the map, the following update should be ignored
+            late(timeProvider);
 
 
-        assertEquals(false, map.remove("key-1", "value-1"));
+            assertEquals(false, map.remove("key-1", "value-1"));
 
-        // we'll now flip the time back to the current in order to do the read the result
-        current(timeProvider);
-        assertEquals(1, map.size());
-        assertEquals("value-1", map.get("key-1"));
+            // we'll now flip the time back to the current in order to do the read the result
+            current(timeProvider);
+            assertEquals(1, map.size());
+            assertEquals("value-1", map.get("key-1"));
+        }
 
     }
 
@@ -204,11 +206,11 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     public void testIgnoreALateRemove() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
-                .create();
+                .create())  {
 
         current(timeProvider);
 
@@ -226,37 +228,40 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         current(timeProvider);
         assertEquals(1, map.size());
         assertEquals("value-1", map.get("key-1"));
-
     }
+
+}
 
 
     @Test
     public void testIgnoreWithRemoteRemove() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of
+                (CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
-                .create();
+                .create()) {
 
-        current(timeProvider);
+            current(timeProvider);
 
-        // we do a put at the current time
-        map.put("key-1", "value-1");
-        assertEquals(1, map.size());
-        assertEquals("value-1", map.get("key-1"));
+            // we do a put at the current time
+            map.put("key-1", "value-1");
+            assertEquals(1, map.size());
+            assertEquals("value-1", map.get("key-1"));
 
-        // now test assume that we receive a late update to the map, the following update should be ignored
-        final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5);
-        assertEquals(null, map.remove("key-1", "value-2", IDENTIFIER, late));
+            // now test assume that we receive a late update to the map, the following update should be ignored
+            final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5);
+            assertEquals(null, map.remove("key-1", "value-2", IDENTIFIER, late));
 
-        // we'll now flip the time back to the current in order to do the read the result
-        current(timeProvider);
-        assertEquals(1, map.size());
-        assertEquals("value-1", map.get("key-1"));
-        assertTrue(map.containsValue("value-1"));
-        assertFalse(map.containsValue("value-2"));
+            // we'll now flip the time back to the current in order to do the read the result
+            current(timeProvider);
+            assertEquals(1, map.size());
+            assertEquals("value-1", map.get("key-1"));
+            assertTrue(map.containsValue("value-1"));
+            assertFalse(map.containsValue("value-2"));
+        }
     }
 
 
@@ -265,30 +270,33 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of
+                (CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
-                .create();
+                .create()) {
 
-        current(timeProvider);
+            current(timeProvider);
 
-        // we do a put at the current time
-        map.put("key-1", "value-1");
-        assertEquals(1, map.size());
-        assertEquals("value-1", map.get("key-1"));
+            // we do a put at the current time
+            map.put("key-1", "value-1");
+            assertEquals(1, map.size());
+            assertEquals("value-1", map.get("key-1"));
 
-        // now test assume that we receive a late update to the map, the following update should be ignored
-        // now test assume that we receive a late update to the map, the following update should be ignored
-        final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5);
-        assertEquals(null, map.put("key-1", "value-2", IDENTIFIER, late));
+            // now test assume that we receive a late update to the map, the following update should be ignored
+            // now test assume that we receive a late update to the map, the following update should be ignored
+            final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5);
+            assertEquals(null, map.put("key-1", "value-2", IDENTIFIER, late));
 
 
-        // we'll now flip the time back to the current in order to do the read the result
-        current(timeProvider);
+            // we'll now flip the time back to the current in order to do the read the result
+            current(timeProvider);
 
-        assertEquals("value-1", map.get("key-1"));
-        assertEquals(1, map.size(), 0);
+            assertEquals("value-1", map.get("key-1"));
+            assertEquals(1, map.size(), 0);
+
+        }
     }
 
 
@@ -296,28 +304,30 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     public void testRemoveFollowedByLatePut() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of
+                (CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .replication((byte)1)
-                .create();
+                .replication((byte) 1)
+                .create()) {
 
-        current(timeProvider);
+            current(timeProvider);
 
-        // we do a put at the current time
-        map.put("key-1", "value-1");
-        map.remove("key-1", "value-1");
-        assertEquals(0, map.size());
-        assertEquals(null, map.get("key-1"));
-        assertEquals(false, map.containsKey("key-1"));
+            // we do a put at the current time
+            map.put("key-1", "value-1");
+            map.remove("key-1", "value-1");
+            assertEquals(0, map.size());
+            assertEquals(null, map.get("key-1"));
+            assertEquals(false, map.containsKey("key-1"));
 
-        // test assume that we receive a late update to the map, the following update should be ignored
-        final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(50);
-        assertEquals(null, map.put("key-1", "value-2", IDENTIFIER, late));
+            // test assume that we receive a late update to the map, the following update should be ignored
+            final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(50);
+            assertEquals(null, map.put("key-1", "value-2", IDENTIFIER, late));
 
-        assertEquals(null, map.get("key-1"));
-        assertEquals(false, map.containsKey("key-1"));
-        assertEquals(0, map.size(), 0);
+            assertEquals(null, map.get("key-1"));
+            assertEquals(false, map.containsKey("key-1"));
+            assertEquals(0, map.size(), 0);
+        }
     }
 
 
@@ -325,21 +335,22 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     public void testPutRemovePut() throws IOException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .timeProvider(timeProvider)
-                .replication((byte)1)
-                .create();
-        current(timeProvider);
+                .replication((byte) 1)
+                .create()) {
+            current(timeProvider);
 
-        // we do a put at the current time
-        map.put("key-1", "value-1");
-        map.remove("key-1");
-        assertEquals(0, map.size());
-        assertEquals(null, map.put("key-1", "new-value-2"));
-        assertEquals(true, map.containsKey("key-1"));
-        assertEquals("new-value-2", map.get("key-1"));
-        assertEquals(1, map.size(), 0);
+            // we do a put at the current time
+            map.put("key-1", "value-1");
+            map.remove("key-1");
+            assertEquals(0, map.size());
+            assertEquals(null, map.put("key-1", "new-value-2"));
+            assertEquals(true, map.containsKey("key-1"));
+            assertEquals("new-value-2", map.get("key-1"));
+            assertEquals(1, map.size(), 0);
+        }
     }
 
     private void current(TimeProvider timeProvider) {

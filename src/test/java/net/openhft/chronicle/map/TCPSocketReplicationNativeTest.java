@@ -74,6 +74,7 @@ public class TCPSocketReplicationNativeTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

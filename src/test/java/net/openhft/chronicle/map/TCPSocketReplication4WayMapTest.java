@@ -73,6 +73,7 @@ public class TCPSocketReplication4WayMapTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

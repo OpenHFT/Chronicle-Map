@@ -88,6 +88,7 @@ public class ChannelReplicationTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

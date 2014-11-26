@@ -111,6 +111,7 @@ public class PostChannelCreationTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

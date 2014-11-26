@@ -60,6 +60,7 @@ public class TCPSocketReplication3VoidValueTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

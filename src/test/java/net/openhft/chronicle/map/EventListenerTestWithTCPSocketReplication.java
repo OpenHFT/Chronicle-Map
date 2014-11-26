@@ -87,6 +87,7 @@ public class EventListenerTestWithTCPSocketReplication {
         valueRef.set(null);
         replacedValueRef.set(null);
         keyRef.set(null);
+        System.gc();
     }
 
 

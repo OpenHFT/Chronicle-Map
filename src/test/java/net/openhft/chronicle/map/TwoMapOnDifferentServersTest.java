@@ -70,6 +70,7 @@ public class TwoMapOnDifferentServersTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

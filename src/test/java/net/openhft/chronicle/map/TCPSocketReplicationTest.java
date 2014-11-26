@@ -64,6 +64,7 @@ public class TCPSocketReplicationTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 

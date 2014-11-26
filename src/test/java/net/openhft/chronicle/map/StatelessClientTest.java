@@ -52,6 +52,7 @@ public class StatelessClientTest {
 
         try (ChronicleMap<Integer, StringBuilder> serverMap = ChronicleMapBuilder.of(Integer.class,
                 StringBuilder.class)
+                .putReturnsNull(true)
                 .defaultValue(new StringBuilder())
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
 
@@ -59,6 +60,7 @@ public class StatelessClientTest {
 
             try (ChronicleMap<Integer, StringBuilder> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, StringBuilder.class)
+                    .putReturnsNull(true)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
 
                 String actual = statelessMap.mapForKey(10, ToString.INSTANCE);

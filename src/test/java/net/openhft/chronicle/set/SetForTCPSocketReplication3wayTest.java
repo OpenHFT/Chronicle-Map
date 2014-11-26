@@ -77,6 +77,7 @@ public class SetForTCPSocketReplication3wayTest {
                 e.printStackTrace();
             }
         }
+        System.gc();
     }
 
 
