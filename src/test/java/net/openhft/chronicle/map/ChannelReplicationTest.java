@@ -46,7 +46,6 @@ public class ChannelReplicationTest {
     private ReplicationHub hubA;
     private ReplicationHub hubB;
 
-
     @Before
     public void setup() throws IOException {
         {
@@ -59,7 +58,8 @@ public class ChannelReplicationTest {
                     .createWithId((byte) 1);
 
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(1000)
+                    .entries(2)
+                    .entrySize(100)
                     .instance().replicatedViaChannel(hubA.createChannel((short) 1)).create();
         }
 
@@ -72,7 +72,8 @@ public class ChannelReplicationTest {
                     .createWithId((byte) 2);
 
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(1000)
+                    .entries(2)
+                    .entrySize(100)
                     .instance().replicatedViaChannel(hubB.createChannel((short) 1)).create();
         }
     }
@@ -90,17 +91,18 @@ public class ChannelReplicationTest {
     }
 
 
-    @Ignore
+
     @Test
     public void test() throws IOException, InterruptedException {
 
         map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .entries(1000)
+                .entries(2)
+                .entrySize(100)
                 .instance().replicatedViaChannel(hubB.createChannel((short) 2)).create();
 
-
         map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .entries(1000)
+                .entries(2)
+                .entrySize(100)
                 .instance().replicatedViaChannel(hubA.createChannel((short) 2)).create();
 
         map2a.put(1, "EXAMPLE-2");

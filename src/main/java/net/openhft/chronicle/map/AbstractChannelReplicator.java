@@ -80,19 +80,35 @@ abstract class AbstractChannelReplicator implements Closeable {
     }
 
     Selector openSelector(final CloseablesManager closeables) throws IOException {
-        Selector result = null;
-        try {
-            if (useOptimizedSelectedKeys) {
-                Selector selector = Selector.open();
-                closeables.add(selector);
-                result = openSelector(selector);
-            } else
-                result = Selector.open();
 
-        } finally {
-            if (result != null)
-                closeables.add(result);
+        Selector result = Selector.open();
+        closeables.add(result);
+
+        if (useOptimizedSelectedKeys) {
+            closeables.add(new Closeable() {
+                               @Override
+                               public void close() throws IOException {
+                                   {
+                                       SelectionKey[] keys = selectedKeys.flip();
+                                       for (int i = 0; i < keys.length && keys[i] != null; i++) {
+                                           keys[i] = null;
+                                       }
+                                   }
+                                   {
+                                       SelectionKey[] keys = selectedKeys.flip();
+                                       for (int i = 0; i < keys.length && keys[i] != null; i++) {
+                                           keys[i] = null;
+                                       }
+                                   }
+                               }
+
+
+                           }
+            );
+            return openSelector(result);
+
         }
+
         return result;
     }
 
@@ -183,7 +199,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
     }
 
-    abstract void process() throws IOException;
+    abstract void processEvent() throws IOException;
 
     final void start() {
         executorService.execute(
@@ -191,7 +207,7 @@ abstract class AbstractChannelReplicator implements Closeable {
                     @Override
                     public void run() {
                         try {
-                            process();
+                            processEvent();
                         } catch (Exception e) {
                             LOG.error("", e);
                         }

@@ -126,7 +126,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     }
 
     @Override
-    void process() throws IOException {
+    void processEvent() throws IOException {
         try {
             final InetSocketAddress serverInetSocketAddress = new InetSocketAddress(replicationConfig
                     .serverPort());
@@ -175,18 +175,22 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                     if (keys.length == 0)
                         continue;
+                    try {
+                        for (int i = 0; i< keys.length && keys[i] != null; i++) {
+                            final SelectionKey key = keys[i];
 
-                    for (int i = 0; ; i++) {
-                        final SelectionKey key = keys[i];
-                        if (key == null)
-                            break;
-                        try {
-                            processKey(approxTime, key);
-                        } catch (BufferUnderflowException e) {
-                            if (!isClosed)
-                                LOG.error("", e);
+                            try {
+                                processKey(approxTime, key);
+                            } catch (BufferUnderflowException e) {
+                                if (!isClosed)
+                                    LOG.error("", e);
+                            }
+
                         }
-
+                    } finally {
+                        for (int i = 0; i< keys.length && keys[i] != null; i++) {
+                            keys[i] = null;
+                        }
                     }
 
                 }
@@ -207,7 +211,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         } catch (Exception e) {
             LOG.error("", e);
         } finally {
-            selectedKeys = null;
+
             if (LOG.isDebugEnabled())
                 LOG.debug("closing name=" + name);
             if (!isClosed) {
