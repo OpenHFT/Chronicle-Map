@@ -28,7 +28,7 @@ import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
-import net.openhft.lang.io.serialization.JDKObjectSerializer;
+import net.openhft.lang.io.serialization.JDKZObjectSerializer;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.model.constraints.Nullable;
 import net.openhft.lang.threadlocal.Provider;
@@ -208,7 +208,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
 
     long createMappedStoreAndSegments(File file) throws IOException {
         return createMappedStoreAndSegments(new MappedStore(file, FileChannel.MapMode.READ_WRITE,
-                sizeInBytes(), JDKObjectSerializer.INSTANCE));
+                sizeInBytes(), JDKZObjectSerializer.INSTANCE));
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {

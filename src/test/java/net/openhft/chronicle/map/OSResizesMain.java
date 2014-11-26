@@ -20,10 +20,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.lang.Jvm;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.Arrays;
 
 /**
@@ -35,15 +32,21 @@ import java.util.Arrays;
 public class OSResizesMain {
     public static void main(String[] args) throws IOException, InterruptedException {
         File file = File.createTempFile("over-sized", "deleteme");
-        ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class)
-                .entrySize(100 * 1024 * 1024)
-                .entries(1000 * 1000)
+        int valueSize = 1000 * 1000;
+        ChronicleMap<String, ByteArray> map = ChronicleMapBuilder.of(String.class, ByteArray.class)
+                .entrySize(50 * 1024 * 1024)
+                .valueSize(valueSize + 16)
                 .createPersistedTo(file);
-        for (int i = 0; i < 10000; i++) {
-            char[] chars = new char[i];
-            Arrays.fill(chars, '+');
-            map.put("key-" + i, new String(chars));
+        byte[] chars = new byte[valueSize];
+        Arrays.fill(chars, (byte) '+');
+        ByteArray ba = new ByteArray(chars);
+        for (int i = 0; i < 1000; i++) {
+            map.put("key-" + i, ba);
         }
+        long start = System.currentTimeMillis();
+        System.gc();
+        long time0 = System.currentTimeMillis() - start;
+        System.out.printf("GC time: %,d ms%n", time0);
         System.out.printf("System memory: %.1f GB, Extents of map: %.1f GB, disk used: %sB, addressRange: %s%n",
                 Double.parseDouble(run("head", "-1", "/proc/meminfo").split("\\s+")[1]) / 1e6,
                 file.length() / 1e9,
@@ -51,7 +54,7 @@ public class OSResizesMain {
                 run("grep", "over-sized", "/proc/" + Jvm.getProcessId() + "/maps").split("\\s")[0]);
         // show up in top.
         long time = System.currentTimeMillis();
-        while (time + 20000 > System.currentTimeMillis())
+        while (time + 30000 > System.currentTimeMillis())
             Thread.yield();
         map.close();
         file.delete();
@@ -71,5 +74,13 @@ public class OSResizesMain {
             sw.write("\nexit=" + exitValue);
         p.destroy();
         return sw.toString();
+    }
+}
+
+class ByteArray implements Serializable {
+    final byte[] bytes;
+
+    ByteArray(byte[] bytes) {
+        this.bytes = bytes;
     }
 }
