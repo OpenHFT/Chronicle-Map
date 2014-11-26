@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.serialization.JDKObjectSerializer;
+import net.openhft.lang.io.serialization.JDKZObjectSerializer;
 import org.junit.Test;
 
 import java.io.*;
@@ -35,7 +35,7 @@ public class RecursiveRefereneChMapTest {
         file.deleteOnExit();
         Map<String, StupidCycle> map = ChronicleMapBuilder.of(String.class, StupidCycle.class)
                 .entries(64)
-                .objectSerializer(JDKObjectSerializer.INSTANCE).create();
+                .objectSerializer(JDKZObjectSerializer.INSTANCE).create();
         map.put("Test", new StupidCycle());
         map.put("Test2", new StupidCycle2());
         StupidCycle cycle = (StupidCycle) map.get("Test");

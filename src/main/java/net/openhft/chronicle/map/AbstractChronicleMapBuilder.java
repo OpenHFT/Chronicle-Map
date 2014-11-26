@@ -605,10 +605,10 @@ abstract class AbstractChronicleMapBuilder<K, V,
         return self();
     }
 
-    ObjectSerializer objectSerializer() {
+    ObjectSerializer acquireObjectSerializer(ObjectSerializer defaultSerializer) {
         return objectSerializer == null ?
                 objectSerializer = BytesMarshallableSerializer.create(
-                        bytesMarshallerFactory(), JDKObjectSerializer.INSTANCE) :
+                        bytesMarshallerFactory(), defaultSerializer) :
                 objectSerializer;
     }
 
@@ -861,7 +861,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
                 new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                         V, Object, MetaBytesWriter<V, Object>>(this, identifier);
-        BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
+        BytesStore bytesStore = new DirectStore(JDKZObjectSerializer.INSTANCE,
                 map.sizeInBytes(), true);
         map.createMappedStoreAndSegments(bytesStore);
         return map;
@@ -872,7 +872,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
         pushingToMapEventListener();
         try {
             VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
-            BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
+            BytesStore bytesStore = new DirectStore(JDKZObjectSerializer.INSTANCE,
                     map.sizeInBytes(), true);
             map.createMappedStoreAndSegments(bytesStore);
             return establishReplication(map, singleHashReplication, channel);
@@ -933,8 +933,8 @@ abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     void preMapConstruction(boolean replicated) {
-        keyBuilder.objectSerializer(objectSerializer());
-        valueBuilder.objectSerializer(objectSerializer());
+        keyBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
+        valueBuilder.objectSerializer(acquireObjectSerializer(JDKZObjectSerializer.INSTANCE));
 
         long maxSize = (long) entrySize(replicated) * figureBufferAllocationFactor();
         keyBuilder.maxSize(maxSize);
