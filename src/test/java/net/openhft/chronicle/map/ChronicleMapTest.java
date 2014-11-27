@@ -529,6 +529,7 @@ public class ChronicleMapTest {
         map.close();
     }
 
+    @Ignore("JIRA raised HCOLL-221")
     @Test
     public void testAcquireFromMultipleThreads() throws Exception {
         int entries = 1000 * 1000;
@@ -536,6 +537,7 @@ public class ChronicleMapTest {
         testAcquireFromMultipleThreads(getSharedMap(entries, 128, 24, OF_4_BYTES));
         testAcquireFromMultipleThreads(getSharedMap(entries, 128, 24, OF_8_BYTES));
     }
+
 
     public void testAcquireFromMultipleThreads(ChronicleMap<CharSequence, LongValue> map)
             throws Exception {

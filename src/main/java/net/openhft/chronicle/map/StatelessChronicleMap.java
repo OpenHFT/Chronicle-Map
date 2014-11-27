@@ -328,13 +328,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             }
         }
 
-
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            //
-        }
-
     }
 
     /**
