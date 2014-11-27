@@ -142,7 +142,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                 registerPendingRegistrations();
 
-                final int nSelectedKeys = selector.selectNow();
+                final int nSelectedKeys = select();
 
                 // its less resource intensive to set this less frequently and use an approximation
                 final long approxTime = System.currentTimeMillis();
@@ -284,6 +284,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             final int keys = selector.selectNow();
             if (keys != 0)
                 return keys;
+
         }
 
         return selector.select(selectorTimeout);
@@ -295,6 +296,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      *
      * @param approxTime the approximate time in milliseconds
      */
+
     void heartBeatMonitor(long approxTime) {
 
         for (int i = activeKeys.nextSetBit(0); i >= 0; i = activeKeys.nextSetBit(i + 1)) {
