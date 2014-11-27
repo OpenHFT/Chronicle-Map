@@ -453,11 +453,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    public final V putIfAbsent(@NotNull K key, V value) {
+    public final V putIfAbsent(@net.openhft.lang.model.constraints.NotNull K key, V value) {
         return put0(key, value, false);
     }
 
-    V put0(@NotNull K key, V value, boolean replaceIfPresent) {
+    V put0(@net.openhft.lang.model.constraints.NotNull K key, V value, boolean replaceIfPresent) {
         checkKey(key);
         checkValue(value);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
@@ -1065,7 +1065,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
      */
     @Override
     @SuppressWarnings("unchecked")
-    public final boolean remove(@NotNull final Object key, final Object value) {
+    public final boolean remove(@net.openhft.lang.model.constraints.NotNull final Object key, final Object value) {
         if (value == null)
             return false; // CHM compatibility; I would throw NPE
         return (Boolean) removeIfValueIs(key, (V) value);
@@ -1216,7 +1216,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
      * @throws NullPointerException if any of the arguments are null
      */
     @Override
-    public final boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
+    public final boolean replace(@net.openhft.lang.model.constraints.NotNull K key, @net.openhft.lang.model.constraints.NotNull V oldValue, @net.openhft.lang.model.constraints.NotNull V newValue) {
         checkValue(oldValue);
         return (Boolean) replaceIfValueIs(key, oldValue, newValue);
     }
@@ -1226,7 +1226,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
      */
     @Override
     @SuppressWarnings("unchecked")
-    public final V replace(@NotNull final K key, @NotNull final V value) {
+    public final V replace(@net.openhft.lang.model.constraints.NotNull final K key, @net.openhft.lang.model.constraints.NotNull final V value) {
         return (V) replaceIfValueIs(key, null, value);
     }
 
@@ -1256,7 +1256,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
      * @param newValue      the new value you wish to store in the map
      * @return the value that was replaced
      */
-    private Object replaceIfValueIs(@NotNull final K key,
+    private Object replaceIfValueIs(@net.openhft.lang.model.constraints.NotNull final K key,
                        final V expectedValue, final V newValue) {
         checkKey(key);
         checkValue(newValue);
