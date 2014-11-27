@@ -350,6 +350,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
     public synchronized V putIfAbsent(K key, V value) {
+        if (key == null)
+            throw new NullPointerException();
         final long sizeLocation = writeEventAnSkip(PUT_IF_ABSENT);
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
         writeKey(key, local);
@@ -532,6 +534,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
     public synchronized V put(K key, V value) {
+        if (key == null)
+            throw new NullPointerException();
 
         final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
 
