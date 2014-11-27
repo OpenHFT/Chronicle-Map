@@ -272,31 +272,33 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     Future<V> removeLater(@NotNull K key);
 
     /**
-     * exports all the entries to a {@Link java.io.File} storing them in JSON format, an attempt is
+     * exports all the entries to a {@link java.io.File} storing them in JSON format, an attempt is
      * made where possible to use standard java serialisation and keep the data human readable, data
      * serialized using the custom serialises are converted to a binary format which is not human
-     * readable but this is only done if the Keys or Values are not {@Link java.io.Serializable}.
+     * readable but this is only done if the Keys or Values are not {@link java.io.Serializable}.
      * This method can be used in conjunction with {@link ChronicleMap#putAll(java.io.File)} and is
      * especially useful if you wish to import/export entries from one chronicle map into another.
      * This import and export of the entries can be performed even when the versions of ChronicleMap
      * differ. This method is not performant and as such we recommend it is not used in performance
      * sensitive code.
      *
-     * @param toFile the file to store all the entries to, the enties will be stored in JSON format
+     * @param toFile the file to store all the entries to, the entries will be stored in JSON
+     *               format
      * @throws IOException its not possible store the data to {@code toFile}
      * @see ChronicleMap#putAll(java.io.File)
      */
     void getAll(File toFile) throws IOException;
 
     /**
-     * imports all the entries from a {@Link java.io.File}, the {@code fromFile} must be created
-     * using or the same format as {@Link net.openhft.chronicle.map.ChronicleMap#getAll(java.io
-     *.File)}, this method behaves simualar to {@Link java.util.Map#put(java.lang.Object, java
-     *.lang.Object)} where existing entries are overwritten
+     * imports all the entries from a {@link java.io.File}, the {@code fromFile} must be created
+     * using or the same format as {@link ChronicleMap#get(java.lang.Object)}, this method behaves
+     * similar to {@link java.util.Map#put(java.lang.Object, java.lang.Object)} where existing
+     * entries are overwritten. A write lock is only held while each individual entry is inserted
+     * into the map, not over all the entries in the {@link java.io.File}
      *
-     * @param fromFile the file to store all the entries to, the enties will be stored in JSON
-     *                 format
-     * @throws IOException its not possible read the{@code fromFile}
+     * @param fromFile the file containing entries ( in JSON format ) which will be deserialized and
+     *                 {@link java.util.Map#put(java.lang.Object, java.lang.Object)} into the map
+     * @throws IOException its not possible read the {@code fromFile}
      * @see ChronicleMap#getAll(java.io.File)
      */
     void putAll(File fromFile) throws IOException;
