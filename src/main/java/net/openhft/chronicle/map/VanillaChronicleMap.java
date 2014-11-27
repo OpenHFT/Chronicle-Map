@@ -63,7 +63,6 @@ import static java.lang.Thread.currentThread;
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.lang.MemoryUnit.*;
 
-
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         V, VW, MVW extends MetaBytesWriter<V, VW>> extends AbstractMap<K, V>
         implements ChronicleMap<K, V>, Serializable {

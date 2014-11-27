@@ -26,6 +26,8 @@ import net.openhft.lang.model.Byteable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
@@ -268,6 +270,37 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @see java.util.concurrent.Future
      */
     Future<V> removeLater(@NotNull K key);
+
+    /**
+     * exports all the entries to a {@Link java.io.File} storing them in JSON format, an attempt is
+     * made where possible to use standard java serialisation and keep the data human readable, data
+     * serialized using the custom serialises are converted to a binary format which is not human
+     * readable but this is only done if the Keys or Values are not {@Link java.io.Serializable}.
+     * This method can be used in conjunction with {@link ChronicleMap#putAll(java.io.File)} and is
+     * especially useful if you wish to import/export entries from one chronicle map into another.
+     * This import and export of the entries can be performed even when the versions of ChronicleMap
+     * differ. This method is not performant and as such we recommend it is not used in performance
+     * sensitive code.
+     *
+     * @param toFile the file to store all the entries to, the enties will be stored in JSON format
+     * @throws IOException its not possible store the data to {@code toFile}
+     * @see ChronicleMap#putAll(java.io.File)
+     */
+    void getAll(File toFile) throws IOException;
+
+    /**
+     * imports all the entries from a {@Link java.io.File}, the {@code fromFile} must be created
+     * using or the same format as {@Link net.openhft.chronicle.map.ChronicleMap#getAll(java.io
+     *.File)}, this method behaves simualar to {@Link java.util.Map#put(java.lang.Object, java
+     *.lang.Object)} where existing entries are overwritten
+     *
+     * @param fromFile the file to store all the entries to, the enties will be stored in JSON
+     *                 format
+     * @throws IOException its not possible read the{@code fromFile}
+     * @see ChronicleMap#getAll(java.io.File)
+     */
+    void putAll(File fromFile) throws IOException;
+
 
 }
 
