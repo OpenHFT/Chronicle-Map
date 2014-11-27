@@ -109,6 +109,8 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
         @Override
         public V put(K key, V value) {
+            if (key == null)
+                throw new NullPointerException();
             return d.put(key, value);
         }
 
@@ -204,6 +206,8 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
         @Override
         public V putIfAbsent(K key, V value) {
+            if (key == null)
+                throw new NullPointerException();
             return d.putIfAbsent(key, value);
         }
 
