@@ -271,6 +271,16 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public void getAll(File toFile) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void putAll(File fromFile) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public V acquireUsing(@NotNull K key, V usingValue) {
         return map1.acquireUsing(key, usingValue);
     }

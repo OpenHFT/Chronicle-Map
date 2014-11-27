@@ -164,6 +164,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         });
     }
 
+    @Override
+    public void getAll(File toFile) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void putAll(File fromFile) {
+        throw new UnsupportedOperationException();
+    }
+
 
     private ExecutorService lazyExecutorService() {
 
@@ -835,7 +845,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         final long startTime = System.currentTimeMillis();
         final long transactionId = nextUniqueTransaction(startTime);
-        final long timeoutTime = System.currentTimeMillis() + config.timeoutMs();
+        final long timeoutTime = startTime + config.timeoutMs();
 
         // get the data back from the server
         Bytes in = blockingFetch0(sizeLocation, transactionId, startTime);

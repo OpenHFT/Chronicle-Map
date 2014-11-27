@@ -193,6 +193,16 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
+        public void getAll(File toFile) throws IOException {
+            d.getAll(toFile);
+        }
+
+        @Override
+        public void putAll(File fromFile) throws IOException {
+            d.putAll(fromFile);
+        }
+
+        @Override
         public V putIfAbsent(K key, V value) {
             return d.putIfAbsent(key, value);
         }

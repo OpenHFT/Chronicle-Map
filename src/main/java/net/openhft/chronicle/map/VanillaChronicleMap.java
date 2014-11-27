@@ -18,6 +18,14 @@
 
 package net.openhft.chronicle.map;
 
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.ConversionException;
+import com.thoughtworks.xstream.converters.Converter;
+import com.thoughtworks.xstream.converters.MarshallingContext;
+import com.thoughtworks.xstream.converters.UnmarshallingContext;
+import com.thoughtworks.xstream.io.HierarchicalStreamReader;
+import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
+import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.Hasher;
@@ -34,12 +42,14 @@ import net.openhft.lang.model.constraints.Nullable;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.lang.reflect.Array;
+import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -50,12 +60,15 @@ import java.util.concurrent.TimeoutException;
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
+import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.lang.MemoryUnit.*;
 
 
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         V, VW, MVW extends MetaBytesWriter<V, VW>> extends AbstractMap<K, V>
         implements ChronicleMap<K, V>, Serializable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
 
     /**
      * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set
@@ -84,7 +97,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     final Alignment alignment;
     final int actualSegments;
     final long entriesPerSegment;
-    final transient MapEventListener<K, V, ChronicleMap<K, V>> eventListener;
+    transient MapEventListener<K, V, ChronicleMap<K, V>> eventListener;
     // if set the ReturnsNull fields will cause some functions to return NULL
     // rather than as returning the Object can be expensive for something you probably don't use.
     final boolean putReturnsNull;
@@ -105,9 +118,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
     transient long headerSize;
     transient Set<Map.Entry<K, V>> entrySet;
 
+    private transient SerializationBuilder<K> keyBuilder;
+    private transient SerializationBuilder<V> valueBuilder;
+
     public VanillaChronicleMap(AbstractChronicleMapBuilder<K, V, ?> builder) throws IOException {
 
-        SerializationBuilder<K> keyBuilder = builder.keyBuilder;
+        keyBuilder = builder.keyBuilder;
         kClass = keyBuilder.eClass;
         keySizeMarshaller = keyBuilder.sizeMarshaller();
         originalKeyReader = keyBuilder.reader();
@@ -117,7 +133,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
         originalMetaKeyInterop = (MKI) keyBuilder.metaInterop();
         metaKeyInteropProvider = (MetaProvider<K, KI, MKI>) keyBuilder.metaInteropProvider();
 
-        SerializationBuilder<V> valueBuilder = builder.valueBuilder;
+        valueBuilder = builder.valueBuilder;
         vClass = valueBuilder.eClass;
         isNativeValueClass = vClass.getName().endsWith("$$Native");
         valueSizeMarshaller = valueBuilder.sizeMarshaller();
@@ -480,6 +496,242 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, KI>,
             }
         };
     }
+
+    @Override
+    public void getAll(File toFile) throws IOException {
+
+        final XStream xstream = new XStream(new JettisonMappedXmlDriver());
+        xstream.setMode(XStream.NO_REFERENCES);
+        xstream.alias("key", kClass);
+        xstream.alias("value", vClass);
+        xstream.alias("entries", net.openhft.chronicle.map.VanillaChronicleMap.EntrySet.class);
+
+        // ideally we will use java serialization if we can
+
+        lazyXStreamConverter().registerConverter(xstream);
+
+
+        try (FileOutputStream out = new FileOutputStream(toFile)) {
+            xstream.toXML(entrySet, out);
+        }
+
+    }
+
+    @Override
+    public void putAll(File fromFile) throws IOException {
+        final XStream xstream = new XStream(new JettisonMappedXmlDriver());
+        xstream.setMode(XStream.NO_REFERENCES);
+        xstream.alias("key", kClass);
+        xstream.alias("value", vClass);
+        xstream.alias("entries", net.openhft.chronicle.map.VanillaChronicleMap.EntrySet.class);
+
+        // ideally we will use java serialization if we can
+        lazyXStreamConverter().registerConverter(xstream);
+
+        try (FileInputStream out = new FileInputStream(fromFile)) {
+            xstream.fromXML(out);
+        }
+
+    }
+
+
+    private XStreamConverter xStreamConverter;
+
+    /**
+     * @return a lazily created XStreamConverter
+     */
+    private XStreamConverter lazyXStreamConverter() {
+
+        final KeyValueSerializer<K, V> serializers = new KeyValueSerializer<K, V>(keyBuilder,
+                valueBuilder);
+
+        final ThreadLocalCopies threadLocalCopies = serializers.threadLocalCopies();
+
+        final Bytes buffer = new ByteBufferBytes(allocateDirect((int) entrySize)
+                .order(ByteOrder.nativeOrder()));
+
+        return new XStreamConverter(threadLocalCopies, buffer, serializers);
+    }
+
+
+    private class XStreamConverter {
+
+
+        private final ThreadLocalCopies threadLocalCopies;
+        private Bytes buffer;
+        private final KeyValueSerializer<K, V> keyValueSerializer;
+
+        public XStreamConverter(ThreadLocalCopies threadLocalCopies, Bytes buffer, final KeyValueSerializer<K, V>
+                keyValueSerializer) {
+            this.threadLocalCopies = threadLocalCopies;
+            this.buffer = buffer;
+            this.keyValueSerializer = keyValueSerializer;
+        }
+
+
+        private synchronized Bytes toKeyBytes(K key) {
+            for (; ; ) {
+
+                try {
+                    keyValueSerializer.writeKey(key, buffer, threadLocalCopies);
+                    return buffer;
+                } catch (BufferOverflowException e) {
+                    ByteBuffer b = allocateDirect((int) buffer.capacity() + (int) entrySize)
+                            .order(ByteOrder.nativeOrder());
+                    buffer = new ByteBufferBytes(allocateDirect((int) buffer.capacity() + (int) entrySize)
+                            .order(ByteOrder.nativeOrder()));
+                }
+            }
+        }
+
+        private synchronized Bytes toValueBytes(V value) {
+            for (; ; ) {
+
+                try {
+                    keyValueSerializer.writeValue(value, buffer, threadLocalCopies);
+                    return buffer;
+                } catch (BufferOverflowException e) {
+                    ByteBuffer b = allocateDirect((int) buffer.capacity() + (int) entrySize)
+                            .order(ByteOrder.nativeOrder());
+                    buffer = new ByteBufferBytes(b);
+                }
+            }
+        }
+
+
+        private synchronized Bytes append(CharSequence value) {
+            for (; ; ) {
+
+                try {
+                    buffer.clear();
+                    buffer.append(value);
+                    buffer.flip();
+                    return buffer;
+                } catch (BufferOverflowException e) {
+                    ByteBuffer b = allocateDirect((int) buffer.capacity() + (int) entrySize)
+                            .order(ByteOrder.nativeOrder());
+                    buffer = new ByteBufferBytes(b);
+                }
+            }
+        }
+
+        private void registerConverter(XStream xstream) {
+            final Converter converter = new Converter() {
+
+                final Bytes buffer = XStreamConverter.this.buffer;
+
+                @Override
+                public boolean canConvert(Class aClass) {
+
+                    if (EntrySet.class
+                            .isAssignableFrom(aClass) || SimpleEntry.class
+                            .isAssignableFrom(aClass))
+                        return true;
+
+                    if (Serializable.class
+                            .isAssignableFrom(aClass))
+                        return false;
+
+                    return kClass.equals(aClass) || vClass.equals(aClass);
+                }
+
+                @Override
+                public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext
+                        marshallingContext) {
+
+                    buffer.clear();
+
+                    if (o.getClass().equals(kClass)) {
+
+                        //String text = toKeyBytes((K) o).asString().toString();
+                        // System.out.println("key=" + text);
+                        // writer.setValue(text);
+
+
+                        //  writer.startNode("key");
+                        writer.setValue(o.toString());
+                        //  writer.endNode();
+                    } else if (o.getClass().equals(vClass)) {
+                        writer.setValue(o.toString());
+                    } else if (o instanceof Entry) {
+                        final SimpleEntry e = (SimpleEntry) o;
+
+                        writer.startNode("key");
+                        marshallingContext.convertAnother(e.getKey());
+                        writer.endNode();
+                        writer.startNode("value");
+                        marshallingContext.convertAnother(e.getValue());
+                        writer.endNode();
+
+                    } else if (EntrySet.class
+                            .isAssignableFrom(o.getClass())) {
+
+                        for (Entry e : (EntrySet) o) {
+                            writer.startNode("entry");
+                            marshallingContext.convertAnother(e);
+                            writer.endNode();
+                        }
+
+                    }
+                }
+
+                @Override
+                public Object unmarshal(HierarchicalStreamReader reader, UnmarshallingContext unmarshallingContext) {
+                    String value = reader.getValue();
+                    buffer.clear();
+                    append(value);
+                    buffer.flip();
+
+                    final String nodeName = reader.getNodeName();
+
+
+                    if (nodeName.equals("entries")) {
+
+                        while (reader.hasMoreChildren()) {
+                            reader.moveDown();
+                            final String nodeName0 = reader
+                                    .getNodeName();
+
+                            if (!nodeName0.equals("entry"))
+                                throw new ConversionException("unable to convert node " +
+                                        "named=" + nodeName0);
+                            K k = null;
+                            V v = null;
+
+                            while (reader.hasMoreChildren()) {
+                                reader.moveDown();
+                                final String nodeName1 = reader
+                                        .getNodeName();
+                                if ("key".equals(nodeName1))
+                                    k = (K) unmarshallingContext.convertAnother(null, kClass);
+                                else if ("value".equals(nodeName1))
+                                    v = (V) unmarshallingContext.convertAnother(null, vClass);
+                                else throw new ConversionException
+                                            ("expecting either a key or" +
+                                                    " value");
+                                reader.moveUp();
+                            }
+
+                            if (k != null)
+                                VanillaChronicleMap.this.put(k, v);
+                            reader.moveUp();
+                        }
+
+
+                    } else if (nodeName.equals("key"))
+                        return keyValueSerializer.readKey(buffer, threadLocalCopies);
+                    else if (nodeName.equals("value"))
+                        return keyValueSerializer.readValue(buffer, threadLocalCopies);
+
+                    return null;
+                }
+            };
+
+            xstream.registerConverter(converter);
+        }
+
+    }
+
 
     @NotNull
     @Override
