@@ -33,11 +33,10 @@ public class CHMMetaDataTest {
     @Test
     public void testAccessTimes() throws IOException {
         File file = new File(TMP, "testAccessTimes");
-        MapEventListener<String, String, ChronicleMap<String, String>> listener =
+        BytesMapEventListener listener =
                 new StringStringMapEventListener(new AtomicLong(1));
         ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class)
-                .metaDataBytes(8)
-                .eventListener(listener).create();
+                .metaDataBytes(8).bytesEventListener(listener).create();
 
         try {
             map.put("a", "aye");
@@ -63,7 +62,7 @@ public class CHMMetaDataTest {
     }
 
     private static class StringStringMapEventListener
-            extends MapEventListener<String, String, ChronicleMap<String, String>> {
+            extends BytesMapEventListener {
         private static final long serialVersionUID = 0L;
 
         private final AtomicLong timeStamps;
@@ -73,27 +72,20 @@ public class CHMMetaDataTest {
         }
 
         @Override
-        public void onGetFound(ChronicleMap<String, String> map, Bytes entry, int metaDataBytes,
-                               String key, String value) {
-            assertEquals(8, metaDataBytes);
-            entry.writeLong(0, timeStamps.incrementAndGet());
+        public void onGetFound(Bytes entry, long metaDataPos, long keyPos, long valuePos) {
+            entry.writeLong(metaDataPos, timeStamps.incrementAndGet());
         }
 
         @Override
-        public void onPut(ChronicleMap<String, String> map, Bytes entry, int metaDataBytes,
-                          boolean added, String key, String replacedValue, String value, long pos,
-                          SharedSegment segment) {
-            assertEquals(8, metaDataBytes);
+        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added) {
             if (added)
-                assertEquals(0, entry.readLong());
-            entry.writeLong(0, timeStamps.incrementAndGet());
+                assertEquals(0, entry.readLong(metaDataPos));
+            entry.writeLong(metaDataPos, timeStamps.incrementAndGet());
         }
 
         @Override
-        public void onRemove(ChronicleMap<String, String> map, Bytes entry, int metaDataBytes,
-                             String key, String value, long pos, SharedSegment segment) {
-            assertEquals(8, metaDataBytes);
-            System.out.println("Removed " + key + "/" + value + " with ts of " + entry.readLong(0));
+        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos) {
+            System.out.println("Removed entry with ts of " + entry.readLong(metaDataPos));;
         }
     }
 }

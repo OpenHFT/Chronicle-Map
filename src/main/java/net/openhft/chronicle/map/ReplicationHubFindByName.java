@@ -64,17 +64,15 @@ class ReplicationHubFindByName<K> implements FindByName {
         this.replicationHub = replicationHub;
         ReplicationChannel channel = replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL);
 
-        final MapEventListener<CharSequence, ChronicleMapBuilderWithChannelId, ChronicleMap<CharSequence, ChronicleMapBuilderWithChannelId>> listener = new
-                MapEventListener<CharSequence, ChronicleMapBuilderWithChannelId, ChronicleMap<CharSequence, ChronicleMapBuilderWithChannelId>>() {
+        final MapEventListener<CharSequence, ChronicleMapBuilderWithChannelId> listener = new
+                MapEventListener<CharSequence, ChronicleMapBuilderWithChannelId>() {
 
                     // creates a map based on the details that are sent to the map of builders
                     @Override
-                    void onPut(ChronicleMap<CharSequence, ChronicleMapBuilderWithChannelId> map, Bytes
-                            entry, int metaDataBytes, boolean added, CharSequence key,
-                               ChronicleMapBuilderWithChannelId replaced, ChronicleMapBuilderWithChannelId
-                            value, long pos, SharedSegment segment) {
-                        super.onPut(map, entry, metaDataBytes, added, key, replaced, value, pos, segment);
-
+                    public void onPut(CharSequence key, ChronicleMapBuilderWithChannelId value,
+                               ChronicleMapBuilderWithChannelId replacedValue) {
+                        super.onPut(key, value, replacedValue);
+                        boolean added = replacedValue == null;
                         if (!added || value == null)
                             return;
 

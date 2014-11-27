@@ -19,8 +19,9 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 
@@ -34,8 +35,7 @@ import java.io.Serializable;
  * <p>To configure {@code MapEventListener} for {@code ChronicleMap}, use {@link
  * AbstractChronicleMapBuilder#eventListener(MapEventListener)} method.
  *
- * <p>{@link MapEventListeners} uninstantiable class contains several logging implementations and the default
- * {@linkplain MapEventListeners#nop() no-op implementation}.
+ * <p>See {@link #logging(String)} implementation.
  *
  * <p>All these calls are synchronous while a {@code ChronicleMap} lock is held so make them as quick as
  * possible.
@@ -45,31 +45,59 @@ import java.io.Serializable;
  *
  * @param <K> key type of the maps, trackable by this event listener
  * @param <V> value type of the maps, trackable by this event listener
- * @param <M> {@code ChronicleMap} subtype, trackable by this event listener
  * @see AbstractChronicleMapBuilder#eventListener(MapEventListener)
- * @see MapEventListeners
  */
-public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
-        implements Serializable {
+public abstract class MapEventListener<K, V> implements Serializable {
     private static final long serialVersionUID = 0L;
+
+    /**
+     * Returns the map event listener, which logs strings like
+     * "{@linkplain ChronicleMap#file() map file} opType key value", where opType is either "get",
+     * "put" or "remove", to the logger provided by SLF4J.
+     *
+     * @param <K> the map key type
+     * @param <V> the map value type
+     * @return the logging event listener
+     */
+    public static <K, V> MapEventListener<K, V> logging(String prefix) {
+        return new LoggingMapEventListener(prefix);
+    }
+
+    private static class LoggingMapEventListener extends MapEventListener {
+        private static final long serialVersionUID = 0L;
+        public final static Logger LOGGER = LoggerFactory.getLogger(LoggingMapEventListener.class);
+
+        private final String prefix;
+
+        private LoggingMapEventListener(String prefix) {
+            this.prefix = prefix;
+        }
+
+        @Override
+        public void onGetFound(Object key, Object value) {
+            LOGGER.info("get {} => {}", prefix, key, value);
+        }
+
+        @Override
+        public void onPut(Object key, Object value, Object replacedValue) {
+            LOGGER.info("{} put {} => {}", prefix, key, value);
+        }
+
+        @Override
+        public void onRemove(Object key, Object value) {
+            LOGGER.info("{} remove {} was {}", prefix, key, value);
+        }
+    }
 
     /**
      * This method is called if the key is found in the map during {@link ChronicleMap#get get}, {@link
      * ChronicleMap#getUsing getUsing} or {@link ChronicleMap#acquireUsing acquireUsing} method call.
      *
-     * @param map           the accessed map
-     * @param entry         bytes of the entry
-     * @param metaDataBytes length of {@link ChronicleHashBuilder#metaDataBytes(int) meta data} for this map
      * @param key           the key looked up
-     * @param value         the value found for the key
+     * @param foundValue    the value found for the key
      */
-    public void onGetFound(M map, Bytes entry, int metaDataBytes, K key, V value) {
+    public void onGetFound(K key, V foundValue) {
         // do nothing
-    }
-
-    void onPut(M map, Bytes entry, int metaDataBytes, boolean added, K key, V replacedValue, V value,
-               long pos, SharedSegment segment) {
-        onPut(map, entry, metaDataBytes, added, key, value, replacedValue);
     }
 
     /**
@@ -81,41 +109,23 @@ public abstract class MapEventListener<K, V, M extends ChronicleMap<K, V>>
      *
      * <p>This method is called when put is already happened.
      *
-     * @param map           the accessed map
-     * @param entry         bytes of the entry (with the value already written to)
-     * @param metaDataBytes length of {@link net.openhft.chronicle.hash.ChronicleHashBuilder#metaDataBytes(int)
-     *                      meta data} for this map
-     * @param added         {@code true} is the key was absent in the map before current {@code ChronicleMap}
-     *                      method call, led to putting a value and inherently calling this listener method
      * @param key           the key the given value is put for
-     * @param value         the value which is now associated with the given key
-     * @param replacedValue the value which was replaced by {@code value}, is NULL if {@code added} is true
+     * @param newValue      the value which is now associated with the given key
+     * @param replacedValue the value which was replaced by {@code newValue}, {@code null}
+     *                      if the key was absent in the map before current {@code ChronicleMap}
      */
-    public void onPut(M map, Bytes entry, int metaDataBytes, boolean added, K key, V value,
-                      @Nullable V replacedValue) {
+    public void onPut(K key, V newValue, @Nullable V replacedValue) {
         // do nothing
-    }
-
-    void onRemove(M map, Bytes entry, int metaDataBytes, K key, V value,
-                  long pos, SharedSegment segment) {
-        onRemove(map, entry, metaDataBytes, key, value);
     }
 
     /**
-     * This is called when an entry is removed. Misses, i. e. when {@code map.remove(key)} is called, but key
-     * is already absent in the map, are not notified.
+     * This is called when an entry is removed. Misses, i. e. when {@code map.remove(key)}
+     * is called, but key is already absent in the map, are not notified.
      *
-     * @param map           accessed
-     * @param entry         bytes of the entry just removed, but any data is not yet erased
-     * @param metaDataBytes length of {@link ChronicleHashBuilder#metaDataBytes(int) meta data} for this map
      * @param key           the key removed from the map
      * @param value         the value which was associated with the given key
      */
-    public void onRemove(M map, Bytes entry, int metaDataBytes, K key, V value) {
-        // do nothing
-    }
-
-    void onRelocation(long pos, SharedSegment segment) {
+    public void onRemove(K key, V value) {
         // do nothing
     }
 }

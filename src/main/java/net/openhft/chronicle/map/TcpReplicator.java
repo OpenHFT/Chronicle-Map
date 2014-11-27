@@ -1050,7 +1050,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          *
          * @param socketChannel the socket to publish the buffer to
          * @param approxTime    an approximation of the current time in millis
-         * @param key           the selectors key
          * @throws IOException
          */
         private int writeBufferToSocket(@NotNull final SocketChannel socketChannel,
@@ -1282,7 +1281,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                     }
 
                 } else
-                    externalizable.readExternalEntry(out);
+                    externalizable.readExternalEntry(copies, segmentState, out);
 
                 out.limit(limit);
 
@@ -1506,41 +1505,35 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work removeWithValue(Bytes reader, Bytes writer, final long sizeLocation) {
-        if (MAP_SUPPORTS_BYTES) {
-            map.removeWithValue(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final K key = readKey(reader, local);
-            final V readValue = readValue(reader, local);
-
-            final boolean result;
-            try {
-                result = map.remove(key, readValue);
-            } catch (Throwable e) {
-                return sendException(writer, sizeLocation, e);
+        try {
+            if (MAP_SUPPORTS_BYTES) {
+                writer.writeBoolean(map.removeWithValue(reader));
+            } else {
+                final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+                final K key = readKey(reader, local);
+                final V readValue = readValue(reader, local);
+                writer.writeBoolean(map.remove(key, readValue));
             }
-            writer.writeBoolean(result);
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
     private Work replaceWithOldAndNew(Bytes reader, Bytes writer, final long sizeLocation) {
-        if (MAP_SUPPORTS_BYTES) {
-            map.replaceWithOldAndNew(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final K key = readKey(reader, local);
-            final V oldValue = readValue(reader, local);
-            final V newValue = readValue(reader, local);
-            boolean replaced;
-
-            try {
-                replaced = map.replace(key, oldValue, newValue);
-            } catch (Throwable e) {
-                return sendException(writer, sizeLocation, e);
+        try {
+            if (MAP_SUPPORTS_BYTES) {
+                map.replaceWithOldAndNew(reader, writer);
+            } else {
+                final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+                final K key = readKey(reader, local);
+                final V oldValue = readValue(reader, local);
+                final V newValue = readValue(reader, local);
+                writer.writeBoolean(map.replace(key, oldValue, newValue));
             }
-            writer.writeBoolean(replaced);
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
@@ -1621,52 +1614,46 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work containsKey(Bytes reader, Bytes writer, final long sizeLocation) {
-        if (MAP_SUPPORTS_BYTES) {
-            map.containsKey(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final K k = readKey(reader, local);
-
-            try {
+        try {
+            if (MAP_SUPPORTS_BYTES) {
+                writer.writeBoolean(map.containsKey(reader));
+            } else {
+                final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+                final K k = readKey(reader, local);
                 writer.writeBoolean(map.containsKey(k));
-            } catch (Throwable e) {
-                return sendException(writer, sizeLocation, e);
             }
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
     private Work containsValue(Bytes reader, Bytes writer, final long sizeLocation) {
+        // todo optimize -- eliminate
+        final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+        final V v = readValue(reader, local);
 
-        if (MAP_SUPPORTS_BYTES) {
-            map.containsValue(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final V v = readValue(reader, local);
-
-            try {
-                writer.writeBoolean(map.containsValue(v));
-            } catch (Throwable e) {
-                return sendException(writer, sizeLocation, e);
-            }
+        try {
+            writer.writeBoolean(map.containsValue(v));
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
     private Work get(Bytes reader, Bytes writer, final long sizeLocation) {
-        if (MAP_SUPPORTS_BYTES) {
-            map.get(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final K k = readKey(reader, local);
-
-            try {
+        try {
+            if (MAP_SUPPORTS_BYTES) {
+                map.get(reader, writer);
+            } else {
+                final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+                final K k = readKey(reader, local);
                 writeValue(map.get(k), writer, local);
-            } catch (Throwable e) {
-                return sendException(writer, sizeLocation, e);
             }
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
@@ -1688,18 +1675,17 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work put(Bytes reader, Bytes writer, final long sizeLocation) {
-        if (MAP_SUPPORTS_BYTES) {
-            map.put(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final K k = readKey(reader, local);
-            final V v = readValue(reader, local);
-
-            try {
+        try {
+            if (MAP_SUPPORTS_BYTES) {
+                map.put(reader, writer);
+            } else {
+                final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+                final K k = readKey(reader, local);
+                final V v = readValue(reader, local);
                 writeValue(map.put(k, v), writer, local);
-            } catch (Throwable e) {
-                return sendException(writer, sizeLocation, e);
             }
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
@@ -1707,7 +1693,7 @@ class StatelessServerConnector<K, V> {
 
     private Work remove(Bytes reader) {
         if (MAP_SUPPORTS_BYTES) {
-            map.removeWithBytes(reader);
+            map.removeKeyAsBytes(reader);
         } else {
             final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
             final K key = readKey(reader, local);
@@ -1719,40 +1705,34 @@ class StatelessServerConnector<K, V> {
 
 
     private Work remove(Bytes reader, Bytes writer, final long sizeLocation) {
-        if (MAP_SUPPORTS_BYTES) {
-            map.remove(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final K key = readKey(reader, local);
-
-            try {
+        try {
+            if (MAP_SUPPORTS_BYTES) {
+                map.remove(reader, writer);
+            } else {
+                final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+                final K key = readKey(reader, local);
                 if (LOG.isDebugEnabled())
                     LOG.debug("removing entry key=" + key);
                 writeValue(map.remove(key), writer, local);
-            } catch (Throwable e) {
-                return sendException(writer, sizeLocation, e);
             }
-
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
         }
-
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
 
     private Work putAll(Bytes reader, Bytes writer, final long sizeLocation) {
-
-        if (MAP_SUPPORTS_BYTES) {
-            map.putAll(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final Map<K, V> m = readEntries(reader, local);
-
-            try {
+        try {
+            if (MAP_SUPPORTS_BYTES) {
+                map.putAll(reader);
+            } else {
+                final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+                final Map<K, V> m = readEntries(reader, local);
                 map.putAll(m);
-            } catch (Throwable e) {
-                return sendException(writer, sizeLocation, e);
             }
-
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
@@ -1924,23 +1904,17 @@ class StatelessServerConnector<K, V> {
 
 
     private Work putIfAbsent(Bytes reader, Bytes writer, final long sizeLocation) {
-
-        if (MAP_SUPPORTS_BYTES) {
-            map.putIfAbsent(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final K key = readKey(reader, local);
-            final V v = readValue(reader, local);
-
-            final V result;
-
-            try {
-                result = map.putIfAbsent(key, v);
-            } catch (Throwable e) {
-                return sendException(writer, sizeLocation, e);
+        try {
+            if (MAP_SUPPORTS_BYTES) {
+                map.putIfAbsent(reader, writer);
+            } else {
+                final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+                final K key = readKey(reader, local);
+                final V v = readValue(reader, local);
+                writeValue(map.putIfAbsent(key, v), writer, local);
             }
-
-            writeValue(result, writer, local);
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
@@ -1948,23 +1922,18 @@ class StatelessServerConnector<K, V> {
 
 
     private Work replace(Bytes reader, Bytes writer, final long sizeLocation) {
-
-        if (MAP_SUPPORTS_BYTES) {
-            map.replaceKV(reader, writer);
-        } else {
-            final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
-            final K k = readKey(reader, local);
-            final V v = readValue(reader, local);
-            final V replaced;
-
-            try {
-                replaced = map.replace(k, v);
-            } catch (Throwable e) {
-                return sendException(writer, sizeLocation, e);
+        try {
+            if (MAP_SUPPORTS_BYTES) {
+                map.replaceKV(reader, writer);
+            } else {
+                final ThreadLocalCopies local = keyValueSerializer.threadLocalCopies();
+                final K k = readKey(reader, local);
+                final V v = readValue(reader, local);
+                writeValue(map.replace(k, v), writer, local);
             }
-            writeValue(replaced, writer, local);
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
         }
-
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }

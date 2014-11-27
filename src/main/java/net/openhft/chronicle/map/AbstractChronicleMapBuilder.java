@@ -136,15 +136,15 @@ abstract class AbstractChronicleMapBuilder<K, V,
     private TimeProvider timeProvider = TimeProvider.SYSTEM;
     private BytesMarshallerFactory bytesMarshallerFactory;
     private ObjectSerializer objectSerializer;
-    private MapEventListener<K, V, ChronicleMap<K, V>> eventListener =
-            MapEventListeners.nop();
+    private MapEventListener<K, V> eventListener = null;
+    private BytesMapEventListener bytesEventListener = null;
     private V defaultValue = null;
     private DefaultValueProvider<K, V> defaultValueProvider = null;
     private PrepareValueBytes<K, V> prepareValueBytes = null;
 
     private SingleChronicleHashReplication singleHashReplication = null;
     private InetSocketAddress[] pushToAddresses;
-    public boolean bootstapOnlyLocalEntries = false;
+    public boolean bootstrapOnlyLocalEntries = false;
 
     AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
@@ -680,13 +680,22 @@ abstract class AbstractChronicleMapBuilder<K, V,
         return self();
     }
 
-    public B eventListener(MapEventListener<K, V, ChronicleMap<K, V>> eventListener) {
+    public B eventListener(MapEventListener<K, V> eventListener) {
         this.eventListener = eventListener;
         return self();
     }
 
-    MapEventListener<K, V, ChronicleMap<K, V>> eventListener() {
+    MapEventListener<K, V> eventListener() {
         return eventListener;
+    }
+
+    public B bytesEventListener(BytesMapEventListener eventListener) {
+        this.bytesEventListener = eventListener;
+        return self();
+    }
+
+    BytesMapEventListener bytesEventListener() {
+        return bytesEventListener;
     }
 
     /**
@@ -859,7 +868,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
         preMapConstruction(true);
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
                 new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
-                        V, Object, MetaBytesWriter<V, Object>>(this, identifier);
+                        V, Object, MetaBytesInterop<V, Object>>(this, identifier);
         BytesStore bytesStore = new DirectStore(JDKZObjectSerializer.INSTANCE,
                 map.sizeInBytes(), true);
         map.createMappedStoreAndSegments(bytesStore);
@@ -895,7 +904,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
             for (int i = 0; i < pushToAddresses.length; i++) {
                 statelessClients[i] = cmb.statelessClient(pushToAddresses[i]).create();
             }
-            eventListener = (MapEventListener<K, V, ChronicleMap<K, V>>) constructor.newInstance((Object) statelessClients);
+            eventListener = (MapEventListener<K, V>) constructor.newInstance((Object) statelessClients);
         } catch (ClassNotFoundException e) {
             LoggerFactory.getLogger(getClass().getName()).warn("Chronicle Enterprise not found in the class path");
         } catch (Exception e) {
@@ -924,10 +933,10 @@ abstract class AbstractChronicleMapBuilder<K, V,
                 identifier = channel.hub().identifier();
             }
             return new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
-                    V, Object, MetaBytesWriter<V, Object>>(this, identifier);
+                    V, Object, MetaBytesInterop<V, Object>>(this, identifier);
         } else {
             return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
-                    V, Object, MetaBytesWriter<V, Object>>(this);
+                    V, Object, MetaBytesInterop<V, Object>>(this);
         }
     }
 
@@ -998,8 +1007,8 @@ abstract class AbstractChronicleMapBuilder<K, V,
 
 
     @Override
-    public ChronicleMapBuilderI<K, V> bootstapOnlyLocalEntries(boolean bootstapOnlyLocalEntries) {
-        this.bootstapOnlyLocalEntries = bootstapOnlyLocalEntries;
+    public ChronicleMapBuilderI<K, V> bootstrapOnlyLocalEntries(boolean bootstapOnlyLocalEntries) {
+        this.bootstrapOnlyLocalEntries = bootstapOnlyLocalEntries;
         return this;
     }
 

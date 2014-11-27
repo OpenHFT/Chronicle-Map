@@ -36,6 +36,8 @@ interface MultiMap {
      */
     void put(long key, long value);
 
+    void putPosition(long value);
+
     /**
      * Remove a key/value pair.
      *
@@ -44,6 +46,8 @@ interface MultiMap {
      * @throws RuntimeException if key-value pair is absent in the multi map
      */
     void remove(long key, long value);
+
+    void removePosition(long value);
 
     void replace(long key, long oldValue, long newValue);
 

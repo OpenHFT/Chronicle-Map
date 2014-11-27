@@ -50,13 +50,12 @@ public class EventListenerTestWithTCPSocketReplication {
     final AtomicBoolean wasRemoved = new AtomicBoolean(false);
     final AtomicReference<CharSequence> valueRemoved = new AtomicReference<CharSequence>();
 
-    final MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>> eventListener = new
-            MapEventListener<Integer, CharSequence, ChronicleMap<Integer, CharSequence>>() {
+    final MapEventListener<Integer, CharSequence> eventListener = new
+            MapEventListener<Integer, CharSequence>() {
                 private static final long serialVersionUID = 1L;
 
                 @Override
-                public void onPut(ChronicleMap<Integer, CharSequence> map, Bytes entry, int metaDataBytes, boolean added, Integer key,
-                                  CharSequence value, CharSequence replacedValue) {
+                public void onPut(Integer key, CharSequence value, CharSequence replacedValue) {
                     putWasCalled.getAndSet(true);
                     keyRef.set(key);
                     valueRef.set(value);
@@ -64,7 +63,7 @@ public class EventListenerTestWithTCPSocketReplication {
                 }
 
                 @Override
-                public void onRemove(ChronicleMap<Integer, CharSequence> map, Bytes entry, int metaDataBytes, Integer key, CharSequence value) {
+                public void onRemove(Integer key, CharSequence value) {
                     wasRemoved.set(true);
                     valueRemoved.set(value);
                 }

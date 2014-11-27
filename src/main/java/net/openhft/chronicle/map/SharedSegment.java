@@ -19,6 +19,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.NativeBytes;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -28,17 +30,18 @@ import java.util.Map;
  */
 interface SharedSegment<K, V> {
 
-    AutoCloseable readLock();
+    /**
+     * if passed segmentState is null, null is returned instead of readLock
+     */
+    AutoCloseable readLock(@Nullable VanillaChronicleMap.SegmentState segmentState);
 
-    AutoCloseable writeLock();
+    AutoCloseable writeLock(@Nullable VanillaChronicleMap.SegmentState segmentState);
 
-    Map.Entry<K, V> getEntry(long pos);
+    Map.Entry<K, V> getEntry(@NotNull VanillaChronicleMap.SegmentState segmentState, long pos);
 
     void readUnlock();
 
     void writeUnlock();
-
-    NativeBytes entry(long pos);
 
     int getIndex();
 

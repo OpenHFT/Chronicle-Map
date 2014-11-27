@@ -492,10 +492,17 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> eventListener(MapEventListener<K, V, ChronicleMap<K, V>> eventListener) {
+    public ChronicleMapBuilder<K, V> eventListener(MapEventListener<K, V> eventListener) {
         delegate.eventListener(eventListener);
         return this;
     }
+
+    @Override
+    public ChronicleMapBuilderI<K, V> bytesEventListener(BytesMapEventListener eventListener) {
+        delegate.bytesEventListener(eventListener);
+        return this;
+    }
+
 
     @Override
     public ChronicleMap<K, V> createPersistedTo(File file) throws IOException {
@@ -503,16 +510,16 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
     }
 
     /**
-     * @param bootstapOnlyLocalEntries if set to true - when a new node joins a TCP replication grid, the new
-     *                                 node will be populated with data, only for the nodes that created that
-     *                                 data. Otherwise, all the nodes will publish all the data they have (
-     *                                 potentially swamping the new node with duplicates ) however this does
-     *                                 guarantee that all the data is replicated over to the new node, and is
-     *                                 useful especially in the case that the originating node is not
-     *                                 currently running.
+     * @param bootstrapOnlyLocalEntries if set to true - when a new node joins a TCP replication grid, the new
+     *                                  node will be populated with data, only for the nodes that created that
+     *                                  data. Otherwise, all the nodes will publish all the data they have (
+     *                                  potentially swamping the new node with duplicates ) however this does
+     *                                  guarantee that all the data is replicated over to the new node, and is
+     *                                  useful especially in the case that the originating node is not
+     *                                  currently running.
      */
-    public ChronicleMapBuilder<K, V> bootstapOnlyLocalEntries(boolean bootstapOnlyLocalEntries) {
-        delegate.bootstapOnlyLocalEntries(bootstapOnlyLocalEntries);
+    public ChronicleMapBuilder<K, V> bootstrapOnlyLocalEntries(boolean bootstrapOnlyLocalEntries) {
+        delegate.bootstrapOnlyLocalEntries(bootstrapOnlyLocalEntries);
         return this;
     }
 

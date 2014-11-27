@@ -122,6 +122,12 @@ class IntIntMultiMap implements MultiMap {
     }
 
     @Override
+    public void putPosition(long value) {
+        checkValueForPut(value);
+        positions.set(value);
+    }
+
+    @Override
     public void put(long key, long value) {
         key = maskUnsetKey(key);
         checkValueForPut(value);
@@ -133,6 +139,12 @@ class IntIntMultiMap implements MultiMap {
                 return;
             }
         }
+    }
+
+    @Override
+    public void removePosition(long value) {
+        checkValueForRemove(value);
+        positions.clear(value);
     }
 
     @Override

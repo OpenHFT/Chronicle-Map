@@ -290,7 +290,9 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
 
     ChronicleMapBuilderI<K, V> clone();
 
-    ChronicleMapBuilderI<K, V> eventListener(MapEventListener<K, V, ChronicleMap<K, V>> eventListener);
+    ChronicleMapBuilderI<K, V> eventListener(MapEventListener<K, V> eventListener);
+
+    ChronicleMapBuilderI<K, V> bytesEventListener(BytesMapEventListener eventListener);
 
     ChronicleMapBuilderI<K, V> putReturnsNull(boolean b);
 
@@ -307,7 +309,7 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
      *                                 useful especially in the case that the originating node is not
      *                                 currently running.
      */
-    ChronicleMapBuilderI<K, V> bootstapOnlyLocalEntries(boolean bootstapOnlyLocalEntries);
+    ChronicleMapBuilderI<K, V> bootstrapOnlyLocalEntries(boolean bootstapOnlyLocalEntries);
 
     String name();
 

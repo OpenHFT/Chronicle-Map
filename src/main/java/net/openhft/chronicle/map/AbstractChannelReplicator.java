@@ -22,6 +22,7 @@ import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.thread.NamedThreadFactory;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -68,6 +69,9 @@ abstract class AbstractChannelReplicator implements Closeable {
     private final Throttler throttler;
     volatile boolean isClosed = false;
 
+
+    ThreadLocalCopies copies;
+    VanillaChronicleMap.SegmentState segmentState;
 
     AbstractChannelReplicator(String name, ThrottlingConfig throttlingConfig,
                               int maxEntrySizeBytes)
@@ -211,6 +215,8 @@ abstract class AbstractChannelReplicator implements Closeable {
                     @Override
                     public void run() {
                         try {
+                            copies = VanillaChronicleMap.SegmentState.getCopies(null);
+                            segmentState = VanillaChronicleMap.SegmentState.get(copies);
                             processEvent();
                         } catch (Exception e) {
                             LOG.error("", e);
@@ -227,7 +233,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         executorService.shutdown();
         closeables.closeQuietly();
         executorService.shutdownNow();
-
+        segmentState.close();
 
         try {
             // we HAVE to be sure we have terminated before calling close() on the

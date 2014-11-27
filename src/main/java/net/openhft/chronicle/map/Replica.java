@@ -19,6 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -140,9 +141,13 @@ interface Replica extends Closeable {
          * is typically called when we receive a remote replication event, this event could originate from
          * either a remote {@code put(K key, V value)} or {@code remove(Object key)}
          *
+         * @param copies
+         * @param segmentState
          * @param source bytes to read an entry from
          */
-        void readExternalEntry(@NotNull Bytes source);
+        void readExternalEntry(
+                @NotNull ThreadLocalCopies copies,
+                @NotNull VanillaChronicleMap.SegmentState segmentState, @NotNull Bytes source);
 
     }
 

@@ -60,7 +60,7 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
         start();
     }
 
-    private static class UdpSocketChannelEntryReader implements EntryReader {
+    private class UdpSocketChannelEntryReader implements EntryReader {
 
         private final Replica.EntryExternalizable externalizable;
         private final ByteBuffer in;
@@ -113,7 +113,7 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
             if (out.remaining() != size)
                 return;
 
-            externalizable.readExternalEntry(out);
+            externalizable.readExternalEntry(copies, segmentState, out);
         }
 
     }

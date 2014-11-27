@@ -1,7 +1,5 @@
 /*
- * Copyright 2014 Higher Frequency Trading
- *
- * http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +14,11 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.serialization.internal;
+package net.openhft.chronicle.map;
 
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
-
-public interface MetaProvider<E, W, MW extends MetaBytesWriter<E, ? super W>> extends Serializable {
-
-    MW get(ThreadLocalCopies copies, MW originalMetaWriter, W writer, E e);
-
-    ThreadLocalCopies getCopies(ThreadLocalCopies copies);
+interface InstanceOrBytesToInstance<TB, T> {
+    T toInstance(@NotNull ThreadLocalCopies copies, TB instanceOrBytes, long size);
 }

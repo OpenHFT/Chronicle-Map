@@ -247,18 +247,20 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             current(timeProvider);
 
             // we do a put at the current time
-            map.put("key-1", "value-1");
+            String key1 = "key-1";
+            map.put(key1, "value-1");
             assertEquals(1, map.size());
-            assertEquals("value-1", map.get("key-1"));
+            assertEquals("value-1", map.get(key1));
 
-            // now test assume that we receive a late update to the map, the following update should be ignored
-            final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5);
-            assertEquals(null, map.remove("key-1", "value-2", IDENTIFIER, late));
+            // now test assume that we receive a late update to the map,
+            // the following update should be ignored
+            late(timeProvider);
+            assertFalse(map.remove(key1, "value-2"));
 
             // we'll now flip the time back to the current in order to do the read the result
             current(timeProvider);
             assertEquals(1, map.size());
-            assertEquals("value-1", map.get("key-1"));
+            assertEquals("value-1", map.get(key1));
             assertTrue(map.containsValue("value-1"));
             assertFalse(map.containsValue("value-2"));
         }
