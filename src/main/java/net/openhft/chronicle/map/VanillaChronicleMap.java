@@ -55,6 +55,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static java.lang.Class.forName;
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
@@ -718,13 +719,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     private class XStreamConverter {
 
-
         private final ThreadLocalCopies threadLocalCopies;
         private Bytes buffer;
         private final KeyValueSerializer<K, V> keyValueSerializer;
 
-        public XStreamConverter(ThreadLocalCopies threadLocalCopies, ByteBufferBytes buffer, final KeyValueSerializer<K, V>
-                keyValueSerializer) {
+        public XStreamConverter(ThreadLocalCopies threadLocalCopies,
+                                ByteBufferBytes buffer,
+                                final KeyValueSerializer<K, V> keyValueSerializer) {
             this.threadLocalCopies = threadLocalCopies;
             this.buffer = buffer;
             this.keyValueSerializer = keyValueSerializer;
@@ -738,9 +739,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 @Override
                 public boolean canConvert(Class aClass) {
 
-                    if (EntrySet.class
-                            .isAssignableFrom(aClass) || WriteThroughEntry.class.isAssignableFrom
-                            (aClass))
+                    if (EntrySet.class.isAssignableFrom(aClass)
+                            || WriteThroughEntry.class.isAssignableFrom(aClass))
                         return true;
 
                     if (Serializable.class
@@ -749,17 +749,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                     if (vClass.equals(Map.class))
                         return false;
-
-                    return kClass.isAssignableFrom(aClass) || vClass.isAssignableFrom(aClass);
+                    // todo add this back in when we do native
+                    //  return kClass.isAssignableFrom(aClass) || vClass.isAssignableFrom(aClass);
+                    return false;
                 }
 
                 @Override
                 public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext
                         marshallingContext) {
 
-                    buffer.clear();
-
-                   if (WriteThroughEntry.class.isAssignableFrom(o.getClass())) {
+                    if (WriteThroughEntry.class.isAssignableFrom(o.getClass())) {
 
                         final SimpleEntry e = (SimpleEntry) o;
 
@@ -794,78 +793,66 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 @Override
                 public Object unmarshal(HierarchicalStreamReader reader,
                                         UnmarshallingContext unmarshallingContext) {
-
-
                     final String nodeName = reader.getNodeName();
-
-
-                    if (nodeName.equals("chronicle-entries")) {
-
-                        while (reader.hasMoreChildren()) {
-                            reader.moveDown();
-                            final String nodeName0 = reader
-                                    .getNodeName();
-
-                            if (!nodeName0.equals("chronicle-entry"))
-                                throw new ConversionException("unable to convert node " +
-                                        "named=" + nodeName0);
-                            K k = null;
-                            V v = null;
+                    switch (nodeName) {
+                        case "chronicle-entries":
 
                             while (reader.hasMoreChildren()) {
                                 reader.moveDown();
-                                final String nodeName1 = reader
-                                        .getNodeName();
-                                if ("chronicle-key".equals(nodeName1)) {
+                                final String nodeName0 = reader.getNodeName();
 
+                                if (!nodeName0.equals("chronicle-entry"))
+                                    throw new ConversionException("unable to convert node " +
+                                            "named=" + nodeName0);
+                                K k = null;
+                                V v = null;
 
-                                    k = get(reader, unmarshallingContext, kClass);
-                                } else if ("chronicle-value".equals(nodeName1)) {
+                                while (reader.hasMoreChildren()) {
+                                    reader.moveDown();
+                                    final String nodeName1 = reader
+                                            .getNodeName();
+                                    if ("chronicle-key".equals(nodeName1))
+                                        k = get(reader, unmarshallingContext, kClass);
+                                    else if ("chronicle-value".equals(nodeName1))
+                                        v = get(reader, unmarshallingContext, vClass);
+                                    else
+                                        throw new ConversionException("expecting either a key or value");
+                                    reader.moveUp();
+                                }
 
+                                if (k != null)
+                                    VanillaChronicleMap.this.put(k, v);
 
-                                    v = get(reader, unmarshallingContext, vClass);
-
-
-                                } else throw new ConversionException
-                                        ("expecting either a key or" +
-                                                " value");
                                 reader.moveUp();
                             }
-
-                            if (k != null)
-                                VanillaChronicleMap.this.put(k, v);
-                            reader.moveUp();
-                        }
-
-
-                    } else if (nodeName.equals("chronicle-key"))
-                        return keyValueSerializer.readKey(buffer, threadLocalCopies);
-                    else if (nodeName.equals("chronicle-value"))
-                        return keyValueSerializer.readValue(buffer, threadLocalCopies);
+                            break;
+                        case "chronicle-key":
+                            return keyValueSerializer.readKey(buffer, threadLocalCopies);
+                        case "chronicle-value":
+                            return keyValueSerializer.readValue(buffer, threadLocalCopies);
+                    }
 
                     return null;
                 }
 
-                private <E> E get(HierarchicalStreamReader reader, UnmarshallingContext
-                        unmarshallingContext, final Class<E> clazz) {
+                private <E> E get(HierarchicalStreamReader reader,
+                                  UnmarshallingContext unmarshallingContext,
+                                  Class<E> clazz) {
 
                     if (reader.getAttributeCount() > 0) {
-                        String type = reader.getAttribute("type");
+                        final String type = reader.getAttribute("type");
                         try {
-                            return (E) unmarshallingContext.convertAnother(null, Class.forName
-                                    (type));
+                            return (E) unmarshallingContext.convertAnother(null, forName(type));
                         } catch (ClassNotFoundException e) {
                             throw new ConversionException(e);
                         }
-                    } else
-                        return (E) unmarshallingContext.convertAnother(null, clazz);
+                    } else return (E) unmarshallingContext.convertAnother(null, clazz);
 
                 }
             };
 
             xstream.registerConverter(converter);
         }
-
     }
 
 
