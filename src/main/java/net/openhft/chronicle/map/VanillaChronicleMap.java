@@ -666,7 +666,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
-
         xstream.alias("chronicle-entries", net.openhft.chronicle.map.VanillaChronicleMap.EntrySet.class);
 
         // ideally we will use java serialization if we can
