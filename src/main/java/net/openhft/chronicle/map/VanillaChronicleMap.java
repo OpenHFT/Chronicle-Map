@@ -662,7 +662,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    public void getAll(File toFile) throws IOException {
+    public synchronized void getAll(File toFile) throws IOException {
 
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
@@ -679,7 +679,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    public void putAll(File fromFile) throws IOException {
+    public synchronized void putAll(File fromFile) throws IOException {
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
         xstream.alias("chronicle-entries", net.openhft.chronicle.map.VanillaChronicleMap.EntrySet
@@ -700,17 +700,20 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     /**
      * @return a lazily created XStreamConverter
      */
-    private XStreamConverter lazyXStreamConverter() {
+    private synchronized XStreamConverter lazyXStreamConverter() {
+        if (xStreamConverter == null)
+            return xStreamConverter;
 
         final KeyValueSerializer<K, V> serializers = new KeyValueSerializer<K, V>(keyBuilder,
                 valueBuilder);
 
         final ThreadLocalCopies threadLocalCopies = serializers.threadLocalCopies();
 
-        final Bytes buffer = new ByteBufferBytes(allocateDirect((int) entrySize)
+        final ByteBufferBytes buffer = new ByteBufferBytes(allocateDirect((int) entrySize)
                 .order(ByteOrder.nativeOrder()));
 
-        return new XStreamConverter(threadLocalCopies, buffer, serializers);
+        xStreamConverter = new XStreamConverter(threadLocalCopies, buffer, serializers);
+        return xStreamConverter;
     }
 
 
@@ -721,7 +724,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         private Bytes buffer;
         private final KeyValueSerializer<K, V> keyValueSerializer;
 
-        public XStreamConverter(ThreadLocalCopies threadLocalCopies, Bytes buffer, final KeyValueSerializer<K, V>
+        public XStreamConverter(ThreadLocalCopies threadLocalCopies, ByteBufferBytes buffer, final KeyValueSerializer<K, V>
                 keyValueSerializer) {
             this.threadLocalCopies = threadLocalCopies;
             this.buffer = buffer;
@@ -806,7 +809,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                     if (kClass.isAssignableFrom(o.getClass())) {
 
-                        String text = toKeyBytes((K) o).asString().toString();
+                        Bytes bytes = (ByteBufferBytes) toKeyBytes((K) o);
+
+                        String hex = AbstractBytes.toHex(bytes);
+                        hex.toString();
+
+
+                        String text = bytes.asString().toString();
                         System.out.println("key=" + text);
                         // writer.setValue(text);
 

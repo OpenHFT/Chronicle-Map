@@ -191,7 +191,17 @@ public class ChronicleMapImportExportTest {
                 .create()) {
 
 
-            expected.put("hello", new LongValue$$Native());
+
+            ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
+                    .of(CharSequence.class, LongValue.class)
+                    .entries(1000)
+                    .entrySize(16);
+
+
+            LongValue value = new LongValue$$Native();
+
+
+            expected.put("hello", value);
 
             expected.getAll(file);
 

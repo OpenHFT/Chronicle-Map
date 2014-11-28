@@ -143,9 +143,8 @@ abstract class AbstractChannelReplicator implements Closeable {
      * @param selector
      * @return
      */
-    private Selector openSelector(@NotNull final Selector selector, @NotNull final
-    SelectedSelectionKeySet
-            selectedKeySet) {
+    private Selector openSelector(@NotNull final Selector selector,
+                                  @NotNull final SelectedSelectionKeySet selectedKeySet) {
 
 
         try {
@@ -165,7 +164,6 @@ abstract class AbstractChannelReplicator implements Closeable {
 
             selectedKeysField.setAccessible(true);
             publicSelectedKeysField.setAccessible(true);
-            Object old = selectedKeysField.get(selector);
 
             selectedKeysField.set(selector, selectedKeySet);
             publicSelectedKeysField.set(selector, selectedKeySet);

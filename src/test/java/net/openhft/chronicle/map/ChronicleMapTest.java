@@ -1358,13 +1358,13 @@ public class ChronicleMapTest {
 
     @Test
     public void equalsTest() throws IOException {
-        final ChronicleMap<Integer, String> map1 = OnHeapUpdatableChronicleMapBuilder
+        final ChronicleMap<Integer, String> map1 = ChronicleMapBuilder
                 .of(Integer.class, String.class).create();
 
         map1.put(1, "one");
         map1.put(2, "two");
 
-        final ChronicleMap<Integer, String> map2 = OnHeapUpdatableChronicleMapBuilder
+        final ChronicleMap<Integer, String> map2 = ChronicleMapBuilder
                 .of(Integer.class, String.class).create();
 
         map2.put(1, "one");
@@ -1405,6 +1405,20 @@ public class ChronicleMapTest {
         }
     }
 
+
+    @Ignore("JIRA raised for failing test HCOLL-222")
+    @Test
+    public void testPutLongValue() throws IOException {
+        final ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
+                .of(CharSequence.class, LongValue.class)
+                .entries(1000)
+                .entrySize(16);
+
+        final ChronicleMap<CharSequence, LongValue> map = builder.create();
+
+        LongValue value = nativeLongValue();
+        map.put("x", value);
+    }
 
     @Test
     public void testOffheapAcquireUsingLocked() throws IOException {
