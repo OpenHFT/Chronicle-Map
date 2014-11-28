@@ -41,9 +41,9 @@ import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Array;
@@ -473,11 +473,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
             RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
     RV put(ThreadLocalCopies copies, SegmentState segmentState,
-          MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-          InstanceOrBytesToInstance<KB, K> toKey,
-          GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-          InstanceOrBytesToInstance<? super VB, V> toValue,
-          boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused) {
+           MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+           InstanceOrBytesToInstance<KB, K> toKey,
+           GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+           InstanceOrBytesToInstance<? super VB, V> toValue,
+           boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused) {
         long hash = metaKeyInterop.hash(keyInterop, key);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
@@ -533,10 +533,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
     RV lookupUsing(ThreadLocalCopies copies, SegmentState segmentState,
-                  MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                  InstanceOrBytesToInstance<KB, K> toKey,
-                  ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
-                  boolean create) {
+                   MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+                   InstanceOrBytesToInstance<KB, K> toKey,
+                   ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
+                   boolean create) {
         long hash = metaKeyInterop.hash(keyInterop, key);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
@@ -666,17 +666,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
-        xstream.alias("key", kClass);
-        xstream.alias("value", vClass);
-        xstream.alias("entries", net.openhft.chronicle.map.VanillaChronicleMap.EntrySet.class);
+
+        xstream.alias("chronicle-entries", net.openhft.chronicle.map.VanillaChronicleMap.EntrySet.class);
 
         // ideally we will use java serialization if we can
-
         lazyXStreamConverter().registerConverter(xstream);
 
-
         try (FileOutputStream out = new FileOutputStream(toFile)) {
-            xstream.toXML(entrySet, out);
+            xstream.toXML(entrySet(), out);
         }
 
     }
@@ -685,9 +682,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public void putAll(File fromFile) throws IOException {
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
-        xstream.alias("key", kClass);
-        xstream.alias("value", vClass);
-        xstream.alias("entries", net.openhft.chronicle.map.VanillaChronicleMap.EntrySet.class);
+        xstream.alias("chronicle-entries", net.openhft.chronicle.map.VanillaChronicleMap.EntrySet
+                .class);
 
         // ideally we will use java serialization if we can
         lazyXStreamConverter().registerConverter(xstream);
@@ -788,15 +784,18 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 public boolean canConvert(Class aClass) {
 
                     if (EntrySet.class
-                            .isAssignableFrom(aClass) || SimpleEntry.class
-                            .isAssignableFrom(aClass))
+                            .isAssignableFrom(aClass) || WriteThroughEntry.class.isAssignableFrom
+                            (aClass))
                         return true;
 
                     if (Serializable.class
                             .isAssignableFrom(aClass))
                         return false;
 
-                    return kClass.equals(aClass) || vClass.equals(aClass);
+                    if (vClass.equals(Map.class))
+                        return false;
+
+                    return kClass.isAssignableFrom(aClass) || vClass.isAssignableFrom(aClass);
                 }
 
                 @Override
@@ -805,33 +804,43 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                     buffer.clear();
 
-                    if (o.getClass().equals(kClass)) {
+                    if (kClass.isAssignableFrom(o.getClass())) {
 
-                        //String text = toKeyBytes((K) o).asString().toString();
-                        // System.out.println("key=" + text);
+                        String text = toKeyBytes((K) o).asString().toString();
+                        System.out.println("key=" + text);
                         // writer.setValue(text);
-
 
                         //  writer.startNode("key");
                         writer.setValue(o.toString());
                         //  writer.endNode();
-                    } else if (o.getClass().equals(vClass)) {
+                    } else if (vClass.isAssignableFrom(o.getClass())) {
                         writer.setValue(o.toString());
-                    } else if (o instanceof Entry) {
+                    } else if (WriteThroughEntry.class.isAssignableFrom
+                            (o.getClass())) {
+
                         final SimpleEntry e = (SimpleEntry) o;
 
-                        writer.startNode("key");
-                        marshallingContext.convertAnother(e.getKey());
+                        writer.startNode("chronicle-key");
+
+                        Object key = e.getKey();
+                        if (!kClass.equals(key.getClass()))
+                            writer.addAttribute("type", key.getClass().getCanonicalName());
+
+                        marshallingContext.convertAnother(key);
                         writer.endNode();
-                        writer.startNode("value");
-                        marshallingContext.convertAnother(e.getValue());
+
+                        writer.startNode("chronicle-value");
+                        Object value = e.getValue();
+                        if (!vClass.equals(value.getClass()))
+                            writer.addAttribute("type", value.getClass().getCanonicalName());
+                        marshallingContext.convertAnother(value);
                         writer.endNode();
 
                     } else if (EntrySet.class
                             .isAssignableFrom(o.getClass())) {
 
                         for (Entry e : (EntrySet) o) {
-                            writer.startNode("entry");
+                            writer.startNode("chronicle-entry");
                             marshallingContext.convertAnother(e);
                             writer.endNode();
                         }
@@ -850,14 +859,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     final String nodeName = reader.getNodeName();
 
 
-                    if (nodeName.equals("entries")) {
+                    if (nodeName.equals("chronicle-entries")) {
 
                         while (reader.hasMoreChildren()) {
                             reader.moveDown();
                             final String nodeName0 = reader
                                     .getNodeName();
 
-                            if (!nodeName0.equals("entry"))
+                            if (!nodeName0.equals("chronicle-entry"))
                                 throw new ConversionException("unable to convert node " +
                                         "named=" + nodeName0);
                             K k = null;
@@ -867,13 +876,19 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                                 reader.moveDown();
                                 final String nodeName1 = reader
                                         .getNodeName();
-                                if ("key".equals(nodeName1))
-                                    k = (K) unmarshallingContext.convertAnother(null, kClass);
-                                else if ("value".equals(nodeName1))
-                                    v = (V) unmarshallingContext.convertAnother(null, vClass);
-                                else throw new ConversionException
-                                            ("expecting either a key or" +
-                                                    " value");
+                                if ("chronicle-key".equals(nodeName1)) {
+
+
+                                    k = get(reader, unmarshallingContext, kClass);
+                                } else if ("chronicle-value".equals(nodeName1)) {
+
+
+                                    v = get(reader, unmarshallingContext, vClass);
+
+
+                                } else throw new ConversionException
+                                        ("expecting either a key or" +
+                                                " value");
                                 reader.moveUp();
                             }
 
@@ -883,12 +898,28 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         }
 
 
-                    } else if (nodeName.equals("key"))
+                    } else if (nodeName.equals("chronicle-key"))
                         return keyValueSerializer.readKey(buffer, threadLocalCopies);
-                    else if (nodeName.equals("value"))
+                    else if (nodeName.equals("chronicle-value"))
                         return keyValueSerializer.readValue(buffer, threadLocalCopies);
 
                     return null;
+                }
+
+                private <E> E get(HierarchicalStreamReader reader, UnmarshallingContext
+                        unmarshallingContext, final Class<E> clazz) {
+
+                    if (reader.getAttributeCount() > 0) {
+                        String type = reader.getAttribute("type");
+                        try {
+                            return (E) unmarshallingContext.convertAnother(null, Class.forName
+                                    (type));
+                        } catch (ClassNotFoundException e) {
+                            throw new ConversionException(e);
+                        }
+                    } else
+                        return (E) unmarshallingContext.convertAnother(null, clazz);
+
                 }
             };
 
@@ -956,7 +987,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         if (mustReuseValue && returnedValue != null && returnedValue != usingValue)
             throw new IllegalArgumentException(
                     "acquireUsingLocked/getUsingLocked MUST reuse given " +
-                    "values. Given value" + usingValue +
+                            "values. Given value" + usingValue +
                             " cannot be reused to read " + returnedValue);
     }
 
@@ -977,30 +1008,30 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     transient InstanceOrBytesToInstance<Bytes, K> keyBytesToInstance =
             new InstanceOrBytesToInstance<Bytes, K>() {
-        @Override
-        public K toInstance(@NotNull ThreadLocalCopies copies, Bytes keyBytes, long size) {
-            assertNotNull(copies);
-            BytesReader<K> keyReader = keyReaderProvider.get(copies, originalKeyReader);
-            return keyReader.read(keyBytes, size);
-        }
-    };
+                @Override
+                public K toInstance(@NotNull ThreadLocalCopies copies, Bytes keyBytes, long size) {
+                    assertNotNull(copies);
+                    BytesReader<K> keyReader = keyReaderProvider.get(copies, originalKeyReader);
+                    return keyReader.read(keyBytes, size);
+                }
+            };
 
     transient InstanceOrBytesToInstance<Bytes, V> valueBytesToInstance =
             new InstanceOrBytesToInstance<Bytes, V>() {
-        @Override
-        public V toInstance(@NotNull ThreadLocalCopies copies, Bytes valueBytes, long size) {
-            return readValue(copies, valueBytes, null, size);
-        }
-    };
+                @Override
+                public V toInstance(@NotNull ThreadLocalCopies copies, Bytes valueBytes, long size) {
+                    return readValue(copies, valueBytes, null, size);
+                }
+            };
 
     private transient InstanceOrBytesToInstance<Bytes, V> outputValueBytesToInstance =
             new InstanceOrBytesToInstance<Bytes, V>() {
-        @Override
-        public V toInstance(@NotNull ThreadLocalCopies copies, Bytes outputBytes, long size) {
-            outputBytes.position(outputBytes.position() - size);
-            return readValue(copies, outputBytes, null, size);
-        }
-    };
+                @Override
+                public V toInstance(@NotNull ThreadLocalCopies copies, Bytes outputBytes, long size) {
+                    outputBytes.position(outputBytes.position() - size);
+                    return readValue(copies, outputBytes, null, size);
+                }
+            };
 
     @Override
     public final boolean containsKey(final Object k) {
@@ -1251,13 +1282,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
      * replace the value in a map, only if the existing entry equals {@param expectedValue}
      *
      * @param key           the key into the map
-     * @param expectedValue the expected existing value in the map
-     *                      ( could be null when we don't wish to do this check )
+     * @param expectedValue the expected existing value in the map ( could be null when we don't
+     *                      wish to do this check )
      * @param newValue      the new value you wish to store in the map
      * @return the value that was replaced
      */
     private Object replaceIfValueIs(@net.openhft.lang.model.constraints.NotNull final K key,
-                       final V expectedValue, final V newValue) {
+                                    final V expectedValue, final V newValue) {
         checkKey(key);
         checkValue(newValue);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
@@ -1372,7 +1403,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     final void putAll(Bytes entries) {
         long numberOfEntries = entries.readStopBit();
         long entryPosition = entries.position();
-        while (numberOfEntries --> 0) {
+        while (numberOfEntries-- > 0) {
             long keySize = keySizeMarshaller.readSize(entries);
             entries.skip(keySize);
             long valueSize = valueSizeMarshaller.readSize(entries);
@@ -1410,7 +1441,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 Provider.of(SegmentState.class);
         private static final SegmentState originalSegmentState = new SegmentState(0);
 
-        static @NotNull ThreadLocalCopies getCopies(ThreadLocalCopies copies) {
+        static
+        @NotNull
+        ThreadLocalCopies getCopies(ThreadLocalCopies copies) {
             return segmentStateProvider.getCopies(copies);
         }
 
@@ -1793,9 +1826,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         metaKeyInterop, keyInterop, key, keySize,
                         metaValueInterop, valueInterop, defaultValue, entry, true);
             } else if (prepareValueBytesAsWriter != null) {
-                    valueSize = putEntry(segmentState,
-                            metaKeyInterop, keyInterop, key, keySize,
-                            prepareValueBytesAsWriter, null, keyInstance, entry, true);
+                valueSize = putEntry(segmentState,
+                        metaKeyInterop, keyInterop, key, keySize,
+                        prepareValueBytesAsWriter, null, keyInstance, entry, true);
             } else {
                 throw defaultValueOrPrepareBytesShouldBeSpecified();
             }
@@ -1847,12 +1880,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
                 RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
         RV put(@Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
-                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                InstanceOrBytesToInstance<KB, K> toKey,
-                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-                InstanceOrBytesToInstance<? super VB, V> toValue,
-                long hash2, boolean replaceIfPresent,
-                ReadValue<RV> readValue, boolean resultUnused) {
+               MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+               InstanceOrBytesToInstance<KB, K> toKey,
+               GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+               InstanceOrBytesToInstance<? super VB, V> toValue,
+               long hash2, boolean replaceIfPresent,
+               ReadValue<RV> readValue, boolean resultUnused) {
             shouldNotBeCalledFromReplicatedChronicleMap("Segment.put");
             writeLock(null);
             try {
@@ -1976,9 +2009,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         /**
-         * Returns value size, writes the entry (key, value, sizes) to the entry, after this
-         * method call entry positioned after value bytes written (i. e. at the end of entry),
-         * sets entry position (in segment) and value size position in the given segmentState
+         * Returns value size, writes the entry (key, value, sizes) to the entry, after this method
+         * call entry positioned after value bytes written (i. e. at the end of entry), sets entry
+         * position (in segment) and value size position in the given segmentState
          */
         final <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, E, EW>
         long putEntry(SegmentState segmentState,
@@ -2106,12 +2139,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         /**
-         * - if expectedValue is not null, returns Boolean.TRUE (removed) or
-         * Boolean.FALSE (entry not found), regardless the expectedValue object is Bytes instance
-         * (RPC call) or the value instance
-         * - if expectedValue is null:
-         *   - if resultUnused is false, null or removed value is returned
-         *   - if resultUnused is true, null is always returned
+         * - if expectedValue is not null, returns Boolean.TRUE (removed) or Boolean.FALSE (entry
+         * not found), regardless the expectedValue object is Bytes instance (RPC call) or the value
+         * instance - if expectedValue is null: - if resultUnused is false, null or removed value is
+         * returned - if resultUnused is true, null is always returned
          */
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
                 VB, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
@@ -2683,7 +2714,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    private class WriteThroughEntry extends SimpleEntry<K, V> {
+    class WriteThroughEntry extends SimpleEntry<K, V> {
         private static final long serialVersionUID = 0L;
 
         WriteThroughEntry(K key, V value) {

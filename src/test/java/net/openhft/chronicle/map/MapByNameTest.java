@@ -67,9 +67,8 @@ public class MapByNameTest {
     //  }
 
 
-    // currently work in progress
     @Test
-    @Ignore
+    @Ignore("currently work in progress")
     public void testConnectByName() throws IOException, InterruptedException, TimeoutException {
 
         NodeDiscovery nodeDiscovery = new NodeDiscovery();
