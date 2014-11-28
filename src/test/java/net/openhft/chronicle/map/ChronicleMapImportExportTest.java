@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author Rob Austin.
  */
@@ -178,7 +180,7 @@ public class ChronicleMapImportExportTest {
 
     }
 
-    @Ignore("this tyep of off heap reference is not currently supported")
+    @Ignore("this type of off heap reference is not currently supported")
     @Test
     public void testWithLongValue() throws IOException, InterruptedException {
 
@@ -190,18 +192,15 @@ public class ChronicleMapImportExportTest {
                 .class)
                 .create()) {
 
-
-
-            ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
-                    .of(CharSequence.class, LongValue.class)
-                    .entries(1000)
-                    .entrySize(16);
-
-
             LongValue value = new LongValue$$Native();
 
-
-            expected.put("hello", value);
+            // this will add the entry
+            try (WriteContext<?, LongValue> context = expected.acquireUsingLocked("one", value)) {
+                assertEquals(0, context.value().getValue());
+                assert value == context.value();
+                LongValue value1 = context.value();
+                value1.addValue(1);
+            }
 
             expected.getAll(file);
 

@@ -47,8 +47,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.Array;
-import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.*;
@@ -388,6 +386,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     static abstract class ReadValueToBytes implements ReadValue<Bytes> {
         private SizeMarshaller valueSizeMarshaller;
+
         abstract Bytes bytes(long valueSize);
 
         void valueSizeMarshaller(SizeMarshaller valueSizeMarshaller) {
@@ -427,6 +426,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     private static class ReadValueToLazyBytes extends ReadValueToBytes {
         DirectBytes lazyBytes;
+
         @Override
         Bytes bytes(long valueSize) {
             if (lazyBytes != null) {
@@ -701,7 +701,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
      * @return a lazily created XStreamConverter
      */
     private synchronized XStreamConverter lazyXStreamConverter() {
-        if (xStreamConverter == null)
+        if (xStreamConverter != null)
             return xStreamConverter;
 
         final KeyValueSerializer<K, V> serializers = new KeyValueSerializer<K, V>(keyBuilder,
@@ -729,53 +729,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             this.threadLocalCopies = threadLocalCopies;
             this.buffer = buffer;
             this.keyValueSerializer = keyValueSerializer;
-        }
-
-
-        private synchronized Bytes toKeyBytes(K key) {
-            for (; ; ) {
-
-                try {
-                    keyValueSerializer.writeKey(key, buffer, threadLocalCopies);
-                    return buffer;
-                } catch (BufferOverflowException e) {
-                    ByteBuffer b = allocateDirect((int) buffer.capacity() + (int) entrySize)
-                            .order(ByteOrder.nativeOrder());
-                    buffer = new ByteBufferBytes(allocateDirect((int) buffer.capacity() + (int) entrySize)
-                            .order(ByteOrder.nativeOrder()));
-                }
-            }
-        }
-
-        private synchronized Bytes toValueBytes(V value) {
-            for (; ; ) {
-
-                try {
-                    keyValueSerializer.writeValue(value, buffer, threadLocalCopies);
-                    return buffer;
-                } catch (BufferOverflowException e) {
-                    ByteBuffer b = allocateDirect((int) buffer.capacity() + (int) entrySize)
-                            .order(ByteOrder.nativeOrder());
-                    buffer = new ByteBufferBytes(b);
-                }
-            }
-        }
-
-
-        private synchronized Bytes append(CharSequence value) {
-            for (; ; ) {
-
-                try {
-                    buffer.clear();
-                    buffer.append(value);
-                    buffer.flip();
-                    return buffer;
-                } catch (BufferOverflowException e) {
-                    ByteBuffer b = allocateDirect((int) buffer.capacity() + (int) entrySize)
-                            .order(ByteOrder.nativeOrder());
-                    buffer = new ByteBufferBytes(b);
-                }
-            }
         }
 
         private void registerConverter(XStream xstream) {
@@ -807,25 +760,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                     buffer.clear();
 
-                    if (kClass.isAssignableFrom(o.getClass())) {
-
-                        Bytes bytes = (ByteBufferBytes) toKeyBytes((K) o);
-
-                        String hex = AbstractBytes.toHex(bytes);
-                        hex.toString();
-
-
-                        String text = bytes.asString().toString();
-                        System.out.println("key=" + text);
-                        // writer.setValue(text);
-
-                        //  writer.startNode("key");
-                        writer.setValue(o.toString());
-                        //  writer.endNode();
-                    } else if (vClass.isAssignableFrom(o.getClass())) {
-                        writer.setValue(o.toString());
-                    } else if (WriteThroughEntry.class.isAssignableFrom
-                            (o.getClass())) {
+                   if (WriteThroughEntry.class.isAssignableFrom(o.getClass())) {
 
                         final SimpleEntry e = (SimpleEntry) o;
 
@@ -860,10 +795,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 @Override
                 public Object unmarshal(HierarchicalStreamReader reader,
                                         UnmarshallingContext unmarshallingContext) {
-                    String value = reader.getValue();
-                    buffer.clear();
-                    append(value);
-                    buffer.flip();
+
 
                     final String nodeName = reader.getNodeName();
 
