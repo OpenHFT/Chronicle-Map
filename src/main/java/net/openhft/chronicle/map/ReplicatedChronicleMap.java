@@ -744,10 +744,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 Bytes keyBytes, long hash2, final long timestamp, final byte identifier) {
             writeLock(null);
             try {
+                ReadValueToBytes readValueToLazyBytes = segmentState.readValueToLazyBytes;
+                readValueToLazyBytes.valueSizeMarshaller(valueSizeMarshaller);
                 Boolean removed = (Boolean) removeWithoutLock(copies, segmentState,
                         DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
                         BytesBytesInterop.INSTANCE, keyBytes, keyBytes.remaining(),
-                        keyBytesToInstance, null, null, null, hash2, true,
+                        keyBytesToInstance, null, null, outputValueBytesToInstance,
+                        hash2, readValueToLazyBytes, true,
                         timestamp, identifier, true, true);
                 if (!removed && LOG.isDebugEnabled()) {
                     LOG.debug("Segment.remoteRemove() : key=" + keyBytes.toString().trim() +
@@ -971,19 +974,19 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
         @Override
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-                VB, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
+                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
         Object remove(@Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
                       MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                       InstanceOrBytesToInstance<KB, K> toKey,
                       GetValueInterops<VB, VBI, MVBI> getValueInterops, VB expectedValue,
-                      InstanceOrBytesToInstance<? super VB, V> toValue,
-                      long hash2, boolean resultUnused) {
+                      InstanceOrBytesToInstance<RV, V> toValue,
+                      long hash2, ReadValue<RV> readValue, boolean resultUnused) {
             writeLock(null);
             try {
                 return removeWithoutLock(copies, segmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
                         getValueInterops, expectedValue, toValue,
-                        hash2, resultUnused, currentTime(), localIdentifier, false,
+                        hash2, readValue, resultUnused, currentTime(), localIdentifier, false,
                         expectedValue != null);
             } finally {
                 if (segmentState != null)
@@ -999,16 +1002,16 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
         @Override
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-                VB, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
+                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
         Object removeWithoutLock(
                 @Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
                 GetValueInterops<VB, VBI, MVBI> getValueInterops, VB expectedValue,
-                InstanceOrBytesToInstance<? super VB, V> toValue,
-                long hash2, boolean resultUnused) {
+                InstanceOrBytesToInstance<RV, V> toValue,
+                long hash2, ReadValue<RV> readValue, boolean resultUnused) {
             return removeWithoutLock(copies, segmentState, metaKeyInterop, keyInterop, key, keySize,
-                    toKey, getValueInterops, expectedValue, toValue, hash2, resultUnused,
+                    toKey, getValueInterops, expectedValue, toValue, hash2, readValue, resultUnused,
                     currentTime(), localIdentifier, false, expectedValue != null);
         }
 
@@ -1021,14 +1024,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          *   - if resultUnused is true, null is always returned
          */
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-                VB, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
+                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
         Object removeWithoutLock(
                 @Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
                 GetValueInterops<VB, VBI, MVBI> getValueInterops, VB expectedValue,
-                InstanceOrBytesToInstance<? super VB, V> toValue,
-                long hash2, boolean resultUnused,
+                InstanceOrBytesToInstance<RV, V> toValue,
+                long hash2, ReadValue<RV> readValue, boolean resultUnused,
                 long timestamp, byte identifier, boolean remote, boolean booleanResult) {
             segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
             assert identifier > 0;
@@ -1061,7 +1064,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                         // we should ignore only remote updates
                         // which don't use remove, put results
-                        // assert expectedValue != null || resultUnused;
+                        // assert booleanResult || resultUnused;
                         return booleanResult ? Boolean.FALSE : null;
                     }
                     boolean isDeleted = entry.readBoolean();
@@ -1093,12 +1096,16 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     entry.writeBoolean(true);
                     entry.position(valuePos);
 
-                    return removeEntry(copies, key, keySize, toKey, expectedValue, toValue,
-                            resultUnused, hashLookup, entry, pos, valueSizePos, valueSize,
-                            remote, false, booleanResult);
+                    return removeEntry(copies, key, keySize, toKey, toValue, readValue,
+                            resultUnused, hashLookup, entry, pos, valueSizePos,
+                            valueSize, remote, false, booleanResult);
                 }
                 // key is not found
-                return booleanResult ? Boolean.FALSE : null;
+                if (booleanResult) {
+                    return Boolean.FALSE;
+                } else {
+                    return resultUnused ? null : readValue.readNull();
+                }
             } finally {
                 if (segmentState == null && localSegmentState != null)
                     localSegmentState.close();
@@ -1139,8 +1146,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     entry.skip(keySize);
 
                     long timestampPos = entry.position();
-                    if (shouldIgnore(entry, timestamp, identifier))
-                        return null;
+                    if (shouldIgnore(entry, timestamp, identifier)) {
+                        LOG.error("Trying to replace a value for key={} on the node with id={} " +
+                                "at time={} (current time), but the entry is updated by node " +
+                                "with id={} at time={}. Time is not monotonic across nodes!?",
+                                key, identifier, timestamp, entry.readByte(entry.position() - 1),
+                                entry.readLong(entry.position() - ADDITIONAL_ENTRY_BYTES + 1));
+                        return readValue.readNull();
+                    }
                     boolean isDeleted = entry.readBoolean();
                     if (isDeleted)
                         break;
@@ -1156,7 +1169,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     return result;
                 }
                 // key is not found
-                return null;
+                return readValue.readNull();
             } finally {
                 if (segmentState != null)
                     segmentState.close();
