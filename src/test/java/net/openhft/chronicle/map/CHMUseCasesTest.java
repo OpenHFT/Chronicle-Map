@@ -343,6 +343,7 @@ public class CHMUseCasesTest {
     public void testDoubleDoubleMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Double, Double> map = ChronicleMapBuilder
                 .of(Double.class, Double.class)
+                        // TODO .disableOversizedEntries(true) // disabled for testing purposes only.
                 .entrySize(16)
                 .create()) {
 
@@ -384,6 +385,59 @@ public class CHMUseCasesTest {
             assertEquals((Double) 4.0, map.getLater(3.0).get());
             assertEquals((Double) 4.0, map.removeLater(3.0).get());
             assertEquals(null, map.removeLater(3.0).get());
+        }
+    }
+
+    @Test
+    @Ignore
+    public void testByteArrayByteArrayMap() throws ExecutionException, InterruptedException {
+        try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
+                .of(byte[].class, byte[].class)
+                        // TODO .disableOversizedEntries(true) // disabled for testing purposes only.
+                .entrySize(12)
+                .create()) {
+            byte[] key1 = {1, 1, 1, 1};
+            byte[] key2 = {2, 2, 2, 2};
+            byte[] value1 = {11, 11, 11, 11};
+            byte[] value2 = {22, 22, 22, 22};
+            assertNull(map.put(key1, value1));
+            assertTrue(Arrays.equals(value1, map.put(key1, value2)));
+            assertTrue(Arrays.equals(value1, map.get(key1)));
+            assertNull(map.get(key2));
+
+            assertTrue(Arrays.equals(new byte[]{11, 11}, map.mapForKey(key1, new Function<byte[], byte[]>() {
+                @Override
+                public byte[] apply(byte[] s) {
+                    return Arrays.copyOf(s, 2);
+                }
+            })));
+            assertEquals(null, map.mapForKey(key2, new Function<byte[], byte[]>() {
+                @Override
+                public byte[] apply(byte[] s) {
+                    return Arrays.copyOf(s, 2);
+                }
+            }));
+
+            assertTrue(Arrays.equals(new byte[]{12, 10}, map.updateForKey(key1, new Mutator<byte[], byte[]>() {
+                @Override
+                public byte[] update(byte[] s) {
+                    s[0]++;
+                    s[1]--;
+                    return Arrays.copyOf(s, 2);
+                }
+            })));
+
+            assertTrue(Arrays.equals(new byte[]{12, 10, 11, 11}, map.get(key1)));
+
+            byte[] key3 = {3, 3, 3, 3};
+            byte[] value3 = {4, 4, 4, 4};
+
+            assertEquals(null, map.putLater(key3, value3).get());
+            assertTrue(Arrays.equals(value3, map.getLater(key3).get()));
+            assertTrue(Arrays.equals(value3, map.removeLater(key3).get()));
+            assertEquals(null, map.removeLater(key3).get());
+
+
         }
     }
 
