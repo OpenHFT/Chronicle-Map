@@ -6,198 +6,389 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.*;
 
 /**
  * This test enumerates common usecases for keys and values.
  */
-@Ignore
+// TODO Test for persisted map.
+// TODO Test for stateless map.
 public class CHMUseCasesTest {
     /**
-     * String is not as efficient as CharSequence as a key or value but easier to use
-     * The key can only be on heap and variable length serialised.
+     * String is not as efficient as CharSequence as a key or value but easier to use The key can only be on heap and
+     * variable length serialised.
      */
     @Test
-    public void testStringStringMap() {
-        ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class).create();
-        map.put("Hello", "World");
-        map.close();
+    @Ignore
+    public void testStringStringMap() throws ExecutionException, InterruptedException {
+/* TODO run the same test for multiple types of map stores
+        for(ChronicleMapBuilder<String, String> chmb : Arrays.asList(
+                ChronicleMapBuilder.of(String.class, String.class),
+                ChronicleMapBuilder.of(String.class, String.class).file(TMP_FILE),
+                ChronicleMapBuilder.of(String.class, String.class).statelessClient(CONFIG)
+        )) {
+            try (ChronicleMap<String, String> map = chmb.create()) {
+
+*/
+        try (ChronicleMap<String, String> map = ChronicleMapBuilder
+                .of(String.class, String.class)
+//  TODO        .checkSerializedValues()
+                .create()) {
+            map.put("Hello", "World");
+            assertEquals("World", map.get("Hello"));
+
+            assertEquals("New World", map.mapForKey("Hello", new Function<String, String>() {
+                @Override
+                public String apply(String s) {
+                    return "New " + s;
+                }
+            }));
+            assertEquals(null, map.mapForKey("No key", new Function<String, String>() {
+                @Override
+                public String apply(String s) {
+                    return "New " + s;
+                }
+            }));
+            try {
+                map.updateForKey("Hello", new Mutator<String, String>() {
+                    @Override
+                    public String update(String s) {
+                        return "New " + s;
+                    }
+                });
+                fail("Operation not supported as value is not mutable");
+            } catch (Exception ignored) {
+                // TODO replace with the specific exception.
+            }
+
+            assertEquals(null, map.putLater("Bye", "For now").get());
+            assertEquals("For now", map.getLater("Bye").get());
+            assertEquals("For now", map.removeLater("Bye").get());
+            assertEquals(null, map.removeLater("Bye").get());
+        }
     }
 
     /**
-     * CharSequence is more efficient when object creation is avoided.
-     * The key can only be on heap and variable length serialised.
+     * CharSequence is more efficient when object creation is avoided. The key can only be on heap and variable length
+     * serialised.
      */
     @Test
-    public void testCharSequenceCharSequenceMap() {
-        ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).create();
-        map.put("Hello", "World");
-        StringBuilder key = new StringBuilder();
-        key.append("key-").append(1);
+    @Ignore
+    public void testCharSequenceCharSequenceMap() throws ExecutionException, InterruptedException {
+        try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
+                .create()) {
+            map.put("Hello", "World");
+            StringBuilder key = new StringBuilder();
+            key.append("key-").append(1);
 
-        StringBuilder value = new StringBuilder();
-        value.append("value-").append(1);
-        map.put(key, value);
-        assertEquals("value-1", map.get("key-1"));
+            StringBuilder value = new StringBuilder();
+            value.append("value-").append(1);
+            map.put(key, value);
+            assertEquals("value-1", map.get("key-1"));
 
-        assertEquals(value, map.getUsing(key, value));
-        assertEquals("value-1", value.toString());
-        map.remove("key-1");
-        assertNull(map.getUsing(key, value));
-        map.close();
+            assertEquals(value, map.getUsing(key, value));
+            assertEquals("value-1", value.toString());
+            map.remove("key-1");
+            assertNull(map.getUsing(key, value));
+            map.close();
+
+            assertEquals("New World", map.mapForKey("Hello", new Function<CharSequence, CharSequence>() {
+                @Override
+                public CharSequence apply(CharSequence s) {
+                    return "New " + s;
+                }
+            }));
+            assertEquals(null, map.mapForKey("No key", new Function<CharSequence, CharSequence>() {
+                @Override
+                public CharSequence apply(CharSequence s) {
+                    return "New " + s;
+                }
+            }));
+
+            assertEquals("New World !!", map.updateForKey("Hello", new Mutator<CharSequence, CharSequence>() {
+                @Override
+                public CharSequence update(CharSequence s) {
+                    ((StringBuilder) s).append("!!");
+                    return "New " + s;
+                }
+            }));
+
+            assertEquals("New World !!", map.get("Hello").toString());
+
+            assertEquals(null, map.updateForKey("no-key", new Mutator<CharSequence, CharSequence>() {
+                @Override
+                public CharSequence update(CharSequence s) {
+                    ((StringBuilder) s).append("!!");
+                    return "New " + s;
+                }
+            }));
+
+            assertEquals(null, map.putLater("Bye", "For now").get());
+            assertEquals("For now", map.getLater("Bye").get().toString());
+            assertEquals("For now", map.removeLater("Bye").get().toString());
+            assertEquals(null, map.removeLater("Bye").get());
+        }
     }
 
     /**
      * StringValue represents any bean which contains a String Value
      */
     @Test
+    @Ignore
     public void testStringValueStringValueMap() {
-        ChronicleMap<StringValue, StringValue> map = ChronicleMapBuilder.of(StringValue.class, StringValue.class).create();
-        StringValue key1 = DataValueClasses.newDirectInstance(StringValue.class);
-        StringValue key2 = DataValueClasses.newInstance(StringValue.class);
-        StringValue value1 = DataValueClasses.newDirectInstance(StringValue.class);
-        StringValue value2 = DataValueClasses.newInstance(StringValue.class);
+        try (ChronicleMap<StringValue, StringValue> map = ChronicleMapBuilder
+                .of(StringValue.class, StringValue.class)
+                .create()) {
 
-        key1.setValue(new StringBuilder("1"));
-        value1.setValue("11");
-        map.put(key1, value1);
-        assertEquals(value1, map.get(key1));
+            StringValue key1 = DataValueClasses.newDirectInstance(StringValue.class);
+            StringValue key2 = DataValueClasses.newInstance(StringValue.class);
+            StringValue value1 = DataValueClasses.newDirectInstance(StringValue.class);
+            StringValue value2 = DataValueClasses.newInstance(StringValue.class);
 
-        key2.setValue("2");
-        value2.setValue(new StringBuilder("22"));
-        map.put(key2, value2);
-        assertEquals(value2, map.get(key2));
+            key1.setValue(new StringBuilder("1"));
+            value1.setValue("11");
+            map.put(key1, value1);
+            assertEquals(value1, map.get(key1));
 
-        StringBuilder sb = new StringBuilder();
-        try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-            assertTrue(rc.present());
-            assertEquals("11", value1.getValue());
-            value1.getUsingValue(sb);
-            assertEquals("11", sb.toString());
-        }
-        try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-            assertTrue(rc.present());
-            assertEquals("22", value2.getValue());
-            value2.getUsingValue(sb);
-            assertEquals("22", sb.toString());
-        }
-        try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-            assertTrue(rc.present());
-            assertEquals("11", value2.getValue());
-            value2.getUsingValue(sb);
-            assertEquals("11", sb.toString());
-        }
-        try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-            assertTrue(rc.present());
-            assertEquals("22", value2.getValue());
-            value2.getUsingValue(sb);
-            assertEquals("22", sb.toString());
-        }
-        key1.setValue("3");
-        try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-            assertFalse(rc.present());
-        }
-        key2.setValue("4");
-        try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-            assertFalse(rc.present());
-        }
+            key2.setValue("2");
+            value2.setValue(new StringBuilder("22"));
+            map.put(key2, value2);
+            assertEquals(value2, map.get(key2));
 
-        try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
-            assertEquals("", value1.getValue());
-            value1.getUsingValue(sb);
-            assertEquals("", sb.toString());
-            sb.append(123);
-            value1.setValue(sb);
-        }
-        try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
-            assertEquals("123", value2.getValue());
-            value2.setValue(value2.getValue() + '4');
-            assertEquals("1234", value2.getValue());
-        }
-        try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-            assertTrue(rc.present());
-            assertEquals("1234", value1.getValue());
-        }
+            StringBuilder sb = new StringBuilder();
+            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
+                assertTrue(rc.present());
+                assertEquals("11", value1.getValue());
+                value1.getUsingValue(sb);
+                assertEquals("11", sb.toString());
+            }
+            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+                assertTrue(rc.present());
+                assertEquals("22", value2.getValue());
+                value2.getUsingValue(sb);
+                assertEquals("22", sb.toString());
+            }
+            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
+                assertTrue(rc.present());
+                assertEquals("11", value2.getValue());
+                value2.getUsingValue(sb);
+                assertEquals("11", sb.toString());
+            }
+            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
+                assertTrue(rc.present());
+                assertEquals("22", value2.getValue());
+                value2.getUsingValue(sb);
+                assertEquals("22", sb.toString());
+            }
+            key1.setValue("3");
+            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
+                assertFalse(rc.present());
+            }
+            key2.setValue("4");
+            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
+                assertFalse(rc.present());
+            }
 
-        try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
-            assertEquals("", value2.getValue());
-            value2.getUsingValue(sb);
-            assertEquals("", sb.toString());
-            sb.append(123);
-            value2.setValue(sb);
+            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+                assertEquals("", value1.getValue());
+                value1.getUsingValue(sb);
+                assertEquals("", sb.toString());
+                sb.append(123);
+                value1.setValue(sb);
+            }
+            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+                assertEquals("123", value2.getValue());
+                value2.setValue(value2.getValue() + '4');
+                assertEquals("1234", value2.getValue());
+            }
+            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
+                assertTrue(rc.present());
+                assertEquals("1234", value1.getValue());
+            }
+
+            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+                assertEquals("", value2.getValue());
+                value2.getUsingValue(sb);
+                assertEquals("", sb.toString());
+                sb.append(123);
+                value2.setValue(sb);
+            }
+            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+                assertEquals("123", value1.getValue());
+                value1.setValue(value1.getValue() + '4');
+                assertEquals("1234", value1.getValue());
+            }
+            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
+                assertTrue(rc.present());
+                assertEquals("1234", value2.getValue());
+            }
         }
-        try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
-            assertEquals("123", value1.getValue());
-            value1.setValue(value1.getValue() + '4');
-            assertEquals("1234", value1.getValue());
-        }
-        try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-            assertTrue(rc.present());
-            assertEquals("1234", value2.getValue());
-        }
-        map.close();
     }
 
     @Test
-    public void testIntegerIntegerMap() {
-        ChronicleMap<Integer, Integer> map = ChronicleMapBuilder.of(Integer.class, Integer.class).entrySize(8).create();
-        Integer key1;
-        Integer key2;
-        Integer value1;
-        Integer value2;
+    @Ignore
+    public void testIntegerIntegerMap() throws ExecutionException, InterruptedException {
+        try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
+                .of(Integer.class, Integer.class)
+                .entrySize(8)
+                        // TODO .disableOversizedEntries(true) // disabled for testing purposes only.
+                .create()) {
+            Integer key1;
+            Integer key2;
+            Integer value1;
+            Integer value2;
 
-        key1 = 1;
-        value1 = 11;
-        map.put(key1, value1);
-        assertEquals(value1, map.get(key1));
+            key1 = 1;
+            value1 = 11;
+            map.put(key1, value1);
+            assertEquals(value1, map.get(key1));
 
-        key2 = 2;
-        value2 = 22;
-        map.put(key2, value2);
-        assertEquals(value2, map.get(key2));
+            key2 = 2;
+            value2 = 22;
+            map.put(key2, value2);
+            assertEquals(value2, map.get(key2));
 
-        assertEquals((Integer) 11, map.get(key1));
-        assertEquals((Integer) 22, map.get(key2));
-        assertEquals(null, map.get(3));
-        assertEquals(null, map.get(4));
+            assertEquals((Integer) 11, map.get(key1));
+            assertEquals((Integer) 22, map.get(key2));
+            assertEquals(null, map.get(3));
+            assertEquals(null, map.get(4));
 
-        map.close();
+            assertEquals((Integer) 110, map.mapForKey(1, new Function<Integer, Integer>() {
+                @Override
+                public Integer apply(Integer s) {
+                    return 10 * s;
+                }
+            }));
+            assertEquals(null, map.mapForKey(-1, new Function<Integer, Integer>() {
+                @Override
+                public Integer apply(Integer s) {
+                    return 10 * s;
+                }
+            }));
+
+            try {
+                map.updateForKey(1, new Mutator<Integer, Integer>() {
+                    @Override
+                    public Integer update(Integer s) {
+                        return s + 1;
+                    }
+                });
+                fail("Update of Integer not supported");
+            } catch (Exception todoMoreSpecificException) {
+
+            }
+
+            assertEquals(null, map.putLater(3, 4).get());
+            assertEquals((Integer) 4, map.getLater(3).get());
+            assertEquals((Integer) 4, map.removeLater(3).get());
+            assertEquals(null, map.removeLater(3).get());
+        }
     }
 
     @Test
-    public void testLongLongMap() {
-        ChronicleMap<Long, Long> map = ChronicleMapBuilder.of(Long.class, Long.class).entrySize(16).create();
+    @Ignore
+    public void testLongLongMap() throws ExecutionException, InterruptedException {
+        try (ChronicleMap<Long, Long> map = ChronicleMapBuilder
+                .of(Long.class, Long.class)
+                .entrySize(16)
+                        // TODO .disableOversizedEntries(true) // disabled for testing purposes only.
+                .create()) {
 
-        map.put(1L, 11L);
-        assertEquals((Long) 11L, map.get(1L));
+            map.put(1L, 11L);
+            assertEquals((Long) 11L, map.get(1L));
 
-        map.put(2L, 22L);
-        assertEquals((Long) 22L, map.get(2L));
+            map.put(2L, 22L);
+            assertEquals((Long) 22L, map.get(2L));
 
-        assertEquals(null, map.get(3));
-        assertEquals(null, map.get(4));
+            assertEquals(null, map.get(3L));
+            assertEquals(null, map.get(4L));
 
-        map.close();
+            assertEquals((Long) 110L, map.mapForKey(1L, new Function<Long, Long>() {
+                @Override
+                public Long apply(Long s) {
+                    return 10 * s;
+                }
+            }));
+            assertEquals(null, map.mapForKey(-1L, new Function<Long, Long>() {
+                @Override
+                public Long apply(Long s) {
+                    return 10 * s;
+                }
+            }));
+
+            try {
+                map.updateForKey(1L, new Mutator<Long, Long>() {
+                    @Override
+                    public Long update(Long s) {
+                        return s + 1;
+                    }
+                });
+                fail("Update of Long not supported");
+            } catch (Exception todoMoreSpecificException) {
+
+            }
+
+            assertEquals(null, map.putLater(3L, 4L).get());
+            assertEquals((Long) 4L, map.getLater(3L).get());
+            assertEquals((Long) 4L, map.removeLater(3L).get());
+            assertEquals(null, map.removeLater(3L).get());
+        }
     }
 
     @Test
-    public void testDoubleDoubleMap() {
-        ChronicleMap<Double, Double> map = ChronicleMapBuilder.of(Double.class, Double.class).entrySize(16).create();
+    @Ignore
+    public void testDoubleDoubleMap() throws ExecutionException, InterruptedException {
+        try (ChronicleMap<Double, Double> map = ChronicleMapBuilder
+                .of(Double.class, Double.class)
+                .entrySize(16)
+                .create()) {
 
-        map.put(1.0, 11.0);
-        assertEquals((Double) 11.0, map.get(1.0));
+            map.put(1.0, 11.0);
+            assertEquals((Double) 11.0, map.get(1.0));
 
-        map.put(2.0, 22.0);
-        assertEquals((Double) 22.0, map.get(2.0));
+            map.put(2.0, 22.0);
+            assertEquals((Double) 22.0, map.get(2.0));
 
-        assertEquals(null, map.get(3));
-        assertEquals(null, map.get(4));
+            assertEquals(null, map.get(3.0));
+            assertEquals(null, map.get(4.0));
 
-        map.close();
+            assertEquals((Double) 110.0, map.mapForKey(1.0, new Function<Double, Double>() {
+                @Override
+                public Double apply(Double s) {
+                    return 10 * s;
+                }
+            }));
+            assertEquals(null, map.mapForKey(-1.0, new Function<Double, Double>() {
+                @Override
+                public Double apply(Double s) {
+                    return 10 * s;
+                }
+            }));
+
+            try {
+                map.updateForKey(1.0, new Mutator<Double, Double>() {
+                    @Override
+                    public Double update(Double s) {
+                        return s + 1;
+                    }
+                });
+                fail("Update of Double not supported");
+            } catch (Exception todoMoreSpecificException) {
+
+            }
+
+            assertEquals(null, map.putLater(3.0, 4.0).get());
+            assertEquals((Double) 4.0, map.getLater(3.0).get());
+            assertEquals((Double) 4.0, map.removeLater(3.0).get());
+            assertEquals(null, map.removeLater(3.0).get());
+        }
     }
 
     @Test
+    @Ignore
     public void testIntValueIntValueMap() {
         ChronicleMap<IntValue, IntValue> map = ChronicleMapBuilder.of(IntValue.class, IntValue.class).entrySize(8).create();
         IntValue key1 = DataValueClasses.newDirectInstance(IntValue.class);
@@ -276,6 +467,7 @@ public class CHMUseCasesTest {
      * For unsigned int -> unsigned int entries, the key can be on heap or off heap.
      */
     @Test
+    @Ignore
     public void testUnsignedIntValueUnsignedIntValueMap() {
         ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = ChronicleMapBuilder.of(UnsignedIntValue.class, UnsignedIntValue.class).entrySize(8).create();
         UnsignedIntValue key1 = DataValueClasses.newDirectInstance(UnsignedIntValue.class);
@@ -354,6 +546,7 @@ public class CHMUseCasesTest {
      * For int values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore
     public void testIntValueShortValueMap() {
         ChronicleMap<IntValue, ShortValue> map = ChronicleMapBuilder.of(IntValue.class, ShortValue.class).entrySize(6).create();
         IntValue key1 = DataValueClasses.newDirectInstance(IntValue.class);
@@ -432,6 +625,7 @@ public class CHMUseCasesTest {
      * For int -> unsigned short values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore
     public void testIntValueUnsignedShortValueMap() {
         ChronicleMap<IntValue, UnsignedShortValue> map = ChronicleMapBuilder.of(IntValue.class, UnsignedShortValue.class).entrySize(6).create();
         IntValue key1 = DataValueClasses.newDirectInstance(IntValue.class);
@@ -510,6 +704,7 @@ public class CHMUseCasesTest {
      * For int values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore
     public void testIntValueCharValueMap() {
         ChronicleMap<IntValue, CharValue> map = ChronicleMapBuilder.of(IntValue.class, CharValue.class).entrySize(6).create();
         IntValue key1 = DataValueClasses.newDirectInstance(IntValue.class);
@@ -588,6 +783,7 @@ public class CHMUseCasesTest {
      * For int-> byte entries, the key can be on heap or off heap.
      */
     @Test
+    @Ignore
     public void testIntValueUnsignedByteMap() {
         ChronicleMap<IntValue, UnsignedByteValue> map = ChronicleMapBuilder.of(IntValue.class, UnsignedByteValue.class).entrySize(5).create();
         IntValue key1 = DataValueClasses.newDirectInstance(IntValue.class);
@@ -666,6 +862,7 @@ public class CHMUseCasesTest {
      * For int values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore
     public void testIntValueBooleanValueMap() {
         ChronicleMap<IntValue, BooleanValue> map = ChronicleMapBuilder.of(IntValue.class, BooleanValue.class).entrySize(5).create();
         IntValue key1 = DataValueClasses.newDirectInstance(IntValue.class);
@@ -744,6 +941,7 @@ public class CHMUseCasesTest {
      * For float values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore
     public void testFloatValueFloatValueMap() {
         ChronicleMap<FloatValue, FloatValue> map = ChronicleMapBuilder.of(FloatValue.class, FloatValue.class).entrySize(8).create();
         FloatValue key1 = DataValueClasses.newDirectInstance(FloatValue.class);
@@ -822,6 +1020,7 @@ public class CHMUseCasesTest {
      * For double values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore
     public void testDoubleValueDoubleValueMap() {
         ChronicleMap<DoubleValue, DoubleValue> map = ChronicleMapBuilder.of(DoubleValue.class, DoubleValue.class).entrySize(16).create();
         DoubleValue key1 = DataValueClasses.newDirectInstance(DoubleValue.class);
@@ -899,6 +1098,7 @@ public class CHMUseCasesTest {
      * For long values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore
     public void testLongValueLongValueMap() {
         ChronicleMap<LongValue, LongValue> map = ChronicleMapBuilder.of(LongValue.class, LongValue.class).entrySize(16).create();
         LongValue key1 = DataValueClasses.newDirectInstance(LongValue.class);
@@ -982,6 +1182,7 @@ public class CHMUseCasesTest {
 
 
     @Test
+    @Ignore
     public void testListValue() {
         ChronicleMap<String, List<String>> map = ChronicleMapBuilder.of(String.class, (Class<List<String>>) (Class) List.class).create();
 
@@ -1010,6 +1211,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
+    @Ignore
     public void testSetValue() {
         ChronicleMap<String, Set<String>> map = ChronicleMapBuilder.of(String.class, (Class<Set<String>>) (Class) Set.class).create();
 
@@ -1038,6 +1240,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
+    @Ignore
     public void testMapStringStringValue() {
         ChronicleMap<String, Map<String, String>> map = ChronicleMapBuilder.of(String.class, (Class<Map<String, String>>) (Class) Map.class).create();
 
@@ -1066,6 +1269,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
+    @Ignore
     public void testMapStringIntegerValue() {
         ChronicleMap<String, Map<String, Integer>> map = ChronicleMapBuilder.of(String.class, (Class<Map<String, Integer>>) (Class) Map.class).create();
 
