@@ -47,12 +47,9 @@ final class Replicators {
                                         final ChronicleMap chronicleMap)
                     throws IOException {
 
-                final KeyValueSerializer keyValueSerializer = new KeyValueSerializer(builder
-                        .keyBuilder, builder.valueBuilder);
-
-                StatelessServerConnector statelessServer = new StatelessServerConnector
-                        (keyValueSerializer, (VanillaChronicleMap) chronicleMap,
-                                builder.entrySize(true));
+                StatelessServerConnector statelessServer = new StatelessServerConnector(
+                        builder.keyBuilder, builder.valueBuilder,
+                                (VanillaChronicleMap) chronicleMap, builder.entrySize(true));
 
                 TcpTransportAndNetworkConfig tcpConfig = replication.tcpTransportAndNetwork();
                 assert tcpConfig != null;

@@ -73,23 +73,23 @@ public class SerializerTest {
         ByteBufferBytes in = out.slice();
 
 
-        ChronicleMapBuilder cBuilder = ChronicleMapBuilder.of(Integer
-                .class, valueClass);
+        ChronicleMapBuilder cBuilder = ChronicleMapBuilder.of(Integer.class, valueClass);
 
         OnHeapUpdatableChronicleMapBuilder builder = (OnHeapUpdatableChronicleMapBuilder) cBuilder.delegate;
 
 
         builder.preMapConstruction(false);
 
-        Serializer v = new Serializer(builder.valueBuilder);
+        WriterWithSize valueWriterWithSize = new WriterWithSize(builder.valueBuilder);
+        ReaderWithSize valueReaderWithSize = new ReaderWithSize(builder.valueBuilder);
 
-        v.writeMarshallable(value, out, null);
+        valueWriterWithSize.write(out, value, null);
 
         long position = out.position();
         in.limit(position);
 
 
-        Object actual = v.readMarshallable(in, null);
+        Object actual = valueReaderWithSize.read(in, null);
         Assert.assertEquals(actual, value);
     }
 
@@ -107,15 +107,15 @@ public class SerializerTest {
 
         builder.preMapConstruction(false);
         {
-            Serializer v = new Serializer(builder.keyBuilder);
+            WriterWithSize keyWriterWithSize = new WriterWithSize(builder.keyBuilder);
+            ReaderWithSize keyReaderWithSize = new ReaderWithSize(builder.keyBuilder);
 
-
-            v.writeMarshallable(key, out, null);
+            keyWriterWithSize.write(out, key, null);
 
             long position = out.position();
             in.limit(position);
 
-            Object actual = v.readMarshallable(in, null);
+            Object actual = keyReaderWithSize.read(in, null);
             Assert.assertEquals(actual, key);
 
         }
