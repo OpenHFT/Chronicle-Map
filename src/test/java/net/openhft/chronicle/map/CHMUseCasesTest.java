@@ -489,6 +489,62 @@ public class CHMUseCasesTest {
         }
     }
 
+    @Test
+    @Ignore
+    public void testByteBufferDirectByteBufferMap() throws ExecutionException, InterruptedException {
+        try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
+                .of(ByteBuffer.class, ByteBuffer.class)
+                        // TODO .disableOversizedEntries(true) // disabled for testing purposes only.
+                .entrySize(12)
+                .create()) {
+            ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
+            ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
+            ByteBuffer value1 = ByteBuffer.allocateDirect(4);
+            value1.put(new byte[]{11, 11, 11, 11});
+            value1.flip();
+            ByteBuffer value2 = ByteBuffer.allocateDirect(4);
+            value2.put(new byte[]{22, 22, 22, 22});
+            value2.flip();
+            assertNull(map.put(key1, value1));
+            assertBBEquals(value1, map.put(key1, value2));
+            assertBBEquals(value1, map.get(key1));
+            assertNull(map.get(key2));
+
+            final Function<ByteBuffer, ByteBuffer> function = new Function<ByteBuffer, ByteBuffer>() {
+                @Override
+                public ByteBuffer apply(ByteBuffer s) {
+                    ByteBuffer slice = s.slice();
+                    slice.limit(2);
+                    return slice;
+                }
+            };
+            assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.mapForKey(key1, function));
+            assertEquals(null, map.mapForKey(key2, function));
+
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.updateForKey(key1, new Mutator<ByteBuffer, ByteBuffer>() {
+                @Override
+                public ByteBuffer update(ByteBuffer s) {
+                    s.put(0, (byte) (s.get(0) + 1));
+                    s.put(0, (byte) (s.get(0) - 1));
+                    return function.apply(s);
+                }
+            }));
+
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10, 11, 11}), map.get(key1));
+
+            ByteBuffer key3 = ByteBuffer.wrap(new byte[]{3, 3, 3, 3});
+            ByteBuffer value3 = ByteBuffer.allocateDirect(4);
+            value3.put(new byte[]{4, 4, 4, 4});
+            value3.flip();
+
+            assertEquals(null, map.putLater(key3, value3).get());
+            assertBBEquals(value3, map.getLater(key3).get());
+            assertBBEquals(value3, map.removeLater(key3).get());
+            assertEquals(null, map.removeLater(key3).get());
+        }
+    }
+
+
     private void assertBBEquals(ByteBuffer bb1, ByteBuffer bb2) {
         assertEquals(bb1.remaining(), bb2.remaining());
         for (int i = 0; i < bb1.remaining(); i++)
