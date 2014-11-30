@@ -24,6 +24,7 @@ import com.google.common.collect.Multimap;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.DirectStore;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -151,7 +152,7 @@ public class IntIntMultiMapTest {
     }
 
     @Test
-   // @Ignore("Very long running test")
+    @Ignore("Very long running test")
     public void testMaxCapacity() throws NoSuchFieldException, IllegalAccessException {
         Field maxCapacityField = c.getDeclaredField("MAX_CAPACITY");
         long maxCapacity = maxCapacityField.getLong(null);

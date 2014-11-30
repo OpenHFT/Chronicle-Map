@@ -64,12 +64,15 @@ abstract class AbstractChannelReplicator implements Closeable {
     final CloseablesManager closeables = new CloseablesManager();
     final Selector selector = openSelector(closeables);
     private final ExecutorService executorService;
+    private volatile Thread lastThread;
+    private Throwable startedHere;
+    private Future<?> future;
     private final Queue<Runnable> pendingRegistrations = new ConcurrentLinkedQueue<Runnable>();
     @Nullable
     private final Throttler throttler;
+
+
     volatile boolean isClosed = false;
-
-
     ThreadLocalCopies copies;
     VanillaChronicleMap.SegmentState segmentState;
 
@@ -77,12 +80,19 @@ abstract class AbstractChannelReplicator implements Closeable {
                               int maxEntrySizeBytes)
             throws IOException {
         executorService = Executors.newSingleThreadExecutor(
-                new NamedThreadFactory(name, true));
+                new NamedThreadFactory(name, true) {
+                    @Override
+                    public Thread newThread(@net.openhft.lang.model.constraints.NotNull Runnable r) {
+                        return lastThread = super.newThread(r);
+                    }
+                });
 
         throttler = throttlingConfig.throttling(DAYS) > 0 ?
                 new Throttler(selector,
                         throttlingConfig.bucketInterval(MILLISECONDS),
                         maxEntrySizeBytes, throttlingConfig.throttling(DAYS)) : null;
+
+        startedHere = new Throwable("Started here");
     }
 
     Selector openSelector(final CloseablesManager closeables) throws IOException {
@@ -208,7 +218,7 @@ abstract class AbstractChannelReplicator implements Closeable {
     abstract void processEvent() throws IOException;
 
     final void start() {
-        executorService.execute(
+        future = executorService.submit(
                 new Runnable() {
                     @Override
                     public void run() {
@@ -227,22 +237,57 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     @Override
     public void close() {
+        if (Thread.interrupted())
+            LOG.warn("Already interrupted");
+        long start = System.currentTimeMillis();
+        closeResources();
+
+        try {
+            if (future != null)
+                future.cancel(true);
+
+            // we HAVE to be sure we have terminated before calling close() on the ReplicatedChronicleMap
+            // if this thread is still running and you close() the ReplicatedChronicleMap without
+            // fulling terminating this, you can cause the ReplicatedChronicleMap to attempt to
+            // process data on a map that has been closed, which would result in a core dump.
+
+            Thread thread = lastThread;
+            if (thread != null && Thread.currentThread() != lastThread)
+                for (int i = 0; i < 10; i++) {
+                    if (thread.isAlive()) {
+                        thread.join(1000);
+                        dumpThreadStackTrace(start);
+                    }
+                }
+
+        } catch (InterruptedException e) {
+            dumpThreadStackTrace(start);
+            LOG.error("", e);
+            LOG.error("", startedHere);
+        }
+    }
+
+    public void closeResources() {
         isClosed = true;
         executorService.shutdown();
         closeables.closeQuietly();
-        executorService.shutdownNow();
-        segmentState.close();
+        if (segmentState != null)
+            segmentState.close();
+    }
 
-        try {
-            // we HAVE to be sure we have terminated before calling close() on the
-            // ReplicatedChronicleMap
-            // if this thread is still running and you close() the ReplicatedChronicleMap without
-            // fulling terminating this, you can cause the ReplicatedChronicleMap to attempt to
-            // process data on a map that has been closed, which would result in a
-            // core dump.
-            executorService.awaitTermination(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            LOG.error("", e);
+    private void dumpThreadStackTrace(long start) {
+        if (lastThread != null && lastThread.isAlive()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Replicator thread still running after ");
+            sb.append((System.currentTimeMillis() - start) / 100 / 10.0);
+            sb.append(" secs ");
+            sb.append(lastThread);
+            sb.append(" isAlive= ");
+            sb.append(lastThread.isAlive());
+            for (StackTraceElement ste : lastThread.getStackTrace()) {
+                sb.append("\n\t").append(ste);
+            }
+            LOG.warn(sb.toString());
         }
     }
 

@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class Builder {
 
+    public static final int SIZE = 1000;
     // added to ensure uniqueness
     static int count;
     static String WIN_OS = "WINDOWS";
@@ -75,6 +76,7 @@ public class Builder {
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(serverPort, Arrays.asList(endpoints))
                 .heartBeatInterval(1L, TimeUnit.SECONDS).autoReconnectedUponDroppedConnection(true);
         return ChronicleMapBuilder.of(kClass, vClass)
+                .entries(SIZE)
                 .replication(identifier, tcpConfig);
     }
 

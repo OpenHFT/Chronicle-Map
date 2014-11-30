@@ -1617,9 +1617,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
         }
 
+        long startWriteLock = 0;
         @Override
         public final WriteLocked<K, KI, MKI, V, VI, MVI> writeLock(
                 @Nullable SegmentState segmentState) {
+            startWriteLock = System.nanoTime();
             while (true) {
                 final boolean success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
                 if (success) {
@@ -1660,6 +1662,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);
             }
+            long lockTime = System.nanoTime() - startWriteLock;
+            if (lockTime > 1e8)
+                System.out.printf("Thread took %,d ms to release lock%n", lockTime / 1000000);
         }
 
         @Override

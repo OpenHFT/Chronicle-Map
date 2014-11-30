@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Set;
 
 import static net.openhft.chronicle.map.Builder.newMapVoid;
 import static org.junit.Assert.assertEquals;
@@ -60,6 +61,18 @@ public class TCPSocketReplication3VoidValueTest {
             }
         }
         System.gc();
+    }
+
+    Set<Thread> threads;
+
+    @Before
+    public void sampleThreads() {
+        threads = Thread.getAllStackTraces().keySet();
+    }
+
+    @After
+    public void checkThreadsShutdown() {
+        StatelessClientTest.checkThreadsShutdown(threads);
     }
 
 

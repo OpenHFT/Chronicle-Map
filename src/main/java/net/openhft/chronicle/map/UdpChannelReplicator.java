@@ -164,7 +164,7 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
             }
         } finally {
             if (!isClosed) {
-                close();
+                closeResources();
             }
         }
     }

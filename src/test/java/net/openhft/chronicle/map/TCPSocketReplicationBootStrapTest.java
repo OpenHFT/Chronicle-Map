@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -27,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
@@ -155,6 +157,17 @@ public class TCPSocketReplicationBootStrapTest {
         System.gc();
     }
 
+    Set<Thread> threads;
+
+    @Before
+    public void sampleThreads() {
+        threads = Thread.getAllStackTraces().keySet();
+    }
+
+    @After
+    public void checkThreadsShutdown() {
+        StatelessClientTest.checkThreadsShutdown(threads);
+    }
 
     /**
      * waits until map1 and map2 show the same value

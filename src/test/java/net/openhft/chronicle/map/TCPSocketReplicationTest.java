@@ -26,6 +26,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Random;
+import java.util.Set;
 
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
@@ -42,16 +43,19 @@ import static org.junit.Assert.assertTrue;
 public class TCPSocketReplicationTest {
 
 
+    static int s_port = 12050;
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
 
     @Before
     public void setup() throws IOException {
+        int port = s_port;
         ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
-                        (byte) 1, 8076, new InetSocketAddress("localhost", 8077));
+                        (byte) 1, port, new InetSocketAddress("localhost", port + 1));
         map1 = map1Builder.createPersistedTo(getPersistenceFile());
-        map2 = newTcpSocketShmIntString((byte) 2, 8077);
+        map2 = newTcpSocketShmIntString((byte) 2, port + 1);
+        s_port += 2;
     }
 
     @After
@@ -67,6 +71,17 @@ public class TCPSocketReplicationTest {
         System.gc();
     }
 
+    Set<Thread> threads;
+
+    @Before
+    public void sampleThreads() {
+        threads = Thread.getAllStackTraces().keySet();
+    }
+
+    @After
+    public void checkThreadsShutdown() {
+        StatelessClientTest.checkThreadsShutdown(threads);
+    }
 
     @Test
     public void test3() throws IOException, InterruptedException {
@@ -136,13 +151,12 @@ public class TCPSocketReplicationTest {
 
     }
 
-
+    // TODO test this with larger sizes.
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
-        final long start = System.currentTimeMillis();
         System.out.print("SoakTesting ");
-        for (int j = 1; j < 90 * 1000; j++) {
-            if (j % 9000 == 0)
+        for (int j = 1; j < Builder.SIZE * 2; j++) {
+            if (j % 1000 == 0)
                 System.out.print(".");
             Random rnd = new Random(j);
             for (int i = 1; i < 10; i++) {
@@ -153,22 +167,19 @@ public class TCPSocketReplicationTest {
 
                 switch (rnd.nextInt(2)) {
                     case 0:
-                        map.put(rnd.nextInt(1000) /* + select * 100 */, "test");
+                        map.put(rnd.nextInt(Builder.SIZE), "test");
                         break;
                     case 1:
-                        map.remove(rnd.nextInt(1000) /*+ select * 100 */);
+                        map.remove(rnd.nextInt(Builder.SIZE));
                         break;
                 }
             }
 
         }
         System.out.println("");
-        waitTillEqual(5000);
+        waitTillEqual(10000);
 
     }
-
-
-
 
 
 }

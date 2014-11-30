@@ -19,11 +19,13 @@
 package net.openhft.chronicle.map;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Set;
 
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
 import static org.junit.Assert.assertEquals;
@@ -39,6 +41,18 @@ public class TCPSocketReplicationPostConnectionTest {
 
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
+
+    Set<Thread> threads;
+
+    @Before
+    public void sampleThreads() {
+        threads = Thread.getAllStackTraces().keySet();
+    }
+
+    @After
+    public void checkThreadsShutdown() {
+        StatelessClientTest.checkThreadsShutdown(threads);
+    }
 
     @Test
     public void testPostConnection() throws IOException, InterruptedException {

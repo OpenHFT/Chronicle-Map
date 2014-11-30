@@ -27,6 +27,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -78,6 +79,17 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
         System.gc();
     }
 
+    Set<Thread> threads;
+
+    @Before
+    public void sampleThreads() {
+        threads = Thread.getAllStackTraces().keySet();
+    }
+
+    @After
+    public void checkThreadsShutdown() {
+        StatelessClientTest.checkThreadsShutdown(threads);
+    }
 
     @Test
     public void test3() throws IOException, InterruptedException {

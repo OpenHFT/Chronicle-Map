@@ -60,10 +60,10 @@ public class SetForTCPSocketReplication3wayTest {
 
     @Before
     public void setup() throws IOException {
-        set1 = newTcpSocketIntSet((byte) 1, 8076, new InetSocketAddress("localhost", 8077),
-                new InetSocketAddress("localhost", 8079));
-        set2 = newTcpSocketIntSet((byte) 2, 8077, new InetSocketAddress("localhost", 8079));
-        set3 = newTcpSocketIntSet((byte) 3, 8079);
+        set1 = newTcpSocketIntSet((byte) 1, 18076, new InetSocketAddress("localhost", 18077),
+                new InetSocketAddress("localhost", 18079));
+        set2 = newTcpSocketIntSet((byte) 2, 18077, new InetSocketAddress("localhost", 18079));
+        set3 = newTcpSocketIntSet((byte) 3, 18079);
     }
 
     @After

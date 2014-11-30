@@ -3,6 +3,7 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.*;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -16,6 +17,7 @@ import static org.junit.Assert.*;
  */
 // TODO Test for persisted map.
 // TODO Test for stateless map.
+@Ignore
 public class CHMUseCasesTest {
     /**
      * String is not as efficient as CharSequence as a key or value but easier to use The key can only be on heap and

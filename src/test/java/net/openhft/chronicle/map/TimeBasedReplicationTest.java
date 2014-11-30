@@ -20,11 +20,14 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
@@ -42,6 +45,18 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         File file = new File(TMP + "/chm-test" + System.nanoTime());
         file.deleteOnExit();
         return file;
+    }
+
+    Set<Thread> threads;
+
+    @Before
+    public void sampleThreads() {
+        threads = Thread.getAllStackTraces().keySet();
+    }
+
+    @After
+    public void checkThreadsShutdown() {
+        StatelessClientTest.checkThreadsShutdown(threads);
     }
 
 

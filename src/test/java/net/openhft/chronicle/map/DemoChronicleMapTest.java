@@ -49,7 +49,7 @@ public class DemoChronicleMapTest {
                 IntValue k = entry.getKey();
                 DemoOrderVOInterface v = entry.getValue();
 
-                System.out.println(String.format("Key %d %s", k.getValue(), v == null ? "<null>" : v.getSymbol()));
+//                System.out.println(String.format("Key %d %s", k.getValue(), v == null ? "<null>" : v.getSymbol()));
                 assertNotNull(v);
             }
         }
@@ -95,7 +95,7 @@ public class DemoChronicleMapTest {
                 IntValue k = entry.getKey();
                 DemoOrderVOInterface v = entry.getValue();
 
-                System.out.println(String.format("Key %d %s", k.getValue(), v == null ? "<null>" : v.getSymbol()));
+//                System.out.println(String.format("Key %d %s", k.getValue(), v == null ? "<null>" : v.getSymbol()));
                 assertNotNull(v);
             }
         }

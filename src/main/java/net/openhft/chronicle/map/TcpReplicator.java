@@ -113,7 +113,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
         heartBeatIntervalMillis = replicationConfig.heartBeatInterval(MILLISECONDS);
 
-        selectorTimeout = Math.min(heartBeatIntervalMillis, throttleBucketInterval);
+        selectorTimeout = Math.min(heartBeatIntervalMillis / 4, throttleBucketInterval);
 
         this.replica = replica;
         this.localIdentifier = replica.identifier();
@@ -191,8 +191,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                             keys[i] = null;
                         }
                     }
-
-                    //  Thread.sleep(100);
                 }
 
             }
@@ -215,7 +213,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             if (LOG.isDebugEnabled())
                 LOG.debug("closing name=" + name);
             if (!isClosed) {
-                close();
+                closeResources();
             }
         }
     }

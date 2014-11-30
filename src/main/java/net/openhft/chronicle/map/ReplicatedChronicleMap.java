@@ -739,7 +739,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         /**
          * called from a remote node as part of replication
          */
-        private void remoteRemove(
+        void remoteRemove(
                 @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
                 Bytes keyBytes, long hash2, final long timestamp, final byte identifier) {
             writeLock(null);
