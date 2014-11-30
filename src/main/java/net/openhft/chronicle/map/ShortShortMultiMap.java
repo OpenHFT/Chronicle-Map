@@ -149,12 +149,15 @@ class ShortShortMultiMap implements MultiMap {
         key = maskUnsetKey(key);
         checkValueForRemove(value);
         long posToRemove;
+        int limit = capacity;
         for (long pos = pos(key); ; pos = step(pos)) {
             int entry = bytes.readInt(pos);
             if (key(entry) == key && value(entry) == value) {
                 posToRemove = pos;
                 break;
             }
+            if (limit-- < 0)
+                throw new IllegalStateException();
         }
         positions.clear(value);
         removePos(posToRemove);

@@ -39,6 +39,7 @@ import static org.junit.Assert.assertTrue;
 
 public class TCPSocketReplicationPostConnectionTest {
 
+    private static int s_port = 13050;
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
 
@@ -56,11 +57,13 @@ public class TCPSocketReplicationPostConnectionTest {
 
     @Test
     public void testPostConnection() throws IOException, InterruptedException {
-
-        map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, 8076);
+        int port = s_port;
+        s_port += 2;
+        map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, port);
         map1.put(5, "EXAMPLE-2");
         Thread.sleep(1);
-        map2 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 2, 8077, new InetSocketAddress("localhost", 8076));
+        map2 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 2, port + 1,
+                new InetSocketAddress("localhost", port));
 
         // allow time for the recompilation to resolve
         waitTillEqual(500);
@@ -71,10 +74,12 @@ public class TCPSocketReplicationPostConnectionTest {
 
     @Test
     public void testPostConnectionNoSleep() throws IOException, InterruptedException {
-
-        map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, 8076);
+        int port = s_port;
+        s_port += 2;
+        map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, port);
         map1.put(5, "EXAMPLE-2");
-        map2 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 2, 8077, new InetSocketAddress("localhost", 8076));
+        map2 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 2, port + 1,
+                new InetSocketAddress("localhost", port));
 
         // allow time for the recompilation to resolve
         waitTillEqual(1000);
@@ -85,13 +90,15 @@ public class TCPSocketReplicationPostConnectionTest {
 
     @Test
     public void testBootStrapIntoNewMapWithNewFile() throws IOException, InterruptedException {
+        int port = s_port;
+        s_port += 2;
 
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
-                        (byte) 2, 8077, new InetSocketAddress("localhost", 8076));
+                        (byte) 2, port + 1, new InetSocketAddress("localhost", port));
         try (final ChronicleMap<Integer, CharSequence> map2a =
                 map2aBuilder.createPersistedTo(Builder.getPersistenceFile())) {
-            map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, 8076);
+            map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, port);
 
             Thread.sleep(1);
             map1.put(5, "EXAMPLE-2");
