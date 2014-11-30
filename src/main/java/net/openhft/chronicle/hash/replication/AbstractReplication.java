@@ -44,7 +44,6 @@ public abstract class AbstractReplication implements Serializable {
         remoteNodeValidator = builder.remoteNodeValidator;
     }
 
-
     @Override
     public String toString() {
         return ", localIdentifier=" + localIdentifier +
@@ -136,7 +135,6 @@ public abstract class AbstractReplication implements Serializable {
                 throw new IllegalArgumentException("Identifier must be positive, " + identifier +
                         " given");
         }
-
 
         @Override
         public String toString() {

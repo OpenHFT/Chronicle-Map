@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
@@ -55,7 +54,6 @@ public class SingleMapChannelTest {
         return file;
     }
 
-
     @Before
     public void setup() throws IOException {
 
@@ -75,7 +73,6 @@ public class SingleMapChannelTest {
                     .entries(1000)
                     .instance().replicatedViaChannel(hubA.createChannel((short) 1)).create();
         }
-
 
         {
             final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
@@ -107,7 +104,6 @@ public class SingleMapChannelTest {
         System.gc();
     }
 
-
     @Test
     public void test() throws IOException, InterruptedException {
 
@@ -118,12 +114,9 @@ public class SingleMapChannelTest {
 
         Assert.assertEquals("map1a=map1b", map1a, map1b);
 
-
         assertTrue("map1a.empty", !map1a.isEmpty());
 
-
     }
-
 
     /**
      * waits until map1 and map2 show the same value
@@ -143,6 +136,4 @@ public class SingleMapChannelTest {
     }
 
 }
-
-
 

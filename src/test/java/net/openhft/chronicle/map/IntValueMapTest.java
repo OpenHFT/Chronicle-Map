@@ -28,7 +28,6 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
-
 /**
  * @author Rob Austin.
  */

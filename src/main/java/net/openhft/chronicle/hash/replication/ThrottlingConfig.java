@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.hash.replication;
 
-
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +35,6 @@ public final class ThrottlingConfig implements Serializable {
     private final TimeUnit throttlePerUnit;
     private final long bucketInterval;
     private final TimeUnit bucketIntervalUnit;
-
 
     ThrottlingConfig(
             long throttle,
@@ -94,7 +92,6 @@ public final class ThrottlingConfig implements Serializable {
                 throttleBucketInterval, throttleBucketIntervalUnit);
     }
 
-
     /**
      * Returns maximum bits per the given time unit, i. e. the throttling. {@code 0} (zero) designates there
      * is no throttling.
@@ -105,7 +102,6 @@ public final class ThrottlingConfig implements Serializable {
     public final long throttling(TimeUnit perUnit) {
         return throttlePerUnit.convert(throttle, perUnit);
     }
-
 
     /**
      * Returns the throttle bucketing interval in the given time units.  <p>Default throttle bucketing

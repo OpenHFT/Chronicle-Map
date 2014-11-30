@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 
-
 public final class UdpTransportConfig {
     private final InetAddress address;
     private final int port;
@@ -48,7 +47,6 @@ public final class UdpTransportConfig {
         }
         this.throttlingConfig = throttlingConfig;
     }
-
 
     public static UdpTransportConfig multiCast(@NotNull InetAddress address, int port,
                                                  @NotNull NetworkInterface networkInterface) {

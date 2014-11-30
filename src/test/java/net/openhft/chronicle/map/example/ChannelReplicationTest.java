@@ -44,10 +44,8 @@ public class ChannelReplicationTest {
     private ChronicleMap<CharSequence, CharSequence> favoriteColourServer2;
     private ChronicleMap<CharSequence, CharSequence> favoriteColourServer1;
 
-
     private ReplicationHub hubOnServer1;
     private ReplicationHub hubOnServer2;
-
 
     @Test
     public void test() throws IOException, InterruptedException {
@@ -63,7 +61,6 @@ public class ChannelReplicationTest {
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
-
 
             hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -103,13 +100,11 @@ public class ChannelReplicationTest {
                     .tcpTransportAndNetwork(tcpConfig)
                     .createWithId(identifier);
 
-
             // this demotes favoriteColour
             short channel1 = (short) 1;
 
             favoriteColourServer2 = smallStringToStringMapBuilder.instance()
                     .replicatedViaChannel(hubOnServer2.createChannel(channel1)).create();
-
 
             favoriteColourServer2.put("rob", "blue");
 
@@ -123,7 +118,6 @@ public class ChannelReplicationTest {
             favoriteComputerServer2.put("daniel", "mac");
         }
 
-
         // allow time for the recompilation to resolve
         for (int t = 0; t < 2500; t++) {
             if (favoriteComputerServer2.equals(favoriteComputerServer1) &&
@@ -132,14 +126,11 @@ public class ChannelReplicationTest {
             Thread.sleep(1);
         }
 
-
         assertEquals(favoriteComputerServer1, favoriteComputerServer2);
         Assert.assertEquals(3, favoriteComputerServer2.size());
 
-
         assertEquals(favoriteColourServer1, favoriteColourServer2);
         Assert.assertEquals(2, favoriteColourServer1.size());
-
 
         favoriteColourServer1.close();
         favoriteComputerServer2.close();
@@ -147,15 +138,12 @@ public class ChannelReplicationTest {
         favoriteComputerServer1.close();
     }
 
-
     @Test
     public void testPublishOnOneMapOnlyBootstrapTwice() throws IOException, InterruptedException {
-
 
         ChronicleMap<CharSequence, CharSequence> favoriteComputerServer3;
 
         ChronicleMap<CharSequence, CharSequence> favoriteColourServer3;
-
 
         // server 1 with  identifier = 1
         {
@@ -168,7 +156,6 @@ public class ChannelReplicationTest {
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                     .of(8086)
                     .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
-
 
             hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -189,7 +176,6 @@ public class ChannelReplicationTest {
                     .replicatedViaChannel(hubOnServer1.createChannel(channel2)).create();
 
             favoriteComputerServer1.put("peter", "dell");
-
 
         }
 
@@ -218,7 +204,6 @@ public class ChannelReplicationTest {
             favoriteColourServer2 = instance.create();
         }
 
-
         {
             ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
@@ -235,7 +220,6 @@ public class ChannelReplicationTest {
                     .tcpTransportAndNetwork(tcpConfig)
                     .createWithId(identifier);
 
-
             // this demotes favoriteColour
             short channel1 = (short) 1;
 
@@ -248,9 +232,7 @@ public class ChannelReplicationTest {
             favoriteComputerServer3 = smallStringToStringMapBuilder.instance()
                     .replicatedViaChannel(hubOnServer3.createChannel(channel2)).create();
 
-
         }
-
 
         // allow time for the recompilation to resolve
         for (int t = 0; t < 250000; t++) {
@@ -261,10 +243,8 @@ public class ChannelReplicationTest {
             Thread.sleep(1);
         }
 
-
         assertEquals(favoriteComputerServer3, favoriteComputerServer1);
         assertEquals(favoriteColourServer2, favoriteColourServer3);
-
 
         Assert.assertEquals(1, favoriteColourServer3.size());
         Assert.assertEquals(1, favoriteComputerServer1.size());
@@ -275,12 +255,9 @@ public class ChannelReplicationTest {
         favoriteComputerServer1.close();
         favoriteColourServer1.close();
 
-
         favoriteColourServer2.close();
 
-
     }
-
 
     @Test
     public void testPublishOnOneMapOnly() throws IOException, InterruptedException {
@@ -297,7 +274,6 @@ public class ChannelReplicationTest {
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .heartBeatInterval(1, SECONDS)
                     .autoReconnectedUponDroppedConnection(true);
-
 
             hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -337,13 +313,11 @@ public class ChannelReplicationTest {
                     .tcpTransportAndNetwork(tcpConfig)
                     .createWithId(identifier);
 
-
             // this demotes favoriteColour
             short channel1 = (short) 1;
 
             favoriteColourServer2 = smallStringToStringMapBuilder.instance()
                     .replicatedViaChannel(hubOnServer2.createChannel(channel1)).create();
-
 
             // this demotes favoriteComputer
             short channel2 = (short) 2;
@@ -351,7 +325,6 @@ public class ChannelReplicationTest {
             favoriteComputerServer2 = smallStringToStringMapBuilder.instance()
                     .replicatedViaChannel(hubOnServer2.createChannel(channel2)).create();
         }
-
 
         // allow time for the recompilation to resolve
         for (int t = 0; t < 2500; t++) {
@@ -361,14 +334,11 @@ public class ChannelReplicationTest {
             Thread.sleep(1);
         }
 
-
         assertEquals(favoriteComputerServer1, favoriteComputerServer2);
         Assert.assertEquals(1, favoriteComputerServer2.size());
 
-
         assertEquals(favoriteColourServer1, favoriteColourServer2);
         Assert.assertEquals(1, favoriteColourServer1.size());
-
 
         favoriteColourServer1.close();
         favoriteComputerServer2.close();
@@ -376,7 +346,4 @@ public class ChannelReplicationTest {
         favoriteComputerServer1.close();
     }
 }
-
-
-
 

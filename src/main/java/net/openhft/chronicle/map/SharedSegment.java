@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.NativeBytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +45,5 @@ interface SharedSegment<K, V> {
     int getIndex();
 
     long offsetFromPos(long pos);
-
 
 }

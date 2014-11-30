@@ -75,11 +75,9 @@ public class NodeDiscovery {
 
     }
 
-
     private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
     private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListenerAtomicReference =
             new AtomicReference<NodeDiscoveryEventListener>();
-
 
     private KnownNodes knownNodes;
 
@@ -104,7 +102,6 @@ public class NodeDiscovery {
 
         discoveryNodeBytesMarshallable.setModificationNotifier(nodeDiscoveryBroadcaster);
     }
-
 
     public synchronized ReplicationHubFindByName mapByName() throws
             IOException, InterruptedException {
@@ -149,7 +146,6 @@ public class NodeDiscovery {
                 }
                 countDownLatch.get().countDown();
             }
-
 
         };
 
@@ -220,7 +216,6 @@ public class NodeDiscovery {
             break;
         }
 
-
         // we should make a local copy as this may change
 
         final RemoteNodeValidator remoteNodeValidator = new RemoteNodeValidator() {
@@ -252,7 +247,6 @@ public class NodeDiscovery {
 
         LOG.info("Using Remote identifier=" + identifier);
         nodeDiscoveryEventListenerAtomicReference.set(null);
-
 
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8123, new
                 InetSocketAddress("192.168.1.253", 8123));
@@ -286,7 +280,6 @@ public class NodeDiscovery {
         return addresses;
     }
 
-
     /**
      * bitwise OR's the two bit sets or put another way, merges the source bitset into the destination bitset
      * and returns the destination
@@ -311,11 +304,9 @@ public class NodeDiscovery {
         return destination;
     }
 
-
     static byte proposeRandomUnusedIdentifier(final DirectBitSet knownIdentifiers,
                                               boolean isFirstTime) throws UnknownHostException {
         byte possible;
-
 
         // the first time, rather than choosing a random number, we will choose the last value of the IP
         // address as our random number, ( or at least something that is based upon it)
@@ -463,7 +454,6 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
             externalizable.readMarshallable(out);
         }
 
-
     }
 
     static class UdpSocketChannelEntryWriter implements EntryWriter {
@@ -486,7 +476,6 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
             out = allocateDirect(serializedEntrySize * 2);
             in = new ByteBufferBytes(out);
         }
-
 
         /**
          * @param socketChannel the socketChannel that we will write to
@@ -526,7 +515,6 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
 
 }
 
-
 class KnownNodes implements BytesMarshallable {
 
     private Bytes activeIdentifiersBitSetBytes;
@@ -539,7 +527,6 @@ class KnownNodes implements BytesMarshallable {
         this.addressAndPorts = new ConcurrentSkipListSet<AddressAndPort>();
         this.atsDirectBitSet = new ATSDirectBitSet(this.activeIdentifiersBitSetBytes);
     }
-
 
     public Set<AddressAndPort> addressAndPorts() {
         return addressAndPorts;
@@ -558,7 +545,6 @@ class KnownNodes implements BytesMarshallable {
     public DirectBitSet identifiers() {
         return atsDirectBitSet;
     }
-
 
     @Override
     public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
@@ -605,7 +591,6 @@ class KnownNodes implements BytesMarshallable {
                 '}';
     }
 }
-
 
 class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
     private byte[] address;
@@ -656,7 +641,6 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
         return result;
     }
 
-
     @Override
     public int compareTo(AddressAndPort o) {
         int i = 0;
@@ -667,7 +651,6 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
         }
         return Short.compare(port, o.port);
     }
-
 
     @Override
     public String toString() {
@@ -696,9 +679,7 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
 
         return sb.toString();
 
-
     }
-
 
     @Override
     public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
@@ -721,7 +702,6 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
         out.writeShort(port);
     }
 }
-
 
 class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
@@ -788,7 +768,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
         proposedIdentifiersWithHost.writeMarshallable(out);
 
-
     }
 
     private boolean writeBootstrap(Bytes out) {
@@ -838,7 +817,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         }
     }
 
-
     @Override
     public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
 
@@ -863,7 +841,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             return;
         }
 
-
         // the host and port the message came from
         this.sourceAddressAndPort.readMarshallable(in);
         if (sourceAddressAndPort.equals(ourAddressAndPort))
@@ -878,7 +855,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         if (listener != null)
             listener.onRemoteNodeEvent(remoteNode, proposedIdentifiersWithHost);
     }
-
 
     public void onChange() {
         if (modificationNotifier != null)
@@ -905,7 +881,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             this.identifier = identifier;
             this.timestamp = System.currentTimeMillis();
         }
-
 
         AddressAndPort addressAndPort() {
             return addressAndPort;
@@ -957,7 +932,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         }
     }
 
-
     /**
      * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the host:port
      * and perhaps even proposed identifier of the node that sent it.
@@ -969,7 +943,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         bootstrapRequired.set(true);
         onChange();
     }
-
 
 }
 
@@ -1061,14 +1034,12 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
         });
     }
 
-
     // this is used for expiry
     private final Queue<Map.Entry<K, W<V>>> queue = new ConcurrentLinkedQueue<Map.Entry<K, W<V>>>();
 
     java.util.Collection<V> values() {
         return map.values();
     }
-
 
     void expireEntries(long timeOlderThan) {
         for (; ; ) {
@@ -1086,7 +1057,6 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
             this.queue.poll();
         }
     }
-
 
     public static void main(String... args) {
         String ip;
@@ -1109,7 +1079,6 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
             throw new RuntimeException(e);
         }
     }
-
 
     /**
      * private NetworkInterface defaultNetworkInterface() throws SocketException { NetworkInterface
@@ -1153,7 +1122,6 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
         for (; inetAddresses.hasMoreElements(); ) {
             inetAddress = inetAddresses.nextElement();
         }
-
 
         if (inetAddress == null)
             throw new IllegalStateException();

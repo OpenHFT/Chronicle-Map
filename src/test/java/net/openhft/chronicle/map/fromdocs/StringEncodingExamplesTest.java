@@ -181,7 +181,6 @@ public class StringEncodingExamplesTest {
         testCustomKeyMarshaller(gbkStringMarshaller);
     }
 
-
     @Test
     public void testNoEncodingMarshaller() throws IOException {
         Utf16Marshaller<CharSequence> noEncodingMarshaller =

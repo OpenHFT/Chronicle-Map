@@ -18,7 +18,6 @@ import static org.junit.Assert.assertEquals;
  */
 public class ChronicleMapImportExportTest {
 
-
     public static final String TMP = System.getProperty("java.io.tmpdir");
 
     @Test
@@ -47,9 +46,7 @@ public class ChronicleMapImportExportTest {
             file.delete();
         }
 
-
     }
-
 
     @Test
     public void testWithMapValue() throws IOException, InterruptedException {
@@ -81,7 +78,6 @@ public class ChronicleMapImportExportTest {
 
     }
 
-
     @Test
     public void testWithMapOfMapValue() throws IOException, InterruptedException {
 
@@ -112,9 +108,7 @@ public class ChronicleMapImportExportTest {
             file.delete();
         }
 
-
     }
-
 
     @Test
     public void testWithIntegerAndDouble() throws IOException, InterruptedException {
@@ -126,9 +120,7 @@ public class ChronicleMapImportExportTest {
                 .class)
                 .create()) {
 
-
             expected.put(1, 1.0);
-
 
             expected.getAll(file);
 
@@ -144,9 +136,7 @@ public class ChronicleMapImportExportTest {
             file.delete();
         }
 
-
     }
-
 
     @Test
     public void testWithCharSeq() throws IOException, InterruptedException {
@@ -159,9 +149,7 @@ public class ChronicleMapImportExportTest {
                 .class)
                 .create()) {
 
-
             expected.put("hello", "world");
-
 
             expected.getAll(file);
 
@@ -176,7 +164,6 @@ public class ChronicleMapImportExportTest {
         } finally {
             file.delete();
         }
-
 
     }
 
@@ -215,7 +202,6 @@ public class ChronicleMapImportExportTest {
         } finally {
             file.delete();
         }
-
 
     }
 

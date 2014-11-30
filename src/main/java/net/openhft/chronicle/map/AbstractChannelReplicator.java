@@ -71,7 +71,6 @@ abstract class AbstractChannelReplicator implements Closeable {
     @Nullable
     private final Throttler throttler;
 
-
     volatile boolean isClosed = false;
     ThreadLocalCopies copies;
     VanillaChronicleMap.SegmentState segmentState;
@@ -118,7 +117,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                                    }
                                }
 
-
                            }
             );
             return openSelector(result, selectedKeys);
@@ -146,7 +144,6 @@ abstract class AbstractChannelReplicator implements Closeable {
         return result;
     }
 
-
     /**
      * this is similar to the code in Netty
      *
@@ -156,9 +153,7 @@ abstract class AbstractChannelReplicator implements Closeable {
     private Selector openSelector(@NotNull final Selector selector,
                                   @NotNull final SelectedSelectionKeySet selectedKeySet) {
 
-
         try {
-
 
             Class<?> selectorImplClass =
                     Class.forName("sun.nio.ch.SelectorImpl", false, getSystemClassLoader());
@@ -170,7 +165,6 @@ abstract class AbstractChannelReplicator implements Closeable {
 
             Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys");
             Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");
-
 
             selectedKeysField.setAccessible(true);
             publicSelectedKeysField.setAccessible(true);
@@ -234,7 +228,6 @@ abstract class AbstractChannelReplicator implements Closeable {
         );
     }
 
-
     @Override
     public void close() {
         if (Thread.interrupted())
@@ -296,7 +289,6 @@ abstract class AbstractChannelReplicator implements Closeable {
             throttler.remove(channel);
         closeables.closeQuietly(channel);
     }
-
 
     void checkThrottleInterval() throws ClosedChannelException {
         if (throttler != null)
@@ -371,7 +363,6 @@ abstract class AbstractChannelReplicator implements Closeable {
 
             }
         }
-
 
         /**
          * checks the number of bytes written in this interval, if this number of bytes exceeds a
@@ -465,7 +456,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                 throw new IllegalStateException("entry too large, the entry size=" + entrySize + ", " +
                         "entries are limited to a size of " + Integer.MAX_VALUE);
 
-
             int entrySize1 = (int) entrySize;
             if (LOG.isDebugEnabled())
                 LOG.debug("sending entry of entrySize=" + entrySize1);
@@ -511,7 +501,6 @@ abstract class AbstractChannelReplicator implements Closeable {
             doConnect(0);
         }
 
-
         /**
          * @param reconnectionInterval the period to wait before connecting
          */
@@ -539,7 +528,6 @@ abstract class AbstractChannelReplicator implements Closeable {
 
                         AbstractConnector.this.socketChannel = socketChannel;
 
-
                     } catch (Exception e) {
                         closeQuietly(socketChannel);
                         LOG.debug("", e);
@@ -561,13 +549,11 @@ abstract class AbstractChannelReplicator implements Closeable {
             thread.setDaemon(true);
             thread.start();
 
-
         }
 
         public void setSuccessfullyConnected() {
             connectionAttempts = 0;
         }
     }
-
 
 }

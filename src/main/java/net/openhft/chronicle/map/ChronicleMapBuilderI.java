@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
  */
 public interface ChronicleMapBuilderI<K, V> extends Serializable {
 
-
     /**
      * {@inheritDoc} With respect to {@linkplain #entryAndValueAlignment(Alignment) alignment}.
      *
@@ -58,7 +57,6 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
      */
     ChronicleMapBuilderI<K, V> entryAndValueAlignment(Alignment alignment);
 
-
     /**
      * {@inheritDoc} Also, it overrides any previous {@link #prepareValueBytesOnAcquire} configuration to this
      * {@code ChronicleMapBuilder}.
@@ -70,7 +68,6 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
      * @see #prepareValueBytesOnAcquire(PrepareValueBytes)
      */
     ChronicleMapBuilderI<K, V> defaultValue(V defaultValue);
-
 
     /**
      * Configures the procedure which is called on the bytes, which later the returned value is pointing to,
@@ -89,7 +86,6 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
      */
     ChronicleMapBuilderI<K, V> prepareValueBytesOnAcquire(
             @NotNull PrepareValueBytes<K, V> prepareValueBytes);
-
 
     /**
      * {@inheritDoc}
@@ -147,7 +143,6 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
      * @see #constantKeySizeBySample(Object)
      */
 
-
     ChronicleMapBuilderI<K, V> constantValueSizeBySample(
             @NotNull V sampleValue);
 
@@ -202,7 +197,6 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
      */
     ChronicleMapBuilderI<K, V> valueMarshaller(
             @NotNull BytesMarshaller<V> valueMarshaller);
-
 
     /**
      * Configures the marshallers, used to serialize/deserialize values to/from off-heap memory in maps,
@@ -312,6 +306,5 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
     ChronicleMapBuilderI<K, V> bootstrapOnlyLocalEntries(boolean bootstapOnlyLocalEntries);
 
     String name();
-
 
 }

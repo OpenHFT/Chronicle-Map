@@ -32,7 +32,6 @@ import static junit.framework.Assert.assertEquals;
  */
 public class MapByNameTest {
 
-
     private ReplicationHubFindByName<CharSequence> findMapByName;
 
     @Before
@@ -66,7 +65,6 @@ public class MapByNameTest {
     //      findMapByName.get("hello");
     //  }
 
-
     @Test
     @Ignore("currently work in progress")
     public void testConnectByName() throws IOException, InterruptedException, TimeoutException {
@@ -89,7 +87,6 @@ public class MapByNameTest {
     public static void main(String... args) throws IOException, InterruptedException, TimeoutException {
         NodeDiscovery nodeDiscovery = new NodeDiscovery();
 
-
         final ReplicationHubFindByName<CharSequence> mapByName = nodeDiscovery.mapByName();
         Thread.sleep(2000);
 
@@ -104,7 +101,6 @@ public class MapByNameTest {
         map.put("hello", "world");
 
         //    final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap5");
-
 
         // allow time for replication
         Thread.sleep(2000);

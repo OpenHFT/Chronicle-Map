@@ -42,7 +42,6 @@ public class CHMTestIterator1 {
         chm.put("k5", alValue.incrementAndGet());*/
             //chm.keySet();
 
-
             for (int i = 0; i < runs; i++) {
                 chm.put("k" + alKey.incrementAndGet(), alValue.incrementAndGet());
             }
@@ -58,6 +57,5 @@ public class CHMTestIterator1 {
 
         }
     }
-
 
 }

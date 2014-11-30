@@ -57,7 +57,6 @@ public class TCPSocketReplicationPostConnectionTest {
     @Test
     public void testPostConnection() throws IOException, InterruptedException {
 
-
         map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, 8076);
         map1.put(5, "EXAMPLE-2");
         Thread.sleep(1);
@@ -73,7 +72,6 @@ public class TCPSocketReplicationPostConnectionTest {
 
     @Test
     public void testPostConnectionNoSleep() throws IOException, InterruptedException {
-
 
         map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, 8076);
         map1.put(5, "EXAMPLE-2");
@@ -102,13 +100,11 @@ public class TCPSocketReplicationPostConnectionTest {
 
         }
 
-
         Thread.sleep(1);
         map1.put(6, "EXAMPLE-1");
 
         // recreate map2 with new unique file
         map2 = map2aBuilder.createPersistedTo(Builder.getPersistenceFile());
-
 
         // allow time for the recompilation to resolve
         waitTillEqual(5000);
@@ -118,7 +114,6 @@ public class TCPSocketReplicationPostConnectionTest {
         assertTrue(map2.get(6).equals("EXAMPLE-1"));
 
     }
-
 
     @After
     public void tearDown() {
@@ -133,7 +128,6 @@ public class TCPSocketReplicationPostConnectionTest {
         }
         System.gc();
     }
-
 
     /**
      * * waits until map1 and map2 show the same value
@@ -152,6 +146,4 @@ public class TCPSocketReplicationPostConnectionTest {
     }
 
 }
-
-
 

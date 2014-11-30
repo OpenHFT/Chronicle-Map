@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
@@ -57,7 +56,6 @@ public class PostChannelCreationTest {
         return file;
     }
 
-
     @Before
     public void setup() throws IOException {
 
@@ -79,7 +77,6 @@ public class PostChannelCreationTest {
                     .instance().replicatedViaChannel(hubA.createChannel((short) 2)).create();
         }
 
-
         {
             final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                     .of(8087, new InetSocketAddress("localhost", 8086))
@@ -98,7 +95,6 @@ public class PostChannelCreationTest {
                     .instance().replicatedViaChannel(hubB.createChannel((short) 2)).create();
         }
 
-
     }
 
     @After
@@ -113,7 +109,6 @@ public class PostChannelCreationTest {
         }
         System.gc();
     }
-
 
     /**
      * sets up a 2 clusters ( notionally one for each host ), and replicates 2 Chronicle Maps between them
@@ -138,7 +133,6 @@ public class PostChannelCreationTest {
 
     }
 
-
     /**
      * waits until map1 and map2 show the same value
      *
@@ -157,6 +151,4 @@ public class PostChannelCreationTest {
     }
 
 }
-
-
 

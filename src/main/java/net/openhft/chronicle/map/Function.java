@@ -22,5 +22,4 @@ public interface Function<T, R> extends Serializable {
      */
     R apply(T t);
 
-
 }

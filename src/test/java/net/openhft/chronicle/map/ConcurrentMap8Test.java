@@ -44,7 +44,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
 
         final ChronicleMapOnHeapUpdatableBuilder<Long, Long> builder = ChronicleMapBuilder.of(Long.class, Long.class);
 
-
         //// don't include this, just to check it is as expected.
         assertEquals(8, builder.minSegments());
         //// end of test
@@ -56,17 +55,14 @@ public class ConcurrentMap8Test extends JSR166TestCase {
             throw new IllegalStateException(e);
         }
 
-
         // return new ConcurrentMap(5);
 
     }
 
     private static ConcurrentMap newIntegerStringMap() {
 
-
         final ChronicleMapOnHeapUpdatableBuilder<Integer, String> builder = ChronicleMapBuilder.of(Integer.class,
                 String.class);
-
 
         //// don't include this, just to check it is as expected.
         assertEquals(8, builder.minSegments());
@@ -79,7 +75,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-
 
     }
 

@@ -70,7 +70,6 @@ public class TCPSocketReplicationIntValueTest {
         s_port += 2;
     }
 
-
     @After
     public void tearDown() throws InterruptedException {
 
@@ -97,7 +96,6 @@ public class TCPSocketReplicationIntValueTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-
     @Test
     public void test3() throws IOException, InterruptedException {
 
@@ -115,7 +113,6 @@ public class TCPSocketReplicationIntValueTest {
         value.setValue(x);
         return value;
     }
-
 
     // see https://higherfrequencytrading.atlassian.net/browse/HCOLL-148
     @Test
@@ -140,7 +137,6 @@ public class TCPSocketReplicationIntValueTest {
         assertTrue(!map1.isEmpty());
 
     }
-
 
     @Test
     public void testBufferOverflow() throws IOException, InterruptedException {
@@ -173,7 +169,6 @@ public class TCPSocketReplicationIntValueTest {
         assertEquals(map1, map2);
     }
 
-
     // TODO test this with larger sizes.
     @Test(timeout = 12000)
     @Ignore("Doesn't work, maps need to check equality.")
@@ -188,7 +183,6 @@ public class TCPSocketReplicationIntValueTest {
 
                 final int select = rnd.nextInt(2);
                 final ChronicleMap<IntValue, CharSequence> map = select > 0 ? map1 : map2;
-
 
                 if (rnd.nextBoolean()) {
                     map.put(set(rnd.nextInt(Builder.SIZE)), "test");
@@ -209,6 +203,4 @@ public class TCPSocketReplicationIntValueTest {
     }
 
 }
-
-
 

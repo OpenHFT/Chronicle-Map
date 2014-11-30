@@ -153,22 +153,17 @@ final class OffHeapUpdatableChronicleMapBuilder<K, V>
         throw new UnsupportedOperationException("not supported for this combination of key/value type");
     }
 
-
     public ChronicleMapBuilderI<K, V> valueMarshallers(@NotNull BytesWriter<V> valueWriter, @NotNull BytesReader<V> valueReader) {
         throw new UnsupportedOperationException("not supported for this combination of key/value type");
     }
-
 
     public ChronicleMapBuilderI<K, V> valueSizeMarshaller(@NotNull SizeMarshaller valueSizeMarshaller) {
         throw new UnsupportedOperationException("not supported for this combination of key/value type");
     }
 
-
-
     @Override
     public OffHeapUpdatableChronicleMapBuilder<K, V> constantValueSizeBySample(V sampleValue) {
         throw new UnsupportedOperationException("not supported for this combination of key/value type");
     }
-
 
 }

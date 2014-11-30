@@ -47,7 +47,6 @@ public class SerializerTest {
         testReadWriteValue(new MyTestClassObjectGraph(3));
     }
 
-
     @Test
     public void testKeyMarshallable() throws Exception {
         testReadWriteKey("Test");
@@ -64,7 +63,6 @@ public class SerializerTest {
         testReadWriteKey(new MyTestClassObjectGraph(3));
     }
 
-
     public void testReadWriteValue(Object value) throws Exception {
 
         Class valueClass = value.getClass();
@@ -72,11 +70,9 @@ public class SerializerTest {
         final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
         ByteBufferBytes in = out.slice();
 
-
         ChronicleMapBuilder cBuilder = ChronicleMapBuilder.of(Integer.class, valueClass);
 
         OnHeapUpdatableChronicleMapBuilder builder = (OnHeapUpdatableChronicleMapBuilder) cBuilder.delegate;
-
 
         builder.preMapConstruction(false);
 
@@ -88,11 +84,9 @@ public class SerializerTest {
         long position = out.position();
         in.limit(position);
 
-
         Object actual = valueReaderWithSize.read(in, null);
         Assert.assertEquals(actual, value);
     }
-
 
     public void testReadWriteKey(Object key) throws Exception {
 
@@ -120,7 +114,6 @@ public class SerializerTest {
 
         }
 
-
     }
 
     public static class MyTestClassExternalizable implements Externalizable {
@@ -128,7 +121,6 @@ public class SerializerTest {
 
         public MyTestClassExternalizable() {
         }
-
 
         MyTestClassExternalizable(int a) {
             this.a = a;
@@ -262,6 +254,5 @@ public class SerializerTest {
             return delegate != null ? delegate.hashCode() : 0;
         }
     }
-
 
 }

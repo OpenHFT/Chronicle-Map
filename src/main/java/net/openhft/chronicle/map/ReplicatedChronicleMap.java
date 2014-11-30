@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
@@ -37,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -165,7 +165,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         if (identifierUpdatedBytes.readLong(offset) < timestamp)
             identifierUpdatedBytes.writeLong(offset, timestamp);
     }
-
 
     @Override
     public long lastModificationTime(byte remoteIdentifier) {
@@ -393,12 +392,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
         final long keySize = keySizeMarshaller.readSize(entry);
 
-
         final long keyPosition = entry.position();
         entry.skip(keySize);
         final long keyLimit = entry.position();
         final long timeStamp = entry.readLong();
-
 
         final byte identifier = entry.readByte();
         if (identifier != localIdentifier) {
@@ -419,7 +416,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         keySizeMarshaller.writeSize(destination, keySize);
         valueSizeMarshaller.writeSize(destination, valueSize);
         destination.writeStopBit(timeStamp);
-
 
         destination.writeByte(identifier);
         destination.writeBoolean(isDeleted);
@@ -471,7 +467,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         final long keySize = keySizeMarshaller.readSize(source);
         final long valueSize = valueSizeMarshaller.readSize(source);
         final long timeStamp = source.readStopBit();
-
 
         final byte id = source.readByte();
         final boolean isDeleted = source.readBoolean();
@@ -533,7 +528,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             source.position(valuePosition);
             LOG.debug(message + "value=" + source.toString().trim() + ")");
         }
-
 
     }
 
@@ -695,7 +689,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                         incrementSize();
                         hashLookup.putPosition(pos);
-
 
                         entry.position(valueSizePos);
                         long valueSize = readValueSize(entry);

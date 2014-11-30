@@ -45,7 +45,6 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
-
 public class StatelessChronicleMapTest extends JSR166TestCase {
 
     public static final int SIZE = 1024;
@@ -251,7 +250,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create();
 
-
         final ChronicleMap<CharSequence, CharSequence> statelessMap = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .statelessClient(new InetSocketAddress("localhost", port))
@@ -268,7 +266,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create();
-
 
         final ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapBuilder
                 .of(byte[].class, byte[].class)
@@ -541,7 +538,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 assertTrue(empty.containsKey(four));
                 assertTrue(empty.containsKey(five));
 
-
             }
         }
     }
@@ -765,7 +761,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
     }
 
-
     /**
      * replace(null, x) throws NPE
      */
@@ -789,7 +784,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         } catch (NullPointerException success) {
         }
     }
-
 
     /**
      * putIfAbsent(x, null) throws NPE
@@ -960,7 +954,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             return r;
         }
     }
-
 
 }
 

@@ -22,7 +22,6 @@ import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.Provider;
-import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +39,6 @@ final class WriterWithSize<T> {
         originalMetaWriter = serializationBuilder.metaInterop();
         metaWriterProvider = serializationBuilder.metaInteropProvider();
     }
-
-
 
     ThreadLocalCopies getCopies(ThreadLocalCopies copies) {
         copies = writerProvider.getCopies(copies);

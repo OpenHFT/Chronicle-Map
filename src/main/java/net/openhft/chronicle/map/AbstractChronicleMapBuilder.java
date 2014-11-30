@@ -107,7 +107,6 @@ abstract class AbstractChronicleMapBuilder<K, V,
     private static final Logger LOG =
             LoggerFactory.getLogger(AbstractChronicleMapBuilder.class.getName());
 
-
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
 
@@ -156,7 +155,6 @@ abstract class AbstractChronicleMapBuilder<K, V,
     protected static boolean offHeapReference(Class valueClass) {
         return Byteable.class.isAssignableFrom(valueClass);
     }
-
 
     private static long roundUpMapHeaderSize(long headerSize) {
         long roundUp = (headerSize + 127L) & ~127L;
@@ -449,7 +447,6 @@ abstract class AbstractChronicleMapBuilder<K, V,
         return segments <= maxSegments ? segments : -segments;
     }
 
-
     int segmentHeaderSize() {
         int segments = actualSegments();
         // reduce false sharing unless we have a lot of segments.
@@ -617,7 +614,6 @@ abstract class AbstractChronicleMapBuilder<K, V,
         return self();
     }
 
-
     /**
      * {@inheritDoc}
      *
@@ -749,7 +745,6 @@ abstract class AbstractChronicleMapBuilder<K, V,
         return new PrepareValueBytesAsWriter<>(prepareValueBytes, valueSize());
     }
 
-
     /**
      * Non-public because should be called only after {@link #preMapConstruction(boolean)}
      */
@@ -775,12 +770,10 @@ abstract class AbstractChronicleMapBuilder<K, V,
         return self();
     }
 
-
     @Override
     public B replication(byte identifier) {
         return replication(SingleChronicleHashReplication.builder().createWithId(identifier));
     }
-
 
     @Override
     public B replication(byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork) {
@@ -1004,7 +997,6 @@ abstract class AbstractChronicleMapBuilder<K, V,
         this.name = name;
         return this;
     }
-
 
     @Override
     public ChronicleMapBuilderI<K, V> bootstrapOnlyLocalEntries(boolean bootstapOnlyLocalEntries) {

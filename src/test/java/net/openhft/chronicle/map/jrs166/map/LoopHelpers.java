@@ -83,7 +83,6 @@ class LoopHelpers {
         return x * 134775813 + 1;
     }
 
-
     /**
      * Yet another random number generator
      */
@@ -122,7 +121,6 @@ class LoopHelpers {
         x ^= (x << 17);
         return x;
     }
-
 
     public static String rightJustify(long n) {
         // There's probably a better way to do this...

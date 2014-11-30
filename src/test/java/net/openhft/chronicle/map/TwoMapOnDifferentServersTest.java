@@ -37,7 +37,6 @@ import static org.junit.Assert.assertTrue;
  */
 public class TwoMapOnDifferentServersTest {
 
-
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
 
@@ -47,7 +46,6 @@ public class TwoMapOnDifferentServersTest {
         final TcpTransportAndNetworkConfig tcpConfig =
                 TcpTransportAndNetworkConfig.of(8076, new InetSocketAddress("localhost", 8077))
                         .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
-
 
         map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000)
@@ -98,7 +96,6 @@ public class TwoMapOnDifferentServersTest {
         assertTrue(!map1.isEmpty());
     }
 
-
     /**
      * * waits until map1 and map2 show the same value
      *
@@ -114,6 +111,5 @@ public class TwoMapOnDifferentServersTest {
         }
 
     }
-
 
 }

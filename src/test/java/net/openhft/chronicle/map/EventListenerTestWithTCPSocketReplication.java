@@ -37,7 +37,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class EventListenerTestWithTCPSocketReplication {
 
-
     ChronicleMap<Integer, CharSequence> map1;
     ChronicleMap<Integer, CharSequence> map2;
 
@@ -69,7 +68,6 @@ public class EventListenerTestWithTCPSocketReplication {
                 }
             };
 
-
     @After
     public void tearDown() throws InterruptedException {
 
@@ -89,10 +87,8 @@ public class EventListenerTestWithTCPSocketReplication {
         System.gc();
     }
 
-
     @Test
     public void testAdded() throws IOException, InterruptedException {
-
 
         // ---------- SERVER1 1 ----------
         {
@@ -123,9 +119,7 @@ public class EventListenerTestWithTCPSocketReplication {
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
         Assert.assertEquals("EXAMPLE", valueRef.get());
 
-
     }
-
 
     @Test
     public void testRemoteNotifyPutLargerValue() throws IOException, InterruptedException {
@@ -139,7 +133,6 @@ public class EventListenerTestWithTCPSocketReplication {
 
             map1 = map1Builder.create();
 
-
         }
         // ---------- SERVER2 2 on the same server as ----------
 
@@ -149,11 +142,9 @@ public class EventListenerTestWithTCPSocketReplication {
             map2.put(5, "WILL_GET_OVER-WRITTEN");
         }
 
-
         // we will stores some data into one map here
         map1.put(5, "EXAMPLE");
         waitTillReplicated();
-
 
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
@@ -162,10 +153,8 @@ public class EventListenerTestWithTCPSocketReplication {
 
     }
 
-
     @Test
     public void testRemoteNotifyPutSmallerValue() throws IOException, InterruptedException {
-
 
         // ---------- SERVER1 1 ----------
         {
@@ -183,12 +172,10 @@ public class EventListenerTestWithTCPSocketReplication {
             map2.put(5, "small");
         }
 
-
         // we will stores some data into one map here
         map1.put(5, "EXAMPLE");
 
         waitTillReplicated();
-
 
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
@@ -196,7 +183,6 @@ public class EventListenerTestWithTCPSocketReplication {
         Assert.assertEquals("EXAMPLE", valueRef.get());
 
     }
-
 
     @Test
     @Ignore("TODO Failing test")
@@ -210,7 +196,6 @@ public class EventListenerTestWithTCPSocketReplication {
             ChronicleMapBuilder<Integer, CharSequence> map1Builder = serverBuilder();
 
             map1 = map1Builder.create();
-
 
         }
 
@@ -246,7 +231,6 @@ public class EventListenerTestWithTCPSocketReplication {
                 .replication((byte) 1, tcpConfig)
                 .eventListener(eventListener);
     }
-
 
     private void waitTillReplicated() throws InterruptedException {
         int t = 0;

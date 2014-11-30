@@ -24,7 +24,6 @@ public class DemoChronicleMapTest {
                 .entries(maxEntries)
                 .createPersistedTo(file)) {
 
-
             IntValue key = DataValueClasses.newDirectInstance(IntValue.class);
 
             DemoOrderVOInterface value = DataValueClasses.newDirectReference(DemoOrderVOInterface.class);
@@ -55,7 +54,6 @@ public class DemoChronicleMapTest {
         }
     }
 
-
     @Test
     public void testMapLocked() throws Exception {
         File file = File.createTempFile("DummyOrders", ".test");
@@ -67,7 +65,6 @@ public class DemoChronicleMapTest {
                 .removeReturnsNull(true)
                 .entries(maxEntries)
                 .createPersistedTo(file)) {
-
 
             IntValue key = DataValueClasses.newDirectInstance(IntValue.class);
 

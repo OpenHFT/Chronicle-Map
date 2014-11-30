@@ -493,7 +493,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 segmentHash, replaceIfPresent, readValue, resultUnused);
     }
 
-
     enum LockType {READ_LOCK, WRITE_LOCK}
 
     @Override
@@ -698,7 +697,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     }
 
-
     private XStreamConverter xStreamConverter;
 
     /**
@@ -708,7 +706,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return xStreamConverter != null ? xStreamConverter :
                 (xStreamConverter = new XStreamConverter());
     }
-
 
     private class XStreamConverter {
         private Bytes buffer;
@@ -849,7 +846,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-
     @NotNull
     @Override
     public final WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue) {
@@ -974,7 +970,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 BytesBytesInterop.INSTANCE,
                 key, keySizeMarshaller.readSize(key));
     }
-
 
     private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>>
     boolean containsKey(ThreadLocalCopies copies,
@@ -1169,7 +1164,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 getRemoveBytesValueInterops, value, valueBytesToInstance,
                 readValueToLazyBytes, false);
     }
-
 
     private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
             RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
@@ -1496,7 +1490,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         assert booleanResult || expectedValue == null;
     }
 
-
     // these methods should be package local, not public or private.
     class Segment implements SharedSegment {
         /*
@@ -1563,7 +1556,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         public final int getIndex() {
             return index;
         }
-
 
         /* Methods with private access modifier considered private to Segment
          * class, although Java allows to access them from outer class anyway.
@@ -2436,7 +2428,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
             return new WriteThroughEntry(key, value);
         }
-
 
         boolean isDeleted(long pos) {
             return false;

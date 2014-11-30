@@ -35,10 +35,8 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
     public static final int SERVER2_IDENTIFER = 10;
     public static final int PROPOSED_IDENTIFIER = 5;
 
-
     @Test
     public void testsTheSerializationOfTheNodeDiscovery() throws IOException, InterruptedException {
-
 
         AtomicReference ref = new AtomicReference();
         final AddressAndPort ourAddressAndPort1 = new AddressAndPort(InetAddress.getLocalHost()
@@ -81,7 +79,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
         // add our identifier and host:port to the list of known identifiers
 
-
         // SERVER 2 - is the node already in the cluster
         // read the bootstrap along with the host and port it came from
         {
@@ -101,7 +98,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
             //    RemoteNodes remoteNodes = new RemoteNodes(bitSetBytes);
 
-
             udpData.clear();
 
             // broadcasts in response to the bootstrap all the host:ports and identifiers that it knows about
@@ -110,7 +106,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             server2BytesExternalizable.writeMarshallable(udpData);
 
         }
-
 
         // SERER1
         // receive
@@ -160,7 +155,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
                     (new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER)));
         }
 
-
         // SERVER 2
         // write/broadcast the the response to receiving a bootstrap message
         {
@@ -168,7 +162,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             //      final DirectBitSet knownIdentifiers = new ATSDirectBitSet(bitSetBytes);
 
             //    RemoteNodes remoteNodes = new RemoteNodes(bitSetBytes);
-
 
             udpData.clear();
 
@@ -178,7 +171,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             server2BytesExternalizable.writeMarshallable(udpData);
 
         }
-
 
         // SERVER 1
         // read the bootstrap along with all the proposed identifiers ( this will include our
@@ -198,8 +190,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
         }
 
-
     }
-
 
 }

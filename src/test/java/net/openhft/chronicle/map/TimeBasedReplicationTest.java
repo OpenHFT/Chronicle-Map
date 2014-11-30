@@ -37,7 +37,6 @@ import static org.junit.Assert.*;
  */
 public class TimeBasedReplicationTest extends JSR166TestCase {
 
-
     public static final byte IDENTIFIER = 1;
 
     private static File getPersistenceFile() {
@@ -59,7 +58,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-
     @Test
     public void testIgnoreALatePut() throws IOException {
 
@@ -79,7 +77,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
             // now test assume that we receive a late update to the map, the following update should be ignored
             late(timeProvider);
-
 
             map.put("key-1", "value-2");
 
@@ -109,7 +106,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             // now test assume that we receive a late update to the map, the following update should be ignored
             late(timeProvider);
 
-
             final Object o = map.putIfAbsent("key-1", "value-2");
             assertEquals(o, null);
 
@@ -132,17 +128,14 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
             current(timeProvider);
 
-
             // we do a put at the current time
             map.put("key-1", "value-1");
             assertEquals(1, map.size());
             assertEquals("value-1", map.get("key-1"));
 
-
             // now test assume that we receive a late update to the map,
             // the following update should be ignored
             late(timeProvider);
-
 
             final Object o = map.replace("key-1", "value-2");
             assertEquals(o, null);
@@ -175,9 +168,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             // now test assume that we receive a late update to the map, the following update should be ignored
             late(timeProvider);
 
-
             assertEquals(null, map.replace("key-1", "value-2"));
-
 
             // we'll now flip the time back to the current in order to do the read the result
             current(timeProvider);
@@ -205,7 +196,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
             // now test assume that we receive a late update to the map, the following update should be ignored
             late(timeProvider);
-
 
             assertEquals(false, map.remove("key-1", "value-1"));
 
@@ -247,7 +237,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
 }
 
-
     @Test
     public void testIgnoreWithRemoteRemove() throws IOException {
 
@@ -281,10 +270,8 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         }
     }
 
-
     @Test
     public void testIgnoreWithRemotePut() throws IOException {
-
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
         try (ReplicatedChronicleMap map = (ReplicatedChronicleMap) ChronicleMapBuilder.of
@@ -306,7 +293,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5);
             assertEquals(null, map.put("key-1", "value-2", IDENTIFIER, late));
 
-
             // we'll now flip the time back to the current in order to do the read the result
             current(timeProvider);
 
@@ -315,7 +301,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
         }
     }
-
 
     @Test
     public void testRemoveFollowedByLatePut() throws IOException {
@@ -346,7 +331,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             assertEquals(0, map.size(), 0);
         }
     }
-
 
     @Test
     public void testPutRemovePut() throws IOException {

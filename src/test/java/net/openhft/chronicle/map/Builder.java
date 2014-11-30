@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 
 import java.io.File;
@@ -59,7 +58,6 @@ public class Builder {
         return file;
     }
 
-
     public static <T extends ChronicleMap<Integer, Void>> T newMapVoid(
             final byte identifier,
             final int serverPort,
@@ -79,6 +77,5 @@ public class Builder {
                 .entries(SIZE)
                 .replication(identifier, tcpConfig);
     }
-
 
 }

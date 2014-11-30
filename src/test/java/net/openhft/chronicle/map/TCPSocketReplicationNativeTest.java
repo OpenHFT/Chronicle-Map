@@ -42,10 +42,8 @@ import static org.junit.Assert.assertTrue;
 
 public class TCPSocketReplicationNativeTest {
 
-
     private ChronicleMap<Integer, LongValue> map1;
     private ChronicleMap<Integer, LongValue> map2;
-
 
     @Before
     public void setup() throws IOException {
@@ -101,7 +99,6 @@ public class TCPSocketReplicationNativeTest {
             value.setValue(10);
         }
 
-
         // allow time for the recompilation to resolve
         waitTillEqual(5000);
 
@@ -109,7 +106,6 @@ public class TCPSocketReplicationNativeTest {
         assertTrue(!map1.isEmpty());
 
     }
-
 
     @Test
     public void test2Puts() throws IOException, InterruptedException {
@@ -152,8 +148,5 @@ public class TCPSocketReplicationNativeTest {
 
     }
 
-
 }
-
-
 

@@ -44,7 +44,6 @@ public final class CharSequenceReader<S extends CharSequence>
     private static final CharSequenceReader<String> DEFAULT_READER =
             new CharSequenceReader<String>(NoInterning.INSTANCE, NoInterning.INSTANCE);
 
-
     public static CharSequenceReader<String> of() {
         return DEFAULT_READER;
     }

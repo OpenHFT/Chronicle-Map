@@ -38,7 +38,6 @@ import static org.junit.Assert.*;
 
 public class TCPSocketReplication3wayTest {
 
-
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     private ChronicleMap<Integer, CharSequence> map3;
@@ -73,7 +72,6 @@ public class TCPSocketReplication3wayTest {
     public void checkThreadsShutdown() {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
-
 
     @Test
     public void test3() throws IOException, InterruptedException {
@@ -113,7 +111,6 @@ public class TCPSocketReplication3wayTest {
 
     }
 
-
     @Test
     public void testClear() throws IOException, InterruptedException {
 
@@ -136,7 +133,6 @@ public class TCPSocketReplication3wayTest {
         assertTrue(!map1.isEmpty());
 
     }
-
 
     @Test
     public void testPutIfAbsent() throws IOException, InterruptedException {
@@ -175,6 +171,4 @@ public class TCPSocketReplication3wayTest {
 
     }
 }
-
-
 

@@ -88,7 +88,6 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
         return buffer;
     }
 
-
     public static <E, M extends BytesMarshaller<E>>
     MetaBytesInterop<E, M> forBytesMarshaller(Serializable bufferIdentity) {
         return new DirectBytesBuffer(bufferIdentity).forBytesMarshaller;
@@ -169,7 +168,6 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
             return forBytesWriter;
         }
     }
-
 
     private static class DirectBytesBuffer
             implements StatefulCopyable<DirectBytesBuffer>, Serializable {

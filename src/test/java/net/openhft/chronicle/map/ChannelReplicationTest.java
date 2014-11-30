@@ -18,10 +18,12 @@
 
 package net.openhft.chronicle.map;
 
-
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -104,7 +106,6 @@ public class ChannelReplicationTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-
     @Test
     public void test() throws IOException, InterruptedException {
 
@@ -132,7 +133,6 @@ public class ChannelReplicationTest {
 
     }
 
-
     /**
      * waits until map1 and map2 show the same value
      *
@@ -151,6 +151,4 @@ public class ChannelReplicationTest {
     }
 
 }
-
-
 

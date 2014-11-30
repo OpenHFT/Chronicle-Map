@@ -24,7 +24,6 @@ package net.openhft.chronicle.hash;
  */
 public class RemoteCallTimeoutException extends RuntimeException {
 
-
     public RemoteCallTimeoutException(String s) {
         super(s);
     }

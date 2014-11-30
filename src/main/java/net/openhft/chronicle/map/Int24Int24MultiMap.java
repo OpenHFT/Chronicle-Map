@@ -250,7 +250,6 @@ class Int24Int24MultiMap implements MultiMap {
         bytes.writeInt48(prevPos, entry(searchHash, newValue));
     }
 
-
     @Override
     public void putAfterFailedSearch(long value) {
         checkValueForPut(value);

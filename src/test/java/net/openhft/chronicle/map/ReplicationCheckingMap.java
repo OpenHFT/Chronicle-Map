@@ -104,14 +104,12 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
         }
 
-
         Assert.assertEquals(map1, map2);
         System.out.print(map1);
         System.out.print(map2);
 
         if (r1 != null)
             Assert.assertEquals(r1.toString(), r2.toString());
-
 
         return (R) r1;
 
@@ -132,7 +130,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public boolean containsKey(final Object key) {
-
 
         return check(new Call<K, V>() {
                          @Override
@@ -159,7 +156,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public V get(final Object key) {
-
 
         return check(new Call<K, V>() {
                          @Override
@@ -195,7 +191,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @Override
     public Set<K> keySet() {
 
-
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {
@@ -209,7 +204,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @NotNull
     @Override
     public Collection<V> values() {
-
 
         return check(new Call<K, V>() {
                          @Override
@@ -325,6 +319,5 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     interface Call<K, V> {
         Object method(ConcurrentMap<K, V> map);
     }
-
 
 }

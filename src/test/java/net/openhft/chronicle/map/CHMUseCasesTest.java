@@ -477,7 +477,6 @@ public class CHMUseCasesTest {
 
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10, 11, 11}), map.get(key1));
 
-
             map.put(key1, value1);
             map.put(key2, value2);
             ByteBuffer valueA = ByteBuffer.allocateDirect(8);
@@ -499,7 +498,6 @@ public class CHMUseCasesTest {
                 assertTrue(rc.present());
                 assertBBEquals(value2, valueB);
             }
-
 
             try (WriteContext wc = map.acquireUsingLocked(key1, valueA)) {
                 assertBBEquals(value1, valueA);
@@ -590,7 +588,6 @@ public class CHMUseCasesTest {
             assertEquals(null, map.removeLater(key3).get());
         }
     }
-
 
     private void assertBBEquals(ByteBuffer bb1, ByteBuffer bb2) {
         assertEquals(bb1.remaining(), bb2.remaining());
@@ -1420,7 +1417,6 @@ public class CHMUseCasesTest {
     public void testBeanBeanMap() {
 
     }
-
 
     @Test
     public void testListValue() {

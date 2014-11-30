@@ -68,7 +68,6 @@ interface Replica extends Closeable {
      */
     long lastModificationTime(byte remoteIdentifier);
 
-
     /**
      * notifies when there is a changed to the modification iterator
      */
@@ -84,7 +83,6 @@ interface Replica extends Closeable {
          */
         void onChange();
     }
-
 
     /**
      * Holds a record of which entries have modification. Each remote map supported will require a
@@ -119,7 +117,6 @@ interface Replica extends Closeable {
         void dirtyEntries(long fromTimeStamp);
     }
 
-
     /**
      * supports reading and writing serialize entries
      */
@@ -151,7 +148,6 @@ interface Replica extends Closeable {
 
     }
 
-
     /**
      * provides a key and value from NativeBytes, this can be used in conjunction with the modification
      * iterator to get the key and value out of the NativeBytes
@@ -166,7 +162,6 @@ interface Replica extends Closeable {
          * @return the key which is in the entry
          */
         K key(@NotNull Bytes entry, K usingKey);
-
 
         /**
          * gets the value from the entry

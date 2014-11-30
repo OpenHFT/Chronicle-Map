@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +50,6 @@ public class TCPSocketReplication4WayMapTest {
         return (T) newTcpSocketShmBuilder(Integer.class, CharSequence.class,
                 identifier, serverPort, endpoints).create();
     }
-
 
     @Before
     public void setup() throws IOException {
@@ -89,7 +87,6 @@ public class TCPSocketReplication4WayMapTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-
     @Test
     public void test() throws IOException, InterruptedException {
         Thread.sleep(1000);
@@ -108,7 +105,6 @@ public class TCPSocketReplication4WayMapTest {
 
     }
 
-
     @Test
     public void testBufferOverflow() throws IOException, InterruptedException {
         Thread.sleep(1000);
@@ -125,7 +121,6 @@ public class TCPSocketReplication4WayMapTest {
         assertTrue("map2.empty", !map2.isEmpty());
 
     }
-
 
     @Test
     public void testBufferOverflowPutIfAbsent() throws IOException, InterruptedException {
@@ -148,7 +143,6 @@ public class TCPSocketReplication4WayMapTest {
         assertTrue("map2.empty", !map2.isEmpty());
 
     }
-
 
     /**
      * waits until map1 and map2 show the same value
@@ -173,6 +167,4 @@ public class TCPSocketReplication4WayMapTest {
     }
 
 }
-
-
 

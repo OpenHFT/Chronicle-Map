@@ -39,7 +39,6 @@ import static java.net.StandardSocketOptions.SO_REUSEADDR;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 
-
 /**
  * The UdpReplicator attempts to read the data ( but it does not enforce or grantee delivery ),
  * typically, you should use the UdpReplicator if you have a large number of nodes, and you wish to
@@ -84,7 +83,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
         networkInterface = replicationConfig.networkInterface();
         serverConnector = new ServerConnector();
     }
-
 
     void setWriter(EntryWriter writer) {
         this.writer = writer;
@@ -169,7 +167,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
         }
     }
 
-
     private DatagramChannel connectClient() throws IOException {
         final DatagramChannel client = address.isMulticastAddress() ?
                 DatagramChannel.open(address.getAddress().length == 4 ? INET : INET6) :
@@ -240,7 +237,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
         }
     }
 
-
     private class ServerConnector extends AbstractConnector {
         private final InetSocketAddress socketAddress;
 
@@ -293,11 +289,9 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
             return server;
         }
 
-
     }
 
 }
-
 
 interface EntryReader {
     void readAll(@NotNull final DatagramChannel socketChannel) throws IOException, InterruptedException;
@@ -306,6 +300,4 @@ interface EntryReader {
 interface EntryWriter {
     int writeAll(@NotNull final DatagramChannel socketChannel) throws InterruptedException, IOException;
 }
-
-
 

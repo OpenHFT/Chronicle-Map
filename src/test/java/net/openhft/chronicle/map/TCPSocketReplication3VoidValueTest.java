@@ -75,7 +75,6 @@ public class TCPSocketReplication3VoidValueTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-
     @Test
     public void test3() throws IOException, InterruptedException {
 
@@ -111,7 +110,6 @@ public class TCPSocketReplication3VoidValueTest {
 
     }
 
-
     @Test
     public void testClear() throws IOException, InterruptedException {
 
@@ -146,6 +144,4 @@ public class TCPSocketReplication3VoidValueTest {
     }
 
 }
-
-
 

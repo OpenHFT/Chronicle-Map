@@ -41,13 +41,11 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
 
     }
 
-
     ChronicleMap<CharSequence, CharSequence> newShmStringString() throws IOException {
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .create();
 
     }
-
 
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
@@ -118,7 +116,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         assertTrue(map.containsValue("A"));
         assertFalse(map.containsValue("Z"));
     }
-
 
     /**
      * Inserted elements that are subclasses of the same Comparable

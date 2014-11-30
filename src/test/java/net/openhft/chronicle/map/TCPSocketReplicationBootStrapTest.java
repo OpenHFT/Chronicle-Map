@@ -88,7 +88,6 @@ public class TCPSocketReplicationBootStrapTest {
 
     }
 
-
     @Test
     public void testBootstrapAndHeartbeat() throws IOException, InterruptedException {
 
@@ -121,7 +120,6 @@ public class TCPSocketReplicationBootStrapTest {
 
         map2a.close();
 
-
         {
             // restart map 2 but does not connect it to map1
             final ChronicleMap<Integer, CharSequence> map2b = ChronicleMapBuilder.of(Integer.class,
@@ -140,7 +138,6 @@ public class TCPSocketReplicationBootStrapTest {
         // add data into it
         waitTillEqual(20000000);
         assertEquals("ADDED WHEN DISCONNECTED TO MAP1", map1.get(11));
-
 
     }
 
@@ -186,6 +183,4 @@ public class TCPSocketReplicationBootStrapTest {
     }
 
 }
-
-
 

@@ -42,7 +42,6 @@ import static org.junit.Assert.assertTrue;
 
 public class TCPSocketReplicationTest {
 
-
     static int s_port = 12050;
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
@@ -95,7 +94,6 @@ public class TCPSocketReplicationTest {
         assertTrue(!map1.isEmpty());
     }
 
-
     @Test
     public void test() throws IOException, InterruptedException {
 
@@ -118,7 +116,6 @@ public class TCPSocketReplicationTest {
         assertTrue(!map1.isEmpty());
 
     }
-
 
     @Test
     public void testBufferOverflow() throws IOException, InterruptedException {
@@ -164,7 +161,6 @@ public class TCPSocketReplicationTest {
                 final int select = rnd.nextInt(2);
                 final ChronicleMap<Integer, CharSequence> map = select > 0 ? map1 : map2;
 
-
                 switch (rnd.nextInt(2)) {
                     case 0:
                         map.put(rnd.nextInt(Builder.SIZE), "test");
@@ -181,8 +177,5 @@ public class TCPSocketReplicationTest {
 
     }
 
-
 }
-
-
 

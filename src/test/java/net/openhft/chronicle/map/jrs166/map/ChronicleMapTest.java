@@ -37,9 +37,7 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
-
 public class ChronicleMapTest extends JSR166TestCase {
-
 
     private static File getPersistenceFile() {
         String TMP = System.getProperty("java.io.tmpdir");
@@ -54,14 +52,10 @@ public class ChronicleMapTest extends JSR166TestCase {
 
     }
 
-
-
-
     static ChronicleMap<ArrayList, CharSequence> newShmListBoolean(int size) throws IOException {
         return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
                 .entries(size).create();
     }
-
 
     static ChronicleMap<ArrayList, CharSequence> newShmListBoolean() throws IOException {
         return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class).create();
@@ -71,7 +65,6 @@ public class ChronicleMapTest extends JSR166TestCase {
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(size).create();
     }
-
 
     static ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class).create();
@@ -96,8 +89,6 @@ public class ChronicleMapTest extends JSR166TestCase {
         assertEquals(5, map.size());
         return map;
     }
-
-
 
     /**
      * clear removes all pairs
@@ -158,8 +149,6 @@ public class ChronicleMapTest extends JSR166TestCase {
             }
         }
     }
-
-
 
     /**
      * isEmpty is true of empty map and false for non-empty
@@ -299,7 +288,6 @@ public class ChronicleMapTest extends JSR166TestCase {
                 assertTrue(empty.containsKey(three));
                 assertTrue(empty.containsKey(four));
                 assertTrue(empty.containsKey(five));
-
 
             }
         }
@@ -529,7 +517,6 @@ public class ChronicleMapTest extends JSR166TestCase {
         }
     }
 
-
     /**
      * replace(null, x) throws NPE
      */
@@ -555,7 +542,6 @@ public class ChronicleMapTest extends JSR166TestCase {
         } catch (NullPointerException success) {
         }
     }
-
 
     /**
      * putIfAbsent(x, null) throws NPE
@@ -644,10 +630,6 @@ public class ChronicleMapTest extends JSR166TestCase {
             assertFalse(c.remove("sadsdf", null));
         }
     }
-
-
-
-
 
     // classes for testing Comparable fallbacks
     static class BI implements Comparable<BI> {

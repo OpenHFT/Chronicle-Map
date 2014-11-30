@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
-
 /**
  * The UdpReplicator attempts to read the data ( but it does not enforce or grantee delivery ), typically, you
  * should use the UdpReplicator if you have a large number of nodes, and you wish to receive the data before
@@ -178,10 +177,5 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
         }
     }
 
-
 }
-
-
-
-
 

@@ -39,7 +39,6 @@ import static org.junit.Assert.assertEquals;
 public class OpenJDKAndHashMapExamplesTest {
     private static final SimpleDateFormat YYYYMMDD = new SimpleDateFormat("yyyyMMdd");
 
-
     private static final String TMP = System.getProperty("java.io.tmpdir");
 
     private static long parseYYYYMMDD(String s) {
@@ -124,7 +123,6 @@ public class OpenJDKAndHashMapExamplesTest {
         // no other resource is involved.
         // now perform thread safe operations on my reference
         bond.addAtomicMaturityDate(16 * 24 * 3600 * 1000L);  //20440331
-
 
         bond.addAtomicCoupon(-1 * bond.getCoupon()); //MT-safe! now a Zero Coupon Bond.
 

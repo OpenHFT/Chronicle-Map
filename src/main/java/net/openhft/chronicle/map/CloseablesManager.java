@@ -31,7 +31,6 @@ final class CloseablesManager implements Closeable {
 
     private final List<Closeable> closeables = new ArrayList<>();
 
-
     public synchronized void add(Closeable closeable) {
 
         if (closeable == null)
@@ -78,7 +77,6 @@ final class CloseablesManager implements Closeable {
             // do nothing
         }
     }
-
 
     public synchronized boolean isEmpty() {
         return closeables.isEmpty();

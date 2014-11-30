@@ -40,7 +40,6 @@ import static org.junit.Assert.assertTrue;
 
 public class TCPSocketReplication3wayPutReturnsNullTest {
 
-
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     private ChronicleMap<Integer, CharSequence> map3;
@@ -56,7 +55,6 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
                 .putReturnsNull(true)
                 .replication(identifier, tcpConfig).create();
     }
-
 
     @Before
     public void setup() throws IOException {
@@ -129,7 +127,6 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
 
     }
 
-
     @Test
     public void testPutIfAbsent() throws IOException, InterruptedException {
 
@@ -167,6 +164,4 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
 
     }
 }
-
-
 

@@ -41,11 +41,9 @@ import static org.junit.Assert.assertTrue;
 
 public class SetForTCPSocketReplication3wayTest {
 
-
     private ChronicleSet<Integer> set1;
     private ChronicleSet<Integer> set2;
     private ChronicleSet<Integer> set3;
-
 
     private static <T extends ChronicleSet<Integer>> T newTcpSocketIntSet(
             final byte identifier,
@@ -56,7 +54,6 @@ public class SetForTCPSocketReplication3wayTest {
                         .heartBeatInterval(1L, SECONDS).autoReconnectedUponDroppedConnection(true))
                 .createPersistedTo(getPersistenceFile());
     }
-
 
     @Before
     public void setup() throws IOException {
@@ -78,7 +75,6 @@ public class SetForTCPSocketReplication3wayTest {
         }
         System.gc();
     }
-
 
     @Test
     public void test3() throws IOException, InterruptedException {
@@ -118,7 +114,6 @@ public class SetForTCPSocketReplication3wayTest {
 
     }
 
-
     @Test
     public void testClear() throws IOException, InterruptedException {
 
@@ -144,7 +139,6 @@ public class SetForTCPSocketReplication3wayTest {
 
     }
 
-
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
         int t = 0;
         for (; t < timeOutMs; t++) {
@@ -157,6 +151,4 @@ public class SetForTCPSocketReplication3wayTest {
 
     }
 }
-
-
 

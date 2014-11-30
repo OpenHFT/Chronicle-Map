@@ -187,7 +187,6 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      */
     V acquireUsing(@NotNull K key, V usingValue);
 
-
     @NotNull
     WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);
 
@@ -228,7 +227,6 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      */
     Future<V> getLater(@NotNull K key);
 
-
     /**
      * Associates the specified value with the specified key in this map (optional operation).  If
      * the map previously contained a mapping for the key, the old value is replaced by the
@@ -246,7 +244,6 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @see java.util.concurrent.Future
      */
     Future<V> putLater(@NotNull K key, @NotNull V value);
-
 
     /**
      * Removes the mapping for a key from this map if it is present (optional operation).   More
@@ -308,7 +305,6 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @see ChronicleMap#getAll(java.io.File)
      */
     void putAll(File fromFile) throws IOException;
-
 
 }
 

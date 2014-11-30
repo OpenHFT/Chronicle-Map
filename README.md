@@ -9,7 +9,6 @@ requirements. - [Contact Us](sales@higherfrequencytrading.com)*
 Replicate your Key Value Store across your network, with consistency, durability and performance.
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
 
-
 #### Maven Artifact Download
 ```xml
 <dependency>                                   
@@ -19,7 +18,6 @@ Replicate your Key Value Store across your network, with consistency, durability
 </dependency>
 ```
 Click here to get the [Latest Version Number](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22) 
-
 
 #### Contents
 
@@ -120,8 +118,6 @@ This will naturally drop updates and is a more natural choice for low bandwidth 
 SharedHashMap was the old name given to ChronicleMap, Since the last release of SharedHashMap
  we have added a lot of new features to ChronicleMap, most of these are listed in this readme.
 
-
-
 ## Getting Started
 
 #### Tutorial 1 - Creating an instance of Chronicle Map
@@ -196,9 +192,6 @@ or value objects that are created through, a directClass interface, for example 
 ```
 
 Object graphs can also be included as long as the outer object supports Serializable, Externalizable or BytesMarshallable.
-
-
-
 
 #### Java Class Construction
 
@@ -301,8 +294,7 @@ To illustrate this with an example - On Ubuntu we can create a 100 TB chronicle 
 `ls -l` say the process virtual size / file size is 100 TB, however the resident memory via `du`
 says the size is 71 MB after adding 10000 entries. You can see the size actually used with du.
 
-
-### Chronicle Map Interface 
+### Chronicle Map Interface
 The Chronicle Map interface adds a few methods above an beyond the standard ConcurrentMap,
 the ChronicleMapBuilder can also be used to return the ChronicleMap, see the example below :
 
@@ -318,7 +310,6 @@ supports the following methods :
  - [`V acquireUsing(K key, V value);`](http://openhft.github.io/Chronicle-Map/apidocs/net/openhft/chronicle/map/ChronicleMap.html#acquireUsing-K-V-)
  - [`ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);`]  (https://github.com/OpenHFT/Chronicle-Map#off-heap-storage-and-how-using-a-proxy-object-can-improve-performance)
  - [`WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);`]    (https://github.com/OpenHFT/Chronicle-Map#acquireusinglocked)
-
 
 These methods let you provide the object which the data will be written to, even if the object is
 immutable. For example 
@@ -403,14 +394,11 @@ public interface BondVOInterface {
     long getIssueDate();
     void setIssueDate(long issueDate);  /* time in millis */
 
-
     long getMaturityDate();
     void setMaturityDate(long maturityDate);  /* time in millis */
 
-
     double getCoupon();
     void setCoupon(double coupon);
-
 
     String getSymbol();
     void setSymbol(@MaxSize(20) String symbol);
@@ -481,7 +469,6 @@ for(int i=1;i<=10;i++) {
 }
 ```
 
-
 so when you call :
 
 ``` java
@@ -503,7 +490,6 @@ try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,bond)) {
 	// add your logic here ( the lock will ensure this bond can not be changed by another thread )
 
 } // the lock is released here because close() is called
-
 
 ```
 
@@ -545,7 +531,6 @@ if you are only accessing ChronicleMap from a single thread and you are not doin
 and don't care about atomic reads, then its simpler ( and faster ) to use acquireUsing() otherwise we
 recommend acquireUsingLocked(key,value)
 
-
 because acquireUsing can end up creating an entry the acquireUsingLocked(key,value) method holds
 a segment write lock, this is unlike the getUsing(key,using) method that holds a segment read lock.
 
@@ -566,7 +551,6 @@ try (WriteContext<?, BondVOInterface> context = map.acquireUsingLocked("one", bo
 if after you have read the 'issueDate' and  'symbol' and you wish to remove the entry based on some
 business logic, it more efficient to use the 'context' to remove the entry, as the contents is
 already aware when the entry is in memory.
-
 
 ## Oversized Entries Support
 
@@ -610,14 +594,11 @@ so we have designed it so you don't have to close() it.
 WARNING : If you call close too early before you have finished working with the map, this can cause
 your JVM to crash. Close MUST BE the last thing that you do with the map.
 
-
-
 # TCP / UDP Replication
 
 Chronicle Hash Map supports both TCP and UDP replication
 
 ![TCP/IP Replication](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-TCP-Replication_simple_02.jpg)
-
 
 ### TCP / UDP Background.
 TCP/IP is a reliable protocol, what this means is unless you have a network failure or hardware
@@ -723,7 +704,6 @@ map = ChronicleMapBuilder
 ```
 
 
-   
 ### Bootstrapping 
 When a node is connected over the network to an active grid of nodes. It must first receive any data
 that it does not have from the other nodes. Eventually, all the nodes in the grid have to hold a
@@ -782,7 +762,6 @@ this, in other words its a bidirectional connection.
 
 ![TCP/IP Replication 3Way](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-27-at-18.19.05.png)
 
-
 Below is example how to set up tcpConfig for 3 host
 
 ```java
@@ -797,7 +776,6 @@ InetSocketAddress inetSocketAddress2 = new InetSocketAddress(hostServer2, server
 String hostServer3 = "localhost"; // change this to your host
 int serverPort3 = 8078;           // change this to your port
 InetSocketAddress inetSocketAddress3 = new InetSocketAddress(hostServer3, serverPort3);
-
 
 // this is to go on server 1
 TcpTransportAndNetworkConfig tcpConfigServer1 =
@@ -825,8 +803,6 @@ is dropped and re-established.
 
 ![Chronicle Maps Network Distributed](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map_channels_diagram_02.jpg)
 
-
-
 Chronicle Map TCP Replication lets you distribute a single Chronicle Map, to a number of servers
 across your network. Replication is point to point and the data transfer is bidirectional, so in the
 example of just two servers, they only have to be connected via a single tcp socket connection and
@@ -843,7 +819,6 @@ update. Put simply:
 
 * Each host mustbe given a unique identifier.
 * Each map must be given a unique channel.
-
 
 ``` java
 int maxEntrySize = 1024;
@@ -898,7 +873,6 @@ If you inadvertently got the chronicle channels around the wrong way, then chron
 to replicate the wrong maps data. The chronicle channels don't have to be in order but they must be
 unique for each map you have.
 
-
 ### Channels and ReplicationChannel - Example
 
 ``` java
@@ -913,7 +887,6 @@ unique for each map you have.
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .of(8086, new InetSocketAddress("localhost", 8087))
                 .heartBeatInterval(1, SECONDS);
-
 
         hubOnServer1 = ReplicationHub.builder()
                 .tcpTransportAndNetwork(tcpConfig)
@@ -952,13 +925,11 @@ unique for each map you have.
                 .tcpTransportAndNetwork(tcpConfig)
                 .createWithId(identifier);
 
-
         // this demotes favoriteColour
         short channel1 = (short) 1;
 
         favoriteColourServer2 = smallStringToStringMapBuilder.instance()
                 .replicatedViaChannel(hubOnServer2.createChannel(channel1)).create();
-
 
         favoriteColourServer2.put("rob", "blue");
 
@@ -972,7 +943,6 @@ unique for each map you have.
         favoriteComputerServer2.put("daniel", "mac");
     }
 
-
     // allow time for the recompilation to resolve
     for (int t = 0; t < 2500; t++) {
         if (favoriteComputerServer2.equals(favoriteComputerServer1) &&
@@ -980,7 +950,6 @@ unique for each map you have.
             break;
         Thread.sleep(1);
     }
-
 
     assertEquals(favoriteComputerServer1, favoriteComputerServer2);
     Assert.assertEquals(3, favoriteComputerServer2.size());
@@ -1045,7 +1014,6 @@ replication, when you set up TCP Replication you must define a port for the repl
 run on, the port you choose is up to you, but you should pick a free port that is not currently 
 being used by another application. In this example we choose the port 8076
 
-
 ``` java
 // sets the server to run on localhost:8076
 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8076))
@@ -1100,8 +1068,6 @@ and also for the `remove()` method
 .removeReturnsNull
 ```
 
-
-
 ``` java
 statelessClientMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
      .putReturnsNull(true)
@@ -1112,7 +1078,6 @@ statelessClientMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
 
 For the very best performance you should also set these properties on the server as well
 
-
 ``` java
 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
     .replication((byte) 2, TcpTransportAndNetworkConfig.of(8076))
@@ -1120,8 +1085,6 @@ ChronicleMapBuilder.of(Integer.class, CharSequence.class)
     .removeReturnsNull(true)
     .create();            
 ```
-
-
 
 ##### Close
 
@@ -1131,7 +1094,6 @@ its always important to close `ChronicleMap`'s and `ChronicleSet` 's when you ha
 serverMap.close();
 statelessMap.close();
 ``` 
-
 
 #  Known Issues
 
@@ -1258,7 +1220,6 @@ between them, this is how we could set it up
 }
 ```
 
-
 # Example : Replicating data between process on different servers via TCP/IP
 
 Lets assume that we had two server, lets call them server1 and server2, if we wished to share a map
@@ -1274,7 +1235,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class YourClass {
-
 
     @Test
     public void test() throws IOException, InterruptedException {
@@ -1294,7 +1254,6 @@ public class YourClass {
                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                             .entries(20000L)
                             .replication((byte) 1, tcpConfig);
-
 
             map1 = map1Builder.create();
         }
@@ -1341,9 +1300,7 @@ LAN, UDP won’t miss updates. But UDP does not support guaranteed delivery, we 
 a TCP connection along side to ensure the data becomes eventually consistent.  Note : It is possible
 to use Chronicle without the TCP replication and just use UDP (  that’s if you like living dangerously ! )
 
-
-
-``` java 
+``` java
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -1354,7 +1311,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class YourClass {
-
 
     @Test
     public void test() throws IOException, InterruptedException {
@@ -1376,7 +1332,6 @@ public class YourClass {
                             // a maximum of 1024 bits per millisecond
                     .throttlingConfig(ThrottlingConfig.throttle(1024, TimeUnit.MILLISECONDS));
 
-
             UdpTransportConfig udpConfig = UdpTransportConfig
                     .of(Inet4Address.getByName("255.255.255.255"), udpPort);
 
@@ -1387,7 +1342,6 @@ public class YourClass {
                                     .tcpTransportAndNetwork(tcpConfig)
                                     .udpTransport(udpConfig)
                                     .createWithId((byte) 1));
-
 
             map1 = map1Builder.create();
         }
@@ -1451,7 +1405,6 @@ and just like map it support shared memory and TCP replication.
         
 # Performance Topics
 
-
 There are general principles we can give direction on - for specific advise we believe consulting
  to be the most productive solution.
 
@@ -1465,7 +1418,6 @@ the maximum entries is above what you need.
 types.
 - we support code generation of efficient custom serializes - See the examples where you provide 
 an interface as the data type, the map will generate the implementation.
-
 
 ### Improving the performance of Chronicle Maps Serialization
 
@@ -1484,8 +1436,7 @@ of object
  relationships between the maps, by using for example integers or longs. This works especially well as
  integers and longs have a good hash distribution.
 
-
-### Tuning Chronicle Map with Large Data 
+### Tuning Chronicle Map with Large Data
 
 Generally speaking `ChronicleMap` is slower then ConcurrentHashMap for a small number of entries, but
 for a large number of entries ConcurrentHashMap doesn't scale as well as Chronicle Map, especially
@@ -1524,7 +1475,6 @@ directory is an HDD and its performance is around 125 IOPS (I/Os per second). Ea
 memory accesses so you might get around 65 lookups per second. For 100-200K operations you can
 expect around 1600 seconds or 25-50 minutes. If you use an SSD, it can get around 230 K IOPS, or
 about 115 K `ChronicleMap` lookups per second.
-
 
 ### Lock contention
 
@@ -1585,10 +1535,6 @@ For large key/values it is not total memory use but other factors which matter s
   support short lived tasks without having to use TCP.
 - data can be replicated across machines.
 
-
-
-
-
 ### ConcurrentHashMap v ChronicleMap
 ConcurrentHashMap ( CHM ) outperforms `ChronicleMap` ( CM ) on throughput.  If you don't need
 the extra features SharedHashMap gives you, it is not worth the extra complexity it brings.
@@ -1602,7 +1548,6 @@ It can be used to reduce or eliminate GCs.
 #### Performance Test for many small key-values
 The following performance test consists of string keys of the form "u:0123456789" and an int
 counter.  The update increments the counter once in each thread, creating an new entry if required.
-
 
 | Number of entries | Chronicle* Throughput  |  Chronicle RSS  | HashMap* Throughput | HashMap Worst GC pause | HashMap RSS |
 |------------------:|---------------:|---------:|---------------:|-------------------:|--------:|

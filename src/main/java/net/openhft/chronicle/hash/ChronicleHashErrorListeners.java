@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.hash;
 
-
 import org.slf4j.LoggerFactory;
 
 public final class ChronicleHashErrorListeners {

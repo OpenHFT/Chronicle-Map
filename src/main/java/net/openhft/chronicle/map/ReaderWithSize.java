@@ -23,7 +23,6 @@ import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.Nullable;
 
-
 final class ReaderWithSize<T> {
     private final SizeMarshaller sizeMarshaller;
     private final BytesReader<T> originalReader;

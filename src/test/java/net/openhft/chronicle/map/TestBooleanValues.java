@@ -23,7 +23,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-
 /**
  * @author Rob Austin.
  */

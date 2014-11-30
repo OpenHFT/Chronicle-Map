@@ -29,7 +29,6 @@ public interface WriteContext<K, V> extends Context<K, V> {
      */
     void dontPutOnClose();
 
-
     /**
      * this is simular by more efficient than calling map.remove("key") as the entry is already available to
      * the WriteContext

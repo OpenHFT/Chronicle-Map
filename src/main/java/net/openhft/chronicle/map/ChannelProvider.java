@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.UdpTransportConfig;
@@ -323,7 +322,6 @@ final class ChannelProvider implements Closeable {
 
     private static ByteBufferBytes toBootstrapMessage(int chronicleChannel, final long lastModificationTime, final byte localIdentifier) {
 
-
         final ByteBufferBytes writeBuffer = new ByteBufferBytes(ByteBuffer.allocate(1 + 1 + 2 + 8));
         writeBuffer.writeByte(BOOTSTRAP_MESSAGE);
         writeBuffer.writeByte(localIdentifier);
@@ -411,7 +409,6 @@ final class ChannelProvider implements Closeable {
      */
     class SystemQueue {
 
-
         final Replica asReplica = new Replica() {
 
             @Override
@@ -422,7 +419,6 @@ final class ChannelProvider implements Closeable {
             @Override
             public ModificationIterator acquireModificationIterator(
                     final byte remoteIdentifier, final ModificationNotifier modificationNotifier) {
-
 
                 final ModificationIterator result = systemModificationIterator.get(remoteIdentifier);
 

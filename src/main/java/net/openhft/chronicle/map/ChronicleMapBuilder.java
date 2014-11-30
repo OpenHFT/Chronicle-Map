@@ -76,11 +76,9 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         this.delegate = delegate;
     }
 
-
     private static boolean offHeapReference(Class valueClass) {
         return Byteable.class.isAssignableFrom(valueClass);
     }
-
 
     /**
      * {@inheritDoc} With respect to {@linkplain #entryAndValueAlignment(Alignment) alignment}.
@@ -158,13 +156,11 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         return this;
     }
 
-
     @Override
     public ChronicleMapBuilder<K, V> keySize(int keySize) {
         delegate.keySize(keySize);
         return this;
     }
-
 
     @Override
     public ChronicleMapBuilder<K, V> constantKeySizeBySample(K sampleKey) {
@@ -234,7 +230,6 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         delegate.objectSerializer(objectSerializer);
         return this;
     }
-
 
     /**
      * {@inheritDoc}
@@ -306,7 +301,6 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         return this;
     }
 
-
     /**
      * Configures the marshaller used to serialize actual value sizes to off-heap memory in maps, created by
      * this builder.
@@ -335,7 +329,6 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         return this;
     }
 
-
     /**
      * each map can be identified by a name
      *
@@ -347,7 +340,6 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         delegate.name(name);
         return this;
     }
-
 
     @Override
     public String name() {
@@ -450,7 +442,6 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         return this;
     }
 
-
     @Override
     public StatelessClientConfig<ChronicleMap<K, V>> statelessClient(InetSocketAddress remoteAddress) {
         return delegate.statelessClient(remoteAddress);
@@ -502,7 +493,6 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         delegate.bytesEventListener(eventListener);
         return this;
     }
-
 
     @Override
     public ChronicleMap<K, V> createPersistedTo(File file) throws IOException {

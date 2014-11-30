@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.Bytes;
@@ -90,7 +89,6 @@ class ShortShortMultiMap implements MultiMap {
         assert (value & ~MASK) == 0L : "Value out of range, was " + value;
         assert positions.isSet(value) : "Shouldn't remove absent value";
     }
-
 
     private static long maskUnsetKey(long key) {
         return (key &= MASK) != UNSET_KEY ? key : HASH_INSTEAD_OF_UNSET_KEY;

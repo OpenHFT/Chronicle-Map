@@ -80,8 +80,6 @@
     </dependencyManagement>
     <dependencies>
 
-
-
         <dependency>
             <groupId>xstream</groupId>
             <artifactId>xstream</artifactId>
@@ -113,7 +111,6 @@
         </dependency>
 
         <!-- test dependencies -->
-
 
         <dependency>
             <groupId>junit</groupId>
@@ -186,6 +183,5 @@
         <developerConnection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</developerConnection>
         <tag>master</tag>
     </scm>
-
 
 </project>

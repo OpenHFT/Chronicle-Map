@@ -186,7 +186,6 @@ public class ChronicleMapTest {
                         .minSegments(1024)
                         .removeReturnsNull(true).create();
 
-
         for (int i = 1; i < 1024; i++) {
             map.put("key" + i, "value");
             assertEquals(i, map.size());
@@ -207,7 +206,6 @@ public class ChronicleMapTest {
         final ChronicleMap<Object, Object> map = ChronicleMapBuilder.of(Object.class, Object.class)
                 .entrySize(count)
                 .minSegments(2).create();
-
 
         for (int i = 1; i < count; i++) {
             map.put(i, i);
@@ -277,7 +275,6 @@ public class ChronicleMapTest {
         final ChronicleMap<CharSequence, CharSequence> map =
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                         .minSegments(2).create();
-
 
         map.put("key1", "one");
         map.put("key2", "two");
@@ -385,25 +382,21 @@ public class ChronicleMapTest {
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                         .minSegments(2).create();
 
-
         map.put("key1", "one");
         map.put("key2", "two");
 
         assertEquals("one", map.get("key1"));
         assertEquals("two", map.get("key2"));
 
-
         // a false remove
         final boolean wasRemoved1 = map.remove("key1", "three");
 
         assertFalse(wasRemoved1);
 
-
         assertEquals(null, map.get("key1"), "one");
         assertEquals("two", map.get("key2"), "two");
 
         map.put("key1", "one");
-
 
         final boolean wasRemoved2 = map.remove("key1", "three");
         assertFalse(wasRemoved2);
@@ -538,7 +531,6 @@ public class ChronicleMapTest {
         testAcquireFromMultipleThreads(getSharedMap(entries, 128, 24, OF_4_BYTES));
         testAcquireFromMultipleThreads(getSharedMap(entries, 128, 24, OF_8_BYTES));
     }
-
 
     public void testAcquireFromMultipleThreads(ChronicleMap<CharSequence, LongValue> map)
             throws Exception {
@@ -1406,7 +1398,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Ignore("JIRA raised for failing test HCOLL-222")
     @Test
     public void testPutLongValue() throws IOException {
@@ -1432,7 +1423,6 @@ public class ChronicleMapTest {
 
         LongValue value = nativeLongValue();
 
-
         // this will add the entry
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
             assertEquals(0, context.value().getValue());
@@ -1448,7 +1438,6 @@ public class ChronicleMapTest {
             assertEquals(1, context.value().getValue());
         }
 
-
         // this will remove the entry
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
             assert value == context.value();
@@ -1461,12 +1450,10 @@ public class ChronicleMapTest {
             assertEquals(null, context.value());
         }
 
-
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
             assert value == context.value();
             assertEquals(0, context.value().getValue());
         }
-
 
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
             assert value == context.value();
@@ -1482,7 +1469,6 @@ public class ChronicleMapTest {
         map.close();
     }
 
-
     @Test(expected = IllegalArgumentException.class)
     public void testAcquireUsingLockedWithString() throws IOException {
 
@@ -1492,21 +1478,16 @@ public class ChronicleMapTest {
                 .defaultValue("")
                 .entrySize(16);
 
-
         try (final ChronicleMap<CharSequence, String> map = builder.create()) {
-
 
             // this will add the entry
             try (WriteContext<?, String> context = map.acquireUsingLocked("one", "")) {
                 // do nothing
             }
 
-
         }
 
-
     }
-
 
     @Test
     public void testOnheapAcquireUsingLockedStringBuilder() throws IOException {
@@ -1528,7 +1509,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Test
     public void testOnheapAcquireUsingLocked() throws IOException {
         ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
@@ -1540,7 +1520,6 @@ public class ChronicleMapTest {
         final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
 
         LongValue value = DataValueClasses.newDirectReference(LongValue.class);
-
 
         try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
             assertEquals(false, context.present());
@@ -1562,7 +1541,6 @@ public class ChronicleMapTest {
             assertEquals(true, context.present());
             assertEquals(11, context.value().getValue());
         }
-
 
         // this will remove the entry
         try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
@@ -1599,5 +1577,4 @@ public class ChronicleMapTest {
         map.close();
     }
 }
-
 

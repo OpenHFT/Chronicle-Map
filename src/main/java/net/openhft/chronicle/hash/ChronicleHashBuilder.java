@@ -450,6 +450,5 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      */
     C createPersistedTo(File file) throws IOException;
 
-
     String name();
 }

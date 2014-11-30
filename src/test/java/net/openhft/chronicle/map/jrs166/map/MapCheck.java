@@ -60,7 +60,6 @@ public class MapCheck {
         if (args.length == 0)
             System.out.println("Usage: MapCheck mapclass [int|float|string|object] [trials] [size] [serialtest]");
 
-
         if (args.length > 1) {
             String et = args[1].toLowerCase();
             if (et.startsWith("i"))
@@ -84,7 +83,6 @@ public class MapCheck {
         boolean doSerializeTest = args.length > 4;
 
         while ((size & 3) != 0) ++size;
-
 
         System.out.print(" elements: " + eclass.getName());
         System.out.print(" trials: " + numTests);
@@ -119,7 +117,6 @@ public class MapCheck {
         file.deleteOnExit();
         return file;
     }
-
 
     static Map newMap() {
         try {
@@ -186,7 +183,6 @@ public class MapCheck {
         closeMap(m);
     }
 
-
     static void getTest(String nm, int n, Map s, Object[] key, int expect) {
         int sum = 0;
         timer.start(nm, n);
@@ -199,7 +195,6 @@ public class MapCheck {
         reallyAssert(sum == expect);
         checkSum += sum;
     }
-
 
     // unused
     static void getTestBoxed(String nm, int n, Map s, Object[] key, int expect) {
@@ -286,7 +281,6 @@ public class MapCheck {
         reallyAssert(sum == 0);
         checkSum += sum;
     }
-
 
     static Object kitTest(Map s, int size) {
         Object last = null;
@@ -561,7 +555,6 @@ public class MapCheck {
         reallyAssert(s.size() == size);
     }
 
-
     static void initializeKeys(Object[] key, Object[] absent, int size) {
         // Object cannot be used as it cannot be serialized.
         if (eclass == Object.class || eclass == Integer.class) {
@@ -662,7 +655,6 @@ public class MapCheck {
             throw new Error(ex);
         }
     }
-
 
     static void randomWords(Object[] ws, int origin, int size) {
         for (int i = origin; i < size; ++i) {

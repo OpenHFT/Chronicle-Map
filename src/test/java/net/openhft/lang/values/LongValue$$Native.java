@@ -29,11 +29,8 @@ import static net.openhft.lang.Compare.isEqual;
 public class LongValue$$Native implements LongValue, BytesMarshallable, Byteable, Copyable<net.openhft.lang.values.LongValue> {
     private static final int VALUE = 0;
 
-
     private Bytes _bytes;
     private long _offset;
-
-
 
     public void setValue(long $) {
         _bytes.writeLong(_offset + VALUE, $);
@@ -42,8 +39,6 @@ public class LongValue$$Native implements LongValue, BytesMarshallable, Byteable
     public long getValue() {
         return _bytes.readLong(_offset + VALUE);
     }
-
-
 
     public void setOrderedValue(long $) {
         _bytes.writeOrderedLong(_offset + VALUE, $);

@@ -78,7 +78,6 @@ public final class ReplicationHub extends AbstractReplication {
                 ", channels=" + Arrays.toString(channels) + '}';
     }
 
-
     /**
      * Returns the maximum {@linkplain ChronicleHashBuilder#entrySize(int) entry size} of {@link
      * ChronicleHash}es, replicated by this {@code ReplicationHub}, could have. {@code RuntimeException} is
@@ -184,7 +183,6 @@ public final class ReplicationHub extends AbstractReplication {
             check(identifier);
             return new ReplicationHub(identifier, this);
         }
-
 
     }
 

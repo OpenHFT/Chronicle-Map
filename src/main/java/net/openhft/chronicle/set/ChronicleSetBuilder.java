@@ -319,6 +319,5 @@ public class ChronicleSetBuilder<E>
         return this;
     }
 
-
 }
 

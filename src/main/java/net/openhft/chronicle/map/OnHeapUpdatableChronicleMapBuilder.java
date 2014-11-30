@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Externalizable;
 import java.io.Serializable;
 
-
 /**
  * {@code ChronicleMapOnHeapUpdatableBuilder} is intended to be used to configure {@link ChronicleMap}s with
  * non-{@link Byteable} values, which don't point to off-heap memory directly, including primitives ({@link
@@ -276,10 +275,8 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
         throw new UnsupportedOperationException("not supported for this combination of key/value type");
     }
 
-
     public OnHeapUpdatableChronicleMapBuilder<K, V> entryAndValueAlignment(Alignment a) {
         throw new UnsupportedOperationException("not supported for this combination of key/value type");
     }
-
 
 }
