@@ -89,11 +89,13 @@ public class StringEncodingExamplesTest {
 
         @Override
         public CharSequence read(Bytes bytes) {
-            int csLen = (int) bytes.readStopBit();
+            long csLen = bytes.readStopBit();
+            if (csLen < 0 || csLen > Integer.MAX_VALUE)
+                throw new IllegalStateException("length invalid: " + csLen);
             if (returnedCharBuffer == null || returnedCharBuffer.capacity() < csLen) {
-                returnedCharBuffer = CharBuffer.allocate(csLen);
+                returnedCharBuffer = CharBuffer.allocate((int) csLen);
             } else {
-                returnedCharBuffer.clear().limit(csLen);
+                returnedCharBuffer.clear().limit((int) csLen);
             }
             bytesAsBuffer = bytes.sliceAsByteBuffer(bytesAsBuffer);
             decoder.decode(bytesAsBuffer, returnedCharBuffer, true);

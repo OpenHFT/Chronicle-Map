@@ -1952,7 +1952,6 @@ class StatelessServerConnector<K, V> {
     }
 
     private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
-        long currentPosition = out.position();
         final long size = out.position() - locationOfSize;
         out.writeInt(locationOfSize, (int) size); // size
         out.writeBoolean(locationOfSize + SIZE_OF_SIZE, isException); // isException
@@ -1964,7 +1963,7 @@ class StatelessServerConnector<K, V> {
 
     private Map<K, V> readEntries(Bytes reader) {
         final long numberOfEntries = reader.readStopBit();
-        final HashMap<K, V> result = new HashMap<K, V>();
+        final Map<K, V> result = new HashMap<K, V>();
 
         ThreadLocalCopies copies = keyReaderWithSize.getCopies(null);
         BytesReader<K> keyReader = keyReaderWithSize.readerForLoop(copies);
