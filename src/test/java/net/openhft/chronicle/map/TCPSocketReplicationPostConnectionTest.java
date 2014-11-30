@@ -67,7 +67,6 @@ public class TCPSocketReplicationPostConnectionTest {
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -82,7 +81,6 @@ public class TCPSocketReplicationPostConnectionTest {
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -97,7 +95,6 @@ public class TCPSocketReplicationPostConnectionTest {
 
             Thread.sleep(1);
             map1.put(5, "EXAMPLE-2");
-
         }
 
         Thread.sleep(1);
@@ -112,7 +109,6 @@ public class TCPSocketReplicationPostConnectionTest {
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
         assertTrue(map2.get(6).equals("EXAMPLE-1"));
-
     }
 
     @After
@@ -142,7 +138,6 @@ public class TCPSocketReplicationPostConnectionTest {
                 break;
             Thread.sleep(1);
         }
-
     }
 
 }

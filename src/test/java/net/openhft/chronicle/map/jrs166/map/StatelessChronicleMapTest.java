@@ -239,7 +239,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 .statelessClient(new InetSocketAddress("localhost", port)).create();
 
         return new SingleCloseMap(statelessMap, statelessMap, serverMap);
-
     }
 
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int port) throws
@@ -303,7 +302,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         assertFalse(map.isEmpty());
         assertEquals(5, map.size());
         return map;
-
     }
 
     static int s_port = 11050;
@@ -348,7 +346,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
             map.clear();
             assertEquals(0, map.size());
-
         }
     }
 
@@ -361,7 +358,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             assertTrue(map.containsValue("A"));
             assertFalse(map.containsValue("Z"));
         }
-
     }
 
     /**
@@ -462,7 +458,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             assertTrue(s.contains("C"));
             assertTrue(s.contains("D"));
             assertTrue(s.contains("E"));
-
         }
     }
 
@@ -479,7 +474,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 assertTrue(map.containsKey(((java.util.Map.Entry) (ar[i])).getKey()));
                 assertTrue(map.containsValue(((java.util.Map.Entry) (ar[i])).getValue()));
             }
-
         }
     }
 
@@ -518,7 +512,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                                 (e.getKey().equals(five) && e.getValue().equals("E"))
                 );
             }
-
         }
     }
 
@@ -537,7 +530,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 assertTrue(empty.containsKey(three));
                 assertTrue(empty.containsKey(four));
                 assertTrue(empty.containsKey(five));
-
             }
         }
     }
@@ -550,7 +542,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap map = map5(s_port++)) {
             map.putIfAbsent(six, "Z");
             assertTrue(map.containsKey(six));
-
         }
     }
 
@@ -572,7 +563,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap map = map5(s_port++)) {
             assertNull(map.replace(six, "Z"));
             assertFalse(map.containsKey(six));
-
         }
     }
 
@@ -597,7 +587,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             assertEquals("A", map.get(one));
             assertFalse(map.replace(one, "Z", "Z"));
             assertEquals("A", map.get(one));
-
         }
     }
 
@@ -610,7 +599,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             assertEquals("A", map.get(one));
             assertTrue(map.replace(one, "A", "Z"));
             assertEquals("Z", map.get(one));
-
         }
     }
 
@@ -623,7 +611,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             map.remove(five);
             assertEquals(4, map.size());
             assertFalse(map.containsKey(five));
-
         }
     }
 
@@ -695,7 +682,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             for (int i = 1; i <= 5; ++i) {
                 assertTrue(s.contains(String.valueOf(i)));
             }
-
         }
     }
 
@@ -710,7 +696,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             shouldThrow();
         } catch (NullPointerException success) {
         }
-
     }
 
     /**

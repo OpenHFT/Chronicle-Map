@@ -114,7 +114,6 @@ public class TCPSocketReplicationTest {
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -129,7 +128,6 @@ public class TCPSocketReplicationTest {
 
         assertEquals(map1, map2);
         assertTrue(!map2.isEmpty());
-
     }
 
     /**
@@ -145,7 +143,6 @@ public class TCPSocketReplicationTest {
                 break;
             Thread.sleep(1);
         }
-
     }
 
     // TODO test this with larger sizes.
@@ -170,11 +167,9 @@ public class TCPSocketReplicationTest {
                         break;
                 }
             }
-
         }
         System.out.println("");
         waitTillEqual(10000);
-
     }
 
 }

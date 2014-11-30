@@ -94,7 +94,6 @@ public class PostChannelCreationTest {
                     .entries(1000)
                     .instance().replicatedViaChannel(hubB.createChannel((short) 2)).create();
         }
-
     }
 
     @After
@@ -130,7 +129,6 @@ public class PostChannelCreationTest {
 
         assertTrue("map1a.empty", !map1a.isEmpty());
         assertTrue("map2a.empty", !map2a.isEmpty());
-
     }
 
     /**
@@ -147,7 +145,6 @@ public class PostChannelCreationTest {
                 break;
             Thread.sleep(1);
         }
-
     }
 
 }

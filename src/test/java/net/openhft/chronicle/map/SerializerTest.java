@@ -111,9 +111,7 @@ public class SerializerTest {
 
             Object actual = keyReaderWithSize.read(in, null);
             Assert.assertEquals(actual, key);
-
         }
-
     }
 
     public static class MyTestClassExternalizable implements Externalizable {
@@ -229,7 +227,6 @@ public class SerializerTest {
         MyTestClass delegate;
 
         public MyTestClassObjectGraph() {
-
         }
 
         MyTestClassObjectGraph(int a) {

@@ -249,7 +249,6 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
     public SerializationBuilder<E> reader(BytesReader<E> reader) {
         this.reader = reader;
         return this;
-
     }
 
     public Object interop() {

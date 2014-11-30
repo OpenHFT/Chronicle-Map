@@ -114,7 +114,6 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
 
             externalizable.readExternalEntry(copies, segmentState, out);
         }
-
     }
 
     private static class UdpSocketChannelEntryWriter implements EntryWriter {
@@ -173,7 +172,6 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
             out.limit((int) in.position());
 
             return socketChannel.write(out);
-
         }
     }
 

@@ -183,7 +183,6 @@ public final class ReplicationHub extends AbstractReplication {
             check(identifier);
             return new ReplicationHub(identifier, this);
         }
-
     }
 
 }

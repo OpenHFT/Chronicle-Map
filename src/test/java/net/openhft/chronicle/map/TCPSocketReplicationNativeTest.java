@@ -60,7 +60,6 @@ public class TCPSocketReplicationNativeTest {
 
         map2 = ChronicleMapBuilder.of(Integer.class, LongValue.class)
                 .replication((byte) 2, tcpConfig2).create();
-
     }
 
     @After
@@ -104,7 +103,6 @@ public class TCPSocketReplicationNativeTest {
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -129,7 +127,6 @@ public class TCPSocketReplicationNativeTest {
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
-
     }
 
     /**
@@ -145,7 +142,6 @@ public class TCPSocketReplicationNativeTest {
                 break;
             Thread.sleep(1);
         }
-
     }
 
 }

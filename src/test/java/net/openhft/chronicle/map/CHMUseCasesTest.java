@@ -279,7 +279,6 @@ public class CHMUseCasesTest {
                 });
                 fail("Update of Integer not supported");
             } catch (Exception todoMoreSpecificException) {
-
             }
 
             assertEquals(null, map.putLater(3, 4).get());
@@ -328,7 +327,6 @@ public class CHMUseCasesTest {
                 });
                 fail("Update of Long not supported");
             } catch (Exception todoMoreSpecificException) {
-
             }
 
             assertEquals(null, map.putLater(3L, 4L).get());
@@ -377,7 +375,6 @@ public class CHMUseCasesTest {
                 });
                 fail("Update of Double not supported");
             } catch (Exception todoMoreSpecificException) {
-
             }
 
             assertEquals(null, map.putLater(3.0, 4.0).get());
@@ -1415,7 +1412,6 @@ public class CHMUseCasesTest {
      */
     @Test
     public void testBeanBeanMap() {
-
     }
 
     @Test

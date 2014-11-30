@@ -121,7 +121,6 @@ public class MapCheck {
     static Map newMap() {
         try {
             return ChronicleMapBuilder.of(Object.class, Object.class).create();
-
         } catch (Exception e) {
             throw new RuntimeException("Can't instantiate CHM : " + e);
         }
@@ -736,7 +735,6 @@ public class MapCheck {
             else
                 ((Stats) st).addTime(elapsed, numOps);
         }
-
     }
 
     static final class Stats {

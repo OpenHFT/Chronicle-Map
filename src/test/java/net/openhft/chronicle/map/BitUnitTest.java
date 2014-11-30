@@ -23,14 +23,11 @@ import junit.framework.TestCase;
 public class BitUnitTest extends TestCase {
 
     public void testToBits() throws Exception {
-
     }
 
     public void testToMegaBits() throws Exception {
-
     }
 
     public void testToGigaBits() throws Exception {
-
     }
 }

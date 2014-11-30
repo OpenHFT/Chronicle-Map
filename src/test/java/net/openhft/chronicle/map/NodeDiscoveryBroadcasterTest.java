@@ -104,7 +104,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             // in this case given that there is only this node in the grid and one node joining,
             // it will only be the node that has the bootstrap and this node, who's data will be sent
             server2BytesExternalizable.writeMarshallable(udpData);
-
         }
 
         // SERER1
@@ -120,7 +119,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
             Assert.assertTrue(server1BytesExternalizable.getRemoteNodes().identifiers().get
                     (SERVER2_IDENTIFER));
-
         }
 
         // SERVER 1
@@ -142,7 +140,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             bytesExternalizable.sendBootStrap(proposedNodes);
 
             bytesExternalizable.writeMarshallable(udpData);
-
         }
 
         // SERVER 2 - is the node already in the cluster
@@ -169,7 +166,6 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
             // in this case given that there is only this node in the grid and one node joining,
             // it will only be the node that has the bootstrap and this node, who's data will be sent
             server2BytesExternalizable.writeMarshallable(udpData);
-
         }
 
         // SERVER 1
@@ -187,9 +183,7 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
 
             Assert.assertTrue(server1BytesExternalizable.proposedIdentifiersWithHost.values().contains
                     (new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER)));
-
         }
-
     }
 
 }

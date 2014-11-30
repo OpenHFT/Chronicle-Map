@@ -150,7 +150,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
                                 serverConnector.connectLater();
                             }
                         }
-
                     } catch (Exception e) {
                         LOG.error("", e);
                         if (!isClosed)
@@ -205,7 +204,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
     public void onChange() {
         // the write have to be enabled on the same thread as the selector
         shouldEnableOpWrite = true;
-
     }
 
     private void enableWrites() {
@@ -282,13 +280,11 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
                     } catch (ClosedChannelException e) {
                         LOG.error("", e);
                     }
-
                 }
             });
 
             return server;
         }
-
     }
 
 }

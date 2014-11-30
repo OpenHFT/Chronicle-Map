@@ -50,7 +50,6 @@ public abstract class AbstractReplication implements Serializable {
                 ", tcpConfig=" + tcpConfig +
                 ", udpConfig=" + udpConfig +
                 ", remoteNodeValidator=" + remoteNodeValidator;
-
     }
 
     public byte identifier() {
@@ -140,7 +139,6 @@ public abstract class AbstractReplication implements Serializable {
         public String toString() {
             return ", udpConfig=" + udpConfig +
                     ", remoteNodeValidator=" + remoteNodeValidator;
-
         }
     }
 }

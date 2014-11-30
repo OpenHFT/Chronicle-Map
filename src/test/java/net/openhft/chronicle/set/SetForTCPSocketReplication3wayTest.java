@@ -87,7 +87,6 @@ public class SetForTCPSocketReplication3wayTest {
         assertEquals(set1, set2);
         assertEquals(set3, set2);
         assertTrue(!set1.isEmpty());
-
     }
 
     @Test
@@ -111,7 +110,6 @@ public class SetForTCPSocketReplication3wayTest {
         assertEquals(set1, set2);
         assertEquals(set3, set3);
         assertTrue(!set1.isEmpty());
-
     }
 
     @Test
@@ -136,7 +134,6 @@ public class SetForTCPSocketReplication3wayTest {
         assertEquals(set1, set2);
         assertEquals(set3, set3);
         assertTrue(!set1.isEmpty());
-
     }
 
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
@@ -148,7 +145,6 @@ public class SetForTCPSocketReplication3wayTest {
                 break;
             Thread.sleep(1);
         }
-
     }
 }
 

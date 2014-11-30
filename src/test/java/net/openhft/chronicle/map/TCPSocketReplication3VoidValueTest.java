@@ -85,7 +85,6 @@ public class TCPSocketReplication3VoidValueTest {
 
         assertEquals(map3, map2);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -107,7 +106,6 @@ public class TCPSocketReplication3VoidValueTest {
 
         assertEquals(map3, map3);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -128,7 +126,6 @@ public class TCPSocketReplication3VoidValueTest {
 
         assertEquals(map3, map3);
         assertTrue(!map1.isEmpty());
-
     }
 
     private boolean waitTillEqual(final int timeOutMs) throws InterruptedException {

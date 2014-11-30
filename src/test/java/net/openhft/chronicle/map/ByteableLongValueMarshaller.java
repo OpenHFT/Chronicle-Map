@@ -58,7 +58,6 @@ enum ByteableLongValueMarshaller implements BytesMarshaller<LongValue> {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
-
     }
 }
 

@@ -114,7 +114,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
         }
-
     }
 
     private int assignedModIterBitSetSizeInBytes() {
@@ -528,7 +527,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             source.position(valuePosition);
             LOG.debug(message + "value=" + source.toString().trim() + ")");
         }
-
     }
 
     @Override
@@ -546,7 +544,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         } finally {
             entry.position(start);
         }
-
     }
 
     @Override
@@ -950,7 +947,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
             // check the identifier
             return entry.readByte() > identifier;
-
         }
 
         @Override

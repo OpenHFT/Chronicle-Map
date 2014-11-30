@@ -183,7 +183,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                                 if (!isClosed)
                                     LOG.error("", e);
                             }
-
                         }
                     } finally {
                         for (int i = 0; i < keys.length && keys[i] != null; i++) {
@@ -191,7 +190,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                         }
                     }
                 }
-
             }
         } catch (CancelledKeyException e) {
             if (LOG.isDebugEnabled())
@@ -266,7 +264,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             if (!isClosed)
                 closeEarlyAndQuietly(key.channel());
         }
-
     }
 
     /**
@@ -282,7 +279,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             final int keys = selector.selectNow();
             if (keys != 0)
                 return keys;
-
         }
 
         return selector.select(selectorTimeout);
@@ -321,7 +317,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                     if (LOG.isDebugEnabled())
                         LOG.debug("", e);
                 }
-
             } catch (Exception e) {
                 if (LOG.isDebugEnabled())
                     LOG.debug("", e);
@@ -350,7 +345,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             if (LOG.isDebugEnabled())
                 LOG.debug("sending heartbeat");
-
         }
     }
 
@@ -639,7 +633,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             if (completed)
                 attached.entryWriter.workCompleted();
-
         } else if (attached.remoteModificationIterator != null)
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
@@ -653,7 +646,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             if (!attached.entryWriter.hasBytesToWrite() && !attached.entryWriter.isWorkIncomplete())
                 // TURN OP_WRITE_OFF
                 key.interestOps(key.interestOps() & ~OP_WRITE);
-
         } catch (IOException e) {
             quietClose(key, e);
             if (!attached.isServer)
@@ -691,7 +683,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             if (attached.entryWriter.isWorkIncomplete())
                 return;
-
         } catch (IOException e) {
             if (!attached.isServer)
                 attached.connector.connectLater();
@@ -813,7 +804,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                     } catch (ClosedChannelException e) {
                         LOG.debug("", e);
                     }
-
                 }
             });
 
@@ -876,14 +866,12 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                             if (socketChannel.isOpen())
                                 LOG.error("", e);
                         }
-
                     }
                 });
 
                 selector.wakeup();
                 success = true;
                 return socketChannel;
-
             } finally {
                 if (!success) {
                     try {
@@ -899,7 +887,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 }
             }
         }
-
     }
 
     /**
@@ -943,7 +930,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             if (remoteIdentifier != Byte.MIN_VALUE)
                 TcpReplicator.this.opWriteUpdater.set(remoteIdentifier);
         }
-
     }
 
     /**
@@ -1029,7 +1015,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 // if we have space in the buffer to write more data and we just wrote data into the
                 // buffer then let try and write some more
             }
-
         }
 
         /**
@@ -1106,7 +1091,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                         key.interestOps(key.interestOps() & ~OP_WRITE);
                     }
                 }
-
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -1257,10 +1241,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                             } catch (Exception e) {
                                 LOG.error("", e);
                             }
-
                         }
                     }
-
                 } else
                     externalizable.readExternalEntry(copies, segmentState, out);
 
@@ -1272,7 +1254,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 state = NOT_SET;
                 sizeInBytes = 0;
             }
-
         }
 
         /**
@@ -1349,7 +1330,6 @@ class StatelessServerConnector<K, V> {
         valueWriterWithSize = new WriterWithSize<>(valueSerializationBuilder);
         this.map = map;
         this.maxEntrySizeBytes = maxEntrySizeBytes;
-
     }
 
     Work processStatelessEvent(final byte eventId,
@@ -1378,7 +1358,6 @@ class StatelessServerConnector<K, V> {
 
             case REMOVE_WITHOUT_ACC:
                 return remove(reader);
-
         }
 
         final long sizeLocation = reflectTransactionId(reader, writer);
@@ -1440,9 +1419,7 @@ class StatelessServerConnector<K, V> {
 
             default:
                 throw new IllegalStateException("unsupported event=" + event);
-
         }
-
     }
 
     public Work mapForKey(ByteBufferBytes reader, Bytes writer, long sizeLocation) {
@@ -1451,7 +1428,6 @@ class StatelessServerConnector<K, V> {
         try {
             Object result = map.mapForKey(key, function);
             writer.writeObject(result);
-
         } catch (Throwable e) {
             LOG.info("", e);
             return sendException(writer, sizeLocation, e);
@@ -1467,7 +1443,6 @@ class StatelessServerConnector<K, V> {
         try {
             Object result = map.updateForKey(key, mutator);
             writer.writeObject(result);
-
         } catch (Throwable e) {
             LOG.info("", e);
             return sendException(writer, sizeLocation, e);
@@ -1625,7 +1600,6 @@ class StatelessServerConnector<K, V> {
         }
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
-
     }
 
     private Work put(Bytes reader) {
@@ -1865,7 +1839,6 @@ class StatelessServerConnector<K, V> {
                 writeHeader(out, sizeLocation, count, false);
                 return true;
             }
-
         };
     }
 

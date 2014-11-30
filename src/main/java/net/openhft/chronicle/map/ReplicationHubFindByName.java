@@ -86,9 +86,7 @@ class ReplicationHubFindByName<K> implements FindByName {
                         } catch (IOException e) {
                             LOG.error("", e);
                         }
-
                     }
-
                 };
 
         this.map = (Map) of(CharSequence.class, ChronicleMapBuilderWithChannelId.class)
@@ -114,7 +112,6 @@ class ReplicationHubFindByName<K> implements FindByName {
         map.put(builder.name(), builderWithChannelId);
 
         return (T) get(builder.name()).chronicleMapBuilder.create();
-
     }
 
     public <T extends ChronicleHash> T from(String name) throws IllegalArgumentException,
@@ -149,7 +146,6 @@ class ReplicationHubFindByName<K> implements FindByName {
             Thread.sleep(1);
         }
         throw new TimeoutException("timed out wait for map name=" + name);
-
     }
 
     private ChronicleHashInstanceConfig replicatedViaChannel(String name) throws TimeoutException, InterruptedException {

@@ -84,7 +84,6 @@ public class TCPSocketReplication3wayTest {
         assertEquals(map1, map2);
         assertEquals(map3, map2);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -108,7 +107,6 @@ public class TCPSocketReplication3wayTest {
         assertEquals(map1, map2);
         assertEquals(map3, map3);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -131,7 +129,6 @@ public class TCPSocketReplication3wayTest {
         assertEquals(map1, map2);
         assertEquals(map3, map3);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -156,7 +153,6 @@ public class TCPSocketReplication3wayTest {
         assertEquals(map1, map2);
         assertEquals(map3, map3);
         assertTrue(!map1.isEmpty());
-
     }
 
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
@@ -168,7 +164,6 @@ public class TCPSocketReplication3wayTest {
                 break;
             Thread.sleep(1);
         }
-
     }
 }
 

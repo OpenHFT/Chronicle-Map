@@ -118,7 +118,6 @@ public class EventListenerTestWithTCPSocketReplication {
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
         Assert.assertEquals("EXAMPLE", valueRef.get());
-
     }
 
     @Test
@@ -132,7 +131,6 @@ public class EventListenerTestWithTCPSocketReplication {
             ChronicleMapBuilder<Integer, CharSequence> map1Builder = serverBuilder();
 
             map1 = map1Builder.create();
-
         }
         // ---------- SERVER2 2 on the same server as ----------
 
@@ -150,7 +148,6 @@ public class EventListenerTestWithTCPSocketReplication {
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
         Assert.assertEquals("EXAMPLE", valueRef.get());
         Assert.assertEquals("WILL_GET_OVER-WRITTEN", replacedValueRef.get());
-
     }
 
     @Test
@@ -162,7 +159,6 @@ public class EventListenerTestWithTCPSocketReplication {
             // we connect the maps via a TCP socket connection on port 8077
 
             map1 = serverBuilder().create();
-
         }
         // ---------- SERVER2 2 on the same server as ----------
 
@@ -181,7 +177,6 @@ public class EventListenerTestWithTCPSocketReplication {
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
         Assert.assertEquals("small", replacedValueRef.get());
         Assert.assertEquals("EXAMPLE", valueRef.get());
-
     }
 
     @Test
@@ -196,7 +191,6 @@ public class EventListenerTestWithTCPSocketReplication {
             ChronicleMapBuilder<Integer, CharSequence> map1Builder = serverBuilder();
 
             map1 = map1Builder.create();
-
         }
 
         // ---------- SERVER2 2 on the same server as ----------

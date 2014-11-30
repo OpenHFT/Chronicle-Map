@@ -144,7 +144,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             current(timeProvider);
             assertEquals(map.size(), 1);
             assertEquals("value-1", map.get("key-1"));
-
         }
     }
 
@@ -204,7 +203,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             assertEquals(1, map.size());
             assertEquals("value-1", map.get("key-1"));
         }
-
     }
 
     @Test
@@ -298,7 +296,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
             assertEquals("value-1", map.get("key-1"));
             assertEquals(1, map.size(), 0);
-
         }
     }
 

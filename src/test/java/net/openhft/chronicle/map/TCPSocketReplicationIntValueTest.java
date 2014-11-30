@@ -135,7 +135,6 @@ public class TCPSocketReplicationIntValueTest {
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -150,7 +149,6 @@ public class TCPSocketReplicationIntValueTest {
 
         assertEquals(map1, map2);
         assertTrue(!map2.isEmpty());
-
     }
 
     /**
@@ -190,7 +188,6 @@ public class TCPSocketReplicationIntValueTest {
                     map.remove(set(rnd.nextInt(Builder.SIZE)));
                 }
             }
-
         }
 
         waitTillEqual(10000);
@@ -199,7 +196,6 @@ public class TCPSocketReplicationIntValueTest {
 
         //assertTrue("timeTaken="+time, time < 2200);
         System.out.println("\ntime taken millis=" + time);
-
     }
 
 }

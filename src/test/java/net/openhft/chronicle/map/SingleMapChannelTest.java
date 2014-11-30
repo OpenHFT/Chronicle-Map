@@ -115,7 +115,6 @@ public class SingleMapChannelTest {
         Assert.assertEquals("map1a=map1b", map1a, map1b);
 
         assertTrue("map1a.empty", !map1a.isEmpty());
-
     }
 
     /**
@@ -132,7 +131,6 @@ public class SingleMapChannelTest {
                 break;
             Thread.sleep(1);
         }
-
     }
 
 }

@@ -72,7 +72,6 @@ public class NodeDiscovery {
             mask = null;
         }
         IP_MULIT_CAST_GROUP = mask;
-
     }
 
     private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
@@ -146,7 +145,6 @@ public class NodeDiscovery {
                 }
                 countDownLatch.get().countDown();
             }
-
         };
 
         nodeDiscoveryEventListenerAtomicReference.set(nodeDiscoveryEventListener);
@@ -208,7 +206,6 @@ public class NodeDiscovery {
                     LOG.debug("timed-out getting a response from the server so sending another boot-strap  " +
                             "message");
                 }
-
             }
 
             LOG.info("looks like we are the only node in the grid, so going to use identifier=" + identifier);
@@ -258,7 +255,6 @@ public class NodeDiscovery {
                 .createWithId(identifier);
 
         return new ReplicationHubFindByName(replicationHub);
-
     }
 
     private static Collection<InetSocketAddress> toInetSocketCollection(Set<AddressAndPort> source)
@@ -453,7 +449,6 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
 
             externalizable.readMarshallable(out);
         }
-
     }
 
     static class UdpSocketChannelEntryWriter implements EntryWriter {
@@ -580,7 +575,6 @@ class KnownNodes implements BytesMarshallable {
 
         activeIdentifiersBitSetBytes.clear();
         activeIdentifiersBitSetBytes.writeMarshallable(out);
-
     }
 
     @Override
@@ -602,7 +596,6 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
     }
 
     public AddressAndPort() {
-
     }
 
     public byte[] getAddress() {
@@ -678,7 +671,6 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
         }
 
         return sb.toString();
-
     }
 
     @Override
@@ -690,7 +682,6 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
             address[i] = in.readByte();
         }
         port = in.readShort();
-
     }
 
     @Override
@@ -767,7 +758,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         proposedIdentifiersWithHost.expireEntries(System.currentTimeMillis() - SECONDS.toMillis(1));
 
         proposedIdentifiersWithHost.writeMarshallable(out);
-
     }
 
     private boolean writeBootstrap(Bytes out) {
@@ -811,7 +801,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             result.readMarshallable(in);
 
             return result;
-
         } finally {
             in.position(start);
         }
@@ -868,7 +857,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         private AddressAndPort addressAndPort;
 
         public ProposedNodes() {
-
         }
 
         public byte identifier() {
@@ -892,7 +880,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             addressAndPort.readMarshallable(in);
             timestamp = in.readLong();
             identifier = in.readByte();
-
         }
 
         @Override
@@ -989,7 +976,6 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
         } catch (Exception e) {
             LOG.error("", e);
         }
-
     }
 
     @Override
@@ -1110,7 +1096,6 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
             return null;
 
         return networkInterfaces.nextElement();
-
     }
 
     public static InetAddress getDefaultAddress() throws SocketException {

@@ -907,7 +907,6 @@ unique for each map you have.
                 .replicatedViaChannel(hubOnServer1.createChannel(channel2)).create();
 
         favoriteComputerServer1.put("peter", "dell");
-
     }
 
     // server 2 with  identifier = 2
@@ -1384,7 +1383,6 @@ public class YourClass {
 
         Assert.assertEquals(map1, map2);
         Assert.assertTrue(!map1.isEmpty());
-
     }
 }
 ```

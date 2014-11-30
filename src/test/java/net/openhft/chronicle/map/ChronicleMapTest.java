@@ -1484,9 +1484,7 @@ public class ChronicleMapTest {
             try (WriteContext<?, String> context = map.acquireUsingLocked("one", "")) {
                 // do nothing
             }
-
         }
-
     }
 
     @Test

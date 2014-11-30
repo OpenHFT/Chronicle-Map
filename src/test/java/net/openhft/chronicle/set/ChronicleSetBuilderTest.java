@@ -35,6 +35,5 @@ public class ChronicleSetBuilderTest {
             Assert.assertTrue(integers.contains(5));
             Assert.assertEquals(10, integers.size());
         }
-
     }
 }

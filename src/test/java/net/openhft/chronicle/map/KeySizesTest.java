@@ -50,6 +50,5 @@ public class KeySizesTest {
         }
 
         ((Closeable) map).close();
-
     }
 }

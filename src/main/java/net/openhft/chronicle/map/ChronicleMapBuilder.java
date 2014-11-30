@@ -361,7 +361,6 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
     @Override
     public ChronicleMap<K, V> create() {
         return delegate.create();
-
     }
 
     @Override

@@ -81,7 +81,6 @@ public class MapByNameTest {
         //  mapByName.add(builder);
 
         ChronicleMap<CharSequence, CharSequence> myMap2 = mapByName.from("myMap");
-
     }
 
     public static void main(String... args) throws IOException, InterruptedException, TimeoutException {
@@ -107,7 +106,6 @@ public class MapByNameTest {
         System.out.print(map);
 
         map.close();
-
     }
 
 }

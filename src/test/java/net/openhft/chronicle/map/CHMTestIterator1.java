@@ -50,11 +50,9 @@ public class CHMTestIterator1 {
             for (Map.Entry<String, Long> entry : chm.entrySet()) {
                 entry.getKey();
                 entry.getValue();
-
             }
             long time = System.nanoTime() - start;
             System.out.println("Average iteration time was " + time / runs / 1e3 + "us, for " + runs / 1e6 + "m entries");
-
         }
     }
 

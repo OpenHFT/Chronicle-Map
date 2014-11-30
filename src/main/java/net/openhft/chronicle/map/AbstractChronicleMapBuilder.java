@@ -399,7 +399,6 @@ abstract class AbstractChronicleMapBuilder<K, V,
 
     private int estimateSegments() {
         return (int) Math.min(Maths.nextPower2(entries / 32, 1), estimateSegementBasedOnSize());
-
     }
 
     private int estimateSegementBasedOnSize() {

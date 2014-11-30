@@ -58,7 +58,6 @@ public class CHMMetaDataTest {
             map.close();
             file.delete();
         }
-
     }
 
     private static class StringStringMapEventListener

@@ -145,7 +145,6 @@ interface Replica extends Closeable {
         void readExternalEntry(
                 @NotNull ThreadLocalCopies copies,
                 @NotNull VanillaChronicleMap.SegmentState segmentState, @NotNull Bytes source);
-
     }
 
     /**
@@ -173,7 +172,6 @@ interface Replica extends Closeable {
         V value(@NotNull Bytes entry, V usingValue);
 
         boolean wasRemoved(@NotNull Bytes entry);
-
     }
 
     /**

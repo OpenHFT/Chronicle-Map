@@ -84,7 +84,6 @@ public class UDPSocketReplicationTest {
             map2.put(i * 2, "E");
             System.out.println("" + map2);
         }
-
     }*/
 
 }

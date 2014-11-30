@@ -56,7 +56,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         }
 
         // return new ConcurrentMap(5);
-
     }
 
     private static ConcurrentMap newIntegerStringMap() {
@@ -75,7 +74,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-
     }
 
     *//**

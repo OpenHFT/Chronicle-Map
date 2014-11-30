@@ -169,7 +169,6 @@ public class StatelessClientTest {
                 assertEquals("some value=" + next.getKey(), next.getValue());
 
                 assertEquals(SIZE, entries.size());
-
             }
         }
     }
@@ -200,7 +199,6 @@ public class StatelessClientTest {
                 Collection<CharSequence> values = statelessMap.values();
 
                 assertEquals(values.size(), SIZE);
-
             }
         }
     }
@@ -230,7 +228,6 @@ public class StatelessClientTest {
                 final Set<Integer> keys = statelessMap.keySet();
 
                 assertEquals(keys.size(), payload.size());
-
             }
         }
     }
@@ -271,11 +268,8 @@ public class StatelessClientTest {
 
                 assertEquals("EXAMPLE-10", statelessMap.get(10));
                 assertEquals(1, statelessMap.size());
-
             }
-
         }
-
     }
 
     @Test(timeout = 10000)
@@ -296,11 +290,8 @@ public class StatelessClientTest {
 
                 assertEquals(Collections.singletonMap("hello", "world"), statelessMap.get("hello"));
                 assertEquals(1, statelessMap.size());
-
             }
-
         }
-
     }
 
     @Test(timeout = 10000)
@@ -328,11 +319,8 @@ public class StatelessClientTest {
 
                 assertEquals(data, serverMap.get("hello"));
                 assertEquals(1, statelessMap.size());
-
             }
-
         }
-
     }
 
     @Test(timeout = 10000)
@@ -360,7 +348,6 @@ public class StatelessClientTest {
 
                 assertEquals("some value=" + value, statelessMap.get(value));
                 assertEquals(SIZE, statelessMap.size());
-
             }
         }
     }
@@ -391,10 +378,8 @@ public class StatelessClientTest {
 
                 assertEquals("some value=" + value, statelessMap.get(value));
                 assertEquals(SIZE, statelessMap.size());
-
             }
         }
-
     }
 
     @Test(timeout = 10000)
@@ -412,7 +397,6 @@ public class StatelessClientTest {
 
                 assertEquals("some value", statelessMap.get(1));
                 assertEquals(1, statelessMap.size());
-
             }
         }
     }
@@ -437,10 +421,8 @@ public class StatelessClientTest {
 
                 assertEquals(null, statelessMap.get(1));
                 assertEquals(0, statelessMap.size());
-
             }
         }
-
     }
 
     @Test(timeout = 10000)
@@ -463,10 +445,8 @@ public class StatelessClientTest {
 
                 assertEquals(null, statelessMap.getLater(1).get());
                 assertEquals(0, statelessMap.size());
-
             }
         }
-
     }
 
     @Test
@@ -483,10 +463,8 @@ public class StatelessClientTest {
                 CharSequence oldValue = statelessMap.putLater(1, "some value").get();
                 assertEquals("some value", statelessMap.get(1));
                 assertEquals(1, statelessMap.size());
-
             }
         }
-
     }
 
     @Test(timeout = 10000)
@@ -503,10 +481,8 @@ public class StatelessClientTest {
                 statelessMap.removeLater(1).get();
                 assertEquals(null, statelessMap.get(1));
                 assertEquals(0, statelessMap.size());
-
             }
         }
-
     }
 
     @Test(timeout = 10000)
@@ -523,7 +499,6 @@ public class StatelessClientTest {
                     .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create();
             serverMap2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .replication((byte) 2, TcpTransportAndNetworkConfig.of(8077)).create();
-
         }
 
         // stateless client
@@ -549,6 +524,5 @@ public class StatelessClientTest {
 
         serverMap1.close();
         serverMap2.close();
-
     }
 }

@@ -45,7 +45,6 @@ public class ChronicleMapImportExportTest {
         } finally {
             file.delete();
         }
-
     }
 
     @Test
@@ -75,7 +74,6 @@ public class ChronicleMapImportExportTest {
         } finally {
             file.delete();
         }
-
     }
 
     @Test
@@ -107,7 +105,6 @@ public class ChronicleMapImportExportTest {
         } finally {
             file.delete();
         }
-
     }
 
     @Test
@@ -135,7 +132,6 @@ public class ChronicleMapImportExportTest {
         } finally {
             file.delete();
         }
-
     }
 
     @Test
@@ -164,7 +160,6 @@ public class ChronicleMapImportExportTest {
         } finally {
             file.delete();
         }
-
     }
 
     @Ignore("this type of off heap reference is not currently supported")
@@ -202,7 +197,6 @@ public class ChronicleMapImportExportTest {
         } finally {
             file.delete();
         }
-
     }
 
 }

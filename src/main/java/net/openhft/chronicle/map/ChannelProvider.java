@@ -365,7 +365,6 @@ final class ChannelProvider implements Closeable {
                     LOG.debug("sending bootstrap message received for localIdentifier=" + localIdentifier + ", " +
                             "remoteIdentifier=" + remoteIdentifier + ",chronicleChannel=" + chronicleChannel + "," +
                             "lastModificationTime=" + lastModificationTime);
-
             }
         } finally {
             channelDataLock.writeLock().unlock();
@@ -463,7 +462,6 @@ final class ChannelProvider implements Closeable {
                 systemModificationIteratorBitSet.set(remoteIdentifier);
 
                 return iterator;
-
             }
 
             @Override
@@ -539,6 +537,5 @@ final class ChannelProvider implements Closeable {
                 channelDataLock.writeLock().unlock();
             }
         }
-
     }
 }

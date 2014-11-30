@@ -38,13 +38,11 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .create();
-
     }
 
     ChronicleMap<CharSequence, CharSequence> newShmStringString() throws IOException {
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .create();
-
     }
 
     /**

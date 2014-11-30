@@ -116,11 +116,9 @@ abstract class AbstractChannelReplicator implements Closeable {
                                        }
                                    }
                                }
-
                            }
             );
             return openSelector(result, selectedKeys);
-
         }
 
         return result;
@@ -132,7 +130,6 @@ abstract class AbstractChannelReplicator implements Closeable {
         try {
             result = SocketChannel.open();
             result.socket().setTcpNoDelay(true);
-
         } finally {
             if (result != null)
                 try {
@@ -252,7 +249,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                         dumpThreadStackTrace(start);
                     }
                 }
-
         } catch (InterruptedException e) {
             dumpThreadStackTrace(start);
             LOG.error("", e);
@@ -360,7 +356,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                 final SelectionKey selectionKey = selectableChannel.keyFor(selector);
                 if (selectionKey != null)
                     selectionKey.interestOps(selectionKey.interestOps() | OP_WRITE);
-
             }
         }
 
@@ -527,7 +522,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                         }
 
                         AbstractConnector.this.socketChannel = socketChannel;
-
                     } catch (Exception e) {
                         closeQuietly(socketChannel);
                         LOG.debug("", e);
@@ -548,7 +542,6 @@ abstract class AbstractChannelReplicator implements Closeable {
             thread.setName(name);
             thread.setDaemon(true);
             thread.start();
-
         }
 
         public void setSuccessfullyConnected() {

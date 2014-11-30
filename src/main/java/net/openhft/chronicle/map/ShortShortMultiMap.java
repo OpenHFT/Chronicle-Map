@@ -264,7 +264,6 @@ class ShortShortMultiMap implements MultiMap {
             int entry = bytes.readInt(pos);
             if (entry != UNSET_ENTRY)
                 sb.append(key(entry)).append('=').append(value(entry)).append(", ");
-
         }
         if (sb.length() > 2) {
             sb.setLength(sb.length() - 2);

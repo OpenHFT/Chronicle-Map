@@ -81,7 +81,6 @@ public class ChannelReplicationTest {
                     .replicatedViaChannel(hubOnServer1.createChannel(channel2)).create();
 
             favoriteComputerServer1.put("peter", "dell");
-
         }
 
         // server 2 with  identifier = 2
@@ -176,7 +175,6 @@ public class ChannelReplicationTest {
                     .replicatedViaChannel(hubOnServer1.createChannel(channel2)).create();
 
             favoriteComputerServer1.put("peter", "dell");
-
         }
 
         // server 2 with  identifier = 2
@@ -231,7 +229,6 @@ public class ChannelReplicationTest {
 
             favoriteComputerServer3 = smallStringToStringMapBuilder.instance()
                     .replicatedViaChannel(hubOnServer3.createChannel(channel2)).create();
-
         }
 
         // allow time for the recompilation to resolve
@@ -256,7 +253,6 @@ public class ChannelReplicationTest {
         favoriteColourServer1.close();
 
         favoriteColourServer2.close();
-
     }
 
     @Test
@@ -294,7 +290,6 @@ public class ChannelReplicationTest {
                     .replicatedViaChannel(hubOnServer1.createChannel(channel2)).create();
 
             favoriteComputerServer1.put("peter", "dell");
-
         }
 
         // server 2 with  identifier = 2

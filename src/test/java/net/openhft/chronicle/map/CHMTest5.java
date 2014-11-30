@@ -89,7 +89,6 @@ public class CHMTest5 {
         if (!locked) {
             System.out.println("Unable to acquire a lock on the time array - exiting");
             System.exit(0);
-
         }
         try {
             //we've got the lock, now copy the array
@@ -119,7 +118,6 @@ public class CHMTest5 {
         if (!locked) {
             System.out.println("Unable to acquire a lock on the time array - exiting");
             System.exit(0);
-
         }
         try {
             //we've got the lock, now copy the array
@@ -155,7 +153,6 @@ public class CHMTest5 {
                 if (!locked) {
                     System.out.println("Unable to acquire a lock on the time array - exiting");
                     System.exit(0);
-
                 }
                 try {
                     data.setTimeAt(slotindex, timenow);
@@ -197,7 +194,6 @@ public class CHMTest5 {
             if (!locked) {
                 System.out.println("Unable to acquire a lock on the time array - exiting");
                 System.exit(0);
-
             }
             try {
                 if (lastUpdateTime == data.getTimeAt(slotindex)) {

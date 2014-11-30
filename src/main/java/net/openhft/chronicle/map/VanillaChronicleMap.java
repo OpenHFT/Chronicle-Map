@@ -235,7 +235,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
      * called when the header is created
      */
     void onHeaderCreated() {
-
     }
 
     long getHeaderSize() {
@@ -679,7 +678,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         try (FileOutputStream out = new FileOutputStream(toFile)) {
             xstream.toXML(entrySet(), out);
         }
-
     }
 
     @Override
@@ -694,7 +692,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         try (FileInputStream out = new FileInputStream(fromFile)) {
             xstream.fromXML(out);
         }
-
     }
 
     private XStreamConverter xStreamConverter;
@@ -761,7 +758,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             writer.addAttribute("type", value.getClass().getCanonicalName());
                         marshallingContext.convertAnother(value);
                         writer.endNode();
-
                     } else if (EntrySet.class
                             .isAssignableFrom(o.getClass())) {
 
@@ -770,7 +766,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             marshallingContext.convertAnother(e);
                             writer.endNode();
                         }
-
                     }
                 }
 
@@ -838,7 +833,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             throw new ConversionException(e);
                         }
                     } else return (E) unmarshallingContext.convertAnother(null, clazz);
-
                 }
             };
 

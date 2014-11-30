@@ -78,7 +78,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                          }
                      }
         );
-
     }
 
     public <R> R check(Call instance) {
@@ -98,10 +97,8 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
             } else
                 Thread.yield();
-
         }
 
         Assert.assertEquals(map1, map2);
@@ -112,7 +109,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
             Assert.assertEquals(r1.toString(), r2.toString());
 
         return (R) r1;
-
     }
 
     @Override
@@ -125,7 +121,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                          }
                      }
         );
-
     }
 
     @Override
@@ -138,7 +133,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                          }
                      }
         );
-
     }
 
     @Override
@@ -151,7 +145,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                          }
                      }
         );
-
     }
 
     @Override
@@ -164,7 +157,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                          }
                      }
         );
-
     }
 
     @Override
@@ -198,7 +190,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                          }
                      }
         );
-
     }
 
     @NotNull
@@ -212,7 +203,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                          }
                      }
         );
-
     }
 
     @NotNull
@@ -226,7 +216,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                          }
                      }
         );
-
     }
 
     @Override

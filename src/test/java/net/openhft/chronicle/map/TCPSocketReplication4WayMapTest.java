@@ -102,7 +102,6 @@ public class TCPSocketReplication4WayMapTest {
         assertEquals("map3", map1, map3);
         assertEquals("map4", map1, map4);
         assertTrue("map2.empty", !map2.isEmpty());
-
     }
 
     @Test
@@ -119,7 +118,6 @@ public class TCPSocketReplication4WayMapTest {
         assertEquals("map3", map1, map3);
         assertEquals("map4", map1, map4);
         assertTrue("map2.empty", !map2.isEmpty());
-
     }
 
     @Test
@@ -141,7 +139,6 @@ public class TCPSocketReplication4WayMapTest {
         assertEquals("map3", map1, map3);
         assertEquals("map4", map1, map4);
         assertTrue("map2.empty", !map2.isEmpty());
-
     }
 
     /**
@@ -163,7 +160,6 @@ public class TCPSocketReplication4WayMapTest {
                 break;
             Thread.sleep(1);
         }
-
     }
 
 }

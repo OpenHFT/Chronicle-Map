@@ -130,7 +130,6 @@ public class ChannelReplicationTest {
 
         assertTrue("map1a.empty", !map1a.isEmpty());
         assertTrue("map2a.empty", !map2a.isEmpty());
-
     }
 
     /**
@@ -147,7 +146,6 @@ public class ChannelReplicationTest {
                 break;
             Thread.sleep(1);
         }
-
     }
 
 }

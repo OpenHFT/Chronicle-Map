@@ -222,7 +222,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 closeables.closeQuietly();
                 throw e;
             }
-
         }
 
         return result;
@@ -251,11 +250,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             clientChannel = AbstractChannelReplicator.openSocketChannel(closeables);
             clientChannel.connect(remoteAddress);
             doHandShaking(clientChannel);
-
         } catch (IOException e) {
             closeables.closeQuietly();
         }
-
     }
 
     /**
@@ -303,7 +300,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         if (LOG.isDebugEnabled())
             LOG.debug("Attached to a map with a remote identifier=" + remoteIdentifier);
-
     }
 
     public File file() {
@@ -325,7 +321,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 LOG.error("", e);
             }
         }
-
     }
 
     /**
@@ -417,7 +412,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         final Set<Map.Entry<K, V>> entries = entrySet();
 
         return that.entrySet().equals(entries);
-
     }
 
     @Override
@@ -442,7 +436,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         // get the data back from the server
         return blockingFetch(sizeLocation).readBoolean();
-
     }
 
     private static NullPointerException keyNotNullNPE() {
@@ -469,7 +462,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         // get the data back from the server
         return readValue(sizeLocation, copies);
-
     }
 
     public synchronized V getUsing(K key, V usingValue) {
@@ -527,7 +519,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         } else
             // get the data back from the server
             return readValue(sizeLocation, copies);
-
     }
 
     public synchronized <R> R mapForKey(K key, @NotNull Function<? super V, R> function) {
@@ -562,10 +553,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 if (cause instanceof IOException && cause.getMessage().contains("Not enough available space")) {
                     LOG.debug("resizing buffer");
                     resizeBuffer(buffer.capacity() + maxEntrySize, start);
-
                 } else
                     throw e;
-
             }
         }
     }
@@ -581,7 +570,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             sendWithoutAcc(bytes, sizeLocation);
         else
             blockingFetch(sizeLocation);
-
     }
 
     private synchronized void sendWithoutAcc(final Bytes bytes, long sizeLocation) {
@@ -920,7 +908,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         public final String toString() {
             return getKey() + "=" + getValue();
         }
-
     }
 
     private Bytes blockingFetch(long sizeLocation) {
@@ -936,7 +923,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             close();
             throw e;
         }
-
     }
 
     private Bytes blockingFetch0(long sizeLocation, final long transactionId, long startTime) {
@@ -950,7 +936,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             close();
             throw e;
         }
-
     }
 
     private Bytes blockingFetchThrowable(long sizeLocation, long timeOutMs, final long transactionId, final long startTime) throws IOException {
@@ -976,7 +961,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 bytes.buffer().clear();
 
                 return blockingFetch(timeoutTime, transactionId);
-
             } catch (java.nio.channels.ClosedChannelException | ClosedConnectionException e) {
                 checkTimeout(timeoutTime);
                 clientChannel = lazyConnect(config.timeoutMs(), config.remoteAddress());
@@ -995,7 +979,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             close();
             throw e;
         }
-
     }
 
     private Bytes blockingFetch(long timeoutTime, long transactionId) throws IOException {
@@ -1011,7 +994,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             long limit = bytes.position();
             bytes.position(limit);
             resizeBuffer(requiredSize, pos);
-
         } else
             bytes.limit(bytes.capacity());
 

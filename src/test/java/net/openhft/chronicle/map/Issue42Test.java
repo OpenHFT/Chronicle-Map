@@ -48,6 +48,5 @@ public class Issue42Test {
                 Assert.assertEquals(s, map.get(s));
             }
         }
-
     }
 }

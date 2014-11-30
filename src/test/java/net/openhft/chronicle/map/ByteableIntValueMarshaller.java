@@ -58,7 +58,6 @@ enum ByteableIntValueMarshaller implements BytesMarshaller<IntValue> {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
-
     }
 }
 
