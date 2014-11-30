@@ -523,4 +523,12 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         return this;
     }
 
+    public ChronicleMapBuilderI<K, V> checkSerializedValues() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    public ChronicleMapBuilder<K, V> disableOversizedEntries(boolean disableOversizedEntries) {
+        // throw an exception rather than use oversized entries to test the size is as expected.
+        throw new UnsupportedOperationException("Not implemented");
+    }
 }

@@ -136,7 +136,8 @@ public class ChronicleMapTest {
     public void testRemoveWithKey() throws Exception {
 
         final ChronicleMap<CharSequence, CharSequence> map =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                ChronicleMapBuilder
+                        .of(CharSequence.class, CharSequence.class)
                         .minSegments(2).create();
 
         assertFalse(map.containsKey("key3"));
