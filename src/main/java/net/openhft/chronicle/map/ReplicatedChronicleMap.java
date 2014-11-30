@@ -386,7 +386,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     @Override
     public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
                                    int chronicleId) {
-
         final long initialLimit = entry.limit();
 
         final long keySize = keySizeMarshaller.readSize(entry);
@@ -462,7 +461,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     public void readExternalEntry(
             @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
             @NotNull Bytes source) {
-
         final long keySize = keySizeMarshaller.readSize(source);
         final long valueSize = valueSizeMarshaller.readSize(source);
         final long timeStamp = source.readStopBit();
@@ -496,7 +494,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         boolean debugEnabled = LOG.isDebugEnabled();
 
         if (isDeleted) {
-
             if (debugEnabled) {
                 LOG.debug("READING FROM SOURCE -  into local-id={}, remote={}, remove(key={})",
                         localIdentifier, remoteIdentifier, source.toString().trim()
@@ -932,7 +929,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          */
         private boolean shouldIgnore(@NotNull final NativeBytes entry, final long timestamp,
                                      final byte identifier) {
-
             final long lastModifiedTimeStamp = entry.readLong();
 
             // if the readTimeStamp is newer then we'll reject this put()
@@ -1173,14 +1169,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         public void dirtyEntries(final long timeStamp,
                                  final ModificationIterator.EntryModifiableCallback callback,
                                  final boolean bootstrapOnlyLocalEntries) {
-
             readLock(null);
             ThreadLocalCopies copies = SegmentState.getCopies(null);
             try (SegmentState segmentState = SegmentState.get(copies)) {
                 final int index = Segment.this.getIndex();
                 final MultiStoreBytes tmpBytes = segmentState.tmpBytes;
                 hashLookup().forEach(new MultiMap.EntryConsumer() {
-
                     @Override
                     public void accept(long hash, long pos) {
                         final NativeBytes entry = reuse(tmpBytes, offsetFromPos(pos));
@@ -1411,7 +1405,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 segment.readLock(null);
                 try {
                     if (changes.clearIfSet(position)) {
-
                         entryCallback.onBeforeEntry();
 
                         final long segmentPos = position & posMask;

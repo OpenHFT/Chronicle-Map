@@ -154,7 +154,6 @@ public class TCPSocketReplicationTest {
                 System.out.print(".");
             Random rnd = new Random(j);
             for (int i = 1; i < 10; i++) {
-
                 final int select = rnd.nextInt(2);
                 final ChronicleMap<Integer, CharSequence> map = select > 0 ? map1 : map2;
 

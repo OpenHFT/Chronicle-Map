@@ -149,7 +149,6 @@ abstract class AbstractChannelReplicator implements Closeable {
      */
     private Selector openSelector(@NotNull final Selector selector,
                                   @NotNull final SelectedSelectionKeySet selectedKeySet) {
-
         try {
 
             Class<?> selectorImplClass =
@@ -319,7 +318,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                   long throttleIntervalInMillis,
                   long serializedEntrySize,
                   long bitsPerDay) {
-
             this.selector = selector;
             this.throttleInterval = throttleIntervalInMillis;
             double bytesPerMs = ((double) bitsPerDay) / DAYS.toMillis(1) / BITS_IN_A_BYTE;
@@ -352,7 +350,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                 LOG.debug("Restoring OP_WRITE on all channels");
 
             for (SelectableChannel selectableChannel : channels) {
-
                 final SelectionKey selectionKey = selectableChannel.keyFor(selector);
                 if (selectionKey != null)
                     selectionKey.interestOps(selectionKey.interestOps() | OP_WRITE);
@@ -425,7 +422,6 @@ abstract class AbstractChannelReplicator implements Closeable {
 
         @Override
         public boolean onEntry(final Bytes entry, final int chronicleId) {
-
             long pos0 = in.position();
 
             // used to denote that this is not a stateless map event
@@ -500,9 +496,7 @@ abstract class AbstractChannelReplicator implements Closeable {
          * @param reconnectionInterval the period to wait before connecting
          */
         private void doConnect(final long reconnectionInterval) {
-
             final Thread thread = new Thread(new Runnable() {
-
                 public void run() {
                     SelectableChannel socketChannel = null;
                     try {
@@ -514,7 +508,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                         try {
                             closeables.add(socketChannel);
                         } catch (IllegalStateException e) {
-
                             // close could have be called from another thread, while we were in Thread.sleep()
                             // which would cause a IllegalStateException
                             closeQuietly(socketChannel);

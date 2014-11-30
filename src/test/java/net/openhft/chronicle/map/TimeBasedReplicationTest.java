@@ -67,7 +67,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
                 .create()) {
-
             current(timeProvider);
 
             // we do a put at the current time
@@ -125,7 +124,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
                 .create()) {
-
             current(timeProvider);
 
             // we do a put at the current time
@@ -156,7 +154,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
                 .create()) {
-
             current(timeProvider);
 
             // we do a put at the current time
@@ -185,7 +182,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
                 .create()) {
-
             current(timeProvider);
 
             // we do a put at the current time
@@ -245,7 +241,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
                 .create()) {
-
             current(timeProvider);
 
             // we do a put at the current time
@@ -278,7 +273,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
                 .create()) {
-
             current(timeProvider);
 
             // we do a put at the current time
@@ -309,7 +303,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
                 .create()) {
-
             current(timeProvider);
 
             // we do a put at the current time

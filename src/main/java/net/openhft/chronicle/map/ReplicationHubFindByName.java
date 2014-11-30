@@ -63,7 +63,6 @@ class ReplicationHubFindByName<K> implements FindByName {
 
         final MapEventListener<CharSequence, ChronicleMapBuilderWithChannelId> listener = new
                 MapEventListener<CharSequence, ChronicleMapBuilderWithChannelId>() {
-
                     // creates a map based on the details that are sent to the map of builders
                     @Override
                     public void onPut(CharSequence key, ChronicleMapBuilderWithChannelId value,
@@ -179,7 +178,6 @@ class ReplicationHubFindByName<K> implements FindByName {
 
     private ChronicleHashInstanceConfig toReplicatedViaChannel(ChronicleHashBuilder<K, ?, ?> builder, int
             withChannelId) {
-
         return builder.instance().replicatedViaChannel(replicationHub.createChannel((short) withChannelId));
     }
 

@@ -116,12 +116,10 @@ public class NodeDiscovery {
                 = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
 
         final NodeDiscoveryEventListener nodeDiscoveryEventListener = new NodeDiscoveryEventListener() {
-
             @Override
             public void onRemoteNodeEvent(@NotNull final KnownNodes remoteNodes,
                                           @NotNull final ConcurrentExpiryMap<AddressAndPort,
                                                   ProposedNodes> proposedIdentifiersWithHost) {
-
                 LOG.info("onRemoteNodeEvent " + remoteNodes + ", proposedIdentifiersWithHost=" + proposedIdentifiersWithHost);
 
                 knownHostPorts.addAll(remoteNodes.addressAndPorts());
@@ -131,7 +129,6 @@ public class NodeDiscovery {
                 for (ProposedNodes proposedIdentifierWithHost :
                         proposedIdentifiersWithHost.values()) {
                     if (!proposedIdentifierWithHost.addressAndPort().equals(ourAddressAndPort)) {
-
                         int proposedIdentifier = proposedIdentifierWithHost.identifier();
                         if (proposedIdentifier != -1) {
                             knownAndProposedIdentifiers.set(proposedIdentifier, true);
@@ -216,7 +213,6 @@ public class NodeDiscovery {
         // we should make a local copy as this may change
 
         final RemoteNodeValidator remoteNodeValidator = new RemoteNodeValidator() {
-
             private final ConcurrentMap<Byte, SocketAddress> identifiers = new ConcurrentHashMap<Byte,
                     SocketAddress>();
 
@@ -286,7 +282,6 @@ public class NodeDiscovery {
      */
     private DirectBitSet orBitSets(@NotNull final DirectBitSet source,
                                    @NotNull final DirectBitSet destination) {
-
         // merges the two bit-sets together
         for (int i = (int) source.nextSetBit(0); i > 0;
              i = (int) source.nextSetBit(i + 1)) {
@@ -320,7 +315,6 @@ public class NodeDiscovery {
 
         int count = 0;
         for (; ; ) {
-
             if (knownIdentifiers.setIfClear(possible)) {
                 return possible;
             }
@@ -404,7 +398,6 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
          */
         UdpSocketChannelEntryReader(final int serializedEntrySize,
                                     @NotNull final BytesMarshallable externalizable) {
-
             // we make the buffer twice as large just to give ourselves headroom
             in = allocateDirect(serializedEntrySize * 2);
 
@@ -463,7 +456,6 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
         UdpSocketChannelEntryWriter(final int serializedEntrySize,
                                     @NotNull final BytesMarshallable externalizable,
                                     @NotNull final UdpChannelReplicator udpReplicator) {
-
             this.externalizable = externalizable;
             this.udpReplicator = udpReplicator;
 
@@ -517,7 +509,6 @@ class KnownNodes implements BytesMarshallable {
     private ATSDirectBitSet atsDirectBitSet;
 
     KnownNodes() {
-
         this.activeIdentifiersBitSetBytes = new ByteBufferBytes(ByteBuffer.allocate(128 / 8));
         this.addressAndPorts = new ConcurrentSkipListSet<AddressAndPort>();
         this.atsDirectBitSet = new ATSDirectBitSet(this.activeIdentifiersBitSetBytes);
@@ -562,7 +553,6 @@ class KnownNodes implements BytesMarshallable {
 
     @Override
     public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
-
         // make a safe copy
         final Set<AddressAndPort> addressAndPorts = new HashSet<AddressAndPort>(this.addressAndPorts);
 
@@ -743,7 +733,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
      */
     @Override
     public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
-
         if (bootstrapRequired.getAndSet(false)) {
             writeBootstrap(out);
             return;
@@ -777,7 +766,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
      * @return returns true if the UDP message contains the text 'BOOTSTRAP'
      */
     private ProposedNodes readBootstrapMessage(Bytes in) {
-
         final long start = in.position();
 
         try {
@@ -789,7 +777,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
             // reads the text bootstrap
             for (int i = 0; i < size; i++) {
-
                 final byte byteRead = in.readByte();
                 final byte expectedByte = BOOTSTRAP_BYTES.readByte(i);
 
@@ -811,7 +798,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
         final ProposedNodes bootstrap = readBootstrapMessage(in);
         if (bootstrap != null) {
-
             if (bootstrap.addressAndPort().equals(this.ourAddressAndPort))
                 return;
 
@@ -948,7 +934,6 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
     private final Class<V> vClass;
 
     ConcurrentExpiryMap(Class<K> kClass, Class<V> vClass) {
-
         this.kClass = kClass;
         this.vClass = vClass;
     }
@@ -964,7 +949,6 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
         short size = in.readShort();
         try {
             for (int i = 0; i < size; i++) {
-
                 final K k = kClass.newInstance();
                 k.readMarshallable(in);
 
@@ -1002,7 +986,6 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
         map.put(k, v);
         final W w = new W(v);
         queue.add(new Map.Entry<K, W<V>>() {
-
             @Override
             public K getKey() {
                 return k;
@@ -1029,7 +1012,6 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
 
     void expireEntries(long timeOlderThan) {
         for (; ; ) {
-
             final Map.Entry<K, W<V>> e = this.queue.peek();
 
             if (e == null)

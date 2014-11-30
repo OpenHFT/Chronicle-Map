@@ -1479,7 +1479,6 @@ public class ChronicleMapTest {
                 .entrySize(16);
 
         try (final ChronicleMap<CharSequence, String> map = builder.create()) {
-
             // this will add the entry
             try (WriteContext<?, String> context = map.acquireUsingLocked("one", "")) {
                 // do nothing
@@ -1496,7 +1495,6 @@ public class ChronicleMapTest {
                 .entrySize(40)
                 .defaultValue("")
                 .create()) {
-
             StringBuilder value = new StringBuilder();
 
             try (WriteContext<?, CharSequence> context = map.acquireUsingLocked("one", value)) {

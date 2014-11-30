@@ -29,7 +29,6 @@ public class ChronicleMapImportExportTest {
         try (ChronicleMap<String, String> expected = ChronicleMapBuilder.of(String.class, String
                 .class)
                 .create()) {
-
             expected.put("hello", "world");
             expected.put("aKey", "aValue");
             expected.getAll(file);
@@ -37,7 +36,6 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<String, String> actual = ChronicleMapBuilder.of(String.class, String
                     .class)
                     .create()) {
-
                 actual.putAll(file);
 
                 Assert.assertEquals(expected, actual);
@@ -57,7 +55,6 @@ public class ChronicleMapImportExportTest {
         try (ChronicleMap<String, Map> expected = ChronicleMapBuilder.of(String.class, Map
                 .class)
                 .create()) {
-
             HashMap<String, String> data = new HashMap<>();
             data.put("myKey", "myValue");
             expected.put("hello", data);
@@ -66,7 +63,6 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<String, Map> actual = ChronicleMapBuilder.of(String.class, Map
                     .class)
                     .create()) {
-
                 actual.putAll(file);
 
                 Assert.assertEquals(expected, actual);
@@ -85,7 +81,6 @@ public class ChronicleMapImportExportTest {
         System.out.println(file.getAbsoluteFile());
         try (ChronicleMap expected = ChronicleMapBuilder.of
                 (String.class, Map.class).create()) {
-
             HashMap<String, Map> data = new HashMap<>();
             HashMap<String, String> data2 = new HashMap<>();
             data2.put("nested", "map");
@@ -97,7 +92,6 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<String, Map> actual = ChronicleMapBuilder.of(String.class, Map
                     .class)
                     .create()) {
-
                 actual.putAll(file);
 
                 Assert.assertEquals(expected, actual);
@@ -116,7 +110,6 @@ public class ChronicleMapImportExportTest {
         try (ChronicleMap<Integer, Double> expected = ChronicleMapBuilder.of(Integer.class, Double
                 .class)
                 .create()) {
-
             expected.put(1, 1.0);
 
             expected.getAll(file);
@@ -124,7 +117,6 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<Integer, Double> actual = ChronicleMapBuilder.of(Integer.class, Double
                     .class)
                     .create()) {
-
                 actual.putAll(file);
 
                 Assert.assertEquals(expected, actual);
@@ -144,7 +136,6 @@ public class ChronicleMapImportExportTest {
         try (ChronicleMap<CharSequence, CharSequence> expected = ChronicleMapBuilder.of(CharSequence.class, CharSequence
                 .class)
                 .create()) {
-
             expected.put("hello", "world");
 
             expected.getAll(file);
@@ -152,7 +143,6 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<CharSequence, CharSequence> actual = ChronicleMapBuilder.of(CharSequence.class, CharSequence
                     .class)
                     .create()) {
-
                 actual.putAll(file);
 
                 Assert.assertEquals(expected, actual);
@@ -173,7 +163,6 @@ public class ChronicleMapImportExportTest {
         try (ChronicleMap<CharSequence, LongValue> expected = ChronicleMapBuilder.of(CharSequence.class, LongValue
                 .class)
                 .create()) {
-
             LongValue value = new LongValue$$Native();
 
             // this will add the entry
@@ -189,7 +178,6 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<CharSequence, LongValue> actual = ChronicleMapBuilder.of(CharSequence.class, LongValue
                     .class)
                     .create()) {
-
                 actual.putAll(file);
 
                 Assert.assertEquals(expected, actual);

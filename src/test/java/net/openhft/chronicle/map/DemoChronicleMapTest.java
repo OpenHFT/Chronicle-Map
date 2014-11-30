@@ -23,7 +23,6 @@ public class DemoChronicleMapTest {
                 .removeReturnsNull(true)
                 .entries(maxEntries)
                 .createPersistedTo(file)) {
-
             IntValue key = DataValueClasses.newDirectInstance(IntValue.class);
 
             DemoOrderVOInterface value = DataValueClasses.newDirectReference(DemoOrderVOInterface.class);
@@ -44,7 +43,6 @@ public class DemoChronicleMapTest {
             }
 
             for (Map.Entry<IntValue, DemoOrderVOInterface> entry : map.entrySet()) {
-
                 IntValue k = entry.getKey();
                 DemoOrderVOInterface v = entry.getValue();
 
@@ -65,7 +63,6 @@ public class DemoChronicleMapTest {
                 .removeReturnsNull(true)
                 .entries(maxEntries)
                 .createPersistedTo(file)) {
-
             IntValue key = DataValueClasses.newDirectInstance(IntValue.class);
 
             DemoOrderVOInterface value = DataValueClasses.newDirectReference(DemoOrderVOInterface.class);
@@ -88,7 +85,6 @@ public class DemoChronicleMapTest {
             }
 
             for (Map.Entry<IntValue, DemoOrderVOInterface> entry : map.entrySet()) {
-
                 IntValue k = entry.getKey();
                 DemoOrderVOInterface v = entry.getValue();
 

@@ -113,7 +113,6 @@ public class TCPSocketReplicationPostConnectionTest {
 
     @After
     public void tearDown() {
-
         for (final Closeable closeable : new Closeable[]{map1, map2}) {
             try {
                 if (closeable != null)

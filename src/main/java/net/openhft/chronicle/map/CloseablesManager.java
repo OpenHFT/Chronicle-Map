@@ -32,7 +32,6 @@ final class CloseablesManager implements Closeable {
     private final List<Closeable> closeables = new ArrayList<>();
 
     public synchronized void add(Closeable closeable) {
-
         if (closeable == null)
             throw new NullPointerException();
         if (!closeables.contains(closeable))

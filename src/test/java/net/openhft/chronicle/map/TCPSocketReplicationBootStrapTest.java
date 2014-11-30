@@ -141,7 +141,6 @@ public class TCPSocketReplicationBootStrapTest {
 
     @After
     public void tearDown() {
-
         for (final Closeable closeable : new Closeable[]{map1, map2}) {
             try {
                 closeable.close();

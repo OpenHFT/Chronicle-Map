@@ -40,7 +40,6 @@ public class IntValueMapTest {
                 .of(IntValue.class, CharSequence.class)
                 .entries(20000)
                 .keyMarshaller(ByteableIntValueMarshaller.INSTANCE).create()) {
-
             IntValue$$Native value = new IntValue$$Native();
             value.bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
 

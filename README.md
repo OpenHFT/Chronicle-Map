@@ -483,7 +483,6 @@ when calling getUsing(key,using) you can do this :
 ``` java
 BondVOInterface  bond = map.getUsing(key,value);
 try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,bond)) {
-
    long issueDate =  bond.getIssueDate();
    String symbol = bond.getSymbol();
 
@@ -537,7 +536,6 @@ a segment write lock, this is unlike the getUsing(key,using) method that holds a
 ``` java
 BondVOInterface bond = ... // create your instance
 try (WriteContext<?, BondVOInterface> context = map.acquireUsingLocked("one", bond)) {
-
  assert bond ==  context.value();
 
  long issueDate =  bond.getIssueDate();

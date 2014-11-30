@@ -39,7 +39,6 @@ final class Replicators {
 
     static Replicator tcp(final AbstractReplication replication) {
         return new Replicator() {
-
             @Override
             protected Closeable applyTo(@NotNull final AbstractChronicleMapBuilder builder,
                                         @NotNull final Replica replica,
@@ -64,7 +63,6 @@ final class Replicators {
     static Replicator udp(
             final UdpTransportConfig replicationConfig) {
         return new Replicator() {
-
             @Override
             protected Closeable applyTo(@NotNull final AbstractChronicleMapBuilder builder,
                                         @NotNull final Replica map,

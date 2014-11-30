@@ -195,7 +195,6 @@ public class StringEncodingExamplesTest {
                 .actualSegments(1)
                 .actualEntriesPerSegment(1000)
                 .create()) {
-
             chineseWordSet.add("新闻");
             chineseWordSet.add("地图");
             chineseWordSet.add("贴吧");

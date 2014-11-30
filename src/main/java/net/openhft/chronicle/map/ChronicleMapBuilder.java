@@ -51,7 +51,6 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
      */
     public static <K, V> ChronicleMapBuilder<K, V> of(
             @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
-
         if (valueClass.isEnum())
             return new ChronicleMapBuilder<K, V>(OnHeapUpdatableChronicleMapBuilder.of(keyClass, valueClass));
 

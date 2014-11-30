@@ -72,7 +72,6 @@ public final class ReplicationHub extends AbstractReplication {
 
     @Override
     public String toString() {
-
         return "ReplicationHub{" + super.toString() +
                 "maxEntrySize=" + maxEntrySize +
                 ", channels=" + Arrays.toString(channels) + '}';

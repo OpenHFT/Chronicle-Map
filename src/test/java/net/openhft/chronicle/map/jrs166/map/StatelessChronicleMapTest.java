@@ -343,7 +343,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 10000)
     public void testClear() throws IOException {
         try (ChronicleMap<Integer, String> map = map5(s_port++)) {
-
             map.clear();
             assertEquals(0, map.size());
         }
@@ -402,7 +401,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     public void testIsEmpty() throws IOException {
         try (ChronicleMap empty = newShmIntString(s_port++)) {
             try (ChronicleMap map = map5(s_port++)) {
-
                 if (!empty.isEmpty()) {
                     System.out.print("not empty " + empty);
                 }
@@ -636,7 +634,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 5000)
     public void testSize() throws IOException {
         try (ChronicleMap map = map5(s_port++)) {
-
             try (ChronicleMap empty = newShmIntString(s_port++)) {
                 assertEquals(0, empty.size());
                 assertEquals(5, map.size());
@@ -650,7 +647,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 15000)
     public void testSize2() throws IOException {
         try (ChronicleMap map = map5(s_port++)) {
-
             try (ChronicleMap empty = newShmIntString(s_port++)) {
                 assertEquals(0, empty.size());
                 assertEquals(5, map.size());
@@ -664,7 +660,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 5000)
     public void testSize3() throws IOException {
         try (ChronicleMap map = map5(s_port++)) {
-
             try (ChronicleMap empty = newShmIntString(s_port++)) {
                 assertEquals(0, empty.size());
                 assertEquals(5, map.size());

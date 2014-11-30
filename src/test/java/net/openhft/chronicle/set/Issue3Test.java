@@ -31,7 +31,6 @@ public class Issue3Test {
                 .actualSegments(1)
                 .actualEntriesPerSegment(1000)
                 .create()) {
-
             Random r = new Random();
             for (int i = 0; i < 10; i++) {
                 for (int j = 0; j < 300; j++) {

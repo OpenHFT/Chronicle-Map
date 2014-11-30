@@ -57,7 +57,6 @@ public class ConstantSizeBySampleTest {
                 .entries(100)
                 .actualSegments(1)
                 .create()) {
-
             byte[] value = new byte[512 * 1024];
 
             value[42] = 1;
@@ -95,7 +94,6 @@ public class ConstantSizeBySampleTest {
                         .entries(100)
                         .actualSegments(1)
                         .create()) {
-
             ExternalizableData value = new ExternalizableData();
             value.data[42] = 1;
             map.put(1L, value);
@@ -123,7 +121,6 @@ public class ConstantSizeBySampleTest {
                         .entries(100)
                         .actualSegments(1)
                         .create()) {
-
             SerializableData value = new SerializableData();
             value.data[42] = 1;
             map.put(1L, value);

@@ -29,7 +29,6 @@ final class OffHeapUpdatableChronicleMapBuilder<K, V>
 
     public static <K, V> ChronicleMapBuilderI<K, V> of(
             @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
-
         if (valueClass.isEnum())
             return OnHeapUpdatableChronicleMapBuilder.of(keyClass, valueClass);
 

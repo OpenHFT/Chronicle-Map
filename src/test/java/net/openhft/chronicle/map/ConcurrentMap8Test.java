@@ -59,7 +59,6 @@ public class ConcurrentMap8Test extends JSR166TestCase {
     }
 
     private static ConcurrentMap newIntegerStringMap() {
-
         final ChronicleMapOnHeapUpdatableBuilder<Integer, String> builder = ChronicleMapBuilder.of(Integer.class,
                 String.class);
 

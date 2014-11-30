@@ -104,14 +104,12 @@ public class StatelessClientTest {
                 .defaultValue(new StringBuilder())
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
-
             serverMap.put(10, new StringBuilder("Hello World"));
 
             try (ChronicleMap<Integer, StringBuilder> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, StringBuilder.class)
                     .putReturnsNull(true)
                     .statelessClient(new InetSocketAddress("localhost", port)).create()) {
-
                 String actual = statelessMap.mapForKey(10, ToString.INSTANCE);
 
                 assertEquals("Hello World", actual);
@@ -127,13 +125,11 @@ public class StatelessClientTest {
                 .defaultValue(new StringBuilder())
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create()) {
-
             serverMap.put(10, new StringBuilder("Hello World"));
 
             try (ChronicleMap<Integer, StringBuilder> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, StringBuilder.class)
                     .statelessClient(new InetSocketAddress("localhost", port)).create()) {
-
                 String actual = statelessMap.mapForKey(11, ToString.INSTANCE);
 
                 assertEquals(null, actual);
@@ -149,12 +145,10 @@ public class StatelessClientTest {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder
                     .of(Integer.class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", port))
                     .create()) {
-
                 Map<Integer, CharSequence> payload = new HashMap<Integer, CharSequence>();
 
                 for (int i = 0; i < SIZE; i++) {
@@ -182,12 +176,10 @@ public class StatelessClientTest {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder
                     .of(Integer.class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", port))
                     .create()) {
-
                 Map<Integer, CharSequence> payload = new HashMap<Integer, CharSequence>();
 
                 for (int i = 0; i < SIZE; i++) {
@@ -212,7 +204,6 @@ public class StatelessClientTest {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder
                     .of(Integer.class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", port))
@@ -241,12 +232,10 @@ public class StatelessClientTest {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
-
             serverMap.put(10, "EXAMPLE-10");
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", port)).create()) {
-
                 assertEquals("EXAMPLE-10", statelessMap.get(10));
                 assertEquals(1, statelessMap.size());
             }
@@ -259,11 +248,9 @@ public class StatelessClientTest {
 
         try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", port)).create()) {
-
                 serverMap.put(10, "EXAMPLE-10");
 
                 assertEquals("EXAMPLE-10", statelessMap.get(10));
@@ -280,12 +267,10 @@ public class StatelessClientTest {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
                 .create()) {
-
             try (ChronicleMap<String, Map> statelessMap = ChronicleMapBuilder
                     .of(String.class, Map.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056))
                     .create()) {
-
                 serverMap.put("hello", Collections.singletonMap("hello", "world"));
 
                 assertEquals(Collections.singletonMap("hello", "world"), statelessMap.get("hello"));
@@ -309,12 +294,10 @@ public class StatelessClientTest {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
                 .create()) {
-
             try (ChronicleMap<String, Map> statelessMap = ChronicleMapBuilder
                     .of(String.class, Map.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056))
                     .create()) {
-
                 statelessMap.put("hello", data);
 
                 assertEquals(data, serverMap.get("hello"));
@@ -330,12 +313,10 @@ public class StatelessClientTest {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
                 .create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder
                     .of(Integer.class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056))
                     .create()) {
-
                 Map<Integer, CharSequence> payload = new HashMap<Integer, CharSequence>();
 
                 for (int i = 0; i < SIZE; i++) {
@@ -360,12 +341,10 @@ public class StatelessClientTest {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
                 .create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder
                     .of(Integer.class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056))
                     .create()) {
-
                 Map<Integer, CharSequence> payload = new HashMap<Integer, CharSequence>();
 
                 for (int i = 0; i < SIZE; i++) {
@@ -388,11 +367,9 @@ public class StatelessClientTest {
 
         try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
-
                 statelessMap.put(1, "some value");
 
                 assertEquals("some value", statelessMap.get(1));
@@ -407,11 +384,9 @@ public class StatelessClientTest {
 
         try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
-
                 statelessMap.put(1, "some value");
 
                 assertEquals("some value", statelessMap.get(1));
@@ -431,11 +406,9 @@ public class StatelessClientTest {
 
         try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
-
                 statelessMap.put(1, "some value");
 
                 assertEquals("some value", statelessMap.getLater(1).get());
@@ -455,11 +428,9 @@ public class StatelessClientTest {
 
         try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
-
                 CharSequence oldValue = statelessMap.putLater(1, "some value").get();
                 assertEquals("some value", statelessMap.get(1));
                 assertEquals(1, statelessMap.size());
@@ -473,7 +444,6 @@ public class StatelessClientTest {
 
         try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {

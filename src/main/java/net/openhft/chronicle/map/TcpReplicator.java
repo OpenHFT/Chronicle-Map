@@ -140,7 +140,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             }
 
             while (selector.isOpen()) {
-
                 registerPendingRegistrations();
 
                 final int nSelectedKeys = select();
@@ -157,7 +156,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 opWriteUpdater.applyUpdates();
 
                 if (useJavaNIOSelectionKeys) {
-
                     // use the standard java nio selector
 
                     if (nSelectedKeys == 0)
@@ -216,7 +214,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     }
 
     private void processKey(long approxTime, SelectionKey key) {
-
         try {
 
             if (!key.isValid())
@@ -291,7 +288,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      */
 
     void heartBeatMonitor(long approxTime) {
-
         for (int i = activeKeys.nextSetBit(0); i >= 0; i = activeKeys.nextSetBit(i + 1)) {
             try {
                 final SelectionKey key = selectionKeysStore[i];
@@ -332,12 +328,10 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      */
     private void sendHeartbeatIfRequired(final long approxTime,
                                          @NotNull final SelectionKey key) {
-
         final Attached attachment = (Attached) key.attachment();
 
         if (attachment.isHandShakingComplete() && attachment.entryWriter.lastSentTime +
                 heartBeatIntervalMillis < approxTime) {
-
             attachment.entryWriter.lastSentTime = approxTime;
             attachment.entryWriter.writeHeartbeatToBuffer();
 
@@ -531,7 +525,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         socketChannel.register(selector, OP_READ | OP_WRITE, attached);
 
         if (attached.remoteIdentifier == Byte.MIN_VALUE) {
-
             final byte remoteIdentifier = reader.identifierFromBuffer();
 
             if (remoteIdentifier == STATELESS_CLIENT) {
@@ -589,7 +582,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
 
         if (!attached.hasRemoteHeartbeatInterval) {
-
             final long value = reader.remoteHeartbeatIntervalFromBuffer();
 
             if (value == Long.MIN_VALUE)
@@ -628,7 +620,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         final Attached attached = (Attached) key.attachment();
 
         if (attached.entryWriter.isWorkIncomplete()) {
-
             final boolean completed = attached.entryWriter.doWork();
 
             if (completed)
@@ -668,7 +659,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             int len = attached.entryReader.readSocketToBuffer(socketChannel);
             if (len == -1) {
-
                 if (replicationConfig.autoReconnectedUponDroppedConnection()) {
                     AbstractConnector connector = attached.connector;
                     if (connector != null)
@@ -856,7 +846,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 addPendingRegistration(new Runnable() {
                     @Override
                     public void run() {
-
                         final Attached attached = new Attached();
                         attached.connector = ClientConnector.this;
 
@@ -926,7 +915,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          */
         @Override
         public void onChange() {
-
             if (remoteIdentifier != Byte.MIN_VALUE)
                 TcpReplicator.this.opWriteUpdater.set(remoteIdentifier);
         }
@@ -995,11 +983,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             final boolean handShakingComplete = attached.isHandShakingComplete();
 
             for (; ; ) {
-
                 final boolean wasDataRead = modificationIterator.nextEntry(entryCallback, 0);
 
                 if (!wasDataRead) {
-
                     // if we have no more data to write to the socket then we will
                     // un-register OP_WRITE on the selector, until more data becomes available
                     if (in.position() == 0 && handShakingComplete)
@@ -1059,7 +1045,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          * localHeartbeatInterval
          */
         private void writeHeartbeatToBuffer() {
-
             // denotes the state - 0 for a heartbeat
             in.writeByte(HEARTBEAT.ordinal());
 
@@ -1124,7 +1109,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
 
         void resizeBuffer(long size) {
-
             assert size < Integer.MAX_VALUE;
 
             if (size < in.capacity())
@@ -1177,12 +1161,10 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          */
         void entriesFromBuffer(Attached attached, SelectionKey key) throws InterruptedException, IOException {
             for (; ; ) {
-
                 out.limit(in.position());
 
                 // its set to MIN_VALUE when it should be read again
                 if (state == NOT_SET) {
-
                     if (out.remaining() < SIZE_OF_SIZE + 1)
                         return;
 
@@ -1217,7 +1199,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                 if (isStateless) {
                     if (statelessServerConnector == null) {
-
                         LOG.error("", new IllegalArgumentException("received an event " +
                                 "from a stateless map, stateless maps are not " +
                                 "currently supported when using Chronicle Channels"));
@@ -1233,7 +1214,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                         // fill out the write buffer, so this data will be send when the buffer
                         // is no longer full, and as such is treated as future work
                         if (futureWork != null) {
-
                             try {  // we will complete what we can for now
                                 boolean isComplete = futureWork.doWork(attached.entryWriter.in);
                                 if (!isComplete)
@@ -1260,7 +1240,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          * compacts the buffer and updates the {@code in} and {@code out} accordingly
          */
         private void compactBuffer() {
-
             // the maxEntrySizeBytes used here may not be the maximum size of the entry in its serialized form
             // however, its only use as an indication that the buffer is becoming full and should be compacted
             // the buffer can be compacted at any time
@@ -1335,12 +1314,10 @@ class StatelessServerConnector<K, V> {
     Work processStatelessEvent(final byte eventId,
                                @NotNull final Bytes writer,
                                @NotNull final ByteBufferBytes reader) {
-
         final StatelessChronicleMap.EventId event = VALUES[eventId];
 
         // these methods don't return a result
         switch (event) {
-
             case KEY_SET:
                 return keySet(reader, writer);
 
@@ -1365,7 +1342,6 @@ class StatelessServerConnector<K, V> {
         // these methods return a result
 
         switch (event) {
-
             case LONG_SIZE:
                 return longSize(reader, writer, sizeLocation);
 
@@ -1490,7 +1466,6 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work longSize(Bytes reader, Bytes writer, final long sizeLocation) {
-
         try {
             writer.writeLong(map.longSize());
         } catch (Throwable e) {
@@ -1501,7 +1476,6 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work hashCode(Bytes reader, Bytes writer, final long sizeLocation) {
-
         try {
             writer.writeInt(map.hashCode());
         } catch (Throwable e) {
@@ -1513,7 +1487,6 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work toString(Bytes reader, Bytes writer, final long sizeLocation) {
-
         final String str;
 
         final long remaining = writer.remaining();
@@ -1536,7 +1509,6 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work sendException(Bytes writer, long sizeLocation, Throwable e) {
-
         // move the position to ignore any bytes written so far
         writer.position(sizeLocation + HEADER_SIZE);
 
@@ -1547,7 +1519,6 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work isEmpty(Bytes reader, Bytes writer, final long sizeLocation) {
-
         try {
             writer.writeBoolean(map.isEmpty());
         } catch (Throwable e) {
@@ -1679,7 +1650,6 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work putAll(Bytes reader) {
-
         if (MAP_SUPPORTS_BYTES) {
             map.putAll(reader);
         } else {
@@ -1690,7 +1660,6 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work clear(Bytes reader, Bytes writer, final long sizeLocation) {
-
         try {
             map.clear();
         } catch (Throwable e) {
@@ -1702,7 +1671,6 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work values(Bytes reader, Bytes writer) {
-
         final long transactionId = reader.readLong();
 
         Collection<V> values;
@@ -1717,7 +1685,6 @@ class StatelessServerConnector<K, V> {
 
         // this allows us to write more data than the buffer will allow
         return new Work() {
-
             @Override
             public boolean doWork(Bytes out) {
                 final long sizeLocation = header(out, transactionId);
@@ -1727,7 +1694,6 @@ class StatelessServerConnector<K, V> {
 
                 int count = 0;
                 while (iterator.hasNext()) {
-
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
                     if (out.remaining() <= maxEntrySizeBytes) {
@@ -1761,7 +1727,6 @@ class StatelessServerConnector<K, V> {
 
         // this allows us to write more data than the buffer will allow
         return new Work() {
-
             @Override
             public boolean doWork(Bytes out) {
                 final long sizeLocation = header(out, transactionId);
@@ -1771,7 +1736,6 @@ class StatelessServerConnector<K, V> {
 
                 int count = 0;
                 while (iterator.hasNext()) {
-
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
                     if (out.remaining() <= maxEntrySizeBytes) {
@@ -1791,7 +1755,6 @@ class StatelessServerConnector<K, V> {
     }
 
     private Work entrySet(final Bytes reader, Bytes writer) {
-
         final long transactionId = reader.readLong();
 
         final Set<Map.Entry<K, V>> entries;
@@ -1806,7 +1769,6 @@ class StatelessServerConnector<K, V> {
 
         // this allows us to write more data than the buffer will allow
         return new Work() {
-
             @Override
             public boolean doWork(Bytes out) {
                 if (out.remaining() <= maxEntrySizeBytes)
@@ -1821,11 +1783,9 @@ class StatelessServerConnector<K, V> {
 
                 int count = 0;
                 while (iterator.hasNext()) {
-
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
                     if (out.remaining() <= maxEntrySizeBytes) {
-
                         writeHeader(out, sizeLocation, count, true);
                         return false;
                     }

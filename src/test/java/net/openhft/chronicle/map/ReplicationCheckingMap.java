@@ -58,7 +58,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public V replace(final K key, final V value) {
-
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {
@@ -70,7 +69,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public int size() {
-
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {
@@ -84,7 +82,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
         R r1 = null;
         R r2 = null;
         for (int i = 0; i < 50; i++) {
-
             r1 = (R) instance.method(map1);
             r2 = (R) instance.method(map2);
 
@@ -113,7 +110,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public boolean isEmpty() {
-
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {
@@ -125,7 +121,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public boolean containsKey(final Object key) {
-
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {
@@ -137,7 +132,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public boolean containsValue(final Object value) {
-
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {
@@ -149,7 +143,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public V get(final Object key) {
-
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {
@@ -182,7 +175,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @NotNull
     @Override
     public Set<K> keySet() {
-
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {
@@ -195,7 +187,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @NotNull
     @Override
     public Collection<V> values() {
-
         return check(new Call<K, V>() {
                          @Override
                          public Collection<V> method(ConcurrentMap<K, V> map) {
@@ -208,7 +199,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @NotNull
     @Override
     public Set<Entry<K, V>> entrySet() {
-
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {

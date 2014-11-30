@@ -115,7 +115,6 @@ final class ChannelProvider implements Closeable {
             try {
                 final int chronicleId = (int) source.readStopBit();
                 if (chronicleId < chronicleChannels.length) {
-
                     // this channel is has not currently been created so it updates will be ignored
                    if (channelEntryExternalizables[chronicleId] != null)
                         channelEntryExternalizables[chronicleId]
@@ -129,7 +128,6 @@ final class ChannelProvider implements Closeable {
     };
     private final byte localIdentifier;
     final Replica asReplica = new Replica() {
-
         @Override
         public byte identifier() {
             return localIdentifier;
@@ -138,7 +136,6 @@ final class ChannelProvider implements Closeable {
         @Override
         public ModificationIterator acquireModificationIterator(
                 final byte remoteIdentifier, final ModificationNotifier notifier) {
-
             channelDataLock.writeLock().lock();
             try {
                 final ModificationIterator result = modificationIterator.get(remoteIdentifier);
@@ -146,7 +143,6 @@ final class ChannelProvider implements Closeable {
                     return result;
 
                 final ModificationIterator result0 = new ModificationIterator() {
-
                     @Override
                     public boolean hasNext() {
                         channelDataLock.readLock().lock();
@@ -321,7 +317,6 @@ final class ChannelProvider implements Closeable {
     }
 
     private static ByteBufferBytes toBootstrapMessage(int chronicleChannel, final long lastModificationTime, final byte localIdentifier) {
-
         final ByteBufferBytes writeBuffer = new ByteBufferBytes(ByteBuffer.allocate(1 + 1 + 2 + 8));
         writeBuffer.writeByte(BOOTSTRAP_MESSAGE);
         writeBuffer.writeByte(localIdentifier);
@@ -409,7 +404,6 @@ final class ChannelProvider implements Closeable {
     class SystemQueue {
 
         final Replica asReplica = new Replica() {
-
             @Override
             public byte identifier() {
                 throw new UnsupportedOperationException();
@@ -418,14 +412,12 @@ final class ChannelProvider implements Closeable {
             @Override
             public ModificationIterator acquireModificationIterator(
                     final byte remoteIdentifier, final ModificationNotifier modificationNotifier) {
-
                 final ModificationIterator result = systemModificationIterator.get(remoteIdentifier);
 
                 if (result != null)
                     return result;
 
                 final PayloadProvider iterator = new PayloadProvider() {
-
                     final Queue<Bytes> payloads = new LinkedTransferQueue<Bytes>();
 
                     @Override
@@ -495,7 +487,6 @@ final class ChannelProvider implements Closeable {
         SystemQueue(DirectBitSet systemModificationIteratorBitSet,
                     AtomicReferenceArray<PayloadProvider> systemModificationIterator,
                     MessageHandler messageHandler) {
-
             this.systemModificationIteratorBitSet = systemModificationIteratorBitSet;
             this.systemModificationIterator = systemModificationIterator;
             this.messageHandler = messageHandler;

@@ -37,7 +37,6 @@ public class Issue42Test {
                 .entrySize(18)
                 .entries(1500000)
                 .minSegments(128).create()) {
-
             for (int i = 0; i < 1000000; ++i) {
                 String s = String.valueOf(i);
                 map.put(s, s);

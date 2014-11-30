@@ -109,7 +109,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
 
         try {
             while (selector.isOpen()) {
-
                 registerPendingRegistrations();
 
                 // this may block for a long time, upon return the
@@ -127,7 +126,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
 
                 final Set<SelectionKey> selectionKeys = selector.selectedKeys();
                 for (final SelectionKey key : selectionKeys) {
-
                     try {
 
                         if (key.isReadable()) {
@@ -207,7 +205,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
     }
 
     private void enableWrites() {
-
         if (writeChannel == null)
             return;
 
@@ -223,7 +220,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
     }
 
     void disableWrites() {
-
         if (writeChannel == null)
             return;
 
@@ -272,7 +268,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
             addPendingRegistration(new Runnable() {
                 @Override
                 public void run() {
-
                     try {
                         server.register(selector, OP_WRITE);
                         writeChannel = server;

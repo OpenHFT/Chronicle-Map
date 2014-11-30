@@ -94,7 +94,6 @@ public class TCPSocketReplicationNativeTest {
 
         try (WriteContext<Integer, LongValue> c = map1
                 .acquireUsingLocked(1, value)) {
-
             value.setValue(10);
         }
 
@@ -112,13 +111,11 @@ public class TCPSocketReplicationNativeTest {
 
         try (WriteContext<Integer, LongValue> c = map1
                 .acquireUsingLocked(1, value)) {
-
             value.setValue(10);
         }
 
         try (WriteContext<Integer, LongValue> c = map1
                 .acquireUsingLocked(1, value)) {
-
             value.setValue(20);
         }
 

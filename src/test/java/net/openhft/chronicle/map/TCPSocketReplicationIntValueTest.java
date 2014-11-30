@@ -109,7 +109,6 @@ public class TCPSocketReplicationIntValueTest {
     }
 
     private IntValue set(int x) {
-
         value.setValue(x);
         return value;
     }
@@ -178,7 +177,6 @@ public class TCPSocketReplicationIntValueTest {
                 System.out.print(".");
             Random rnd = new Random(j);
             for (int i = 1; i < 10; i++) {
-
                 final int select = rnd.nextInt(2);
                 final ChronicleMap<IntValue, CharSequence> map = select > 0 ? map1 : map2;
 

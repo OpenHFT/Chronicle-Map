@@ -32,7 +32,6 @@ public class CHMUseCasesTest {
                 ChronicleMapBuilder.of(String.class, String.class).statelessClient(CONFIG)
         )) {
             try (ChronicleMap<String, String> map = chmb.create()) {
-
 */
         try (ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
@@ -144,7 +143,6 @@ public class CHMUseCasesTest {
                 .of(StringValue.class, StringValue.class)
                 .checkSerializedValues() // for testng purposes only
                 .create()) {
-
             StringValue key1 = DataValueClasses.newDirectInstance(StringValue.class);
             StringValue key2 = DataValueClasses.newInstance(StringValue.class);
             StringValue value1 = DataValueClasses.newDirectInstance(StringValue.class);
@@ -295,7 +293,6 @@ public class CHMUseCasesTest {
                 .entrySize(16)
                 .disableOversizedEntries(true) // disabled for testing purposes only.
                 .create()) {
-
             map.put(1L, 11L);
             assertEquals((Long) 11L, map.get(1L));
 
@@ -343,7 +340,6 @@ public class CHMUseCasesTest {
                 .disableOversizedEntries(true) // disabled for testing purposes only.
                 .entrySize(16)
                 .create()) {
-
             map.put(1.0, 11.0);
             assertEquals((Double) 11.0, map.get(1.0));
 
@@ -763,7 +759,6 @@ public class CHMUseCasesTest {
                 .disableOversizedEntries(true) // disabled for testing purposes only.
                 .entrySize(6)
                 .create()) {
-
             IntValue key1 = DataValueClasses.newDirectInstance(IntValue.class);
             IntValue key2 = DataValueClasses.newInstance(IntValue.class);
             ShortValue value1 = DataValueClasses.newDirectInstance(ShortValue.class);
@@ -1420,7 +1415,6 @@ public class CHMUseCasesTest {
                 .of(String.class, (Class<List<String>>) (Class) List.class)
                 .valueMarshaller(ListMarshaller.of(new StringMarshaller(8)))
                 .create()) {
-
             map.put("1", Collections.<String>emptyList());
             map.put("2", Arrays.asList("one"));
 
@@ -1451,7 +1445,6 @@ public class CHMUseCasesTest {
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)
                 .valueMarshaller(SetMarshaller.of(new StringMarshaller(8)))
                 .create()) {
-
             map.put("1", Collections.<String>emptySet());
             map.put("2", new LinkedHashSet<String>(Arrays.asList("one")));
 
@@ -1482,7 +1475,6 @@ public class CHMUseCasesTest {
                 .of(String.class, (Class<Map<String, String>>) (Class) Map.class)
                 .valueMarshaller(MapMarshaller.of(new StringMarshaller(16), new StringMarshaller(16)))
                 .create()) {
-
             map.put("1", Collections.<String, String>emptyMap());
             map.put("2", mapOf("one", "uni"));
 
@@ -1513,7 +1505,6 @@ public class CHMUseCasesTest {
                 .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
                 .valueMarshaller(MapMarshaller.of(new StringMarshaller(16), new GenericEnumMarshaller<Integer>(Integer.class, 16)))
                 .create()) {
-
             map.put("1", Collections.<String, Integer>emptyMap());
             map.put("2", mapOf("one", 1));
 

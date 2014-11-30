@@ -571,7 +571,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public Future<V> getLater(@NotNull K key) {
         final V v = get(key);
         return new Future<V>() {
-
             @Override
             public boolean cancel(boolean mayInterruptIfRunning) {
                 return false;
@@ -604,7 +603,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public Future<V> putLater(@NotNull K key, @NotNull V value) {
         final V v = put(key, value);
         return new Future<V>() {
-
             @Override
             public boolean cancel(boolean mayInterruptIfRunning) {
                 return false;
@@ -637,7 +635,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public Future<V> removeLater(@NotNull K key) {
         final V v = remove(key);
         return new Future<V>() {
-
             @Override
             public boolean cancel(boolean mayInterruptIfRunning) {
                 return false;
@@ -714,12 +711,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         private void registerConverter(XStream xstream) {
             final Converter converter = new Converter() {
-
                 final Bytes buffer = XStreamConverter.this.buffer;
 
                 @Override
                 public boolean canConvert(Class aClass) {
-
                     if (EntrySet.class.isAssignableFrom(aClass)
                             || WriteThroughEntry.class.isAssignableFrom(aClass))
                         return true;
@@ -738,9 +733,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 @Override
                 public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext
                         marshallingContext) {
-
                     if (WriteThroughEntry.class.isAssignableFrom(o.getClass())) {
-
                         final SimpleEntry e = (SimpleEntry) o;
 
                         writer.startNode("chronicle-key");
@@ -760,7 +753,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         writer.endNode();
                     } else if (EntrySet.class
                             .isAssignableFrom(o.getClass())) {
-
                         for (Entry e : (EntrySet) o) {
                             writer.startNode("chronicle-entry");
                             marshallingContext.convertAnother(e);
@@ -824,7 +816,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 private <E> E get(HierarchicalStreamReader reader,
                                   UnmarshallingContext unmarshallingContext,
                                   Class<E> clazz) {
-
                     if (reader.getAttributeCount() > 0) {
                         final String type = reader.getAttribute("type");
                         try {
