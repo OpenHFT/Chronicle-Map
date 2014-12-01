@@ -45,12 +45,12 @@ import java.util.concurrent.TimeUnit;
  * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could
  * be used as a classic builder and/or factory.
  *
- * <p>{@code ChronicleMapOnHeapUpdatableBuilder} is mutable, see a note in {@link
+ * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link
  * ChronicleHashBuilder} interface documentation.
  *
  * @param <E> element type of the sets, created by this builder
  * @see ChronicleSet
- * @see net.openhft.chronicle.map.OnHeapUpdatableChronicleMapBuilder
+ * @see net.openhft.chronicle.map.ChronicleMapBuilder
  */
 public class ChronicleSetBuilder<E>
         implements ChronicleHashBuilder<E, ChronicleSet<E>, ChronicleSetBuilder<E>> {

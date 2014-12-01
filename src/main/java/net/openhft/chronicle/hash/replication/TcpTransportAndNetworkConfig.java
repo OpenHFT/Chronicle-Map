@@ -135,7 +135,9 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
     }
 
     /**
-     * @param name the name used here is reflected in the Tcp Replicator and is typically used when debugging
+     * @param name the name used here is reflected in the Tcp Replicator and is typically used when
+     *             debugging
+     * @return self
      */
     public TcpTransportAndNetworkConfig name(String name) {
         this.name = name;
@@ -164,11 +166,13 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
 
         TcpTransportAndNetworkConfig that = (TcpTransportAndNetworkConfig) o;
 
-        if (autoReconnectedUponDroppedConnection != that.autoReconnectedUponDroppedConnection) return false;
+        if (autoReconnectedUponDroppedConnection != that.autoReconnectedUponDroppedConnection)
+            return false;
         if (heartBeatInterval != that.heartBeatInterval) return false;
         if (packetSize != that.packetSize) return false;
         if (serverPort != that.serverPort) return false;
-        if (endpoints != null ? !endpoints.equals(that.endpoints) : that.endpoints != null) return false;
+        if (endpoints != null ? !endpoints.equals(that.endpoints) : that.endpoints != null)
+            return false;
         if (heartBeatIntervalUnit != that.heartBeatIntervalUnit) return false;
         if (throttlingConfig != null ? !throttlingConfig.equals(that.throttlingConfig) : that.throttlingConfig != null)
             return false;
