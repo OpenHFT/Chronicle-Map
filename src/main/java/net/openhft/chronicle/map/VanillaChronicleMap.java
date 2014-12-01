@@ -384,7 +384,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     static abstract class ReadValueToBytes implements ReadValue<Bytes> {
-        private SizeMarshaller valueSizeMarshaller;
+        SizeMarshaller valueSizeMarshaller;
 
         abstract Bytes bytes(long valueSize);
 
@@ -398,6 +398,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             usingBytes = bytes(valueSize);
             valueSizeMarshaller.writeSize(usingBytes, valueSize);
             usingBytes.write(entry, entry.position(), valueSize);
+            entry.skip(valueSize);
             return usingBytes;
         }
     }
@@ -434,6 +435,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         @Override
         Bytes bytes(long valueSize) {
+            valueSize = valueSizeMarshaller.sizeEncodingSize(valueSize) + valueSize;
             if (lazyBytes != null) {
                 if (lazyBytes.capacity() < valueSize) {
                     DirectStore store = (DirectStore) lazyBytes.store();

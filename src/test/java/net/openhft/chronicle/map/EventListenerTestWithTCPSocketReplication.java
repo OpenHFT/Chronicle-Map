@@ -180,7 +180,6 @@ public class EventListenerTestWithTCPSocketReplication {
     }
 
     @Test
-    @Ignore("TODO Failing test")
     public void testRemoteNotifyRemove() throws IOException, InterruptedException {
 
         // ---------- SERVER1 1 ----------
