@@ -103,8 +103,8 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     /**
      * Configures the optimal number of bytes, taken by serialized form of values, put into maps, created by
      * this builder. If value size is always the same, call {@link #constantValueSizeBySample(Object)} method
-     * instead of this one. <p/> <p>If value is a boxed primitive type, i. e. if value size is known
-     * statically, it is automatically accounted and shouldn't be specified by user. <p/> <p>If value size
+     * instead of this one.  If value is a boxed primitive type, i. e. if value size is known
+     * statically, it is automatically accounted and shouldn't be specified by user. <p/> If value size
      * varies moderately, specify the size higher than average, but lower than the maximum possible, to
      * minimize average memory overuse. If value size varies in a wide range, it's better to use {@linkplain
      * #entrySize(int) entry size} in "chunk" mode and configure it directly.
@@ -123,9 +123,9 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     /**
      * Configures the constant number of bytes, taken by serialized form of values, put into maps, created by
      * this builder. This is done by providing the {@code sampleValue}, all values should take the same number
-     * of bytes in serialized form, as this sample object. <p/> <p>If values are of boxed primitive type or
+     * of bytes in serialized form, as this sample object.  If values are of boxed primitive type or
      * {@link Byteable} subclass, i. e. if value size is known statically, it is automatically accounted and
-     * this method shouldn't be called. <p/> <p>If value size varies, method {@link #valueSize(int)} or {@link
+     * this method shouldn't be called. If value size varies, method {@link #valueSize(int)} or {@link
      * #entrySize(int)} should be called instead of this one.
      *
      * @param sampleValue the sample value

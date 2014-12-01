@@ -30,25 +30,25 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
      * {@inheritDoc} With respect to {@linkplain #entryAndValueAlignment(Alignment) alignment}.
      *
      * <p>Note that the actual entrySize will be aligned to 4 (default {@linkplain
-     * #entryAndValueAlignment(Alignment) entry alignment}). I. e. if you set entry size to 30, and entry
-     * alignment is set to {@link Alignment#OF_4_BYTES}, the actual entry size will be 32 (30 aligned to 4
-     * bytes).
+     * #entryAndValueAlignment(Alignment) entry alignment}). I. e. if you set entry size to 30, and
+     * entry alignment is set to {@link Alignment#OF_4_BYTES}, the actual entry size will be 32 (30
+     * aligned to 4 bytes).
      *
      * @see #entryAndValueAlignment(Alignment) //  * @see #entries(long)
      */
     ChronicleMapBuilderI<K, V> entrySize(int entrySize);
 
     /**
-     * Configures alignment strategy of address in memory of entries and independently of address in memory of
-     * values within entries in ChronicleMaps, created by this builder.
+     * Configures alignment strategy of address in memory of entries and independently of address in
+     * memory of values within entries in ChronicleMaps, created by this builder.
      *
-     * <p>Useful when values of the map are updated intensively, particularly fields with volatile access,
-     * because it doesn't work well if the value crosses cache lines. Also, on some (nowadays rare)
-     * architectures any misaligned memory access is more expensive than aligned.
+     * <p>Useful when values of the map are updated intensively, particularly fields with volatile
+     * access, because it doesn't work well if the value crosses cache lines. Also, on some
+     * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
      *
-     * <p>Note that {@linkplain #entrySize(int) entry size} will be aligned according to this alignment. I. e.
-     * if you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual entry size will be 24 (20
-     * aligned to 8 bytes).
+     * <p>Note that {@linkplain #entrySize(int) entry size} will be aligned according to this
+     * alignment. I. e. if you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual
+     * entry size will be 24 (20 aligned to 8 bytes).
      *
      * <p>Default is {@link Alignment#OF_4_BYTES} for Byteable values.
      *
@@ -58,11 +58,11 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
     ChronicleMapBuilderI<K, V> entryAndValueAlignment(Alignment alignment);
 
     /**
-     * {@inheritDoc} Also, it overrides any previous {@link #prepareValueBytesOnAcquire} configuration to this
-     * {@code ChronicleMapBuilder}.
+     * {@inheritDoc} Also, it overrides any previous {@link #prepareValueBytesOnAcquire}
+     * configuration to this {@code ChronicleMapBuilder}.
      *
-     * <p>By default, the default value is not specified, default {@linkplain #prepareValueBytesOnAcquire
-     * prepare value bytes routine} is specified instead.
+     * <p>By default, the default value is not specified, default {@linkplain
+     * #prepareValueBytesOnAcquire prepare value bytes routine} is specified instead.
      *
      * @see #defaultValueProvider(DefaultValueProvider)
      * @see #prepareValueBytesOnAcquire(PrepareValueBytes)
@@ -70,15 +70,16 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
     ChronicleMapBuilderI<K, V> defaultValue(V defaultValue);
 
     /**
-     * Configures the procedure which is called on the bytes, which later the returned value is pointing to,
-     * if the key is absent, on {@link ChronicleMap#acquireUsing(Object, Object) acquireUsing()} call on maps,
-     * created by this builder. See {@link PrepareValueBytes} for more information.
+     * Configures the procedure which is called on the bytes, which later the returned value is
+     * pointing to, if the key is absent, on {@link ChronicleMap#acquireUsing(Object, Object)
+     * acquireUsing()} call on maps, created by this builder. See {@link PrepareValueBytes} for more
+     * information.
      *
      * <p>The default preparation callback zeroes out the value bytes.
      *
-     * @param prepareValueBytes what to do with the value bytes before assigning them into the {@link
-     *                          net.openhft.lang.model.Byteable} value to return from {@code acquireUsing()}
-     *                          call
+     * @param prepareValueBytes what to do with the value bytes before assigning them into the
+     *                          {@link net.openhft.lang.model.Byteable} value to return from {@code
+     *                          acquireUsing()} call
      * @return this builder back
      * @see PrepareValueBytes
      * @see #defaultValue(Object)
@@ -106,16 +107,17 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
     ChronicleMapBuilderI<K, V> constantKeySizeBySample(K sampleKey);
 
     /**
-     * Configures the optimal number of bytes, taken by serialized form of values, put into maps, created by
-     * this builder. If value size is always the same, call {@link #constantValueSizeBySample(Object)} method
-     * instead of this one.
+     * Configures the optimal number of bytes, taken by serialized form of values, put into maps,
+     * created by this builder. If value size is always the same, call {@link
+     * #constantValueSizeBySample(Object)} method instead of this one.
      *
-     * <p>If value is a boxed primitive type, i. e. if value size is known statically, it is automatically
-     * accounted and shouldn't be specified by user.
+     * <p>If value is a boxed primitive type, i. e. if value size is known statically, it is
+     * automatically accounted and shouldn't be specified by user.
      *
-     * <p>If value size varies moderately, specify the size higher than average, but lower than the maximum
-     * possible, to minimize average memory overuse. If value size varies in a wide range, it's better to use
-     * {@linkplain #entrySize(int) entry size} in "chunk" mode and configure it directly.
+     * <p>If value size varies moderately, specify the size higher than average, but lower than the
+     * maximum possible, to minimize average memory overuse. If value size varies in a wide range,
+     * it's better to use {@linkplain #entrySize(int) entry size} in "chunk" mode and configure it
+     * directly.
      *
      * @param valueSize number of bytes, taken by serialized form of values
      * @return this {@code ChronicleMapOnHeapUpdatableBuilder} back
@@ -127,15 +129,16 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
     ChronicleMapBuilderI<K, V> valueSize(int valueSize);
 
     /**
-     * Configures the constant number of bytes, taken by serialized form of values, put into maps, created by
-     * this builder. This is done by providing the {@code sampleValue}, all values should take the same number
-     * of bytes in serialized form, as this sample object.
+     * Configures the constant number of bytes, taken by serialized form of values, put into maps,
+     * created by this builder. This is done by providing the {@code sampleValue}, all values should
+     * take the same number of bytes in serialized form, as this sample object.
      *
-     * <p>If values are of boxed primitive type or {@link net.openhft.lang.model.Byteable} subclass, i. e. if
-     * value size is known statically, it is automatically accounted and this method shouldn't be called.
+     * <p>If values are of boxed primitive type or {@link net.openhft.lang.model.Byteable} subclass,
+     * i. e. if value size is known statically, it is automatically accounted and this method
+     * shouldn't be called.
      *
-     * <p>If value size varies, method {@link #valueSize(int)} or {@link #entrySize(int)} should be called
-     * instead of this one.
+     * <p>If value size varies, method {@link #valueSize(int)} or {@link #entrySize(int)} should be
+     * called instead of this one.
      *
      * @param sampleValue the sample value
      * @return this builder back
@@ -164,8 +167,8 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
     /**
      * {@inheritDoc}
      *
-     * @throws IllegalStateException if custom value marshaller is specified or value class is not either
-     *                               {@code BytesMarshallable} or {@code Externalizable}
+     * @throws IllegalStateException if custom value marshaller is specified or value class is not
+     *                               either {@code BytesMarshallable} or {@code Externalizable}
      */
 
     ChronicleMapBuilderI<K, V> valueDeserializationFactory(
@@ -174,8 +177,8 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
     /**
      * {@inheritDoc}
      *
-     * <p>By default, default value provider is not specified, {@link #defaultValue(Object) default value} is
-     * specified instead.
+     * <p>By default, default value provider is not specified, {@link #defaultValue(Object) default
+     * value} is specified instead.
      *
      * @see #defaultValue(Object)
      */
@@ -184,8 +187,8 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
             @NotNull DefaultValueProvider<K, V> defaultValueProvider);
 
     /**
-     * Configures the {@code BytesMarshaller} used to serialize/deserialize values to/from off-heap memory in
-     * maps, created by this builder. See <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the
+     * Configures the {@code BytesMarshaller} used to serialize/deserialize values to/from off-heap
+     * memory in maps, created by this builder. See <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the
      * section about serialization in ChronicleMap manual</a> for more information.
      *
      * @param valueMarshaller the marshaller used to serialize values
@@ -199,20 +202,21 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
             @NotNull BytesMarshaller<V> valueMarshaller);
 
     /**
-     * Configures the marshallers, used to serialize/deserialize values to/from off-heap memory in maps,
-     * created by this builder. See <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the
+     * Configures the marshallers, used to serialize/deserialize values to/from off-heap memory in
+     * maps, created by this builder. See <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the
      * section about serialization in ChronicleMap manual</a> for more information.
      *
-     * <p>Configuring marshalling this way results to a little bit more compact in-memory layout of the map,
-     * comparing to a single interface configuration: {@link #valueMarshaller(BytesMarshaller)}.
+     * <p>Configuring marshalling this way results to a little bit more compact in-memory layout of
+     * the map, comparing to a single interface configuration: {@link #valueMarshaller(BytesMarshaller)}.
      *
-     * <p>Passing {@link net.openhft.chronicle.hash.serialization.BytesInterop} instead of plain {@link
-     * net.openhft.chronicle.hash.serialization.BytesWriter} is, of cause, possible, but currently pointless
-     * for values.
+     * <p>Passing {@link net.openhft.chronicle.hash.serialization.BytesInterop} instead of plain
+     * {@link net.openhft.chronicle.hash.serialization.BytesWriter} is, of cause, possible, but
+     * currently pointless for values.
      *
-     * @param valueWriter the new value object &rarr; {@link net.openhft.lang.io.Bytes} writer (interop)
+     * @param valueWriter the new value object &rarr; {@link net.openhft.lang.io.Bytes} writer
+     *                    (interop) strategy
+     * @param valueReader the new {@link net.openhft.lang.io.Bytes} &rarr; value object reader
      *                    strategy
-     * @param valueReader the new {@link net.openhft.lang.io.Bytes} &rarr; value object reader strategy
      * @return this builder back
      * @see #valueMarshaller(BytesMarshaller)
      */
@@ -220,19 +224,21 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
             @NotNull BytesWriter<V> valueWriter, @NotNull BytesReader<V> valueReader);
 
     /**
-     * Configures the marshaller used to serialize actual value sizes to off-heap memory in maps, created by
-     * this builder.
+     * Configures the marshaller used to serialize actual value sizes to off-heap memory in maps,
+     * created by this builder.
      *
      * <p>Default value size marshaller is so-called {@linkplain net.openhft.chronicle.hash.serialization.SizeMarshallers#stopBit()
-     * stop bit encoding marshalling}. If {@linkplain #constantValueSizeBySample(Object) constant value size}
-     * is configured, or defaulted if the value type is always constant and {@code ChronicleHashBuilder}
-     * implementation knows about it, this configuration takes no effect, because a special {@link
-     * net.openhft.chronicle.hash.serialization.SizeMarshaller} implementation, which doesn't actually do any
-     * marshalling, and just returns the known constant size on {@link net.openhft.chronicle.hash.serialization.SizeMarshaller#readSize(
-     *net.openhft.lang.io.Bytes)} calls, is used instead of any {@code SizeMarshaller} configured using this
-     * method.
+     * stop bit encoding marshalling}. If {@linkplain #constantValueSizeBySample(Object) constant
+     * value size} is configured, or defaulted if the value type is always constant and {@code
+     * ChronicleHashBuilder} implementation knows about it, this configuration takes no effect,
+     * because a special {@link net.openhft.chronicle.hash.serialization.SizeMarshaller}
+     * implementation, which doesn't actually do any marshalling, and just returns the known
+     * constant size on {@link net.openhft.chronicle.hash.serialization.SizeMarshaller#readSize(
+     *net.openhft.lang.io.Bytes)} calls, is used instead of any {@code SizeMarshaller} configured
+     * using this method.
      *
-     * @param valueSizeMarshaller the new marshaller, used to serialize actual value sizes to off-heap memory
+     * @param valueSizeMarshaller the new marshaller, used to serialize actual value sizes to
+     *                            off-heap memory
      * @return this builder back
      */
     ChronicleMapBuilderI<K, V> valueSizeMarshaller(
@@ -295,13 +301,15 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
     ChronicleMapBuilderI<K, V> name(String name);
 
     /**
-     * @param bootstapOnlyLocalEntries if set to true - when a new node joins a TCP replication grid, the new
-     *                                 node will be populated with data, only for the nodes that created that
-     *                                 data. Otherwise, all the nodes will publish all the data they have (
-     *                                 potentially swamping the new node with duplicates ) however this does
-     *                                 guarantee that all the data is replicated over to the new node, and is
-     *                                 useful especially in the case that the originating node is not
+     * @param bootstapOnlyLocalEntries if set to true - when a new node joins a TCP replication
+     *                                 grid, the new node will be populated with data, only for the
+     *                                 nodes that created that data. Otherwise, all the nodes will
+     *                                 publish all the data they have ( potentially swamping the new
+     *                                 node with duplicates ) however this does guarantee that all
+     *                                 the data is replicated over to the new node, and is useful
+     *                                 especially in the case that the originating node is not
      *                                 currently running.
+     * @return self
      */
     ChronicleMapBuilderI<K, V> bootstrapOnlyLocalEntries(boolean bootstapOnlyLocalEntries);
 
