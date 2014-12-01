@@ -26,7 +26,7 @@ import java.io.IOException;
 /**
  * @author Rob Austin.
  */
-public class TestBooleanValues {
+public class BooleanValuesTest {
 
     /**
      * see issue http://stackoverflow.com/questions/26219313/strange-npe-from-chronicle-map-toy-code

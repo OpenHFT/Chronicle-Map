@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Rob Austin.
  */
-public class EventListenerTestWithTCPSocketReplication {
+public class EventListenerWithTCPSocketReplicationTest {
 
     ChronicleMap<Integer, CharSequence> map1;
     ChronicleMap<Integer, CharSequence> map2;
