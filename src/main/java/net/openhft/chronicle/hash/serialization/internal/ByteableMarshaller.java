@@ -103,7 +103,14 @@ public class ByteableMarshaller<E extends Byteable>
 
     @Override
     public void write(Bytes bytes, E e) {
-        bytes.write(e.bytes(), e.offset(), size);
+        Bytes eBytes = e.bytes();
+        if (eBytes != null) {
+            bytes.write(eBytes, e.offset(), size);
+        } else {
+            throw new NullPointerException("You are trying to write a byteable object of " +
+                    e.getClass() + ", " +
+                    "which bytes are not assigned. I. e. most likely the object is uninitialized.");
+        }
     }
 
     @Override

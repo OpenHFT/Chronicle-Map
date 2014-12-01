@@ -1398,8 +1398,7 @@ public class ChronicleMapTest {
         }
     }
 
-    @Ignore("JIRA raised for failing test HCOLL-222")
-    @Test
+    @Test(expected = NullPointerException.class)
     public void testPutLongValue() throws IOException {
         final ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
