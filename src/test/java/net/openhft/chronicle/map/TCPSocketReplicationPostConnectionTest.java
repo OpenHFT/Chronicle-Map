@@ -61,12 +61,12 @@ public class TCPSocketReplicationPostConnectionTest {
         s_port += 2;
         map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, port);
         map1.put(5, "EXAMPLE-2");
-        Thread.sleep(1);
+        Thread.sleep(10);
         map2 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 2, port + 1,
                 new InetSocketAddress("localhost", port));
 
         // allow time for the recompilation to resolve
-        waitTillEqual(1500);
+        waitTillEqual(15000);
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
