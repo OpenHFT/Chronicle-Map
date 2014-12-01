@@ -36,7 +36,7 @@ import java.io.Serializable;
  * non-{@link Byteable} values, which don't point to off-heap memory directly, including primitives ({@link
  * Long}, {@link Double}, etc.), {@link String}s and {@link CharSequence}s, values implementing {@link
  * BytesMarshallable}, {@link Externalizable} or {@link Serializable} interface, or any other values for which
- * {@linkplain #valueMarshaller(BytesMarshaller) custom marshaller} is provided. <p/> <p>Use static {@link
+ * {@linkplain #valueMarshaller(BytesMarshaller) custom marshaller} is provided. Use static {@link
  * #of(Class, Class) of(Key.class, Value.class)} method to obtain a {@code ChronicleMapOnHeapUpdatableBuilder}
  * instance.
  *
@@ -149,7 +149,7 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
      *     // this class hasn't implemented yet, just for example
      *     .objectSerializer(new KryoObjectSerializer())
      *     .create();}</pre>
-     * <p/> <p>This serializer is used to serialize both keys and values, if they both require this: loosely
+     * <p/> This serializer is used to serialize both keys and values, if they both require this: loosely
      * typed, nullable, and custom {@linkplain #keyMarshaller(BytesMarshaller) key} and {@linkplain
      * #valueMarshaller(BytesMarshaller) value} marshallers are not configured.
      */
@@ -160,7 +160,7 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
     }
 
     /**
-     * {@inheritDoc} <p/> <p>If {@linkplain #valueMarshaller(BytesMarshaller) custom value marshaller} is
+     * {@inheritDoc} If {@linkplain #valueMarshaller(BytesMarshaller) custom value marshaller} is
      * configured, this configuration is unused, because it is incapsulated in {@link
      * BytesMarshaller#read(Bytes)} method (without provided instance to read the data into), i. e. it's is
      * the user-side responsibility. Actually this is just a convenience method supporting value marshaller
