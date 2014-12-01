@@ -243,6 +243,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      *              mapping for <tt>key</tt>. (A <tt>null</tt> return can also indicate that the map
      *              previously associated <tt>null</tt> with <tt>key</tt>, if the implementation
      *              supports <tt>null</tt> values.)
+     * @return a future containing either, the previous value associated with <tt>key</tt>, or
+     * <tt>null</tt> if there was no mapping for <tt>key</tt>.
      * @see java.util.Map#put(java.lang.Object, java.lang.Object)
      * @see java.util.concurrent.Future
      */
