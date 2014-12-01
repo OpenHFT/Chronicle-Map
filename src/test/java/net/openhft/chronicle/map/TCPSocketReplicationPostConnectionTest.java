@@ -66,7 +66,7 @@ public class TCPSocketReplicationPostConnectionTest {
                 new InetSocketAddress("localhost", port));
 
         // allow time for the recompilation to resolve
-        waitTillEqual(500);
+        waitTillEqual(1500);
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
