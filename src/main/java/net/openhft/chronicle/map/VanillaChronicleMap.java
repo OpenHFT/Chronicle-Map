@@ -316,18 +316,18 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     final void checkKey(Object key) {
-        if (!kClass.isInstance(key)) {
-            // key.getClass will cause NPE exactly as needed
-            throw new ClassCastException("Key must be a " + kClass.getName() +
-                    " but was a " + key.getClass());
-        }
+        // if (!kClass.isInstance(key)) {
+        //     // key.getClass will cause NPE exactly as needed
+        //     throw new ClassCastException("Key must be a " + kClass.getName() +
+        //            " but was a " + key.getClass());
+        //}
     }
 
     final void checkValue(Object value) {
-        if (vClass != Void.class && !vClass.isInstance(value)) {
-            throw new ClassCastException("Value must be a " + vClass.getName() +
-                    " but was a " + value.getClass());
-        }
+        //  if (vClass != Void.class && !vClass.isInstance(value)) {
+        //      throw new ClassCastException("Value must be a " + vClass.getName() +
+        //              " but was a " + value.getClass());
+        //  }
     }
 
     final void put(Bytes entry, Bytes output) {
@@ -1176,6 +1176,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public final boolean replace(@net.openhft.lang.model.constraints.NotNull K key,
                                  @net.openhft.lang.model.constraints.NotNull V oldValue,
                                  @net.openhft.lang.model.constraints.NotNull V newValue) {
+
+        if (key == null || oldValue == null || newValue == null)
+            throw new NullPointerException();
+
         checkValue(oldValue);
         return (Boolean) replaceIfValueIs(key, oldValue, newValue);
     }
@@ -1187,6 +1191,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     @SuppressWarnings("unchecked")
     public final V replace(@net.openhft.lang.model.constraints.NotNull final K key,
                            @net.openhft.lang.model.constraints.NotNull final V value) {
+        if (key == null || value == null)
+            throw new NullPointerException();
+
         return (V) replaceIfValueIs(key, null, value);
     }
 
@@ -1597,6 +1604,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         long startWriteLock = 0;
+
         @Override
         public final WriteLocked<K, KI, MKI, V, VI, MVI> writeLock(
                 @Nullable SegmentState segmentState) {

@@ -95,8 +95,8 @@ public class TcpReplicationSoakTest {
     @Ignore("Doesn't work, maps need to check equality.")
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
 
-        Thread.sleep(100);
-        final long start = System.currentTimeMillis();
+
+
         System.out.print("SoakTesting ");
         for (int j = 1; j < 2 * Builder.SIZE; j++) {
             if (j % 100 == 0)

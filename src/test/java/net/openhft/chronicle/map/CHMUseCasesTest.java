@@ -20,10 +20,11 @@ import static org.junit.Assert.*;
 @Ignore
 public class CHMUseCasesTest {
     /**
-     * String is not as efficient as CharSequence as a key or value but easier to use The key can only be on heap and
-     * variable length serialised.
+     * String is not as efficient as CharSequence as a key or value but easier to use The key can
+     * only be on heap and variable length serialised.
      */
     @Test
+    @Ignore("Not yet implemented")
     public void testStringStringMap() throws ExecutionException, InterruptedException {
 /* TODO run the same test for multiple types of map stores
         for(ChronicleMapBuilder<String, String> chmb : Arrays.asList(
@@ -72,10 +73,11 @@ public class CHMUseCasesTest {
     }
 
     /**
-     * CharSequence is more efficient when object creation is avoided. The key can only be on heap and variable length
-     * serialised.
+     * CharSequence is more efficient when object creation is avoided. The key can only be on heap
+     * and variable length serialised.
      */
     @Test
+    @Ignore("Not yet implemented")
     public void testCharSequenceCharSequenceMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
@@ -138,6 +140,7 @@ public class CHMUseCasesTest {
      * StringValue represents any bean which contains a String Value
      */
     @Test
+    @Ignore("Not yet implemented")
     public void testStringValueStringValueMap() {
         try (ChronicleMap<StringValue, StringValue> map = ChronicleMapBuilder
                 .of(StringValue.class, StringValue.class)
@@ -229,6 +232,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testIntegerIntegerMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
@@ -287,6 +291,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testLongLongMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Long, Long> map = ChronicleMapBuilder
                 .of(Long.class, Long.class)
@@ -334,6 +339,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
+    @Ignore("Not yet implemented")
     public void testDoubleDoubleMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Double, Double> map = ChronicleMapBuilder
                 .of(Double.class, Double.class)
@@ -381,6 +387,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testByteArrayByteArrayMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
                 .of(byte[].class, byte[].class)
@@ -431,6 +438,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testByteBufferByteBufferMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
@@ -529,6 +537,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testByteBufferDirectByteBufferMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
@@ -589,6 +598,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testIntValueIntValueMap() {
         try (ChronicleMap<IntValue, IntValue> map = ChronicleMapBuilder
                 .of(IntValue.class, IntValue.class)
@@ -671,6 +681,7 @@ public class CHMUseCasesTest {
      * For unsigned int -> unsigned int entries, the key can be on heap or off heap.
      */
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testUnsignedIntValueUnsignedIntValueMap() {
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = ChronicleMapBuilder
                 .of(UnsignedIntValue.class, UnsignedIntValue.class)
@@ -753,6 +764,7 @@ public class CHMUseCasesTest {
      * For int values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testIntValueShortValueMap() {
         try (ChronicleMap<IntValue, ShortValue> map = ChronicleMapBuilder
                 .of(IntValue.class, ShortValue.class)
@@ -835,6 +847,7 @@ public class CHMUseCasesTest {
      * For int -> unsigned short values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testIntValueUnsignedShortValueMap() {
         try (ChronicleMap<IntValue, UnsignedShortValue> map = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedShortValue.class)
@@ -917,6 +930,7 @@ public class CHMUseCasesTest {
      * For int values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testIntValueCharValueMap() {
         try (ChronicleMap<IntValue, CharValue> map = ChronicleMapBuilder
                 .of(IntValue.class, CharValue.class)
@@ -999,6 +1013,7 @@ public class CHMUseCasesTest {
      * For int-> byte entries, the key can be on heap or off heap.
      */
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testIntValueUnsignedByteMap() {
         try (ChronicleMap<IntValue, UnsignedByteValue> map = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedByteValue.class)
@@ -1081,6 +1096,7 @@ public class CHMUseCasesTest {
      * For int values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testIntValueBooleanValueMap() {
         try (ChronicleMap<IntValue, BooleanValue> map = ChronicleMapBuilder
                 .of(IntValue.class, BooleanValue.class)
@@ -1163,6 +1179,7 @@ public class CHMUseCasesTest {
      * For float values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testFloatValueFloatValueMap() {
         try (ChronicleMap<FloatValue, FloatValue> map = ChronicleMapBuilder
                 .of(FloatValue.class, FloatValue.class)
@@ -1245,18 +1262,24 @@ public class CHMUseCasesTest {
      * For double values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore("HCOLL-225 Add support for heap and native object in the same map")
     public void testDoubleValueDoubleValueMap() {
         try (ChronicleMap<DoubleValue, DoubleValue> map = ChronicleMapBuilder
                 .of(DoubleValue.class, DoubleValue.class)
                 .entrySize(16)
                 .create()) {
+
             DoubleValue key1 = DataValueClasses.newDirectInstance(DoubleValue.class);
             DoubleValue key2 = DataValueClasses.newInstance(DoubleValue.class);
             DoubleValue value1 = DataValueClasses.newDirectInstance(DoubleValue.class);
             DoubleValue value2 = DataValueClasses.newInstance(DoubleValue.class);
 
+
             key1.setValue(1);
             value1.setValue(11);
+            assertEquals(null, map.get(key1));
+
+            map.put(key1, value1);
             assertEquals(value1, map.get(key1));
 
             key2.setValue(2);
@@ -1325,6 +1348,7 @@ public class CHMUseCasesTest {
      * For long values, the key can be on heap or off heap.
      */
     @Test
+    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testLongValueLongValueMap() {
         try (ChronicleMap<LongValue, LongValue> map = ChronicleMapBuilder
                 .of(LongValue.class, LongValue.class)
@@ -1416,30 +1440,29 @@ public class CHMUseCasesTest {
                 .valueMarshaller(ListMarshaller.of(new StringMarshaller(8)))
                 .create()) {
             map.put("1", Collections.<String>emptyList());
-            map.put("2", Arrays.asList("one"));
+            map.put("2", Arrays.asList("two-A"));
 
             List<String> list1 = new ArrayList<>();
             try (WriteContext wc = map.acquireUsingLocked("1", list1)) {
-                list1.add("two");
-                assertEquals(Arrays.asList("two"), list1);
+                assertEquals(Collections.EMPTY_LIST, list1);
             }
+
             List<String> list2 = new ArrayList<>();
-            try (ReadContext rc = map.getUsingLocked("1", list2)) {
-                assertTrue(rc.present());
-                assertEquals(Arrays.asList("two"), list2);
-            }
-            try (WriteContext wc = map.acquireUsingLocked("2", list1)) {
-                list1.add("three");
-                assertEquals(Arrays.asList("three"), list1);
-            }
             try (ReadContext rc = map.getUsingLocked("2", list2)) {
                 assertTrue(rc.present());
-                assertEquals(Arrays.asList("one", "three"), list2);
+                list2.add("two-B");     // this is not written as it only a read context
+                assertEquals(Arrays.asList("two-A", "two-B"), list2);
+            }
+
+            try (ReadContext rc = map.getUsingLocked("2", list2)) {
+                assertTrue(rc.present());
+                assertEquals(Arrays.asList("two-A"), list2);
             }
         }
     }
 
     @Test
+    @Ignore("Fix LinkedHashSet Marshaller")
     public void testSetValue() {
         try (ChronicleMap<String, Set<String>> map = ChronicleMapBuilder
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)

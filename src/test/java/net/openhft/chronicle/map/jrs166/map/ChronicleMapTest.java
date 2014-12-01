@@ -23,7 +23,6 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.jrs166.JSR166TestCase;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -39,38 +38,15 @@ import static org.junit.Assert.*;
 
 public class ChronicleMapTest extends JSR166TestCase {
 
-    private static File getPersistenceFile() {
-        String TMP = System.getProperty("java.io.tmpdir");
-        File file = new File(TMP + "/chm-test" + System.nanoTime());
-        file.deleteOnExit();
-        return file;
-    }
 
     static ChronicleMap<Integer, CharSequence> newShmIntString(int size) throws IOException {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(size).create();
     }
 
-    static ChronicleMap<ArrayList, CharSequence> newShmListBoolean(int size) throws IOException {
-        return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class)
-                .entries(size).create();
-    }
-
-    static ChronicleMap<ArrayList, CharSequence> newShmListBoolean() throws IOException {
-        return ChronicleMapBuilder.of(ArrayList.class, CharSequence.class).create();
-    }
-
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int size) throws IOException {
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(size).create();
-    }
-
-    static ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
-        return ChronicleMapBuilder.of(Integer.class, CharSequence.class).create();
-    }
-
-    static ChronicleMap<BI, Boolean> newShmBiBoolean() throws IOException {
-        return ChronicleMapBuilder.of(BI.class, Boolean.class).create();
     }
 
     /**
