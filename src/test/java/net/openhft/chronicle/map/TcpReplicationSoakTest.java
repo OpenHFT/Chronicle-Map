@@ -1,15 +1,11 @@
 package net.openhft.chronicle.map;
 
-import junit.framework.Assert;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -92,10 +88,7 @@ public class TcpReplicationSoakTest {
 
     // TODO test this with larger sizes.
     @Test(timeout = 20000)
-    @Ignore("Doesn't work, maps need to check equality.")
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
-
-
 
         System.out.print("SoakTesting ");
         for (int j = 1; j < 2 * Builder.SIZE; j++) {
@@ -116,7 +109,7 @@ public class TcpReplicationSoakTest {
 
         System.out.println("\nwaiting till equal");
 
-        waitTillEqual(1000);
+        waitTillEqual(10000);
 
         Assert.assertEquals(map1, map2);
 

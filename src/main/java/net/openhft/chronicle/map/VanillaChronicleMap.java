@@ -2031,10 +2031,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             return ret;
         }
 
-        private void setBlocks(long pos, int blocks) {
-            freeList.set(pos, pos + blocks);
-        }
-
         private void updateNextPosToSearchFrom(long allocated, int blocks) {
             if ((nextPosToSearchFrom = allocated + blocks) >= entriesPerSegment)
                 nextPosToSearchFrom = 0L;
@@ -2165,12 +2161,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // update segment state
             if (removeFromMultiMap) {
                 hashLookup.removePrevPos();
+                long entrySizeInBytes = entry.positionAddr() + valueSize - entry.startAddr();
+                free(pos, inBlocks(entrySizeInBytes));
             } else {
                 hashLookup.removePosition(pos);
             }
             decrementSize();
-            long entrySizeInBytes = entry.positionAddr() + valueSize - entry.startAddr();
-            free(pos, inBlocks(entrySizeInBytes));
 
             // remove callbacks
             if (!remote)
@@ -2383,9 +2379,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     // But if these blocks will be taken by that time,
                     // this entry will need to be relocated.
                 }
-            } else {
-                // todo investivate when we are able to avoid this assignment
-                setBlocks(pos, oldSizeInBlocks);
             }
             // Common code for all cases
             entry.position(valueSizePos);
@@ -2595,11 +2588,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             final long entryEndAddr = entry.positionAddr() + valueSize;
             if (removeFromMultiMap) {
                 segment.hashLookup().remove(segmentHash, pos);
+                segment.free(pos, segment.inBlocks(entryEndAddr - entry.address()));
             } else {
                 segment.hashLookup().removePosition(pos);
             }
             segment.decrementSize();
-            segment.free(pos, segment.inBlocks(entryEndAddr - entry.address()));
 
             // remove callbacks
             onRemove(segment, pos);
