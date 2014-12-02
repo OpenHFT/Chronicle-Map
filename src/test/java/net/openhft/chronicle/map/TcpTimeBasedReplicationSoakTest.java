@@ -1,28 +1,33 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
 import org.junit.*;
+import org.mockito.Mockito;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Rob Austin.
  */
-public class TcpReplicationSoakTest {
+public class TcpTimeBasedReplicationSoakTest {
 
 
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     private IntValue value;
     static int s_port = 8010;
+    private TimeProvider timeProvider;
+    int t = 0;
 
     @Before
     public void setup() throws IOException {
@@ -30,26 +35,37 @@ public class TcpReplicationSoakTest {
         ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
+        timeProvider = new TimeProvider() {
+
+            Random rnd = new Random(4);
+
+            @Override
+            public long currentTimeMillis() {
+
+                if (rnd.nextBoolean())
+                    return t++;
+                else
+                    return t;
+            }
+        };
 
         {
             final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(s_port,
-                    endpoint).autoReconnectedUponDroppedConnection(true).name("      map1");
+                    endpoint);
 
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(Builder.SIZE + Builder.SIZE)
-                    .actualSegments(1)
-                    .name("map1")
+                    .entries(Builder.SIZE)
+                    .timeProvider(timeProvider)
                     .replication((byte) 1, tcpConfig1)
                     .create();
         }
         {
-            final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of
-                    (s_port + 1).autoReconnectedUponDroppedConnection(true).name("map2");
+            final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of(s_port + 1);
 
             map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(Builder.SIZE + Builder.SIZE)
-                    .name("map2")
+                    .entries(Builder.SIZE)
+                    .timeProvider(timeProvider)
                     .replication((byte) 2, tcpConfig2)
                     .create();
 
@@ -89,56 +105,62 @@ public class TcpReplicationSoakTest {
     @Ignore
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
 
+        Thread.sleep(100);
+
+        // for (int i = 30; i < 50; i++) {
         System.out.print("SoakTesting ");
-        for (int j = 1; j < 2 * Builder.SIZE; j++) {
+        int max = 1000000;
+        for (int j = 1; j < max; j++) {
             if (j % 100 == 0)
                 System.out.print(".");
-            Random rnd = new Random(j);
-            for (int i = 1; i < 10; i++) {
-                final int select = rnd.nextInt(2);
-                final ChronicleMap<Integer, CharSequence> map = select > 0 ? map1 : map2;
+            Random rnd = new Random(System.currentTimeMillis());
+
+            final ChronicleMap<Integer, CharSequence> map = rnd.nextBoolean() ? map1 : map2;
 
             if (rnd.nextBoolean()) {
-                map.put(rnd.nextInt(Builder.SIZE), "test" + j);
+                map.put((int) rnd.nextInt(100), "test" + j);
             } else {
-                map.remove(rnd.nextInt(Builder.SIZE));
+                map.remove((int) rnd.nextInt(100));
             }
+
         }
-        }
-         Thread.sleep(1000);
+
         System.out.println("\nwaiting till equal");
 
-            waitTillEqual(10000);
-
+        waitTillUnchanged(1000);
+        System.out.println("time t=" + t);
         Assert.assertEquals(new TreeMap(map1), new TreeMap(map2));
 
     }
 
 
-    private void waitTillEqual(final int timeOutMs) throws InterruptedException {
+    private void waitTillUnchanged(final int timeOutMs) throws InterruptedException {
 
         Map map1UnChanged = new HashMap();
         Map map2UnChanged = new HashMap();
 
         int numberOfTimesTheSame = 0;
         for (int t = 0; t < timeOutMs + 100; t++) {
-            if (map1.equals(map2)) {
-                if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
-                    numberOfTimesTheSame++;
-                } else {
-                    numberOfTimesTheSame = 0;
-                    map1UnChanged = new HashMap(map1);
-                    map2UnChanged = new HashMap(map2);
-                }
-                Thread.sleep(500);
-                if (numberOfTimesTheSame == 100) {
-                    System.out.println("same");
-                    break;
-                }
 
+            if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
+                numberOfTimesTheSame++;
+            } else {
+                numberOfTimesTheSame = 0;
+                map1UnChanged = new HashMap(map1);
+                map2UnChanged = new HashMap(map2);
             }
-            Thread.sleep(1);
+            Thread.sleep(50);
+            if (numberOfTimesTheSame == 100) {
+
+                break;
+            }
+
+
         }
+    }
+
+    private void late(TimeProvider timeProvider) {
+        Mockito.when(timeProvider.currentTimeMillis()).thenReturn(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5));
     }
 }
 

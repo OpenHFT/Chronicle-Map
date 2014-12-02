@@ -28,7 +28,6 @@ import java.net.InetSocketAddress;
 import java.util.Random;
 import java.util.Set;
 
-import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
 import static net.openhft.chronicle.map.TCPSocketReplication4WayMapTest.newTcpSocketShmIntString;
 import static org.junit.Assert.assertEquals;
@@ -52,7 +51,7 @@ public class TCPSocketReplicationTest {
         ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
                         (byte) 1, port, new InetSocketAddress("localhost", port + 1));
-        map1 = map1Builder.createPersistedTo(getPersistenceFile());
+        map1 = map1Builder.create();
         map2 = newTcpSocketShmIntString((byte) 2, port + 1);
         s_port += 2;
     }
@@ -116,6 +115,46 @@ public class TCPSocketReplicationTest {
         assertTrue(!map1.isEmpty());
     }
 
+
+    @Test
+    public void test2() throws IOException, InterruptedException {
+
+        map2.put(1, "EXAMPLE-1");
+        map2.remove(1);
+
+        map1.put(1, "EXAMPLE-2");
+        map1.remove(1);
+
+        map2.put(1, "EXAMPLE-1");
+
+
+        // allow time for the recompilation to resolve
+        waitTillEqual(5000);
+
+        assertEquals(map1, map2);
+        assertTrue(!map1.isEmpty());
+    }
+
+    @Test
+    public void test4() throws IOException, InterruptedException {
+
+        map2.put(1, "EXAMPLE-1");
+        map2.remove(1);
+
+        map1.put(1, "EXAMPLE-2");
+        map1.remove(1);
+
+        map2.put(1, "EXAMPLE-1");
+      map2.remove(1);
+
+        // allow time for the recompilation to resolve
+        waitTillEqual(5000);
+
+        assertEquals(map1, map2);
+        assertTrue(map1.isEmpty());
+    }
+
+
     @Test
     public void testBufferOverflow() throws IOException, InterruptedException {
 
@@ -168,7 +207,7 @@ public class TCPSocketReplicationTest {
             }
         }
         System.out.println("");
-        waitTillEqual(10000);
+        waitTillEqual(1000);
     }
 
 }
