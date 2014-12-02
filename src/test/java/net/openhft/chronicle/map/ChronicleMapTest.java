@@ -523,7 +523,6 @@ public class ChronicleMapTest {
         map.close();
     }
 
-    @Ignore("JIRA raised HCOLL-221")
     @Test
     public void testAcquireFromMultipleThreads() throws Exception {
         int entries = 1000 * 1000;
@@ -551,7 +550,8 @@ public class ChronicleMapTest {
             threads[t].join();
         }
 
-        assertEquals(noOfThreads * iterations, map.acquireUsing(key, new LongValue$$Native()).getValue());
+        assertEquals(noOfThreads * iterations,
+                map.acquireUsing(key, new LongValue$$Native()).getValue());
 
         map.close();
     }
