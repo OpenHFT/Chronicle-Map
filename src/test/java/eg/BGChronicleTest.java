@@ -149,15 +149,20 @@ public class BGChronicleTest {
 
             if (args.length == 0 || (args.length > 1 && args[0].equalsIgnoreCase("server"))) {
                 int port = args.length > 0 && args[1] != null ? Integer.valueOf(args[1]) : DEFAULT_PORT;
+                System.out.println("server starting....");
                 serverMap = o.startChronicleMapServer(port);
                 System.out.println("server started.");
-            }
+            }   else
+                System.out.println("server if OFF");
 
             if (args.length == 0 || (args.length > 1 && args[0].equalsIgnoreCase("client"))) {
                 String host = args.length > 0 && args[1] != null ? args[1] : DEFAULT_HOST;
                 int port = args.length > 1 && args[2] != null ? Integer.valueOf(args[2]) :
                         DEFAULT_PORT;
+                System.out.println("client starting....");
                 o.startChronicleMapClient(host, port, MAX_NUMBER_OF_EATERIES);
+            } else {
+                System.out.println("client if OFF");
             }
 
         } finally {
