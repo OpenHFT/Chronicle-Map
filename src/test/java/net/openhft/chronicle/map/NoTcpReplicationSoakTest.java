@@ -112,7 +112,7 @@ public class NoTcpReplicationSoakTest {
             final int key = rnd.nextInt(1000);
 
             // add random delay
-           addRandomDelay(executorService, rnd);
+          addRandomDelay(executorService, rnd);
 
             if (rnd.nextBoolean()) {
                 final CharSequence value = "test" + j;
@@ -153,7 +153,7 @@ public class NoTcpReplicationSoakTest {
                         @Override
                         public void run() {
 
-                            map2.remoteRemove(key, (byte) 1, time);
+                            map2.remoteRemove(key, (byte) 1, t);
                             task.decrementAndGet();
                         }
                     });
@@ -166,7 +166,7 @@ public class NoTcpReplicationSoakTest {
                         @Override
                         public void run() {
 
-                            map1.remoteRemove(key, (byte) 2, time);
+                            map1.remoteRemove(key, (byte) 2, t);
                             task.decrementAndGet();
                         }
                     });
