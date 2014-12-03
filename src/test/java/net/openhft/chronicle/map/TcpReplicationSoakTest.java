@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Rob Austin.
@@ -33,7 +34,8 @@ public class TcpReplicationSoakTest {
 
         {
             final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(s_port,
-                    endpoint).autoReconnectedUponDroppedConnection(true).name("      map1");
+                    endpoint).autoReconnectedUponDroppedConnection(true).name("      map1")
+                    .heartBeatInterval(1, TimeUnit.SECONDS);
 
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -45,7 +47,8 @@ public class TcpReplicationSoakTest {
         }
         {
             final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of
-                    (s_port + 1).autoReconnectedUponDroppedConnection(true).name("map2");
+                    (s_port + 1).autoReconnectedUponDroppedConnection(true).name("map2")
+                    .heartBeatInterval(1, TimeUnit.SECONDS);
 
             map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE + Builder.SIZE)
@@ -86,7 +89,6 @@ public class TcpReplicationSoakTest {
 
 
     @Test
-    @Ignore
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
 
         System.out.print("SoakTesting ");
@@ -130,7 +132,7 @@ public class TcpReplicationSoakTest {
                     map1UnChanged = new HashMap(map1);
                     map2UnChanged = new HashMap(map2);
                 }
-                Thread.sleep(500);
+                Thread.sleep(1);
                 if (numberOfTimesTheSame == 100) {
                     System.out.println("same");
                     break;

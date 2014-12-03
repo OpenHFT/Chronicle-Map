@@ -388,6 +388,11 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     @Override
+    void onRemotePut(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
+        onRelocation(segment, pos); // erase modification bits
+    }
+
+    @Override
     void onRemove(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
@@ -397,6 +402,11 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 LOG.error("", e);
             }
         }
+    }
+
+    @Override
+    void onRemoteRemove(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
+        onRelocation(segment, pos); // erase modification bits
     }
 
     @Override
@@ -931,8 +941,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 entry.writeBoolean(false);
 
                 // put callbacks
-                if (!remote)
-                    onPut(this, localSegmentState.pos);
+                onPutMaybeRemote(localSegmentState.pos, remote);
                 if (bytesEventListener != null)
                     bytesEventListener.onPut(entry, 0L, metaDataBytes,
                             localSegmentState.valueSizePos, true);
@@ -1086,6 +1095,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         entry.position(timestampPos);
                         entry.writeLong(timestamp);
                         entry.writeByte(identifier);
+                        onRemoveMaybeRemote(pos, remote);
                         break; // to "key not found" location
                     }
 
@@ -1452,7 +1462,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     }
 
                     // if the position was already cleared by another thread
-                    // while we were trying to obtain segment lock (for example, in onReplication()),
+                    // while we were trying to obtain segment lock (for example, in onRelocation()),
                     // go to pick up next (next iteration in while (true) loop)
                 } finally {
                     segment.readUnlock();
