@@ -1520,7 +1520,7 @@ class StatelessServerConnector<K, V> {
 
         writeException(writer, e);
 
-        writeSizeAndFlags(sizeLocation, true, writer);
+        writeSizeAndFlags(sizeLocation+SIZE_OF_TRANSACTION_ID, true, writer);
         return null;
     }
 
@@ -1845,17 +1845,19 @@ class StatelessServerConnector<K, V> {
     }
 
     private long reflectTransactionId(Bytes reader, Bytes writer) {
-        final long sizeLocation = writer.position();
-        writer.skip(TRANSACTION_ID_OFFSET); // isException +  SIZE_OF_SIZE
         final long transactionId = reader.readLong();
+        final long sizeLocation = writer.position();
+        writer.skip(SIZE_OF_SIZE);
         writer.writeLong(transactionId);
+        writer.writeBoolean(false); // isException
         return sizeLocation;
     }
 
     private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
         final long size = out.position() - locationOfSize;
         out.writeInt(locationOfSize, (int) size); // size
-        out.writeBoolean(locationOfSize + SIZE_OF_SIZE, isException); // isException
+        out.skip(SIZE_OF_TRANSACTION_ID);
+        out.writeBoolean(isException); // isException
     }
 
     private void writeException(Bytes out, Throwable e) {
@@ -1887,10 +1889,11 @@ class StatelessServerConnector<K, V> {
     private long header(Bytes writer, final long transactionId) {
         final long sizeLocation = writer.position();
 
-        writer.skip(TRANSACTION_ID_OFFSET);
+        writer.skip(SIZE_OF_SIZE);
+        writer.writeLong(transactionId);
 
         // exception
-        writer.writeLong(transactionId);
+        writer.skip(1);
 
         //  hasAnotherChunk
         writer.skip(1);
@@ -1909,11 +1912,11 @@ class StatelessServerConnector<K, V> {
         // size in bytes
         writer.writeInt(size);
 
-        // is exception
-        writer.writeBoolean(false);
-
         //transaction id;
         writer.skip(8);
+
+        // is exception
+        writer.writeBoolean(false);
 
         writer.writeBoolean(hasAnotherChunk);
 

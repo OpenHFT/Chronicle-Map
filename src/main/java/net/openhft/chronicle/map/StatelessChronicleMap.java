@@ -982,8 +982,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         // block until we have received all the bytes in this chunk
         receive(size, timeoutTime);
 
-        final boolean isException = bytes.readBoolean();
+
         final long inTransactionId = bytes.readLong();
+        final boolean isException = bytes.readBoolean();
 
         if (inTransactionId != transactionId) {
             LOG.error("", new IllegalStateException("Skipped Message with transaction-id=" +
