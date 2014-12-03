@@ -976,7 +976,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         } else
             bytes.limit(bytes.capacity());
 
-        // block until we have received all the byte in this chunk
+        // block until we have received all the bytes in this chunk
         receive(size, timeoutTime);
 
         final boolean isException = bytes.readBoolean();
