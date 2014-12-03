@@ -287,9 +287,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         this.connectionOutBuffer.clear();
 
-        // read a single  byte back
+        if (!clientChannel.finishConnect() || !clientChannel.socket().isBound())
+            return;
+
+        // read a single byte back
         while (this.connectionOutBuffer.position() <= 0) {
-            clientChannel.read(this.connectionOutBuffer);
+            clientChannel.read(this.connectionOutBuffer);  // the remote identifier
             checkTimeout(timeoutTime);
         }
 
@@ -983,13 +986,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         final long inTransactionId = bytes.readLong();
 
         if (inTransactionId != transactionId) {
-           LOG.error("",  new IllegalStateException("Skipped Message with transaction-id=" +
+            LOG.error("", new IllegalStateException("Skipped Message with transaction-id=" +
                     inTransactionId +
                     ", this can occur when you have another thread which has called the " +
-                   "stateless client and terminated abruptly before the message has been " +
-                   "returned from the server"));
+                    "stateless client and terminated abruptly before the message has been " +
+                    "returned from the server"));
 
-            blockingFetch(timeoutTime,transactionId);
+            blockingFetch(timeoutTime, transactionId);
         }
 
         if (isException) {
