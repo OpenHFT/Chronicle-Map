@@ -24,7 +24,7 @@ public class BGChronicleTest {
     public ChronicleMap<byte[], byte[]> startChronicleMapServer(int port) throws InterruptedException, IOException {
 
 
-        TcpTransportAndNetworkConfig map2Config = TcpTransportAndNetworkConfig.of(port)
+        TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(port)
                 .heartBeatInterval(CHRONICLE_HEARTBEAT_SECONDS, TimeUnit.SECONDS).name("serverMap")
                 .autoReconnectedUponDroppedConnection(true);
 
@@ -35,13 +35,13 @@ public class BGChronicleTest {
                 .valueSize(11)
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
-                .replication((byte) 1, map2Config)
+                .replication((byte) 1, serverConfig)
                 .create();
     }
 
     /**
-     * over loop-back on my mac I get around 50,000 messages per second
-     * of my local network ( LAN ), I get around 730 messages per second
+     * over loop-back on my mac I get around 50,000 messages per second of my local network ( LAN ),
+     * I get around 730 messages per second
      *
      * @param hostNameOrIpAddress
      * @param port
@@ -88,20 +88,76 @@ public class BGChronicleTest {
         }
     }
 
-    private void logMessagesPerSecond(double numberOfMessages, long start) {
-        double messagesPerSecond = numberOfMessages / (double) TimeUnit.NANOSECONDS
-                .toSeconds(System.nanoTime() - start);
 
-        System.out.println("messages per seconds " + messagesPerSecond);
+    /**
+     * over loop-back on my mac I get around 50,000 messages per second of my local network ( LAN ),
+     * I get around 730 messages per second
+     *
+     * @param hostNameOrIpAddress
+     * @param port
+     * @param numberOfMessages
+     * @throws IOException
+     */
+    public void startReplicatingChronicleMapClient(String hostNameOrIpAddress, final int port,
+                                                   final long numberOfMessages) throws
+            IOException {
+
+        System.out.println("client starting");
+
+        final InetSocketAddress serverHostPort = new InetSocketAddress(hostNameOrIpAddress, port);
+
+        TcpTransportAndNetworkConfig clientConfig = TcpTransportAndNetworkConfig.of(port + 1, serverHostPort)
+                .heartBeatInterval(CHRONICLE_HEARTBEAT_SECONDS, TimeUnit.SECONDS).name("clientMap")
+                .autoReconnectedUponDroppedConnection(true);
+
+        try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[].class)
+                .entries(MAX_NUMBER_OF_EATERIES)
+                .keySize(17)
+                .valueSize(11)
+                .putReturnsNull(true)
+                .removeReturnsNull(true)
+                .replication((byte) 2, clientConfig)
+                .create()) {
+
+            System.out.println("client started");
+
+            long start = System.nanoTime();
+            for (long count = 0; count < numberOfMessages; count++) {
+                if (rnd.nextBoolean()) {
+                    // puts
+                    rnd.nextBytes(key);
+                    rnd.nextBytes(value);
+                    map.put(key, value);
+
+                } else {
+                    //gets
+                    rnd.nextBytes(key);
+                    map.get(key);
+                }
+
+                if (count % 50000 == 0) {
+                    logMessagesPerSecond(count, start);
+                }
+
+            }
+
+            logMessagesPerSecond(numberOfMessages, start);
+
+        }
     }
 
 
+    private void logMessagesPerSecond(double numberOfMessages, long start) {
+        double messagesPerSecond = numberOfMessages / (double) TimeUnit.NANOSECONDS
+                .toSeconds(System.nanoTime() - start);
+        System.out.println("messages per seconds " + messagesPerSecond);
+    }
 
 
     /**
      * for loop back args = []
      *
-     * for servereg.BGChronicleTest server
+     * for server - eg.BGChronicleTest server for client - eg.BGChronicleTest client
      *
      * @param args
      * @throws IOException
@@ -113,26 +169,50 @@ public class BGChronicleTest {
         ChronicleMap<byte[], byte[]> serverMap = null;
         try {
 
-            if (args.length == 0 || (args.length > 0 && args[0].equalsIgnoreCase("server"))) {
-                int port = args.length > 1 && args[1] != null ? Integer.valueOf(args[1]) :
-                        DEFAULT_PORT;
+            // loop-back
+            if (args.length == 0) {
+                serverMap = o.startChronicleMapServer(DEFAULT_PORT);
+                o.startChronicleMapClient(DEFAULT_HOST, DEFAULT_PORT, MAX_NUMBER_OF_EATERIES);
 
-                serverMap = o.startChronicleMapServer(port);
-                System.out.println("server ON");
-            }   else
-                System.out.println("server if OFF");
-
-            if (args.length == 0 || (args.length > 1 && args[0].equalsIgnoreCase("client"))) {
-                String host = args.length > 1 && args[1] != null ? args[1] : DEFAULT_HOST;
-                int port = args.length > 2 && args[2] != null ? Integer.valueOf(args[2]) :
-                        DEFAULT_PORT;
-                System.out.println("client ON....");
-                o.startChronicleMapClient(host, port, MAX_NUMBER_OF_EATERIES);
             } else {
+
+                // server
+                if (args.length > 0 && args[0].equalsIgnoreCase("server")) {
+                    int port = getPort(args, 1);
+
+                    serverMap = o.startChronicleMapServer(port);
+                    System.out.println("server ON");
+                } else
+                    System.out.println("server if OFF");
+
+                // client
+                if (args.length == 0 || (args.length > 1 && args[0].equalsIgnoreCase("client"))) {
+
+                    // stateless replicating client
+                    String host = getHost(args, 1);
+                    int port = getPort(args, 2);
+                    System.out.println("client ON....");
+                    o.startChronicleMapClient(host, port, MAX_NUMBER_OF_EATERIES);
+
+                    // replicating client
+                } else if (args.length > 1 && args[0].equalsIgnoreCase("replicatingClient")) {
+                    String host = getHost(args, 1);
+                    int port = getPort(args, 2);
+                    System.out.println("client ON....");
+                    o.startReplicatingChronicleMapClient(host, port, MAX_NUMBER_OF_EATERIES);
+
+                } else {
+                    System.out.println("client if OFF");
+                    for (; ; ) {
+                        Thread.sleep(1000);
+                    }
+                }
+
                 System.out.println("client if OFF");
-                for (;;){
+                for (; ; ) {
                     Thread.sleep(1000);
                 }
+
             }
 
         } finally {
@@ -140,6 +220,19 @@ public class BGChronicleTest {
                 serverMap.close();
         }
 
+    }
+
+    private static String getHost(String[] args, int index) {
+        String host = args.length > index && args[index] != null ? args[index] : DEFAULT_HOST;
+        System.out.println(host);
+        return host;
+    }
+
+    private static int getPort(String[] args, int index) {
+        int port = args.length > index && args[index] != null ? Integer.valueOf(args[index]) :
+                DEFAULT_PORT;
+        System.out.println(port);
+        return port;
     }
 
     public void test() throws IOException, InterruptedException {
