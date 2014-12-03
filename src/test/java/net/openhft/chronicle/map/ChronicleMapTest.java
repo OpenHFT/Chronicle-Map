@@ -523,6 +523,7 @@ public class ChronicleMapTest {
         map.close();
     }
 
+    @Ignore("JIRA raised HCOLL-221")
     @Test
     public void testAcquireFromMultipleThreads() throws Exception {
         int entries = 1000 * 1000;
