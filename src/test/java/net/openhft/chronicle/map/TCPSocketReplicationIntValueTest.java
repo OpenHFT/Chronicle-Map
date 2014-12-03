@@ -161,14 +161,13 @@ public class TCPSocketReplicationIntValueTest {
         for (; t < timeOutMs; t++) {
             if (map1.equals(map2))
                 break;
-            Thread.sleep(25);
+            Thread.sleep(1);
         }
         assertEquals(map1, map2);
     }
 
     // TODO test this with larger sizes.
     @Test(timeout = 12000)
-    @Ignore("Doesn't work, maps need to check equality.")
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         final long start = System.currentTimeMillis();
         System.out.print("SoakTesting ");

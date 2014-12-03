@@ -203,6 +203,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 LOG.debug("", e);
         } catch (Exception e) {
             LOG.error("", e);
+        } catch (Throwable e) {
+            LOG.error("", e);
+            throw e;
         } finally {
 
             if (LOG.isDebugEnabled())
