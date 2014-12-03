@@ -147,19 +147,20 @@ public class BGChronicleTest {
         ChronicleMap<byte[], byte[]> serverMap = null;
         try {
 
-            if (args.length == 0 || (args.length > 1 && args[0].equalsIgnoreCase("server"))) {
-                int port = args.length > 0 && args[1] != null ? Integer.valueOf(args[1]) : DEFAULT_PORT;
-                System.out.println("server starting....");
+            if (args.length == 0 || (args.length > 0 && args[0].equalsIgnoreCase("server"))) {
+                int port = args.length > 1 && args[1] != null ? Integer.valueOf(args[1]) :
+                        DEFAULT_PORT;
+
                 serverMap = o.startChronicleMapServer(port);
-                System.out.println("server started.");
+                System.out.println("server ON");
             }   else
                 System.out.println("server if OFF");
 
             if (args.length == 0 || (args.length > 1 && args[0].equalsIgnoreCase("client"))) {
-                String host = args.length > 0 && args[1] != null ? args[1] : DEFAULT_HOST;
-                int port = args.length > 1 && args[2] != null ? Integer.valueOf(args[2]) :
+                String host = args.length > 1 && args[1] != null ? args[1] : DEFAULT_HOST;
+                int port = args.length > 2 && args[2] != null ? Integer.valueOf(args[2]) :
                         DEFAULT_PORT;
-                System.out.println("client starting....");
+                System.out.println("client ON....");
                 o.startChronicleMapClient(host, port, MAX_NUMBER_OF_EATERIES);
             } else {
                 System.out.println("client if OFF");
