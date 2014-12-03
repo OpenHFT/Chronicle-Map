@@ -44,7 +44,6 @@ public class NoTcpReplicationSoakTest {
 
 
             map1 = (ReplicatedChronicleMap) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-
                     .name("map1")
                     .replication((byte) 1)
                     .timeProvider(timeProvider)
@@ -53,7 +52,6 @@ public class NoTcpReplicationSoakTest {
         {
 
             map2 = (ReplicatedChronicleMap) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-
                     .name("map2")
                     .replication((byte) 2)
                     .timeProvider(timeProvider)
@@ -125,8 +123,9 @@ public class NoTcpReplicationSoakTest {
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            task.decrementAndGet();
+
                             map2.put0(key, value, true, (byte) 1, t);
+                            task.decrementAndGet();
                         }
                     });
 
@@ -137,8 +136,9 @@ public class NoTcpReplicationSoakTest {
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            task.decrementAndGet();
+
                             map1.put0(key, value, true, (byte) 2, t);
+                            task.decrementAndGet();
                         }
                     });
                 }
@@ -152,8 +152,9 @@ public class NoTcpReplicationSoakTest {
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            task.decrementAndGet();
+
                             map2.remoteRemove(key, (byte) 1, time);
+                            task.decrementAndGet();
                         }
                     });
 
@@ -164,8 +165,9 @@ public class NoTcpReplicationSoakTest {
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            task.decrementAndGet();
+
                             map1.remoteRemove(key, (byte) 2, time);
+                            task.decrementAndGet();
                         }
                     });
                 }
@@ -200,31 +202,7 @@ public class NoTcpReplicationSoakTest {
     }
 
 
-    private void waitTillEqual(final int timeOutMs) throws InterruptedException {
 
-        Map map1UnChanged = new HashMap();
-        Map map2UnChanged = new HashMap();
-
-        int numberOfTimesTheSame = 0;
-        for (int t = 0; t < timeOutMs + 100; t++) {
-            if (map1.equals(map2)) {
-                if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
-                    numberOfTimesTheSame++;
-                } else {
-                    numberOfTimesTheSame = 0;
-                    map1UnChanged = new HashMap(map1);
-                    map2UnChanged = new HashMap(map2);
-                }
-                Thread.sleep(500);
-                if (numberOfTimesTheSame == 100) {
-                    System.out.println("same");
-                    break;
-                }
-
-            }
-            Thread.sleep(1);
-        }
-    }
 
 }
 
