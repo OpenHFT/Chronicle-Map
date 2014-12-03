@@ -3,19 +3,14 @@ package eg;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-
 public class BGChronicleTest {
+
     private static final int CHRONICLE_HEARTBEAT_SECONDS = 5;
     public static final long MAX_NUMBER_OF_EATERIES = 3000000L;
     public static final String DEFAULT_HOST = "localhost";
@@ -46,6 +41,7 @@ public class BGChronicleTest {
 
     /**
      * over loop-back on my mac I get around 50,000 messages per second
+     * of my local network ( LAN ), I get around 730 messages per second
      *
      * @param hostNameOrIpAddress
      * @param port
@@ -100,36 +96,6 @@ public class BGChronicleTest {
     }
 
 
-    @Test(timeout = 10000)
-    public void testBufferOverFlowPutAllAndEntrySet() throws IOException, InterruptedException {
-        int SIZE = 10;
-        int port = 9050;
-        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder
-                .of(Integer.class, CharSequence.class)
-                .entries(SIZE)
-                .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
-                .create()) {
-            try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder
-                    .of(Integer.class, CharSequence.class)
-                    .statelessClient(new InetSocketAddress("localhost", port))
-                    .create()) {
-                Map<Integer, CharSequence> payload = new HashMap<Integer, CharSequence>();
-
-                for (int i = 0; i < SIZE; i++) {
-                    payload.put(i, "some value=" + i);
-                }
-
-                statelessMap.putAll(payload);
-
-                Set<Map.Entry<Integer, CharSequence>> entries = statelessMap.entrySet();
-
-                Map.Entry<Integer, CharSequence> next = entries.iterator().next();
-                assertEquals("some value=" + next.getKey(), next.getValue());
-
-                assertEquals(SIZE, entries.size());
-            }
-        }
-    }
 
 
     /**
@@ -164,6 +130,9 @@ public class BGChronicleTest {
                 o.startChronicleMapClient(host, port, MAX_NUMBER_OF_EATERIES);
             } else {
                 System.out.println("client if OFF");
+                for (;;){
+                    Thread.sleep(1000);
+                }
             }
 
         } finally {
