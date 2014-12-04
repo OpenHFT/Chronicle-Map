@@ -1849,6 +1849,7 @@ class StatelessServerConnector<K, V> {
         final long transactionId = reader.readLong();
         final long sizeLocation = writer.position();
         writer.skip(SIZE_OF_SIZE);
+        assert transactionId != 0;
         writer.writeLong(transactionId);
         writer.writeBoolean(false); // isException
         return sizeLocation;

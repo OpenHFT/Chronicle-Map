@@ -20,7 +20,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Rob Austin.
@@ -195,6 +195,7 @@ public class StatelessClientTest {
         }
     }
 
+
     @Test(timeout = 10000)
     public void testBufferOverFlowPutAllAndKeySet() throws IOException, InterruptedException {
         int port = s_port++;
@@ -238,7 +239,7 @@ public class StatelessClientTest {
                     .statelessClient(new InetSocketAddress("localhost", port)).create()) {
                 assertEquals("EXAMPLE-10", statelessMap.get(10));
 
-         int size = statelessMap.size();
+                int size = statelessMap.size();
                 assertEquals(1, size);
             }
         }
@@ -281,8 +282,57 @@ public class StatelessClientTest {
         }
     }
 
+
     @Test(timeout = 10000)
-    public void testStringKeyMapPutIntoStatelessMap() throws IOException, InterruptedException {
+    public void testServerPutClientReplace() throws IOException, InterruptedException {
+
+        try (ChronicleMap<String, String> serverMap = ChronicleMapBuilder
+                .of(String.class, String.class)
+                .entries(SIZE)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
+                .create()) {
+            try (ChronicleMap<String, String> statelessMap = ChronicleMapBuilder
+                    .of(String.class, String.class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056))
+                    .create()) {
+
+                serverMap.put("hello", "world");
+
+                statelessMap.replace("hello", "world", "hello");
+
+                assertEquals("hello", statelessMap.get("hello"));
+                assertEquals(1, statelessMap.size());
+
+
+            }
+        }
+    }
+
+
+    @Test(timeout = 10000)
+    public void testIsEmpty() throws IOException, InterruptedException {
+
+        try (ChronicleMap<String, String> serverMap = ChronicleMapBuilder
+                .of(String.class, String.class)
+                .entries(SIZE)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
+                .create()) {
+            try (ChronicleMap<String, String> statelessMap = ChronicleMapBuilder
+                    .of(String.class, String.class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056))
+                    .create()) {
+
+                assertTrue(statelessMap.isEmpty());
+                assertEquals(0, statelessMap.size());
+
+
+            }
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void testStringKeyMapPutIfAbsentIntoStatelessMap() throws IOException,
+            InterruptedException {
 
         final Map<String, String> data = new HashMap<String, String>();
 
@@ -300,7 +350,7 @@ public class StatelessClientTest {
                     .of(String.class, Map.class)
                     .statelessClient(new InetSocketAddress("localhost", 8056))
                     .create()) {
-                statelessMap.put("hello", data);
+                statelessMap.putIfAbsent("hello", data);
 
                 assertEquals(data, serverMap.get("hello"));
                 assertEquals(1, statelessMap.size());
@@ -489,7 +539,7 @@ public class StatelessClientTest {
         }
 
         statelessMap1.putAll(payload);
-        Assert.assertTrue(statelessMap1.equals(payload));
+        assertTrue(statelessMap1.equals(payload));
 
         statelessMap1.close();
         statelessMap2.close();
