@@ -106,14 +106,13 @@ public class ConstantSizeBySampleTest {
 
         @Override
         public boolean equals(Object obj) {
-            if (!(obj instanceof ExternalizableData))
+            if (!(obj instanceof SerializableData))
                 return false;
-            return Arrays.equals(((ExternalizableData) obj).data, data);
+            return Arrays.equals(((SerializableData) obj).data, data);
         }
     }
 
     @Test
-    @Ignore
     public void testUnexpectedlyLongConstantSerializableValues() throws IOException {
         try (   ChronicleMap<Long, SerializableData> map =
                 ChronicleMapBuilder.of(Long.class, SerializableData.class)

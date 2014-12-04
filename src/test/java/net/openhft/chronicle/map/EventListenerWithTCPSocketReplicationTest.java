@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Rob Austin.
  */
-public class EventListenerTestWithTCPSocketReplication {
+public class EventListenerWithTCPSocketReplicationTest {
 
     ChronicleMap<Integer, CharSequence> map1;
     ChronicleMap<Integer, CharSequence> map2;
@@ -180,7 +180,6 @@ public class EventListenerTestWithTCPSocketReplication {
     }
 
     @Test
-    @Ignore("TODO Failing test")
     public void testRemoteNotifyRemove() throws IOException, InterruptedException {
 
         // ---------- SERVER1 1 ----------

@@ -220,6 +220,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * Calling this method may or may not block until the operating is complete depending on the
      * implementation.
      *
+     * @param key the key whose associated value is to be returned in the future
      * @return a future containing the value to which the specified key is mapped after this method
      * call, or {@code null} if no value is mapped
      * @see java.util.Map#get(java.lang.Object)
@@ -236,10 +237,14 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * Calling this method may or may not block until the operating is complete depending on the
      * implementation.
      *
-     * @return a future containing the previous value associated with <tt>key</tt>, or <tt>null</tt>
-     * if there was no mapping for <tt>key</tt>. (A <tt>null</tt> return can also indicate that the
-     * map previously associated <tt>null</tt> with <tt>key</tt>, if the implementation supports
-     * <tt>null</tt> values.)
+     * @param key   key with which the specified value is to be associated
+     * @param value value to be associated with the specified key * @return a future containing the
+     *              previous value associated with <tt>key</tt>, or <tt>null</tt> if there was no
+     *              mapping for <tt>key</tt>. (A <tt>null</tt> return can also indicate that the map
+     *              previously associated <tt>null</tt> with <tt>key</tt>, if the implementation
+     *              supports <tt>null</tt> values.)
+     * @return a future containing either, the previous value associated with <tt>key</tt>, or
+     * <tt>null</tt> if there was no mapping for <tt>key</tt>.
      * @see java.util.Map#put(java.lang.Object, java.lang.Object)
      * @see java.util.concurrent.Future
      */
@@ -279,8 +284,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * differ. This method is not performant and as such we recommend it is not used in performance
      * sensitive code.
      *
-     * MAPS CONTAINING KEYS/VALUES GENERATED WITH OFF-HEAP INTERFACES ARE NOT CURRENTLY
-     * SUPPORTED, CURRENTLY ONLY KEYS/VALUES THAT IMPLEMENT SERIALIZABLE ARE SUPPORTED
+     * MAPS CONTAINING KEYS/VALUES GENERATED WITH OFF-HEAP INTERFACES ARE NOT CURRENTLY SUPPORTED,
+     * CURRENTLY ONLY KEYS/VALUES THAT IMPLEMENT SERIALIZABLE ARE SUPPORTED
      *
      * @param toFile the file to store all the entries to, the entries will be stored in JSON
      *               format
@@ -296,8 +301,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * entries are overwritten. A write lock is only held while each individual entry is inserted
      * into the map, not over all the entries in the {@link java.io.File}
      *
-     * MAPS CONTAINING KEYS/VALUES GENERATED WITH OFF-HEAP INTERFACES ARE NOT CURRENTLY
-     * SUPPORTED, CURRENTLY ONLY KEYS/VALUES THAT IMPLEMENT SERIALIZABLE ARE SUPPORTED
+     * MAPS CONTAINING KEYS/VALUES GENERATED WITH OFF-HEAP INTERFACES ARE NOT CURRENTLY SUPPORTED,
+     * CURRENTLY ONLY KEYS/VALUES THAT IMPLEMENT SERIALIZABLE ARE SUPPORTED
      *
      * @param fromFile the file containing entries ( in JSON format ) which will be deserialized and
      *                 {@link java.util.Map#put(java.lang.Object, java.lang.Object)} into the map

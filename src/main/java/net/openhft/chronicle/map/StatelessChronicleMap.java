@@ -287,9 +287,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         this.connectionOutBuffer.clear();
 
-        // read a single  byte back
+        if (!clientChannel.finishConnect() || !clientChannel.socket().isBound())
+            return;
+
+        // read a single byte back
         while (this.connectionOutBuffer.position() <= 0) {
-            clientChannel.read(this.connectionOutBuffer);
+            clientChannel.read(this.connectionOutBuffer);  // the remote identifier
             checkTimeout(timeoutTime);
         }
 
@@ -938,9 +941,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 // send out all the bytes
                 send(bytes, timeoutTime);
 
-                bytes.clear();
-                bytes.buffer().clear();
-
                 return blockingFetch(timeoutTime, transactionId);
             } catch (java.nio.channels.ClosedChannelException | ClosedConnectionException e) {
                 checkTimeout(timeoutTime);
@@ -963,6 +963,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     private Bytes blockingFetch(long timeoutTime, long transactionId) throws IOException {
 
+        bytes.clear();
+        bytes.buffer().clear();
+
         // the number of bytes in the response
         final int size = receive(SIZE_OF_SIZE, timeoutTime).readInt();
 
@@ -976,15 +979,22 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         } else
             bytes.limit(bytes.capacity());
 
-        // block until we have received all the byte in this chunk
+        // block until we have received all the bytes in this chunk
         receive(size, timeoutTime);
 
-        final boolean isException = bytes.readBoolean();
-        final long inTransactionId = bytes.readLong();
 
-        if (inTransactionId != transactionId)
-            throw new IllegalStateException("the received transaction-id=" + inTransactionId +
-                    ", does not match the expected transaction-id=" + transactionId);
+        final long inTransactionId = bytes.readLong();
+        final boolean isException = bytes.readBoolean();
+
+        if (inTransactionId != transactionId) {
+            LOG.error("", new IllegalStateException("Skipped Message with transaction-id=" +
+                    inTransactionId +
+                    ", this can occur when you have another thread which has called the " +
+                    "stateless client and terminated abruptly before the message has been " +
+                    "returned from the server"));
+
+            blockingFetch(timeoutTime, transactionId);
+        }
 
         if (isException) {
             Throwable throwable = (Throwable) bytes.readObject();

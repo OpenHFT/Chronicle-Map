@@ -18,8 +18,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 
@@ -29,7 +27,7 @@ import java.io.Serializable;
  *     {@linkplain Bytes#limit() limit}).</li>
  *     <li>Methods must not update entry bytes, except in metadata area</li>
  *     <li>From {@code metaDataPos} offset metadata area starts in the given {@code entry}, listener
- *     should be itself aware of it's length (see {@link ChronicleMapBuilder#metaDataBytes()}).</li>
+ *     should be itself aware of it's length (see {@link ChronicleMapBuilder#metaDataBytes(int)}).</li>
  *     <li>From {@code keyPos} offset key area in the given {@code entry}, serialized key size
  *     (using {@linkplain ChronicleMapBuilder#keySizeMarshaller(SizeMarshaller)}), directly followed
  *     by the serialized key itself.</li>

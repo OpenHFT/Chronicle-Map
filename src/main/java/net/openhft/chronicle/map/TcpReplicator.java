@@ -203,6 +203,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 LOG.debug("", e);
         } catch (Exception e) {
             LOG.error("", e);
+        } catch (Throwable e) {
+            LOG.error("", e);
+            throw e;
         } finally {
 
             if (LOG.isDebugEnabled())
@@ -628,11 +631,14 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
         try {
-            final int bytesJustWritten = attached.entryWriter.writeBufferToSocket(socketChannel,
+            final int len = attached.entryWriter.writeBufferToSocket(socketChannel,
                     approxTime);
 
-            if (bytesJustWritten > 0)
-                contemplateThrottleWrites(bytesJustWritten);
+            if (len == -1)
+                socketChannel.close();
+
+            if (len > 0)
+                contemplateThrottleWrites(len);
 
             if (!attached.entryWriter.hasBytesToWrite() && !attached.entryWriter.isWorkIncomplete())
                 // TURN OP_WRITE_OFF
@@ -659,6 +665,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             int len = attached.entryReader.readSocketToBuffer(socketChannel);
             if (len == -1) {
+                socketChannel.register(selector, 0);
                 if (replicationConfig.autoReconnectedUponDroppedConnection()) {
                     AbstractConnector connector = attached.connector;
                     if (connector != null)
@@ -1018,6 +1025,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             // if we still have some unwritten writer from last time
             lastSentTime = approxTime;
+            assert in.position() <= Integer.MAX_VALUE;
             int size = (int) in.position();
             out.limit(size);
 
@@ -1027,7 +1035,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 LOG.debug("bytes-written=" + len);
 
             if (len == size) {
-                //      assert len == size;
                 out.clear();
                 in.clear();
             } else {
@@ -1195,9 +1202,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 final long limit = out.limit();
                 out.limit(nextEntryPos);
 
-                boolean isStateless = (state != 1);
+                boolean isStatelessClient = (state != 1);
 
-                if (isStateless) {
+                if (isStatelessClient) {
                     if (statelessServerConnector == null) {
                         LOG.error("", new IllegalArgumentException("received an event " +
                                 "from a stateless map, stateless maps are not " +
@@ -1247,6 +1254,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 return;
 
             in.limit(in.position());
+            assert out.position() < Integer.MAX_VALUE;
             in.position((int) out.position());
 
             in.compact();
@@ -1268,8 +1276,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 return out.readLong();
             else
                 return Long.MIN_VALUE;
-
-            //  return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
         }
 
         public long remoteHeartbeatIntervalFromBuffer() {
@@ -1514,7 +1520,7 @@ class StatelessServerConnector<K, V> {
 
         writeException(writer, e);
 
-        writeSizeAndFlags(sizeLocation, true, writer);
+        writeSizeAndFlags(sizeLocation+SIZE_OF_TRANSACTION_ID, true, writer);
         return null;
     }
 
@@ -1839,17 +1845,19 @@ class StatelessServerConnector<K, V> {
     }
 
     private long reflectTransactionId(Bytes reader, Bytes writer) {
-        final long sizeLocation = writer.position();
-        writer.skip(TRANSACTION_ID_OFFSET); // isException +  SIZE_OF_SIZE
         final long transactionId = reader.readLong();
+        final long sizeLocation = writer.position();
+        writer.skip(SIZE_OF_SIZE);
         writer.writeLong(transactionId);
+        writer.writeBoolean(false); // isException
         return sizeLocation;
     }
 
     private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
         final long size = out.position() - locationOfSize;
         out.writeInt(locationOfSize, (int) size); // size
-        out.writeBoolean(locationOfSize + SIZE_OF_SIZE, isException); // isException
+        out.skip(SIZE_OF_TRANSACTION_ID);
+        out.writeBoolean(isException); // isException
     }
 
     private void writeException(Bytes out, Throwable e) {
@@ -1881,10 +1889,11 @@ class StatelessServerConnector<K, V> {
     private long header(Bytes writer, final long transactionId) {
         final long sizeLocation = writer.position();
 
-        writer.skip(TRANSACTION_ID_OFFSET);
+        writer.skip(SIZE_OF_SIZE);
+        writer.writeLong(transactionId);
 
         // exception
-        writer.writeLong(transactionId);
+        writer.skip(1);
 
         //  hasAnotherChunk
         writer.skip(1);
@@ -1903,11 +1912,11 @@ class StatelessServerConnector<K, V> {
         // size in bytes
         writer.writeInt(size);
 
-        // is exception
-        writer.writeBoolean(false);
-
         //transaction id;
         writer.skip(8);
+
+        // is exception
+        writer.writeBoolean(false);
 
         writer.writeBoolean(hasAnotherChunk);
 

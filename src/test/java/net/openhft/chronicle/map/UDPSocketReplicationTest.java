@@ -22,6 +22,8 @@ import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -75,8 +77,8 @@ public class UDPSocketReplicationTest {
         System.gc();
     }
 
-  /*  @Test
-     @Ignore
+    @Test
+    @Ignore
     public void testBufferOverflow() throws IOException, InterruptedException {
 
         for (int i = 0; i < 1024; i++) {
@@ -84,7 +86,7 @@ public class UDPSocketReplicationTest {
             map2.put(i * 2, "E");
             System.out.println("" + map2);
         }
-    }*/
+    }
 
 }
 

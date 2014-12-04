@@ -48,36 +48,39 @@ import static net.openhft.lang.MemoryUnit.*;
 import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 
 /**
- * <h2>A Replicating Multi Master HashMap</h2> <p>Each remote hash map, mirrors its changes over to another
- * remote hash map, neither hash map is considered the master store of data, each hash map uses timestamps to
- * reconcile changes. We refer to an instance of a remote hash-map as a node. A node will be connected to any
- * number of other nodes, for the first implementation the maximum number of nodes will be fixed. The data
- * that is stored locally in each node will become eventually consistent. So changes made to one node, for
- * example by calling put() will be replicated over to the other node. To achieve a high level of performance
- * and throughput, the call to put() won’t block, with concurrentHashMap, It is typical to check the return
- * code of some methods to obtain the old value for example remove(). Due to the loose coupling and lock free
- * nature of this multi master implementation,  this return value will only be the old value on the nodes
- * local data store. In other words the nodes are only concurrent locally. Its worth realising that another
- * node performing exactly the same operation may return a different value. However reconciliation will ensure
- * the maps themselves become eventually consistent. </p> <h2>Reconciliation </h2> <p>If two ( or more nodes )
- * were to receive a change to their maps for the same key but different values, say by a user of the maps,
- * calling the put(key, value). Then, initially each node will update its local store and each local store
- * will hold a different value, but the aim of multi master replication is to provide eventual consistency
- * across the nodes. So, with multi master when ever a node is changed it will notify the other nodes of its
- * change. We will refer to this notification as an event. The event will hold a timestamp indicating the time
- * the change occurred, it will also hold the state transition, in this case it was a put with a key and
- * value. Eventual consistency is achieved by looking at the timestamp from the remote node, if for a given
- * key, the remote nodes timestamp is newer than the local nodes timestamp, then the event from the remote
- * node will be applied to the local node, otherwise the event will be ignored. </p> <p>However there is an
- * edge case that we have to concern ourselves with, If two nodes update their map at the same time with
- * different values, we have to deterministically resolve which update wins, because of eventual consistency
- * both nodes should end up locally holding the same data. Although it is rare two remote nodes could receive
- * an update to their maps at exactly the same time for the same key, we have to handle this edge case, its
- * therefore important not to rely on timestamps alone to reconcile the updates. Typically the update with the
- * newest timestamp should win, but in this example both timestamps are the same, and the decision made to one
- * node should be identical to the decision made to the other. We resolve this simple dilemma by using a node
- * identifier, each node will have a unique identifier, the update from the node with the smallest identifier
- * wins. </p>
+ * <h2>A Replicating Multi Master HashMap</h2> <p>Each remote hash map, mirrors its changes over to
+ * another remote hash map, neither hash map is considered the master store of data, each hash map
+ * uses timestamps to reconcile changes. We refer to an instance of a remote hash-map as a node. A
+ * node will be connected to any number of other nodes, for the first implementation the maximum
+ * number of nodes will be fixed. The data that is stored locally in each node will become
+ * eventually consistent. So changes made to one node, for example by calling put() will be
+ * replicated over to the other node. To achieve a high level of performance and throughput, the
+ * call to put() won’t block, with concurrentHashMap, It is typical to check the return code of some
+ * methods to obtain the old value for example remove(). Due to the loose coupling and lock free
+ * nature of this multi master implementation,  this return value will only be the old value on the
+ * nodes local data store. In other words the nodes are only concurrent locally. Its worth realising
+ * that another node performing exactly the same operation may return a different value. However
+ * reconciliation will ensure the maps themselves become eventually consistent. </p>
+ * <h2>Reconciliation </h2> <p>If two ( or more nodes ) were to receive a change to their maps for
+ * the same key but different values, say by a user of the maps, calling the put(key, value). Then,
+ * initially each node will update its local store and each local store will hold a different value,
+ * but the aim of multi master replication is to provide eventual consistency across the nodes. So,
+ * with multi master when ever a node is changed it will notify the other nodes of its change. We
+ * will refer to this notification as an event. The event will hold a timestamp indicating the time
+ * the change occurred, it will also hold the state transition, in this case it was a put with a key
+ * and value. Eventual consistency is achieved by looking at the timestamp from the remote node, if
+ * for a given key, the remote nodes timestamp is newer than the local nodes timestamp, then the
+ * event from the remote node will be applied to the local node, otherwise the event will be
+ * ignored. </p> <p>However there is an edge case that we have to concern ourselves with, If two
+ * nodes update their map at the same time with different values, we have to deterministically
+ * resolve which update wins, because of eventual consistency both nodes should end up locally
+ * holding the same data. Although it is rare two remote nodes could receive an update to their maps
+ * at exactly the same time for the same key, we have to handle this edge case, its therefore
+ * important not to rely on timestamps alone to reconcile the updates. Typically the update with the
+ * newest timestamp should win, but in this example both timestamps are the same, and the decision
+ * made to one node should be identical to the decision made to the other. We resolve this simple
+ * dilemma by using a node identifier, each node will have a unique identifier, the update from the
+ * node with the smallest identifier wins. </p>
  *
  * @param <K> the entries key type
  * @param <V> the entries value type
@@ -207,7 +210,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
                 BytesBytesInterop.INSTANCE, key, keySize, keyBytesToInstance,
                 getRemoteBytesValueInterops, value, valueBytesToInstance,
-                replaceIfPresent, readValue, false, localIdentifier, currentTime());;
+                replaceIfPresent, readValue, false, localIdentifier, currentTime());
+        ;
     }
 
     /**
@@ -239,8 +243,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
      * @param timeStamp        the time that that change was made, this is used for replication
      * @return the value that was replaced
      */
-    private V put0(K key, V value, boolean replaceIfPresent,
-                   final byte identifier, long timeStamp) {
+    V put0(K key, V value, boolean replaceIfPresent,
+           final byte identifier, long timeStamp) {
         checkKey(key);
         checkValue(value);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
@@ -253,6 +257,34 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 this, value, valueIdentity(), replaceIfPresent, this, putReturnsNull,
                 identifier, timeStamp);
     }
+
+
+    Object remoteRemove(K key,
+                        final byte remoteIdentifier, long timeStamp) {
+        checkKey(key);
+
+        K key1 = (K) key;
+        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
+        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
+        copies = metaKeyInteropProvider.getCopies(copies);
+        MKI metaKeyInterop =
+                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key1);
+        long keySize = metaKeyInterop.size(keyInterop, key1);
+        long hash = metaKeyInterop.hash(keyInterop, key1);
+        int segmentNum = getSegment(hash);
+        long segmentHash = segmentHash(hash);
+        ReplicatedChronicleMap.Segment segment = segment(segmentNum);
+        segment.writeLock(null);
+        try {
+            return segment.removeWithoutLock(copies, null, metaKeyInterop, keyInterop, key1, keySize,
+                    keyIdentity(), this, (V) null, valueIdentity(), segmentHash, this, removeReturnsNull,
+                    timeStamp, remoteIdentifier, true, false);
+        } finally {
+            segment.writeUnlock();
+        }
+
+    }
+
 
     @Override
     <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
@@ -356,6 +388,11 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     @Override
+    void onRemotePut(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
+        onRelocation(segment, pos); // erase modification bits
+    }
+
+    @Override
     void onRemove(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
@@ -365,6 +402,11 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 LOG.error("", e);
             }
         }
+    }
+
+    @Override
+    void onRemoteRemove(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
+        onRelocation(segment, pos); // erase modification bits
     }
 
     @Override
@@ -380,8 +422,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     /**
-     * This method does not set a segment lock, A segment lock should be obtained before calling this method,
-     * especially when being used in a multi threaded context.
+     * This method does not set a segment lock, A segment lock should be obtained before calling
+     * this method, especially when being used in a multi threaded context.
      */
     @Override
     public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
@@ -454,8 +496,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     /**
-     * This method does not set a segment lock, A segment lock should be obtained before calling this method,
-     * especially when being used in a multi threaded context.
+     * This method does not set a segment lock, A segment lock should be obtained before calling
+     * this method, especially when being used in a multi threaded context.
      */
     @Override
     public void readExternalEntry(
@@ -471,7 +513,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         final byte remoteIdentifier;
 
         if (id != 0) {
-            //     isDeleted = false;
             remoteIdentifier = id;
         } else {
             throw new IllegalStateException("identifier can't be 0");
@@ -900,8 +941,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 entry.writeBoolean(false);
 
                 // put callbacks
-                if (!remote)
-                    onPut(this, localSegmentState.pos);
+                onPutMaybeRemote(localSegmentState.pos, remote);
                 if (bytesEventListener != null)
                     bytesEventListener.onPut(entry, 0L, metaDataBytes,
                             localSegmentState.valueSizePos, true);
@@ -1001,12 +1041,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         /**
-         * - if expectedValue is not null, returns Boolean.TRUE (removed) or
-         * Boolean.FALSE (entry not found), regardless the expectedValue object is Bytes instance
-         * (RPC call) or the value instance
-         * - if expectedValue is null:
-         *   - if resultUnused is false, null or removed value is returned
-         *   - if resultUnused is true, null is always returned
+         * - if expectedValue is not null, returns Boolean.TRUE (removed) or Boolean.FALSE (entry
+         * not found), regardless the expectedValue object is Bytes instance (RPC call) or the value
+         * instance - if expectedValue is null: - if resultUnused is false, null or removed value is
+         * returned - if resultUnused is true, null is always returned
          */
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
                 RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
@@ -1057,6 +1095,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         entry.position(timestampPos);
                         entry.writeLong(timestamp);
                         entry.writeByte(identifier);
+                        onRemoveMaybeRemote(pos, remote);
                         break; // to "key not found" location
                     }
 
@@ -1133,8 +1172,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     long timestampPos = entry.position();
                     if (shouldIgnore(entry, timestamp, identifier)) {
                         LOG.error("Trying to replace a value for key={} on the node with id={} " +
-                                "at time={} (current time), but the entry is updated by node " +
-                                "with id={} at time={}. Time is not monotonic across nodes!?",
+                                        "at time={} (current time), but the entry is updated by node " +
+                                        "with id={} at time={}. Time is not monotonic across nodes!?",
                                 key, identifier, timestamp, entry.readByte(entry.position() - 1),
                                 entry.readLong(entry.position() - ADDITIONAL_ENTRY_BYTES + 1));
                         return readValue.readNull();
@@ -1163,8 +1202,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         /**
-         * @param bootstrapOnlyLocalEntries if true - only entries that have been create from
-         *                                  this node will be published during a bootstrap
+         * @param bootstrapOnlyLocalEntries if true - only entries that have been create from this
+         *                                  node will be published during a bootstrap
          */
         public void dirtyEntries(final long timeStamp,
                                  final ModificationIterator.EntryModifiableCallback callback,
@@ -1300,14 +1339,15 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     /**
-     * <p>Once a change occurs to a map, map replication requires that these changes are picked up by another
-     * thread, this class provides an iterator like interface to poll for such changes. </p> <p>In most cases
-     * the thread that adds data to the node is unlikely to be the same thread that replicates the data over
-     * to the other nodes, so data will have to be marshaled between the main thread storing data to the map,
-     * and the thread running the replication. </p> <p>One way to perform this marshalling, would be to pipe
-     * the data into a queue. However, This class takes another approach. It uses a bit set, and marks bits
-     * which correspond to the indexes of the entries that have changed. It then provides an iterator like
-     * interface to poll for such changes. </p>
+     * <p>Once a change occurs to a map, map replication requires that these changes are picked up
+     * by another thread, this class provides an iterator like interface to poll for such changes.
+     * </p> <p>In most cases the thread that adds data to the node is unlikely to be the same thread
+     * that replicates the data over to the other nodes, so data will have to be marshaled between
+     * the main thread storing data to the map, and the thread running the replication. </p> <p>One
+     * way to perform this marshalling, would be to pipe the data into a queue. However, This class
+     * takes another approach. It uses a bit set, and marks bits which correspond to the indexes of
+     * the entries that have changed. It then provides an iterator like interface to poll for such
+     * changes. </p>
      *
      * @author Rob Austin.
      */
@@ -1344,7 +1384,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          *
          * @param segmentIndex the index of the maps segment
          * @param pos          the position within this {@code segmentIndex}
-         * @return and index the has combined the {@code segmentIndex}  and  {@code pos} into a single value
+         * @return and index the has combined the {@code segmentIndex}  and  {@code pos} into a
+         * single value
          */
         private long combine(int segmentIndex, long pos) {
             return (((long) segmentIndex) << segmentIndexShift) | pos;
@@ -1368,8 +1409,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         /**
-         * you can continue to poll hasNext() until data becomes available. If are are in the middle of
-         * processing an entry via {@code nextEntry}, hasNext will return true until the bit is cleared
+         * you can continue to poll hasNext() until data becomes available. If are are in the middle
+         * of processing an entry via {@code nextEntry}, hasNext will return true until the bit is
+         * cleared
          *
          * @return true if there is an entry
          */
@@ -1420,7 +1462,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     }
 
                     // if the position was already cleared by another thread
-                    // while we were trying to obtain segment lock (for example, in onReplication()),
+                    // while we were trying to obtain segment lock (for example, in onRelocation()),
                     // go to pick up next (next iteration in while (true) loop)
                 } finally {
                     segment.readUnlock();

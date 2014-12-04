@@ -316,18 +316,18 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     final void checkKey(Object key) {
-        if (!kClass.isInstance(key)) {
-            // key.getClass will cause NPE exactly as needed
-            throw new ClassCastException("Key must be a " + kClass.getName() +
-                    " but was a " + key.getClass());
-        }
+        // if (!kClass.isInstance(key)) {
+        //     // key.getClass will cause NPE exactly as needed
+        //     throw new ClassCastException("Key must be a " + kClass.getName() +
+        //            " but was a " + key.getClass());
+        //}
     }
 
     final void checkValue(Object value) {
-        if (vClass != Void.class && !vClass.isInstance(value)) {
-            throw new ClassCastException("Value must be a " + vClass.getName() +
-                    " but was a " + value.getClass());
-        }
+        //  if (vClass != Void.class && !vClass.isInstance(value)) {
+        //      throw new ClassCastException("Value must be a " + vClass.getName() +
+        //              " but was a " + value.getClass());
+        //  }
     }
 
     final void put(Bytes entry, Bytes output) {
@@ -384,7 +384,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     static abstract class ReadValueToBytes implements ReadValue<Bytes> {
-        private SizeMarshaller valueSizeMarshaller;
+        SizeMarshaller valueSizeMarshaller;
 
         abstract Bytes bytes(long valueSize);
 
@@ -398,6 +398,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             usingBytes = bytes(valueSize);
             valueSizeMarshaller.writeSize(usingBytes, valueSize);
             usingBytes.write(entry, entry.position(), valueSize);
+            entry.skip(valueSize);
             return usingBytes;
         }
     }
@@ -434,6 +435,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         @Override
         Bytes bytes(long valueSize) {
+            valueSize = valueSizeMarshaller.sizeEncodingSize(valueSize) + valueSize;
             if (lazyBytes != null) {
                 if (lazyBytes.capacity() < valueSize) {
                     DirectStore store = (DirectStore) lazyBytes.store();
@@ -1174,6 +1176,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public final boolean replace(@net.openhft.lang.model.constraints.NotNull K key,
                                  @net.openhft.lang.model.constraints.NotNull V oldValue,
                                  @net.openhft.lang.model.constraints.NotNull V newValue) {
+
+        if (key == null || oldValue == null || newValue == null)
+            throw new NullPointerException();
+
         checkValue(oldValue);
         return (Boolean) replaceIfValueIs(key, oldValue, newValue);
     }
@@ -1185,6 +1191,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     @SuppressWarnings("unchecked")
     public final V replace(@net.openhft.lang.model.constraints.NotNull final K key,
                            @net.openhft.lang.model.constraints.NotNull final V value) {
+        if (key == null || value == null)
+            throw new NullPointerException();
+
         return (V) replaceIfValueIs(key, null, value);
     }
 
@@ -1359,7 +1368,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         // do nothing
     }
 
+    void onRemoteRemove(Segment segment, long pos) {
+        // do nothing
+    }
+
     void onPut(Segment segment, long pos) {
+        // do nothing
+    }
+
+    void onRemotePut(Segment segment, long pos) {
         // do nothing
     }
 
@@ -1595,6 +1612,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         long startWriteLock = 0;
+
         @Override
         public final WriteLocked<K, KI, MKI, V, VI, MVI> writeLock(
                 @Nullable SegmentState segmentState) {
@@ -1930,8 +1948,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     metaValueInterop, valueInterop, value, valueSize, searchedHashLookup);
 
             // put callbacks
-            if (!remote)
-                onPut(this, segmentState.pos);
+            onPutMaybeRemote(segmentState.pos, remote);
             if (bytesEventListener != null)
                 bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false);
             if (eventListener != null) {
@@ -1940,6 +1957,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
 
             return resultUnused ? null : prevValue;
+        }
+
+        final void onPutMaybeRemote(long pos, boolean remote) {
+            if (remote) {
+                onRemotePut(this, pos);
+            } else {
+                onPut(this, pos);
+            }
         }
 
         /**
@@ -2019,10 +2044,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 }
             }
             return ret;
-        }
-
-        private void setBlocks(long pos, int blocks) {
-            freeList.set(pos, pos + blocks);
         }
 
         private void updateNextPosToSearchFrom(long allocated, int blocks) {
@@ -2155,16 +2176,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // update segment state
             if (removeFromMultiMap) {
                 hashLookup.removePrevPos();
+                long entrySizeInBytes = entry.positionAddr() + valueSize - entry.startAddr();
+                free(pos, inBlocks(entrySizeInBytes));
             } else {
                 hashLookup.removePosition(pos);
             }
             decrementSize();
-            long entrySizeInBytes = entry.positionAddr() + valueSize - entry.startAddr();
-            free(pos, inBlocks(entrySizeInBytes));
 
             // remove callbacks
-            if (!remote)
-                onRemove(this, pos);
+            onRemoveMaybeRemote(pos, remote);
             if (bytesEventListener != null)
                 bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos);
             if (eventListener != null) {
@@ -2175,6 +2195,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
 
             return booleanResult ? Boolean.TRUE : removedValue;
+        }
+
+        final void onRemoveMaybeRemote(long pos, boolean remote) {
+            if (remote) {
+                onRemoteRemove(this, pos);
+            } else {
+                onRemove(this, pos);
+            }
         }
 
         private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>>
@@ -2331,15 +2359,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 MetaBytesWriter<E, ? super EW> metaElemWriter, EW elemWriter, E newElem,
                 long newElemSize,
                 MultiMap searchedHashLookup) {
-            long valueSizeAddr = entry.address() + valueSizePos;
+            long entryStartAddr = entry.address();
+            long valueSizeAddr = entryStartAddr + valueSizePos;
             long newValueAddr = alignment.alignAddr(
                     valueSizeAddr + valueSizeMarshaller.sizeEncodingSize(newElemSize));
             long newEntryEndAddr = newValueAddr + newElemSize;
-            long entryStartAddr = entry.address();
-            long oldEntrySize = entryEndAddr - entryStartAddr;
-            int oldSizeInBlocks = inBlocks(oldEntrySize);
             newValueDoesNotFit:
             if (newEntryEndAddr != entryEndAddr) {
+                long oldEntrySize = entryEndAddr - entryStartAddr;
+                int oldSizeInBlocks = inBlocks(oldEntrySize);
                 int newSizeInBlocks = inBlocks(newEntryEndAddr - entryStartAddr);
                 if (newSizeInBlocks > oldSizeInBlocks) {
                     if (newSizeInBlocks > MAX_ENTRY_OVERSIZE_FACTOR) {
@@ -2373,9 +2401,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     // But if these blocks will be taken by that time,
                     // this entry will need to be relocated.
                 }
-            } else {
-                // todo investivate when we are able to avoid this assignment
-                setBlocks(pos, oldSizeInBlocks);
             }
             // Common code for all cases
             entry.position(valueSizePos);
@@ -2585,11 +2610,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             final long entryEndAddr = entry.positionAddr() + valueSize;
             if (removeFromMultiMap) {
                 segment.hashLookup().remove(segmentHash, pos);
+                segment.free(pos, segment.inBlocks(entryEndAddr - entry.address()));
             } else {
                 segment.hashLookup().removePosition(pos);
             }
             segment.decrementSize();
-            segment.free(pos, segment.inBlocks(entryEndAddr - entry.address()));
 
             // remove callbacks
             onRemove(segment, pos);
