@@ -135,7 +135,7 @@ public class TCPSocketReplicationBootStrapTest {
                 .replication((byte) 2, tcpConfigNewMap2).createPersistedTo(persistenceFile);
 
         // add data into it
-        waitTillEqual(20000000);
+        waitTillEqual(5000);
         assertEquals("ADDED WHEN DISCONNECTED TO MAP1", map1.get(11));
     }
 
