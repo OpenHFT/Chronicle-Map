@@ -1857,7 +1857,7 @@ class StatelessServerConnector<K, V> {
 
     private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
         final long size = out.position() - locationOfSize;
-        System.out.println("..................... Size=" + size);
+
         out.writeInt(locationOfSize, (int) size); // size
 
         // write isException
@@ -1866,12 +1866,14 @@ class StatelessServerConnector<K, V> {
         long pos = out.position();
         long limit = out.limit();
 
-        out.position(locationOfSize);
-        out.limit(pos);
-        System.out.println("...................... Sending > bytes=" + AbstractBytes.toHex(out));
-
-        out.limit(limit);
-        out.position(pos);
+        if (LOG.isDebugEnabled()) {
+            out.position(locationOfSize);
+            out.limit(pos);
+            LOG.info("Sending to the stateless client, bytes=" + AbstractBytes.toHex(out) + "," +
+                    "len=" + out.remaining());
+            out.limit(limit);
+            out.position(pos);
+        }
 
 
     }
