@@ -22,6 +22,7 @@ import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -1520,7 +1521,7 @@ class StatelessServerConnector<K, V> {
 
         writeException(writer, e);
 
-        writeSizeAndFlags(sizeLocation+SIZE_OF_TRANSACTION_ID, true, writer);
+        writeSizeAndFlags(sizeLocation + SIZE_OF_TRANSACTION_ID, true, writer);
         return null;
     }
 
@@ -1855,9 +1856,23 @@ class StatelessServerConnector<K, V> {
 
     private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
         final long size = out.position() - locationOfSize;
+        System.out.println("..................... Size=" + size);
         out.writeInt(locationOfSize, (int) size); // size
-        out.skip(SIZE_OF_TRANSACTION_ID);
-        out.writeBoolean(isException); // isException
+
+        // write isException
+        out.writeBoolean(locationOfSize + SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID, isException);
+
+        long pos = out.position();
+        long limit = out.limit();
+
+        out.position(locationOfSize);
+        out.limit(pos);
+        System.out.println("...................... Sending > bytes=" + AbstractBytes.toHex(out));
+
+        out.limit(limit);
+        out.position(pos);
+
+
     }
 
     private void writeException(Bytes out, Throwable e) {

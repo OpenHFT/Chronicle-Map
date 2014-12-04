@@ -237,7 +237,9 @@ public class StatelessClientTest {
                     .class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", port)).create()) {
                 assertEquals("EXAMPLE-10", statelessMap.get(10));
-                assertEquals(1, statelessMap.size());
+
+         int size = statelessMap.size();
+                assertEquals(1, size);
             }
         }
     }

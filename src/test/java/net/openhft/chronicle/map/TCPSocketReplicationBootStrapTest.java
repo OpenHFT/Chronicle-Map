@@ -50,11 +50,11 @@ public class TCPSocketReplicationBootStrapTest {
     @Test
     public void testBootstrap() throws IOException, InterruptedException {
 
-        map1 = newTcpSocketShmIntString((byte) 1, 8069);
+        map1 = newTcpSocketShmIntString((byte) 1, 8091);
 
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
-                        (byte) 2, 8066, new InetSocketAddress("localhost", 8069));
+                        (byte) 2, 8092, new InetSocketAddress("localhost", 8091));
         final ChronicleMap<Integer, CharSequence> map2a =
                 map2aBuilder.createPersistedTo(getPersistenceFile());
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2

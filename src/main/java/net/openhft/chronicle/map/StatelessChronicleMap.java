@@ -21,6 +21,7 @@ package net.openhft.chronicle.map;
 import com.sun.jdi.connect.spi.ClosedConnectionException;
 import net.openhft.chronicle.hash.RemoteCallTimeoutException;
 import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.NativeBytes;
@@ -40,6 +41,8 @@ import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
@@ -60,8 +63,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final String name;
     private final AbstractChronicleMapBuilder chronicleMapBuilder;
 
-    private ByteBuffer buffer;
-    private ByteBufferBytes bytes;
+    private ByteBuffer outBuffer;
+    private ByteBufferBytes outBytes;
+
+    private ByteBuffer inBuffer;
+    private ByteBufferBytes inBytes;
 
     private final ReaderWithSize<K> keyReaderWithSize;
     private final WriterWithSize<K> keyWriterWithSize;
@@ -78,6 +84,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final boolean removeReturnsNull;
 
     private ExecutorService executorService;
+
 
     static enum EventId {
         HEARTBEAT,
@@ -108,7 +115,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         UPDATE_FOR_KEY
     }
 
-    private long transactionID;
+    private AtomicLong transactionID = new AtomicLong(0);
 
     StatelessChronicleMap(final StatelessMapConfig config,
                           final AbstractChronicleMapBuilder chronicleMapBuilder) throws IOException {
@@ -130,8 +137,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         this.name = chronicleMapBuilder.name();
         attemptConnect(config.remoteAddress());
 
-        buffer = allocateDirect(maxEntrySize).order(ByteOrder.nativeOrder());
-        bytes = new ByteBufferBytes(buffer.slice());
+        outBuffer = allocateDirect(maxEntrySize).order(ByteOrder.nativeOrder());
+        outBytes = new ByteBufferBytes(outBuffer.slice());
+
+
+        inBuffer = allocateDirect(maxEntrySize).order(ByteOrder.nativeOrder());
+        inBytes = new ByteBufferBytes(outBuffer.slice());
+
     }
 
     @Override
@@ -330,8 +342,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
      * @return a unique transactionId
      */
     private long nextUniqueTransaction(long time) {
-        transactionID = (time == transactionID) ? time + 1 : time;
-        return transactionID;
+        long old = transactionID.getAndSet(time);
+
+        if (old == time)
+            return transactionID.incrementAndGet();
+        else
+            return time;
+
     }
 
     public synchronized V putIfAbsent(K key, V value) {
@@ -495,7 +512,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         ThreadLocalCopies copies = writeKey((K) key);
 
         if (removeReturnsNull) {
-            sendWithoutAcc(bytes, sizeLocation);
+            sendWithoutAcc(outBytes, sizeLocation);
             return null;
         } else
             // get the data back from the server
@@ -512,7 +529,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         copies = writeValue(value, copies);
 
         if (putReturnsNull) {
-            sendWithoutAcc(bytes, sizeLocation);
+            sendWithoutAcc(outBytes, sizeLocation);
             return null;
         } else
             // get the data back from the server
@@ -539,17 +556,17 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private synchronized <R> void writeObject(@NotNull Object function) {
-        long start = bytes.position();
+        long start = outBytes.position();
         for (; ; ) {
             try {
-                bytes.writeObject(function);
+                outBytes.writeObject(function);
                 return;
             } catch (IllegalStateException e) {
                 Throwable cause = e.getCause();
 
                 if (cause instanceof IOException && cause.getMessage().contains("Not enough available space")) {
                     LOG.debug("resizing buffer");
-                    resizeBuffer(buffer.capacity() + maxEntrySize, start);
+                    resizeBufferOutBuffer(outBuffer.capacity() + maxEntrySize, start);
                 } else
                     throw e;
             }
@@ -563,7 +580,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         writeEntriesForPutAll(map);
 
         if (putReturnsNull)
-            sendWithoutAcc(bytes, sizeLocation);
+            sendWithoutAcc(outBytes, sizeLocation);
         else
             blockingFetch(sizeLocation);
     }
@@ -595,8 +612,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         final int numberOfEntries = map.size();
         int numberOfEntriesReadSoFar = 0;
 
-        bytes.writeStopBit(numberOfEntries);
-        assert bytes.limit() == bytes.capacity();
+        outBytes.writeStopBit(numberOfEntries);
+        assert outBytes.limit() == outBytes.capacity();
 
         ThreadLocalCopies copies = keyWriterWithSize.getCopies(null);
         Object keyWriter = keyWriterWithSize.writerForLoop(copies);
@@ -611,7 +628,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
             numberOfEntriesReadSoFar++;
 
-            long start = bytes.position();
+            long start = outBytes.position();
 
             // putAll if a bit more complicated than the others
             // as the volume of data could cause us to have to resize our buffers
@@ -634,7 +651,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
             writeValueInLoop(value, valueWriter, copies);
 
-            final int len = (int) (bytes.position() - start);
+            final int len = (int) (outBytes.position() - start);
 
             if (len > maxEntrySize)
                 maxEntrySize = len;
@@ -642,11 +659,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private void resizeIfRequired(int numberOfEntries, int numberOfEntriesReadSoFar, final long start) {
-        final long remaining = bytes.remaining();
+        final long remaining = outBytes.remaining();
 
         if (remaining < maxEntrySize) {
             long estimatedRequiredSize = estimateSize(numberOfEntries, numberOfEntriesReadSoFar);
-            resizeBuffer((int) (estimatedRequiredSize + maxEntrySize), start);
+            resizeBufferOutBuffer((int) (estimatedRequiredSize + maxEntrySize), start);
         }
     }
 
@@ -659,46 +676,85 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private long estimateSize(int numberOfEntries, int numberOfEntriesReadSoFar) {
         // we will back the size estimate on what we have so far
         final double percentageComplete = (double) numberOfEntriesReadSoFar / (double) numberOfEntries;
-        return (long) ((double) bytes.position() / percentageComplete);
+        return (long) ((double) outBytes.position() / percentageComplete);
     }
 
-    private void resizeBuffer(int size, long start) {
+    private void resizeBufferOutBuffer(int size, long start) {
         if (LOG.isDebugEnabled())
             LOG.debug("resizing buffer to size=" + size);
 
-        if (size < buffer.capacity())
+        if (size < outBuffer.capacity())
             throw new IllegalStateException("it not possible to resize the buffer smaller");
 
         assert size < Integer.MAX_VALUE;
 
         final ByteBuffer result = ByteBuffer.allocate((int) size).order(ByteOrder.nativeOrder());
 
-        final long bytesPosition = bytes.position();
+        final long bytesPosition = outBytes.position();
 
-        bytes = new ByteBufferBytes(result.slice());
+        outBytes = new ByteBufferBytes(result.slice());
 
-        buffer.position(0);
-        buffer.limit((int) bytesPosition);
+        outBuffer.position(0);
+        outBuffer.limit((int) bytesPosition);
 
         int numberOfLongs = (int) bytesPosition / 8;
 
         // chunk in longs first
         for (int i = 0; i < numberOfLongs; i++) {
-            bytes.writeLong(buffer.getLong());
+            outBytes.writeLong(outBuffer.getLong());
         }
 
         for (int i = numberOfLongs * 8; i < bytesPosition; i++) {
-            bytes.writeByte(buffer.get());
+            outBytes.writeByte(outBuffer.get());
         }
 
-        buffer = result;
+        outBuffer = result;
 
-        assert buffer.capacity() == bytes.capacity();
+        assert outBuffer.capacity() == outBytes.capacity();
 
-        assert buffer.capacity() == size;
-        assert buffer.capacity() == bytes.capacity();
-        assert bytes.limit() == bytes.capacity();
-        bytes.position(start);
+        assert outBuffer.capacity() == size;
+        assert outBuffer.capacity() == outBytes.capacity();
+        assert outBytes.limit() == outBytes.capacity();
+        outBytes.position(start);
+    }
+
+    private void resizeBufferInBuffer(int size, long start) {
+        if (LOG.isDebugEnabled())
+            LOG.debug("resizing buffer to size=" + size);
+
+        if (size < inBuffer.capacity())
+            throw new IllegalStateException("it not possible to resize the buffer smaller");
+
+        assert size < Integer.MAX_VALUE;
+
+        final ByteBuffer result = ByteBuffer.allocate((int) size).order(ByteOrder.nativeOrder());
+
+        final long bytesPosition = inBytes.position();
+
+        inBytes = new ByteBufferBytes(result.slice());
+
+        inBuffer.position(0);
+        inBuffer.limit((int) bytesPosition);
+
+        int numberOfLongs = (int) bytesPosition / 8;
+
+        // chunk in longs first
+        for (int i = 0; i < numberOfLongs; i++) {
+            inBytes.writeLong(inBuffer.getLong());
+        }
+
+        for (int i = numberOfLongs * 8; i < bytesPosition; i++) {
+            inBytes.writeByte(inBuffer.get());
+        }
+
+        inBuffer = result;
+
+        assert inBuffer.capacity() == inBytes.capacity();
+        assert inBuffer.capacity() == size;
+        assert inBuffer.capacity() == inBytes.capacity();
+        assert inBytes.limit() == inBytes.capacity();
+
+        inBytes.position(start);
     }
 
     public synchronized void clear() {
@@ -780,10 +836,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     private void compact(Bytes in) {
         if (in.remaining() == 0) {
-            bytes.clear();
-            bytes.buffer().clear();
+            outBytes.clear();
+            outBytes.buffer().clear();
         } else {
-            buffer.compact();
+            outBuffer.compact();
         }
     }
 
@@ -822,10 +878,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private long writeEvent(StatelessChronicleMap.EventId event) {
-        buffer.clear();
-        bytes.clear();
+        outBuffer.clear();
+        outBytes.clear();
 
-        bytes.write((byte) event.ordinal());
+        outBytes.write((byte) event.ordinal());
         long sizeLocation = markSizeLocation();
 
         return sizeLocation;
@@ -841,7 +897,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         long sizeLocation = writeEvent(event);
 
         // skips for the transaction id
-        bytes.skip(SIZE_OF_TRANSACTION_ID);
+        outBytes.skip(SIZE_OF_TRANSACTION_ID);
         return sizeLocation;
     }
 
@@ -905,6 +961,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         } catch (IOException e) {
             close();
             throw new IORuntimeException(e);
+        } catch (InterruptedException e) {
+            close();
+            throw new RuntimeException(e);
         } catch (Exception e) {
             close();
             throw e;
@@ -917,13 +976,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         } catch (IOException e) {
             close();
             throw new IORuntimeException(e);
+        } catch (InterruptedException e) {
+            close();
+            throw new RuntimeException(e);
         } catch (Exception e) {
             close();
             throw e;
         }
     }
 
-    private Bytes blockingFetchThrowable(long sizeLocation, long timeOutMs, final long transactionId, final long startTime) throws IOException {
+    private Bytes blockingFetchThrowable(long sizeLocation, long timeOutMs, final long transactionId, final long startTime) throws IOException, InterruptedException {
 
         final long timeoutTime = startTime + timeOutMs;
 
@@ -936,10 +998,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 if (LOG.isDebugEnabled())
                     LOG.debug("sending data with transactionId=" + transactionId);
 
+                System.out.println("sending data with transactionId=" + transactionId);
                 writeSizeAndTransactionIdAt(sizeLocation, transactionId);
 
                 // send out all the bytes
-                send(bytes, timeoutTime);
+                send(outBytes, timeoutTime);
 
                 return blockingFetch(timeoutTime, transactionId);
             } catch (java.nio.channels.ClosedChannelException | ClosedConnectionException e) {
@@ -955,49 +1018,147 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         } catch (IOException e) {
             close();
             throw new IORuntimeException(e);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             close();
             throw e;
+        } catch (Exception e) {
+            close();
+            throw new RuntimeException(e);
         }
     }
 
-    private Bytes blockingFetch(long timeoutTime, long transactionId) throws IOException {
 
-        bytes.clear();
-        bytes.buffer().clear();
+    private volatile long parkedTransactionId;
+    private volatile int parkedTransactionSize;
+    private volatile long parkedTransactionTimeStamp;
 
-        // the number of bytes in the response
-        final int size = receive(SIZE_OF_SIZE, timeoutTime).readInt();
+    ByteBufferBytes sizeAndTransactionIdBuffer = new ByteBufferBytes(ByteBuffer.allocate
+            (SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID));
 
-        final int requiredSize = size + SIZE_OF_SIZE;
+    private ReentrantLock reentrantLock = new ReentrantLock();
 
-        if (bytes.capacity() < requiredSize) {
-            long pos = bytes.position();
-            long limit = bytes.position();
-            bytes.position(limit);
-            resizeBuffer(requiredSize, pos);
+    int i = 0;
+
+    private synchronized Bytes blockingFetch(long timeoutTime, long transactionId) throws IOException,
+            InterruptedException {
+        System.out.println("blockingFetch=" + +parkedTransactionId + ", thread=" + Thread
+                .currentThread().getName());
+        int size = 0;
+        parkedTransactionTimeStamp = 0;
+        parkedTransactionId = 0;
+        parkedTransactionSize = 0;
+
+//        if (i++ == 1)
+//            receiveAll();
+
+        System.out.println("expecting transaction of bytes=" + AbstractBytes.toHex
+                (transactionId) + " for " + transactionId);
+
+        for (; ; ) {
+            System.out.println("transactionId=" + transactionId + ",parkedTransactionId=" +
+                    parkedTransactionId +
+                    ", thread=" + Thread
+                    .currentThread().getName());
+
+            // read the next item from the socket
+            if (parkedTransactionId == 0) {
+
+                assert parkedTransactionTimeStamp == 0;
+                assert parkedTransactionSize == 0;
+
+                // the number of bytes in the response
+                //    final Bytes buffer = receiveSizeAndTransactionId(timeoutTime);
+                receive(SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID, timeoutTime);
+
+                System.out.println("receiveSizeAndTransactionId bytes=" + AbstractBytes.toHex
+                        (inBytes) + " for " + transactionId);
+
+
+                final int trueSize = inBytes.readInt();
+
+                System.out.println("trueSize=" + trueSize);
+
+                final int size0 = trueSize - (SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID);
+                final long transactionId0 = inBytes.readLong();
+
+
+                System.out.println("got receiveSizeAndTransactionId bytes=" + transactionId0);
+
+
+                // if the transaction id is not for this thread, park it and read the next one
+                if (transactionId0 == transactionId) {
+                    // we have the correct transaction id !
+                    parkedTransactionId = 0;
+
+                    System.out.println("using transactionId=" + transactionId0 + ", thead=" + Thread
+                            .currentThread().getName());
+                    size = size0;
+                    assert size > 0;
+
+
+                    parkedTransactionSize = 0;
+                    parkedTransactionTimeStamp = 0;
+                    break;
+                } else {
+                    System.out.println("read but not for use transactionId=" + transactionId0 + ", " +
+                            "thead=" + Thread
+                            .currentThread().getName());
+
+                    parkedTransactionTimeStamp = System.currentTimeMillis();
+                    parkedTransactionSize = size0;
+                    parkedTransactionId = transactionId0;
+                    pause();
+                    continue;
+                }
+            }
+
+            // the transaction id was read by another thread, but it is for this thread
+            if (parkedTransactionId == transactionId) {
+                parkedTransactionId = 0;
+                size = parkedTransactionSize;
+                parkedTransactionSize = 0;
+                System.out.println("using transactionId=" + transactionId);
+                break;
+            }
+
+
+            // time out the old transaction id
+            if (System.currentTimeMillis() - timeoutTime > parkedTransactionTimeStamp) {
+
+                LOG.error("", new IllegalStateException("Skipped Message with transaction-id=" +
+                        parkedTransactionTimeStamp +
+                        ", this can occur when you have another thread which has called the " +
+                        "stateless client and terminated abruptly before the message has been " +
+                        "returned from the server"));
+                parkedTransactionTimeStamp = 0;
+                parkedTransactionId = 0;
+                parkedTransactionSize = 0;
+
+            }
+
+            pause();
+        }
+
+
+        final int minBufferSize = size;
+
+        if (inBytes.capacity() < minBufferSize) {
+            long pos = inBytes.position();
+            long limit = inBytes.position();
+            inBytes.position(limit);
+            resizeBufferInBuffer(minBufferSize, pos);
         } else
-            bytes.limit(bytes.capacity());
+            inBytes.limit(inBytes.capacity());
 
         // block until we have received all the bytes in this chunk
         receive(size, timeoutTime);
 
+        System.out.println("received bytes=" + AbstractBytes.toHex(inBytes) + ",Len=" + inBytes.remaining());
 
-        final long inTransactionId = bytes.readLong();
-        final boolean isException = bytes.readBoolean();
-
-        if (inTransactionId != transactionId) {
-            LOG.error("", new IllegalStateException("Skipped Message with transaction-id=" +
-                    inTransactionId +
-                    ", this can occur when you have another thread which has called the " +
-                    "stateless client and terminated abruptly before the message has been " +
-                    "returned from the server"));
-
-            blockingFetch(timeoutTime, transactionId);
-        }
+        final boolean isException = inBytes.readBoolean();
 
         if (isException) {
-            Throwable throwable = (Throwable) bytes.readObject();
+            Throwable throwable = (Throwable) inBytes.readObject();
             try {
                 Field stackTrace = Throwable.class.getDeclaredField("stackTrace");
                 stackTrace.setAccessible(true);
@@ -1017,38 +1178,104 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             NativeBytes.UNSAFE.throwException(throwable);
         }
 
-        return bytes;
+
+        return inBytes;
     }
+
+    private void pause() throws InterruptedException {
+        //    reentrantLock.unlock();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            LOG.error("", e);
+            throw e;
+        }
+        //  reentrantLock.lock();
+    }
+
+    private void receiveAll() throws IOException {
+
+        inBytes.clear();
+        int len = clientChannel.read(inBytes.buffer());
+
+        System.out.println("read all bytes=" + AbstractBytes.toHex(inBytes) + ",len=" + len);
+
+    }
+
 
     private Bytes receive(int requiredNumberOfBytes, long timeoutTime) throws IOException {
 
-        while (bytes.buffer().position() < requiredNumberOfBytes) {
-            assert requiredNumberOfBytes <= bytes.capacity();
+        // inBytes.clear();
+        // inBytes.buffer().clear();
 
-            int len = clientChannel.read(bytes.buffer());
+        //   int limit = inBytes.buffer().limit();
+        //   int start = inBytes.buffer().position();
 
+        //  inBytes.buffer().limit(start + requiredNumberOfBytes);
+        inBytes.position(0);
+        inBytes.limit(requiredNumberOfBytes);
+
+        inBytes.buffer().position(0);
+        inBytes.buffer().limit(requiredNumberOfBytes);
+
+        while (inBytes.buffer().remaining() > 0) {
+            assert requiredNumberOfBytes <= inBytes.capacity();
+
+            int len = clientChannel.read(inBytes.buffer());
+            System.out.println("receive - len read=" + len);
             if (len == -1)
                 throw new IORuntimeException("Disconnected to remote server");
 
             checkTimeout(timeoutTime);
         }
 
-        bytes.limit(bytes.buffer().position());
-        return bytes;
+
+        // inBytes.buffer().limit(limit);
+
+        // inBytes.limit(inBytes.buffer().position());
+        inBytes.position(0);
+        inBytes.limit(requiredNumberOfBytes);
+
+        System.out.println("requiredNumberOfBytes=" + requiredNumberOfBytes);
+
+        return inBytes;
     }
+
+
+    private Bytes receiveSizeAndTransactionId(long timeoutTime) throws IOException {
+
+
+        sizeAndTransactionIdBuffer.clear();
+
+        sizeAndTransactionIdBuffer.buffer().clear();
+
+        while (sizeAndTransactionIdBuffer.buffer().remaining() > 0) {
+
+            int len = clientChannel.read(sizeAndTransactionIdBuffer.buffer());
+            System.out.println("bytes read in receiveSizeAndTransactionId =" + len);
+            if (len == -1)
+                throw new IORuntimeException("Disconnected to remote server");
+
+            checkTimeout(timeoutTime);
+        }
+
+        sizeAndTransactionIdBuffer.flip();
+        return sizeAndTransactionIdBuffer;
+    }
+
 
     private void send(final Bytes out, long timeoutTime) throws IOException {
 
-        buffer.limit((int) out.position());
-        buffer.position(0);
+        outBuffer.limit((int) out.position());
+        outBuffer.position(0);
 
-        while (buffer.remaining() > 0) {
-            clientChannel.write(buffer);
+        while (outBuffer.remaining() > 0) {
+            clientChannel.write(outBuffer);
             checkTimeout(timeoutTime);
         }
 
         out.clear();
-        buffer.clear();
+        outBuffer.clear();
     }
 
     private void checkTimeout(long timeoutTime) {
@@ -1057,22 +1284,22 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private void writeSizeAndTransactionIdAt(long locationOfSize, final long transactionId) {
-        final long size = bytes.position() - locationOfSize;
-        final long pos = bytes.position();
-        bytes.position(locationOfSize);
-        bytes.writeInt((int) size - SIZE_OF_SIZE);
-        bytes.writeLong(transactionId);
-        bytes.position(pos);
+        final long size = outBytes.position() - locationOfSize;
+        final long pos = outBytes.position();
+        outBytes.position(locationOfSize);
+        outBytes.writeInt((int) size - SIZE_OF_SIZE);
+        outBytes.writeLong(transactionId);
+        outBytes.position(pos);
     }
 
     private void writeSizeAt(long locationOfSize) {
-        final long size = bytes.position() - locationOfSize;
-        bytes.writeInt(locationOfSize, (int) size - SIZE_OF_SIZE);
+        final long size = outBytes.position() - locationOfSize;
+        outBytes.writeInt(locationOfSize, (int) size - SIZE_OF_SIZE);
     }
 
     private long markSizeLocation() {
-        final long position = bytes.position();
-        bytes.skip(SIZE_OF_SIZE);
+        final long position = outBytes.position();
+        outBytes.skip(SIZE_OF_SIZE);
         return position;
     }
 
@@ -1081,18 +1308,18 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private ThreadLocalCopies writeKey(K key, ThreadLocalCopies copies) {
-        long start = bytes.position();
+        long start = outBytes.position();
 
         for (; ; ) {
             try {
-                return keyWriterWithSize.write(bytes, key, copies);
+                return keyWriterWithSize.write(outBytes, key, copies);
             } catch (IndexOutOfBoundsException e) {
-                resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                resizeBufferOutBuffer((int) (outBytes.capacity() + maxEntrySize), start);
             } catch (IllegalArgumentException e) {
                 resizeToMessage(start, e);
             } catch (IllegalStateException e) {
                 if (e.getMessage().contains("Not enough available space"))
-                    resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                    resizeBufferOutBuffer((int) (outBytes.capacity() + maxEntrySize), start);
                 else
                     throw e;
             }
@@ -1100,18 +1327,18 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private ThreadLocalCopies writeKeyInLoop(K key, Object writer, ThreadLocalCopies copies) {
-        long start = bytes.position();
+        long start = outBytes.position();
 
         for (; ; ) {
             try {
-                return keyWriterWithSize.writeInLoop(bytes, key, writer, copies);
+                return keyWriterWithSize.writeInLoop(outBytes, key, writer, copies);
             } catch (IndexOutOfBoundsException e) {
-                resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                resizeBufferOutBuffer((int) (outBytes.capacity() + maxEntrySize), start);
             } catch (IllegalArgumentException e) {
                 resizeToMessage(start, e);
             } catch (IllegalStateException e) {
                 if (e.getMessage().contains("Not enough available space"))
-                    resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                    resizeBufferOutBuffer((int) (outBytes.capacity() + maxEntrySize), start);
                 else
                     throw e;
             }
@@ -1119,21 +1346,23 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private V readValue(final long sizeLocation, ThreadLocalCopies copies) {
-        return valueReaderWithSize.readNullable(blockingFetch(sizeLocation), copies);
+        V v = valueReaderWithSize.readNullable(blockingFetch(sizeLocation), copies);
+        System.out.println("value=" + v);
+        return v;
     }
 
     private ThreadLocalCopies writeValue(V value, ThreadLocalCopies copies) {
-        long start = bytes.position();
+        long start = outBytes.position();
         for (; ; ) {
             try {
-                assert bytes.position() == start;
-                bytes.limit(bytes.capacity());
-                return valueWriterWithSize.write(bytes, value, copies);
+                assert outBytes.position() == start;
+                outBytes.limit(outBytes.capacity());
+                return valueWriterWithSize.write(outBytes, value, copies);
             } catch (IllegalArgumentException e) {
                 resizeToMessage(start, e);
             } catch (IllegalStateException e) {
                 if (e.getMessage().contains("Not enough available space"))
-                    resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                    resizeBufferOutBuffer((int) (outBytes.capacity() + maxEntrySize), start);
                 else
                     throw e;
             }
@@ -1141,17 +1370,17 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private ThreadLocalCopies writeValueInLoop(V value, Object writer, ThreadLocalCopies copies) {
-        long start = bytes.position();
+        long start = outBytes.position();
         for (; ; ) {
             try {
-                assert bytes.position() == start;
-                bytes.limit(bytes.capacity());
-                return valueWriterWithSize.writeInLoop(bytes, value, writer, copies);
+                assert outBytes.position() == start;
+                outBytes.limit(outBytes.capacity());
+                return valueWriterWithSize.writeInLoop(outBytes, value, writer, copies);
             } catch (IllegalArgumentException e) {
                 resizeToMessage(start, e);
             } catch (IllegalStateException e) {
                 if (e.getMessage().contains("Not enough available space"))
-                    resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                    resizeBufferOutBuffer((int) (outBytes.capacity() + maxEntrySize), start);
                 else
                     throw e;
             }
@@ -1166,11 +1395,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             if (i != -1) {
                 int size = Integer.parseInt(substring.substring(0, i));
 
-                long requiresExtra = size - bytes.remaining();
+                long requiresExtra = size - outBytes.remaining();
                 System.out.println(size + substring);
-                resizeBuffer((int) (bytes.capacity() + requiresExtra), start);
+                resizeBufferOutBuffer((int) (outBytes.capacity() + requiresExtra), start);
             } else
-                resizeBuffer((int) (bytes.capacity() + maxEntrySize), start);
+                resizeBufferOutBuffer((int) (outBytes.capacity() + maxEntrySize), start);
         } else
             throw e;
     }
