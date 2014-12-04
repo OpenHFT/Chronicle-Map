@@ -1555,6 +1555,12 @@ counter.  The update increments the counter once in each thread, creating an new
 
 _*HashMap refers to ConcurrentHashMap, Chronicle refers to Chronicle Map_
 
+
+Key :
+RSS - Resident memory size.  How much main memory was used.
+Mupd/s - Million write operations per second. i.e. put(key, value);
+
+
 Notes:
 * `ChronicleMap` was tested with a 32 MB heap, CHM was test with a 100 GB heap.
 * The `ChronicleMap` test had a small minor GC on startup of 0.5 ms, but not during the test.
