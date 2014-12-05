@@ -449,6 +449,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
         attached.entryReader = new TcpSocketChannelEntryReader();
         attached.entryWriter = new TcpSocketChannelEntryWriter();
+        attached.writeBarrier = true;
 
         key.interestOps(OP_WRITE | OP_READ);
 
@@ -487,15 +488,16 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         channel.socket().setSoLinger(false, 0);
 
         final Attached attached = new Attached();
-        channel.register(selector, OP_READ, attached);
-
-        throttle(channel);
-
         attached.entryReader = new TcpSocketChannelEntryReader();
         attached.entryWriter = new TcpSocketChannelEntryWriter();
 
-        attached.isServer = true;
         attached.entryWriter.identifierToBuffer(localIdentifier);
+        attached.isServer = true;
+        attached.writeBarrier = true;
+
+        channel.register(selector, OP_READ, attached);
+
+        throttle(channel);
     }
 
     /**
@@ -622,17 +624,19 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                          final long approxTime) throws InterruptedException, IOException {
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
-
-        if (attached.entryWriter.isWorkIncomplete()) {
-            final boolean completed = attached.entryWriter.doWork();
+        if (attached == null) throw new NullPointerException("No attached");
+        TcpSocketChannelEntryWriter entryWriter = attached.entryWriter;
+        if (entryWriter == null) throw new NullPointerException("No entryWriter");
+        if (entryWriter.isWorkIncomplete()) {
+            final boolean completed = entryWriter.doWork();
 
             if (completed)
-                attached.entryWriter.workCompleted();
+                entryWriter.workCompleted();
         } else if (attached.remoteModificationIterator != null)
-            attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
+            entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
         try {
-            final int len = attached.entryWriter.writeBufferToSocket(socketChannel,
+            final int len = entryWriter.writeBufferToSocket(socketChannel,
                     approxTime);
 
             if (len == -1)
@@ -641,7 +645,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             if (len > 0)
                 contemplateThrottleWrites(len);
 
-            if (!attached.entryWriter.hasBytesToWrite() && !attached.entryWriter.isWorkIncomplete())
+            if (!entryWriter.hasBytesToWrite() && !entryWriter.isWorkIncomplete())
                 // TURN OP_WRITE_OFF
                 key.interestOps(key.interestOps() & ~OP_WRITE);
         } catch (IOException e) {
@@ -903,6 +907,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         public boolean isServer;        // the frequency the remote node will send a heartbeat
         public boolean handShakingComplete;
         public long remoteHeartbeatInterval = heartBeatIntervalMillis;
+        public volatile boolean writeBarrier;
 
         boolean isHandShakingComplete() {
             return handShakingComplete;
