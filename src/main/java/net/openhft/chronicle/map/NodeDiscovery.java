@@ -326,7 +326,7 @@ public class NodeDiscovery {
                         "going the grid.");
             }
 
-            if (possible == 128)
+            if (possible == Byte.MAX_VALUE)
                 possible = 0;
             else
                 possible++;
