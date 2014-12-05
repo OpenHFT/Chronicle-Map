@@ -603,9 +603,9 @@ void getAll(File toFile) throws IOException;
 void putAll(File fromFile) throws IOException;
 ```
 
-Its only the
- entries of your map that are exported, not the configuration of your map. So care must be taken to
- populate the data in to a map of the correct Key/Value type and with enough available entries. When importing data :
+Its only the entries of your map that are exported, not the configuration of your map. So care
+must be taken to populate the data in to a map of the correct Key/Value type and with enough
+available entries. When importing data :
 * entries that are in the map but not in the JSON file will remain untouched,
 * entries that are in the map and in the JSON file will be updated
 * entries that are not in the map but are in the JSON file wil added.
