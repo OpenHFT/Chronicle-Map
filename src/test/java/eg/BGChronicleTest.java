@@ -20,9 +20,9 @@ import static java.nio.ByteBuffer.wrap;
 public class BGChronicleTest {
 
     private static final int CHRONICLE_HEARTBEAT_SECONDS = 5;
-    public static final int CLIENTS = Integer.getInteger("clients", 10);
-    public static final long KEYS = Long.getLong("keys", 100000L);
-    public static final long MESSAGES = Long.getLong("messages", 200000L);
+    public static final int CLIENTS = Integer.getInteger("clients", Runtime.getRuntime().availableProcessors() * 2);
+    public static final long KEYS = Long.getLong("keys", 500_000L);
+    public static final long MESSAGES = Long.getLong("messages", 500_000 + KEYS * 2);
     public static final String DEFAULT_HOST = "localhost";
     public static final int DEFAULT_PORT = 9050;
     public static final int KEY_SIZE = Integer.getInteger("keySize", 16);
