@@ -39,8 +39,8 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [Serialization](https://github.com/OpenHFT/Chronicle-Map#serialization)
   *   [Simple Types](https://github.com/OpenHFT/Chronicle-Map#simple-types)
   *   [Complex Types](https://github.com/OpenHFT/Chronicle-Map#complex-types)
-  * [Close](https://github.com/OpenHFT/Chronicle-Map#close)
   * [Import/Export Entries as JSON](https://github.com/OpenHFT/Chronicle-Map#importexport-entries-as-json)
+* [Close](https://github.com/OpenHFT/Chronicle-Map#close)
 * [TCP / UDP Replication](https://github.com/OpenHFT/Chronicle-Map#tcp--udp-replication)
  * [TCP / UDP Background.](https://github.com/OpenHFT/Chronicle-Map#tcp--udp-background)
  *   [How to setup UDP Replication](https://github.com/OpenHFT/Chronicle-Map#how-to-setup-udp-replication)
@@ -579,23 +579,8 @@ an example of how to do this can be found at "IntValue$$Native"
 * alternatively, you could write a "Custom Marshaller", the custom marshaller can be implemented
 for a single type or a number of types.
 
-### Close
-Unlike ConcurrentHashMap, chronicle map stores its data off heap, often in a memory mapped file.
-Its recommended that you call close() once you have finished working with a Chronicle Map.
-``` java
-map.close()
-```
-
-You only need to close to clean up resources deterministically.  If your program is exiting, 
-you don't need to close the collection, as Chronicle never knows when the program might crash, 
-so we have designed it so you don't have to close() it.
-
-WARNING : If you call close too early before you have finished working with the map, this can cause
-your JVM to crash. Close MUST BE the last thing that you do with the map.
-
 ### Import/Export Entries as JSON
 ![Import/Export](http://openhft.net/wp-content/uploads/2014/09/Export-import_04.jpg)
-
 
 Chronicle Map supports importing and exporting all the entries into a JSON encoded file.
 
@@ -621,6 +606,22 @@ Importing and exporting the map, is ideal if you wish to:
 WARNING : The current version only supports Chronicle Maps that contained serialized KEYS and
 VALUES, future versions will support a binary encoding of objects that are `net.openhft.lang.io
 .serialization.BytesMarshallable`
+
+## Close
+Unlike ConcurrentHashMap, chronicle map stores its data off heap, often in a memory mapped file.
+Its recommended that you call close() once you have finished working with a Chronicle Map.
+``` java
+map.close()
+```
+
+You only need to close to clean up resources deterministically.  If your program is exiting, 
+you don't need to close the collection, as Chronicle never knows when the program might crash, 
+so we have designed it so you don't have to close() it.
+
+WARNING : If you call close too early before you have finished working with the map, this can cause
+your JVM to crash. Close MUST BE the last thing that you do with the map.
+
+
 
 # TCP / UDP Replication
 
