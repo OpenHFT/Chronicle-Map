@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-import junit.framework.Assert;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
@@ -29,7 +28,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -571,14 +570,14 @@ public class StatelessClientTest {
     @Test
     public void testThreadSafeness() throws IOException, InterruptedException {
 
-        Thread.sleep(5000);
+        int nThreads = 1;
+        final ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
 
-        final ExecutorService executorService = Executors.newFixedThreadPool(3);
-
-        int count = 1000000;
+        int count = 100000;
         final CountDownLatch latch = new CountDownLatch(count * 2);
+        final AtomicInteger got = new AtomicInteger();
 
-
+        long startTime = System.currentTimeMillis();
         // server
         try (ChronicleMap<Integer, Integer> server = ChronicleMapBuilder.of(Integer.class, Integer.class)
                 .putReturnsNull(true)
@@ -587,7 +586,6 @@ public class StatelessClientTest {
             // stateless client
             try (ChronicleMap<Integer, Integer> client = ChronicleMapBuilder.of(Integer.class,
                     Integer.class)
-                    .putReturnsNull(true)
                     .statelessClient(new InetSocketAddress("localhost", 8059)).create()) {
 
                 for (int i = 0; i < count; i++) {
@@ -598,7 +596,6 @@ public class StatelessClientTest {
                         @Override
                         public void run() {
                             try {
-                                System.out.println("put " + j + ", Thread" + Thread.currentThread().getName());
                                 client.put(j, j);
                                 latch.countDown();
                             } catch (Error | Exception e) {
@@ -611,19 +608,25 @@ public class StatelessClientTest {
 
                 for (int i = 0; i < count; i++) {
                     final int j = i;
-                    final AtomicBoolean issue = new AtomicBoolean();
+
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                System.out.println("get " + j + ", Thread" + Thread.currentThread().getName());
 
-                                while (client.get(j) == null) {
-                                    System.out.println("waiting");
+                                Integer result = client.get(j);
+
+
+                                if (result == null) {
+                                    executorService.submit(this);
+                                    return;
                                 }
 
-                                if (j != client.get(j))
-                                    issue.set(true);
+                                if (result.equals(j)) {
+                                    got.incrementAndGet();
+                                } else {
+                                    System.out.println("expected j=" + j + " but got back=" + result);
+                                }
 
                                 latch.countDown();
                             } catch (Error | Exception e) {
@@ -634,14 +637,16 @@ public class StatelessClientTest {
                     });
 
 
-                    if (issue.get())
-                        Assert.fail();
-
-
                 }
-                latch.await();
 
-                System.out.println("..............................CLosing");
+                latch.await();
+                System.out.println("" + count + " messages took " +
+                        TimeUnit.MILLISECONDS.toSeconds(System
+                                .currentTimeMillis() - startTime) + " seconds, using " + nThreads + "" +
+                        " threads");
+
+                assertEquals(count, got.get());
+
             }
         } finally {
             executorService.shutdownNow();
