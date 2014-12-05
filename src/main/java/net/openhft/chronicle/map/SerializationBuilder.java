@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.lang.model.*;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.chronicle.hash.serialization.*;
@@ -28,7 +29,6 @@ import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.io.serialization.impl.*;
-import net.openhft.lang.model.Byteable;
 import net.openhft.lang.values.LongValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,13 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
+import static net.openhft.chronicle.hash.serialization.SizeMarshallers.constant;
 import static net.openhft.chronicle.map.Objects.hash;
 import static net.openhft.chronicle.hash.serialization.SizeMarshallers.stopBit;
 import static net.openhft.chronicle.map.SerializationBuilder.Role.KEY;
@@ -54,8 +60,13 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
                 Externalizable.class.isAssignableFrom(c);
     }
 
+    private static final List<Class> knownJDKImmutableClasses = Arrays.<Class>asList(
+            String.class, Byte.class, Short.class, Character.class, Integer.class,
+            Float.class, Long.class, Double.class, BigDecimal.class, BigInteger.class, URL.class
+    );
+
     private static boolean instancesAreMutable(Class c) {
-        return c != String.class;
+        return !knownJDKImmutableClasses.contains(c);
     }
 
     enum Role {KEY, VALUE}
@@ -65,6 +76,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
     private final Role role;
     final Class<E> eClass;
     private boolean instancesAreMutable;
+    private boolean dataValueClass = false;
     private SizeMarshaller sizeMarshaller = stopBit();
     private BytesReader<E> reader;
     private Object interop;
@@ -82,6 +94,22 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
         ObjectFactory<E> factory = concreteClass(eClass) && marshallerUseFactory(eClass) ?
                 new NewInstanceObjectFactory<E>(eClass) :
                 NullObjectFactory.<E>of();
+
+        if (eClass.isInterface()) {
+            try {
+                BytesReader<E> reader = DataValueBytesMarshallers.acquireBytesReader(eClass);
+                BytesWriter<E> writer = DataValueBytesMarshallers.acquireBytesWriter(eClass);
+                DataValueModel<E> model = DataValueModels.acquireModel(eClass);
+                int size = DataValueGenerator.computeNonScalarOffset(model, eClass);
+                dataValueClass = true;
+                reader(reader);
+                writer(writer);
+                sizeMarshaller(constant((long) size));
+                return;
+            } catch (Exception e) {
+                // ignore, fall through
+            }
+        }
 
         if (concreteClass(eClass) && Byteable.class.isAssignableFrom(eClass)) {
             ByteableMarshaller byteableMarshaller = ByteableMarshaller.of((Class) eClass);
@@ -129,6 +157,10 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
         }
     }
 
+    private void clearDefaults() {
+        dataValueClass = false;
+    }
+
     @SuppressWarnings("unchecked")
     private BytesMarshaller<E> chooseMarshaller(Class<E> eClass, Class<E> classForMarshaller) {
         if (BytesMarshallable.class.isAssignableFrom(eClass))
@@ -144,6 +176,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
     }
 
     public SerializationBuilder<E> interop(BytesInterop<E> interop) {
+        clearDefaults();
         return copyingInterop(null)
                 .setInterop(interop)
                 .metaInterop(DelegatingMetaBytesInterop.<E, BytesInterop<E>>instance())
@@ -152,6 +185,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
     }
 
     public SerializationBuilder<E> writer(BytesWriter<E> writer) {
+        clearDefaults();
         if (writer instanceof BytesInterop)
             return interop((BytesInterop<E>) writer);
         return copyingInterop(CopyingInterop.FROM_WRITER)
@@ -161,6 +195,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
     }
 
     public SerializationBuilder<E> marshaller(BytesMarshaller<E> marshaller) {
+        clearDefaults();
         return copyingInterop(CopyingInterop.FROM_MARSHALLER)
                 .reader(BytesReaders.fromBytesMarshaller(marshaller))
                 .setInterop(marshaller)
@@ -247,6 +282,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
     }
 
     public SerializationBuilder<E> reader(BytesReader<E> reader) {
+        clearDefaults();
         this.reader = reader;
         return this;
     }
@@ -282,6 +318,10 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
 
     @SuppressWarnings("unchecked")
     public SerializationBuilder<E> factory(ObjectFactory<E> factory) {
+        if (dataValueClass) {
+            reader(DataValueBytesMarshallers.acquireBytesReader(eClass, factory));
+            return this;
+        }
         if (!marshallerUseFactory(eClass)) {
             throw new IllegalStateException("Default marshaller for " + eClass +
                     " value don't use object factory");

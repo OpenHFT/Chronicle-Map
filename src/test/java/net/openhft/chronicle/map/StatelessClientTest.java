@@ -26,7 +26,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -508,6 +509,21 @@ public class StatelessClientTest {
     }
 
     @Test(timeout = 10000)
+    public void testGetAndEntryWeDontHave() throws IOException,
+            InterruptedException, ExecutionException {
+
+        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+            try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, CharSequence.class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+                assertEquals(null, statelessMap.get(3));
+
+            }
+        }
+    }
+
+    @Test(timeout = 10000)
     public void testEquals() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap1;
@@ -547,4 +563,99 @@ public class StatelessClientTest {
         serverMap1.close();
         serverMap2.close();
     }
+
+
+     @Test
+    public void testThreadSafeness() throws IOException, InterruptedException {
+
+        int nThreads = 1;
+        final ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
+
+        int count = 1000;
+        final CountDownLatch latch = new CountDownLatch(count * 2);
+        final AtomicInteger got = new AtomicInteger();
+
+        long startTime = System.currentTimeMillis();
+        // server
+        try (ChronicleMap<Integer, Integer> server = ChronicleMapBuilder.of(Integer.class, Integer.class)
+                .putReturnsNull(true)
+                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8059)).create()) {
+
+            // stateless client
+            try (ChronicleMap<Integer, Integer> client = ChronicleMapBuilder.of(Integer.class,
+                    Integer.class)
+                    .statelessClient(new InetSocketAddress("localhost", 8059)).create()) {
+
+                for (int i = 0; i < count; i++) {
+
+
+                    final int j = i;
+                    executorService.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                client.put(j, j);
+                                latch.countDown();
+                            } catch (Error | Exception e) {
+                                e.printStackTrace();
+                                System.exit(0);
+                            }
+                        }
+                    });
+                }
+
+                for (int i = 0; i < count; i++) {
+                    final int j = i;
+
+                    executorService.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+
+                                Integer result = client.get(j);
+
+
+                                if (result == null) {
+                                    executorService.submit(this);
+                                    return;
+                                }
+
+                                if (result.equals(j)) {
+                                    got.incrementAndGet();
+                                } else {
+                                    System.out.println("expected j=" + j + " but got back=" + result);
+                                }
+
+                                latch.countDown();
+                            } catch (Error | Exception e) {
+                                e.printStackTrace();
+                                System.exit(0);
+                            }
+                        }
+                    });
+
+
+                }
+
+                latch.await();
+                System.out.println("" + count + " messages took " +
+                        TimeUnit.MILLISECONDS.toSeconds(System
+                                .currentTimeMillis() - startTime) + " seconds, using " + nThreads + "" +
+                        " threads");
+
+                assertEquals(count, got.get());
+
+            }
+        } finally {
+            executorService.shutdownNow();
+            executorService.awaitTermination(100, TimeUnit.SECONDS);
+
+        }
+
+
+    }
+
+
 }
+
+
