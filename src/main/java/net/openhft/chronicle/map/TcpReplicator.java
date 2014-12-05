@@ -1181,9 +1181,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                     // state is used for both heartbeat and stateless
                     state = out.readByte();
                     sizeInBytes = out.readInt();
-                    //System.out.println("received size=" + sizeInBytes);
-                    //    System.out.println("......sizeInBytes=>" + sizeInBytes);
-                    assert sizeInBytes > 0;
+
+                    assert sizeInBytes >= 0;
 
                     // if the buffer is too small to read this payload we will have to grow the
                     // size of the buffer
