@@ -592,7 +592,7 @@ so we have designed it so you don't have to close() it.
 WARNING : If you call close too early before you have finished working with the map, this can cause
 your JVM to crash. Close MUST BE the last thing that you do with the map.
 
-### Import / Export entries
+### Import/Export Entries as JSON
 ![Import/Export](http://openhft.net/wp-content/uploads/2014/09/Export-import_04.jpg)
 
 
@@ -610,11 +610,13 @@ available entries. When importing data :
 * entries that are in the map and in the JSON file will be updated
 * entries that are not in the map but are in the JSON file wil added.
 * In other words importing data into a Chronicle Map works like `map.putAll(<JSON entries>)`.
+
 When Importing data if you are also writing to the map at the same time, the last update will win.
 In other words a write lock is not held for the entire import process.
 Importing and exporting the map, is ideal if you wish to:
 * Bulk load data from one chronicle map into another.
 * migrate data between versions of chronicle map.
+
 WARNING : The current version only supports Chronicle Maps that contained serialized KEYS and
 VALUES, future versions will support a binary encoding of objects that are `net.openhft.lang.io
 .serialization.BytesMarshallable`
