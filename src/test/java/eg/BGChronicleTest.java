@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
@@ -20,15 +21,16 @@ import static java.nio.ByteBuffer.wrap;
 public class BGChronicleTest {
 
     private static final int CHRONICLE_HEARTBEAT_SECONDS = 5;
-    public static final int CLIENTS = Integer.getInteger("clients", Runtime.getRuntime().availableProcessors() * 2);
-    public static final long KEYS = Long.getLong("keys", 500_000L);
-    public static final long MESSAGES = Long.getLong("messages", 500_000 + KEYS * 2);
+    public static final int READ_RATIO = Integer.getInteger("readRatio", 2);
+    public static final int CLIENTS = Integer.getInteger("clients", Math.max(1, Runtime.getRuntime().availableProcessors() - 2));
+    public static final long KEYS = Long.getLong("keys", 100_000L);
+    public static final long MESSAGES = Long.getLong("messages", 100_000 + KEYS * 2);
+    public static final long MAX_RATE = Long.getLong("maxRate", 50000);
     public static final String DEFAULT_HOST = "localhost";
     public static final int DEFAULT_PORT = 9050;
     public static final int KEY_SIZE = Integer.getInteger("keySize", 16);
     public static final int VALUE_SIZE = Integer.getInteger("valueSize", 16);
     private volatile long start;
-
 
     public ChronicleMap<byte[], byte[]> startChronicleMapServer(int port) throws InterruptedException, IOException {
 
@@ -58,8 +60,8 @@ public class BGChronicleTest {
         System.out.println("client starting");
         final InetSocketAddress remoteAddress = new InetSocketAddress(hostNameOrIpAddress, port);
 
+        System.out.println("###  Throughput test  ###");
         start = nanoTime();
-
         ExecutorService es = Executors.newFixedThreadPool(CLIENTS);
         List<Future<Void>> futureList = new ArrayList<>();
         for (int i = 0; i < CLIENTS; i++) {
@@ -76,10 +78,10 @@ public class BGChronicleTest {
                             .statelessClient(remoteAddress)
                             .create()) {
 
-                        System.out.println(clientId + "/" + CLIENTS + " client started");
+                        System.out.println((clientId + 1) + "/" + CLIENTS + " client started");
 
                         exerciseMap(MESSAGES, map, clientId);
-                        System.out.println(clientId + "/" + CLIENTS + " ... client finished");
+                        System.out.println((clientId + 1) + "/" + CLIENTS + " ... client finished");
                     }
                     return null;
                 }
@@ -92,8 +94,64 @@ public class BGChronicleTest {
                 e.printStackTrace();
             }
         }
+        futureList.clear();
+        long throughput = logMessagesPerSecond(MESSAGES, start);
+        // 50% of throughput, rounded to multiple of 100.
+        long rate = Math.min((throughput / 2) / 100 * 100, MAX_RATE);
+        System.out.printf("### Latency test with a target throughput of %,d msg/sec%n", rate);
+
+        final long delayNS = CLIENTS * 1_000_000_000L / rate;
+        List<Future<long[]>> futureList2 = new ArrayList<>();
+        long start2 = System.nanoTime();
+        for (int i = 0; i < CLIENTS; i++) {
+            final int clientId = i;
+            futureList2.add(es.submit(new Callable<long[]>() {
+                @Override
+                public long[] call() throws IOException, InterruptedException {
+                    try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
+                            .of(byte[].class, byte[].class)
+                            .constantKeySizeBySample(new byte[KEY_SIZE])
+                            .constantValueSizeBySample(new byte[VALUE_SIZE])
+                            .putReturnsNull(true)
+                            .removeReturnsNull(true)
+                            .statelessClient(remoteAddress)
+                            .create()) {
+                        map.size();
+
+                        System.out.println((clientId + 1) + "/" + CLIENTS + " client started");
+
+                        long[] times = exerciseMapLatency(MESSAGES, map, delayNS - clientId * 1000);
+                        System.out.println((clientId + 1) + "/" + CLIENTS + " ... client finished");
+                        return times;
+                    }
+                }
+            }));
+        }
+        long[] times = new long[(int) MESSAGES];
+        int offset = 0;
+        for (Future<long[]> future : futureList2) {
+            try {
+                long[] t2 = future.get();
+                System.arraycopy(t2, 0, times, offset, t2.length);
+                offset += t2.length;
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+        long time2 = System.nanoTime() - start2;
+        long rate2 = (long) (MESSAGES * 1e9 / time2);
+        System.out.printf("Rate achieved was %,d msg/sec%n", rate2);
+        Arrays.sort(times);
+        System.out.printf("50%% / 90%% / 99%% // 99.9%% / 99.99%% / worst latency was %,d / %,d / %,d // %,d / %,d / %,d us%n",
+                times[times.length - times.length / 2] / 1000,
+                times[times.length - times.length / 10] / 1000,
+                times[times.length - times.length / 100] / 1000,
+                times[times.length - times.length / 1000] / 1000,
+                times[times.length - times.length / 10000] / 1000,
+                times[times.length - 1] / 1000
+        );
+
         es.shutdown();
-        logMessagesPerSecond(MESSAGES, start);
     }
 
     public void exerciseMap(long numberOfMessages, ChronicleMap<byte[], byte[]> map, int clientId) {
@@ -108,7 +166,7 @@ public class BGChronicleTest {
             for (byte b = 0; b < 100; b++) {
                 // 100 possible values for the first byte.
                 key[0] = b;
-                if (rnd.nextBoolean()) {
+                if (rnd.nextInt(READ_RATIO + 1) == 0) {
                     // puts
                     value[0] = b;
                     map.put(key, value);
@@ -126,6 +184,42 @@ public class BGChronicleTest {
         }
     }
 
+    public long[] exerciseMapLatency(long numberOfMessages, ChronicleMap<byte[], byte[]> map, long delayNS) throws InterruptedException {
+        long[] times = new long[(int) (numberOfMessages / CLIENTS)];
+        byte[] key = new byte[KEY_SIZE];
+        byte[] value = new byte[VALUE_SIZE];
+        Random rnd = new Random();
+        ByteBuffer keyBB = wrap(key);
+        long next = System.nanoTime() + delayNS;
+        for (int count = 0; count < times.length; count += 100) {
+            // KEYS/100 possible values after first byte.
+            keyBB.putInt(1, rnd.nextInt((int) (KEYS / 100)));
+            rnd.nextBytes(value);
+            for (byte b = 0; b < 100; b++) {
+                long now = System.nanoTime();
+                next += delayNS;
+                int pause = (int) ((next - now) / 1000000);
+                if (pause > 0)
+                    Thread.sleep(pause);
+                // 100 possible values for the first byte.
+                long start = System.nanoTime();
+                key[0] = b;
+                if (rnd.nextInt(READ_RATIO + 1) == 0) {
+                    // puts
+                    value[0] = b;
+                    map.put(key, value);
+
+                } else {
+                    //gets
+                    map.get(key);
+                }
+                long time = System.nanoTime() - start;
+                times[count + b] = time;
+            }
+        }
+        return times;
+    }
+
 
     /**
      * over loop-back on my mac I get around 50,000 messages per second of my local network ( LAN ),
@@ -141,6 +235,7 @@ public class BGChronicleTest {
                 .heartBeatInterval(CHRONICLE_HEARTBEAT_SECONDS, TimeUnit.SECONDS).name("clientMap")
                 .autoReconnectedUponDroppedConnection(true);
 
+        System.out.println("###  Throughput test  ###");
         start = nanoTime();
         ExecutorService es = Executors.newFixedThreadPool(CLIENTS);
         for (int i = 0; i < CLIENTS; i++) {
@@ -168,12 +263,16 @@ public class BGChronicleTest {
         }
         es.awaitTermination(1, TimeUnit.HOURS);
         logMessagesPerSecond(MESSAGES, start);
+
+        System.out.println("###  Latency test  ###");
+
     }
 
 
-    private void logMessagesPerSecond(double numberOfMessages, long start) {
+    private long logMessagesPerSecond(double numberOfMessages, long start) {
         long messagesPerSecond = (long) (numberOfMessages * 1e9 / (System.nanoTime() - start));
         System.out.printf("messages per seconds: %,d%n", messagesPerSecond);
+        return messagesPerSecond;
     }
 
 
