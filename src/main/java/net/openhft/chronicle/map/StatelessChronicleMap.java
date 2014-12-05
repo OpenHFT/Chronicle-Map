@@ -1554,7 +1554,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
             copies = writeKey(key);
             copies = writeValue(value, copies);
-            transactionId = blockingSend(sizeLocation, startTime);
+            transactionId = send(sizeLocation, startTime);
         } finally {
             outBytesLock.unlock();
         }

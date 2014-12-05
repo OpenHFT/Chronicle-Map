@@ -23,13 +23,13 @@ public class BGChronicleTest {
 
     public static final int CHRONICLE_HEARTBEAT_SECONDS = 5;
     public static final int READ_RATIO = Integer.getInteger("readRatio", 2);
-    public static final int CLIENTS = Integer.getInteger("clients", Math.max(1, Runtime.getRuntime().availableProcessors() - 1));
     //    public static final boolean BUSY_WAIT = Boolean.parseBoolean(System.getProperty("busyWait",
 //            "" + (CLIENTS < Runtime.getRuntime().availableProcessors())));
     public static final int REPLICAS = Integer.getInteger("replicas", 1);
+    public static final int CLIENTS = Integer.getInteger("clients", Math.max(1, Runtime.getRuntime().availableProcessors() - REPLICAS));
     public static final long KEYS = Long.getLong("keys", 100_000L);
     public static final long MESSAGES = Long.getLong("messages", 1000_000 + KEYS * 10);
-    public static final long MAX_RATE = Long.getLong("maxRate", 50000);
+    public static final long MAX_RATE = Long.getLong("maxRate", 100000);
     public static final String DEFAULT_HOST = "localhost";
     public static final int DEFAULT_PORT = 9050;
     public static final int KEY_SIZE = Integer.getInteger("keySize", 16);
@@ -88,6 +88,7 @@ public class BGChronicleTest {
     public void startChronicleMapClient(String hostNameOrIpAddress, int port) throws IOException, InterruptedException {
 
         final InetSocketAddress remoteAddress = new InetSocketAddress(hostNameOrIpAddress, port);
+        final InetSocketAddress remoteAddress2 = new InetSocketAddress(hostNameOrIpAddress, port + 1);
         System.out.println("client connecting to " + remoteAddress);
 
         System.out.println("###  Throughput test  ###");
@@ -105,7 +106,7 @@ public class BGChronicleTest {
                             .constantValueSizeBySample(new byte[VALUE_SIZE])
                             .putReturnsNull(true)
                             .removeReturnsNull(true)
-                            .statelessClient(remoteAddress)
+                            .statelessClient(REPLICAS > 1 && clientId % 2 == 0 ? remoteAddress2 : remoteAddress)
                             .create()) {
 
                         System.out.println((clientId + 1) + "/" + CLIENTS + " client started");
@@ -249,7 +250,8 @@ public class BGChronicleTest {
                     map.get(key);
                 }
                 long time = System.nanoTime() - start;
-                times[count + b] = time;
+                if (count + b < times.length)
+                    times[count + b] = time;
             }
         }
         return times;
