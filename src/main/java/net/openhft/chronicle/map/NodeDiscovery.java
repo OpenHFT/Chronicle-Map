@@ -273,8 +273,8 @@ public class NodeDiscovery {
     }
 
     /**
-     * bitwise OR's the two bit sets or put another way, merges the source bitset into the destination bitset
-     * and returns the destination
+     * bitwise OR's the two bit sets or put another way, merges the source bitset into the
+     * destination bitset and returns the destination
      *
      * @param source      to or
      * @param destination to or
@@ -326,7 +326,7 @@ public class NodeDiscovery {
                         "going the grid.");
             }
 
-            if (possible == 128)
+            if (possible == Byte.MAX_VALUE)
                 possible = 0;
             else
                 possible++;
@@ -336,8 +336,8 @@ public class NodeDiscovery {
 }
 
 /**
- * Broadcast the nodes host ports and identifiers over UDP, to make it easy to join a grid of remote nodes
- * just by name, this functionality requires UDP
+ * Broadcast the nodes host ports and identifiers over UDP, to make it easy to join a grid of remote
+ * nodes just by name, this functionality requires UDP
  *
  * @author Rob Austin.
  */
@@ -604,10 +604,11 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
         return port;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || AddressAndPort.class != o.getClass()) return false;
 
         AddressAndPort that = (AddressAndPort) o;
 
@@ -728,8 +729,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
     }
 
     /**
-     * this is used to tell nodes that are connecting to us which host and ports are in our grid, along with
-     * all the identifiers.
+     * this is used to tell nodes that are connecting to us which host and ports are in our grid,
+     * along with all the identifiers.
      */
     @Override
     public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
@@ -887,7 +888,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (o == null || ProposedNodes.class != o.getClass()) return false;
 
             ProposedNodes that = (ProposedNodes) o;
 
@@ -906,8 +907,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
     }
 
     /**
-     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the host:port
-     * and perhaps even proposed identifier of the node that sent it.
+     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the
+     * host:port and perhaps even proposed identifier of the node that sent it.
      *
      * @param proposedNodes
      */

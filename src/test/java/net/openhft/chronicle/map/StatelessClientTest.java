@@ -18,15 +18,18 @@
 
 package net.openhft.chronicle.map;
 
+import junit.framework.Assert;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -508,6 +511,21 @@ public class StatelessClientTest {
     }
 
     @Test(timeout = 10000)
+    public void testGetAndEntryWeDontHave() throws IOException,
+            InterruptedException, ExecutionException {
+
+        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+            try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, CharSequence.class)
+                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+                assertEquals(null, statelessMap.get(3));
+
+            }
+        }
+    }
+
+    @Test(timeout = 10000)
     public void testEquals() throws IOException, InterruptedException {
 
         final ChronicleMap<Integer, CharSequence> serverMap1;
@@ -547,4 +565,94 @@ public class StatelessClientTest {
         serverMap1.close();
         serverMap2.close();
     }
+
+
+    @Ignore
+    @Test
+    public void testThreadSafeness() throws IOException, InterruptedException {
+
+        Thread.sleep(5000);
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(3);
+
+        int count = 1000000;
+        final CountDownLatch latch = new CountDownLatch(count * 2);
+
+
+        // server
+        try (ChronicleMap<Integer, Integer> server = ChronicleMapBuilder.of(Integer.class, Integer.class)
+                .putReturnsNull(true)
+                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8059)).create()) {
+
+            // stateless client
+            try (ChronicleMap<Integer, Integer> client = ChronicleMapBuilder.of(Integer.class,
+                    Integer.class)
+                    .putReturnsNull(true)
+                    .statelessClient(new InetSocketAddress("localhost", 8059)).create()) {
+
+                for (int i = 0; i < count; i++) {
+
+
+                    final int j = i;
+                    executorService.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                System.out.println("put " + j + ", Thread" + Thread.currentThread().getName());
+                                client.put(j, j);
+                                latch.countDown();
+                            } catch (Error | Exception e) {
+                                e.printStackTrace();
+                                System.exit(0);
+                            }
+                        }
+                    });
+                }
+
+                for (int i = 0; i < count; i++) {
+                    final int j = i;
+                    final AtomicBoolean issue = new AtomicBoolean();
+                    executorService.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                System.out.println("get " + j + ", Thread" + Thread.currentThread().getName());
+
+                                while (client.get(j) == null) {
+                                    System.out.println("waiting");
+                                }
+
+                                if (j != client.get(j))
+                                    issue.set(true);
+
+                                latch.countDown();
+                            } catch (Error | Exception e) {
+                                e.printStackTrace();
+                                System.exit(0);
+                            }
+                        }
+                    });
+
+
+                    if (issue.get())
+                        Assert.fail();
+
+
+                }
+                latch.await();
+
+                System.out.println("..............................CLosing");
+            }
+        } finally {
+            executorService.shutdownNow();
+            executorService.awaitTermination(100, TimeUnit.SECONDS);
+
+        }
+
+
+    }
+
+
 }
+
+

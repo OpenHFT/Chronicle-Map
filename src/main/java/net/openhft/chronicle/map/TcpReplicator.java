@@ -487,15 +487,15 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         channel.socket().setSoLinger(false, 0);
 
         final Attached attached = new Attached();
-        channel.register(selector, OP_READ, attached);
-
-        throttle(channel);
-
         attached.entryReader = new TcpSocketChannelEntryReader();
         attached.entryWriter = new TcpSocketChannelEntryWriter();
 
-        attached.isServer = true;
         attached.entryWriter.identifierToBuffer(localIdentifier);
+        attached.isServer = true;
+
+        channel.register(selector, OP_READ, attached);
+
+        throttle(channel);
     }
 
     /**
@@ -622,17 +622,19 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                          final long approxTime) throws InterruptedException, IOException {
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
-
-        if (attached.entryWriter.isWorkIncomplete()) {
-            final boolean completed = attached.entryWriter.doWork();
+        if (attached == null) throw new NullPointerException("No attached");
+        TcpSocketChannelEntryWriter entryWriter = attached.entryWriter;
+        if (entryWriter == null) throw new NullPointerException("No entryWriter");
+        if (entryWriter.isWorkIncomplete()) {
+            final boolean completed = entryWriter.doWork();
 
             if (completed)
-                attached.entryWriter.workCompleted();
+                entryWriter.workCompleted();
         } else if (attached.remoteModificationIterator != null)
-            attached.entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
+            entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
         try {
-            final int len = attached.entryWriter.writeBufferToSocket(socketChannel,
+            final int len = entryWriter.writeBufferToSocket(socketChannel,
                     approxTime);
 
             if (len == -1)
@@ -641,7 +643,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             if (len > 0)
                 contemplateThrottleWrites(len);
 
-            if (!attached.entryWriter.hasBytesToWrite() && !attached.entryWriter.isWorkIncomplete())
+            if (!entryWriter.hasBytesToWrite() && !entryWriter.isWorkIncomplete())
                 // TURN OP_WRITE_OFF
                 key.interestOps(key.interestOps() & ~OP_WRITE);
         } catch (IOException e) {
@@ -1179,6 +1181,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                     // state is used for both heartbeat and stateless
                     state = out.readByte();
                     sizeInBytes = out.readInt();
+                    //System.out.println("received size=" + sizeInBytes);
+                    //    System.out.println("......sizeInBytes=>" + sizeInBytes);
+                    assert sizeInBytes > 0;
 
                     // if the buffer is too small to read this payload we will have to grow the
                     // size of the buffer
@@ -1200,6 +1205,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 }
 
                 final long nextEntryPos = out.position() + sizeInBytes;
+                assert nextEntryPos > 0;
                 final long limit = out.limit();
                 out.limit(nextEntryPos);
 
@@ -1522,6 +1528,8 @@ class StatelessServerConnector<K, V> {
         writeException(writer, e);
 
         writeSizeAndFlags(sizeLocation + SIZE_OF_TRANSACTION_ID, true, writer);
+
+        e.printStackTrace();
         return null;
     }
 
@@ -1865,6 +1873,8 @@ class StatelessServerConnector<K, V> {
 
         long pos = out.position();
         long limit = out.limit();
+
+     //   System.out.println("Sending with size=" + size);
 
         if (LOG.isDebugEnabled()) {
             out.position(locationOfSize);
