@@ -148,8 +148,6 @@ abstract class AbstractChronicleMapBuilder<K, V,
     AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
         valueBuilder = new SerializationBuilder<V>(valueClass, SerializationBuilder.Role.VALUE);
-        if (valueClass == LongValue.class)
-            prepareValueBytesOnAcquire(new ZeroOutValueBytes<K, V>(valueSize()));
     }
 
     protected static boolean offHeapReference(Class valueClass) {

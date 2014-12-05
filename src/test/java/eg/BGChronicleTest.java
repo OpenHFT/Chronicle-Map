@@ -31,7 +31,8 @@ public class BGChronicleTest {
     private volatile long start;
 
 
-    public ChronicleMap<byte[], byte[]> startChronicleMapServer(int port) throws InterruptedException, IOException {
+    public ChronicleMap<byte[], byte[]> startChronicleMapServer(int port)
+            throws InterruptedException, IOException {
 
 
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(port)
@@ -138,7 +139,8 @@ public class BGChronicleTest {
 
         final InetSocketAddress serverHostPort = new InetSocketAddress(hostNameOrIpAddress, port);
 
-        final TcpTransportAndNetworkConfig clientConfig = TcpTransportAndNetworkConfig.of(port + 1, serverHostPort)
+        final TcpTransportAndNetworkConfig clientConfig =
+                TcpTransportAndNetworkConfig.of(port + 1, serverHostPort)
                 .heartBeatInterval(CHRONICLE_HEARTBEAT_SECONDS, TimeUnit.SECONDS).name("clientMap")
                 .autoReconnectedUponDroppedConnection(true);
 
