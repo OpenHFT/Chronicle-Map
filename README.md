@@ -39,7 +39,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [Serialization](https://github.com/OpenHFT/Chronicle-Map#serialization)
   *   [Simple Types](https://github.com/OpenHFT/Chronicle-Map#simple-types)
   *   [Complex Types](https://github.com/OpenHFT/Chronicle-Map#complex-types)
-  * [Import/Export Entries as JSON](https://github.com/OpenHFT/Chronicle-Map#importexport-entries-as-json)
+  * [Import/Export entries as JSON](https://github.com/OpenHFT/Chronicle-Map#importexport-entries-as-json)
 * [Close](https://github.com/OpenHFT/Chronicle-Map#close)
 * [TCP / UDP Replication](https://github.com/OpenHFT/Chronicle-Map#tcp--udp-replication)
  * [TCP / UDP Background.](https://github.com/OpenHFT/Chronicle-Map#tcp--udp-background)
@@ -579,7 +579,7 @@ an example of how to do this can be found at "IntValue$$Native"
 * alternatively, you could write a "Custom Marshaller", the custom marshaller can be implemented
 for a single type or a number of types.
 
-### Import/Export Entries as JSON
+### Import/Export entries as JSON
 ![Import/Export](http://openhft.net/wp-content/uploads/2014/09/Export-import_04.jpg)
 
 Chronicle Map supports importing and exporting all the entries into a JSON encoded file.
