@@ -236,7 +236,7 @@ public class BGChronicleTest {
         return port;
     }
 
-    @Tesdded t
+    @Test
     public void test() throws IOException, InterruptedException {
         main();
     }
