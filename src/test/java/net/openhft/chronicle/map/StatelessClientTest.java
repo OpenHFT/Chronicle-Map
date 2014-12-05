@@ -21,7 +21,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -566,14 +565,13 @@ public class StatelessClientTest {
     }
 
 
-    @Ignore("HCOLL-230 this has an issue as the map just gets slower and slower !")
-    @Test
+     @Test
     public void testThreadSafeness() throws IOException, InterruptedException {
 
         int nThreads = 1;
         final ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
 
-        int count = 100000;
+        int count = 1000;
         final CountDownLatch latch = new CountDownLatch(count * 2);
         final AtomicInteger got = new AtomicInteger();
 
