@@ -3,6 +3,7 @@ package eg;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -236,6 +237,7 @@ public class BGChronicleTest {
         return port;
     }
 
+    @Ignore
     @Test
     public void test() throws IOException, InterruptedException {
         main();

@@ -1179,6 +1179,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                     // state is used for both heartbeat and stateless
                     state = out.readByte();
                     sizeInBytes = out.readInt();
+                    //System.out.println("received size=" + sizeInBytes);
+                    //    System.out.println("......sizeInBytes=>" + sizeInBytes);
+                    assert sizeInBytes > 0;
 
                     // if the buffer is too small to read this payload we will have to grow the
                     // size of the buffer
@@ -1200,6 +1203,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 }
 
                 final long nextEntryPos = out.position() + sizeInBytes;
+                assert nextEntryPos > 0;
                 final long limit = out.limit();
                 out.limit(nextEntryPos);
 
@@ -1522,6 +1526,8 @@ class StatelessServerConnector<K, V> {
         writeException(writer, e);
 
         writeSizeAndFlags(sizeLocation + SIZE_OF_TRANSACTION_ID, true, writer);
+
+        e.printStackTrace();
         return null;
     }
 
@@ -1865,6 +1871,8 @@ class StatelessServerConnector<K, V> {
 
         long pos = out.position();
         long limit = out.limit();
+
+     //   System.out.println("Sending with size=" + size);
 
         if (LOG.isDebugEnabled()) {
             out.position(locationOfSize);
