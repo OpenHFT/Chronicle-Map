@@ -593,7 +593,7 @@ WARNING : If you call close too early before you have finished working with the 
 your JVM to crash. Close MUST BE the last thing that you do with the map.
 
 ### Import / Export entries
-![Import/Export](http://openhft.net/wp-content/uploads/2014/09/Export-import_04.jpg])
+![Import/Export](http://openhft.net/wp-content/uploads/2014/09/Export-import_04.jpg)
 
 
 Chronicle Map supports importing and exporting all the entries into a JSON encoded file.
