@@ -449,7 +449,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
         attached.entryReader = new TcpSocketChannelEntryReader();
         attached.entryWriter = new TcpSocketChannelEntryWriter();
-        attached.writeBarrier = true;
 
         key.interestOps(OP_WRITE | OP_READ);
 
@@ -493,7 +492,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
         attached.entryWriter.identifierToBuffer(localIdentifier);
         attached.isServer = true;
-        attached.writeBarrier = true;
 
         channel.register(selector, OP_READ, attached);
 
@@ -907,7 +905,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         public boolean isServer;        // the frequency the remote node will send a heartbeat
         public boolean handShakingComplete;
         public long remoteHeartbeatInterval = heartBeatIntervalMillis;
-        public volatile boolean writeBarrier;
 
         boolean isHandShakingComplete() {
             return handShakingComplete;
