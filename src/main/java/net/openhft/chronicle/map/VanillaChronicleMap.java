@@ -1689,9 +1689,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             return (int) (sizeInBytes / entrySize) + 1;
         }
 
-        private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
-        RV acquire(
-                @Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
+        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
+        RV acquire(@Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
                 ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,

@@ -1491,7 +1491,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
 
-    private <R> R fetchObject(Class<R> rClass, final EventId eventId, K key, V... values) {
+    private <R> R fetchObject(Class<R> rClass, final EventId eventId, K key, V value) {
         final long startTime = System.currentTimeMillis();
         ThreadLocalCopies copies;
 
@@ -1505,9 +1505,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                     : writeEventAnSkip(eventId);
 
             copies = writeKey(key);
-            for (V value : values) {
-                copies = writeValue(value, copies);
-            }
+            copies = writeValue(value, copies);
             transactionId = blockingSend(sizeLocation, startTime);
         } finally {
             outBytesLock.unlock();

@@ -23,12 +23,12 @@ public class BGChronicleTest {
 
     public static final int CHRONICLE_HEARTBEAT_SECONDS = 5;
     public static final int READ_RATIO = Integer.getInteger("readRatio", 2);
-    public static final int CLIENTS = Integer.getInteger("clients", Math.max(1, Runtime.getRuntime().availableProcessors() - 2));
+    public static final int CLIENTS = Integer.getInteger("clients", Math.max(1, Runtime.getRuntime().availableProcessors() - 1));
     //    public static final boolean BUSY_WAIT = Boolean.parseBoolean(System.getProperty("busyWait",
 //            "" + (CLIENTS < Runtime.getRuntime().availableProcessors())));
     public static final int REPLICAS = Integer.getInteger("replicas", 1);
     public static final long KEYS = Long.getLong("keys", 100_000L);
-    public static final long MESSAGES = Long.getLong("messages", 100_000 + KEYS * 2);
+    public static final long MESSAGES = Long.getLong("messages", 1000_000 + KEYS * 10);
     public static final long MAX_RATE = Long.getLong("maxRate", 50000);
     public static final String DEFAULT_HOST = "localhost";
     public static final int DEFAULT_PORT = 9050;
@@ -235,15 +235,17 @@ public class BGChronicleTest {
 //                if (BUSY_WAIT)
 //                    while (System.nanoTime() < next) ;
                 // 100 possible values for the first byte.
-                long start = System.nanoTime();
+                long start;
                 key[0] = b;
                 if (rnd.nextInt(READ_RATIO + 1) == 0) {
                     // puts
                     value[0] = b;
+                    start = System.nanoTime();
                     map.put(key, value);
 
                 } else {
                     //gets
+                    start = System.nanoTime();
                     map.get(key);
                 }
                 long time = System.nanoTime() - start;

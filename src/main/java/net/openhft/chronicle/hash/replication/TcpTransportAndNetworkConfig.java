@@ -70,8 +70,12 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
                 throw new IllegalArgumentException("endpoint=" + endpoint
                         + " can not point to the same port as the server");
         }
+        Set<InetSocketAddress> s = new HashSet<>();
+        for (InetSocketAddress endpoint : endpoints) {
+            s.add(new TcpInetSocketAddress(endpoint.getHostName(), endpoint.getPort()));
+        }
         return new TcpTransportAndNetworkConfig(
-                serverPort, unmodifiableSet(new HashSet<InetSocketAddress>(endpoints)),
+                serverPort, unmodifiableSet(s),
                 DEFAULT_PACKET_SIZE,
                 false, // autoReconnectedUponDroppedConnection
                 ThrottlingConfig.noThrottling(),
