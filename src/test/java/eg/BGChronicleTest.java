@@ -32,8 +32,8 @@ public class BGChronicleTest {
 
         return ChronicleMapBuilder.of(byte[].class, byte[].class)
                 .entries(MAX_NUMBER_OF_EATERIES)
-                .keySize(17)
-                .valueSize(11)
+                .constantKeySizeBySample(key)
+                .constantValueSizeBySample(value)
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
                 .replication((byte) 1, serverConfig)
@@ -56,8 +56,8 @@ public class BGChronicleTest {
 
 
         try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[].class)
-                .keySize(17)
-                .valueSize(11)
+                .constantKeySizeBySample(key)
+                .constantValueSizeBySample(value)
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
                 .statelessClient(new InetSocketAddress(hostNameOrIpAddress, port)).create()) {
