@@ -592,8 +592,8 @@ void putAll(File fromFile) throws IOException;
 Its only the entries of your map that are exported, not the configuration of your map. So care
 must be taken to populate the data in to a map of the correct Key/Value type and with enough
 available entries. When importing data :
-* entries that are in the map but not in the JSON file will remain untouched,
-* entries that are in the map and in the JSON file will be updated
+* entries that are in the map but not in the JSON file will remain untouched.
+* entries that are in the map and in the JSON file will be updated.
 * entries that are not in the map but are in the JSON file wil added.
 * In other words importing data into a Chronicle Map works like `map.putAll(<JSON entries>)`.
 
@@ -605,7 +605,7 @@ Importing and exporting the map, is ideal if you wish to:
 
 WARNING : The current version only supports Chronicle Maps that contained serialized KEYS and
 VALUES, future versions will support a binary encoding of objects that are `net.openhft.lang.io
-.serialization.BytesMarshallable`
+.serialization.BytesMarshallable`.
 
 ## Close
 Unlike ConcurrentHashMap, chronicle map stores its data off heap, often in a memory mapped file.
