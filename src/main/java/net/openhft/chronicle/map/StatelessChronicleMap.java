@@ -1003,7 +1003,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                     assert parkedTransactionTimeStamp == 0;
                     assert parkedRemainingBytes == 0;
 
-
                     receive(SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID, timeoutTime);
 
                     final int messageSize = inBytes.readInt();
@@ -1012,12 +1011,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
                     assert transactionId0 != 0;
 
-
                     // check the transaction id is reasonable
                     assert String.valueOf(transactionId0).startsWith("14");
 
-
-                    // if the transaction id is not for this thread, park it and read the next one
+                    // if the transaction id is for this thread process it
                     if (transactionId0 == transactionId) {
 
                         // we have the correct transaction id !
@@ -1026,11 +1023,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                         assert remainingBytes > 0;
 
                         clearParked();
-
                         break;
 
                     } else {
-
+                        // if the transaction id is not for this thread, park it and read the next one
                         parkedTransactionTimeStamp = System.currentTimeMillis();
                         parkedRemainingBytes = remainingBytes0;
                         parkedTransactionId = transactionId0;
@@ -1040,7 +1036,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                     }
                 }
 
-                // the transaction id was read by another thread, but it is for this thread
+                // the transaction id was read by another thread, but is for this thread, process it
                 if (parkedTransactionId == transactionId) {
                     remainingBytes = parkedRemainingBytes;
                     clearParked();
@@ -1123,7 +1119,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     private void pause() throws InterruptedException {
 
-        /// inBytesLock.writeLock().isHeldByCurrentThread() don't call this as it not atomic
+        /// don't call inBytesLock.isHeldByCurrentThread() as it not atomic
         inBytesLock.unlock();
         inBytesLock.lock();
     }
