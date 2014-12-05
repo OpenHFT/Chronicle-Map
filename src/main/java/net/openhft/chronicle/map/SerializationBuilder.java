@@ -37,6 +37,11 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
 import static net.openhft.chronicle.hash.serialization.SizeMarshallers.constant;
 import static net.openhft.chronicle.map.Objects.hash;
@@ -55,8 +60,13 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
                 Externalizable.class.isAssignableFrom(c);
     }
 
+    private static final List<Class> knownJDKImmutableClasses = Arrays.<Class>asList(
+            String.class, Byte.class, Short.class, Character.class, Integer.class,
+            Float.class, Long.class, Double.class, BigDecimal.class, BigInteger.class, URL.class
+    );
+
     private static boolean instancesAreMutable(Class c) {
-        return c != String.class;
+        return !knownJDKImmutableClasses.contains(c);
     }
 
     enum Role {KEY, VALUE}
