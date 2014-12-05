@@ -567,7 +567,7 @@ public class StatelessClientTest {
     }
 
 
-    @Ignore
+    @Ignore("HCOLL-230 this has an issue as the map just gets slower and slower !")
     @Test
     public void testThreadSafeness() throws IOException, InterruptedException {
 

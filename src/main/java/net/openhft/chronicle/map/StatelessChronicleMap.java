@@ -503,19 +503,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
 
-    public synchronized void putAll(Map<? extends K, ? extends V> map) {
-
-        final long sizeLocation = putReturnsNull ? writeEvent(PUT_ALL_WITHOUT_ACC) :
-                writeEventAnSkip(PUT_ALL);
-
-        writeEntriesForPutAll(map);
-
-        if (putReturnsNull)
-            sendWithoutAcc(outBytes, sizeLocation);
-        else
-            blockingFetch(sizeLocation);
-    }
-
     private synchronized void sendWithoutAcc(final Bytes bytes, long sizeLocation) {
         writeSizeAt(sizeLocation);
         long timeoutTime = config.timeoutMs() + System.currentTimeMillis();
@@ -685,9 +672,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         inBytes.position(start);
     }
 
-    public synchronized void clear() {
-        // get the data back from the server
-        blockingFetch(writeEventAnSkip(CLEAR));
+    public  void clear() {
+
+        fetchVoid(CLEAR);
     }
 
     @NotNull
@@ -697,7 +684,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         final long startTime = System.currentTimeMillis();
 
         final long timeoutTime = System.currentTimeMillis() + config.timeoutMs();
-        final long transactionId = blockingSend(sizeLocation, startTime);
+        final long transactionId = send(sizeLocation, startTime);
 
         // get the data back from the server
         final Collection<V> result = new ArrayList<V>();
@@ -734,7 +721,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         final long sizeLocation = writeEventAnSkip(ENTRY_SET);
         final long startTime = System.currentTimeMillis();
         final long timeoutTime = System.currentTimeMillis() + config.timeoutMs();
-        final long transactionId = blockingSend(sizeLocation, startTime);
+        final long transactionId = send(sizeLocation, startTime);
 
         // get the data back from the server
         ThreadLocalCopies copies = keyReaderWithSize.getCopies(null);
@@ -772,13 +759,31 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return result.entrySet();
     }
 
+    public void putAll(Map<? extends K, ? extends V> map) {
+
+
+        final long sizeLocation = putReturnsNull ? writeEvent(PUT_ALL_WITHOUT_ACC) :
+                writeEventAnSkip(PUT_ALL);
+
+        final long startTime = System.currentTimeMillis();
+        final long timeoutTime = startTime + config.timeoutMs();
+
+
+        writeEntriesForPutAll(map);
+
+        final long transactionId = send(sizeLocation, startTime);
+
+        if (!putReturnsNull)
+            blockingFetchReadOnly(timeoutTime, transactionId);
+    }
+
     @NotNull
     public Set<K> keySet() {
 
         final long sizeLocation = writeEventAnSkip(KEY_SET);
         final long startTime = System.currentTimeMillis();
         final long timeoutTime = startTime + config.timeoutMs();
-        final long transactionId = blockingSend(sizeLocation, startTime);
+        final long transactionId = send(sizeLocation, startTime);
         final Set<K> result = new HashSet<>();
         final BytesReader<K> keyReader = keyReaderWithSize.readerForLoop(null);
 
@@ -898,7 +903,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         }
     }
 
-    private Bytes blockingFetch(long sizeLocation) {
+/*    private Bytes blockingFetch(long sizeLocation) {
         try {
             long startTime = System.currentTimeMillis();
             return blockingFetchThrowable(sizeLocation,
@@ -913,7 +918,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             close();
             throw e;
         }
-    }
+    }*/
 
     /**
      * sends data to the server via TCP/IP
@@ -922,7 +927,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
      * @param startTime    the current time
      * @return a unique transaction id
      */
-    private long blockingSend(long sizeLocation, final long startTime) {
+    private long send(long sizeLocation, final long startTime) {
         long transactionId = nextUniqueTransaction(startTime);
         final long timeoutTime = startTime + this.config.timeoutMs();
         try {
@@ -960,7 +965,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
 
-    private Bytes blockingFetchThrowable(long sizeLocation, final long transactionId, final long timeoutTime) throws IOException, InterruptedException {
+/*    private Bytes blockingFetchThrowable(long sizeLocation, final long transactionId, final long timeoutTime) throws IOException, InterruptedException {
 
         for (; ; ) {
             if (clientChannel == null) {
@@ -988,7 +993,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             }
         }
 
-    }
+    }*/
 
     private Bytes blockingFetchReadOnly(long timeoutTime, final long transactionId) {
         try {
@@ -1231,7 +1236,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
 
-    private void send(final Bytes out, long timeoutTime) throws IOException {
+    private synchronized void send(final Bytes out, long timeoutTime) throws IOException {
 
         outBuffer.limit((int) out.position());
         outBuffer.position(0);
@@ -1424,7 +1429,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         // send
         synchronized (this) {
             final long sizeLocation = writeEventAnSkip(eventId);
-            transactionId = blockingSend(sizeLocation, startTime);
+            transactionId = send(sizeLocation, startTime);
         }
 
         return transactionId;
@@ -1449,7 +1454,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             for (V value : values) {
                 copies = writeValue(value, copies);
             }
-            transactionId = blockingSend(sizeLocation, startTime);
+            transactionId = send(sizeLocation, startTime);
         }
 
 
@@ -1468,7 +1473,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
             final long sizeLocation = writeEventAnSkip(eventId);
             writeValue(value, null);
-            transactionId = blockingSend(sizeLocation, startTime);
+            transactionId = send(sizeLocation, startTime);
         }
 
 
@@ -1484,7 +1489,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         synchronized (this) {
             final long sizeLocation = writeEventAnSkip(eventId);
-            transactionId = blockingSend(sizeLocation, startTime);
+            transactionId = send(sizeLocation, startTime);
         }
 
         return readLong(transactionId, startTime);
@@ -1498,12 +1503,41 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         synchronized (this) {
             final long sizeLocation = writeEventAnSkip(eventId);
-            transactionId = blockingSend(sizeLocation, startTime);
+            transactionId = send(sizeLocation, startTime);
         }
 
 
         return readBoolean(transactionId, startTime);
 
+    }
+
+    private void fetchVoid(final EventId eventId) {
+
+        final long startTime = System.currentTimeMillis();
+
+        long transactionId;
+
+        synchronized (this) {
+            final long sizeLocation = writeEventAnSkip(eventId);
+            transactionId = send(sizeLocation, startTime);
+        }
+
+        readVoid(transactionId, startTime);
+
+
+    }
+
+    private void readVoid(long transactionId, long startTime) {
+        long timeoutTime = startTime + this.config.timeoutMs();
+
+        // receive
+        inBytesLock.writeLock().lock();
+        try {
+            blockingFetchReadOnly(timeoutTime, transactionId);
+            return;
+        } finally {
+            inBytesLock.writeLock().unlock();
+        }
     }
 
 
@@ -1530,7 +1564,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         synchronized (this) {
             final long sizeLocation = writeEventAnSkip(eventId);
-            transactionId = blockingSend(sizeLocation, startTime);
+            transactionId = send(sizeLocation, startTime);
         }
 
 
@@ -1555,7 +1589,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             for (V value : values) {
                 copies = writeValue(value, copies);
             }
-            transactionId = blockingSend(sizeLocation, startTime);
+            transactionId = send(sizeLocation, startTime);
         }
 
 
@@ -1583,7 +1617,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                     : writeEventAnSkip(eventId);
 
             copies = writeKey(key);
-            transactionId = blockingSend(sizeLocation, startTime);
+            transactionId = send(sizeLocation, startTime);
         }
 
         if (eventReturnsNull(eventId))
@@ -1594,6 +1628,36 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         else
             throw new UnsupportedOperationException("class of type class=" + rClass + " is not " +
                     "supported");
+    }
+
+    private <O> O fetchObject(final EventId eventId) {
+        final long startTime = System.currentTimeMillis();
+        long transactionId = send(eventId, startTime);
+        return readObject(transactionId, startTime);
+    }
+
+    private <O> O fetchObject(final EventId eventId, K key, V... values) {
+        final long startTime = System.currentTimeMillis();
+        long transactionId = sendAndGetTransactionId(startTime, eventId, key, values);
+        return (O) readObject(transactionId, startTime);
+    }
+
+    private long sendAndGetTransactionId(long startTime, final EventId eventId, K key, V... values) {
+        ThreadLocalCopies copies;
+        long transactionId;// send
+        synchronized (this) {
+
+            final long sizeLocation = (eventReturnsNull(eventId))
+                    ? writeEvent(eventId)
+                    : writeEventAnSkip(eventId);
+
+            copies = writeKey(key);
+            for (V value : values) {
+                copies = writeValue(value, copies);
+            }
+            transactionId = send(sizeLocation, startTime);
+        }
+        return transactionId;
     }
 
 
@@ -1637,7 +1701,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             final long sizeLocation = writeEventAnSkip(eventId);
             writeKey(key);
             writeObject(object);
-            transactionId = blockingSend(sizeLocation, startTime);
+            transactionId = send(sizeLocation, startTime);
         }
 
         if (eventReturnsNull(eventId))
