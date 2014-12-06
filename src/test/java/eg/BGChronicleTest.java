@@ -27,8 +27,8 @@ public class BGChronicleTest {
 //            "" + (CLIENTS < Runtime.getRuntime().availableProcessors())));
     public static final int REPLICAS = Integer.getInteger("replicas", 1);
     public static final int CLIENTS = Integer.getInteger("clients", Math.max(1, Runtime.getRuntime().availableProcessors() - REPLICAS));
-    public static final long KEYS = Long.getLong("keys", 100_000L);
-    public static final long MESSAGES = Long.getLong("messages", 1000_000 + KEYS * 10);
+    public static final long KEYS = Long.getLong("keys", 1000_000L);
+    public static final long MESSAGES = Long.getLong("messages", 1000_000 + KEYS * 2);
     public static final long MAX_RATE = Long.getLong("maxRate", 100000);
     public static final String DEFAULT_HOST = "localhost";
     public static final int DEFAULT_PORT = 9050;
