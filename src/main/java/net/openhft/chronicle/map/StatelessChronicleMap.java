@@ -83,7 +83,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final boolean removeReturnsNull;
 
 
-    private final ReentrantLock inBytesLock = new ReentrantLock(true);
+    private final ReentrantLock inBytesLock = new ReentrantLock();
     private final ReentrantLock outBytesLock = new ReentrantLock(true);
 
     private ExecutorService executorService;
@@ -994,80 +994,73 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             InterruptedException {
         int remainingBytes = 0;
 
-        try {
-            for (; ; ) {
 
-                // read the next item from the socket
-                if (parkedTransactionId == 0) {
+        for (; ; ) {
 
-                    assert parkedTransactionTimeStamp == 0;
-                    assert parkedRemainingBytes == 0;
+            // read the next item from the socket
+            if (parkedTransactionId == 0) {
 
-                    receive(SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID, timeoutTime);
+                assert parkedTransactionTimeStamp == 0;
+                assert parkedRemainingBytes == 0;
 
-                    final int messageSize = inBytes.readInt();
-                    final int remainingBytes0 = messageSize - (SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID);
-                    final long transactionId0 = inBytes.readLong();
+                receive(SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID, timeoutTime);
 
-                    assert transactionId0 != 0;
+                final int messageSize = inBytes.readInt();
+                final int remainingBytes0 = messageSize - (SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID);
+                final long transactionId0 = inBytes.readLong();
 
-                    // check the transaction id is reasonable
-                    assert String.valueOf(transactionId0).startsWith("14");
+                assert transactionId0 != 0;
 
-                    // if the transaction id is for this thread process it
-                    if (transactionId0 == transactionId) {
+                // check the transaction id is reasonable
+                assert String.valueOf(transactionId0).startsWith("14");
 
-                        // we have the correct transaction id !
-                        parkedTransactionId = 0;
-                        remainingBytes = remainingBytes0;
-                        assert remainingBytes > 0;
+                // if the transaction id is for this thread process it
+                if (transactionId0 == transactionId) {
 
-                        clearParked();
-                        break;
+                    // we have the correct transaction id !
+                    parkedTransactionId = 0;
+                    remainingBytes = remainingBytes0;
+                    assert remainingBytes > 0;
 
-                    } else {
-                        // if the transaction id is not for this thread, park it and read the next one
-                        parkedTransactionTimeStamp = System.currentTimeMillis();
-                        parkedRemainingBytes = remainingBytes0;
-                        parkedTransactionId = transactionId0;
-
-                        pause();
-                        continue;
-                    }
-                }
-
-                // the transaction id was read by another thread, but is for this thread, process it
-                if (parkedTransactionId == transactionId) {
-                    remainingBytes = parkedRemainingBytes;
                     clearParked();
                     break;
+
+                } else {
+                    // if the transaction id is not for this thread, park it and read the next one
+                    parkedTransactionTimeStamp = System.currentTimeMillis();
+                    parkedRemainingBytes = remainingBytes0;
+                    parkedTransactionId = transactionId0;
+
+                    pause();
+                    continue;
                 }
-
-
-                // time out the old transaction id
-                if (System.currentTimeMillis() - timeoutTime >
-                        parkedTransactionTimeStamp) {
-
-                    LOG.error("", new IllegalStateException("Skipped Message with transaction-id=" +
-                            parkedTransactionTimeStamp +
-                            ", this can occur when you have another thread which has called the " +
-                            "stateless client and terminated abruptly before the message has been " +
-                            "returned from the server"));
-
-                    // read the the next message
-                    receive(parkedRemainingBytes, timeoutTime);
-                    clearParked();
-
-                }
-
-                pause();
             }
-        } catch (Exception | Error e) {
-            parkedTransactionTimeStamp = 0;
-            parkedTransactionId = 0;
-            parkedRemainingBytes = 0;
-            LOG.error("", e);
-            throw e;
+
+            // the transaction id was read by another thread, but is for this thread, process it
+            if (parkedTransactionId == transactionId) {
+                remainingBytes = parkedRemainingBytes;
+                clearParked();
+                break;
+            }
+
+
+            // time out the old transaction id
+            if (System.currentTimeMillis() - timeoutTime >
+                    parkedTransactionTimeStamp) {
+
+                LOG.error("", new IllegalStateException("Skipped Message with transaction-id=" +
+                        parkedTransactionTimeStamp +
+                        ", this can occur when you have another thread which has called the " +
+                        "stateless client and terminated abruptly before the message has been " +
+                        "returned from the server"));
+
+                // read the the next message
+                receive(parkedRemainingBytes, timeoutTime);
+                clearParked();
+
+            }
+
+            pause();
         }
 
 
