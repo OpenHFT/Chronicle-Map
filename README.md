@@ -1126,13 +1126,13 @@ For in memory data-structures like a HashMap this isn’t a big problem. But in 
 So if you don’t require the old value and don’t wish to block until your `put()` has been received by the server, then you may wish to consider using the following configuration :
 
 ``` java
-.putReturnsNull
+.putReturnsNull(true)
 ```
   
 and also for the `remove()` method
 
 ``` java
-.removeReturnsNull
+.removeReturnsNull(true)
 ```
 
 ``` java
@@ -1152,6 +1152,55 @@ ChronicleMapBuilder.of(Integer.class, CharSequence.class)
     .removeReturnsNull(true)
     .create();            
 ```
+
+##### Performance
+
+The throughput and latency performance for different configurations.
+
+Tested using a test called BGChronicleTest.
+
+On one machine (i7 3.5 GHz) we have two persisted replicas run as
+
+-Dreplicas=2 eg.BGChronicleTest server
+
+On another machine (Dual Xeon 8 core 2.6 GHz) connected via a pair of Solarflare SFN5121T 10 Gig-E with onload enabled.
+
+-Dreplicas=2 -Dclients={see below} -DmaxRate=30000 -DreadRatio=2 eg.BGChronicleTest client
+
+2 clients
+Throughput test
+messages per seconds: 58,864
+
+Latency test at 30,000 msg/sec
+50% / 90% / 99% // 99.9% / 99.99% / worst latency was 33 / 80 / 111 // 120 / 148 / 3,921 us
+
+4 clients
+Throughput test
+messages per seconds: 94,006
+
+Latency test at 30,000 msg/sec
+50% / 90% / 99% // 99.9% / 99.99% / worst latency was 32 / 94 / 106 // 131 / 177 / 2,153 us
+
+8 clients
+Throughput test
+messages per seconds: 162,961
+
+Latency test at 30,000 msg/sec
+50% / 90% / 99% // 99.9% / 99.99% / worst latency was 35 / 94 / 117 // 140 / 167 / 1,685 us
+
+16 clients
+Throughput test
+messages per seconds: 267,097
+
+Latency test at 30,000 msg/sec
+50% / 90% / 99% // 99.9% / 99.99% / worst latency was 38 / 97 / 122 // 149 / 174 / 2,771 us
+
+24 clients
+Throughput test
+messages per seconds: 253,052
+
+Latency test at 30,000 msg/sec
+50% / 90% / 99% // 99.9% / 99.99% / worst latency was 40 / 99 / 121 // 151 / 243 / 3,669 us
 
 ##### Close
 
