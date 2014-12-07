@@ -974,24 +974,31 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             // this can occur when new map are added to a channel
             final boolean handShakingComplete = attached.isHandShakingComplete();
 
-            for (; ; ) {
-                final boolean wasDataRead = modificationIterator.nextEntry(entryCallback, 0);
+            int entriesWritten = 0;
+            try {
+                for (; ; entriesWritten++) {
+                    final boolean wasDataRead = modificationIterator.nextEntry(entryCallback, 0);
 
-                if (!wasDataRead) {
-                    // if we have no more data to write to the socket then we will
-                    // un-register OP_WRITE on the selector, until more data becomes available
-                    if (in.position() == 0 && handShakingComplete)
-                        disableWrite(socketChannel, attached);
+                    if (!wasDataRead) {
+                        // if we have no more data to write to the socket then we will
+                        // un-register OP_WRITE on the selector, until more data becomes available
+                        if (in.position() == 0 && handShakingComplete)
+                            disableWrite(socketChannel, attached);
 
-                    return;
+                        return;
+                    }
+
+                    // we've filled up the buffer lets give another channel a chance to send
+                    // some data
+                    if (in.remaining() <= maxEntrySizeBytes)
+                        return;
+
+                    // if we have space in the buffer to write more data and we just wrote data
+                    // into the buffer then let try and write some more
                 }
-
-                // we've filled up the buffer lets give another channel a chance to send some data
-                if (in.remaining() <= maxEntrySizeBytes)
-                    return;
-
-                // if we have space in the buffer to write more data and we just wrote data into the
-                // buffer then let try and write some more
+            } finally {
+                if (LOG.isDebugEnabled())
+                    LOG.debug("Entries written: {}", entriesWritten);
             }
         }
 
@@ -1152,82 +1159,89 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          * @throws InterruptedException
          */
         void entriesFromBuffer(@NotNull Attached attached, @NotNull SelectionKey key) {
-            for (; ; ) {
-                out.limit(in.position());
+            int entriesRead = 0;
+            try {
+                for (; ; entriesRead++) {
+                    out.limit(in.position());
 
-                // its set to MIN_VALUE when it should be read again
-                if (state == NOT_SET) {
-                    if (out.remaining() < SIZE_OF_SIZE + 1)
-                        return;
+                    // its set to MIN_VALUE when it should be read again
+                    if (state == NOT_SET) {
+                        if (out.remaining() < SIZE_OF_SIZE + 1)
+                            return;
 
-                    // state is used for both heartbeat and stateless
-                    state = out.readByte();
-                    sizeInBytes = out.readInt();
+                        // state is used for both heartbeat and stateless
+                        state = out.readByte();
+                        sizeInBytes = out.readInt();
 
-                    assert sizeInBytes >= 0;
+                        assert sizeInBytes >= 0;
 
-                    // if the buffer is too small to read this payload we will have to grow the
-                    // size of the buffer
-                    long requiredSize = sizeInBytes + SIZE_OF_SIZE + 1;
-                    if (out.capacity() < requiredSize) {
-                        attached.entryReader.resizeBuffer(requiredSize + HEADROOM);
+                        // if the buffer is too small to read this payload we will have to grow the
+                        // size of the buffer
+                        long requiredSize = sizeInBytes + SIZE_OF_SIZE + 1;
+                        if (out.capacity() < requiredSize) {
+                            attached.entryReader.resizeBuffer(requiredSize + HEADROOM);
+                        }
+
+                        // this is the :
+                        //  -- heartbeat if its 0
+                        //  -- stateful update if its 1
+                        //  -- the id of the stateful event
+                        if (state == NOT_SET)
+                            continue;
                     }
 
-                    // this is the :
-                    //  -- heartbeat if its 0
-                    //  -- stateful update if its 1
-                    //  -- the id of the stateful event
-                    if (state == NOT_SET)
-                        continue;
-                }
+                    if (out.remaining() < sizeInBytes) {
+                        return;
+                    }
 
-                if (out.remaining() < sizeInBytes) {
-                    return;
-                }
+                    final long nextEntryPos = out.position() + sizeInBytes;
+                    assert nextEntryPos > 0;
+                    final long limit = out.limit();
+                    out.limit(nextEntryPos);
 
-                final long nextEntryPos = out.position() + sizeInBytes;
-                assert nextEntryPos > 0;
-                final long limit = out.limit();
-                out.limit(nextEntryPos);
+                    boolean isStatelessClient = (state != 1);
 
-                boolean isStatelessClient = (state != 1);
+                    if (isStatelessClient) {
+                        if (statelessServerConnector == null) {
+                            LOG.error("", new IllegalArgumentException("received an event " +
+                                    "from a stateless map, stateless maps are not " +
+                                    "currently supported when using Chronicle Channels"));
+                        } else {
 
-                if (isStatelessClient) {
-                    if (statelessServerConnector == null) {
-                        LOG.error("", new IllegalArgumentException("received an event " +
-                                "from a stateless map, stateless maps are not " +
-                                "currently supported when using Chronicle Channels"));
-                    } else {
+                            final Work futureWork =
+                                    statelessServerConnector.processStatelessEvent(state,
+                                            attached.entryWriter.in, attached.entryReader.out);
 
-                        final Work futureWork = statelessServerConnector.processStatelessEvent(state,
-                                attached.entryWriter.in, attached.entryReader.out);
+                            // turn the OP_WRITE on
+                            key.interestOps(key.interestOps() | OP_WRITE);
 
-                        // turn the OP_WRITE on
-                        key.interestOps(key.interestOps() | OP_WRITE);
-
-                        // in some cases it may not be possible to send out all the data before we
-                        // fill out the write buffer, so this data will be send when the buffer
-                        // is no longer full, and as such is treated as future work
-                        if (futureWork != null) {
-                            try {  // we will complete what we can for now
-                                boolean isComplete = futureWork.doWork(attached.entryWriter.in);
-                                if (!isComplete)
-                                    attached.entryWriter.uncompletedWork = futureWork;
-                            } catch (Exception e) {
-                                LOG.error("", e);
+                            // in some cases it may not be possible to send out all the data before
+                            // we fill out the write buffer, so this data will be send when
+                            // the buffer is no longer full, and as such is treated as future work
+                            if (futureWork != null) {
+                                try {  // we will complete what we can for now
+                                    boolean isComplete = futureWork.doWork(attached.entryWriter.in);
+                                    if (!isComplete)
+                                        attached.entryWriter.uncompletedWork = futureWork;
+                                } catch (Exception e) {
+                                    LOG.error("", e);
+                                }
                             }
                         }
-                    }
-                } else
-                    externalizable.readExternalEntry(copies, segmentState, out);
+                    } else
+                        externalizable.readExternalEntry(copies, segmentState, out);
 
-                out.limit(limit);
+                    out.limit(limit);
 
-                // skip onto the next entry
-                out.position(nextEntryPos);
+                    // skip onto the next entry
+                    out.position(nextEntryPos);
 
-                state = NOT_SET;
-                sizeInBytes = 0;
+                    state = NOT_SET;
+                    sizeInBytes = 0;
+                }
+            } finally {
+                if (LOG.isDebugEnabled())
+                    LOG.debug("Entries read: {}", entriesRead);
             }
         }
 
