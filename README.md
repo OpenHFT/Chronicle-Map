@@ -652,10 +652,13 @@ Its recommended that you call close() once you have finished working with a Chro
 map.close()
 ```
 
-When using replication its important to call close to clean up the NIO socket connections. Failure to call close may prevent you from restarting a replicated map on the same port.
-WARNING : If you call close too early before you have finished working with the map, this can cause
-your JVM to crash. Close MUST BE the last thing that you do with the map.
+When using replication its important to call close to clean up the TCP/IP socket connection.
+Failure to call close may prevent you from restarting a replicated map on the same port.
 
+###### WARNING
+
+If you call close too early before you have finished working with the map, this can cause
+your JVM to crash. Close MUST BE the last thing that you do with the map.
 
 
 # TCP / UDP Replication
