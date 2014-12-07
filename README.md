@@ -315,24 +315,23 @@ says the size is 71 MB after adding 10000 entries. You can see the size actually
 
 ### How Operating Systems differ
 
-There is two key differences between Windows and Linux
+As a pure java library, the same chronicle map java byte code can be run on Windows, Linux and Mac OSX.
+However these operating systems work with memory mapped files differently, these differences effect how
+chronicle is able to map memory to a file, and hence this can impact the total number of entries that you are
+able to configure.
 
-- Windows allocates memory and disk eagerly - Windows fails if you attempt to use more than 4 GB in a single mapping. This calculated as 4GB = 2^20 * 4 KB pages. This doesn't fail when you map the region, rather as you use it up.
-It may be this limitation doesn't apply to newer or server based versions of Windows.
-In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.
-- Linux allocates memory and disk lazily.
-- MacOSX allocates memory lazily and disk eagerly.
+- Windows allocates memory and disk eagerly, Windows will fail if more than 4 GB is allocated in a single memory
+mapping, ( calculated as 4GB = 2^20 * 4 KB pages). Windows doesn't fail when a memory mapped region is mapped, rather it will fail when it is used up. This limitation doesn't apply to newer or server based versions of Windows. Eager memory allocation means you can't map more than free memory, but it should reduce jitter when you use it. In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.
+- Linux allocates memory and disk lazily. Linux systems see a performance degradation at around 200% of main memory.
+- Mac OSX allocates memory lazily and disk eagerly.
 
-On Windows, eager memory allocation means you can't map more than free memory, but it should reduce jitter when you use it.
-Chronicle Map allocates head room which is a waste on Windows (Linux's sparse allocation means the head room has
-little impact).
+Chronicle Map allocates head room which is a waste on Windows (Linux's sparse allocation means the head room has little
+impact).
 
-Linux systems see a performance degradation at around 200% of main memory size.
-
-For production systems, we recommend;
-- on Windows smaller map sizes of less than 4 GB each, and less than 50% main memory in total.
-- on Linux small to large maps of less than double main memory. e.g. if you have a 128 GB server, have less than 256 GB of maps on the server.
-- on MacOSX, we have no specific recommendations.
+For production systems
+- on Windows we recommend you use map sizes of less than 4 GB each, and less than 50% main memory in total.
+- on Linux we recommend you use small to large maps of less than double main memory. e.g. if you have a 128 GB server, we recommend you have less than 256 GB of maps on the server.
+- on Mac OSX, we have no specific recommendations.
 
 ### Chronicle Map Interface
 The Chronicle Map interface adds a few methods above an beyond the standard ConcurrentMap,
