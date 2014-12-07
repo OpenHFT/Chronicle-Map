@@ -584,7 +584,7 @@ try (WriteContext<?, BondVOInterface> context = map.acquireUsingLocked("one", bo
 ```
 
 If after you have read the 'issueDate' and  'symbol' and you wish to remove the entry based on some
-business logic, it more efficient to use the 'context' to remove the entry, as the contents is
+business logic, its more efficient to use the 'context' to remove the entry, as the contents is
 already aware when the entry is in memory.
 
 ## Oversized Entries Support
