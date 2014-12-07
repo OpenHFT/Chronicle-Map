@@ -589,11 +589,11 @@ already aware when the entry is in memory.
 
 ## Oversized Entries Support
 
-It is possible for the size of your entry to be twice as large as the maximum entry size, 
+It is possible for the size of your entry to be 64 times as large as the maximum entry size,
 we refer to this type of entry as an oversized entry. Oversized entries are there to cater for the case 
 where only a small
-percentage of your entries are twice as large as the others, in this case your large entry will
-span across two entries. The alternative would be to increase your maximum entry size to be similar
+percentage of your entries are larger than the others, in this case your large entry will
+span across a number of entries. The alternative would be to increase your maximum entry size to be similar
 to the size of the largest entry, but this approach is wasteful of memory, especially when most
 entries are no where near the max entry size.  
 
