@@ -652,10 +652,7 @@ Its recommended that you call close() once you have finished working with a Chro
 map.close()
 ```
 
-You only need to close to clean up resources deterministically.  If your program is exiting, 
-you don't need to close the collection, as Chronicle never knows when the program might crash, 
-so we have designed it so you don't have to close() it.
-
+When using replication its important to call close to clean up the NIO socket connections. Failure to call close may prevent you from restarting a replicated map on the same port.
 WARNING : If you call close too early before you have finished working with the map, this can cause
 your JVM to crash. Close MUST BE the last thing that you do with the map.
 
