@@ -299,9 +299,9 @@ says the size is 71 MB after adding 10000 entries. You can see the size actually
 
 There is two key differences between Windows and Linux
 
-- Windows fails if you attempt to use more than 4 GB in a single mapping. This calculated as 4GB = 2^20 * 4 KB pages. This doesn't fail when you map the region, rather as you use it up.
-It may be this limitation doesn't apply to newer or server based versions.
-In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so. Windows allocates memory and disk eagerly.
+- Windows allocates memory and disk eagerly - Windows fails if you attempt to use more than 4 GB in a single mapping. This calculated as 4GB = 2^20 * 4 KB pages. This doesn't fail when you map the region, rather as you use it up.
+It may be this limitation doesn't apply to newer or server based versions of Windows.
+In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.
 - Linux allocates memory and disk lazily.
 - MacOSX allocates memory lazily and disk eagerly.
 
