@@ -295,6 +295,8 @@ To illustrate this with an example - On Ubuntu we can create a 100 TB chronicle 
 `ls -l` say the process virtual size / file size is 100 TB, however the resident memory via `du`
 says the size is 71 MB after adding 10000 entries. You can see the size actually used with du.
 
+### How Operating Systems differ
+
 There is two key differences between Windows and Linux
 
 - windows fails if you attempt to use more than 2^20 * 4 KB pages in a single mapping (4 GB).  This doesn't fail when you map the region, rather as you use it up.  We should check for this and prevent users mapping regions of more than 4 GB on some (?all?) windows.  It may be this limitation doesn't apply to newer or server based versions, so this requires some testing.  In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.  It is possible Microsoft might fix this first.
