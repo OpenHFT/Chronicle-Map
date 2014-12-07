@@ -351,7 +351,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     }
 
-    public V putIfAbsent(@NotNull K key, V value) {
+    public V putIfAbsent(K key, V value) {
 
         if (key == null || value == null)
             throw new NullPointerException();
@@ -360,7 +360,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
 
-    public boolean remove(@NotNull Object key, Object value) {
+    public boolean remove( Object key, Object value) {
 
         if (key == null)
             throw new NullPointerException();
@@ -372,14 +372,14 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
 
-    public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
+    public boolean replace(K key, V oldValue, V newValue) {
         if (key == null || oldValue == null || newValue == null)
             throw new NullPointerException();
 
         return fetchBoolean(REPLACE_WITH_OLD_AND_NEW_VALUE, key, oldValue, newValue);
     }
 
-    public V replace(@NotNull K key, @NotNull V value) {
+    public V replace(K key,  V value) {
         if (key == null || value == null)
             throw new NullPointerException();
 

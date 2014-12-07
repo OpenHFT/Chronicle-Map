@@ -440,7 +440,7 @@ public class BGChronicleTest {
         return port;
     }
 
-    @Test
+
     public void test() throws IOException, InterruptedException {
         main();
     }
