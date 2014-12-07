@@ -295,6 +295,21 @@ To illustrate this with an example - On Ubuntu we can create a 100 TB chronicle 
 `ls -l` say the process virtual size / file size is 100 TB, however the resident memory via `du`
 says the size is 71 MB after adding 10000 entries. You can see the size actually used with du.
 
+There is two key differences between Windows and Linux
+
+- windows fails if you attempt to use more than 2^20 * 4 KB pages in a single mapping (4 GB).  This doesn't fail when you map the region, rather as you use it up.  We should check for this and prevent users mapping regions of more than 4 GB on some (?all?) windows.  It may be this limitation doesn't apply to newer or server based versions, so this requires some testing.  In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.  It is possible Microsoft might fix this first.
+
+- windows allocates memory and disk eagerly.  Linux allocates memory and disk lazily. MacOSX allocates memory lazily and disk eagerly. On windows, eager memory allocation means you can't map more than free memory, but it should reduce jitter when you use it.  Chronicle Map allocates head room which is a waste on Windows (Linux's sparse allocation means the head room has little impact)  We could add an option for linux to more eagerly allocate space/disk on startup. e.g. to a percentage like 50%.
+
+Linux systems see a performance degradation at around 200% of main memory size.
+
+There likely to be more subtle differences, but these are the main ones which have caused problems.
+
+For production systems, we recommend;
+- on Windows smaller map sizes of less than 4 GB each, and less than 50% main memory in total.
+- on Linux small to large maps of less than double main memory. e.g. if you have a 128 GB server, have less than 256 GB of maps on the server.
+- on MacOSX, we have no specific recommendations.
+
 ### Chronicle Map Interface
 The Chronicle Map interface adds a few methods above an beyond the standard ConcurrentMap,
 the ChronicleMapBuilder can also be used to return the ChronicleMap, see the example below :
