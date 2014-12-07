@@ -36,7 +36,7 @@ public class CHMUseCasesTest {
 */
         try (ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
-                .checkSerializedValues() // for testng purposes only
+                .checkSerializedValues() // for testing purposes only
                 .create()) {
             map.put("Hello", "World");
             assertEquals("World", map.get("Hello"));
@@ -65,10 +65,6 @@ public class CHMUseCasesTest {
                 // TODO replace with the specific exception.
             }
 
-            assertEquals(null, map.putLater("Bye", "For now").get());
-            assertEquals("For now", map.getLater("Bye").get());
-            assertEquals("For now", map.removeLater("Bye").get());
-            assertEquals(null, map.removeLater("Bye").get());
         }
     }
 
@@ -81,7 +77,7 @@ public class CHMUseCasesTest {
     public void testCharSequenceCharSequenceMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
-                .checkSerializedValues() // for testng purposes only
+                .checkSerializedValues() // for testing purposes only
                 .create()) {
             map.put("Hello", "World");
             StringBuilder key = new StringBuilder();
@@ -129,10 +125,6 @@ public class CHMUseCasesTest {
                 }
             }));
 
-            assertEquals(null, map.putLater("Bye", "For now").get());
-            assertEquals("For now", map.getLater("Bye").get().toString());
-            assertEquals("For now", map.removeLater("Bye").get().toString());
-            assertEquals(null, map.removeLater("Bye").get());
         }
     }
 
@@ -144,7 +136,7 @@ public class CHMUseCasesTest {
     public void testStringValueStringValueMap() {
         try (ChronicleMap<StringValue, StringValue> map = ChronicleMapBuilder
                 .of(StringValue.class, StringValue.class)
-                .checkSerializedValues() // for testng purposes only
+                .checkSerializedValues() // for testing purposes only
                 .create()) {
             StringValue key1 = DataValueClasses.newDirectInstance(StringValue.class);
             StringValue key2 = DataValueClasses.newInstance(StringValue.class);
@@ -283,10 +275,7 @@ public class CHMUseCasesTest {
             } catch (Exception todoMoreSpecificException) {
             }
 
-            assertEquals(null, map.putLater(3, 4).get());
-            assertEquals((Integer) 4, map.getLater(3).get());
-            assertEquals((Integer) 4, map.removeLater(3).get());
-            assertEquals(null, map.removeLater(3).get());
+
         }
     }
 
@@ -331,10 +320,7 @@ public class CHMUseCasesTest {
             } catch (Exception todoMoreSpecificException) {
             }
 
-            assertEquals(null, map.putLater(3L, 4L).get());
-            assertEquals((Long) 4L, map.getLater(3L).get());
-            assertEquals((Long) 4L, map.removeLater(3L).get());
-            assertEquals(null, map.removeLater(3L).get());
+
         }
     }
 
@@ -379,10 +365,7 @@ public class CHMUseCasesTest {
             } catch (Exception todoMoreSpecificException) {
             }
 
-            assertEquals(null, map.putLater(3.0, 4.0).get());
-            assertEquals((Double) 4.0, map.getLater(3.0).get());
-            assertEquals((Double) 4.0, map.removeLater(3.0).get());
-            assertEquals(null, map.removeLater(3.0).get());
+
         }
     }
 
@@ -430,10 +413,6 @@ public class CHMUseCasesTest {
             byte[] key3 = {3, 3, 3, 3};
             byte[] value3 = {4, 4, 4, 4};
 
-            assertEquals(null, map.putLater(key3, value3).get());
-            assertTrue(Arrays.equals(value3, map.getLater(key3).get()));
-            assertTrue(Arrays.equals(value3, map.removeLater(key3).get()));
-            assertEquals(null, map.removeLater(key3).get());
         }
     }
 
@@ -521,13 +500,7 @@ public class CHMUseCasesTest {
                 assertBBEquals(bb1, valueA);
             }
 
-            ByteBuffer key3 = ByteBuffer.wrap(new byte[]{3, 3, 3, 3});
-            ByteBuffer value3 = ByteBuffer.wrap(new byte[]{4, 4, 4, 4});
 
-            assertEquals(null, map.putLater(key3, value3).get());
-            assertBBEquals(value3, map.getLater(key3).get());
-            assertBBEquals(value3, map.removeLater(key3).get());
-            assertEquals(null, map.removeLater(key3).get());
         }
     }
 
@@ -579,15 +552,6 @@ public class CHMUseCasesTest {
 
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10, 11, 11}), map.get(key1));
 
-            ByteBuffer key3 = ByteBuffer.wrap(new byte[]{3, 3, 3, 3});
-            ByteBuffer value3 = ByteBuffer.allocateDirect(4);
-            value3.put(new byte[]{4, 4, 4, 4});
-            value3.flip();
-
-            assertEquals(null, map.putLater(key3, value3).get());
-            assertBBEquals(value3, map.getLater(key3).get());
-            assertBBEquals(value3, map.removeLater(key3).get());
-            assertEquals(null, map.removeLater(key3).get());
         }
     }
 

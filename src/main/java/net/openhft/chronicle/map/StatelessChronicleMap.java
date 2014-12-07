@@ -157,40 +157,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     }
 
-    @NotNull
-    @Override
-    public Future<V> getLater(@NotNull final K key) {
-        return lazyExecutorService().submit(new Callable<V>() {
-            @Nullable
-            @Override
-            public V call() throws Exception {
-                return StatelessChronicleMap.this.get(key);
-            }
-        });
-    }
-
-    @NotNull
-    @Override
-    public Future<V> putLater(@NotNull final K key, @NotNull final V value) {
-        return lazyExecutorService().submit(new Callable<V>() {
-            @Nullable
-            @Override
-            public V call() throws Exception {
-                return StatelessChronicleMap.this.put(key, value);
-            }
-        });
-    }
-
-    @Override
-    public Future<V> removeLater(@NotNull final K key) {
-        return lazyExecutorService().submit(new Callable<V>() {
-            @Override
-            public V call() throws Exception {
-                return StatelessChronicleMap.this.remove(key);
-            }
-        });
-    }
-
     @Override
     public void getAll(File toFile) {
         throw new UnsupportedOperationException();

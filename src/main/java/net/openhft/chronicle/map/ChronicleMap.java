@@ -212,68 +212,6 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator);
 
     /**
-     * Returns a {@link java.util.concurrent.Future} containing the value to which the specified key
-     * is mapped, or {@code null} if this map contains no mapping for the key. This method behaves
-     * the same as {@link java.util.Map#get(java.lang.Object)} yet wraps result in a future a {@link
-     * java.util.concurrent.Future}.
-     *
-     * Calling this method may or may not block until the operating is complete depending on the
-     * implementation.
-     *
-     * @param key the key whose associated value is to be returned in the future
-     * @return a future containing the value to which the specified key is mapped after this method
-     * call, or {@code null} if no value is mapped
-     * @see java.util.Map#get(java.lang.Object)
-     * @see java.util.concurrent.Future
-     */
-    Future<V> getLater(@NotNull K key);
-
-    /**
-     * Associates the specified value with the specified key in this map (optional operation).  If
-     * the map previously contained a mapping for the key, the old value is replaced by the
-     * specified value.  (A map <tt>m</tt> is said to contain a mapping for a key <tt>k</tt> if and
-     * only if {@link #containsKey(Object) m.containsKey(k)} would return <tt>true</tt>.)
-     *
-     * Calling this method may or may not block until the operating is complete depending on the
-     * implementation.
-     *
-     * @param key   key with which the specified value is to be associated
-     * @param value value to be associated with the specified key * @return a future containing the
-     *              previous value associated with <tt>key</tt>, or <tt>null</tt> if there was no
-     *              mapping for <tt>key</tt>. (A <tt>null</tt> return can also indicate that the map
-     *              previously associated <tt>null</tt> with <tt>key</tt>, if the implementation
-     *              supports <tt>null</tt> values.)
-     * @return a future containing either, the previous value associated with <tt>key</tt>, or
-     * <tt>null</tt> if there was no mapping for <tt>key</tt>.
-     * @see java.util.Map#put(java.lang.Object, java.lang.Object)
-     * @see java.util.concurrent.Future
-     */
-    Future<V> putLater(@NotNull K key, @NotNull V value);
-
-    /**
-     * Removes the mapping for a key from this map if it is present (optional operation).   More
-     * formally, if this map contains a mapping from key <tt>k</tt> to value <tt>v</tt> such that
-     * <code>(key==null ?  k==null : key.equals(k))</code>, that mapping is removed.  (The map can
-     * contain at most one such mapping.)
-     *
-     * <p>Returns a future containing, either the value to which this map previously associated the
-     * key, or <tt>null</tt> if the map contained no mapping for the key.
-     *
-     * This method behaves the same as {@link java.util.Map#remove(java.lang.Object)} yet wraps
-     * result in a future a {@link java.util.concurrent.Future}.
-     *
-     * Calling this method may or may not block until the operating is complete depending on the
-     * implementation.
-     *
-     * @param key key whose mapping is to be removed from the map
-     * @return a future containing either, the previous value associated with <tt>key</tt>, or
-     * <tt>null</tt> if there was no mapping for <tt>key</tt>.
-     * @see java.util.Map#remove(java.lang.Object)
-     * @see java.util.concurrent.Future
-     */
-    Future<V> removeLater(@NotNull K key);
-
-    /**
      * exports all the entries to a {@link java.io.File} storing them in JSON format, an attempt is
      * made where possible to use standard java serialisation and keep the data human readable, data
      * serialized using the custom serialises are converted to a binary format which is not human

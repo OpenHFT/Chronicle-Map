@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
 
 /**
  * @author Rob Austin.
@@ -226,21 +225,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @Override
     public <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator) {
         return map1.updateForKey(key, mutator);
-    }
-
-    @Override
-    public Future<V> getLater(@NotNull K key) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Future<V> putLater(@NotNull K key, @NotNull V value) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Future<V> removeLater(@NotNull K key) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -50,10 +50,7 @@ import java.lang.reflect.Array;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static java.lang.Class.forName;
 import static java.lang.Long.numberOfTrailingZeros;
@@ -567,102 +564,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 LockType.WRITE_LOCK, false)) {
             return mutator.update(entry.value());
         }
-    }
-
-    @Override
-    public Future<V> getLater(@NotNull K key) {
-        final V v = get(key);
-        return new Future<V>() {
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
-                return false;
-            }
-
-            @Override
-            public boolean isCancelled() {
-                return false;
-            }
-
-            @Override
-            public boolean isDone() {
-                return true;
-            }
-
-            @Override
-            public V get() throws InterruptedException, ExecutionException {
-                return v;
-            }
-
-            @Override
-            public V get(long timeout, @NotNull TimeUnit unit)
-                    throws InterruptedException, ExecutionException, TimeoutException {
-                return v;
-            }
-        };
-    }
-
-    @Override
-    public Future<V> putLater(@NotNull K key, @NotNull V value) {
-        final V v = put(key, value);
-        return new Future<V>() {
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
-                return false;
-            }
-
-            @Override
-            public boolean isCancelled() {
-                return false;
-            }
-
-            @Override
-            public boolean isDone() {
-                return true;
-            }
-
-            @Override
-            public V get() throws InterruptedException, ExecutionException {
-                return v;
-            }
-
-            @Override
-            public V get(long timeout, TimeUnit unit)
-                    throws InterruptedException, ExecutionException, TimeoutException {
-                return v;
-            }
-        };
-    }
-
-    @Override
-    public Future<V> removeLater(@NotNull K key) {
-        final V v = remove(key);
-        return new Future<V>() {
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
-                return false;
-            }
-
-            @Override
-            public boolean isCancelled() {
-                return false;
-            }
-
-            @Override
-            public boolean isDone() {
-                return true;
-            }
-
-            @Override
-            public V get() throws InterruptedException, ExecutionException {
-                return v;
-            }
-
-            @Override
-            public V get(long timeout, TimeUnit unit)
-                    throws InterruptedException, ExecutionException, TimeoutException {
-                return v;
-            }
-        };
     }
 
     @Override
