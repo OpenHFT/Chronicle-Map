@@ -299,13 +299,20 @@ says the size is 71 MB after adding 10000 entries. You can see the size actually
 
 There is two key differences between Windows and Linux
 
-- windows fails if you attempt to use more than 2^20 * 4 KB pages in a single mapping (4 GB).  This doesn't fail when you map the region, rather as you use it up.  We should check for this and prevent users mapping regions of more than 4 GB on some (?all?) windows.  It may be this limitation doesn't apply to newer or server based versions, so this requires some testing.  In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.  It is possible Microsoft might fix this first.
+- Windows fails if you attempt to use more than 2^20 * 4 KB pages in a single mapping (4 GB).
+This doesn't fail when you map the region, rather as you use it up.
+It may be this limitation doesn't apply to newer or server based versions.
+In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.
 
-- windows allocates memory and disk eagerly.  Linux allocates memory and disk lazily. MacOSX allocates memory lazily and disk eagerly. On windows, eager memory allocation means you can't map more than free memory, but it should reduce jitter when you use it.  Chronicle Map allocates head room which is a waste on Windows (Linux's sparse allocation means the head room has little impact)  We could add an option for linux to more eagerly allocate space/disk on startup. e.g. to a percentage like 50%.
+- Windows allocates memory and disk eagerly.
+- Linux allocates memory and disk lazily.
+- MacOSX allocates memory lazily and disk eagerly.
+
+On Windows, eager memory allocation means you can't map more than free memory, but it should reduce jitter when you use it.
+Chronicle Map allocates head room which is a waste on Windows (Linux's sparse allocation means the head room has
+little impact).
 
 Linux systems see a performance degradation at around 200% of main memory size.
-
-There likely to be more subtle differences, but these are the main ones which have caused problems.
 
 For production systems, we recommend;
 - on Windows smaller map sizes of less than 4 GB each, and less than 50% main memory in total.
