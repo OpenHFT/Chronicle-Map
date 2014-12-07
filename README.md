@@ -302,9 +302,7 @@ There is two key differences between Windows and Linux
 - Windows fails if you attempt to use more than 2^20 * 4 KB pages in a single mapping (4 GB).
 This doesn't fail when you map the region, rather as you use it up.
 It may be this limitation doesn't apply to newer or server based versions.
-In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.
-
-- Windows allocates memory and disk eagerly.
+In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so. Windows allocates memory and disk eagerly.
 - Linux allocates memory and disk lazily.
 - MacOSX allocates memory lazily and disk eagerly.
 
