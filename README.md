@@ -260,10 +260,12 @@ You set the maximum number of entries by the builder:
 ``` java
 ConcurrentMap<Integer, CharSequence> map =
     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+    constantValueSizeBySample("a long sample string"),
     .entries(1000) // set the max number of entries here
     .create();
 ```
 In this example above we have set 1000 entries.
+
 
 We have optimised chronicle, So that you can have situations where you either don't use;
 
@@ -274,6 +276,19 @@ used reflect the number of actual entries, not the number you allowed for.
 lines (128 bytes +), only the lines you touch sit in your CPU cache and if you have multiple pages
 (8+ Kbytes) only the pages you touch use memory or disk.  The CPU cache usage matters as it can be
 10000x smaller than main memory.
+
+#### How many bytes is each entry
+
+For example, if you had ant entry that had both Integer keys and values, these take exactly 4 bytes themselves.
+There is also multi-map overhead per entry, ~6 bytes if your segment size is < 64k,
+ ~9 if < 16m and ~12 if > 16m entries per segment. If you create replicated map,
+ there is also 10 bytes per entry for replication purposes.
+
+We suggest you don't configure size for constant-sized keys or values, instead you can use the
+builder methods .constantKeySizeBySample(sampleKey) and
+.constantValueSizeBySample(sampleValue), For common types like Integer we suggest you don't use
+these methods, for example ChronicleMap knows that Integer is 4 bytes long, Long is 8, etc.
+
 
 ### Size of space reserved on disk
 
