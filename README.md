@@ -328,7 +328,7 @@ mapping, ( calculated as 4GB = 2^20 * 4 KB pages). Windows doesn't fail when a m
 Chronicle Map allocates head room which is a waste on Windows (Linux's sparse allocation means the head room has little
 impact).
 
-For production systems
+##### For production
 - on Windows we recommend you use map sizes of less than 4 GB each, and less than 50% main memory in total.
 - on Linux we recommend you use small to large maps of less than double main memory. e.g. if you have a 128 GB server, we recommend you have less than 256 GB of maps on the server.
 - on Mac OSX, we have no specific recommendations.
