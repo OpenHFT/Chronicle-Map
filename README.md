@@ -453,7 +453,7 @@ bond.getCoupon()
 lets say that it is only the `coupon` field that we are interested in, then its better not to have to
 deserialise the whole object that implements the `BondVOInterface`. The `ChronicleMapBuilder` will look a the types of keys
  and values that you use, If the value type is a simple accessor/mutator interface that is exposing a non nested pojo, which uses simple types
- like String and primitives with corresponding get..() and
+ like `CharSequence` and primitives with corresponding get..() and
  set..() methods, Chronicle is able to generate off heap poxies so the whole object is not desrialized each
   time it is accessed, The off heap poxies are able to read
 and write into
@@ -461,7 +461,7 @@ the off heap data structures directly, this reduced serialisation can give you a
 Below we show you how you can work directly with the off heap entries.
 
 ``` java
-        ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
+        ChronicleMap<CharSequence, BondVOInterface> chm = ChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
                 .keySize(10)
                 .create();
@@ -470,7 +470,7 @@ Below we show you how you can work directly with the off heap entries.
 notice that the
 
 ``` java
-.of(String.class, BondVOInterface.class)
+.of(CharSequence.class, BondVOInterface.class)
 ``` 
 
 value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  now
@@ -542,14 +542,13 @@ context.close() // the lock will get released when this is called
 ```
 
 ####  acquireUsingLocked()
-
-just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
-code is a pattern that you will often come across, acquireUsing(key,value) offers this
-functionality with a single method call :
+Just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
+code is a pattern that you will often come across, `acquireUsing(key,value)` offers this
+functionality i the example, below with a single method call :
 
  ``` java
 V acquireUsing(key,value) {
-    Lock l = ...; // the segement lock of the map
+    Lock l = ...; // the segment lock of the map
     l.lock();
     try {
            V v = map.getUsing(key,value)
@@ -564,12 +563,12 @@ V acquireUsing(key,value) {
 }
 ```
 
-if you are only accessing ChronicleMap from a single thread and you are not doing replication
-and don't care about atomic reads, then its simpler ( and faster ) to use acquireUsing() otherwise we
-recommend acquireUsingLocked(key,value)
+If you are only accessing ChronicleMap from a single thread. If you are not doing replication
+and don't care about atomic reads. Then its simpler ( and faster ) to use acquireUsing() otherwise we
+recommend you use `acquireUsingLocked(key,value)`
 
-because acquireUsing can end up creating an entry the acquireUsingLocked(key,value) method holds
-a segment write lock, this is unlike the getUsing(key,using) method that holds a segment read lock.
+Since the acquireUsing() method can end up creating an entry, the acquireUsingLocked(key,value) method must hold
+a segment write lock, this is unlike  getUsing(key,using) which only holds a segment read lock.
 
 ``` java
 BondVOInterface bond = ... // create your instance
@@ -584,7 +583,7 @@ try (WriteContext<?, BondVOInterface> context = map.acquireUsingLocked("one", bo
 }
 ```
 
-if after you have read the 'issueDate' and  'symbol' and you wish to remove the entry based on some
+If after you have read the 'issueDate' and  'symbol' and you wish to remove the entry based on some
 business logic, it more efficient to use the 'context' to remove the entry, as the contents is
 already aware when the entry is in memory.
 
@@ -593,7 +592,7 @@ already aware when the entry is in memory.
 It is possible for the size of your entry to be twice as large as the maximum entry size, 
 we refer to this type of entry as an oversized entry. Oversized entries are there to cater for the case 
 where only a small
-percentage of your entries are twise as large as the others, in this case your large entry will
+percentage of your entries are twice as large as the others, in this case your large entry will
 span across two entries. The alternative would be to increase your maximum entry size to be similar
 to the size of the largest entry, but this approach is wasteful of memory, especially when most
 entries are no where near the max entry size.  
