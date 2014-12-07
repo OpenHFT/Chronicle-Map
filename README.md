@@ -350,18 +350,17 @@ supports the following methods :
  - [`ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);`]  (https://github.com/OpenHFT/Chronicle-Map#off-heap-storage-and-how-using-a-proxy-object-can-improve-performance)
  - [`WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);`]    (https://github.com/OpenHFT/Chronicle-Map#acquireusinglocked)
 
-These methods let you provide the object which the data will be written to, even if the object is
-immutable. For example 
+These methods let you provide the object which the data will be written to, but the value use to be mutable. For example
 
 ``` java
-String myString = ""; 
-String myResult = map.getUsing("key", myString);
+CharSequence using = new StringBuilder();
+CharSequence myResult = map.getUsing("key", using);
 // at this point the myString and myResult will both point to the same object
 ```
 
 The `map.getUsing()` method is similar to `map.get()`, but because Chronicle Map stores its data off
 heap, if you were to call get("key"), a new object would be created each time, map.getUsing() works
-by reusing the heap memory which was used by the original Object "myString". This technique provides
+by reusing the heap memory which was used by the original Object "using". This technique provides
 you with better control over your object creation.
 
 Exactly like `map.getUsing()`, `map.acquireUsing()` will give you back a reference to an value 
