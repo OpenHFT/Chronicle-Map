@@ -277,12 +277,15 @@ lines (128 bytes +), only the lines you touch sit in your CPU cache and if you h
 (8+ Kbytes) only the pages you touch use memory or disk.  The CPU cache usage matters as it can be
 10000x smaller than main memory.
 
-#### How many bytes is each entry
+#### Entry size
 
-For example, if you had ant entry that had both Integer keys and values, these take exactly 4 bytes themselves.
-There is also multi-map overhead per entry, ~6 bytes if your segment size is < 64k,
- ~9 if < 16m and ~12 if > 16m entries per segment. If you create replicated map,
- there is also 10 bytes per entry for replication purposes.
+The size of each entry depends on the type of the Keys and Values, as some types are larger than others. For example, if an entry uses Integers for both the keys and values, both the key and value each take exactly 4 bytes.
+There is also some other overhead which is internal to chronicle, such as its internal multi-map, which has an overhead of
+* 6 bytes per entry for segment size of < 64k,
+* 9 bytes per entry for segment size of < 16m but > 64k
+* 12 bytes per entry for segment size of > 16m entries per segment.
+
+Also, if you create a replicated map, there is an additional 10 bytes per entry.
 
 We suggest you don't configure size for constant-sized keys or values, instead you can use the
 builder methods .constantKeySizeBySample(sampleKey) and
