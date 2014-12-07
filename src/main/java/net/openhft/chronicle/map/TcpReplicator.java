@@ -76,11 +76,15 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private final BitSet activeKeys = new BitSet(selectionKeysStore.length);
     private final long heartBeatIntervalMillis;
 
+    @NotNull
     private final Replica replica;
     private final byte localIdentifier;
     private final int maxEntrySizeBytes;
+    @NotNull
     private final Replica.EntryExternalizable externalizable;
+    @NotNull
     private final TcpTransportAndNetworkConfig replicationConfig;
+    @Nullable
     private final StatelessServerConnector statelessServerConnector;
     private final
     @Nullable
@@ -217,7 +221,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
     }
 
-    private void processKey(long approxTime, SelectionKey key) {
+    private void processKey(long approxTime, @NotNull SelectionKey key) {
         try {
 
             if (!key.isValid())
@@ -346,7 +350,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
     }
 
-    private void enableOpWrite(SelectionKey key) {
+    private void enableOpWrite(@NotNull SelectionKey key) {
         int ops = key.interestOps();
         if ((ops & (OP_CONNECT | OP_ACCEPT)) == 0)
             key.interestOps(ops | OP_WRITE);
@@ -504,7 +508,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      *
      * @param key the nio SelectionKey
      */
-    private void clearHandshaking(SelectionKey key) {
+    private void clearHandshaking(@NotNull SelectionKey key) {
         final Attached attached = (Attached) key.attachment();
         activeKeys.clear(attached.remoteIdentifier);
         selectionKeysStore[attached.remoteIdentifier] = null;
@@ -520,7 +524,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      * @throws java.io.IOException
      * @throws InterruptedException
      */
-    private void doHandShaking(@NotNull final SelectionKey key, SocketChannel socketChannel)
+    private void doHandShaking(@NotNull final SelectionKey key, @NotNull SocketChannel socketChannel)
             throws IOException, InterruptedException {
         final Attached attached = (Attached) key.attachment();
         final TcpSocketChannelEntryWriter writer = attached.entryWriter;
@@ -658,7 +662,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      * called when the selector receives a OP_READ message
      */
 
-    private void onRead(final SelectionKey key,
+    private void onRead(@NotNull final SelectionKey key,
                         final long approxTime) throws IOException, InterruptedException {
 
         final SocketChannel socketChannel = (SocketChannel) key.channel();
@@ -701,6 +705,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
     }
 
+    @Nullable
     private ServerSocketChannel openServerSocketChannel() throws IOException {
         ServerSocketChannel result = null;
 
@@ -722,11 +727,13 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private static class KeyInterestUpdater {
 
         private final AtomicBoolean wasChanged = new AtomicBoolean();
+        @NotNull
         private final BitSet changeOfOpWriteRequired;
+        @NotNull
         private final SelectionKey[] selectionKeys;
         private final int op;
 
-        KeyInterestUpdater(int op, final SelectionKey[] selectionKeys) {
+        KeyInterestUpdater(int op, @NotNull final SelectionKey[] selectionKeys) {
             this.op = op;
             this.selectionKeys = selectionKeys;
             changeOfOpWriteRequired = new BitSet(selectionKeys.length);
@@ -759,6 +766,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
     private class ServerConnector extends AbstractConnector {
 
+        @NotNull
         private final Details details;
 
         private ServerConnector(@NotNull Details details) {
@@ -766,6 +774,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             this.details = details;
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "ServerConnector{" +
@@ -773,6 +782,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                     '}';
         }
 
+        @Nullable
         SelectableChannel doConnect() throws
                 IOException, InterruptedException {
 
@@ -815,6 +825,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
     private class ClientConnector extends AbstractConnector {
 
+        @NotNull
         private final Details details;
 
         private ClientConnector(@NotNull Details details) {
@@ -822,6 +833,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             this.details = details;
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "ClientConnector{" + details + '}';
@@ -896,6 +908,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         public TcpSocketChannelEntryReader entryReader;
         public TcpSocketChannelEntryWriter entryWriter;
 
+        @Nullable
         public Replica.ModificationIterator remoteModificationIterator;
         public AbstractConnector connector;
         public long remoteBootstrapTimestamp = Long.MIN_VALUE;
@@ -935,11 +948,15 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      */
     private class TcpSocketChannelEntryWriter {
 
+        @NotNull
         final ByteBufferBytes in;
+        @NotNull
         private final ByteBuffer out;
+        @NotNull
         private final EntryCallback entryCallback;
         // if uncompletedWork is set ( not null ) , this must be completed before any further work
         // is  carried out
+        @Nullable
         public Work uncompletedWork;
         private long lastSentTime;
 
@@ -1169,7 +1186,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          * @param key
          * @throws InterruptedException
          */
-        void entriesFromBuffer(Attached attached, SelectionKey key) throws InterruptedException, IOException {
+        void entriesFromBuffer(@NotNull Attached attached, @NotNull SelectionKey key) throws InterruptedException, IOException {
             for (; ; ) {
                 out.limit(in.position());
 
@@ -1304,10 +1321,15 @@ class StatelessServerConnector<K, V> {
     public static final int SIZE_OF_IS_EXCEPTION = 1;
     public static final int HEADER_SIZE = SIZE_OF_SIZE + SIZE_OF_IS_EXCEPTION + SIZE_OF_TRANSACTION_ID;
 
+    @NotNull
     private final ReaderWithSize<K> keyReaderWithSize;
+    @NotNull
     private final WriterWithSize<K> keyWriterWithSize;
+    @NotNull
     private final ReaderWithSize<V> valueReaderWithSize;
+    @NotNull
     private final WriterWithSize<V> valueWriterWithSize;
+    @NotNull
     private final VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
     private double maxEntrySizeBytes;
 
@@ -1323,6 +1345,7 @@ class StatelessServerConnector<K, V> {
         this.maxEntrySizeBytes = maxEntrySizeBytes;
     }
 
+    @Nullable
     Work processStatelessEvent(final byte eventId,
                                @NotNull final Bytes writer,
                                @NotNull final ByteBufferBytes reader) {
@@ -1410,7 +1433,8 @@ class StatelessServerConnector<K, V> {
         }
     }
 
-    public Work mapForKey(ByteBufferBytes reader, Bytes writer, long sizeLocation) {
+    @Nullable
+    public Work mapForKey(@NotNull ByteBufferBytes reader, @NotNull Bytes writer, long sizeLocation) {
         final K key = keyReaderWithSize.read(reader, null);
         final Function<V, ?> function = (Function<V, ?>) reader.readObject();
         try {
@@ -1425,7 +1449,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    public Work updateForKey(ByteBufferBytes reader, Bytes writer, long sizeLocation) {
+    @Nullable
+    public Work updateForKey(@NotNull ByteBufferBytes reader, @NotNull Bytes writer, long sizeLocation) {
         final K key = keyReaderWithSize.read(reader, null);
         final Mutator<V, ?> mutator = (Mutator<V, ?>) reader.readObject();
         try {
@@ -1440,7 +1465,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work removeWithValue(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work removeWithValue(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 writer.writeBoolean(map.removeWithValue(reader));
@@ -1458,7 +1484,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work replaceWithOldAndNew(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work replaceWithOldAndNew(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.replaceWithOldAndNew(reader, writer);
@@ -1477,7 +1504,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work longSize(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work longSize(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             writer.writeLong(map.longSize());
         } catch (Throwable e) {
@@ -1487,7 +1515,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work hashCode(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work hashCode(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             writer.writeInt(map.hashCode());
         } catch (Throwable e) {
@@ -1498,7 +1527,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work toString(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work toString(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         final String str;
 
         final long remaining = writer.remaining();
@@ -1520,7 +1550,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work sendException(Bytes writer, long sizeLocation, Throwable e) {
+    @Nullable
+    private Work sendException(@NotNull Bytes writer, long sizeLocation, @NotNull Throwable e) {
         // move the position to ignore any bytes written so far
         writer.position(sizeLocation + HEADER_SIZE);
 
@@ -1532,7 +1563,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work isEmpty(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work isEmpty(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             writer.writeBoolean(map.isEmpty());
         } catch (Throwable e) {
@@ -1543,7 +1575,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work containsKey(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work containsKey(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 writer.writeBoolean(map.containsKey(reader));
@@ -1558,7 +1591,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work containsValue(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work containsValue(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         // todo optimize -- eliminate
         final V v = valueReaderWithSize.read(reader, null);
 
@@ -1571,7 +1605,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work get(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work get(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.get(reader, writer);
@@ -1587,6 +1622,7 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
+    @Nullable
     private Work put(Bytes reader) {
         if (MAP_SUPPORTS_BYTES) {
             map.put(reader);
@@ -1601,7 +1637,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work put(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work put(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.put(reader, writer);
@@ -1619,6 +1656,7 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
+    @Nullable
     private Work remove(Bytes reader) {
         if (MAP_SUPPORTS_BYTES) {
             map.removeKeyAsBytes(reader);
@@ -1630,7 +1668,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work remove(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work remove(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.remove(reader, writer);
@@ -1648,7 +1687,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work putAll(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work putAll(@NotNull Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.putAll(reader);
@@ -1663,7 +1703,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work putAll(Bytes reader) {
+    @Nullable
+    private Work putAll(@NotNull Bytes reader) {
         if (MAP_SUPPORTS_BYTES) {
             map.putAll(reader);
         } else {
@@ -1673,7 +1714,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work clear(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work clear(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             map.clear();
         } catch (Throwable e) {
@@ -1684,7 +1726,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work values(Bytes reader, Bytes writer) {
+    @Nullable
+    private Work values(@NotNull Bytes reader, @NotNull Bytes writer) {
         final long transactionId = reader.readLong();
 
         Collection<V> values;
@@ -1700,7 +1743,7 @@ class StatelessServerConnector<K, V> {
         // this allows us to write more data than the buffer will allow
         return new Work() {
             @Override
-            public boolean doWork(Bytes out) {
+            public boolean doWork(@NotNull Bytes out) {
                 final long sizeLocation = header(out, transactionId);
 
                 ThreadLocalCopies copies = valueWriterWithSize.getCopies(null);
@@ -1726,7 +1769,8 @@ class StatelessServerConnector<K, V> {
         };
     }
 
-    private Work keySet(Bytes reader, final Bytes writer) {
+    @Nullable
+    private Work keySet(@NotNull Bytes reader, @NotNull final Bytes writer) {
         final long transactionId = reader.readLong();
 
         Set<K> ks;
@@ -1742,7 +1786,7 @@ class StatelessServerConnector<K, V> {
         // this allows us to write more data than the buffer will allow
         return new Work() {
             @Override
-            public boolean doWork(Bytes out) {
+            public boolean doWork(@NotNull Bytes out) {
                 final long sizeLocation = header(out, transactionId);
 
                 ThreadLocalCopies copies = keyWriterWithSize.getCopies(null);
@@ -1768,7 +1812,8 @@ class StatelessServerConnector<K, V> {
         };
     }
 
-    private Work entrySet(final Bytes reader, Bytes writer) {
+    @Nullable
+    private Work entrySet(@NotNull final Bytes reader, @NotNull Bytes writer) {
         final long transactionId = reader.readLong();
 
         final Set<Map.Entry<K, V>> entries;
@@ -1784,7 +1829,7 @@ class StatelessServerConnector<K, V> {
         // this allows us to write more data than the buffer will allow
         return new Work() {
             @Override
-            public boolean doWork(Bytes out) {
+            public boolean doWork(@NotNull Bytes out) {
                 if (out.remaining() <= maxEntrySizeBytes)
                     return false;
 
@@ -1816,7 +1861,8 @@ class StatelessServerConnector<K, V> {
         };
     }
 
-    private Work putIfAbsent(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work putIfAbsent(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.putIfAbsent(reader, writer);
@@ -1834,7 +1880,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private Work replace(Bytes reader, Bytes writer, final long sizeLocation) {
+    @Nullable
+    private Work replace(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.replaceKV(reader, writer);
@@ -1852,7 +1899,7 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private long reflectTransactionId(Bytes reader, Bytes writer) {
+    private long reflectTransactionId(@NotNull Bytes reader, @NotNull Bytes writer) {
         final long transactionId = reader.readLong();
         final long sizeLocation = writer.position();
         writer.skip(SIZE_OF_SIZE);
@@ -1862,7 +1909,7 @@ class StatelessServerConnector<K, V> {
         return sizeLocation;
     }
 
-    private void writeSizeAndFlags(long locationOfSize, boolean isException, Bytes out) {
+    private void writeSizeAndFlags(long locationOfSize, boolean isException, @NotNull Bytes out) {
         final long size = out.position() - locationOfSize;
 
         out.writeInt(locationOfSize, (int) size); // size
@@ -1887,11 +1934,12 @@ class StatelessServerConnector<K, V> {
 
     }
 
-    private void writeException(Bytes out, Throwable e) {
+    private void writeException(@NotNull Bytes out, Throwable e) {
         out.writeObject(e);
     }
 
-    private Map<K, V> readEntries(Bytes reader) {
+    @NotNull
+    private Map<K, V> readEntries(@NotNull Bytes reader) {
         final long numberOfEntries = reader.readStopBit();
         final Map<K, V> result = new HashMap<K, V>();
 
@@ -1908,12 +1956,13 @@ class StatelessServerConnector<K, V> {
         return result;
     }
 
-    private Work sendException(Bytes reader, Bytes writer, Throwable e) {
+    @Nullable
+    private Work sendException(@NotNull Bytes reader, @NotNull Bytes writer, @NotNull Throwable e) {
         final long sizeLocation = reflectTransactionId(reader, writer);
         return sendException(writer, sizeLocation, e);
     }
 
-    private long header(Bytes writer, final long transactionId) {
+    private long header(@NotNull Bytes writer, final long transactionId) {
         final long sizeLocation = writer.position();
 
         writer.skip(SIZE_OF_SIZE);
@@ -1930,7 +1979,7 @@ class StatelessServerConnector<K, V> {
         return sizeLocation;
     }
 
-    private void writeHeader(Bytes writer, long sizeLocation, int count,
+    private void writeHeader(@NotNull Bytes writer, long sizeLocation, int count,
                              final boolean hasAnotherChunk) {
         final long end = writer.position();
         final int size = (int) (end - sizeLocation);
