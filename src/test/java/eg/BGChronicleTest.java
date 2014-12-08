@@ -3,7 +3,6 @@ package eg;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.File;
@@ -399,7 +398,8 @@ public class BGChronicleTest {
 
                 o.startChronicleMapServer(port);
                 System.out.println("server ON");
-
+                System.in.read();
+                System.out.println("... server OFF");
                 break;
             }
 
