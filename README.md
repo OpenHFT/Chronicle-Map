@@ -648,12 +648,16 @@ VALUES, future versions will support a binary encoding of objects that are `net.
 ## Close
 Unlike ConcurrentHashMap, chronicle map stores its data off heap, often in a memory mapped file.
 Its recommended that you call close() once you have finished working with a Chronicle Map.
+
 ``` java
 map.close()
 ```
 
-When using replication its important to call close to clean up the TCP/IP socket connection.
-Failure to call close may prevent you from restarting a replicated map on the same port.
+This is especially important when working with chronicle map replication, as failure to call close may prevent
+you from restarting a replicated map on the same port. In the event that your application crashes it may not
+be possible to call close(). Your operating system will usually close dangling ports automatically,
+so although it is recommended that you close() when you have finished with the map,
+its not something that you must do, its just something that we recommend you should do.
 
 ###### WARNING
 
