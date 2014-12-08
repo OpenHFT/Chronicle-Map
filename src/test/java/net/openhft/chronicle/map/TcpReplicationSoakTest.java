@@ -5,7 +5,10 @@ import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -100,19 +103,19 @@ public class TcpReplicationSoakTest {
                 final int select = rnd.nextInt(2);
                 final ChronicleMap<Integer, CharSequence> map = select > 0 ? map1 : map2;
 
-            if (rnd.nextBoolean()) {
-                map.put(rnd.nextInt(Builder.SIZE), "test" + j);
-            } else {
-                map.remove(rnd.nextInt(Builder.SIZE));
+                if (rnd.nextBoolean()) {
+                    map.put(rnd.nextInt(Builder.SIZE), "test" + j);
+                } else {
+                    map.remove(rnd.nextInt(Builder.SIZE));
+                }
             }
         }
-        }
-         Thread.sleep(1000);
+        Thread.sleep(1000);
         System.out.println("\nwaiting till equal");
 
-            waitTillEqual(10000);
+        waitTillEqual(10000);
 
-        Assert.assertEquals(new TreeMap(map1), new TreeMap(map2));
+        Assert.assertEquals(map1, map2);
 
     }
 

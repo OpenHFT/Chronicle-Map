@@ -992,9 +992,49 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     private Bytes blockingFetchThrowable(long timeoutTime, long transactionId) throws IOException,
             InterruptedException {
-        int remainingBytes = 0;
+
+        int remainingBytes = nextEntry(timeoutTime, transactionId);
+
+        if (inBytes.capacity() < remainingBytes) {
+            long pos = inBytes.position();
+            long limit = inBytes.position();
+            inBytes.position(limit);
+            resizeBufferInBuffer(remainingBytes, pos);
+        } else
+            inBytes.limit(inBytes.capacity());
+
+        // block until we have received all the bytes in this chunk
+        receive(remainingBytes, timeoutTime);
+
+        final boolean isException = inBytes.readBoolean();
+
+        if (isException) {
+            Throwable throwable = (Throwable) inBytes.readObject();
+            try {
+                Field stackTrace = Throwable.class.getDeclaredField("stackTrace");
+                stackTrace.setAccessible(true);
+                List<StackTraceElement> stes = new ArrayList<>(Arrays.asList((StackTraceElement[]) stackTrace.get(throwable)));
+                // prune the end of the stack.
+                for (int i = stes.size() - 1; i > 0 && stes.get(i).getClassName().startsWith("Thread"); i--) {
+                    stes.remove(i);
+                }
+                InetSocketAddress address = config.remoteAddress();
+                stes.add(new StackTraceElement("~ remote", "tcp ~", address.getHostName(), address.getPort()));
+                StackTraceElement[] stackTrace2 = Thread.currentThread().getStackTrace();
+                for (int i = 4; i < stackTrace2.length; i++)
+                    stes.add(stackTrace2[i]);
+                stackTrace.set(throwable, stes.toArray(new StackTraceElement[stes.size()]));
+            } catch (Exception ignore) {
+            }
+            NativeBytes.UNSAFE.throwException(throwable);
+        }
 
 
+        return inBytes;
+    }
+
+    private int nextEntry(long timeoutTime, long transactionId) throws IOException, InterruptedException {
+        int remainingBytes;
         for (; ; ) {
 
             // read the next item from the socket
@@ -1062,46 +1102,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
             pause();
         }
-
-
-        final int minBufferSize = remainingBytes;
-
-        if (inBytes.capacity() < minBufferSize) {
-            long pos = inBytes.position();
-            long limit = inBytes.position();
-            inBytes.position(limit);
-            resizeBufferInBuffer(minBufferSize, pos);
-        } else
-            inBytes.limit(inBytes.capacity());
-
-        // block until we have received all the bytes in this chunk
-        receive(remainingBytes, timeoutTime);
-
-        final boolean isException = inBytes.readBoolean();
-
-        if (isException) {
-            Throwable throwable = (Throwable) inBytes.readObject();
-            try {
-                Field stackTrace = Throwable.class.getDeclaredField("stackTrace");
-                stackTrace.setAccessible(true);
-                List<StackTraceElement> stes = new ArrayList<>(Arrays.asList((StackTraceElement[]) stackTrace.get(throwable)));
-                // prune the end of the stack.
-                for (int i = stes.size() - 1; i > 0 && stes.get(i).getClassName().startsWith("Thread"); i--) {
-                    stes.remove(i);
-                }
-                InetSocketAddress address = config.remoteAddress();
-                stes.add(new StackTraceElement("~ remote", "tcp ~", address.getHostName(), address.getPort()));
-                StackTraceElement[] stackTrace2 = Thread.currentThread().getStackTrace();
-                for (int i = 4; i < stackTrace2.length; i++)
-                    stes.add(stackTrace2[i]);
-                stackTrace.set(throwable, stes.toArray(new StackTraceElement[stes.size()]));
-            } catch (Exception ignore) {
-            }
-            NativeBytes.UNSAFE.throwException(throwable);
-        }
-
-
-        return inBytes;
+        return remainingBytes;
     }
 
     private void clearParked() {
