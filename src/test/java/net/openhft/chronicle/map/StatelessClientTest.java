@@ -157,8 +157,9 @@ public class StatelessClientTest {
                 }
 
                 statelessMap.putAll(payload);
+                assertEquals(SIZE, serverMap.size());
 
-                Set<Map.Entry<Integer, CharSequence>> entries = statelessMap.entrySet();
+                 Set<Map.Entry<Integer, CharSequence>> entries = statelessMap.entrySet();
 
                 Map.Entry<Integer, CharSequence> next = entries.iterator().next();
                 assertEquals("some value=" + next.getKey(), next.getValue());

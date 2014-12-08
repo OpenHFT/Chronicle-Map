@@ -1329,28 +1329,39 @@ class StatelessServerConnector<K, V> {
                                @NotNull final ByteBufferBytes reader) {
         final StatelessChronicleMap.EventId event = VALUES[eventId];
 
-        // these methods don't return a result
+        long transactionId = reader.readLong();
+
+        // the time stamp and the transaction are usually the same, or out by the shift
+        int timestampShift = reader.readUnsignedShort();
+        long timestamp = transactionId - timestampShift;
+
+        byte identifier = reader.readByte();
+
+
+        // these methods don't return a result to the client or don't return a result to the
+        // client immediately
         switch (event) {
             case KEY_SET:
-                return keySet(reader, writer);
+                return keySet(reader, writer, transactionId);
 
             case VALUES:
-                return values(reader, writer);
+                return values(reader, writer, transactionId);
 
             case ENTRY_SET:
-                return entrySet(reader, writer);
+                return entrySet(reader, writer, transactionId);
 
             case PUT_WITHOUT_ACC:
-                return put(reader);
+                return put(reader, timestamp, identifier);
 
             case PUT_ALL_WITHOUT_ACC:
-                return putAll(reader);
+                return putAll(reader, timestamp, identifier);
 
             case REMOVE_WITHOUT_ACC:
-                return remove(reader);
+                return remove(reader, timestamp, identifier);
         }
 
-        final long sizeLocation = reflectTransactionId(reader, writer);
+        final long sizeLocation = reflectTransactionId(writer, transactionId);
+
 
         // these methods return a result
 
@@ -1368,34 +1379,33 @@ class StatelessServerConnector<K, V> {
                 return containsValue(reader, writer, sizeLocation);
 
             case GET:
-                return get(reader, writer, sizeLocation);
+                return get(reader, writer, sizeLocation, timestamp);
 
             case PUT:
-                return put(reader, writer, sizeLocation);
+                return put(reader, writer, sizeLocation, timestamp, identifier);
 
             case REMOVE:
-                return remove(reader, writer, sizeLocation);
+                return remove(reader, writer, sizeLocation, timestamp, identifier);
 
             case CLEAR:
-                return clear(writer, sizeLocation);
+                return clear(writer, sizeLocation, timestamp, identifier);
 
             case REPLACE:
-                return replace(reader, writer, sizeLocation);
+                return replace(reader, writer, sizeLocation, timestamp, identifier);
 
             case REPLACE_WITH_OLD_AND_NEW_VALUE:
-                return replaceWithOldAndNew(reader, writer, sizeLocation);
+                return replaceWithOldAndNew(reader, writer, sizeLocation, timestamp, identifier);
 
             case PUT_IF_ABSENT:
-                return putIfAbsent(reader, writer, sizeLocation);
+                return putIfAbsent(reader, writer, sizeLocation, timestamp, identifier);
 
             case REMOVE_WITH_VALUE:
-                return removeWithValue(reader, writer, sizeLocation);
-
+                return removeWithValue(reader, writer, sizeLocation, timestamp, identifier);
             case TO_STRING:
                 return toString(writer, sizeLocation);
 
             case PUT_ALL:
-                return putAll(reader, writer, sizeLocation);
+                return putAll(reader, writer, sizeLocation, timestamp, identifier);
 
             case HASH_CODE:
                 return hashCode(writer, sizeLocation);
@@ -1444,7 +1454,7 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work removeWithValue(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
+    private Work removeWithValue(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 writer.writeBoolean(map.removeWithValue(reader));
@@ -1463,7 +1473,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work replaceWithOldAndNew(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
+    private Work replaceWithOldAndNew(Bytes reader, @NotNull Bytes writer, final long
+            sizeLocation, long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.replaceWithOldAndNew(reader, writer);
@@ -1585,7 +1596,9 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work get(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
+    private Work get(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long
+            transactionId) {
+
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.get(reader, writer);
@@ -1603,7 +1616,7 @@ class StatelessServerConnector<K, V> {
 
     @SuppressWarnings("SameReturnValue")
     @Nullable
-    private Work put(Bytes reader) {
+    private Work put(Bytes reader, long timestamp, byte id) {
         if (MAP_SUPPORTS_BYTES) {
             map.put(reader);
         } else {
@@ -1618,7 +1631,7 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work put(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
+    private Work put(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.put(reader, writer);
@@ -1638,7 +1651,7 @@ class StatelessServerConnector<K, V> {
 
     @SuppressWarnings("SameReturnValue")
     @Nullable
-    private Work remove(Bytes reader) {
+    private Work remove(Bytes reader, long timestamp, byte id) {
         if (MAP_SUPPORTS_BYTES) {
             map.removeKeyAsBytes(reader);
         } else {
@@ -1650,7 +1663,7 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work remove(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
+    private Work remove(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.remove(reader, writer);
@@ -1669,7 +1682,7 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work putAll(@NotNull Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
+    private Work putAll(@NotNull Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.putAll(reader);
@@ -1686,7 +1699,7 @@ class StatelessServerConnector<K, V> {
 
     @SuppressWarnings("SameReturnValue")
     @Nullable
-    private Work putAll(@NotNull Bytes reader) {
+    private Work putAll(@NotNull Bytes reader, long timestamp, byte id) {
         if (MAP_SUPPORTS_BYTES) {
             map.putAll(reader);
         } else {
@@ -1697,7 +1710,7 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work clear(@NotNull Bytes writer, final long sizeLocation) {
+    private Work clear(@NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
         try {
             map.clear();
         } catch (Throwable e) {
@@ -1709,8 +1722,7 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work values(@NotNull Bytes reader, @NotNull Bytes writer) {
-        final long transactionId = reader.readLong();
+    private Work values(@NotNull Bytes reader, @NotNull Bytes writer, final long transactionId) {
 
         Collection<V> values;
 
@@ -1752,8 +1764,7 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work keySet(@NotNull Bytes reader, @NotNull final Bytes writer) {
-        final long transactionId = reader.readLong();
+    private Work keySet(@NotNull Bytes reader, @NotNull final Bytes writer, final long transactionId) {
 
         Set<K> ks;
 
@@ -1795,8 +1806,7 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work entrySet(@NotNull final Bytes reader, @NotNull Bytes writer) {
-        final long transactionId = reader.readLong();
+    private Work entrySet(@NotNull final Bytes reader, @NotNull Bytes writer, final long transactionId) {
 
         final Set<Map.Entry<K, V>> entries;
 
@@ -1844,7 +1854,7 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work putIfAbsent(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
+    private Work putIfAbsent(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.putIfAbsent(reader, writer);
@@ -1863,7 +1873,7 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work replace(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
+    private Work replace(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.replaceKV(reader, writer);
@@ -1881,8 +1891,7 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-    private long reflectTransactionId(@NotNull Bytes reader, @NotNull Bytes writer) {
-        final long transactionId = reader.readLong();
+    private long reflectTransactionId(@NotNull Bytes writer, final long transactionId) {
         final long sizeLocation = writer.position();
         writer.skip(SIZE_OF_SIZE);
         assert transactionId != 0;
@@ -1940,7 +1949,7 @@ class StatelessServerConnector<K, V> {
 
     @Nullable
     private Work sendException(@NotNull Bytes reader, @NotNull Bytes writer, @NotNull Throwable e) {
-        final long sizeLocation = reflectTransactionId(reader, writer);
+        final long sizeLocation = reflectTransactionId(writer, reader.readLong());
         return sendException(writer, sizeLocation, e);
     }
 
