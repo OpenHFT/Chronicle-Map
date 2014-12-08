@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.Future;
 
 import static org.junit.Assert.*;
 
@@ -178,21 +177,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         @Override
         public <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator) {
             return d.updateForKey(key, mutator);
-        }
-
-        @Override
-        public Future<V> getLater(@NotNull K key) {
-            return d.getLater(key);
-        }
-
-        @Override
-        public Future<V> putLater(@NotNull K key, @NotNull V value) {
-            return d.putLater(key, value);
-        }
-
-        @Override
-        public Future<V> removeLater(@NotNull K key) {
-            return d.removeLater(key);
         }
 
         @Override

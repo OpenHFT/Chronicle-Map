@@ -53,7 +53,7 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     public static final int SIZE_OF_SIZE = 4;
     public static final int SIZE_OF_TRANSACTION_ID = 8;
-    public static final int SIZE_OF_IS_EXCEPTION = 1;
+    public static final int SIZE_OF_TIME_SHIFT = 2;
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractChannelReplicator.class);
 

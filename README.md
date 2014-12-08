@@ -260,10 +260,12 @@ You set the maximum number of entries by the builder:
 ``` java
 ConcurrentMap<Integer, CharSequence> map =
     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+    constantValueSizeBySample("a long sample string"),
     .entries(1000) // set the max number of entries here
     .create();
 ```
 In this example above we have set 1000 entries.
+
 
 We have optimised chronicle, So that you can have situations where you either don't use;
 
@@ -274,6 +276,22 @@ used reflect the number of actual entries, not the number you allowed for.
 lines (128 bytes +), only the lines you touch sit in your CPU cache and if you have multiple pages
 (8+ Kbytes) only the pages you touch use memory or disk.  The CPU cache usage matters as it can be
 10000x smaller than main memory.
+
+#### Entry size
+
+The size of each entry depends on the type of the Keys and Values, as some types are larger than others. For example, if an entry uses Integers for both the keys and values, both the key and value each take exactly 4 bytes.
+There is also some other overhead which is internal to chronicle, such as its internal multi-map, which has an overhead of
+* 6 bytes per entry for segment size of < 64k,
+* 9 bytes per entry for segment size of < 16m but > 64k
+* 12 bytes per entry for segment size of > 16m entries per segment.
+
+Also, if you create a replicated map, there is an additional 10 bytes per entry.
+
+We suggest you don't configure size for constant-sized keys or values, instead you can use the
+builder methods .constantKeySizeBySample(sampleKey) and
+.constantValueSizeBySample(sampleValue), For common types like Integer we suggest you don't use
+these methods, for example ChronicleMap knows that Integer is 4 bytes long, Long is 8, etc.
+
 
 ### Size of space reserved on disk
 
@@ -295,6 +313,26 @@ To illustrate this with an example - On Ubuntu we can create a 100 TB chronicle 
 `ls -l` say the process virtual size / file size is 100 TB, however the resident memory via `du`
 says the size is 71 MB after adding 10000 entries. You can see the size actually used with du.
 
+### How Operating Systems differ
+
+As a pure java library, the same chronicle map java byte code can be run on Windows, Linux and Mac OSX.
+However these operating systems work with memory mapped files differently, these differences effect how
+chronicle is able to map memory to a file, and hence this can impact the total number of entries that you are
+able to configure.
+
+- Windows allocates memory and disk eagerly, Windows will fail if more than 4 GB is allocated in a single memory
+mapping, ( calculated as 4GB = 2^20 * 4 KB pages). Windows doesn't fail when a memory mapped region is mapped, rather it will fail when it is used up. This limitation doesn't apply to newer or server based versions of Windows. Eager memory allocation means you can't map more than free memory, but it should reduce jitter when you use it. In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.
+- Linux allocates memory and disk lazily. Linux systems see a performance degradation at around 200% of main memory.
+- Mac OSX allocates memory lazily and disk eagerly.
+
+Chronicle Map allocates head room which is a waste on Windows (Linux's sparse allocation means the head room has little
+impact).
+
+##### For production
+- on Windows we recommend you use map sizes of less than 4 GB each, and less than 50% main memory in total.
+- on Linux we recommend you use small to large maps of less than double main memory. e.g. if you have a 128 GB server, we recommend you have less than 256 GB of maps on the server.
+- on Mac OSX, we have no specific recommendations.
+
 ### Chronicle Map Interface
 The Chronicle Map interface adds a few methods above an beyond the standard ConcurrentMap,
 the ChronicleMapBuilder can also be used to return the ChronicleMap, see the example below :
@@ -312,18 +350,17 @@ supports the following methods :
  - [`ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);`]  (https://github.com/OpenHFT/Chronicle-Map#off-heap-storage-and-how-using-a-proxy-object-can-improve-performance)
  - [`WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);`]    (https://github.com/OpenHFT/Chronicle-Map#acquireusinglocked)
 
-These methods let you provide the object which the data will be written to, even if the object is
-immutable. For example 
+These methods let you provide the object which the data will be written to, but the value use to be mutable. For example
 
 ``` java
-String myString = ""; 
-String myResult = map.getUsing("key", myString);
+CharSequence using = new StringBuilder();
+CharSequence myResult = map.getUsing("key", using);
 // at this point the myString and myResult will both point to the same object
 ```
 
 The `map.getUsing()` method is similar to `map.get()`, but because Chronicle Map stores its data off
 heap, if you were to call get("key"), a new object would be created each time, map.getUsing() works
-by reusing the heap memory which was used by the original Object "myString". This technique provides
+by reusing the heap memory which was used by the original Object "using". This technique provides
 you with better control over your object creation.
 
 Exactly like `map.getUsing()`, `map.acquireUsing()` will give you back a reference to an value 
@@ -416,7 +453,7 @@ bond.getCoupon()
 lets say that it is only the `coupon` field that we are interested in, then its better not to have to
 deserialise the whole object that implements the `BondVOInterface`. The `ChronicleMapBuilder` will look a the types of keys
  and values that you use, If the value type is a simple accessor/mutator interface that is exposing a non nested pojo, which uses simple types
- like String and primitives with corresponding get..() and
+ like `CharSequence` and primitives with corresponding get..() and
  set..() methods, Chronicle is able to generate off heap poxies so the whole object is not desrialized each
   time it is accessed, The off heap poxies are able to read
 and write into
@@ -424,7 +461,7 @@ the off heap data structures directly, this reduced serialisation can give you a
 Below we show you how you can work directly with the off heap entries.
 
 ``` java
-        ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
+        ChronicleMap<CharSequence, BondVOInterface> chm = ChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
                 .keySize(10)
                 .create();
@@ -433,7 +470,7 @@ Below we show you how you can work directly with the off heap entries.
 notice that the
 
 ``` java
-.of(String.class, BondVOInterface.class)
+.of(CharSequence.class, BondVOInterface.class)
 ``` 
 
 value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  now
@@ -505,14 +542,13 @@ context.close() // the lock will get released when this is called
 ```
 
 ####  acquireUsingLocked()
-
-just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
-code is a pattern that you will often come across, acquireUsing(key,value) offers this
-functionality with a single method call :
+Just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
+code is a pattern that you will often come across, `acquireUsing(key,value)` offers this
+functionality i the example, below with a single method call :
 
  ``` java
 V acquireUsing(key,value) {
-    Lock l = ...; // the segement lock of the map
+    Lock l = ...; // the segment lock of the map
     l.lock();
     try {
            V v = map.getUsing(key,value)
@@ -527,12 +563,12 @@ V acquireUsing(key,value) {
 }
 ```
 
-if you are only accessing ChronicleMap from a single thread and you are not doing replication
-and don't care about atomic reads, then its simpler ( and faster ) to use acquireUsing() otherwise we
-recommend acquireUsingLocked(key,value)
+If you are only accessing ChronicleMap from a single thread. If you are not doing replication
+and don't care about atomic reads. Then its simpler ( and faster ) to use acquireUsing() otherwise we
+recommend you use `acquireUsingLocked(key,value)`
 
-because acquireUsing can end up creating an entry the acquireUsingLocked(key,value) method holds
-a segment write lock, this is unlike the getUsing(key,using) method that holds a segment read lock.
+Since the acquireUsing() method can end up creating an entry, the acquireUsingLocked(key,value) method must hold
+a segment write lock, this is unlike  getUsing(key,using) which only holds a segment read lock.
 
 ``` java
 BondVOInterface bond = ... // create your instance
@@ -547,17 +583,17 @@ try (WriteContext<?, BondVOInterface> context = map.acquireUsingLocked("one", bo
 }
 ```
 
-if after you have read the 'issueDate' and  'symbol' and you wish to remove the entry based on some
-business logic, it more efficient to use the 'context' to remove the entry, as the contents is
+If after you have read the 'issueDate' and  'symbol' and you wish to remove the entry based on some
+business logic, its more efficient to use the 'context' to remove the entry, as the contents is
 already aware when the entry is in memory.
 
 ## Oversized Entries Support
 
-It is possible for the size of your entry to be twice as large as the maximum entry size, 
+It is possible for the size of your entry to be 64 times as large as the maximum entry size,
 we refer to this type of entry as an oversized entry. Oversized entries are there to cater for the case 
 where only a small
-percentage of your entries are twise as large as the others, in this case your large entry will
-span across two entries. The alternative would be to increase your maximum entry size to be similar
+percentage of your entries are larger than the others, in this case your large entry will
+span across a number of entries. The alternative would be to increase your maximum entry size to be similar
 to the size of the largest entry, but this approach is wasteful of memory, especially when most
 entries are no where near the max entry size.  
 
@@ -592,10 +628,12 @@ void putAll(File fromFile) throws IOException;
 Its only the entries of your map that are exported, not the configuration of your map. So care
 must be taken to populate the data in to a map of the correct Key/Value type and with enough
 available entries. When importing data :
+
 * entries that are in the map but not in the JSON file will remain untouched.
 * entries that are in the map and in the JSON file will be updated.
-* entries that are not in the map but are in the JSON file wil added.
-* In other words importing data into a Chronicle Map works like `map.putAll(<JSON entries>)`.
+* entries that are not in the map but are in the JSON file will be added.
+
+In other words importing data into a Chronicle Map works like `map.putAll(<JSON entries>)`.
 
 When Importing data if you are also writing to the map at the same time, the last update will win.
 In other words a write lock is not held for the entire import process.
@@ -610,17 +648,21 @@ VALUES, future versions will support a binary encoding of objects that are `net.
 ## Close
 Unlike ConcurrentHashMap, chronicle map stores its data off heap, often in a memory mapped file.
 Its recommended that you call close() once you have finished working with a Chronicle Map.
+
 ``` java
 map.close()
 ```
 
-You only need to close to clean up resources deterministically.  If your program is exiting, 
-you don't need to close the collection, as Chronicle never knows when the program might crash, 
-so we have designed it so you don't have to close() it.
+This is especially important when working with chronicle map replication, as failure to call close may prevent
+you from restarting a replicated map on the same port. In the event that your application crashes it may not
+be possible to call close(). Your operating system will usually close dangling ports automatically,
+so although it is recommended that you close() when you have finished with the map,
+its not something that you must do, its just something that we recommend you should do.
 
-WARNING : If you call close too early before you have finished working with the map, this can cause
+###### WARNING
+
+If you call close too early before you have finished working with the map, this can cause
 your JVM to crash. Close MUST BE the last thing that you do with the map.
-
 
 
 # TCP / UDP Replication
@@ -1087,13 +1129,13 @@ For in memory data-structures like a HashMap this isn’t a big problem. But in 
 So if you don’t require the old value and don’t wish to block until your `put()` has been received by the server, then you may wish to consider using the following configuration :
 
 ``` java
-.putReturnsNull
+.putReturnsNull(true)
 ```
   
 and also for the `remove()` method
 
 ``` java
-.removeReturnsNull
+.removeReturnsNull(true)
 ```
 
 ``` java
@@ -1113,6 +1155,55 @@ ChronicleMapBuilder.of(Integer.class, CharSequence.class)
     .removeReturnsNull(true)
     .create();            
 ```
+
+##### Performance
+
+The throughput and latency performance for different configurations.
+
+Tested using a test called BGChronicleTest.
+
+On one machine (i7 3.5 GHz) we have two persisted replicas run as
+
+-Dreplicas=2 eg.BGChronicleTest server
+
+On another machine (Dual Xeon 8 core 2.6 GHz) connected via a pair of Solarflare SFN5121T 10 Gig-E with onload enabled.
+
+-Dreplicas=2 -Dclients={see below} -DmaxRate=30000 -DreadRatio=2 eg.BGChronicleTest client
+
+2 clients
+Throughput test
+messages per seconds: 58,864
+
+Latency test at 30,000 msg/sec
+50% / 90% / 99% // 99.9% / 99.99% / worst latency was 33 / 80 / 111 // 120 / 148 / 3,921 us
+
+4 clients
+Throughput test
+messages per seconds: 94,006
+
+Latency test at 30,000 msg/sec
+50% / 90% / 99% // 99.9% / 99.99% / worst latency was 32 / 94 / 106 // 131 / 177 / 2,153 us
+
+8 clients
+Throughput test
+messages per seconds: 162,961
+
+Latency test at 30,000 msg/sec
+50% / 90% / 99% // 99.9% / 99.99% / worst latency was 35 / 94 / 117 // 140 / 167 / 1,685 us
+
+16 clients
+Throughput test
+messages per seconds: 267,097
+
+Latency test at 30,000 msg/sec
+50% / 90% / 99% // 99.9% / 99.99% / worst latency was 38 / 97 / 122 // 149 / 174 / 2,771 us
+
+24 clients
+Throughput test
+messages per seconds: 253,052
+
+Latency test at 30,000 msg/sec
+50% / 90% / 99% // 99.9% / 99.99% / worst latency was 40 / 99 / 121 // 151 / 243 / 3,669 us
 
 ##### Close
 

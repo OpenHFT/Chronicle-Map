@@ -157,8 +157,9 @@ public class StatelessClientTest {
                 }
 
                 statelessMap.putAll(payload);
+                assertEquals(SIZE, serverMap.size());
 
-                Set<Map.Entry<Integer, CharSequence>> entries = statelessMap.entrySet();
+                 Set<Map.Entry<Integer, CharSequence>> entries = statelessMap.entrySet();
 
                 Map.Entry<Integer, CharSequence> next = entries.iterator().next();
                 assertEquals("some value=" + next.getKey(), next.getValue());
@@ -453,60 +454,7 @@ public class StatelessClientTest {
         }
     }
 
-    @Test(timeout = 10000)
-    public void testGetLater() throws IOException,
-            InterruptedException, ExecutionException {
 
-        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-            try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
-                    .class, CharSequence.class)
-                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
-                statelessMap.put(1, "some value");
-
-                assertEquals("some value", statelessMap.getLater(1).get());
-                assertEquals(1, statelessMap.size());
-
-                statelessMap.remove(1);
-
-                assertEquals(null, statelessMap.getLater(1).get());
-                assertEquals(0, statelessMap.size());
-            }
-        }
-    }
-
-    @Test
-    public void testPutLater() throws IOException,
-            InterruptedException, ExecutionException {
-
-        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-            try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
-                    .class, CharSequence.class)
-                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
-                CharSequence oldValue = statelessMap.putLater(1, "some value").get();
-                assertEquals("some value", statelessMap.get(1));
-                assertEquals(1, statelessMap.size());
-            }
-        }
-    }
-
-    @Test(timeout = 10000)
-    public void testRemoveLater() throws IOException,
-            InterruptedException, ExecutionException {
-
-        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-            try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
-                    .class, CharSequence.class)
-                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
-                statelessMap.put(1, "some value");
-                statelessMap.removeLater(1).get();
-                assertEquals(null, statelessMap.get(1));
-                assertEquals(0, statelessMap.size());
-            }
-        }
-    }
 
     @Test(timeout = 10000)
     public void testGetAndEntryWeDontHave() throws IOException,
