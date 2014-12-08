@@ -18,9 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.model.*;
-import net.openhft.lang.threadlocal.Provider;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.*;
 import net.openhft.lang.io.Bytes;
@@ -29,6 +26,12 @@ import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.io.serialization.impl.*;
+import net.openhft.lang.model.Byteable;
+import net.openhft.lang.model.DataValueGenerator;
+import net.openhft.lang.model.DataValueModel;
+import net.openhft.lang.model.DataValueModels;
+import net.openhft.lang.threadlocal.Provider;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.values.LongValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,11 +47,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import static net.openhft.chronicle.hash.serialization.SizeMarshallers.constant;
-import static net.openhft.chronicle.map.Objects.hash;
 import static net.openhft.chronicle.hash.serialization.SizeMarshallers.stopBit;
+import static net.openhft.chronicle.map.Objects.hash;
 import static net.openhft.chronicle.map.SerializationBuilder.Role.KEY;
 
-final class SerializationBuilder<E> implements Cloneable, Serializable{
+final class SerializationBuilder<E> implements Cloneable, Serializable {
 
     private static boolean concreteClass(Class c) {
         return !c.isInterface() && !Modifier.isAbstract(c.getModifiers());
@@ -194,7 +197,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable{
                         .<E, BytesWriter<E>>forBytesWriter(role));
     }
 
-    public SerializationBuilder<E> marshaller(BytesMarshaller<E> marshaller) {
+    public SerializationBuilder<E> marshaller(BytesMarshaller<? super E> marshaller) {
         clearDefaults();
         return copyingInterop(CopyingInterop.FROM_MARSHALLER)
                 .reader(BytesReaders.fromBytesMarshaller(marshaller))

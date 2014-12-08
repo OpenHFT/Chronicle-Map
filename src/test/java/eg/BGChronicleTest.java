@@ -22,10 +22,10 @@ public class BGChronicleTest {
 
     public static final int CHRONICLE_HEARTBEAT_SECONDS = 5;
     public static final int READ_RATIO = Integer.getInteger("readRatio", 2);
-    //    public static final boolean BUSY_WAIT = Boolean.parseBoolean(System.getProperty("busyWait",
-//            "" + (CLIENTS < Runtime.getRuntime().availableProcessors())));
     public static final int REPLICAS = Integer.getInteger("replicas", 1);
     public static final int CLIENTS = Integer.getInteger("clients", Math.max(1, Runtime.getRuntime().availableProcessors() - REPLICAS));
+    public static final boolean BUSY_WAIT = Boolean.parseBoolean(System.getProperty("busyWaiting",
+            "" + (CLIENTS + REPLICAS < Runtime.getRuntime().availableProcessors())));
     public static final long KEYS = Long.getLong("keys", 1000_000L);
     public static final long MESSAGES = Long.getLong("messages", 1000_000 + KEYS * 2);
     public static final long MAX_RATE = Long.getLong("maxRate", 100000);
@@ -232,8 +232,8 @@ public class BGChronicleTest {
                 if (pause > 0)
                     Thread.sleep(pause);
                 // wait for residual.
-//                if (BUSY_WAIT)
-//                    while (System.nanoTime() < next) ;
+                if (BUSY_WAIT)
+                    while (System.nanoTime() < next) ;
                 // 100 possible values for the first byte.
                 long start;
                 key[0] = b;

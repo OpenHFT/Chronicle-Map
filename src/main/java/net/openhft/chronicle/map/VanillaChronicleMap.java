@@ -354,7 +354,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     void putBytes(ThreadLocalCopies copies, SegmentState segmentState, Bytes key, long keySize,
                   GetRemoteBytesValueInterops getRemoteBytesValueInterops, MultiStoreBytes value,
                   boolean replaceIfPresent, ReadValue<Bytes> readValue) {
-        put(copies, segmentState,
+        put2(copies, segmentState,
                 DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
                 BytesBytesInterop.INSTANCE, key, keySize, keyBytesToInstance,
                 getRemoteBytesValueInterops, value, valueBytesToInstance,
@@ -373,7 +373,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         getRemoteBytesValueInterops.valueSizeMarshaller(valueSizeMarshaller);
         ReadValueToBytes readValueToLazyBytes = segmentState.readValueToLazyBytes;
         readValueToLazyBytes.valueSizeMarshaller(valueSizeMarshaller);
-        put(copies, segmentState,
+        put2(copies, segmentState,
                 DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
                 BytesBytesInterop.INSTANCE, entry, keySize, keyBytesToInstance,
                 getRemoteBytesValueInterops, value, valueBytesToInstance,
@@ -453,15 +453,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     public final V put(K key, V value) {
-        return put0(key, value, true);
+        return put1(key, value, true);
     }
 
     @Override
     public final V putIfAbsent(@net.openhft.lang.model.constraints.NotNull K key, V value) {
-        return put0(key, value, false);
+        return put1(key, value, false);
     }
 
-    V put0(@net.openhft.lang.model.constraints.NotNull K key, V value, boolean replaceIfPresent) {
+    V put1(@net.openhft.lang.model.constraints.NotNull K key, V value, boolean replaceIfPresent) {
         checkKey(key);
         checkValue(value);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
@@ -470,22 +470,22 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         MKI metaKeyInterop =
                 metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
         long keySize = metaKeyInterop.size(keyInterop, key);
-        return put(copies, null, metaKeyInterop, keyInterop, key, keySize, keyIdentity(),
+        return put2(copies, null, metaKeyInterop, keyInterop, key, keySize, keyIdentity(),
                 this, value, valueIdentity(), replaceIfPresent, this, putReturnsNull);
     }
 
     <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
             RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
-    RV put(ThreadLocalCopies copies, SegmentState segmentState,
-           MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-           InstanceOrBytesToInstance<KB, K> toKey,
-           GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-           InstanceOrBytesToInstance<? super VB, V> toValue,
-           boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused) {
+    RV put2(ThreadLocalCopies copies, SegmentState segmentState,
+            MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+            InstanceOrBytesToInstance<KB, K> toKey,
+            GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+            InstanceOrBytesToInstance<? super VB, V> toValue,
+            boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused) {
         long hash = metaKeyInterop.hash(keyInterop, key);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
-        return segments[segmentNum].put(copies, segmentState,
+        return segments[segmentNum].put3(copies, segmentState,
                 metaKeyInterop, keyInterop, key, keySize, toKey,
                 getValueInterops, value, toValue,
                 segmentHash, replaceIfPresent, readValue, resultUnused);
@@ -1729,15 +1729,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             return v;
         }
 
-        private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
+        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
                 RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
-        RV put(@Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
-               MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-               InstanceOrBytesToInstance<KB, K> toKey,
-               GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-               InstanceOrBytesToInstance<? super VB, V> toValue,
-               long hash2, boolean replaceIfPresent,
-               ReadValue<RV> readValue, boolean resultUnused) {
+        RV put3(@Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
+                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+                InstanceOrBytesToInstance<KB, K> toKey,
+                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+                InstanceOrBytesToInstance<? super VB, V> toValue,
+                long hash2, boolean replaceIfPresent,
+                ReadValue<RV> readValue, boolean resultUnused) {
             shouldNotBeCalledFromReplicatedChronicleMap("Segment.put");
             writeLock(null);
             try {

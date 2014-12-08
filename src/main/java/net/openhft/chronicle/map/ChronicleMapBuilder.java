@@ -271,7 +271,7 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
      */
     @Override
     public ChronicleMapBuilder<K, V> valueMarshaller(
-            @NotNull BytesMarshaller<V> valueMarshaller) {
+            @NotNull BytesMarshaller<? super V> valueMarshaller) {
         delegate.valueMarshaller(valueMarshaller);
         return this;
     }

@@ -34,32 +34,33 @@ public final class BytesReaders {
      * from {@link net.openhft.chronicle.hash.serialization} package.
      *
      * @param marshaller the actual reading implementation
-     * @param <E> type of the objects marshalled
+     * @param <E>        type of the objects marshalled
      * @return a {@code BytesReader} wrapping the given {@code BytesMarshaller}
      */
-    public static <E> BytesReader<E> fromBytesMarshaller(BytesMarshaller<E> marshaller) {
+    public static <E> BytesReader<E> fromBytesMarshaller(BytesMarshaller<? super E> marshaller) {
         return new SimpleBytesReader<E>(marshaller);
     }
 
     private static class SimpleBytesReader<E> implements BytesReader<E> {
         private static final long serialVersionUID = 0L;
 
-        private final BytesMarshaller<E> marshaller;
+        private final BytesMarshaller<? super E> marshaller;
 
-        public SimpleBytesReader(BytesMarshaller<E> marshaller) {
+        public SimpleBytesReader(BytesMarshaller<? super E> marshaller) {
             this.marshaller = marshaller;
         }
 
         @Override
         public E read(Bytes bytes, long size) {
-            return marshaller.read(bytes);
+            return (E) marshaller.read(bytes);
         }
 
         @Override
         public E read(Bytes bytes, long size, E toReuse) {
-            return marshaller.read(bytes, toReuse);
+            return (E) marshaller.read(bytes, toReuse);
         }
     }
 
-    private BytesReaders() {}
+    private BytesReaders() {
+    }
 }

@@ -199,7 +199,7 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
      * @see #objectSerializer(ObjectSerializer)
      */
     ChronicleMapBuilderI<K, V> valueMarshaller(
-            @NotNull BytesMarshaller<V> valueMarshaller);
+            @NotNull BytesMarshaller<? super V> valueMarshaller);
 
     /**
      * Configures the marshallers, used to serialize/deserialize values to/from off-heap memory in
