@@ -40,7 +40,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -204,9 +206,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 doHandShaking(result);
                 break;
             } catch (IOException e) {
-               if (closeables!=null) closeables.closeQuietly();
+                if (closeables != null) closeables.closeQuietly();
             } catch (Exception e) {
-                if (closeables!=null)  closeables.closeQuietly();
+                if (closeables != null) closeables.closeQuietly();
                 throw e;
             }
         }
@@ -237,7 +239,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             clientChannel.connect(remoteAddress);
             doHandShaking(clientChannel);
         } catch (IOException e) {
-            if (closeables!=null) closeables.closeQuietly();
+            if (closeables != null) closeables.closeQuietly();
         }
     }
 
@@ -341,7 +343,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
     @SuppressWarnings("NullableProblems")
-    public boolean remove( Object key, Object value) {
+    public boolean remove(Object key, Object value) {
 
         if (key == null)
             throw new NullPointerException();
@@ -360,7 +362,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     @SuppressWarnings("NullableProblems")
-    public V replace(K key,  V value) {
+    public V replace(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
 
@@ -973,16 +975,57 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         }
     }
 
-    // this is a transactionid and size that has been read by another thread.
+    // this is a transaction id and size that has been read by another thread.
     private volatile long parkedTransactionId;
     private volatile int parkedRemainingBytes;
     private volatile long parkedTransactionTimeStamp;
 
     private Bytes blockingFetchThrowable(long timeoutTime, long transactionId) throws IOException,
             InterruptedException {
-        int remainingBytes = 0;
+
+        int remainingBytes = nextEntry(timeoutTime, transactionId);
+
+        if (inBytes.capacity() < remainingBytes) {
+            long pos = inBytes.position();
+            long limit = inBytes.position();
+            inBytes.position(limit);
+            resizeBufferInBuffer(remainingBytes, pos);
+        } else
+            inBytes.limit(inBytes.capacity());
+
+        // block until we have received all the bytes in this chunk
+        receive(remainingBytes, timeoutTime);
+
+        final boolean isException = inBytes.readBoolean();
+
+        if (isException) {
+            Throwable throwable = (Throwable) inBytes.readObject();
+            try {
+                Field stackTrace = Throwable.class.getDeclaredField("stackTrace");
+                stackTrace.setAccessible(true);
+                List<StackTraceElement> stes = new ArrayList<>(Arrays.asList((StackTraceElement[]) stackTrace.get(throwable)));
+                // prune the end of the stack.
+                for (int i = stes.size() - 1; i > 0 && stes.get(i).getClassName().startsWith("Thread"); i--) {
+                    stes.remove(i);
+                }
+                InetSocketAddress address = config.remoteAddress();
+                stes.add(new StackTraceElement("~ remote", "tcp ~", address.getHostName(), address.getPort()));
+                StackTraceElement[] stackTrace2 = Thread.currentThread().getStackTrace();
+                //noinspection ManualArrayToCollectionCopy
+                for (int i = 4; i < stackTrace2.length; i++)
+                    stes.add(stackTrace2[i]);
+                stackTrace.set(throwable, stes.toArray(new StackTraceElement[stes.size()]));
+            } catch (Exception ignore) {
+            }
+            NativeBytes.UNSAFE.throwException(throwable);
+        }
 
 
+        return inBytes;
+    }
+
+    private int nextEntry(long timeoutTime, long transactionId) throws IOException {
+        int remainingBytes;
         for (; ; ) {
 
             // read the next item from the socket
@@ -1050,47 +1093,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
             pause();
         }
-
-
-        final int minBufferSize = remainingBytes;
-
-        if (inBytes.capacity() < minBufferSize) {
-            long pos = inBytes.position();
-            long limit = inBytes.position();
-            inBytes.position(limit);
-            resizeBufferInBuffer(minBufferSize, pos);
-        } else
-            inBytes.limit(inBytes.capacity());
-
-        // block until we have received all the bytes in this chunk
-        receive(remainingBytes, timeoutTime);
-
-        final boolean isException = inBytes.readBoolean();
-
-        if (isException) {
-            Throwable throwable = (Throwable) inBytes.readObject();
-            try {
-                Field stackTrace = Throwable.class.getDeclaredField("stackTrace");
-                stackTrace.setAccessible(true);
-                List<StackTraceElement> stes = new ArrayList<>(Arrays.asList((StackTraceElement[]) stackTrace.get(throwable)));
-                // prune the end of the stack.
-                for (int i = stes.size() - 1; i > 0 && stes.get(i).getClassName().startsWith("Thread"); i--) {
-                    stes.remove(i);
-                }
-                InetSocketAddress address = config.remoteAddress();
-                stes.add(new StackTraceElement("~ remote", "tcp ~", address.getHostName(), address.getPort()));
-                StackTraceElement[] stackTrace2 = Thread.currentThread().getStackTrace();
-                //noinspection ManualArrayToCollectionCopy
-                for (int i = 4; i < stackTrace2.length; i++)
-                    stes.add(stackTrace2[i]);
-                stackTrace.set(throwable, stes.toArray(new StackTraceElement[stes.size()]));
-            } catch (Exception ignore) {
-            }
-            NativeBytes.UNSAFE.throwException(throwable);
-        }
-
-
-        return inBytes;
+        return remainingBytes;
     }
 
     private void clearParked() {
