@@ -757,14 +757,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 }
 
 
-
-                RV result =createEntryOnAcquire(copies, localSegmentState,
+                RV result = createEntryOnAcquire(copies, localSegmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
                         readValue, usingValue, toValue, entry);
 
                 //  notify the context that the entry was created
                 if (lock instanceof WriteLocked)
-                    ((WriteLocked) lock).wasPresent(true);
+                    ((WriteLocked) lock).wasPresent(false);
 
                 return result;
 

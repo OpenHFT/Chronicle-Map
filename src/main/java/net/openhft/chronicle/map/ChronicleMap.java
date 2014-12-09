@@ -30,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
 
 /**
  * Extension of {@link ConcurrentMap} interface, stores the data off-heap.
@@ -202,14 +201,14 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
 
     /**
      * Apply a mutator to the value for a key and return a result. A write lock is assumed. <p> If
-     * there is no entry for this key it will be created and the value empty.
+     * there is no entry for this key null will be returned
      *
      * @param <R>     return type.
      * @param key     to apply the mapping to
      * @param mutator to alter the value and calculate a result
      * @return the result of the function.
      */
-    <R> R putWithMapping(K key, @NotNull Mutator<? super V, R> mutator);
+    <R> R putWith(K key, @NotNull Mutator<? super V, R> mutator);
 
     /**
      * exports all the entries to a {@link java.io.File} storing them in JSON format, an attempt is

@@ -1,7 +1,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.serialization.impl.*;
-import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.*;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -74,17 +73,14 @@ public class CHMUseCasesTest {
                 .create()) {
             map.put("Hello", "World");
 
-            try {
-                map.putWithMapping("Hello", new Mutator<String, String>() {
-                    @Override
-                    public String update(String s) {
-                        return "New " + s;
-                    }
-                });
 
-            } catch (Exception ignored) {
-                ignored.printStackTrace();
-            }
+            map.putWith("Hello", new Mutator<String, String>() {
+                @Override
+                public String update(String s) {
+                    return "New " + s;
+                }
+            });
+
 
         }
     }
@@ -129,7 +125,7 @@ public class CHMUseCasesTest {
                         }
                     }));
 
-            assertEquals("New World !!", map.putWithMapping(new StringBuilder("Hello"), new
+            assertEquals("New World !!", map.putWith(new StringBuilder("Hello"), new
                     Mutator<CharSequence, CharSequence>() {
                         @Override
                         public CharSequence update(CharSequence s) {
@@ -140,7 +136,7 @@ public class CHMUseCasesTest {
 
             assertEquals("New World !!", map.get("Hello").toString());
 
-            assertEquals(null, map.putWithMapping(new StringBuilder("no-key"), new
+            assertEquals(null, map.putWith(new StringBuilder("no-key"), new
                     Mutator<CharSequence, CharSequence>() {
                         @Override
                         public CharSequence update(CharSequence s) {
@@ -156,16 +152,15 @@ public class CHMUseCasesTest {
      * StringValue represents any bean which contains a String Value
      */
     @Test
-    @Ignore("Not yet implemented")
     public void testStringValueStringValueMap() {
         try (ChronicleMap<StringValue, StringValue> map = ChronicleMapBuilder
                 .of(StringValue.class, StringValue.class)
                 .checkSerializedValues() // for testing purposes only
                 .create()) {
-            StringValue key1 = DataValueClasses.newDirectInstance(StringValue.class);
-            StringValue key2 = DataValueClasses.newInstance(StringValue.class);
-            StringValue value1 = DataValueClasses.newDirectInstance(StringValue.class);
-            StringValue value2 = DataValueClasses.newInstance(StringValue.class);
+            StringValue key1 = ChronicleMapBuilder.newInstance(StringValue.class, true);
+            StringValue key2 = ChronicleMapBuilder.newInstance(StringValue.class, true);
+            StringValue value1 = ChronicleMapBuilder.newInstance(StringValue.class, false);
+            StringValue value2 = ChronicleMapBuilder.newInstance(StringValue.class, false);
 
             key1.setValue(new StringBuilder("1"));
             value1.setValue("11");
@@ -248,7 +243,6 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testIntegerIntegerMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
@@ -289,7 +283,7 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.putWithMapping(1, new Mutator<Integer, Integer>() {
+                map.putWith(1, new Mutator<Integer, Integer>() {
                     @Override
                     public Integer update(Integer s) {
                         return s + 1;
@@ -332,7 +326,7 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.putWithMapping(1L, new Mutator<Long, Long>() {
+                map.putWith(1L, new Mutator<Long, Long>() {
                     @Override
                     public Long update(Long s) {
                         return s + 1;
@@ -346,7 +340,6 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    @Ignore("Not yet implemented")
     public void testDoubleDoubleMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Double, Double> map = ChronicleMapBuilder
                 .of(Double.class, Double.class)
@@ -376,7 +369,7 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.putWithMapping(1.0, new Mutator<Double, Double>() {
+                map.putWith(1.0, new Mutator<Double, Double>() {
                     @Override
                     public Double update(Double s) {
                         return s + 1;
@@ -391,7 +384,6 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testByteArrayByteArrayMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
                 .of(byte[].class, byte[].class)
@@ -404,8 +396,11 @@ public class CHMUseCasesTest {
             byte[] value2 = {22, 22, 22, 22};
             assertNull(map.put(key1, value1));
             assertTrue(Arrays.equals(value1, map.put(key1, value2)));
-            assertTrue(Arrays.equals(value1, map.get(key1)));
+            assertTrue(Arrays.equals(value2, map.get(key1)));
             assertNull(map.get(key2));
+
+            map.put(key1, value1);
+
 
             assertTrue(Arrays.equals(new byte[]{11, 11}, map.mapForKey(key1, new Function<byte[], byte[]>() {
                 @Override
@@ -420,7 +415,7 @@ public class CHMUseCasesTest {
                 }
             }));
 
-            assertTrue(Arrays.equals(new byte[]{12, 10}, map.putWithMapping(key1, new Mutator<byte[], byte[]>() {
+            assertTrue(Arrays.equals(new byte[]{12, 10}, map.putWith(key1, new Mutator<byte[], byte[]>() {
                 @Override
                 public byte[] update(byte[] s) {
                     s[0]++;
@@ -429,16 +424,15 @@ public class CHMUseCasesTest {
                 }
             })));
 
-            assertTrue(Arrays.equals(new byte[]{12, 10, 11, 11}, map.get(key1)));
+            byte[] a2 = map.get(key1);
+            assertTrue(Arrays.equals(new byte[]{12, 10}, a2));
 
-            byte[] key3 = {3, 3, 3, 3};
-            byte[] value3 = {4, 4, 4, 4};
 
         }
     }
 
     @Test
-    @Ignore("HCOLL-226 implement disableOversizedEntries()")
+    @Ignore("Not enough available space")
     public void testByteBufferByteBufferMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
@@ -467,7 +461,7 @@ public class CHMUseCasesTest {
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.mapForKey(key1, function));
             assertEquals(null, map.mapForKey(key2, function));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWithMapping(key1, new Mutator<ByteBuffer, ByteBuffer>() {
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWith(key1, new Mutator<ByteBuffer, ByteBuffer>() {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));
@@ -531,7 +525,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    @Ignore("HCOLL-226 implement disableOversizedEntries()")
+    @Ignore("Not enough available space")
     public void testByteBufferDirectByteBufferMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
@@ -562,7 +556,7 @@ public class CHMUseCasesTest {
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.mapForKey(key1, function));
             assertEquals(null, map.mapForKey(key2, function));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWithMapping(key1, new Mutator<ByteBuffer, ByteBuffer>() {
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWith(key1, new Mutator<ByteBuffer, ByteBuffer>() {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));

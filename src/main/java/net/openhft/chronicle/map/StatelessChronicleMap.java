@@ -490,7 +490,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @Nullable
     @Override
-    public <R> R putWithMapping(@Nullable K key, @NotNull Mutator<? super V, R> mutator) {
+    public <R> R putWith(@Nullable K key, @NotNull Mutator<? super V, R> mutator) {
         if (key == null)
             throw keyNotNullNPE();
         return fetchObject(UPDATE_FOR_KEY, key, mutator);

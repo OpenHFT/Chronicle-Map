@@ -559,7 +559,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    public <R> R putWithMapping(K key, @NotNull Mutator<? super V, R> mutator) {
+    public <R> R putWith(K key, @NotNull Mutator<? super V, R> mutator) {
 
 
         if (!(CharSequence.class.isAssignableFrom(vClass))) {
@@ -575,8 +575,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                 R result = mutator.update(entry.value());
                 ((MutableLockedEntry) entry).value(result);
+                return result;
             }
-
         }
 
 
@@ -2707,7 +2707,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             extends MutableLockedEntry<K, KI, MKI, V, VI, MVI>
             implements WriteContext<K, V> {
 
-        private boolean wasPresent;
+        private boolean wasPresent = true;
 
         WriteLocked(SegmentState segmentState) {
             super(segmentState);
