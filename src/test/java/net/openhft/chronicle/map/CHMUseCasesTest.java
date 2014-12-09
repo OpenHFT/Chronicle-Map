@@ -2,7 +2,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.values.*;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -432,7 +431,6 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    @Ignore("Not enough available space")
     public void testByteBufferByteBufferMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
@@ -478,7 +476,8 @@ public class CHMUseCasesTest {
             map.put(key2, value2);
             ByteBuffer valueA = ByteBuffer.allocateDirect(8);
             ByteBuffer valueB = ByteBuffer.allocate(8);
-            try (ReadContext rc = map.getUsingLocked(key1, valueA)) {
+//            assertBBEquals(value1, valueA);
+            try (ReadContext<ByteBuffer, ByteBuffer> rc = map.getUsingLocked(key1, valueA)) {
                 assertTrue(rc.present());
                 assertBBEquals(value1, valueA);
             }
@@ -499,20 +498,31 @@ public class CHMUseCasesTest {
             try (WriteContext wc = map.acquireUsingLocked(key1, valueA)) {
                 assertBBEquals(value1, valueA);
                 appendMode(valueA);
+                valueA.clear();
                 valueA.putInt(12345);
                 valueA.flip();
             }
+
+
+            value1.clear();
+            value1.putInt(12345);
+            value1.flip();
+
+
             try (WriteContext wc = map.acquireUsingLocked(key1, valueB)) {
+
                 assertBBEquals(value1, valueB);
                 appendMode(valueB);
                 valueB.putShort((short) 12345);
                 valueB.flip();
             }
+
             try (ReadContext rc = map.getUsingLocked(key1, valueA)) {
                 assertTrue(rc.present());
+
                 ByteBuffer bb1 = ByteBuffer.allocate(8);
                 bb1.put(value1);
-                bb1.putInt(12345);
+                bb1.putShort((short)12345);
                 bb1.flip();
                 assertBBEquals(bb1, valueA);
             }
@@ -1576,4 +1586,5 @@ interface IBean {
     void setInt(int i);
 }
 */
+
 
