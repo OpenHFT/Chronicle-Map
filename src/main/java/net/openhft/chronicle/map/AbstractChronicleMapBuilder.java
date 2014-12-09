@@ -931,7 +931,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
 
     void preMapConstruction(boolean replicated) {
         keyBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
-        valueBuilder.objectSerializer(acquireObjectSerializer(JDKZObjectSerializer.INSTANCE));
+        valueBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
 
         long maxSize = (long) entrySize(replicated) * figureBufferAllocationFactor();
         keyBuilder.maxSize(maxSize);

@@ -436,8 +436,10 @@ public class CHMUseCasesTest {
     public void testByteBufferByteBufferMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
+                .valueMarshaller(ByteBufferMarshaller.INSTANCE)
+                .keyMarshaller(ByteBufferMarshaller.INSTANCE)
                 .disableOversizedEntries(true) // disabled for testing purposes only.
-                .entrySize(12)
+                .entrySize(20)
                 .create()) {
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
@@ -445,7 +447,7 @@ public class CHMUseCasesTest {
             ByteBuffer value2 = ByteBuffer.wrap(new byte[]{22, 22, 22, 22});
             assertNull(map.put(key1, value1));
             assertBBEquals(value1, map.put(key1, value2));
-            assertBBEquals(value1, map.get(key1));
+            assertBBEquals(value2, map.get(key1));
             assertNull(map.get(key2));
 
             final Function<ByteBuffer, ByteBuffer> function = new Function<ByteBuffer, ByteBuffer>() {
@@ -465,12 +467,12 @@ public class CHMUseCasesTest {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));
-                    s.put(0, (byte) (s.get(0) - 1));
+                    s.put(1, (byte) (s.get(1) - 1));
                     return function.apply(s);
                 }
             }));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10, 11, 11}), map.get(key1));
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.get(key1));
 
             map.put(key1, value1);
             map.put(key2, value2);
@@ -524,11 +526,13 @@ public class CHMUseCasesTest {
         valueA.limit(valueA.capacity());
     }
 
+
     @Test
-    @Ignore("Not enough available space")
     public void testByteBufferDirectByteBufferMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
+                .valueMarshaller(ByteBufferMarshaller.INSTANCE) // we should not have to to this !
+                .keyMarshaller(ByteBufferMarshaller.INSTANCE)    // we should not have to to this !
                 .disableOversizedEntries(true) // disabled for testing purposes only.
                 .entrySize(12)
                 .create()) {
@@ -542,8 +546,9 @@ public class CHMUseCasesTest {
             value2.flip();
             assertNull(map.put(key1, value1));
             assertBBEquals(value1, map.put(key1, value2));
-            assertBBEquals(value1, map.get(key1));
+            assertBBEquals(value2, map.get(key1));
             assertNull(map.get(key2));
+            map.put(key1, value1);
 
             final Function<ByteBuffer, ByteBuffer> function = new Function<ByteBuffer, ByteBuffer>() {
                 @Override
@@ -560,12 +565,12 @@ public class CHMUseCasesTest {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));
-                    s.put(0, (byte) (s.get(0) - 1));
+                    s.put(1, (byte) (s.get(1) - 1));
                     return function.apply(s);
                 }
             }));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10, 11, 11}), map.get(key1));
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.get(key1));
 
         }
     }
@@ -1571,3 +1576,4 @@ interface IBean {
     void setInt(int i);
 }
 */
+
