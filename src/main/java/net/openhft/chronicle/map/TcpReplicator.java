@@ -1442,7 +1442,7 @@ class StatelessServerConnector<K, V> {
         final K key = keyReaderWithSize.read(reader, null);
         final Mutator<V, ?> mutator = (Mutator<V, ?>) reader.readObject();
         try {
-            Object result = map.updateForKey(key, mutator);
+            Object result = map.putWithMapping(key, mutator);
             writer.writeObject(result);
         } catch (Throwable e) {
             LOG.info("", e);

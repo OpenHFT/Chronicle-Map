@@ -559,7 +559,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    public <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator) {
+    public <R> R putWithMapping(K key, @NotNull Mutator<? super V, R> mutator) {
 
 
         if (!(CharSequence.class.isAssignableFrom(vClass))) {
@@ -573,7 +573,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 if (!entry.wasPresent())
                     return null;
 
-                return mutator.update(entry.value());
+                R result = mutator.update(entry.value());
+                ((MutableLockedEntry) entry).value(result);
             }
 
         }

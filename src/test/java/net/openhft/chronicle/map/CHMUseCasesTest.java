@@ -75,16 +75,13 @@ public class CHMUseCasesTest {
             map.put("Hello", "World");
 
             try {
-                map.updateForKey("Hello", new Mutator<String, String>() {
+                map.putWithMapping("Hello", new Mutator<String, String>() {
                     @Override
                     public String update(String s) {
                         return "New " + s;
                     }
                 });
 
-
-                //I disagree with the fail - you should be able to put into a string - Rob
-//                fail("Operation not supported as value is not mutable");
             } catch (Exception ignored) {
                 ignored.printStackTrace();
             }
@@ -132,7 +129,7 @@ public class CHMUseCasesTest {
                         }
                     }));
 
-            assertEquals("New World !!", map.updateForKey(new StringBuilder("Hello"), new
+            assertEquals("New World !!", map.putWithMapping(new StringBuilder("Hello"), new
                     Mutator<CharSequence, CharSequence>() {
                         @Override
                         public CharSequence update(CharSequence s) {
@@ -143,7 +140,7 @@ public class CHMUseCasesTest {
 
             assertEquals("New World !!", map.get("Hello").toString());
 
-            assertEquals(null, map.updateForKey(new StringBuilder("no-key"), new
+            assertEquals(null, map.putWithMapping(new StringBuilder("no-key"), new
                     Mutator<CharSequence, CharSequence>() {
                         @Override
                         public CharSequence update(CharSequence s) {
@@ -292,13 +289,12 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.updateForKey(1, new Mutator<Integer, Integer>() {
+                map.putWithMapping(1, new Mutator<Integer, Integer>() {
                     @Override
                     public Integer update(Integer s) {
                         return s + 1;
                     }
                 });
-                fail("Update of Integer not supported");
             } catch (Exception todoMoreSpecificException) {
             }
 
@@ -307,7 +303,6 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testLongLongMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Long, Long> map = ChronicleMapBuilder
                 .of(Long.class, Long.class)
@@ -337,13 +332,12 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.updateForKey(1L, new Mutator<Long, Long>() {
+                map.putWithMapping(1L, new Mutator<Long, Long>() {
                     @Override
                     public Long update(Long s) {
                         return s + 1;
                     }
                 });
-                fail("Update of Long not supported");
             } catch (Exception todoMoreSpecificException) {
             }
 
@@ -382,13 +376,13 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.updateForKey(1.0, new Mutator<Double, Double>() {
+                map.putWithMapping(1.0, new Mutator<Double, Double>() {
                     @Override
                     public Double update(Double s) {
                         return s + 1;
                     }
                 });
-                fail("Update of Double not supported");
+
             } catch (Exception todoMoreSpecificException) {
             }
 
@@ -426,7 +420,7 @@ public class CHMUseCasesTest {
                 }
             }));
 
-            assertTrue(Arrays.equals(new byte[]{12, 10}, map.updateForKey(key1, new Mutator<byte[], byte[]>() {
+            assertTrue(Arrays.equals(new byte[]{12, 10}, map.putWithMapping(key1, new Mutator<byte[], byte[]>() {
                 @Override
                 public byte[] update(byte[] s) {
                     s[0]++;
@@ -473,7 +467,7 @@ public class CHMUseCasesTest {
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.mapForKey(key1, function));
             assertEquals(null, map.mapForKey(key2, function));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.updateForKey(key1, new Mutator<ByteBuffer, ByteBuffer>() {
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWithMapping(key1, new Mutator<ByteBuffer, ByteBuffer>() {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));
@@ -568,7 +562,7 @@ public class CHMUseCasesTest {
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.mapForKey(key1, function));
             assertEquals(null, map.mapForKey(key2, function));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.updateForKey(key1, new Mutator<ByteBuffer, ByteBuffer>() {
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWithMapping(key1, new Mutator<ByteBuffer, ByteBuffer>() {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));
