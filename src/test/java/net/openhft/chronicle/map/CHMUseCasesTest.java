@@ -109,14 +109,14 @@ public class CHMUseCasesTest {
             assertNull(map.getUsing(key, value));
 
 
-            assertEquals("New World", map.mapForKey(new StringBuilder("Hello"), new
+            assertEquals("New World", map.mapForKey("Hello", new
                     Function<CharSequence, CharSequence>() {
                         @Override
                         public CharSequence apply(CharSequence s) {
                             return "New " + s;
                         }
                     }));
-            assertEquals(null, map.mapForKey(new StringBuilder("No key"), new
+            assertEquals(null, map.mapForKey("No key", new
                     Function<CharSequence, CharSequence>() {
                         @Override
                         public CharSequence apply(CharSequence s) {
@@ -124,7 +124,7 @@ public class CHMUseCasesTest {
                         }
                     }));
 
-            assertEquals("New World !!", map.putWith(new StringBuilder("Hello"), new
+            assertEquals("New World !!", map.putWith("Hello", new
                     Mutator<CharSequence>() {
                         @Override
                         public CharSequence update(CharSequence s) {
@@ -135,7 +135,7 @@ public class CHMUseCasesTest {
 
             assertEquals("New World !!", map.get("Hello").toString());
 
-            assertEquals(null, map.putWith(new StringBuilder("no-key"), new
+            assertEquals(null, map.putWith("no-key", new
                     Mutator<CharSequence>() {
                         @Override
                         public CharSequence update(CharSequence s) {
@@ -849,8 +849,6 @@ public class CHMUseCasesTest {
             UnsignedShortValue value1 = ChronicleMapBuilder.newInstance(UnsignedShortValue.class, false);
             UnsignedShortValue value2 = ChronicleMapBuilder.newInstance(UnsignedShortValue.class, false);
 
-            //key direct instance,      rather direct ref
-
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
@@ -1435,7 +1433,6 @@ public class CHMUseCasesTest {
                 list1.add("one");
                 assertEquals(Arrays.asList("one"), list1);
             }
-
             List<String> list2 = new ArrayList<>();
             try (ReadContext rc = map.getUsingLocked("1", list2)) {
                 assertTrue(rc.present());
@@ -1586,5 +1583,3 @@ interface IBean {
     void setInt(int i);
 }
 */
-
-
