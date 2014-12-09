@@ -21,8 +21,11 @@ package net.openhft.chronicle.map;
 /**
  * @author Rob Austin.
  */
-public interface ReadContext<K,V> extends Context<K,V> {
+public interface ReadContext<K, V> extends Context<K, V> {
 
+    /**
+     * @returns true if the entry was present
+     */
     boolean present();
 
 }

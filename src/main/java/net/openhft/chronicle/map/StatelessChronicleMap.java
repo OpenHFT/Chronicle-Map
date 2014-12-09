@@ -68,8 +68,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private volatile ByteBuffer outBuffer;
     private volatile ByteBufferBytes outBytes;
 
-    private volatile ByteBuffer inBuffer;
-    private volatile ByteBufferBytes inBytes;
+    private ByteBuffer inBuffer;
+    private ByteBufferBytes inBytes;
 
     @NotNull
     private final ReaderWithSize<K> keyReaderWithSize;

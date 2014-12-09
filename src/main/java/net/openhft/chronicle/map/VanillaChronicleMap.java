@@ -35,7 +35,7 @@ import net.openhft.chronicle.hash.serialization.internal.*;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
-import net.openhft.lang.io.serialization.JDKZObjectSerializer;
+import net.openhft.lang.io.serialization.JDKObjectSerializer;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.StatefulCopyable;
@@ -220,7 +220,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     final long createMappedStoreAndSegments(File file) throws IOException {
         return createMappedStoreAndSegments(new MappedStore(file, FileChannel.MapMode.READ_WRITE,
-                sizeInBytes(), JDKZObjectSerializer.INSTANCE));
+                sizeInBytes(), JDKObjectSerializer.INSTANCE));
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -521,7 +521,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
                 BytesBytesInterop.INSTANCE, key, keySizeMarshaller.readSize(key),
                 keyBytesToInstance, readValueToOutputBytes, null, outputValueBytesToInstance,
-                false);
+                false, null);
     }
 
     private V lookupUsing(K key, V usingValue, boolean create) {
@@ -532,7 +532,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
         long keySize = metaKeyInterop.size(keyInterop, key);
         return lookupUsing(copies, null, metaKeyInterop, keyInterop, key, keySize, keyIdentity(),
-                this, usingValue, valueIdentity(), create);
+                this, usingValue, valueIdentity(), create, null);
     }
 
     private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
@@ -540,30 +540,73 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                    MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                    InstanceOrBytesToInstance<KB, K> toKey,
                    ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
-                   boolean create) {
+                   boolean create, final MutableLockedEntry lock) {
         long hash = metaKeyInterop.hash(keyInterop, key);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
         Segment segment = segments[segmentNum];
         return segment.acquire(copies, segmentState,
                 metaKeyInterop, keyInterop, key, keySize, toKey,
-                readValue, usingValue, toValue, segmentHash, create);
+                readValue, usingValue, toValue, segmentHash, create, lock);
     }
 
     @Override
     public <R> R mapForKey(K key, @NotNull Function<? super V, R> function) {
         try (ReadContext<K, V> entry = lookupUsing(key, null,
-                LockType.READ_LOCK, false)) {
+                false, false, LockType.READ_LOCK)) {
             return entry.present() ? function.apply(entry.value()) : null;
         }
     }
 
     @Override
     public <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator) {
-        try (Context<K, V> entry = lookupUsing(key, null,
-                LockType.WRITE_LOCK, false)) {
-            return mutator.update(entry.value());
+
+
+        if (!(CharSequence.class.isAssignableFrom(vClass))) {
+
+            try (WriteContext<K, V> entry = lookupUsing(key, null,
+                    false, false, LockType.WRITE_LOCK)) {
+
+                if (entry.value() == null)
+                    return null;
+
+                if (!entry.wasPresent())
+                    return null;
+
+                return mutator.update(entry.value());
+            }
+
         }
+
+
+        // special case - spoke to peter about this and he wants to handle strings as a
+        // special case
+        CharSequence using;
+        if (vClass.equals(CharSequence.class))
+            using = new StringBuilder();
+        else
+            using = null;
+
+        try (WriteContext<K, V> entry = lookupUsing(key, (V) using,
+                false, using == null, LockType.WRITE_LOCK)) {
+
+            CharSequence value = (CharSequence) entry.value();
+            if (entry.value() == null || value.length() == 0)
+                return null;
+
+            final R result = mutator.update(entry.value());
+
+            if (value instanceof StringBuilder) {
+                StringBuilder using1 = (StringBuilder) using;
+                using1.setLength(0);
+                using1.append((CharSequence) result);
+            } else
+                ((MutableLockedEntry) entry).value(result);
+
+            return result;
+        }
+
+
     }
 
     @Override
@@ -737,17 +780,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     @NotNull
     @Override
     public final WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue) {
-        return lookupUsing(key, usingValue, LockType.WRITE_LOCK, true);
+        return lookupUsing(key, usingValue, true, true, LockType.WRITE_LOCK);
     }
 
     @NotNull
     @Override
     public final ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue) {
-        return lookupUsing(key, usingValue, LockType.READ_LOCK, true);
+        return lookupUsing(key, usingValue, true, false, LockType.READ_LOCK);
     }
 
     private <T extends Context> T lookupUsing(
-            K key, V usingValue, LockType lockType, boolean mustReuseValue) {
+            K key, V usingValue, boolean mustReuseValue, final boolean create, final LockType lockType) {
         checkKey(key);
 
         ThreadLocalCopies copies = SegmentState.getCopies(null);
@@ -769,7 +812,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         V v = segment.acquireWithoutLock(copies, segmentState,
                 metaKeyInterop, keyInterop, key, keySize, keyIdentity(),
                 this, usingValue, valueIdentity(),
-                segmentHash, lockType == LockType.WRITE_LOCK);
+                segmentHash, create, lock);
 
         checkReallyUsingValue(usingValue, mustReuseValue, v);
 
@@ -1592,15 +1635,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
         RV acquire(@Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
-                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                InstanceOrBytesToInstance<KB, K> toKey,
-                ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
-                long hash2, boolean create) {
+                   MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+                   InstanceOrBytesToInstance<KB, K> toKey,
+                   ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
+                   long hash2, boolean create, MutableLockedEntry lock) {
             readLock(null);
             try {
                 return acquireWithoutLock(copies, segmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
-                        readValue, usingValue, toValue, hash2, create);
+                        readValue, usingValue, toValue, hash2, create, lock);
             } finally {
                 if (segmentState != null)
                     segmentState.close();
@@ -1614,7 +1657,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
                 ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
-                long hash2, boolean create) {
+                long hash2, boolean create, MutableLockedEntry lock) {
             segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
             SegmentState localSegmentState = segmentState;
             try {
@@ -1648,9 +1691,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     }
                     entry = localSegmentState.tmpBytes;
                 }
-                return createEntryOnAcquire(copies, localSegmentState,
+
+                RV result = createEntryOnAcquire(copies, localSegmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
                         readValue, usingValue, toValue, entry);
+
+                //  notify the context that the entry was created
+                if (lock instanceof WriteLocked)
+                    ((WriteLocked) lock).wasPresent(true);
+
+                return result;
             } finally {
                 if (segmentState == null && localSegmentState != null)
                     localSegmentState.close();
@@ -2587,7 +2637,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    private static abstract class MutableLockedEntry<
+    static abstract class MutableLockedEntry<
             K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             V, VI, MVI extends MetaBytesInterop<V, ? super VI>> implements Context<K, V> {
         final SegmentState segmentState;
@@ -2602,6 +2652,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         private K key;
         private V value;
+        boolean present;
 
         MutableLockedEntry(SegmentState segmentState) {
             this.segmentState = segmentState;
@@ -2620,8 +2671,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         void value(V value) {
+            this.present = value != null;
             this.value = value;
         }
+
     }
 
     private static class ReadLocked<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
@@ -2629,23 +2682,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             extends MutableLockedEntry<K, KI, MKI, V, VI, MVI>
             implements ReadContext<K, V> {
 
-        private boolean present;
 
         ReadLocked(SegmentState segmentState) {
             super(segmentState);
-        }
-
-        void value(V value) {
-            this.present = value != null;
-            super.value(value);
-        }
-
-        /**
-         * @return if the value is not null
-         */
-        @Override
-        public boolean present() {
-            return present;
         }
 
         @Override
@@ -2653,15 +2692,35 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             segmentState.close();
             segment.readUnlock();
         }
+
+        /**
+         * @return if the value is not null
+         */
+        public boolean present() {
+            return present;
+        }
     }
 
-    private static abstract class WriteLocked<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
+    static abstract class WriteLocked<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
             extends MutableLockedEntry<K, KI, MKI, V, VI, MVI>
             implements WriteContext<K, V> {
 
+        private boolean wasPresent;
+
         WriteLocked(SegmentState segmentState) {
             super(segmentState);
+        }
+
+        /**
+         * @return if the entry was created
+         */
+        public boolean wasPresent() {
+            return wasPresent;
+        }
+
+        public void wasPresent(boolean wasPresent) {
+            this.wasPresent = wasPresent;
         }
     }
 
@@ -2672,6 +2731,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         NativeWriteLocked(SegmentState segmentState) {
             super(segmentState);
         }
+
 
         @Override
         public void close() {
@@ -2714,6 +2774,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             segmentState.close();
             segment.writeUnlock();
         }
+
 
         @Override
         public void dontPutOnClose() {

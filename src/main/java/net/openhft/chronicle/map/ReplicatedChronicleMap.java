@@ -654,7 +654,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
                 ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
-                long hash2, boolean create) {
+                long hash2, boolean create, MutableLockedEntry lock) {
             segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
             SegmentState localSegmentState = segmentState;
             try {
@@ -755,9 +755,19 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     }
                     entry = localSegmentState.tmpBytes;
                 }
-                return createEntryOnAcquire(copies, localSegmentState,
+
+
+
+                RV result =createEntryOnAcquire(copies, localSegmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
                         readValue, usingValue, toValue, entry);
+
+                //  notify the context that the entry was created
+                if (lock instanceof WriteLocked)
+                    ((WriteLocked) lock).wasPresent(true);
+
+                return result;
+
             } finally {
                 if (segmentState == null && localSegmentState != null)
                     localSegmentState.close();
