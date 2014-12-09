@@ -24,7 +24,7 @@ package net.openhft.chronicle.map;
 public interface ReadContext<K, V> extends Context<K, V> {
 
     /**
-     * @returns true if the entry was present
+     * @return true if the entry was present
      */
     boolean present();
 
