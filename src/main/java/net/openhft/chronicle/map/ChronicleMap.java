@@ -203,12 +203,11 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * Apply a mutator to the value for a key and return a result. A write lock is assumed. <p> If
      * there is no entry for this key null will be returned
      *
-     * @param <R>     return type.
      * @param key     to apply the mapping to
      * @param mutator to alter the value and calculate a result
      * @return the result of the function.
      */
-    <R> R putWith(K key, @NotNull Mutator<? super V, R> mutator);
+    V putWith(K key, @NotNull Mutator<V> mutator);
 
     /**
      * exports all the entries to a {@link java.io.File} storing them in JSON format, an attempt is

@@ -559,51 +559,29 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    public <R> R putWith(K key, @NotNull Mutator<? super V, R> mutator) {
+    public  V putWith(K key, @NotNull Mutator<V> mutator) {
 
 
-        if (!(CharSequence.class.isAssignableFrom(vClass))) {
+        final V using = (vClass.equals(CharSequence.class)) ? (V) new StringBuilder() : null;
 
-            try (WriteContext<K, V> entry = lookupUsing(key, null,
-                    false, false, LockType.WRITE_LOCK)) {
+        try (WriteContext<K, V> entry = lookupUsing(key, using,
+                false, false, LockType.WRITE_LOCK)) {
 
-                if (entry.value() == null)
+            if (CharSequence.class.isAssignableFrom(vClass)) {
+                CharSequence value = (CharSequence) entry.value();
+                if (entry.value() == null || value.length() == 0)
                     return null;
-
-                if (!entry.wasPresent())
-                    return null;
-
-                R result = mutator.update(entry.value());
-                ((MutableLockedEntry) entry).value(result);
-                return result;
             }
-        }
 
-
-        // special case - spoke to peter about this and he wants to handle strings as a
-        // special case
-        CharSequence using;
-        if (vClass.equals(CharSequence.class))
-            using = new StringBuilder();
-        else
-            using = null;
-
-        try (WriteContext<K, V> entry = lookupUsing(key, (V) using,
-                false, using == null, LockType.WRITE_LOCK)) {
-
-            CharSequence value = (CharSequence) entry.value();
-            if (entry.value() == null || value.length() == 0)
+            if (entry.value() == null)
                 return null;
 
-            final R result = mutator.update(entry.value());
-
-            if (value instanceof StringBuilder) {
-                StringBuilder using1 = (StringBuilder) using;
-                using1.setLength(0);
-                using1.append((CharSequence) result);
+            V result = mutator.update(entry.value());
+            if (entry.value() instanceof StringBuilder) {
+                ((StringBuilder) using).setLength(0);
+                ((StringBuilder) using).append((CharSequence) result);
             } else
                 ((MutableLockedEntry) entry).value(result);
-
             return result;
         }
 
@@ -1699,7 +1677,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                 //  notify the context that the entry was created
                 if (lock instanceof WriteLocked)
-                    ((WriteLocked) lock).wasPresent(true);
+                    ((WriteLocked) lock).created(true);
 
                 return result;
             } finally {
@@ -2707,7 +2685,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             extends MutableLockedEntry<K, KI, MKI, V, VI, MVI>
             implements WriteContext<K, V> {
 
-        private boolean wasPresent = true;
+        private boolean created = false;
 
         WriteLocked(SegmentState segmentState) {
             super(segmentState);
@@ -2716,12 +2694,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         /**
          * @return if the entry was created
          */
-        public boolean wasPresent() {
-            return wasPresent;
+        public boolean created() {
+            return created;
         }
 
-        public void wasPresent(boolean wasPresent) {
-            this.wasPresent = wasPresent;
+        public void created(boolean created) {
+            this.created = created;
         }
     }
 

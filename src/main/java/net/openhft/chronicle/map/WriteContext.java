@@ -38,6 +38,6 @@ public interface WriteContext<K, V> extends Context<K, V> {
     /**
      * @returns true if the entry was previously present
      */
-    boolean wasPresent();
+    boolean created();
 
 }

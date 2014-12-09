@@ -74,7 +74,7 @@ public class CHMUseCasesTest {
             map.put("Hello", "World");
 
 
-            map.putWith("Hello", new Mutator<String, String>() {
+            map.putWith("Hello", new Mutator<String>() {
                 @Override
                 public String update(String s) {
                     return "New " + s;
@@ -126,7 +126,7 @@ public class CHMUseCasesTest {
                     }));
 
             assertEquals("New World !!", map.putWith(new StringBuilder("Hello"), new
-                    Mutator<CharSequence, CharSequence>() {
+                    Mutator<CharSequence>() {
                         @Override
                         public CharSequence update(CharSequence s) {
                             ((StringBuilder) s).append(" !!");
@@ -137,7 +137,7 @@ public class CHMUseCasesTest {
             assertEquals("New World !!", map.get("Hello").toString());
 
             assertEquals(null, map.putWith(new StringBuilder("no-key"), new
-                    Mutator<CharSequence, CharSequence>() {
+                    Mutator<CharSequence>() {
                         @Override
                         public CharSequence update(CharSequence s) {
                             ((StringBuilder) s).append("!!");
@@ -283,7 +283,7 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.putWith(1, new Mutator<Integer, Integer>() {
+                map.putWith(1, new Mutator<Integer>() {
                     @Override
                     public Integer update(Integer s) {
                         return s + 1;
@@ -326,7 +326,7 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.putWith(1L, new Mutator<Long, Long>() {
+                map.putWith(1L, new Mutator<Long>() {
                     @Override
                     public Long update(Long s) {
                         return s + 1;
@@ -369,7 +369,7 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.putWith(1.0, new Mutator<Double, Double>() {
+                map.putWith(1.0, new Mutator<Double>() {
                     @Override
                     public Double update(Double s) {
                         return s + 1;
@@ -415,7 +415,7 @@ public class CHMUseCasesTest {
                 }
             }));
 
-            assertTrue(Arrays.equals(new byte[]{12, 10}, map.putWith(key1, new Mutator<byte[], byte[]>() {
+            assertTrue(Arrays.equals(new byte[]{12, 10}, map.putWith(key1, new Mutator<byte[]>() {
                 @Override
                 public byte[] update(byte[] s) {
                     s[0]++;
@@ -461,7 +461,7 @@ public class CHMUseCasesTest {
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.mapForKey(key1, function));
             assertEquals(null, map.mapForKey(key2, function));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWith(key1, new Mutator<ByteBuffer, ByteBuffer>() {
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWith(key1, new Mutator<ByteBuffer>() {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));
@@ -556,7 +556,7 @@ public class CHMUseCasesTest {
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.mapForKey(key1, function));
             assertEquals(null, map.mapForKey(key2, function));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWith(key1, new Mutator<ByteBuffer, ByteBuffer>() {
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWith(key1, new Mutator<ByteBuffer>() {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));

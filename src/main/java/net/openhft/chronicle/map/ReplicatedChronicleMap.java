@@ -763,7 +763,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                 //  notify the context that the entry was created
                 if (lock instanceof WriteLocked)
-                    ((WriteLocked) lock).wasPresent(false);
+                    ((WriteLocked) lock).created(false);
 
                 return result;
 
