@@ -210,7 +210,7 @@ final class OnHeapUpdatableChronicleMapBuilder<K, V>
      * @see #objectSerializer(ObjectSerializer)
      */
     public OnHeapUpdatableChronicleMapBuilder<K, V> valueMarshaller(
-            @NotNull BytesMarshaller<V> valueMarshaller) {
+            @NotNull BytesMarshaller<? super V> valueMarshaller) {
         valueBuilder.marshaller(valueMarshaller);
         return this;
     }

@@ -8,15 +8,15 @@ import java.io.Serializable;
  * <p>This is not functional as it can alter an argument.
  *
  * @param <T> the type of the mutable input
- * @param <R> the type of the result of the mutator
+
  */
 
-public interface Mutator<T, R> extends Serializable {
+public interface Mutator<T> extends Serializable {
     /**
      * Applies this mutator to the given mutable argument.
      *
      * @param t the mutator argument
      * @return the  result
      */
-    R update(T t);
+    T update(T t);
 }

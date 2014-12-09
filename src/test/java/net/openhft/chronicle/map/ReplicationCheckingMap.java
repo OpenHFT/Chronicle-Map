@@ -223,8 +223,8 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public <R> R updateForKey(K key, @NotNull Mutator<? super V, R> mutator) {
-        return map1.updateForKey(key, mutator);
+    public V putWith(K key, @NotNull Mutator<V> mutator) {
+        return map1.putWith(key, mutator);
     }
 
     @Override

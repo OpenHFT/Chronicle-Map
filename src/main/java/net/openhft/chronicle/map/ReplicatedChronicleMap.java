@@ -231,7 +231,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     @Override
-    V put0(@NotNull K key, V value, boolean replaceIfPresent) {
+    V put1(@NotNull K key, V value, boolean replaceIfPresent) {
         return put0(key, value, replaceIfPresent, localIdentifier, currentTime());
     }
 
@@ -289,12 +289,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     @Override
     <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
             RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
-    RV put(ThreadLocalCopies copies, SegmentState segmentState,
-           MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-           InstanceOrBytesToInstance<KB, K> toKey,
-           GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-           InstanceOrBytesToInstance<? super VB, V> toValue,
-           boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused) {
+    RV put2(ThreadLocalCopies copies, SegmentState segmentState,
+            MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+            InstanceOrBytesToInstance<KB, K> toKey,
+            GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+            InstanceOrBytesToInstance<? super VB, V> toValue,
+            boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused) {
         return put(copies, segmentState, metaKeyInterop, keyInterop, key, keySize, toKey,
                 getValueInterops, value, toValue, replaceIfPresent, readValue, resultUnused,
                 localIdentifier, currentTime());
@@ -654,7 +654,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
                 ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
-                long hash2, boolean create) {
+                long hash2, boolean create, MutableLockedEntry lock) {
             segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
             SegmentState localSegmentState = segmentState;
             try {
@@ -755,9 +755,18 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     }
                     entry = localSegmentState.tmpBytes;
                 }
-                return createEntryOnAcquire(copies, localSegmentState,
+
+
+                RV result = createEntryOnAcquire(copies, localSegmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
                         readValue, usingValue, toValue, entry);
+
+                //  notify the context that the entry was created
+                if (lock instanceof WriteLocked)
+                    ((WriteLocked) lock).created(false);
+
+                return result;
+
             } finally {
                 if (segmentState == null && localSegmentState != null)
                     localSegmentState.close();

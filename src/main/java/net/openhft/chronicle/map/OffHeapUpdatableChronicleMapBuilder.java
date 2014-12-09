@@ -148,7 +148,7 @@ final class OffHeapUpdatableChronicleMapBuilder<K, V>
         return super.prepareValueBytesOnAcquire(prepareValueBytes);
     }
 
-    public ChronicleMapBuilderI<K, V> valueMarshaller(@NotNull BytesMarshaller<V> valueMarshaller) {
+    public ChronicleMapBuilderI<K, V> valueMarshaller(@NotNull BytesMarshaller<? super V> valueMarshaller) {
         throw new UnsupportedOperationException("not supported for this combination of key/value type");
     }
 

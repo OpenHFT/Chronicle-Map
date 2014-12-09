@@ -1440,9 +1440,9 @@ class StatelessServerConnector<K, V> {
     @Nullable
     public Work updateForKey(@NotNull ByteBufferBytes reader, @NotNull Bytes writer, long sizeLocation) {
         final K key = keyReaderWithSize.read(reader, null);
-        final Mutator<V, ?> mutator = (Mutator<V, ?>) reader.readObject();
+        final Mutator<V> mutator = (Mutator<V>) reader.readObject();
         try {
-            Object result = map.updateForKey(key, mutator);
+            Object result = map.putWith(key, mutator);
             writer.writeObject(result);
         } catch (Throwable e) {
             LOG.info("", e);

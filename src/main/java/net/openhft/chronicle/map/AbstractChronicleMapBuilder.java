@@ -39,7 +39,6 @@ import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
-import net.openhft.lang.values.LongValue;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -985,7 +984,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
     private int figureBufferAllocationFactor() {
         // if expected map size is about 1000, seems rather wasteful to allocate
         // key and value serialization buffers each x64 of expected entry size..
-        return (int) Math.min(Math.max(2L, entries() >> 10),
+        return (int) Math.min(Math.max(4L, entries() >> 10),
                 VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR);
     }
 

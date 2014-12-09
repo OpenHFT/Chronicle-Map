@@ -68,8 +68,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private volatile ByteBuffer outBuffer;
     private volatile ByteBufferBytes outBytes;
 
-    private volatile ByteBuffer inBuffer;
-    private volatile ByteBufferBytes inBytes;
+    private ByteBuffer inBuffer;
+    private ByteBufferBytes inBytes;
 
     @NotNull
     private final ReaderWithSize<K> keyReaderWithSize;
@@ -490,7 +490,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @Nullable
     @Override
-    public <R> R updateForKey(@Nullable K key, @NotNull Mutator<? super V, R> mutator) {
+    public V putWith(@Nullable K key, @NotNull Mutator<V> mutator) {
         if (key == null)
             throw keyNotNullNPE();
         return fetchObject(UPDATE_FOR_KEY, key, mutator);
