@@ -36,7 +36,7 @@ public interface WriteContext<K, V> extends Context<K, V> {
     void removeEntry();
 
     /**
-     * @returns true if the entry was previously present
+     * @return true if the entry was previously present
      */
     boolean created();
 
