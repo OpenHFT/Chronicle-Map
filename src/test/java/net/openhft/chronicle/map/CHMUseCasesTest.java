@@ -24,7 +24,6 @@ public class CHMUseCasesTest {
      * only be on heap and variable length serialised.
      */
     @Test
-    @Ignore("Not yet implemented")
     public void testStringStringMap() throws ExecutionException, InterruptedException {
 /* TODO run the same test for multiple types of map stores
         for(ChronicleMapBuilder<String, String> chmb : Arrays.asList(
@@ -84,8 +83,8 @@ public class CHMUseCasesTest {
                 });
 
 
-                //I disagree the fail - you should be able to put into a string - Rob
-                // fail("Operation not supported as value is not mutable");
+                //I disagree with the fail - you should be able to put into a string - Rob
+//                fail("Operation not supported as value is not mutable");
             } catch (Exception ignored) {
                 ignored.printStackTrace();
             }
@@ -754,7 +753,6 @@ public class CHMUseCasesTest {
      * For int values, the key can be on heap or off heap.
      */
     @Test
-    @Ignore("HCOLL-226 implement disableOversizedEntries()")
     public void testIntValueShortValueMap() {
         try (ChronicleMap<IntValue, ShortValue> map = ChronicleMapBuilder
                 .of(IntValue.class, ShortValue.class)
