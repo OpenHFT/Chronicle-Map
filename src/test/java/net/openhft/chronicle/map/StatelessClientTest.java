@@ -345,7 +345,7 @@ public class StatelessClientTest {
 
         try (ChronicleMap<String, Map> serverMap = ChronicleMapBuilder
                 .of(String.class, Map.class)
-                .entries(SIZE)
+                .entries(1000)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
                 .create()) {
             try (ChronicleMap<String, Map> statelessMap = ChronicleMapBuilder
