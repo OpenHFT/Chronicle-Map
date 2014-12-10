@@ -718,7 +718,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                             throw defaultValueOrPrepareBytesShouldBeSpecified();
                         }
                         putValue(pos, offset, entry, valueSizePos, entryEndAddr,
-                                copies, localSegmentState, metaElemWriter, elemWriter, elem,
+                                localSegmentState, metaElemWriter, elemWriter, elem,
                                 metaElemWriter.size(elemWriter, elem), hashLookup);
                         pos = localSegmentState.pos;
 

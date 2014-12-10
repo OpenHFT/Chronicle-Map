@@ -43,8 +43,6 @@ import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.Array;
@@ -70,7 +68,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         implements ChronicleMap<K, V>, Serializable, ReadValue<V>, InstanceOrBytesToInstance,
         GetValueInterops<V, VI, MVI> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
+//    private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
 
     /**
      * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set bits.
@@ -607,7 +605,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     public synchronized void getAll(File toFile) throws IOException {
-
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
         xstream.alias("chronicle-entries", VanillaChronicleMap.EntrySet.class);
@@ -1926,7 +1923,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
 
             // putValue may relocate entry and change offset
-            putValue(pos, offset, entry, valueSizePos, entryEndAddr, copies, segmentState,
+            putValue(pos, offset, entry, valueSizePos, entryEndAddr, segmentState,
                     metaValueInterop, valueInterop, value, valueSize, searchedHashLookup);
 
             // put callbacks
@@ -2303,7 +2300,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             MVBI metaValueInterop = getNewValueInterops.getMetaValueInterop(
                     copies, valueInterop, newValue);
             long newValueSize = metaValueInterop.size(valueInterop, newValue);
-            putValue(pos, offset, entry, valueSizePos, entryEndAddr, copies, segmentState,
+            putValue(pos, offset, entry, valueSizePos, entryEndAddr, segmentState,
                     metaValueInterop, valueInterop, newValue, newValueSize, searchedHashLookup);
 
             // put callbacks
@@ -2333,7 +2330,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
          */
         final <E, EW> long putValue(
                 long pos, long offset, MultiStoreBytes entry, long valueSizePos, long entryEndAddr,
-                ThreadLocalCopies copies, SegmentState segmentState,
+                SegmentState segmentState,
                 MetaBytesWriter<E, ? super EW> metaElemWriter, EW elemWriter, E newElem,
                 long newElemSize,
                 MultiMap searchedHashLookup) {
