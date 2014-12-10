@@ -52,6 +52,8 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import static java.lang.Class.forName;
 import static java.lang.Long.numberOfTrailingZeros;
@@ -612,7 +614,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         // ideally we will use java serialization if we can
         lazyXStreamConverter().registerConverter(xstream);
 
-        try (FileOutputStream out = new FileOutputStream(toFile)) {
+        OutputStream outputStream = new FileOutputStream(toFile);
+        if (toFile.getName().toLowerCase().endsWith(".gz"))
+            outputStream = new GZIPOutputStream(outputStream);
+        try (OutputStream out = outputStream) {
             xstream.toXML(entrySet(), out);
         }
     }
@@ -626,7 +631,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         // ideally we will use java serialization if we can
         lazyXStreamConverter().registerConverter(xstream);
 
-        try (FileInputStream out = new FileInputStream(fromFile)) {
+        InputStream inputStream = new FileInputStream(fromFile);
+        if (fromFile.getName().toLowerCase().endsWith(".gz"))
+            inputStream = new GZIPInputStream(inputStream);
+        try (InputStream out = inputStream) {
             xstream.fromXML(out);
         }
     }

@@ -32,16 +32,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * Created by peter on 06/12/14.
  */
 public class LargeEntriesTest {
 
-    static final int ENTRIES = 640;
+    static final int ENTRIES = 6400;
     static final int ENTRY_SIZE = 1024;
+    private static final boolean TESTING = Boolean.getBoolean("testing");
 
     @Test
     @Ignore
@@ -55,7 +55,7 @@ public class LargeEntriesTest {
                 .putReturnsNull(true)
                 .create();
         {
-            int threads = 2; //Runtime.getRuntime().availableProcessors();
+            int threads = 4; //Runtime.getRuntime().availableProcessors();
             ExecutorService es = Executors.newFixedThreadPool(threads);
             final int block = ENTRIES / threads;
             for (int i = 0; i < 3; i++) {
@@ -124,11 +124,20 @@ public class LargeEntriesTest {
             SnappyStringMarshaller.INSTANCE.read(bytes);
             bytes.release();
         }
+        Object lock = TESTING ? Thread.currentThread() : map;
 
+        List<String> keys = new ArrayList<>();
         for (int i = start; i < finish; i++) {
             String key = "key-" + i;
-            map.put(key, value);
-            String object = map.get(key);
+            String object;
+            synchronized (lock) {
+                map.put(key, value);
+                keys.add(key);
+                for (String s : keys)
+                    assertTrue(s, map.containsKey(s));
+                object = map.get(key);
+                assertTrue(key, map.containsKey(key));
+            }
 
             assertNotNull(key, object);
             assertEquals(key, entrySize, object.length());
@@ -138,10 +147,12 @@ public class LargeEntriesTest {
         for (int i = start; i < finish; i++) {
 //            System.out.println(i);
             String key = "key-" + i;
-            String object = map.get(key);
+            synchronized (lock) {
+                String object = map.get(key);
 
-            assertNotNull(key, object);
-            assertEquals(key, entrySize, object.length());
+                assertNotNull(key, object);
+                assertEquals(key, entrySize, object.length());
+            }
         }
     }
 }
