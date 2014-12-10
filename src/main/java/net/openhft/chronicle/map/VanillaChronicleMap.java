@@ -34,7 +34,6 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.*;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
-import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
 import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.model.DataValueClasses;
@@ -50,6 +49,7 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -1477,7 +1477,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
          */
         static final long LOCK_OFFSET = 0L; // 64-bit
         static final long SIZE_OFFSET = LOCK_OFFSET + 8L; // 32-bit
-
+        ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
         final NativeBytes segmentHeader;
         final NativeBytes bytes;
         final long entriesOffset;
@@ -1566,7 +1566,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         public final ReadLocked<K, KI, MKI, V, VI, MVI> readLock(
                 @Nullable SegmentState segmentState) {
             while (true) {
-                final boolean success = segmentHeader.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
+//                final boolean success = segmentHeader.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
+                final boolean success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+/*
+                boolean success = false;
+                try {
+                    success = lock.readLock().tryLock(lockTimeOutNS, TimeUnit.NANOSECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+*/
                 if (success) {
                     if (segmentState != null) {
                         return segmentState.readLocked(this);
@@ -1592,6 +1601,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             startWriteLock = System.nanoTime();
             while (true) {
                 final boolean success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+/*
+                boolean success = false;
+                try {
+                    success = lock.writeLock().tryLock(lockTimeOutNS, TimeUnit.NANOSECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+*/
                 if (success) {
                     if (segmentState != null) {
                         if (isNativeValueClass) {
@@ -1617,7 +1634,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         @Override
         public final void readUnlock() {
             try {
-                segmentHeader.unlockRWReadLock(LOCK_OFFSET);
+//                segmentHeader.unlockRWReadLock(LOCK_OFFSET);
+                segmentHeader.unlockRWWriteLock(LOCK_OFFSET);
+//                lock.readLock().unlock();
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);
             }
@@ -1627,6 +1646,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         public final void writeUnlock() {
             try {
                 segmentHeader.unlockRWWriteLock(LOCK_OFFSET);
+//                lock.writeLock().unlock();
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);
             }

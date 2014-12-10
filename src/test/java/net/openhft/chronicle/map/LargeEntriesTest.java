@@ -26,6 +26,8 @@ import org.junit.Test;
 
 import java.beans.XMLEncoder;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -40,12 +42,13 @@ import static org.junit.Assert.*;
 public class LargeEntriesTest {
 
     static final int ENTRIES = 6400;
-    static final int ENTRY_SIZE = 1024;
+    static final int ENTRY_SIZE = 102400;
     private static final boolean TESTING = Boolean.getBoolean("testing");
 
     @Test
     @Ignore
-    public void testLargeStrings() throws ExecutionException, InterruptedException {
+    public void testLargeStrings() throws ExecutionException, InterruptedException, IOException {
+        File file = File.createTempFile("largeEntries", ".deleteme");
         final ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
                 .valueMarshaller(SnappyStringMarshaller.INSTANCE)
@@ -53,7 +56,7 @@ public class LargeEntriesTest {
                 .entries(ENTRIES * 2)
                 .entrySize(ENTRY_SIZE / 4)
                 .putReturnsNull(true)
-                .create();
+                .createPersistedTo(file);
         {
             int threads = 4; //Runtime.getRuntime().availableProcessors();
             ExecutorService es = Executors.newFixedThreadPool(threads);
@@ -124,20 +127,14 @@ public class LargeEntriesTest {
             SnappyStringMarshaller.INSTANCE.read(bytes);
             bytes.release();
         }
-        Object lock = TESTING ? Thread.currentThread() : map;
 
-        List<String> keys = new ArrayList<>();
         for (int i = start; i < finish; i++) {
             String key = "key-" + i;
             String object;
-            synchronized (lock) {
-                map.put(key, value);
-                keys.add(key);
-                for (String s : keys)
-                    assertTrue(s, map.containsKey(s));
-                object = map.get(key);
-                assertTrue(key, map.containsKey(key));
-            }
+
+            map.put(key, value);
+            object = map.get(key);
+            assertTrue(key, map.containsKey(key));
 
             assertNotNull(key, object);
             assertEquals(key, entrySize, object.length());
@@ -147,12 +144,11 @@ public class LargeEntriesTest {
         for (int i = start; i < finish; i++) {
 //            System.out.println(i);
             String key = "key-" + i;
-            synchronized (lock) {
-                String object = map.get(key);
 
-                assertNotNull(key, object);
-                assertEquals(key, entrySize, object.length());
-            }
+            String object = map.get(key);
+
+            assertNotNull(key, object);
+            assertEquals(key, entrySize, object.length());
         }
     }
 }
