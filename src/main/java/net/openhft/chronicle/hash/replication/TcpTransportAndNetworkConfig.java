@@ -77,7 +77,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
         return new TcpTransportAndNetworkConfig(
                 serverPort, unmodifiableSet(s),
                 DEFAULT_PACKET_SIZE,
-                false, // autoReconnectedUponDroppedConnection
+                true, // autoReconnectedUponDroppedConnection
                 ThrottlingConfig.noThrottling(),
                 DEFAULT_HEART_BEAT_INTERVAL,
                 DEFAULT_HEART_BEAT_INTERVAL_UNIT);
