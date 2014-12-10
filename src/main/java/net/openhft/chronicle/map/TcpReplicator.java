@@ -413,8 +413,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             // so these nodes will establish the connection when they come back up,
             // hence under these circumstances, polling a dropped node to attempt to reconnect is no-longer
             // required as the remote node will establish the connection its self on startup.
-            if (replicationConfig.autoReconnectedUponDroppedConnection())
-                attached.connector.connect();
+
+            attached.connector.connect();
 
             throw e;
         }
