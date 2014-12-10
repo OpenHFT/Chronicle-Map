@@ -170,13 +170,13 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
-        public <R> R mapForKey(K key, @NotNull Function<? super V, R> function) {
-            return d.mapForKey(key, function);
+        public <R> R getMapped(K key, @NotNull Function<? super V, R> function) {
+            return d.getMapped(key, function);
         }
 
         @Override
-        public  V putWith(K key, @NotNull Mutator<V> mutator) {
-            return d.putWith(key, mutator);
+        public  V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
+            return d.putMapped(key, unaryOperator);
         }
 
         @Override

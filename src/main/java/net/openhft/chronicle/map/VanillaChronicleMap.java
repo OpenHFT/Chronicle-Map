@@ -551,7 +551,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    public <R> R mapForKey(K key, @NotNull Function<? super V, R> function) {
+    public <R> R getMapped(K key, @NotNull Function<? super V, R> function) {
         try (ReadContext<K, V> entry = lookupUsing(key, null,
                 false, false, LockType.READ_LOCK)) {
             return entry.present() ? function.apply(entry.value()) : null;
@@ -559,7 +559,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    public  V putWith(K key, @NotNull Mutator<V> mutator) {
+    public  V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
 
 
         final V using = (vClass.equals(CharSequence.class)) ? (V) new StringBuilder() : null;
@@ -576,7 +576,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (entry.value() == null)
                 return null;
 
-            V result = mutator.update(entry.value());
+            V result = unaryOperator.update(entry.value());
             if (entry.value() instanceof StringBuilder) {
                 ((StringBuilder) using).setLength(0);
                 ((StringBuilder) using).append((CharSequence) result);

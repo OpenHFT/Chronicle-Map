@@ -38,13 +38,13 @@ public class CHMUseCasesTest {
             map.put("Hello", "World");
             assertEquals("World", map.get("Hello"));
 
-            assertEquals("New World", map.mapForKey("Hello", new Function<String, String>() {
+            assertEquals("New World", map.getMapped("Hello", new Function<String, String>() {
                 @Override
                 public String apply(String s) {
                     return "New " + s;
                 }
             }));
-            assertEquals(null, map.mapForKey("No key", new Function<String, String>() {
+            assertEquals(null, map.getMapped("No key", new Function<String, String>() {
                 @Override
                 public String apply(String s) {
                     return "New " + s;
@@ -73,7 +73,7 @@ public class CHMUseCasesTest {
             map.put("Hello", "World");
 
 
-            map.putWith("Hello", new Mutator<String>() {
+            map.putMapped("Hello", new UnaryOperator<String>() {
                 @Override
                 public String update(String s) {
                     return "New " + s;
@@ -109,14 +109,14 @@ public class CHMUseCasesTest {
             assertNull(map.getUsing(key, value));
 
 
-            assertEquals("New World", map.mapForKey("Hello", new
+            assertEquals("New World", map.getMapped("Hello", new
                     Function<CharSequence, CharSequence>() {
                         @Override
                         public CharSequence apply(CharSequence s) {
                             return "New " + s;
                         }
                     }));
-            assertEquals(null, map.mapForKey("No key", new
+            assertEquals(null, map.getMapped("No key", new
                     Function<CharSequence, CharSequence>() {
                         @Override
                         public CharSequence apply(CharSequence s) {
@@ -124,8 +124,8 @@ public class CHMUseCasesTest {
                         }
                     }));
 
-            assertEquals("New World !!", map.putWith("Hello", new
-                    Mutator<CharSequence>() {
+            assertEquals("New World !!", map.putMapped("Hello", new
+                    UnaryOperator<CharSequence>() {
                         @Override
                         public CharSequence update(CharSequence s) {
                             ((StringBuilder) s).append(" !!");
@@ -135,8 +135,8 @@ public class CHMUseCasesTest {
 
             assertEquals("New World !!", map.get("Hello").toString());
 
-            assertEquals(null, map.putWith("no-key", new
-                    Mutator<CharSequence>() {
+            assertEquals(null, map.putMapped("no-key", new
+                    UnaryOperator<CharSequence>() {
                         @Override
                         public CharSequence update(CharSequence s) {
                             ((StringBuilder) s).append("!!");
@@ -268,13 +268,13 @@ public class CHMUseCasesTest {
             assertEquals(null, map.get(3));
             assertEquals(null, map.get(4));
 
-            assertEquals((Integer) 110, map.mapForKey(1, new Function<Integer, Integer>() {
+            assertEquals((Integer) 110, map.getMapped(1, new Function<Integer, Integer>() {
                 @Override
                 public Integer apply(Integer s) {
                     return 10 * s;
                 }
             }));
-            assertEquals(null, map.mapForKey(-1, new Function<Integer, Integer>() {
+            assertEquals(null, map.getMapped(-1, new Function<Integer, Integer>() {
                 @Override
                 public Integer apply(Integer s) {
                     return 10 * s;
@@ -282,7 +282,7 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.putWith(1, new Mutator<Integer>() {
+                map.putMapped(1, new UnaryOperator<Integer>() {
                     @Override
                     public Integer update(Integer s) {
                         return s + 1;
@@ -311,13 +311,13 @@ public class CHMUseCasesTest {
             assertEquals(null, map.get(3L));
             assertEquals(null, map.get(4L));
 
-            assertEquals((Long) 110L, map.mapForKey(1L, new Function<Long, Long>() {
+            assertEquals((Long) 110L, map.getMapped(1L, new Function<Long, Long>() {
                 @Override
                 public Long apply(Long s) {
                     return 10 * s;
                 }
             }));
-            assertEquals(null, map.mapForKey(-1L, new Function<Long, Long>() {
+            assertEquals(null, map.getMapped(-1L, new Function<Long, Long>() {
                 @Override
                 public Long apply(Long s) {
                     return 10 * s;
@@ -325,7 +325,7 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.putWith(1L, new Mutator<Long>() {
+                map.putMapped(1L, new UnaryOperator<Long>() {
                     @Override
                     public Long update(Long s) {
                         return s + 1;
@@ -354,13 +354,13 @@ public class CHMUseCasesTest {
             assertEquals(null, map.get(3.0));
             assertEquals(null, map.get(4.0));
 
-            assertEquals((Double) 110.0, map.mapForKey(1.0, new Function<Double, Double>() {
+            assertEquals((Double) 110.0, map.getMapped(1.0, new Function<Double, Double>() {
                 @Override
                 public Double apply(Double s) {
                     return 10 * s;
                 }
             }));
-            assertEquals(null, map.mapForKey(-1.0, new Function<Double, Double>() {
+            assertEquals(null, map.getMapped(-1.0, new Function<Double, Double>() {
                 @Override
                 public Double apply(Double s) {
                     return 10 * s;
@@ -368,7 +368,7 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.putWith(1.0, new Mutator<Double>() {
+                map.putMapped(1.0, new UnaryOperator<Double>() {
                     @Override
                     public Double update(Double s) {
                         return s + 1;
@@ -401,20 +401,20 @@ public class CHMUseCasesTest {
             map.put(key1, value1);
 
 
-            assertTrue(Arrays.equals(new byte[]{11, 11}, map.mapForKey(key1, new Function<byte[], byte[]>() {
+            assertTrue(Arrays.equals(new byte[]{11, 11}, map.getMapped(key1, new Function<byte[], byte[]>() {
                 @Override
                 public byte[] apply(byte[] s) {
                     return Arrays.copyOf(s, 2);
                 }
             })));
-            assertEquals(null, map.mapForKey(key2, new Function<byte[], byte[]>() {
+            assertEquals(null, map.getMapped(key2, new Function<byte[], byte[]>() {
                 @Override
                 public byte[] apply(byte[] s) {
                     return Arrays.copyOf(s, 2);
                 }
             }));
 
-            assertTrue(Arrays.equals(new byte[]{12, 10}, map.putWith(key1, new Mutator<byte[]>() {
+            assertTrue(Arrays.equals(new byte[]{12, 10}, map.putMapped(key1, new UnaryOperator<byte[]>() {
                 @Override
                 public byte[] update(byte[] s) {
                     s[0]++;
@@ -458,10 +458,10 @@ public class CHMUseCasesTest {
             };
 
             map.put(key1, value1);
-            assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.mapForKey(key1, function));
-            assertEquals(null, map.mapForKey(key2, function));
+            assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
+            assertEquals(null, map.getMapped(key2, function));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWith(key1, new Mutator<ByteBuffer>() {
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));
@@ -568,10 +568,10 @@ public class CHMUseCasesTest {
                     return slice;
                 }
             };
-            assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.mapForKey(key1, function));
-            assertEquals(null, map.mapForKey(key2, function));
+            assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
+            assertEquals(null, map.getMapped(key2, function));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putWith(key1, new Mutator<ByteBuffer>() {
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));

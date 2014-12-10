@@ -123,7 +123,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         PUT_ALL_WITHOUT_ACC,
         HASH_CODE,
         MAP_FOR_KEY,
-        UPDATE_FOR_KEY
+        PUT_MAPPED
     }
 
 
@@ -482,7 +482,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     @Nullable
-    public <R> R mapForKey(@Nullable K key, @NotNull Function<? super V, R> function) {
+    public <R> R getMapped(@Nullable K key, @NotNull Function<? super V, R> function) {
         if (key == null)
             throw keyNotNullNPE();
         return fetchObject(MAP_FOR_KEY, key, function);
@@ -491,10 +491,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @Nullable
     @Override
-    public V putWith(@Nullable K key, @NotNull Mutator<V> mutator) {
+    public V putMapped(@Nullable K key, @NotNull UnaryOperator<V> unaryOperator) {
         if (key == null)
             throw keyNotNullNPE();
-        return fetchObject(UPDATE_FOR_KEY, key, mutator);
+        return fetchObject(PUT_MAPPED, key, unaryOperator);
     }
 
 

@@ -11,7 +11,7 @@ import java.io.Serializable;
 
  */
 
-public interface Mutator<T> extends Serializable {
+public interface UnaryOperator<T> extends Serializable {
     /**
      * Applies this mutator to the given mutable argument.
      *

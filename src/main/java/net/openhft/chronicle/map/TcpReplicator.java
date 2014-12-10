@@ -1417,8 +1417,8 @@ class StatelessServerConnector<K, V> {
             case MAP_FOR_KEY:
                 return mapForKey(reader, writer, sizeLocation);
 
-            case UPDATE_FOR_KEY:
-                return updateForKey(reader, writer, sizeLocation);
+            case PUT_MAPPED:
+                return putMapped(reader, writer, sizeLocation);
 
             default:
                 throw new IllegalStateException("unsupported event=" + event);
@@ -1430,7 +1430,7 @@ class StatelessServerConnector<K, V> {
         final K key = keyReaderWithSize.read(reader, null);
         final Function<V, ?> function = (Function<V, ?>) reader.readObject();
         try {
-            Object result = map.mapForKey(key, function);
+            Object result = map.getMapped(key, function);
             writer.writeObject(result);
         } catch (Throwable e) {
             LOG.info("", e);
@@ -1442,11 +1442,11 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    public Work updateForKey(@NotNull ByteBufferBytes reader, @NotNull Bytes writer, long sizeLocation) {
+    public Work putMapped(@NotNull ByteBufferBytes reader, @NotNull Bytes writer, long sizeLocation) {
         final K key = keyReaderWithSize.read(reader, null);
-        final Mutator<V> mutator = (Mutator<V>) reader.readObject();
+        final UnaryOperator<V> unaryOperator = (UnaryOperator<V>) reader.readObject();
         try {
-            Object result = map.putWith(key, mutator);
+            Object result = map.putMapped(key, unaryOperator);
             writer.writeObject(result);
         } catch (Throwable e) {
             LOG.info("", e);

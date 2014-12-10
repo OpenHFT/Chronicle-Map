@@ -111,7 +111,7 @@ public class StatelessClientTest {
                     .class, StringBuilder.class)
                     .putReturnsNull(true)
                     .statelessClient(new InetSocketAddress("localhost", port)).create()) {
-                String actual = statelessMap.mapForKey(10, ToString.INSTANCE);
+                String actual = statelessMap.getMapped(10, ToString.INSTANCE);
 
                 assertEquals("Hello World", actual);
             }
@@ -131,7 +131,7 @@ public class StatelessClientTest {
             try (ChronicleMap<Integer, StringBuilder> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, StringBuilder.class)
                     .statelessClient(new InetSocketAddress("localhost", port)).create()) {
-                String actual = statelessMap.mapForKey(11, ToString.INSTANCE);
+                String actual = statelessMap.getMapped(11, ToString.INSTANCE);
 
                 assertEquals(null, actual);
             }
