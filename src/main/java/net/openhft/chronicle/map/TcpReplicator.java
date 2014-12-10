@@ -592,7 +592,11 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                          final long approxTime) throws IOException {
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
-        if (attached == null) throw new NullPointerException("No attached");
+        if (attached == null) {
+            LOG.info("Closing connection " + socketChannel + ", nothing attached");
+            socketChannel.close();
+            return;
+        }
         TcpSocketChannelEntryWriter entryWriter = attached.entryWriter;
         if (entryWriter == null) throw new NullPointerException("No entryWriter");
         if (entryWriter.isWorkIncomplete()) {

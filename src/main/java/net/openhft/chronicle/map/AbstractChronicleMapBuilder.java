@@ -143,6 +143,8 @@ abstract class AbstractChronicleMapBuilder<K, V,
     private SingleChronicleHashReplication singleHashReplication = null;
     private InetSocketAddress[] pushToAddresses;
     public boolean bootstrapOnlyLocalEntries = false;
+    private boolean checkSerializedValues = false;
+    private boolean disableOversizedEntries = false;
 
     AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<K>(keyClass, SerializationBuilder.Role.KEY);
@@ -1002,6 +1004,18 @@ abstract class AbstractChronicleMapBuilder<K, V,
 
     public String name() {
         return this.name;
+    }
+
+    @Override
+    public ChronicleMapBuilderI<K, V> checkSerializedValues() {
+        this.checkSerializedValues = true;
+        return this;
+    }
+
+    @Override
+    public ChronicleMapBuilderI<K, V> disableOversizedEntries() {
+        this.disableOversizedEntries = true;
+        return this;
     }
 }
 
