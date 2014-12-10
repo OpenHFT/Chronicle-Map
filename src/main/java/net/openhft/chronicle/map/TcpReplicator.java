@@ -64,6 +64,7 @@ interface Work {
  */
 final class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
+    public static final long TIMESTAMP_FACTOR = 10000;
     private static final int STATELESS_CLIENT = -127;
     private static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
@@ -1336,10 +1337,10 @@ class StatelessServerConnector<K, V> {
         long transactionId = reader.readLong();
 
         // the time stamp and the transaction are usually the same, or out by the shift
-        int timestampShift = reader.readUnsignedShort();
-        long timestamp = transactionId - timestampShift;
-
+        long timestamp = transactionId / TcpReplicator.TIMESTAMP_FACTOR;
         byte identifier = reader.readByte();
+        int headerSize = reader.readInt();
+        reader.skip(headerSize);
 
 
         // these methods don't return a result to the client or don't return a result to the

@@ -315,7 +315,5 @@ public interface ChronicleMapBuilderI<K, V> extends Serializable {
 
     String name();
 
-    ChronicleMapBuilderI<K, V> checkSerializedValues();
-
     ChronicleMapBuilderI<K, V> disableOversizedEntries();
 }

@@ -522,11 +522,6 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         return this;
     }
 
-    public ChronicleMapBuilderI<K, V> checkSerializedValues() {
-        delegate.checkSerializedValues();
-        return this;
-    }
-
     public ChronicleMapBuilder<K, V> disableOversizedEntries() {
         delegate.disableOversizedEntries();
         return this;

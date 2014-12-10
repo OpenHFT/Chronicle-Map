@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.jrs166;
+package net.openhft.chronicle.map.jsr166;
 
 import junit.framework.AssertionFailedError;
 import org.junit.After;

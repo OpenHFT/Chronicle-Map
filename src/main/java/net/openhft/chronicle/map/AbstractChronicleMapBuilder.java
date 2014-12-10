@@ -143,7 +143,6 @@ abstract class AbstractChronicleMapBuilder<K, V,
     private SingleChronicleHashReplication singleHashReplication = null;
     private InetSocketAddress[] pushToAddresses;
     public boolean bootstrapOnlyLocalEntries = false;
-    private boolean checkSerializedValues = false;
     private boolean disableOversizedEntries = false;
 
     AbstractChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
@@ -935,7 +934,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
         keyBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
         valueBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
 
-        long maxSize = (long) entrySize(replicated) * figureBufferAllocationFactor();
+        long maxSize = (long) entrySize(replicated) * Math.min(maxEntryOversizeFactor(), figureBufferAllocationFactor());
         keyBuilder.maxSize(maxSize);
         valueBuilder.maxSize(maxSize);
 
@@ -986,8 +985,7 @@ abstract class AbstractChronicleMapBuilder<K, V,
     private int figureBufferAllocationFactor() {
         // if expected map size is about 1000, seems rather wasteful to allocate
         // key and value serialization buffers each x64 of expected entry size..
-        return (int) Math.min(Math.max(4L, entries() >> 10),
-                VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR);
+        return (int) Math.max(4L, entries() >> 10);
     }
 
     @Override
@@ -1007,15 +1005,13 @@ abstract class AbstractChronicleMapBuilder<K, V,
     }
 
     @Override
-    public ChronicleMapBuilderI<K, V> checkSerializedValues() {
-        this.checkSerializedValues = true;
-        return this;
-    }
-
-    @Override
     public ChronicleMapBuilderI<K, V> disableOversizedEntries() {
         this.disableOversizedEntries = true;
         return this;
+    }
+
+    public int maxEntryOversizeFactor() {
+        return disableOversizedEntries ? 1 : VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR;
     }
 }
 

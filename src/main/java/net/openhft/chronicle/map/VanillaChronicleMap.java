@@ -36,8 +36,7 @@ import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
-import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
-import net.openhft.lang.model.DataValueClasses;
+import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -71,8 +70,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
 
     /**
-     * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set
-     * bits.
+     * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set bits.
      */
     static final int MAX_ENTRY_OVERSIZE_FACTOR = 64;
     private static final long serialVersionUID = 2L;
@@ -108,6 +106,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     private final HashSplitting hashSplitting;
     final boolean isNativeValueClass;
     final MultiMapFactory multiMapFactory;
+    final int maxEntryOversizeFactor;
     transient Provider<BytesReader<K>> keyReaderProvider;
     transient Provider<KI> keyInteropProvider;
     transient Provider<BytesReader<V>> valueReaderProvider;
@@ -116,7 +115,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     // non-final for close() and because it is initialized out of constructor
     transient BytesStore ms;
     transient long headerSize;
-    private transient Set<Map.Entry<K, V>> entrySet;
+    transient Set<Map.Entry<K, V>> entrySet;
 
     public VanillaChronicleMap(AbstractChronicleMapBuilder<K, V, ?> builder) throws IOException {
 
@@ -159,6 +158,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         this.eventListener = builder.eventListener();
         this.bytesEventListener = builder.bytesEventListener();
         this.segmentHeaderSize = builder.segmentHeaderSize();
+        this.maxEntryOversizeFactor = builder.maxEntryOversizeFactor();
 
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
         initTransients();
@@ -564,32 +564,43 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     @Override
     public V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
 
+        return (vClass.equals(CharSequence.class) || vClass.equals(StringBuilder.class))
+                ? putMappedSB(key, unaryOperator)
+                : putMapped0(key, unaryOperator);
+    }
 
-        final V using = (vClass.equals(CharSequence.class)) ? (V) new StringBuilder() : null;
+    V putMappedSB(K key, @NotNull UnaryOperator<V> unaryOperator) {
 
-        try (WriteContext<K, V> entry = lookupUsing(key, using,
-                false, false, LockType.WRITE_LOCK)) {
+        StringBuilder usingSB = new StringBuilder("\uFFFF");
+        try (WriteContext<K, V> entry = lookupUsing(key, (V) usingSB,
+                false, true, LockType.WRITE_LOCK)) {
 
-            if (CharSequence.class.isAssignableFrom(vClass)) {
-                CharSequence value = (CharSequence) entry.value();
-                if (entry.value() == null || value.length() == 0)
-                    return null;
+            usingSB = (StringBuilder) entry.value();
+            if (usingSB.length() == 1 && usingSB.charAt(0) == '\uFFFF')
+                return null;
+
+            V result = unaryOperator.update((V) usingSB);
+            if (usingSB != result) {
+                usingSB.setLength(0);
+                usingSB.append((CharSequence) result);
             }
+            return result;
+        }
+    }
+
+    V putMapped0(K key, @NotNull UnaryOperator<V> unaryOperator) {
+        try (WriteContext<K, V> entry = lookupUsing(key, null,
+                false, true, LockType.WRITE_LOCK)) {
 
             if (entry.value() == null)
                 return null;
 
             V result = unaryOperator.update(entry.value());
-            if (entry.value() instanceof StringBuilder) {
-                ((StringBuilder) using).setLength(0);
-                ((StringBuilder) using).append((CharSequence) result);
-            } else
-                ((MutableLockedEntry) entry).value(result);
+            ((MutableLockedEntry) entry).value(result);
             return result;
         }
-
-
     }
+
 
     @Override
     public synchronized void getAll(File toFile) throws IOException {
@@ -1040,9 +1051,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     /**
-     * removes ( if there exists ) an entry from the map, if the {@param key} and {@param
-     * expectedValue} match that of a maps.entry. If the {@param expectedValue} equals null then (
-     * if there exists ) an entry whose key equals {@param key} this is removed.
+     * removes ( if there exists ) an entry from the map, if the {@param key} and {@param expectedValue} match that of a
+     * maps.entry. If the {@param expectedValue} equals null then ( if there exists ) an entry whose key equals {@param
+     * key} this is removed.
      *
      * @param k             the key of the entry to remove
      * @param expectedValue null if not required
@@ -1174,8 +1185,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
      * replace the value in a map, only if the existing entry equals {@param expectedValue}
      *
      * @param key           the key into the map
-     * @param expectedValue the expected existing value in the map ( could be null when we don't
-     *                      wish to do this check )
+     * @param expectedValue the expected existing value in the map ( could be null when we don't wish to do this check
+     *                      )
      * @param newValue      the new value you wish to store in the map
      * @return the value that was replaced
      */
@@ -1501,11 +1512,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         private MultiMap createMultiMap(long start) {
             final NativeBytes multiMapBytes =
-                    new NativeBytes(new VanillaBytesMarshallerFactory(), start,
+                    new NativeBytes((ObjectSerializer) null, start,
                             start = start + sizeOfMultiMap(), null);
 
             final NativeBytes sizeOfMultiMapBitSetBytes =
-                    new NativeBytes(new VanillaBytesMarshallerFactory(), start,
+                    new NativeBytes((ObjectSerializer) null, start,
                             start + sizeOfMultiMapBitSet(), null);
 //            multiMapBytes.load();
             return multiMapFactory.create(multiMapBytes, sizeOfMultiMapBitSetBytes);
@@ -1930,9 +1941,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         /**
-         * Returns value size, writes the entry (key, value, sizes) to the entry, after this method
-         * call entry positioned after value bytes written (i. e. at the end of entry), sets entry
-         * position (in segment) and value size position in the given segmentState
+         * Returns value size, writes the entry (key, value, sizes) to the entry, after this method call entry
+         * positioned after value bytes written (i. e. at the end of entry), sets entry position (in segment) and value
+         * size position in the given segmentState
          */
         final <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, E, EW>
         long putEntry(SegmentState segmentState,
@@ -1975,9 +1986,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         //TODO refactor/optimize
         private long alloc(int blocks) {
-            if (blocks > MAX_ENTRY_OVERSIZE_FACTOR)
+            if (blocks > maxEntryOversizeFactor)
                 throw new IllegalArgumentException("Entry is too large: requires " + blocks +
-                        " entry size chucks, " + MAX_ENTRY_OVERSIZE_FACTOR + " is maximum.");
+                        " entry size chucks, " + maxEntryOversizeFactor + " is maximum.");
             long ret = freeList.setNextNContinuousClearBits(nextPosToSearchFrom, blocks);
             if (ret == DirectBitSet.NOT_FOUND || ret + blocks > entriesPerSegment) {
                 if (ret + blocks > entriesPerSegment)
@@ -2056,10 +2067,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         /**
-         * - if expectedValue is not null, returns Boolean.TRUE (removed) or Boolean.FALSE (entry
-         * not found), regardless the expectedValue object is Bytes instance (RPC call) or the value
-         * instance - if expectedValue is null: - if resultUnused is false, null or removed value is
-         * returned - if resultUnused is true, null is always returned
+         * - if expectedValue is not null, returns Boolean.TRUE (removed) or Boolean.FALSE (entry not found), regardless
+         * the expectedValue object is Bytes instance (RPC call) or the value instance - if expectedValue is null: - if
+         * resultUnused is false, null or removed value is returned - if resultUnused is true, null is always returned
          */
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
                 RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
@@ -2203,9 +2213,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         /**
-         * Replaces the specified value for the key with the given value.  {@code newValue} is set
-         * only if the existing value corresponding to the specified key is equal to {@code
-         * expectedValue} or {@code expectedValue == null}.
+         * Replaces the specified value for the key with the given value.  {@code newValue} is set only if the existing
+         * value corresponding to the specified key is equal to {@code expectedValue} or {@code expectedValue == null}.
          *
          * @param hash2 a hash code related to the {@code keyBytes}
          * @return the replaced value or {@code null} if the value was not replaced
@@ -2303,17 +2312,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         /**
-         * Replaces value in existing entry. May cause entry relocation, because there may be not
-         * enough space for new value in location already allocated for this entry.
+         * Replaces value in existing entry. May cause entry relocation, because there may be not enough space for new
+         * value in location already allocated for this entry.
          *
          * @param pos          index of the first block occupied by the entry
-         * @param offset       relative offset of the entry in Segment bytes (before, i. e.
-         *                     including metaData)
+         * @param offset       relative offset of the entry in Segment bytes (before, i. e. including metaData)
          * @param entry        relative pointer in Segment bytes
          * @param valueSizePos relative position of value size in entry
          * @param entryEndAddr absolute address of the entry end
-         * @return relative offset of the entry in Segment bytes after putting value (that may cause
-         * entry relocation)
+         * @return relative offset of the entry in Segment bytes after putting value (that may cause entry relocation)
          */
         final <E, EW> long putValue(
                 long pos, long offset, MultiStoreBytes entry, long valueSizePos, long entryEndAddr,
@@ -2332,10 +2339,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 int oldSizeInBlocks = inBlocks(oldEntrySize);
                 int newSizeInBlocks = inBlocks(newEntryEndAddr - entryStartAddr);
                 if (newSizeInBlocks > oldSizeInBlocks) {
-                    if (newSizeInBlocks > MAX_ENTRY_OVERSIZE_FACTOR) {
+                    if (newSizeInBlocks > maxEntryOversizeFactor) {
                         throw new IllegalArgumentException("Value too large: " +
                                 "entry takes " + newSizeInBlocks + " blocks, " +
-                                MAX_ENTRY_OVERSIZE_FACTOR + " is maximum.");
+                                maxEntryOversizeFactor + " is maximum.");
                     }
                     if (realloc(pos, oldSizeInBlocks, newSizeInBlocks))
                         break newValueDoesNotFit;
@@ -2664,7 +2671,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         private K key;
         private V value;
-        boolean present;
 
         MutableLockedEntry(SegmentState segmentState) {
             this.segmentState = segmentState;
@@ -2683,7 +2689,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         void value(V value) {
-            this.present = value != null;
             this.value = value;
         }
 
@@ -2709,7 +2714,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
          * @return if the value is not null
          */
         public boolean present() {
-            return present;
+            return value() != null;
         }
     }
 

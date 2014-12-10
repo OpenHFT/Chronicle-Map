@@ -27,7 +27,7 @@ package net.openhft.chronicle.map;
 /*import junit.framework.Test;
 import junit.framework.TestSuite;*/
 
-import net.openhft.chronicle.map.jrs166.JSR166TestCase;
+import net.openhft.chronicle.map.jsr166.JSR166TestCase;
 
 import java.util.concurrent.ConcurrentMap;
 
