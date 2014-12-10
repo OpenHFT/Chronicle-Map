@@ -680,8 +680,8 @@ public class CHMUseCasesTest {
                 .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(8)
                 .create()) {
-            UnsignedIntValue key1 = ChronicleMapBuilder.newInstance(UnsignedIntValue.class, true);
-            UnsignedIntValue value1 = ChronicleMapBuilder.newInstance(UnsignedIntValue.class, false);
+            UnsignedIntValue key1 = map.newKeyInstance();
+            UnsignedIntValue value1 = map.newValueInstance();
 
             key1.setValue(1);
             value1.setValue(11);

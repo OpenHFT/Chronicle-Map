@@ -37,6 +37,7 @@ import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
 import net.openhft.lang.io.serialization.ObjectSerializer;
+import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -645,8 +646,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
 
         if (interfaceClass.isEnum())
-            return isKey ? DataValueClasses.newDirectReference(interfaceClass) : DataValueClasses
-                    .newDirectInstance(interfaceClass);
+            return isKey ? DataValueClasses.newDirectReference(interfaceClass)
+                    : DataValueClasses.newDirectInstance(interfaceClass);
 
         else if (!offHeapReference(interfaceClass) && !interfaceClass.isInterface() &&
                 !builtInType(interfaceClass)) {
