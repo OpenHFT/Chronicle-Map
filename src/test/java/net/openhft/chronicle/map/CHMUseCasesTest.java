@@ -246,7 +246,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
                 .entrySize(8)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
             Integer key1;
             Integer key2;
@@ -300,7 +300,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<Long, Long> map = ChronicleMapBuilder
                 .of(Long.class, Long.class)
                 .entrySize(16)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
             map.put(1L, 11L);
             assertEquals((Long) 11L, map.get(1L));
@@ -342,7 +342,7 @@ public class CHMUseCasesTest {
     public void testDoubleDoubleMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Double, Double> map = ChronicleMapBuilder
                 .of(Double.class, Double.class)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(16)
                 .create()) {
             map.put(1.0, 11.0);
@@ -386,7 +386,7 @@ public class CHMUseCasesTest {
     public void testByteArrayByteArrayMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
                 .of(byte[].class, byte[].class)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(12)
                 .create()) {
             byte[] key1 = {1, 1, 1, 1};
@@ -436,7 +436,7 @@ public class CHMUseCasesTest {
                 .of(ByteBuffer.class, ByteBuffer.class)
                 .valueMarshaller(ByteBufferMarshaller.INSTANCE)
                 .keyMarshaller(ByteBufferMarshaller.INSTANCE)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(20)
                 .create()) {
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
@@ -522,7 +522,7 @@ public class CHMUseCasesTest {
 
                 ByteBuffer bb1 = ByteBuffer.allocate(8);
                 bb1.put(value1);
-                bb1.putShort((short)12345);
+                bb1.putShort((short) 12345);
                 bb1.flip();
                 assertBBEquals(bb1, valueA);
             }
@@ -543,7 +543,7 @@ public class CHMUseCasesTest {
                 .of(ByteBuffer.class, ByteBuffer.class)
                 .valueMarshaller(ByteBufferMarshaller.INSTANCE) // we should not have to to this !
                 .keyMarshaller(ByteBufferMarshaller.INSTANCE)    // we should not have to to this !
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(12)
                 .create()) {
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
@@ -595,7 +595,7 @@ public class CHMUseCasesTest {
     public void testIntValueIntValueMap() {
         try (ChronicleMap<IntValue, IntValue> map = ChronicleMapBuilder
                 .of(IntValue.class, IntValue.class)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(8)
                 .create()) {
             IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
@@ -677,7 +677,7 @@ public class CHMUseCasesTest {
     public void testUnsignedIntValueUnsignedIntValueMap() {
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = ChronicleMapBuilder
                 .of(UnsignedIntValue.class, UnsignedIntValue.class)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(8)
                 .create()) {
             UnsignedIntValue key1 = ChronicleMapBuilder.newInstance(UnsignedIntValue.class, true);
@@ -759,7 +759,7 @@ public class CHMUseCasesTest {
     public void testIntValueShortValueMap() {
         try (ChronicleMap<IntValue, ShortValue> map = ChronicleMapBuilder
                 .of(IntValue.class, ShortValue.class)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(6)
                 .create()) {
             IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
@@ -842,7 +842,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<IntValue, UnsignedShortValue> map = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedShortValue.class)
                 .entrySize(6)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
             IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
             IntValue key2 = ChronicleMapBuilder.newInstance(IntValue.class, false);
@@ -923,7 +923,7 @@ public class CHMUseCasesTest {
     public void testIntValueCharValueMap() {
         try (ChronicleMap<IntValue, CharValue> map = ChronicleMapBuilder
                 .of(IntValue.class, CharValue.class)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(6)
                 .create()) {
             IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
@@ -1006,7 +1006,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<IntValue, UnsignedByteValue> map = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedByteValue.class)
                 .entrySize(5)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
             IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
             IntValue key2 = ChronicleMapBuilder.newInstance(IntValue.class, false);
@@ -1087,7 +1087,7 @@ public class CHMUseCasesTest {
     public void testIntValueBooleanValueMap() {
         try (ChronicleMap<IntValue, BooleanValue> map = ChronicleMapBuilder
                 .of(IntValue.class, BooleanValue.class)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(5)
                 .create()) {
             IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
@@ -1170,7 +1170,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<FloatValue, FloatValue> map = ChronicleMapBuilder
                 .of(FloatValue.class, FloatValue.class)
                 .entrySize(8)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
             FloatValue key1 = ChronicleMapBuilder.newInstance(FloatValue.class, false);
             FloatValue key2 = ChronicleMapBuilder.newInstance(FloatValue.class, false);
@@ -1337,7 +1337,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<LongValue, LongValue> map = ChronicleMapBuilder
                 .of(LongValue.class, LongValue.class)
                 .entrySize(16)
-                .disableOversizedEntries(true) // disabled for testing purposes only.
+                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
             LongValue key1 = ChronicleMapBuilder.newInstance(LongValue.class, false);
             LongValue key2 = ChronicleMapBuilder.newInstance(LongValue.class, false);

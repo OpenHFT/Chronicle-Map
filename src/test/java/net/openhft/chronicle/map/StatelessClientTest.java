@@ -38,7 +38,7 @@ import static org.junit.Assert.assertTrue;
 public class StatelessClientTest {
 
     public static final int SIZE = 2500;
-    static int s_port = 9050;
+    static int s_port = 9070;
 
     enum ToString implements Function<Object, String> {
         INSTANCE;

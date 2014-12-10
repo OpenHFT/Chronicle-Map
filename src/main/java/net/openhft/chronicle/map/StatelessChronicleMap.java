@@ -68,8 +68,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private volatile ByteBuffer outBuffer;
     private volatile ByteBufferBytes outBytes;
 
-    private ByteBuffer inBuffer;
-    private ByteBufferBytes inBytes;
+    private volatile ByteBuffer inBuffer;
+    private volatile ByteBufferBytes inBytes;
 
     @NotNull
     private final ReaderWithSize<K> keyReaderWithSize;
@@ -331,13 +331,14 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
      * @return a unique transactionId
      */
     private long nextUniqueTransaction(long time) {
-        long old = transactionID.getAndSet(time);
-
-        if (old == time)
-            return transactionID.incrementAndGet();
-        else
-            return time;
-
+        long id = time * 1000;
+        for (; ; ) {
+            long old = transactionID.get();
+            if (old > id) id = old + 1;
+            if (transactionID.compareAndSet(old, id))
+                break;
+        }
+        return id;
     }
 
     @SuppressWarnings("NullableProblems")
@@ -997,13 +998,15 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 receive(SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID, timeoutTime);
 
                 final int messageSize = inBytes.readInt();
+                assert messageSize > 0 : "Invalid message size " + messageSize;
+                assert messageSize < 16 << 20 : "Invalid message size " + messageSize;
+
                 final int remainingBytes0 = messageSize - (SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID);
                 final long transactionId0 = inBytes.readLong();
 
-                assert transactionId0 != 0;
-
                 // check the transaction id is reasonable
-                assert String.valueOf(transactionId0).startsWith("14");
+                assert transactionId0 > 1410000000000000L : "TransactionId too small " + transactionId0 + " messageSize " + messageSize;
+                assert transactionId0 < 2100000000000000L : "TransactionId too large " + transactionId0 + " messageSize " + messageSize;
 
                 // if the transaction id is for this thread process it
                 if (transactionId0 == transactionId) {
