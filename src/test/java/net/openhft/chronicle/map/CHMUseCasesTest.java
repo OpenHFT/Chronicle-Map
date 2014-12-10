@@ -434,10 +434,10 @@ public class CHMUseCasesTest {
     public void testByteBufferByteBufferMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
-                .valueMarshaller(ByteBufferMarshaller.INSTANCE)
                 .keyMarshaller(ByteBufferMarshaller.INSTANCE)
+                .valueMarshaller(ByteBufferMarshaller.INSTANCE)
                 .disableOversizedEntries() // disabled for testing purposes only.
-                .entrySize(20)
+                .entrySize(12)
                 .create()) {
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
