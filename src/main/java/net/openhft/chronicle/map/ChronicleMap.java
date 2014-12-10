@@ -247,5 +247,14 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      */
     void putAll(File fromFile) throws IOException;
 
+    /**
+     * @return a new empty instance based on the Value type
+     */
+    V newValueInstance();
+
+    /**
+     * @return a new empty instance based on the Key type
+     */
+    K newKeyInstance();
 }
 

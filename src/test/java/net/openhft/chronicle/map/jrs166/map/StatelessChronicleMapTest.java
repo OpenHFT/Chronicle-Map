@@ -190,6 +190,16 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
+        public V newValueInstance() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public K newKeyInstance() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public V putIfAbsent(K key, V value) {
             return d.putIfAbsent(key, value);
         }

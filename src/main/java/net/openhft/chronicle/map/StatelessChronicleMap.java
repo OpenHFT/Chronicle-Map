@@ -177,6 +177,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public V newValueInstance() {
+        return VanillaChronicleMap.newInstance(vClass, false);
+    }
+
+    @Override
+    public K newKeyInstance() {
+        return VanillaChronicleMap.newInstance(kClass, true);
+    }
+
     private ExecutorService lazyExecutorService() {
         if (executorService == null) {
             synchronized (this) {

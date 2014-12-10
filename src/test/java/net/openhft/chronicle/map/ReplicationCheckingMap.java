@@ -238,6 +238,16 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public V newValueInstance() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public K newKeyInstance() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public V acquireUsing(@NotNull K key, V usingValue) {
         return map1.acquireUsing(key, usingValue);
     }

@@ -37,6 +37,7 @@ import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
+import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -58,6 +59,8 @@ import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.Asserts.assertNotNull;
+import static net.openhft.chronicle.map.ChronicleMapBuilder.builtInType;
+import static net.openhft.chronicle.map.ChronicleMapBuilder.offHeapReference;
 import static net.openhft.lang.MemoryUnit.*;
 
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
@@ -559,7 +562,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    public  V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
+    public V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
 
 
         final V using = (vClass.equals(CharSequence.class)) ? (V) new StringBuilder() : null;
@@ -614,6 +617,36 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         try (FileInputStream out = new FileInputStream(fromFile)) {
             xstream.fromXML(out);
         }
+    }
+
+    @Override
+    public V newValueInstance() {
+        return newInstance(vClass, false);
+    }
+
+    @Override
+    public K newKeyInstance() {
+        return newInstance(kClass, true);
+    }
+
+
+    static <T> T newInstance(Class<T> interfaceClass, boolean isKey) {
+
+
+        if (interfaceClass.isEnum())
+            return isKey ? DataValueClasses.newDirectReference(interfaceClass) : DataValueClasses
+                    .newDirectInstance(interfaceClass);
+
+        else if (!offHeapReference(interfaceClass) && !interfaceClass.isInterface() &&
+                !builtInType(interfaceClass)) {
+
+            // if (())
+            //     interfaceClass = DataValueClasses.directClassFor(interfaceClass);
+            return DataValueClasses.newInstance(interfaceClass);
+
+        }
+        return DataValueClasses.newDirectInstance(interfaceClass);
+
     }
 
     private XStreamConverter xStreamConverter;

@@ -156,10 +156,10 @@ public class CHMUseCasesTest {
                 .of(StringValue.class, StringValue.class)
                 .checkSerializedValues() // for testing purposes only
                 .create()) {
-            StringValue key1 = ChronicleMapBuilder.newInstance(StringValue.class, true);
-            StringValue key2 = ChronicleMapBuilder.newInstance(StringValue.class, true);
-            StringValue value1 = ChronicleMapBuilder.newInstance(StringValue.class, false);
-            StringValue value2 = ChronicleMapBuilder.newInstance(StringValue.class, false);
+            StringValue key1 = map.newKeyInstance();
+            StringValue key2 = map.newKeyInstance();
+            StringValue value1 = map.newValueInstance();
+            StringValue value2 = map.newValueInstance();
 
             key1.setValue(new StringBuilder("1"));
             value1.setValue("11");
@@ -598,10 +598,15 @@ public class CHMUseCasesTest {
                 .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(8)
                 .create()) {
-            IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            IntValue key2 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            IntValue value1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            IntValue value2 = ChronicleMapBuilder.newInstance(IntValue.class, false);
+            IntValue key1 = map.newKeyInstance();
+            IntValue key2 = map.newKeyInstance();
+            IntValue value1 = map.newValueInstance();
+            IntValue value2 = map.newValueInstance();
+
+
+
+
+
 
             key1.setValue(1);
             value1.setValue(11);
@@ -680,10 +685,13 @@ public class CHMUseCasesTest {
                 .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(8)
                 .create()) {
-            UnsignedIntValue key1 = ChronicleMapBuilder.newInstance(UnsignedIntValue.class, true);
-            UnsignedIntValue key2 = ChronicleMapBuilder.newInstance(UnsignedIntValue.class, true);
-            UnsignedIntValue value1 = ChronicleMapBuilder.newInstance(UnsignedIntValue.class, false);
-            UnsignedIntValue value2 = ChronicleMapBuilder.newInstance(UnsignedIntValue.class, false);
+
+
+
+            UnsignedIntValue key1 = map.newKeyInstance();
+            UnsignedIntValue key2 = map.newKeyInstance();
+            UnsignedIntValue value1 =  map.newValueInstance();
+            UnsignedIntValue value2 =  map.newValueInstance();
 
             key1.setValue(1);
             value1.setValue(11);
@@ -762,10 +770,10 @@ public class CHMUseCasesTest {
                 .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(6)
                 .create()) {
-            IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            IntValue key2 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            ShortValue value1 = ChronicleMapBuilder.newInstance(ShortValue.class, false);
-            ShortValue value2 = ChronicleMapBuilder.newInstance(ShortValue.class, false);
+            IntValue key1 = map.newKeyInstance();
+            IntValue key2 =  map.newKeyInstance();
+            ShortValue value1 = map.newValueInstance();
+            ShortValue value2 =  map.newValueInstance();
 
             key1.setValue(1);
             value1.setValue((short) 11);
@@ -844,10 +852,11 @@ public class CHMUseCasesTest {
                 .entrySize(6)
                 .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
-            IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            IntValue key2 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            UnsignedShortValue value1 = ChronicleMapBuilder.newInstance(UnsignedShortValue.class, false);
-            UnsignedShortValue value2 = ChronicleMapBuilder.newInstance(UnsignedShortValue.class, false);
+
+            IntValue key1 = map.newKeyInstance();
+            IntValue key2 =  map.newKeyInstance();
+            UnsignedShortValue value1 = map.newValueInstance();
+            UnsignedShortValue value2 =  map.newValueInstance();
 
             key1.setValue(1);
             value1.setValue(11);
@@ -926,10 +935,11 @@ public class CHMUseCasesTest {
                 .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(6)
                 .create()) {
-            IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            IntValue key2 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            CharValue value1 = ChronicleMapBuilder.newInstance(CharValue.class, false);
-            CharValue value2 = ChronicleMapBuilder.newInstance(CharValue.class, false);
+
+            IntValue key1 = map.newKeyInstance();
+            IntValue key2 =  map.newKeyInstance();
+            CharValue value1 = map.newValueInstance();
+            CharValue value2 =  map.newValueInstance();
 
             key1.setValue(1);
             value1.setValue((char) 11);
@@ -1008,10 +1018,14 @@ public class CHMUseCasesTest {
                 .entrySize(5)
                 .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
-            IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            IntValue key2 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            UnsignedByteValue value1 = ChronicleMapBuilder.newInstance(UnsignedByteValue.class, false);
-            UnsignedByteValue value2 = ChronicleMapBuilder.newInstance(UnsignedByteValue.class, false);
+
+
+            IntValue key1 = map.newKeyInstance();
+            IntValue key2 =  map.newKeyInstance();
+            UnsignedByteValue value1 = map.newValueInstance();
+            UnsignedByteValue value2 =  map.newValueInstance();
+
+
 
             key1.setValue(1);
             value1.setValue(11);
@@ -1090,10 +1104,14 @@ public class CHMUseCasesTest {
                 .disableOversizedEntries() // disabled for testing purposes only.
                 .entrySize(5)
                 .create()) {
-            IntValue key1 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            IntValue key2 = ChronicleMapBuilder.newInstance(IntValue.class, false);
-            BooleanValue value1 = ChronicleMapBuilder.newInstance(BooleanValue.class, false);
-            BooleanValue value2 = ChronicleMapBuilder.newInstance(BooleanValue.class, false);
+
+
+
+            IntValue key1 = map.newKeyInstance();
+            IntValue key2 =  map.newKeyInstance();
+            BooleanValue value1 = map.newValueInstance();
+            BooleanValue value2 =  map.newValueInstance();
+
 
             key1.setValue(1);
             value1.setValue(true);
@@ -1172,10 +1190,12 @@ public class CHMUseCasesTest {
                 .entrySize(8)
                 .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
-            FloatValue key1 = ChronicleMapBuilder.newInstance(FloatValue.class, false);
-            FloatValue key2 = ChronicleMapBuilder.newInstance(FloatValue.class, false);
-            FloatValue value1 = ChronicleMapBuilder.newInstance(FloatValue.class, false);
-            FloatValue value2 = ChronicleMapBuilder.newInstance(FloatValue.class, false);
+
+            FloatValue key1 = map.newKeyInstance();
+            FloatValue key2 =  map.newKeyInstance();
+            FloatValue value1 = map.newValueInstance();
+            FloatValue value2 =  map.newValueInstance();
+
 
             key1.setValue(1);
             value1.setValue(11);
@@ -1254,10 +1274,10 @@ public class CHMUseCasesTest {
                 .entrySize(16)
                 .create()) {
 
-            DoubleValue key1 = ChronicleMapBuilder.newInstance(DoubleValue.class, false);
-            DoubleValue key2 = ChronicleMapBuilder.newInstance(DoubleValue.class, false);
-            DoubleValue value1 = ChronicleMapBuilder.newInstance(DoubleValue.class, false);
-            DoubleValue value2 = ChronicleMapBuilder.newInstance(DoubleValue.class, false);
+            DoubleValue key1 = map.newKeyInstance();
+            DoubleValue key2 =  map.newKeyInstance();
+            DoubleValue value1 = map.newValueInstance();
+            DoubleValue value2 =  map.newValueInstance();
 
 
             key1.setValue(1);
@@ -1339,10 +1359,12 @@ public class CHMUseCasesTest {
                 .entrySize(16)
                 .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
-            LongValue key1 = ChronicleMapBuilder.newInstance(LongValue.class, false);
-            LongValue key2 = ChronicleMapBuilder.newInstance(LongValue.class, false);
-            LongValue value1 = ChronicleMapBuilder.newInstance(LongValue.class, false);
-            LongValue value2 = ChronicleMapBuilder.newInstance(LongValue.class, false);
+
+            LongValue key1 = map.newKeyInstance();
+            LongValue key2 =  map.newKeyInstance();
+            LongValue value1 = map.newValueInstance();
+            LongValue value2 =  map.newValueInstance();
+
 
 
             key1.setValue(1);
