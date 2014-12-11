@@ -24,6 +24,8 @@ import net.openhft.lang.io.Bytes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -39,6 +41,7 @@ import static org.junit.Assert.assertTrue;
  * @author Rob Austin.
  */
 public class StatelessClientTest {
+    private static final Logger LOG = LoggerFactory.getLogger(StatelessClientTest.class);
 
     public static final int SIZE = 2500;
     static int s_port = 9070;
@@ -521,7 +524,7 @@ public class StatelessClientTest {
         int nThreads = 2;
         final ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
 
-        int count = 100;
+        int count = 10000;
         final CountDownLatch latch = new CountDownLatch(count * 2);
         final AtomicInteger got = new AtomicInteger();
 
@@ -529,12 +532,12 @@ public class StatelessClientTest {
         // server
         try (ChronicleMap<Integer, Integer> server = ChronicleMapBuilder.of(Integer.class, Integer.class)
                 .putReturnsNull(true)
-                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8054)).create()) {
+                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8047)).create()) {
 
             // stateless client
             try (ChronicleMap<Integer, Integer> client = ChronicleMapBuilder.of(Integer.class,
                     Integer.class)
-                    .statelessClient(new InetSocketAddress("localhost", 8054)).create()) {
+                    .statelessClient(new InetSocketAddress("localhost", 8047)).create()) {
 
                 for (int i = 0; i < count; i++) {
 
@@ -544,15 +547,18 @@ public class StatelessClientTest {
                         @Override
                         public void run() {
                             try {
+                                //   System.out.print("put("+j+")");
                                 client.put(j, j);
                                 latch.countDown();
                             } catch (Error | Exception e) {
-                                e.printStackTrace();
-                              throw e;
+                                LOG.error("", e);
+                                executorService.shutdown();
+
                             }
                         }
                     });
                 }
+
 
                 for (int i = 0; i < count; i++) {
                     final int j = i;
@@ -564,8 +570,8 @@ public class StatelessClientTest {
 
                                 Integer result = client.get(j);
 
-
                                 if (result == null) {
+                                    System.out.print("entry not found so re-submitting");
                                     executorService.submit(this);
                                     return;
                                 }
@@ -579,7 +585,8 @@ public class StatelessClientTest {
                                 latch.countDown();
                             } catch (Error | Exception e) {
                                 e.printStackTrace();
-                                throw e;
+                                LOG.error("", e);
+                                executorService.shutdown();
                             }
                         }
                     });
@@ -587,7 +594,7 @@ public class StatelessClientTest {
 
                 }
 
-                latch.await(10,TimeUnit.SECONDS);
+                latch.await(10, TimeUnit.SECONDS);
                 System.out.println("" + count + " messages took " +
                         TimeUnit.MILLISECONDS.toSeconds(System
                                 .currentTimeMillis() - startTime) + " seconds, using " + nThreads + "" +
