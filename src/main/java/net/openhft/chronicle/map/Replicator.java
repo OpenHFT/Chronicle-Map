@@ -47,7 +47,7 @@ abstract class Replicator {
      *                               already been applied to a map (or the specified number of
      *                               maps)
      */
-    protected abstract Closeable applyTo(AbstractChronicleMapBuilder builder,
+    protected abstract Closeable applyTo(ChronicleMapBuilder builder,
                                          Replica map, Replica.EntryExternalizable entryExternalizable,
                                          final ChronicleMap chronicleMap) throws IOException;
 }

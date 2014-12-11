@@ -36,6 +36,11 @@ final class StatelessSetConfig<E> implements StatelessClientConfig<ChronicleSet<
     }
 
     @Override
+    public StatelessClientConfig<ChronicleSet<E>> name(String name) {
+        return new StatelessSetConfig<>(mapClientBuilder.name(name));
+    }
+
+    @Override
     public ChronicleSet<E> create() throws IOException {
         return new SetFromMap<>(mapClientBuilder.create());
     }

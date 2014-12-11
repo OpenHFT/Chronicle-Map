@@ -64,7 +64,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final ByteBuffer connectionOutBuffer = ByteBuffer.wrap(connectionByte);
     private final String name;
     @NotNull
-    private final AbstractChronicleMapBuilder chronicleMapBuilder;
+    private final ChronicleMapBuilder chronicleMapBuilder;
 
     private volatile ByteBuffer outBuffer;
     private volatile ByteBufferBytes outBytes;
@@ -140,7 +140,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final AtomicLong transactionID = new AtomicLong(0);
 
     StatelessChronicleMap(@NotNull final StatelessMapConfig config,
-                          @NotNull final AbstractChronicleMapBuilder chronicleMapBuilder) throws IOException {
+                          @NotNull final ChronicleMapBuilder chronicleMapBuilder)
+            throws IOException {
         this.chronicleMapBuilder = chronicleMapBuilder;
         this.config = config;
         keyReaderWithSize = new ReaderWithSize<>(chronicleMapBuilder.keyBuilder);
@@ -156,7 +157,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         this.vClass = chronicleMapBuilder.valueBuilder.eClass;
         this.kClass = chronicleMapBuilder.keyBuilder.eClass;
-        this.name = chronicleMapBuilder.name();
+        this.name = config.name();
         attemptConnect(config.remoteAddress());
 
         outBuffer = allocateDirect(maxEntrySize).order(ByteOrder.nativeOrder());
@@ -192,8 +193,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         if (executorService == null) {
             synchronized (this) {
                 if (executorService == null)
-                    executorService = Executors.newSingleThreadExecutor(new NamedThreadFactory(chronicleMapBuilder.name() +
-                            "-stateless-client-async-" + name,
+                    //TODO the same name appears twice
+                    executorService = Executors.newSingleThreadExecutor(
+                            new NamedThreadFactory(config.name() +"-stateless-client-async-" + name,
                             true));
             }
         }

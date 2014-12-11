@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * <p>For information on <ul> <li>how to construct a {@code ChronicleMap}</li> <li>{@code
  * ChronicleMap} flavors and properties</li> <li>available configurations</li> </ul> see {@link
- * AbstractChronicleMapBuilder} documentation.
+ * ChronicleMapBuilder} documentation.
  *
  * <p>Functionally this interface defines some methods supporting garbage-free off-heap programming:
  * {@link #getUsing(Object, Object)}, {@link #acquireUsing(Object, Object)}.
@@ -98,7 +98,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * no mapping for the key
      * @see #get(Object)
      * @see #acquireUsing(Object, Object)
-     * @see OnHeapUpdatableChronicleMapBuilder#valueMarshaller(BytesMarshaller)
+     * @see ChronicleMapBuilder#valueMarshaller(BytesMarshaller)
      */
     V getUsing(K key, V usingValue);
 
@@ -141,7 +141,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * no mapping for the key
      * @see #get(Object)
      * @see #getUsing(Object, Object)
-     * @see OnHeapUpdatableChronicleMapBuilder#valueMarshaller(BytesMarshaller)
+     * @see ChronicleMapBuilder#valueMarshaller(BytesMarshaller)
      */
     @NotNull
     ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);
@@ -149,8 +149,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     /**
      * Acquire a value for a key, creating if absent.
      *
-     * <p>If the specified key is absent in the map, {@linkplain AbstractChronicleMapBuilder#defaultValue(Object)
-     * default value} is taken or {@linkplain AbstractChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
+     * <p>If the specified key is absent in the map, {@linkplain ChronicleMapBuilder#defaultValue(Object)
+     * default value} is taken or {@linkplain ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
      * default value provider} is called. Then this object is put to this map for the specified
      * key.
      *
@@ -169,8 +169,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * }}</pre>
      *
      *
-     * Where {@code defaultValue(key)} returns either {@linkplain AbstractChronicleMapBuilder#defaultValue(Object)
-     * default value} or {@link AbstractChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
+     * Where {@code defaultValue(key)} returns either {@linkplain ChronicleMapBuilder#defaultValue(Object)
+     * default value} or {@link ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
      * defaultValueProvider.}
      *
      * <p>If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link

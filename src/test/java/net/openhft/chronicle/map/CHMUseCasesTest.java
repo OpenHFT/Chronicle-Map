@@ -241,9 +241,9 @@ public class CHMUseCasesTest {
     public void testIntegerIntegerMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
-                .entrySize(8)
-                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
+            assertEquals(8, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             Integer key1;
             Integer key2;
             Integer value1;
@@ -295,9 +295,9 @@ public class CHMUseCasesTest {
     public void testLongLongMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Long, Long> map = ChronicleMapBuilder
                 .of(Long.class, Long.class)
-                .entrySize(16)
-                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
+            assertEquals(16, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             map.put(1L, 11L);
             assertEquals((Long) 11L, map.get(1L));
 
@@ -338,9 +338,9 @@ public class CHMUseCasesTest {
     public void testDoubleDoubleMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<Double, Double> map = ChronicleMapBuilder
                 .of(Double.class, Double.class)
-                .disableOversizedEntries() // disabled for testing purposes only.
-                .entrySize(16)
                 .create()) {
+            assertEquals(16, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             map.put(1.0, 11.0);
             assertEquals((Double) 11.0, map.get(1.0));
 
@@ -382,8 +382,8 @@ public class CHMUseCasesTest {
     public void testByteArrayByteArrayMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
                 .of(byte[].class, byte[].class)
-                .disableOversizedEntries() // disabled for testing purposes only.
-                .entrySize(12)
+                .keySize(4).valueSize(4)
+                .maxEntryOversizeFactor(1)
                 .create()) {
             byte[] key1 = {1, 1, 1, 1};
             byte[] key2 = {2, 2, 2, 2};
@@ -432,9 +432,9 @@ public class CHMUseCasesTest {
                 .of(ByteBuffer.class, ByteBuffer.class)
                 .keyMarshaller(ByteBufferMarshaller.INSTANCE)
                 .valueMarshaller(ByteBufferMarshaller.INSTANCE)
-                .disableOversizedEntries() // disabled for testing purposes only.
-                        // TODO does this have to be 14 bytes?
-                .entrySize(14)
+                .keySize(8)
+                .valueSize(8)
+                .maxEntryOversizeFactor(1)
                 .create()) {
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
@@ -539,8 +539,8 @@ public class CHMUseCasesTest {
                 .of(ByteBuffer.class, ByteBuffer.class)
                 .valueMarshaller(ByteBufferMarshaller.INSTANCE) // we should not have to to this !
                 .keyMarshaller(ByteBufferMarshaller.INSTANCE)    // we should not have to to this !
-                .disableOversizedEntries() // disabled for testing purposes only.
-                .entrySize(12)
+                .keySize(5).valueSize(5)
+                .maxEntryOversizeFactor(1)
                 .create()) {
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
@@ -591,9 +591,9 @@ public class CHMUseCasesTest {
     public void testIntValueIntValueMap() {
         try (ChronicleMap<IntValue, IntValue> map = ChronicleMapBuilder
                 .of(IntValue.class, IntValue.class)
-                .disableOversizedEntries() // disabled for testing purposes only.
-                .entrySize(8)
                 .create()) {
+            assertEquals(8, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             IntValue key1 = map.newKeyInstance();
             IntValue key2 = map.newKeyInstance();
             IntValue value1 = map.newValueInstance();
@@ -677,9 +677,9 @@ public class CHMUseCasesTest {
         // TODO once this is working, merge the next test.
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = ChronicleMapBuilder
                 .of(UnsignedIntValue.class, UnsignedIntValue.class)
-                .disableOversizedEntries() // disabled for testing purposes only.
-                .entrySize(8)
                 .create()) {
+            assertEquals(8, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             UnsignedIntValue key1 = map.newKeyInstance();
             UnsignedIntValue value1 = map.newValueInstance();
 
@@ -781,9 +781,9 @@ public class CHMUseCasesTest {
     public void testIntValueShortValueMap() {
         try (ChronicleMap<IntValue, ShortValue> map = ChronicleMapBuilder
                 .of(IntValue.class, ShortValue.class)
-                .disableOversizedEntries() // disabled for testing purposes only.
-                .entrySize(6)
                 .create()) {
+            assertEquals(6, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             IntValue key1 = map.newKeyInstance();
             IntValue key2 =  map.newKeyInstance();
             ShortValue value1 = map.newValueInstance();
@@ -863,10 +863,10 @@ public class CHMUseCasesTest {
     public void testIntValueUnsignedShortValueMap() {
         try (ChronicleMap<IntValue, UnsignedShortValue> map = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedShortValue.class)
-                .entrySize(6)
-                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
-
+            // TODO should be 6
+            assertEquals(8, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             IntValue key1 = map.newKeyInstance();
             IntValue key2 =  map.newKeyInstance();
             UnsignedShortValue value1 = map.newValueInstance();
@@ -946,10 +946,9 @@ public class CHMUseCasesTest {
     public void testIntValueCharValueMap() {
         try (ChronicleMap<IntValue, CharValue> map = ChronicleMapBuilder
                 .of(IntValue.class, CharValue.class)
-                .disableOversizedEntries() // disabled for testing purposes only.
-                .entrySize(6)
                 .create()) {
-
+            assertEquals(6, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             IntValue key1 = map.newKeyInstance();
             IntValue key2 =  map.newKeyInstance();
             CharValue value1 = map.newValueInstance();
@@ -1029,10 +1028,11 @@ public class CHMUseCasesTest {
     public void testIntValueUnsignedByteMap() {
         try (ChronicleMap<IntValue, UnsignedByteValue> map = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedByteValue.class)
-                .entrySize(5)
-                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
-
+            // TODO should be 5, but shorter fields based on range doesn't seem to be implemented
+            // on data value generation level yet
+            assertEquals(8, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
             IntValue key1 = map.newKeyInstance();
             IntValue key2 =  map.newKeyInstance();
@@ -1115,11 +1115,9 @@ public class CHMUseCasesTest {
     public void testIntValueBooleanValueMap() {
         try (ChronicleMap<IntValue, BooleanValue> map = ChronicleMapBuilder
                 .of(IntValue.class, BooleanValue.class)
-                .disableOversizedEntries() // disabled for testing purposes only.
-                .entrySize(5)
                 .create()) {
-
-
+            assertEquals(5, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
             IntValue key1 = map.newKeyInstance();
             IntValue key2 =  map.newKeyInstance();
@@ -1201,9 +1199,9 @@ public class CHMUseCasesTest {
     public void testFloatValueFloatValueMap() {
         try (ChronicleMap<FloatValue, FloatValue> map = ChronicleMapBuilder
                 .of(FloatValue.class, FloatValue.class)
-                .entrySize(8)
-                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
+            assertEquals(8, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
             FloatValue key1 = map.newKeyInstance();
             FloatValue key2 =  map.newKeyInstance();
@@ -1285,8 +1283,9 @@ public class CHMUseCasesTest {
     public void testDoubleValueDoubleValueMap() {
         try (ChronicleMap<DoubleValue, DoubleValue> map = ChronicleMapBuilder
                 .of(DoubleValue.class, DoubleValue.class)
-                .entrySize(16)
                 .create()) {
+            assertEquals(16, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
             DoubleValue key1 = map.newKeyInstance();
             DoubleValue key2 =  map.newKeyInstance();
@@ -1370,9 +1369,9 @@ public class CHMUseCasesTest {
     public void testLongValueLongValueMap() {
         try (ChronicleMap<LongValue, LongValue> map = ChronicleMapBuilder
                 .of(LongValue.class, LongValue.class)
-                .entrySize(16)
-                .disableOversizedEntries() // disabled for testing purposes only.
                 .create()) {
+            assertEquals(16, ((VanillaChronicleMap) map).entrySize);
+            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
             LongValue key1 = map.newKeyInstance();
             LongValue key2 =  map.newKeyInstance();

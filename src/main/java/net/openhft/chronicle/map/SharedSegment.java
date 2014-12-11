@@ -34,8 +34,6 @@ interface SharedSegment<K, V> {
      */
     AutoCloseable readLock(@Nullable VanillaChronicleMap.SegmentState segmentState);
 
-    AutoCloseable writeLock(@Nullable VanillaChronicleMap.SegmentState segmentState);
-
     Map.Entry<K, V> getEntry(@NotNull VanillaChronicleMap.SegmentState segmentState, long pos);
 
     void readUnlock();

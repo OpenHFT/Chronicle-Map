@@ -38,25 +38,29 @@ public class TcpReplicationSoakTest {
         {
             final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(s_port,
                     endpoint).autoReconnectedUponDroppedConnection(true).name("      map1")
-                    .heartBeatInterval(1, TimeUnit.SECONDS);
+                    .heartBeatInterval(1, TimeUnit.SECONDS)
+                    .packetSize(1024 * 64);
 
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE + Builder.SIZE)
                     .actualSegments(1)
-                    .name("map1")
                     .replication((byte) 1, tcpConfig1)
+                    .instance()
+                    .name("map1")
                     .create();
         }
         {
             final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of
                     (s_port + 1).autoReconnectedUponDroppedConnection(true).name("map2")
-                    .heartBeatInterval(1, TimeUnit.SECONDS);
+                    .heartBeatInterval(1, TimeUnit.SECONDS)
+                    .packetSize(1024 * 64);
 
             map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE + Builder.SIZE)
-                    .name("map2")
                     .replication((byte) 2, tcpConfig2)
+                    .instance()
+                    .name("map2")
                     .create();
 
         }

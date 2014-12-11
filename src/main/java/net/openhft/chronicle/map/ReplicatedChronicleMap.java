@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
@@ -105,14 +106,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     private transient long startOfModificationIterators;
     private boolean bootstrapOnlyLocalEntries;
 
-    public ReplicatedChronicleMap(@NotNull AbstractChronicleMapBuilder<K, V, ?> builder,
-                                  byte identifier)
+    public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder,
+                                  AbstractReplication replication)
             throws IOException {
         super(builder);
         this.timeProvider = builder.timeProvider();
 
-        this.localIdentifier = identifier;
-        this.bootstrapOnlyLocalEntries = builder.bootstrapOnlyLocalEntries;
+        this.localIdentifier = replication.identifier();
+        this.bootstrapOnlyLocalEntries = replication.bootstrapOnlyLocalEntries();
 
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
@@ -274,7 +275,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
         ReplicatedChronicleMap.Segment segment = segment(segmentNum);
-        segment.writeLock(null);
+        segment.writeLock();
         try {
             return segment.removeWithoutLock(copies, null, metaKeyInterop, keyInterop, key1, keySize,
                     keyIdentity(), this, (V) null, valueIdentity(), segmentHash, this, removeReturnsNull,
@@ -779,7 +780,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         void remoteRemove(
                 @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
                 Bytes keyBytes, long hash2, final long timestamp, final byte identifier) {
-            writeLock(null);
+            writeLock();
             try {
                 ReadValueToBytes readValueToLazyBytes = segmentState.readValueToLazyBytes;
                 readValueToLazyBytes.valueSizeMarshaller(valueSizeMarshaller);
@@ -812,7 +813,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             ReadValueToBytes readValueToLazyBytes = segmentState.readValueToLazyBytes;
             readValueToLazyBytes.valueSizeMarshaller(valueSizeMarshaller);
 
-            writeLock(null);
+            writeLock();
             try {
                 putWithoutLock(copies, segmentState,
                         DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
@@ -835,7 +836,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                long hash2, boolean replaceIfPresent,
                ReadValue<RV> readValue, boolean resultUnused,
                byte identifier, long timeStamp) {
-            writeLock(null);
+            writeLock();
             try {
                 return putWithoutLock(copies, segmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
@@ -1015,7 +1016,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                       GetValueInterops<VB, VBI, MVBI> getValueInterops, VB expectedValue,
                       InstanceOrBytesToInstance<RV, V> toValue,
                       long hash2, ReadValue<RV> readValue, boolean resultUnused) {
-            writeLock(null);
+            writeLock();
             try {
                 return removeWithoutLock(copies, segmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
@@ -1158,7 +1159,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
             long timestamp = currentTime();
             byte identifier = localIdentifier;
-            writeLock(null);
+            writeLock();
             try {
                 MultiMap hashLookup = hashLookup();
                 hashLookup.startSearch(hash2);

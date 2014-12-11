@@ -31,7 +31,7 @@ import java.io.Serializable;
  * PrepareValueBytes) configure} custom {@code PrepareValueBytes} strategy in {@link
  * ChronicleMapBuilder}: <pre>{@code
  * ChronicleMapBuilder.of(Key.class, LongValue.class)
- *     .prepareValueBytesOnAcquire((bytes, k) -> bytes.writeLong(1L))
+ *     .prepareDefaultValueBytes((bytes, k) -> bytes.writeLong(1L))
  *     ...
  *     .create();}</pre>
  *

@@ -33,7 +33,7 @@ import java.io.Serializable;
  *     by the serialized key itself.</li>
  *     <li>From {@code valuePos} offset value area in the given {@code entry}, serialized value size
  *     (using {@linkplain ChronicleMapBuilder#keySizeMarshaller(SizeMarshaller)}), then (optionally)
- *     alignment (see {@link OffHeapUpdatableChronicleMapBuilder#entryAndValueAlignment(Alignment)}
+ *     alignment (see {@link ChronicleMapBuilder#entryAndValueAlignment(Alignment)}
  *     ), followed by the serialized value itself.</li>
  * </ul>
  */

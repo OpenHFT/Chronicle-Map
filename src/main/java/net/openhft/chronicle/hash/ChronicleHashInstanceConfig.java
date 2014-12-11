@@ -53,5 +53,7 @@ public interface ChronicleHashInstanceConfig<C extends ChronicleHash> {
 
     ChronicleHashInstanceConfig<C> persistedTo(File file);
 
+    ChronicleHashInstanceConfig<C> name(String name);
+
     C create() throws IOException;
 }
