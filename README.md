@@ -168,7 +168,7 @@ and define the snapshot version in your pom.xml, for example:
 <dependency>
   <groupId>net.openhft</groupId>
   <artifactId>chronicle-map</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version><!--replace with the latest version--></version>
 </dependency>
 ```
 
@@ -598,6 +598,9 @@ to the size of the largest entry, but this approach is wasteful of memory, espec
 entries are no where near the max entry size.  
 
 ## Serialization
+
+![Serialization](http://openhft.net/wp-content/uploads/2014/09/Serialization_01.jpg)
+
 
 Chronicle Map stores your data into off heap memory, so when you give it a Key or Value, it will
 serialise these objects into bytes.
@@ -1116,6 +1119,9 @@ sharing a map with heap memory
 click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps ) 
 
 ### How to speed up the Chronicle Map Stateless Client 
+
+![Chronicle Map](http://openhft.net/wp-content/uploads/2014/09/State-Transition_1-thread_02.jpg)
+![Chronicle Map](http://openhft.net/wp-content/uploads/2014/09/State-Transition_2-thread_03.jpg)
 
 By default when you make a method call to a `ChronicleMap` stateless client, 
 your method call is wrapped into an event which is sent over tcp and processed by the server, 

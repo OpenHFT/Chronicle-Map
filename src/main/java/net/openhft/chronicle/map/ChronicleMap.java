@@ -197,17 +197,17 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @param <R>      return type.
      * @return the result of the function, or null if there is no entry for the key.
      */
-    <R> R mapForKey(K key, @NotNull Function<? super V, R> function);
+    <R> R getMapped(K key, @NotNull Function<? super V, R> function);
 
     /**
-     * Apply a mutator to the value for a key and return a result. A write lock is assumed. <p> If
+     * Apply a unaryOperator to the value for a key and return a result. A write lock is assumed. <p> If
      * there is no entry for this key null will be returned
      *
      * @param key     to apply the mapping to
-     * @param mutator to alter the value and calculate a result
+     * @param unaryOperator to alter the value and calculate a result
      * @return the result of the function.
      */
-    V putWith(K key, @NotNull Mutator<V> mutator);
+    V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator);
 
     /**
      * exports all the entries to a {@link java.io.File} storing them in JSON format, an attempt is
@@ -247,5 +247,14 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      */
     void putAll(File fromFile) throws IOException;
 
+    /**
+     * @return a new empty instance based on the Value type
+     */
+    V newValueInstance();
+
+    /**
+     * @return a new empty instance based on the Key type
+     */
+    K newKeyInstance();
 }
 

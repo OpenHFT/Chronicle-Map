@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TimeProvider;
-import net.openhft.chronicle.map.jrs166.JSR166TestCase;
+import net.openhft.chronicle.map.jsr166.JSR166TestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.jrs166.map;
+package net.openhft.chronicle.map.jsr166.map;
 
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166

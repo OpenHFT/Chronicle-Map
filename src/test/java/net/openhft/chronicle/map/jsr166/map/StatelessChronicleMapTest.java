@@ -16,14 +16,22 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.jrs166.map;
+package net.openhft.chronicle.map.jsr166.map;
 
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.jrs166.JSR166TestCase;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.map.jsr166.JSR166TestCase;
+import org.jetbrains.annotations.NotNull;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -36,24 +44,249 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
-public class ChronicleMapTest extends JSR166TestCase {
+public class StatelessChronicleMapTest extends JSR166TestCase {
 
+    public static final int SIZE = 1024;
 
-    static ChronicleMap<Integer, CharSequence> newShmIntString(int size) throws IOException {
-        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .entries(size).create();
+    static class SingleCloseMap<K, V> implements ChronicleMap<K, V> {
+        private final Closeable[] closeables;
+        private final ChronicleMap<K, V> d;
+
+        @Override
+        public String toString() {
+            return d.toString();
+        }
+
+        public SingleCloseMap(ChronicleMap<K, V> statelessMap, Closeable... closeables) {
+            this.closeables = closeables;
+            this.d = statelessMap;
+        }
+
+        @Override
+        public File file() {
+            return null;
+        }
+
+        @Override
+        public void close() {
+            for (Closeable c : closeables) {
+                try {
+                    c.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // eat the exception
+                }
+            }
+        }
+
+        @Override
+        public long longSize() {
+            return d.longSize();
+        }
+
+        @Override
+        public int size() {
+            return d.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return d.isEmpty();
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return d.containsKey(key);
+        }
+
+        @Override
+        public boolean containsValue(Object value) {
+            return d.containsValue(value);
+        }
+
+        @Override
+        public V get(Object key) {
+            return d.get(key);
+        }
+
+        @Override
+        public V put(K key, V value) {
+            return d.put(key, value);
+        }
+
+        @Override
+        public V remove(Object key) {
+            return d.remove(key);
+        }
+
+        @Override
+        public void putAll(java.util.Map<? extends K, ? extends V> m) {
+            d.putAll(m);
+        }
+
+        @Override
+        public void clear() {
+            d.clear();
+        }
+
+        @NotNull
+        @Override
+        public Set<K> keySet() {
+            return d.keySet();
+        }
+
+        @NotNull
+        @Override
+        public Collection<V> values() {
+            return d.values();
+        }
+
+        @NotNull
+        @Override
+        public Set<Entry<K, V>> entrySet() {
+            return d.entrySet();
+        }
+
+        @Override
+        public V getUsing(K key, V usingValue) {
+            return d.getUsing(key, usingValue);
+        }
+
+        @Override
+        public V acquireUsing(@NotNull K key, V usingValue) {
+            return d.acquireUsing(key, usingValue);
+        }
+
+        @NotNull
+        @Override
+        public WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue) {
+            throw new UnsupportedOperationException();
+        }
+
+        @NotNull
+        @Override
+        public ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <R> R getMapped(K key, @NotNull Function<? super V, R> function) {
+            return d.getMapped(key, function);
+        }
+
+        @Override
+        public  V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
+            return d.putMapped(key, unaryOperator);
+        }
+
+        @Override
+        public void getAll(File toFile) throws IOException {
+            d.getAll(toFile);
+        }
+
+        @Override
+        public void putAll(File fromFile) throws IOException {
+            d.putAll(fromFile);
+        }
+
+        @Override
+        public V newValueInstance() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public K newKeyInstance() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public V putIfAbsent(K key, V value) {
+            return d.putIfAbsent(key, value);
+        }
+
+        @Override
+        public boolean remove(Object key, Object value) {
+            return d.remove(key, value);
+        }
+
+        @Override
+        public boolean replace(K key, V oldValue, V newValue) {
+            return d.replace(key, oldValue, newValue);
+        }
+
+        @Override
+        public V replace(K key, V value) {
+            return d.replace(key, value);
+        }
     }
 
-    static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int size) throws IOException {
-        return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(size).create();
+    static ChronicleMap<Integer, String> newShmIntString(int port) throws IOException {
+
+        final ChronicleMap<Integer, String> serverMap =
+                ChronicleMapBuilder.of(Integer.class, String.class)
+                        .entries(SIZE)
+                        .replication((byte) 1, TcpTransportAndNetworkConfig.of(port))
+                        .create();
+
+        final ChronicleMap<Integer, String> statelessMap = ChronicleMapBuilder.of(Integer
+                .class, String.class)
+                .statelessClient(new InetSocketAddress("localhost", port)).create();
+
+        return new SingleCloseMap(statelessMap, statelessMap, serverMap);
+    }
+
+    static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int port) throws
+            IOException {
+
+        final ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
+                .entries(SIZE)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create();
+
+        final ChronicleMap<CharSequence, CharSequence> statelessMap = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
+                .statelessClient(new InetSocketAddress("localhost", port))
+                .create();
+
+        return new SingleCloseMap<>(statelessMap, statelessMap, serverMap);
+    }
+
+    static ChronicleMap<byte[], byte[]> newByteArrayMap(int port) throws IOException {
+
+        final ChronicleMap<byte[], byte[]> serverMap = ChronicleMapBuilder
+                .of(byte[].class, byte[].class)
+                .putReturnsNull(true)
+                .entries(SIZE)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
+                .create();
+
+        final ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapBuilder
+                .of(byte[].class, byte[].class)
+                .putReturnsNull(true)
+                .statelessClient(new InetSocketAddress("localhost", port)).create();
+
+        return new SingleCloseMap<>(statelessMap, statelessMap, serverMap);
+    }
+
+    Set<Thread> threads;
+
+    @Before
+    public void sampleThreads() {
+        threads = Thread.getAllStackTraces().keySet();
+    }
+
+    @After
+    public void checkThreadsShutdown() {
+        StatelessClientTest.checkThreadsShutdown(threads);
     }
 
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
+     *
+     * @param port
      */
-    private static ChronicleMap map5() throws IOException {
-        ChronicleMap<Integer, CharSequence> map = newShmIntString(10);
+    private ChronicleMap<Integer, String> map5(final int port) throws IOException {
+        ChronicleMap<Integer, String> map = newShmIntString(port);
         assertTrue(map.isEmpty());
         map.put(one, "A");
         map.put(two, "B");
@@ -65,12 +298,45 @@ public class ChronicleMapTest extends JSR166TestCase {
         return map;
     }
 
+    static int s_port = 11050;
+
+    @Test(timeout = 30000)
+    @Ignore
+    public void testByteArrayPerf() throws IOException {
+        ByteBuffer key = ByteBuffer.allocate(8);
+        ByteBuffer value = ByteBuffer.allocate(50);
+        int runs = 100000;
+        try (ChronicleMap<byte[], byte[]> map = newByteArrayMap(s_port++)) {
+            for (int t = 0; t < 5; t++) {
+                {
+                    long start = System.nanoTime();
+                    for (int i = 0; i < runs; i++) {
+                        key.putLong(0, i);
+                        value.putLong(0, i);
+                        map.put(key.array(), value.array());
+                    }
+                    long time = System.nanoTime() - start;
+                    System.out.printf("%d: Took %.1f us on average to put %n", t, time / 1e3 / runs);
+                }
+                {
+                    long start = System.nanoTime();
+                    for (int i = 0; i < runs; i++) {
+                        key.putLong(0, i);
+                        byte[] b = map.get(key.array());
+                    }
+                    long time = System.nanoTime() - start;
+                    System.out.printf("%d: Took %.1f us on average to get %n", t, time / 1e3 / runs);
+                }
+            }
+        }
+    }
+
     /**
      * clear removes all pairs
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testClear() throws IOException {
-        try (ChronicleMap<Integer, String> map = map5()) {
+        try (ChronicleMap<Integer, String> map = map5(s_port++)) {
             map.clear();
             assertEquals(0, map.size());
         }
@@ -79,9 +345,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * contains returns true for contained value
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testContains() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             assertTrue(map.containsValue("A"));
             assertFalse(map.containsValue("Z"));
         }
@@ -90,9 +356,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * containsKey returns true for contained key
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testContainsKey() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             assertTrue(map.containsKey(one));
             assertFalse(map.containsKey(zero));
         }
@@ -101,9 +367,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * containsValue returns true for held values
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testContainsValue() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             assertTrue(map.containsValue("A"));
             assertFalse(map.containsValue("Z"));
         }
@@ -112,9 +378,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * get returns the correct element at the given key, or null if not present
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testGet() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             assertEquals("A", (String) map.get(one));
             try (ChronicleMap empty = newStrStrMap(8078)) {
                 assertNull(map.get(notPresent));
@@ -125,10 +391,10 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * isEmpty is true of empty map and false for non-empty
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testIsEmpty() throws IOException {
-        try (ChronicleMap empty = newShmIntString(8078)) {
-            try (ChronicleMap map = map5()) {
+        try (ChronicleMap empty = newShmIntString(s_port++)) {
+            try (ChronicleMap map = map5(s_port++)) {
                 if (!empty.isEmpty()) {
                     System.out.print("not empty " + empty);
                 }
@@ -141,9 +407,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testKeySet() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             Set s = map.keySet();
             assertEquals(5, s.size());
             assertTrue(s.contains(one));
@@ -157,9 +423,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * keySet.toArray returns contains all keys
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testKeySetToArray() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             Set s = map.keySet();
             Object[] ar = s.toArray();
             assertTrue(s.containsAll(Arrays.asList(ar)));
@@ -172,9 +438,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testValuesToArray() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             Collection v = map.values();
             Object[] ar = v.toArray();
             ArrayList s = new ArrayList(Arrays.asList(ar));
@@ -192,7 +458,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testEntrySetToArray() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             Set s = map.entrySet();
             Object[] ar = s.toArray();
             assertEquals(5, ar.length);
@@ -208,7 +474,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testValues() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             Collection s = map.values();
             assertEquals(5, s.size());
             assertTrue(s.contains("A"));
@@ -222,9 +488,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet contains all pairs
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testEntrySet() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             Set s = map.entrySet();
             assertEquals(5, s.size());
             Iterator it = s.iterator();
@@ -246,9 +512,9 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testPutAll() throws IOException {
-
-        try (ChronicleMap empty = newShmIntString(8076)) {
-            try (ChronicleMap map = map5()) {
+        int port = s_port++;
+        try (ChronicleMap empty = newShmIntString(port)) {
+            try (ChronicleMap map = map5(port)) {
                 empty.putAll(map);
                 assertEquals(5, empty.size());
                 assertTrue(empty.containsKey(one));
@@ -265,7 +531,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testPutIfAbsent() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             map.putIfAbsent(six, "Z");
             assertTrue(map.containsKey(six));
         }
@@ -276,7 +542,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testPutIfAbsent2() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             assertEquals("A", map.putIfAbsent(one, "Z"));
         }
     }
@@ -286,7 +552,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testReplace() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             assertNull(map.replace(six, "Z"));
             assertFalse(map.containsKey(six));
         }
@@ -298,7 +564,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 5000)
     public void testReplace2() throws
             IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             assertNotNull(map.replace(one, "Z"));
             assertEquals("Z", map.get(one));
         }
@@ -308,9 +574,8 @@ public class ChronicleMapTest extends JSR166TestCase {
      * replace value fails when the given key not mapped to expected value
      */
     @Test(timeout = 5000)
-    public void testReplaceValue() throws
-            IOException {
-        try (ChronicleMap map = map5()) {
+    public void testReplaceValue() throws IOException {
+        try (ChronicleMap map = map5(s_port++)) {
             assertEquals("A", map.get(one));
             assertFalse(map.replace(one, "Z", "Z"));
             assertEquals("A", map.get(one));
@@ -321,9 +586,8 @@ public class ChronicleMapTest extends JSR166TestCase {
      * replace value succeeds when the given key mapped to expected value
      */
     @Test(timeout = 5000)
-    public void testReplaceValue2
-    () throws IOException {
-        try (ChronicleMap map = map5()) {
+    public void testReplaceValue2() throws IOException {
+        try (ChronicleMap map = map5(s_port++)) {
             assertEquals("A", map.get(one));
             assertTrue(map.replace(one, "A", "Z"));
             assertEquals("Z", map.get(one));
@@ -334,9 +598,8 @@ public class ChronicleMapTest extends JSR166TestCase {
      * remove removes the correct key-value pair from the map
      */
     @Test(timeout = 5000)
-    public void testRemove() throws
-            IOException {
-        try (ChronicleMap map = map5()) {
+    public void testRemove() throws IOException {
+        try (ChronicleMap map = map5(s_port++)) {
             map.remove(five);
             assertEquals(4, map.size());
             assertFalse(map.containsKey(five));
@@ -364,8 +627,8 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testSize() throws IOException {
-        try (ChronicleMap map = map5()) {
-            try (ChronicleMap empty = newShmIntString(8078)) {
+        try (ChronicleMap map = map5(s_port++)) {
+            try (ChronicleMap empty = newShmIntString(s_port++)) {
                 assertEquals(0, empty.size());
                 assertEquals(5, map.size());
             }
@@ -375,10 +638,10 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * size returns the correct values
      */
-    @Test(timeout = 10000)
+    @Test(timeout = 15000)
     public void testSize2() throws IOException {
-        try (ChronicleMap map = map5()) {
-            try (ChronicleMap empty = newShmIntString(8078)) {
+        try (ChronicleMap map = map5(s_port++)) {
+            try (ChronicleMap empty = newShmIntString(s_port++)) {
                 assertEquals(0, empty.size());
                 assertEquals(5, map.size());
             }
@@ -390,8 +653,8 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testSize3() throws IOException {
-        try (ChronicleMap map = map5()) {
-            try (ChronicleMap empty = newShmIntString(8078)) {
+        try (ChronicleMap map = map5(s_port++)) {
+            try (ChronicleMap empty = newShmIntString(s_port++)) {
                 assertEquals(0, empty.size());
                 assertEquals(5, map.size());
             }
@@ -403,7 +666,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testToString() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ChronicleMap map = map5(s_port++)) {
             String s = map.toString();
             for (int i = 1; i <= 5; ++i) {
                 assertTrue(s.contains(String.valueOf(i)));
@@ -417,7 +680,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 5000)
     public void testGet_NullPointerException() throws IOException {
 
-        try (ChronicleMap c = newShmIntString(8076)) {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.get(null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -429,7 +692,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testContainsKey_NullPointerException() throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.containsKey(null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -441,7 +704,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testPut1_NullPointerException() throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.put(null, "whatever");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -452,9 +715,8 @@ public class ChronicleMapTest extends JSR166TestCase {
      * put(x, null) throws NPE
      */
     @Test(timeout = 5000)
-    public void testPut2_NullPointerException
-    () throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+    public void testPut2_NullPointerException() throws IOException {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.put(notPresent, null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -465,9 +727,8 @@ public class ChronicleMapTest extends JSR166TestCase {
      * putIfAbsent(null, x) throws NPE
      */
     @Test(timeout = 5000)
-    public void testPutIfAbsent1_NullPointerException
-    () throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+    public void testPutIfAbsent1_NullPointerException() throws IOException {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.putIfAbsent(null, "whatever");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -477,10 +738,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * replace(null, x) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testReplace_NullPointerException
-    () throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+    @Test(timeout = 10000)
+    public void testReplace_NullPointerException() throws IOException {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.replace(null, "whatever");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -490,10 +750,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * replace(null, x, y) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testReplaceValue_NullPointerException
-    () throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+    @Test(timeout = 10000)
+    public void testReplaceValue_NullPointerException() throws IOException {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.replace(null, "A", "whatever");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -503,9 +762,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * putIfAbsent(x, null) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testPutIfAbsent2_NullPointerException() throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.putIfAbsent(notPresent, null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -517,7 +776,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testReplace2_NullPointerException() throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.replace(notPresent, null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -528,9 +787,8 @@ public class ChronicleMapTest extends JSR166TestCase {
      * replace(x, null, y) throws NPE
      */
     @Test(timeout = 5000)
-    public void testReplaceValue2_NullPointerException
-    () throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+    public void testReplaceValue2_NullPointerException() throws IOException {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.replace(notPresent, null, "A");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -542,7 +800,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testReplaceValue3_NullPointerException() throws IOException {
-        try (ChronicleMap c = newShmIntString(8076)) {
+        try (ChronicleMap c = newShmIntString(s_port++)) {
             c.replace(notPresent, "A", null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -552,9 +810,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * remove(null) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testRemove1_NullPointerException() throws IOException {
-        try (ChronicleMap c = newStrStrMap(8076)) {
+        try (ChronicleMap c = newStrStrMap(s_port++)) {
             c.put("sadsdf", "asdads");
             c.remove(null);
             shouldThrow();
@@ -568,7 +826,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 5000)
     public void testRemove2_NullPointerException
     () throws IOException {
-        try (ChronicleMap c = newStrStrMap(8086)) {
+        try (ChronicleMap c = newStrStrMap(s_port++)) {
             c.put("sadsdf", "asdads");
             c.remove(null, "whatever");
             shouldThrow();
@@ -582,7 +840,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 5000)
     public void testRemove3() throws IOException {
 
-        try (ChronicleMap c = newStrStrMap(8076)) {
+        try (ChronicleMap c = newStrStrMap(s_port++)) {
             c.put("sadsdf", "asdads");
             assertFalse(c.remove("sadsdf", null));
         }
@@ -670,41 +928,6 @@ public class ChronicleMapTest extends JSR166TestCase {
             return r;
         }
     }
-
-    /**
-     * A deserialized map equals original
-     */
-  /*  @Test public void testSerialization() throws Exception {
-        Map x = map5();
-        Map y = serialClone(x);
-
-        assertNotSame(x, y);
-        assertEquals(x.size(), y.size());
-        assertEquals(x, y);
-        assertEquals(y, x);
-    }*/
-
-    /**
-     * TODO : SetValue of an EntrySet entry sets value in the map.
-     */
-    /*@Test public void testSetValueWriteThrough() {
-        // Adapted from a bug report by Eric Zoerner
-        ChronicleMap map = newShmIntString(2, 5.0f, 1);
-        assertTrue(map.isEmpty());
-        for (int i = 0; i < 20; i++)
-            map.put(new Integer(i), new Integer(i));
-        assertFalse(map.isEmpty());
-        Map.Entry entry1 = (Map.Entry) map.entrySet().iterator().next();
-        // Unless it happens to be first (in which case remainder of
-        // test is skipped), remove a possibly-colliding key from map
-        // which, under some implementations, may cause entry1 to be
-        // cloned in map
-        if (!entry1.getKey().equals(new Integer(16))) {
-            map.remove(new Integer(16));
-            entry1.setValue("XYZ");
-            assertTrue(map.containsValue("XYZ")); // fails if write-through broken
-        }
-    }*/
 
 }
 

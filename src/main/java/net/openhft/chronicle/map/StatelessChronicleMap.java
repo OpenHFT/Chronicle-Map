@@ -47,7 +47,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static net.openhft.chronicle.map.AbstractChannelReplicator.*;
+import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
+import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTION_ID;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
 
 /**
@@ -68,8 +69,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private volatile ByteBuffer outBuffer;
     private volatile ByteBufferBytes outBytes;
 
-    private ByteBuffer inBuffer;
-    private ByteBufferBytes inBytes;
+    private volatile ByteBuffer inBuffer;
+    private volatile ByteBufferBytes inBytes;
 
     @NotNull
     private final ReaderWithSize<K> keyReaderWithSize;
@@ -123,7 +124,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         PUT_ALL_WITHOUT_ACC,
         HASH_CODE,
         MAP_FOR_KEY,
-        UPDATE_FOR_KEY
+        PUT_MAPPED
     }
 
 
@@ -177,6 +178,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public V newValueInstance() {
+        return VanillaChronicleMap.newInstance(vClass, false);
+    }
+
+    @Override
+    public K newKeyInstance() {
+        return VanillaChronicleMap.newInstance(kClass, true);
+    }
+
     private ExecutorService lazyExecutorService() {
         if (executorService == null) {
             synchronized (this) {
@@ -225,16 +236,14 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     /**
-     * attempts a single connect without a timeout and eat any IOException used typically in the
-     * constructor, its possible the server is not running with this instance is created, {@link
-     * net.openhft.chronicle.map.StatelessChronicleMap#lazyConnect(long,
-     * java.net.InetSocketAddress)} will attempt to establish the connection when the client make
-     * the first map method call.
+     * attempts a single connect without a timeout and eat any IOException used typically in the constructor, its
+     * possible the server is not running with this instance is created, {@link net.openhft.chronicle.map.StatelessChronicleMap#lazyConnect(long,
+     * java.net.InetSocketAddress)} will attempt to establish the connection when the client make the first map method
+     * call.
      *
      * @param remoteAddress the  Inet Socket Address
      * @throws java.io.IOException
-     * @see net.openhft.chronicle.map.StatelessChronicleMap#lazyConnect(long,
-     * java.net.InetSocketAddress)
+     * @see net.openhft.chronicle.map.StatelessChronicleMap#lazyConnect(long, java.net.InetSocketAddress)
      */
 
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
@@ -263,9 +272,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     /**
-     * initiates a very simple level of handshaking with the remote server, we send a special ID of
-     * -127 ( when the server receives this it knows its dealing with a stateless client, receive
-     * back an identifier from the server
+     * initiates a very simple level of handshaking with the remote server, we send a special ID of -127 ( when the
+     * server receives this it knows its dealing with a stateless client, receive back an identifier from the server
      *
      * @param clientChannel clientChannel
      * @throws java.io.IOException
@@ -331,13 +339,14 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
      * @return a unique transactionId
      */
     private long nextUniqueTransaction(long time) {
-        long old = transactionID.getAndSet(time);
-
-        if (old == time)
-            return transactionID.incrementAndGet();
-        else
-            return time;
-
+        long id = time * TcpReplicator.TIMESTAMP_FACTOR;
+        for (; ; ) {
+            long old = transactionID.get();
+            if (old >= id) id = old + 1;
+            if (transactionID.compareAndSet(old, id))
+                break;
+        }
+        return id;
     }
 
     @SuppressWarnings("NullableProblems")
@@ -382,10 +391,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     /**
-     * calling this method should be avoided at all cost, as the entire {@code object} is
-     * serialized. This equals can be used to compare map that extends ChronicleMap.  So two
-     * Chronicle Maps that contain the same data are considered equal, even if the instances of the
-     * chronicle maps were of different types
+     * calling this method should be avoided at all cost, as the entire {@code object} is serialized. This equals can be
+     * used to compare map that extends ChronicleMap.  So two Chronicle Maps that contain the same data are considered
+     * equal, even if the instances of the chronicle maps were of different types
      *
      * @param object the object that you are comparing against
      * @return true if the contain the same data
@@ -481,7 +489,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     @Nullable
-    public <R> R mapForKey(@Nullable K key, @NotNull Function<? super V, R> function) {
+    public <R> R getMapped(@Nullable K key, @NotNull Function<? super V, R> function) {
         if (key == null)
             throw keyNotNullNPE();
         return fetchObject(MAP_FOR_KEY, key, function);
@@ -490,10 +498,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @Nullable
     @Override
-    public V putWith(@Nullable K key, @NotNull Mutator<V> mutator) {
+    public V putMapped(@Nullable K key, @NotNull UnaryOperator<V> unaryOperator) {
         if (key == null)
             throw keyNotNullNPE();
-        return fetchObject(UPDATE_FOR_KEY, key, mutator);
+        return fetchObject(PUT_MAPPED, key, unaryOperator);
     }
 
 
@@ -814,8 +822,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         // skips for the transaction id
         outBytes.skip(SIZE_OF_TRANSACTION_ID);
-        outBytes.skip(SIZE_OF_TIME_SHIFT);
         outBytes.writeByte(identifier);
+        outBytes.writeInt(0);
         return sizeLocation;
     }
 
@@ -997,13 +1005,15 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 receive(SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID, timeoutTime);
 
                 final int messageSize = inBytes.readInt();
+                assert messageSize > 0 : "Invalid message size " + messageSize;
+                assert messageSize < 16 << 20 : "Invalid message size " + messageSize;
+
                 final int remainingBytes0 = messageSize - (SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID);
                 final long transactionId0 = inBytes.readLong();
 
-                assert transactionId0 != 0;
-
                 // check the transaction id is reasonable
-                assert String.valueOf(transactionId0).startsWith("14");
+                assert transactionId0 > 1410000000000L * TcpReplicator.TIMESTAMP_FACTOR : "TransactionId too small " + transactionId0 + " messageSize " + messageSize;
+                assert transactionId0 < 2100000000000L * TcpReplicator.TIMESTAMP_FACTOR : "TransactionId too large " + transactionId0 + " messageSize " + messageSize;
 
                 // if the transaction id is for this thread process it
                 if (transactionId0 == transactionId) {
@@ -1130,7 +1140,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         outBytes.writeInt(size0);
         assert transactionId != 0;
         outBytes.writeLong(transactionId);
-        outBytes.writeUnsignedShort((int) (transactionId - startTime));
 
         outBytes.position(pos);
     }

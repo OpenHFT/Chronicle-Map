@@ -64,6 +64,7 @@ interface Work {
  */
 final class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
+    public static final long TIMESTAMP_FACTOR = 10000;
     private static final int STATELESS_CLIENT = -127;
     private static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
@@ -413,8 +414,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             // so these nodes will establish the connection when they come back up,
             // hence under these circumstances, polling a dropped node to attempt to reconnect is no-longer
             // required as the remote node will establish the connection its self on startup.
-            if (replicationConfig.autoReconnectedUponDroppedConnection())
-                attached.connector.connect();
+
+            attached.connector.connect();
 
             throw e;
         }
@@ -592,7 +593,11 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                          final long approxTime) throws IOException {
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
-        if (attached == null) throw new NullPointerException("No attached");
+        if (attached == null) {
+            LOG.info("Closing connection " + socketChannel + ", nothing attached");
+            socketChannel.close();
+            return;
+        }
         TcpSocketChannelEntryWriter entryWriter = attached.entryWriter;
         if (entryWriter == null) throw new NullPointerException("No entryWriter");
         if (entryWriter.isWorkIncomplete()) {
@@ -1332,10 +1337,10 @@ class StatelessServerConnector<K, V> {
         long transactionId = reader.readLong();
 
         // the time stamp and the transaction are usually the same, or out by the shift
-        int timestampShift = reader.readUnsignedShort();
-        long timestamp = transactionId - timestampShift;
-
+        long timestamp = transactionId / TcpReplicator.TIMESTAMP_FACTOR;
         byte identifier = reader.readByte();
+        int headerSize = reader.readInt();
+        reader.skip(headerSize);
 
 
         // these methods don't return a result to the client or don't return a result to the
@@ -1413,8 +1418,8 @@ class StatelessServerConnector<K, V> {
             case MAP_FOR_KEY:
                 return mapForKey(reader, writer, sizeLocation);
 
-            case UPDATE_FOR_KEY:
-                return updateForKey(reader, writer, sizeLocation);
+            case PUT_MAPPED:
+                return putMapped(reader, writer, sizeLocation);
 
             default:
                 throw new IllegalStateException("unsupported event=" + event);
@@ -1426,7 +1431,7 @@ class StatelessServerConnector<K, V> {
         final K key = keyReaderWithSize.read(reader, null);
         final Function<V, ?> function = (Function<V, ?>) reader.readObject();
         try {
-            Object result = map.mapForKey(key, function);
+            Object result = map.getMapped(key, function);
             writer.writeObject(result);
         } catch (Throwable e) {
             LOG.info("", e);
@@ -1438,11 +1443,11 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    public Work updateForKey(@NotNull ByteBufferBytes reader, @NotNull Bytes writer, long sizeLocation) {
+    public Work putMapped(@NotNull ByteBufferBytes reader, @NotNull Bytes writer, long sizeLocation) {
         final K key = keyReaderWithSize.read(reader, null);
-        final Mutator<V> mutator = (Mutator<V>) reader.readObject();
+        final UnaryOperator<V> unaryOperator = (UnaryOperator<V>) reader.readObject();
         try {
-            Object result = map.putWith(key, mutator);
+            Object result = map.putMapped(key, unaryOperator);
             writer.writeObject(result);
         } catch (Throwable e) {
             LOG.info("", e);

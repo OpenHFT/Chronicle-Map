@@ -218,13 +218,13 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public <R> R mapForKey(K key, @NotNull Function<? super V, R> function) {
-        return map1.mapForKey(key, function);
+    public <R> R getMapped(K key, @NotNull Function<? super V, R> function) {
+        return map1.getMapped(key, function);
     }
 
     @Override
-    public V putWith(K key, @NotNull Mutator<V> mutator) {
-        return map1.putWith(key, mutator);
+    public V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
+        return map1.putMapped(key, unaryOperator);
     }
 
     @Override
@@ -234,6 +234,16 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public void putAll(File fromFile) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public V newValueInstance() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public K newKeyInstance() {
         throw new UnsupportedOperationException();
     }
 

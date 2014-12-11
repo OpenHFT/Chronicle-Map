@@ -69,25 +69,7 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         return new ChronicleMapBuilder<K, V>(builder);
     }
 
-    // todo - work in progress this will be changed me not today, so don't refactor this !
-    public static <T> T newInstance(Class<T> interfaceClass, boolean isKey) {
 
-
-        if (interfaceClass.isEnum())
-            return isKey ? DataValueClasses.newDirectReference(interfaceClass) : DataValueClasses
-                    .newDirectInstance(interfaceClass);
-
-        else if (!offHeapReference(interfaceClass) && !interfaceClass.isInterface() &&
-                !builtInType(interfaceClass)) {
-
-            // if (())
-            //     interfaceClass = DataValueClasses.directClassFor(interfaceClass);
-            return DataValueClasses.newInstance(interfaceClass);
-
-        }
-        return DataValueClasses.newDirectInstance(interfaceClass);
-
-    }
 
     static boolean builtInType(Class clazz) {
         return clazz.getClassLoader() == Class.class.getClassLoader();
@@ -97,7 +79,7 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         this.delegate = delegate;
     }
 
-    private static boolean offHeapReference(Class valueClass) {
+      static boolean offHeapReference(Class valueClass) {
         return Byteable.class.isAssignableFrom(valueClass);
     }
 
@@ -540,14 +522,8 @@ public final class ChronicleMapBuilder<K, V> implements ChronicleMapBuilderI<K, 
         return this;
     }
 
-    public ChronicleMapBuilderI<K, V> checkSerializedValues() {
-        //    throw new UnsupportedOperationException("Not implemented");
-        return this;
-    }
-
-    public ChronicleMapBuilder<K, V> disableOversizedEntries(boolean disableOversizedEntries) {
-        // throw an exception rather than use oversized entries to test the size is as expected.
-        //  throw new UnsupportedOperationException("Not implemented");
+    public ChronicleMapBuilder<K, V> disableOversizedEntries() {
+        delegate.disableOversizedEntries();
         return this;
     }
 }
