@@ -24,7 +24,6 @@ import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.NativeBytes;
-import net.openhft.lang.thread.NamedThreadFactory;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +40,6 @@ import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -64,7 +61,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final ByteBuffer connectionOutBuffer = ByteBuffer.wrap(connectionByte);
     private final String name;
     @NotNull
-    private final AbstractChronicleMapBuilder chronicleMapBuilder;
+    private final ChronicleMapBuilder chronicleMapBuilder;
 
     private volatile ByteBuffer outBuffer;
     private volatile ByteBufferBytes outBytes;
