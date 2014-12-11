@@ -19,12 +19,15 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.lang.io.ByteBufferBytes;
+import net.openhft.lang.io.Bytes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -159,7 +162,7 @@ public class StatelessClientTest {
                 statelessMap.putAll(payload);
                 assertEquals(SIZE, serverMap.size());
 
-                 Set<Map.Entry<Integer, CharSequence>> entries = statelessMap.entrySet();
+                Set<Map.Entry<Integer, CharSequence>> entries = statelessMap.entrySet();
 
                 Map.Entry<Integer, CharSequence> next = entries.iterator().next();
                 assertEquals("some value=" + next.getKey(), next.getValue());
@@ -455,7 +458,6 @@ public class StatelessClientTest {
     }
 
 
-
     @Test(timeout = 10000)
     public void testGetAndEntryWeDontHave() throws IOException,
             InterruptedException, ExecutionException {
@@ -513,13 +515,13 @@ public class StatelessClientTest {
     }
 
 
-     @Test
+    @Test
     public void testThreadSafeness() throws IOException, InterruptedException {
 
-        int nThreads = 1;
+        int nThreads = 2;
         final ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
 
-        int count = 10000;
+        int count = 100;
         final CountDownLatch latch = new CountDownLatch(count * 2);
         final AtomicInteger got = new AtomicInteger();
 
@@ -527,12 +529,12 @@ public class StatelessClientTest {
         // server
         try (ChronicleMap<Integer, Integer> server = ChronicleMapBuilder.of(Integer.class, Integer.class)
                 .putReturnsNull(true)
-                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8059)).create()) {
+                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8054)).create()) {
 
             // stateless client
             try (ChronicleMap<Integer, Integer> client = ChronicleMapBuilder.of(Integer.class,
                     Integer.class)
-                    .statelessClient(new InetSocketAddress("localhost", 8059)).create()) {
+                    .statelessClient(new InetSocketAddress("localhost", 8054)).create()) {
 
                 for (int i = 0; i < count; i++) {
 
@@ -546,7 +548,7 @@ public class StatelessClientTest {
                                 latch.countDown();
                             } catch (Error | Exception e) {
                                 e.printStackTrace();
-                                System.exit(0);
+                              throw e;
                             }
                         }
                     });
@@ -577,7 +579,7 @@ public class StatelessClientTest {
                                 latch.countDown();
                             } catch (Error | Exception e) {
                                 e.printStackTrace();
-                                System.exit(0);
+                                throw e;
                             }
                         }
                     });
@@ -585,7 +587,7 @@ public class StatelessClientTest {
 
                 }
 
-                latch.await();
+                latch.await(10,TimeUnit.SECONDS);
                 System.out.println("" + count + " messages took " +
                         TimeUnit.MILLISECONDS.toSeconds(System
                                 .currentTimeMillis() - startTime) + " seconds, using " + nThreads + "" +
@@ -603,7 +605,39 @@ public class StatelessClientTest {
 
     }
 
+    @Test(timeout = 10000)
+    public void testCreateWithByteArrayKeyValue() throws IOException, InterruptedException {
+
+        byte[] key = new byte[4];
+        Bytes keyBuffer = new ByteBufferBytes(ByteBuffer.wrap(key));
+
+        try (ChronicleMap<byte[], byte[]> serverMap = ChronicleMapBuilder
+                .of(byte[].class, byte[].class)
+                .keySize(4)
+                .valueSize(4)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
+                .create()) {
+
+            try (ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapBuilder
+                    .of(byte[].class, byte[].class)
+                    .keySize(4)
+                    .valueSize(4)
+                    .statelessClient(new InetSocketAddress("localhost", 8056))
+                    .create()) {
+
+                for (int i = 0; i < SIZE; i++) {
+                    keyBuffer.clear();
+                    keyBuffer.writeInt(i);
+                    statelessMap.put(key, key);
+                }
+
+                assertEquals(SIZE, statelessMap.size());
+            }
+        }
+    }
 
 }
+
+
 
 
