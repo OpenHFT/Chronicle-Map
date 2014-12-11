@@ -24,6 +24,7 @@ import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.io.serialization.BytesMarshaller;
+import net.openhft.lang.io.serialization.JDKObjectSerializer;
 import net.openhft.lang.io.serialization.JDKZObjectSerializer;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.StatefulCopyable;
@@ -203,7 +204,7 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
                     return buffer = store.bytes();
                 }
             } else {
-                buffer = new DirectStore(JDKZObjectSerializer.INSTANCE, maxSize, false).bytes();
+                buffer = new DirectStore(JDKObjectSerializer.INSTANCE, maxSize, false).bytes();
                 return buffer;
             }
         }

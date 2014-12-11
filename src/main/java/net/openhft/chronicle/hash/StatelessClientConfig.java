@@ -18,8 +18,10 @@ package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,6 +42,8 @@ import java.util.concurrent.TimeUnit;
  */
 public interface StatelessClientConfig<C extends ChronicleHash> {
     StatelessClientConfig<C> timeout(long timeout, TimeUnit units);
+
+    StatelessClientConfig<C> name(String name);
 
     C create() throws IOException;
 }

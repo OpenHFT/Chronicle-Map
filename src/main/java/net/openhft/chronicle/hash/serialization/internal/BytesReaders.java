@@ -41,6 +41,18 @@ public final class BytesReaders {
         return new SimpleBytesReader<E>(marshaller);
     }
 
+    /**
+     * Returns {@code BytesMarshaller} {@code m}, if the given reader is the result of {@link
+     * #fromBytesMarshaller(BytesMarshaller) fromBytesMarshaller(m)} call, {@code null} otherwise.
+     *
+     * @param reader reader to extract {@code BytesMarshaller} from
+     * @param <E> type of the objects marshalled
+     * @return {@code BytesMarshaller} from which the specified reader was created, or {@code null}
+     */
+    public static <E> BytesMarshaller<E> getBytesMarshaller(BytesReader<E> reader) {
+        return reader instanceof SimpleBytesReader ? ((SimpleBytesReader) reader).marshaller : null;
+    }
+
     private static class SimpleBytesReader<E> implements BytesReader<E> {
         private static final long serialVersionUID = 0L;
 

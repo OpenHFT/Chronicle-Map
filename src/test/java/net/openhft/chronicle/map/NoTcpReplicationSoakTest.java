@@ -44,17 +44,19 @@ public class NoTcpReplicationSoakTest {
 
 
             map1 = (ReplicatedChronicleMap) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .name("map1")
                     .replication((byte) 1)
                     .timeProvider(timeProvider)
+                    .instance()
+                    .name("map1")
                     .create();
         }
         {
 
             map2 = (ReplicatedChronicleMap) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .name("map2")
                     .replication((byte) 2)
                     .timeProvider(timeProvider)
+                    .instance()
+                    .name("map2")
                     .create();
 
         }

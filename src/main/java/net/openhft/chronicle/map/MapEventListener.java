@@ -33,7 +33,7 @@ import java.io.Serializable;
  * class and override only methods corresponding the events you are interested in.
  *
  * <p>To configure {@code MapEventListener} for {@code ChronicleMap}, use {@link
- * AbstractChronicleMapBuilder#eventListener(MapEventListener)} method.
+ * ChronicleMapBuilder#eventListener(MapEventListener)} method.
  *
  * <p>See {@link #logging(String)} implementation.
  *
@@ -45,7 +45,7 @@ import java.io.Serializable;
  *
  * @param <K> key type of the maps, trackable by this event listener
  * @param <V> value type of the maps, trackable by this event listener
- * @see AbstractChronicleMapBuilder#eventListener(MapEventListener)
+ * @see ChronicleMapBuilder#eventListener(MapEventListener)
  */
 public abstract class MapEventListener<K, V> implements Serializable {
     private static final long serialVersionUID = 0L;
@@ -107,7 +107,7 @@ public abstract class MapEventListener<K, V> implements Serializable {
      * This method is called whenever a new value is put for the key in the map during calls of such
      * methods as {@link ChronicleMap#put put}, {@link ChronicleMap#putIfAbsent putIfAbsent}, {@link
      * ChronicleMap#replace(Object, Object, Object) replace}, etc. When a new value is {@linkplain
-     * AbstractChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during
+     * ChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during
      * {@link ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method is called
      * as well.
      *

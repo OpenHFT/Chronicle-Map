@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.DeserializationFactoryConfigurableBytesReader;
 import net.openhft.compiler.CompilerUtils;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.ObjectFactory;
@@ -52,18 +53,6 @@ public final class DataValueBytesMarshallers {
             Object reader = instanceField.get(null);
             return (BytesReader<T>) reader;
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    public static <T> BytesReader<T> acquireBytesReader(Class<T> tClass, ObjectFactory<T> factory) {
-        Class readerClass = acquireReaderWithCustomFactory(tClass);
-        try {
-            Constructor constructor = readerClass.getConstructor(ObjectFactory.class);
-            Object reader = constructor.newInstance(factory);
-            return (BytesReader<T>) reader;
-        } catch (IllegalAccessException | NoSuchMethodException | InstantiationException |
-                InvocationTargetException e) {
             throw new AssertionError(e);
         }
     }
@@ -106,6 +95,7 @@ public final class DataValueBytesMarshallers {
             }
         }
         readersClassMap.put(tClass, readerClass);
+        acquireReaderWithCustomFactory(tClass);
         return readerClass;
     }
 
@@ -146,7 +136,7 @@ public final class DataValueBytesMarshallers {
         if (dumpCode)
             LoggerFactory.getLogger(DataValueGenerator.class).info(actual);
         ClassLoader classLoader = tClass.getClassLoader();
-        String className = bytesReaderName(tClass, false) + "$WithCustomFactory";
+        String className = withCustomFactoryName(tClass);
         try {
             c = classLoader.loadClass(className);
         } catch (ClassNotFoundException ignored) {
@@ -159,6 +149,10 @@ public final class DataValueBytesMarshallers {
         }
         readersWithCustomFactoriesClassMap.put(tClass, c);
         return c;
+    }
+
+    private static <T> String withCustomFactoryName(Class<T> tClass) {
+        return bytesReaderName(tClass, false) + "$WithCustomFactory";
     }
 
     private static String generateWithCustomFactoryClass(Class tClass) {
@@ -217,10 +211,14 @@ public final class DataValueBytesMarshallers {
 
         SortedSet<Class> imported = newImported();
         imported.add(BytesReader.class);
+        imported.add(DeserializationFactoryConfigurableBytesReader.class);
+        imported.add(ObjectFactory.class);
         imported.add(Bytes.class);
         imported.add(ByteableMarshaller.class);
         imported.add(Byteable.class);
         imported.add(dvModel.type());
+        imported.add(InvocationTargetException.class);
+        imported.add(Constructor.class);
 
         StringBuilder read = generateReadBody(dvModel, imported);
 
@@ -231,15 +229,42 @@ public final class DataValueBytesMarshallers {
         String bytesReaderName = bytesReaderName(tClass, false);
         String simpleReaderName = bytesReaderName(simpleName(tClass));
         sb.append("\npublic class ").append(simpleReaderName)
-                .append(" implements BytesReader<").append(simpleName).append("> {\n");
+                .append(" implements DeserializationFactoryConfigurableBytesReader<")
+                .append(simpleName).append(", ").append(simpleReaderName).append("> {\n");
         declareSerialVersionUID(sb);
         declareStaticInstance(sb, tClass);
         generatePrivateConstructor(sb, simpleReaderName);
+        generateWithDeserializationFactory(tClass, dvModel, sb, simpleName, simpleReaderName);
         generateGetInstance(sb, tClass);
         generateDelegatingRead(sb, simpleName);
         generateRead(read, sb, simpleName, tClass);
         sb.append("}\n");
         return sb.toString();
+    }
+
+    private static void generateWithDeserializationFactory(Class<?> tClass,
+                                                           DataValueModel<?> dvModel,
+                                                           StringBuilder sb, String simpleName,
+                                                           String simpleReaderName) {
+        appendOverride(sb);
+        sb.append("    public ").append(simpleReaderName)
+                .append(" withDeserializationFactory(ObjectFactory<").append(simpleName)
+                .append("> factory) {\n");
+        sb.append("        try {\n");
+        sb.append("            ")
+                .append("Class cfc = Class.forName(\"")
+                .append(getPackage(dvModel))
+                .append(".").append(withCustomFactoryName(tClass)).append("\");\n");
+        sb.append(
+                "            Constructor constructor = cfc.getConstructor(ObjectFactory.class);\n" +
+                        "            Object reader = constructor.newInstance(factory);\n" +
+                        "            return (" + simpleReaderName + ") reader;\n" +
+                        "        } catch (ClassNotFoundException | IllegalAccessException | " +
+                        "NoSuchMethodException | InstantiationException |\n" +
+                        "                InvocationTargetException e) {\n" +
+                        "            throw new AssertionError(e);\n" +
+                        "        }\n");
+        sb.append("    }\n\n");
     }
 
     private static StringBuilder generateReadBody(DataValueModel<?> dvModel,
@@ -272,7 +297,7 @@ public final class DataValueBytesMarshallers {
                             .append(bytesReaderName(type, false))
                             .append(".INSTANCE").append(".read(bytes, ")
                             .append(computeNonScalarOffset(dvModel, type)).append(", ")
-                            .append(defaultGetter.getName()).append("(i)));");
+                            .append("toReuse.").append(defaultGetter.getName()).append("(i)));\n");
                     read.append("        }\n");
                 } else {
                     read.append("        toReuse.")
@@ -280,18 +305,30 @@ public final class DataValueBytesMarshallers {
                             .append(bytesReaderName(type, false))
                             .append(".INSTANCE").append(".read(bytes, ")
                             .append(computeNonScalarOffset(dvModel, type)).append(", ")
-                            .append(defaultGetter.getName()).append("()));");
+                            .append("toReuse.").append(defaultGetter.getName()).append("()));\n");
                 }
             } else {
                 if (model.isArray()) {
                     read.append("        for (int i = 0; i < ")
                             .append(model.indexSize().value()).append("; i++) {\n");
+                    if (CharSequence.class.isAssignableFrom(type))
+                        read.append("            long pos = bytes.position();\n");
                     read.append("            toReuse.").append(defaultSetter.getName())
                             .append("(i, bytes.read").append(bytesType(type)).append("());\n");
+                    if (CharSequence.class.isAssignableFrom(type))
+                        read.append("            bytes.position(pos + ")
+                                .append(fieldSize(model)).append(");\n");
                     read.append("        }\n");
                 } else {
-                    read.append("        toReuse.").append(defaultSetter.getName())
+                    read.append("        {\n");
+                    if (CharSequence.class.isAssignableFrom(type))
+                        read.append("            long pos = bytes.position();\n");
+                    read.append("            toReuse.").append(defaultSetter.getName())
                             .append("(bytes.read").append(bytesType(type)).append("());\n");
+                    if (CharSequence.class.isAssignableFrom(type))
+                        read.append("            bytes.position(pos + ")
+                                .append(fieldSize(model)).append(");\n");
+                    read.append("        }\n");
                 }
             }
         }
@@ -390,7 +427,7 @@ public final class DataValueBytesMarshallers {
                     write.append("        for (int i = 0; i < ")
                             .append(model.indexSize().value()).append("; i++) {\n");
                     write.append("            ")
-                            .append(type.getName()).append(" ").append(" $ = e.")
+                            .append(normalize(type)).append(" $ = e.")
                             .append(defaultGetter.getName()).append("(i);\n");
                     write.append("            ")
                             .append("if ($ == null) shouldNotBeNull();\n");
@@ -400,7 +437,7 @@ public final class DataValueBytesMarshallers {
                     write.append("        }\n");
                 } else {
                     write.append("        {")
-                            .append(type.getName()).append(" ").append(" $ = e.")
+                            .append(normalize(type)).append(" $ = e.")
                             .append(defaultGetter.getName()).append("();\n");
                     write.append("        ")
                             .append("if ($ == null) shouldNotBeNull();\n");
@@ -412,12 +449,25 @@ public final class DataValueBytesMarshallers {
                 if (model.isArray()) {
                     write.append("        for (int i = 0; i < ")
                             .append(model.indexSize().value()).append("; i++) {\n");
+                    if (CharSequence.class.isAssignableFrom(type))
+                        write.append("            long pos = bytes.position();\n");
                     write.append("            bytes.write").append(bytesType(type))
                             .append("(e.").append(defaultGetter.getName()).append("(i));\n");
+                    if (CharSequence.class.isAssignableFrom(type))
+                        write.append("            bytes.position(pos + ")
+                                .append(fieldSize(model)).append(");\n");
+
                     write.append("        }\n");
                 } else {
-                    write.append("        bytes.write").append(bytesType(type))
+                    write.append("        {\n");
+                    if (CharSequence.class.isAssignableFrom(type))
+                        write.append("            long pos = bytes.position();\n");
+                    write.append("            bytes.write").append(bytesType(type))
                             .append("(e.").append(defaultGetter.getName()).append("());\n");
+                    if (CharSequence.class.isAssignableFrom(type))
+                        write.append("            bytes.position(pos + ")
+                                .append(fieldSize(model)).append(");\n");
+                    write.append("        }\n");
                 }
             }
         }
@@ -432,8 +482,7 @@ public final class DataValueBytesMarshallers {
         sb.append("    try {\n");
         sb.append("        if (toReuse == null)\n");
         sb.append("            toReuse = getInstance();\n");
-        sb.append("        if (toReuse instanceof Byteable && ")
-                .append("((Byteable) toReuse).bytes() == null) {\n");
+        sb.append("        if (toReuse instanceof Byteable) {\n");
         sb.append("            " +
                 "ByteableMarshaller.setBytesAndOffset(((Byteable) toReuse), bytes);\n");
         sb.append("            bytes.skip(size);\n");

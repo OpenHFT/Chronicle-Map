@@ -35,6 +35,7 @@ public abstract class AbstractReplication implements Serializable {
     private final
     @Nullable
     RemoteNodeValidator remoteNodeValidator;
+    private final boolean bootstrapOnlyLocalEntries;
 
     // package-private to forbid subclassing from outside of the package
     AbstractReplication(byte localIdentifier, Builder builder) {
@@ -42,14 +43,16 @@ public abstract class AbstractReplication implements Serializable {
         tcpConfig = builder.tcpConfig;
         udpConfig = builder.udpConfig;
         remoteNodeValidator = builder.remoteNodeValidator;
+        bootstrapOnlyLocalEntries = builder.bootstrapOnlyLocalEntries;
     }
 
     @Override
     public String toString() {
-        return ", localIdentifier=" + localIdentifier +
+        return "localIdentifier=" + localIdentifier +
                 ", tcpConfig=" + tcpConfig +
                 ", udpConfig=" + udpConfig +
-                ", remoteNodeValidator=" + remoteNodeValidator;
+                ", remoteNodeValidator=" + remoteNodeValidator +
+                ", bootstrapOnlyLocalEntries=" + bootstrapOnlyLocalEntries;
     }
 
     public byte identifier() {
@@ -71,6 +74,10 @@ public abstract class AbstractReplication implements Serializable {
         return remoteNodeValidator;
     }
 
+    public boolean bootstrapOnlyLocalEntries() {
+        return bootstrapOnlyLocalEntries;
+    }
+
     /**
      * Builder of {@link AbstractReplication} configurations. This class and it's subclasses are mutable,
      * configuration methods mutate the builder and return it back for convenient chaining.
@@ -84,6 +91,7 @@ public abstract class AbstractReplication implements Serializable {
         private TcpTransportAndNetworkConfig tcpConfig = null;
         private UdpTransportConfig udpConfig = null;
         private RemoteNodeValidator remoteNodeValidator = null;
+        private boolean bootstrapOnlyLocalEntries = false;
 
         // package-private to forbid subclassing from outside of the package
         Builder() {
@@ -114,6 +122,29 @@ public abstract class AbstractReplication implements Serializable {
             this.remoteNodeValidator = remoteNodeValidator;
             return (B) this;
         }
+
+
+        /**
+         * Configures if the node, provided with replication, created by this builder, should
+         * replicate only local data, last updated with own identifier, or all data currently
+         * present on the node, when a new node joins the replication grid.
+         *
+         * <p>Default configuration is {@code false}, potentially swamping new nodes with
+         * duplicates. However, this does guarantee that all the data is replicated over to the new
+         * node and is useful especially in the case that the originating node of some data is not
+         * currently running.
+         *
+         * @param bootstrapOnlyLocalEntries if a node provided with this replication should
+         *                                  replicate only local data to the new nodes joining
+         *                                  the replication network
+         * @return this builder back
+         */
+        @NotNull
+        public B bootstrapOnlyLocalEntries(boolean bootstrapOnlyLocalEntries) {
+            this.bootstrapOnlyLocalEntries = bootstrapOnlyLocalEntries;
+            return (B) this;
+        }
+
 
         /**
          * Creates a Replication instance with the given node (server) identifier.

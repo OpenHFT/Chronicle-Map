@@ -506,7 +506,7 @@ final class ChannelProvider implements Closeable {
         }
 
         @Override
-        protected Closeable applyTo(AbstractChronicleMapBuilder builder,
+        protected Closeable applyTo(ChronicleMapBuilder builder,
                                     Replica map, EntryExternalizable entryExternalizable,
                                     final ChronicleMap chronicleMap) {
             add(chronicleChannel, map, entryExternalizable);

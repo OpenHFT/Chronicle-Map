@@ -29,6 +29,11 @@ public final class SingleChronicleHashReplication extends AbstractReplication {
         super(localIdentifier, builder);
     }
 
+    @Override
+    public String toString() {
+        return "SingleChronicleHashReplication{" + super.toString() + "}";
+    }
+
     public static final class Builder
             extends AbstractReplication.Builder<SingleChronicleHashReplication, Builder> {
         private Builder() {}

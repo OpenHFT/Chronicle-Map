@@ -18,34 +18,28 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.serialization.BytesInterop;
-import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.Hasher;
-import net.openhft.chronicle.hash.serialization.SizeMarshaller;
+import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.MultiStoreBytes;
 import net.openhft.lang.io.NativeBytes;
 import net.openhft.lang.io.serialization.*;
-import net.openhft.lang.io.serialization.impl.AllocateInstanceObjectFactory;
 import net.openhft.lang.model.Byteable;
 import org.jetbrains.annotations.NotNull;
 
-public class ByteableMarshaller<E extends Byteable>
-        implements BytesInterop<E>, BytesReader<E>, SizeMarshaller {
+public abstract class ByteableMarshaller<E extends Byteable>
+        implements BytesInterop<E>,
+        DeserializationFactoryConfigurableBytesReader<E, ByteableMarshaller<E>>,
+        SizeMarshaller {
     private static final long serialVersionUID = 0L;
 
     public static <E extends Byteable> ByteableMarshaller<E> of(@NotNull Class<E> eClass) {
-        return new ByteableMarshaller<E>(eClass);
+        return new Default<>(eClass);
     }
 
-    public static <E extends Byteable> ByteableMarshaller<E> of(@NotNull Class<E> eClass,
-                                                                ObjectFactory<E> factory) {
-        if (factory instanceof AllocateInstanceObjectFactory) {
-            Class allocatedClass = ((AllocateInstanceObjectFactory) factory).allocatedClass();
-            return new Default<E>(allocatedClass);
-        } else {
-            return new WithCustomFactory<E>(eClass, factory);
-        }
+    @Override
+    public ByteableMarshaller<E> withDeserializationFactory(
+            ObjectFactory<E> deserializationFactory) {
+        return new WithCustomFactory<>(tClass, deserializationFactory);
     }
 
     @NotNull

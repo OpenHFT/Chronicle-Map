@@ -20,7 +20,6 @@ import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
 import net.openhft.lang.values.LongValue;
-import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -30,7 +29,7 @@ public class DataKeyValueTest {
     @Test
     public void dataKeyValueTest() {
         ChronicleMap<IntValue, LongValue> map =
-                OnHeapUpdatableChronicleMapBuilder.of(IntValue.class, LongValue.class)
+                ChronicleMapBuilder.of(IntValue.class, LongValue.class)
                         .entries(1000).create();
         IntValue heapKey = DataValueClasses.newInstance(IntValue.class);
         IntValue directKey = DataValueClasses.newDirectInstance(IntValue.class);

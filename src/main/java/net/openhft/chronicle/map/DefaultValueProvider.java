@@ -22,7 +22,7 @@ import java.io.Serializable;
 
 /**
  * Default value computation strategy, used
- * in {@link AbstractChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)} configuration.
+ * in {@link ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)} configuration.
  *
  * @param <K> map key class
  * @param <V> map value class

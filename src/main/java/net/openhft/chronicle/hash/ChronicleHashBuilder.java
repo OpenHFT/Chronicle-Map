@@ -23,6 +23,7 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.io.Bytes;
@@ -46,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * This interface defines the meaning of configurations, common to {@link
- * net.openhft.chronicle.map.ChronicleMapBuilder} and {@link ChronicleSetBuilder}, i.
+ * ChronicleMapBuilder} and {@link ChronicleSetBuilder}, i.
  * e. <i>Chronicle hash container</i> configurations.
  *
  * <p>{@code ChronicleHashBuilder} is mutable. Configuration methods mutate the builder and return
@@ -57,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  * @param <K> the type of keys in hash containers, created by this builder
  * @param <C> the container type, created by this builder, i. e. {@link ChronicleMap} or {@link
  *            ChronicleSet}
- * @param <B> the concrete builder type, i. e. {@link net.openhft.chronicle.map.ChronicleMapBuilder}
+ * @param <B> the concrete builder type, i. e. {@link ChronicleMapBuilder}
  *            or {@link ChronicleSetBuilder}
  */
 public interface ChronicleHashBuilder<K, C extends ChronicleHash,
@@ -91,8 +92,14 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * it's better to use {@linkplain #entrySize(int) entry size} in "chunk" mode and configure it
      * directly.
      *
+     * <p>If key is a boxed primitive type or {@link Byteable} subclass, i. e. if key size is known
+     * statically, it is automatically accounted and shouldn't be specified by user.
+     *
      * @param keySize number of bytes, taken by serialized form of keys
      * @return this builder back
+     * @throws IllegalStateException if key size is known statically and shouldn't be configured
+     *         by user
+     * @throws IllegalArgumentException if the given {@code keySize} is non-positive
      * @see #constantKeySizeBySample(Object)
      * @see #entrySize(int)
      */
@@ -131,7 +138,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      *
      * <p>There are three major patterns of this configuration usage: <ol> <li>Key (and value, in
      * {@code ChronicleMap} case) sizes are constant. Configure them via {@link
-     * #constantKeySizeBySample(Object)} and {@link net.openhft.chronicle.map.ChronicleMapBuilder#constantValueSizeBySample(Object)}
+     * #constantKeySizeBySample(Object)} and {@link ChronicleMapBuilder#constantValueSizeBySample(Object)}
      * methods, and you will experience no memory waste at all.</li> <li>Key (and/or value size, in
      * {@code ChronicleMap} case) varies moderately. Specify them using corresponding methods, or
      * specify entry size directly by calling this method, by sizes somewhere between average and
@@ -145,10 +152,11 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * <p>However, remember that <ul> <li>Operations with entries that span several "entry sizes"
      * are a bit slower, than entries which take a single "entry size". That is why "chunk" approach
      * is not recommended, when key (and/or value size) varies moderately.</li> <li>The maximum
-     * number of chunks could be taken by an entry is 64. {@link IllegalArgumentException} is thrown
-     * on attempt to insert too large entry, compared to the configured or computed entry size.</li>
-     * <li>The number of "entries" {@linkplain #entries(long) in the whole map} and {@linkplain
-     * #actualEntriesPerSegment(long) per segment} is actually the number "chunks".</li> </ul>
+     * number of chunks could be taken by an entry is {@link #maxEntryOversizeFactor(int)}, of max
+     * 64 chunks. {@link IllegalArgumentException} is thrown on attempt to insert too large entry,
+     * compared to the configured or computed entry size.</li> <li>The number of "entries"
+     * {@linkplain #entries(long) in the whole map} and {@linkplain #actualEntriesPerSegment(long)
+     * per segment} is actually the number "chunks".</li> </ul>
      *
      * <p>Example: if values in your {@code ChronicleMap} are adjacency lists of some social graph,
      * where nodes are represented as {@code long} ids, and adjacency lists are serialized in
@@ -169,8 +177,21 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @param entrySize the "chunk size" in bytes
      * @return this builder back
      * @see #entries(long)
+     * @see #maxEntryOversizeFactor(int)
      */
     B entrySize(int entrySize);
+
+    /**
+     * Configures how much the actual entry size is allowed to be larger than configured or derived
+     * {@linkplain #entrySize(int) entry size}.
+     *
+     * @param maxEntryOversizeFactor number of times the actual entry size could oversize the
+     *                               configured "entry size" (chunk size, actually)
+     * @return this builder back
+     * @throws IllegalArgumentException if the given {@code maxEntryOversizeFactor} is lesser than 1
+     *         or greater than 64
+     */
+    B maxEntryOversizeFactor(int maxEntryOversizeFactor);
 
     /**
      * Configures the maximum number of {@linkplain #entrySize(int) "entry size chunks"}, which
@@ -184,7 +205,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * memory unit).</li> <li>If key (and/or value, in {@code ChronicleMap} case) size varies
      * moderately, you should pass to this method the maximum number of entries + 5-25%, depending
      * on your data properties and configured {@linkplain #keySize(int) key}/{@linkplain
-     * net.openhft.chronicle.map.ChronicleMapBuilder#valueSize(int)
+     * ChronicleMapBuilder#valueSize(int)
      * value}/{@linkplain #entrySize(int) entry} sizes.</li> <li>If your data size varies in a wide
      * range, pass the maximum number of entries multiplied by average data size and divided by the
      * configured "entry size" (i. e. chunk size). See an example in the documentation to {@link
@@ -292,7 +313,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @see #keyMarshallers(BytesWriter, BytesReader)
      * @see #objectSerializer(ObjectSerializer)
      */
-    B keyMarshaller(@NotNull BytesMarshaller<K> keyMarshaller);
+    B keyMarshaller(@NotNull BytesMarshaller<? super K> keyMarshaller);
 
     /**
      * Configures the marshallers, used to serialize/deserialize keys to/from off-heap memory in
@@ -332,11 +353,10 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
 
     /**
      * Configures factory which is used to create a new key instance, if key class is either {@link
-     * Byteable}, {@link BytesMarshallable} or {@link Externalizable} subclass in maps, created by
-     * this builder. If {@linkplain #keyMarshaller(BytesMarshaller) custom key marshaller} is
-     * configured, this configuration is unused, because it is incapsulated in {@link
-     * BytesMarshaller#read(Bytes)} method (without provided instance to read the data into), i. e.
-     * it's is the user-side responsibility.
+     * Byteable}, {@link BytesMarshallable} or {@link Externalizable} subclass, or key type is
+     * eligible for data value generation, or {@linkplain #keyMarshallers(BytesWriter, BytesReader)
+     * configured custom key reader} implements {@link DeserializationFactoryConfigurableBytesReader
+     * }, in maps, created by this builder.
      *
      * <p>Default key deserialization factory is {@link NewInstanceObjectFactory}, which creates a
      * new key instance using {@link Class#newInstance()} default constructor. You could provide an
@@ -348,9 +368,8 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @param keyDeserializationFactory the key factory used to produce instances to deserialize
      *                                  data in
      * @return this builder back
-     * @throws IllegalStateException if custom key marshaller is specified or key class is not
-     *                               either {@code Byteable}, {@code BytesMarshallable} or {@code
-     *                               Externalizable}
+     * @throws IllegalStateException if it is not possible to apply deserialization factory to
+     *                               key deserializers, currently configured for this builder
      */
     B keyDeserializationFactory(@NotNull ObjectFactory<K> keyDeserializationFactory);
 
@@ -401,8 +420,6 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
 
     B replication(byte identifier);
 
-    StatelessClientConfig<C> statelessClient(InetSocketAddress remoteAddress);
-
     ChronicleHashInstanceConfig<C> instance();
 
     /**
@@ -414,12 +431,10 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * <p>This method is a shortcut for {@code instance().create()}.
      *
      * @return a new off-heap hash container
-     * @throws IOException if any IO error relates to off-heap memory allocation, or establishing
-     *                     replication connections, occurs
      * @see #createPersistedTo(File)
      * @see #instance()
      */
-    C create() throws IOException;
+    C create();
 
     /**
      * Opens a hash container residing the specified file, or creates a new one if the file not yet
@@ -450,5 +465,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      */
     C createPersistedTo(File file) throws IOException;
 
-    String name();
+    StatelessClientConfig<C> statelessClient(InetSocketAddress remoteAddress);
+
+    C createStatelessClient(InetSocketAddress serverAddress) throws IOException;
 }
