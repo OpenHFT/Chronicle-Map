@@ -168,7 +168,7 @@ and define the snapshot version in your pom.xml, for example:
 <dependency>
   <groupId>net.openhft</groupId>
   <artifactId>chronicle-map</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version><!--replace with the latest version--></version>
 </dependency>
 ```
 
