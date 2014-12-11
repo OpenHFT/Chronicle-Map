@@ -89,7 +89,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
     private final ReentrantLock inBytesLock = new ReentrantLock();
-    private final ReentrantLock outBytesLock = new ReentrantLock(true);
+    private final ReentrantLock outBytesLock = new ReentrantLock();
 
 
     static enum EventId {

@@ -524,7 +524,7 @@ public class StatelessClientTest {
         int nThreads = 2;
         final ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
 
-        int count = 10000;
+        int count = 50000;
         final CountDownLatch latch = new CountDownLatch(count * 2);
         final AtomicInteger got = new AtomicInteger();
 
