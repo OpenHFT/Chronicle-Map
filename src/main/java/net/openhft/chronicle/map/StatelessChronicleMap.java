@@ -39,7 +39,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -60,14 +59,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final byte[] connectionByte = new byte[1];
     private final ByteBuffer connectionOutBuffer = ByteBuffer.wrap(connectionByte);
     private final String name;
-    @NotNull
-    private final ChronicleMapBuilder chronicleMapBuilder;
 
-    private volatile ByteBuffer outBuffer;
-    private volatile ByteBufferBytes outBytes;
 
-    private volatile ByteBuffer inBuffer;
-    private volatile ByteBufferBytes inBytes;
+    private ByteBuffer outBuffer;
+    private ByteBufferBytes outBytes;
+
+    private ByteBuffer inBuffer;
+    private ByteBufferBytes inBytes;
 
     @NotNull
     private final ReaderWithSize<K> keyReaderWithSize;
@@ -93,7 +91,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final ReentrantLock inBytesLock = new ReentrantLock();
     private final ReentrantLock outBytesLock = new ReentrantLock(true);
 
-    private ExecutorService executorService;
 
     static enum EventId {
         HEARTBEAT,
@@ -139,7 +136,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     StatelessChronicleMap(@NotNull final StatelessMapConfig config,
                           @NotNull final ChronicleMapBuilder chronicleMapBuilder)
             throws IOException {
-        this.chronicleMapBuilder = chronicleMapBuilder;
+
         this.config = config;
         keyReaderWithSize = new ReaderWithSize<>(chronicleMapBuilder.keyBuilder);
         keyWriterWithSize = new WriterWithSize<>(chronicleMapBuilder.keyBuilder);
@@ -162,7 +159,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
         inBuffer = allocateDirect(maxEntrySize).order(ByteOrder.nativeOrder());
-        inBytes = new ByteBufferBytes(outBuffer.slice());
+        inBytes = new ByteBufferBytes(inBuffer.slice());
 
     }
 
@@ -196,7 +193,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                                                    final InetSocketAddress remoteAddress) {
 
         if (LOG.isDebugEnabled())
-            LOG.debug("attempting to connect to " + remoteAddress);
+            LOG.debug("attempting to connect to " + remoteAddress+" ,name="+name);
 
         SocketChannel result;
 
@@ -299,7 +296,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         byte remoteIdentifier = connectionByte[0];
 
         if (LOG.isDebugEnabled())
-            LOG.debug("Attached to a map with a remote identifier=" + remoteIdentifier);
+            LOG.debug("Attached to a map with a remote identifier=" + remoteIdentifier+" ,name="+name);
     }
 
     @NotNull
@@ -515,7 +512,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         assert !inBytesLock.isHeldByCurrentThread();
 
         if (LOG.isDebugEnabled())
-            LOG.debug("resizing buffer to size=" + size);
+            LOG.debug("resizing buffer to size=" + size+" ,name="+name);
 
         if (size < outBuffer.capacity())
             throw new IllegalStateException("it not possible to resize the buffer smaller");
@@ -553,7 +550,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     private void resizeBufferInBuffer(int size, long start) {
         if (LOG.isDebugEnabled())
-            LOG.debug("InBuffer resizing buffer to size=" + size);
+            LOG.debug("InBuffer resizing buffer to size=" + size+" ,name="+name);
 
         if (size < inBuffer.capacity())
             throw new IllegalStateException("it not possible to resize the buffer smaller");
@@ -694,10 +691,15 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {
 
+        final long sizeLocation;
 
-        final long sizeLocation = putReturnsNull ? writeEventAnSkip(PUT_ALL_WITHOUT_ACC) :
-                writeEventAnSkip(PUT_ALL);
-
+        outBytesLock.lock();
+        try {
+            sizeLocation = putReturnsNull ? writeEventAnSkip(PUT_ALL_WITHOUT_ACC) :
+                    writeEventAnSkip(PUT_ALL);
+        } finally {
+            outBytesLock.unlock();
+        }
         final long startTime = System.currentTimeMillis();
         final long timeoutTime = startTime + config.timeoutMs();
         final long transactionId;
@@ -839,7 +841,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private long writeEventAnSkip(@NotNull EventId event) {
 
         assert outBytesLock.isHeldByCurrentThread();
-        assert !inBytesLock.isHeldByCurrentThread();
+        //   assert !inBytesLock.isHeldByCurrentThread();
 
         final long sizeLocation = writeEvent(event);
 
@@ -932,7 +934,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 try {
 
                     if (LOG.isDebugEnabled())
-                        LOG.debug("sending data with transactionId=" + transactionId);
+                        LOG.debug("sending data with transactionId=" + transactionId+" ,name="+name);
 
                     writeSizeAndTransactionIdAt(sizeLocation, transactionId);
 
@@ -970,7 +972,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             close();
             throw new RuntimeException(e);
         } catch (AssertionError e) {
-            LOG.error("", e);
+            LOG.error("name="+name, e);
             throw e;
         }
     }
@@ -1081,7 +1083,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             if (System.currentTimeMillis() - timeoutTime >
                     parkedTransactionTimeStamp) {
 
-                LOG.error("", new IllegalStateException("Skipped Message with transaction-id=" +
+                LOG.error("name="+name, new IllegalStateException("Skipped Message with " +
+                        "transaction-id=" +
                         parkedTransactionTimeStamp +
                         ", this can occur when you have another thread which has called the " +
                         "stateless client and terminated abruptly before the message has been " +
@@ -1687,7 +1690,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 Throwable cause = e.getCause();
 
                 if (cause instanceof IOException && cause.getMessage().contains("Not enough available space")) {
-                    LOG.debug("resizing buffer");
+                    LOG.debug("resizing buffer, name="+name);
                     resizeBufferOutBuffer(outBuffer.capacity() + maxEntrySize, start);
                 } else
                     throw e;
