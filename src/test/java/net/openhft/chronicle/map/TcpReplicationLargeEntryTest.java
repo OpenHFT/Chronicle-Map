@@ -1,38 +1,40 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import org.junit.*;
+import net.openhft.lang.io.ByteBufferBytes;
+import net.openhft.lang.model.Byteable;
+import net.openhft.lang.model.DataValueClasses;
+import net.openhft.lang.values.IntValue;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Rob Austin.
  */
-public class TcpReplicationSoakTest {
+public class TcpReplicationLargeEntryTest {
 
 
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
-
+    private IntValue value;
     static int s_port = 8010;
-    int valueSize = 1000000;
-
-    char[] value = new char[valueSize];
-
 
     @Before
     public void setup() throws IOException {
-        Arrays.fill(value, 'X');
-
-        int keySize = 4;
-        int entrySize = keySize + valueSize;
+        value = DataValueClasses.newDirectReference(IntValue.class);
+        ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
 
@@ -44,7 +46,7 @@ public class TcpReplicationSoakTest {
 
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(entrySize)
+                    .entries(Builder.SIZE + Builder.SIZE)
                     .actualSegments(1)
                     .replication((byte) 1, tcpConfig1)
                     .instance()
@@ -58,7 +60,7 @@ public class TcpReplicationSoakTest {
                     .packetSize(1024 * 64);
 
             map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(entrySize)
+                    .entries(Builder.SIZE + Builder.SIZE)
                     .replication((byte) 2, tcpConfig2)
                     .instance()
                     .name("map2")
@@ -95,13 +97,26 @@ public class TcpReplicationSoakTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-    @Ignore("HCOLL-246 Tcp Replication fails with large values or entries sizes that don't " +
-            "included internal replication bytes")
+
     @Test
-    public void testLargeValues() throws IOException, InterruptedException {
+    public void testSoakTestWithRandomData() throws IOException, InterruptedException {
 
-        map1.put(1, new String(value));
+        System.out.print("SoakTesting ");
+        for (int j = 1; j < 2 * Builder.SIZE; j++) {
+            if (j % 100 == 0)
+                System.out.print(".");
+            Random rnd = new Random(j);
+            for (int i = 1; i < 10; i++) {
+                final int select = rnd.nextInt(2);
+                final ChronicleMap<Integer, CharSequence> map = select > 0 ? map1 : map2;
 
+                if (rnd.nextBoolean()) {
+                    map.put(rnd.nextInt(Builder.SIZE), "test" + j);
+                } else {
+                    map.remove(rnd.nextInt(Builder.SIZE));
+                }
+            }
+        }
         Thread.sleep(1000);
         System.out.println("\nwaiting till equal");
 
