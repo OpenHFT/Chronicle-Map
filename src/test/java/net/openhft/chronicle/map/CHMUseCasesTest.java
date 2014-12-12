@@ -89,7 +89,6 @@ public class CHMUseCasesTest {
     public void testCharSequenceCharSequenceMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class) // for testing purposes only
-                .defaultValue("")
                 .create()) {
             map.put("Hello", "World");
             StringBuilder key = new StringBuilder();
@@ -688,7 +687,6 @@ public class CHMUseCasesTest {
     }
 
 
-
     /**
      * For unsigned int -> unsigned int entries, the key can be on heap or off heap.
      */
@@ -697,7 +695,6 @@ public class CHMUseCasesTest {
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = ChronicleMapBuilder
                 .of(UnsignedIntValue.class, UnsignedIntValue.class)
                 .create()) {
-
 
             UnsignedIntValue key1 = map.newKeyInstance();
             UnsignedIntValue key2 = map.newKeyInstance();
