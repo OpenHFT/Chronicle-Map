@@ -425,6 +425,32 @@ public class CHMUseCasesTest {
         }
     }
 
+    @Ignore("HCOLL-247 automatically register ByteBufferMarshaller")
+    @Test
+    public void testByteBufferByteBufferDefaultKeyValueMarshaller() throws ExecutionException,
+            InterruptedException {
+        try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
+                .of(ByteBuffer.class, ByteBuffer.class)
+               // .keyMarshaller(ByteBufferMarshaller.INSTANCE)
+              //  .valueMarshaller(ByteBufferMarshaller.INSTANCE)
+                .keySize(8)
+                .valueSize(8)
+                .maxEntryOversizeFactor(1)
+                .create()) {
+            ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
+            ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
+            ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11});
+            ByteBuffer value2 = ByteBuffer.wrap(new byte[]{22, 22, 22, 22});
+            assertNull(map.put(key1, value1));
+            assertBBEquals(value1, map.put(key1, value2));
+            assertBBEquals(value2, map.get(key1));
+            assertNull(map.get(key2));
+
+
+            map.put(key1, value1);
+        }
+    }
+
     @Test
     public void testByteBufferByteBufferMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
