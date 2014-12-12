@@ -19,8 +19,8 @@ import static org.junit.Assert.*;
 
 public class CHMUseCasesTest {
     /**
-     * String is not as efficient as CharSequence as a key or value but easier to use The key can only be on heap and
-     * variable length serialised.
+     * String is not as efficient as CharSequence as a key or value but easier to use The key can
+     * only be on heap and variable length serialised.
      */
     @Test
     public void testStringStringMap() throws ExecutionException, InterruptedException {
@@ -82,14 +82,14 @@ public class CHMUseCasesTest {
     }
 
     /**
-     * CharSequence is more efficient when object creation is avoided. The key can only be on heap and variable length
-     * serialised.
+     * CharSequence is more efficient when object creation is avoided. The key can only be on heap
+     * and variable length serialised.
      */
     @Test
     public void testCharSequenceCharSequenceMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class) // for testing purposes only
-           //     .defaultValue("")
+                .defaultValue("")
                 .create()) {
             map.put("Hello", "World");
             StringBuilder key = new StringBuilder();
@@ -600,10 +600,6 @@ public class CHMUseCasesTest {
             IntValue value2 = map.newValueInstance();
 
 
-
-
-
-
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
@@ -701,11 +697,10 @@ public class CHMUseCasesTest {
                 .create()) {
 
 
-
             UnsignedIntValue key1 = map.newKeyInstance();
             UnsignedIntValue key2 = map.newKeyInstance();
-            UnsignedIntValue value1 =  map.newValueInstance();
-            UnsignedIntValue value2 =  map.newValueInstance();
+            UnsignedIntValue value1 = map.newValueInstance();
+            UnsignedIntValue value2 = map.newValueInstance();
 
             key1.setValue(1);
             value1.setValue(11);
@@ -785,9 +780,9 @@ public class CHMUseCasesTest {
             assertEquals(6, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             IntValue key1 = map.newKeyInstance();
-            IntValue key2 =  map.newKeyInstance();
+            IntValue key2 = map.newKeyInstance();
             ShortValue value1 = map.newValueInstance();
-            ShortValue value2 =  map.newValueInstance();
+            ShortValue value2 = map.newValueInstance();
 
             key1.setValue(1);
             value1.setValue((short) 11);
@@ -868,9 +863,9 @@ public class CHMUseCasesTest {
             assertEquals(8, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             IntValue key1 = map.newKeyInstance();
-            IntValue key2 =  map.newKeyInstance();
+            IntValue key2 = map.newKeyInstance();
             UnsignedShortValue value1 = map.newValueInstance();
-            UnsignedShortValue value2 =  map.newValueInstance();
+            UnsignedShortValue value2 = map.newValueInstance();
 
             key1.setValue(1);
             value1.setValue(11);
@@ -950,9 +945,9 @@ public class CHMUseCasesTest {
             assertEquals(6, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             IntValue key1 = map.newKeyInstance();
-            IntValue key2 =  map.newKeyInstance();
+            IntValue key2 = map.newKeyInstance();
             CharValue value1 = map.newValueInstance();
-            CharValue value2 =  map.newValueInstance();
+            CharValue value2 = map.newValueInstance();
 
             key1.setValue(1);
             value1.setValue((char) 11);
@@ -1035,10 +1030,9 @@ public class CHMUseCasesTest {
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
             IntValue key1 = map.newKeyInstance();
-            IntValue key2 =  map.newKeyInstance();
+            IntValue key2 = map.newKeyInstance();
             UnsignedByteValue value1 = map.newValueInstance();
-            UnsignedByteValue value2 =  map.newValueInstance();
-
+            UnsignedByteValue value2 = map.newValueInstance();
 
 
             key1.setValue(1);
@@ -1120,9 +1114,9 @@ public class CHMUseCasesTest {
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
             IntValue key1 = map.newKeyInstance();
-            IntValue key2 =  map.newKeyInstance();
+            IntValue key2 = map.newKeyInstance();
             BooleanValue value1 = map.newValueInstance();
-            BooleanValue value2 =  map.newValueInstance();
+            BooleanValue value2 = map.newValueInstance();
 
 
             key1.setValue(1);
@@ -1204,9 +1198,9 @@ public class CHMUseCasesTest {
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
             FloatValue key1 = map.newKeyInstance();
-            FloatValue key2 =  map.newKeyInstance();
+            FloatValue key2 = map.newKeyInstance();
             FloatValue value1 = map.newValueInstance();
-            FloatValue value2 =  map.newValueInstance();
+            FloatValue value2 = map.newValueInstance();
 
 
             key1.setValue(1);
@@ -1288,9 +1282,9 @@ public class CHMUseCasesTest {
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
             DoubleValue key1 = map.newKeyInstance();
-            DoubleValue key2 =  map.newKeyInstance();
+            DoubleValue key2 = map.newKeyInstance();
             DoubleValue value1 = map.newValueInstance();
-            DoubleValue value2 =  map.newValueInstance();
+            DoubleValue value2 = map.newValueInstance();
 
 
             key1.setValue(1);
@@ -1374,10 +1368,9 @@ public class CHMUseCasesTest {
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
             LongValue key1 = map.newKeyInstance();
-            LongValue key2 =  map.newKeyInstance();
+            LongValue key2 = map.newKeyInstance();
             LongValue value1 = map.newValueInstance();
-            LongValue value2 =  map.newValueInstance();
-
+            LongValue value2 = map.newValueInstance();
 
 
             key1.setValue(1);
