@@ -579,7 +579,6 @@ public class StatelessClientTest {
 
                 for (int i = 0; i < count; i++) {
 
-
                     final int j = i;
                     executorService.submit(new Runnable() {
                         @Override
@@ -590,7 +589,7 @@ public class StatelessClientTest {
                                 latch.countDown();
                             } catch (Error | Exception e) {
                                 LOG.error("", e);
-                                executorService.shutdown();
+                                //executorService.shutdown();
 
                             }
                         }
@@ -624,7 +623,7 @@ public class StatelessClientTest {
                             } catch (Error | Exception e) {
                                 e.printStackTrace();
                                 LOG.error("", e);
-                                executorService.shutdown();
+                           //     executorService.shutdown();
                             }
                         }
                     });
@@ -632,7 +631,7 @@ public class StatelessClientTest {
 
                 }
 
-                latch.await(10, TimeUnit.SECONDS);
+                latch.await(20, TimeUnit.SECONDS);
                 System.out.println("" + count + " messages took " +
                         TimeUnit.MILLISECONDS.toSeconds(System
                                 .currentTimeMillis() - startTime) + " seconds, using " + nThreads + "" +
