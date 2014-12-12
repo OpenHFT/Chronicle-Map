@@ -102,10 +102,7 @@ public class TcpTimeBasedReplicationSoakTest {
 
 
     @Test
-    @Ignore
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
-
-        Thread.sleep(100);
 
         // for (int i = 30; i < 50; i++) {
         System.out.print("SoakTesting ");
