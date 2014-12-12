@@ -101,8 +101,6 @@ public class TcpReplicationSoakTest {
     public void testLargeValues() throws IOException, InterruptedException {
 
         map1.put(1, new String(value));
-
-        Thread.sleep(1000);
         System.out.println("\nwaiting till equal");
 
         waitTillEqual(10000);
