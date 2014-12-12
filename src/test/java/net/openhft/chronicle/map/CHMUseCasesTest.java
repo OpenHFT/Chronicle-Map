@@ -143,6 +143,23 @@ public class CHMUseCasesTest {
         }
     }
 
+    @Test
+    public void testAcquireUsingWithCharSequence() {
+        try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
+                .create()) {
+
+            CharSequence using = map.newValueInstance();
+
+            try (WriteContext wc = map.acquireUsingLocked("1", using)) {
+                assertTrue(using instanceof StringBuilder);
+                ((StringBuilder) using).append("Hello World");
+            }
+
+            assertEquals("Hello World", map.get("1"));
+        }
+    }
+
     /**
      * StringValue represents any bean which contains a String Value
      */

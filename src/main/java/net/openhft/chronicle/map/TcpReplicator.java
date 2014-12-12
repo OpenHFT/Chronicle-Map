@@ -767,6 +767,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             serverChannel.socket().setReceiveBufferSize(BUFFER_SIZE);
             serverChannel.configureBlocking(false);
+            serverChannel.register(TcpReplicator.this.selector,0);
             ServerSocket serverSocket = null;
 
             try {
