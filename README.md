@@ -468,10 +468,10 @@ the off heap data structures directly, this reduced serialisation can give you a
 Below we show you how you can work directly with the off heap entries.
 
 ``` java
-        ChronicleMap<CharSequence, BondVOInterface> chm = ChronicleMapBuilder
-                .of(String.class, BondVOInterface.class)
-                .keySize(10)
-                .create();
+ChronicleMap<CharSequence, BondVOInterface> map = ChronicleMapBuilder
+        .of(String.class, BondVOInterface.class)
+        .keySize(10)
+        .create();
 ```
 
 notice that the

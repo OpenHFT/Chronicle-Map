@@ -89,7 +89,7 @@ public class CHMUseCasesTest {
     public void testCharSequenceCharSequenceMap() throws ExecutionException, InterruptedException {
         try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class) // for testing purposes only
-                .defaultValue("")
+           //     .defaultValue("")
                 .create()) {
             map.put("Hello", "World");
             StringBuilder key = new StringBuilder();
