@@ -237,7 +237,7 @@ between processes by just using memory and in around 40 nanoseconds.
 ``` java 
 ConcurrentMap<Integer, CharSequence> map1, map2;
 
-// this could could be on one process
+// this could be on one process
 map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).createPersistedTo(file);
 
 // this could be on the other process
@@ -1110,16 +1110,18 @@ but in your example you should choose the host of the state-full server and the 
 ```
 
 the ".statelessClient(..)" returns an instance of `StatelessClientConfig`, which has only a few
-own configurations and `create()` method to create a new stateless client.
-method tells `ChronicleMap` that its going to build a stateless client.
-If you don’t add this line a normal state-full `ChronicleMap` will be created. For this example
+of its own configurations, such as the `create()` method, which can be used to create a new
+stateless client.
+If you don’t add this line, a normal state-full `ChronicleMap` will be created. For this example
 we ran both 
 the client an the server on the same host ( hence the “localhost" setting ), 
 but in a real life example the stateless client will typically be on a different server than the
 state-full host. If you are aiming to create a stateless client and server on the same host, its
-better not to do this, as the stateless client connects to the server via TCP/IP, 
-you would get better performance if you connect to the server via heap memory, to read more about
-sharing a map with heap memory
+better not to do this, as the stateless client connects to the server via TCP/IP. It better to
+share the maps via memory as this will give you better performance ( read more about
+this at [Sharing Data Between Two or More Maps](https://github
+.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps).
+
 click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps ) 
 
 ### How to speed up the Chronicle Map Stateless Client 
