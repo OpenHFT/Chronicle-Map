@@ -182,7 +182,7 @@ public class ChronicleMapImportExportTest {
     }
 
 
-    @Ignore("this type of off heap reference is not currently supported")
+    @Ignore("HCOLL-242 - this type of off heap reference is not currently supported")
     @Test
     public void testWithLongValue() throws IOException, InterruptedException {
 
