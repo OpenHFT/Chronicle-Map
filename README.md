@@ -1044,11 +1044,15 @@ unique for each map you have.
 A stateless client is an instance of a `ChronicleMap` or a `ChronicleSet` that does not hold any 
 data
  locally, all the Map or Set operations are delegated via a Remote Procedure Calls ( RPC ) to 
- another `ChronicleMap` or  `ChronicleSet`  which we will refer to as the server. The server will
- hold all your data, the server can not it’s self be a stateless client. Your stateless client must
- be connected to the server via TCP/IP. The stateless client will delegate all your method calls to
- the remote server. The stateless client operations will block, in other words the stateless client
- will wait for the server to send a response before continuing to the next operation. The stateless
+ another `ChronicleMap` or  `ChronicleSet`  which we will refer to as the server. The server
+ holds all your data, the server can not it’s self be a stateless client. Your stateless client must
+ be connected to the server via TCP/IP.
+
+ ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/09/State-Transition_1-thread_02.jpg)
+
+ The stateless client delegates all your method calls to
+ the remote server. The stateless client operations will block, in other words the stateless
+ client waits for the server to send a response before continuing to the next operation. The stateless
  client could be  consider to be a ClientProxy to `ChronicleMap` or  `ChronicleSet`  running
  on another host.
  
@@ -1120,13 +1124,16 @@ click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-o
 
 ### How to speed up the Chronicle Map Stateless Client 
 
-![Chronicle Map](http://openhft.net/wp-content/uploads/2014/09/State-Transition_1-thread_02.jpg)
+When calling the stateless client, you will get better throughput if you invoke your requests from a
+ number of threads, this is because by default when you make a method call to a `ChronicleMap`
+ stateless client, your method call is wrapped into an event which is sent over tcp and processed
+  by the server,
+your stateless client will block until an acknowledgement has been received from the server that
+your event was processed.
+
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/09/State-Transition_2-thread_03.jpg)
 
-By default when you make a method call to a `ChronicleMap` stateless client, 
-your method call is wrapped into an event which is sent over tcp and processed by the server, 
-your stateless client will block until an acknowledgement has been received from the server that 
-your event was processed. When you are calling methods that return a value like get() this 
+When you are calling methods that return a value like get() this
 blocking adds no additional overhead, because you have to wait for the return value anyway, 
 In some cases you could get better performance if you don't have to wait for the acknowledgement, This maybe the case when you are calling the `put()` method, but the problem with this method is it returns the old value even though you may not use it.
 
