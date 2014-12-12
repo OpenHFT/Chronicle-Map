@@ -668,7 +668,7 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    @Ignore("Generated code creates a field too large ie. it ignores the @Range")
+    @Ignore("HCOLL-241 Generated code creates a field too large ie. it ignores the @Range")
     public void testUnsignedIntValueUnsignedIntValueMapEntrySize() {
         // TODO once this is working, merge the next test.
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = ChronicleMapBuilder

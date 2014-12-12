@@ -172,11 +172,9 @@ public class ChronicleMapImportExportTest {
 
                     expected.getAll(file);
 
-
                     actual.putAll(file);
 
                     Assert.assertEquals(expected, actual);
-
 
                 }
             }
