@@ -431,8 +431,8 @@ public class CHMUseCasesTest {
             InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
-               // .keyMarshaller(ByteBufferMarshaller.INSTANCE)
-              //  .valueMarshaller(ByteBufferMarshaller.INSTANCE)
+                        // .keyMarshaller(ByteBufferMarshaller.INSTANCE)
+                        //  .valueMarshaller(ByteBufferMarshaller.INSTANCE)
                 .keySize(8)
                 .valueSize(8)
                 .maxEntryOversizeFactor(1)
@@ -1597,6 +1597,18 @@ public class CHMUseCasesTest {
                 assertTrue(rc.present());
                 assertEquals(mapOf("one", 1, "three", 3), map2);
             }
+        }
+    }
+
+    @Test
+    public void testMapStringIntegerValueWithoutListMarshallers() {
+        try (ChronicleMap<String, Map<String, Integer>> map = ChronicleMapBuilder
+                .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
+                .create()) {
+            map.put("1", Collections.<String, Integer>emptyMap());
+            map.put("2", mapOf("two", 2));
+
+            assertEquals(mapOf("two", 2), map.get("2"));
         }
     }
 
