@@ -297,6 +297,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         if (LOG.isDebugEnabled())
             LOG.debug("Attached to a map with a remote identifier=" + remoteIdentifier + " ,name=" + name);
+
     }
 
     @NotNull
@@ -593,7 +594,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     public void clear() {
-
         fetchVoid(CLEAR);
     }
 
@@ -839,14 +839,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private long writeEvent(@NotNull StatelessChronicleMap.EventId event) {
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
-
-        outBuffer.clear();
-        outBytes.clear();
-
         assert event != HEARTBEAT;
-
-        outBytes.clear();
-        outBuffer.clear();
 
         outBytes.write((byte) event.ordinal());
 
@@ -957,9 +950,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                     writeSizeAndTransactionIdAt(sizeLocation, transactionId);
 
                     // send out all the bytes
-                    writeBytesToSocket(outBytes, timeoutTime);
-                    outBytes.clear();
-                    outBytes.buffer().clear();
+                    writeBytesToSocket(timeoutTime);
+
                     break;
 
                 } catch (@NotNull java.nio.channels.ClosedChannelException | ClosedConnectionException e) {
@@ -1184,12 +1176,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
 
-    private void writeBytesToSocket(@NotNull final Bytes out, long timeoutTime) throws IOException {
+    private void writeBytesToSocket(long timeoutTime) throws IOException {
 
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
 
-        outBuffer.limit((int) out.position());
+        outBuffer.limit((int) outBytes.position());
         outBuffer.position(0);
 
         while (outBuffer.remaining() > 0) {
@@ -1197,7 +1189,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             checkTimeout(timeoutTime);
         }
 
-        out.clear();
         outBuffer.clear();
         outBytes.clear();
     }
