@@ -95,7 +95,7 @@ public class NoTcpReplicationSoakTest {
     AtomicInteger task = new AtomicInteger();
 
     @Test
-    @Ignore
+    @Ignore("HCOLL-243 Possible replication issue when used via multiple threads")
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         System.out.print("SoakTesting ");
