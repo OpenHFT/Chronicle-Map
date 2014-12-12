@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.values.*;
 import org.junit.Ignore;
@@ -157,6 +158,160 @@ public class CHMUseCasesTest {
             }
 
             assertEquals("Hello World", map.get("1"));
+        }
+    }
+
+    @Test
+    public void testGetUsingWithCharSequenceNoValue() {
+        try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
+                .create()) {
+
+            CharSequence using = map.newValueInstance();
+
+            try (ReadContext rc = map.getUsingLocked("1", using)) {
+                assertTrue(using instanceof StringBuilder);
+                ((StringBuilder) using).append("Hello World");
+            }
+
+            assertEquals(null, map.get("1"));
+        }
+    }
+
+
+    @Test
+    public void testGetUsingWithIntValueNoValue() {
+        try (ChronicleMap<CharSequence, IntValue> map = ChronicleMapBuilder
+                .of(CharSequence.class, IntValue.class)
+                .create()) {
+
+            IntValue using = map.newValueInstance();
+
+            try (ReadContext rc = map.getUsingLocked("1", using)) {
+                assertTrue(using instanceof IntValue);
+                using.setValue(1);
+            }
+
+            assertEquals(null, map.get("1"));
+        }
+    }
+
+
+    @Test(expected = IllegalStateException.class)
+    public void testAquireUsingWithIntValueNoValue() {
+        try (ChronicleMap<CharSequence, IntValue> map = ChronicleMapBuilder
+                .of(CharSequence.class, IntValue.class)
+                .create()) {
+
+            IntValue using = map.newValueInstance();
+
+            try (WriteContext rc = map.acquireUsingLocked("1", using)) {
+                assertTrue(using instanceof IntValue);
+                using.setValue(1);
+                rc.dontPutOnClose();
+            }
+
+            assertEquals(null, map.get("1"));
+        }
+    }
+
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAquireUsingImutableUsing() {
+        try (ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
+                .of(IntValue.class, CharSequence.class)
+                .create()) {
+
+            IntValue using = map.newKeyInstance();
+            using.setValue(1);
+
+            try (WriteContext rc = map.acquireUsingLocked(using, "")) {
+                assertTrue(using instanceof IntValue);
+                using.setValue(1);
+                rc.dontPutOnClose();
+            }
+
+            assertEquals(null, map.get("1"));
+        }
+    }
+
+    @Ignore("HCOLL-248 Issue with acquireUsingLocked() for a StringBuilder Value")
+    @Test
+    public void testAcquireUsingWithIntValueKeyStringBuilderValue() {
+        try (ChronicleMap<IntValue, StringBuilder> map = ChronicleMapBuilder
+                .of(IntValue.class, StringBuilder.class)
+                .create()) {
+
+            IntValue key = map.newKeyInstance();
+            key.setValue(1);
+
+            StringBuilder using = map.newValueInstance();
+
+            try (WriteContext rc = map.acquireUsingLocked(key, using)) {
+                using.append("Hello");
+            }
+
+            assertEquals("Hello", map.get(key).toString());
+        }
+    }
+
+    @Test
+    public void testAcquireUsingWithIntValueKey() {
+        try (ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
+                .of(IntValue.class, CharSequence.class)
+                .create()) {
+
+            IntValue key = map.newKeyInstance();
+            key.setValue(1);
+
+            CharSequence using = map.newValueInstance();
+
+            try (WriteContext rc = map.acquireUsingLocked(key, using)) {
+                key.setValue(3);
+                ((StringBuilder) using).append("Hello");
+            }
+
+            key.setValue(2);
+            try (WriteContext rc = map.acquireUsingLocked(key, using)) {
+                ((StringBuilder) using).append("World");
+            }
+
+            key.setValue(1);
+            assertEquals("Hello", map.get(key));
+        }
+    }
+
+    @Ignore("HCOLL-249 issue when using acquireUsingLocked() with ByteBufferBytes value")
+    @Test
+    public void testAcquireUsingWithByteBufferBytesValue() {
+        try (ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
+                .of(IntValue.class, CharSequence.class)
+                .create()) {
+
+            IntValue key = map.newKeyInstance();
+            key.setValue(1);
+
+            ByteBufferBytes value = new ByteBufferBytes(ByteBuffer.allocate(10));
+
+            try (WriteContext rc = map.acquireUsingLocked(key, value)) {
+                assertTrue(key instanceof IntValue);
+                key.setValue(1);
+
+            }
+
+            assertEquals(null, map.get(key));
+        }
+    }
+
+    @Ignore("HCOLL-250 map.newKeyInstance() throws NPE for simple types like Long")
+    @Test
+    public void testLongNewKeyValueInstance() {
+        try (ChronicleMap map = ChronicleMapBuilder
+                .of(Long.class, Long.class)
+                .create()) {
+
+            map.newKeyInstance();
+            map.newValueInstance();
         }
     }
 

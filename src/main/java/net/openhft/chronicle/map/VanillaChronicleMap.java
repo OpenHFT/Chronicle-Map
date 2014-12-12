@@ -650,6 +650,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     public V newValueInstance() {
+        if (vClass.equals(CharSequence.class) || vClass.equals(StringBuilder.class)) {
+            return (V) new StringBuilder();
+        }
+
         return newInstance(vClass, false);
     }
 
@@ -660,15 +664,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
 
     static <T> T newInstance(Class<T> interfaceClass, boolean isKey) {
-        if (isKey)
-            return DataValueClasses.newInstance(interfaceClass);
-        else {
-            if (interfaceClass.equals(CharSequence.class)) {
-                return (T) new StringBuilder();
-            }
-
-            return DataValueClasses.newDirectInstance(interfaceClass);
-        }
+        return isKey ? DataValueClasses.newInstance(interfaceClass) :
+                DataValueClasses.newDirectInstance(interfaceClass);
     }
 
     private XStreamConverter xStreamConverter;
