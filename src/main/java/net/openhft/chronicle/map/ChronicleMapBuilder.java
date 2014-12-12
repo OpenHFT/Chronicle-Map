@@ -146,9 +146,18 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         keyBuilder = new SerializationBuilder<>(keyClass, SerializationBuilder.Role.KEY);
         valueBuilder = new SerializationBuilder<>(valueClass, SerializationBuilder.Role.VALUE);
 
-        if (CharSequence.class.isAssignableFrom(valueClass)) {
+        if (String.class.equals(valueClass)) {
             defaultValue = (V) "";
             this.defaultValueProvider = null;
+        } else if (CharSequence.class.isAssignableFrom(valueClass)) {
+            defaultValue = null;
+            this.defaultValueProvider = new DefaultValueProvider<K, V>() {
+
+                @Override
+                public V get(K key) {
+                    return (V) new StringBuilder();
+                }
+            };
         }
     }
 
