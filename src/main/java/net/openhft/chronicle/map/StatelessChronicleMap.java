@@ -138,6 +138,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             throws IOException {
 
         this.config = config;
+
         keyReaderWithSize = new ReaderWithSize<>(chronicleMapBuilder.keyBuilder);
         keyWriterWithSize = new WriterWithSize<>(chronicleMapBuilder.keyBuilder);
         valueReaderWithSize = new ReaderWithSize<>(chronicleMapBuilder.valueBuilder);
@@ -841,7 +842,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         assert !inBytesLock.isHeldByCurrentThread();
         assert event != HEARTBEAT;
 
-        outBytes.write((byte) event.ordinal());
+        if (outBytes.remaining() < 128)
+            resizeBufferOutBuffer((int) outBytes.capacity() + 128, outBytes.position());
+
+        outBytes.writeByte((byte) event.ordinal());
+
 
         return markSizeLocation();
     }
@@ -855,8 +860,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         assert !inBytesLock.isHeldByCurrentThread();
 
         final long sizeLocation = writeEvent(event);
-
-        assert outBytes.readByte(0) == event.ordinal();
+        assert outBytes.readByte(sizeLocation - 1) == event.ordinal();
 
         assert outBytes.position() > 0;
 
@@ -864,7 +868,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         outBytes.skip(SIZE_OF_TRANSACTION_ID);
         outBytes.writeByte(identifier);
         outBytes.writeInt(0);
-        assert outBytes.readByte(0) == event.ordinal();
+        assert outBytes.readByte(sizeLocation - 1) == event.ordinal();
         return sizeLocation;
     }
 
@@ -1013,7 +1017,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             inBytes.limit(inBytes.capacity());
 
         // block until we have received all the bytes in this chunk
-        receive(remainingBytes, timeoutTime);
+        receiveBytesFromSocket(remainingBytes, timeoutTime);
 
         final boolean isException = inBytes.readBoolean();
 
@@ -1056,7 +1060,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 assert parkedTransactionTimeStamp == 0;
                 assert parkedRemainingBytes == 0;
 
-                receive(SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID, timeoutTime);
+                receiveBytesFromSocket(SIZE_OF_SIZE + SIZE_OF_TRANSACTION_ID, timeoutTime);
 
                 final int messageSize = inBytes.readInt();
                 assert messageSize > 0 : "Invalid message size " + messageSize;
@@ -1111,7 +1115,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                         "returned from the server"));
 
                 // read the the next message
-                receive(parkedRemainingBytes, timeoutTime);
+                receiveBytesFromSocket(parkedRemainingBytes, timeoutTime);
                 clearParked();
 
             }
@@ -1149,7 +1153,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
      * @throws IOException socket failed to read data
      */
     @SuppressWarnings("UnusedReturnValue")
-    private Bytes receive(int requiredNumberOfBytes, long timeoutTime) throws IOException {
+    private Bytes receiveBytesFromSocket(int requiredNumberOfBytes, long timeoutTime) throws IOException {
 
         assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
@@ -1165,7 +1169,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             int len = clientChannel.read(inBytes.buffer());
 
             if (len == -1)
-                throw new IORuntimeException("Disconnected to remote server");
+                throw new IORuntimeException("Disconnection to server");
 
             checkTimeout(timeoutTime);
         }
@@ -1176,21 +1180,59 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
 
+    long lagestEntrySoFar = 0;
+    long limitOfLast = 0;
+
     private void writeBytesToSocket(long timeoutTime) throws IOException {
 
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
 
+        // if we have other threads waiting to send and the buffer is not full, let the other threads
+        // write to the buffer
+        if (outBytesLock.hasQueuedThreads() &&
+                outBytes.position() + lagestEntrySoFar <= config.packetSize()) {
+            return;
+        }
+
         outBuffer.limit((int) outBytes.position());
         outBuffer.position(0);
 
+        int sizeOfThisMessage = (int) (outBuffer.limit() - limitOfLast);
+        if (lagestEntrySoFar < sizeOfThisMessage)
+            lagestEntrySoFar = sizeOfThisMessage;
+
+        limitOfLast = outBuffer.limit();
+
+
         while (outBuffer.remaining() > 0) {
-            clientChannel.write(outBuffer);
+
+            int len = clientChannel.write(outBuffer);
+            if (len == -1)
+                throw new IORuntimeException("Disconnection to server");
+
+
+            // if we have queued threads then we don't have to write all the bytes as the other
+            // threads will write the remains bytes.
+            if (outBuffer.remaining() > 0 && outBytesLock.hasQueuedThreads() &&
+                    outBuffer.remaining() + lagestEntrySoFar <= config.packetSize()) {
+
+
+                LOG.debug("continuing -  without all the data being written to the buffer as " +
+                        "it will be written by the next thread");
+                outBuffer.compact();
+                outBytes.limit(outBuffer.limit());
+                outBytes.position(outBuffer.position());
+                return;
+            }
+
             checkTimeout(timeoutTime);
+
         }
 
         outBuffer.clear();
         outBytes.clear();
+
     }
 
 
@@ -1199,22 +1241,24 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
 
-        assert outBytes.readByte(0) >= LONG_SIZE.ordinal();
+        assert outBytes.readByte(locationOfSize - 1) >= LONG_SIZE.ordinal();
 
 
         final long size = outBytes.position() - locationOfSize;
         final long pos = outBytes.position();
         outBytes.position(locationOfSize);
-        outBuffer.position((int) locationOfSize);
-        assert outBytes.readByte(0) >= LONG_SIZE.ordinal();
+        try {
+            outBuffer.position((int) locationOfSize);
 
-        assert locationOfSize == 1;
+        } catch (IllegalArgumentException e) {
+            LOG.error("locationOfSize=" + locationOfSize + ", limit=" + outBuffer.limit(), e);
+        }
         int size0 = (int) size - SIZE_OF_SIZE;
 
         outBytes.writeInt(size0);
         assert transactionId != 0;
         outBytes.writeLong(transactionId);
-        assert outBytes.readByte(0) >= LONG_SIZE.ordinal();
+
         outBytes.position(pos);
     }
 

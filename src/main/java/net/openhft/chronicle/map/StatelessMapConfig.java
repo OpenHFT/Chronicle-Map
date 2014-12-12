@@ -35,6 +35,8 @@ class StatelessMapConfig<K, V> implements StatelessClientConfig<ChronicleMap<K, 
     private final long timeoutMs;
     private final String name;
 
+    private int packetSize = 1024 * 64;
+
     private final AtomicBoolean used;
 
     StatelessMapConfig(ChronicleMapBuilder<K, V> mapBuilder,
@@ -80,5 +82,14 @@ class StatelessMapConfig<K, V> implements StatelessClientConfig<ChronicleMap<K, 
                             "Create a new StatelessClientConfig (builder.statelessClient()) " +
                             "to create a new stateless client");
         }
+    }
+
+    public int packetSize() {
+        return packetSize;
+    }
+
+    public StatelessMapConfig packetSize(int packetSize) {
+        this.packetSize = packetSize;
+        return this;
     }
 }
