@@ -523,7 +523,6 @@ public class ChronicleMapTest {
         map.close();
     }
 
-    @Ignore("JIRA raised HCOLL-221")
     @Test
     public void testAcquireFromMultipleThreads() throws Exception {
         int entries = 1000 * 1000;
@@ -566,7 +565,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("Performance test")
     public void testAcquirePerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
@@ -638,7 +637,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("Performance test")
     public void testAcquireLockedPerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
@@ -712,7 +711,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("Performance test")
     public void testAcquireLockedLLPerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
@@ -788,7 +787,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("Performance test")
     public void testCHMAcquirePerf() throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException, InterruptedException {
         for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
             System.out.println("Testing " + runs + " million entries");
