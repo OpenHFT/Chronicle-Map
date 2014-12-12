@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map;
 
 import junit.framework.Assert;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.values.LongValue;
 import net.openhft.lang.values.LongValue$$Native;
 import org.junit.Ignore;
@@ -8,6 +9,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -152,6 +154,36 @@ public class ChronicleMapImportExportTest {
         }
     }
 
+
+    @Ignore("HCOLL-239 - The JSON to Map import/export should work on the stateless client.")
+    @Test
+    public void testToJsonWithStatlessClient() throws IOException, InterruptedException {
+        File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
+        file.deleteOnExit();
+        try (ChronicleMap<CharSequence, CharSequence> expected = ChronicleMapBuilder.of(CharSequence.class, CharSequence
+                .class)
+                .create()) {
+            try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+                try (ChronicleMap<Integer, CharSequence> actual = ChronicleMapBuilder.of(Integer
+                        .class, CharSequence.class)
+                        .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+                    expected.put("hello", "world");
+
+                    expected.getAll(file);
+
+
+                    actual.putAll(file);
+
+                    Assert.assertEquals(expected, actual);
+
+
+                }
+            }
+        }
+    }
+
+
     @Ignore("this type of off heap reference is not currently supported")
     @Test
     public void testWithLongValue() throws IOException, InterruptedException {
@@ -186,5 +218,6 @@ public class ChronicleMapImportExportTest {
             file.delete();
         }
     }
+
 
 }
