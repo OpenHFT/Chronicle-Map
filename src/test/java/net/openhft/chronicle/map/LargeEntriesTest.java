@@ -100,7 +100,7 @@ public class LargeEntriesTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("Performance Test")
     public void testLargeStringsPerf() throws ExecutionException, InterruptedException, IOException {
         doLargeEntryPerf(10000, 100 * 1024);
         doLargeEntryPerf(100000, 10 * 1024);
