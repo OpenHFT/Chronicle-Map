@@ -35,7 +35,7 @@ class StatelessMapConfig<K, V> implements StatelessClientConfig<ChronicleMap<K, 
     private final long timeoutMs;
     private final String name;
 
-    private int packetSize = 1024 * 64;
+    private int tcpBufferSize = 1024 * 64;
 
     private final AtomicBoolean used;
 
@@ -84,12 +84,12 @@ class StatelessMapConfig<K, V> implements StatelessClientConfig<ChronicleMap<K, 
         }
     }
 
-    public int packetSize() {
-        return packetSize;
+    public int tcpBufferSize() {
+        return tcpBufferSize;
     }
 
-    public StatelessMapConfig packetSize(int packetSize) {
-        this.packetSize = packetSize;
+    public StatelessMapConfig tcpBufferSize(int packetSize) {
+        this.tcpBufferSize = packetSize;
         return this;
     }
 }

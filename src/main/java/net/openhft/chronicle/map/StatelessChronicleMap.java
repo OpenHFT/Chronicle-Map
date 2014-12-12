@@ -1191,7 +1191,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         // if we have other threads waiting to send and the buffer is not full, let the other threads
         // write to the buffer
         if (outBytesLock.hasQueuedThreads() &&
-                outBytes.position() + lagestEntrySoFar <= config.packetSize()) {
+                outBytes.position() + lagestEntrySoFar <= config.tcpBufferSize()) {
             return;
         }
 
@@ -1215,7 +1215,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             // if we have queued threads then we don't have to write all the bytes as the other
             // threads will write the remains bytes.
             if (outBuffer.remaining() > 0 && outBytesLock.hasQueuedThreads() &&
-                    outBuffer.remaining() + lagestEntrySoFar <= config.packetSize()) {
+                    outBuffer.remaining() + lagestEntrySoFar <= config.tcpBufferSize()) {
 
 
                 LOG.debug("continuing -  without all the data being written to the buffer as " +
