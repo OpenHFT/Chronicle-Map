@@ -483,29 +483,29 @@ notice that the
 value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  now
 like before, we can
 use the `getUsing(key,using)` method, but this time we have to create the ‘using’ instance slightly
-differently, we have to call the `newDirectReference(..)` method.
+differently, we have to call either the `map.newValueInstance()` or `map.newKeyInstance()` method.
 
 ``` java
-BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
+BondVOInterface using = map.newValueInstance();
 ``` 
 
 the call to `getUsing(key,value)` is the same as we had in the earlier example
 
 ``` java
-BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
+BondVOInterface using = map.newValueInstance();
 BondVOInterface  bond = map.getUsing(key,using);
 assert using == bond; // this will always be the same instance
 ```
 
 `getUsing(key,using)` won’t create any on heap objects, and it won’t deserialize the ‘bond’ entry from off heap to on
 heap, all it does is sets the bond as a proxy to the off heap memory, this proxy object was created by
-`DataValueClasses.newDirectReference(BondVOInterface.class)`, it allows us access to the fields of our
+`map.newValueInstance()`, it allows us access to the fields of our
 entry, directly into the off heap storage.
 
 As above, ideally you would reuse the `using` variable.
 
  ``` java
-BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
+BondVOInterface using = map.newValueInstance();
 
 for(int i=1;i<=10;i++) {
   Value bond = map.getUsing(key,using); // this won’t create a new value each time.
@@ -550,8 +550,7 @@ context.close() // the lock will get released when this is called
 
 ####  acquireUsingLocked()
 Just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
-code is a pattern that you will often come across, `acquireUsing(key,value)` offers this
-functionality i the example, below with a single method call :
+code is a pattern that you will often come across,
 
  ``` java
 V acquireUsing(key,value) {
@@ -569,6 +568,10 @@ V acquireUsing(key,value) {
     }
 }
 ```
+
+`acquireUsing(key,value)` offers this functionality from a single method call, an be cause it
+implemented inside the chronicle map we are able to reduce the hash lookups and make it more
+efficient.
 
 If you are only accessing ChronicleMap from a single thread. If you are not doing replication
 and don't care about atomic reads. Then its simpler ( and faster ) to use acquireUsing() otherwise we
