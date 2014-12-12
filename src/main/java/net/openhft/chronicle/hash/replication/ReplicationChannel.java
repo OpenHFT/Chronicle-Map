@@ -20,6 +20,8 @@ import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * A token which should be created via {@link ReplicationHub#createChannel(int)} call and passed to {@link
  * ChronicleHashInstanceConfig#replicatedViaChannel(ReplicationChannel)} method, to establish a channel
@@ -31,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * @see ReplicationHub
  * @see ReplicationHub#createChannel(int)
  */
-public final class ReplicationChannel {
+public final class ReplicationChannel implements Serializable{
     private ReplicationHub hub;
     private final int channelId;
 

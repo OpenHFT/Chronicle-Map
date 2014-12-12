@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.Before;
@@ -46,17 +45,17 @@ public class MapByNameTest {
     }
 
     @Test
-    @Ignore("builder is not serializable")
     public void testSerializingBuilder() throws TimeoutException, InterruptedException, IOException {
 
         final MapInstanceConfig<CharSequence, CharSequence> config =
                 (MapInstanceConfig<CharSequence, CharSequence>)
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(2)
-                .minSegments(2)
-                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8244))
-                .removeReturnsNull(true)
-                .instance().name("map1");
+                        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                                .entrySize(900)
+                                .entries(2)
+                                .minSegments(2)
+                                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8244))
+                                .removeReturnsNull(true)
+                                .instance().name("map1");
 
         final ChronicleMap<CharSequence, CharSequence> map = findMapByName.create(config);
         map.put("hello", "world");
@@ -77,11 +76,11 @@ public class MapByNameTest {
 
         MapInstanceConfig<CharSequence, CharSequence> config =
                 (MapInstanceConfig<CharSequence, CharSequence>)
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .minSegments(2)
-                .removeReturnsNull(true)
-                .instance()
-                .name("myMap");
+                        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                                .minSegments(2)
+                                .removeReturnsNull(true)
+                                .instance()
+                                .name("myMap");
 
         ReplicationHubFindByName<CharSequence> mapByName = nodeDiscovery.mapByName();
         //  mapByName.add(config);
@@ -97,12 +96,12 @@ public class MapByNameTest {
 
         MapInstanceConfig<CharSequence, CharSequence> config =
                 (MapInstanceConfig<CharSequence, CharSequence>)
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .minSegments(2)
-                .entries(2)
-                .removeReturnsNull(true)
-                .instance()
-                .name("myMap6");
+                        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                                .minSegments(2)
+                                .entries(2)
+                                .removeReturnsNull(true)
+                                .instance()
+                                .name("myMap6");
 
         ChronicleMap<String, String> map = mapByName.create(config);
         map.put("hello", "world");

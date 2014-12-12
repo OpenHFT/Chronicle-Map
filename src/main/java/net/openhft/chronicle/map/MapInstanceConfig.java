@@ -23,10 +23,11 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 final class MapInstanceConfig<K, V>
-        implements ChronicleHashInstanceConfig<ChronicleMap<K, V>> {
+        implements ChronicleHashInstanceConfig<ChronicleMap<K, V>>, Serializable{
 
     final ChronicleMapBuilder<K, V> mapBuilder;
     final SingleChronicleHashReplication singleHashReplication;

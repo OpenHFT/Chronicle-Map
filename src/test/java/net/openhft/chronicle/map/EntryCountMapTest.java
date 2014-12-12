@@ -137,7 +137,7 @@ public class EntryCountMapTest {
     }
 
     @Test
-    @Ignore
+    @Ignore ("ignore because its a scalability test")
     public void testLarge() throws Exception {
         int s = 8 * 1024;
         for (int i = 0; i < 10; i++) {

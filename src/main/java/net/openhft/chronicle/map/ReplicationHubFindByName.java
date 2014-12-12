@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -83,7 +82,7 @@ class ReplicationHubFindByName<K> implements FindByName {
 
         this.map = (Map) ChronicleMapBuilder
                 .of(CharSequence.class, MapInstanceConfig.class)
-                .entrySize(3000)
+                .entrySize(4000)
                 .entries(128)
                 .eventListener(listener)
                 .instance()

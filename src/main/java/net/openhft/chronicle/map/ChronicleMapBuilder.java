@@ -99,7 +99,7 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * @see ChronicleSetBuilder
  */
 public final class ChronicleMapBuilder<K, V> implements Cloneable,
-        ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>> {
+        ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>, Serializable {
 
     static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte)128;
     private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
