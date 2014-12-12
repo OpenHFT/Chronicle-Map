@@ -23,6 +23,7 @@ import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -453,6 +454,43 @@ public class StatelessClientTest {
                 assertEquals(1, statelessMap.size());
 
                 statelessMap.remove(1);
+
+                assertEquals(null, statelessMap.get(1));
+                assertEquals(0, statelessMap.size());
+            }
+        }
+    }
+
+    @Ignore("HCOLL-245 Stateless Client to support large entries")
+    @Test(timeout = 10000)
+    public void testLargeEntries() throws IOException,
+            InterruptedException {
+
+
+        int keySize = 4;
+        int valueSize = 1000000;
+        int entrySize = keySize + valueSize;
+
+        char[] value = new char[valueSize];
+
+        Arrays.fill(value, 'X');
+
+        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .entrySize(entrySize)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+            try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, CharSequence.class)
+                    .entrySize(entrySize)
+                    .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+
+           //     for (int i = 0; i < 128; i++) {
+
+                    statelessMap.put(1, new String(value));
+
+                    assertEquals("some value", statelessMap.get(1));
+                    assertEquals(1, statelessMap.size());
+
+             //   }
 
                 assertEquals(null, statelessMap.get(1));
                 assertEquals(0, statelessMap.size());
