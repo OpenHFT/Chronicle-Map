@@ -30,7 +30,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *   [Maven Download](https://github.com/OpenHFT/Chronicle-Map#maven-artifact-download-1)
  *   [Snapshot Download](https://github.com/OpenHFT/Chronicle-Map#maven-snapshot-download)
  *   [Key Value Object Types](https://github.com/OpenHFT/Chronicle-Map#key-value-object-types)
- *   [Off Heap and How to improve performance]()
+ *   [Off Heap and How to improve performance](https://github.com/OpenHFT/Chronicle-Map#off-heap-storage-and-how-using-a-proxy-object-can-improve-performance)
  *   [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
  *   [Entries](https://github.com/OpenHFT/Chronicle-Map#entries)
  *   [Size of Space Reserved on Disk](https://github.com/OpenHFT/Chronicle-Map#size-of-space-reserved-on-disk)
@@ -54,6 +54,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
 * [Multi Chronicle Maps - Network Distributed](https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed)
 * [Stateless Client](https://github.com/OpenHFT/Chronicle-Map#stateless-client)
+* [How to speed up the Chronicle Map Stateless Client](https://github.com/OpenHFT/Chronicle-Map#how-to-speed-up-the-chronicle-map-stateless-client)
 * [Questions/Answers](https://github.com/OpenHFT/Chronicle-Map#questions-and-answers)
 
 #### Miscellaneous
@@ -380,6 +381,12 @@ heap memory. When this memory is shared between processes on the same server,
 the chronicle map is able to distribute entries between processes with extremely low overhead, 
 as both processes are sharing the same off heap memory space. Since your objects are already stored off
 heap ( as a series of bytes ), replicating entries over the network adds relatively low over head.
+
+For more information on the benefit's of off heap memory, see our article on - [On
+heap vs off
+heap memory
+usage]
+(http://vanillajava.blogspot.co.uk/2014/12/on-heap-vs-off-heap-memory-usage.html)
 
 One of the downsides of an Off Heap Map is that whenever you wish to get a value ( on heap ) from an entry
 which is off heap, for example calling :
