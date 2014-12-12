@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import junit.framework.Assert;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.values.*;
@@ -81,6 +82,34 @@ public class CHMUseCasesTest {
             });
         }
     }
+
+    @Test
+    public void testCharSequenceMixingKeyTypes() throws ExecutionException, InterruptedException {
+
+        try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class) // for testing purposes only
+                .create()) {
+            map.put("Hello", "World");
+            map.put(new StringBuilder("Hello"), "World2");
+
+            Assert.assertEquals("World2", map.get("Hello"));
+        }
+    }
+
+    @Test
+    public void testCharSequenceMixingValueTypes() throws ExecutionException, InterruptedException {
+
+        try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class) // for testing purposes only
+                .create()) {
+            map.put("Hello", "World");
+            map.put("Hello2", new StringBuilder("World2"));
+
+            Assert.assertEquals("World2", map.get("Hello2"));
+            Assert.assertEquals("World", map.get("Hello"));
+        }
+    }
+
 
     /**
      * CharSequence is more efficient when object creation is avoided. The key can only be on heap
