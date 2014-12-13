@@ -32,7 +32,7 @@ public class MarkTest {
 
     static int ENTRIES = 25_000_000;
 
-    @Test
+    @Test(timeout = 15000)
     public void inMemoryTest() {
         test(new Function<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>() {
             @Override
@@ -43,7 +43,7 @@ public class MarkTest {
         });
     }
 
-    @Test
+    @Test(timeout = 15000)
     public void persistedTest() {
         final File db = Paths.get(System.getProperty("java.io.tmpdir"), "mark").toFile();
         try {
