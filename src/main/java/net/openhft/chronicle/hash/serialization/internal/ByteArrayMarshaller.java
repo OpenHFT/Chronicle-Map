@@ -20,7 +20,7 @@ package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.Hasher;
+import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.lang.io.Bytes;
 
 public enum ByteArrayMarshaller implements BytesInterop<byte[]>, BytesReader<byte[]> {
@@ -33,6 +33,8 @@ public enum ByteArrayMarshaller implements BytesInterop<byte[]>, BytesReader<byt
 
     @Override
     public boolean startsWith(Bytes bytes, byte[] ba) {
+        if (bytes.capacity() - bytes.position() < (long) ba.length)
+            return false;
         long pos = bytes.position();
         for (int i = 0; i < ba.length; i++) {
             if (bytes.readByte(pos + i) != ba[i])
@@ -43,7 +45,7 @@ public enum ByteArrayMarshaller implements BytesInterop<byte[]>, BytesReader<byt
 
     @Override
     public long hash(byte[] ba) {
-        return Hasher.hash(ba, ba.length);
+        return Hasher.hash(ba);
     }
 
     @Override
@@ -60,6 +62,9 @@ public enum ByteArrayMarshaller implements BytesInterop<byte[]>, BytesReader<byt
 
     @Override
     public byte[] read(Bytes bytes, long size, byte[] toReuse) {
+        if (size < 0L || size > (long) Integer.MAX_VALUE)
+            throw new IllegalArgumentException("byte[] size should be non-negative int, " +
+                    size + " given. Memory corruption?");
         if (toReuse == null || size != toReuse.length)
             toReuse = new byte[(int) size];
         bytes.read(toReuse);

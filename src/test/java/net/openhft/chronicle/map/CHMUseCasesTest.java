@@ -626,14 +626,11 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore("HCOLL-247 automatically register ByteBufferMarshaller")
     @Test
     public void testByteBufferByteBufferDefaultKeyValueMarshaller() throws ExecutionException,
             InterruptedException {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
-                        // .keyMarshaller(ByteBufferMarshaller.INSTANCE)
-                        //  .valueMarshaller(ByteBufferMarshaller.INSTANCE)
                 .keySize(8)
                 .valueSize(8)
                 .maxEntryOversizeFactor(1)

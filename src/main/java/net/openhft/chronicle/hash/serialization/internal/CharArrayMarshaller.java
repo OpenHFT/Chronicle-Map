@@ -20,7 +20,7 @@ package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.Hasher;
+import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.lang.io.Bytes;
 
 public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<char[]> {
@@ -28,6 +28,8 @@ public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<cha
 
     @Override
     public boolean startsWith(Bytes bytes, char[] chars) {
+        if (bytes.capacity() - bytes.position() < chars.length * 2L)
+            return false;
         long pos = bytes.position();
         for (int i = 0; i < chars.length; i++) {
             if (bytes.readChar(pos + (i * 2L)) != chars[i])
@@ -38,7 +40,7 @@ public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<cha
 
     @Override
     public long hash(char[] chars) {
-        return Hasher.hash(chars, chars.length);
+        return Hasher.hash(chars);
     }
 
     @Override

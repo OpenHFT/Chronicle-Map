@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
+import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.MultiStoreBytes;
@@ -75,6 +76,8 @@ public abstract class ByteableMarshaller<E extends Byteable>
 
     @Override
     public boolean startsWith(Bytes bytes, E e) {
+        if (bytes.capacity() - bytes.position() < size)
+            return false;
         Bytes input = e.bytes();
         long pos = bytes.position(), inputPos = e.offset();
 

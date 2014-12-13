@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.*;
+import net.openhft.chronicle.hash.serialization.internal.ByteBufferMarshaller;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
@@ -151,6 +152,9 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         } else if (eClass == char[].class) {
             reader((BytesReader<E>) CharArrayMarshaller.INSTANCE);
             interop((BytesInterop<E>) CharArrayMarshaller.INSTANCE);
+        } else if (eClass == ByteBuffer.class) {
+            reader((BytesReader<E>) ByteBufferMarshaller.INSTANCE);
+            writer((BytesWriter<E>) ByteBufferMarshaller.INSTANCE);
         } else if (concreteClass(eClass)) {
             BytesMarshaller<E> marshaller = chooseMarshaller(eClass, eClass);
             if (marshaller != null)

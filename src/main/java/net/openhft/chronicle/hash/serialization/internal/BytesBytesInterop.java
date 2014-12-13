@@ -17,7 +17,7 @@
 package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesInterop;
-import net.openhft.chronicle.hash.serialization.Hasher;
+import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.lang.io.Bytes;
 
 public enum BytesBytesInterop implements BytesInterop<Bytes> {
@@ -25,7 +25,11 @@ public enum BytesBytesInterop implements BytesInterop<Bytes> {
 
     @Override
     public boolean startsWith(Bytes bytes, Bytes e) {
-        return bytes.startsWith(e);
+        long limit = bytes.limit();
+        bytes.limit(bytes.capacity());
+        boolean result = bytes.startsWith(e);
+        bytes.limit(limit);
+        return result;
     }
 
     @Override
