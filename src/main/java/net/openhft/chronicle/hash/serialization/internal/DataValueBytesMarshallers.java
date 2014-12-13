@@ -311,28 +311,29 @@ public final class DataValueBytesMarshallers {
                 if (model.isArray()) {
                     read.append("        for (int i = 0; i < ")
                             .append(model.indexSize().value()).append("; i++) {\n");
-                    if (CharSequence.class.isAssignableFrom(type))
-                        read.append("            long pos = bytes.position();\n");
+                    saveCharSequencePosition(read, type);
                     read.append("            toReuse.").append(defaultSetter.getName())
                             .append("(i, bytes.read").append(bytesType(type)).append("());\n");
-                    if (CharSequence.class.isAssignableFrom(type))
-                        read.append("            bytes.position(pos + ")
-                                .append(fieldSize(model)).append(");\n");
+                    updateCharSequencePosition(read, model, type);
                     read.append("        }\n");
                 } else {
                     read.append("        {\n");
-                    if (CharSequence.class.isAssignableFrom(type))
-                        read.append("            long pos = bytes.position();\n");
+                    saveCharSequencePosition(read, type);
                     read.append("            toReuse.").append(defaultSetter.getName())
                             .append("(bytes.read").append(bytesType(type)).append("());\n");
-                    if (CharSequence.class.isAssignableFrom(type))
-                        read.append("            bytes.position(pos + ")
-                                .append(fieldSize(model)).append(");\n");
+                    updateCharSequencePosition(read, model, type);
                     read.append("        }\n");
                 }
             }
         }
         return read;
+    }
+
+    private static void updateCharSequencePosition(StringBuilder read, FieldModel model,
+                                                   Class type) {
+        if (CharSequence.class.isAssignableFrom(type))
+            read.append("            bytes.position(pos + ")
+                    .append(fieldSize(model)).append(");\n");
     }
 
     private static String generateBytesWriter(Class<?> tClass) {
@@ -449,29 +450,37 @@ public final class DataValueBytesMarshallers {
                 if (model.isArray()) {
                     write.append("        for (int i = 0; i < ")
                             .append(model.indexSize().value()).append("; i++) {\n");
-                    if (CharSequence.class.isAssignableFrom(type))
-                        write.append("            long pos = bytes.position();\n");
+                    saveCharSequencePosition(write, type);
                     write.append("            bytes.write").append(bytesType(type))
                             .append("(e.").append(defaultGetter.getName()).append("(i));\n");
-                    if (CharSequence.class.isAssignableFrom(type))
-                        write.append("            bytes.position(pos + ")
-                                .append(fieldSize(model)).append(");\n");
-
+                    zeroOutRemainingCharSequenceBytesAndUpdatePosition(write, model, type);
                     write.append("        }\n");
                 } else {
                     write.append("        {\n");
-                    if (CharSequence.class.isAssignableFrom(type))
-                        write.append("            long pos = bytes.position();\n");
+                    saveCharSequencePosition(write, type);
                     write.append("            bytes.write").append(bytesType(type))
                             .append("(e.").append(defaultGetter.getName()).append("());\n");
-                    if (CharSequence.class.isAssignableFrom(type))
-                        write.append("            bytes.position(pos + ")
-                                .append(fieldSize(model)).append(");\n");
+                    zeroOutRemainingCharSequenceBytesAndUpdatePosition(write, model, type);
                     write.append("        }\n");
                 }
             }
         }
         return write.toString();
+    }
+
+    private static void saveCharSequencePosition(StringBuilder write, Class type) {
+        if (CharSequence.class.isAssignableFrom(type))
+            write.append("            long pos = bytes.position();\n");
+    }
+
+    private static void zeroOutRemainingCharSequenceBytesAndUpdatePosition(
+            StringBuilder write, FieldModel model, Class type) {
+        if (CharSequence.class.isAssignableFrom(type)) {
+            write.append("            long newPos = pos + ").append(fieldSize(model))
+                    .append(";\n");
+            write.append("            bytes.zeroOut(bytes.position(), newPos);\n");
+            write.append("            bytes.position(newPos);\n");
+        }
     }
 
     private static void generateRead(StringBuilder read, StringBuilder sb, String simpleName,
