@@ -42,7 +42,7 @@ public enum IntegerMarshaller
 
     @Override
     public boolean startsWith(Bytes bytes, Integer e) {
-        return e == bytes.readInt(0);
+        return e == bytes.readInt(bytes.position());
     }
 
     @Override

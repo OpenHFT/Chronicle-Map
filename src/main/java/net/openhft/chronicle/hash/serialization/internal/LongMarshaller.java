@@ -45,7 +45,7 @@ public enum LongMarshaller
 
     @Override
     public boolean startsWith(Bytes bytes, Long e) {
-        return e == bytes.readLong(0);
+        return e == bytes.readLong(bytes.position());
     }
 
     @Override

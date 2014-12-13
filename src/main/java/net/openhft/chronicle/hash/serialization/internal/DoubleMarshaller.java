@@ -46,7 +46,7 @@ public enum DoubleMarshaller implements BytesInterop<Double>, BytesReader<Double
 
     @Override
     public boolean startsWith(Bytes bytes, Double e) {
-        return doubleToLongBits(e) == bytes.readLong(0);
+        return doubleToLongBits(e) == bytes.readLong(bytes.position());
     }
 
     @Override
