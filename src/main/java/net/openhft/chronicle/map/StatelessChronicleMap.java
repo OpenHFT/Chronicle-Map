@@ -88,7 +88,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final boolean removeReturnsNull;
 
 
-    private final ReentrantLock inBytesLock = new ReentrantLock();
+    private final ReentrantLock inBytesLock = new ReentrantLock(true);
     private final ReentrantLock outBytesLock = new ReentrantLock();
 
 
