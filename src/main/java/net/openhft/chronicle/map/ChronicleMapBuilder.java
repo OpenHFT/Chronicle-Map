@@ -940,10 +940,10 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
      * @see #prepareDefaultValueBytes(PrepareValueBytes)
      */
     public ChronicleMapBuilder<K, V> defaultValue(V defaultValue) {
+        if (defaultValue == null)
+            throw new IllegalArgumentException("default ChronicleMap value couldn't be null");
         this.defaultValue = defaultValue;
         this.defaultValueProvider = null;
-        if (defaultValue == null)
-            defaultValueProvider = NullValueProvider.INSTANCE;
         this.prepareValueBytes = null;
         return this;
     }
