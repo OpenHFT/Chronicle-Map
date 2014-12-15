@@ -5,6 +5,7 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.WriteContext;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Vanitha on 12/5/2014.
  */
+@Ignore("a test written by someone on the google groups")
 public class TestNesterInterfaceMarshal {
 
 
@@ -23,6 +25,7 @@ public class TestNesterInterfaceMarshal {
      * @throws Exception
      */
     @Test
+
     public void testReplicatedMap() throws Exception {
 
         ChronicleMap chronicleMap = null;
@@ -69,16 +72,16 @@ public class TestNesterInterfaceMarshal {
             intrumentVOInterface.setCurrencyCode("USA");
             intrumentVOInterface.setSizeOfInstrumentIDArray(2);
 
-         //   TestIntrumentVOInterface.TestInstrumentIDVOInterface instrumentIDVOInterface =
-                    intrumentVOInterface.getInstrumentIDAt(0);
-         //   instrumentIDVOInterface.setIdSource("CUSIP");
-         //   instrumentIDVOInterface.setSecurityId("TEST");
+            //   TestIntrumentVOInterface.TestInstrumentIDVOInterface instrumentIDVOInterface =
+            intrumentVOInterface.getInstrumentIDAt(0);
+            //   instrumentIDVOInterface.setIdSource("CUSIP");
+            //   instrumentIDVOInterface.setSecurityId("TEST");
 
-           // intrumentVOInterface.setInstrumentIDAt(0, instrumentIDVOInterface);
+            // intrumentVOInterface.setInstrumentIDAt(0, instrumentIDVOInterface);
 
 
-          //  Assert.assertNotNull(map);
-          //  Assert.assertNotNull(replicatedMap);
+            //  Assert.assertNotNull(map);
+            //  Assert.assertNotNull(replicatedMap);
         }
 
 
@@ -92,7 +95,7 @@ public class TestNesterInterfaceMarshal {
         Assert.assertEquals(map, replicatedMap);
         Assert.assertTrue(!replicatedMap.isEmpty());
 
-        System.out.println(((  TestInstrumentVOInterface.TestInstrumentIDVOInterface) map.get
+        System.out.println(((TestInstrumentVOInterface.TestInstrumentIDVOInterface) map.get
                 ("KEY1")).getIdSource());
         System.out.println(replicatedMap.get("KEY1"));
 
