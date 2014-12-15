@@ -663,9 +663,32 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
 
-    static <T> T newInstance(Class<T> interfaceClass, boolean isKey) {
-        return isKey ? DataValueClasses.newInstance(interfaceClass) :
-                DataValueClasses.newDirectInstance(interfaceClass);
+    static <T> T newInstance(Class<T> aClass, boolean isKey) {
+        try {
+            return isKey ? DataValueClasses.newInstance(aClass) :
+                    DataValueClasses.newDirectInstance(aClass);
+        } catch (Exception e) {
+            if (aClass.isInterface())
+                throw new IllegalStateException("It not possible to create a instance from " +
+                        "interface=" + aClass.getSimpleName() + " we recommend you create an " +
+                        "instance in the usual way.");
+
+            try {
+                return (T) aClass.newInstance();
+            } catch (Exception e1) {
+                throw new IllegalStateException("It has not been possible to create a instance " +
+                        "of class=" + aClass.getSimpleName() +
+                        ", Note : its more efficient if your chronicle map is configured with " +
+                        "interface key " +
+                        "and value types rather than classes, as this method is able to use " +
+                        "interfaces to generate off heap proxies that point straight at your data. " +
+                        "In this case you have used a class and chronicle is unable to create an " +
+                        "instance of this class has it does not have a default constructor. " +
+                        "If your class is mutable, we " +
+                        "recommend you create and instance of your class=" + aClass.getSimpleName() +
+                        " in the usual way, rather than using this method.");
+            }
+        }
     }
 
     private XStreamConverter xStreamConverter;

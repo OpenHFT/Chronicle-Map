@@ -59,7 +59,7 @@ final class CloseablesManager implements Closeable {
             try {
                 closeable.close();
             } catch (IOException e) {
-                LOG.error("", e);
+                LOG.debug("", e);
                 ex = e;
             }
         }

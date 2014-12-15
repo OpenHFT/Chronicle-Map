@@ -332,8 +332,8 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore("HCOLL-250 map.newKeyInstance() throws NPE for simple types like Long")
-    @Test
+
+    @Test(expected = IllegalStateException.class)
     public void testLongNewKeyValueInstance() {
         try (ChronicleMap map = ChronicleMapBuilder
                 .of(Long.class, Long.class)
@@ -343,6 +343,42 @@ public class CHMUseCasesTest {
             map.newValueInstance();
         }
     }
+
+
+    @Test(expected = IllegalStateException.class)
+    public void testNewKeyValueInstanceWithMapType() {
+        try (ChronicleMap map = ChronicleMapBuilder
+                .of(Map.class, Map.class)
+                .create()) {
+
+            map.newKeyInstance();
+            map.newValueInstance();
+        }
+    }
+
+    @Test
+    public void testNewKeyValueInstanceWithHahMapType() {
+        try (ChronicleMap map = ChronicleMapBuilder
+                .of(HashMap.class, HashMap.class)
+                .create()) {
+
+            map.newKeyInstance();
+            map.newValueInstance();
+        }
+    }
+
+
+    @Test(expected = IllegalStateException.class)
+    public void testNewKeyValueInstanceWithByteArray() {
+        try (ChronicleMap map = ChronicleMapBuilder
+                .of(byte[].class, byte[].class)
+                .create()) {
+
+            map.newKeyInstance();
+            map.newValueInstance();
+        }
+    }
+
 
     /**
      * StringValue represents any bean which contains a String Value
