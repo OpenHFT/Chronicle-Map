@@ -43,6 +43,8 @@ import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.Array;
@@ -67,7 +69,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         implements ChronicleMap<K, V>, Serializable, ReadValue<V>, InstanceOrBytesToInstance,
         GetValueInterops<V, VI, MVI> {
 
-//    private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
 
     /**
      * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set
@@ -668,10 +670,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             return isKey ? DataValueClasses.newInstance(aClass) :
                     DataValueClasses.newDirectInstance(aClass);
         } catch (Exception e) {
-            if (aClass.isInterface())
+            if (aClass.isInterface()) {
+
                 throw new IllegalStateException("It not possible to create a instance from " +
                         "interface=" + aClass.getSimpleName() + " we recommend you create an " +
-                        "instance in the usual way.");
+                        "instance in the usual way.", e);
+
+
+            }
 
             try {
                 return (T) aClass.newInstance();
@@ -686,7 +692,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         "instance of this class has it does not have a default constructor. " +
                         "If your class is mutable, we " +
                         "recommend you create and instance of your class=" + aClass.getSimpleName() +
-                        " in the usual way, rather than using this method.");
+                        " in the usual way, rather than using this method.", e);
             }
         }
     }

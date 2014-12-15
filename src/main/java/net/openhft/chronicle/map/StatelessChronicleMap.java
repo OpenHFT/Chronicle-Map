@@ -176,6 +176,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @Override
     public V newValueInstance() {
+        if (vClass.equals(CharSequence.class) || vClass.equals(StringBuilder.class)) {
+            return (V) new StringBuilder();
+        }
         return VanillaChronicleMap.newInstance(vClass, false);
     }
 
