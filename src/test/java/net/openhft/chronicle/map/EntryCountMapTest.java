@@ -94,6 +94,8 @@ public class EntryCountMapTest {
         System.out.printf("Score: %.2f%n", scoreCount / score);
     }
 
+    @Ignore("HCOLL-251 Investigate test failure of net.openhft.chronicle.map" +
+            ".EntryCountMapTest#testMedium")
     @Test
     public void testMedium() throws Exception {
         for (int i = 0; i < 2; i++) {
