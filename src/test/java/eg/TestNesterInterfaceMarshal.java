@@ -3,6 +3,7 @@ package eg;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.WriteContext;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -23,25 +24,62 @@ public class TestNesterInterfaceMarshal {
      */
     @Test
     public void testReplicatedMap() throws Exception {
-        ChronicleMap<CharSequence, TestIntrumentVOInterface> map = createReplicatedMap1();
-        ChronicleMap<CharSequence, TestIntrumentVOInterface> replicatedMap = createReplicatedMap2();
+
+        ChronicleMap chronicleMap = null;
+        TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig = TcpTransportAndNetworkConfig.of(8076).heartBeatInterval(1L, TimeUnit.SECONDS);
+        try {
+            ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, TestInstrumentVOInterface.class)
+                    .entries(5000L).entrySize(2000)
+                    .replication((byte) 1, tcpTransportAndNetworkConfig);
+
+
+            chronicleMap = builder.create();
+
+        } catch (Exception e) {
+            System.out.println("Error(s) creating instrument cache: " + e);
+        }
+        ChronicleMap<CharSequence, TestInstrumentVOInterface> map = chronicleMap;
+
+        ChronicleMap chronicleMap1 = null;
+        TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig1 = TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076)).heartBeatInterval(1L, TimeUnit.SECONDS);
+
+        try {
+            ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, TestInstrumentVOInterface.class)
+                    .putReturnsNull(true)
+                    .removeReturnsNull(true)
+                    .entries(5000L).entrySize(2000)
+                    .replication((byte) 2, tcpTransportAndNetworkConfig1);
+
+
+            chronicleMap1 = builder.create();
+
+        } catch (Exception e) {
+            System.out.println("*********************Error(s) creating launcher instrument cache: " + e);
+        }
+        ChronicleMap<CharSequence, TestInstrumentVOInterface> replicatedMap = chronicleMap1;
 
 
         //Store some data into MAP1
-        TestIntrumentVOInterface intrumentVOInterface = map.newValueInstance();
-        intrumentVOInterface.setSymbol("Flyer");
-        intrumentVOInterface.setCurrencyCode("USA");
-        intrumentVOInterface.setSizeOfInstrumentIDArray(2);
-
-        TestIntrumentVOInterface.TestInstrumentIDVOInterface instrumentIDVOInterface = intrumentVOInterface.getInstrumentIDAt(0);
-        instrumentIDVOInterface.setIdSource("CUSIP");
-        instrumentIDVOInterface.setSecurityId("TEST");
-        intrumentVOInterface.setInstrumentIDAt(0, instrumentIDVOInterface);
-        map.put("KEY1", intrumentVOInterface);
+        TestInstrumentVOInterface intrumentVOInterface = map.newValueInstance();
 
 
-        Assert.assertNotNull(map);
-        Assert.assertNotNull(replicatedMap);
+        try (WriteContext<CharSequence, TestInstrumentVOInterface> wc = map.acquireUsingLocked
+                ("KEY1", intrumentVOInterface)) {
+            intrumentVOInterface.setSymbol("Flyer");
+            intrumentVOInterface.setCurrencyCode("USA");
+            intrumentVOInterface.setSizeOfInstrumentIDArray(2);
+
+         //   TestIntrumentVOInterface.TestInstrumentIDVOInterface instrumentIDVOInterface =
+                    intrumentVOInterface.getInstrumentIDAt(0);
+         //   instrumentIDVOInterface.setIdSource("CUSIP");
+         //   instrumentIDVOInterface.setSecurityId("TEST");
+
+           // intrumentVOInterface.setInstrumentIDAt(0, instrumentIDVOInterface);
+
+
+          //  Assert.assertNotNull(map);
+          //  Assert.assertNotNull(replicatedMap);
+        }
 
 
         int t = 0;
@@ -54,7 +92,8 @@ public class TestNesterInterfaceMarshal {
         Assert.assertEquals(map, replicatedMap);
         Assert.assertTrue(!replicatedMap.isEmpty());
 
-        System.out.println(map.get("KEY1"));
+        System.out.println(((  TestInstrumentVOInterface.TestInstrumentIDVOInterface) map.get
+                ("KEY1")).getIdSource());
         System.out.println(replicatedMap.get("KEY1"));
 
         map.close();
@@ -67,7 +106,7 @@ public class TestNesterInterfaceMarshal {
         ChronicleMap chronicleMap = null;
         TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig = TcpTransportAndNetworkConfig.of(8076).heartBeatInterval(1L, TimeUnit.SECONDS);
         try {
-            ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, TestIntrumentVOInterface.class)
+            ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, TestInstrumentVOInterface.class)
                     .entries(5000L).entrySize(2000)
                     .replication((byte) 1, tcpTransportAndNetworkConfig);
 
@@ -86,7 +125,7 @@ public class TestNesterInterfaceMarshal {
         TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig = TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076)).heartBeatInterval(1L, TimeUnit.SECONDS);
 
         try {
-            ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, TestIntrumentVOInterface.class)
+            ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, TestInstrumentVOInterface.class)
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
                     .entries(5000L).entrySize(2000)
