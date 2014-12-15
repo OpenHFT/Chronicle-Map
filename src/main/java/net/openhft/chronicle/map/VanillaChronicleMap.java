@@ -27,9 +27,9 @@ import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
+import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.*;
 import net.openhft.lang.collection.DirectBitSet;
@@ -329,18 +329,18 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     final void checkKey(Object key) {
-        // if (!kClass.isInstance(key)) {
-        //     // key.getClass will cause NPE exactly as needed
-        //     throw new ClassCastException("Key must be a " + kClass.getName() +
-        //            " but was a " + key.getClass());
-        //}
+        if (!kClass.isInstance(key)) {
+            // key.getClass will cause NPE exactly as needed
+            throw new ClassCastException("Key must be a " + kClass.getName() +
+                    " but was a " + key.getClass());
+        }
     }
 
     final void checkValue(Object value) {
-        //  if (vClass != Void.class && !vClass.isInstance(value)) {
-        //      throw new ClassCastException("Value must be a " + vClass.getName() +
-        //              " but was a " + value.getClass());
-        //  }
+        if (vClass != Void.class && !vClass.isInstance(value)) {
+            throw new ClassCastException("Value must be a " + vClass.getName() +
+                    " but was a " + value.getClass());
+        }
     }
 
     final void put(Bytes entry, Bytes output) {
