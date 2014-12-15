@@ -1074,67 +1074,96 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 MultiMap hashLookup = hashLookup();
                 hashLookup.startSearch(hash2);
                 MultiStoreBytes entry = null;
-                for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
-                    long offset = offsetFromPos(pos);
-                    if (entry == null) {
-                        if (localSegmentState == null) {
-                            copies = SegmentState.getCopies(copies); // copies is not null now
-                            localSegmentState = SegmentState.get(copies);
+                returnNothing: {
+                    for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
+                        long offset = offsetFromPos(pos);
+                        if (entry == null) {
+                            if (localSegmentState == null) {
+                                copies = SegmentState.getCopies(copies); // copies is not null now
+                                localSegmentState = SegmentState.get(copies);
+                            }
+                            entry = localSegmentState.tmpBytes;
                         }
-                        entry = localSegmentState.tmpBytes;
-                    }
-                    reuse(entry, offset);
-                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
-                        continue;
-                    // key is found
-                    entry.skip(keySize);
+                        reuse(entry, offset);
+                        if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
+                            continue;
+                        // key is found
+                        entry.skip(keySize);
 
-                    long timestampPos = entry.position();
-                    if (shouldIgnore(entry, timestamp, identifier)) {
-                        // the following assert should be enabled, but TimeBasedReplicationTest
-                        // intentionally violates the explained invariant, => assertion fails.
-                        // todo do something with this
+                        long timestampPos = entry.position();
+                        if (shouldIgnore(entry, timestamp, identifier)) {
+                            // the following assert should be enabled, but TimeBasedReplicationTest
+                            // intentionally violates the explained invariant, => assertion fails.
+                            // todo do something with this
 
-                        // we should ignore only remote updates
-                        // which don't use remove, put results
-                        // assert booleanResult || resultUnused;
-                        return booleanResult ? Boolean.FALSE : null;
-                    }
-                    boolean isDeleted = entry.readBoolean();
-                    if (isDeleted) {
+                            // we should ignore only remote updates
+                            // which don't use remove, put results
+                            // assert booleanResult || resultUnused;
+                            return booleanResult ? Boolean.FALSE : null;
+                        }
+                        boolean isDeleted = entry.readBoolean();
+                        if (isDeleted) {
+                            if (expectedValue != null)
+                                return Boolean.FALSE;
+                            entry.position(timestampPos);
+                            entry.writeLong(timestamp);
+                            entry.writeByte(identifier);
+                            onRemoveMaybeRemote(pos, remote);
+                            break returnNothing;
+                        }
+
+                        long valueSizePos = entry.position();
+                        long valueSize = readValueSize(entry);
+                        long valuePos = entry.position();
+
+                        // check the value assigned for the key is that we expect
+                        if (expectedValue != null) {
+                            VBI valueInterop = getValueInterops.getValueInterop(copies);
+                            MVBI metaValueInterop = getValueInterops.getMetaValueInterop(
+                                    copies, valueInterop, expectedValue);
+                            if (metaValueInterop.size(valueInterop, expectedValue) != valueSize)
+                                return Boolean.FALSE;
+                            if (!metaValueInterop.startsWith(valueInterop, entry, expectedValue))
+                                return Boolean.FALSE;
+                        }
+
                         entry.position(timestampPos);
                         entry.writeLong(timestamp);
                         entry.writeByte(identifier);
-                        onRemoveMaybeRemote(pos, remote);
-                        break; // to "key not found" location
+                        entry.writeBoolean(true);
+                        entry.position(valuePos);
+
+                        return removeEntry(copies, key, keySize, toKey, toValue, readValue,
+                                resultUnused, hashLookup, entry, pos, valueSizePos,
+                                valueSize, remote, false, booleanResult);
                     }
+                    // key is not found
+                    if (remote) {
+                        long entrySize = entrySize(keySize, 0);
+                        long pos = alloc(inBlocks(entrySize));
+                        long offset = offsetFromPos(pos);
+                        clearMetaData(offset);
+                        if (entry == null) {
+                            if (localSegmentState == null) {
+                                copies = SegmentState.getCopies(copies); // copies is not null now
+                                localSegmentState = SegmentState.get(copies);
+                            }
+                            entry = localSegmentState.tmpBytes;
+                        }
+                        reuse(entry, offset);
 
-                    long valueSizePos = entry.position();
-                    long valueSize = readValueSize(entry);
-                    long valuePos = entry.position();
+                        keySizeMarshaller.writeSize(entry, keySize);
+                        metaKeyInterop.write(keyInterop, entry, key);
 
-                    // check the value assigned for the key is that we expect
-                    if (expectedValue != null) {
-                        VBI valueInterop = getValueInterops.getValueInterop(copies);
-                        MVBI metaValueInterop = getValueInterops.getMetaValueInterop(
-                                copies, valueInterop, expectedValue);
-                        if (metaValueInterop.size(valueInterop, expectedValue) != valueSize)
-                            return Boolean.FALSE;
-                        if (!metaValueInterop.startsWith(valueInterop, entry, expectedValue))
-                            return Boolean.FALSE;
+                        entry.writeLong(timestamp);
+                        entry.writeByte(identifier);
+                        entry.writeBoolean(true);
+
+                        hashLookup.putAfterFailedSearch(pos);
+                        hashLookup.removePosition(pos);
                     }
-
-                    entry.position(timestampPos);
-                    entry.writeLong(timestamp);
-                    entry.writeByte(identifier);
-                    entry.writeBoolean(true);
-                    entry.position(valuePos);
-
-                    return removeEntry(copies, key, keySize, toKey, toValue, readValue,
-                            resultUnused, hashLookup, entry, pos, valueSizePos,
-                            valueSize, remote, false, booleanResult);
                 }
-                // key is not found
+                // return nothing
                 if (booleanResult) {
                     return Boolean.FALSE;
                 } else {

@@ -2035,13 +2035,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // do nothing
         }
 
-        private void clearMetaData(long offset) {
+        final void clearMetaData(long offset) {
             if (metaDataBytes > 0)
                 bytes.zeroOut(offset, offset + metaDataBytes);
         }
 
         //TODO refactor/optimize
-        private long alloc(int blocks) {
+        final long alloc(int blocks) {
             if (blocks > maxEntryOversizeFactor)
                 throw new IllegalArgumentException("Entry is too large: requires " + blocks +
                         " entry size chucks, " + maxEntryOversizeFactor + " is maximum.");
