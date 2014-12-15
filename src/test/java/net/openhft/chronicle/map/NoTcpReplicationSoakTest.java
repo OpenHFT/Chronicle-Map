@@ -95,7 +95,6 @@ public class NoTcpReplicationSoakTest {
     AtomicInteger task = new AtomicInteger();
 
     @Test
-    @Ignore("HCOLL-243 Possible replication issue when used via multiple threads")
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         System.out.print("SoakTesting ");
@@ -119,26 +118,24 @@ public class NoTcpReplicationSoakTest {
             if (rnd.nextBoolean()) {
                 final CharSequence value = "test" + j;
                 if (rnd.nextBoolean()) {
-                    map1.put(key, value);
+                    map1.put(key, value, (byte) 1, t);
 
                     task.incrementAndGet();
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-
                             map2.put0(key, value, true, (byte) 1, t);
                             task.decrementAndGet();
                         }
                     });
 
                 } else {
-                    map2.put(key, value);
+                    map2.put(key, value, (byte) 2, t);
 
                     task.incrementAndGet();
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-
                             map1.put0(key, value, true, (byte) 2, t);
                             task.decrementAndGet();
                         }
@@ -148,26 +145,24 @@ public class NoTcpReplicationSoakTest {
             } else {
 
                 if (rnd.nextBoolean()) {
-                    map1.remove(key);
+                    map1.remoteRemove(key, (byte) 1, t);
 
                     task.incrementAndGet();
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-
                             map2.remoteRemove(key, (byte) 1, t);
                             task.decrementAndGet();
                         }
                     });
 
                 } else {
-                    map2.remove(key);
+                    map2.remoteRemove(key, (byte) 2, t);
 
                     task.incrementAndGet();
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-
                             map1.remoteRemove(key, (byte) 2, t);
                             task.decrementAndGet();
                         }
@@ -179,10 +174,7 @@ public class NoTcpReplicationSoakTest {
         while (task.get() > 0) {
 
         }
-
-
         Assert.assertEquals(new TreeMap(map1), new TreeMap(map2));
-
     }
 
     private void addRandomDelay(ExecutorService executorService, Random rnd) {
