@@ -1,94 +1,228 @@
 package net.openhft.chronicle.map;
 
 import junit.framework.Assert;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.serialization.impl.*;
+import net.openhft.lang.model.constraints.NotNull;
 import net.openhft.lang.values.*;
+import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
 /**
- * This test enumerates common usecases for keys and values.
+ * This test enumerates common use cases for keys and values.
  */
-// TODO Test for persisted map.
-// TODO Test for stateless map.
-
+@RunWith(value = Parameterized.class)
 public class CHMUseCasesTest {
+
+
+    enum TypeOfMap {SIMPLE, REPLICATED, STATELESS}
+
+    private final TypeOfMap typeOfMap;
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {
+                        TypeOfMap.SIMPLE
+                },
+
+              /*  {
+                        TypeOfMap.REPLICATED
+                },*/
+
+                // todo some are failing due to unimplemented features
+                /*{
+                        TypeOfMap.STATELESS
+                }*/
+        });
+
+
+    }
+
+    public CHMUseCasesTest(TypeOfMap typeOfMap) {
+        this.typeOfMap = typeOfMap;
+    }
+
+
+    private static class PrefixStingFunction implements Function<String, String> {
+        private String prefix;
+
+        public PrefixStingFunction(@NotNull String prefix) {
+            this.prefix = prefix;
+        }
+
+        @Override
+        public String apply(String s) {
+            return prefix + s;
+        }
+    }
+
     /**
      * String is not as efficient as CharSequence as a key or value but easier to use The key can
      * only be on heap and variable length serialised.
      */
     @Test
-    public void testStringStringMap() throws ExecutionException, InterruptedException {
-/* TODO run the same test for multiple types of map stores
-        for(ChronicleMapBuilder<String, String> chmb : Arrays.asList(
-                ChronicleMapBuilder.of(String.class, String.class),
-                ChronicleMapBuilder.of(String.class, String.class).file(TMP_FILE),
-                ChronicleMapBuilder.of(String.class, String.class).statelessClient(CONFIG)
-        )) {
-            try (ChronicleMap<String, String> map = chmb.create()) {
-*/
-        try (ChronicleMap<String, String> map = ChronicleMapBuilder
-                .of(String.class, String.class) // for testing purposes only
-                .create()) {
+
+    public void testStringStringMap() throws ExecutionException, InterruptedException, IOException {
+
+        ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
+                .of(String.class, String.class);
+
+        try (ChronicleMap<String, String> map = newInstance(builder)) {
             map.put("Hello", "World");
             assertEquals("World", map.get("Hello"));
 
-            assertEquals("New World", map.getMapped("Hello", new Function<String, String>() {
-                @Override
-                public String apply(String s) {
-                    return "New " + s;
-                }
-            }));
-            assertEquals(null, map.getMapped("No key", new Function<String, String>() {
-                @Override
-                public String apply(String s) {
-                    return "New " + s;
-                }
-            }));
+            assertEquals("New World", map.getMapped("Hello", new PrefixStingFunction("New ")));
+            assertEquals(null, map.getMapped("No key", new PrefixStingFunction("New ")));
 
 
         }
     }
 
 
+    Collection<Closeable> closeables = new ArrayList<Closeable>();
+
+    @After
+    public void after() {
+        for (Closeable c : closeables) {
+
+            try {
+                c.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        closeables.clear();
+    }
+
+
+    private <X, Y> ChronicleMap<X, Y> newInstance(ChronicleMapBuilder<X, Y> builder) throws
+            IOException {
+
+        switch (typeOfMap) {
+
+            case SIMPLE:
+                return builder.create();
+
+            case REPLICATED: {
+
+
+                {
+                    final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig
+                            .of(8086).name("server")
+                            .heartBeatInterval(1, TimeUnit.SECONDS)
+                            .tcpBufferSize(1024 * 64);
+
+
+                    closeables.add(builder
+                            .replication((byte) 1, tcpConfig1)
+                            .instance()
+                            .name("server")
+                            .create());
+
+                }
+                {
+                    final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of
+                            (8087, new InetSocketAddress("localhost", 8086)).name("map2")
+                            .heartBeatInterval(1, TimeUnit.SECONDS)
+                            .tcpBufferSize(1024 * 64);
+
+                    ChronicleMap map2 = builder
+                            .replication((byte) 2, tcpConfig2)
+                            .instance()
+                            .name("map2")
+                            .create();
+                    closeables.add(map2);
+                    return map2;
+
+                }
+
+
+            }
+
+
+            case STATELESS: {
+                {
+                    final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig
+                            .of(8086).name("server")
+                            .heartBeatInterval(1, TimeUnit.SECONDS)
+                            .tcpBufferSize(1024 * 64);
+
+
+                    closeables.add(builder
+                            .replication((byte) 1, tcpConfig1)
+                            .instance()
+                            .name("server")
+                            .create());
+
+                }
+                {
+                    ChronicleMap map2 = builder
+                            .statelessClient(new InetSocketAddress("localhost", 8086))
+                            .create();
+
+                    closeables.add(map2);
+                    return map2;
+
+                }
+            }
+
+            default:
+                throw new IllegalStateException();
+        }
+    }
+
+
+    private static class StringPrefixUnaryOperator implements UnaryOperator<String>, Serializable {
+
+        private String prefix;
+
+        StringPrefixUnaryOperator(final String prefix1) {
+            prefix = prefix1;
+        }
+
+        @Override
+        public String update(String s) {
+            return prefix + s;
+        }
+    }
+
+
     @Test
-    public void testStringStringMapMutableValue() throws ExecutionException, InterruptedException {
-/* TODO run the same test for multiple types of map stores
-        for(ChronicleMapBuilder<String, String> chmb : Arrays.asList(
-                ChronicleMapBuilder.of(String.class, String.class),
-                ChronicleMapBuilder.of(String.class, String.class).file(TMP_FILE),
-                ChronicleMapBuilder.of(String.class, String.class).statelessClient(CONFIG)
-        )) {
-            try (ChronicleMap<String, String> map = chmb.create()) {
-*/
-        try (ChronicleMap<String, String> map = ChronicleMapBuilder
-                .of(String.class, String.class) // for testing purposes only
-                .create()) {
+    public void testStringStringMapMutableValue() throws ExecutionException, InterruptedException, IOException {
+
+        ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
+                .of(String.class, String.class);
+
+        try (ChronicleMap<String, String> map = newInstance(builder)) {
             map.put("Hello", "World");
-
-
-            map.putMapped("Hello", new UnaryOperator<String>() {
-                @Override
-                public String update(String s) {
-                    return "New " + s;
-                }
-            });
+            map.putMapped("Hello", new StringPrefixUnaryOperator("New "));
         }
     }
 
     @Test
-    public void testCharSequenceMixingKeyTypes() throws ExecutionException, InterruptedException {
+    public void testCharSequenceMixingKeyTypes() throws ExecutionException, InterruptedException, IOException {
 
-        try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class) // for testing purposes only
-                .create()) {
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class);
+
+        try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
+
             map.put("Hello", "World");
             map.put(new StringBuilder("Hello"), "World2");
 
@@ -97,11 +231,12 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testCharSequenceMixingValueTypes() throws ExecutionException, InterruptedException {
+    public void testCharSequenceMixingValueTypes() throws ExecutionException, InterruptedException, IOException {
 
-        try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class) // for testing purposes only
-                .create()) {
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class);
+
+        try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
             map.put("Hello", "World");
             map.put("Hello2", new StringBuilder("World2"));
 
@@ -116,10 +251,11 @@ public class CHMUseCasesTest {
      * and variable length serialised.
      */
     @Test
-    public void testCharSequenceCharSequenceMap() throws ExecutionException, InterruptedException {
-        try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class) // for testing purposes only
-                .create()) {
+    public void testCharSequenceCharSequenceMap() throws ExecutionException, InterruptedException, IOException {
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class);
+
+        try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
             map.put("Hello", "World");
             StringBuilder key = new StringBuilder();
             key.append("key-").append(1);
@@ -173,11 +309,13 @@ public class CHMUseCasesTest {
         }
     }
 
+
     @Test
-    public void testAcquireUsingWithCharSequence() {
-        try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class)
-                .create()) {
+    public void testAcquireUsingWithCharSequence() throws IOException {
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class);
+
+        try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
 
             CharSequence using = map.newValueInstance();
 
@@ -191,10 +329,11 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testGetUsingWithCharSequenceNoValue() {
-        try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class)
-                .create()) {
+    public void testGetUsingWithCharSequenceNoValue() throws IOException {
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class);
+
+        try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
 
             CharSequence using = map.newValueInstance();
 
@@ -209,10 +348,12 @@ public class CHMUseCasesTest {
 
 
     @Test
-    public void testGetUsingWithIntValueNoValue() {
-        try (ChronicleMap<CharSequence, IntValue> map = ChronicleMapBuilder
-                .of(CharSequence.class, IntValue.class)
-                .create()) {
+    public void testGetUsingWithIntValueNoValue() throws IOException {
+
+        ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
+                .of(CharSequence.class, IntValue.class);
+
+        try (ChronicleMap<CharSequence, IntValue> map = newInstance(builder)) {
 
             IntValue using = map.newValueInstance();
 
@@ -227,10 +368,11 @@ public class CHMUseCasesTest {
 
 
     @Test(expected = IllegalStateException.class)
-    public void testAquireUsingWithIntValueNoValue() {
-        try (ChronicleMap<CharSequence, IntValue> map = ChronicleMapBuilder
-                .of(CharSequence.class, IntValue.class)
-                .create()) {
+    public void testAquireUsingWithIntValueNoValue() throws IOException {
+        ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
+                .of(CharSequence.class, IntValue.class);
+
+        try (ChronicleMap<CharSequence, IntValue> map = newInstance(builder)) {
 
             IntValue using = map.newValueInstance();
 
@@ -246,10 +388,14 @@ public class CHMUseCasesTest {
 
 
     @Test(expected = IllegalArgumentException.class)
-    public void testAquireUsingImutableUsing() {
-        try (ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
-                .of(IntValue.class, CharSequence.class)
-                .create()) {
+    public void testAquireUsingImutableUsing() throws IOException {
+
+
+        ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
+                .of(IntValue.class, CharSequence.class);
+
+        try (ChronicleMap<IntValue, CharSequence> map = newInstance(builder)) {
+
 
             IntValue using = map.newKeyInstance();
             using.setValue(1);
@@ -266,10 +412,14 @@ public class CHMUseCasesTest {
 
     @Ignore("HCOLL-248 Issue with acquireUsingLocked() for a StringBuilder Value")
     @Test
-    public void testAcquireUsingWithIntValueKeyStringBuilderValue() {
-        try (ChronicleMap<IntValue, StringBuilder> map = ChronicleMapBuilder
-                .of(IntValue.class, StringBuilder.class)
-                .create()) {
+    public void testAcquireUsingWithIntValueKeyStringBuilderValue() throws IOException {
+
+
+        ChronicleMapBuilder<IntValue, StringBuilder> builder = ChronicleMapBuilder
+                .of(IntValue.class, StringBuilder.class);
+
+        try (ChronicleMap<IntValue, StringBuilder> map = newInstance(builder)) {
+
 
             IntValue key = map.newKeyInstance();
             key.setValue(1);
@@ -285,10 +435,12 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testAcquireUsingWithIntValueKey() {
-        try (ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
-                .of(IntValue.class, CharSequence.class)
-                .create()) {
+    public void testAcquireUsingWithIntValueKey() throws IOException {
+
+        ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
+                .of(IntValue.class, CharSequence.class);
+
+        try (ChronicleMap<IntValue, CharSequence> map = newInstance(builder)) {
 
             IntValue key = map.newKeyInstance();
             key.setValue(1);
@@ -312,10 +464,12 @@ public class CHMUseCasesTest {
 
     @Ignore("HCOLL-249 issue when using acquireUsingLocked() with ByteBufferBytes value")
     @Test
-    public void testAcquireUsingWithByteBufferBytesValue() {
-        try (ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
-                .of(IntValue.class, CharSequence.class)
-                .create()) {
+    public void testAcquireUsingWithByteBufferBytesValue() throws IOException {
+
+        ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
+                .of(IntValue.class, CharSequence.class);
+
+        try (ChronicleMap<IntValue, CharSequence> map = newInstance(builder)) {
 
             IntValue key = map.newKeyInstance();
             key.setValue(1);
@@ -384,10 +538,12 @@ public class CHMUseCasesTest {
      * StringValue represents any bean which contains a String Value
      */
     @Test
-    public void testStringValueStringValueMap() {
-        try (ChronicleMap<StringValue, StringValue> map = ChronicleMapBuilder
-                .of(StringValue.class, StringValue.class) // for testing purposes only
-                .create()) {
+    public void testStringValueStringValueMap() throws IOException {
+
+        ChronicleMapBuilder<StringValue, StringValue> builder = ChronicleMapBuilder
+                .of(StringValue.class, StringValue.class);
+
+        try (ChronicleMap<StringValue, StringValue> map = newInstance(builder)) {
             StringValue key1 = map.newKeyInstance();
             StringValue key2 = map.newKeyInstance();
             StringValue value1 = map.newValueInstance();
@@ -474,10 +630,11 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testIntegerIntegerMap() throws ExecutionException, InterruptedException {
-        try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
-                .of(Integer.class, Integer.class)
-                .create()) {
+    public void testIntegerIntegerMap() throws ExecutionException, InterruptedException, IOException {
+        ChronicleMapBuilder<Integer, Integer> builder = ChronicleMapBuilder
+                .of(Integer.class, Integer.class);
+
+        try (ChronicleMap<Integer, Integer> map = newInstance(builder)) {
             assertEquals(8, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             Integer key1;
@@ -528,10 +685,11 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testLongLongMap() throws ExecutionException, InterruptedException {
-        try (ChronicleMap<Long, Long> map = ChronicleMapBuilder
-                .of(Long.class, Long.class)
-                .create()) {
+    public void testLongLongMap() throws ExecutionException, InterruptedException, IOException {
+        ChronicleMapBuilder<Long, Long> builder = ChronicleMapBuilder
+                .of(Long.class, Long.class);
+
+        try (ChronicleMap<Long, Long> map = newInstance(builder)) {
             assertEquals(16, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             map.put(1L, 11L);
@@ -571,10 +729,11 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testDoubleDoubleMap() throws ExecutionException, InterruptedException {
-        try (ChronicleMap<Double, Double> map = ChronicleMapBuilder
-                .of(Double.class, Double.class)
-                .create()) {
+    public void testDoubleDoubleMap() throws ExecutionException, InterruptedException, IOException {
+        ChronicleMapBuilder<Double, Double> builder = ChronicleMapBuilder
+                .of(Double.class, Double.class);
+
+        try (ChronicleMap<Double, Double> map = newInstance(builder)) {
             assertEquals(16, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             map.put(1.0, 11.0);
@@ -615,12 +774,13 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testByteArrayByteArrayMap() throws ExecutionException, InterruptedException {
-        try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
-                .of(byte[].class, byte[].class)
-                .keySize(4).valueSize(4)
-                .maxEntryOversizeFactor(1)
-                .create()) {
+    public void testByteArrayByteArrayMap() throws ExecutionException, InterruptedException, IOException {
+
+        ChronicleMapBuilder<byte[], byte[]> builder = ChronicleMapBuilder
+                .of(byte[].class, byte[].class).keySize(4).valueSize(4)
+                .maxEntryOversizeFactor(1);
+
+        try (ChronicleMap<byte[], byte[]> map = newInstance(builder)) {
             byte[] key1 = {1, 1, 1, 1};
             byte[] key2 = {2, 2, 2, 2};
             byte[] value1 = {11, 11, 11, 11};
@@ -664,13 +824,17 @@ public class CHMUseCasesTest {
 
     @Test
     public void testByteBufferByteBufferDefaultKeyValueMarshaller() throws ExecutionException,
-            InterruptedException {
-        try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
+            InterruptedException, IOException {
+
+        ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
                 .keySize(8)
                 .valueSize(8)
-                .maxEntryOversizeFactor(1)
-                .create()) {
+                .maxEntryOversizeFactor(1);
+
+        try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
+
+
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
             ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11});
@@ -686,15 +850,19 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testByteBufferByteBufferMap() throws ExecutionException, InterruptedException {
-        try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
+    public void testByteBufferByteBufferMap() throws ExecutionException, InterruptedException, IOException {
+
+        ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
                 .keyMarshaller(ByteBufferMarshaller.INSTANCE)
                 .valueMarshaller(ByteBufferMarshaller.INSTANCE)
                 .keySize(8)
                 .valueSize(8)
-                .maxEntryOversizeFactor(1)
-                .create()) {
+                .maxEntryOversizeFactor(1);
+
+        try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
+
+
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
             ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11});
@@ -793,14 +961,18 @@ public class CHMUseCasesTest {
 
 
     @Test
-    public void testByteBufferDirectByteBufferMap() throws ExecutionException, InterruptedException {
-        try (ChronicleMap<ByteBuffer, ByteBuffer> map = ChronicleMapBuilder
+    public void testByteBufferDirectByteBufferMap() throws ExecutionException, InterruptedException, IOException {
+
+        ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
                 .valueMarshaller(ByteBufferMarshaller.INSTANCE) // we should not have to to this !
                 .keyMarshaller(ByteBufferMarshaller.INSTANCE)    // we should not have to to this !
                 .keySize(5).valueSize(5)
-                .maxEntryOversizeFactor(1)
-                .create()) {
+                .maxEntryOversizeFactor(1);
+
+        try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
+
+
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
             ByteBuffer value1 = ByteBuffer.allocateDirect(4);
@@ -847,10 +1019,13 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testIntValueIntValueMap() {
-        try (ChronicleMap<IntValue, IntValue> map = ChronicleMapBuilder
-                .of(IntValue.class, IntValue.class)
-                .create()) {
+    public void testIntValueIntValueMap() throws IOException {
+
+        ChronicleMapBuilder<IntValue, IntValue> builder = ChronicleMapBuilder
+                .of(IntValue.class, IntValue.class);
+
+        try (ChronicleMap<IntValue, IntValue> map = newInstance(builder)) {
+
             assertEquals(8, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             IntValue key1 = map.newKeyInstance();
@@ -928,11 +1103,15 @@ public class CHMUseCasesTest {
 
     @Test
     @Ignore("HCOLL-241 Generated code creates a field too large ie. it ignores the @Range")
-    public void testUnsignedIntValueUnsignedIntValueMapEntrySize() {
+    public void testUnsignedIntValueUnsignedIntValueMapEntrySize() throws IOException {
+
         // TODO once this is working, merge the next test.
-        try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = ChronicleMapBuilder
-                .of(UnsignedIntValue.class, UnsignedIntValue.class)
-                .create()) {
+        ChronicleMapBuilder<UnsignedIntValue, UnsignedIntValue> builder = ChronicleMapBuilder
+                .of(UnsignedIntValue.class, UnsignedIntValue.class);
+
+        try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = newInstance(builder)) {
+
+
             assertEquals(8, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             UnsignedIntValue key1 = map.newKeyInstance();
@@ -951,10 +1130,12 @@ public class CHMUseCasesTest {
      * For unsigned int -> unsigned int entries, the key can be on heap or off heap.
      */
     @Test
-    public void testUnsignedIntValueUnsignedIntValueMap() {
-        try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = ChronicleMapBuilder
-                .of(UnsignedIntValue.class, UnsignedIntValue.class)
-                .create()) {
+    public void testUnsignedIntValueUnsignedIntValueMap() throws IOException {
+        ChronicleMapBuilder<UnsignedIntValue, UnsignedIntValue> builder = ChronicleMapBuilder
+                .of(UnsignedIntValue.class, UnsignedIntValue.class);
+
+        try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = newInstance(builder)) {
+
 
             UnsignedIntValue key1 = map.newKeyInstance();
             UnsignedIntValue key2 = map.newKeyInstance();
@@ -1032,10 +1213,14 @@ public class CHMUseCasesTest {
      * For int values, the key can be on heap or off heap.
      */
     @Test
-    public void testIntValueShortValueMap() {
-        try (ChronicleMap<IntValue, ShortValue> map = ChronicleMapBuilder
-                .of(IntValue.class, ShortValue.class)
-                .create()) {
+    public void testIntValueShortValueMap() throws IOException {
+
+        ChronicleMapBuilder<IntValue, ShortValue> builder = ChronicleMapBuilder
+                .of(IntValue.class, ShortValue.class);
+
+        try (ChronicleMap<IntValue, ShortValue> map = newInstance(builder)) {
+
+
             assertEquals(6, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             IntValue key1 = map.newKeyInstance();
@@ -1114,10 +1299,14 @@ public class CHMUseCasesTest {
      * For int -> unsigned short values, the key can be on heap or off heap.
      */
     @Test
-    public void testIntValueUnsignedShortValueMap() {
-        try (ChronicleMap<IntValue, UnsignedShortValue> map = ChronicleMapBuilder
-                .of(IntValue.class, UnsignedShortValue.class)
-                .create()) {
+    public void testIntValueUnsignedShortValueMap() throws IOException {
+
+        ChronicleMapBuilder<IntValue, UnsignedShortValue> builder = ChronicleMapBuilder
+                .of(IntValue.class, UnsignedShortValue.class);
+
+        try (ChronicleMap<IntValue, UnsignedShortValue> map = newInstance(builder)) {
+
+
             // TODO should be 6
             assertEquals(8, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
@@ -1197,10 +1386,13 @@ public class CHMUseCasesTest {
      * For int values, the key can be on heap or off heap.
      */
     @Test
-    public void testIntValueCharValueMap() {
-        try (ChronicleMap<IntValue, CharValue> map = ChronicleMapBuilder
-                .of(IntValue.class, CharValue.class)
-                .create()) {
+    public void testIntValueCharValueMap() throws IOException {
+        ChronicleMapBuilder<IntValue, CharValue> builder = ChronicleMapBuilder
+                .of(IntValue.class, CharValue.class);
+
+        try (ChronicleMap<IntValue, CharValue> map = newInstance(builder)) {
+
+
             assertEquals(6, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
             IntValue key1 = map.newKeyInstance();
@@ -1279,10 +1471,14 @@ public class CHMUseCasesTest {
      * For int-> byte entries, the key can be on heap or off heap.
      */
     @Test
-    public void testIntValueUnsignedByteMap() {
-        try (ChronicleMap<IntValue, UnsignedByteValue> map = ChronicleMapBuilder
-                .of(IntValue.class, UnsignedByteValue.class)
-                .create()) {
+    public void testIntValueUnsignedByteMap() throws IOException {
+
+        ChronicleMapBuilder<IntValue, UnsignedByteValue> builder = ChronicleMapBuilder
+                .of(IntValue.class, UnsignedByteValue.class);
+
+        try (ChronicleMap<IntValue, UnsignedByteValue> map = newInstance(builder)) {
+
+
             // TODO should be 5, but shorter fields based on range doesn't seem to be implemented
             // on data value generation level yet
             assertEquals(8, ((VanillaChronicleMap) map).entrySize);
@@ -1365,10 +1561,13 @@ public class CHMUseCasesTest {
      * For int values, the key can be on heap or off heap.
      */
     @Test
-    public void testIntValueBooleanValueMap() {
-        try (ChronicleMap<IntValue, BooleanValue> map = ChronicleMapBuilder
-                .of(IntValue.class, BooleanValue.class)
-                .create()) {
+    public void testIntValueBooleanValueMap() throws IOException {
+
+        ChronicleMapBuilder<IntValue, BooleanValue> builder = ChronicleMapBuilder
+                .of(IntValue.class, BooleanValue.class);
+
+        try (ChronicleMap<IntValue, BooleanValue> map = newInstance(builder)) {
+
             assertEquals(5, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
@@ -1449,10 +1648,15 @@ public class CHMUseCasesTest {
      * For float values, the key can be on heap or off heap.
      */
     @Test
-    public void testFloatValueFloatValueMap() {
-        try (ChronicleMap<FloatValue, FloatValue> map = ChronicleMapBuilder
-                .of(FloatValue.class, FloatValue.class)
-                .create()) {
+    public void testFloatValueFloatValueMap() throws IOException {
+
+
+        ChronicleMapBuilder<FloatValue, FloatValue> builder = ChronicleMapBuilder
+                .of(FloatValue.class, FloatValue.class);
+
+        try (ChronicleMap<FloatValue, FloatValue> map = newInstance(builder)) {
+
+
             assertEquals(8, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
@@ -1533,10 +1737,13 @@ public class CHMUseCasesTest {
      * For double values, the key can be on heap or off heap.
      */
     @Test
-    public void testDoubleValueDoubleValueMap() {
-        try (ChronicleMap<DoubleValue, DoubleValue> map = ChronicleMapBuilder
-                .of(DoubleValue.class, DoubleValue.class)
-                .create()) {
+    public void testDoubleValueDoubleValueMap() throws IOException {
+
+        ChronicleMapBuilder<DoubleValue, DoubleValue> builder = ChronicleMapBuilder
+                .of(DoubleValue.class, DoubleValue.class);
+
+        try (ChronicleMap<DoubleValue, DoubleValue> map = newInstance(builder)) {
+
             assertEquals(16, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
@@ -1619,10 +1826,14 @@ public class CHMUseCasesTest {
      * For long values, the key can be on heap or off heap.
      */
     @Test
-    public void testLongValueLongValueMap() {
-        try (ChronicleMap<LongValue, LongValue> map = ChronicleMapBuilder
-                .of(LongValue.class, LongValue.class)
-                .create()) {
+    public void testLongValueLongValueMap() throws IOException {
+
+        ChronicleMapBuilder<LongValue, LongValue> builder = ChronicleMapBuilder
+                .of(LongValue.class, LongValue.class);
+
+        try (ChronicleMap<LongValue, LongValue> map = newInstance(builder)) {
+
+
             assertEquals(16, ((VanillaChronicleMap) map).entrySize);
             assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
 
@@ -1707,11 +1918,14 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testListValue() {
-        try (ChronicleMap<String, List<String>> map = ChronicleMapBuilder
+    public void testListValue() throws IOException {
+
+        ChronicleMapBuilder<String, List<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<List<String>>) (Class) List.class)
-                .valueMarshaller(ListMarshaller.of(new StringMarshaller(8)))
-                .create()) {
+                .valueMarshaller(ListMarshaller.of(new StringMarshaller(8)));
+
+
+        try (ChronicleMap<String, List<String>> map = newInstance(builder)) {
             map.put("1", Collections.<String>emptyList());
             map.put("2", Arrays.asList("two-A"));
 
@@ -1745,11 +1959,15 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testSetValue() {
-        try (ChronicleMap<String, Set<String>> map = ChronicleMapBuilder
+    public void testSetValue() throws IOException {
+
+
+        ChronicleMapBuilder<String, Set<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)
-                .valueMarshaller(SetMarshaller.of(new StringMarshaller(8)))
-                .create()) {
+                .valueMarshaller(SetMarshaller.of(new StringMarshaller(8)));
+
+
+        try (ChronicleMap<String, Set<String>> map = newInstance(builder)) {
             map.put("1", Collections.<String>emptySet());
             map.put("2", new LinkedHashSet<String>(Arrays.asList("one")));
 
@@ -1775,11 +1993,15 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testMapStringStringValue() {
-        try (ChronicleMap<String, Map<String, String>> map = ChronicleMapBuilder
+    public void testMapStringStringValue() throws IOException {
+
+        ChronicleMapBuilder<String, Map<String, String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, String>>) (Class) Map.class)
-                .valueMarshaller(MapMarshaller.of(new StringMarshaller(16), new StringMarshaller(16)))
-                .create()) {
+                .valueMarshaller(MapMarshaller.of(new StringMarshaller(16), new StringMarshaller
+                        (16)));
+
+
+        try (ChronicleMap<String, Map<String, String>> map = newInstance(builder)) {
             map.put("1", Collections.<String, String>emptyMap());
             map.put("2", mapOf("one", "uni"));
 
@@ -1805,11 +2027,14 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testMapStringIntegerValue() {
-        try (ChronicleMap<String, Map<String, Integer>> map = ChronicleMapBuilder
+    public void testMapStringIntegerValue() throws IOException {
+
+        ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
-                .valueMarshaller(MapMarshaller.of(new StringMarshaller(16), new GenericEnumMarshaller<Integer>(Integer.class, 16)))
-                .create()) {
+                .valueMarshaller(MapMarshaller.of(new StringMarshaller(16), new
+                        GenericEnumMarshaller<Integer>(Integer.class, 16)));
+
+        try (ChronicleMap<String, Map<String, Integer>> map = newInstance(builder)) {
             map.put("1", Collections.<String, Integer>emptyMap());
             map.put("2", mapOf("one", 1));
 
