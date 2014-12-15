@@ -31,13 +31,13 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public final class TcpTransportAndNetworkConfig implements Serializable {
 
-    private static final int DEFAULT_PACKET_SIZE = 1024 * 8;
+    private static final int DEFAULT_TCP_BUFFER_SIZE = 1024 * 64;
     private static final long DEFAULT_HEART_BEAT_INTERVAL = 20;
     private static final TimeUnit DEFAULT_HEART_BEAT_INTERVAL_UNIT = SECONDS;
 
     private final int serverPort;
     private final Set<InetSocketAddress> endpoints;
-    private final int packetSize;
+    private final int tcpBufferSize;
     private final boolean autoReconnectedUponDroppedConnection;
     private final ThrottlingConfig throttlingConfig;
     private final long heartBeatInterval;
@@ -45,13 +45,13 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
     private String name = "(unknown)";
 
     private TcpTransportAndNetworkConfig(int serverPort, Set<InetSocketAddress> endpoints,
-                                         int packetSize,
+                                         int tcpBufferSize,
                                          boolean autoReconnectedUponDroppedConnection,
                                          ThrottlingConfig throttlingConfig, long heartBeatInterval,
                                          TimeUnit heartBeatIntervalUnit) {
         this.serverPort = serverPort;
         this.endpoints = endpoints;
-        this.packetSize = packetSize;
+        this.tcpBufferSize = tcpBufferSize;
         this.autoReconnectedUponDroppedConnection = autoReconnectedUponDroppedConnection;
         this.throttlingConfig = throttlingConfig;
         this.heartBeatInterval = heartBeatInterval;
@@ -76,7 +76,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
         }
         return new TcpTransportAndNetworkConfig(
                 serverPort, unmodifiableSet(s),
-                DEFAULT_PACKET_SIZE,
+                DEFAULT_TCP_BUFFER_SIZE,
                 true, // autoReconnectedUponDroppedConnection
                 ThrottlingConfig.noThrottling(),
                 DEFAULT_HEART_BEAT_INTERVAL,
@@ -89,7 +89,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
 
     public TcpTransportAndNetworkConfig autoReconnectedUponDroppedConnection(
             boolean autoReconnectedUponDroppedConnection) {
-        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, tcpBufferSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit);
     }
@@ -100,7 +100,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
 
     public TcpTransportAndNetworkConfig throttlingConfig(ThrottlingConfig throttlingConfig) {
         ThrottlingConfig.checkMillisecondBucketInterval(throttlingConfig, "TCP");
-        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, tcpBufferSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit);
     }
@@ -114,7 +114,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
     }
 
     public TcpTransportAndNetworkConfig serverPort(int serverPort) {
-        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, tcpBufferSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit);
     }
@@ -129,13 +129,13 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
                 throw new IllegalArgumentException("endpoint=" + endpoint
                         + " can not point to the same port as the server");
         }
-        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, tcpBufferSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit);
     }
 
     public int packetSize() {
-        return packetSize;
+        return tcpBufferSize;
     }
 
     /**
@@ -148,17 +148,17 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
         return this;
     }
 
-    public TcpTransportAndNetworkConfig packetSize(int packetSize) {
-        if (packetSize <= 0)
+    public TcpTransportAndNetworkConfig tcpBufferSize(int tcpBufferSize) {
+        if (tcpBufferSize <= 0)
             throw new IllegalArgumentException();
-        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, tcpBufferSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit);
     }
 
     public TcpTransportAndNetworkConfig heartBeatInterval(long heartBeatInterval,
                                                           TimeUnit heartBeatIntervalUnit) {
-        return new TcpTransportAndNetworkConfig(serverPort, endpoints, packetSize,
+        return new TcpTransportAndNetworkConfig(serverPort, endpoints, tcpBufferSize,
                 autoReconnectedUponDroppedConnection, throttlingConfig, heartBeatInterval,
                 heartBeatIntervalUnit);
     }
@@ -173,7 +173,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
         if (autoReconnectedUponDroppedConnection != that.autoReconnectedUponDroppedConnection)
             return false;
         if (heartBeatInterval != that.heartBeatInterval) return false;
-        if (packetSize != that.packetSize) return false;
+        if (tcpBufferSize != that.tcpBufferSize) return false;
         if (serverPort != that.serverPort) return false;
         if (endpoints != null ? !endpoints.equals(that.endpoints) : that.endpoints != null)
             return false;
@@ -188,7 +188,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
     public int hashCode() {
         int result = serverPort;
         result = 31 * result + (endpoints != null ? endpoints.hashCode() : 0);
-        result = 31 * result + packetSize;
+        result = 31 * result + tcpBufferSize;
         result = 31 * result + (autoReconnectedUponDroppedConnection ? 1 : 0);
         result = 31 * result + (throttlingConfig != null ? throttlingConfig.hashCode() : 0);
         result = 31 * result + (int) (heartBeatInterval ^ (heartBeatInterval >>> 32));
@@ -202,7 +202,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
                 "name=" + name() +
                 ", serverPort=" + serverPort +
                 ", endpoints=" + endpoints +
-                ", packetSize=" + packetSize +
+                ", tcpBufferSize=" + tcpBufferSize +
                 ", autoReconnectedUponDroppedConnection=" + autoReconnectedUponDroppedConnection +
                 ", throttlingConfig=" + throttlingConfig +
                 ", heartBeatInterval=" + heartBeatInterval +
