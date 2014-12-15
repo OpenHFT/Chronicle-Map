@@ -25,14 +25,13 @@ import java.nio.file.Paths;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class MarkTest {
 
     static int ENTRIES = 25_000_000;
 
-    @Test(timeout = 15000)
+    @Test(timeout = 25000)
     public void inMemoryTest() {
         test(new Function<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>() {
             @Override
@@ -43,7 +42,7 @@ public class MarkTest {
         });
     }
 
-    @Test(timeout = 15000)
+    @Test(timeout = 25000)
     public void persistedTest() {
         final File db = Paths.get(System.getProperty("java.io.tmpdir"), "mark").toFile();
         try {
