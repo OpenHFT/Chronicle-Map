@@ -89,7 +89,7 @@ public class TCPSocketReplication4WayMapTest {
 
     @Test
     public void test() throws IOException, InterruptedException {
-        Thread.sleep(1000);
+
         map1.put(1, "EXAMPLE-1");
         map2.put(2, "EXAMPLE-1");
         map3.put(3, "EXAMPLE-1");
@@ -106,7 +106,7 @@ public class TCPSocketReplication4WayMapTest {
 
     @Test
     public void testBufferOverflow() throws IOException, InterruptedException {
-        Thread.sleep(1000);
+
         for (int i = 0; i < 50; i++) {
             map1.put(i, "EXAMPLE-1");
         }
@@ -122,7 +122,7 @@ public class TCPSocketReplication4WayMapTest {
 
     @Test
     public void testBufferOverflowPutIfAbsent() throws IOException, InterruptedException {
-        Thread.sleep(1000);
+
 
         for (int i = 0; i < 1024; i++) {
             map1.putIfAbsent(i, "EXAMPLE-1");
