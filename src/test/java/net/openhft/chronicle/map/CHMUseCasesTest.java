@@ -74,8 +74,32 @@ public class CHMUseCasesTest {
         }
     }
 
+
+    @Test
+    @Ignore("HCOLL-256 Maps containing Value as char[], get() returns too many char[]'s")
+    public void testCharArrayValue() throws ExecutionException, InterruptedException, IOException {
+
+        int valueSize = 10;
+
+        char[] expected = new char[valueSize];
+        Arrays.fill(expected, 'X');
+
+        ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
+                .of(CharSequence.class, char[].class);
+
+        try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
+            map.put("Key", expected);
+
+            char[] actual = map.get("Key");
+            System.out.println(actual);
+            assertTrue(Arrays.equals(expected, map.get("Key")));
+
+        }
+    }
+
+
     /**
-     * String is not as efficient as CharSequence as a key or value but easier to use The key can
+     * String is not as efficient as CharSequence as a key or value but easier to use. The key can
      * only be on heap and variable length serialised.
      */
     @Test

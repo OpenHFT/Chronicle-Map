@@ -58,6 +58,10 @@ final class CloseablesManager implements Closeable {
             Closeable closeable = closeables.get(i);
             try {
                 closeable.close();
+            } catch (NullPointerException e) {
+                // at java.nio.channels.spi.AbstractSelectableChannel.removeKey
+                // (AbstractSelectableChannel.java:129) is throwing a NULL on close
+                LOG.debug("", e);
             } catch (IOException e) {
                 LOG.debug("", e);
                 ex = e;
