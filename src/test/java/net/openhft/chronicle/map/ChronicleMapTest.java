@@ -643,24 +643,24 @@ public class ChronicleMapTest {
             InstantiationException, InterruptedException, ExecutionException {
 //        int runs = Integer.getInteger("runs", 10);
         int procs = Runtime.getRuntime().availableProcessors();
-        int threads = procs * 3; // runs > 100 ? procs / 2 : procs;
+        if (procs > 8) procs--;
+        int threads = procs * 3;
         ExecutorService es = Executors.newFixedThreadPool(procs);
-        for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
-            // JAVA 8 produces more garbage than previous versions for internal work.
-//            System.gc();
+        for (int runs : new int[]{1, 2, 5, 10, 25, 50, 100, 500, 1000, 2500}) {
+
             final long entries = runs * 1000 * 1000L;
             ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                     .of(CharSequence.class, LongValue.class)
                     .entries(entries)
                     .entryAndValueAlignment(OF_8_BYTES)
-                    .actualSegments(8 * 1024)
+                    .actualSegments(256)
                     .entrySize(24);
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
             final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
 
-            int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
+            int count = runs >= 5 ? 2 : 3;
             final int independence = Math.min(procs, runs > 500 ? 8 : 4);
             System.out.println("\nKey size: " + runs + " Million entries. " + builder);
             for (int j = 0; j < count; j++) {
@@ -674,6 +674,7 @@ public class ChronicleMapTest {
                             LongValue value = nativeLongValue();
                             StringBuilder sb = new StringBuilder();
                             long next = 50 * 1000 * 1000;
+                            Random rand = new Random();
                             // use a factor to give up to 10 digit numbers.
                             int factor = Math.max(1, (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
                             for (long j = t % independence; j < entries + independence - 1; j += independence) {
@@ -681,8 +682,15 @@ public class ChronicleMapTest {
                                 sb.append("us:");
                                 sb.append(j * factor);
                                 long n;
-                                try (WriteContext wc = map.acquireUsingLocked(sb, value)) {
-                                    n = value.addValue(1);
+                                // 75% read
+                                if (rand.nextBoolean() || rand.nextBoolean()) {
+                                    try (ReadContext rc = map.getUsingLocked(sb, value)) {
+                                        n = rc.present() ? value.getValue() + 1 : 1;
+                                    }
+                                } else {
+                                    try (WriteContext wc = map.acquireUsingLocked(sb, value)) {
+                                        n = value.addValue(1);
+                                    }
                                 }
                                 assert n > 0 && n < 1000 : "Counter corrupted " + n;
                                 if (t == 0 && j >= next) {
