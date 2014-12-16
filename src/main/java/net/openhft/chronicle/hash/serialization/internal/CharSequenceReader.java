@@ -57,11 +57,11 @@ public final class CharSequenceReader<S extends CharSequence>
             new CharSequenceReader(NoInterningIdentity.INSTANCE, NoInterningIdentity.INSTANCE);
 
     public static CharSequenceReader of() {
-        return DEFAULT_READER;
+        return STRING_READER;
     }
 
-    public static CharSequenceReader<String> ofString() {
-        return STRING_READER;
+    public static CharSequenceReader<String> ofStringBuilder() {
+        return DEFAULT_READER;
     }
 
     public static <S extends CharSequence, I extends CharSequenceInterner<S> & Serializable>
