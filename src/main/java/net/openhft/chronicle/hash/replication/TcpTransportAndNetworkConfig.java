@@ -134,7 +134,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
                 heartBeatIntervalUnit);
     }
 
-    public int packetSize() {
+    public int tcpBufferSize() {
         return tcpBufferSize;
     }
 

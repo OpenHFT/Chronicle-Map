@@ -76,11 +76,12 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private final KeyInterestUpdater opWriteUpdater = new KeyInterestUpdater(OP_WRITE, selectionKeysStore);
     private final BitSet activeKeys = new BitSet(selectionKeysStore.length);
     private final long heartBeatIntervalMillis;
+    private long largestEntrySoFar = 128;
 
     @NotNull
     private final Replica replica;
     private final byte localIdentifier;
-    private final int maxEntrySizeBytes;
+
     @NotNull
     private final Replica.EntryExternalizable externalizable;
     @NotNull
@@ -95,23 +96,17 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private long selectorTimeout;
 
     /**
-     * @param maxEntrySizeBytes        used to check that the last entry will fit into the buffer,
-     *                                 it can not be smaller than the size of and entry, if it is
-     *                                 set smaller the buffer will over flow, it can be larger then
-     *                                 the entry, but setting it too large reduces the workable
-     *                                 space in the buffer.
      * @param statelessServerConnector set to NULL if not required
      * @throws IOException on an io error.
      */
     public TcpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable externalizable,
                          @NotNull final TcpTransportAndNetworkConfig replicationConfig,
-                         final int maxEntrySizeBytes,
                          @Nullable StatelessServerConnector statelessServerConnector,
                          @Nullable RemoteNodeValidator remoteNodeValidator) throws IOException {
 
-        super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig(),
-                maxEntrySizeBytes);
+        super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig()
+        );
         this.statelessServerConnector = statelessServerConnector;
 
         final ThrottlingConfig throttlingConfig = replicationConfig.throttlingConfig();
@@ -123,7 +118,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
         this.replica = replica;
         this.localIdentifier = replica.identifier();
-        this.maxEntrySizeBytes = maxEntrySizeBytes;
+
         this.externalizable = externalizable;
         this.replicationConfig = replicationConfig;
 
@@ -767,7 +762,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             serverChannel.socket().setReceiveBufferSize(BUFFER_SIZE);
             serverChannel.configureBlocking(false);
-            serverChannel.register(TcpReplicator.this.selector,0);
+            serverChannel.register(TcpReplicator.this.selector, 0);
             ServerSocket serverSocket = null;
 
             try {
@@ -926,10 +921,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      */
     private class TcpSocketChannelEntryWriter {
 
-        @NotNull
-        final ByteBufferBytes in;
-        @NotNull
-        private final ByteBuffer out;
+
         @NotNull
         private final EntryCallback entryCallback;
         // if uncompletedWork is set ( not null ) , this must be completed before any further work
@@ -939,9 +931,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         private long lastSentTime;
 
         private TcpSocketChannelEntryWriter() {
-            out = ByteBuffer.allocateDirect(replicationConfig.packetSize() + maxEntrySizeBytes);
-            in = new ByteBufferBytes(out);
-            entryCallback = new EntryCallback(externalizable, in);
+            entryCallback = new EntryCallback(externalizable, replicationConfig.tcpBufferSize());
         }
 
         public boolean isWorkIncomplete() {
@@ -958,7 +948,11 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          * @param localIdentifier the current nodes identifier
          */
         void identifierToBuffer(final byte localIdentifier) {
-            in.writeByte(localIdentifier);
+            in().writeByte(localIdentifier);
+        }
+
+        private Bytes in() {
+            return entryCallback.in();
         }
 
         /**
@@ -967,8 +961,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
          * @param timeStampOfLastMessage the last timestamp we received a message from that node
          */
         void writeRemoteBootstrapTimestamp(final long timeStampOfLastMessage) {
-            in.writeLong(timeStampOfLastMessage);
+            in().writeLong(timeStampOfLastMessage);
         }
+
 
         /**
          * writes all the entries that have changed, to the buffer which will later be written to
@@ -989,12 +984,19 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             int entriesWritten = 0;
             try {
                 for (; ; entriesWritten++) {
-                    final boolean wasDataRead = modificationIterator.nextEntry(entryCallback, 0);
 
-                    if (!wasDataRead) {
+                    long start = in().position();
+                    final boolean isMoreDataAvailable = modificationIterator.nextEntry(entryCallback, 0);
+                    long entrySize = in().position() - start;
+
+                    if (entrySize > largestEntrySoFar)
+                        largestEntrySoFar = entrySize;
+
+
+                    if (!isMoreDataAvailable) {
                         // if we have no more data to write to the socket then we will
                         // un-register OP_WRITE on the selector, until more data becomes available
-                        if (in.position() == 0 && handShakingComplete)
+                        if (in().position() == 0 && handShakingComplete)
                             disableWrite(socketChannel, attached);
 
                         return;
@@ -1002,7 +1004,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                     // we've filled up the buffer lets give another channel a chance to send
                     // some data
-                    if (in.remaining() <= maxEntrySizeBytes)
+                    if (in().remaining() <= largestEntrySoFar)
                         return;
 
                     // if we have space in the buffer to write more data and we just wrote data
@@ -1024,6 +1026,9 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         private int writeBufferToSocket(@NotNull final SocketChannel socketChannel,
                                         final long approxTime) throws IOException {
 
+            final Bytes in = in();
+            final  ByteBuffer out = out();
+
             if (in.position() == 0)
                 return 0;
 
@@ -1031,6 +1036,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             lastSentTime = approxTime;
             assert in.position() <= Integer.MAX_VALUE;
             int size = (int) in.position();
+
             out.limit(size);
 
             final int len = socketChannel.write(out);
@@ -1051,20 +1057,24 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             return len;
         }
 
+        private ByteBuffer out() {
+            return entryCallback.out();
+        }
+
         /**
          * used to send an single zero byte if we have not send any data for up to the
          * localHeartbeatInterval
          */
         private void writeHeartbeatToBuffer() {
             // denotes the state - 0 for a heartbeat
-            in.writeByte(HEARTBEAT.ordinal());
+            in().writeByte(HEARTBEAT.ordinal());
 
             // denotes the size in bytes
-            in.writeInt(0);
+            in().writeInt(0);
         }
 
         private void writeRemoteHeartbeatInterval(long localHeartbeatInterval) {
-            in.writeLong(localHeartbeatInterval);
+            in().writeLong(localHeartbeatInterval);
         }
 
         /**
@@ -1093,11 +1103,11 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         }
 
         public boolean doWork() {
-            return uncompletedWork != null && uncompletedWork.doWork(in);
+            return uncompletedWork != null && uncompletedWork.doWork(in());
         }
 
         public boolean hasBytesToWrite() {
-            return in.position() > 0;
+            return in().position() > 0;
         }
     }
 
@@ -1113,7 +1123,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         private byte state;
 
         private TcpSocketChannelEntryReader() {
-            in = ByteBuffer.allocateDirect(replicationConfig.packetSize() + maxEntrySizeBytes);
+            in = ByteBuffer.allocateDirect(replicationConfig.tcpBufferSize());
             out = new ByteBufferBytes(in.slice());
             out.limit(0);
             in.clear();
@@ -1222,7 +1232,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                             final Work futureWork =
                                     statelessServerConnector.processStatelessEvent(state,
-                                            attached.entryWriter.in, attached.entryReader.out);
+                                            attached.entryWriter.in(), attached.entryReader.out);
 
                             // turn the OP_WRITE on
                             key.interestOps(key.interestOps() | OP_WRITE);
@@ -1232,7 +1242,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                             // the buffer is no longer full, and as such is treated as future work
                             if (futureWork != null) {
                                 try {  // we will complete what we can for now
-                                    boolean isComplete = futureWork.doWork(attached.entryWriter.in);
+                                    boolean isComplete = futureWork.doWork(attached.entryWriter
+                                            .in());
                                     if (!isComplete)
                                         attached.entryWriter.uncompletedWork = futureWork;
                                 } catch (Exception e) {
@@ -1264,7 +1275,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             // the maxEntrySizeBytes used here may not be the maximum size of the entry in its serialized form
             // however, its only use as an indication that the buffer is becoming full and should be compacted
             // the buffer can be compacted at any time
-            if (in.position() == 0 || in.remaining() > maxEntrySizeBytes)
+            if (in.position() == 0 || in.remaining() > largestEntrySoFar)
                 return;
 
             in.limit(in.position());

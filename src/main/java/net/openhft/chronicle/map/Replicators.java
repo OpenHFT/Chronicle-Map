@@ -54,7 +54,7 @@ final class Replicators {
                 assert tcpConfig != null;
                 return new TcpReplicator(replica, entryExternalizable,
                         tcpConfig,
-                        builder.entrySize(true), statelessServer,
+                        statelessServer,
                         replication.remoteNodeValidator());
             }
         };

@@ -73,8 +73,8 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
                          final byte localIdentifier)
             throws IOException {
 
-        super("UdpReplicator-" + localIdentifier, replicationConfig.throttlingConfig(),
-                maxPayloadSize);
+        super("UdpReplicator-" + localIdentifier, replicationConfig.throttlingConfig()
+        );
 
         this.localIdentifier = localIdentifier;
 

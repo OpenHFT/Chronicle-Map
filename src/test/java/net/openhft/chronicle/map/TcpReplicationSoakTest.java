@@ -1,7 +1,10 @@
 package net.openhft.chronicle.map;
 
+import junit.framework.Assert;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -22,14 +25,15 @@ public class TcpReplicationSoakTest {
     private ChronicleMap<Integer, CharSequence> map2;
 
     static int s_port = 8010;
-    int valueSize = 1000000;
+    int valueSize = 1_00_000; // 1MB
 
-    char[] value = new char[valueSize];
-
+    char[] valueX = new char[valueSize - 100];
+    char[] valueY = new char[valueSize - 100];
 
     @Before
     public void setup() throws IOException {
-        Arrays.fill(value, 'X');
+        Arrays.fill(valueX, 'X');
+        Arrays.fill(valueX, 'Y');
 
         int keySize = 4;
         int entrySize = keySize + valueSize;
@@ -44,7 +48,8 @@ public class TcpReplicationSoakTest {
 
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(entrySize)
+                    .entrySize(entrySize)
+                    .entries(2)
                     .actualSegments(1)
                     .replication((byte) 1, tcpConfig1)
                     .instance()
@@ -58,7 +63,8 @@ public class TcpReplicationSoakTest {
                     .tcpBufferSize(1024 * 64);
 
             map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(entrySize)
+                    .entrySize(entrySize)
+                    .entries(2)
                     .replication((byte) 2, tcpConfig2)
                     .instance()
                     .name("map2")
@@ -95,17 +101,22 @@ public class TcpReplicationSoakTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-    @Ignore("HCOLL-246 Tcp Replication fails with large values or entries sizes that don't " +
-            "included internal replication bytes")
+
     @Test
     public void testLargeValues() throws IOException, InterruptedException {
 
-        map1.put(1, new String(value));
+        String xString = new String(valueX);
+        String yString = new String(valueY);
+
+        map1.put(1, xString);
+        map1.put(2, yString);
+
         System.out.println("\nwaiting till equal");
 
         waitTillEqual(10000);
 
-        Assert.assertEquals(map1, map2);
+        Assert.assertEquals(xString, map2.get(1));
+        Assert.assertEquals(yString, map2.get(2));
 
     }
 

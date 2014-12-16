@@ -422,6 +422,41 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
     }
 
+    public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
+
+        long start = entry.position();
+        final long keySize = keySizeMarshaller.readSize(entry);
+
+        entry.skip(keySize);
+
+        // timeStamp
+        entry.readLong();
+
+        //identifier
+        entry.readByte();
+
+        final boolean isDeleted = entry.readBoolean();
+        long valueSize;
+        if (!isDeleted) {
+            valueSize = valueSizeMarshaller.readSize(entry);
+        } else {
+            valueSize = 0L;
+        }
+
+        alignment.alignPositionAddr(entry);
+        entry.skip(valueSize);
+        long result = (entry.position() - start);
+        entry.position(start);
+
+        // entries can be larger than Integer.MAX_VALUE as we are restricted to the size we can
+        // make a byte buffer
+        assert result < Integer.MAX_VALUE;
+
+        return (int) result;
+
+    }
+
+
     /**
      * This method does not set a segment lock, A segment lock should be obtained before calling
      * this method, especially when being used in a multi threaded context.
@@ -1074,7 +1109,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 MultiMap hashLookup = hashLookup();
                 hashLookup.startSearch(hash2);
                 MultiStoreBytes entry = null;
-                returnNothing: {
+                returnNothing:
+                {
                     for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
                         long offset = offsetFromPos(pos);
                         if (entry == null) {
