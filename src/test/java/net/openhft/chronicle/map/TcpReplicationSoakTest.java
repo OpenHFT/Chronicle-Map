@@ -5,7 +5,10 @@ import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -95,13 +98,12 @@ public class TcpReplicationSoakTest {
     }
 
 
-    @Ignore
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
 
         System.out.print("SoakTesting ");
         for (int j = 1; j < 2 * Builder.SIZE; j++) {
-            if (j % 100 == 0)
+            if (j % 1000 == 0)
                 System.out.print(".");
             Random rnd = new Random(j);
             for (int i = 1; i < 10; i++) {
@@ -115,10 +117,10 @@ public class TcpReplicationSoakTest {
                 }
             }
         }
-        Thread.sleep(1000);
+
         System.out.println("\nwaiting till equal");
 
-        waitTillEqual(10000);
+        waitTillEqual(15000);
 
         Assert.assertEquals(map1, map2);
 
