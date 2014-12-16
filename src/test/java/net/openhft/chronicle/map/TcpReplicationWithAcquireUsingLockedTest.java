@@ -3,7 +3,6 @@ package net.openhft.chronicle.map;
 import eg.TestInstrumentVOInterface;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -14,7 +13,6 @@ import java.net.InetSocketAddress;
 public class TcpReplicationWithAcquireUsingLockedTest {
 
 
-    @Ignore("HCOLL-253 TcpReplication is not working when used with acquireUsingLocked")
     @Test
     public void testReplicationWithAcquireUsingLocked() throws Exception {
 
@@ -31,10 +29,12 @@ public class TcpReplicationWithAcquireUsingLockedTest {
 
             map1a = map1;
 
-            TcpTransportAndNetworkConfig config2 = TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076));
+            TcpTransportAndNetworkConfig config2 =
+                    TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076));
 
 
-            try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 = ChronicleMapBuilder.of(CharSequence.class,
+            try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
+                         ChronicleMapBuilder.of(CharSequence.class,
                     TestInstrumentVOInterface.class)
                     .replication((byte) 2, config2)
                     .create()) {
@@ -45,9 +45,8 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 TestInstrumentVOInterface instrumentVOInterface = map1.newValueInstance();
 
 
-                try (WriteContext<CharSequence, TestInstrumentVOInterface> wc = map1
-                        .acquireUsingLocked
-                                ("KEY1", instrumentVOInterface)) {
+                try (WriteContext<CharSequence, TestInstrumentVOInterface> wc =
+                             map1.acquireUsingLocked("KEY1", instrumentVOInterface)) {
                     instrumentVOInterface.setSymbol("Flyer");
                     instrumentVOInterface.setCurrencyCode("USA");
                 }
