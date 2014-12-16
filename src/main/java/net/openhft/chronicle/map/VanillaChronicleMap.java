@@ -821,7 +821,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         case "chronicle-key":
 
                             if (kClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
-                                return to$$Native(reader, vClass);
+                                return to$$Native(reader, vClass, true);
                             } else {
                                 long keySize = keySizeMarshaller.readSize(buffer);
                                 ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
@@ -831,7 +831,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         case "chronicle-value":
 
                             if (vClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
-                                return to$$Native(reader, vClass);
+                                return to$$Native(reader, vClass, false);
                             } else {
                                 long valueSize = valueSizeMarshaller.readSize(buffer);
                                 ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
@@ -859,9 +859,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     } else return (E) unmarshallingContext.convertAnother(null, clazz);
                 }
 
-                private Object to$$Native(HierarchicalStreamReader reader, final Class aClass) {
+                private Object to$$Native(HierarchicalStreamReader reader, final Class aClass, final boolean isKey) {
 
-                    Object o = DataValueClasses.newDirectInstance(aClass);
+                    final Object o = isKey ? newKeyInstance() : newValueInstance();
                     try {
                         for (Method $$nativeMethod : o.getClass().getMethods()) {
                             if ($$nativeMethod.getName().equals("setValue") && $$nativeMethod.getParameterTypes()
