@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import com.google.common.primitives.Chars;
 import junit.framework.Assert;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -21,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
 /**
@@ -36,7 +38,7 @@ public class CHMUseCasesTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
+        return asList(new Object[][]{
                 {
                         TypeOfMap.SIMPLE
                 },
@@ -76,7 +78,6 @@ public class CHMUseCasesTest {
 
 
     @Test
-    @Ignore("HCOLL-256 Maps containing Value as char[], get() returns too many char[]'s")
     public void testCharArrayValue() throws ExecutionException, InterruptedException, IOException {
 
         int valueSize = 10;
@@ -92,8 +93,7 @@ public class CHMUseCasesTest {
 
             char[] actual = map.get("Key");
             System.out.println(actual);
-            assertTrue(Arrays.equals(expected, map.get("Key")));
-
+            assertEquals(Chars.asList(expected), Chars.asList(map.get("Key")));
         }
     }
 
@@ -2063,33 +2063,33 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<String, List<String>> map = newInstance(builder)) {
             map.put("1", Collections.<String>emptyList());
-            map.put("2", Arrays.asList("two-A"));
+            map.put("2", asList("two-A"));
 
             List<String> list1 = new ArrayList<>();
             try (WriteContext wc = map.acquireUsingLocked("1", list1)) {
                 list1.add("one");
-                assertEquals(Arrays.asList("one"), list1);
+                assertEquals(asList("one"), list1);
             }
             List<String> list2 = new ArrayList<>();
             try (ReadContext rc = map.getUsingLocked("1", list2)) {
                 assertTrue(rc.present());
-                assertEquals(Arrays.asList("one"), list2);
+                assertEquals(asList("one"), list2);
             }
 
             try (ReadContext rc = map.getUsingLocked("2", list2)) {
                 assertTrue(rc.present());
                 list2.add("two-B");     // this is not written as it only a read context
-                assertEquals(Arrays.asList("two-A", "two-B"), list2);
+                assertEquals(asList("two-A", "two-B"), list2);
             }
 
             try (WriteContext wc = map.acquireUsingLocked("2", list1)) {
                 list1.add("two-C");
-                assertEquals(Arrays.asList("two-A", "two-C"), list1);
+                assertEquals(asList("two-A", "two-C"), list1);
             }
 
             try (ReadContext rc = map.getUsingLocked("2", list2)) {
                 assertTrue(rc.present());
-                assertEquals(Arrays.asList("two-A", "two-C"), list2);
+                assertEquals(asList("two-A", "two-C"), list2);
             }
         }
     }
@@ -2107,25 +2107,25 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<String, Set<String>> map = newInstance(builder)) {
             map.put("1", Collections.<String>emptySet());
-            map.put("2", new LinkedHashSet<String>(Arrays.asList("one")));
+            map.put("2", new LinkedHashSet<String>(asList("one")));
 
             Set<String> list1 = new LinkedHashSet<>();
             try (WriteContext wc = map.acquireUsingLocked("1", list1)) {
                 list1.add("two");
-                assertEquals(new LinkedHashSet<String>(Arrays.asList("two")), list1);
+                assertEquals(new LinkedHashSet<String>(asList("two")), list1);
             }
             Set<String> list2 = new LinkedHashSet<>();
             try (ReadContext rc = map.getUsingLocked("1", list2)) {
                 assertTrue(rc.present());
-                assertEquals(new LinkedHashSet<String>(Arrays.asList("two")), list2);
+                assertEquals(new LinkedHashSet<String>(asList("two")), list2);
             }
             try (WriteContext wc = map.acquireUsingLocked("2", list1)) {
                 list1.add("three");
-                assertEquals(new LinkedHashSet<String>(Arrays.asList("one", "three")), list1);
+                assertEquals(new LinkedHashSet<String>(asList("one", "three")), list1);
             }
             try (ReadContext rc = map.getUsingLocked("2", list2)) {
                 assertTrue(rc.present());
-                assertEquals(new LinkedHashSet<String>(Arrays.asList("one", "three")), list2);
+                assertEquals(new LinkedHashSet<String>(asList("one", "three")), list2);
             }
         }
     }

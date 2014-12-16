@@ -31,6 +31,8 @@ enum LongPairArrayReader implements BytesReader<LongPair[]> {
 
     @Override
     public LongPair[] read(Bytes bytes, long size, LongPair[] toReuse) {
+        if (size > Integer.MAX_VALUE * 16L)
+            throw new IllegalStateException("LongPair[] size couldn't be " + (size / 16L));
         int resLen = (int) (size / 16L);
         LongPair[] res;
         if (toReuse != null) {
