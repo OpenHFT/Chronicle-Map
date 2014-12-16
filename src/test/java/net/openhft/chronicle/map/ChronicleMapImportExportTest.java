@@ -182,7 +182,6 @@ public class ChronicleMapImportExportTest {
     }
 
 
-    @Ignore("HCOLL-242 - this type of off heap reference is not currently supported")
     @Test
     public void testWithLongValue() throws IOException, InterruptedException {
 
@@ -208,6 +207,7 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<CharSequence, LongValue> actual = ChronicleMapBuilder.of(CharSequence.class, LongValue
                     .class)
                     .create()) {
+
                 actual.putAll(file);
 
                 Assert.assertEquals(expected, actual);

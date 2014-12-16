@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.*;
@@ -622,7 +623,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
         xstream.alias("chronicle-entries", VanillaChronicleMap.EntrySet.class);
-        // ideally we will use java serialization if we can
         lazyXStreamConverter().registerConverter(xstream);
 
         OutputStream outputStream = new FileOutputStream(toFile);
@@ -699,6 +699,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     private XStreamConverter xStreamConverter;
 
+
     /**
      * @return a lazily created XStreamConverter
      */
@@ -721,18 +722,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                 @Override
                 public boolean canConvert(Class aClass) {
+
                     if (EntrySet.class.isAssignableFrom(aClass)
                             || WriteThroughEntry.class.isAssignableFrom(aClass))
                         return true;
 
-                    if (Serializable.class
-                            .isAssignableFrom(aClass))
-                        return false;
+                    String canonicalName = aClass.getCanonicalName();
 
-                    if (vClass.equals(Map.class))
-                        return false;
-                    // todo add this back in when we do native
-                    //  return kClass.isAssignableFrom(aClass) || vClass.isAssignableFrom(aClass);
+                    if (canonicalName.startsWith("net.openhft.lang.values")) {
+                        return true;
+                    }
+
                     return false;
                 }
 
@@ -745,16 +745,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         writer.startNode("chronicle-key");
 
                         Object key = e.getKey();
-                        if (!kClass.equals(key.getClass()))
-                            writer.addAttribute("type", key.getClass().getCanonicalName());
+                        writeType(writer, key, kClass);
 
                         marshallingContext.convertAnother(key);
                         writer.endNode();
 
                         writer.startNode("chronicle-value");
                         Object value = e.getValue();
-                        if (!vClass.equals(value.getClass()))
-                            writer.addAttribute("type", value.getClass().getCanonicalName());
+                        writeType(writer, value, vClass);
                         marshallingContext.convertAnother(value);
                         writer.endNode();
                     } else if (EntrySet.class
@@ -763,6 +761,23 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             writer.startNode("chronicle-entry");
                             marshallingContext.convertAnother(e);
                             writer.endNode();
+                        }
+                    }
+                    if (o.getClass().getCanonicalName().startsWith("net.openhft.lang.values")
+                            && (o.getClass().getCanonicalName().endsWith("$$Native") ||
+                            o.getClass().getCanonicalName().endsWith("$$Heap"))) {
+                        Method[] methods = o.getClass().getMethods();
+                        for (Method method : methods) {
+                            if (method.getName().equals("getValue") && method.getParameterTypes()
+                                    .length == 0) {
+                                try {
+                                    Object result = method.invoke(o);
+                                    writer.setValue(result.toString());
+                                    return;
+                                } catch (Exception e) {
+                                    throw new RuntimeException("class=" + o.getClass().getCanonicalName(), e);
+                                }
+                            }
                         }
                     }
                 }
@@ -804,17 +819,29 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             }
                             break;
                         case "chronicle-key":
-                            long keySize = keySizeMarshaller.readSize(buffer);
-                            ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
-                            BytesReader<K> keyReader = keyReaderProvider.get(copies, originalKeyReader);
-                            return keyReader.read(buffer, keySize);
+
+                            if (kClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
+                                return toNative(reader, vClass);
+                            } else {
+                                long keySize = keySizeMarshaller.readSize(buffer);
+                                ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
+                                BytesReader<K> keyReader = keyReaderProvider.get(copies, originalKeyReader);
+                                return keyReader.read(buffer, keySize);
+                            }
                         case "chronicle-value":
-                            long valueSize = valueSizeMarshaller.readSize(buffer);
-                            copies = valueReaderProvider.getCopies(null);
-                            BytesReader<V> valueReader =
-                                    valueReaderProvider.get(copies, originalValueReader);
-                            return valueReader.read(buffer, valueSize);
+
+                            if (vClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
+                                return toNative(reader, vClass);
+                            } else {
+                                long valueSize = valueSizeMarshaller.readSize(buffer);
+                                ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
+                                BytesReader<V> valueReader =
+                                        valueReaderProvider.get(copies, originalValueReader);
+                                return valueReader.read(buffer, valueSize);
+                            }
+
                     }
+
 
                     return null;
                 }
@@ -831,9 +858,55 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         }
                     } else return (E) unmarshallingContext.convertAnother(null, clazz);
                 }
+
+                private Object toNative(HierarchicalStreamReader reader, final Class aClass) {
+
+                    Object o = DataValueClasses.newDirectInstance(aClass);
+                    try {
+                        for (Method $$nativeMethod : o.getClass().getMethods()) {
+                            if ($$nativeMethod.getName().equals("setValue") && $$nativeMethod.getParameterTypes()
+                                    .length == 1) {
+
+                                Class<?> parameterType = $$nativeMethod.getParameterTypes()[0];
+                                String value = reader.getValue();
+
+                                if (parameterType.isPrimitive()) {
+                                    String name = parameterType.getSimpleName();
+
+                                    String properName = "java.lang." + Character.toString(name
+                                            .charAt(0)).toUpperCase()
+                                            + name.substring(1);
+                                    parameterType = Class.forName(properName);
+                                }
+
+                                Method valueOf = parameterType.getMethod("valueOf", String.class);
+                                Object invoke = valueOf.invoke(null, value);
+                                $$nativeMethod.invoke(o, invoke);
+                                return o;
+
+                            }
+                        }
+                    } catch (Exception e) {
+                        throw new ConversionException("class=" + aClass.getCanonicalName(), e);
+                    }
+                    throw new ConversionException("setValue(..) method not found in class=" + aClass
+                            .getCanonicalName
+                                    ());
+                }
             };
 
             xstream.registerConverter(converter);
+        }
+
+        private void writeType(HierarchicalStreamWriter writer, Object o, final Class clazz) {
+            String simpleName = o.getClass().getCanonicalName();
+            if (simpleName.endsWith("$$Native")) {
+                String nodeName = simpleName.substring(0, simpleName.length() -
+                        "$$Native".length());
+                if (!nodeName.equals(clazz.getCanonicalName()))
+                    writer.addAttribute("type", nodeName);
+            } else if (!clazz.equals(o.getClass()))
+                writer.addAttribute("type", o.getClass().getCanonicalName());
         }
     }
 
