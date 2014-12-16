@@ -543,7 +543,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore("HCOLL-249 issue when using acquireUsingLocked() with ByteBufferBytes wrong string.length()")
     @Test
     public void testAcquireUsingWithByteBufferBytesValue() throws IOException {
 
@@ -564,6 +563,7 @@ public class CHMUseCasesTest {
             try (WriteContext rc = map.acquireUsingLocked(key, value)) {
                 assertTrue(key instanceof IntValue);
                 assertTrue(value instanceof CharSequence);
+                value.limit(value.position());
             }
 
             assertTrue( map.get(key).length() == 0);
