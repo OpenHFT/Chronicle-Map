@@ -543,9 +543,12 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore("HCOLL-249 issue when using acquireUsingLocked() with ByteBufferBytes value")
+    @Ignore("HCOLL-249 issue when using acquireUsingLocked() with ByteBufferBytes wrong string.length()")
     @Test
     public void testAcquireUsingWithByteBufferBytesValue() throws IOException {
+
+        if (typeOfMap == TypeOfMap.STATELESS)
+            return;
 
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class);
@@ -556,14 +559,14 @@ public class CHMUseCasesTest {
             key.setValue(1);
 
             ByteBufferBytes value = new ByteBufferBytes(ByteBuffer.allocate(10));
+            value.clear();
 
             try (WriteContext rc = map.acquireUsingLocked(key, value)) {
                 assertTrue(key instanceof IntValue);
-                key.setValue(1);
-
+                assertTrue(value instanceof CharSequence);
             }
 
-            assertEquals(null, map.get(key));
+            assertTrue( map.get(key).length() == 0);
         }
     }
 
