@@ -228,7 +228,7 @@ public final class DataValueBytesMarshallers {
         String simpleName = tClass.getSimpleName();
         String bytesReaderName = bytesReaderName(tClass, false);
         String simpleReaderName = bytesReaderName(simpleName(tClass));
-        sb.append("\npublic class ").append(simpleReaderName)
+        sb.append("\n@SuppressWarnings(\"unchecked\") public class ").append(simpleReaderName)
                 .append(" implements DeserializationFactoryConfigurableBytesReader<")
                 .append(simpleName).append(", ").append(simpleReaderName).append("> {\n");
         declareSerialVersionUID(sb);
