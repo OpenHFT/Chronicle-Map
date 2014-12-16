@@ -104,6 +104,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
             LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
     public static final long DEFAULT_STATELESS_CLIENT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
+    private static final StringBuilder EMTRY_STRING_BUILDER = new StringBuilder();
+
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
 
@@ -148,6 +150,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
         if (CharSequence.class == valueClass)
             defaultValue = (V) "";
+        if (StringBuilder.class == valueClass)
+            defaultValue = (V) EMTRY_STRING_BUILDER;
     }
 
     /**

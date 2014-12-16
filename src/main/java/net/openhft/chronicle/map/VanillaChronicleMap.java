@@ -652,7 +652,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     public V newValueInstance() {
-        if (vClass.equals(CharSequence.class) || vClass.equals(StringBuilder.class)) {
+        if (vClass == CharSequence.class || vClass == StringBuilder.class) {
             return (V) new StringBuilder();
         }
 
