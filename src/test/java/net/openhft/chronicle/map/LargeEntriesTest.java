@@ -103,24 +103,25 @@ public class LargeEntriesTest {
     @Ignore("Performance Test")
     public void testLargeStringsPerf() throws ExecutionException, InterruptedException, IOException {
         doLargeEntryPerf(10000, 100 * 1024);
+        doLargeEntryPerf(1000000, 1024);
         doLargeEntryPerf(100000, 10 * 1024);
         doLargeEntryPerf(10000, 100 * 1024);
         doLargeEntryPerf(3000, 1024 * 1024);
     }
 
     private void doLargeEntryPerf(int ENTRIES, final int ENTRY_SIZE) throws IOException, InterruptedException, ExecutionException {
-        System.out.printf("Testing %,d entries of %,d KB%n", ENTRIES, ENTRY_SIZE);
+        System.out.printf("Testing %,d entries of %,d KB%n", ENTRIES, ENTRY_SIZE / 1024);
         File file = File.createTempFile("largeEntries", ".deleteme");
         file.deleteOnExit();
         final ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
                 .valueMarshaller(SnappyStringMarshaller.INSTANCE)
-                .entries(ENTRIES * 2)
-                .entrySize(ENTRY_SIZE / 6)
+                .entries(ENTRIES)
+                .entrySize(ENTRY_SIZE / 7 + 200)
                 .putReturnsNull(true)
                 .createPersistedTo(file);
         {
-            warmUpCompression(ENTRY_SIZE);
+//            warmUpCompression(ENTRY_SIZE);
             int threads = Runtime.getRuntime().availableProcessors();
             ExecutorService es = Executors.newFixedThreadPool(threads);
             final int block = ENTRIES / threads;

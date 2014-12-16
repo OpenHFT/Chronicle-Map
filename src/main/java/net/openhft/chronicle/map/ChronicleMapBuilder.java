@@ -553,8 +553,10 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
     private int estimateSegmentsBasedOnSize() {
         // based on entries with multimap of 100 bytes.
-        int segmentsForEntries = estimateSegmentsForEntries();
-        return entrySize >= 100000
+        int segmentsForEntries = estimateSegmentsForEntries(entries);
+        return entrySize >= 1000000
+                ? segmentsForEntries * 16
+                : entrySize >= 100000
                 ? segmentsForEntries * 8
                 : entrySize >= 10000
                 ? segmentsForEntries * 4
@@ -563,8 +565,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
                 : segmentsForEntries;
     }
 
-    private int estimateSegmentsForEntries() {
-        long size = entries;
+    private static int estimateSegmentsForEntries(long size) {
         if (size > 200 << 20)
             return 256;
         if (size >= 1 << 20)
@@ -575,6 +576,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
             return 32;
         if (size >= 4 << 10)
             return 16;
+        if (size >= 1 << 10)
+            return 8;
         return 1;
     }
 
