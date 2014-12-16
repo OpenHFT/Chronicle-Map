@@ -42,6 +42,8 @@ import java.io.Serializable;
  *
  *     &#064;Override
  *     public LongPair[] read(Bytes bytes, long size, LongPair[] toReuse) {
+ *         if (size &gt; Integer.MAX_VALUE * 16L)
+ *             throw new IllegalStateException("LongPair[] size couldn't be " + (size / 16L));
  *         int resLen = (int) (size / 16L);
  *         LongPair[] res;
  *         if (toReuse != null) {

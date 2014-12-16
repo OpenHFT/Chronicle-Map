@@ -55,19 +55,24 @@ public enum ByteArrayMarshaller implements BytesInterop<byte[]>, BytesReader<byt
 
     @Override
     public byte[] read(Bytes bytes, long size) {
-        byte[] ba = new byte[(int) size];
+        byte[] ba = new byte[resLen(size)];
         bytes.read(ba);
         return ba;
     }
 
     @Override
     public byte[] read(Bytes bytes, long size, byte[] toReuse) {
+        int resLen = resLen(size);
+        if (toReuse == null || resLen != toReuse.length)
+            toReuse = new byte[resLen];
+        bytes.read(toReuse);
+        return toReuse;
+    }
+
+    private int resLen(long size) {
         if (size < 0L || size > (long) Integer.MAX_VALUE)
             throw new IllegalArgumentException("byte[] size should be non-negative int, " +
                     size + " given. Memory corruption?");
-        if (toReuse == null || size != toReuse.length)
-            toReuse = new byte[(int) size];
-        bytes.read(toReuse);
-        return toReuse;
+        return (int) size;
     }
 }

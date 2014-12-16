@@ -45,17 +45,26 @@ public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<cha
 
     @Override
     public char[] read(Bytes bytes, long size) {
-        char[] chars = new char[(int) size];
+        char[] chars = new char[resLen(size)];
         bytes.readFully(chars);
         return chars;
     }
 
     @Override
     public char[] read(Bytes bytes, long size, char[] toReuse) {
-        if (toReuse == null || toReuse.length != size)
-            toReuse = new char[(int) size];
+        int resLen = resLen(size);
+        if (toReuse == null || toReuse.length != resLen)
+            toReuse = new char[resLen];
         bytes.readFully(toReuse);
         return toReuse;
+    }
+
+    private int resLen(long size) {
+        long resLen = size / 2L;
+        if (resLen < 0 || resLen > Integer.MAX_VALUE)
+            throw new IllegalArgumentException("char[] size should be non-negative int, " +
+                    resLen + " given. Memory corruption?");
+        return (int) resLen;
     }
 
     @Override
