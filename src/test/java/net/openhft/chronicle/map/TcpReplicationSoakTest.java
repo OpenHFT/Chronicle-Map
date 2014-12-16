@@ -1,17 +1,19 @@
 package net.openhft.chronicle.map;
 
-import junit.framework.Assert;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import net.openhft.lang.io.ByteBufferBytes;
+import net.openhft.lang.model.Byteable;
+import net.openhft.lang.model.DataValueClasses;
+import net.openhft.lang.values.IntValue;
+import org.junit.*;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -23,20 +25,13 @@ public class TcpReplicationSoakTest {
 
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
-
+    private IntValue value;
     static int s_port = 8010;
-    int valueSize = 1_00_000; // 1MB
-
-    char[] valueX = new char[valueSize - 100];
-    char[] valueY = new char[valueSize - 100];
 
     @Before
     public void setup() throws IOException {
-        Arrays.fill(valueX, 'X');
-        Arrays.fill(valueX, 'Y');
-
-        int keySize = 4;
-        int entrySize = keySize + valueSize;
+        value = DataValueClasses.newDirectReference(IntValue.class);
+        ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
 
@@ -48,8 +43,7 @@ public class TcpReplicationSoakTest {
 
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entrySize(entrySize)
-                    .entries(2)
+                    .entries(Builder.SIZE + Builder.SIZE)
                     .actualSegments(1)
                     .replication((byte) 1, tcpConfig1)
                     .instance()
@@ -63,8 +57,7 @@ public class TcpReplicationSoakTest {
                     .tcpBufferSize(1024 * 64);
 
             map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entrySize(entrySize)
-                    .entries(2)
+                    .entries(Builder.SIZE + Builder.SIZE)
                     .replication((byte) 2, tcpConfig2)
                     .instance()
                     .name("map2")
@@ -102,21 +95,32 @@ public class TcpReplicationSoakTest {
     }
 
 
+    @Ignore
     @Test
-    public void testLargeValues() throws IOException, InterruptedException {
+    public void testSoakTestWithRandomData() throws IOException, InterruptedException {
 
-        String xString = new String(valueX);
-        String yString = new String(valueY);
+        System.out.print("SoakTesting ");
+        for (int j = 1; j < 2 * Builder.SIZE; j++) {
+            if (j % 100 == 0)
+                System.out.print(".");
+            Random rnd = new Random(j);
+            for (int i = 1; i < 10; i++) {
+                final int select = rnd.nextInt(2);
+                final ChronicleMap<Integer, CharSequence> map = select > 0 ? map1 : map2;
 
-        map1.put(1, xString);
-        map1.put(2, yString);
-
+                if (rnd.nextBoolean()) {
+                    map.put(rnd.nextInt(Builder.SIZE), "test" + j);
+                } else {
+                    map.remove(rnd.nextInt(Builder.SIZE));
+                }
+            }
+        }
+        Thread.sleep(1000);
         System.out.println("\nwaiting till equal");
 
         waitTillEqual(10000);
 
-        Assert.assertEquals(xString, map2.get(1));
-        Assert.assertEquals(yString, map2.get(2));
+        Assert.assertEquals(map1, map2);
 
     }
 
