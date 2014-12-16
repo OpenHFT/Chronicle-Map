@@ -130,6 +130,9 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         } else if (eClass == CharSequence.class || eClass == String.class) {
             reader((BytesReader<E>) CharSequenceReader.of());
             writer((BytesWriter<E>) CharSequenceWriter.instance());
+        } else if (eClass == StringBuilder.class) {
+            reader((BytesReader<E>) CharSequenceReader.ofStringBuilder());
+            writer((BytesWriter<E>) CharSequenceWriter.instance());
         } else if (eClass == Void.class) {
             sizeMarshaller(VoidMarshaller.INSTANCE);
             reader((BytesReader<E>) VoidMarshaller.INSTANCE);

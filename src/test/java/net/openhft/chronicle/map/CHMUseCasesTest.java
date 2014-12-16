@@ -460,10 +460,11 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore("HCOLL-248 Issue with acquireUsingLocked() for a StringBuilder Value")
     @Test
     public void testAcquireUsingWithIntValueKeyStringBuilderValue() throws IOException {
 
+        if (typeOfMap == TypeOfMap.STATELESS)
+            return; // acquireUsingLocked supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, StringBuilder> builder = ChronicleMapBuilder
                 .of(IntValue.class, StringBuilder.class);

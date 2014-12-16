@@ -652,7 +652,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     public V newValueInstance() {
-        if (vClass.equals(CharSequence.class) || vClass.equals(StringBuilder.class)) {
+        if (vClass == CharSequence.class || vClass == StringBuilder.class) {
             return (V) new StringBuilder();
         }
 
@@ -2818,6 +2818,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         @Override
         public void close() {
+            // TODO optimize -- keep replication bytes offset in SegmentState to jump directly
+            long pos = segmentState.pos;
+            long offset = segment.offsetFromPos(pos);
+            MultiStoreBytes entry = segment.reuse(segmentState.tmpBytes, offset);
+            long keySize = map.keySizeMarshaller.readSize(entry);
+            entry.skip(keySize);
+            segment.manageReplicationBytes(entry, true, false);
+            map.onPut(segment, pos);
             segmentState.close();
             segment.writeUnlock();
         }
@@ -2849,9 +2857,25 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         @Override
         public void close() {
             if (putOnClose) {
-                segment.putWithoutLock(copies, segmentState,
-                        metaKeyInterop, keyInterop, key(), keySize, map.keyIdentity(),
-                        map, value(), map.valueIdentity(), segmentHash, true, map, true);
+                // TODO optimize -- keep keySize, valueSizePos, entryEndAddr, etc. inside
+                // segmentState
+                long pos = segmentState.pos;
+                long offset = segment.offsetFromPos(pos);
+                MultiStoreBytes entry = segment.reuse(segmentState.tmpBytes, offset);
+                long keySize = map.keySizeMarshaller.readSize(entry);
+                entry.skip(keySize);
+                segment.manageReplicationBytes(entry, true, false);
+                long valueSizePos = entry.position();
+                long valueSize = map.readValueSize(entry);
+                long entryEndAddr = entry.positionAddr() + valueSize;
+                VI valueInterop = map.valueInteropProvider.get(copies, map.originalValueInterop);
+                V value = value();
+                MVI metaValueInterop = map.metaValueInteropProvider
+                        .get(copies, map.originalMetaValueInterop, valueInterop, value);
+                long newValueSize = metaValueInterop.size(valueInterop, value);
+                segment.putValue(pos, offset, entry, valueSizePos, entryEndAddr, segmentState,
+                        metaValueInterop, valueInterop, value, newValueSize, segment.hashLookup());
+                map.onPut(segment, segmentState.pos);
             }
             putOnClose = true;
             segmentState.close();
