@@ -98,15 +98,26 @@ public class CHMUseCasesTest {
     }
 
 
-    /**
-     * String is not as efficient as CharSequence as a key or value but easier to use. The key can
-     * only be on heap and variable length serialised.
-     */
+    @Ignore("HCOLL-257 Object serialization is failing when calling writeObject() / readObject()")
+    @Test
+    public void testPrefixStingFunctionSerialization() throws ExecutionException,
+            InterruptedException, IOException {
+
+        ByteBufferBytes b = new ByteBufferBytes(ByteBuffer.allocate(512));
+
+        PrefixStingFunction expected = new PrefixStingFunction("New ");
+        b.writeObject(expected);
+
+        b.clear();
+        PrefixStingFunction actual = b.readObject(PrefixStingFunction.class);
+        assertEquals(expected, actual);
+
+    }
+
+    @Ignore("HCOLL-257 Object serialization is failing when calling writeObject() / readObject()")
     @Test
     public void testStringStringMap() throws ExecutionException, InterruptedException, IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return;
 
         ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
                 .of(String.class, String.class);
@@ -119,6 +130,22 @@ public class CHMUseCasesTest {
             assertEquals(null, map.getMapped("No key", new PrefixStingFunction("New ")));
 
         }
+    }
+
+    @Test
+    public void testStringSerialization() throws ExecutionException,
+            InterruptedException, IOException {
+
+        ByteBufferBytes b = new ByteBufferBytes(ByteBuffer.allocate(512));
+
+        String expected = "Hello";
+        b.writeObject(expected);
+
+        b.clear();
+
+        String actual = (String) b.readObject();
+        assertEquals(expected, actual);
+
     }
 
 
