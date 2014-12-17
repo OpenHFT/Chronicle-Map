@@ -631,7 +631,7 @@ public class StatelessClientTest {
 
                 }
 
-                latch.await(20, TimeUnit.SECONDS);
+                latch.await(25, TimeUnit.SECONDS);
                 System.out.println("" + count + " messages took " +
                         TimeUnit.MILLISECONDS.toSeconds(System
                                 .currentTimeMillis() - startTime) + " seconds, using " + nThreads + "" +
@@ -642,7 +642,7 @@ public class StatelessClientTest {
             }
         } finally {
             executorService.shutdownNow();
-            executorService.awaitTermination(100, TimeUnit.SECONDS);
+            executorService.awaitTermination(1000, TimeUnit.SECONDS);
 
         }
 
