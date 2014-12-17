@@ -102,7 +102,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     private static final int MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS = (1 << 20);
     private static final Logger LOG =
             LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
-    public static final long DEFAULT_STATELESS_CLIENT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
+    static final long DEFAULT_STATELESS_CLIENT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
     private static final StringBuilder EMTRY_STRING_BUILDER = new StringBuilder();
 
