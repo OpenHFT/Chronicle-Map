@@ -849,6 +849,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 private <E> E get(HierarchicalStreamReader reader,
                                   UnmarshallingContext unmarshallingContext,
                                   Class<E> clazz) {
+
+                    if (clazz == CharSequence.class)
+                        return (E) unmarshallingContext.convertAnother(null, String.class);
+
                     if (reader.getAttributeCount() > 0) {
                         final String type = reader.getAttribute("type");
                         try {
@@ -910,6 +914,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         private void writeType(HierarchicalStreamWriter writer, Object o, final Class clazz) {
+            if (clazz == CharSequence.class)
+                return;
+
             String simpleName = o.getClass().getCanonicalName();
             if (simpleName.endsWith("$$Native")) {
                 String nodeName = simpleName.substring(0, simpleName.length() -

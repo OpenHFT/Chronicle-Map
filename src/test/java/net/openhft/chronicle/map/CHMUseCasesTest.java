@@ -110,7 +110,8 @@ public class CHMUseCasesTest {
 
 
     @Test
-    public void testStringStringMap() throws ExecutionException, InterruptedException, IOException {
+    public void testStringStringMap() throws ExecutionException, InterruptedException,
+            IOException {
 
 
         ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
