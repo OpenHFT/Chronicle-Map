@@ -32,7 +32,7 @@ class BuildVersion {
 
 
     /**
-     * gets the version of NULL if it can not be read
+     * @return version of ChronicleMap being used, or NULL if its not known
      */
     public static String version() {
 
@@ -61,8 +61,16 @@ class BuildVersion {
      * @return gets the version from the pom.xml
      */
     private static String getVersionFromPom() {
-        final File file = new File(new File(BuildVersion.class.getResource("/").getPath())
-                .getParentFile().getParentFile().getAbsolutePath() + "/pom.xml");
+
+        final String absolutePath = new File(BuildVersion.class.getResource(BuildVersion.class
+                .getSimpleName() + ".class").getPath())
+                .getParentFile().getParentFile().getParentFile().getParentFile().getParentFile()
+                .getParentFile().getParentFile().getAbsolutePath();
+
+        if (!absolutePath.endsWith("Chronicle-Map"))
+            return null;
+
+        final File file = new File(absolutePath + "/pom.xml");
 
         try (Reader reader = new FileReader(file)) {
 
@@ -70,7 +78,10 @@ class BuildVersion {
             Model model = xpp3Reader.read(reader);
             return model.getVersion();
 
-
+        } catch (NoClassDefFoundError e) {
+            // if you want to get the version possibly in development add in to your pom
+            // pax-url-aether.jar
+            return null;
         } catch (Exception e) {
             return null;
         }
