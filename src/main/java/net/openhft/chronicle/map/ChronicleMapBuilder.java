@@ -1172,6 +1172,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         try {
             pushingToMapEventListener();
             VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
+            map.warnOnWindows();
             BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
                     map.sizeInBytes(), true);
             map.createMappedStoreAndSegments(bytesStore);
@@ -1209,7 +1210,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap(
-            SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) throws IOException {
+            SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel)
+            throws IOException {
         boolean replicated = singleHashReplication != null || channel != null;
         preMapConstruction(replicated);
         if (replicated) {
