@@ -46,7 +46,7 @@ class BuildVersion {
     }
 
     /**
-     * This should be used by everyone that has install chronicle map
+     * This should be used by everyone that has install chronicle map as a JAR
      *
      * @return gets the version out of the manifest, or null if it can not be read
      */
@@ -56,7 +56,7 @@ class BuildVersion {
 
 
     /**
-     * reads the pom file to get this version, only used for development or within the ide.
+     * reads the pom file to get this version, only to be used for development or within the IDE.
      *
      * @return gets the version from the pom.xml
      */
@@ -66,9 +66,6 @@ class BuildVersion {
                 .getSimpleName() + ".class").getPath())
                 .getParentFile().getParentFile().getParentFile().getParentFile().getParentFile()
                 .getParentFile().getParentFile().getAbsolutePath();
-
-        if (!absolutePath.endsWith("Chronicle-Map"))
-            return null;
 
         final File file = new File(absolutePath + "/pom.xml");
 
