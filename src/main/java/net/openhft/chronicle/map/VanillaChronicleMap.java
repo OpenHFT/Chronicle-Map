@@ -80,6 +80,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     static final int MAX_ENTRY_OVERSIZE_FACTOR = 64;
     private static final long serialVersionUID = 2L;
     final Class<K> kClass;
+    final String mapVersion;
     final SizeMarshaller keySizeMarshaller;
     final BytesReader<K> originalKeyReader;
     final KI originalKeyInterop;
@@ -128,6 +129,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         kClass = keyBuilder.eClass;
         keySizeMarshaller = keyBuilder.sizeMarshaller();
         originalKeyReader = keyBuilder.reader();
+        mapVersion = BuildVersion.readVersion();
 
         originalKeyInterop = (KI) keyBuilder.interop();
 
@@ -179,6 +181,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
         initTransients();
+    }
+
+    /**
+     * @return the version of Chronicle Map this instance was built with
+     */
+    String version() {
+        return mapVersion;
     }
 
     final long segmentHash(long hash) {
@@ -3018,4 +3027,5 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     map, null, map.valueIdentity(), segmentHash, map, true);
         }
     }
+
 }

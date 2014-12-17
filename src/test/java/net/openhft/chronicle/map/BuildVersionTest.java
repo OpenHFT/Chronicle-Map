@@ -32,7 +32,28 @@ public class BuildVersionTest {
     @Test
     public void test() throws IOException, InterruptedException {
         // checks that we always get a version
-        Assert.assertNotNull(BuildVersion.version());
+        Assert.assertNotNull(BuildVersion.readVersion());
+    }
+
+
+    /**
+     * check that the map records the version
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @Test
+    public void testVersion() throws IOException, InterruptedException {
+
+        try (ChronicleMap<Integer, Double> expected = ChronicleMapBuilder.of(Integer.class, Double
+                .class)
+                .create()) {
+            expected.put(1, 1.0);
+
+            String version = ((VanillaChronicleMap) expected).version();
+            Assert.assertNotNull(BuildVersion.readVersion(), version);
+
+        }
     }
 
 }

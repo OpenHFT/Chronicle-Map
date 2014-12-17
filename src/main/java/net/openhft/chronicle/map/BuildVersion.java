@@ -34,14 +34,15 @@ class BuildVersion {
     /**
      * @return version of ChronicleMap being used, or NULL if its not known
      */
-    public static String version() {
+    public static String readVersion() {
 
+        // the best way to get the version is to read it from the manifest
         final String version = getVersionFromManifest();
 
         if (version != null)
             return version;
 
-        // as a fall back for development we will read the version from the pom file
+        // as a fall back for development, we will read the version from the pom file
         return getVersionFromPom();
     }
 
