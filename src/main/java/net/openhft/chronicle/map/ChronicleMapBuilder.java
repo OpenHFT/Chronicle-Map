@@ -525,15 +525,17 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         if (entries * 4 <= s3)
             entries *= 1.8;
         else if (entries <= s3)
-            entries *= 1.5;
+            entries *= 1.45;
         else if (entries <= s3 * 4)
-            entries *= 1.35;
+            entries *= 1.33;
         else if (entries <= s3 * 8)
             entries *= 1.22;
+        else if (entries <= s3 * 16)
+            entries *= 1.15;
         else
-            entries *= 1.16;
+            entries *= 1.1;
         return Math.min(segments * this.entries,
-                entries + 6 * segments);
+                entries + 4 * segments + 8);
     }
 
     @Override
