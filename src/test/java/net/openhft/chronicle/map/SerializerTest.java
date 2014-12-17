@@ -29,7 +29,23 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 
+import static org.junit.Assert.assertEquals;
+
 public class SerializerTest {
+
+    @Test
+    public void testPrefixStingFunctionSerialization() throws Exception {
+
+        ByteBufferBytes b = new ByteBufferBytes(ByteBuffer.allocate(512));
+
+        CHMUseCasesTest.PrefixStingFunction expected = new CHMUseCasesTest.PrefixStingFunction("New ");
+        b.writeObject(expected);
+
+        b.clear();
+        CHMUseCasesTest.PrefixStingFunction actual = b.readObject(CHMUseCasesTest.PrefixStingFunction.class);
+        assertEquals(expected, actual);
+
+    }
 
     @Test
     public void testValueMarshallable() throws Exception {

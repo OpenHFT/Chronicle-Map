@@ -63,7 +63,7 @@ public class CHMUseCasesTest {
     }
 
 
-    private static class PrefixStingFunction implements Function<String, String> {
+    static class PrefixStingFunction implements Function<String, String> {
         private final String prefix;
 
         public PrefixStingFunction(@NotNull String prefix) {
@@ -108,21 +108,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
-    @Test
-    public void testPrefixStingFunctionSerialization() throws ExecutionException,
-            InterruptedException, IOException {
-
-        ByteBufferBytes b = new ByteBufferBytes(ByteBuffer.allocate(512));
-
-        PrefixStingFunction expected = new PrefixStingFunction("New ");
-        b.writeObject(expected);
-
-        b.clear();
-        PrefixStingFunction actual = b.readObject(PrefixStingFunction.class);
-        assertEquals(expected, actual);
-
-    }
 
     @Test
     public void testStringStringMap() throws ExecutionException, InterruptedException, IOException {
@@ -447,7 +432,7 @@ public class CHMUseCasesTest {
 
 
     @Test(expected = IllegalStateException.class)
-    public void testAquireUsingWithIntValueNoValue() throws IOException {
+    public void testAcquireUsingWithIntValueNoValue() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
             throw new IllegalStateException(); // acquireUsingLocked supported by the STATELESS
@@ -472,7 +457,7 @@ public class CHMUseCasesTest {
 
 
     @Test(expected = IllegalArgumentException.class)
-    public void testAquireUsingImutableUsing() throws IOException {
+    public void testAcquireUsingImmutableUsing() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
             throw new IllegalArgumentException(); // acquireUsingLocked supported by the STATELESS
@@ -567,15 +552,14 @@ public class CHMUseCasesTest {
             key.setValue(1);
 
             ByteBufferBytes value = new ByteBufferBytes(ByteBuffer.allocate(10));
-            value.clear();
+            value.limit(0);
 
             try (WriteContext rc = map.acquireUsingLocked(key, value)) {
                 assertTrue(key instanceof IntValue);
                 assertTrue(value instanceof CharSequence);
-                value.limit(value.position());
             }
 
-            assertTrue( map.get(key).length() == 0);
+            assertTrue(map.get(key).length() == 0);
         }
     }
 
