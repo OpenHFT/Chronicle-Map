@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import junit.framework.Assert;
+ import org.junit.Assert;
 import net.openhft.lang.Jvm;
 import org.junit.Test;
 

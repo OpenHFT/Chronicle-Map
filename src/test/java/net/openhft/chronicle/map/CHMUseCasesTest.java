@@ -1,7 +1,7 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.primitives.Chars;
-import junit.framework.Assert;
+ import org.junit.Assert;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.serialization.impl.*;

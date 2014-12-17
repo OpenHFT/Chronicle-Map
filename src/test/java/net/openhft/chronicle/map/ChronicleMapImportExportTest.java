@@ -1,9 +1,9 @@
 package net.openhft.chronicle.map;
 
-import junit.framework.Assert;
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.values.LongValue;
 import net.openhft.lang.values.LongValue$$Native;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 

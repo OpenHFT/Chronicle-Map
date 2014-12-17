@@ -75,6 +75,12 @@
                 <version>1.3.6</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.ops4j.pax.url</groupId>
+                <artifactId>pax-url-aether</artifactId>
+                <version>2.2.0</version>
+            </dependency>
+
         </dependencies>
 
     </dependencyManagement>
@@ -90,6 +96,12 @@
             <optional>true</optional>
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
+        </dependency>
+
+        <dependency>
+            <optional>true</optional>
+            <groupId>org.ops4j.pax.url</groupId>
+            <artifactId>pax-url-aether</artifactId>
         </dependency>
 
         <dependency>
