@@ -32,6 +32,7 @@ import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.*;
+import net.openhft.lang.Jvm;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.*;
@@ -237,7 +238,37 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return offset;
     }
 
+    void warnOnWindows() {
+        if (!Jvm.isWindows())
+            return;
+        long offHeapMapSize = sizeInBytes();
+        long oneGb = GIGABYTES.toBytes(1L);
+        double offHeapMapSizeInGb = offHeapMapSize * 1.0 / oneGb;
+        if (offHeapMapSize > GIGABYTES.toBytes(4L)) {
+            System.out.printf(
+                    "WARNING: On Windows, you probably cannot create a ChronicleMap\n" +
+                    "of more than 4 GB. The configured map requires %.2f GB of off-heap memory.\n",
+                    offHeapMapSizeInGb);
+        }
+        try {
+            long freePhysicalMemory = Jvm.freePhysicalMemoryOnWindowsInBytes();
+            if (offHeapMapSize > freePhysicalMemory * 0.9) {
+                double freePhysicalMemoryInGb = freePhysicalMemory * 1.0 / oneGb;
+                System.out.printf(
+                        "WARNING: On Windows, you probably cannot create a ChronicleMap\n" +
+                        "of more than 90%% of available free memory in the system.\n" +
+                        "The configured map requires %.2f GB of off-heap memory.\n" +
+                        "There is only %.2f GB of free physical memory in the system.\n",
+                        offHeapMapSizeInGb, freePhysicalMemoryInGb);
+
+            }
+        } catch (IOException e) {
+            // ignore -- anyway we just warn the user
+        }
+    }
+
     final long createMappedStoreAndSegments(File file) throws IOException {
+        warnOnWindows();
         return createMappedStoreAndSegments(new MappedStore(file, FileChannel.MapMode.READ_WRITE,
                 sizeInBytes(), JDKObjectSerializer.INSTANCE));
     }

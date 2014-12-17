@@ -102,7 +102,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     private static final int MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS = (1 << 20);
     private static final Logger LOG =
             LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
-    public static final long DEFAULT_STATELESS_CLIENT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
+    static final long DEFAULT_STATELESS_CLIENT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
     private static final StringBuilder EMTRY_STRING_BUILDER = new StringBuilder();
 
@@ -1172,6 +1172,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         try {
             pushingToMapEventListener();
             VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
+            map.warnOnWindows();
             BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
                     map.sizeInBytes(), true);
             map.createMappedStoreAndSegments(bytesStore);
@@ -1209,7 +1210,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap(
-            SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) throws IOException {
+            SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel)
+            throws IOException {
         boolean replicated = singleHashReplication != null || channel != null;
         preMapConstruction(replicated);
         if (replicated) {

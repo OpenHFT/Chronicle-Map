@@ -2,7 +2,7 @@ package net.openhft.chronicle.hash.replication;
 
 import java.net.InetSocketAddress;
 
-public class TcpInetSocketAddress extends InetSocketAddress {
+class TcpInetSocketAddress extends InetSocketAddress {
     private final String toString;
 
     public TcpInetSocketAddress(String hostname, int port) {

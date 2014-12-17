@@ -53,7 +53,7 @@ import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
  *
  *         This code is in alpha, and still has to undergo refactoring
  */
-public class NodeDiscovery {
+class NodeDiscovery {
 
     public static final int DEFAULT_UDP_BROADCAST_PORT = 8129;
     public static final short DEFAULT_TCP_PORT = (short) 8123;
