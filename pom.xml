@@ -81,11 +81,13 @@
     <dependencies>
 
         <dependency>
+            <optional>true</optional>
             <groupId>xstream</groupId>
             <artifactId>xstream</artifactId>
         </dependency>
 
         <dependency>
+            <optional>true</optional>
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
         </dependency>
@@ -174,6 +176,23 @@
                 </configuration>
             </plugin>
 
+            <!-- used to allow getClass().getPackage().getImplementationVersion() -->
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.1</version>
+
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+
+            </plugin>
         </plugins>
     </build>
 
