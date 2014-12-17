@@ -735,8 +735,7 @@ public class ChronicleMapTest {
                     .of(LongValue.class, LongValue.class)
                     .entries(entries)
                     .entryAndValueAlignment(OF_8_BYTES)
-                    .actualSegments(8 * 1024)
-                    .entrySize(16);
+                    .actualSegments(8 * 1024);
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
