@@ -64,7 +64,7 @@ public class CHMUseCasesTest {
 
 
     private static class PrefixStingFunction implements Function<String, String> {
-        private String prefix;
+        private final String prefix;
 
         public PrefixStingFunction(@NotNull String prefix) {
             this.prefix = prefix;
@@ -73,6 +73,17 @@ public class CHMUseCasesTest {
         @Override
         public String apply(String s) {
             return prefix + s;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof PrefixStingFunction &&
+                    prefix.equals(((PrefixStingFunction) obj).prefix);
+        }
+
+        @Override
+        public String toString() {
+            return prefix;
         }
     }
 
@@ -98,7 +109,6 @@ public class CHMUseCasesTest {
     }
 
 
-    @Ignore("HCOLL-257 Object serialization is failing when calling writeObject() / readObject()")
     @Test
     public void testPrefixStingFunctionSerialization() throws ExecutionException,
             InterruptedException, IOException {
@@ -114,7 +124,6 @@ public class CHMUseCasesTest {
 
     }
 
-    @Ignore("HCOLL-257 Object serialization is failing when calling writeObject() / readObject()")
     @Test
     public void testStringStringMap() throws ExecutionException, InterruptedException, IOException {
 

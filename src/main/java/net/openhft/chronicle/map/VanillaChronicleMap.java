@@ -821,7 +821,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         case "chronicle-key":
 
                             if (kClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
-                                return toNative(reader, vClass);
+                                return to$$Native(reader, vClass, true);
                             } else {
                                 long keySize = keySizeMarshaller.readSize(buffer);
                                 ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
@@ -831,7 +831,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         case "chronicle-value":
 
                             if (vClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
-                                return toNative(reader, vClass);
+                                return to$$Native(reader, vClass, false);
                             } else {
                                 long valueSize = valueSizeMarshaller.readSize(buffer);
                                 ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
@@ -859,9 +859,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     } else return (E) unmarshallingContext.convertAnother(null, clazz);
                 }
 
-                private Object toNative(HierarchicalStreamReader reader, final Class aClass) {
+                private Object to$$Native(HierarchicalStreamReader reader, final Class aClass, final boolean isKey) {
 
-                    Object o = DataValueClasses.newDirectInstance(aClass);
+                    final Object o = isKey ? newKeyInstance() : newValueInstance();
                     try {
                         for (Method $$nativeMethod : o.getClass().getMethods()) {
                             if ($$nativeMethod.getName().equals("setValue") && $$nativeMethod.getParameterTypes()
@@ -870,17 +870,28 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                                 Class<?> parameterType = $$nativeMethod.getParameterTypes()[0];
                                 String value = reader.getValue();
 
-                                if (parameterType.isPrimitive()) {
-                                    String name = parameterType.getSimpleName();
 
-                                    String properName = "java.lang." + Character.toString(name
-                                            .charAt(0)).toUpperCase()
-                                            + name.substring(1);
-                                    parameterType = Class.forName(properName);
+                                if (parameterType.isPrimitive()) {
+
+                                    // convert the primitive to their boxed type
+
+                                    if (parameterType == int.class)
+                                        parameterType = Integer.class;
+                                    else if (parameterType == char.class)
+                                        parameterType = Character.class;
+                                    else {
+                                        final String name = parameterType.getSimpleName();
+
+                                        final String properName = "java.lang." + Character.toString
+                                                (name.charAt(0)).toUpperCase()
+                                                + name.substring(1);
+                                        parameterType = Class.forName(properName);
+                                    }
                                 }
 
-                                Method valueOf = parameterType.getMethod("valueOf", String.class);
-                                Object invoke = valueOf.invoke(null, value);
+
+                                final Method valueOf = parameterType.getMethod("valueOf", String.class);
+                                final Object invoke = valueOf.invoke(null, value);
                                 $$nativeMethod.invoke(o, invoke);
                                 return o;
 

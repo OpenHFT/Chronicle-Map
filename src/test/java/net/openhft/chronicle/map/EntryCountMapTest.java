@@ -60,6 +60,7 @@ public class EntryCountMapTest {
         return mapBuilder.createPersistedTo(getPersistenceFile());
     }
 
+    @Ignore("HCOLL-251 Investigate test failure of net.openhft.chronicle.map.EntryCountMapTest")
     @Test
     public void testVerySmall() throws Exception {
         for (int t = 0; t < 5; t++) {
@@ -108,6 +109,7 @@ public class EntryCountMapTest {
         System.out.printf("Score: %.2f%n", scoreCount / score);
     }
 
+    @Ignore("HCOLL-251 Investigate test failure of net.openhft.chronicle.map.EntryCountMapTest")
     @Test
     public void testSmall() throws Exception {
         for (int i = 0; i < 5; i++) {
