@@ -6,7 +6,7 @@ requirements. - [Contact Us](sales@higherfrequencytrading.com)*
 
 # Chronicle Map
 
-Replicate your Key Value Store across your network, with consistency, durability and performance.
+Replicate your Key Value Store across your network, with eventual consistency, persistence and performance.
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
 
 #### Maven Artifact Download
