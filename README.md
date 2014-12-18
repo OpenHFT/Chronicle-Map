@@ -356,7 +356,7 @@ These methods let you provide the object which the data will be written to, but 
 ``` java
 CharSequence using = new StringBuilder();
 CharSequence myResult = map.getUsing("key", using);
-// at this point the myString and myResult will both point to the same object
+// at this point "using" and "myResult" will both point to the same object
 ```
 
 The `map.getUsing()` method is similar to `map.get()`, but because Chronicle Map stores its data off
