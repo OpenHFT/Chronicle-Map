@@ -427,13 +427,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         long start = entry.position();
         final long keySize = keySizeMarshaller.readSize(entry);
 
-        entry.skip(keySize);
-
-        // timeStamp
-        entry.readLong();
-
-        //identifier
-        entry.readByte();
+        entry.skip(keySize + ADDITIONAL_ENTRY_BYTES - 1L);
 
         final boolean isDeleted = entry.readBoolean();
         long valueSize;
@@ -444,8 +438,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         alignment.alignPositionAddr(entry);
-        entry.skip(valueSize);
-        long result = (entry.position() - start);
+        long result = (entry.position() + valueSize - start);
         entry.position(start);
 
         // entries can be larger than Integer.MAX_VALUE as we are restricted to the size we can
