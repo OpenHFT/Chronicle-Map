@@ -1405,6 +1405,8 @@ public class ChronicleMapTest {
         }
     }
 
+
+    @Ignore
     @Test(expected = NullPointerException.class)
     public void testPutLongValue() throws IOException {
         final ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
