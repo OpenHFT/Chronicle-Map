@@ -523,7 +523,6 @@ public class ChronicleMapTest {
         map.close();
     }
 
-    @Ignore("JIRA raised HCOLL-221")
     @Test
     public void testAcquireFromMultipleThreads() throws Exception {
         int entries = 1000 * 1000;
@@ -538,7 +537,7 @@ public class ChronicleMapTest {
         CharSequence key = getUserCharSequence(0);
         map.acquireUsing(key, new LongValue$$Native());
 
-        int iterations = 1000;
+        int iterations = 10000;
         int noOfThreads = 10;
         CyclicBarrier barrier = new CyclicBarrier(noOfThreads);
 
