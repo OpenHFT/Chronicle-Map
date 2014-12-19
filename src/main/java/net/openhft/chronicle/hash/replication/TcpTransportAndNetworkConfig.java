@@ -178,7 +178,8 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
         if (endpoints != null ? !endpoints.equals(that.endpoints) : that.endpoints != null)
             return false;
         if (heartBeatIntervalUnit != that.heartBeatIntervalUnit) return false;
-        if (throttlingConfig != null ? !throttlingConfig.equals(that.throttlingConfig) : that.throttlingConfig != null)
+        if (throttlingConfig != null ? !throttlingConfig.equals(that.throttlingConfig) :
+                that.throttlingConfig != null)
             return false;
 
         return true;

@@ -21,6 +21,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.*;
 import net.openhft.chronicle.hash.serialization.internal.ByteBufferMarshaller;
+import net.openhft.lang.MemoryUnit;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
@@ -261,10 +262,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
                             copies, this.metaInterop, interop, sampleObject);
                     break findSufficientSerializationSize;
                 } catch (Exception e) {
-                    // assuming nobody need > 512 mb _constant size_ keys/values
-                    if (maxSize > 512 * 1024 * 1024) {
-                        throw e;
-                    }
+                    CopyingMetaBytesInterop.checkMaxSizeStillReasonable(maxSize, e);
                     maxSize(maxSize * 2);
                 }
             }

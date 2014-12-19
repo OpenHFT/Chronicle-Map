@@ -35,7 +35,7 @@ class StatelessMapConfig<K, V> implements StatelessClientConfig<ChronicleMap<K, 
     private final long timeoutMs;
     private final String name;
 
-    private int tcpBufferSize = 1024 * 64;
+    private int tcpBufferSize = 1024 * VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR;
 
     private final AtomicBoolean used;
 
