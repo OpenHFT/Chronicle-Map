@@ -20,7 +20,7 @@ package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.Hasher;
+import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
 
@@ -46,7 +46,7 @@ public enum DoubleMarshaller implements BytesInterop<Double>, BytesReader<Double
 
     @Override
     public boolean startsWith(Bytes bytes, Double e) {
-        return doubleToLongBits(e) == bytes.readLong(0);
+        return doubleToLongBits(e) == bytes.readLong(bytes.position());
     }
 
     @Override

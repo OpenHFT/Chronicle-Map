@@ -8,3 +8,4 @@
 *.war
 *.ear
 *.iml
+.idea*

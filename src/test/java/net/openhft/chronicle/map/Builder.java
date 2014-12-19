@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class Builder {
 
-    public static final int SIZE = 1000;
+    public static final int SIZE = 10_000;
     // added to ensure uniqueness
     static int count;
     static String WIN_OS = "WINDOWS";

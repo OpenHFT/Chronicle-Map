@@ -47,14 +47,17 @@ public class MapByNameTest {
     @Test
     public void testSerializingBuilder() throws TimeoutException, InterruptedException, IOException {
 
-        final ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(2)
-                .minSegments(2)
-                .name("map1")
-                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8244))
-                .removeReturnsNull(true);
+        final MapInstanceConfig<CharSequence, CharSequence> config =
+                (MapInstanceConfig<CharSequence, CharSequence>)
+                        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                                .keySize("hello".length()).valueSize("world".length())
+                                .entries(2)
+                                .minSegments(2)
+                                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8244))
+                                .removeReturnsNull(true)
+                                .instance().name("map1");
 
-        final ChronicleMap<CharSequence, CharSequence> map = findMapByName.create(builder);
+        final ChronicleMap<CharSequence, CharSequence> map = findMapByName.create(config);
         map.put("hello", "world");
 
         assertEquals(map.get("hello"), "world");
@@ -71,14 +74,16 @@ public class MapByNameTest {
 
         NodeDiscovery nodeDiscovery = new NodeDiscovery();
 
-        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
-                .class, CharSequence.class)
-                .minSegments(2)
-                .name("myMap")
-                .removeReturnsNull(true);
+        MapInstanceConfig<CharSequence, CharSequence> config =
+                (MapInstanceConfig<CharSequence, CharSequence>)
+                        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                                .minSegments(2)
+                                .removeReturnsNull(true)
+                                .instance()
+                                .name("myMap");
 
         ReplicationHubFindByName<CharSequence> mapByName = nodeDiscovery.mapByName();
-        //  mapByName.add(builder);
+        //  mapByName.add(config);
 
         ChronicleMap<CharSequence, CharSequence> myMap2 = mapByName.from("myMap");
     }
@@ -89,14 +94,16 @@ public class MapByNameTest {
         final ReplicationHubFindByName<CharSequence> mapByName = nodeDiscovery.mapByName();
         Thread.sleep(2000);
 
-        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence
-                .class, CharSequence.class)
-                .minSegments(2)
-                .entries(2)
-                .name("myMap6")
-                .removeReturnsNull(true);
+        MapInstanceConfig<CharSequence, CharSequence> config =
+                (MapInstanceConfig<CharSequence, CharSequence>)
+                        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                                .minSegments(2)
+                                .entries(2)
+                                .removeReturnsNull(true)
+                                .instance()
+                                .name("myMap6");
 
-        ChronicleMap<String, String> map = mapByName.create(builder);
+        ChronicleMap<String, String> map = mapByName.create(config);
         map.put("hello", "world");
 
         //    final ChronicleMap<CharSequence, CharSequence> map = mapByName.from("myMap5");

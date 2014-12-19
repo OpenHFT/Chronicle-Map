@@ -375,7 +375,7 @@ public class BGChronicleTest {
 
     /**
      * for loop back args = []
-     * <p/>
+     * <p>
      * for server - eg.BGChronicleTest server for client - eg.BGChronicleTest client
      *
      * @param args

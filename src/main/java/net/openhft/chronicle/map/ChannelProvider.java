@@ -64,7 +64,7 @@ final class ChannelProvider implements Closeable {
             final TcpReplicator tcpReplicator = new TcpReplicator(
                     channelProvider.asReplica,
                     channelProvider.asEntryExternalizable,
-                    tcpConfig, hub.maxEntrySize(), null, hub.remoteNodeValidator());
+                    tcpConfig, null, hub.remoteNodeValidator());
             channelProvider.add(tcpReplicator);
         }
 
@@ -85,6 +85,30 @@ final class ChannelProvider implements Closeable {
 
     private static final byte BOOTSTRAP_MESSAGE = 'B';
     final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
+        @Override
+        public int sizeOfEntry(@NotNull Bytes entry, int chronicleChannel) {
+            channelDataLock.readLock().lock();
+            try {
+
+                return channelEntryExternalizables[chronicleChannel]
+                        .sizeOfEntry(entry, chronicleChannel);
+            } finally {
+                channelDataLock.readLock().unlock();
+            }
+        }
+
+        @Override
+        public boolean identifierCheck(@NotNull Bytes entry, int chronicleChannel) {
+            channelDataLock.readLock().lock();
+            try {
+
+                return channelEntryExternalizables[chronicleChannel]
+                        .identifierCheck(entry, chronicleChannel);
+            } finally {
+                channelDataLock.readLock().unlock();
+            }
+        }
+
         /**
          * writes the entry to the chronicle channel provided
          *
@@ -116,7 +140,7 @@ final class ChannelProvider implements Closeable {
                 final int chronicleId = (int) source.readStopBit();
                 if (chronicleId < chronicleChannels.length) {
                     // this channel is has not currently been created so it updates will be ignored
-                   if (channelEntryExternalizables[chronicleId] != null)
+                    if (channelEntryExternalizables[chronicleId] != null)
                         channelEntryExternalizables[chronicleId]
                                 .readExternalEntry(copies, segmentState, source);
                 } else
@@ -398,8 +422,8 @@ final class ChannelProvider implements Closeable {
     }
 
     /**
-     * used to send system messages such as bootstrap from one remote node to another, it also can be used in
-     * a broadcast context
+     * used to send system messages such as bootstrap from one remote node to another, it also can
+     * be used in a broadcast context
      */
     class SystemQueue {
 
@@ -468,6 +492,16 @@ final class ChannelProvider implements Closeable {
         };
         final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
             @Override
+            public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
+                return (int) entry.remaining();
+            }
+
+            @Override
+            public boolean identifierCheck(@NotNull Bytes entry, int chronicleId) {
+                return true;
+            }
+
+            @Override
             public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
                                            int na) {
                 destination.write(entry);
@@ -506,7 +540,7 @@ final class ChannelProvider implements Closeable {
         }
 
         @Override
-        protected Closeable applyTo(AbstractChronicleMapBuilder builder,
+        protected Closeable applyTo(ChronicleMapBuilder builder,
                                     Replica map, EntryExternalizable entryExternalizable,
                                     final ChronicleMap chronicleMap) {
             add(chronicleChannel, map, entryExternalizable);

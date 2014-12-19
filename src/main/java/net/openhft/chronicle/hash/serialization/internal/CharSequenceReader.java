@@ -33,7 +33,16 @@ public final class CharSequenceReader<S extends CharSequence>
         implements BytesReader<S>, StatefulCopyable<CharSequenceReader<S>> {
     private static final long serialVersionUID = 0L;
 
-    private enum NoInterning implements CharSequenceInterner<String> {
+    private enum NoInterningIdentity implements CharSequenceInterner<CharSequence> {
+        INSTANCE;
+
+        @Override
+        public CharSequence intern(CharSequence cs) {
+            return cs;
+        }
+    }
+
+    private enum NoInterningToString implements CharSequenceInterner<String> {
         INSTANCE;
         @Override
         public String intern(CharSequence cs) {
@@ -41,10 +50,17 @@ public final class CharSequenceReader<S extends CharSequence>
         }
     }
 
-    private static final CharSequenceReader<String> DEFAULT_READER =
-            new CharSequenceReader<String>(NoInterning.INSTANCE, NoInterning.INSTANCE);
+    private static final CharSequenceReader<String> STRING_READER =
+            new CharSequenceReader<String>(NoInterningToString.INSTANCE, NoInterningToString.INSTANCE);
 
-    public static CharSequenceReader<String> of() {
+    private static final CharSequenceReader DEFAULT_READER =
+            new CharSequenceReader(NoInterningIdentity.INSTANCE, NoInterningIdentity.INSTANCE);
+
+    public static CharSequenceReader of() {
+        return STRING_READER;
+    }
+
+    public static CharSequenceReader<String> ofStringBuilder() {
         return DEFAULT_READER;
     }
 
@@ -111,7 +127,9 @@ public final class CharSequenceReader<S extends CharSequence>
     }
 
     private Object readResolve() throws ObjectStreamException {
-        if (interner == NoInterning.INSTANCE)
+        if (interner == NoInterningToString.INSTANCE)
+            return STRING_READER;
+        if (interner == NoInterningIdentity.INSTANCE)
             return DEFAULT_READER;
         return this;
     }

@@ -5,7 +5,7 @@ import net.openhft.lang.model.constraints.MaxSize;
 /**
  * Created by Vanitha on 12/5/2014.
  */
-public interface TestIntrumentVOInterface {
+public interface TestInstrumentVOInterface {
 
 
     public int getSizeOfInstrumentIDArray();

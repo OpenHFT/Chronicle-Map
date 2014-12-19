@@ -103,17 +103,12 @@ public class ChronicleMapTest {
     }
 
     private static ChronicleMap<CharSequence, LongValue> getSharedMap(
-            long entries, int segments, int entrySize) throws IOException {
-        return getSharedMap(entries, segments, entrySize, OF_4_BYTES);
-    }
-
-    private static ChronicleMap<CharSequence, LongValue> getSharedMap(
-            long entries, int segments, int entrySize, Alignment alignment)
+            long entries, int segments, Alignment alignment, int keySize)
             throws IOException {
         return ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                 .entries(entries)
                 .minSegments(segments)
-                .entrySize(entrySize)
+                .keySize(keySize)
                 .entryAndValueAlignment(alignment)
                 .create();
     }
@@ -204,7 +199,7 @@ public class ChronicleMapTest {
 
         int count = 300;
         final ChronicleMap<Object, Object> map = ChronicleMapBuilder.of(Object.class, Object.class)
-                .entrySize(count)
+                .entries(count)
                 .minSegments(2).create();
 
         for (int i = 1; i < count; i++) {
@@ -414,10 +409,13 @@ public class ChronicleMapTest {
 
     @Test
     public void testAcquireWithNullContainer() throws Exception {
-        ChronicleMap<CharSequence, LongValue> map = getSharedMap(10 * 1000, 128, 24);
+        ChronicleMap<CharSequence, LongValue> map =
+                ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+                        .entries(1000)
+                        .entryAndValueAlignment(OF_4_BYTES)
+                        .create();
         map.acquireUsing("key", new LongValue$$Native());
         assertEquals(0, map.acquireUsing("key", null).getValue());
-
         map.close();
     }
 
@@ -454,7 +452,11 @@ public class ChronicleMapTest {
 
     @Test
     public void testGetWithNullContainer() throws Exception {
-        ChronicleMap<CharSequence, LongValue> map = getSharedMap(10 * 1000, 128, 24);
+        ChronicleMap<CharSequence, LongValue> map =
+                ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+                        .entries(10)
+                        .entryAndValueAlignment(OF_4_BYTES)
+                        .create();
         map.acquireUsing("key", new LongValue$$Native());
         assertEquals(0, map.getUsing("key", null).getValue());
 
@@ -463,7 +465,11 @@ public class ChronicleMapTest {
 
     @Test
     public void testGetWithoutAcquireFirst() throws Exception {
-        ChronicleMap<CharSequence, LongValue> map = getSharedMap(10, 1, 24);
+        ChronicleMap<CharSequence, LongValue> map =
+                ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+                        .entries(10)
+                        .entryAndValueAlignment(OF_4_BYTES)
+                        .create();
         assertNull(map.getUsing("key", DataValueClasses.newDirectReference(LongValue.class)));
 
         map.close();
@@ -485,9 +491,9 @@ public class ChronicleMapTest {
     public void testAcquireAndGet() throws IOException, ClassNotFoundException,
             IllegalAccessException, InstantiationException {
         int entries = 3/*00 * 1000*/;
-        testAcquireAndGet(getSharedMap(entries, 1, 24, OF_4_BYTES), entries);
-        testAcquireAndGet(getSharedMap(entries, 1, 24, NO_ALIGNMENT), entries);
-        testAcquireAndGet(getSharedMap(entries, 1, 24, OF_8_BYTES), entries);
+        testAcquireAndGet(getSharedMap(entries, 1, OF_4_BYTES, 10), entries);
+        testAcquireAndGet(getSharedMap(entries, 1, NO_ALIGNMENT, 10), entries);
+        testAcquireAndGet(getSharedMap(entries, 1, OF_8_BYTES, 10), entries);
     }
 
     public void testAcquireAndGet(ChronicleMap<CharSequence, LongValue> map, int entries)
@@ -526,9 +532,9 @@ public class ChronicleMapTest {
     @Test
     public void testAcquireFromMultipleThreads() throws Exception {
         int entries = 1000 * 1000;
-        testAcquireFromMultipleThreads(getSharedMap(entries, 128, 24, NO_ALIGNMENT));
-        testAcquireFromMultipleThreads(getSharedMap(entries, 128, 24, OF_4_BYTES));
-        testAcquireFromMultipleThreads(getSharedMap(entries, 128, 24, OF_8_BYTES));
+        testAcquireFromMultipleThreads(getSharedMap(entries, 128, NO_ALIGNMENT, 10));
+        testAcquireFromMultipleThreads(getSharedMap(entries, 128, OF_4_BYTES, 10));
+        testAcquireFromMultipleThreads(getSharedMap(entries, 128, OF_8_BYTES, 10));
     }
 
     public void testAcquireFromMultipleThreads(ChronicleMap<CharSequence, LongValue> map)
@@ -565,7 +571,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("Performance test")
     public void testAcquirePerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
@@ -582,7 +588,7 @@ public class ChronicleMapTest {
                     .entries(entries)
                     .actualSegments(8 * 1024)
                     .entryAndValueAlignment(OF_8_BYTES)
-                    .entrySize(24);
+                    .keySize(13);
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
@@ -603,8 +609,10 @@ public class ChronicleMapTest {
                             StringBuilder sb = new StringBuilder();
                             long next = 50 * 1000 * 1000;
                             // use a factor to give up to 10 digit numbers.
-                            int factor = Math.max(1, (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
-                            for (long j = t % independence; j < entries + independence - 1; j += independence) {
+                            int factor = Math.max(1,
+                                    (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
+                            for (long j = t % independence; j < entries + independence - 1;
+                                 j += independence) {
                                 sb.setLength(0);
                                 sb.append("us:");
                                 sb.append(j * factor);
@@ -625,7 +633,8 @@ public class ChronicleMapTest {
                     future.get();
                 }
                 long time = System.currentTimeMillis() - start;
-                System.out.printf("Throughput %.1f M ops/sec%n", threads * entries / independence / 1000.0 / time);
+                System.out.printf("Throughput %.1f M ops/sec%n",
+                        threads * entries / independence / 1000.0 / time);
             }
             printStatus();
             File file = map.file();
@@ -637,30 +646,30 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("Performance test")
     public void testAcquireLockedPerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
 //        int runs = Integer.getInteger("runs", 10);
         int procs = Runtime.getRuntime().availableProcessors();
-        int threads = procs * 3; // runs > 100 ? procs / 2 : procs;
+        if (procs > 8) procs--;
+        int threads = procs * 3;
         ExecutorService es = Executors.newFixedThreadPool(procs);
-        for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
-            // JAVA 8 produces more garbage than previous versions for internal work.
-//            System.gc();
+        for (int runs : new int[]{1, 2, 5, 10, 25, 50, 100, 500, 1000, 2500}) {
+
             final long entries = runs * 1000 * 1000L;
             ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                     .of(CharSequence.class, LongValue.class)
                     .entries(entries)
                     .entryAndValueAlignment(OF_8_BYTES)
-                    .actualSegments(8 * 1024)
-                    .entrySize(24);
+                    .actualSegments(256)
+                    .keySize(13);
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
             final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
 
-            int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
+            int count = runs >= 5 ? 2 : 3;
             final int independence = Math.min(procs, runs > 500 ? 8 : 4);
             System.out.println("\nKey size: " + runs + " Million entries. " + builder);
             for (int j = 0; j < count; j++) {
@@ -674,15 +683,25 @@ public class ChronicleMapTest {
                             LongValue value = nativeLongValue();
                             StringBuilder sb = new StringBuilder();
                             long next = 50 * 1000 * 1000;
+                            Random rand = new Random();
                             // use a factor to give up to 10 digit numbers.
-                            int factor = Math.max(1, (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
-                            for (long j = t % independence; j < entries + independence - 1; j += independence) {
+                            int factor = Math.max(1,
+                                    (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
+                            for (long j = t % independence; j < entries + independence - 1;
+                                 j += independence) {
                                 sb.setLength(0);
                                 sb.append("us:");
                                 sb.append(j * factor);
                                 long n;
-                                try (WriteContext wc = map.acquireUsingLocked(sb, value)) {
-                                    n = value.addValue(1);
+                                // 75% read
+                                if (rand.nextBoolean() || rand.nextBoolean()) {
+                                    try (ReadContext rc = map.getUsingLocked(sb, value)) {
+                                        n = rc.present() ? value.getValue() + 1 : 1;
+                                    }
+                                } else {
+                                    try (WriteContext wc = map.acquireUsingLocked(sb, value)) {
+                                        n = value.addValue(1);
+                                    }
                                 }
                                 assert n > 0 && n < 1000 : "Counter corrupted " + n;
                                 if (t == 0 && j >= next) {
@@ -699,7 +718,8 @@ public class ChronicleMapTest {
                     future.get();
                 }
                 long time = System.currentTimeMillis() - start;
-                System.out.printf("Throughput %.1f M ops/sec%n", threads * entries / independence / 1000.0 / time);
+                System.out.printf("Throughput %.1f M ops/sec%n",
+                        threads * entries / independence / 1000.0 / time);
             }
             printStatus();
             File file = map.file();
@@ -711,7 +731,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("Performance test")
     public void testAcquireLockedLLPerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
@@ -727,8 +747,7 @@ public class ChronicleMapTest {
                     .of(LongValue.class, LongValue.class)
                     .entries(entries)
                     .entryAndValueAlignment(OF_8_BYTES)
-                    .actualSegments(8 * 1024)
-                    .entrySize(16);
+                    .actualSegments(8 * 1024);
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
@@ -787,7 +806,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("Performance test")
     public void testCHMAcquirePerf() throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException, InterruptedException {
         for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
             System.out.println("Testing " + runs + " million entries");
@@ -846,14 +865,16 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testPutAndRemove() throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+    public void testPutAndRemove() throws IOException, ClassNotFoundException,
+            IllegalAccessException, InstantiationException {
         String TMP = System.getProperty("java.io.tmpdir");
         int entries = 100 * 1000;
         ChronicleMap<CharSequence, CharSequence> map =
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                         .entries(entries)
                         .minSegments(16)
-                        .entrySize(32)
+                        .keySize("user:".length() + 6)
+                        .valueSize("value:".length() + 6)
                         .putReturnsNull(true)
                         .removeReturnsNull(true).create();
         StringBuilder key = new StringBuilder();
@@ -1398,12 +1419,14 @@ public class ChronicleMapTest {
         }
     }
 
-    @Test(expected = NullPointerException.class)
+
+
+    @Test(expected = IllegalStateException.class)
     public void testPutLongValue() throws IOException {
         final ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
                 .entries(1000)
-                .entrySize(16);
+                .keySize("x".length());
 
         final ChronicleMap<CharSequence, LongValue> map = builder.create();
 
@@ -1416,7 +1439,7 @@ public class ChronicleMapTest {
         ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
                 .entries(1000)
-                .entrySize(16);
+                .keySize("one".length());
 
         final ChronicleMap<CharSequence, LongValue> map = builder.create();
 
@@ -1474,8 +1497,7 @@ public class ChronicleMapTest {
         ChronicleMapBuilder<CharSequence, String> builder = ChronicleMapBuilder
                 .of(CharSequence.class, String.class)
                 .entries(1000)
-                .defaultValue("")
-                .entrySize(16);
+                .defaultValue("");
 
         try (final ChronicleMap<CharSequence, String> map = builder.create()) {
             // this will add the entry
@@ -1491,7 +1513,8 @@ public class ChronicleMapTest {
         try (final ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .entries(1000)
-                .entrySize(40)
+                .keySize("one".length())
+                .valueSize("Hello World".length())
                 .defaultValue("")
                 .create()) {
             StringBuilder value = new StringBuilder();
@@ -1509,7 +1532,7 @@ public class ChronicleMapTest {
         ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
                 .entries(1000)
-                .entrySize(40);
+                .keySize("one".length());
         File tmpFile = File.createTempFile("testAcquireUsingLocked", ".deleteme");
         tmpFile.deleteOnExit();
         final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);

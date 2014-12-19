@@ -30,10 +30,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
 /**
- * The UdpReplicator attempts to read the data ( but it does not enforce or grantee delivery ), typically, you
- * should use the UdpReplicator if you have a large number of nodes, and you wish to receive the data before
- * it becomes available on TCP/IP. In order to not miss data, UdpReplicator should be used in conjunction with
- * the TCP Replicator.
+ * The UdpReplicator attempts to read the data ( but it does not enforce or grantee delivery ),
+ * typically, you should use the UdpReplicator if you have a large number of nodes, and you wish to
+ * receive the data before it becomes available on TCP/IP. In order to not miss data, UdpReplicator
+ * should be used in conjunction with the TCP Replicator.
  */
 final class UdpReplicator extends UdpChannelReplicator implements Replica.ModificationNotifier, Closeable {
 
@@ -49,7 +49,7 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
         super(replicationConfig, serializedEntrySize, replica.identifier());
 
         Replica.ModificationIterator modificationIterator = replica.acquireModificationIterator(
-                AbstractChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID, this);
+                ChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID, this);
 
         setReader(new UdpSocketChannelEntryReader(serializedEntrySize, entryExternalizable));
 
@@ -106,7 +106,7 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
 
             // check the the first 4 bytes are the inverted len followed by the len
             // we do this to check that this is a valid start of entry, otherwise we throw it away
-            if ( ~size != invertedSize)
+            if (~size != invertedSize)
                 return;
 
             if (out.remaining() != size)
@@ -118,8 +118,7 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
 
     private static class UdpSocketChannelEntryWriter implements EntryWriter {
 
-        private final ByteBuffer out;
-        private final ByteBufferBytes in;
+
         private final EntryCallback entryCallback;
         private final UdpChannelReplicator udpReplicator;
         private Replica.ModificationIterator modificationIterator;
@@ -131,9 +130,8 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
             this.udpReplicator = udpReplicator;
 
             // we make the buffer twice as large just to give ourselves headroom
-            out = ByteBuffer.allocateDirect(serializedEntrySize * 2);
-            in = new ByteBufferBytes(out);
-            entryCallback = new EntryCallback(externalizable, in);
+
+            entryCallback = new EntryCallback(externalizable, serializedEntrySize);
             this.modificationIterator = modificationIterator;
         }
 
@@ -155,6 +153,9 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
          */
         public int writeAll(@NotNull final DatagramChannel socketChannel)
                 throws InterruptedException, IOException {
+
+            final ByteBufferBytes in = entryCallback.in();
+            final ByteBuffer out = entryCallback.out();
 
             out.clear();
             in.clear();

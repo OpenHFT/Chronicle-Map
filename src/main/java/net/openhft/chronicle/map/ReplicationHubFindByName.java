@@ -19,7 +19,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
-import net.openhft.chronicle.hash.FindByName;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import org.slf4j.Logger;
@@ -27,12 +26,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 
 /**
  * @author Rob Austin.
@@ -43,13 +39,8 @@ class ReplicationHubFindByName<K> implements FindByName {
     public static final int MAP_BY_NAME_CHANNEL = 1;
 
     private final AtomicInteger nextFreeChannel = new AtomicInteger(2);
-    private final Map<String, ChronicleMapBuilderWithChannelId> map;
+    private final Map<String, MapInstanceConfig> map;
     private final ReplicationHub replicationHub;
-
-    public static class ChronicleMapBuilderWithChannelId<K, V> implements Serializable {
-        ChronicleHashBuilder<K, ChronicleMap<K, V>, ?> chronicleMapBuilder;
-        int channelId;
-    }
 
     /**
      * @throws IOException
@@ -61,35 +52,36 @@ class ReplicationHubFindByName<K> implements FindByName {
         this.replicationHub = replicationHub;
         ReplicationChannel channel = replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL);
 
-        final MapEventListener<CharSequence, ChronicleMapBuilderWithChannelId> listener = new
-                MapEventListener<CharSequence, ChronicleMapBuilderWithChannelId>() {
+        final MapEventListener<CharSequence, MapInstanceConfig> listener =
+                new MapEventListener<CharSequence, MapInstanceConfig>() {
                     // creates a map based on the details that are sent to the map of builders
                     @Override
-                    public void onPut(CharSequence key, ChronicleMapBuilderWithChannelId value,
-                               ChronicleMapBuilderWithChannelId replacedValue) {
+                    public void onPut(CharSequence key, MapInstanceConfig value,
+                                      MapInstanceConfig replacedValue) {
                         super.onPut(key, value, replacedValue);
                         boolean added = replacedValue == null;
                         if (!added || value == null)
                             return;
 
                         // establish the new map based on this channel ID
-                        LOG.info("create new map for name=" + value.chronicleMapBuilder.name()
-                                + ",channelId=" + value.channelId);
+                        LOG.info("create new map for name=" + value.name
+                                + ",channelId=" + value.channel.channelId());
 
                         try {
-                            toReplicatedViaChannel(value.chronicleMapBuilder, value.channelId).create();
+                            toReplicatedViaChannel(value.mapBuilder, value.channel.channelId()).create();
                         } catch (IllegalStateException e) {
                             // channel is already created
-                            LOG.debug("while creating channel for name=" + value.chronicleMapBuilder.name()
-                                    + ",channelId=" + value.channelId, e);
+                            LOG.debug("while creating channel for name=" + value.name
+                                    + ",channelId=" + value.channel.channelId(), e);
                         } catch (IOException e) {
                             LOG.error("", e);
                         }
                     }
                 };
 
-        this.map = (Map) of(CharSequence.class, ChronicleMapBuilderWithChannelId.class)
-                .entrySize(3000)
+        this.map = (Map) ChronicleMapBuilder
+                .of(CharSequence.class, MapInstanceConfig.class)
+                .entrySize(4000)
                 .entries(128)
                 .eventListener(listener)
                 .instance()
@@ -99,34 +91,32 @@ class ReplicationHubFindByName<K> implements FindByName {
             LOG.debug("map=" + map);
     }
 
-    public <T extends ChronicleHash> T create(ChronicleMapBuilder<CharSequence, CharSequence> builder) throws IllegalArgumentException,
-            IOException, TimeoutException, InterruptedException {
+    public <T extends ChronicleHash> T create(
+            MapInstanceConfig<CharSequence, CharSequence> config)
+            throws IOException, TimeoutException, InterruptedException {
 
         int withChannelId = nextFreeChannel.incrementAndGet();
-        ChronicleMapBuilderWithChannelId builderWithChannelId = new
-                ChronicleMapBuilderWithChannelId();
-        builderWithChannelId.channelId = withChannelId;
-        builderWithChannelId.chronicleMapBuilder = (ChronicleHashBuilder)builder;
 
-        map.put(builder.name(), builderWithChannelId);
+        map.put(config.name,
+                config.replicatedViaChannel(replicationHub.createChannel(withChannelId)));
 
-        return (T) get(builder.name()).chronicleMapBuilder.create();
+        return (T) get(config.name).mapBuilder.create();
     }
 
     public <T extends ChronicleHash> T from(String name) throws IllegalArgumentException,
             IOException, TimeoutException, InterruptedException {
-        return (T) replicatedViaChannel(name).create();
+        return (T) get(name).create();
     }
 
-    ChronicleMapBuilderWithChannelId get(String name) throws IllegalArgumentException,
+    MapInstanceConfig get(String name) throws IllegalArgumentException,
             TimeoutException,
             InterruptedException {
 
-        ChronicleMapBuilderWithChannelId chronicleMapBuilder = waitTillEntryReceived(5000, name);
-        if (chronicleMapBuilder == null)
+        MapInstanceConfig config = waitTillEntryReceived(5000, name);
+        if (config == null)
             throw new IllegalArgumentException("A map name=" + name + " can not be found.");
 
-        return chronicleMapBuilder;
+        return config;
     }
 
     /**
@@ -135,21 +125,17 @@ class ReplicationHubFindByName<K> implements FindByName {
      * @param timeOutMs timeout in milliseconds
      * @throws InterruptedException
      */
-    private ChronicleMapBuilderWithChannelId waitTillEntryReceived(final int timeOutMs, String name) throws TimeoutException, InterruptedException {
+    private MapInstanceConfig waitTillEntryReceived(final int timeOutMs, String name)
+            throws TimeoutException, InterruptedException {
         int t = 0;
         for (; t < timeOutMs; t++) {
-            ChronicleMapBuilderWithChannelId builder = map.get(name);
+            MapInstanceConfig config = map.get(name);
 
-            if (builder != null)
-                return builder;
+            if (config != null)
+                return config;
             Thread.sleep(1);
         }
         throw new TimeoutException("timed out wait for map name=" + name);
-    }
-
-    private ChronicleHashInstanceConfig replicatedViaChannel(String name) throws TimeoutException, InterruptedException {
-        ChronicleMapBuilderWithChannelId builder = get(name);
-        return toReplicatedViaChannel(builder.chronicleMapBuilder, builder.channelId);
     }
 
     /**
@@ -163,9 +149,10 @@ class ReplicationHubFindByName<K> implements FindByName {
      * @throws IOException
      * @see ChronicleMapBuilder#createPersistedTo(File file)
      */
-    public <T extends ChronicleHash> T createPersistedTo(String name, File file) throws IllegalArgumentException,
+    public <T extends ChronicleHash> T createPersistedTo(String name, File file)
+            throws IllegalArgumentException,
             IOException, TimeoutException, InterruptedException {
-        return (T) replicatedViaChannel(name).persistedTo(file).create();
+        return (T) get(name).persistedTo(file).create();
     }
 
     private ChronicleHashInstanceConfig toReplicatedViaChannel(ChronicleMapBuilder builder) {

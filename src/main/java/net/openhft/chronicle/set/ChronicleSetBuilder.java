@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
  * @see ChronicleSet
  * @see net.openhft.chronicle.map.ChronicleMapBuilder
  */
-public class ChronicleSetBuilder<E>
+public final class ChronicleSetBuilder<E>
         implements ChronicleHashBuilder<E, ChronicleSet<E>, ChronicleSetBuilder<E>> {
 
     private ChronicleMapBuilder<E, DummyValue> chronicleMapBuilder;
@@ -64,7 +64,7 @@ public class ChronicleSetBuilder<E>
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
-        return new ChronicleSetBuilder<K>(keyClass);
+        return new ChronicleSetBuilder<>(keyClass);
     }
 
     @Override
@@ -154,6 +154,12 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
+    public ChronicleSetBuilder<E> maxEntryOversizeFactor(int maxEntryOversizeFactor) {
+        chronicleMapBuilder.maxEntryOversizeFactor(maxEntryOversizeFactor);
+        return this;
+    }
+
+    @Override
     public ChronicleSetBuilder<E> entries(long entries) {
         chronicleMapBuilder.entries(entries);
         return this;
@@ -227,7 +233,7 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> keyMarshaller(@NotNull BytesMarshaller<E> keyMarshaller) {
+    public ChronicleSetBuilder<E> keyMarshaller(@NotNull BytesMarshaller<? super E> keyMarshaller) {
         chronicleMapBuilder.keyMarshaller(keyMarshaller);
         return this;
     }
@@ -293,31 +299,26 @@ public class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleHashInstanceConfig<ChronicleSet<E>> instance() {
-        return new InstanceConfig<>(chronicleMapBuilder.instance());
+    public ChronicleSet<E> createStatelessClient(InetSocketAddress serverAddress)
+            throws IOException {
+        return statelessClient(serverAddress).create();
     }
 
     @Override
-    public ChronicleSet<E> create() throws IOException {
+    public ChronicleHashInstanceConfig<ChronicleSet<E>> instance() {
+        return new SetInstanceConfig<>(chronicleMapBuilder.instance());
+    }
+
+    @Override
+    public ChronicleSet<E> create() {
         final ChronicleMap<E, DummyValue> map = chronicleMapBuilder.create();
-        return new SetFromMap<E>(map);
+        return new SetFromMap<>(map);
     }
 
     @Override
     public ChronicleSet<E> createPersistedTo(File file) throws IOException {
         ChronicleMap<E, DummyValue> map = chronicleMapBuilder.createPersistedTo(file);
-        return new SetFromMap<E>(map);
+        return new SetFromMap<>(map);
     }
-
-    @Override
-    public String name() {
-        return chronicleMapBuilder.name();
-    }
-
-    public ChronicleSetBuilder<E> name(String name) {
-        chronicleMapBuilder.name(name);
-        return this;
-    }
-
 }
 

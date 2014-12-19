@@ -1,14 +1,14 @@
 /*
  * Copyright 2014 Higher Frequency Trading
- * <p/>
+ * <p>
  * http://www.higherfrequencytrading.com
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,17 +21,18 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Test  ReplicatedChronicleMap where the Replicated is over a TCP Socket
+ * Tests ReplicatedChronicleMap when the Replication is over a TCP Socket
  *
  * @author Rob Austin.
  */
@@ -109,7 +110,7 @@ public class EventListenerWithTCPSocketReplicationTest {
 
         // we will stores some data into one map here
         map1.put(5, "EXAMPLE");
-        waitTillReplicated();
+        waitTillReplicated(5000);
 
         Assert.assertEquals("Maps should be equal", map1, map2);
         Assert.assertTrue("Map 1 should not be empty", !map1.isEmpty());
@@ -142,7 +143,7 @@ public class EventListenerWithTCPSocketReplicationTest {
 
         // we will stores some data into one map here
         map1.put(5, "EXAMPLE");
-        waitTillReplicated();
+        waitTillReplicated(5000);
 
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
@@ -171,7 +172,7 @@ public class EventListenerWithTCPSocketReplicationTest {
         // we will stores some data into one map here
         map1.put(5, "EXAMPLE");
 
-        waitTillReplicated();
+        waitTillReplicated(5000);
 
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
@@ -200,7 +201,7 @@ public class EventListenerWithTCPSocketReplicationTest {
 
         // its we have to wait here for this entry to be removed - as removing an entry that you dont have
         // on map 1 will have no effect
-        waitTillReplicated();
+        waitTillReplicated(5000);
 
         // no more puts after this point
         putWasCalled.set(false);
@@ -208,7 +209,7 @@ public class EventListenerWithTCPSocketReplicationTest {
         // we will stores some data into one map here
         map1.remove(5);
 
-        waitTillReplicated();
+        waitTillReplicated(5000);
 
         Assert.assertTrue(!putWasCalled.get());
         Assert.assertTrue(wasRemoved.get());
@@ -225,11 +226,26 @@ public class EventListenerWithTCPSocketReplicationTest {
                 .eventListener(eventListener);
     }
 
-    private void waitTillReplicated() throws InterruptedException {
-        int t = 0;
-        for (; t < 5000; t++) {
+    private void waitTillReplicated(final int timeOutMs) throws InterruptedException {
+
+        Map map1UnChanged = new HashMap();
+        Map map2UnChanged = new HashMap();
+
+        int numberOfTimesTheSame = 0;
+        for (int t = 0; t < timeOutMs + 100; t++) {
             if (map1.equals(map2)) {
-                break;
+                if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
+                    numberOfTimesTheSame++;
+                } else {
+                    numberOfTimesTheSame = 0;
+                    map1UnChanged = new HashMap(map1);
+                    map2UnChanged = new HashMap(map2);
+                }
+                Thread.sleep(1);
+                if (numberOfTimesTheSame == 100) {
+                    break;
+                }
+
             }
             Thread.sleep(1);
         }

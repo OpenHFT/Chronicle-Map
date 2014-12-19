@@ -1,4 +1,6 @@
-package net.openhft.chronicle.hash;
+package net.openhft.chronicle.map;
+
+import net.openhft.chronicle.hash.ChronicleHash;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -6,7 +8,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * @author Rob Austin.
  */
-public interface FindByName {
+interface FindByName {
 
     /**
      * @param name the name of the map or set

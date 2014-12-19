@@ -19,12 +19,13 @@
 package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesWriter;
-import net.openhft.chronicle.hash.serialization.Hasher;
+import net.openhft.chronicle.hash.hashing.Hasher;
+import net.openhft.lang.MemoryUnit;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.io.serialization.BytesMarshaller;
-import net.openhft.lang.io.serialization.JDKZObjectSerializer;
+import net.openhft.lang.io.serialization.JDKObjectSerializer;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -35,6 +36,19 @@ import java.io.Serializable;
 
 public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<E, W> {
     private static final long serialVersionUID = 0L;
+
+    private static final long MAX_REASONABLE_SERIALIZED_SIZE = MemoryUnit.MEGABYTES.toBytes(512L);
+
+    public static void checkMaxSizeStillReasonable(long maxSize, Exception ex) {
+        if (maxSize > MAX_REASONABLE_SERIALIZED_SIZE) {
+            throw new IllegalStateException("We try to figure out size of objects " +
+                    "in serialized form, but it exceeds " +
+                    MAX_REASONABLE_SERIALIZED_SIZE + " bytes. We assume this is " +
+                    "a error and throw exception at this point. If you really " +
+                    "want larger keys/values, use ChronicleMapBuilder." +
+                    "keySize(int)/valueSize(int)/entrySize(int) configurations", ex);
+        }
+    }
 
     final DirectBytesBuffer buffer;
     transient long size;
@@ -50,11 +64,19 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
         if (mutable || writer != this.writer || e != cur) {
             this.writer = writer;
             cur = e;
-            Bytes buffer = this.buffer.obtain(maxSize);
-            innerWrite(writer, buffer, e);
-            buffer.flip();
-            size = buffer.remaining();
-            hash = 0L;
+            while (true) {
+                try {
+                    Bytes buffer = this.buffer.obtain(maxSize);
+                    innerWrite(writer, buffer, e);
+                    buffer.flip();
+                    size = buffer.remaining();
+                    hash = 0L;
+                    return;
+                } catch (Exception ex) {
+                    checkMaxSizeStillReasonable(maxSize, ex);
+                    maxSize *= 2L;
+                }
+            }
         }
     }
 
@@ -203,7 +225,7 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
                     return buffer = store.bytes();
                 }
             } else {
-                buffer = new DirectStore(JDKZObjectSerializer.INSTANCE, maxSize, false).bytes();
+                buffer = new DirectStore(JDKObjectSerializer.INSTANCE, maxSize, false).bytes();
                 return buffer;
             }
         }

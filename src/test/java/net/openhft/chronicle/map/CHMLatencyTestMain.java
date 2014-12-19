@@ -78,7 +78,6 @@ public class CHMLatencyTestMain {
         ChronicleMap<LongValue, LongValue> countersMap =
                 ChronicleMapBuilder.of(LongValue.class, LongValue.class)
                 .entries(KEYS)
-                .entrySize(16)
                 .createPersistedTo(file);
 
         // add keys

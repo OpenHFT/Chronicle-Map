@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import junit.framework.Assert;
+ import org.junit.Assert;
 import net.openhft.lang.Jvm;
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ public class Issue42Test {
         if (!Jvm.isWindows())
             return;
 
-        try (final ChronicleMap<CharSequence, CharSequence> map = OnHeapUpdatableChronicleMapBuilder
+        try (final ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .entrySize(18)
                 .entries(1500000)

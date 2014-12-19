@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
+import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.lang.io.Bytes;
 
@@ -42,7 +43,7 @@ public enum IntegerMarshaller
 
     @Override
     public boolean startsWith(Bytes bytes, Integer e) {
-        return e == bytes.readInt(0);
+        return e == bytes.readInt(bytes.position());
     }
 
     @Override

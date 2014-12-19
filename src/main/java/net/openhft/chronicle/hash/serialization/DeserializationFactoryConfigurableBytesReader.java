@@ -1,7 +1,5 @@
 /*
- * Copyright 2014 Higher Frequency Trading
- *
- * http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.serialization;
 
-enum NullValueProvider implements DefaultValueProvider {
-    INSTANCE;
+import net.openhft.lang.io.serialization.ObjectFactory;
 
-    @Override
-    public Object get(Object key) {
-        return null;
-    }
+public interface DeserializationFactoryConfigurableBytesReader<E,
+        R extends DeserializationFactoryConfigurableBytesReader<E, R>>
+        extends BytesReader<E> {
+
+    R withDeserializationFactory(ObjectFactory<E> deserializationFactory);
 }

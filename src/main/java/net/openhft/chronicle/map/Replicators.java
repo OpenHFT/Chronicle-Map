@@ -40,7 +40,7 @@ final class Replicators {
     static Replicator tcp(final AbstractReplication replication) {
         return new Replicator() {
             @Override
-            protected Closeable applyTo(@NotNull final AbstractChronicleMapBuilder builder,
+            protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
                                         @NotNull final Replica replica,
                                         @NotNull final Replica.EntryExternalizable entryExternalizable,
                                         final ChronicleMap chronicleMap)
@@ -54,7 +54,7 @@ final class Replicators {
                 assert tcpConfig != null;
                 return new TcpReplicator(replica, entryExternalizable,
                         tcpConfig,
-                        builder.entrySize(true), statelessServer,
+                        statelessServer,
                         replication.remoteNodeValidator());
             }
         };
@@ -64,7 +64,7 @@ final class Replicators {
             final UdpTransportConfig replicationConfig) {
         return new Replicator() {
             @Override
-            protected Closeable applyTo(@NotNull final AbstractChronicleMapBuilder builder,
+            protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
                                         @NotNull final Replica map,
                                         @NotNull final Replica.EntryExternalizable entryExternalizable,
                                         final ChronicleMap chronicleMap)

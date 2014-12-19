@@ -20,7 +20,7 @@ package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.Hasher;
+import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.lang.io.Bytes;
 
 public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<char[]> {
@@ -28,6 +28,8 @@ public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<cha
 
     @Override
     public boolean startsWith(Bytes bytes, char[] chars) {
+        if (bytes.capacity() - bytes.position() < chars.length * 2L)
+            return false;
         long pos = bytes.position();
         for (int i = 0; i < chars.length; i++) {
             if (bytes.readChar(pos + (i * 2L)) != chars[i])
@@ -38,22 +40,31 @@ public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<cha
 
     @Override
     public long hash(char[] chars) {
-        return Hasher.hash(chars, chars.length);
+        return Hasher.hash(chars);
     }
 
     @Override
     public char[] read(Bytes bytes, long size) {
-        char[] chars = new char[(int) size];
+        char[] chars = new char[resLen(size)];
         bytes.readFully(chars);
         return chars;
     }
 
     @Override
     public char[] read(Bytes bytes, long size, char[] toReuse) {
-        if (toReuse == null || toReuse.length != size)
-            toReuse = new char[(int) size];
+        int resLen = resLen(size);
+        if (toReuse == null || toReuse.length != resLen)
+            toReuse = new char[resLen];
         bytes.readFully(toReuse);
         return toReuse;
+    }
+
+    private int resLen(long size) {
+        long resLen = size / 2L;
+        if (resLen < 0 || resLen > Integer.MAX_VALUE)
+            throw new IllegalArgumentException("char[] size should be non-negative int, " +
+                    resLen + " given. Memory corruption?");
+        return (int) resLen;
     }
 
     @Override

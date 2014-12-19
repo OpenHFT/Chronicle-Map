@@ -6,7 +6,7 @@ requirements. - [Contact Us](sales@higherfrequencytrading.com)*
 
 # Chronicle Map
 
-Replicate your Key Value Store across your network, with consistency, durability and performance.
+Replicate your Key Value Store across your network, with eventual consistency, persistence and performance.
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
 
 #### Maven Artifact Download
@@ -30,7 +30,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *   [Maven Download](https://github.com/OpenHFT/Chronicle-Map#maven-artifact-download-1)
  *   [Snapshot Download](https://github.com/OpenHFT/Chronicle-Map#maven-snapshot-download)
  *   [Key Value Object Types](https://github.com/OpenHFT/Chronicle-Map#key-value-object-types)
- *   [Off Heap and How to improve performance]()
+ *   [Off Heap and How to improve performance](https://github.com/OpenHFT/Chronicle-Map#off-heap-storage-and-how-using-a-proxy-object-can-improve-performance)
  *   [Sharing Data Between Two or More Maps](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps)
  *   [Entries](https://github.com/OpenHFT/Chronicle-Map#entries)
  *   [Size of Space Reserved on Disk](https://github.com/OpenHFT/Chronicle-Map#size-of-space-reserved-on-disk)
@@ -54,6 +54,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Heart Beat Interval](https://github.com/OpenHFT/Chronicle-Map#heart-beat-interval)
 * [Multi Chronicle Maps - Network Distributed](https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed)
 * [Stateless Client](https://github.com/OpenHFT/Chronicle-Map#stateless-client)
+* [How to speed up the Chronicle Map Stateless Client](https://github.com/OpenHFT/Chronicle-Map#how-to-speed-up-the-chronicle-map-stateless-client)
 * [Questions/Answers](https://github.com/OpenHFT/Chronicle-Map#questions-and-answers)
 
 #### Miscellaneous
@@ -168,7 +169,7 @@ and define the snapshot version in your pom.xml, for example:
 <dependency>
   <groupId>net.openhft</groupId>
   <artifactId>chronicle-map</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version><!--replace with the latest version--></version>
 </dependency>
 ```
 
@@ -237,7 +238,7 @@ between processes by just using memory and in around 40 nanoseconds.
 ``` java 
 ConcurrentMap<Integer, CharSequence> map1, map2;
 
-// this could could be on one process
+// this could be on one process
 map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class).createPersistedTo(file);
 
 // this could be on the other process
@@ -355,7 +356,7 @@ These methods let you provide the object which the data will be written to, but 
 ``` java
 CharSequence using = new StringBuilder();
 CharSequence myResult = map.getUsing("key", using);
-// at this point the myString and myResult will both point to the same object
+// at this point "using" and "myResult" will both point to the same object
 ```
 
 The `map.getUsing()` method is similar to `map.get()`, but because Chronicle Map stores its data off
@@ -380,6 +381,12 @@ heap memory. When this memory is shared between processes on the same server,
 the chronicle map is able to distribute entries between processes with extremely low overhead, 
 as both processes are sharing the same off heap memory space. Since your objects are already stored off
 heap ( as a series of bytes ), replicating entries over the network adds relatively low over head.
+
+For more information on the benefit's of off heap memory, see our article on - [On
+heap vs off
+heap memory
+usage]
+(http://vanillajava.blogspot.co.uk/2014/12/on-heap-vs-off-heap-memory-usage.html)
 
 One of the downsides of an Off Heap Map is that whenever you wish to get a value ( on heap ) from an entry
 which is off heap, for example calling :
@@ -461,10 +468,10 @@ the off heap data structures directly, this reduced serialisation can give you a
 Below we show you how you can work directly with the off heap entries.
 
 ``` java
-        ChronicleMap<CharSequence, BondVOInterface> chm = ChronicleMapBuilder
-                .of(String.class, BondVOInterface.class)
-                .keySize(10)
-                .create();
+ChronicleMap<CharSequence, BondVOInterface> map = ChronicleMapBuilder
+        .of(String.class, BondVOInterface.class)
+        .keySize(10)
+        .create();
 ```
 
 notice that the
@@ -476,29 +483,29 @@ notice that the
 value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  now
 like before, we can
 use the `getUsing(key,using)` method, but this time we have to create the ‘using’ instance slightly
-differently, we have to call the `newDirectReference(..)` method.
+differently, we have to call either the `map.newValueInstance()` or `map.newKeyInstance()` method.
 
 ``` java
-BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
+BondVOInterface using = map.newValueInstance();
 ``` 
 
 the call to `getUsing(key,value)` is the same as we had in the earlier example
 
 ``` java
-BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
+BondVOInterface using = map.newValueInstance();
 BondVOInterface  bond = map.getUsing(key,using);
 assert using == bond; // this will always be the same instance
 ```
 
 `getUsing(key,using)` won’t create any on heap objects, and it won’t deserialize the ‘bond’ entry from off heap to on
 heap, all it does is sets the bond as a proxy to the off heap memory, this proxy object was created by
-`DataValueClasses.newDirectReference(BondVOInterface.class)`, it allows us access to the fields of our
+`map.newValueInstance()`, it allows us access to the fields of our
 entry, directly into the off heap storage.
 
 As above, ideally you would reuse the `using` variable.
 
  ``` java
-BondVOInterface using = DataValueClasses.newDirectReference(BondVOInterface.class);
+BondVOInterface using = map.newValueInstance();
 
 for(int i=1;i<=10;i++) {
   Value bond = map.getUsing(key,using); // this won’t create a new value each time.
@@ -543,8 +550,7 @@ context.close() // the lock will get released when this is called
 
 ####  acquireUsingLocked()
 Just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
-code is a pattern that you will often come across, `acquireUsing(key,value)` offers this
-functionality i the example, below with a single method call :
+code is a pattern that you will often come across,
 
  ``` java
 V acquireUsing(key,value) {
@@ -562,6 +568,10 @@ V acquireUsing(key,value) {
     }
 }
 ```
+
+`acquireUsing(key,value)` offers this functionality from a single method call, an be cause it
+implemented inside the chronicle map we are able to reduce the hash lookups and make it more
+efficient.
 
 If you are only accessing ChronicleMap from a single thread. If you are not doing replication
 and don't care about atomic reads. Then its simpler ( and faster ) to use acquireUsing() otherwise we
@@ -598,6 +608,9 @@ to the size of the largest entry, but this approach is wasteful of memory, espec
 entries are no where near the max entry size.  
 
 ## Serialization
+
+![Serialization](http://openhft.net/wp-content/uploads/2014/09/Serialization_01.jpg)
+
 
 Chronicle Map stores your data into off heap memory, so when you give it a Key or Value, it will
 serialise these objects into bytes.
@@ -1041,11 +1054,15 @@ unique for each map you have.
 A stateless client is an instance of a `ChronicleMap` or a `ChronicleSet` that does not hold any 
 data
  locally, all the Map or Set operations are delegated via a Remote Procedure Calls ( RPC ) to 
- another `ChronicleMap` or  `ChronicleSet`  which we will refer to as the server. The server will
- hold all your data, the server can not it’s self be a stateless client. Your stateless client must
- be connected to the server via TCP/IP. The stateless client will delegate all your method calls to
- the remote server. The stateless client operations will block, in other words the stateless client
- will wait for the server to send a response before continuing to the next operation. The stateless
+ another `ChronicleMap` or  `ChronicleSet`  which we will refer to as the server. The server
+ holds all your data, the server can not it’s self be a stateless client. Your stateless client must
+ be connected to the server via TCP/IP.
+
+ ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/09/State-Transition_1-thread_02.jpg)
+
+ The stateless client delegates all your method calls to
+ the remote server. The stateless client operations will block, in other words the stateless
+ client waits for the server to send a response before continuing to the next operation. The stateless
  client could be  consider to be a ClientProxy to `ChronicleMap` or  `ChronicleSet`  running
  on another host.
  
@@ -1103,24 +1120,32 @@ but in your example you should choose the host of the state-full server and the 
 ```
 
 the ".statelessClient(..)" returns an instance of `StatelessClientConfig`, which has only a few
-own configurations and `create()` method to create a new stateless client.
-method tells `ChronicleMap` that its going to build a stateless client.
-If you don’t add this line a normal state-full `ChronicleMap` will be created. For this example
+of its own configurations, such as the `create()` method, which can be used to create a new
+stateless client.
+If you don’t add this line, a normal state-full `ChronicleMap` will be created. For this example
 we ran both 
 the client an the server on the same host ( hence the “localhost" setting ), 
 but in a real life example the stateless client will typically be on a different server than the
 state-full host. If you are aiming to create a stateless client and server on the same host, its
-better not to do this, as the stateless client connects to the server via TCP/IP, 
-you would get better performance if you connect to the server via heap memory, to read more about
-sharing a map with heap memory
+better not to do this, as the stateless client connects to the server via TCP/IP. It better to
+share the maps via memory as this will give you better performance ( read more about
+this at [Sharing Data Between Two or More Maps](https://github
+.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps).
+
 click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps ) 
 
 ### How to speed up the Chronicle Map Stateless Client 
 
-By default when you make a method call to a `ChronicleMap` stateless client, 
-your method call is wrapped into an event which is sent over tcp and processed by the server, 
-your stateless client will block until an acknowledgement has been received from the server that 
-your event was processed. When you are calling methods that return a value like get() this 
+When calling the stateless client, you will get better throughput if you invoke your requests from a
+ number of threads, this is because by default when you make a method call to a `ChronicleMap`
+ stateless client, your method call is wrapped into an event which is sent over tcp and processed
+  by the server,
+your stateless client will block until an acknowledgement has been received from the server that
+your event was processed.
+
+![Chronicle Map](http://openhft.net/wp-content/uploads/2014/09/State-Transition_2-thread_03.jpg)
+
+When you are calling methods that return a value like get() this
 blocking adds no additional overhead, because you have to wait for the return value anyway, 
 In some cases you could get better performance if you don't have to wait for the acknowledgement, This maybe the case when you are calling the `put()` method, but the problem with this method is it returns the old value even though you may not use it.
 

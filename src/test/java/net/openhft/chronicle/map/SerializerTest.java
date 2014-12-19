@@ -29,7 +29,23 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 
+import static org.junit.Assert.assertEquals;
+
 public class SerializerTest {
+
+    @Test
+    public void testPrefixStringFunctionSerialization() throws Exception {
+
+        ByteBufferBytes b = new ByteBufferBytes(ByteBuffer.allocate(512));
+
+        CHMUseCasesTest.PrefixStringFunction expected = new CHMUseCasesTest.PrefixStringFunction("New ");
+        b.writeObject(expected);
+
+        b.clear();
+        CHMUseCasesTest.PrefixStringFunction actual = b.readObject(CHMUseCasesTest.PrefixStringFunction.class);
+        assertEquals(expected, actual);
+
+    }
 
     @Test
     public void testValueMarshallable() throws Exception {
@@ -70,9 +86,8 @@ public class SerializerTest {
         final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
         ByteBufferBytes in = out.slice();
 
-        ChronicleMapBuilder cBuilder = ChronicleMapBuilder.of(Integer.class, valueClass);
-
-        OnHeapUpdatableChronicleMapBuilder builder = (OnHeapUpdatableChronicleMapBuilder) cBuilder.delegate;
+        ChronicleMapBuilder builder =
+                ChronicleMapBuilder.of(Integer.class, valueClass);
 
         builder.preMapConstruction(false);
 
@@ -95,9 +110,7 @@ public class SerializerTest {
         final ByteBufferBytes out = new ByteBufferBytes(ByteBuffer.allocateDirect(1024));
         ByteBufferBytes in = out.slice();
 
-        ChronicleMapBuilder cBuilder = ChronicleMapBuilder.of(clazz, Integer.class);
-
-        OnHeapUpdatableChronicleMapBuilder builder = (OnHeapUpdatableChronicleMapBuilder) cBuilder.delegate;
+        ChronicleMapBuilder builder = ChronicleMapBuilder.of(clazz, Integer.class);
 
         builder.preMapConstruction(false);
         {

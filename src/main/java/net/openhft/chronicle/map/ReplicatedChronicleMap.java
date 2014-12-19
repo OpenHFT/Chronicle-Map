@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
@@ -43,7 +44,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-import static net.openhft.chronicle.hash.serialization.Hasher.hash;
+import static net.openhft.chronicle.hash.hashing.Hasher.hash;
 import static net.openhft.lang.MemoryUnit.*;
 import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 
@@ -105,14 +106,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     private transient long startOfModificationIterators;
     private boolean bootstrapOnlyLocalEntries;
 
-    public ReplicatedChronicleMap(@NotNull AbstractChronicleMapBuilder<K, V, ?> builder,
-                                  byte identifier)
+    public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder,
+                                  AbstractReplication replication)
             throws IOException {
         super(builder);
         this.timeProvider = builder.timeProvider();
 
-        this.localIdentifier = identifier;
-        this.bootstrapOnlyLocalEntries = builder.bootstrapOnlyLocalEntries;
+        this.localIdentifier = replication.identifier();
+        this.bootstrapOnlyLocalEntries = replication.bootstrapOnlyLocalEntries();
 
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
@@ -274,7 +275,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
         ReplicatedChronicleMap.Segment segment = segment(segmentNum);
-        segment.writeLock(null);
+        segment.writeLock();
         try {
             return segment.removeWithoutLock(copies, null, metaKeyInterop, keyInterop, key1, keySize,
                     keyIdentity(), this, (V) null, valueIdentity(), segmentHash, this, removeReturnsNull,
@@ -421,12 +422,63 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
     }
 
+    public boolean identifierCheck(@NotNull Bytes entry, int chronicleId) {
+        long start = entry.position();
+        try {
+            final long keySize = keySizeMarshaller.readSize(entry);
+            entry.skip(keySize + 8); // we skip 8 for the timestamp
+            final byte identifier = entry.readByte();
+            return identifier == localIdentifier;
+        } finally {
+            entry.position(start);
+        }
+    }
+
+
+    public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
+
+        long start = entry.position();
+        try {
+            final long keySize = keySizeMarshaller.readSize(entry);
+
+            entry.skip(keySize + 8); // we skip 8 for the timestamp
+
+            final byte identifier = entry.readByte();
+            if (identifier != localIdentifier) {
+                // although unlikely, this may occur if the entry has been updated
+                return 0;
+            }
+
+            final boolean isDeleted = entry.readBoolean();
+            long valueSize;
+            if (!isDeleted) {
+                valueSize = valueSizeMarshaller.readSize(entry);
+            } else {
+                valueSize = 0L;
+            }
+
+            alignment.alignPositionAddr(entry);
+            long result = (entry.position() + valueSize - start);
+
+            // entries can be larger than Integer.MAX_VALUE as we are restricted to the size we can
+            // make a byte buffer
+            assert result < Integer.MAX_VALUE;
+
+            return (int) result;
+        } finally {
+            entry.position(start);
+        }
+
+    }
+
+
     /**
      * This method does not set a segment lock, A segment lock should be obtained before calling
      * this method, especially when being used in a multi threaded context.
      */
     @Override
-    public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
+    public void writeExternalEntry(@NotNull Bytes entry,
+                                   @NotNull Bytes destination,
                                    int chronicleId) {
         final long initialLimit = entry.limit();
 
@@ -779,7 +831,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         void remoteRemove(
                 @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
                 Bytes keyBytes, long hash2, final long timestamp, final byte identifier) {
-            writeLock(null);
+            writeLock();
             try {
                 ReadValueToBytes readValueToLazyBytes = segmentState.readValueToLazyBytes;
                 readValueToLazyBytes.valueSizeMarshaller(valueSizeMarshaller);
@@ -812,7 +864,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             ReadValueToBytes readValueToLazyBytes = segmentState.readValueToLazyBytes;
             readValueToLazyBytes.valueSizeMarshaller(valueSizeMarshaller);
 
-            writeLock(null);
+            writeLock();
             try {
                 putWithoutLock(copies, segmentState,
                         DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
@@ -835,7 +887,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                long hash2, boolean replaceIfPresent,
                ReadValue<RV> readValue, boolean resultUnused,
                byte identifier, long timeStamp) {
-            writeLock(null);
+            writeLock();
             try {
                 return putWithoutLock(copies, segmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
@@ -1015,7 +1067,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                       GetValueInterops<VB, VBI, MVBI> getValueInterops, VB expectedValue,
                       InstanceOrBytesToInstance<RV, V> toValue,
                       long hash2, ReadValue<RV> readValue, boolean resultUnused) {
-            writeLock(null);
+            writeLock();
             try {
                 return removeWithoutLock(copies, segmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
@@ -1073,67 +1125,97 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 MultiMap hashLookup = hashLookup();
                 hashLookup.startSearch(hash2);
                 MultiStoreBytes entry = null;
-                for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
-                    long offset = offsetFromPos(pos);
-                    if (entry == null) {
-                        if (localSegmentState == null) {
-                            copies = SegmentState.getCopies(copies); // copies is not null now
-                            localSegmentState = SegmentState.get(copies);
+                returnNothing:
+                {
+                    for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
+                        long offset = offsetFromPos(pos);
+                        if (entry == null) {
+                            if (localSegmentState == null) {
+                                copies = SegmentState.getCopies(copies); // copies is not null now
+                                localSegmentState = SegmentState.get(copies);
+                            }
+                            entry = localSegmentState.tmpBytes;
                         }
-                        entry = localSegmentState.tmpBytes;
-                    }
-                    reuse(entry, offset);
-                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
-                        continue;
-                    // key is found
-                    entry.skip(keySize);
+                        reuse(entry, offset);
+                        if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
+                            continue;
+                        // key is found
+                        entry.skip(keySize);
 
-                    long timestampPos = entry.position();
-                    if (shouldIgnore(entry, timestamp, identifier)) {
-                        // the following assert should be enabled, but TimeBasedReplicationTest
-                        // intentionally violates the explained invariant, => assertion fails.
-                        // todo do something with this
+                        long timestampPos = entry.position();
+                        if (shouldIgnore(entry, timestamp, identifier)) {
+                            // the following assert should be enabled, but TimeBasedReplicationTest
+                            // intentionally violates the explained invariant, => assertion fails.
+                            // todo do something with this
 
-                        // we should ignore only remote updates
-                        // which don't use remove, put results
-                        // assert booleanResult || resultUnused;
-                        return booleanResult ? Boolean.FALSE : null;
-                    }
-                    boolean isDeleted = entry.readBoolean();
-                    if (isDeleted) {
+                            // we should ignore only remote updates
+                            // which don't use remove, put results
+                            // assert booleanResult || resultUnused;
+                            return booleanResult ? Boolean.FALSE : null;
+                        }
+                        boolean isDeleted = entry.readBoolean();
+                        if (isDeleted) {
+                            if (expectedValue != null)
+                                return Boolean.FALSE;
+                            entry.position(timestampPos);
+                            entry.writeLong(timestamp);
+                            entry.writeByte(identifier);
+                            onRemoveMaybeRemote(pos, remote);
+                            break returnNothing;
+                        }
+
+                        long valueSizePos = entry.position();
+                        long valueSize = readValueSize(entry);
+                        long valuePos = entry.position();
+
+                        // check the value assigned for the key is that we expect
+                        if (expectedValue != null) {
+                            VBI valueInterop = getValueInterops.getValueInterop(copies);
+                            MVBI metaValueInterop = getValueInterops.getMetaValueInterop(
+                                    copies, valueInterop, expectedValue);
+                            if (metaValueInterop.size(valueInterop, expectedValue) != valueSize)
+                                return Boolean.FALSE;
+                            if (!metaValueInterop.startsWith(valueInterop, entry, expectedValue))
+                                return Boolean.FALSE;
+                        }
+
                         entry.position(timestampPos);
                         entry.writeLong(timestamp);
                         entry.writeByte(identifier);
-                        onRemoveMaybeRemote(pos, remote);
-                        break; // to "key not found" location
+                        entry.writeBoolean(true);
+                        entry.position(valuePos);
+
+                        return removeEntry(copies, key, keySize, toKey, toValue, readValue,
+                                resultUnused, hashLookup, entry, pos, valueSizePos,
+                                valueSize, remote, false, booleanResult);
                     }
+                    // key is not found
+                    if (remote) {
+                        long entrySize = entrySize(keySize, 0);
+                        long pos = alloc(inBlocks(entrySize));
+                        long offset = offsetFromPos(pos);
+                        clearMetaData(offset);
+                        if (entry == null) {
+                            if (localSegmentState == null) {
+                                copies = SegmentState.getCopies(copies); // copies is not null now
+                                localSegmentState = SegmentState.get(copies);
+                            }
+                            entry = localSegmentState.tmpBytes;
+                        }
+                        reuse(entry, offset);
 
-                    long valueSizePos = entry.position();
-                    long valueSize = readValueSize(entry);
-                    long valuePos = entry.position();
+                        keySizeMarshaller.writeSize(entry, keySize);
+                        metaKeyInterop.write(keyInterop, entry, key);
 
-                    // check the value assigned for the key is that we expect
-                    if (expectedValue != null) {
-                        VBI valueInterop = getValueInterops.getValueInterop(copies);
-                        MVBI metaValueInterop = getValueInterops.getMetaValueInterop(
-                                copies, valueInterop, expectedValue);
-                        if (metaValueInterop.size(valueInterop, expectedValue) != valueSize)
-                            return Boolean.FALSE;
-                        if (!metaValueInterop.startsWith(valueInterop, entry, expectedValue))
-                            return Boolean.FALSE;
+                        entry.writeLong(timestamp);
+                        entry.writeByte(identifier);
+                        entry.writeBoolean(true);
+
+                        hashLookup.putAfterFailedSearch(pos);
+                        hashLookup.removePosition(pos);
                     }
-
-                    entry.position(timestampPos);
-                    entry.writeLong(timestamp);
-                    entry.writeByte(identifier);
-                    entry.writeBoolean(true);
-                    entry.position(valuePos);
-
-                    return removeEntry(copies, key, keySize, toKey, toValue, readValue,
-                            resultUnused, hashLookup, entry, pos, valueSizePos,
-                            valueSize, remote, false, booleanResult);
                 }
-                // key is not found
+                // return nothing
                 if (booleanResult) {
                     return Boolean.FALSE;
                 } else {
@@ -1158,7 +1240,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
             long timestamp = currentTime();
             byte identifier = localIdentifier;
-            writeLock(null);
+            writeLock();
             try {
                 MultiMap hashLookup = hashLookup();
                 hashLookup.startSearch(hash2);
@@ -1455,7 +1537,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         segment((int) (position >>> segmentIndexShift));
                 segment.readLock(null);
                 try {
-                    if (changes.clearIfSet(position)) {
+                    if (changes.get(position)) {
+
                         entryCallback.onBeforeEntry();
 
                         final long segmentPos = position & posMask;
@@ -1463,12 +1546,23 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                                 segment.reuse(tmpBytes, segment.offsetFromPos(segmentPos));
 
                         // if the entry should be ignored, we'll move the next entry
+                        if (entryCallback.shouldBeIgnored(entry, chronicleId)) {
+                            changes.clear(position);
+                            continue;
+                        }
+
+                        // it may not be successful if the buffer can not be resided so we will
+                        // process it later, by NOT clearing the changes.clear(position)
                         final boolean success = entryCallback.onEntry(entry, chronicleId);
                         entryCallback.onAfterEntry();
-                        if (success) {
-                            return true;
-                        }
+
+                        if (success)
+                            changes.clear(position);
+
+                        return success;
+
                     }
+
 
                     // if the position was already cleared by another thread
                     // while we were trying to obtain segment lock (for example, in onRelocation()),

@@ -23,61 +23,69 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-final class InstanceConfig<K, V>
-        implements ChronicleHashInstanceConfig<ChronicleMap<K, V>> {
+final class MapInstanceConfig<K, V>
+        implements ChronicleHashInstanceConfig<ChronicleMap<K, V>>, Serializable{
 
-    final AbstractChronicleMapBuilder<K, V, ?> mapBuilder;
+    final ChronicleMapBuilder<K, V> mapBuilder;
     final SingleChronicleHashReplication singleHashReplication;
     final ReplicationChannel channel;
     final File file;
+    final String name;
 
-    private boolean used = false;
+    final AtomicBoolean used;
 
-    InstanceConfig(AbstractChronicleMapBuilder<K, V, ?> mapBuilder,
-                   SingleChronicleHashReplication singleHashReplication,
-                   ReplicationChannel channel,
-                   File file) {
+    MapInstanceConfig(ChronicleMapBuilder<K, V> mapBuilder,
+                      SingleChronicleHashReplication singleHashReplication,
+                      ReplicationChannel channel,
+                      File file, String name, AtomicBoolean used) {
         this.mapBuilder = mapBuilder;
         this.singleHashReplication = singleHashReplication;
         this.channel = channel;
         this.file = file;
+        this.name = name;
+        this.used = used;
     }
 
     @Override
-    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> replicated(
+    public MapInstanceConfig<K, V> replicated(
             byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork) {
         return replicated(SingleChronicleHashReplication.builder()
                 .tcpTransportAndNetwork(tcpTransportAndNetwork).createWithId(identifier));
     }
 
     @Override
-    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> replicated(
-            SingleChronicleHashReplication replication) {
-        return new InstanceConfig<>(mapBuilder, replication, null, file);
+    public MapInstanceConfig<K, V> replicated(SingleChronicleHashReplication replication) {
+        return new MapInstanceConfig<>(mapBuilder, replication, null, file, name, used);
     }
 
     @Override
-    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> replicatedViaChannel(
-            ReplicationChannel channel) {
-        return new InstanceConfig<>(mapBuilder, null, channel, file);
+    public MapInstanceConfig<K, V> replicatedViaChannel(ReplicationChannel channel) {
+        return new MapInstanceConfig<>(mapBuilder, null, channel, file, name, used);
     }
 
     @Override
-    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> persistedTo(File file) {
-        return new InstanceConfig<>(mapBuilder, singleHashReplication, channel, file);
+    public MapInstanceConfig<K, V> persistedTo(File file) {
+        return new MapInstanceConfig<>(mapBuilder, singleHashReplication, channel, file, name, used);
+    }
+
+    @Override
+    public MapInstanceConfig<K, V> name(String name) {
+        return new MapInstanceConfig<>(mapBuilder, singleHashReplication, channel, file, name, used);
     }
 
     @Override
     public synchronized ChronicleMap<K, V> create() throws IOException {
-        if (used)
+        if (!used.getAndSet(true)) {
+            return mapBuilder.create(this);
+        } else {
             throw new IllegalStateException(
-                    "A ChronicleMap has already been created using this instance config. " +
-                            "Create a new instance config (builder.instance() or call any " +
-                            "configuration method on this instance config) to create a new " +
+                    "A ChronicleMap has already been created using this instance config chain. " +
+                            "Create a new instance config (builder.instance()) to create a new " +
                             "ChronicleMap instance");
-        used = true;
-        return mapBuilder.create(this);
+        }
     }
 
 }

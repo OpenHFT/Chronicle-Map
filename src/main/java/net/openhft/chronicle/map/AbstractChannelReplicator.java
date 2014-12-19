@@ -32,6 +32,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -76,8 +78,7 @@ abstract class AbstractChannelReplicator implements Closeable {
     ThreadLocalCopies copies;
     VanillaChronicleMap.SegmentState segmentState;
 
-    AbstractChannelReplicator(String name, ThrottlingConfig throttlingConfig,
-                              int maxEntrySizeBytes)
+    AbstractChannelReplicator(String name, ThrottlingConfig throttlingConfig)
             throws IOException {
         executorService = Executors.newSingleThreadExecutor(
                 new NamedThreadFactory(name, true) {
@@ -90,7 +91,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         throttler = throttlingConfig.throttling(DAYS) > 0 ?
                 new Throttler(selector,
                         throttlingConfig.bucketInterval(MILLISECONDS),
-                        maxEntrySizeBytes, throttlingConfig.throttling(DAYS)) : null;
+                        throttlingConfig.throttling(DAYS)) : null;
 
         startedHere = new Throwable("Started here");
     }
@@ -317,12 +318,11 @@ abstract class AbstractChannelReplicator implements Closeable {
 
         Throttler(@NotNull Selector selector,
                   long throttleIntervalInMillis,
-                  long serializedEntrySize,
                   long bitsPerDay) {
             this.selector = selector;
             this.throttleInterval = throttleIntervalInMillis;
             double bytesPerMs = ((double) bitsPerDay) / DAYS.toMillis(1) / BITS_IN_A_BYTE;
-            this.maxBytesInInterval = round(bytesPerMs * throttleInterval) - serializedEntrySize;
+            this.maxBytesInInterval = round(bytesPerMs * throttleInterval);
         }
 
         public void add(SelectableChannel selectableChannel) {
@@ -413,16 +413,78 @@ abstract class AbstractChannelReplicator implements Closeable {
     static class EntryCallback extends Replica.EntryCallback {
 
         private final Replica.EntryExternalizable externalizable;
-        private final ByteBufferBytes in;
+
+        @NotNull
+        private ByteBufferBytes in;
+
+        @NotNull
+        private ByteBuffer out;
 
         EntryCallback(@NotNull final Replica.EntryExternalizable externalizable,
-                      @NotNull final ByteBufferBytes in) {
+                      final int tcpBufferSize) {
             this.externalizable = externalizable;
-            this.in = in;
+            out = ByteBuffer.allocateDirect(tcpBufferSize);
+            in = new ByteBufferBytes(out);
         }
+
+        @NotNull
+        public ByteBufferBytes in() {
+            return in;
+        }
+
+        @NotNull
+        public ByteBuffer out() {
+            return out;
+        }
+
+
+        private void resizeBuffer(int size) {
+
+            if (LOG.isDebugEnabled())
+                LOG.debug("resizing buffer to size=" + size);
+
+            if (size < out.capacity())
+                throw new IllegalStateException("it not possible to resize the buffer smaller");
+
+            assert size < Integer.MAX_VALUE;
+
+            final ByteBuffer result = ByteBuffer.allocate(size).order(ByteOrder.nativeOrder());
+            final long bytesPosition = in.position();
+
+            in = new ByteBufferBytes(result.slice());
+
+            out.position(0);
+            out.limit((int) bytesPosition);
+
+            int numberOfLongs = (int) bytesPosition / 8;
+
+            // chunk in longs first
+            for (int i = 0; i < numberOfLongs; i++) {
+                in.writeLong(out.getLong());
+            }
+
+            for (int i = numberOfLongs * 8; i < bytesPosition; i++) {
+                in.writeByte(out.get());
+            }
+
+            out = result;
+
+            assert out.capacity() == in.capacity();
+
+            assert out.capacity() == size;
+            assert out.capacity() == in.capacity();
+            assert in.limit() == in.capacity();
+
+        }
+
+        public boolean shouldBeIgnored(final Bytes entry, final int chronicleId) {
+            return !externalizable.identifierCheck(entry, chronicleId);
+        }
+
 
         @Override
         public boolean onEntry(final Bytes entry, final int chronicleId) {
+
             long pos0 = in.position();
 
             // used to denote that this is not a stateless map event
@@ -433,7 +495,22 @@ abstract class AbstractChannelReplicator implements Closeable {
             // this is where we will store the size of the entry
             in.skip(SIZE_OF_SIZE);
 
+            int entrySize = externalizable.sizeOfEntry(entry, chronicleId);
+
+            if (entrySize > in.remaining()) {
+
+                long newSize = in.position() + entrySize;
+
+                // This can occur when we pack a number of entries into the buffer and the
+                // last entry is very large.
+                if (newSize > Integer.MAX_VALUE)
+                    return false;
+
+                resizeBuffer((int) newSize);
+            }
+
             final long start = in.position();
+
             externalizable.writeExternalEntry(entry, in, chronicleId);
 
             if (in.position() == start) {
@@ -443,16 +520,16 @@ abstract class AbstractChannelReplicator implements Closeable {
 
             // write the length of the entry, just before the start, so when we read it back
             // we read the length of the entry first and hence know how many preceding writer to read
-            final long entrySize = (int) (in.position() - start);
-            if (entrySize > Integer.MAX_VALUE)
+            final long bytesWritten = (int) (in.position() - start);
+
+            if (bytesWritten > Integer.MAX_VALUE)
                 throw new IllegalStateException("entry too large, the entry size=" + entrySize + ", " +
                         "entries are limited to a size of " + Integer.MAX_VALUE);
 
-            int entrySize1 = (int) entrySize;
             if (LOG.isDebugEnabled())
-                LOG.debug("sending entry of entrySize=" + entrySize1);
+                LOG.debug("sending entry of entrySize=" + (int) bytesWritten);
 
-            in.writeInt(sizeLocation, entrySize1);
+            in.writeInt(sizeLocation, (int) bytesWritten);
 
             return true;
         }

@@ -14,7 +14,10 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,25 +41,29 @@ public class TcpReplicationSoakTest {
         {
             final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(s_port,
                     endpoint).autoReconnectedUponDroppedConnection(true).name("      map1")
-                    .heartBeatInterval(1, TimeUnit.SECONDS);
+                    .heartBeatInterval(1, TimeUnit.SECONDS)
+                    .tcpBufferSize(1024 * 64);
 
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE + Builder.SIZE)
                     .actualSegments(1)
-                    .name("map1")
                     .replication((byte) 1, tcpConfig1)
+                    .instance()
+                    .name("map1")
                     .create();
         }
         {
             final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of
                     (s_port + 1).autoReconnectedUponDroppedConnection(true).name("map2")
-                    .heartBeatInterval(1, TimeUnit.SECONDS);
+                    .heartBeatInterval(1, TimeUnit.SECONDS)
+                    .tcpBufferSize(1024 * 64);
 
             map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE + Builder.SIZE)
-                    .name("map2")
                     .replication((byte) 2, tcpConfig2)
+                    .instance()
+                    .name("map2")
                     .create();
 
         }
@@ -96,7 +103,7 @@ public class TcpReplicationSoakTest {
 
         System.out.print("SoakTesting ");
         for (int j = 1; j < 2 * Builder.SIZE; j++) {
-            if (j % 100 == 0)
+            if (j % 1000 == 0)
                 System.out.print(".");
             Random rnd = new Random(j);
             for (int i = 1; i < 10; i++) {
@@ -110,10 +117,10 @@ public class TcpReplicationSoakTest {
                 }
             }
         }
-        Thread.sleep(1000);
+
         System.out.println("\nwaiting till equal");
 
-        waitTillEqual(10000);
+        waitTillEqual(15000);
 
         Assert.assertEquals(map1, map2);
 
