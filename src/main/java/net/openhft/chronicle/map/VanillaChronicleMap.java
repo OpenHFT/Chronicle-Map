@@ -64,6 +64,7 @@ import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.Asserts.assertNotNull;
+import static net.openhft.chronicle.map.XStreamHelper.to$$Native;
 import static net.openhft.lang.MemoryUnit.*;
 
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
@@ -862,7 +863,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         case "chronicle-key":
 
                             if (kClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
-                                return to$$Native(reader, vClass, true);
+                                return to$$Native(reader, vClass, true, VanillaChronicleMap.this);
                             } else {
                                 long keySize = keySizeMarshaller.readSize(buffer);
                                 ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
@@ -872,7 +873,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         case "chronicle-value":
 
                             if (vClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
-                                return to$$Native(reader, vClass, false);
+                                return to$$Native(reader, vClass, false, VanillaChronicleMap.this);
                             } else {
                                 long valueSize = valueSizeMarshaller.readSize(buffer);
                                 ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
@@ -904,51 +905,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     } else return (E) unmarshallingContext.convertAnother(null, clazz);
                 }
 
-                private Object to$$Native(HierarchicalStreamReader reader, final Class aClass, final boolean isKey) {
 
-                    final Object o = isKey ? newKeyInstance() : newValueInstance();
-                    try {
-                        for (Method $$nativeMethod : o.getClass().getMethods()) {
-                            if ($$nativeMethod.getName().equals("setValue") && $$nativeMethod.getParameterTypes()
-                                    .length == 1) {
-
-                                Class<?> parameterType = $$nativeMethod.getParameterTypes()[0];
-                                String value = reader.getValue();
-
-
-                                if (parameterType.isPrimitive()) {
-
-                                    // convert the primitive to their boxed type
-
-                                    if (parameterType == int.class)
-                                        parameterType = Integer.class;
-                                    else if (parameterType == char.class)
-                                        parameterType = Character.class;
-                                    else {
-                                        final String name = parameterType.getSimpleName();
-
-                                        final String properName = "java.lang." + Character.toString
-                                                (name.charAt(0)).toUpperCase()
-                                                + name.substring(1);
-                                        parameterType = Class.forName(properName);
-                                    }
-                                }
-
-
-                                final Method valueOf = parameterType.getMethod("valueOf", String.class);
-                                final Object invoke = valueOf.invoke(null, value);
-                                $$nativeMethod.invoke(o, invoke);
-                                return o;
-
-                            }
-                        }
-                    } catch (Exception e) {
-                        throw new ConversionException("class=" + aClass.getCanonicalName(), e);
-                    }
-                    throw new ConversionException("setValue(..) method not found in class=" + aClass
-                            .getCanonicalName
-                                    ());
-                }
             };
 
             xstream.registerConverter(converter);
