@@ -75,7 +75,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final ReaderWithSize<V> valueReaderWithSize;
     @NotNull
     private final WriterWithSize<V> valueWriterWithSize;
-    private volatile SocketChannel clientChannel;
+    private SocketChannel clientChannel;
 
     @Nullable
     private CloseablesManager closeables;
@@ -309,11 +309,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         throw new UnsupportedOperationException();
     }
 
-    public void close() {
+    public synchronized void close() {
 
         if (closeables != null)
             closeables.closeQuietly();
         closeables = null;
+        clientChannel = null;
 
     }
 
