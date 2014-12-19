@@ -251,6 +251,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             doHandShaking(clientChannel);
         } catch (IOException e) {
             if (closeables != null) closeables.closeQuietly();
+            clientChannel = null;
         }
     }
 
