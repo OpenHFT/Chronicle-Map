@@ -34,15 +34,15 @@ import static org.junit.Assert.assertEquals;
 public class SerializerTest {
 
     @Test
-    public void testPrefixStingFunctionSerialization() throws Exception {
+    public void testPrefixStringFunctionSerialization() throws Exception {
 
         ByteBufferBytes b = new ByteBufferBytes(ByteBuffer.allocate(512));
 
-        CHMUseCasesTest.PrefixStingFunction expected = new CHMUseCasesTest.PrefixStingFunction("New ");
+        CHMUseCasesTest.PrefixStringFunction expected = new CHMUseCasesTest.PrefixStringFunction("New ");
         b.writeObject(expected);
 
         b.clear();
-        CHMUseCasesTest.PrefixStingFunction actual = b.readObject(CHMUseCasesTest.PrefixStingFunction.class);
+        CHMUseCasesTest.PrefixStringFunction actual = b.readObject(CHMUseCasesTest.PrefixStringFunction.class);
         assertEquals(expected, actual);
 
     }

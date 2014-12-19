@@ -6,7 +6,7 @@ requirements. - [Contact Us](sales@higherfrequencytrading.com)*
 
 # Chronicle Map
 
-Replicate your Key Value Store across your network, with consistency, durability and performance.
+Replicate your Key Value Store across your network, with eventual consistency, persistence and performance.
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
 
 #### Maven Artifact Download
@@ -356,7 +356,7 @@ These methods let you provide the object which the data will be written to, but 
 ``` java
 CharSequence using = new StringBuilder();
 CharSequence myResult = map.getUsing("key", using);
-// at this point the myString and myResult will both point to the same object
+// at this point "using" and "myResult" will both point to the same object
 ```
 
 The `map.getUsing()` method is similar to `map.get()`, but because Chronicle Map stores its data off

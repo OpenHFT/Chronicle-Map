@@ -63,10 +63,10 @@ public class CHMUseCasesTest {
     }
 
 
-    static class PrefixStingFunction implements Function<String, String> {
+    static class PrefixStringFunction implements Function<String, String> {
         private final String prefix;
 
-        public PrefixStingFunction(@NotNull String prefix) {
+        public PrefixStringFunction(@NotNull String prefix) {
             this.prefix = prefix;
         }
 
@@ -77,8 +77,8 @@ public class CHMUseCasesTest {
 
         @Override
         public boolean equals(Object obj) {
-            return obj instanceof PrefixStingFunction &&
-                    prefix.equals(((PrefixStingFunction) obj).prefix);
+            return obj instanceof PrefixStringFunction &&
+                    prefix.equals(((PrefixStringFunction) obj).prefix);
         }
 
         @Override
@@ -121,8 +121,8 @@ public class CHMUseCasesTest {
             map.put("Hello", "World");
             assertEquals("World", map.get("Hello"));
 
-            assertEquals("New World", map.getMapped("Hello", new PrefixStingFunction("New ")));
-            assertEquals(null, map.getMapped("No key", new PrefixStingFunction("New ")));
+            assertEquals("New World", map.getMapped("Hello", new PrefixStringFunction("New ")));
+            assertEquals(null, map.getMapped("No key", new PrefixStringFunction("New ")));
 
         }
     }
