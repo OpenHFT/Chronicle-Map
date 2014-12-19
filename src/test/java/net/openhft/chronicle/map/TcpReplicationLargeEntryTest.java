@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.lang.MemoryUnit;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,7 +25,7 @@ public class TcpReplicationLargeEntryTest {
     private ChronicleMap<Integer, CharSequence> map2;
 
     static int s_port = 8010;
-    int valueSize = 1_00_000; // 1MB
+    int valueSize = (int) MemoryUnit.MEGABYTES.toBytes(1);
 
     char[] valueX = new char[valueSize - 100];
     char[] valueY = new char[valueSize - 100];
@@ -34,9 +35,7 @@ public class TcpReplicationLargeEntryTest {
         Arrays.fill(valueX, 'X');
         Arrays.fill(valueX, 'Y');
 
-        int keySize = 4;
-        int entrySize = keySize + valueSize;
-
+        String sampleValue = new String(valueX);
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
 
         {
@@ -47,7 +46,7 @@ public class TcpReplicationLargeEntryTest {
 
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entrySize(entrySize)
+                    .constantValueSizeBySample(sampleValue)
                     .entries(2)
                     .actualSegments(1)
                     .replication((byte) 1, tcpConfig1)
@@ -62,7 +61,7 @@ public class TcpReplicationLargeEntryTest {
                     .tcpBufferSize(1024 * 64);
 
             map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entrySize(entrySize)
+                    .constantValueSizeBySample(sampleValue)
                     .entries(2)
                     .replication((byte) 2, tcpConfig2)
                     .instance()

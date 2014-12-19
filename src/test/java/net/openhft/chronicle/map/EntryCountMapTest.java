@@ -34,6 +34,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.lang.Math.log10;
+import static java.lang.Math.round;
 import static net.openhft.chronicle.map.Alignment.OF_4_BYTES;
 import static net.openhft.lang.model.DataValueClasses.newDirectReference;
 import static org.junit.Assert.assertTrue;
@@ -51,12 +53,13 @@ public class EntryCountMapTest {
     }
 
     private static ChronicleMap<CharSequence, LongValue> getSharedMap(
-            long entries, int segments, int entrySize) throws IOException {
-        ChronicleMapBuilder<CharSequence, LongValue> mapBuilder = ChronicleMapBuilder.of(CharSequence
-                .class, LongValue.class)
+            long entries, int segments, int keySize) throws IOException {
+        ChronicleMapBuilder<CharSequence, LongValue> mapBuilder =
+                ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                 .entries(entries)
                 .actualSegments(segments)
-                .entrySize(entrySize);
+                .keySize(keySize)
+                .maxEntryOversizeFactor(1);
         return mapBuilder.createPersistedTo(getPersistenceFile());
     }
 
@@ -182,12 +185,17 @@ public class EntryCountMapTest {
         System.out.printf("Score: %.2f%n", scoreCount / score);
     }
 
-    private Future<Void> testEntriesMaxSize(ExecutorService es, final int segments, final int minSize, final int maxSize, final int seed) throws IOException {
+    private Future<Void> testEntriesMaxSize(ExecutorService es, final int segments,
+                                            final int minSize, final int maxSize, final int seed)
+            throws IOException {
         assert minSize <= maxSize;
         Random random = new Random(seed);
         int counter = minSize + random.nextInt(9999 + maxSize);
         final int stride = 1 + random.nextInt(100);
-        final ChronicleMap<CharSequence, LongValue> map = getSharedMap(minSize, segments, 32);
+        int maxKeySize = "key:".length() +
+                (int) round(log10(moreThanMaxSize(maxSize) * stride + counter)) + 1;
+        final ChronicleMap<CharSequence, LongValue> map =
+                getSharedMap(minSize, segments, maxKeySize);
         return es.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
@@ -202,14 +210,17 @@ public class EntryCountMapTest {
         Random random = new Random(seed);
         int counter = minSize + random.nextInt(9999 + maxSize);
         int stride = 1 + random.nextInt(100);
-        ChronicleMap<CharSequence, LongValue> map = getSharedMap(minSize, segments, 32);
+        int maxKeySize = "key:".length() +
+                (int) round(log10(moreThanMaxSize(maxSize) * stride + counter)) + 1;
+        ChronicleMap<CharSequence, LongValue> map = getSharedMap(minSize, segments, maxKeySize);
         testEntriesMaxSize0(segments, minSize, maxSize, counter, stride, map);
     }
 
-     void testEntriesMaxSize0(int segments, int minSize, int maxSize, int counter, int stride, ChronicleMap<CharSequence, LongValue> map) {
+     void testEntriesMaxSize0(int segments, int minSize, int maxSize, int counter, int stride,
+                              ChronicleMap<CharSequence, LongValue> map) {
         LongValue longValue = newDirectReference(LongValue.class);
         try {
-            for (int j = 0; j < maxSize * 14 / 10 + 300; j++) {
+            for (int j = 0; j < moreThanMaxSize(maxSize); j++) {
                 String key = "key:" + counter;
                 counter += stride;
                 // give a biased hashcode distribution.
@@ -229,14 +240,20 @@ public class EntryCountMapTest {
             boolean condition = minSize <= map.size() && map.size() <= maxSize;
             if (!condition) {
                 dumpMapStats(segments, minSize, map);
-                assertTrue("stride: " + stride + ", seg: " + segments + ", min: " + minSize + ", size: " + map.size(), condition);
+                assertTrue("stride: " + stride + ", seg: " + segments + ", min: " + minSize +
+                        ", size: " + map.size(), condition);
             }
         } finally {
             map.close();
         }
     }
 
-    private void dumpMapStats(int segments, int minSize, ChronicleMap<CharSequence, LongValue> map) {
+    private static int moreThanMaxSize(int maxSize) {
+        return maxSize * 14 / 10 + 300;
+    }
+
+    private void dumpMapStats(int segments, int minSize,
+                              ChronicleMap<CharSequence, LongValue> map) {
         long[] a = ((VanillaChronicleMap) map).segmentSizes();
         System.out.println("segs: " + segments + " min: " + minSize + " was " + map.size() + " "
                 + Arrays.toString(a)

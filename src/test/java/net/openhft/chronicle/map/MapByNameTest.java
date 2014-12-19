@@ -50,7 +50,7 @@ public class MapByNameTest {
         final MapInstanceConfig<CharSequence, CharSequence> config =
                 (MapInstanceConfig<CharSequence, CharSequence>)
                         ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                                .entrySize(900)
+                                .keySize("hello".length()).valueSize("world".length())
                                 .entries(2)
                                 .minSegments(2)
                                 .replication((byte) 1, TcpTransportAndNetworkConfig.of(8244))

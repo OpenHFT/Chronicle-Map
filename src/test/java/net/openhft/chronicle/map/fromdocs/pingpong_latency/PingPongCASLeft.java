@@ -50,7 +50,8 @@ public class PingPongCASLeft {
         playPingPong(chm, 4, 5, true, "PingPongCASLEFT");
     }
 
-    static void playPingPong(ChronicleMap<String, BondVOInterface> chm, double _coupon, double _coupon2, boolean setFirst, final String desc) {
+    static void playPingPong(ChronicleMap<String, BondVOInterface> chm, double _coupon,
+                             double _coupon2, boolean setFirst, final String desc) {
         BondVOInterface bond1 = newDirectReference(BondVOInterface.class);
         BondVOInterface bond2 = newDirectReference(BondVOInterface.class);
         BondVOInterface bond3 = newDirectReference(BondVOInterface.class);
@@ -91,6 +92,6 @@ public class PingPongCASLeft {
         AffinitySupport.setThreadId();
         return ChronicleMapBuilder.of(String.class, BondVOInterface.class)
                 .entries(16)
-                .entrySize(64).create();
+                .keySize("369604101".length()).create();
     }
 }
