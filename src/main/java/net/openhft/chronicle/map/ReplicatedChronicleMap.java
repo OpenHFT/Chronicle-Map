@@ -422,30 +422,52 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
     }
 
+    public boolean identifierCheck(@NotNull Bytes entry, int chronicleId) {
+        long start = entry.position();
+        try {
+            final long keySize = keySizeMarshaller.readSize(entry);
+            entry.skip(keySize + 8); // we skip 8 for the timestamp
+            final byte identifier = entry.readByte();
+            return identifier == localIdentifier;
+        } finally {
+            entry.position(start);
+        }
+    }
+
+
     public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
 
         long start = entry.position();
-        final long keySize = keySizeMarshaller.readSize(entry);
+        try {
+            final long keySize = keySizeMarshaller.readSize(entry);
 
-        entry.skip(keySize + ADDITIONAL_ENTRY_BYTES - 1L);
+            entry.skip(keySize + 8); // we skip 8 for the timestamp
 
-        final boolean isDeleted = entry.readBoolean();
-        long valueSize;
-        if (!isDeleted) {
-            valueSize = valueSizeMarshaller.readSize(entry);
-        } else {
-            valueSize = 0L;
+            final byte identifier = entry.readByte();
+            if (identifier != localIdentifier) {
+                // although unlikely, this may occur if the entry has been updated
+                return 0;
+            }
+
+            final boolean isDeleted = entry.readBoolean();
+            long valueSize;
+            if (!isDeleted) {
+                valueSize = valueSizeMarshaller.readSize(entry);
+            } else {
+                valueSize = 0L;
+            }
+
+            alignment.alignPositionAddr(entry);
+            long result = (entry.position() + valueSize - start);
+
+            // entries can be larger than Integer.MAX_VALUE as we are restricted to the size we can
+            // make a byte buffer
+            assert result < Integer.MAX_VALUE;
+
+            return (int) result;
+        } finally {
+            entry.position(start);
         }
-
-        alignment.alignPositionAddr(entry);
-        long result = (entry.position() + valueSize - start);
-        entry.position(start);
-
-        // entries can be larger than Integer.MAX_VALUE as we are restricted to the size we can
-        // make a byte buffer
-        assert result < Integer.MAX_VALUE;
-
-        return (int) result;
 
     }
 
@@ -455,7 +477,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
      * this method, especially when being used in a multi threaded context.
      */
     @Override
-    public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
+    public void writeExternalEntry(@NotNull Bytes entry,
+                                   @NotNull Bytes destination,
                                    int chronicleId) {
         final long initialLimit = entry.limit();
 
@@ -1514,7 +1537,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         segment((int) (position >>> segmentIndexShift));
                 segment.readLock(null);
                 try {
-                    if (changes.clearIfSet(position)) {
+                    if (changes.get(position)) {
+
                         entryCallback.onBeforeEntry();
 
                         final long segmentPos = position & posMask;
@@ -1522,12 +1546,23 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                                 segment.reuse(tmpBytes, segment.offsetFromPos(segmentPos));
 
                         // if the entry should be ignored, we'll move the next entry
+                        if (entryCallback.shouldBeIgnored(entry, chronicleId)) {
+                            changes.clear(position);
+                            continue;
+                        }
+
+                        // it may not be successful if the buffer can not be resided so we will
+                        // process it later, by NOT clearing the changes.clear(position)
                         final boolean success = entryCallback.onEntry(entry, chronicleId);
                         entryCallback.onAfterEntry();
-                        if (success) {
-                            return true;
-                        }
+
+                        if (success)
+                            changes.clear(position);
+
+                        return success;
+
                     }
+
 
                     // if the position was already cleared by another thread
                     // while we were trying to obtain segment lock (for example, in onRelocation()),

@@ -128,11 +128,24 @@ interface Replica extends Closeable {
     interface EntryExternalizable {
 
         /**
-         * @param entry an entry in the map
-         * @param chronicleId  is the channel id used to identify the canonical map or queue
+         * The size of entry in bytes
+         *
+         * @param entry       an entry in the map
+         * @param chronicleId is the channel id used to identify the canonical map or queue
          * @return the size of the entry
          */
         int sizeOfEntry(@NotNull Bytes entry, int chronicleId);
+
+
+        /**
+         * check that the identifier in the entry is from this node
+         *
+         * @param entry       an entry in the map
+         * @param chronicleId is the channel id used to identify the canonical map or queue
+         * @return the size of the entry
+         */
+        boolean identifierCheck(@NotNull Bytes entry, int chronicleId);
+
 
         /**
          * The map implements this method to save its contents.
@@ -160,6 +173,8 @@ interface Replica extends Closeable {
         void readExternalEntry(
                 @NotNull ThreadLocalCopies copies,
                 @NotNull VanillaChronicleMap.SegmentState segmentState, @NotNull Bytes source);
+
+
     }
 
     /**
@@ -218,6 +233,21 @@ interface Replica extends Closeable {
          */
         public void onBeforeEntry() {
         }
+
+
+        /**
+         * its possible that the entry should now be ignored, for example although rare its
+         * identifier may have recently been changed by another thread, so its no longer applicable
+         * to send
+         *
+         * @param entry       the entry you will receive, this does not have to be locked, as
+         *                    locking is already provided from the caller.
+         * @param chronicleId only assigned when clustering
+         * @return {@code true} if this entry should be ignored
+         */
+        public abstract boolean shouldBeIgnored(final Bytes entry, final int chronicleId);
     }
+
+
 }
 

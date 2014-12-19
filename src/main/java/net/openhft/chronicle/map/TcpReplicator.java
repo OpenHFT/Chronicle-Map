@@ -593,13 +593,18 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             socketChannel.close();
             return;
         }
+
         TcpSocketChannelEntryWriter entryWriter = attached.entryWriter;
-        if (entryWriter == null) throw new NullPointerException("No entryWriter");
+
+        if (entryWriter == null) throw
+                new NullPointerException("No entryWriter");
+
         if (entryWriter.isWorkIncomplete()) {
             final boolean completed = entryWriter.doWork();
 
             if (completed)
                 entryWriter.workCompleted();
+
         } else if (attached.remoteModificationIterator != null)
             entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
@@ -986,25 +991,34 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                 for (; ; entriesWritten++) {
 
                     long start = in().position();
-                    final boolean isMoreDataAvailable = modificationIterator.nextEntry(entryCallback, 0);
+
+                    boolean success = modificationIterator.nextEntry(entryCallback, 0);
+
+                    // if not success this is most likely due to the next entry not fitting into
+                    // the buffer and the buffer can not be re-sized above Integer.max_value, in
+                    // this case success will return false, so we return so that we can send to
+                    // the socket what we have.
+                    if (!success)
+                        return;
+
                     long entrySize = in().position() - start;
 
                     if (entrySize > largestEntrySoFar)
                         largestEntrySoFar = entrySize;
 
 
-                    if (!isMoreDataAvailable) {
+                    if (!modificationIterator.hasNext()) {
                         // if we have no more data to write to the socket then we will
                         // un-register OP_WRITE on the selector, until more data becomes available
                         if (in().position() == 0 && handShakingComplete)
                             disableWrite(socketChannel, attached);
 
-                        return;
                     }
 
                     // we've filled up the buffer lets give another channel a chance to send
                     // some data
-                    if (in().remaining() <= largestEntrySoFar)
+                    if (in().remaining() <= largestEntrySoFar || in().position() >
+                            replicationConfig.tcpBufferSize())
                         return;
 
                     // if we have space in the buffer to write more data and we just wrote data
@@ -1027,7 +1041,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                                         final long approxTime) throws IOException {
 
             final Bytes in = in();
-            final  ByteBuffer out = out();
+            final ByteBuffer out = out();
 
             if (in.position() == 0)
                 return 0;

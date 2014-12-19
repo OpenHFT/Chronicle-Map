@@ -97,6 +97,18 @@ final class ChannelProvider implements Closeable {
             }
         }
 
+        @Override
+        public boolean identifierCheck(@NotNull Bytes entry, int chronicleChannel) {
+            channelDataLock.readLock().lock();
+            try {
+
+                return channelEntryExternalizables[chronicleChannel]
+                        .identifierCheck(entry, chronicleChannel);
+            } finally {
+                channelDataLock.readLock().unlock();
+            }
+        }
+
         /**
          * writes the entry to the chronicle channel provided
          *
@@ -482,6 +494,11 @@ final class ChannelProvider implements Closeable {
             @Override
             public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
                 return (int) entry.remaining();
+            }
+
+            @Override
+            public boolean identifierCheck(@NotNull Bytes entry, int chronicleId) {
+                return true;
             }
 
             @Override

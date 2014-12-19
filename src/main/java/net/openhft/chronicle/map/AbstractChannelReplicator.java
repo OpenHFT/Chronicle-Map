@@ -477,6 +477,10 @@ abstract class AbstractChannelReplicator implements Closeable {
 
         }
 
+        public boolean shouldBeIgnored(final Bytes entry, final int chronicleId) {
+            return !externalizable.identifierCheck(entry, chronicleId);
+        }
+
 
         @Override
         public boolean onEntry(final Bytes entry, final int chronicleId) {
@@ -494,8 +498,14 @@ abstract class AbstractChannelReplicator implements Closeable {
             int entrySize = externalizable.sizeOfEntry(entry, chronicleId);
 
             if (entrySize > in.remaining()) {
+
                 long newSize = in.position() + entrySize;
-                assert newSize < Integer.MAX_VALUE;
+
+                // This can occur when we pack a number of entries into the buffer and the
+                // last entry is very large.
+                if (newSize > Integer.MAX_VALUE)
+                    return false;
+
                 resizeBuffer((int) newSize);
             }
 
