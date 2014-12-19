@@ -51,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.openhft.chronicle.map.Objects.builderEquals;
+import static net.openhft.chronicle.map.VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR;
 import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
 
 /**
@@ -407,17 +408,32 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
     @Override
     public ChronicleMapBuilder<K, V> maxEntryOversizeFactor(int maxEntryOversizeFactor) {
-        if (maxEntryOversizeFactor < 1 || maxEntryOversizeFactor > 64)
-            throw new IllegalArgumentException("maxEntryOversizeFactor should be in [1, 64] " +
-                    "range, " + maxEntryOversizeFactor + " given");
+        if (maxEntryOversizeFactor < 1)
+            throw new IllegalArgumentException("maxEntryOversizeFactor should be more than 1, " +
+                    maxEntryOversizeFactor + " given");
         this.maxEntryOversizeFactor = maxEntryOversizeFactor;
         return this;
     }
 
-    int maxEntryOversizeFactor() {
-        if (maxEntryOversizeFactor < 0)
-            return keyBuilder.constantSizeMarshaller() && valueBuilder.constantSizeMarshaller() ?
-                    1 : 64;
+    private void checkMaxEntryOversizeFactorIfReplicated(boolean replicated) {
+        if (replicated && maxEntryOversizeFactor > MAX_ENTRY_OVERSIZE_FACTOR)
+            throw new IllegalStateException("As of now Replicated Chornicle Map doesn't support " +
+                    "more than " + MAX_ENTRY_OVERSIZE_FACTOR + " entry oversize factor, " +
+                    maxEntryOversizeFactor + " is configured");
+    }
+
+    int maxEntryOversizeFactor(boolean replicated) {
+        if (maxEntryOversizeFactor < 0) {
+            if (keyBuilder.constantSizeMarshaller() && valueBuilder.constantSizeMarshaller()) {
+                return 1;
+            } else {
+                if (replicated) {
+                    return MAX_ENTRY_OVERSIZE_FACTOR;
+                } else {
+                    return Integer.MAX_VALUE;
+                }
+            }
+        }
         return maxEntryOversizeFactor;
     }
 
@@ -1233,7 +1249,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         keyBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
         valueBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
 
-        long maxSize = (long) entrySize(replicated) * figureBufferAllocationFactor();
+        long maxSize = (long) entrySize(replicated) * figureBufferAllocationFactor(replicated);
         keyBuilder.maxSize(maxSize);
         valueBuilder.maxSize(maxSize);
 
@@ -1241,12 +1257,13 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
             keyBuilder.constantSizeBySample(sampleKey);
         if (sampleValue != null)
             valueBuilder.constantSizeBySample(sampleValue);
-        stateChecks();
+        stateChecks(replicated);
     }
 
-    private void stateChecks() {
+    private void stateChecks(boolean replicated) {
         checkAlignmentOnlyIfValuesPossiblyReferenceOffHeap();
         checkPrepareValueBytesOnlyIfConstantValueSize();
+        checkMaxEntryOversizeFactorIfReplicated(replicated);
     }
 
     private ChronicleMap<K, V> establishReplication(
@@ -1288,11 +1305,11 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return map;
     }
 
-    private int figureBufferAllocationFactor() {
+    private int figureBufferAllocationFactor(boolean replicated) {
         // if expected map size is about 1000, seems rather wasteful to allocate
         // key and value serialization buffers each x64 of expected entry size..
         return (int) Math.min(Math.max(2L, entries() >> 10),
-                VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR);
+                maxEntryOversizeFactor(replicated));
     }
 }
 

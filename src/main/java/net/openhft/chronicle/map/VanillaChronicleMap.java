@@ -177,7 +177,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         this.eventListener = builder.eventListener();
         this.bytesEventListener = builder.bytesEventListener();
         this.segmentHeaderSize = builder.segmentHeaderSize();
-        this.maxEntryOversizeFactor = builder.maxEntryOversizeFactor();
+        this.maxEntryOversizeFactor =
+                builder.maxEntryOversizeFactor(this instanceof ReplicatedChronicleMap);
 
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
         initTransients();
