@@ -1406,8 +1406,8 @@ public class ChronicleMapTest {
     }
 
 
-    @Ignore
-    @Test(expected = NullPointerException.class)
+
+    @Test(expected = IllegalStateException.class)
     public void testPutLongValue() throws IOException {
         final ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
