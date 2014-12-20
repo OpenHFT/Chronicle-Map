@@ -38,8 +38,11 @@ public class LotsOfEntriesMain {
                 ;
         final ChronicleMap<CharSequence, MyFloats> map = ChronicleMapBuilder
                 .of(CharSequence.class, MyFloats.class)
-                .entries((long) (entries * (averageEntrySize / 16.0)))
-                .entrySize(16) // "chunk mode"
+                .entries((long) (entries *
+                        (averageEntrySize / 8.0 +
+                                0.5))) // account average internal fragmentation --
+                                       // because we need to round up to integral number of chunks
+                .entrySize(8) // "chunk mode"
                 .createPersistedTo(file);
         int threads = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(threads);
