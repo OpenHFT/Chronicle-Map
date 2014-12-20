@@ -1,13 +1,13 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.primitives.Chars;
- import org.junit.Assert;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.model.constraints.NotNull;
 import net.openhft.lang.values.*;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -108,6 +108,41 @@ public class CHMUseCasesTest {
         }
     }
 
+
+    @Test
+    public void testLargeCharSequenceValueWriteOnly() throws ExecutionException, InterruptedException, IOException {
+
+        int valueSize = 1000000;
+
+        char[] expected = new char[valueSize];
+        Arrays.fill(expected, 'X');
+
+        ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
+                .of(CharSequence.class, char[].class).entries(1).constantValueSizeBySample(expected);
+
+        try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
+            map.put("Key", expected);
+        }
+    }
+
+
+    @Ignore("HCOLL-260 VanillaChronicleMap$ReadValueToBytes.readValue fails with large values")
+    @Test
+    public void testLargeCharSequenceValue() throws ExecutionException, InterruptedException, IOException {
+
+        int valueSize = 1000000;
+
+        char[] expected = new char[valueSize];
+        Arrays.fill(expected, 'X');
+
+        ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
+                .of(CharSequence.class, char[].class).entries(1).constantValueSizeBySample(expected);
+
+        try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
+            map.put("Key", expected);
+            map.get("Key");
+        }
+    }
 
     @Test
     public void testStringStringMap() throws ExecutionException, InterruptedException,

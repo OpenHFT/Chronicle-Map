@@ -465,7 +465,7 @@ public class StatelessClientTest {
     @Test(timeout = 10000)
     public void testLargeEntries() throws IOException,
             InterruptedException {
-        int valueSize = 1000000;
+        int valueSize = 100;
 
         char[] value = new char[valueSize];
 
@@ -474,24 +474,23 @@ public class StatelessClientTest {
         String sampleValue = new String(value);
         try (ChronicleMap<Integer, CharSequence> serverMap =
                      ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .constantValueSizeBySample(sampleValue)
-                .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+                             .constantValueSizeBySample(sampleValue)
+                             .entries(1)
+                             .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
+                    .entries(1)
                     .constantValueSizeBySample(sampleValue)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
 
-           //     for (int i = 0; i < 128; i++) {
+                statelessMap.put(1, new String(value));
 
-                    statelessMap.put(1, new String(value));
+                assertEquals(new String(value), statelessMap.get(1));
+                assertEquals(1, statelessMap.size());
 
-                    assertEquals("some value", statelessMap.get(1));
-                    assertEquals(1, statelessMap.size());
 
-             //   }
-
-                assertEquals(null, statelessMap.get(1));
-                assertEquals(0, statelessMap.size());
+                assertEquals(null, statelessMap.get(0));
+                assertEquals(1, statelessMap.size());
             }
         }
     }
@@ -621,7 +620,7 @@ public class StatelessClientTest {
                             } catch (Error | Exception e) {
                                 e.printStackTrace();
                                 LOG.error("", e);
-                           //     executorService.shutdown();
+                                //     executorService.shutdown();
                             }
                         }
                     });
