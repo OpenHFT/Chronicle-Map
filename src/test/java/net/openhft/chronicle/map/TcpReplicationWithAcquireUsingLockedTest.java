@@ -80,20 +80,22 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 (CharSequence.class,
                         TestInstrumentVOInterface
                                 .class)
-                .entries(5000L).entrySize(2000)
+                .entries(5000L).keySize("hello".length())
                 .replication((byte) 1, config1).create()) {
 
             map1a = map1;
 
-            TcpTransportAndNetworkConfig config2 = TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076));
+            TcpTransportAndNetworkConfig config2 = TcpTransportAndNetworkConfig
+                    .of(8077, new InetSocketAddress("127.0.0.1", 8076));
 
 
-            try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 = ChronicleMapBuilder.of(CharSequence.class,
+            try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
+                         ChronicleMapBuilder.of(CharSequence.class,
                     TestInstrumentVOInterface.class)
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
                     .replication((byte) 2, config2)
-                    .entries(5000L).entrySize(2000).create()) {
+                    .entries(5000L).keySize("hello".length()).create()) {
 
                 map2a = map2;
 
@@ -131,20 +133,22 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 (CharSequence.class,
                         TestInstrumentVOInterface
                                 .class)
-                .entries(5000L).entrySize(2000)
+                .entries(5000L).keySize("hello".length())
                 .replication((byte) 1, config1).create()) {
 
             map1a = map1;
 
-            TcpTransportAndNetworkConfig config2 = TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076));
+            TcpTransportAndNetworkConfig config2 =
+                    TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076));
 
 
-            try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 = ChronicleMapBuilder.of(CharSequence.class,
+            try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
+                         ChronicleMapBuilder.of(CharSequence.class,
                     TestInstrumentVOInterface.class)
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
                     .replication((byte) 2, config2)
-                    .entries(5000L).entrySize(2000).create()) {
+                    .entries(5000L).keySize("hello".length()).create()) {
 
                 map2a = map2;
 
