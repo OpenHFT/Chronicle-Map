@@ -65,10 +65,10 @@ final class WriterWithSize<T> {
 
     private Bytes resizeIfRequired(Bytes out, long size) {
         if (out.remaining() < size + 8) {
-            long newCapacity = out.remaining() + size + 8;
+            long newCapacity = out.capacity() + (size - out.remaining()) + 8;
             if (newCapacity > Integer.MAX_VALUE)
                 throw new BufferOverflowException();
-             return bufferResizer.resizeBuffer((int) newCapacity);
+            return bufferResizer.resizeBuffer((int) newCapacity);
         }
         return out;
     }
