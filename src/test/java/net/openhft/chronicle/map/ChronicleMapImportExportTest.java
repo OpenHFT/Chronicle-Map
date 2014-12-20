@@ -1,8 +1,8 @@
 package net.openhft.chronicle.map;
 
- import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.values.LongValue;
-import net.openhft.lang.values.LongValue$$Native;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -192,7 +192,7 @@ public class ChronicleMapImportExportTest {
         try (ChronicleMap<CharSequence, LongValue> expected = ChronicleMapBuilder.of(CharSequence.class, LongValue
                 .class)
                 .create()) {
-            LongValue value = new LongValue$$Native();
+            LongValue value = expected.newValueInstance();
 
             // this will add the entry
             try (WriteContext<?, LongValue> context = expected.acquireUsingLocked("one", value)) {
@@ -217,5 +217,38 @@ public class ChronicleMapImportExportTest {
         }
     }
 
+    @Ignore("HCOLL-259 JSON<->CHM to support $$Native like BondVOInterface")
+    @Test
+    public void testBondVOInterface() throws IOException, InterruptedException {
 
+        File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
+        file.deleteOnExit();
+
+        System.out.println(file.getAbsolutePath());
+        try (ChronicleMap<CharSequence, BondVOInterface> expected = ChronicleMapBuilder.of(CharSequence.class, BondVOInterface
+                .class)
+                .create()) {
+            BondVOInterface value = expected.newValueInstance();
+
+            // this will add the entry
+            try (WriteContext context = expected.acquireUsingLocked("one", value)) {
+                value.setCoupon(8.98);
+                assert value == context.value();
+
+            }
+
+            expected.getAll(file);
+
+            try (ChronicleMap<CharSequence, LongValue> actual = ChronicleMapBuilder.of(CharSequence.class, LongValue
+                    .class)
+                    .create()) {
+
+                actual.putAll(file);
+
+                Assert.assertEquals(expected, actual);
+            }
+        } finally {
+            file.delete();
+        }
+    }
 }
