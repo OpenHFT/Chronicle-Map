@@ -25,14 +25,19 @@ import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.BufferOverflowException;
+
 final class WriterWithSize<T> {
     private final SizeMarshaller sizeMarshaller;
     private final Object originalWriter;
     private final Provider writerProvider;
     private final MetaBytesInterop originalMetaWriter;
     private final MetaProvider metaWriterProvider;
+    private final BufferResizer bufferResizer;
 
-    WriterWithSize(SerializationBuilder<T> serializationBuilder) {
+    WriterWithSize(SerializationBuilder<T> serializationBuilder,
+                   @Nullable BufferResizer bufferResizer) {
+        this.bufferResizer = bufferResizer;
         sizeMarshaller = serializationBuilder.sizeMarshaller();
         originalWriter = serializationBuilder.interop();
         writerProvider = Provider.of((Class) originalWriter.getClass());
@@ -50,10 +55,24 @@ final class WriterWithSize<T> {
         Object writer = writerProvider.get(copies, originalWriter);
         copies = metaWriterProvider.getCopies(copies);
         MetaBytesWriter metaWriter = metaWriterProvider.get(copies, originalMetaWriter, writer, t);
-        sizeMarshaller.writeSize(out, metaWriter.size(writer, t));
+        long size = metaWriter.size(writer, t);
+        if (bufferResizer != null)
+            out = resizeIfRequired(out, size);
+        sizeMarshaller.writeSize(out, size);
         metaWriter.write(writer, out, t);
         return copies;
     }
+
+    private Bytes resizeIfRequired(Bytes out, long size) {
+        if (out.remaining() < size + 8) {
+            long newCapacity = out.capacity() + (size - out.remaining()) + 8;
+            if (newCapacity > Integer.MAX_VALUE)
+                throw new BufferOverflowException();
+            return bufferResizer.resizeBuffer((int) newCapacity);
+        }
+        return out;
+    }
+
 
     public ThreadLocalCopies writeNullable(Bytes out, T t, @Nullable ThreadLocalCopies copies) {
         out.writeBoolean(t == null);
@@ -71,7 +90,10 @@ final class WriterWithSize<T> {
                                          @Nullable ThreadLocalCopies copies) {
         copies = metaWriterProvider.getCopies(copies);
         MetaBytesWriter metaWriter = metaWriterProvider.get(copies, originalMetaWriter, writer, t);
-        sizeMarshaller.writeSize(out, metaWriter.size(writer, t));
+        long size = metaWriter.size(writer, t);
+        if (bufferResizer != null)
+            out = resizeIfRequired(out, size);
+        sizeMarshaller.writeSize(out, size);
         metaWriter.write(writer, out, t);
         return copies;
     }
@@ -83,4 +105,13 @@ final class WriterWithSize<T> {
             return copies;
         return writeInLoop(out, t, writer, copies);
     }
+}
+
+interface BufferResizer {
+
+    /**
+     * @param newCapacity
+     * @return the newly resize buffer
+     */
+    public Bytes resizeBuffer(int newCapacity);
 }

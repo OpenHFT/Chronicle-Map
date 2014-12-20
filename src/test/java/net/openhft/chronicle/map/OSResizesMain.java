@@ -33,13 +33,13 @@ public class OSResizesMain {
     public static void main(String[] args) throws IOException, InterruptedException {
         File file = File.createTempFile("over-sized", "deleteme");
         int valueSize = 1000 * 1000;
-        ChronicleMap<String, ByteArray> map = ChronicleMapBuilder.of(String.class, ByteArray.class)
-                .entrySize(50 * 1024 * 1024)
-                .valueSize(valueSize + 16)
-                .createPersistedTo(file);
         byte[] chars = new byte[valueSize];
-        Arrays.fill(chars, (byte) '+');
         ByteArray ba = new ByteArray(chars);
+        ChronicleMap<String, ByteArray> map = ChronicleMapBuilder.of(String.class, ByteArray.class)
+                .keySize("key-".length() + 4)
+                .constantValueSizeBySample(ba)
+                .createPersistedTo(file);
+        Arrays.fill(chars, (byte) '+');
         for (int i = 0; i < 1000; i++) {
             map.put("key-" + i, ba);
         }

@@ -62,7 +62,7 @@ interface Work {
  *
  * @author Rob Austin.
  */
-final class TcpReplicator extends AbstractChannelReplicator implements Closeable {
+final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Closeable {
 
     public static final long TIMESTAMP_FACTOR = 10000;
     private static final int STATELESS_CLIENT = -127;
@@ -86,8 +86,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     private final Replica.EntryExternalizable externalizable;
     @NotNull
     private final TcpTransportAndNetworkConfig replicationConfig;
-    @Nullable
-    private final StatelessServerConnector statelessServerConnector;
+
+
     private final
     @Nullable
     RemoteNodeValidator remoteNodeValidator;
@@ -95,19 +95,34 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
     private long selectorTimeout;
 
+    StatelessClientParameters<K, V> statelessClientParameters;
+
+    static class StatelessClientParameters<K, V> {
+        public StatelessClientParameters(VanillaChronicleMap<K, ?, ?, V, ?, ?> map,
+                                         SerializationBuilder<K> keySerializationBuilder,
+                                         SerializationBuilder<V> valueSerializationBuilder) {
+            this.map = map;
+            this.keySerializationBuilder = keySerializationBuilder;
+            this.valueSerializationBuilder = valueSerializationBuilder;
+        }
+
+        VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
+        SerializationBuilder<K> keySerializationBuilder;
+        SerializationBuilder<V> valueSerializationBuilder;
+    }
+
     /**
-     * @param statelessServerConnector set to NULL if not required
      * @throws IOException on an io error.
      */
     public TcpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable externalizable,
                          @NotNull final TcpTransportAndNetworkConfig replicationConfig,
-                         @Nullable StatelessServerConnector statelessServerConnector,
-                         @Nullable RemoteNodeValidator remoteNodeValidator) throws IOException {
+                         @Nullable final RemoteNodeValidator remoteNodeValidator,
+                         @Nullable final StatelessClientParameters statelessClientParameters) throws IOException {
 
-        super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig()
-        );
-        this.statelessServerConnector = statelessServerConnector;
+        super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig());
+
+        this.statelessClientParameters = statelessClientParameters;
 
         final ThrottlingConfig throttlingConfig = replicationConfig.throttlingConfig();
         long throttleBucketInterval = throttlingConfig.bucketInterval(MILLISECONDS);
@@ -881,7 +896,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     /**
      * Attached to the NIO selection key via methods such as {@link SelectionKey#attach(Object)}
      */
-    class Attached implements Replica.ModificationNotifier {
+    class Attached<K, V> implements Replica.ModificationNotifier {
 
         public TcpSocketChannelEntryReader entryReader;
         public TcpSocketChannelEntryWriter entryWriter;
@@ -899,16 +914,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
         boolean isHandShakingComplete() {
             return handShakingComplete;
-        }
-
-        void clearHandShaking() {
-            handShakingComplete = false;
-
-            remoteIdentifier = Byte.MIN_VALUE;
-            remoteBootstrapTimestamp = Long.MIN_VALUE;
-            remoteHeartbeatInterval = heartBeatIntervalMillis;
-            hasRemoteHeartbeatInterval = false;
-            remoteModificationIterator = null;
         }
 
         /**
@@ -934,9 +939,17 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
         @Nullable
         public Work uncompletedWork;
         private long lastSentTime;
+        StatelessServerConnector statelessServer;
 
         private TcpSocketChannelEntryWriter() {
             entryCallback = new EntryCallback(externalizable, replicationConfig.tcpBufferSize());
+
+            if (statelessClientParameters != null)
+                statelessServer = new StatelessServerConnector(
+                        statelessClientParameters.map, entryCallback,
+                        replicationConfig.tcpBufferSize(),
+                        statelessClientParameters.keySerializationBuilder,
+                        statelessClientParameters.valueSerializationBuilder);
         }
 
         public boolean isWorkIncomplete() {
@@ -958,6 +971,10 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
         private Bytes in() {
             return entryCallback.in();
+        }
+
+        private ByteBuffer out() {
+            return entryCallback.out();
         }
 
         /**
@@ -1071,9 +1088,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
             return len;
         }
 
-        private ByteBuffer out() {
-            return entryCallback.out();
-        }
 
         /**
          * used to send an single zero byte if we have not send any data for up to the
@@ -1128,7 +1142,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
     /**
      * Reads map entries from a socket, this could be a client or server socket
      */
-    class TcpSocketChannelEntryReader {
+    class TcpSocketChannelEntryReader<K, V> {
         public static final int HEADROOM = 1024;
         public long lastHeartBeatReceived = System.currentTimeMillis();
         ByteBuffer in;
@@ -1238,6 +1252,10 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                     boolean isStatelessClient = (state != 1);
 
                     if (isStatelessClient) {
+
+                        final StatelessServerConnector statelessServerConnector = attached
+                                .entryWriter.statelessServer;
+
                         if (statelessServerConnector == null) {
                             LOG.error("", new IllegalArgumentException("received an event " +
                                     "from a stateless map, stateless maps are not " +
@@ -1338,26 +1356,33 @@ class StatelessServerConnector<K, V> {
 
     @NotNull
     private final ReaderWithSize<K> keyReaderWithSize;
+
     @NotNull
     private final WriterWithSize<K> keyWriterWithSize;
+
     @NotNull
     private final ReaderWithSize<V> valueReaderWithSize;
+
     @NotNull
     private final WriterWithSize<V> valueWriterWithSize;
+
     @NotNull
     private final VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
-    private final double maxEntrySizeBytes;
+    private final int tcpBufferSize;
+
 
     StatelessServerConnector(
-            SerializationBuilder<K> keySerializationBuilder,
-            SerializationBuilder<V> valueSerializationBuilder,
-            @NotNull VanillaChronicleMap<K, ?, ?, V, ?, ?> map, int maxEntrySizeBytes) {
+            @NotNull VanillaChronicleMap<K, ?, ?, V, ?, ?> map,
+            @NotNull final BufferResizer bufferResizer, int tcpBufferSize,
+            final SerializationBuilder<K> keySerializationBuilder,
+            final SerializationBuilder<V> valueSerializationBuilder) {
+        this.tcpBufferSize = tcpBufferSize;
+
         keyReaderWithSize = new ReaderWithSize<>(keySerializationBuilder);
-        keyWriterWithSize = new WriterWithSize<>(keySerializationBuilder);
+        keyWriterWithSize = new WriterWithSize<>(keySerializationBuilder, bufferResizer);
         valueReaderWithSize = new ReaderWithSize<>(valueSerializationBuilder);
-        valueWriterWithSize = new WriterWithSize<>(valueSerializationBuilder);
+        valueWriterWithSize = new WriterWithSize<>(valueSerializationBuilder, bufferResizer);
         this.map = map;
-        this.maxEntrySizeBytes = maxEntrySizeBytes;
     }
 
     @Nullable
@@ -1784,7 +1809,7 @@ class StatelessServerConnector<K, V> {
                 while (iterator.hasNext()) {
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
-                    if (out.remaining() <= maxEntrySizeBytes) {
+                    if (out.position() > tcpBufferSize) {
                         writeHeader(out, sizeLocation, count, true);
                         return false;
                     }
@@ -1826,7 +1851,7 @@ class StatelessServerConnector<K, V> {
                 while (iterator.hasNext()) {
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
-                    if (out.remaining() <= maxEntrySizeBytes) {
+                    if (out.position() > tcpBufferSize) {
                         writeHeader(out, sizeLocation, count, true);
                         return false;
                     }
@@ -1859,7 +1884,7 @@ class StatelessServerConnector<K, V> {
         return new Work() {
             @Override
             public boolean doWork(@NotNull Bytes out) {
-                if (out.remaining() <= maxEntrySizeBytes)
+                if (out.position() > tcpBufferSize)
                     return false;
 
                 final long sizeLocation = header(out, transactionId);
@@ -1873,7 +1898,7 @@ class StatelessServerConnector<K, V> {
                 while (iterator.hasNext()) {
                     // we've filled up the buffer, so lets give another channel a chance to send
                     // some data, we don't know the max key size, we will use the entrySize instead
-                    if (out.remaining() <= maxEntrySizeBytes) {
+                    if (out.position() > tcpBufferSize) {
                         writeHeader(out, sizeLocation, count, true);
                         return false;
                     }

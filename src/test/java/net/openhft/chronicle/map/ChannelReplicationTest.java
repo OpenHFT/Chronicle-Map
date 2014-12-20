@@ -62,7 +62,7 @@ public class ChannelReplicationTest {
 
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(2)
-                    .entrySize(100)
+                    .constantValueSizeBySample("EXAMPLE-1")
                     .instance().replicatedViaChannel(hubA.createChannel((short) 1)).create();
         }
 
@@ -76,7 +76,7 @@ public class ChannelReplicationTest {
 
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(2)
-                    .entrySize(100)
+                    .constantValueSizeBySample("EXAMPLE-1")
                     .instance().replicatedViaChannel(hubB.createChannel((short) 1)).create();
         }
     }
@@ -111,12 +111,12 @@ public class ChannelReplicationTest {
 
         map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(2)
-                .entrySize(100)
+                .constantValueSizeBySample("EXAMPLE-1")
                 .instance().replicatedViaChannel(hubB.createChannel((short) 2)).create();
 
         map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(2)
-                .entrySize(100)
+                .constantValueSizeBySample("EXAMPLE-1")
                 .instance().replicatedViaChannel(hubA.createChannel((short) 2)).create();
 
         map2a.put(1, "EXAMPLE-2");

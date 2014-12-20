@@ -465,22 +465,20 @@ public class StatelessClientTest {
     @Test(timeout = 10000)
     public void testLargeEntries() throws IOException,
             InterruptedException {
-
-
-        int keySize = 4;
         int valueSize = 1000000;
-        int entrySize = keySize + valueSize;
 
         char[] value = new char[valueSize];
 
         Arrays.fill(value, 'X');
 
-        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .entrySize(entrySize)
+        String sampleValue = new String(value);
+        try (ChronicleMap<Integer, CharSequence> serverMap =
+                     ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .constantValueSizeBySample(sampleValue)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
-                    .entrySize(entrySize)
+                    .constantValueSizeBySample(sampleValue)
                     .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
 
            //     for (int i = 0; i < 128; i++) {

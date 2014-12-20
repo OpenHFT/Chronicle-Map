@@ -410,7 +410,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
     }
 
-    static class EntryCallback extends Replica.EntryCallback {
+    static class EntryCallback extends Replica.EntryCallback implements BufferResizer {
 
         private final Replica.EntryExternalizable externalizable;
 
@@ -438,7 +438,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
 
 
-        private void resizeBuffer(int size) {
+        public Bytes resizeBuffer(int size) {
 
             if (LOG.isDebugEnabled())
                 LOG.debug("resizing buffer to size=" + size);
@@ -474,7 +474,7 @@ abstract class AbstractChannelReplicator implements Closeable {
             assert out.capacity() == size;
             assert out.capacity() == in.capacity();
             assert in.limit() == in.capacity();
-
+            return in;
         }
 
         public boolean shouldBeIgnored(final Bytes entry, final int chronicleId) {

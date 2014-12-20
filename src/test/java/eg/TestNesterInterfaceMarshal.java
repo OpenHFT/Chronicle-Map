@@ -29,10 +29,13 @@ public class TestNesterInterfaceMarshal {
     public void testReplicatedMap() throws Exception {
 
         ChronicleMap chronicleMap = null;
-        TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig = TcpTransportAndNetworkConfig.of(8076).heartBeatInterval(1L, TimeUnit.SECONDS);
+        TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig =
+                TcpTransportAndNetworkConfig.of(8076).heartBeatInterval(1L, TimeUnit.SECONDS);
         try {
-            ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, TestInstrumentVOInterface.class)
-                    .entries(5000L).entrySize(2000)
+            ChronicleMapBuilder builder = ChronicleMapBuilder
+                    .of(CharSequence.class, TestInstrumentVOInterface.class)
+                    .entries(5000L)
+                    .keySize(10)
                     .replication((byte) 1, tcpTransportAndNetworkConfig);
 
 
@@ -44,20 +47,24 @@ public class TestNesterInterfaceMarshal {
         ChronicleMap<CharSequence, TestInstrumentVOInterface> map = chronicleMap;
 
         ChronicleMap chronicleMap1 = null;
-        TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig1 = TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076)).heartBeatInterval(1L, TimeUnit.SECONDS);
+        TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig1 =
+                TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076))
+                        .heartBeatInterval(1L, TimeUnit.SECONDS);
 
         try {
-            ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, TestInstrumentVOInterface.class)
+            ChronicleMapBuilder builder = ChronicleMapBuilder
+                    .of(CharSequence.class, TestInstrumentVOInterface.class)
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
-                    .entries(5000L).entrySize(2000)
+                    .entries(5000L).keySize(10)
                     .replication((byte) 2, tcpTransportAndNetworkConfig1);
 
 
             chronicleMap1 = builder.create();
 
         } catch (Exception e) {
-            System.out.println("*********************Error(s) creating launcher instrument cache: " + e);
+            System.out.println("*********************Error(s) creating launcher " +
+                    "instrument cache: " + e);
         }
         ChronicleMap<CharSequence, TestInstrumentVOInterface> replicatedMap = chronicleMap1;
 
@@ -107,10 +114,13 @@ public class TestNesterInterfaceMarshal {
     protected ChronicleMap createReplicatedMap1() {
 
         ChronicleMap chronicleMap = null;
-        TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig = TcpTransportAndNetworkConfig.of(8076).heartBeatInterval(1L, TimeUnit.SECONDS);
+        TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig =
+                TcpTransportAndNetworkConfig.of(8076).heartBeatInterval(1L, TimeUnit.SECONDS);
         try {
-            ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, TestInstrumentVOInterface.class)
-                    .entries(5000L).entrySize(2000)
+            ChronicleMapBuilder builder = ChronicleMapBuilder
+                    .of(CharSequence.class, TestInstrumentVOInterface.class)
+                    .entries(5000L)
+                    .keySize(10)
                     .replication((byte) 1, tcpTransportAndNetworkConfig);
 
 
@@ -125,20 +135,25 @@ public class TestNesterInterfaceMarshal {
     protected ChronicleMap createReplicatedMap2() {
 
         ChronicleMap chronicleMap = null;
-        TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig = TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076)).heartBeatInterval(1L, TimeUnit.SECONDS);
+        TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig =
+                TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076))
+                        .heartBeatInterval(1L, TimeUnit.SECONDS);
 
         try {
-            ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, TestInstrumentVOInterface.class)
+            ChronicleMapBuilder builder = ChronicleMapBuilder
+                    .of(CharSequence.class, TestInstrumentVOInterface.class)
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
-                    .entries(5000L).entrySize(2000)
+                    .entries(5000L)
+                    .keySize(10)
                     .replication((byte) 2, tcpTransportAndNetworkConfig);
 
 
             chronicleMap = builder.create();
 
         } catch (Exception e) {
-            System.out.println("*********************Error(s) creating launcher instrument cache: " + e);
+            System.out.println("*********************Error(s) creating launcher " +
+                    "instrument cache: " + e);
         }
         return chronicleMap;
     }

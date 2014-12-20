@@ -38,10 +38,12 @@ public class StringsMapMain {
     public static void startServer() throws IOException {
         File file = File.createTempFile("testServersMapMain", ".deleteme");
         file.deleteOnExit();
+        int keyAndValueSize = (int) Math.round(Math.log10(entries));
         final ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .putReturnsNull(true)
-                .entrySize(50)
+                .keySize(keyAndValueSize)
+                .valueSize(keyAndValueSize)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .createPersistedTo(file);
         System.out.println("Server started");
@@ -58,7 +60,8 @@ public class StringsMapMain {
         } else {
             File file = File.createTempFile("testServersMapMain", ".deleteme");
             file.deleteOnExit();
-            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(port, new InetSocketAddress(hostname, port));
+            TcpTransportAndNetworkConfig tcpConfig =
+                    TcpTransportAndNetworkConfig.of(port, new InetSocketAddress(hostname, port));
 
             map = ChronicleMapBuilder
                     .of(CharSequence.class, CharSequence.class)
@@ -90,11 +93,13 @@ public class StringsMapMain {
                 puts += t2 - t1;
                 gets += t3 - t2;
 //                if (t2 - t1 > lastAveragePut * 100 || t3 - t2 > lastAverageGet * 100)
-//                    System.out.printf("Took put/get took %.1f/%.1f us%n", (t2 - t1) / 1e3, (t3 - t2) / 1e3);
+//                    System.out.printf("Took put/get took %.1f/%.1f us%n",
+// (t2 - t1) / 1e3, (t3 - t2) / 1e3);
             }
             lastAveragePut = puts / entries;
             lastAverageGet = gets / entries;
-            System.out.printf("Average took put/get took %.1f/%.1f us%n", lastAveragePut / 1e3, lastAverageGet / 1e3);
+            System.out.printf("Average took put/get took %.1f/%.1f us%n",
+                    lastAveragePut / 1e3, lastAverageGet / 1e3);
         }
     }
 
