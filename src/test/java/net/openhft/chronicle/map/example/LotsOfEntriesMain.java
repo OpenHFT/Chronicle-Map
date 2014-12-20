@@ -18,18 +18,28 @@ import java.util.concurrent.Future;
  * Created by peter on 19/12/14.
  */
 public class LotsOfEntriesMain {
-    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
+    public static void main(String[] args)
+            throws IOException, ExecutionException, InterruptedException {
         workEntries(true);
         workEntries(false);
     }
 
-    private static void workEntries(final boolean add) throws IOException, ExecutionException, InterruptedException {
+    private static void workEntries(final boolean add)
+            throws IOException, ExecutionException, InterruptedException {
         final long entries = 100_000_000;
         File file = new File("/tmp/lotsOfEntries.dat");
+        double averageEntrySize =
+                1 + // key size marshalling size
+                // + 2 is average oversize because we append 4-letter "-key" in a loop
+                (Math.log(1.024) - Math.log(0.024)) * 24 + 2 + // average key size
+                24 + // value size
+                2 // average loss due to value alignment. defaults to OF_4_BYTES because
+                // there are floats in values
+                ;
         final ChronicleMap<CharSequence, MyFloats> map = ChronicleMapBuilder
                 .of(CharSequence.class, MyFloats.class)
-                .entries(entries*6/5)
-                .entrySize(256)
+                .entries((long) (entries * (averageEntrySize / 16.0)))
+                .entrySize(16) // "chunk mode"
                 .createPersistedTo(file);
         int threads = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(threads);
