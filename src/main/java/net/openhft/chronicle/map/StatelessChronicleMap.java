@@ -139,10 +139,22 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         this.config = config;
 
-        keyReaderWithSize = new ReaderWithSize<>(chronicleMapBuilder.keyBuilder);
-        keyWriterWithSize = new WriterWithSize<>(chronicleMapBuilder.keyBuilder);
-        valueReaderWithSize = new ReaderWithSize<>(chronicleMapBuilder.valueBuilder);
-        valueWriterWithSize = new WriterWithSize<>(chronicleMapBuilder.valueBuilder);
+        final BufferResizer outBufferResizer = new BufferResizer() {
+            @Override
+            public Bytes resizeBuffer(int newCapacity) {
+                return resizeBufferOutBuffer(newCapacity);
+
+            }
+        };
+
+        keyReaderWithSize = new ReaderWithSize(chronicleMapBuilder.keyBuilder);
+        keyWriterWithSize = new WriterWithSize(chronicleMapBuilder.keyBuilder, outBufferResizer);
+
+        valueReaderWithSize = new ReaderWithSize(chronicleMapBuilder.valueBuilder);
+
+        valueWriterWithSize = new WriterWithSize(chronicleMapBuilder.valueBuilder,
+                outBufferResizer);
+
         this.putReturnsNull = chronicleMapBuilder.putReturnsNull();
         this.removeReturnsNull = chronicleMapBuilder.removeReturnsNull();
         this.maxEntrySize = chronicleMapBuilder.entrySize(true);
@@ -515,21 +527,25 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return (long) ((double) outBytes.position() / percentageComplete);
     }
 
-    private void resizeBufferOutBuffer(int size, long start) {
+    private Bytes resizeBufferOutBuffer(int newCapacity) {
+        return resizeBufferOutBuffer(newCapacity, outBytes.position());
+    }
+
+    private Bytes resizeBufferOutBuffer(int newCapacity, long start) {
 
 
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
 
         if (LOG.isDebugEnabled())
-            LOG.debug("resizing buffer to size=" + size + " ,name=" + name);
+            LOG.debug("resizing buffer to newCapacity=" + newCapacity + " ,name=" + name);
 
-        if (size < outBuffer.capacity())
+        if (newCapacity < outBuffer.capacity())
             throw new IllegalStateException("it not possible to resize the buffer smaller");
 
-        assert size < Integer.MAX_VALUE;
+        assert newCapacity < Integer.MAX_VALUE;
 
-        final ByteBuffer result = ByteBuffer.allocate(size).order(ByteOrder.nativeOrder());
+        final ByteBuffer result = ByteBuffer.allocate(newCapacity).order(ByteOrder.nativeOrder());
         final long bytesPosition = outBytes.position();
 
         outBytes = new ByteBufferBytes(result.slice());
@@ -552,25 +568,27 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         assert outBuffer.capacity() == outBytes.capacity();
 
-        assert outBuffer.capacity() == size;
+        assert outBuffer.capacity() == newCapacity;
         assert outBuffer.capacity() == outBytes.capacity();
         assert outBytes.limit() == outBytes.capacity();
         outBytes.position(start);
+        return outBytes;
     }
 
-    private void resizeBufferInBuffer(int size, long start) {
+
+    private void resizeBufferInBuffer(int newCapacity, long start) {
         assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
 
         if (LOG.isDebugEnabled())
-            LOG.debug("InBuffer resizing buffer to size=" + size + " ,name=" + name);
+            LOG.debug("InBuffer resizing buffer to newCapacity=" + newCapacity + " ,name=" + name);
 
-        if (size < inBuffer.capacity())
+        if (newCapacity < inBuffer.capacity())
             throw new IllegalStateException("it not possible to resize the buffer smaller");
 
-        assert size < Integer.MAX_VALUE;
+        assert newCapacity < Integer.MAX_VALUE;
 
-        final ByteBuffer result = ByteBuffer.allocate(size).order(ByteOrder.nativeOrder());
+        final ByteBuffer result = ByteBuffer.allocate(newCapacity).order(ByteOrder.nativeOrder());
         final long bytesPosition = inBytes.position();
 
         inBytes = new ByteBufferBytes(result.slice());
@@ -592,7 +610,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         inBuffer = result;
 
         assert inBuffer.capacity() == inBytes.capacity();
-        assert inBuffer.capacity() == size;
+        assert inBuffer.capacity() == newCapacity;
         assert inBuffer.capacity() == inBytes.capacity();
         assert inBytes.limit() == inBytes.capacity();
 
@@ -1370,6 +1388,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private void resizeToMessageOutBuffer(long start, @NotNull IllegalArgumentException e) {
+
+        e.printStackTrace();
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
         String message = e.getMessage();

@@ -39,6 +39,9 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
 
     private static final Logger LOG =
             LoggerFactory.getLogger(UdpReplicator.class.getName());
+    public static final int UPD_BUFFER_SIZE = 64 * 1204;
+    @NotNull
+    private final UdpTransportConfig replicationConfig;
 
     public UdpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable entryExternalizable,
@@ -47,14 +50,16 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
             throws IOException {
 
         super(replicationConfig, serializedEntrySize, replica.identifier());
+        this.replicationConfig = replicationConfig;
 
         Replica.ModificationIterator modificationIterator = replica.acquireModificationIterator(
                 ChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID, this);
 
         setReader(new UdpSocketChannelEntryReader(serializedEntrySize, entryExternalizable));
 
-        setWriter(new UdpSocketChannelEntryWriter(serializedEntrySize, entryExternalizable,
-                modificationIterator, this));
+        setWriter(new UdpSocketChannelEntryWriter(replicationConfig.udpBufferSize(),
+                entryExternalizable,
+                modificationIterator, this, new Replicators.OutBuffer(UPD_BUFFER_SIZE)));
 
         start();
     }
@@ -121,17 +126,19 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
 
         private final EntryCallback entryCallback;
         private final UdpChannelReplicator udpReplicator;
+        private final Replicators.OutBuffer outBuffer;
         private Replica.ModificationIterator modificationIterator;
 
-        UdpSocketChannelEntryWriter(final int serializedEntrySize,
+        UdpSocketChannelEntryWriter(final int updBufferSize,
                                     @NotNull final Replica.EntryExternalizable externalizable,
                                     @NotNull final Replica.ModificationIterator modificationIterator,
-                                    UdpChannelReplicator udpReplicator) {
+                                    UdpChannelReplicator udpReplicator, Replicators.OutBuffer outBuffer) {
             this.udpReplicator = udpReplicator;
 
+            this.outBuffer = outBuffer;
             // we make the buffer twice as large just to give ourselves headroom
 
-            entryCallback = new EntryCallback(externalizable, serializedEntrySize);
+            entryCallback = new EntryCallback(externalizable, updBufferSize);
             this.modificationIterator = modificationIterator;
         }
 
@@ -154,8 +161,8 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
         public int writeAll(@NotNull final DatagramChannel socketChannel)
                 throws InterruptedException, IOException {
 
-            final ByteBufferBytes in = entryCallback.in();
-            final ByteBuffer out = entryCallback.out();
+            final ByteBufferBytes in = outBuffer.in();
+            final ByteBuffer out = outBuffer.out();
 
             out.clear();
             in.clear();

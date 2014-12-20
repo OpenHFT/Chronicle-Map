@@ -25,16 +25,26 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 
 public final class UdpTransportConfig {
+    public static final int DEFAULT_UDP_BUFFER_SIZE = 64 * 1024;
     private final InetAddress address;
     private final int port;
-    private final @Nullable NetworkInterface networkInterface;
+
+    @Nullable
+    private final
+    NetworkInterface networkInterface;
+
+    @NotNull
     private final ThrottlingConfig throttlingConfig;
+
+    private final int udpBufferSize;
 
     private UdpTransportConfig(
             InetAddress address,
             int port,
             @Nullable NetworkInterface networkInterface,
-            ThrottlingConfig throttlingConfig) {
+            ThrottlingConfig throttlingConfig,
+            int udpBufferSize) {
+        this.udpBufferSize = udpBufferSize;
         if (address == null) {
             throw new NullPointerException("Null address");
         }
@@ -49,22 +59,23 @@ public final class UdpTransportConfig {
     }
 
     public static UdpTransportConfig multiCast(@NotNull InetAddress address, int port,
-                                                 @NotNull NetworkInterface networkInterface) {
+                                               @Nullable NetworkInterface networkInterface) {
         if (!address.isMulticastAddress() || networkInterface == null)
             throw new IllegalArgumentException();
-        return create(address, port, networkInterface, ThrottlingConfig.noThrottling());
+        return create(address, port, networkInterface, ThrottlingConfig.noThrottling(), DEFAULT_UDP_BUFFER_SIZE);
     }
 
     public static UdpTransportConfig of(@NotNull InetAddress address, int port) {
         if (address.isMulticastAddress())
             throw new IllegalArgumentException();
-        return create(address, port, null, ThrottlingConfig.noThrottling());
+        return create(address, port, null, ThrottlingConfig.noThrottling(), DEFAULT_UDP_BUFFER_SIZE);
     }
 
     static UdpTransportConfig create(InetAddress address, int port,
                                      @Nullable NetworkInterface networkInterface,
-                                     ThrottlingConfig throttlingConfig) {
-        return new UdpTransportConfig(address, port, networkInterface, throttlingConfig);
+                                     ThrottlingConfig throttlingConfig,
+                                     final int udpBufferSize1) {
+        return new UdpTransportConfig(address, port, networkInterface, throttlingConfig, udpBufferSize1);
     }
 
     @NotNull
@@ -129,11 +140,20 @@ public final class UdpTransportConfig {
             @Nullable NetworkInterface networkInterface) {
         if (!address().isMulticastAddress())
             throw new IllegalArgumentException();
-        return create(address(), port(), networkInterface, throttlingConfig());
+        return create(address(), port(), networkInterface, throttlingConfig(), udpBufferSize());
     }
 
     public UdpTransportConfig throttlingConfig(@NotNull ThrottlingConfig throttlingConfig) {
         ThrottlingConfig.checkMillisecondBucketInterval(throttlingConfig, "UDP");
-        return create(address(), port(), networkInterface(), throttlingConfig);
+        return create(address(), port(), networkInterface(), throttlingConfig, udpBufferSize());
     }
+
+    public int udpBufferSize() {
+        return udpBufferSize;
+    }
+
+    public UdpTransportConfig udpBufferSize(int udpBufferSize) {
+        return create(address(), port(), networkInterface(), throttlingConfig(), udpBufferSize);
+    }
+
 }

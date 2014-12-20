@@ -91,7 +91,7 @@ public class SerializerTest {
 
         builder.preMapConstruction(false);
 
-        WriterWithSize valueWriterWithSize = new WriterWithSize(builder.valueBuilder);
+        WriterWithSize valueWriterWithSize = new WriterWithSize(builder.valueBuilder,null);
         ReaderWithSize valueReaderWithSize = new ReaderWithSize(builder.valueBuilder);
 
         valueWriterWithSize.write(out, value, null);
@@ -114,7 +114,7 @@ public class SerializerTest {
 
         builder.preMapConstruction(false);
         {
-            WriterWithSize keyWriterWithSize = new WriterWithSize(builder.keyBuilder);
+            WriterWithSize keyWriterWithSize = new WriterWithSize(builder.keyBuilder, null);
             ReaderWithSize keyReaderWithSize = new ReaderWithSize(builder.keyBuilder);
 
             keyWriterWithSize.write(out, key, null);
@@ -207,7 +207,7 @@ public class SerializerTest {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (o == null || MyTestClassMarshallable.class != o.getClass()) return false;
 
             MyTestClassMarshallable that = (MyTestClassMarshallable) o;
 
