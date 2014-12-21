@@ -2,6 +2,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
+import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.LongValue;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -186,7 +187,7 @@ public class ChronicleMapImportExportTest {
     public void testWithLongValue() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
-        file.deleteOnExit();
+        //file.deleteOnExit();
 
         System.out.println(file.getAbsolutePath());
         try (ChronicleMap<CharSequence, LongValue> expected = ChronicleMapBuilder.of(CharSequence.class, LongValue
@@ -213,11 +214,11 @@ public class ChronicleMapImportExportTest {
                 Assert.assertEquals(expected, actual);
             }
         } finally {
-            file.delete();
+            // file.delete();
         }
     }
 
-    @Ignore("HCOLL-259 JSON<->CHM to support $$Native like BondVOInterface")
+
     @Test
     public void testBondVOInterface() throws IOException, InterruptedException {
 
@@ -225,27 +226,26 @@ public class ChronicleMapImportExportTest {
         file.deleteOnExit();
 
         System.out.println(file.getAbsolutePath());
-        try (ChronicleMap<CharSequence, BondVOInterface> expected = ChronicleMapBuilder.of(CharSequence.class, BondVOInterface
-                .class)
-                .create()) {
-            BondVOInterface value = expected.newValueInstance();
+        try (ChronicleMap<CharSequence, BondVOInterface> expected =
+                     ChronicleMapBuilder.of(CharSequence.class, BondVOInterface.class).create()) {
+
+            final BondVOInterface value = expected.newValueInstance();
 
             // this will add the entry
             try (WriteContext context = expected.acquireUsingLocked("one", value)) {
                 value.setCoupon(8.98);
                 assert value == context.value();
-
             }
 
             expected.getAll(file);
 
-            try (ChronicleMap<CharSequence, LongValue> actual = ChronicleMapBuilder.of(CharSequence.class, LongValue
-                    .class)
-                    .create()) {
+            try (ChronicleMap<CharSequence, BondVOInterface> actual =
+                         ChronicleMapBuilder.of(CharSequence.class,
+                                 DataValueClasses.directClassFor(BondVOInterface.class)).create()) {
 
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                Assert.assertEquals(expected.get("one").getCoupon(), actual.get("one").getCoupon(), 0);
             }
         } finally {
             file.delete();
