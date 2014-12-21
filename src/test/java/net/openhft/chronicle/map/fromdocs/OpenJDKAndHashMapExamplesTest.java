@@ -60,7 +60,7 @@ public class OpenJDKAndHashMapExamplesTest {
                 .keySize(10)
                 .createPersistedTo(file);
 
-        BondVOInterface bondVO = DataValueClasses.newDirectReference(BondVOInterface.class);
+        BondVOInterface bondVO = chm.newValueInstance();
         try (WriteContext wc = chm.acquireUsingLocked("369604103", bondVO)) {
             bondVO.setIssueDate(parseYYYYMMDD("20130915"));
             bondVO.setMaturityDate(parseYYYYMMDD("20140915"));
@@ -82,7 +82,7 @@ public class OpenJDKAndHashMapExamplesTest {
 
         // ZERO Copy but creates a new off heap reference each time
         // our reusable, mutable off heap reference, generated from the interface.
-        BondVOInterface bond = DataValueClasses.newDirectReference(BondVOInterface.class);
+        BondVOInterface bond = chm.newValueInstance();
         try (ReadContext rc = chmB.getUsingLocked("369604103", bond)) {
             if (rc.present()) {
                 assertEquals(5.0 / 100, bond.getCoupon(), 0.0);
