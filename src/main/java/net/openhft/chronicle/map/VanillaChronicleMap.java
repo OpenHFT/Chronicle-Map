@@ -1193,7 +1193,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
      */
     @Override
     @SuppressWarnings("unchecked")
-    public final boolean remove(@net.openhft.lang.model.constraints.NotNull final Object key, final Object value) {
+    public final boolean remove(@net.openhft.lang.model.constraints.NotNull final Object key,
+                                final Object value) {
         if (value == null)
             return false; // CHM compatibility; I would throw NPE
         return (Boolean) removeIfValueIs(key, (V) value);

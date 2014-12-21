@@ -1468,7 +1468,7 @@ class StatelessServerConnector<K, V> {
                 return put(reader, writer, sizeLocation, timestamp, identifier);
 
             case REMOVE:
-                return remove(reader, writer.in(), sizeLocation, timestamp, identifier);
+                return remove(reader, writer, sizeLocation, timestamp, identifier);
 
             case CLEAR:
                 return clear(writer.in(), sizeLocation, timestamp, identifier);
@@ -1699,14 +1699,14 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work remove(Bytes reader, @NotNull Bytes writer, final long sizeLocation,
-                        long timestamp, byte id) {
+    private Work remove(Bytes reader, TcpReplicator.TcpSocketChannelEntryWriter writer,
+                        final long sizeLocation, long timestamp, byte id) {
         try {
             map.remove(reader, writer);
         } catch (Throwable e) {
-            return sendException(writer, sizeLocation, e);
+            return sendException(writer.in(), sizeLocation, e);
         }
-        writeSizeAndFlags(sizeLocation, false, writer);
+        writeSizeAndFlags(sizeLocation, false, writer.in());
         return null;
     }
 
