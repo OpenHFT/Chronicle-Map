@@ -130,7 +130,7 @@ public class CHMUseCasesTest {
     public void testLargeCharSequenceValue()
             throws ExecutionException, InterruptedException, IOException {
 
-        int valueSize = 1000000;
+        int valueSize = 5_000_000;
 
         char[] expected = new char[valueSize];
         Arrays.fill(expected, 'X');
