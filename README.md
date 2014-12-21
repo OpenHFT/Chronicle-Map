@@ -573,9 +573,8 @@ V acquireUsing(key,value) {
 }
 ```
 
-`acquireUsing(key,value)` offers this functionality from a single method call, an be cause it
-implemented inside the chronicle map we are able to reduce the hash lookups and make it more
-efficient.
+`acquireUsing(key,value)` offers this functionality from a single method call, reducing the hash
+look-ups and making your code run slightly faster.
 
 If you are only accessing ChronicleMap from a single thread. If you are not doing replication
 and don't care about atomic reads. Then its simpler ( and faster ) to use acquireUsing() otherwise we
