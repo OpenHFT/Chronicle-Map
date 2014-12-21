@@ -71,9 +71,10 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     private static final int BUFFER_SIZE = 0x100000; // 1MB
     private static final int SPIN_LOOP_COUNT = 100000;
     private final SelectionKey[] selectionKeysStore = new SelectionKey[Byte.MAX_VALUE + 1];
-    // used to instruct the selector thread to set OP_WRITE on a key correlated by the bit index in the
-    // bitset
-    private final KeyInterestUpdater opWriteUpdater = new KeyInterestUpdater(OP_WRITE, selectionKeysStore);
+    // used to instruct the selector thread to set OP_WRITE on a key correlated by the bit index
+    // in the bitset
+    private final KeyInterestUpdater opWriteUpdater =
+            new KeyInterestUpdater(OP_WRITE, selectionKeysStore);
     private final BitSet activeKeys = new BitSet(selectionKeysStore.length);
     private final long heartBeatIntervalMillis;
     private long largestEntrySoFar = 128;
@@ -118,7 +119,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                          @NotNull final Replica.EntryExternalizable externalizable,
                          @NotNull final TcpTransportAndNetworkConfig replicationConfig,
                          @Nullable final RemoteNodeValidator remoteNodeValidator,
-                         @Nullable final StatelessClientParameters statelessClientParameters) throws IOException {
+                         @Nullable final StatelessClientParameters statelessClientParameters)
+            throws IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig());
 
@@ -145,8 +147,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     @Override
     void processEvent() throws IOException {
         try {
-            final InetSocketAddress serverInetSocketAddress = new InetSocketAddress(replicationConfig
-                    .serverPort());
+            final InetSocketAddress serverInetSocketAddress =
+                    new InetSocketAddress(replicationConfig.serverPort());
             final Details serverDetails = new Details(serverInetSocketAddress, localIdentifier);
             new ServerConnector(serverDetails).connect();
 
@@ -205,7 +207,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                     }
                 }
             }
-        } catch (CancelledKeyException | ConnectException | ClosedChannelException | ClosedSelectorException e) {
+        } catch (CancelledKeyException | ConnectException | ClosedChannelException |
+                ClosedSelectorException e) {
             if (LOG.isDebugEnabled())
                 LOG.debug("", e);
         } catch (Exception e) {
@@ -251,7 +254,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                     LOG.debug("onWrite - " + name);
                 onWrite(key, approxTime);
             }
-        } catch (BufferUnderflowException | InterruptedException | IOException | ClosedSelectorException | CancelledKeyException e) {
+        } catch (BufferUnderflowException | InterruptedException | IOException |
+                ClosedSelectorException | CancelledKeyException e) {
             if (!isClosed)
                 quietClose(key, e);
         } catch (Exception e) {
@@ -375,8 +379,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
             // when node discovery is used ( by nodes broadcasting out their host:port over UDP ),
             // when new or restarted nodes are started up. they attempt to find the nodes
-            // on the grid by listening to the host and ports of the other nodes, so these nodes will establish the connection when they come back up,
-            // hence under these circumstances, polling a dropped node to attempt to reconnect is no-longer
+            // on the grid by listening to the host and ports of the other nodes, so these nodes
+            // will establish the connection when they come back up, hence under these
+            // circumstances, polling a dropped node to attempt to reconnect is no-longer
             // required as the remote node will establish the connection its self on startup.
             if (replicationConfig.autoReconnectedUponDroppedConnection())
                 attached.connector.connectLater();
@@ -422,8 +427,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             // when new or restarted nodes are started up. they attempt to find the nodes
             // on the grid by listening to the host and ports of the other nodes,
             // so these nodes will establish the connection when they come back up,
-            // hence under these circumstances, polling a dropped node to attempt to reconnect is no-longer
-            // required as the remote node will establish the connection its self on startup.
+            // hence under these circumstances, polling a dropped node to attempt to reconnect
+            // is no-longer required as the remote node will establish the connection its self
+            // on startup.
 
             attached.connector.connect();
 
@@ -501,7 +507,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      * @throws java.io.IOException
      * @throws InterruptedException
      */
-    private void doHandShaking(@NotNull final SelectionKey key, @NotNull SocketChannel socketChannel)
+    private void doHandShaking(@NotNull final SelectionKey key,
+                               @NotNull SocketChannel socketChannel)
             throws IOException {
         final Attached attached = (Attached) key.attachment();
         final TcpSocketChannelEntryWriter writer = attached.entryWriter;
@@ -529,11 +536,12 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             activeKeys.set(remoteIdentifier);
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug("server-connection id={}, remoteIdentifier={}", localIdentifier, remoteIdentifier);
+                LOG.debug("server-connection id={}, remoteIdentifier={}", localIdentifier,
+                        remoteIdentifier);
             }
 
-            // this can occur sometimes when if 2 or more remote node attempt to use node discovery at the
-            // same time
+            // this can occur sometimes when if 2 or more remote node attempt to use node discovery
+            // at the same time
 
             final SocketAddress remoteAddress = socketChannel.getRemoteAddress();
 
@@ -543,16 +551,17 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
                 // throwing this exception will cause us to disconnect, both the client and server
                 // will be able to detect the the remote and local identifiers are the same,
-                // as the identifier is send early on in the hand shaking via the connect(() and accept()
-                // methods
+                // as the identifier is send early on in the hand shaking via the connect(()
+                // and accept() methods
                 throw new IllegalStateException("dropping connection, " +
-                        "as the remote-identifier is already being used, identifier=" + remoteIdentifier);
+                        "as the remote-identifier is already being used, identifier=" +
+                        remoteIdentifier);
             if (LOG.isDebugEnabled())
                 LOG.debug("handshaking for localIdentifier=" + localIdentifier + "," +
                         "remoteIdentifier=" + remoteIdentifier);
 
-            attached.remoteModificationIterator = replica.acquireModificationIterator(remoteIdentifier,
-                    attached);
+            attached.remoteModificationIterator =
+                    replica.acquireModificationIterator(remoteIdentifier, attached);
 
             writer.writeRemoteBootstrapTimestamp(replica.lastModificationTime(remoteIdentifier));
 
@@ -576,12 +585,13 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 LOG.error("value=" + value);
             }
 
-            // we add a 10% safety margin to the timeout time due to latency fluctuations on the network,
-            // in other words we wont consider a connection to have
+            // we add a 10% safety margin to the timeout time due to latency fluctuations
+            // on the network, in other words we wont consider a connection to have
             // timed out, unless the heartbeat interval has exceeded 25% of the expected time.
             attached.remoteHeartbeatInterval = (long) (value * 1.25);
 
-            // we have to make our selector poll interval at least as short as the minimum selector timeout
+            // we have to make our selector poll interval at least as short as the minimum selector
+            // timeout
             selectorTimeout = Math.min(selectorTimeout, value);
 
             if (selectorTimeout < 0)
@@ -1163,7 +1173,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             if (size < in.capacity())
                 throw new IllegalStateException("it not possible to resize the buffer smaller");
 
-            final ByteBuffer buffer = ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder());
+            final ByteBuffer buffer = ByteBuffer.allocateDirect((int) size)
+                    .order(ByteOrder.nativeOrder());
 
             final int inPosition = in.position();
 
@@ -1304,9 +1315,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
          * compacts the buffer and updates the {@code in} and {@code out} accordingly
          */
         private void compactBuffer() {
-            // the maxEntrySizeBytes used here may not be the maximum size of the entry in its serialized form
-            // however, its only use as an indication that the buffer is becoming full and should be compacted
-            // the buffer can be compacted at any time
+            // the maxEntrySizeBytes used here may not be the maximum size of the entry in its
+            // serialized form however, its only use as an indication that the buffer is becoming
+            // full and should be compacted the buffer can be compacted at any time
             if (in.position() == 0 || in.remaining() > largestEntrySoFar)
                 return;
 
@@ -1352,7 +1363,8 @@ class StatelessServerConnector<K, V> {
     public static final StatelessChronicleMap.EventId[] VALUES
             = StatelessChronicleMap.EventId.values();
     public static final int SIZE_OF_IS_EXCEPTION = 1;
-    public static final int HEADER_SIZE = SIZE_OF_SIZE + SIZE_OF_IS_EXCEPTION + SIZE_OF_TRANSACTION_ID;
+    public static final int HEADER_SIZE = SIZE_OF_SIZE + SIZE_OF_IS_EXCEPTION +
+            SIZE_OF_TRANSACTION_ID;
 
     @NotNull
     private final ReaderWithSize<K> keyReaderWithSize;
@@ -1484,7 +1496,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    public Work mapForKey(@NotNull ByteBufferBytes reader, @NotNull Bytes writer, long sizeLocation) {
+    public Work mapForKey(@NotNull ByteBufferBytes reader, @NotNull Bytes writer,
+                          long sizeLocation) {
         final K key = keyReaderWithSize.read(reader, null);
         final Function<V, ?> function = (Function<V, ?>) reader.readObject();
         try {
@@ -1500,7 +1513,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    public Work putMapped(@NotNull ByteBufferBytes reader, @NotNull Bytes writer, long sizeLocation) {
+    public Work putMapped(@NotNull ByteBufferBytes reader, @NotNull Bytes writer,
+                          long sizeLocation) {
         final K key = keyReaderWithSize.read(reader, null);
         final UnaryOperator<V> unaryOperator = (UnaryOperator<V>) reader.readObject();
         try {
@@ -1516,7 +1530,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work removeWithValue(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
+    private Work removeWithValue(Bytes reader, @NotNull Bytes writer, final long sizeLocation,
+                                 long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 writer.writeBoolean(map.removeWithValue(reader));
@@ -1693,7 +1708,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work put(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
+    private Work put(Bytes reader, @NotNull Bytes writer, final long sizeLocation,
+                     long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.put(reader, writer);
@@ -1725,7 +1741,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work remove(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
+    private Work remove(Bytes reader, @NotNull Bytes writer, final long sizeLocation,
+                        long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.remove(reader, writer);
@@ -1744,7 +1761,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work putAll(@NotNull Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
+    private Work putAll(@NotNull Bytes reader, @NotNull Bytes writer, final long sizeLocation,
+                        long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.putAll(reader);
@@ -1826,7 +1844,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work keySet(@NotNull Bytes reader, @NotNull final Bytes writer, final long transactionId) {
+    private Work keySet(@NotNull Bytes reader, @NotNull final Bytes writer,
+                        final long transactionId) {
 
         Set<K> ks;
 
@@ -1868,7 +1887,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work entrySet(@NotNull final Bytes reader, @NotNull Bytes writer, final long transactionId) {
+    private Work entrySet(@NotNull final Bytes reader, @NotNull Bytes writer,
+                          final long transactionId) {
 
         final Set<Map.Entry<K, V>> entries;
 
@@ -1916,7 +1936,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work putIfAbsent(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
+    private Work putIfAbsent(Bytes reader, @NotNull Bytes writer, final long sizeLocation,
+                             long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.putIfAbsent(reader, writer);
@@ -1935,7 +1956,8 @@ class StatelessServerConnector<K, V> {
     }
 
     @Nullable
-    private Work replace(Bytes reader, @NotNull Bytes writer, final long sizeLocation, long timestamp, byte id) {
+    private Work replace(Bytes reader, @NotNull Bytes writer, final long sizeLocation,
+                         long timestamp, byte id) {
         try {
             if (MAP_SUPPORTS_BYTES) {
                 map.replaceKV(reader, writer);
