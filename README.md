@@ -188,7 +188,7 @@ this for best performance.
 or value objects that are created through, a directClass interface, for example : 
 ``` java
       ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
-               .of(String.class, DataValueClasses.directClassFor(BondVOInterface.class))
+               .of(String.class, ondVOInterface.class)
                .create();
 
 ```
@@ -470,19 +470,12 @@ Below we show you how you can work directly with the off heap entries.
 
 ``` java
 ChronicleMap<CharSequence, BondVOInterface> map = ChronicleMapBuilder
-        .of(String.class, DataValueClasses.directClassFor(BondVOInterface.class))
+        .of(String.class, BondVOInterface.class)
         .keySize(10)
         .create();
 ```
-
-notice that the the builder is passed a wrapped value type
-
-``` java
-.of(CharSequence.class, DataValueClasses.directClassFor(BondVOInterface.class))
-``` 
-
-this is in order to tell the builder that we are going to work directly with the off heap
-entries.
+by default, builder assume that we are going to work directly with the off heap
+entries (`DataValueClasses.directClassFor(BondVOInterface.class)`).
 
 The value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  now
 like before, we can

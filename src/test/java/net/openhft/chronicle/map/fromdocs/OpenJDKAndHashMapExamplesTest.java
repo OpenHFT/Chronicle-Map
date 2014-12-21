@@ -56,7 +56,7 @@ public class OpenJDKAndHashMapExamplesTest {
         file.deleteOnExit();
 
         ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
-                .of(String.class, DataValueClasses.directClassFor(BondVOInterface.class))
+                .of(String.class, BondVOInterface.class)
                 .keySize(10)
                 .createPersistedTo(file);
 

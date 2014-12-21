@@ -29,10 +29,7 @@ import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.io.serialization.impl.*;
-import net.openhft.lang.model.Byteable;
-import net.openhft.lang.model.DataValueGenerator;
-import net.openhft.lang.model.DataValueModel;
-import net.openhft.lang.model.DataValueModels;
+import net.openhft.lang.model.*;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
@@ -104,10 +101,6 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
     private void configureByDefault(Class<E> eClass, Role role) {
         instancesAreMutable = instancesAreMutable(eClass);
 
-        ObjectFactory<E> factory = concreteClass(eClass) && marshallerUseFactory(eClass) ?
-                new NewInstanceObjectFactory<E>(eClass) :
-                NullObjectFactory.<E>of();
-
         if (eClass.isInterface()) {
             try {
                 BytesReader<E> reader = DataValueBytesMarshallers.acquireBytesReader(eClass);
@@ -119,9 +112,18 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
                 sizeMarshaller(constant((long) size));
                 return;
             } catch (Exception e) {
+                try {
+                    eClass = DataValueClasses.directClassFor(eClass);
+                } catch (Exception ex) {
+                    // ignore, fall through
+                }
                 // ignore, fall through
             }
         }
+
+        ObjectFactory<E> factory = concreteClass(eClass) && marshallerUseFactory(eClass) ?
+                new NewInstanceObjectFactory<E>(eClass) :
+                NullObjectFactory.<E>of();
 
         if (concreteClass(eClass) && Byteable.class.isAssignableFrom(eClass)) {
             ByteableMarshaller byteableMarshaller = ByteableMarshaller.of((Class) eClass);
