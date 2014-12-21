@@ -126,9 +126,9 @@ public class CHMUseCasesTest {
     }
 
 
-    @Ignore("HCOLL-260 VanillaChronicleMap$ReadValueToBytes.readValue fails with large values")
     @Test
-    public void testLargeCharSequenceValue() throws ExecutionException, InterruptedException, IOException {
+    public void testLargeCharSequenceValue()
+            throws ExecutionException, InterruptedException, IOException {
 
         int valueSize = 1000000;
 
@@ -136,7 +136,8 @@ public class CHMUseCasesTest {
         Arrays.fill(expected, 'X');
 
         ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
-                .of(CharSequence.class, char[].class).entries(1).constantValueSizeBySample(expected);
+                .of(CharSequence.class, char[].class).entries(1)
+                .constantValueSizeBySample(expected);
 
         try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
             map.put("Key", expected);

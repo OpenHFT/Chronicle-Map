@@ -388,15 +388,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    final void put(Bytes entry, Bytes output) {
+    final void put(Bytes entry, TcpReplicator.TcpSocketChannelEntryWriter output) {
         put(entry, output, true);
     }
 
-    final void putIfAbsent(Bytes entry, Bytes output) {
+    final void putIfAbsent(Bytes entry, TcpReplicator.TcpSocketChannelEntryWriter output) {
         put(entry, output, false);
     }
 
-    private void put(Bytes entry, Bytes output, boolean replaceIfPresent) {
+    private void put(Bytes entry, TcpReplicator.TcpSocketChannelEntryWriter output,
+                     boolean replaceIfPresent) {
         ThreadLocalCopies copies = SegmentState.getCopies(null);
         SegmentState segmentState = SegmentState.get(copies);
         ReadValueToOutputBytes readValueToOutputBytes = segmentState.readValueToOutputBytes;
@@ -462,28 +463,32 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     private static class ReadValueToOutputBytes extends ReadValueToBytes {
-        private Bytes outputBytes;
+        private TcpReplicator.TcpSocketChannelEntryWriter output;
 
-        void reuse(SizeMarshaller valueSizeMarshaller, Bytes outputBytes) {
+        void reuse(SizeMarshaller valueSizeMarshaller,
+                   TcpReplicator.TcpSocketChannelEntryWriter output) {
             valueSizeMarshaller(valueSizeMarshaller);
-            this.outputBytes = outputBytes;
+            this.output = output;
         }
 
         @Override
         Bytes bytes(long valueSize) {
-            return outputBytes;
+            return output.in();
         }
 
         @Override
         public Bytes readValue(@NotNull ThreadLocalCopies copies, Bytes entry, Bytes usingBytes,
                                long valueSize) {
-            outputBytes.writeBoolean(false);
+            long totalSize = 1 + valueSizeMarshaller.sizeEncodingSize(valueSize) + valueSize;
+            output.ensureBufferSize(totalSize);
+            output.in().writeBoolean(false);
             return super.readValue(copies, entry, usingBytes, valueSize);
         }
 
         @Override
         public Bytes readNull() {
-            outputBytes.writeBoolean(true);
+            output.ensureBufferSize(1);
+            output.in().writeBoolean(true);
             return null;
         }
     }
@@ -573,7 +578,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return lookupUsing(key, usingValue, true);
     }
 
-    final void get(Bytes key, Bytes output) {
+    final void get(Bytes key, TcpReplicator.TcpSocketChannelEntryWriter output) {
         ThreadLocalCopies copies = SegmentState.getCopies(null);
         SegmentState segmentState = SegmentState.get(copies);
         ReadValueToOutputBytes readValueToOutputBytes = segmentState.readValueToOutputBytes;
@@ -1214,7 +1219,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 outputValueBytesToInstance, readValueToLazyBytes, true);
     }
 
-    final void remove(Bytes key, Bytes output) {
+    final void remove(Bytes key, TcpReplicator.TcpSocketChannelEntryWriter output) {
         ThreadLocalCopies copies = SegmentState.getCopies(null);
         SegmentState segmentState = SegmentState.get(copies);
         ReadValueToOutputBytes readValueToOutputBytes = segmentState.readValueToOutputBytes;
@@ -1333,7 +1338,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 this, expectedValue, this, newValue, this, valueIdentity());
     }
 
-    final void replaceKV(Bytes keyAndNewValue, Bytes output) {
+    final void replaceKV(Bytes keyAndNewValue, TcpReplicator.TcpSocketChannelEntryWriter output) {
         ThreadLocalCopies copies = SegmentState.getCopies(null);
         SegmentState segmentState = SegmentState.get(copies);
         ReadValueToOutputBytes readValueToOutputBytes = segmentState.readValueToOutputBytes;
