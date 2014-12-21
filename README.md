@@ -469,7 +469,7 @@ Below we show you how you can work directly with the off heap entries.
 
 ``` java
 ChronicleMap<CharSequence, BondVOInterface> map = ChronicleMapBuilder
-        .of(String.class, BondVOInterface.class)
+        .of(String.class, DataValueClasses.directClassFor(BondVOInterface.class))
         .keySize(10)
         .create();
 ```
