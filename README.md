@@ -549,7 +549,7 @@ AutoCloseable so will automatically unlock the segment when the try block is exi
 
 If you wish not to use a try block you must manually release the segment lock by calling
 ``` java
-context.close() // the lock will get released when this is called
+context.close() //  releases the lock
 ```
 
 ####  acquireUsingLocked()
