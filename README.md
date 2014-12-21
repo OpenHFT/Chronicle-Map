@@ -461,8 +461,9 @@ lets say that it is only the `coupon` field that we are interested in, then its 
 deserialise the whole object that implements the `BondVOInterface`. The `ChronicleMapBuilder` will look a the types of keys
  and values that you use, If the value type is a simple accessor/mutator interface that is exposing a non nested pojo, which uses simple types
  like `CharSequence` and primitives with corresponding get..() and
- set..() methods, Chronicle is able to generate off heap poxies so the whole object is not desrialized each
-  time it is accessed, The off heap poxies are able to read
+ set..() methods, Chronicle is able to generate off heap poxies so the whole object is not
+ deserialized each
+  time it is accessed, The off heap proxies are able to read
 and write into
 the off heap data structures directly, this reduced serialisation can give you a big performance boost.
 Below we show you how you can work directly with the off heap entries.
@@ -474,18 +475,16 @@ ChronicleMap<CharSequence, BondVOInterface> map = ChronicleMapBuilder
         .create();
 ```
 
-notice that the
+notice that the the builder is passed a wrapped value type
 
 ``` java
 .of(CharSequence.class, DataValueClasses.directClassFor(BondVOInterface.class))
 ``` 
 
-we have to wrap the interface ( in this example the BondVOInterface ), with DataValueClasses
-.directClassFor(...) method, in
-order
-to tell the builder that we are going to work directly with the off heap entries.
+this is order to tell the builder that we are going to work directly with the off heap
+entries.
 
-value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  now
+The value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  now
 like before, we can
 use the `getUsing(key,using)` method, but this time we have to create the ‘using’ instance slightly
 differently, we have to call either the `map.newValueInstance()` or `map.newKeyInstance()` method.
