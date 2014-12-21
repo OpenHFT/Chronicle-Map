@@ -580,10 +580,12 @@ look-ups and making your code run slightly faster.
 
 If you are only accessing ChronicleMap from a single thread. If you are not doing replication
 and don't care about atomic reads. Then its simpler ( and faster ) to use acquireUsing() otherwise we
-recommend you use `acquireUsingLocked(key,value)`
+recommend you use `acquireUsingLocked(key,value)` as this gives you atomicity.
 
-Since the acquireUsing() method can end up creating an entry, the acquireUsingLocked(key,value) method must hold
-a segment write lock, this is unlike  getUsing(key,using) which only holds a segment read lock.
+The acquireUsingLocked(key,value) method holds a segment write lock, as it will update or put a
+new entry into the map, this is unlike getUsing
+(key,using) which only holds a segment read lock. Below is an example of how to use
+acquireUsingLocked(..,..).
 
 ``` java
 BondVOInterface bond = ... // create your instance
