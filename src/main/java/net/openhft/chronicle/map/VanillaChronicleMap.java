@@ -583,7 +583,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return lookupUsing(key, usingValue, true);
     }
 
-    final void get(Bytes key, TcpReplicator.TcpSocketChannelEntryWriter output) {
+    final void getBytes(Bytes key, TcpReplicator.TcpSocketChannelEntryWriter output) {
         ThreadLocalCopies copies = SegmentState.getCopies(null);
         SegmentState segmentState = SegmentState.get(copies);
         ReadValueToOutputBytes readValueToOutputBytes = segmentState.readValueToOutputBytes;
@@ -1145,7 +1145,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 metaKeyInterop.size(keyInterop, key));
     }
 
-    final boolean containsKey(Bytes key) {
+    final boolean containsBytesKey(Bytes key) {
         return containsKey(null,
                 DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
                 BytesBytesInterop.INSTANCE,
@@ -1301,7 +1301,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 keyIdentity(), this, expectedValue, valueIdentity(), this, removeReturnsNull);
     }
 
-    final void removeKeyAsBytes(Bytes key) {
+    final void removeBytesKeyWithoutOutput(Bytes key) {
         ThreadLocalCopies copies = SegmentState.getCopies(null);
         SegmentState segmentState = SegmentState.get(copies);
         ReadValueToBytes readValueToLazyBytes = segmentState.readValueToLazyBytes;
@@ -1314,7 +1314,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 outputValueBytesToInstance, readValueToLazyBytes, true);
     }
 
-    final void remove(Bytes key, TcpReplicator.TcpSocketChannelEntryWriter output) {
+    final void removeBytesKeyOutputPrevValue(Bytes key,
+                                             TcpReplicator.TcpSocketChannelEntryWriter output) {
         ThreadLocalCopies copies = SegmentState.getCopies(null);
         SegmentState segmentState = SegmentState.get(copies);
         ReadValueToOutputBytes readValueToOutputBytes = segmentState.readValueToOutputBytes;
@@ -1328,7 +1329,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     // for boolean remove(Object key, Object value);
-    final boolean removeWithValue(Bytes entry) {
+    final boolean removeBytesEntry(Bytes entry) {
         ThreadLocalCopies copies = SegmentState.getCopies(null);
         SegmentState segmentState = SegmentState.get(copies);
         long keySize = keySizeMarshaller.readSize(entry);

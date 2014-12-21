@@ -1543,7 +1543,7 @@ class StatelessServerConnector<K, V> {
     private Work removeWithValue(Bytes reader, @NotNull Bytes writer, final long sizeLocation,
                                  long timestamp, byte id) {
         try {
-            writer.writeBoolean(map.removeWithValue(reader));
+            writer.writeBoolean(map.removeBytesEntry(reader));
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         }
@@ -1638,7 +1638,7 @@ class StatelessServerConnector<K, V> {
     @Nullable
     private Work containsKey(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         try {
-            writer.writeBoolean(map.containsKey(reader));
+            writer.writeBoolean(map.containsBytesKey(reader));
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         }
@@ -1664,7 +1664,7 @@ class StatelessServerConnector<K, V> {
     private Work get(Bytes reader, TcpReplicator.TcpSocketChannelEntryWriter writer,
                      final long sizeLocation, long transactionId) {
         try {
-            map.get(reader, writer);
+            map.getBytes(reader, writer);
         } catch (Throwable e) {
             return sendException(writer.in(), sizeLocation, e);
         }
@@ -1694,7 +1694,7 @@ class StatelessServerConnector<K, V> {
     @SuppressWarnings("SameReturnValue")
     @Nullable
     private Work remove(Bytes reader, long timestamp, byte id) {
-        map.removeKeyAsBytes(reader);
+        map.removeBytesKeyWithoutOutput(reader);
         return null;
     }
 
@@ -1702,7 +1702,7 @@ class StatelessServerConnector<K, V> {
     private Work remove(Bytes reader, TcpReplicator.TcpSocketChannelEntryWriter writer,
                         final long sizeLocation, long timestamp, byte id) {
         try {
-            map.remove(reader, writer);
+            map.removeBytesKeyOutputPrevValue(reader, writer);
         } catch (Throwable e) {
             return sendException(writer.in(), sizeLocation, e);
         }
