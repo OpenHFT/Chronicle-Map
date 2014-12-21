@@ -579,8 +579,8 @@ look-ups and making your code run slightly faster.
 ####  acquireUsingLocked()
 
 If you are only accessing ChronicleMap from a single thread. If you are not doing replication
-and don't care about atomic reads. Then its simpler ( and faster ) to use acquireUsing() otherwise we
-recommend you use `acquireUsingLocked(key,value)` as this gives you atomicity.
+and don't care about atomic reads. Then its simpler ( and faster ) to use `acquireUsing(key,
+value)` otherwise werecommend you use `acquireUsingLocked(key,value)` as this gives you atomicity.
 
 The acquireUsingLocked(key,value) method holds a segment write lock, as it will update or put a
 new entry into the map, this is unlike getUsing
@@ -600,9 +600,11 @@ try (WriteContext<?, BondVOInterface> context = map.acquireUsingLocked("one", bo
 }
 ```
 
-If after you have read the 'issueDate' and  'symbol' and you wish to remove the entry based on some
-business logic, its more efficient to use the 'context' to remove the entry, as the contents is
-already aware when the entry is in memory.
+
+If after some business logic, in our example after reading the 'issueDate' and
+'symbol', you wish to remove the entry, its more efficient to use the 'context' directly to remove the entry. The
+'context' is already aware of the entries location in memory. So it will be quicker to call
+`context.removeEntry()` rather than `map.remove(key)`.
 
 ## Oversized Entries Support
 
