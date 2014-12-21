@@ -552,7 +552,7 @@ If you wish not to use a try block you must manually release the segment lock by
 context.close() //  releases the lock
 ```
 
-####  acquireUsingLocked()
+####  acquireUsing()
 Just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
 code is a pattern that you will often come across,
 
