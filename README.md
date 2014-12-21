@@ -481,7 +481,7 @@ notice that the the builder is passed a wrapped value type
 .of(CharSequence.class, DataValueClasses.directClassFor(BondVOInterface.class))
 ``` 
 
-this is order to tell the builder that we are going to work directly with the off heap
+this is in order to tell the builder that we are going to work directly with the off heap
 entries.
 
 The value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  now
