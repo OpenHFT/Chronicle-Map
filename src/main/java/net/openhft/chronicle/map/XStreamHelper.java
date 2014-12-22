@@ -17,20 +17,49 @@
 package net.openhft.chronicle.map;
 
 import com.thoughtworks.xstream.converters.ConversionException;
+import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import net.openhft.lang.model.DataValueClasses;
+import net.openhft.lang.values.StringValue;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
+import java.util.Collections;
 
 /**
  * Created by Rob on 18/12/14.
  */
 class XStreamHelper {
 
+
+    static Object deserialize(UnmarshallingContext unmarshallingContext, HierarchicalStreamReader
+            reader) {
+        String type = reader.getNodeName();
+
+        switch (type) {
+
+            case "java.util.Collections$EmptySet":
+                return Collections.EMPTY_SET;
+
+            case "java.util.Collections$EmptyList":
+                return Collections.EMPTY_LIST;
+
+            case "java.util.Collections$EmptyMap":
+            case "java.util.Collections.EmptyMap":
+                return Collections.EMPTY_MAP;
+
+
+        }
+
+
+        Class o = XStreamHelper.forName(type);
+        return unmarshallingContext.convertAnother(null, o);
+    }
+
     static Class forName(String type) {
+
 
         boolean isNative = type.endsWith("$$Native");
         if (!isNative && !type.endsWith("$$Heap")) {
@@ -81,6 +110,12 @@ class XStreamHelper {
                     final String value = reader.getValue();
                     Class<?> parameterType = p.getPropertyType();
 
+
+                    if (StringValue.class.isAssignableFrom(o.getClass())) {
+                        ((StringValue) o).setValue(value);
+                        return o;
+                    }
+
                     if (parameterType.isPrimitive()) {
 
                         // convert the primitive to their boxed type
@@ -115,4 +150,6 @@ class XStreamHelper {
         throw new ConversionException("setValue(..) method not found in class=" + aClass
                 .getCanonicalName());
     }
+
+
 }

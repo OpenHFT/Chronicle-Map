@@ -67,6 +67,7 @@ import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.Asserts.assertNotNull;
+import static net.openhft.chronicle.map.XStreamHelper.deserialize;
 import static net.openhft.lang.MemoryUnit.*;
 
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
@@ -671,7 +672,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public synchronized void getAll(File toFile) throws IOException {
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
-        xstream.alias("chronicle-entries", VanillaChronicleMap.EntrySet.class);
+        xstream.alias("cmap", VanillaChronicleMap.EntrySet.class);
         lazyXStreamConverter().registerConverter(xstream);
 
         OutputStream outputStream = new FileOutputStream(toFile);
@@ -686,7 +687,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public synchronized void putAll(File fromFile) throws IOException {
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
-        xstream.alias("chronicle-entries", VanillaChronicleMap.EntrySet.class);
+        xstream.alias("cmap", VanillaChronicleMap.EntrySet.class);
 
         // ideally we will use java serialization if we can
         lazyXStreamConverter().registerConverter(xstream);
@@ -817,7 +818,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     } else if (EntrySet.class
                             .isAssignableFrom(o.getClass())) {
                         for (Entry e : (EntrySet) o) {
-                            writer.startNode("chronicle-entry");
+                            writer.startNode("entry");
                             marshallingContext.convertAnother(e);
                             writer.endNode();
                         }
@@ -951,13 +952,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     final String nodeName = reader.getNodeName();
 
                     switch (nodeName) {
-                        case "chronicle-entries":
+                        case "cmap":
 
                             while (reader.hasMoreChildren()) {
                                 reader.moveDown();
                                 final String nodeName0 = reader.getNodeName();
 
-                                if (!nodeName0.equals("chronicle-entry"))
+                                if (!nodeName0.equals("entry"))
                                     throw new ConversionException("unable to convert node " +
                                             "named=" + nodeName0);
                                 final K k;
@@ -966,17 +967,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                                 reader.moveDown();
                                 {
-
-                                    String type = reader.getNodeName();
-                                    Class o = XStreamHelper.forName(type);
-                                    k = (K) unmarshallingContext.convertAnother(null, o);
+                                    k = (K) deserialize(unmarshallingContext, reader);
                                 }
                                 reader.moveUp();
                                 reader.moveDown();
                                 {
-                                    String type = reader.getNodeName();
-                                    Class o = XStreamHelper.forName(type);
-                                    v = (V) unmarshallingContext.convertAnother(null, o);
+                                    v = (V) deserialize(unmarshallingContext, reader);
                                 }
                                 reader.moveUp();
 
@@ -994,7 +990,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                     return null;
                 }
-
 
 
             };
