@@ -1,5 +1,7 @@
 package net.openhft.chronicle.map;
 
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.model.DataValueClasses;
@@ -9,6 +11,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -156,6 +159,47 @@ public class ChronicleMapImportExportTest {
     }
 
 
+
+    @Test
+    public void testFromHashMap() throws IOException, InterruptedException {
+
+        File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
+        System.out.println(file.getCanonicalFile());
+
+        File file2 = new File(TMP + "/chronicle-map-2" + System.nanoTime() + ".json");
+        System.out.println(file2.getCanonicalFile());
+
+        HashMap<Integer, String> map = new HashMap<Integer, String>();
+        map.put(1, "one");
+        map.put(2, "two");
+
+
+        final XStream xstream = new XStream(new JettisonMappedXmlDriver());
+        xstream.setMode(XStream.NO_REFERENCES);
+
+        xstream.toXML(map, new FileOutputStream(file));
+
+
+        try (ChronicleMap<Integer, String> expected = ChronicleMapBuilder.of(Integer.class,
+                String.class).create()) {
+
+            expected.put(1, "one");
+            expected.put(2, "two");
+
+            expected.getAll(file2);
+            expected.putAll(file2);
+
+
+            Assert.assertEquals(2, expected.size());
+            Assert.assertEquals("one", expected.get(1));
+            Assert.assertEquals("two", expected.get(2));
+        }
+
+
+        //file.deleteOnExit();
+    }
+
+
     @Ignore("HCOLL-239 - The JSON to Map import/export should work on the stateless client.")
     @Test
     public void testToJsonWithStatlessClient() throws IOException, InterruptedException {
@@ -223,7 +267,7 @@ public class ChronicleMapImportExportTest {
     public void testBondVOInterface() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
-        file.deleteOnExit();
+      //  file.deleteOnExit();
 
         System.out.println(file.getAbsolutePath());
         try (ChronicleMap<CharSequence, BondVOInterface> expected =
@@ -248,7 +292,8 @@ public class ChronicleMapImportExportTest {
                 Assert.assertEquals(expected.get("one").getCoupon(), actual.get("one").getCoupon(), 0);
             }
         } finally {
-            file.delete();
+     //       file.delete();
         }
     }
 }
+

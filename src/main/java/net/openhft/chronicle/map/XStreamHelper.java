@@ -17,7 +17,6 @@
 package net.openhft.chronicle.map;
 
 import com.thoughtworks.xstream.converters.ConversionException;
-import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import net.openhft.lang.model.DataValueClasses;
 
@@ -30,17 +29,23 @@ import java.lang.reflect.Method;
  * Created by Rob on 18/12/14.
  */
 class XStreamHelper {
-    static Object to$$Native2(HierarchicalStreamReader reader, final Class aClass2, final boolean isKey,
-                              ChronicleMap map, UnmarshallingContext unmarshallingContext, String type) {
 
+    static Class forName(String type) {
 
         boolean isNative = type.endsWith("$$Native");
+        if (!isNative && !type.endsWith("$$Heap")) {
+            try {
+                return Class.forName(type);
+            } catch (ClassNotFoundException e1) {
+                throw new ConversionException(e1);
+            }
+        }
 
 
-        Class<?> aClass;
         try {
-            aClass = Class.forName(type);
+            return Class.forName(type);
         } catch (ClassNotFoundException e) {
+
             String clazz = isNative ? type.substring(0, type.length() -
                     "$$Native".length()) : type.substring(0, type.length() -
                     "$$Heap".length());
@@ -50,23 +55,20 @@ class XStreamHelper {
                 throw new ConversionException(e1);
             }
             try {
-                aClass = Class.forName(type);
+                return Class.forName(type);
             } catch (ClassNotFoundException e1) {
                 throw new ConversionException(e1);
             }
         }
 
 
-        return unmarshallingContext.convertAnother(null, aClass);
     }
 
 
+    static Object toBuiltIn$$(HierarchicalStreamReader reader, final Class aClass) {
 
 
-    static Object to$$Native(HierarchicalStreamReader reader, final Class aClass, final boolean isKey, ChronicleMap map, UnmarshallingContext unmarshallingContext) {
-
-
-        final Object o = isKey ? map.newKeyInstance() : map.newValueInstance();
+        final Object o = DataValueClasses.newDirectInstance(aClass);
 
         try {
 

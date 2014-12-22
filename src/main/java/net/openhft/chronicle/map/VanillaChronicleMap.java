@@ -62,13 +62,11 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import static java.beans.Introspector.getBeanInfo;
-import static java.lang.Class.forName;
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
 import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.Asserts.assertNotNull;
-import static net.openhft.chronicle.map.XStreamHelper.to$$Native;
 import static net.openhft.lang.MemoryUnit.*;
 
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
@@ -779,7 +777,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         private void registerConverter(XStream xstream) {
             final Converter converter = new Converter() {
-                final Bytes buffer = XStreamConverter.this.buffer;
+
 
                 @Override
                 public boolean canConvert(Class aClass) {
@@ -802,17 +800,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     if (WriteThroughEntry.class.isAssignableFrom(o.getClass())) {
 
                         final SimpleEntry e = (SimpleEntry) o;
-                        writer.startNode("chronicle-key");
-
                         Object key = e.getKey();
-                        writeType(writer, key, kClass);
+                        writer.startNode(key.getClass().getCanonicalName());
+
 
                         marshallingContext.convertAnother(key);
                         writer.endNode();
 
-                        writer.startNode("chronicle-value");
                         Object value = e.getValue();
-                        writeType(writer, value, vClass);
+                        writer.startNode(value.getClass().getCanonicalName());
+
+
                         marshallingContext.convertAnother(value);
                         writer.endNode();
 
@@ -888,10 +886,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                                         UnmarshallingContext unmarshallingContext) {
 
                     String canonicalName = unmarshallingContext.getRequiredType().getCanonicalName();
+
                     boolean isNative = canonicalName.endsWith("$$Native");
                     boolean isHeap = canonicalName.endsWith("$$Heap");
 
                     if (isNative || isHeap) {
+
+
+                        if (unmarshallingContext.getRequiredType().getCanonicalName().startsWith
+                                ("net.openhft.lang.values"))
+                            return XStreamHelper.toBuiltIn$$(reader, unmarshallingContext.getRequiredType()
+                            );
 
 
                         final String nodeName = isNative ?
@@ -903,8 +908,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                         Object o;
 
+
                         try {
-                            o = DataValueClasses.newDirectInstance(Class.forName(nodeName));
+                            Class<?> interfaceClass = Class.forName(nodeName);
+                            o = (isNative) ?
+                                    DataValueClasses.newDirectInstance(interfaceClass) :
+                                    DataValueClasses.newInstance(interfaceClass);
 
                             final BeanInfo beanInfo = getBeanInfo(o.getClass());
 
@@ -940,7 +949,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
 
                     final String nodeName = reader.getNodeName();
-                    String type = reader.getAttribute("type");
+
                     switch (nodeName) {
                         case "chronicle-entries":
 
@@ -951,21 +960,26 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                                 if (!nodeName0.equals("chronicle-entry"))
                                     throw new ConversionException("unable to convert node " +
                                             "named=" + nodeName0);
-                                K k = null;
-                                V v = null;
+                                final K k;
+                                final V v;
 
-                                while (reader.hasMoreChildren()) {
-                                    reader.moveDown();
-                                    final String nodeName1 = reader
-                                            .getNodeName();
-                                    if ("chronicle-key".equals(nodeName1))
-                                        k = get(reader, unmarshallingContext, kClass);
-                                    else if ("chronicle-value".equals(nodeName1))
-                                        v = get(reader, unmarshallingContext, vClass);
-                                    else
-                                        throw new ConversionException("expecting either a key or value");
-                                    reader.moveUp();
+
+                                reader.moveDown();
+                                {
+
+                                    String type = reader.getNodeName();
+                                    Class o = XStreamHelper.forName(type);
+                                    k = (K) unmarshallingContext.convertAnother(null, o);
                                 }
+                                reader.moveUp();
+                                reader.moveDown();
+                                {
+                                    String type = reader.getNodeName();
+                                    Class o = XStreamHelper.forName(type);
+                                    v = (V) unmarshallingContext.convertAnother(null, o);
+                                }
+                                reader.moveUp();
+
 
                                 if (k != null)
                                     VanillaChronicleMap.this.put(k, v);
@@ -974,57 +988,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             }
 
                             return null;
-                        case "chronicle-key":
 
-                            if (kClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
-                                return to$$Native(reader, vClass, true, VanillaChronicleMap.this, unmarshallingContext);
-                            } else if (type.endsWith("$$Native") || type.endsWith("$$Heap")) {
-                                return XStreamHelper.to$$Native2(reader, vClass, false, VanillaChronicleMap.this, unmarshallingContext, type);
-                            } else {
-                                long keySize = keySizeMarshaller.readSize(buffer);
-                                ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
-                                BytesReader<K> keyReader = keyReaderProvider.get(copies, originalKeyReader);
-                                return keyReader.read(buffer, keySize);
-                            }
-                        case "chronicle-value":
-
-                            if (vClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
-                                return to$$Native(reader, vClass, false, VanillaChronicleMap.this, unmarshallingContext);
-                            } else if (type.endsWith("$$Native") || type.endsWith("$$Heap")) {
-                                return XStreamHelper.to$$Native2(reader, vClass, false, VanillaChronicleMap.this, unmarshallingContext, type);
-                            } else {
-                                long valueSize = valueSizeMarshaller.readSize(buffer);
-                                ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
-                                BytesReader<V> valueReader =
-                                        valueReaderProvider.get(copies, originalValueReader);
-                                return valueReader.read(buffer, valueSize);
-                            }
 
                     }
 
                     return null;
                 }
 
-                private <E> E get(HierarchicalStreamReader reader,
-                                  UnmarshallingContext unmarshallingContext,
-                                  Class<E> clazz) {
-
-                    if (clazz == CharSequence.class)
-                        return (E) unmarshallingContext.convertAnother(null, String.class);
-
-                    if (reader.getAttributeCount() > 0) {
-                        final String type = reader.getAttribute("type");
-                        if (type != null)
-                            try {
-                                return (E) unmarshallingContext.convertAnother(null, forName(type));
-                            } catch (ClassNotFoundException e) {
-                                throw new ConversionException(e);
-                            }
-
-                    }
-
-                    return (E) unmarshallingContext.convertAnother(null, clazz);
-                }
 
 
             };
@@ -1032,20 +1002,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             xstream.registerConverter(converter);
         }
 
-        private void writeType(HierarchicalStreamWriter writer, Object o, final Class clazz) {
-            if (clazz == CharSequence.class)
-                return;
 
-            String simpleName = o.getClass().getCanonicalName();
-            if (simpleName.startsWith("net.openhft.lang.values")) {
-                String nodeName = simpleName.substring(0, simpleName.length() -
-                        "$$Native".length());
-                if (!nodeName.equals(clazz.getCanonicalName()))
-                    writer.addAttribute("type", nodeName);
-            } else if (simpleName.endsWith("$$Native") || !clazz.equals(o.getClass())) {
-                writer.addAttribute("type", o.getClass().getCanonicalName());
-            }
-        }
     }
 
     @NotNull
