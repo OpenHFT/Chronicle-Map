@@ -54,22 +54,20 @@ interface MultiMap {
     /**
      * Used for start a search for a given key
      */
-    void startSearch(long key);
-
-    long getSearchHash();
+    void startSearch(long key, SearchState searchStateToReuse);
 
     /**
      * Used for getting the next position for a given key
      *
      * @return the next position for the last search or negative value
      */
-    long nextPos();
+    long nextPos(SearchState searchState);
 
-    void removePrevPos();
+    void removePrevPos(SearchState searchState);
 
-    void replacePrevPos(long newValue);
+    void replacePrevPos(SearchState searchState, long newValue);
 
-    void putAfterFailedSearch(long value);
+    void putAfterFailedSearch(SearchState searchState, long value);
 
     void clear();
 

@@ -44,9 +44,6 @@ class Int24Int24MultiMap implements MultiMap {
     private final long capacityInBytes;
     private final Bytes bytes;
 
-    private long searchHash = -1L;
-    private long searchPos = -1L;
-
     public Int24Int24MultiMap(long minCapacity) {
         long capacity = MultiMapFactory.multiMapCapacity(minCapacity);
         this.capacity = (int) capacity;
@@ -208,57 +205,53 @@ class Int24Int24MultiMap implements MultiMap {
     // Stateful methods
 
     @Override
-    public void startSearch(long key) {
+    public void startSearch(long key, SearchState searchStateToReuse) {
         key = maskUnsetKey(key);
-        searchPos = pos(key);
-        searchHash = key;
+        searchStateToReuse.searchPos = pos(key);
+        searchStateToReuse.searchHash = key;
     }
 
     @Override
-    public long nextPos() {
-        long pos = searchPos;
+    public long nextPos(SearchState searchState) {
+        long pos = searchState.searchPos;
         while (true) {
             long entry = bytes.readInt48(pos);
             if (entry == UNSET_ENTRY) {
-                searchPos = pos;
+                searchState.searchPos = pos;
                 return -1L;
             }
             pos = step(pos);
-            if (key(entry) == searchHash) {
-                searchPos = pos;
+            if (key(entry) == searchState.searchHash) {
+                searchState.searchPos = pos;
                 return value(entry);
             }
         }
     }
 
     @Override
-    public void removePrevPos() {
-        long prevPos = stepBack(searchPos);
+    public void removePrevPos(SearchState searchState) {
+        long prevPos = stepBack(searchState.searchPos);
         long entry = bytes.readInt48(prevPos);
         positions.clear(value(entry));
         removePos(prevPos);
     }
 
     @Override
-    public void replacePrevPos(long newValue) {
+    public void replacePrevPos(SearchState searchState, long newValue) {
         checkValueForPut(newValue);
-        long prevPos = stepBack(searchPos);
+        long prevPos = stepBack(searchState.searchPos);
         long oldEntry = bytes.readInt48(prevPos);
         long oldValue = value(oldEntry);
         positions.clear(oldValue);
         positions.set(newValue);
-        bytes.writeInt48(prevPos, entry(searchHash, newValue));
+        bytes.writeInt48(prevPos, entry(searchState.searchHash, newValue));
     }
 
     @Override
-    public void putAfterFailedSearch(long value) {
+    public void putAfterFailedSearch(SearchState searchState, long value) {
         checkValueForPut(value);
         positions.set(value);
-        bytes.writeInt48(searchPos, entry(searchHash, value));
-    }
-
-    public long getSearchHash() {
-        return searchHash;
+        bytes.writeInt48(searchState.searchPos, entry(searchState.searchHash, value));
     }
 
     @Override

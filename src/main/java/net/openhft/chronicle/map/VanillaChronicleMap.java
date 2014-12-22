@@ -1591,7 +1591,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             return segmentStateProvider.getCopies(copies);
         }
 
-        static SegmentState get(@NotNull ThreadLocalCopies copies) {
+        static @NotNull SegmentState get(@NotNull ThreadLocalCopies copies) {
             assertNotNull(copies);
             return segmentStateProvider.get(copies, originalSegmentState).get();
         }
@@ -1616,6 +1616,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         long pos;
         long valueSizePos;
+
+        SearchState searchState = new SearchState();
 
         private SegmentState(int depth) {
             if (depth > (1 << 16))
@@ -1909,77 +1911,61 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
-        RV acquire(@Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
+        RV acquire(@Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
                    MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                    InstanceOrBytesToInstance<KB, K> toKey,
                    ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
                    long hash2, boolean create, MutableLockedEntry lock) {
+            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
+            if (segmentState == null) {
+                copies = SegmentState.getCopies(copies);
+                segmentState = SegmentState.get(copies);
+            }
             readLock(null);
             try {
                 return acquireWithoutLock(copies, segmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
                         readValue, usingValue, toValue, hash2, create, lock);
             } finally {
-                if (segmentState != null)
-                    segmentState.close();
+                segmentState.close();
                 readUnlock();
             }
         }
 
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
         RV acquireWithoutLock(
-                @Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
+                @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
                 ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
                 long hash2, boolean create, MutableLockedEntry lock) {
-            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
-            SegmentState localSegmentState = segmentState;
-            try {
-                MultiStoreBytes entry = null;
-                MultiMap hashLookup = this.hashLookup;
-                hashLookup.startSearch(hash2);
-                for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
-                    long offset = offsetFromPos(pos);
-                    if (entry == null) {
-                        if (localSegmentState == null) {
-                            copies = SegmentState.getCopies(copies);
-                            localSegmentState = SegmentState.get(copies);
-                        }
-                        entry = localSegmentState.tmpBytes;
-                    }
-                    reuse(entry, offset);
-                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
-                        continue;
-                    // key is found
-                    entry.skip(keySize);
-                    return readValueAndNotifyGet(copies, key, keySize, toKey,
-                            readValue, usingValue, toValue, entry);
-                }
-                // key is not found
-                if (!create)
-                    return readValue.readNull();
-                if (entry == null) {
-                    if (localSegmentState == null) {
-                        copies = SegmentState.getCopies(copies); // after this, copies is not null
-                        localSegmentState = SegmentState.get(copies);
-                    }
-                    entry = localSegmentState.tmpBytes;
-                }
-
-                RV result = createEntryOnAcquire(copies, localSegmentState,
-                        metaKeyInterop, keyInterop, key, keySize, toKey,
+            MultiStoreBytes entry = segmentState.tmpBytes;
+            MultiMap hashLookup = this.hashLookup;
+            SearchState searchState = segmentState.searchState;
+            hashLookup.startSearch(hash2, searchState);
+            for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
+                long offset = offsetFromPos(pos);
+                reuse(entry, offset);
+                if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
+                    continue;
+                // key is found
+                entry.skip(keySize);
+                return readValueAndNotifyGet(copies, key, keySize, toKey,
                         readValue, usingValue, toValue, entry);
-
-                //  notify the context that the entry was created
-                if (lock instanceof WriteLocked)
-                    ((WriteLocked) lock).created(true);
-
-                return result;
-            } finally {
-                if (segmentState == null && localSegmentState != null)
-                    localSegmentState.close();
             }
+            // key is not found
+            if (!create)
+                return readValue.readNull();
+
+            RV result = createEntryOnAcquire(copies, segmentState,
+                    metaKeyInterop, keyInterop, key, keySize, toKey,
+                    readValue, usingValue, toValue, entry);
+
+            //  notify the context that the entry was created
+            if (lock instanceof WriteLocked)
+                ((WriteLocked) lock).created(true);
+
+            return result;
         }
 
         final <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
@@ -2056,7 +2042,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
                 RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
-        RV put3(@Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
+        RV put3(@Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
                 GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
@@ -2064,6 +2050,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 long hash2, boolean replaceIfPresent,
                 ReadValue<RV> readValue, boolean resultUnused) {
             shouldNotBeCalledFromReplicatedChronicleMap("Segment.put");
+            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
+            if (segmentState == null) {
+                copies = SegmentState.getCopies(copies);
+                segmentState = SegmentState.get(copies);
+            }
             writeLock();
             try {
                 return putWithoutLock(copies, segmentState,
@@ -2071,8 +2062,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         getValueInterops, value, toValue,
                         hash2, replaceIfPresent, readValue, resultUnused);
             } finally {
-                if (segmentState != null)
-                    segmentState.close();
+                segmentState.close();
                 writeUnlock();
             }
         }
@@ -2080,63 +2070,53 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
                 RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
         RV putWithoutLock(
-                @Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
+                @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
                 GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
                 InstanceOrBytesToInstance<? super VB, V> toValue,
                 long hash2, boolean replaceIfPresent,
                 ReadValue<RV> readValue, boolean resultUnused) {
-            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
-            SegmentState localSegmentState = segmentState;
-            if (localSegmentState == null) {
-                copies = SegmentState.getCopies(copies); // copies is not null now
-                localSegmentState = SegmentState.get(copies);
-            }
-            try {
-                hashLookup.startSearch(hash2);
-                MultiStoreBytes entry = localSegmentState.tmpBytes;
-                for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
-                    long offset = offsetFromPos(pos);
-                    reuse(entry, offset);
-                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
-                        continue;
-                    // key is found
-                    entry.skip(keySize);
-                    if (replaceIfPresent) {
-                        return replaceValueAndNotifyPut(copies, localSegmentState,
-                                key, keySize, toKey,
-                                getValueInterops, value, toValue,
-                                entry, pos, offset, hashLookup, readValue, resultUnused,
-                                false, false);
-                    } else {
-                        long valueSize = readValueSize(entry);
-                        return resultUnused ? null :
-                                readValue.readValue(copies, entry, null, valueSize);
-                    }
+            SearchState searchState = segmentState.searchState;
+            hashLookup.startSearch(hash2, searchState);
+            MultiStoreBytes entry = segmentState.tmpBytes;
+            for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
+                long offset = offsetFromPos(pos);
+                reuse(entry, offset);
+                if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
+                    continue;
+                // key is found
+                entry.skip(keySize);
+                if (replaceIfPresent) {
+                    return replaceValueAndNotifyPut(copies, segmentState,
+                            key, keySize, toKey,
+                            getValueInterops, value, toValue,
+                            entry, pos, offset, hashLookup, readValue, resultUnused,
+                            false, false);
+                } else {
+                    long valueSize = readValueSize(entry);
+                    return resultUnused ? null :
+                            readValue.readValue(copies, entry, null, valueSize);
                 }
-                // key is not found
-                VBI valueInterop = getValueInterops.getValueInterop(copies);
-                MVBI metaValueInterop =
-                        getValueInterops.getMetaValueInterop(copies, valueInterop, value);
-                long valueSize = metaValueInterop.size(valueInterop, value);
-                putEntry(localSegmentState, metaKeyInterop, keyInterop, key, keySize,
-                        metaValueInterop, valueInterop, value, entry, false);
-
-                // put callbacks
-                onPut(this, localSegmentState.pos);
-                if (bytesEventListener != null)
-                    bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                            localSegmentState.valueSizePos, true);
-                if (eventListener != null)
-                    eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                            toValue.toInstance(copies, value, valueSize), null);
-
-                return resultUnused ? null : readValue.readNull();
-            } finally {
-                if (segmentState == null && localSegmentState != null)
-                    localSegmentState.close();
             }
+            // key is not found
+            VBI valueInterop = getValueInterops.getValueInterop(copies);
+            MVBI metaValueInterop =
+                    getValueInterops.getMetaValueInterop(copies, valueInterop, value);
+            long valueSize = metaValueInterop.size(valueInterop, value);
+            putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
+                    metaValueInterop, valueInterop, value, entry, false);
+
+            // put callbacks
+            onPut(this, segmentState.pos);
+            if (bytesEventListener != null)
+                bytesEventListener.onPut(entry, 0L, metaDataBytes,
+                        segmentState.valueSizePos, true);
+            if (eventListener != null)
+                eventListener.onPut(toKey.toInstance(copies, key, keySize),
+                        toValue.toInstance(copies, value, valueSize), null);
+
+            return resultUnused ? null : readValue.readNull();
         }
 
         final <KB, RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
@@ -2220,7 +2200,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             alignment.alignPositionAddr(entry);
             metaElemWriter.write(elemWriter, entry, elem);
 
-            hashLookup.putAfterFailedSearch(pos);
+            hashLookup.putAfterFailedSearch(segmentState.searchState, pos);
             incrementSize();
 
             return valueSize;
@@ -2305,6 +2285,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                       GetValueInterops<VB, VBI, MVBI> getValueInterops, VB expectedValue,
                       InstanceOrBytesToInstance<RV, V> toValue,
                       long hash2, ReadValue<RV> readValue, boolean resultUnused) {
+            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
+            if (segmentState == null) {
+                copies = SegmentState.getCopies(copies);
+                segmentState = SegmentState.get(copies);
+            }
             writeLock();
             try {
                 return removeWithoutLock(copies, segmentState,
@@ -2312,8 +2297,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         getValueInterops, expectedValue, toValue,
                         hash2, readValue, resultUnused);
             } finally {
-                if (segmentState != null)
-                    segmentState.close();
+                segmentState.close();
                 writeUnlock();
             }
         }
@@ -2327,63 +2311,50 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
                 RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
         Object removeWithoutLock(
-                @Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
+                @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
                 GetValueInterops<VB, VBI, MVBI> getValueInterops, VB expectedValue,
                 InstanceOrBytesToInstance<RV, V> toValue,
                 long hash2, ReadValue<RV> readValue, boolean resultUnused) {
-            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
-            SegmentState localSegmentState = segmentState;
-            try {
-                MultiMap hashLookup = hashLookup();
-                hashLookup.startSearch(hash2);
-                MultiStoreBytes entry = null;
-                for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
-                    long offset = offsetFromPos(pos);
-                    if (entry == null) {
-                        if (localSegmentState == null) {
-                            copies = SegmentState.getCopies(copies); // copies is not null now
-                            localSegmentState = SegmentState.get(copies);
-                        }
-                        entry = localSegmentState.tmpBytes;
-                    }
-                    reuse(entry, offset);
-                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
-                        continue;
-                    // key is found
-                    entry.skip(keySize);
-                    long valueSizePos = entry.position();
-                    long valueSize = readValueSize(entry);
+            MultiStoreBytes entry = segmentState.tmpBytes;
+            SearchState searchState = segmentState.searchState;
+            MultiMap hashLookup = hashLookup();
+            hashLookup.startSearch(hash2, searchState);
+            for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
+                long offset = offsetFromPos(pos);
+                reuse(entry, offset);
+                if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
+                    continue;
+                // key is found
+                entry.skip(keySize);
+                long valueSizePos = entry.position();
+                long valueSize = readValueSize(entry);
 
-                    // check the value assigned for the key is that we expect
-                    if (expectedValue != null) {
-                        VBI valueInterop = getValueInterops.getValueInterop(copies);
-                        MVBI metaValueInterop = getValueInterops.getMetaValueInterop(
-                                copies, valueInterop, expectedValue);
-                        if (metaValueInterop.size(valueInterop, expectedValue) != valueSize)
-                            return Boolean.FALSE;
-                        if (!metaValueInterop.startsWith(valueInterop, entry, expectedValue))
-                            return Boolean.FALSE;
-                    }
-                    return removeEntry(copies, key, keySize, toKey, toValue,
-                            readValue, resultUnused, hashLookup, entry, pos, valueSizePos,
-                            valueSize, false, true, expectedValue != null);
+                // check the value assigned for the key is that we expect
+                if (expectedValue != null) {
+                    VBI valueInterop = getValueInterops.getValueInterop(copies);
+                    MVBI metaValueInterop = getValueInterops.getMetaValueInterop(
+                            copies, valueInterop, expectedValue);
+                    if (metaValueInterop.size(valueInterop, expectedValue) != valueSize)
+                        return Boolean.FALSE;
+                    if (!metaValueInterop.startsWith(valueInterop, entry, expectedValue))
+                        return Boolean.FALSE;
                 }
-                // key is not found
-                if (expectedValue == null) {
-                    return resultUnused ? null : readValue.readNull();
-                } else {
-                    return Boolean.FALSE;
-                }
-            } finally {
-                if (segmentState == null && localSegmentState != null)
-                    localSegmentState.close();
+                return removeEntry(copies, searchState, key, keySize, toKey, toValue,
+                        readValue, resultUnused, hashLookup, entry, pos, valueSizePos,
+                        valueSize, false, true, expectedValue != null);
+            }
+            // key is not found
+            if (expectedValue == null) {
+                return resultUnused ? null : readValue.readNull();
+            } else {
+                return Boolean.FALSE;
             }
         }
 
         final <KB, RV, VB extends RV> Object removeEntry(
-                ThreadLocalCopies copies,
+                ThreadLocalCopies copies, SearchState searchState,
                 KB key, long keySize, InstanceOrBytesToInstance<KB, K> toKey,
                 InstanceOrBytesToInstance<RV, V> toValue,
                 ReadValue<RV> readValue, boolean resultUnused,
@@ -2400,7 +2371,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
             // update segment state
             if (removeFromMultiMap) {
-                hashLookup.removePrevPos();
+                hashLookup.removePrevPos(searchState);
                 long entrySizeInBytes = entry.positionAddr() + valueSize - entry.startAddr();
                 free(pos, inBlocks(entrySizeInBytes));
             } else {
@@ -2434,18 +2405,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         boolean containsKey(ThreadLocalCopies copies,
                             MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize, long hash2) {
             readLock(null);
-            SegmentState segmentState = null;
-            try {
-                MultiStoreBytes entry = null;
+            copies = SegmentState.getCopies(copies);
+            try (SegmentState segmentState = SegmentState.get(copies)) {
+                MultiStoreBytes entry = segmentState.tmpBytes;
                 MultiMap hashLookup = hashLookup();
-                hashLookup.startSearch(hash2);
-                for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
+                SearchState searchState = segmentState.searchState;
+                hashLookup.startSearch(hash2, searchState);
+                for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
                     long offset = offsetFromPos(pos);
-                    if (entry == null) {
-                        copies = SegmentState.getCopies(copies);
-                        segmentState = SegmentState.get(copies);
-                        entry = segmentState.tmpBytes;
-                    }
                     reuse(entry, offset);
                     if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                         continue;
@@ -2455,8 +2422,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 }
                 return false;
             } finally {
-                if (segmentState != null)
-                    segmentState.close();
                 readUnlock();
             }
         }
@@ -2484,19 +2449,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 ReadValue<RV> readValue, InstanceOrBytesToInstance<? super RV, V> toValue,
                 long hash2) {
             segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
+            if (segmentState == null) {
+                copies = SegmentState.getCopies(copies);
+                segmentState = SegmentState.get(copies);
+            }
             writeLock();
             try {
-                hashLookup.startSearch(hash2);
-                MultiStoreBytes entry = null;
-                for (long pos; (pos = hashLookup.nextPos()) >= 0L; ) {
+                SearchState searchState = segmentState.searchState;
+                hashLookup.startSearch(hash2, searchState);
+                MultiStoreBytes entry = segmentState.tmpBytes;
+                for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
                     long offset = offsetFromPos(pos);
-                    if (entry == null) {
-                        if (segmentState == null) {
-                            copies = SegmentState.getCopies(copies);
-                            segmentState = SegmentState.get(copies);
-                        }
-                        entry = segmentState.tmpBytes;
-                    }
                     reuse(entry, offset);
                     if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                         continue;
@@ -2510,8 +2473,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 // key is not found
                 return expectedValue == null ? null : Boolean.FALSE;
             } finally {
-                if (segmentState != null)
-                    segmentState.close();
+                segmentState.close();
                 writeUnlock();
             }
         }
@@ -2608,7 +2570,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     pos = alloc(newSizeInBlocks);
                     // putValue() is called from put() and replace()
                     // after successful search by key
-                    searchedHashLookup.replacePrevPos(pos);
+                    searchedHashLookup.replacePrevPos(segmentState.searchState, pos);
                     offset = offsetFromPos(pos);
                     // Moving metadata, key size and key.
                     // Don't want to fiddle with pseudo-buffers for this,
