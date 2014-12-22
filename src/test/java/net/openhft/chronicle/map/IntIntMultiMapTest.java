@@ -82,9 +82,10 @@ public class IntIntMultiMapTest {
 
     private void valuesEqualsByKey(long k) {
         List<Long> values = new ArrayList<Long>();
-        map.startSearch(k);
+        SearchState searchState = new SearchState();
+        map.startSearch(k, searchState);
         long v;
-        while ((v = map.nextPos()) >= 0L)
+        while ((v = map.nextPos(searchState)) >= 0L)
             values.add(v);
         Set<Long> valueSet = new HashSet<Long>(values);
         Assert.assertEquals(values.size(), valueSet.size());
@@ -146,8 +147,9 @@ public class IntIntMultiMapTest {
 
         map.put(15, 1);
         map.remove(15, 1);
-        map.startSearch(15);
-        Assert.assertTrue(map.nextPos() < 0);
+        SearchState searchState = new SearchState();
+        map.startSearch(15, searchState);
+        Assert.assertTrue(map.nextPos(searchState) < 0);
     }
 
     @Test
