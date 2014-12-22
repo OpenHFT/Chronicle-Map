@@ -29,7 +29,7 @@ public class TcpReplicationSoakTest {
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     private IntValue value;
-    static int s_port = 8010;
+    static int s_port = 8093;
 
     @Before
     public void setup() throws IOException {
@@ -100,29 +100,33 @@ public class TcpReplicationSoakTest {
 
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
+        try {
+            System.out.print("SoakTesting ");
+            for (int j = 1; j < 2 * Builder.SIZE; j++) {
+                if (j % 1000 == 0)
+                    System.out.print(".");
+                Random rnd = new Random(j);
+                for (int i = 1; i < 10; i++) {
+                    final int select = rnd.nextInt(2);
+                    final ChronicleMap<Integer, CharSequence> map = select > 0 ? map1 : map2;
 
-        System.out.print("SoakTesting ");
-        for (int j = 1; j < 2 * Builder.SIZE; j++) {
-            if (j % 1000 == 0)
-                System.out.print(".");
-            Random rnd = new Random(j);
-            for (int i = 1; i < 10; i++) {
-                final int select = rnd.nextInt(2);
-                final ChronicleMap<Integer, CharSequence> map = select > 0 ? map1 : map2;
-
-                if (rnd.nextBoolean()) {
-                    map.put(rnd.nextInt(Builder.SIZE), "test" + j);
-                } else {
-                    map.remove(rnd.nextInt(Builder.SIZE));
+                    if (rnd.nextBoolean()) {
+                        map.put(rnd.nextInt(Builder.SIZE), "test" + j);
+                    } else {
+                        map.remove(rnd.nextInt(Builder.SIZE));
+                    }
                 }
             }
+
+            System.out.println("\nwaiting till equal");
+
+            waitTillEqual(15000);
+
+            Assert.assertEquals(map1, map2);
+        } finally {
+            map1.close();
+            map2.close();
         }
-
-        System.out.println("\nwaiting till equal");
-
-        waitTillEqual(15000);
-
-        Assert.assertEquals(map1, map2);
 
     }
 
