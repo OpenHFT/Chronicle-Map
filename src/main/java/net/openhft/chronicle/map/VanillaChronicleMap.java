@@ -36,6 +36,8 @@ import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
+import net.openhft.xstreem.convertors.ByteBufferConverter;
+import net.openhft.xstreem.convertors.ChronicleMapConvecter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -659,7 +661,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
         xstream.alias("cmap", VanillaChronicleMap.EntrySet.class);
-        xstream.registerConverter(new ChronicleMapConvector(this));
+
+        xstream.registerConverter(new ChronicleMapConvecter(this));
+        xstream.registerConverter(new ByteBufferConverter());
 
         OutputStream outputStream = new FileOutputStream(toFile);
         if (toFile.getName().toLowerCase().endsWith(".gz"))
@@ -674,7 +678,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
         xstream.alias("cmap", VanillaChronicleMap.EntrySet.class);
-        xstream.registerConverter(new ChronicleMapConvector(this));
+        xstream.registerConverter(new ChronicleMapConvecter(this));
+        xstream.registerConverter(new ByteBufferConverter());
 
         InputStream inputStream = new FileInputStream(fromFile);
         if (fromFile.getName().toLowerCase().endsWith(".gz"))
