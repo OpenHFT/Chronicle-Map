@@ -197,7 +197,7 @@ Object graphs can also be included as long as the outer object supports Serializ
 
 #### Java Class Construction
 
-Creating an instance of Chronicle Map is a little more complexed than just calling a constructor.
+Creating an instance of Chronicle Map is a little more complex than just calling a constructor.
 To create an instance you have to use the ChronicleMapBuilder.
 
 ``` java
