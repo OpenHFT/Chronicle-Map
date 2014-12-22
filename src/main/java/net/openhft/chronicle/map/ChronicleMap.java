@@ -257,12 +257,12 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     K newKeyInstance();
 
     /**
-     * @return the class of <K>
+     * @return the class of {@code <K>}
      */
     Class<K> keyClass();
 
     /**
-     * @return the class of <V>
+     * @return the class of {@code <V>}
      */
     Class<V> valueClass();
 }
