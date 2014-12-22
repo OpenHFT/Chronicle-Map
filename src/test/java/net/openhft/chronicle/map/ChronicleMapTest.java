@@ -192,7 +192,7 @@ public class ChronicleMapTest {
         }
     }
 
-    @Ignore("HCOLL-265 Chronicle Maps with Identical char[] values are not equal")
+    @Ignore("HCOLL-265 Chronicle Maps with Identical byte[] & char[] values are not equal")
     @Test
     public void testEqualsCharArray() throws Exception {
 
@@ -206,6 +206,29 @@ public class ChronicleMapTest {
             map1.put("hello", value);
 
             try (final ChronicleMap<CharSequence, char[]> map2 = builder.create()) {
+                map2.put("hello", value);
+
+                assertEquals(map1, map2);
+            }
+
+        }
+    }
+
+
+    @Ignore("HCOLL-265 Chronicle Maps with Identical byte[] & char[] values are not equal")
+    @Test
+    public void testEqualsByteArray() throws Exception {
+
+        byte[] value = new byte[5];
+        Arrays.fill(value, (byte) 'X');
+
+        ChronicleMapBuilder<CharSequence, byte[]> builder = ChronicleMapBuilder.of(CharSequence.class, byte[].class);
+
+        try (final ChronicleMap<CharSequence, byte[]> map1 = builder.create()) {
+
+            map1.put("hello", value);
+
+            try (final ChronicleMap<CharSequence, byte[]> map2 = builder.create()) {
                 map2.put("hello", value);
 
                 assertEquals(map1, map2);
