@@ -52,11 +52,12 @@ public class ChronicleMapConvector<K, V> implements Converter {
     @Override
     public boolean canConvert(Class aClass) {
 
+        //noinspection unchecked
         if (entrySetClass.isAssignableFrom(aClass) ||
                 writeThroughEntryClass.isAssignableFrom(aClass))
             return true;
 
-        String canonicalName = aClass.getCanonicalName();
+        final String canonicalName = aClass.getCanonicalName();
 
         return canonicalName.startsWith("net.openhft.lang.values") ||
                 canonicalName.endsWith("$$Native") ||
@@ -67,6 +68,7 @@ public class ChronicleMapConvector<K, V> implements Converter {
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext
             marshallingContext) {
 
+        //noinspection unchecked
         if (writeThroughEntryClass.isAssignableFrom(o.getClass())) {
 
             final AbstractMap.SimpleEntry e = (AbstractMap.SimpleEntry) o;
@@ -99,64 +101,64 @@ public class ChronicleMapConvector<K, V> implements Converter {
         boolean isNative = canonicalName.endsWith("$$Native");
         boolean isHeap = canonicalName.endsWith("$$Heap");
 
-        if (isNative || isHeap) {
-            if (canonicalName.startsWith("net.openhft.lang.values")) {
+        if (!isNative && !isHeap)
+            return;
 
-                Method[] methods = o.getClass().getMethods();
+        if (canonicalName.startsWith("net.openhft.lang.values")) {
 
-                for (Method method : methods) {
+            Method[] methods = o.getClass().getMethods();
 
-                    if (!method.getName().equals("getValue") ||
-                            method.getParameterTypes().length != 0) {
-                        continue;
-                    }
+            for (Method method : methods) {
 
-                    try {
-                        marshallingContext.convertAnother(method.invoke(o));
+                if (!method.getName().equals("getValue") ||
+                        method.getParameterTypes().length != 0) {
+                    continue;
+                }
+
+                try {
+                    marshallingContext.convertAnother(method.invoke(o));
+                    return;
+                } catch (Exception e) {
+                    throw new ConversionException("class=" + canonicalName, e);
+                }
+            }
+
+            throw new ConversionException("class=" + canonicalName);
+        }
+
+
+        try {
+
+            final BeanInfo info = getBeanInfo(o.getClass());  //  new BeanGenerator
+
+            for (PropertyDescriptor p : info.getPropertyDescriptors()) {
+
+                if (p.getName().equals("Class") ||
+                        p.getReadMethod() == null ||
+                        p.getWriteMethod() == null)
+                    continue;
+
+                try {
+
+                    final Method readMethod = p.getReadMethod();
+                    final Object value = readMethod.invoke(o);
+
+                    if (value == null)
                         return;
-                    } catch (Exception e) {
-                        throw new ConversionException("class=" + canonicalName, e);
-                    }
+
+                    writer.startNode(p.getDisplayName());
+                    marshallingContext.convertAnother(value);
+                    writer.endNode();
+
+                } catch (Exception e) {
+                    LOG.error("class=" + p.getName(), e);
                 }
 
-                throw new ConversionException("class=" + canonicalName);
 
             }
 
-
-            try {
-
-                final BeanInfo info = getBeanInfo(o.getClass());  //  new BeanGenerator
-
-                for (PropertyDescriptor p : info.getPropertyDescriptors()) {
-
-                    if (p.getName().equals("Class") ||
-                            p.getReadMethod() == null ||
-                            p.getWriteMethod() == null)
-                        continue;
-
-                    try {
-
-                        final Method readMethod = p.getReadMethod();
-                        final Object value = readMethod.invoke(o);
-
-                        if (value == null)
-                            return;
-
-                        writer.startNode(p.getDisplayName());
-                        marshallingContext.convertAnother(value);
-                        writer.endNode();
-
-                    } catch (Exception e) {
-                        LOG.error("class=" + p.getName(), e);
-                    }
-
-
-                }
-            } catch (IntrospectionException e) {
-                throw new ConversionException("class=" + canonicalName, e);
-            }
-
+        } catch (IntrospectionException e) {
+            throw new ConversionException("class=" + canonicalName, e);
         }
     }
 
@@ -178,11 +180,11 @@ public class ChronicleMapConvector<K, V> implements Converter {
                 final V v;
 
                 reader.moveDown();
-                k = (K) deserialize(context, reader);
+                k = deserialize(context, reader);
                 reader.moveUp();
 
                 reader.moveDown();
-                v = (V) deserialize(context, reader);
+                v = deserialize(context, reader);
                 reader.moveUp();
 
 
@@ -206,7 +208,7 @@ public class ChronicleMapConvector<K, V> implements Converter {
 
         if (context.getRequiredType().getCanonicalName().startsWith
                 ("net.openhft.lang.values"))
-            return toNativeValueObjects(reader, context.getRequiredType());
+            return toNativeValueObjects(reader, context.getRequiredType(), context);
 
         final String nodeName = isNative ?
 
@@ -266,26 +268,26 @@ public class ChronicleMapConvector<K, V> implements Converter {
     }
 
 
-    static Object deserialize(@NotNull UnmarshallingContext unmarshallingContext,
-                              @NotNull HierarchicalStreamReader reader) {
+    static <E> E deserialize(@NotNull UnmarshallingContext unmarshallingContext,
+                             @NotNull HierarchicalStreamReader reader) {
 
         final String clazz = reader.getNodeName();
 
         switch (clazz) {
 
             case "java.util.Collections$EmptySet":
-                return Collections.EMPTY_SET;
+                return (E) Collections.EMPTY_SET;
 
             case "java.util.Collections$EmptyList":
-                return Collections.EMPTY_LIST;
+                return (E) Collections.EMPTY_LIST;
 
             case "java.util.Collections$EmptyMap":
             case "java.util.Collections.EmptyMap":
-                return Collections.EMPTY_MAP;
+                return (E) Collections.EMPTY_MAP;
 
         }
 
-        return unmarshallingContext.convertAnother(null, forName(clazz));
+        return (E) unmarshallingContext.convertAnother(null, forName(clazz));
     }
 
     static Class forName(String clazz) {
@@ -316,7 +318,9 @@ public class ChronicleMapConvector<K, V> implements Converter {
     }
 
 
-    static Object toNativeValueObjects(HierarchicalStreamReader reader, final Class aClass) {
+    static Object toNativeValueObjects(HierarchicalStreamReader reader,
+                                       final Class aClass,
+                                       UnmarshallingContext context) {
 
         final Object o = DataValueClasses.newDirectInstance(aClass);
 
@@ -326,40 +330,21 @@ public class ChronicleMapConvector<K, V> implements Converter {
 
             for (PropertyDescriptor p : info.getPropertyDescriptors()) {
 
-                if (!p.getName().equals("value")) {
+                if (!p.getName().equals("value"))
                     continue;
-                }
 
                 final String value = reader.getValue();
-                Class<?> parameterType = p.getPropertyType();
 
                 if (StringValue.class.isAssignableFrom(o.getClass())) {
                     ((StringValue) o).setValue(value);
                     return o;
                 }
 
-                if (parameterType.isPrimitive()) {
+                final Class<?> propertyType = p.getPropertyType();
 
-                    // convert the primitive to their boxed type
+                final Object o1 = context.convertAnother(value, propertyType);
+                p.getWriteMethod().invoke(o, o1);
 
-                    if (parameterType == int.class)
-                        parameterType = Integer.class;
-                    else if (parameterType == char.class)
-                        parameterType = Character.class;
-                    else {
-                        final String name = parameterType.getSimpleName();
-
-                        final String properName = "java.lang." + Character.toString
-                                (name.charAt(0)).toUpperCase()
-                                + name.substring(1);
-                        parameterType = Class.forName(properName);
-                    }
-                }
-
-                final Method valueOf = parameterType.getMethod("valueOf", String.class);
-                final Object boxedValue = valueOf.invoke(null, value);
-
-                p.getWriteMethod().invoke(o, boxedValue);
                 return o;
 
             }
