@@ -19,12 +19,6 @@
 package net.openhft.chronicle.map;
 
 import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.converters.ConversionException;
-import com.thoughtworks.xstream.converters.Converter;
-import com.thoughtworks.xstream.converters.MarshallingContext;
-import com.thoughtworks.xstream.converters.UnmarshallingContext;
-import com.thoughtworks.xstream.io.HierarchicalStreamReader;
-import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
 import net.openhft.chronicle.hash.hashing.Hasher;
@@ -47,13 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.PropertyDescriptor;
 import java.io.*;
 import java.lang.reflect.Array;
-import java.lang.reflect.Method;
-import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -61,13 +50,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import static java.beans.Introspector.getBeanInfo;
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
-import static java.nio.ByteBuffer.allocateDirect;
 import static net.openhft.chronicle.map.Asserts.assertNotNull;
-import static net.openhft.chronicle.map.XStreamHelper.deserialize;
 import static net.openhft.lang.MemoryUnit.*;
 
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
@@ -673,7 +659,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
         xstream.alias("cmap", VanillaChronicleMap.EntrySet.class);
-        lazyXStreamConverter().registerConverter(xstream);
+        xstream.registerConverter(new ChronicleMapConvector(this));
 
         OutputStream outputStream = new FileOutputStream(toFile);
         if (toFile.getName().toLowerCase().endsWith(".gz"))
@@ -688,9 +674,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
         xstream.alias("cmap", VanillaChronicleMap.EntrySet.class);
-
-        // ideally we will use java serialization if we can
-        lazyXStreamConverter().registerConverter(xstream);
+        xstream.registerConverter(new ChronicleMapConvector(this));
 
         InputStream inputStream = new FileInputStream(fromFile);
         if (fromFile.getName().toLowerCase().endsWith(".gz"))
@@ -757,248 +741,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    private transient XStreamConverter xStreamConverter;
-
-
-    /**
-     * @return a lazily created XStreamConverter
-     */
-    private XStreamConverter lazyXStreamConverter() {
-        return xStreamConverter != null ? xStreamConverter :
-                (xStreamConverter = new XStreamConverter());
-    }
-
-    private class XStreamConverter {
-        private Bytes buffer;
-
-        public XStreamConverter() {
-            this.buffer = new ByteBufferBytes(allocateDirect((int) entrySize)
-                    .order(ByteOrder.nativeOrder()));
-        }
-
-        private void registerConverter(XStream xstream) {
-            final Converter converter = new Converter() {
-
-
-                @Override
-                public boolean canConvert(Class aClass) {
-
-                    if (EntrySet.class.isAssignableFrom(aClass)
-                            || WriteThroughEntry.class.isAssignableFrom(aClass))
-                        return true;
-
-                    String canonicalName = aClass.getCanonicalName();
-
-                    return canonicalName.startsWith("net.openhft.lang.values")
-                            || canonicalName.endsWith("$$Native") || canonicalName.endsWith
-                            ("$$Heap");
-
-                }
-
-                @Override
-                public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext
-                        marshallingContext) {
-                    if (WriteThroughEntry.class.isAssignableFrom(o.getClass())) {
-
-                        final SimpleEntry e = (SimpleEntry) o;
-                        Object key = e.getKey();
-                        writer.startNode(key.getClass().getCanonicalName());
-
-
-                        marshallingContext.convertAnother(key);
-                        writer.endNode();
-
-                        Object value = e.getValue();
-                        writer.startNode(value.getClass().getCanonicalName());
-
-
-                        marshallingContext.convertAnother(value);
-                        writer.endNode();
-
-                    } else if (EntrySet.class
-                            .isAssignableFrom(o.getClass())) {
-                        for (Entry e : (EntrySet) o) {
-                            writer.startNode("entry");
-                            marshallingContext.convertAnother(e);
-                            writer.endNode();
-                        }
-                    }
-
-                    final String canonicalName = o.getClass().getCanonicalName();
-
-                    if (canonicalName.startsWith("net.openhft.lang.values")
-                            && (canonicalName.endsWith("$$Native") ||
-                            canonicalName.endsWith("$$Heap"))) {
-
-                        Method[] methods = o.getClass().getMethods();
-
-                        for (Method method : methods) {
-                            if (method.getName().equals("getValue") &&
-                                    method.getParameterTypes().length == 0) {
-                                try {
-                                    marshallingContext.convertAnother(method.invoke(o));
-                                    return;
-                                } catch (Exception e) {
-                                    throw new RuntimeException("class=" + canonicalName, e);
-                                }
-                            }
-                        }
-
-                    } else {
-                        if (canonicalName.endsWith("$$Native") ||
-                                canonicalName.endsWith("$$Heap")) {
-
-                            try {
-                                BeanInfo info = getBeanInfo(o.getClass());  //  new BeanGenerator
-
-                                for (PropertyDescriptor p : info.getPropertyDescriptors()) {
-
-                                    if (p.getName().equals("Class")) {
-                                        continue;
-                                    }
-
-                                    if (p.getReadMethod() != null && p.getWriteMethod() != null) {
-
-                                        try {
-
-                                            final Method readMethod = p.getReadMethod();
-
-                                            Object value = readMethod.invoke(o);
-                                            if (value != null) {
-                                                writer.startNode(p.getDisplayName());
-                                                marshallingContext.convertAnother(value);
-                                                writer.endNode();
-                                            }
-                                        } catch (Exception e) {
-                                            LOG.error("class=" + p.getName(), e);
-                                        }
-                                    }
-
-                                }
-                            } catch (IntrospectionException e) {
-                                throw new RuntimeException("class=" + canonicalName, e);
-                            }
-                        }
-                    }
-                }
-
-                @Override
-                public Object unmarshal(HierarchicalStreamReader reader,
-                                        UnmarshallingContext unmarshallingContext) {
-
-                    String canonicalName = unmarshallingContext.getRequiredType().getCanonicalName();
-
-                    boolean isNative = canonicalName.endsWith("$$Native");
-                    boolean isHeap = canonicalName.endsWith("$$Heap");
-
-                    if (isNative || isHeap) {
-
-
-                        if (unmarshallingContext.getRequiredType().getCanonicalName().startsWith
-                                ("net.openhft.lang.values"))
-                            return XStreamHelper.toBuiltIn$$(reader, unmarshallingContext.getRequiredType()
-                            );
-
-
-                        final String nodeName = isNative ?
-                                canonicalName.substring(0, canonicalName.length() -
-                                        "$$Native".length()) :
-
-                                canonicalName.substring(0, canonicalName.length() -
-                                        "$$Heap".length());
-
-                        Object o;
-
-
-                        try {
-                            Class<?> interfaceClass = Class.forName(nodeName);
-                            o = (isNative) ?
-                                    DataValueClasses.newDirectInstance(interfaceClass) :
-                                    DataValueClasses.newInstance(interfaceClass);
-
-                            final BeanInfo beanInfo = getBeanInfo(o.getClass());
-
-                            while (reader.hasMoreChildren()) {
-                                reader.moveDown();
-                                String name = reader.getNodeName();
-
-                                for (PropertyDescriptor methodDescriptor : beanInfo.getPropertyDescriptors()) {
-                                    if (methodDescriptor.getName().equals(name)) {
-                                        Class<?>[] parameterTypes = methodDescriptor.getWriteMethod().getParameterTypes();
-
-                                        if (parameterTypes.length == 1) {
-                                            Object o1 = unmarshallingContext.convertAnother(null, parameterTypes[0]);
-                                            try {
-                                                methodDescriptor.getWriteMethod().invoke(o, o1);
-                                            } catch (Exception e) {
-                                                LOG.error("", e);
-                                            }
-                                            break;
-                                        }
-
-                                    }
-                                }
-
-                                reader.moveUp();
-                            }
-                            return o;
-                        } catch (Exception e) {
-                            throw new ConversionException("class=" + canonicalName, e);
-                        }
-
-                    }
-
-
-                    final String nodeName = reader.getNodeName();
-
-                    switch (nodeName) {
-                        case "cmap":
-
-                            while (reader.hasMoreChildren()) {
-                                reader.moveDown();
-                                final String nodeName0 = reader.getNodeName();
-
-                                if (!nodeName0.equals("entry"))
-                                    throw new ConversionException("unable to convert node " +
-                                            "named=" + nodeName0);
-                                final K k;
-                                final V v;
-
-
-                                reader.moveDown();
-                                {
-                                    k = (K) deserialize(unmarshallingContext, reader);
-                                }
-                                reader.moveUp();
-                                reader.moveDown();
-                                {
-                                    v = (V) deserialize(unmarshallingContext, reader);
-                                }
-                                reader.moveUp();
-
-
-                                if (k != null)
-                                    VanillaChronicleMap.this.put(k, v);
-
-                                reader.moveUp();
-                            }
-
-                            return null;
-
-
-                    }
-
-                    return null;
-                }
-
-
-            };
-
-            xstream.registerConverter(converter);
-        }
-
-
-    }
 
     @NotNull
     @Override

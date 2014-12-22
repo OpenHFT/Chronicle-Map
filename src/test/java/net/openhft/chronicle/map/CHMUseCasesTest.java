@@ -2383,7 +2383,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    //  @Ignore("HCOLL-268 JSON serialisation issue")
     @Test
     public void testMapStringIntegerValueWithoutListMarshallers() throws IOException {
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
