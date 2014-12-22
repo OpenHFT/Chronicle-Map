@@ -1642,7 +1642,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         long pos;
         long valueSizePos;
 
-        SearchState searchState = new SearchState();
+        final SearchState searchState = new SearchState();
 
         private SegmentState(int depth) {
             if (depth > (1 << 16))

@@ -803,7 +803,7 @@ public class ChronicleMapTest {
 //        int runs = Integer.getInteger("runs", 10);
         int procs = Runtime.getRuntime().availableProcessors();
         int threads = procs * 3; // runs > 100 ? procs / 2 : procs;
-        ExecutorService es = Executors.newFixedThreadPool(1);
+        ExecutorService es = Executors.newFixedThreadPool(procs);
         for (int runs : new int[]{10, 50, 100, 250, 500, 1000, 2500}) {
             // JAVA 8 produces more garbage than previous versions for internal work.
 //            System.gc();
@@ -811,7 +811,6 @@ public class ChronicleMapTest {
             ChronicleMapBuilder<LongValue, LongValue> builder = ChronicleMapBuilder
                     .of(LongValue.class, LongValue.class)
                     .entries(entries)
-                    .entryAndValueAlignment(OF_8_BYTES)
                     .actualSegments(8 * 1024);
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
@@ -833,14 +832,12 @@ public class ChronicleMapTest {
                             LongValue value = nativeLongValue();
                             long next = 50 * 1000 * 1000;
                             // use a factor to give up to 10 digit numbers.
-                            int factor = Math.max(1, (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
-                            for (long j = t % independence; j < entries + independence - 1; j += independence) {
+                            int factor = Math.max(1,
+                                    (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
+                            for (long j = t % independence; j < entries + independence - 1;
+                                 j += independence) {
                                 key.setValue(j * factor);
                                 long n;
-/*
-                                map.acquireUsing(key, value);
-                                n = value.addAtomicValue(1);
-*/
                                 try (WriteContext wc = map.acquireUsingLocked(key, value)) {
                                     n = value.addValue(1);
                                 }
@@ -859,7 +856,8 @@ public class ChronicleMapTest {
                     future.get();
                 }
                 long time = System.currentTimeMillis() - start;
-                System.out.printf("Throughput %.1f M ops/sec%n", threads * entries / independence / 1000.0 / time);
+                System.out.printf("Throughput %.1f M ops/sec%n",
+                        threads * entries / independence / 1000.0 / time);
             }
             printStatus();
             File file = map.file();
