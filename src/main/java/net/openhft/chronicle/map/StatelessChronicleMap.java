@@ -195,6 +195,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return VanillaChronicleMap.newInstance(kClass, true);
     }
 
+    @Override
+    public Class<K> keyClass() {
+        return kClass;
+    }
+
+    @Override
+    public Class<V> valueClass() {
+        return vClass;
+    }
+
 
     private void checkTimeout(long timeoutTime) {
         if (timeoutTime < System.currentTimeMillis())
@@ -1703,7 +1713,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         }
     }
 
-    private void resizeToMessageOutBuffer(long start, @NotNull Exception e) throws Exception{
+    private void resizeToMessageOutBuffer(long start, @NotNull Exception e) throws Exception {
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
         String message = e.getMessage();

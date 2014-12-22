@@ -200,6 +200,16 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
+        public Class<K> keyClass() {
+            return d.keyClass();
+        }
+
+        @Override
+        public Class<V> valueClass() {
+            return d.valueClass();
+        }
+
+        @Override
         public V putIfAbsent(K key, V value) {
             return d.putIfAbsent(key, value);
         }

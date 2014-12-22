@@ -34,32 +34,34 @@ class XStreamHelper {
                               ChronicleMap map, UnmarshallingContext unmarshallingContext, String type) {
 
 
-        if (type.endsWith("$$Native")) {
+        boolean isNative = type.endsWith("$$Native");
 
-            Class<?> aClass = null;
+
+        Class<?> aClass;
+        try {
+            aClass = Class.forName(type);
+        } catch (ClassNotFoundException e) {
+            String clazz = isNative ? type.substring(0, type.length() -
+                    "$$Native".length()) : type.substring(0, type.length() -
+                    "$$Heap".length());
+            try {
+                DataValueClasses.newDirectInstance(Class.forName(clazz));
+            } catch (ClassNotFoundException e1) {
+                throw new ConversionException(e1);
+            }
             try {
                 aClass = Class.forName(type);
-            } catch (ClassNotFoundException e) {
-                String clazz = type.substring(0, type.length() -
-                        "$$Native".length());
-                try {
-                    DataValueClasses.newDirectInstance(Class.forName(clazz));
-                } catch (ClassNotFoundException e1) {
-                    throw new ConversionException(e1);
-                }
-                try {
-                    aClass = Class.forName(type);
-                } catch (ClassNotFoundException e1) {
-                    throw new ConversionException(e1);
-                }
+            } catch (ClassNotFoundException e1) {
+                throw new ConversionException(e1);
             }
-
-
-            return unmarshallingContext.convertAnother(null, aClass);
         }
 
-        throw new ConversionException("setValue(..) method not found in class=" + type);
+
+        return unmarshallingContext.convertAnother(null, aClass);
     }
+
+
+
 
     static Object to$$Native(HierarchicalStreamReader reader, final Class aClass, final boolean isKey, ChronicleMap map, UnmarshallingContext unmarshallingContext) {
 

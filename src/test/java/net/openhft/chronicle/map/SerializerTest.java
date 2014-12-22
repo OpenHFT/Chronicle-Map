@@ -28,6 +28,7 @@ import org.junit.Test;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 
@@ -46,6 +47,23 @@ public class SerializerTest {
         assertEquals(expected, actual);
 
     }
+
+    @Test
+    public void testStringSerialization() throws ExecutionException,
+            InterruptedException, IOException {
+
+        ByteBufferBytes b = new ByteBufferBytes(ByteBuffer.allocate(512));
+
+        String expected = "Hello";
+        b.writeObject(expected);
+
+        b.clear();
+
+        String actual = (String) b.readObject();
+        assertEquals(expected, actual);
+
+    }
+
 
     @Test
     public void testValueMarshallable() throws Exception {

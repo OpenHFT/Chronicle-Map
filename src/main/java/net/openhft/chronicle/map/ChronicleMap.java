@@ -175,9 +175,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      *
      * <p>If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link
      * ChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of what
-     * to do if the key is absent in the map.
-     * By default, value bytes are just zeroed out, no default value, either provided for key or
-     * constant, is put for the absent key.
+     * to do if the key is absent in the map. By default, value bytes are just zeroed out, no
+     * default value, either provided for key or constant, is put for the absent key.
      *
      * @param key        the key whose associated value is to be returned
      * @param usingValue the object to read value data in, if present. Can not be null
@@ -200,10 +199,10 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     <R> R getMapped(K key, @NotNull Function<? super V, R> function);
 
     /**
-     * Apply a unaryOperator to the value for a key and return a result. A write lock is assumed. <p> If
-     * there is no entry for this key null will be returned
+     * Apply a unaryOperator to the value for a key and return a result. A write lock is assumed.
+     * <p> If there is no entry for this key null will be returned
      *
-     * @param key     to apply the mapping to
+     * @param key           to apply the mapping to
      * @param unaryOperator to alter the value and calculate a result
      * @return the result of the function.
      */
@@ -256,5 +255,15 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @return a new empty instance based on the Key type
      */
     K newKeyInstance();
+
+    /**
+     * @return the class of <K>
+     */
+    Class<K> keyClass();
+
+    /**
+     * @return the class of <V>
+     */
+    Class<V> valueClass();
 }
 

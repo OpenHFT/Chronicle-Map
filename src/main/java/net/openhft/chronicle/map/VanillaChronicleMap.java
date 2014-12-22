@@ -49,7 +49,6 @@ import org.slf4j.LoggerFactory;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
-import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.*;
 import java.lang.reflect.Array;
@@ -716,6 +715,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return newInstance(kClass, true);
     }
 
+    @Override
+    public Class<K> keyClass() {
+        return kClass;
+    }
+
+    @Override
+    public Class<V> valueClass() {
+        return vClass;
+    }
+
 
     static <T> T newInstance(Class<T> aClass, boolean isKey) {
         try {
@@ -749,7 +758,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    private XStreamConverter xStreamConverter;
+    private transient XStreamConverter xStreamConverter;
 
 
     /**
@@ -782,7 +791,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     String canonicalName = aClass.getCanonicalName();
 
                     return canonicalName.startsWith("net.openhft.lang.values")
-                            || canonicalName.endsWith("$$Native");
+                            || canonicalName.endsWith("$$Native") || canonicalName.endsWith
+                            ("$$Heap");
 
                 }
 
@@ -815,9 +825,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         }
                     }
 
-                    if (o.getClass().getCanonicalName().startsWith("net.openhft.lang.values")
-                            && (o.getClass().getCanonicalName().endsWith("$$Native") ||
-                            o.getClass().getCanonicalName().endsWith("$$Heap"))) {
+                    final String canonicalName = o.getClass().getCanonicalName();
+
+                    if (canonicalName.startsWith("net.openhft.lang.values")
+                            && (canonicalName.endsWith("$$Native") ||
+                            canonicalName.endsWith("$$Heap"))) {
 
                         Method[] methods = o.getClass().getMethods();
 
@@ -825,19 +837,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             if (method.getName().equals("getValue") &&
                                     method.getParameterTypes().length == 0) {
                                 try {
-                                    final Object result = method.invoke(o);
-                                    //   writer.startNode(o.getClass().getCanonicalName());
-                                    marshallingContext.convertAnother(result);
-                                    // writer.endNode();
+                                    marshallingContext.convertAnother(method.invoke(o));
                                     return;
                                 } catch (Exception e) {
-                                    throw new RuntimeException("class=" + o.getClass().getCanonicalName(), e);
+                                    throw new RuntimeException("class=" + canonicalName, e);
                                 }
                             }
                         }
 
                     } else {
-                        if (o.getClass().getCanonicalName().endsWith("$$Native")) {
+                        if (canonicalName.endsWith("$$Native") ||
+                                canonicalName.endsWith("$$Heap")) {
 
                             try {
                                 BeanInfo info = getBeanInfo(o.getClass());  //  new BeanGenerator
@@ -867,7 +877,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                                 }
                             } catch (IntrospectionException e) {
-                                throw new RuntimeException("class=" + o.getClass().getCanonicalName(), e);
+                                throw new RuntimeException("class=" + canonicalName, e);
                             }
                         }
                     }
@@ -878,10 +888,19 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                                         UnmarshallingContext unmarshallingContext) {
 
                     String canonicalName = unmarshallingContext.getRequiredType().getCanonicalName();
-                    if (canonicalName.endsWith("$$Native")) {
+                    boolean isNative = canonicalName.endsWith("$$Native");
+                    boolean isHeap = canonicalName.endsWith("$$Heap");
 
-                        final String nodeName = canonicalName.substring(0, canonicalName.length() -
-                                "$$Native".length());
+                    if (isNative || isHeap) {
+
+
+                        final String nodeName = isNative ?
+                                canonicalName.substring(0, canonicalName.length() -
+                                        "$$Native".length()) :
+
+                                canonicalName.substring(0, canonicalName.length() -
+                                        "$$Heap".length());
+
                         Object o;
 
                         try {
@@ -959,7 +978,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                             if (kClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
                                 return to$$Native(reader, vClass, true, VanillaChronicleMap.this, unmarshallingContext);
-                            } else if (type.endsWith("$$Native")) {
+                            } else if (type.endsWith("$$Native") || type.endsWith("$$Heap")) {
                                 return XStreamHelper.to$$Native2(reader, vClass, false, VanillaChronicleMap.this, unmarshallingContext, type);
                             } else {
                                 long keySize = keySizeMarshaller.readSize(buffer);
@@ -971,7 +990,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                             if (vClass.getCanonicalName().startsWith("net.openhft.lang.values")) {
                                 return to$$Native(reader, vClass, false, VanillaChronicleMap.this, unmarshallingContext);
-                            } else if (type.endsWith("$$Native")) {
+                            } else if (type.endsWith("$$Native") || type.endsWith("$$Heap")) {
                                 return XStreamHelper.to$$Native2(reader, vClass, false, VanillaChronicleMap.this, unmarshallingContext, type);
                             } else {
                                 long valueSize = valueSizeMarshaller.readSize(buffer);
@@ -995,12 +1014,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                     if (reader.getAttributeCount() > 0) {
                         final String type = reader.getAttribute("type");
-                        try {
-                            return (E) unmarshallingContext.convertAnother(null, forName(type));
-                        } catch (ClassNotFoundException e) {
-                            throw new ConversionException(e);
-                        }
-                    } else return (E) unmarshallingContext.convertAnother(null, clazz);
+                        if (type != null)
+                            try {
+                                return (E) unmarshallingContext.convertAnother(null, forName(type));
+                            } catch (ClassNotFoundException e) {
+                                throw new ConversionException(e);
+                            }
+
+                    }
+
+                    return (E) unmarshallingContext.convertAnother(null, clazz);
                 }
 
 
@@ -1591,7 +1614,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             return segmentStateProvider.getCopies(copies);
         }
 
-        static @NotNull SegmentState get(@NotNull ThreadLocalCopies copies) {
+        static
+        @NotNull
+        SegmentState get(@NotNull ThreadLocalCopies copies) {
             assertNotNull(copies);
             return segmentStateProvider.get(copies, originalSegmentState).get();
         }
