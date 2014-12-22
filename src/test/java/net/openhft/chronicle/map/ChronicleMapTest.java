@@ -173,6 +173,48 @@ public class ChronicleMapTest {
         map.close();
     }
 
+
+    @Test
+    public void testEqualsCharSequence() throws Exception {
+
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class);
+
+        try (final ChronicleMap<CharSequence, CharSequence> map1 = builder.create()) {
+
+            map1.put("hello", "world");
+
+            try (final ChronicleMap<CharSequence, CharSequence> map2 = builder.create()) {
+                map2.put("hello", "world");
+
+                assertEquals(map1, map2);
+            }
+
+        }
+    }
+
+    @Ignore("HCOLL-265 Chronicle Maps with Identical char[] values are not equal")
+    @Test
+    public void testEqualsCharArray() throws Exception {
+
+        char[] value = new char[5];
+        Arrays.fill(value, 'X');
+
+        ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder.of(CharSequence.class, char[].class);
+
+        try (final ChronicleMap<CharSequence, char[]> map1 = builder.create()) {
+
+            map1.put("hello", value);
+
+            try (final ChronicleMap<CharSequence, char[]> map2 = builder.create()) {
+                map2.put("hello", value);
+
+                assertEquals(map1, map2);
+            }
+
+        }
+    }
+
+
     @Test
     public void testSize() throws Exception {
 
@@ -1418,7 +1460,6 @@ public class ChronicleMapTest {
             }
         }
     }
-
 
 
     @Test(expected = IllegalStateException.class)
