@@ -171,11 +171,11 @@ public class ChronicleMapConvector<K, V> implements Converter {
 
             while (reader.hasMoreChildren()) {
                 reader.moveDown();
-                final String nodeName0 = reader.getNodeName();
+                final String name = reader.getNodeName();
 
-                if (!nodeName0.equals("entry"))
+                if (!name.equals("entry"))
                     throw new ConversionException("unable to convert node " +
-                            "named=" + nodeName0);
+                            "named=" + name);
                 final K k;
                 final V v;
 
@@ -186,7 +186,6 @@ public class ChronicleMapConvector<K, V> implements Converter {
                 reader.moveDown();
                 v = deserialize(context, reader);
                 reader.moveUp();
-
 
                 if (k != null)
                     map.put(k, v);
