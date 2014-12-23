@@ -23,7 +23,7 @@ public class TestOversizedReplicationHub {
         ChronicleMap<CharSequence, CharSequence> favoriteColourServer1, favoriteColourServer2;
         ChronicleMap<CharSequence, CharSequence> favoriteComputerServer1, favoriteComputerServer2;
 
-        int OVERSIZE_FACTOR = 63;
+        int OVERSIZE_FACTOR = 100;
         char[] largeEntry = new char[100 * OVERSIZE_FACTOR];
 
         Arrays.fill(largeEntry, 'X');
@@ -33,7 +33,8 @@ public class TestOversizedReplicationHub {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> builder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                            .entrySize(100);
+                            .keySize(10)
+                            .valueSize(100);
 
             byte identifier = (byte) 1;
 
@@ -67,7 +68,8 @@ public class TestOversizedReplicationHub {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> builder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                            .entrySize(100);
+                            .keySize(10)
+                            .valueSize(100);
 
             byte identifier = (byte) 2;
 
