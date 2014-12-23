@@ -37,7 +37,6 @@ public class MapByNameTest {
     @Before
     public void setUp() throws IOException {
         final ReplicationHub replicationHub = ReplicationHub.builder()
-                .maxEntrySize(10 * 1024)
                 .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(8243))
                 .createWithId((byte) 1);
 

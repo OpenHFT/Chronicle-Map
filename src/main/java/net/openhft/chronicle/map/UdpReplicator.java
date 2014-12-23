@@ -40,22 +40,18 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
     private static final Logger LOG =
             LoggerFactory.getLogger(UdpReplicator.class.getName());
     public static final int UPD_BUFFER_SIZE = 64 * 1204;
-    @NotNull
-    private final UdpTransportConfig replicationConfig;
 
     public UdpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable entryExternalizable,
-                         @NotNull final UdpTransportConfig replicationConfig,
-                         final int serializedEntrySize)
+                         @NotNull final UdpTransportConfig replicationConfig)
             throws IOException {
 
-        super(replicationConfig, serializedEntrySize, replica.identifier());
-        this.replicationConfig = replicationConfig;
+        super(replicationConfig, replica.identifier());
 
         Replica.ModificationIterator modificationIterator = replica.acquireModificationIterator(
                 ChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID, this);
 
-        setReader(new UdpSocketChannelEntryReader(serializedEntrySize, entryExternalizable));
+        setReader(new UdpSocketChannelEntryReader(replicationConfig.udpBufferSize(), entryExternalizable));
 
         setWriter(new UdpSocketChannelEntryWriter(replicationConfig.udpBufferSize(),
                 entryExternalizable,

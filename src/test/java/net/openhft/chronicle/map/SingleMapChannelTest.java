@@ -62,10 +62,9 @@ public class SingleMapChannelTest {
                     .of(8086, new InetSocketAddress("localhost", 8087))
                     .autoReconnectedUponDroppedConnection(true)
                     .heartBeatInterval(1, SECONDS);
-            int maxEntrySize = 1024;
+
             byte identifier = 1;
             hubA = ReplicationHub.builder()
-                    .maxEntrySize(maxEntrySize)
                     .tcpTransportAndNetwork(tcpConfig)
                     .createWithId(identifier);
             // this is how you add maps after the custer is created

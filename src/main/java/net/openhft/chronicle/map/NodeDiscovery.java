@@ -245,7 +245,6 @@ class NodeDiscovery {
                 InetSocketAddress("192.168.1.253", 8123));
 
         final ReplicationHub replicationHub = ReplicationHub.builder()
-                .maxEntrySize(10 * 1024)
                 .tcpTransportAndNetwork(tcpConfig)
                 .remoteNodeValidator(remoteNodeValidator)
                 .createWithId(identifier);
@@ -375,7 +374,7 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
             final BytesMarshallable externalizable)
             throws IOException {
 
-        super(replicationConfig, serializedEntrySize, UNUSED);
+        super(replicationConfig, UNUSED);
 
         final UdpSocketChannelEntryWriter writer = new UdpSocketChannelEntryWriter(1024, externalizable, this);
         final UdpSocketChannelEntryReader reader = new UdpSocketChannelEntryReader(1024, externalizable);

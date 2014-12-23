@@ -64,12 +64,10 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
 
     /**
      * @param replicationConfig
-     * @param maxPayloadSize    the maximum size of any serialized entry
      * @param localIdentifier   just used for logging
      * @throws IOException
      */
     UdpChannelReplicator(@NotNull final UdpTransportConfig replicationConfig,
-                         final int maxPayloadSize,
                          final byte localIdentifier)
             throws IOException {
 

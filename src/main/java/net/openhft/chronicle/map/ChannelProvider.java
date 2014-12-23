@@ -77,7 +77,7 @@ final class ChannelProvider implements Closeable {
                     new UdpReplicator(
                             channelProvider.asReplica,
                             channelProvider.asEntryExternalizable,
-                            udpConfig, hub.maxEntrySize());
+                            udpConfig);
             channelProvider.add(udpReplicator);
             if (tcpConfig == null)
                 LOG.warn(Replicators.ONLY_UDP_WARN_MESSAGE);
@@ -258,7 +258,7 @@ final class ChannelProvider implements Closeable {
     };
 
     private final ReplicationHub hub;
-    private final int maxEntrySize;
+
 
     private final ReadWriteLock channelDataLock = new ReentrantReadWriteLock();
 
@@ -283,7 +283,7 @@ final class ChannelProvider implements Closeable {
     private ChannelProvider(ReplicationHub hub) {
         localIdentifier = hub.identifier();
         this.hub = hub;
-        maxEntrySize = hub.maxEntrySize();
+
         chronicleChannels = new Replica[hub.maxNumberOfChannels()];
         channelEntryExternalizables = new EntryExternalizable[hub.maxNumberOfChannels()];
         chronicleChannelList = new ArrayList<Replica>();
@@ -304,9 +304,6 @@ final class ChannelProvider implements Closeable {
         add((short) 0, systemMessageQueue.asReplica, systemMessageQueue.asEntryExternalizable);
     }
 
-    public int maxEntrySize() {
-        return maxEntrySize;
-    }
 
     /**
      * creates a bit set based on a number of bits

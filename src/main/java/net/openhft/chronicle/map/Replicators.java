@@ -139,8 +139,8 @@ final class Replicators {
                                         @NotNull final Replica.EntryExternalizable entryExternalizable,
                                         final ChronicleMap chronicleMap)
                     throws IOException {
-                return new UdpReplicator(map, entryExternalizable, replicationConfig,
-                        builder.entrySize(true));
+                return new UdpReplicator(map, entryExternalizable, replicationConfig
+                );
             }
         };
     }
