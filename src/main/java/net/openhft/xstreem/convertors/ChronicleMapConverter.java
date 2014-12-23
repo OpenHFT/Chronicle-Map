@@ -63,12 +63,12 @@ public class ChronicleMapConverter<K, V> implements Converter {
         final AbstractMap.SimpleEntry e = (AbstractMap.SimpleEntry) o;
 
         final Object key = e.getKey();
-        writer.startNode(key.getClass().getCanonicalName());
+        writer.startNode(key.getClass().getName());
         marshallingContext.convertAnother(key);
         writer.endNode();
 
         Object value = e.getValue();
-        writer.startNode(value.getClass().getCanonicalName());
+        writer.startNode(value.getClass().getName());
         marshallingContext.convertAnother(value);
         writer.endNode();
 
@@ -114,9 +114,7 @@ public class ChronicleMapConverter<K, V> implements Converter {
     static <E> E deserialize(@NotNull UnmarshallingContext unmarshallingContext,
                              @NotNull HierarchicalStreamReader reader) {
 
-        final String clazz = reader.getNodeName();
-
-        switch (clazz) {
+        switch (reader.getNodeName()) {
 
             case "java.util.Collections$EmptySet":
                 return (E) Collections.EMPTY_SET;
@@ -130,7 +128,7 @@ public class ChronicleMapConverter<K, V> implements Converter {
 
         }
 
-        return (E) unmarshallingContext.convertAnother(null, forName(clazz));
+        return (E) unmarshallingContext.convertAnother(null, forName(reader.getNodeName()));
     }
 
     static Class forName(String clazz) {
@@ -159,3 +157,4 @@ public class ChronicleMapConverter<K, V> implements Converter {
     }
 
 }
+

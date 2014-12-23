@@ -122,8 +122,8 @@ public class CHMUseCasesTest {
                 return;
 
 
-            // waitTillEqual(5000);
-            // assertEquals(map1, map2);
+            waitTillEqual(5000);
+            assertEquals(map1, map2);
         }
 
         if (typeOfMap == TypeOfMap.SIMPLE)
@@ -131,35 +131,48 @@ public class CHMUseCasesTest {
 
     }
 
+    private void assertArrayValueEquals(ChronicleMap map1, ChronicleMap map2) {
+
+        assertEquals(map1.size(), map2.size());
+
+
+        for (Object key : map1.keySet()) {
+
+            if (map1.valueClass() == byte[].class)
+                Assert.assertArrayEquals((byte[]) map1.get(key), (byte[]) map2.get(key));
+
+            else if (map1.valueClass() == char[].class)
+                Assert.assertArrayEquals((char[]) map1.get(key), (char[]) map2.get(key));
+
+            else throw new IllegalStateException("unsupported type");
+
+        }
+    }
+
 
     private void checkJsonSerilization() {
 
-        // see HCOLL-265 Chronicle Maps with Identical char[] values are not equal1
-        if (map1.keyClass() == char[].class || map1.valueClass() == char[].class) {
-            return;
-        }
-
         File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
         file.deleteOnExit();
-
-
         try {
 
-            try {
-                map1.getAll(file);
+            map1.getAll(file);
 
-                try (ChronicleMap<Integer, Double> actual = ChronicleMapBuilder.of(map1.keyClass(),
-                        map1.valueClass())
-                        .create()) {
-                    actual.putAll(file);
+            try (ChronicleMap<Integer, Double> actual = ChronicleMapBuilder.of(map1.keyClass(),
+                    map1.valueClass())
+                    .create()) {
+                actual.putAll(file);
 
+
+                if (map1.keyClass() == char[].class || map1.valueClass() == char[].class) {
+                    assertArrayValueEquals(map1, actual);
+                } else {
                     Assert.assertEquals(map1, actual);
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
             }
 
+        } catch (IOException e) {
+            Assert.fail();
         } finally {
             file.delete();
         }
