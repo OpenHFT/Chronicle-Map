@@ -114,6 +114,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         PUT_IF_ABSENT,
         REMOVE_WITH_VALUE,
         TO_STRING,
+        VERSION,
         PUT_ALL,
         PUT_ALL_WITHOUT_ACC,
         HASH_CODE,
@@ -429,6 +430,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     @NotNull
     public String toString() {
         return fetchObject(String.class, TO_STRING);
+    }
+
+    @NotNull
+    public String version() {
+        return fetchObject(String.class, VERSION);
     }
 
     public boolean isEmpty() {

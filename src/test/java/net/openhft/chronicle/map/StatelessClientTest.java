@@ -120,6 +120,7 @@ public class StatelessClientTest {
                     .statelessClient(new InetSocketAddress("localhost", port)).create()) {
                 String actual = statelessMap.getMapped(10, ToString.INSTANCE);
 
+                assertEquals("{10=Hello World}", statelessMap.toString());
                 assertEquals("Hello World", actual);
             }
         }
@@ -673,6 +674,24 @@ public class StatelessClientTest {
                 }
 
                 assertEquals(SIZE, statelessMap.size());
+            }
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void testGetServerVersion() throws IOException, InterruptedException {
+        int port = s_port++;
+        try (ChronicleMap<Integer, StringBuilder> serverMap = ChronicleMapBuilder
+                .of(Integer.class, StringBuilder.class)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
+                .create()) {
+
+            try (ChronicleMap<Integer, StringBuilder> statelessMap = ChronicleMapBuilder.of(Integer
+                    .class, StringBuilder.class)
+                    .statelessClient(new InetSocketAddress("localhost", port)).create()) {
+
+                assertTrue(!((StatelessChronicleMap) statelessMap).version().isEmpty());
+
             }
         }
     }

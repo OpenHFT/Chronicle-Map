@@ -1485,8 +1485,12 @@ class StatelessServerConnector<K, V> {
 
             case REMOVE_WITH_VALUE:
                 return removeWithValue(reader, writer.in(), sizeLocation, timestamp, identifier);
+
             case TO_STRING:
                 return toString(writer.in(), sizeLocation);
+
+            case VERSION:
+                return version(writer.in(), sizeLocation);
 
             case PUT_ALL:
                 return putAll(reader, writer.in(), sizeLocation, timestamp, identifier);
@@ -1605,6 +1609,25 @@ class StatelessServerConnector<K, V> {
                 str.substring(0, (int) (remaining - 4)) + "...";
 
         writer.writeObject(result);
+        writeSizeAndFlags(sizeLocation, false, writer);
+        return null;
+    }
+
+
+    @Nullable
+    private Work version(@NotNull Bytes writer, final long sizeLocation) {
+
+
+        final long remaining = writer.remaining();
+        try {
+            String result = map.version();
+            writer.writeObject(result);
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
+        }
+
+        assert remaining > 4;
+
         writeSizeAndFlags(sizeLocation, false, writer);
         return null;
     }
