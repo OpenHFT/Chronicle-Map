@@ -11,10 +11,8 @@ import net.openhft.lang.values.StringValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
+import java.beans.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import static java.beans.Introspector.getBeanInfo;
@@ -68,6 +66,45 @@ public class DataValueConverter implements Converter {
 
             for (PropertyDescriptor p : info.getPropertyDescriptors()) {
 
+                if (p instanceof IndexedPropertyDescriptor) {
+                    try {
+
+                        IndexedPropertyDescriptor indexedPropertyDescriptor = (IndexedPropertyDescriptor) p;
+
+                        Method indexedReadMethod = indexedPropertyDescriptor.getIndexedReadMethod();
+
+                        if (indexedReadMethod == null)
+                            continue;
+
+                        Class<?> returnType = indexedReadMethod.getReturnType();
+
+                        if (returnType == null) {
+                            continue;
+                        }
+
+                        String simpleName = returnType.getSimpleName();
+
+                        String fieldName = "_" + toCamelCase(simpleName);
+
+                        Field field = o.getClass().getDeclaredField(fieldName);
+                        field.setAccessible(true);
+
+                        Object[] o1 = (Object[]) field.get(o);
+                        if (o1 == null)
+                            continue;
+
+                        int i = 0;
+                        for (Object f : o1) {
+                            writer.startNode(Integer.toString(i++));
+                            context.convertAnother(f);
+                            writer.endNode();
+                        }
+                    } catch (NoSuchFieldException | IllegalAccessException e1) {
+                        LOG.error("", e1);
+                    }
+                }
+
+
                 if (p.getName().equals("Class") ||
                         p.getReadMethod() == null ||
                         p.getWriteMethod() == null)
@@ -96,6 +133,22 @@ public class DataValueConverter implements Converter {
             throw new ConversionException("class=" + canonicalName, e);
         }
     }
+
+
+    static String toCamelCase(String s) {
+
+        final StringBuilder b = new StringBuilder();
+
+        if (s.length() > 0)
+            b.append(Character.toLowerCase(s.charAt(0)));
+
+        if (s.length() > 0)
+            b.append(s.substring(1));
+
+        return b.toString();
+
+    }
+
 
     @Override
     public Object unmarshal(HierarchicalStreamReader reader, UnmarshallingContext context) {
