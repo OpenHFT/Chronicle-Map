@@ -326,6 +326,44 @@ public class CHMUseCasesTest {
 
 
     @Test
+    public void testOversizedEntry() throws ExecutionException, InterruptedException, IOException {
+
+        int salefactor = 100;
+        int valueSize = 10 * salefactor;
+
+        char[] expected = new char[valueSize];
+        Arrays.fill(expected, 'X');
+
+        ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
+                .of(CharSequence.class, char[].class)
+                .keySize(10)
+                .valueSize(10);
+
+        try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
+            map.put("Key", expected);
+            mapChecks();
+        }
+    }
+
+
+    @Test
+    public void testKeyValueSizeBySample() throws ExecutionException, InterruptedException,
+            IOException {
+
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
+                .constantKeySizeBySample("Key")
+                .constantValueSizeBySample("Value")
+                .entries(1);
+
+        try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
+            map.put("Key", "Value");
+            mapChecks();
+        }
+    }
+
+
+    @Test
     public void testLargeCharSequenceValue()
             throws ExecutionException, InterruptedException, IOException {
 
