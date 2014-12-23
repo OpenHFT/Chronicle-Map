@@ -1489,8 +1489,11 @@ class StatelessServerConnector<K, V> {
             case TO_STRING:
                 return toString(writer.in(), sizeLocation);
 
-            case VERSION:
-                return version(writer.in(), sizeLocation);
+            case APPLICATION_VERSION:
+                return applicationVersion(writer.in(), sizeLocation);
+
+            case PERSISTED_DATA_VERSION:
+                return persistedDataVersion(writer.in(), sizeLocation);
 
             case PUT_ALL:
                 return putAll(reader, writer.in(), sizeLocation, timestamp, identifier);
@@ -1615,12 +1618,31 @@ class StatelessServerConnector<K, V> {
 
 
     @Nullable
-    private Work version(@NotNull Bytes writer, final long sizeLocation) {
+    private Work applicationVersion(@NotNull Bytes writer, final long sizeLocation) {
 
 
         final long remaining = writer.remaining();
         try {
-            String result = map.version();
+            String result = map.applicationVersion();
+            writer.writeObject(result);
+        } catch (Throwable e) {
+            return sendException(writer, sizeLocation, e);
+        }
+
+        assert remaining > 4;
+
+        writeSizeAndFlags(sizeLocation, false, writer);
+        return null;
+    }
+
+
+    @Nullable
+    private Work persistedDataVersion(@NotNull Bytes writer, final long sizeLocation) {
+
+
+        final long remaining = writer.remaining();
+        try {
+            String result = map.persistedDataVersion();
             writer.writeObject(result);
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);

@@ -39,7 +39,7 @@ public class TestOversizedReplicationHub {
             byte identifier = (byte) 1;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8086, new InetSocketAddress("localhost", 8087))
+                    .of(8021, new InetSocketAddress("localhost", 8022))
                     .heartBeatInterval(1, TimeUnit.SECONDS);
 
             ReplicationHub hubOnServer1 = ReplicationHub.builder()
@@ -74,7 +74,7 @@ public class TestOversizedReplicationHub {
             byte identifier = (byte) 2;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8087).heartBeatInterval(1, TimeUnit.SECONDS);
+                    .of(8022).heartBeatInterval(1, TimeUnit.SECONDS);
 
             ReplicationHub hubOnServer2 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)

@@ -50,7 +50,7 @@ public class BuildVersionTest {
                 .create()) {
             expected.put(1, 1.0);
 
-            String version = ((VanillaChronicleMap) expected).version();
+            String version = ((VanillaChronicleMap) expected).persistedDataVersion();
             Assert.assertNotNull(BuildVersion.readVersion(), version);
 
         }

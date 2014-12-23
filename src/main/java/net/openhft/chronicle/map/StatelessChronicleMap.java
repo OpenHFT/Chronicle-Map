@@ -52,7 +52,6 @@ import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
  */
 class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Cloneable {
 
-    private static final String START_OF = "Attempt to write ";
     private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
     private static final byte STATELESS_CLIENT_IDENTIFIER = (byte) -127;
 
@@ -114,7 +113,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         PUT_IF_ABSENT,
         REMOVE_WITH_VALUE,
         TO_STRING,
-        VERSION,
+        APPLICATION_VERSION,
+        PERSISTED_DATA_VERSION,
         PUT_ALL,
         PUT_ALL_WITHOUT_ACC,
         HASH_CODE,
@@ -126,6 +126,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     //  used by the enterprise version
     private int identifier;
 
+    @SuppressWarnings("UnusedDeclaration")
     void identifier(int identifier) {
         this.identifier = identifier;
     }
@@ -135,8 +136,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final AtomicLong transactionID = new AtomicLong(0);
 
     StatelessChronicleMap(@NotNull final StatelessMapConfig config,
-                          @NotNull final ChronicleMapBuilder chronicleMapBuilder)
-            throws IOException {
+                          @NotNull final ChronicleMapBuilder chronicleMapBuilder) {
 
         this.config = config;
 
@@ -171,6 +171,21 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         inBuffer = allocateDirect(128).order(ByteOrder.nativeOrder());
         inBytes = new ByteBufferBytes(inBuffer.slice());
 
+        versionCheck();
+
+    }
+
+    private void versionCheck() {
+
+        String serverVersion = serverApplicationVersion();
+        String clientVersion = clientVersion();
+
+        if (serverVersion.equals(clientVersion)) {
+            LOG.warn("The Chronicle Map Server and StalessClient are on different versions, " +
+                    "although these version are backwards compatible, we" +
+                    " suggest that you use the same version, server=" + serverApplicationVersion() + ", " +
+                    "client=" + clientVersion);
+        }
     }
 
     @Override
@@ -272,6 +287,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             if (closeables != null) closeables.closeQuietly();
             clientChannel = null;
         }
+
+
     }
 
     /**
@@ -433,8 +450,19 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     @NotNull
-    public String version() {
-        return fetchObject(String.class, VERSION);
+    public String serverApplicationVersion() {
+        return fetchObject(String.class, APPLICATION_VERSION);
+    }
+
+    @NotNull
+    public String serverPersistedDataVersion() {
+        return fetchObject(String.class, PERSISTED_DATA_VERSION);
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    @NotNull
+    public String clientVersion() {
+        return BuildVersion.readVersion();
     }
 
     public boolean isEmpty() {
@@ -516,16 +544,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return fetchObject(PUT_MAPPED, key, unaryOperator);
     }
 
-    /**
-     * estimates the size based on what been completed so far
-     */
-    private long estimateSize(int numberOfEntries, int numberOfEntriesReadSoFar) {
-        assert outBytesLock.isHeldByCurrentThread();
-        assert !inBytesLock.isHeldByCurrentThread();
-        // we will back the size estimate on what we have so far
-        final double percentageComplete = (double) numberOfEntriesReadSoFar / (double) numberOfEntries;
-        return (long) ((double) outBytes.position() / percentageComplete);
-    }
 
     private Bytes resizeBufferOutBuffer(int newCapacity) {
         return resizeBufferOutBuffer(newCapacity, outBytes.position());
@@ -958,9 +976,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         try {
 
             for (; ; ) {
-                if (clientChannel == null)
+                if (clientChannel == null) {
                     clientChannel = lazyConnect(config.timeoutMs(), config.remoteAddress());
-
+                }
                 try {
 
                     if (LOG.isDebugEnabled())
@@ -1196,7 +1214,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
     long lagestEntrySoFar = 0;
-    long limitOfLast = 0;
+    private long limitOfLast = 0;
 
     private void writeBytesToSocket(long timeoutTime) throws IOException {
 
@@ -1294,14 +1312,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private ThreadLocalCopies writeKey(K key, ThreadLocalCopies copies) {
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
-
-        long start = outBytes.position();
-
-        for (; ; ) {
-
-            return keyWriterWithSize.write(outBytes, key, copies);
-
-        }
+        return keyWriterWithSize.write(outBytes, key, copies);
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -1309,8 +1320,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
-
-
         return keyWriterWithSize.writeInLoop(outBytes, key, writer, copies);
 
     }

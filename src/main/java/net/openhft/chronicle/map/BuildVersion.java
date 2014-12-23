@@ -30,20 +30,28 @@ import java.io.Reader;
  */
 class BuildVersion {
 
+    static String version = null;
 
     /**
      * @return version of ChronicleMap being used, or NULL if its not known
      */
-    public static String readVersion() {
+    public synchronized static String readVersion() {
+
+        if (version != null) {
+            return version;
+        }
 
         // the best way to get the version is to read it from the manifest
-        final String version = getVersionFromManifest();
+        final String versionFromManifest = getVersionFromManifest();
 
-        if (version != null)
+        if (versionFromManifest != null) {
+            version = versionFromManifest;
             return version;
+        }
 
         // as a fall back for development, we will read the version from the pom file
-        return getVersionFromPom();
+        version = getVersionFromPom();
+        return version;
     }
 
     /**

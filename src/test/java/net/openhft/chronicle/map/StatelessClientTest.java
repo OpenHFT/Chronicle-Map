@@ -690,7 +690,7 @@ public class StatelessClientTest {
                     .class, StringBuilder.class)
                     .statelessClient(new InetSocketAddress("localhost", port)).create()) {
 
-                assertTrue(!((StatelessChronicleMap) statelessMap).version().isEmpty());
+                assertTrue(!((StatelessChronicleMap) statelessMap).serverApplicationVersion().isEmpty());
 
             }
         }
