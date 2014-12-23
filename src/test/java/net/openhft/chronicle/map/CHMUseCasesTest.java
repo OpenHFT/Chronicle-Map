@@ -121,9 +121,8 @@ public class CHMUseCasesTest {
                 return;
 
 
-
-           // waitTillEqual(5000);
-           // assertEquals(map1, map2);
+            // waitTillEqual(5000);
+            // assertEquals(map1, map2);
         }
 
         if (typeOfMap == TypeOfMap.SIMPLE)
@@ -136,12 +135,6 @@ public class CHMUseCasesTest {
 
         // see HCOLL-265 Chronicle Maps with Identical char[] values are not equal1
         if (map1.keyClass() == char[].class || map1.valueClass() == char[].class) {
-            return;
-        }
-
-
-        if (ByteBuffer.class.isAssignableFrom(map1.keyClass()) ||
-                ByteBuffer.class.isAssignableFrom(map1.valueClass())) {
             return;
         }
 

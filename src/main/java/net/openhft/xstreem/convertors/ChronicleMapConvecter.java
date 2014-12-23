@@ -1,4 +1,4 @@
-package net.openhft.chronicle.map;
+package net.openhft.xstreem.convertors;
 
 import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.converters.Converter;
@@ -26,17 +26,17 @@ import static java.beans.Introspector.getBeanInfo;
 /**
  * @author Rob Austin.
  */
-public class ChronicleMapConvector<K, V> implements Converter {
+public class ChronicleMapConvecter<K, V> implements Converter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapConvecter.class);
 
     private final Class entrySetClass;
     private final Class writeThroughEntryClass;
     private final Map<K, V> map;
 
-    public ChronicleMapConvector(@NotNull Map map) {
+    public ChronicleMapConvecter(@NotNull Map map) {
 
-        final String vanillaChronicleMap = VanillaChronicleMap.class.getCanonicalName();
+        final String vanillaChronicleMap = "net.openhft.chronicle.map.VanillaChronicleMap";
 
         try {
             this.entrySetClass = Class.forName(vanillaChronicleMap + "$EntrySet");
@@ -72,17 +72,14 @@ public class ChronicleMapConvector<K, V> implements Converter {
         if (writeThroughEntryClass.isAssignableFrom(o.getClass())) {
 
             final AbstractMap.SimpleEntry e = (AbstractMap.SimpleEntry) o;
-            Object key = e.getKey();
+
+            final Object key = e.getKey();
             writer.startNode(key.getClass().getCanonicalName());
-
-
             marshallingContext.convertAnother(key);
             writer.endNode();
 
             Object value = e.getValue();
             writer.startNode(value.getClass().getCanonicalName());
-
-
             marshallingContext.convertAnother(value);
             writer.endNode();
 
