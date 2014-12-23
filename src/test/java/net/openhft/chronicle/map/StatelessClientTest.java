@@ -476,7 +476,9 @@ public class StatelessClientTest {
                      ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                              .constantValueSizeBySample(sampleValue)
                              .entries(1)
-                             .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
+                             .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)
+                                     .tcpBufferSize(128))
+                             .create()) {
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder.of(Integer
                     .class, CharSequence.class)
                     .entries(1)
