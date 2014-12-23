@@ -608,7 +608,7 @@ where only a small percentage of your entries are larger than the others, in thi
 span across a number of entries. The alternative would be to increase the internal entry size to be similar
 to the size of the largest entry, but this approach is wasteful of memory, especially when most
 entries are no where near the max entry size. So put simply Chronicle map is able to accept entries
-where each can have a different size but it does this in a way that is not wasteful of space.
+where each can have a different size but it does this in a way that is efficient.
 
 
 ## Serialization
