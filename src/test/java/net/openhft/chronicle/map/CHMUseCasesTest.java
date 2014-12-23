@@ -4,6 +4,7 @@ import com.google.common.primitives.Chars;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.serialization.impl.*;
+import net.openhft.lang.model.constraints.MaxSize;
 import net.openhft.lang.model.constraints.NotNull;
 import net.openhft.lang.values.*;
 import org.junit.After;
@@ -2437,6 +2438,35 @@ public class CHMUseCasesTest {
         }
         return ret;
     }
+
+    @Ignore("HCOLL-271 JSON<->Map fails for data generated inner classes")
+    @Test
+    public void testGeneratedDataValue() throws IOException {
+
+        if (typeOfMap == TypeOfMap.STATELESS)
+            return; // acquireUsingLocked not supported by the STATELESS client
+
+        ChronicleMapBuilder<String, IBean> builder = ChronicleMapBuilder
+                .of(String.class, IBean.class).keySize(5);
+        try (ChronicleMap<String, IBean> map = newInstance(builder)) {
+
+            IBean iBean = map.newValueInstance();
+            try (WriteContext cx = map.acquireUsingLocked("1",
+                    iBean)) {
+                iBean.setDouble(1.2);
+                iBean.setLong(2);
+                iBean.setInt(4);
+                IBean.Inner innerAt = iBean.getInnerAt(1);
+                innerAt.setMessage("Hello world");
+            }
+
+            assertEquals(2, map.get("1").getLong());
+            assertEquals("Hello world", map.get("1").getInnerAt(1).getMessage());
+            mapChecks();
+        }
+    }
+
+
 }
 
 enum ToString implements Function<Object, String> {
@@ -2448,7 +2478,7 @@ enum ToString implements Function<Object, String> {
     }
 
 }
-/*
+
 interface IBean {
     long getLong();
 
@@ -2461,5 +2491,19 @@ interface IBean {
     int getInt();
 
     void setInt(int i);
+
+    void setInnerAt(@MaxSize(7) int index, Inner inner);
+
+    Inner getInnerAt(int index);
+
+    /* nested interface - empowering an Off-Heap hierarchical “TIER of prices”
+    as array[ ] value */
+    interface Inner {
+
+        String getMessage();
+
+        void setMessage(@MaxSize(20) String px);
+
+    }
 }
-*/
+

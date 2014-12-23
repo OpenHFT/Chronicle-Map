@@ -728,15 +728,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         try {
             return isKey ? DataValueClasses.newInstance(aClass) :
                     DataValueClasses.newDirectInstance(aClass);
-        } catch (Exception e) {
-            if (aClass.isInterface()) {
 
+        } catch (Exception e) {
+            if (e.getCause() instanceof IllegalStateException)
+                throw e;
+
+            if (aClass.isInterface())
                 throw new IllegalStateException("It not possible to create a instance from " +
                         "interface=" + aClass.getSimpleName() + " we recommend you create an " +
                         "instance in the usual way.", e);
-
-
-            }
 
             try {
                 return (T) aClass.newInstance();
