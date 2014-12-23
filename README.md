@@ -903,44 +903,36 @@ unique identifier, but when using the `ReplicationHub` we use a channel to ident
 rather than the identifier, As the identifier is used to identify the host/server which broadcasts the
 update. Put simply:
 
-* Each host mustbe given a unique identifier.
+* Each host must be given a unique identifier.
 * Each map must be given a unique channel.
 
 ``` java
-int maxEntrySize = 1024;
 byte identifier= 2;
 ReplicationHub replicationHub = ReplicationHub.builder()
-                    .maxEntrySize(maxEntrySize)
                     .tcpTransportAndNetwork(tcpConfig)
                     .createWithId(identifier);
 ```
 
 In this example above the `ReplicationHub` is given the identifier of 2.
 
-In addition to specifying the identifier we also have to set the maximum entry size, this sets
-the size of the memory buffers within the `ReplicationChannel`.  This has to be set manually, with channels you
-are able to attach additional maps to a `ReplicationChannel` once its up and running, so the maximum size of each
-entry in the map can not be known in advance and we don’t currently support automatic resizing
-of buffers.
+With channels you are able to attach additional maps to a `ReplicationChannel` once its up and
+running.
 
-When creating the `ReplicationChannel` you should attach your tcp or udp configuration
+When creating the `ReplicationChannel` you should attach your tcp or udp configuration :
 ``` java
-int maxEntrySize = 1024;
 byte identifier = 1;
 ReplicationHub replicationHub = ReplicationHub.builder()
-                    .maxEntrySize(maxEntrySize)
                     .tcpTransportAndNetwork(tcpConfig)
                     .createWithId(identifier);
 ```
 
-Attaching a `ReplicationChannel` to the replication to the map:
+Attaching a `ReplicationChannel` to the map :
 
 ``` java
 short channel = (short) 2;
 ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
   .entries(1000)
-  .instance()
-  .replicatedViaChannel(replicationHub.createChannel(channel))
+  .instance().replicatedViaChannel(replicationHub.createChannel(channel))
   .create();
 ```
 
