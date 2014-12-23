@@ -465,7 +465,7 @@ public class StatelessClientTest {
     @Test(timeout = 10000)
     public void testLargeEntries() throws IOException,
             InterruptedException {
-        int valueSize = 50_000;
+        int valueSize = 1_000;
 
         char[] value = new char[valueSize];
 

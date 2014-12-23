@@ -96,6 +96,7 @@ public class TcpReplicationSoakTest {
     }
 
 
+    @Ignore
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         try {
