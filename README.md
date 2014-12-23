@@ -956,91 +956,105 @@ unique for each map you have.
 ### Channels and ReplicationChannel - Example
 
 ``` java
-    // server 1 with  identifier = 1
-    {
-        ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                        .entries(1000);
 
-        byte identifier = (byte) 1;
+import net.openhft.chronicle.hash.replication.ReplicationChannel;
+import net.openhft.chronicle.hash.replication.ReplicationHub;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
-        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                .of(8086, new InetSocketAddress("localhost", 8087))
-                .heartBeatInterval(1, SECONDS);
+import static org.junit.Assert.assertEquals;
 
-        hubOnServer1 = ReplicationHub.builder()
-                .tcpTransportAndNetwork(tcpConfig)
-                .createWithId(identifier);
+...
 
-        // this demotes favoriteColour
-        short channel1 = (short) 1;
+ChronicleMap<CharSequence, CharSequence> favoriteColourServer1, favoriteColourServer2;
+ChronicleMap<CharSequence, CharSequence> favoriteComputerServer1, favoriteComputerServer2;
 
-        favoriteColourServer1 = smallStringToStringMapBuilder.instance()
-                .replicatedViaChannel(hubOnServer1.createChannel(channel1)).create();
 
-        favoriteColourServer1.put("peter", "green");
+// server 1 with  identifier = 1
+{
+    ChronicleMapBuilder<CharSequence, CharSequence> builder =
+            ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).entries(1000);
 
-        // this demotes favoriteComputer
-        short channel2 = (short) 2;
+    byte identifier = (byte) 1;
 
-        favoriteComputerServer1 = smallStringToStringMapBuilder.instance()
-                .replicatedViaChannel(hubOnServer1.createChannel(channel2)).create();
+    TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
+            .of(8086, new InetSocketAddress("localhost", 8087))
+            .heartBeatInterval(1, TimeUnit.SECONDS);
 
-        favoriteComputerServer1.put("peter", "dell");
-    }
+    ReplicationHub hubOnServer1 = ReplicationHub.builder()
+            .tcpTransportAndNetwork(tcpConfig)
+            .createWithId(identifier);
 
-    // server 2 with  identifier = 2
-    {
-        ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                        .entries(1000);
+    // this demotes favoriteColour
+    short channel1 = (short) 1;
 
-        byte identifier = (byte) 2;
+    ReplicationChannel channel = hubOnServer1.createChannel(channel1);
+    favoriteColourServer1 = builder.instance()
+            .replicatedViaChannel(channel).create();
 
-        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                .of(8087).heartBeatInterval(1, SECONDS);
+    favoriteColourServer1.put("peter", "green");
 
-        hubOnServer2 = ReplicationHub.builder()
-                .tcpTransportAndNetwork(tcpConfig)
-                .createWithId(identifier);
+    // this demotes favoriteComputer
+    short channel2 = (short) 2;
 
-        // this demotes favoriteColour
-        short channel1 = (short) 1;
+    favoriteComputerServer1 = builder.instance()
+            .replicatedViaChannel(hubOnServer1.createChannel(channel2)).create();
 
-        favoriteColourServer2 = smallStringToStringMapBuilder.instance()
-                .replicatedViaChannel(hubOnServer2.createChannel(channel1)).create();
-
-        favoriteColourServer2.put("rob", "blue");
-
-        // this demotes favoriteComputer
-        short channel2 = (short) 2;
-
-        favoriteComputerServer2 = smallStringToStringMapBuilder.instance()
-                .replicatedViaChannel(hubOnServer2.createChannel(channel2)).create();
-
-        favoriteComputerServer2.put("rob", "mac");
-        favoriteComputerServer2.put("daniel", "mac");
-    }
-
-    // allow time for the recompilation to resolve
-    for (int t = 0; t < 2500; t++) {
-        if (favoriteComputerServer2.equals(favoriteComputerServer1) &&
-                favoriteColourServer2.equals(favoriteColourServer1))
-            break;
-        Thread.sleep(1);
-    }
-
-    assertEquals(favoriteComputerServer1, favoriteComputerServer2);
-    Assert.assertEquals(3, favoriteComputerServer2.size());
-
-    assertEquals(favoriteColourServer1, favoriteColourServer2);
-    Assert.assertEquals(2, favoriteColourServer1.size());
-
-    favoriteColourServer1.close();
-    favoriteComputerServer2.close();
-    favoriteColourServer2.close();
-    favoriteColourServer1.close();
+    favoriteComputerServer1.put("peter", "dell");
 }
+
+// server 2 with  identifier = 2
+{
+    ChronicleMapBuilder<CharSequence, CharSequence> builder =
+            ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).entries(1000);
+
+    byte identifier = (byte) 2;
+
+    TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
+            .of(8087).heartBeatInterval(1, TimeUnit.SECONDS);
+
+    ReplicationHub hubOnServer2 = ReplicationHub.builder()
+            .tcpTransportAndNetwork(tcpConfig)
+            .createWithId(identifier);
+
+    // this demotes favoriteColour
+    short channel1 = (short) 1;
+
+    favoriteColourServer2 = builder.instance()
+            .replicatedViaChannel(hubOnServer2.createChannel(channel1)).create();
+
+    favoriteColourServer2.put("rob", "blue");
+
+    // this demotes favoriteComputer
+    short channel2 = (short) 2;
+
+    favoriteComputerServer2 = builder.instance()
+            .replicatedViaChannel(hubOnServer2.createChannel(channel2)).create();
+
+    favoriteComputerServer2.put("rob", "mac");
+    favoriteComputerServer2.put("daniel", "mac");
+}
+
+// allow time for the recompilation to resolve
+for (int t = 0; t < 2500; t++) {
+    if (favoriteComputerServer2.equals(favoriteComputerServer1) &&
+            favoriteColourServer2.equals(favoriteColourServer1))
+        break;
+    Thread.sleep(1);
+}
+
+assertEquals(favoriteComputerServer1, favoriteComputerServer2);
+assertEquals(3, favoriteComputerServer2.size());
+
+assertEquals(favoriteColourServer1, favoriteColourServer2);
+assertEquals(2, favoriteColourServer1.size());
+
+favoriteColourServer1.close();
+favoriteComputerServer2.close();
+favoriteColourServer2.close();
+favoriteColourServer1.close();
+
 ``` 
 
 # Stateless Client
