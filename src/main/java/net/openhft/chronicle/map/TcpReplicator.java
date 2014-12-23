@@ -45,6 +45,7 @@ import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTION_ID;
+import static net.openhft.chronicle.map.BuildVersion.version;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 interface Work {
@@ -498,6 +499,28 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         throttle(channel);
     }
 
+
+    private void checkVersions(final Attached<K, V> attached) {
+
+        final String localVersion = BuildVersion.version();
+        final String remoteVersion = attached.serverVersion;
+
+        if (!remoteVersion.equals(localVersion)) {
+            byte remoteIdentifier = attached.remoteIdentifier;
+            LOG.warn("DIFFERENT CHRONICLE-MAP VERSIONS : " +
+                            "local-map=" + localVersion +
+                            ", remote-map-id-" + remoteIdentifier + "=" +
+                            remoteVersion +
+
+                            ", The Remote Chronicle Map with " +
+                            "identifier=" + remoteIdentifier +
+                            " and this Chronicle Map are on different " +
+                            "versions, we suggest that you use the same version."
+
+            );
+        }
+    }
+
     /**
      * used to exchange identifiers and timestamps and heartbeat intervals between the server and
      * client
@@ -565,6 +588,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
             writer.writeRemoteBootstrapTimestamp(replica.lastModificationTime(remoteIdentifier));
 
+            writer.writeServerVersion();
+
             // tell the remote node, what are heartbeat interval is
             writer.writeRemoteHeartbeatInterval(heartBeatIntervalMillis);
         }
@@ -575,8 +600,16 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 return;
         }
 
+        if (attached.serverVersion == null) {
+            attached.serverVersion = reader.readRemoteServerVersion();
+            if (attached.serverVersion == null)
+                return;
+
+            checkVersions(attached);
+        }
+
         if (!attached.hasRemoteHeartbeatInterval) {
-            final long value = reader.remoteHeartbeatIntervalFromBuffer();
+            final long value = reader.readRemoteHeartbeatIntervalFromBuffer();
 
             if (value == Long.MIN_VALUE)
                 return;
@@ -920,6 +953,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         // true if its socket is a ServerSocket
         public boolean isServer;        // the frequency the remote node will send a heartbeat
         public boolean handShakingComplete;
+        public String serverVersion;
         public long remoteHeartbeatInterval = heartBeatIntervalMillis;
 
         boolean isHandShakingComplete() {
@@ -1005,6 +1039,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             in().writeLong(timeStampOfLastMessage);
         }
 
+        void writeServerVersion() {
+            in().write(String.format("%1$" + 64 + "s", version()).toCharArray());
+        }
 
         /**
          * writes all the entries that have changed, to the buffer which will later be written to
@@ -1356,7 +1393,20 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 return Long.MIN_VALUE;
         }
 
-        public long remoteHeartbeatIntervalFromBuffer() {
+        /**
+         * @return the timestamp or -1 if unsuccessful
+         */
+        String readRemoteServerVersion() {
+            if (out.remaining() >= 64) {
+                char[] chars = new char[64];
+                out.readFully(chars, 0, chars.length);
+                return new String(chars).trim();
+            } else
+                return null;
+        }
+
+
+        public long readRemoteHeartbeatIntervalFromBuffer() {
             return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
         }
     }

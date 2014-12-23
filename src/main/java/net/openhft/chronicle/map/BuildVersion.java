@@ -30,12 +30,12 @@ import java.io.Reader;
  */
 class BuildVersion {
 
-    static String version = null;
+   private static String version = null;
 
     /**
      * @return version of ChronicleMap being used, or NULL if its not known
      */
-    public synchronized static String readVersion() {
+    public synchronized static String version() {
 
         if (version != null) {
             return version;

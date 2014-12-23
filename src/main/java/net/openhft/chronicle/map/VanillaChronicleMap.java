@@ -122,7 +122,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         kClass = keyBuilder.eClass;
         keySizeMarshaller = keyBuilder.sizeMarshaller();
         originalKeyReader = keyBuilder.reader();
-        dataFileVersion = BuildVersion.readVersion();
+        dataFileVersion = BuildVersion.version();
 
         originalKeyInterop = (KI) keyBuilder.interop();
 
@@ -188,7 +188,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
      * @return the version of chronicle map that is currently running
      */
     public String applicationVersion() {
-        return BuildVersion.readVersion();
+        return BuildVersion.version();
     }
 
 

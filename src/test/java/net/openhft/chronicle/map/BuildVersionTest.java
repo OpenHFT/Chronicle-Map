@@ -32,7 +32,7 @@ public class BuildVersionTest {
     @Test
     public void test() throws IOException, InterruptedException {
         // checks that we always get a version
-        Assert.assertNotNull(BuildVersion.readVersion());
+        Assert.assertNotNull(BuildVersion.version());
     }
 
 
@@ -51,7 +51,7 @@ public class BuildVersionTest {
             expected.put(1, 1.0);
 
             String version = ((VanillaChronicleMap) expected).persistedDataVersion();
-            Assert.assertNotNull(BuildVersion.readVersion(), version);
+            Assert.assertNotNull(BuildVersion.version(), version);
 
         }
     }

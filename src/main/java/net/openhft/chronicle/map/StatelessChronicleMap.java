@@ -171,19 +171,20 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         inBuffer = allocateDirect(128).order(ByteOrder.nativeOrder());
         inBytes = new ByteBufferBytes(inBuffer.slice());
 
-        versionCheck();
+        checkVersion();
 
     }
 
-    private void versionCheck() {
+    private void checkVersion() {
 
         String serverVersion = serverApplicationVersion();
         String clientVersion = clientVersion();
 
         if (serverVersion.equals(clientVersion)) {
-            LOG.warn("The Chronicle Map Server and StalessClient are on different versions, " +
-                    "although these version are backwards compatible, we" +
-                    " suggest that you use the same version, server=" + serverApplicationVersion() + ", " +
+            LOG.warn("DIFFERENT CHRONICLE-MAP VERSIONS: The Chronicle-Map-Server and " +
+                    "Stateless-Client are on different " +
+                    "versions, " +
+                    " we suggest that you use the same version, server=" + serverApplicationVersion() + ", " +
                     "client=" + clientVersion);
         }
     }
@@ -462,7 +463,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     @SuppressWarnings("WeakerAccess")
     @NotNull
     public String clientVersion() {
-        return BuildVersion.readVersion();
+        return BuildVersion.version();
     }
 
     public boolean isEmpty() {
