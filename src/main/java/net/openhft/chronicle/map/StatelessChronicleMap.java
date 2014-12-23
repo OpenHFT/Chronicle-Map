@@ -180,7 +180,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         String serverVersion = serverApplicationVersion();
         String clientVersion = clientVersion();
 
-        if (serverVersion.equals(clientVersion)) {
+        if (!serverVersion.equals(clientVersion)) {
             LOG.warn("DIFFERENT CHRONICLE-MAP VERSIONS: The Chronicle-Map-Server and " +
                     "Stateless-Client are on different " +
                     "versions, " +
