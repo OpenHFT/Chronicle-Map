@@ -2335,7 +2335,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore("HCOLL-269 Map with value type of Set<String> throws NPE on map.entrySet()")
     @Test
     public void testSetValue() throws IOException {
 
