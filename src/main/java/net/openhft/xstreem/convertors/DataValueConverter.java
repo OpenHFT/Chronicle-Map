@@ -38,10 +38,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Iterator;
 import java.util.Map;
-
-import static java.beans.Introspector.getBeanInfo;
 
 
 /**
@@ -50,7 +47,6 @@ import static java.beans.Introspector.getBeanInfo;
 public class DataValueConverter implements Converter {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataValueConverter.class);
-
 
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext context) {
@@ -96,7 +92,6 @@ public class DataValueConverter implements Converter {
                 if (fileModel.indexedGetter() != null) {
                     try {
 
-                        //  final IndexedPropertyDescriptor indexedPropertyDescriptor = (IndexedPropertyDescriptor) p;
                         final Method indexedReadMethod = fileModel.indexedGetter();
 
                         if (indexedReadMethod == null)
@@ -129,7 +124,7 @@ public class DataValueConverter implements Converter {
                         writer.endNode();
 
                     } catch (NoSuchFieldException | IllegalAccessException e1) {
-                        LOG.error("", e1);
+                        throw new ConversionException("", e1);
                     }
 
                     continue;
@@ -139,7 +134,6 @@ public class DataValueConverter implements Converter {
                 try {
 
                     final Method readMethod = fileModel.getter();
-
 
                     if (readMethod == null)
                         continue;
@@ -258,7 +252,7 @@ public class DataValueConverter implements Converter {
                             fillInObject(reader, context, instance);
                         }
                     } catch (IllegalAccessException | InvocationTargetException e) {
-                        LOG.error("", e);
+                        throw new ConversionException("", e);
                     }
 
                     reader.moveUp();
@@ -280,7 +274,7 @@ public class DataValueConverter implements Converter {
             try {
                 setter.invoke(using, object);
             } catch (Exception e) {
-                LOG.error("", e);
+                throw new ConversionException("", e);
             }
 
             reader.moveUp();
@@ -320,13 +314,12 @@ public class DataValueConverter implements Converter {
             }
 
         } catch (Exception e) {
-            //
+            throw new ConversionException("class=" + aClass.getName(), e);
         }
 
         throw new ConversionException("setValue(..) method not found in class=" +
                 aClass.getCanonicalName());
     }
-
 
     @Override
     public boolean canConvert(Class clazz) {
