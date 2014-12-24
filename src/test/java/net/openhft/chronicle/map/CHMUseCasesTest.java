@@ -2418,13 +2418,12 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore("HCOLL-267 MapMarshaller fails to serialize")
     @Test
     public void testMapStringIntegerValue() throws IOException {
 
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // getUsingLocked not supported by the STATELESS client
 
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
