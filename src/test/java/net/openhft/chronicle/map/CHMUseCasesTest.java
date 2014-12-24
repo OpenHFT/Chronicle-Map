@@ -313,8 +313,6 @@ public class CHMUseCasesTest {
         try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
             map.put("Key", expected);
 
-            char[] actual = map.get("Key");
-            System.out.println(actual);
             assertEquals(Chars.asList(expected), Chars.asList(map.get("Key")));
             mapChecks();
         }
