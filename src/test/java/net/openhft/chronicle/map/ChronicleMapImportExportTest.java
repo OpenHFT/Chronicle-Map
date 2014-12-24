@@ -159,7 +159,6 @@ public class ChronicleMapImportExportTest {
     }
 
 
-
     @Test
     public void testFromHashMap() throws IOException, InterruptedException {
 
@@ -267,7 +266,7 @@ public class ChronicleMapImportExportTest {
     public void testBondVOInterface() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
-      //  file.deleteOnExit();
+        file.deleteOnExit();
 
         System.out.println(file.getAbsolutePath());
         try (ChronicleMap<CharSequence, BondVOInterface> expected =
@@ -278,6 +277,10 @@ public class ChronicleMapImportExportTest {
             // this will add the entry
             try (WriteContext context = expected.acquireUsingLocked("one", value)) {
                 value.setCoupon(8.98);
+                BondVOInterface.MarketPx marketPxIntraDayHistoryAt = value.getMarketPxIntraDayHistoryAt(1);
+
+                marketPxIntraDayHistoryAt.setAskPx(12.0);
+
                 assert value == context.value();
             }
 
@@ -292,7 +295,7 @@ public class ChronicleMapImportExportTest {
                 Assert.assertEquals(expected.get("one").getCoupon(), actual.get("one").getCoupon(), 0);
             }
         } finally {
-     //       file.delete();
+            file.delete();
         }
     }
 }
