@@ -18,8 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
 import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
@@ -36,22 +34,20 @@ import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
-import net.openhft.xstreem.convertors.ByteBufferConverter;
-import net.openhft.xstreem.convertors.ChronicleMapConverter;
-import net.openhft.xstreem.convertors.DataValueConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
@@ -667,36 +663,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     public synchronized void getAll(File toFile) throws IOException {
-        final XStream xstream = new XStream(new JettisonMappedXmlDriver());
-        xstream.setMode(XStream.NO_REFERENCES);
-        xstream.alias("cmap", VanillaChronicleMap.EntrySet.class);
-
-        xstream.registerConverter(new ChronicleMapConverter(this));
-        xstream.registerConverter(new ByteBufferConverter());
-        xstream.registerConverter(new DataValueConverter());
-        OutputStream outputStream = new FileOutputStream(toFile);
-        if (toFile.getName().toLowerCase().endsWith(".gz"))
-            outputStream = new GZIPOutputStream(outputStream);
-        try (OutputStream out = outputStream) {
-            xstream.toXML(entrySet(), out);
-        }
+        JsonSerializer.getAll(toFile, this);
     }
 
     @Override
     public synchronized void putAll(File fromFile) throws IOException {
-        final XStream xstream = new XStream(new JettisonMappedXmlDriver());
-        xstream.setMode(XStream.NO_REFERENCES);
-        xstream.alias("cmap", VanillaChronicleMap.EntrySet.class);
-        xstream.registerConverter(new ChronicleMapConverter(this));
-        xstream.registerConverter(new ByteBufferConverter());
-        xstream.registerConverter(new DataValueConverter());
-
-        InputStream inputStream = new FileInputStream(fromFile);
-        if (fromFile.getName().toLowerCase().endsWith(".gz"))
-            inputStream = new GZIPInputStream(inputStream);
-        try (InputStream out = inputStream) {
-            xstream.fromXML(out);
-        }
+        JsonSerializer.putAll(fromFile, this);
     }
 
     @Override
