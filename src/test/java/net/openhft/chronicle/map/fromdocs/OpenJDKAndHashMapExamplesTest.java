@@ -22,7 +22,6 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.ReadContext;
 import net.openhft.chronicle.map.WriteContext;
-import net.openhft.lang.model.DataValueClasses;
 import org.junit.Test;
 
 import java.io.File;
@@ -41,7 +40,7 @@ public class OpenJDKAndHashMapExamplesTest {
 
     private static final String TMP = System.getProperty("java.io.tmpdir");
 
-    private static long parseYYYYMMDD(String s) {
+    public static long parseYYYYMMDD(String s) {
         try {
             return YYYYMMDD.parse(s).getTime();
         } catch (ParseException e) {

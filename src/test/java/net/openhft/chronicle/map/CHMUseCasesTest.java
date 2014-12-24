@@ -2,6 +2,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.primitives.Chars;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.model.constraints.MaxSize;
@@ -25,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
+import static net.openhft.chronicle.map.fromdocs.OpenJDKAndHashMapExamplesTest.parseYYYYMMDD;
 import static org.junit.Assert.*;
 
 /**
@@ -320,6 +322,35 @@ public class CHMUseCasesTest {
         }
     }
 
+
+    @Test
+    public void bondExample() throws IOException, InterruptedException {
+
+        if (typeOfMap == TypeOfMap.STATELESS)
+            return; // acquireUsingLocked not supported by the STATELESS client
+
+        ChronicleMapBuilder builder = ChronicleMapBuilder.of(String.class, BondVOInterface.class)
+                .keySize(10);
+
+        try (ChronicleMap<String, BondVOInterface> chm = newInstance(builder)) {
+            BondVOInterface bondVO = chm.newValueInstance();
+            try (WriteContext wc = chm.acquireUsingLocked("369604103", bondVO)) {
+                bondVO.setIssueDate(parseYYYYMMDD("20130915"));
+                bondVO.setMaturityDate(parseYYYYMMDD("20140915"));
+                bondVO.setCoupon(5.0 / 100); // 5.0%
+
+                BondVOInterface.MarketPx mpx930 = bondVO.getMarketPxIntraDayHistoryAt(0);
+                mpx930.setAskPx(109.2);
+                mpx930.setBidPx(106.9);
+
+                BondVOInterface.MarketPx mpx1030 = bondVO.getMarketPxIntraDayHistoryAt(1);
+                mpx1030.setAskPx(109.7);
+                mpx1030.setBidPx(107.6);
+            }
+
+        }
+
+    }
 
     @Test
     public void testLargeCharSequenceValueWriteOnly() throws ExecutionException, InterruptedException, IOException {
@@ -2452,7 +2483,6 @@ public class CHMUseCasesTest {
         return ret;
     }
 
-    @Ignore("HCOLL-271 JSON<->Map fails for data generated inner classes")
     @Test
     public void testGeneratedDataValue() throws IOException {
 

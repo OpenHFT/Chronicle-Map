@@ -13,7 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import java.beans.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Iterator;
 
 import static java.beans.Introspector.getBeanInfo;
 
@@ -69,9 +71,8 @@ public class DataValueConverter implements Converter {
                 if (p instanceof IndexedPropertyDescriptor) {
                     try {
 
-                        IndexedPropertyDescriptor indexedPropertyDescriptor = (IndexedPropertyDescriptor) p;
-
-                        Method indexedReadMethod = indexedPropertyDescriptor.getIndexedReadMethod();
+                        final IndexedPropertyDescriptor indexedPropertyDescriptor = (IndexedPropertyDescriptor) p;
+                        final Method indexedReadMethod = indexedPropertyDescriptor.getIndexedReadMethod();
 
                         if (indexedReadMethod == null)
                             continue;
@@ -82,28 +83,33 @@ public class DataValueConverter implements Converter {
                             continue;
                         }
 
-                        String simpleName = returnType.getSimpleName();
-
-                        String fieldName = "_" + toCamelCase(simpleName);
+                        final String simpleName = returnType.getSimpleName();
+                        final String fieldName = "_" + toCamelCase(simpleName);
 
                         Field field = o.getClass().getDeclaredField(fieldName);
                         field.setAccessible(true);
 
-                        Object[] o1 = (Object[]) field.get(o);
+                        final Object[] o1 = (Object[]) field.get(o);
+
                         if (o1 == null)
                             continue;
 
+                        writer.startNode(p.getName());
                         int i = 0;
                         for (Object f : o1) {
+                            if (f == null) {
+                                continue;
+                            }
                             writer.startNode(Integer.toString(i++));
                             context.convertAnother(f);
                             writer.endNode();
                         }
+                        writer.endNode();
+
                     } catch (NoSuchFieldException | IllegalAccessException e1) {
                         LOG.error("", e1);
                     }
                 }
-
 
                 if (p.getName().equals("Class") ||
                         p.getReadMethod() == null ||
@@ -151,7 +157,9 @@ public class DataValueConverter implements Converter {
 
 
     @Override
-    public Object unmarshal(HierarchicalStreamReader reader, UnmarshallingContext context) {
+    public Object unmarshal(HierarchicalStreamReader reader,
+                            UnmarshallingContext context) {
+
         final String canonicalName = context.getRequiredType().getCanonicalName();
 
         boolean isNative = canonicalName.endsWith("$$Native");
@@ -160,7 +168,7 @@ public class DataValueConverter implements Converter {
         if (!isNative && !isHeap)
             return null;
 
-        if (context.getRequiredType().getCanonicalName().startsWith
+        if (context.getRequiredType().getName().startsWith
                 ("net.openhft.lang.values"))
             return toNativeValueObjects(reader, context.getRequiredType(), context);
 
@@ -180,37 +188,7 @@ public class DataValueConverter implements Converter {
                     DataValueClasses.newDirectInstance(interfaceClass) :
                     DataValueClasses.newInstance(interfaceClass);
 
-            final BeanInfo beanInfo = getBeanInfo(result.getClass());
-
-            while (reader.hasMoreChildren()) {
-                reader.moveDown();
-
-                final String name = reader.getNodeName();
-
-                for (PropertyDescriptor descriptor : beanInfo.getPropertyDescriptors()) {
-
-                    if (!descriptor.getName().equals(name))
-                        continue;
-
-                    final Class<?>[] parameterTypes = descriptor.getWriteMethod()
-                            .getParameterTypes();
-
-                    if (parameterTypes.length != 1)
-                        continue;
-
-                    final Object object = context.convertAnother(null, parameterTypes[0]);
-
-                    try {
-                        descriptor.getWriteMethod().invoke(result, object);
-                    } catch (Exception e) {
-                        LOG.error("", e);
-                    }
-
-                    break;
-                }
-
-                reader.moveUp();
-            }
+            fillInObject(reader, context, result);
 
             return result;
 
@@ -218,9 +196,114 @@ public class DataValueConverter implements Converter {
             throw new ConversionException("class=" + canonicalName, e);
         }
 
-
     }
 
+    private void fillInObject(HierarchicalStreamReader reader, UnmarshallingContext context, Object using) throws IntrospectionException {
+        final BeanInfo beanInfo = getBeanInfo(using.getClass());
+
+        while (reader.hasMoreChildren()) {
+            reader.moveDown();
+
+            final String name = reader.getNodeName();
+
+            for (PropertyDescriptor descriptor : beanInfo.getPropertyDescriptors()) {
+
+                if (!descriptor.getName().equals(name))
+                    continue;
+
+                if ((descriptor instanceof IndexedPropertyDescriptor)) {
+                    IndexedPropertyDescriptor indexedPropertyDescriptor = (IndexedPropertyDescriptor) descriptor;
+                    while (reader.hasMoreChildren()) {
+
+                        reader.moveDown();
+                        try {
+                            String index = reader.getNodeName();
+                            int i = Integer.parseInt(index);
+                            Method writeMethod = indexedPropertyDescriptor.getIndexedWriteMethod();
+                            Class<?>[] parameterTypes = writeMethod.getParameterTypes();
+
+                            if (parameterTypes.length == 2) {
+                                final Method indexedReadMethod = indexedPropertyDescriptor.getIndexedReadMethod();
+                                final Object instance = indexedReadMethod.invoke(using, i);
+                                fillInObject(reader, context, instance);
+                            }
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            LOG.error("", e);
+                        }
+
+                        reader.moveUp();
+                    }
+                    continue;
+                }
+
+                final Class<?>[] parameterTypes = descriptor.getWriteMethod().getParameterTypes();
+
+                if (parameterTypes.length != 1)
+                    continue;
+
+                final Object object = context.convertAnother(null, parameterTypes[0]);
+
+                try {
+                    descriptor.getWriteMethod().invoke(using, object);
+                } catch (Exception e) {
+                    LOG.error("", e);
+                }
+
+                break;
+            }
+
+            reader.moveUp();
+        }
+    }
+
+
+    void convertUsing(final UnmarshallingContext context, final Object using, HierarchicalStreamReader reader) throws IllegalAccessException, IntrospectionException, InvocationTargetException {
+        UnmarshallingContext context1 = new UnmarshallingContext() {
+
+            @Override
+            public Object get(Object o) {
+                return context.get(o);
+            }
+
+            @Override
+            public void put(Object o, Object o1) {
+                context.put(o, o1);
+            }
+
+            @Override
+            public Iterator keys() {
+                return context.keys();
+            }
+
+            @Override
+            public Object convertAnother(Object o, Class aClass) {
+                return context.convertAnother(o, aClass);
+            }
+
+            @Override
+            public Object convertAnother(Object o, Class aClass, Converter converter) {
+                return context.convertAnother(o, aClass, converter);
+            }
+
+            @Override
+            public Object currentObject() {
+                return using;
+            }
+
+            @Override
+            public Class getRequiredType() {
+                return using.getClass();
+            }
+
+            @Override
+            public void addCompletionCallback(Runnable runnable, int i) {
+                context.addCompletionCallback(runnable, i);
+            }
+        };
+
+        fillInObject(reader, context1, using);
+
+    }
 
     static Object toNativeValueObjects(HierarchicalStreamReader reader,
                                        final Class aClass,
