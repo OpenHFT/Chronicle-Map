@@ -32,11 +32,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.Math.log10;
 import static java.lang.Math.round;
-import static net.openhft.chronicle.map.Alignment.OF_4_BYTES;
 import static net.openhft.lang.model.DataValueClasses.newDirectReference;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -58,8 +56,7 @@ public class EntryCountMapTest {
                 ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                 .entries(entries)
                 .actualSegments(segments)
-                .keySize(keySize)
-                .maxEntryOversizeFactor(1);
+                .averageKeySize(keySize);
         return mapBuilder.createPersistedTo(getPersistenceFile());
     }
 

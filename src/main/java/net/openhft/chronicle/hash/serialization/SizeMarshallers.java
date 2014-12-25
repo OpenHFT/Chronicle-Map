@@ -37,6 +37,16 @@ public final class SizeMarshallers {
         }
 
         @Override
+        public int minSizeEncodingSize() {
+            return 1;
+        }
+
+        @Override
+        public int maxSizeEncodingSize() {
+            return 9;
+        }
+
+        @Override
         public void writeSize(Bytes bytes, long size) {
             bytes.writeStopBit(size);
         }
@@ -62,6 +72,16 @@ public final class SizeMarshallers {
 
         @Override
         public int sizeEncodingSize(long size) {
+            return 0;
+        }
+
+        @Override
+        public int minSizeEncodingSize() {
+            return 0;
+        }
+
+        @Override
+        public int maxSizeEncodingSize() {
             return 0;
         }
 

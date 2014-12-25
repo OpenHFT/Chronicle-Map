@@ -56,7 +56,8 @@ public class OpenJDKAndHashMapExamplesTest {
 
         ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
-                .keySize(10)
+                .averageKeySize(10)
+                .entries(1000)
                 .createPersistedTo(file);
 
         BondVOInterface bondVO = chm.newValueInstance();
@@ -76,7 +77,8 @@ public class OpenJDKAndHashMapExamplesTest {
 
         ChronicleMap<String, BondVOInterface> chmB = ChronicleMapBuilder
                 .of(String.class, BondVOInterface.class)
-                .keySize(10)
+                .averageKeySize(10)
+                .entries(1000)
                 .createPersistedTo(file);
 
         // ZERO Copy but creates a new off heap reference each time

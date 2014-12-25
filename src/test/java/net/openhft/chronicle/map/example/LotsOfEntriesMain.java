@@ -28,21 +28,11 @@ public class LotsOfEntriesMain {
             throws IOException, ExecutionException, InterruptedException {
         final long entries = 100_000_000;
         File file = new File("/tmp/lotsOfEntries.dat");
-        double averageEntrySize =
-                1 + // key size marshalling size
-                // + 2 is average oversize because we append 4-letter "-key" in a loop
-                (Math.log(1.024) - Math.log(0.024)) * 24 + 2 + // average key size
-                24 + // value size
-                2 // average loss due to value alignment. defaults to OF_4_BYTES because
-                // there are floats in values
-                ;
         final ChronicleMap<CharSequence, MyFloats> map = ChronicleMapBuilder
                 .of(CharSequence.class, MyFloats.class)
-                .entries((long) (entries *
-                        (averageEntrySize / 8.0 +
-                                0.5))) // account average internal fragmentation --
-                                       // because we need to round up to integral number of chunks
-                .entrySize(8) // "chunk mode"
+                .entries(entries)
+                // + 2 is average oversize because we append 4-letter "-key" in a loop
+                .averageKeySize((Math.log(1.024) - Math.log(0.024)) * 24 + 2)
                 .createPersistedTo(file);
         int threads = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(threads);

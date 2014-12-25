@@ -41,9 +41,10 @@ public class StringsMapMain {
         int keyAndValueSize = (int) Math.round(Math.log10(entries));
         final ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
+                .entries(entries)
                 .putReturnsNull(true)
-                .keySize(keyAndValueSize)
-                .valueSize(keyAndValueSize)
+                .averageKeySize(keyAndValueSize)
+                .averageValueSize(keyAndValueSize)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .createPersistedTo(file);
         System.out.println("Server started");

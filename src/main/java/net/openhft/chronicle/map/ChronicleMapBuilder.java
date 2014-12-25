@@ -43,15 +43,12 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.lang.Math.round;
 import static net.openhft.chronicle.map.Objects.builderEquals;
-import static net.openhft.chronicle.map.VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR;
 import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
 
 /**
@@ -67,21 +64,29 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * ChronicleMapBuilder<Key, Value> builder = ChronicleMapBuilder
  *     .of(Key.class, Value.class)
  *     .entries(100500);
- * <p>
+ *
  * ChronicleMap<Key, Value> map1 = builder.create();
  * ChronicleMap<Key, Value> map2 = builder.create();}</pre>
- * i. e. created {@code ChronicleMap} instances don't depend on the builder. <p> <p>{@code
- * ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
- * documentation. <p> <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created
- * by {@code ChronicleMapBuilder}", unless specified different, because theoretically someone might
- * provide {@code ChronicleMap} implementations with completely different properties. <p> <p>{@code
- * ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently doesn't support
- * resizing. That is why you should <i>always</i> configure {@linkplain #entries(long) number of
- * entries} you are going to insert into the created map <i>at most</i>. See {@link #entries(long)}
- * method documentation for more information on this. <p> <p>{@code ChronicleMap} allocates memory
- * by equally sized chunks. This size is called {@linkplain #entrySize(int) entry size}, you are
- * strongly recommended to configure it to achieve least memory consumption and best speed. See
- * {@link #entrySize(int)} method documentation for more information on this.
+ * i. e. created {@code ChronicleMap} instances don't depend on the builder.
+ *
+ * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
+ * documentation.
+ *
+ * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
+ * ChronicleMapBuilder}", unless specified different, because theoretically someone might provide
+ * {@code ChronicleMap} implementations with completely different properties.
+ *
+ * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
+ * doesn't support resizing. That is why you <i>must</i> configure {@linkplain
+ * #entries(long) number of entries} you are going to insert into the created map <i>at most</i>.
+ * See {@link #entries(long)} method documentation for more information on this.
+ *
+ * <p>If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder},
+ * i. e. it is not a boxed primitive, data value generated interface, {@link Byteable}, etc. (see
+ * the complete list TODO insert the link to the complete list),
+ * you <i>must</i> provide the {@code ChronicleHashBuilder} with some information about you keys
+ * or values: if they are constantly-sized, call {@link #constantKeySizeBySample(Object)}, otherwise
+ * {@link ChronicleHashBuilder#averageKeySize(double)} method, accordingly for values.
  *
  * @param <K> key type of the maps, produced by this builder
  * @param <V> value type of the maps, produced by this builder
@@ -93,6 +98,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
     static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte) 128;
     private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
+    private static final long DEFAULT_ENTRIES = 1 << 20;
     private static final int MAX_SEGMENTS = (1 << 30);
     private static final int MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS = (1 << 20);
     private static final Logger LOG =
@@ -100,6 +106,15 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     static final long DEFAULT_STATELESS_CLIENT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
     private static final StringBuilder EMTRY_STRING_BUILDER = new StringBuilder();
+
+    private static final double UNDEFINED_DOUBLE_CONFIG = Double.NaN;
+
+    private static boolean isDefined(double config) {
+        return !Double.isNaN(config);
+    }
+
+    private static final boolean strictStateChecks =
+            Boolean.getBoolean("chronicle.strictStateChecks");
 
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
@@ -110,15 +125,16 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     private int minSegments = -1;
     private int actualSegments = -1;
     // used when reading the number of entries per
-    private long actualEntriesPerSegment = -1L;
-    private int keySize = 0;
+    private long entriesPerSegment = -1L;
+    private long actualChunksPerSegment = -1L;
+    private double averageKeySize = UNDEFINED_DOUBLE_CONFIG;
     private K sampleKey;
-    private int valueSize = 0;
+    private double averageValueSize = UNDEFINED_DOUBLE_CONFIG;
     private V sampleValue;
-    private int entrySize = 0;
-    private int maxEntryOversizeFactor = -1;
+    private int actualChunkSize = 0;
+    private int maxChunksPerEntry = -1;
     private Alignment alignment = null;
-    private long entries = 1 << 20; // 1 million by default
+    private long entries = -1;
     private long lockTimeOut = 20000;
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
     private int metaDataBytes = 0;
@@ -214,36 +230,37 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * {@inheritDoc} <p> <p>Example: if keys in your map(s) are English words in {@link String}
-     * form, keys size 10
-     * (a bit more than average English word length) would be a good choice: <pre>{@code
+     * {@inheritDoc}
+     *
+     * <p>Example: if keys in your map(s) are English words in {@link String} form, average English
+     * word length is 5.1, configure average key size of 6: <pre>{@code
      * ChronicleMap<String, LongValue> wordFrequencies = ChronicleMapBuilder
      *     .of(String.class, LongValue.class)
      *     .entries(50000)
-     *     .keySize(10)
-     *     // shouldn't specify valueSize(), because it is statically known
+     *     .averageKeySize(6)
      *     .create();}</pre>
-     * (Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded (and
-     * each character takes 2 bytes on-heap), because default off-heap {@link String} encoding is
-     * UTF-8 in {@code ChronicleMap}.)
+     * (Note that 6 is chosen as average key size in bytes despite strings in Java are UTF-16
+     * encoded (and each character takes 2 bytes on-heap), because default off-heap {@link String}
+     * encoding is UTF-8 in {@code ChronicleMap}.)
      *
      * @throws IllegalStateException    {@inheritDoc}
      * @throws IllegalArgumentException {@inheritDoc}
      * @see #constantKeySizeBySample(Object)
-     * @see #valueSize(int)
-     * @see #entrySize(int)
+     * @see #averageValueSize(double)
+     * @see #actualChunkSize(int)
+     * @param averageKeySize
      */
     @Override
-    public ChronicleMapBuilder<K, V> keySize(int keySize) {
+    public ChronicleMapBuilder<K, V> averageKeySize(double averageKeySize) {
         checkSizeIsNotStaticallyKnown(keyBuilder);
-        if (keySize <= 0)
-            throw new IllegalArgumentException("Key size must be positive");
-        this.keySize = keySize;
+        checkAverageSize(averageKeySize, "key");
+        this.averageKeySize = averageKeySize;
         return this;
     }
 
     /**
-     * {@inheritDoc} <p>
+     * {@inheritDoc}
+     *
      * <p>For example, if your keys are Git commit hashes:<pre>{@code
      * Map<byte[], String> gitCommitMessagesByHash =
      *     ChronicleMapBuilder.of(byte[].class, String.class)
@@ -251,7 +268,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
      *     .immutableKeys()
      *     .create();}</pre>
      *
-     * @see #keySize(int)
+     * @see ChronicleHashBuilder#averageKeySize(double)
      * @see #constantValueSizeBySample(Object)
      */
     @Override
@@ -260,35 +277,47 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
-    private int keySize() {
-        return keyOrValueSize(keySize, keyBuilder);
+    private double averageKeySize() {
+        return averageKeyOrValueSize(averageKeySize, keyBuilder);
     }
 
     /**
-     * Configures the optimal number of bytes, taken by serialized form of values, put into maps,
+     * Configures the average number of bytes, taken by serialized form of values, put into maps,
      * created by this builder. If value size is always the same, call {@link
-     * #constantValueSizeBySample(Object)} method instead of this one. <p> <p>If values are of boxed
-     * primitive type or {@link Byteable} subclass, i. e. if value size is known statically, it is
-     * automatically accounted and shouldn't be specified by user. <p> <p>If value size varies
-     * moderately, specify the size higher than average, but lower than the maximum possible, to
-     * minimize average memory overuse. If value size varies in a wide range, it's better to use
-     * {@linkplain #entrySize(int) entry size} in "chunk" mode and configure it directly.
+     * #constantValueSizeBySample(Object)} method instead of this one.
      *
-     * @param valueSize number of bytes, taken by serialized form of values
+     * <p>{@code ChronicleHashBuilder} implementation heuristically chooses
+     * {@linkplain #actualChunkSize(int) the actual chunk size} based on this configuration and
+     * the key size, that, however, might result to quite high internal fragmentation,
+     * i. e. losses because only integral number of chunks could be allocated for the entry. If you
+     * want to avoid this, you should manually configure the actual chunk size in addition to this
+     * average value size configuration, which is anyway needed.
+     *
+     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
+     * known statically, it is automatically accounted and shouldn't be specified by user.
+     *
+     * @param averageValueSize number of bytes, taken by serialized form of values
      * @return this builder back
      * @throws IllegalStateException    if value size is known statically and shouldn't be
      *                                  configured by user
-     * @throws IllegalArgumentException if the given {@code valueSize} is non-positive
+     * @throws IllegalArgumentException if the given {@code averageValueSize} is non-positive
      * @see #constantValueSizeBySample(Object)
-     * @see #keySize(int)
-     * @see #entrySize(int)
+     * @see ChronicleHashBuilder#averageKeySize(double)
+     * @see #actualChunkSize(int)
      */
-    public ChronicleMapBuilder<K, V> valueSize(int valueSize) {
+    public ChronicleMapBuilder<K, V> averageValueSize(double averageValueSize) {
         checkSizeIsNotStaticallyKnown(valueBuilder);
-        if (valueSize <= 0)
-            throw new IllegalArgumentException("Value size must be positive");
-        this.valueSize = valueSize;
+        checkAverageSize(averageValueSize, "value");
+        this.averageValueSize = averageValueSize;
         return this;
+    }
+
+    private static void checkAverageSize(double averageSize, String role) {
+        if (averageSize <= 0 || Double.isNaN(averageSize) ||
+                Double.isInfinite(averageSize)) {
+            throw new IllegalArgumentException("Average " + role + " size must be a positive, " +
+                    "finite number");
+        }
     }
 
     private static void checkSizeIsNotStaticallyKnown(SerializationBuilder builder) {
@@ -300,15 +329,17 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     /**
      * Configures the constant number of bytes, taken by serialized form of values, put into maps,
      * created by this builder. This is done by providing the {@code sampleValue}, all values should
-     * take the same number of bytes in serialized form, as this sample object. <p> <p>If values are
-     * of boxed primitive type or {@link Byteable} subclass, i. e. if value size is known
-     * statically, it is automatically accounted and this method shouldn't be called. <p> <p>If
-     * value size varies, method {@link #valueSize(int)} or {@link #entrySize(int)} should be called
-     * instead of this one.
+     * take the same number of bytes in serialized form, as this sample object.
+     *
+     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
+     * known statically, it is automatically accounted and this method shouldn't be called.
+     *
+     * <p>If value size varies, method {@link #averageValueSize(double)} should be called instead of
+     * this one.
      *
      * @param sampleValue the sample value
      * @return this builder back
-     * @see #valueSize(int)
+     * @see #averageValueSize(double)
      * @see #constantKeySizeBySample(Object)
      */
     public ChronicleMapBuilder<K, V> constantValueSizeBySample(V sampleValue) {
@@ -316,12 +347,12 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
-    int valueSize() {
-        return keyOrValueSize(valueSize, valueBuilder);
+    double averageValueSize() {
+        return averageKeyOrValueSize(averageValueSize, valueBuilder);
     }
 
-    private int keyOrValueSize(int configuredSize, SerializationBuilder builder) {
-        if (configuredSize > 0)
+    private double averageKeyOrValueSize(double configuredSize, SerializationBuilder builder) {
+        if (isDefined(configuredSize))
             return configuredSize;
         if (builder.constantSizeMarshaller())
             return builder.pseudoReadConstantSize();
@@ -329,110 +360,195 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * {@inheritDoc} <p> <p>In fully default case you can expect entry size to be about 256 bytes.
-     * But it is strongly recommended always to configure {@linkplain #keySize(int) key size} and
-     * {@linkplain #valueSize(int) value size}, if they couldn't be derived statically. <p> <p>If
-     * entry size is not configured explicitly by calling this method, it is computed based on
-     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size},
-     * plus {@linkplain #valueSize(int) value size}, plus a few bytes required by implementations,
-     * with respect to {@linkplain #entryAndValueAlignment(Alignment) alignment}. <p> <p>Note that
-     * the actual entrySize will be aligned by the configured {@linkplain
-     * #entryAndValueAlignment(Alignment) entry and value alignment}. I. e. if you set entry size to
-     * 30, and entry alignment is set to {@link Alignment#OF_4_BYTES}, the actual entry size will be
-     * 32 (30 aligned to 4 bytes).
+     * {@inheritDoc}
      *
      * @throws IllegalStateException is sizes of both keys and values of maps created by this
-     *                               builder are statically known, hence entry size shouldn't be
+     *                               builder are constant, hence chunk size shouldn't be
      *                               configured by user
      * @see #entryAndValueAlignment(Alignment)
      * @see #entries(long)
-     * @see #maxEntryOversizeFactor(int)
+     * @see #maxChunksPerEntry(int)
      */
     @Override
-    public ChronicleMapBuilder<K, V> entrySize(int entrySize) {
-        if (keyBuilder.sizeIsStaticallyKnown && valueBuilder.sizeIsStaticallyKnown) {
+    public ChronicleMapBuilder<K, V> actualChunkSize(int actualChunkSize) {
+        if (constantlySizedEntries()) {
             throw new IllegalStateException("Sizes of key type: " + keyBuilder.eClass + " and " +
-                    "value type: " + valueBuilder.eClass + " are both statically known, " +
-                    "so entry size shouldn't be specified manually");
+                    "value type: " + valueBuilder.eClass + " are both constant, " +
+                    "so chunk size shouldn't be specified manually");
         }
-        if (entrySize <= 0)
-            throw new IllegalArgumentException("Entry Size must be positive");
-        this.entrySize = entrySize;
+        if (actualChunkSize <= 0)
+            throw new IllegalArgumentException("Chunk size must be positive");
+        this.actualChunkSize = actualChunkSize;
         return this;
     }
 
-    int entrySize(boolean replicated) {
-        if (entrySize > 0)
-            return entryAndValueAlignment().alignSize(entrySize);
-        int size = metaDataBytes;
-        int keySize = keySize();
-        size += keyBuilder.sizeMarshaller().sizeEncodingSize(keySize);
+    double averageEntrySize(boolean replicated) {
+        double size = metaDataBytes;
+        double keySize = averageKeySize();
+        size += averageSizeEncodingSize(keyBuilder, keySize);
         size += keySize;
         if (replicated)
             size += ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
-        int valueSize = valueSize();
-        size += valueBuilder.sizeMarshaller().sizeEncodingSize(valueSize);
-        size = entryAndValueAlignment().alignSize(size);
-        size += valueSize;
-        // Some cache line heuristics
-        for (int i = 1; i <= 4; i++) {
-            int bound = i * 64;
-            // Not more than 5% oversize.
-            // DEFAULT_KEY_OR_VALUE_SIZE and this heuristic are specially adjusted to produce
-            // entry size 256 -- the default value prior to keySize and valueSize -- when key and
-            // value sizes are both not static nor configured, in both vanilla and replicated modes.
-            if (size < bound && (bound - size) <= bound / 20) {
-                size = bound;
-                break;
-            }
-        }
-        return entryAndValueAlignment().alignSize(size);
-    }
-
-    @Override
-    public ChronicleMapBuilder<K, V> maxEntryOversizeFactor(int maxEntryOversizeFactor) {
-        if (maxEntryOversizeFactor < 1)
-            throw new IllegalArgumentException("maxEntryOversizeFactor should be more than 1, " +
-                    maxEntryOversizeFactor + " given");
-        this.maxEntryOversizeFactor = maxEntryOversizeFactor;
-        return this;
-    }
-
-    private void checkMaxEntryOversizeFactorIfReplicated(boolean replicated) {
-        if (replicated && maxEntryOversizeFactor > MAX_ENTRY_OVERSIZE_FACTOR)
-            throw new IllegalStateException("As of now Replicated Chornicle Map doesn't support " +
-                    "more than " + MAX_ENTRY_OVERSIZE_FACTOR + " entry oversize factor, " +
-                    maxEntryOversizeFactor + " is configured");
-    }
-
-    int maxEntryOversizeFactor(boolean replicated) {
-        if (maxEntryOversizeFactor < 0) {
-            if (keyBuilder.constantSizeMarshaller() && valueBuilder.constantSizeMarshaller()) {
-                return 1;
-            } else {
-                if (replicated) {
-                    return MAX_ENTRY_OVERSIZE_FACTOR;
+        double valueSize = averageValueSize();
+        size += averageSizeEncodingSize(valueBuilder, valueSize);
+        Alignment alignment = valueAlignment();
+        if (alignment != Alignment.NO_ALIGNMENT) {
+            if (constantlySizedKeys() && valueBuilder.constantSizeEncodingSizeMarshaller()) {
+                long constantSizeBeforeAlignment = round(size);
+                if (constantlySizedValues()) {
+                    // see specialEntrySpaceOffset()
+                    long totalDataSize = constantSizeBeforeAlignment + constantValueSize();
+                    size += alignment.alignAddr(totalDataSize) - totalDataSize;
                 } else {
-                    return Integer.MAX_VALUE;
+                    if (actualChunkSize > 0) {
+                        size += averageAlignmentAssumingChunkSize(constantSizeBeforeAlignment,
+                                actualChunkSize);
+                    } else {
+                        for (int chunkSize : new int[]{8, 4}) {
+                            double expectedAverageAlignment = averageAlignmentAssumingChunkSize(
+                                    constantSizeBeforeAlignment, chunkSize);
+                            if (size + expectedAverageAlignment + valueSize >=
+                                    maxDefaultChunksPerAverageEntry(replicated) * chunkSize ||
+                                    chunkSize == 4) {
+                                size += expectedAverageAlignment;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                if (alignment.alignment() > 0) {
+                    // assume worst case, we always lose most possible bytes for alignment
+                    size += alignment.alignment() - 1;
                 }
             }
         }
-        return maxEntryOversizeFactor;
+        size += valueSize;
+        return size;
+    }
+
+    /**
+     * This is needed, if chunkSize = constant entry size is not aligned, for entry alignment to
+     * be always the same, we should _misalign_ the first chunk.
+     */
+    int specialEntrySpaceOffset(boolean replicated) {
+        if (!constantlySizedEntries() || valueAlignment() == Alignment.NO_ALIGNMENT)
+            return 0;
+        return (int) (constantValueSize() % valueAlignment().alignment());
+    }
+
+    private long constantValueSize() {
+        return valueBuilder.pseudoReadConstantSize();
+    }
+
+    private boolean constantlySizedKeys() {
+        return keyBuilder.constantSizeMarshaller();
+    }
+
+    private static double averageSizeEncodingSize(
+            SerializationBuilder builder, double averageSize) {
+        SizeMarshaller sizeMarshaller = builder.sizeMarshaller();
+        if (averageSize == round(averageSize))
+            return sizeMarshaller.sizeEncodingSize(round(averageSize));
+        long lower = (long) averageSize;
+        long upper = lower + 1;
+        int lowerEncodingSize = sizeMarshaller.sizeEncodingSize(lower);
+        int upperEncodingSize = sizeMarshaller.sizeEncodingSize(upper);
+        if (lowerEncodingSize == upperEncodingSize)
+            return lowerEncodingSize;
+        return lower * (upper - averageSize) + upper * (averageSize - lower);
+    }
+
+    private double averageAlignmentAssumingChunkSize(
+            long constantSizeBeforeAlignment, int chunkSize) {
+        if (valueAlignment() == Alignment.NO_ALIGNMENT)
+            return 0.0;
+        Alignment valueAlignment = valueAlignment();
+        long firstAlignment = valueAlignment.alignAddr(constantSizeBeforeAlignment) -
+                constantSizeBeforeAlignment;
+        int alignment = valueAlignment.alignment();
+        int gcdOfAlignmentAndChunkSize = greatestCommonDivisor(alignment, chunkSize);
+        if (gcdOfAlignmentAndChunkSize == alignment)
+            return firstAlignment;
+        // assume worst by now because we cannot predict alignment in VanillaCM.entrySize() method
+        // before allocation
+        return alignment - gcdOfAlignmentAndChunkSize;
+    }
+
+    static int greatestCommonDivisor(int a, int b) {
+        if (b == 0) return a;
+        return greatestCommonDivisor(b, a % b);
+    }
+
+    long chunkSize(boolean replicated) {
+        if (actualChunkSize > 0)
+            return actualChunkSize;
+        double averageEntrySize = averageEntrySize(replicated);
+        if (constantlySizedEntries())
+            return round(averageEntrySize);
+        int maxChunkSize = 1 << 30;
+        for (long chunkSize = 4; chunkSize <= maxChunkSize; chunkSize *= 2L) {
+            if (maxDefaultChunksPerAverageEntry(replicated) * chunkSize > averageEntrySize)
+                return chunkSize;
+        }
+        return maxChunkSize;
+    }
+
+    boolean constantlySizedEntries() {
+        return constantlySizedKeys() && constantlySizedValues();
+    }
+
+    double averageChunksPerEntry(boolean replicated) {
+        if (constantlySizedEntries())
+            return 1.0;
+        long chunkSize = chunkSize(replicated);
+        // assuming we always has worst internal fragmentation. This affects total segment
+        // entry space which is allocated lazily on Linux (main target platform)
+        // so we can afford this
+        return (averageEntrySize(replicated) + chunkSize - 1) / chunkSize;
+    }
+
+    private static int maxDefaultChunksPerAverageEntry(boolean replicated) {
+        return replicated ? 4 : 8;
+    }
+
+    @Override
+    public ChronicleMapBuilder<K, V> maxChunksPerEntry(int maxChunksPerEntry) {
+        if (maxChunksPerEntry < 1)
+            throw new IllegalArgumentException("maxChunksPerEntry should be >= 1, " +
+                    maxChunksPerEntry + " given");
+        this.maxChunksPerEntry = maxChunksPerEntry;
+        return this;
+    }
+
+    int maxChunksPerEntry() {
+        if (maxChunksPerEntry > 0)
+            return maxChunksPerEntry;
+        if (constantlySizedEntries()) {
+            return 1;
+        } else {
+            return Integer.MAX_VALUE;
+        }
+    }
+
+    private boolean constantlySizedValues() {
+        return valueBuilder.constantSizeMarshaller();
     }
 
     /**
      * Configures alignment strategy of address in memory of entries and independently of address in
-     * memory of values within entries in ChronicleMaps, created by this builder. <p> <p>Useful when
-     * values of the map are updated intensively, particularly fields with volatile access, because
-     * it doesn't work well if the value crosses cache lines. Also, on some (nowadays rare)
-     * architectures any misaligned memory access is more expensive than aligned. <p> <p>Note that
-     * {@linkplain #entrySize(int) entry size} will be aligned according to this alignment. I. e. if
-     * you set {@code entrySize(20)} and {@link Alignment#OF_8_BYTES}, actual entry size will be 24
-     * (20 aligned to 8 bytes). <p> <p>If values couldn't reference off-heap memory (i. e. it is not
-     * {@link Byteable} or "data value generated"), alignment configuration makes no sense and
-     * forbidden. <p> <p>Default is {@link Alignment#NO_ALIGNMENT} if values couldn't reference
-     * off-heap memory, otherwise chosen heuristically (configure explicitly for being sure and to
-     * compare performance in your case).
+     * memory of values within entries in ChronicleMaps, created by this builder.
+     *
+     * <p>Useful when values of the map are updated intensively, particularly fields with volatile
+     * access, because it doesn't work well if the value crosses cache lines. Also, on some
+     * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
+     *
+     * <p>If values couldn't reference off-heap memory (i. e. it is not {@link Byteable} or "data
+     * value generated"), alignment configuration makes no sense and forbidden.
+     *
+     * <p>Default is {@link Alignment#NO_ALIGNMENT} if values couldn't reference off-heap memory,
+     * otherwise chosen heuristically (configure explicitly for being sure and to compare
+     * performance in your case).
      *
      * @param alignment the new alignment of the maps constructed by this builder
      * @return this {@code ChronicleMapOnHeapUpdatableBuilder} back
@@ -452,7 +568,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
                     "if values might point to off-heap memory");
     }
 
-    Alignment entryAndValueAlignment() {
+    Alignment valueAlignment() {
         if (alignment != null)
             return alignment;
         Class firstPrimitiveFieldType = firstPrimitiveFieldType(valueBuilder.eClass);
@@ -463,11 +579,6 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return Alignment.NO_ALIGNMENT;
     }
 
-    /**
-     * Package-private for tests
-     */
-
-
     @Override
     public ChronicleMapBuilder<K, V> entries(long entries) {
         if (entries <= 0L)
@@ -477,43 +588,80 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     long entries() {
+        if (entries < 0)
+            return DEFAULT_ENTRIES;
         return entries;
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> actualEntriesPerSegment(long actualEntriesPerSegment) {
-        if (actualEntriesPerSegment <= 0L)
-            throw new IllegalArgumentException("entries per segment should be positive, " +
-                    actualEntriesPerSegment + " given");
-        if (tooManyEntriesPerSegment(actualEntriesPerSegment))
-            throw new IllegalArgumentException("max entries per segment is " +
-                    MultiMapFactory.MAX_CAPACITY + ", " + actualEntriesPerSegment + " given");
-        this.actualEntriesPerSegment = actualEntriesPerSegment;
+    public ChronicleMapBuilder<K, V> entriesPerSegment(long entriesPerSegment) {
+        if (entriesPerSegment <= 0L)
+            throw new IllegalArgumentException("Entries per segment should be positive, " +
+                    entriesPerSegment + " given");
+        this.entriesPerSegment = entriesPerSegment;
         return this;
     }
 
-    private boolean tooManyEntriesPerSegment(long entriesPerSegment) {
-        return entriesPerSegment > MultiMapFactory.MAX_CAPACITY;
+    long entriesPerSegment(boolean replicated) {
+        long entriesPerSegment;
+        if (this.entriesPerSegment > 0L) {
+            entriesPerSegment = this.entriesPerSegment;
+        } else {
+            int actualSegments = actualSegments(replicated);
+            long totalEntries = totalEntriesIfPoorDistribution(actualSegments);
+            entriesPerSegment = divideUpper(totalEntries, actualSegments);
+        }
+        if (actualChunksPerSegment > 0)
+            return entriesPerSegment;
+        double averageChunksPerEntry = averageChunksPerEntry(replicated);
+        if (entriesPerSegment * averageChunksPerEntry > MultiMapFactory.MAX_CAPACITY)
+            throw new IllegalStateException("Max chunks per segment is " +
+                    MultiMapFactory.MAX_CAPACITY + " configured entries() and " +
+                    "actualSegments() so that there should be " + entriesPerSegment +
+                    " entries per segment, while average chunks per entry is " +
+                    averageChunksPerEntry);
+        return entriesPerSegment;
     }
 
-    long actualEntriesPerSegment() {
-        if (actualEntriesPerSegment > 0L)
-            return actualEntriesPerSegment;
-        int actualSegments = actualSegments();
-        long actualEntries = totalEntriesIfPoorDistribution(actualSegments);
-        long actualEntriesPerSegment = divideUpper(actualEntries, actualSegments);
-        if (tooManyEntriesPerSegment(actualEntriesPerSegment))
-            throw new IllegalStateException("max entries per segment is " +
-                    MultiMapFactory.MAX_CAPACITY + " configured entries() and " +
-                    "actualSegments() so that there should be " + actualEntriesPerSegment +
-                    " entries per segment");
-        return actualEntriesPerSegment;
+    @Override
+    public ChronicleMapBuilder<K, V> actualChunksPerSegment(long actualChunksPerSegment) {
+        if (actualChunksPerSegment <= 0)
+            throw new IllegalArgumentException("Actual chunks per segment should be positive, " +
+                    actualChunksPerSegment + " given");
+        this.actualChunksPerSegment = actualChunksPerSegment;
+        return this;
+    }
+
+    private void checkActualChunksPerSegmentIsConfiguredOnlyIfOtherLowLevelConfigsAreManual() {
+        if (actualChunksPerSegment > 0) {
+            if (entriesPerSegment <= 0 || (actualChunkSize <= 0 && !constantlySizedEntries()) ||
+                    actualSegments <= 0)
+                throw new IllegalStateException("Actual chunks per entry could be configured " +
+                        "only if other three low level configs are manual: " +
+                        "entriesPerSegment(), actualSegments() and actualChunkSize(), unless " +
+                        "both keys and value sizes are constant");
+        }
+    }
+
+    private void checkActualChunksPerSegmentGreaterOrEqualToEntries() {
+        if (actualChunksPerSegment > 0 && entriesPerSegment > 0 &&
+                entriesPerSegment > actualChunksPerSegment) {
+            throw new IllegalStateException("Entries per segment couldn't be greater than " +
+                    "actual chunks per segment. Entries: " + entriesPerSegment + ", " +
+                    "chunks: " + actualChunksPerSegment + " is configured");
+        }
+    }
+
+    long actualChunksPerSegment(boolean replicated) {
+        if (actualChunksPerSegment > 0)
+            return actualChunksPerSegment;
+        return round(entriesPerSegment(replicated) * averageChunksPerEntry(replicated));
     }
 
     private long totalEntriesIfPoorDistribution(int segments) {
         if (segments == 1)
-            return entries;
-        long entries = this.entries;
+            return entries();
+        long entries = entries();
         // check if the number of entries is small compared with the number of segments.
         long s3 = (long) Math.min(8, segments) * Math.min(32, segments) * Math.min(128, segments);
         if (entries * 4 <= s3)
@@ -528,7 +676,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
             entries *= 1.15;
         else
             entries *= 1.1;
-        return Math.min(segments * this.entries,
+        return Math.min(segments * entries(),
                 entries + 4 * segments + 8);
     }
 
@@ -544,19 +692,19 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     private int estimateSegments() {
-        return (int) Math.min(Maths.nextPower2(entries / 32, 1), estimateSegmentsBasedOnSize());
+        return (int) Math.min(Maths.nextPower2(entries() / 32, 1), estimateSegmentsBasedOnSize());
     }
 
     private int estimateSegmentsBasedOnSize() {
         // based on entries with multimap of 100 bytes.
-        int segmentsForEntries = estimateSegmentsForEntries(entries);
-        return entrySize >= 1000000
+        int segmentsForEntries = estimateSegmentsForEntries(entries());
+        return actualChunkSize >= 1000000
                 ? segmentsForEntries * 16
-                : entrySize >= 100000
+                : actualChunkSize >= 100000
                 ? segmentsForEntries * 8
-                : entrySize >= 10000
+                : actualChunkSize >= 10000
                 ? segmentsForEntries * 4
-                : entrySize >= 1000
+                : actualChunkSize >= 1000
                 ? segmentsForEntries * 2
                 : segmentsForEntries;
     }
@@ -584,36 +732,51 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
-    int actualSegments() {
+    int actualSegments(boolean replicated) {
         if (actualSegments > 0)
             return actualSegments;
+        if (entriesPerSegment > 0) {
+            long segments = 1;
+            for (int i = 0; i < 3; i++) { // try to converge
+                long totalEntries = totalEntriesIfPoorDistribution((int) segments);
+                segments = divideUpper(totalEntries, entriesPerSegment);
+                if (segments > MAX_SEGMENTS)
+                    throw new IllegalStateException();
+            }
+            if (minSegments > 0)
+                segments = Math.max(minSegments, segments);
+            return (int) segments;
+        }
         long shortMMapSegments = trySegments(MultiMapFactory.I16_MAX_CAPACITY,
-                MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS);
+                MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS, replicated);
+        // TODO why not try I24 multiMap?
         if (shortMMapSegments > 0L)
             return (int) shortMMapSegments;
-        long intMMapSegments = trySegments(MultiMapFactory.MAX_CAPACITY, MAX_SEGMENTS);
+        long intMMapSegments = trySegments(MultiMapFactory.MAX_CAPACITY, MAX_SEGMENTS, replicated);
         if (intMMapSegments > 0L)
             return (int) intMMapSegments;
         throw new IllegalStateException("Max segments is " + MAX_SEGMENTS + ", configured so much" +
-                " entries() that builder automatically decided to use " +
+                " entries (" + entries() + ") or average chunks per entry is too high (" +
+                averageChunksPerEntry(replicated) + ") that builder automatically decided to use " +
                 (-intMMapSegments) + " segments");
     }
 
-    private long trySegments(long maxSegmentCapacity, int maxSegments) {
-        long segments = divideUpper(totalEntriesIfPoorDistribution(minSegments()),
-                maxSegmentCapacity);
+    private long trySegments(long maxSegmentCapacity, int maxSegments, boolean replicated) {
+        long totalChunks = round(totalEntriesIfPoorDistribution(minSegments()) *
+                averageChunksPerEntry(replicated));
+        long segments = divideUpper(totalChunks, maxSegmentCapacity);
         segments = Maths.nextPower2(Math.max(segments, minSegments()), 1L);
         return segments <= maxSegments ? segments : -segments;
     }
 
-    int segmentHeaderSize() {
-        int segments = actualSegments();
+    int segmentHeaderSize(boolean replicated) {
+        int segments = actualSegments(replicated);
         // reduce false sharing unless we have a lot of segments.
         return segments <= 16 * 1024 ? 64 : 32;
     }
 
-    MultiMapFactory multiMapFactory() {
-        return MultiMapFactory.forCapacity(actualEntriesPerSegment());
+    MultiMapFactory multiMapFactory(boolean replicated) {
+        return MultiMapFactory.forCapacity(actualChunksPerSegment(replicated));
     }
 
     public ChronicleMapBuilder<K, V> lockTimeOut(long lockTimeOut, TimeUnit unit) {
@@ -703,13 +866,14 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
                 "name=" + name +
                 ", actualSegments=" + pretty(actualSegments) +
                 ", minSegments=" + pretty(minSegments) +
-                ", actualEntriesPerSegment=" + pretty(actualEntriesPerSegment) +
-                ", keySize=" + pretty(keySize) +
+                ", entriesPerSegment=" + pretty(entriesPerSegment) +
+                ", actualChunksPerSegment=" + pretty(actualChunksPerSegment) +
+                ", averageKeySize=" + pretty(averageKeySize) +
                 ", sampleKeyForConstantSizeComputation=" + pretty(sampleKey) +
-                ", valueSize=" + pretty(valueSize) +
+                ", averageValueSize=" + pretty(averageValueSize) +
                 ", sampleValueForConstantSizeComputation=" + pretty(sampleValue) +
-                ", entrySize=" + pretty(entrySize) +
-                ", entryAndValueAlignment=" + entryAndValueAlignment() +
+                ", actualChunkSize=" + pretty(actualChunkSize) +
+                ", valueAlignment=" + valueAlignment() +
                 ", entries=" + entries() +
                 ", lockTimeOut=" + lockTimeOut + " " + lockTimeOutUnit +
                 ", metaDataBytes=" + metaDataBytes() +
@@ -773,7 +937,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
      * <p>Example: <pre>{@code Map<Key, Value> map =
      *     ChronicleMapBuilder.of(Key.class, Value.class)
      *     .entries(1_000_000)
-     *     .keySize(50).valueSize(200)
+     *     .averageKeySize(50).averageValueSize(200)
      *     // this class hasn't implemented yet, just for example
      *     .objectSerializer(new KryoObjectSerializer())
      *     .create();}</pre>
@@ -997,7 +1161,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     private void checkPrepareValueBytesOnlyIfConstantValueSize() {
-        if (prepareValueBytes != null && !valueBuilder.constantSizeMarshaller())
+        if (prepareValueBytes != null && !constantlySizedValues())
             throw new IllegalStateException("Prepare value bytes could be used only if " +
                     "value size is constant");
     }
@@ -1005,11 +1169,12 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     PrepareValueBytesAsWriter<K> prepareValueBytesAsWriter() {
         PrepareValueBytes<K, V> prepareValueBytes = this.prepareValueBytes;
         if ((prepareValueBytes == null && defaultValueProvider() != null) ||
-                !valueBuilder.constantSizeMarshaller())
+                !constantlySizedValues())
             return null;
+        long constantValueSize = constantValueSize();
         if (prepareValueBytes == null)
-            prepareValueBytes = new ZeroOutValueBytes<>(valueSize());
-        return new PrepareValueBytesAsWriter<>(prepareValueBytes, valueSize());
+            prepareValueBytes = new ZeroOutValueBytes<>(constantValueSize);
+        return new PrepareValueBytesAsWriter<>(prepareValueBytes, constantValueSize);
     }
 
     /**
@@ -1207,21 +1372,35 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         keyBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
         valueBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
 
-        long maxSize = (long) entrySize(replicated) * figureBufferAllocationFactor(replicated);
-        keyBuilder.maxSize(maxSize);
-        valueBuilder.maxSize(maxSize);
+        double largeKeySize = averageKeySize();
+        if (!constantlySizedKeys())
+            largeKeySize *= figureBufferAllocationFactor();
+        keyBuilder.maxSize(round(largeKeySize));
+        double largeValueSize = averageValueSize();
+        if (!constantlySizedValues())
+            largeValueSize *= figureBufferAllocationFactor();
+        valueBuilder.maxSize(round(largeValueSize));
 
         if (sampleKey != null)
             keyBuilder.constantSizeBySample(sampleKey);
         if (sampleValue != null)
             valueBuilder.constantSizeBySample(sampleValue);
-        stateChecks(replicated);
+        stateChecks();
     }
 
-    private void stateChecks(boolean replicated) {
+    private void stateChecks() {
+        if (strictStateChecks) {
+            if (entries < 0)
+                throw new IllegalStateException("Entries must be specified");
+            if (!constantlySizedKeys() && !isDefined(averageKeySize))
+                throw new IllegalStateException("No info about key size");
+            if (!constantlySizedValues() && !isDefined(averageValueSize))
+                throw new IllegalStateException("No info about value size");
+        }
         checkAlignmentOnlyIfValuesPossiblyReferenceOffHeap();
         checkPrepareValueBytesOnlyIfConstantValueSize();
-        checkMaxEntryOversizeFactorIfReplicated(replicated);
+        checkActualChunksPerSegmentIsConfiguredOnlyIfOtherLowLevelConfigsAreManual();
+        checkActualChunksPerSegmentGreaterOrEqualToEntries();
     }
 
     private ChronicleMap<K, V> establishReplication(
@@ -1257,11 +1436,11 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return map;
     }
 
-    private int figureBufferAllocationFactor(boolean replicated) {
+    private int figureBufferAllocationFactor() {
         // if expected map size is about 1000, seems rather wasteful to allocate
         // key and value serialization buffers each x64 of expected entry size..
         return (int) Math.min(Math.max(2L, entries() >> 10),
-                maxEntryOversizeFactor(replicated));
+                Math.min(64, maxChunksPerEntry()));
     }
 }
 

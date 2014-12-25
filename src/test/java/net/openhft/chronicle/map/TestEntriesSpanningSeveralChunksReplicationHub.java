@@ -15,16 +15,17 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
-public class TestOversizedReplicationHub {
+public class TestEntriesSpanningSeveralChunksReplicationHub {
 
     @Test
-    public void testReplicationHubHandlesOverSizeEntries() throws IOException, InterruptedException {
+    public void testReplicationHubHandlesSpanningSeveralChunksEntries()
+            throws IOException, InterruptedException {
 
         ChronicleMap<CharSequence, CharSequence> favoriteColourServer1, favoriteColourServer2;
         ChronicleMap<CharSequence, CharSequence> favoriteComputerServer1, favoriteComputerServer2;
 
-        int OVERSIZE_FACTOR = 65;
-        char[] largeEntry = new char[100 * OVERSIZE_FACTOR];
+        int chunksPerEntry = 65;
+        char[] largeEntry = new char[100 * chunksPerEntry];
 
         Arrays.fill(largeEntry, 'X');
         String largeString = new String(largeEntry);
@@ -33,8 +34,9 @@ public class TestOversizedReplicationHub {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> builder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                            .keySize(10)
-                            .valueSize(100);
+                            .averageKeySize(10)
+                            .averageValueSize(100)
+                            .entries(1000);
 
             byte identifier = (byte) 1;
 
@@ -68,8 +70,9 @@ public class TestOversizedReplicationHub {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> builder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                            .keySize(10)
-                            .valueSize(100);
+                            .averageKeySize(10)
+                            .averageValueSize(100)
+                            .entries(1000);
 
             byte identifier = (byte) 2;
 

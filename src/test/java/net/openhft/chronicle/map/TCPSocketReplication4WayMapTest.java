@@ -48,7 +48,7 @@ public class TCPSocketReplication4WayMapTest {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         return (T) newTcpSocketShmBuilder(Integer.class, CharSequence.class,
-                identifier, serverPort, endpoints).create();
+                identifier, serverPort, endpoints).averageValueSize(10).create();
     }
 
     @Before

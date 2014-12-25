@@ -35,7 +35,6 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  *   [Entries](https://github.com/OpenHFT/Chronicle-Map#entries)
  *   [Size of Space Reserved on Disk](https://github.com/OpenHFT/Chronicle-Map#size-of-space-reserved-on-disk)
  *   [Chronicle Map Interface](https://github.com/OpenHFT/Chronicle-Map#chronicle-map-interface)
-* [Oversized Entries Support] (https://github.com/OpenHFT/Chronicle-Map/blob/master/README.md#oversized-entries-support)  
 * [Serialization](https://github.com/OpenHFT/Chronicle-Map#serialization)
   *   [Simple Types](https://github.com/OpenHFT/Chronicle-Map#simple-types)
   *   [Complex Types](https://github.com/OpenHFT/Chronicle-Map#complex-types)
@@ -598,18 +597,6 @@ If after some business logic, in our example after reading the 'issueDate' and
 'symbol', you wish to remove the entry, its more efficient to use the 'context' directly to remove the entry. The
 'context' is already aware of the entries location in memory. So it will be quicker to call
 `context.removeEntry()` rather than `map.remove(key)`.
-
-## Oversized Entries Support
-
-It is possible for the size of your entry to be larger than the space which chronicle map
-internally allocates to each entry. We refer to this type of entry as an oversized entry.
-Oversized entries are there to cater for the case
-where only a small percentage of your entries are larger than the others, in this case your large entry will
-span across a number of entries. The alternative would be to increase the internal entry size to be similar
-to the size of the largest entry, but this approach is wasteful of memory, especially when most
-entries are no where near the max entry size. So put simply Chronicle map is able to accept entries
-where each can have a different size but it does this in a way that is efficient.
-
 
 ## Serialization
 

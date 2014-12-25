@@ -29,7 +29,7 @@ public class Issue3Test {
     public void test() throws IOException {
         try (ChronicleSet<Long> set = ChronicleSetBuilder.of(Long.class)
                 .actualSegments(1)
-                .actualEntriesPerSegment(1000)
+                .entriesPerSegment(1000)
                 .create()) {
             Random r = new Random();
             for (int i = 0; i < 10; i++) {

@@ -234,6 +234,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
         final ChronicleMap<Integer, String> serverMap =
                 ChronicleMapBuilder.of(Integer.class, String.class)
+                        .averageValueSize(1)
                         .entries(SIZE)
                         .replication((byte) 1, TcpTransportAndNetworkConfig.of(port))
                         .create();

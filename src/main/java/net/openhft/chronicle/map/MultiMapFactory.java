@@ -74,6 +74,7 @@ enum MultiMapFactory {
     public static MultiMapFactory forCapacity(long capacity) {
         if (capacity <= ShortShortMultiMap.MAX_CAPACITY)
             return I16;
+        // TODO why not I24?
 //        if (capacity <= Int24Int24MultiMap.MAX_CAPACITY)
 //            return I24;
         if (capacity <= IntIntMultiMap.MAX_CAPACITY)

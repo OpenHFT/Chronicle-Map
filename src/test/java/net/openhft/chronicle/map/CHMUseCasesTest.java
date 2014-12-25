@@ -186,9 +186,15 @@ public class CHMUseCasesTest {
 
             map1.getAll(file);
 
-            try (ChronicleMap<Integer, Double> actual = ChronicleMapBuilder.of(map1.keyClass(),
+            VanillaChronicleMap vanillaMap = (VanillaChronicleMap) map1;
+            ChronicleMapBuilder builder = ChronicleMapBuilder.of(map1.keyClass(),
                     map1.valueClass())
-                    .create()) {
+                    .entriesPerSegment(vanillaMap.entriesPerSegment)
+                    .actualSegments(vanillaMap.actualSegments)
+                    .actualChunksPerSegment(vanillaMap.actualChunksPerSegment);
+            if (!vanillaMap.constantlySizedEntry)
+                builder.actualChunkSize((int) vanillaMap.chunkSize);
+            try (ChronicleMap<Integer, Double> actual = builder.create()) {
                 actual.putAll(file);
 
 
@@ -211,7 +217,6 @@ public class CHMUseCasesTest {
 
     private <X, Y> ChronicleMap<X, Y> newInstance(ChronicleMapBuilder<X, Y> builder) throws
             IOException {
-
         switch (typeOfMap) {
 
             case SIMPLE:
@@ -378,7 +383,7 @@ public class CHMUseCasesTest {
             return; // acquireUsingLocked not supported by the STATELESS client
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(String.class, BondVOInterface.class)
-                .keySize(10);
+                .averageKeySize(10);
 
         try (ChronicleMap<String, BondVOInterface> chm = newInstance(builder)) {
             BondVOInterface bondVO = chm.newValueInstance();
@@ -419,7 +424,8 @@ public class CHMUseCasesTest {
 
 
     @Test
-    public void testOversizedEntry() throws ExecutionException, InterruptedException, IOException {
+    public void testEntrySpanningSeveralChunks()
+            throws ExecutionException, InterruptedException, IOException {
 
         int salefactor = 100;
         int valueSize = 10 * salefactor;
@@ -429,8 +435,8 @@ public class CHMUseCasesTest {
 
         ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
                 .of(CharSequence.class, char[].class)
-                .keySize(10)
-                .valueSize(10);
+                .averageKeySize(10)
+                .averageValueSize(10);
 
         try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
             map.put("Key", expected);
@@ -445,8 +451,8 @@ public class CHMUseCasesTest {
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
-                .constantKeySizeBySample("Key")
-                .constantValueSizeBySample("Value")
+                .averageKeySize("Key".length())
+                .averageValueSize("Value".length())
                 .entries(1);
 
         try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
@@ -974,7 +980,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<Integer, Integer> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             Integer key1;
             Integer key2;
             Integer value1;
@@ -1043,7 +1049,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<Long, Long> map = newInstance(builder)) {
 //            assertEquals(16, entrySize(map));
-//            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+//            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             map.put(1L, 11L);
             assertEquals((Long) 11L, map.get(1L));
 
@@ -1097,7 +1103,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<Double, Double> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             map.put(1.0, 11.0);
             assertEquals((Double) 11.0, map.get(1.0));
 
@@ -1143,8 +1149,8 @@ public class CHMUseCasesTest {
             return;
 
         ChronicleMapBuilder<byte[], byte[]> builder = ChronicleMapBuilder
-                .of(byte[].class, byte[].class).keySize(4).valueSize(4)
-                .maxEntryOversizeFactor(1);
+                .of(byte[].class, byte[].class).averageKeySize(4).averageValueSize(4)
+                .entries(1000);
 
         try (ChronicleMap<byte[], byte[]> map = newInstance(builder)) {
             byte[] key1 = {1, 1, 1, 1};
@@ -1196,9 +1202,9 @@ public class CHMUseCasesTest {
 
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
-                .keySize(8)
-                .valueSize(8)
-                .maxEntryOversizeFactor(1);
+                .averageKeySize(8)
+                .averageValueSize(8)
+                .entries(1000);
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
 
@@ -1221,18 +1227,17 @@ public class CHMUseCasesTest {
 
 
     @Test
-    public void testByteBufferByteBufferMap() throws ExecutionException, InterruptedException, IOException {
+    public void testByteBufferByteBufferMap()
+            throws ExecutionException, InterruptedException, IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
             return; // getUsingLocked supported by the STATELESS client
 
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
-                .keyMarshaller(ByteBufferMarshaller.INSTANCE)
-                .valueMarshaller(ByteBufferMarshaller.INSTANCE)
-                .keySize(8)
-                .valueSize(8)
-                .maxEntryOversizeFactor(1);
+                .averageKeySize(8)
+                .averageValueSize(8)
+                .entries(1000);
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
 
@@ -1259,7 +1264,8 @@ public class CHMUseCasesTest {
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
             assertEquals(null, map.getMapped(key2, function));
             mapChecks();
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
+                    map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));
@@ -1344,10 +1350,8 @@ public class CHMUseCasesTest {
 
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
-                .valueMarshaller(ByteBufferMarshaller.INSTANCE) // we should not have to to this !
-                .keyMarshaller(ByteBufferMarshaller.INSTANCE)    // we should not have to to this !
-                .keySize(5).valueSize(5)
-                .maxEntryOversizeFactor(1);
+                .averageKeySize(5).averageValueSize(5)
+                .entries(1000);
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
 
@@ -1408,7 +1412,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<IntValue, IntValue> map = newInstance(builder)) {
             // this may change due to alignment
 //            assertEquals(8, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             IntValue key1 = map.newKeyInstance();
             IntValue key2 = map.newKeyInstance();
             IntValue value1 = map.newValueInstance();
@@ -1496,7 +1500,7 @@ public class CHMUseCasesTest {
 
             // this may change due to alignment
             //assertEquals(8, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             UnsignedIntValue key1 = map.newKeyInstance();
             UnsignedIntValue value1 = map.newValueInstance();
 
@@ -1615,7 +1619,7 @@ public class CHMUseCasesTest {
             // assertEquals(6, entrySize(map));
 
 
-            //     assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            //     assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             IntValue key1 = map.newKeyInstance();
             IntValue key2 = map.newKeyInstance();
             ShortValue value1 = map.newValueInstance();
@@ -1707,7 +1711,7 @@ public class CHMUseCasesTest {
 
             // this may change due to alignment
             // assertEquals(8, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             IntValue key1 = map.newKeyInstance();
             IntValue key2 = map.newKeyInstance();
             UnsignedShortValue value1 = map.newValueInstance();
@@ -1796,7 +1800,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<IntValue, CharValue> map = newInstance(builder)) {
 
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             IntValue key1 = map.newKeyInstance();
             IntValue key2 = map.newKeyInstance();
             CharValue value1 = map.newValueInstance();
@@ -1887,7 +1891,7 @@ public class CHMUseCasesTest {
             // TODO should be 5, but shorter fields based on range doesn't seem to be implemented
             // on data value generation level yet
             //assertEquals(8, entrySize(map)); this may change due to alignmented
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
             IntValue key1 = map.newKeyInstance();
             IntValue key2 = map.newKeyInstance();
@@ -1978,7 +1982,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<IntValue, BooleanValue> map = newInstance(builder)) {
 
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
             IntValue key1 = map.newKeyInstance();
             IntValue key2 = map.newKeyInstance();
@@ -2069,7 +2073,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<FloatValue, FloatValue> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
             FloatValue key1 = map.newKeyInstance();
             FloatValue key2 = map.newKeyInstance();
@@ -2163,7 +2167,7 @@ public class CHMUseCasesTest {
             // this may change due to alignment
             //assertEquals(16, entrySize(map));
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
             DoubleValue key1 = map.newKeyInstance();
             DoubleValue key2 = map.newKeyInstance();
@@ -2258,7 +2262,7 @@ public class CHMUseCasesTest {
 
             // this may change due to alignment
             // assertEquals(16, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap) map).maxEntryOversizeFactor);
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
             LongValue key1 = map.newKeyInstance();
             LongValue key2 = map.newKeyInstance();
@@ -2536,7 +2540,7 @@ public class CHMUseCasesTest {
             return; // acquireUsingLocked not supported by the STATELESS client
 
         ChronicleMapBuilder<String, IBean> builder = ChronicleMapBuilder
-                .of(String.class, IBean.class).keySize(5);
+                .of(String.class, IBean.class).averageKeySize(5).entries(1000);
         try (ChronicleMap<String, IBean> map = newInstance(builder)) {
 
             IBean iBean = map.newValueInstance();

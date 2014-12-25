@@ -36,7 +36,7 @@ public class OSResizesMain {
         byte[] chars = new byte[valueSize];
         ByteArray ba = new ByteArray(chars);
         ChronicleMap<String, ByteArray> map = ChronicleMapBuilder.of(String.class, ByteArray.class)
-                .keySize("key-".length() + 4)
+                .averageKeySize("key-".length() + 4)
                 .constantValueSizeBySample(ba)
                 .createPersistedTo(file);
         Arrays.fill(chars, (byte) '+');

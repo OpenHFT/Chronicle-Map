@@ -80,7 +80,7 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 (CharSequence.class,
                         TestInstrumentVOInterface
                                 .class)
-                .entries(5000L).keySize("hello".length())
+                .entries(5000L).averageKeySize("hello".length())
                 .replication((byte) 1, config1).create()) {
 
             map1a = map1;
@@ -95,7 +95,7 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
                     .replication((byte) 2, config2)
-                    .entries(5000L).keySize("hello".length()).create()) {
+                    .entries(5000L).averageKeySize("hello".length()).create()) {
 
                 map2a = map2;
 
@@ -133,7 +133,7 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 (CharSequence.class,
                         TestInstrumentVOInterface
                                 .class)
-                .entries(5000L).keySize("hello".length())
+                .entries(5000L).averageKeySize("hello".length())
                 .replication((byte) 1, config1).create()) {
 
             map1a = map1;
@@ -148,7 +148,7 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
                     .replication((byte) 2, config2)
-                    .entries(5000L).keySize("hello".length()).create()) {
+                    .entries(5000L).averageKeySize("hello".length()).create()) {
 
                 map2a = map2;
 

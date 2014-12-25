@@ -44,6 +44,11 @@ public enum Alignment {
         int alignSize(int size) {
             return size;
         }
+
+        @Override
+        int alignment() {
+            return 0;
+        }
     },
 
     /**
@@ -63,6 +68,11 @@ public enum Alignment {
         @Override
         int alignSize(int size) {
             return (size + 3) & ~3;
+        }
+
+        @Override
+        int alignment() {
+            return 4;
         }
     },
 
@@ -84,6 +94,11 @@ public enum Alignment {
         int alignSize(int size) {
             return (size + 7) & ~7;
         }
+
+        @Override
+        int alignment() {
+            return 8;
+        }
     };
 
     private static final Alignment[] VALUES = values();
@@ -97,4 +112,6 @@ public enum Alignment {
     abstract long alignAddr(long addr);
 
     abstract int alignSize(int size);
+
+    abstract int alignment();
 }

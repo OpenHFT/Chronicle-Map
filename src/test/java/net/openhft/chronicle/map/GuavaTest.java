@@ -100,6 +100,7 @@ public class GuavaTest extends TestCase {
         ChronicleMapBuilder<CharSequence, CharSequence> builder =
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                         .entries(100)
+                        .averageKeySize(10).averageValueSize(10)
                         .minSegments(2);
 
         @Override
