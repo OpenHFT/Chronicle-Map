@@ -114,7 +114,24 @@ public class CHMUseCasesTest {
         if (typeOfMap == TypeOfMap.REPLICATED) {
 
             // see HCOLL-265 Chronicle Maps with Identical char[] values are not equal1
-            if (map1.keyClass() == char[].class || map1.valueClass() == char[].class) {
+            if (map1.valueClass() == char[].class ||
+                    map1.valueClass() == byte[].class ||
+                    map1.valueClass() == byte[][].class) {
+
+                waitTillEqual(5000);
+
+                assertArrayValueEquals(map1, map2);
+                if (typeOfMap == TypeOfMap.SIMPLE)
+                    checkJsonSerilization();
+
+                return;
+            }
+
+
+            // see HCOLL-265 Chronicle Maps with Identical char[] values are not equal1
+            if (map1.keyClass() == char[].class ||
+                    map1.keyClass() == byte[][].class) {
+
                 return;
             }
 
@@ -145,8 +162,17 @@ public class CHMUseCasesTest {
 
             else if (map1.valueClass() == char[].class)
                 Assert.assertArrayEquals((char[]) map1.get(key), (char[]) map2.get(key));
+            else if (map1.valueClass() == byte[][].class) {
+                byte[][] o1 = (byte[][]) map1.get(key);
+                byte[][] o2 = (byte[][]) map2.get(key);
 
-            else throw new IllegalStateException("unsupported type");
+
+                Assert.assertEquals(o1.length, o2.length);
+                for (int i = 0; i < o1.length; i++) {
+                    Assert.assertArrayEquals(o1[i], o2[i]);
+                }
+
+            } else throw new IllegalStateException("unsupported type");
 
         }
     }
@@ -166,7 +192,9 @@ public class CHMUseCasesTest {
                 actual.putAll(file);
 
 
-                if (map1.keyClass() == char[].class || map1.valueClass() == char[].class) {
+                if (map1.valueClass() == char[].class ||
+                        map1.valueClass() == byte[].class ||
+                        map1.valueClass() == byte[][].class) {
                     assertArrayValueEquals(map1, actual);
                 } else {
                     Assert.assertEquals(map1, actual);
@@ -320,6 +348,28 @@ public class CHMUseCasesTest {
         }
     }
 
+
+    @Test
+    public void testByteArrayArrayValue() throws ExecutionException, InterruptedException, IOException {
+
+        int valueSize = 10;
+
+        char[] expected = new char[valueSize];
+        Arrays.fill(expected, 'X');
+
+        ChronicleMapBuilder<byte[], byte[][]> builder = ChronicleMapBuilder
+                .of(byte[].class, byte[][].class);
+
+        try (ChronicleMap<byte[], byte[][]> map = newInstance(builder)) {
+            byte[] bytes1 = "value1".getBytes();
+            byte[] bytes2 = "value2".getBytes();
+            byte[][] value = {bytes1,bytes2};
+            map.put("Key".getBytes(), value);
+
+            assertEquals(value, map.get("Key".getBytes()));
+            mapChecks();
+        }
+    }
 
     @Test
     public void bondExample() throws IOException, InterruptedException {
