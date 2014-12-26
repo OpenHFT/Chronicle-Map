@@ -1673,6 +1673,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     continue;
                 // key is found
                 entry.skip(keySize);
+                segmentState.pos = pos; // for WriteLocked.close()
                 return readValueAndNotifyGet(copies, key, keySize, toKey,
                         readValue, usingValue, toValue, entry);
             }
