@@ -62,6 +62,7 @@ public class EntryCountMapTest {
 
     static final int ecmTests = Integer.getInteger("ecm.tests", 5);
 
+    @Ignore("HCOLL-279 fix net.openhft.chronicle.map.EntryCountMapTest#testVerySmall")
     @Test
     public void testVerySmall() throws Exception {
         System.out.print("testVerySmall seeds");
