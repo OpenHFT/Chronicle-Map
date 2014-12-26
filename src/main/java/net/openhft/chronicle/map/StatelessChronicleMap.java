@@ -190,13 +190,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     @Override
-    public void getAll(File toFile) {
-        throw new UnsupportedOperationException();
+    public void getAll(File toFile) throws IOException {
+        JsonSerializer.getAll(toFile, this);
     }
 
     @Override
-    public void putAll(File fromFile) {
-        throw new UnsupportedOperationException();
+    public void putAll(File fromFile) throws IOException {
+        JsonSerializer.putAll(fromFile, this);
     }
 
     @Override
@@ -736,6 +736,59 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         }
 
         return result.entrySet();
+
+    }
+
+    /**
+     * @param callback each entry is passed to the callback
+     */
+    void entrySet(@NotNull MapEntryCallback<K, V> callback) {
+        final long transactionId;
+        final long timeoutTime;
+
+        outBytesLock.lock();
+        try {
+            final long sizeLocation = writeEventAnSkip(ENTRY_SET);
+            final long startTime = System.currentTimeMillis();
+            timeoutTime = System.currentTimeMillis() + config.timeoutMs();
+            transactionId = send(sizeLocation, startTime);
+        } finally {
+            outBytesLock.unlock();
+        }
+
+        // get the data back from the server
+        ThreadLocalCopies copies = keyReaderWithSize.getCopies(null);
+        final BytesReader<K> keyReader = keyReaderWithSize.readerForLoop(copies);
+        copies = valueReaderWithSize.getCopies(copies);
+        final BytesReader<V> valueReader = valueReaderWithSize.readerForLoop(copies);
+
+        for (; ; ) {
+
+            inBytesLock.lock();
+            try {
+
+                Bytes in = blockingFetchReadOnly(timeoutTime, transactionId);
+
+                final boolean hasMoreEntries = in.readBoolean();
+
+                // number of entries in this chunk
+                final long size = in.readInt();
+
+                for (int i = 0; i < size; i++) {
+                    final K k = keyReaderWithSize.readInLoop(in, keyReader);
+                    final V v = valueReaderWithSize.readInLoop(in, valueReader);
+                    callback.onEntry(k, v);
+                }
+
+                if (!hasMoreEntries)
+                    break;
+
+            } finally {
+                inBytesLock.unlock();
+            }
+        }
+
+
     }
 
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {
@@ -1331,11 +1384,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         long start = outBytes.position();
 
-
         assert outBytes.position() == start;
         outBytes.limit(outBytes.capacity());
         return valueWriterWithSize.write(outBytes, value, copies);
-
 
     }
 

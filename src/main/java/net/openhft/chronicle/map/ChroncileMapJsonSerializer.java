@@ -18,10 +18,14 @@
 package net.openhft.chronicle.map;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.xstreem.convertors.ByteBufferConverter;
-import net.openhft.xstreem.convertors.ChronicleMapConverter;
 import net.openhft.xstreem.convertors.DataValueConverter;
+import net.openhft.xstreem.convertors.StatelessChronicleMapConverter;
+import net.openhft.xstreem.convertors.VanillaChronicleMapConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Map;
@@ -33,30 +37,21 @@ import java.util.zip.GZIPOutputStream;
  */
 class JsonSerializer {
 
-    static synchronized <K, V> void getAll(File toFile, Map<K, V> map) throws IOException {
-        final XStream xstream = new XStream(new JettisonMappedXmlDriver());
-        xstream.setMode(XStream.NO_REFERENCES);
-        xstream.alias("cmap", VanillaChronicleMap.EntrySet.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
 
-        xstream.registerConverter(new ChronicleMapConverter<K, V>(map));
-        xstream.registerConverter(new ByteBufferConverter());
-        xstream.registerConverter(new DataValueConverter());
+    static synchronized <K, V> void getAll(File toFile, Map<K, V> map) throws IOException {
+        final XStream xstream = xStream(map);
         OutputStream outputStream = new FileOutputStream(toFile);
         if (toFile.getName().toLowerCase().endsWith(".gz"))
             outputStream = new GZIPOutputStream(outputStream);
         try (OutputStream out = outputStream) {
-            xstream.toXML(map.entrySet(), out);
+            xstream.toXML(map, out);
         }
     }
 
 
     static synchronized <K, V> void putAll(File fromFile, Map<K, V> map) throws IOException {
-        final XStream xstream = new XStream(new JettisonMappedXmlDriver());
-        xstream.setMode(XStream.NO_REFERENCES);
-        xstream.alias("cmap", VanillaChronicleMap.EntrySet.class);
-        xstream.registerConverter(new ChronicleMapConverter<K, V>(map));
-        xstream.registerConverter(new ByteBufferConverter());
-        xstream.registerConverter(new DataValueConverter());
+        final XStream xstream = xStream(map);
 
         InputStream inputStream = new FileInputStream(fromFile);
         if (fromFile.getName().toLowerCase().endsWith(".gz"))
@@ -65,4 +60,47 @@ class JsonSerializer {
             xstream.fromXML(out);
         }
     }
+
+    private static <K, V> XStream xStream(Map<K, V> map) {
+        try {
+            final XStream xstream = new XStream(new JettisonMappedXmlDriver());
+            xstream.setMode(XStream.NO_REFERENCES);
+            xstream.alias("cmap", map.getClass());
+
+            registerChronicleMapConverter(map, xstream);
+            xstream.registerConverter(new ByteBufferConverter());
+            xstream.registerConverter(new DataValueConverter());
+            return xstream;
+        } catch (NoClassDefFoundError e) {
+            logErrorSuggestXStreem(e);
+            throw e;
+        }
+    }
+
+    static private void logErrorSuggestXStreem(Error e) {
+        LOG.error("map.getAll(<file>) and map.putAll(<file>) methods require the JSON XStream serializer, " +
+                "we don't include these artifacts by default as some users don't require this functionality. " +
+                "Please add the following artifacts to your project\n" +
+                "<dependency>\n" +
+                " <groupId>xstream</groupId>\n" +
+                " <artifactId>xstream</artifactId>\n" +
+                " <version>1.2.2</version>\n" +
+                "</dependency>\n" +
+                "<dependency>\n" +
+                " <groupId>org.codehaus.jettison</groupId>\n" +
+                " <artifactId>jettison</artifactId>\n" +
+                " <version>1.3.6</version>\n" +
+                "</dependency>\n", e);
+    }
+
+    private static <K, V> void registerChronicleMapConverter(Map<K, V> map, XStream xstream) {
+
+        Converter converter = map instanceof StatelessChronicleMap ?
+                new StatelessChronicleMapConverter<K, V>(map) :
+                new VanillaChronicleMapConverter<K, V>(map);
+
+        xstream.registerConverter(converter);
+    }
 }
+
+

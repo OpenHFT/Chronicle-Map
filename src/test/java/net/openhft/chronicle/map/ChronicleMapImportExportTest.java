@@ -7,7 +7,6 @@ import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.LongValue;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -178,7 +177,6 @@ public class ChronicleMapImportExportTest {
 
         xstream.toXML(map, new FileOutputStream(file));
 
-
         try (ChronicleMap<Integer, String> expected = ChronicleMapBuilder.of(Integer.class,
                 String.class).create()) {
 
@@ -188,41 +186,51 @@ public class ChronicleMapImportExportTest {
             expected.getAll(file2);
             expected.putAll(file2);
 
-
             Assert.assertEquals(2, expected.size());
             Assert.assertEquals("one", expected.get(1));
             Assert.assertEquals("two", expected.get(2));
         }
 
 
-        //file.deleteOnExit();
+        file.deleteOnExit();
     }
 
 
-    @Ignore("HCOLL-239 - The JSON to Map import/export should work on the stateless client.")
     @Test
-    public void testToJsonWithStatlessClient() throws IOException, InterruptedException {
+    public void testToJsonWithStatelessClient() throws IOException, InterruptedException {
         File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
+        file.deleteOnExit();
+        File file2 = new File(TMP + "/chronicle-map-" + System.nanoTime() + "-2.json");
         file.deleteOnExit();
         try (ChronicleMap<CharSequence, CharSequence> expected = ChronicleMapBuilder.of(CharSequence.class, CharSequence
                 .class)
                 .create()) {
-            try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+            try (ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                     .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-                try (ChronicleMap<Integer, CharSequence> actual = ChronicleMapBuilder.of(Integer
+                try (ChronicleMap<CharSequence, CharSequence> actual = ChronicleMapBuilder.of(CharSequence
                         .class, CharSequence.class)
                         .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
-                    expected.put("hello", "world");
 
+                    expected.put("hello", "world");
                     expected.getAll(file);
 
                     actual.putAll(file);
+
+
+                    Assert.assertEquals(expected, actual);
+
+                    actual.getAll(file2);
+                    actual.clear();
+                    actual.putAll(file2);
 
                     Assert.assertEquals(expected, actual);
 
                 }
             }
         }
+
+        file.delete();
+        file2.delete();
     }
 
 

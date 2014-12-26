@@ -26,79 +26,57 @@ import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.NotNull;
 
-import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Map;
 
 /**
  * @author Rob Austin.
  */
-public class ChronicleMapConverter<K, V> implements Converter {
+public class AbstractChronicleMapConverter<K, V> implements Converter {
 
-    private final Class entrySetClass;
-    private final Class writeThroughEntryClass;
+
     private final Map<K, V> map;
+     final Class mapClazz;
 
-    public ChronicleMapConverter(@NotNull Map<K, V> map) {
-
-        final String vanillaChronicleMap = "net.openhft.chronicle.map.VanillaChronicleMap";
-
-        try {
-            this.entrySetClass = Class.forName(vanillaChronicleMap + "$EntrySet");
-            this.writeThroughEntryClass = Class.forName(vanillaChronicleMap + "$WriteThroughEntry");
-        } catch (ClassNotFoundException e) {
-            throw new ConversionException("", e);
-        }
-
+    public AbstractChronicleMapConverter(@NotNull Map<K, V> map) {
         this.map = map;
+        this.mapClazz = map.getClass();
     }
 
 
     @Override
     public boolean canConvert(Class aClass) {
-
         //noinspection unchecked
-        return entrySetClass.isAssignableFrom(aClass) ||
-                writeThroughEntryClass.isAssignableFrom(aClass);
-
+        return mapClazz.isAssignableFrom(aClass);
     }
+
 
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext
             marshallingContext) {
 
-        if (entrySetClass.isAssignableFrom(o.getClass())) {
+        for (Map.Entry e : (Iterable<Map.Entry>) ((Map) o).entrySet()) {
 
-            for (Map.Entry e : (Iterable<Map.Entry>) o) {
-                writer.startNode("entry");
-                marshallingContext.convertAnother(e);
+            writer.startNode("entry");
+            {
+                final Object key = e.getKey();
+                writer.startNode(key.getClass().getName());
+                marshallingContext.convertAnother(key);
+                writer.endNode();
+
+                Object value = e.getValue();
+                writer.startNode(value.getClass().getName());
+                marshallingContext.convertAnother(value);
                 writer.endNode();
             }
-            return;
+            writer.endNode();
         }
-
-        final AbstractMap.SimpleEntry e = (AbstractMap.SimpleEntry) o;
-
-        final Object key = e.getKey();
-        writer.startNode(key.getClass().getName());
-        marshallingContext.convertAnother(key);
-        writer.endNode();
-
-        Object value = e.getValue();
-        writer.startNode(value.getClass().getName());
-        marshallingContext.convertAnother(value);
-        writer.endNode();
 
     }
 
     @Override
     public Object unmarshal(HierarchicalStreamReader reader,
                             UnmarshallingContext context) {
-
-        final String nodeName = reader.getNodeName();
-
-        if (!"cmap".equals(nodeName))
-            return null;
 
         while (reader.hasMoreChildren()) {
             reader.moveDown();
