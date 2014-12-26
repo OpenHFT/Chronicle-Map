@@ -492,10 +492,31 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return fetchObject(vClass, GET, (K) key);
     }
 
-    @NotNull
+    @Nullable
     public V getUsing(K key, V usingValue) {
-        throw new UnsupportedOperationException("getUsing() is not supported for stateless " +
-                "clients");
+
+
+        final long startTime = System.currentTimeMillis();
+        ThreadLocalCopies copies;
+
+        long transactionId;
+
+        outBytesLock.lock();
+        try {
+
+            final long sizeLocation = writeEventAnSkip(GET);
+
+            copies = writeKey((K) key);
+            transactionId = send(sizeLocation, startTime);
+        } finally {
+            outBytesLock.unlock();
+        }
+
+        if (eventReturnsNull(GET))
+            return null;
+
+        return (V) readValue(transactionId, startTime, copies, usingValue);
+
     }
 
     @NotNull
@@ -1403,7 +1424,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     }
 
-    private V readValue(long transactionId, long startTime, ThreadLocalCopies copies) {
+    private V readValue(long transactionId, long startTime, ThreadLocalCopies copies, V usingValue) {
         assert !outBytesLock.isHeldByCurrentThread();
 
         long timeoutTime = startTime + this.config.timeoutMs();
@@ -1411,7 +1432,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         // receive
         inBytesLock.lock();
         try {
-            return readValue(copies, blockingFetchReadOnly(timeoutTime, transactionId));
+
+            if (usingValue != null)
+                return readValue(copies, blockingFetchReadOnly(timeoutTime, transactionId), usingValue);
+            else
+
+                return readValue(copies, blockingFetchReadOnly(timeoutTime, transactionId));
         } finally {
             inBytesLock.unlock();
         }
@@ -1481,7 +1507,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private V readValue(ThreadLocalCopies copies, Bytes in) {
         assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
-        return valueReaderWithSize.readNullable(in, copies);
+        return valueReaderWithSize.readNullable(in, copies, null);
+    }
+
+    private V readValue(ThreadLocalCopies copies, Bytes in, V using) {
+        assert !outBytesLock.isHeldByCurrentThread();
+        assert inBytesLock.isHeldByCurrentThread();
+        return valueReaderWithSize.readNullable(in, copies, using);
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -1703,7 +1735,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             return null;
 
         if (rClass == vClass)
-            return (R) readValue(transactionId, startTime, copies);
+            return (R) readValue(transactionId, startTime, copies, null);
         else
             throw new UnsupportedOperationException("class of type class=" + rClass + " is not " +
                     "supported");
@@ -1732,7 +1764,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             return null;
 
         if (rClass == vClass)
-            return (R) readValue(transactionId, startTime, copies);
+            return (R) readValue(transactionId, startTime, copies, null);
         else
             throw new UnsupportedOperationException("class of type class=" + rClass + " is not " +
                     "supported");

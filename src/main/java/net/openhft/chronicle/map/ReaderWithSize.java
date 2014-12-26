@@ -27,6 +27,7 @@ final class ReaderWithSize<T> {
     private final SizeMarshaller sizeMarshaller;
     private final BytesReader<T> originalReader;
     private final Provider<BytesReader<T>> readerProvider;
+
     ReaderWithSize(SerializationBuilder<T> serializationBuilder) {
         sizeMarshaller = serializationBuilder.sizeMarshaller();
         originalReader = serializationBuilder.reader();
@@ -37,17 +38,17 @@ final class ReaderWithSize<T> {
         return readerProvider.getCopies(copies);
     }
 
-    public T read(Bytes in, @Nullable ThreadLocalCopies copies) {
+    public T read(Bytes in, @Nullable ThreadLocalCopies copies, @Nullable T using) {
         long size = sizeMarshaller.readSize(in);
         copies = readerProvider.getCopies(copies);
         BytesReader<T> reader = readerProvider.get(copies, originalReader);
-        return reader.read(in, size);
+        return reader.read(in, size, using);
     }
 
-    public T readNullable(Bytes in, @Nullable ThreadLocalCopies copies) {
+    public T readNullable(Bytes in, @Nullable ThreadLocalCopies copies, T using) {
         if (in.readBoolean())
             return null;
-        return read(in, copies);
+        return read(in, copies, using);
     }
 
     public BytesReader<T> readerForLoop(@Nullable ThreadLocalCopies copies) {

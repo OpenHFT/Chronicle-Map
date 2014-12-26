@@ -117,7 +117,7 @@ public class SerializerTest {
         long position = out.position();
         in.limit(position);
 
-        Object actual = valueReaderWithSize.read(in, null);
+        Object actual = valueReaderWithSize.read(in, null, null);
         Assert.assertEquals(actual, value);
     }
 
@@ -140,7 +140,7 @@ public class SerializerTest {
             long position = out.position();
             in.limit(position);
 
-            Object actual = keyReaderWithSize.read(in, null);
+            Object actual = keyReaderWithSize.read(in, null, null);
             Assert.assertEquals(actual, key);
         }
     }

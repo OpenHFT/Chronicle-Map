@@ -1565,7 +1565,7 @@ class StatelessServerConnector<K, V> {
     @Nullable
     public Work mapForKey(@NotNull ByteBufferBytes reader, @NotNull Bytes writer,
                           long sizeLocation) {
-        final K key = keyReaderWithSize.read(reader, null);
+        final K key = keyReaderWithSize.read(reader, null, null);
         final Function<V, ?> function = (Function<V, ?>) reader.readObject();
         try {
             Object result = map.getMapped(key, function);
@@ -1582,7 +1582,7 @@ class StatelessServerConnector<K, V> {
     @Nullable
     public Work putMapped(@NotNull ByteBufferBytes reader, @NotNull Bytes writer,
                           long sizeLocation) {
-        final K key = keyReaderWithSize.read(reader, null);
+        final K key = keyReaderWithSize.read(reader, null, null);
         final UnaryOperator<V> unaryOperator = (UnaryOperator<V>) reader.readObject();
         try {
             Object result = map.putMapped(key, unaryOperator);
@@ -1744,7 +1744,7 @@ class StatelessServerConnector<K, V> {
     @Nullable
     private Work containsValue(Bytes reader, @NotNull Bytes writer, final long sizeLocation) {
         // todo optimize -- eliminate
-        final V v = valueReaderWithSize.read(reader, null);
+        final V v = valueReaderWithSize.read(reader, null, null);
 
         try {
             writer.writeBoolean(map.containsValue(v));
