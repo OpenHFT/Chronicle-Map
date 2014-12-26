@@ -84,6 +84,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     final Alignment alignment;
     final boolean constantlySizedEntry;
     final int worstAlignment;
+    final boolean couldNotDetermineAlignmentBeforeAllocation;
     final int specialEntrySpaceOffset;
     final int actualSegments;
     final long actualChunksPerSegment;
@@ -154,12 +155,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         this.chunkSize = builder.chunkSize(replicated);
         this.alignment = builder.valueAlignment();
         this.constantlySizedEntry = builder.constantlySizedEntries();
+        this.worstAlignment = builder.worstAlignment(replicated);
         int alignment = this.alignment.alignment();
-        if (this.alignment != Alignment.NO_ALIGNMENT) {
-            this.worstAlignment = alignment - greatestCommonDivisor((int) chunkSize, alignment);
-        } else {
-            this.worstAlignment = 0;
-        }
+        this.couldNotDetermineAlignmentBeforeAllocation =
+                greatestCommonDivisor((int) chunkSize, alignment) != alignment;
         this.specialEntrySpaceOffset = builder.specialEntrySpaceOffset(replicated);
 
         this.errorListener = builder.errorListener();
@@ -1616,7 +1615,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     valueSizeMarshaller.sizeEncodingSize(valueSize);
             if (constantlySizedEntry) {
                 return alignment.alignAddr(sizeOfEverythingBeforeValue + valueSize);
-            } else if (worstAlignment > 0) {
+            } else if (couldNotDetermineAlignmentBeforeAllocation) {
                 return sizeOfEverythingBeforeValue + worstAlignment + valueSize;
             } else {
                 return alignment.alignAddr(sizeOfEverythingBeforeValue) + valueSize;
@@ -1673,6 +1672,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     continue;
                 // key is found
                 entry.skip(keySize);
+                segmentState.pos = pos; // for WriteLocked.close()
                 return readValueAndNotifyGet(copies, key, keySize, toKey,
                         readValue, usingValue, toValue, entry);
             }

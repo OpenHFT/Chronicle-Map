@@ -382,7 +382,17 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
-    double averageEntrySize(boolean replicated) {
+    static class EntrySizeInfo {
+        final double averageEntrySize;
+        final int worstAlignment;
+
+        public EntrySizeInfo(double averageEntrySize, int worstAlignment) {
+            this.averageEntrySize = averageEntrySize;
+            this.worstAlignment = worstAlignment;
+        }
+    }
+
+    private EntrySizeInfo entrySizeInfo(boolean replicated) {
         double size = metaDataBytes;
         double keySize = averageKeySize();
         size += averageSizeEncodingSize(keyBuilder, keySize);
@@ -392,39 +402,42 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         double valueSize = averageValueSize();
         size += averageSizeEncodingSize(valueBuilder, valueSize);
         Alignment alignment = valueAlignment();
+        int worstAlignment;
         if (alignment != Alignment.NO_ALIGNMENT) {
             if (constantlySizedKeys() && valueBuilder.constantSizeEncodingSizeMarshaller()) {
                 long constantSizeBeforeAlignment = round(size);
                 if (constantlySizedValues()) {
                     // see specialEntrySpaceOffset()
                     long totalDataSize = constantSizeBeforeAlignment + constantValueSize();
-                    size += alignment.alignAddr(totalDataSize) - totalDataSize;
+                    worstAlignment = (int) (alignment.alignAddr(totalDataSize) - totalDataSize);
                 } else {
+                    determineAlignment:
                     if (actualChunkSize > 0) {
-                        size += averageAlignmentAssumingChunkSize(constantSizeBeforeAlignment,
+                        worstAlignment = worstAlignmentAssumingChunkSize(constantSizeBeforeAlignment,
                                 actualChunkSize);
                     } else {
-                        for (int chunkSize : new int[]{8, 4}) {
-                            double expectedAverageAlignment = averageAlignmentAssumingChunkSize(
-                                    constantSizeBeforeAlignment, chunkSize);
-                            if (size + expectedAverageAlignment + valueSize >=
-                                    maxDefaultChunksPerAverageEntry(replicated) * chunkSize ||
-                                    chunkSize == 4) {
-                                size += expectedAverageAlignment;
-                                break;
-                            }
+                        int chunkSize = 8;
+                        worstAlignment = worstAlignmentAssumingChunkSize(
+                                constantSizeBeforeAlignment, chunkSize);
+                        if (size + worstAlignment + valueSize >=
+                                maxDefaultChunksPerAverageEntry(replicated) * chunkSize) {
+                            break determineAlignment;
                         }
+                        chunkSize = 4;
+                        worstAlignment = worstAlignmentAssumingChunkSize(
+                                constantSizeBeforeAlignment, chunkSize);
                     }
                 }
             } else {
-                if (alignment.alignment() > 0) {
-                    // assume worst case, we always lose most possible bytes for alignment
-                    size += alignment.alignment() - 1;
-                }
+                // assume worst case, we always lose most possible bytes for alignment
+                worstAlignment = alignment.alignment() - 1;
             }
+        } else {
+            worstAlignment = 0;
         }
+        size += worstAlignment;
         size += valueSize;
-        return size;
+        return new EntrySizeInfo(size, worstAlignment);
     }
 
     /**
@@ -459,20 +472,27 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return lower * (upper - averageSize) + upper * (averageSize - lower);
     }
 
-    private double averageAlignmentAssumingChunkSize(
+    private int worstAlignmentAssumingChunkSize(
             long constantSizeBeforeAlignment, int chunkSize) {
         if (valueAlignment() == Alignment.NO_ALIGNMENT)
-            return 0.0;
+            return 0;
         Alignment valueAlignment = valueAlignment();
         long firstAlignment = valueAlignment.alignAddr(constantSizeBeforeAlignment) -
                 constantSizeBeforeAlignment;
         int alignment = valueAlignment.alignment();
         int gcdOfAlignmentAndChunkSize = greatestCommonDivisor(alignment, chunkSize);
         if (gcdOfAlignmentAndChunkSize == alignment)
-            return firstAlignment;
+            return (int) firstAlignment;
         // assume worst by now because we cannot predict alignment in VanillaCM.entrySize() method
         // before allocation
-        return alignment - gcdOfAlignmentAndChunkSize;
+        long worstAlignment = firstAlignment;
+        while (worstAlignment + gcdOfAlignmentAndChunkSize < alignment)
+            worstAlignment += gcdOfAlignmentAndChunkSize;
+        return (int) worstAlignment;
+    }
+
+    int worstAlignment(boolean replicated) {
+        return entrySizeInfo(replicated).worstAlignment;
     }
 
     static int greatestCommonDivisor(int a, int b) {
@@ -483,7 +503,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     long chunkSize(boolean replicated) {
         if (actualChunkSize > 0)
             return actualChunkSize;
-        double averageEntrySize = averageEntrySize(replicated);
+        double averageEntrySize = entrySizeInfo(replicated).averageEntrySize;
         if (constantlySizedEntries())
             return round(averageEntrySize);
         int maxChunkSize = 1 << 30;
@@ -505,7 +525,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         // assuming we always has worst internal fragmentation. This affects total segment
         // entry space which is allocated lazily on Linux (main target platform)
         // so we can afford this
-        return (averageEntrySize(replicated) + chunkSize - 1) / chunkSize;
+        return (entrySizeInfo(replicated).averageEntrySize + chunkSize - 1) / chunkSize;
     }
 
     private static int maxDefaultChunksPerAverageEntry(boolean replicated) {

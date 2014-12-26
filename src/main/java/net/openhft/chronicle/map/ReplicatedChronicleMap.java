@@ -783,6 +783,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                     return v;
                 } else {
+                    segmentState.pos = pos; // for WriteLocked.close()
                     return readValueAndNotifyGet(copies, key, keySize, toKey,
                             readValue, usingValue, toValue, entry);
                 }
