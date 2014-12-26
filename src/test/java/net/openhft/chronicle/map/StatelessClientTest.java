@@ -680,7 +680,6 @@ public class StatelessClientTest {
         }
     }
 
-    @org.junit.Ignore("HCOLL-276 Improve serializer resilience")
     @Test
     public void startChronicleMapServer() throws IOException {
 
@@ -692,8 +691,9 @@ public class StatelessClientTest {
                 .constantKeySizeBySample(new byte[14])
                 .create()) {
 
-            try (ChronicleMap<byte[], CharSequence> map2 = ChronicleMapBuilder.of(byte[].class, CharSequence.class)
-                    // .constantKeySizeBySample(new byte[14])
+            try (ChronicleMap<byte[], CharSequence> map2 = ChronicleMapBuilder
+                    .of(byte[].class, CharSequence.class)
+                    .constantKeySizeBySample(new byte[14])
                     .statelessClient(new InetSocketAddress("localhost", 8875))
                     .create()) {
 
