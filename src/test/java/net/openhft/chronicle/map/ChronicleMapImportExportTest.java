@@ -189,8 +189,6 @@ public class ChronicleMapImportExportTest {
                 .averageValueSize(10)
                 .entries(1000)
                 .create()) {
-        try (ChronicleMap<Integer, String> expected = ChronicleMapBuilder.of(Integer.class,
-                String.class).create()) {
 
             expected.put(1, "one");
             expected.put(2, "two");
