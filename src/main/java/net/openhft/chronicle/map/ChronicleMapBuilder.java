@@ -695,16 +695,21 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return (int) Math.min(Maths.nextPower2(entries() / 32, 1), estimateSegmentsBasedOnSize());
     }
 
+    //TODO reivew because this heuristic doesn't seem to perform well
     private int estimateSegmentsBasedOnSize() {
-        // based on entries with multimap of 100 bytes.
+        // the idea is that if values are huge, operations on them (and simply ser/deser)
+        // could take long time, so we want more segment to minimize probablity that
+        // two or more concurrent write ops will go to the same segment, and then all but one of
+        // these threads will wait for long time.
         int segmentsForEntries = estimateSegmentsForEntries(entries());
-        return actualChunkSize >= 1000000
+        double averageValueSize = averageValueSize();
+        return averageValueSize >= 1000000
                 ? segmentsForEntries * 16
-                : actualChunkSize >= 100000
+                : averageValueSize >= 100000
                 ? segmentsForEntries * 8
-                : actualChunkSize >= 10000
+                : averageValueSize >= 10000
                 ? segmentsForEntries * 4
-                : actualChunkSize >= 1000
+                : averageValueSize >= 1000
                 ? segmentsForEntries * 2
                 : segmentsForEntries;
     }
