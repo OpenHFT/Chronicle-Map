@@ -108,7 +108,7 @@ public class ChronicleMapTest {
         return ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                 .entries(entries)
                 .minSegments(segments)
-                .keySize(keySize)
+                .averageKeySize(keySize)
                 .entryAndValueAlignment(alignment)
                 .create();
     }
@@ -653,7 +653,7 @@ public class ChronicleMapTest {
                     .entries(entries)
                     .actualSegments(8 * 1024)
                     .entryAndValueAlignment(OF_8_BYTES)
-                    .keySize(13);
+                    .averageKeySize(13);
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
@@ -728,7 +728,7 @@ public class ChronicleMapTest {
                     .entries(entries)
                     .entryAndValueAlignment(OF_8_BYTES)
                     .actualSegments(256)
-                    .keySize(13);
+                    .averageKeySize(13);
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
@@ -936,8 +936,8 @@ public class ChronicleMapTest {
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                         .entries(entries)
                         .minSegments(16)
-                        .keySize("user:".length() + 6)
-                        .valueSize("value:".length() + 6)
+                        .averageKeySize("user:".length() + 6)
+                        .averageValueSize("value:".length() + 6)
                         .putReturnsNull(true)
                         .removeReturnsNull(true).create();
         StringBuilder key = new StringBuilder();
@@ -1365,7 +1365,7 @@ public class ChronicleMapTest {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                         .entries(noOfElements * 2 + 100)
-                        .valueSize((noOfElements + "").length())
+                        .averageValueSize((noOfElements + "").length())
                         .putReturnsNull(true)
                         .removeReturnsNull(true).create();
 
@@ -1382,52 +1382,52 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testOversizeEntriesPutRemoveReplace() throws IOException {
+    public void testEntriesSpanningSeveralChunksPutRemoveReplace() throws IOException {
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .minSegments(1)
-                .entrySize(10);
-        testOversizeEntriesPutRemoveReplace(
+                .actualChunkSize(10);
+        testEntriesSpanningSeveralChunksPutRemoveReplace(
                 (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
                         builder.createPersistedTo(getPersistenceFile())
         );
     }
 
-    public void testOversizeEntriesPutRemoveReplace(
+    public void testEntriesSpanningSeveralChunksPutRemoveReplace(
             VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?> map) {
         String key = "k";
-        String oversizedKey = "oversized key";
+        String largeKey = "very large key";
         String value = "v";
-        String oversizedValue = "oversized value";
+        String largeValue = "vary large value";
 
-        map.put(key, oversizedValue);
-        assertEquals(oversizedValue, map.get(key));
+        map.put(key, largeValue);
+        assertEquals(largeValue, map.get(key));
         map.replace(key, value);
         map.checkConsistency();
         assertEquals(value, map.get(key));
-        map.replace(key, oversizedValue);
+        map.replace(key, largeValue);
         map.checkConsistency();
-        assertEquals(oversizedValue, map.get(key));
+        assertEquals(largeValue, map.get(key));
 
-        map.put(oversizedKey, value);
+        map.put(largeKey, value);
         map.checkConsistency();
-        assertEquals(value, map.get(oversizedKey));
-        map.replace(oversizedKey, oversizedValue);
+        assertEquals(value, map.get(largeKey));
+        map.replace(largeKey, largeValue);
         map.checkConsistency();
-        assertEquals(oversizedValue, map.get(oversizedKey));
-        map.remove(oversizedKey);
+        assertEquals(largeValue, map.get(largeKey));
+        map.remove(largeKey);
         map.checkConsistency();
-        assertEquals(null, map.get(oversizedKey));
-        map.put(oversizedKey, oversizedValue);
+        assertEquals(null, map.get(largeKey));
+        map.put(largeKey, largeValue);
         map.checkConsistency();
-        assertEquals(oversizedValue, map.get(oversizedKey));
-        map.replace(oversizedKey, oversizedValue, value);
+        assertEquals(largeValue, map.get(largeKey));
+        map.replace(largeKey, largeValue, value);
         map.checkConsistency();
-        assertEquals(value, map.get(oversizedKey));
+        assertEquals(value, map.get(largeKey));
 
-        assertEquals(value, map.remove(oversizedKey));
+        assertEquals(value, map.remove(largeKey));
         map.checkConsistency();
-        assertEquals(oversizedValue, map.remove(key));
+        assertEquals(largeValue, map.remove(key));
         map.checkConsistency();
 
         map.close();
@@ -1488,7 +1488,7 @@ public class ChronicleMapTest {
         final ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
                 .entries(1000)
-                .keySize("x".length());
+                .averageKeySize("x".length());
 
         final ChronicleMap<CharSequence, LongValue> map = builder.create();
 
@@ -1501,7 +1501,7 @@ public class ChronicleMapTest {
         ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
                 .entries(1000)
-                .keySize("one".length());
+                .averageKeySize("one".length());
 
         final ChronicleMap<CharSequence, LongValue> map = builder.create();
 
@@ -1575,8 +1575,8 @@ public class ChronicleMapTest {
         try (final ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .entries(1000)
-                .keySize("one".length())
-                .valueSize("Hello World".length())
+                .averageKeySize("one".length())
+                .averageValueSize("Hello World".length())
                 .defaultValue("")
                 .create()) {
             StringBuilder value = new StringBuilder();
@@ -1594,7 +1594,7 @@ public class ChronicleMapTest {
         ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
                 .entries(1000)
-                .keySize("one".length());
+                .averageKeySize("one".length());
         File tmpFile = File.createTempFile("testAcquireUsingLocked", ".deleteme");
         tmpFile.deleteOnExit();
         final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);

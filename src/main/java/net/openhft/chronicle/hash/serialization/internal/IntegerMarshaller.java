@@ -37,6 +37,16 @@ public enum IntegerMarshaller
     }
 
     @Override
+    public int minSizeEncodingSize() {
+        return 0;
+    }
+
+    @Override
+    public int maxSizeEncodingSize() {
+        return 0;
+    }
+
+    @Override
     public void writeSize(Bytes bytes, long size) {
         // do nothing
     }

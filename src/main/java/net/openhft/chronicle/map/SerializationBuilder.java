@@ -274,7 +274,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         }
         long constantSize = metaInterop.size(interop, sampleObject);
         if (sizeIsStaticallyKnown) {
-            int expectedConstantSize = pseudoReadConstantSize();
+            long expectedConstantSize = pseudoReadConstantSize();
             if (constantSize != expectedConstantSize) {
                 throw new IllegalStateException("Although configuring constant size by sample " +
                         "is not forbidden for types which size we already know statically, they " +
@@ -306,11 +306,22 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
     }
 
     boolean constantSizeMarshaller() {
-        return sizeMarshaller().sizeEncodingSize(0L) == 0;
+        try {
+            return sizeMarshaller().sizeEncodingSize(1L) == 0;
+        } catch (Exception e) {
+            // size marshaller thrown likely IllegalArgumentException, that means it doesn't
+            // expect size 1. marshaller of constant size shouldn't do that, it's body should be
+            // just `return 0;`
+            return false;
+        }
     }
 
-    int pseudoReadConstantSize() {
-        return (int) sizeMarshaller().readSize(EMPTY_BYTES);
+    boolean constantSizeEncodingSizeMarshaller() {
+        return sizeMarshaller().minSizeEncodingSize() == sizeMarshaller().maxSizeEncodingSize();
+    }
+
+    long pseudoReadConstantSize() {
+        return sizeMarshaller().readSize(EMPTY_BYTES);
     }
 
     public SerializationBuilder<E> sizeMarshaller(SizeMarshaller sizeMarshaller) {

@@ -92,6 +92,6 @@ public class PingPongCASLeft {
         AffinitySupport.setThreadId();
         return ChronicleMapBuilder.of(String.class, BondVOInterface.class)
                 .entries(16)
-                .keySize("369604101".length()).create();
+                .averageKeySize("369604101".length()).create();
     }
 }

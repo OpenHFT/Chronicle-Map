@@ -19,13 +19,13 @@ package net.openhft.chronicle.map;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class NoEntryOversizeFactorTest {
+public class NoUpperBoundChunksPerEntryTest {
 
     @Test
-    public void noOversizeFactorTest() {
+    public void noUpperBoundChunksPerEntryTest() {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .valueSize(1).entries(10000L).actualSegments(1).create();
+                        .averageValueSize(1).entries(10000L).actualSegments(1).create();
         String ultraLargeValue = "";
         for (int i = 0; i < 100; i++) {
             ultraLargeValue += "Hello";

@@ -150,7 +150,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     private long bitsPerSegmentInModIterBitSet() {
         // min 128 * 8 to prevent false sharing on updating bits from different segments
         // TODO this doesn't prevent false sharing. There should be GAPS between per-segment bits
-        return Maths.nextPower2(entriesPerSegment, 128L * 8L);
+        return Maths.nextPower2(actualChunksPerSegment, 128L * 8L);
     }
 
     @Override
@@ -1157,7 +1157,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 // key is not found
                 if (remote) {
                     long entrySize = entrySize(keySize, 0);
-                    long pos = alloc(inBlocks(entrySize));
+                    long pos = alloc(inChunks(entrySize));
                     long offset = offsetFromPos(pos);
                     clearMetaData(offset);
                     reuse(entry, offset);

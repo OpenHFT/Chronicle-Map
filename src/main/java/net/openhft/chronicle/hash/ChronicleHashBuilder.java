@@ -55,6 +55,11 @@ import java.util.concurrent.TimeUnit;
  * the corresponding configuration changed. To make an independent configuration, {@linkplain
  * #clone} the builder.
  *
+ * <p><a name="low-level-config"></a>There are some "low-level" configurations in this builder,
+ * that require deep understanding of the Chronicle implementation design to be properly used.
+ * Know what you do. These configurations are picked up strictly as-is, without extra round-ups,
+ * adjustments, etc.
+ *
  * @param <K> the type of keys in hash containers, created by this builder
  * @param <C> the container type, created by this builder, i. e. {@link ChronicleMap} or {@link
  *            ChronicleSet}
@@ -83,27 +88,29 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
     B minSegments(int minSegments);
 
     /**
-     * Configures the optimal number of bytes, taken by serialized form of keys, put into hash
+     * Configures the average number of bytes, taken by serialized form of keys, put into hash
      * containers, created by this builder. If key size is always the same, call {@link
      * #constantKeySizeBySample(Object)} method instead of this one.
      *
-     * <p>If key size varies moderately, specify the size higher than average, but lower than the
-     * maximum possible, to minimize average memory overuse. If key size varies in a wide range,
-     * it's better to use {@linkplain #entrySize(int) entry size} in "chunk" mode and configure it
-     * directly.
+     * <p>{@code ChronicleHashBuilder} implementation heuristically chooses
+     * {@linkplain #actualChunkSize(int) the actual chunk size} based on this configuration, that,
+     * however, might result to quite high internal fragmentation, i. e. losses because only
+     * integral number of chunks could be allocated for the entry. If you want to avoid this, you
+     * should manually configure the actual chunk size in addition to this average key size
+     * configuration, which is anyway needed.
      *
      * <p>If key is a boxed primitive type or {@link Byteable} subclass, i. e. if key size is known
      * statically, it is automatically accounted and shouldn't be specified by user.
      *
-     * @param keySize number of bytes, taken by serialized form of keys
+     * @param averageKeySize the average number of bytes, taken by serialized form of keys
      * @return this builder back
      * @throws IllegalStateException if key size is known statically and shouldn't be configured
      *         by user
      * @throws IllegalArgumentException if the given {@code keySize} is non-positive
      * @see #constantKeySizeBySample(Object)
-     * @see #entrySize(int)
+     * @see #actualChunkSize(int)
      */
-    B keySize(int keySize);
+    B averageKeySize(double averageKeySize);
 
     /**
      * Configures the constant number of bytes, taken by serialized form of keys, put into hash
@@ -113,12 +120,12 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * <p>If keys are of boxed primitive type or {@link Byteable} subclass, i. e. if key size is
      * known statically, it is automatically accounted and this method shouldn't be called.
      *
-     * <p>If key size varies, method {@link #keySize(int)} or {@link #entrySize(int)} should be
-     * called instead of this one.
+     * <p>If key size varies, method {@link #averageKeySize(double)} should be called instead of
+     * this one.
      *
      * @param sampleKey the sample key
      * @return this builder back
-     * @see #keySize(int)
+     * @see #averageKeySize(double)
      */
     B constantKeySizeBySample(K sampleKey);
 
@@ -130,104 +137,124 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * to serialize key (and values, in {@code ChronicleMap} case) (unless they are direct {@link
      * Byteable} instances). Serialized key bytes (+ serialized value bytes, in {@code ChronicleMap}
      * case) + some metadata bytes comprise "entry space", which {@code ChronicleMap} or {@code
-     * ChronicleSet} should allocate. So <i>entry size</i> is a minimum allocation portion in the
-     * hash containers, created by this builder. E. g. if entry size is 100, the created container
+     * ChronicleSet} should allocate. So <i>chunk size</i> is the minimum allocation portion in the
+     * hash containers, created by this builder. E. g. if chunk size is 100, the created container
      * could only allocate 100, 200, 300... bytes for an entry. If say 150 bytes of entry space are
-     * required by the entry, 200 bytes will be allocated, 150 used and 50 wasted. To minimize
-     * memory overuse and improve speed, you should pay decent attention to this configuration.
+     * required by the entry, 200 bytes will be allocated, 150 used and 50 wasted. This is called
+     * internal fragmentation.
      *
-     * <p>There are three major patterns of this configuration usage: <ol> <li>Key (and value, in
-     * {@code ChronicleMap} case) sizes are constant. Configure them via {@link
-     * #constantKeySizeBySample(Object)} and {@link ChronicleMapBuilder#constantValueSizeBySample(Object)}
-     * methods, and you will experience no memory waste at all.</li> <li>Key (and/or value size, in
-     * {@code ChronicleMap} case) varies moderately. Specify them using corresponding methods, or
-     * specify entry size directly by calling this method, by sizes somewhere between average and
-     * maximum possible. The idea is to have most (90% or more) entries to fit a single "entry size"
-     * with moderate memory waste (10-20% on average), rest 10% or less of  entries should take 2
-     * "entry sizes", thus with ~50% memory overuse.</li> <li>Key (and/or value size, in {@code
-     * ChronicleMap} case) varies in a wide range. Then it's best to use entry size configuration in
-     * <i>chunk mode</i>. Specify entry size so that most entries should take from 5 to several
-     * dozens of "chunks". With this approach, average memory waste should be very low.
+     * <p>To minimize memory overuse and improve speed, you should pay decent attention to this
+     * configuration. Alternatively, you can just trust the heuristics and doesn't configure
+     * the chunk size.
      *
-     * <p>However, remember that <ul> <li>Operations with entries that span several "entry sizes"
-     * are a bit slower, than entries which take a single "entry size". That is why "chunk" approach
-     * is not recommended, when key (and/or value size) varies moderately.</li> <li>The maximum
-     * number of chunks could be taken by an entry is {@link #maxEntryOversizeFactor(int)}, of max
-     * 64 chunks. {@link IllegalArgumentException} is thrown on attempt to insert too large entry,
-     * compared to the configured or computed entry size.</li> <li>The number of "entries"
-     * {@linkplain #entries(long) in the whole map} and {@linkplain #actualEntriesPerSegment(long)
-     * per segment} is actually the number "chunks".</li> </ul>
+     * <p>Specify chunk size so that most entries would take from 5 to several dozens of chunks.
+     * However, remember that operations with entries that span several chunks are a bit slower,
+     * than with entries which take a single chunk. Particularly avoid entries to take more than
+     * 64 chunks.
      *
      * <p>Example: if values in your {@code ChronicleMap} are adjacency lists of some social graph,
      * where nodes are represented as {@code long} ids, and adjacency lists are serialized in
      * efficient manner, for example as {@code long[]} arrays. Typical number of connections is
-     * 100-300, maximum is 3000. In this case entry size of
-     * 50 * (8 bytes for each id) = 400 bytes would be a good choice: <pre>{@code
+     * 100-300, maximum is 3000. In this case chunk size of
+     * 30 * (8 bytes for each id) = 240 bytes would be a good choice: <pre>{@code
      * Map<Long, long[]> socialGraph = ChronicleMapOnHeapUpdatableBuilder
      *     .of(Long.class, long[].class)
-     *     // given that graph should have of 1 billion nodes, and 150 average adjacency list size
-     *     // => values takes 3 chuncks on average
-     *     .entries(1_000_000_000L * (150 / 50))
-     *     .entrySize(50 * 8)
+     *     .entries(1_000_000_000L)
+     *     .averageValueSize(150 * 8) // 150 is average adjacency list size
+     *     .actualChunkSize(30 * 8) // average 5-6 chunks per entry
      *     .create();}</pre>
-     * It is minimum possible (because 3000 friends / 50 friends = 60 is close to 64 "max chunks by
-     * single entry" limit, and ensures moderate average memory overuse (not more than 20%). </li>
-     * </ol>
      *
-     * @param entrySize the "chunk size" in bytes
+     * <p>This is a <a href="#low-level-config">low-level configuration</a>. The configured number
+     * of bytes is strictly used as-is, without anything like round-up to the multiple of 8 or
+     * 16, or any other adjustment.
+     *
+     * @param actualChunkSize the "chunk size" in bytes
      * @return this builder back
      * @see #entries(long)
-     * @see #maxEntryOversizeFactor(int)
+     * @see #maxChunksPerEntry(int)
      */
-    B entrySize(int entrySize);
+    B actualChunkSize(int actualChunkSize);
 
     /**
-     * Configures how much the actual entry size is allowed to be larger than configured or derived
-     * {@linkplain #entrySize(int) entry size}.
+     * Configures how many chunks a single entry, inserted into {@code ChronicleHash}es, created
+     * by this builder, could take. If you try to insert larger entry, {@link IllegalStateException}
+     * is fired. This is useful as self-check, that you configured chunk size right and you
+     * keys (and values, in {@link ChronicleMap} case) take expected number of bytes. For example,
+     * if {@link #constantKeySizeBySample(Object)} is configured or key size is statically known
+     * to be constant (boxed primitives, data value generated implementations, {@link Byteable}s,
+     * etc.), and the same for value objects in {@code ChronicleMap} case, max chunks per entry
+     * is configured to 1, to ensure keys and values are actually constantly-sized.
      *
-     * @param maxEntryOversizeFactor number of times the actual entry size could oversize the
-     *                               configured "entry size" (chunk size, actually)
+     * @param maxChunksPerEntry how many chunks a single entry could span at most
      * @return this builder back
-     * @throws IllegalArgumentException if the given {@code maxEntryOversizeFactor} is lesser than 1
+     * @throws IllegalArgumentException if the given {@code maxChunksPerEntry} is lesser than 1
      *         or greater than 64
+     * @see #actualChunkSize(int)
      */
-    B maxEntryOversizeFactor(int maxEntryOversizeFactor);
+    B maxChunksPerEntry(int maxChunksPerEntry);
 
     /**
-     * Configures the maximum number of {@linkplain #entrySize(int) "entry size chunks"}, which
-     * could be taken by the maximum number of entries, inserted into the hash containers, created
-     * by this builder. If you try to insert more data, {@link IllegalStateException} might be
-     * thrown, because currently {@link ChronicleMap} and {@link ChronicleSet} doesn't support
-     * resizing.
+     * Configures the maximum number of entries, that could be inserted into the hash containers,
+     * created by this builder. If you try to insert more data, {@link IllegalStateException}
+     * <i>might</i> be thrown, because currently {@link ChronicleMap} and {@link ChronicleSet}
+     * don't support resizing.
      *
-     * <ol> <li>If key size (and value size, in {@code ChronicleMap} case) is constant, this number
-     * is equal to the maximum number of entries (because each entry takes exactly one "entry size"
-     * memory unit).</li> <li>If key (and/or value, in {@code ChronicleMap} case) size varies
-     * moderately, you should pass to this method the maximum number of entries + 5-25%, depending
-     * on your data properties and configured {@linkplain #keySize(int) key}/{@linkplain
-     * ChronicleMapBuilder#valueSize(int)
-     * value}/{@linkplain #entrySize(int) entry} sizes.</li> <li>If your data size varies in a wide
-     * range, pass the maximum number of entries multiplied by average data size and divided by the
-     * configured "entry size" (i. e. chunk size). See an example in the documentation to {@link
-     * #entrySize(int)} method.</li> </ol>
-     *
-     * <p>You shouldn't put additional margin over the number, computed according the rules above.
+     * <p><b>You shouldn't put additional margin over the actual maximum number of entries.</b>
      * This bad practice was popularized by {@link HashMap#HashMap(int)} and {@link
-     * HashSet#HashSet(int)} constructors, which accept "capacity", that should be multiplied by
-     * "load factor" to obtain actual maximum expected number of entries. {@code ChronicleMap} and
-     * {@code ChronicleSet} don't have a notion of load factor.
+     * HashSet#HashSet(int)} constructors, which accept <i>capacity</i>, that should be multiplied
+     * by <i>load factor</i> to obtain the actual maximum expected number of entries.
+     * {@code ChronicleMap} and {@code ChronicleSet} don't have a notion of load factor.
      *
-     * <p>Default value is 2^20 (~ 1 million).
+     * <p>Default maximum entries is 2^20 (~ 1 million).
      *
-     * @param entries maximum size of the created maps, in memory allocation units, so-called "entry
-     *                size"
+     * @param entries maximum size of the maps or sets, created by this builder
      * @return this builder back
-     * @see #entrySize(int)
      */
     B entries(long entries);
 
-    B actualEntriesPerSegment(long actualEntriesPerSegment);
+    /**
+     * Configures the actual maximum number entries, that could be inserted into any single segment
+     * of the hash containers, created by this builder. Configuring both the actual number of
+     * entries per segment and {@linkplain #actualSegments(int) actual segments} replaces a single
+     * {@link #entries(long)} configuration.
+     *
+     * <p>This is a <a href="#low-level-config">low-level configuration</a>.
+     *
+     * @param entriesPerSegment the actual maximum number entries per segment in the
+     *                                hash containers, created by this builder
+     * @return this builder back
+     * @see #entries(long)
+     * @see #actualSegments(int)
+     */
+    B entriesPerSegment(long entriesPerSegment);
 
+    /**
+     * Configures the actual number of chunks, that will be reserved for any single segment of the
+     * hash containers, created by this builder. This configuration is a lower-level version of
+     * {@link #entriesPerSegment(long)}. Makes sense only if {@link #actualChunkSize(int)},
+     * {@link #actualSegments(int)} and {@link #entriesPerSegment(long)} are also configured
+     * manually.
+     *
+     * @param actualChunksPerSegment the actual number of segments, reserved per segment in the
+     *                               hash containers, created by this builder
+     * @return this builder back
+     */
+    B actualChunksPerSegment(long actualChunksPerSegment);
+
+    /**
+     * Configures the actual number of segments in the hash containers, created by this builder.
+     * With {@linkplain #entriesPerSegment(long) actual number of segments}, this
+     * configuration replaces a single {@link #entries(long)} call.
+     *
+     * <p>This is a <a href="#low-level-config">low-level configuration</a>. The configured number
+     * is used as-is, without anything like round-up to the closest power of 2.
+     *
+     * @param actualSegments the actual number of segments in hash containers, created by
+     *                       this builder
+     * @return this builder back
+     * @see #minSegments(int)
+     * @see #entriesPerSegment(long)
+     */
     B actualSegments(int actualSegments);
 
     /**

@@ -656,15 +656,15 @@ public class StatelessClientTest {
 
         try (ChronicleMap<byte[], byte[]> serverMap = ChronicleMapBuilder
                 .of(byte[].class, byte[].class)
-                .keySize(4)
-                .valueSize(4)
+                .averageKeySize(4)
+                .averageValueSize(4)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
                 .create()) {
 
             try (ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapBuilder
                     .of(byte[].class, byte[].class)
-                    .keySize(4)
-                    .valueSize(4)
+                    .averageKeySize(4)
+                    .averageValueSize(4)
                     .statelessClient(new InetSocketAddress("localhost", 8056))
                     .create()) {
 

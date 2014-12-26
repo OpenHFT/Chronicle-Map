@@ -92,31 +92,38 @@ public final class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> actualEntriesPerSegment(long actualEntriesPerSegment) {
-        chronicleMapBuilder.actualEntriesPerSegment(actualEntriesPerSegment);
+    public ChronicleSetBuilder<E> entriesPerSegment(long entriesPerSegment) {
+        chronicleMapBuilder.entriesPerSegment(entriesPerSegment);
+        return this;
+    }
+
+    @Override
+    public ChronicleSetBuilder<E> actualChunksPerSegment(long actualChunksPerSegment) {
+        chronicleMapBuilder.actualChunksPerSegment(actualChunksPerSegment);
         return this;
     }
 
     /**
      * {@inheritDoc}
      *
-     * <p>Example: if keys in your set(s) are English words in {@link String} form, keys size 10
-     * (a bit more than average English word length) would be a good choice: <pre>{@code
+     * <p>Example: if keys in your set(s) are English words in {@link String} form, average English
+     * word length is 5.1, configure average key size of 6: <pre>{@code
      * ChronicleSet<String> uniqueWords = ChronicleSetBuilder.of(String.class)
      *     .entries(50000)
-     *     .keySize(10)
+     *     .averageKeySize(6)
      *     .create();}</pre>
      *
-     * <p>(Note that 10 is chosen as key size in bytes despite strings in Java are UTF-16 encoded
-     * (and each character takes 2 bytes on-heap), because default off-heap {@link String} encoding
-     * is UTF-8 in {@code ChronicleSet}.)
+     * <p>(Note that 6 is chosen as average key size in bytes despite strings in Java are UTF-16
+     * encoded (and each character takes 2 bytes on-heap), because default off-heap {@link String}
+     * encoding is UTF-8 in {@code ChronicleSet}.)
      *
      * @see #constantKeySizeBySample(Object)
-     * @see #entrySize(int)
+     * @see #actualChunkSize(int)
+     * @param averageKeySize
      */
     @Override
-    public ChronicleSetBuilder<E> keySize(int keySize) {
-        chronicleMapBuilder.keySize(keySize);
+    public ChronicleSetBuilder<E> averageKeySize(double averageKeySize) {
+        chronicleMapBuilder.averageKeySize(averageKeySize);
         return this;
     }
 
@@ -128,7 +135,7 @@ public final class ChronicleSetBuilder<E>
      *     .constantKeySizeBySample(new byte[20])
      *     .create();}</pre>
      *
-     * @see #keySize(int)
+     * @see ChronicleHashBuilder#averageKeySize(double)
      */
     @Override
     public ChronicleSetBuilder<E> constantKeySizeBySample(E sampleKey) {
@@ -136,26 +143,15 @@ public final class ChronicleSetBuilder<E>
         return this;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>In fully default case you can expect entry size to be about 120-130 bytes. But it is
-     * strongly recommended always to configure {@linkplain #keySize(int) key size}, if they
-     * couldn't be derived statically.
-     *
-     * <p>If entry size is not configured explicitly by calling this method, it is computed based on
-     * {@linkplain #metaDataBytes(int) meta data bytes}, plus {@linkplain #keySize(int) key size},
-     * plus a few bytes required by implementations.
-     */
     @Override
-    public ChronicleSetBuilder<E> entrySize(int entrySize) {
-        chronicleMapBuilder.entrySize(entrySize);
+    public ChronicleSetBuilder<E> actualChunkSize(int actualChunkSize) {
+        chronicleMapBuilder.actualChunkSize(actualChunkSize);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> maxEntryOversizeFactor(int maxEntryOversizeFactor) {
-        chronicleMapBuilder.maxEntryOversizeFactor(maxEntryOversizeFactor);
+    public ChronicleSetBuilder<E> maxChunksPerEntry(int maxChunksPerEntry) {
+        chronicleMapBuilder.maxChunksPerEntry(maxChunksPerEntry);
         return this;
     }
 

@@ -193,7 +193,7 @@ public class StringEncodingExamplesTest {
         try (ChronicleSet<CharSequence> chineseWordSet = ChronicleSetBuilder.of(CharSequence.class)
                 .keyMarshaller(marshaller)
                 .actualSegments(1)
-                .actualEntriesPerSegment(1000)
+                .entriesPerSegment(1000)
                 .create()) {
             chineseWordSet.add("新闻");
             chineseWordSet.add("地图");

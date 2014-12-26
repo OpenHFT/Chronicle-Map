@@ -19,6 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.StatelessClientConfig;
+import net.openhft.lang.MemoryUnit;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -35,7 +36,7 @@ class StatelessMapConfig<K, V> implements StatelessClientConfig<ChronicleMap<K, 
     private final long timeoutMs;
     private final String name;
 
-    private int tcpBufferSize = 1024 * VanillaChronicleMap.MAX_ENTRY_OVERSIZE_FACTOR;
+    private int tcpBufferSize = (int) MemoryUnit.KILOBYTES.toBytes(64);
 
     private final AtomicBoolean used;
 

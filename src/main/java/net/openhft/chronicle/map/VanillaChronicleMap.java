@@ -53,6 +53,7 @@ import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
 import static net.openhft.chronicle.map.Asserts.assertNotNull;
+import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDivisor;
 import static net.openhft.lang.MemoryUnit.*;
 
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
@@ -62,11 +63,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
 
-    /**
-     * Because DirectBitSet implementations couldn't find more than 64 continuous clear or set
-     * bits.
-     */
-    static final int MAX_ENTRY_OVERSIZE_FACTOR = 64;
     private static final long serialVersionUID = 2L;
     final Class<K> kClass;
     final String dataFileVersion;
@@ -84,10 +80,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     final DefaultValueProvider<K, V> defaultValueProvider;
     final PrepareValueBytesAsWriter<K> prepareValueBytesAsWriter;
     final int metaDataBytes;
-    //   private final int replicas;
-    final long entrySize;
+    final long chunkSize;
     final Alignment alignment;
+    final boolean constantlySizedEntry;
+    final int worstAlignment;
+    final int specialEntrySpaceOffset;
     final int actualSegments;
+    final long actualChunksPerSegment;
     final long entriesPerSegment;
     final MapEventListener<K, V> eventListener;
     final BytesMapEventListener bytesEventListener;
@@ -101,7 +100,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     private final HashSplitting hashSplitting;
     final Class nativeValueClass;
     final MultiMapFactory multiMapFactory;
-    final int maxEntryOversizeFactor;
+    final int maxChunksPerEntry;
     transient Provider<BytesReader<K>> keyReaderProvider;
     transient Provider<KI> keyInteropProvider;
     transient Provider<BytesReader<V>> valueReaderProvider;
@@ -152,22 +151,30 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         lockTimeOutNS = builder.lockTimeOut(TimeUnit.NANOSECONDS);
 
         boolean replicated = getClass() == ReplicatedChronicleMap.class;
-        this.entrySize = builder.entrySize(replicated);
-        this.alignment = builder.entryAndValueAlignment();
+        this.chunkSize = builder.chunkSize(replicated);
+        this.alignment = builder.valueAlignment();
+        this.constantlySizedEntry = builder.constantlySizedEntries();
+        int alignment = this.alignment.alignment();
+        if (this.alignment != Alignment.NO_ALIGNMENT) {
+            this.worstAlignment = alignment - greatestCommonDivisor((int) chunkSize, alignment);
+        } else {
+            this.worstAlignment = 0;
+        }
+        this.specialEntrySpaceOffset = builder.specialEntrySpaceOffset(replicated);
 
         this.errorListener = builder.errorListener();
         this.putReturnsNull = builder.putReturnsNull();
         this.removeReturnsNull = builder.removeReturnsNull();
 
-        this.actualSegments = builder.actualSegments();
-        this.entriesPerSegment = builder.actualEntriesPerSegment();
-        this.multiMapFactory = builder.multiMapFactory();
+        this.actualSegments = builder.actualSegments(replicated);
+        this.actualChunksPerSegment = builder.actualChunksPerSegment(replicated);
+        this.entriesPerSegment = builder.entriesPerSegment(replicated);
+        this.multiMapFactory = builder.multiMapFactory(replicated);
         this.metaDataBytes = builder.metaDataBytes();
         this.eventListener = builder.eventListener();
         this.bytesEventListener = builder.bytesEventListener();
-        this.segmentHeaderSize = builder.segmentHeaderSize();
-        this.maxEntryOversizeFactor =
-                builder.maxEntryOversizeFactor(this instanceof ReplicatedChronicleMap);
+        this.segmentHeaderSize = builder.segmentHeaderSize(replicated);
+        this.maxChunksPerEntry = builder.maxChunksPerEntry();
 
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
         initTransients();
@@ -319,11 +326,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     private long sizeOfMultiMapBitSet() {
-        return MultiMapFactory.sizeOfBitSetInBytes(entriesPerSegment);
+        return MultiMapFactory.sizeOfBitSetInBytes(actualChunksPerSegment);
     }
 
-    private long sizeOfBitSets() {
-        return CACHE_LINES.align(BYTES.alignAndConvert(entriesPerSegment, BITS), BYTES);
+    private long sizeOfSegmentFreeListBitSets() {
+        return CACHE_LINES.align(BYTES.alignAndConvert(actualChunksPerSegment, BITS), BYTES);
     }
 
     private int numberOfBitSets() {
@@ -333,8 +340,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     private long segmentSize() {
         long ss = (CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
                 * multiMapsPerSegment())
-                + numberOfBitSets() * sizeOfBitSets() // the free list and 0+ dirty lists.
-                + sizeOfEntriesInSegment();
+                 // the free list and 0+ dirty lists.
+                 + numberOfBitSets() * sizeOfSegmentFreeListBitSets()
+                + sizeOfEntrySpaceInSegment();
         if ((ss & 63L) != 0)
             throw new AssertionError();
         return breakL1CacheAssociativityContention(ss);
@@ -356,8 +364,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return 1;
     }
 
-    private long sizeOfEntriesInSegment() {
-        return CACHE_LINES.align(entriesPerSegment * entrySize, BYTES);
+    private long sizeOfEntrySpaceInSegment() {
+        return CACHE_LINES.align(specialEntrySpaceOffset + actualChunksPerSegment * chunkSize,
+                BYTES);
     }
 
     @Override
@@ -1435,12 +1444,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     * multiMapsPerSegment();
             final NativeBytes bsBytes = new NativeBytes(ms.objectSerializer(),
                     start,
-                    start + LONGS.align(BYTES.alignAndConvert(entriesPerSegment, BITS), BYTES),
+                    start + LONGS.align(BYTES.alignAndConvert(actualChunksPerSegment, BITS), BYTES),
                     null);
             freeList = new SingleThreadedDirectBitSet(bsBytes);
-            start += numberOfBitSets() * sizeOfBitSets();
+            start += numberOfBitSets() * sizeOfSegmentFreeListBitSets();
+            start += specialEntrySpaceOffset;
             entriesOffset = start - bytes.startAddr();
-            assert bytes.capacity() >= entriesOffset + entriesPerSegment * entrySize;
+            assert bytes.capacity() >= entriesOffset + actualChunksPerSegment * chunkSize;
         }
 
         final MultiMap hashLookup() {
@@ -1591,7 +1601,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         @Override
         public final long offsetFromPos(long pos) {
-            return entriesOffset + pos * entrySize;
+            return entriesOffset + pos * chunkSize;
         }
 
         final MultiStoreBytes reuse(MultiStoreBytes entry, long offset) {
@@ -1601,19 +1611,26 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         long entrySize(long keySize, long valueSize) {
-            return alignment.alignAddr(metaDataBytes +
+            long sizeOfEverythingBeforeValue = metaDataBytes +
                     keySizeMarshaller.sizeEncodingSize(keySize) + keySize +
-                    valueSizeMarshaller.sizeEncodingSize(valueSize)) + valueSize;
+                    valueSizeMarshaller.sizeEncodingSize(valueSize);
+            if (constantlySizedEntry) {
+                return alignment.alignAddr(sizeOfEverythingBeforeValue + valueSize);
+            } else if (worstAlignment > 0) {
+                return sizeOfEverythingBeforeValue + worstAlignment + valueSize;
+            } else {
+                return alignment.alignAddr(sizeOfEverythingBeforeValue) + valueSize;
+            }
         }
 
-        final int inBlocks(long sizeInBytes) {
-            if (sizeInBytes <= entrySize)
+        final int inChunks(long sizeInBytes) {
+            if (sizeInBytes <= chunkSize)
                 return 1;
             // int division is MUCH faster than long on Intel CPUs
             sizeInBytes -= 1L;
             if (sizeInBytes <= Integer.MAX_VALUE)
-                return (((int) sizeInBytes) / (int) entrySize) + 1;
-            return (int) (sizeInBytes / entrySize) + 1;
+                return (((int) sizeInBytes) / (int) chunkSize) + 1;
+            return (int) (sizeInBytes / chunkSize) + 1;
         }
 
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
@@ -1890,7 +1907,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                       MultiStoreBytes entry, boolean writeDefaultInitialReplicationValues) {
             long valueSize = metaElemWriter.size(elemWriter, elem);
             long entrySize = entrySize(keySize, valueSize);
-            long pos = alloc(inBlocks(entrySize));
+            long pos = alloc(inChunks(entrySize));
             segmentState.pos = pos;
             long offset = offsetFromPos(pos);
             clearMetaData(offset);
@@ -1923,56 +1940,58 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         //TODO refactor/optimize
-        final long alloc(int blocks) {
-            if (blocks > maxEntryOversizeFactor)
-                throw new IllegalArgumentException("Entry is too large: requires " + blocks +
-                        " entry size chucks, " + maxEntryOversizeFactor + " is maximum.");
-            long ret = freeList.setNextNContinuousClearBits(nextPosToSearchFrom, blocks);
-            if (ret == DirectBitSet.NOT_FOUND || ret + blocks > entriesPerSegment) {
-                if (ret + blocks > entriesPerSegment)
-                    freeList.clear(ret, ret + blocks);
-                ret = freeList.setNextNContinuousClearBits(0L, blocks);
-                if (ret == DirectBitSet.NOT_FOUND || ret + blocks > entriesPerSegment) {
-                    if (ret + blocks > entriesPerSegment)
-                        freeList.clear(ret, ret + blocks);
-                    if (blocks == 1) {
+        final long alloc(int chunks) {
+            if (chunks > maxChunksPerEntry)
+                throw new IllegalArgumentException("Entry is too large: requires " + chunks +
+                        " entry size chucks, " + maxChunksPerEntry + " is maximum.");
+            long ret = freeList.setNextNContinuousClearBits(nextPosToSearchFrom, chunks);
+            if (ret == DirectBitSet.NOT_FOUND || ret + chunks > actualChunksPerSegment) {
+                if (ret != DirectBitSet.NOT_FOUND &&
+                        ret + chunks > actualChunksPerSegment && ret < actualChunksPerSegment)
+                    freeList.clear(ret, actualChunksPerSegment);
+                ret = freeList.setNextNContinuousClearBits(0L, chunks);
+                if (ret == DirectBitSet.NOT_FOUND || ret + chunks > actualChunksPerSegment) {
+                    if (ret != DirectBitSet.NOT_FOUND &&
+                            ret + chunks > actualChunksPerSegment && ret < actualChunksPerSegment)
+                        freeList.clear(ret, actualChunksPerSegment);
+                    if (chunks == 1) {
                         throw new IllegalStateException(
                                 "Segment is full, no free entries found");
                     } else {
                         throw new IllegalStateException(
-                                "Segment is full or has no ranges of " + blocks
-                                        + " continuous free blocks"
+                                "Segment is full or has no ranges of " + chunks
+                                        + " continuous free chunks"
                         );
                     }
                 }
-                updateNextPosToSearchFrom(ret, blocks);
+                updateNextPosToSearchFrom(ret, chunks);
             } else {
                 // if bit at nextPosToSearchFrom is clear, it was skipped because
-                // more than 1 block was requested. Don't move nextPosToSearchFrom
-                // in this case. blocks == 1 clause is just a fast path.
-                if (blocks == 1 || freeList.isSet(nextPosToSearchFrom)) {
-                    updateNextPosToSearchFrom(ret, blocks);
+                // more than 1 chunk was requested. Don't move nextPosToSearchFrom
+                // in this case. chunks == 1 clause is just a fast path.
+                if (chunks == 1 || freeList.isSet(nextPosToSearchFrom)) {
+                    updateNextPosToSearchFrom(ret, chunks);
                 }
             }
             return ret;
         }
 
-        private void updateNextPosToSearchFrom(long allocated, int blocks) {
-            if ((nextPosToSearchFrom = allocated + blocks) >= entriesPerSegment)
+        private void updateNextPosToSearchFrom(long allocated, int chunks) {
+            if ((nextPosToSearchFrom = allocated + chunks) >= actualChunksPerSegment)
                 nextPosToSearchFrom = 0L;
         }
 
-        private boolean realloc(long fromPos, int oldBlocks, int newBlocks) {
-            if (freeList.allClear(fromPos + oldBlocks, fromPos + newBlocks)) {
-                freeList.set(fromPos + oldBlocks, fromPos + newBlocks);
+        private boolean realloc(long fromPos, int oldChunks, int newChunks) {
+            if (freeList.allClear(fromPos + oldChunks, fromPos + newChunks)) {
+                freeList.set(fromPos + oldChunks, fromPos + newChunks);
                 return true;
             } else {
                 return false;
             }
         }
 
-        private void free(long fromPos, int blocks) {
-            freeList.clear(fromPos, fromPos + blocks);
+        private void free(long fromPos, int chunks) {
+            freeList.clear(fromPos, fromPos + chunks);
             if (fromPos < nextPosToSearchFrom)
                 nextPosToSearchFrom = fromPos;
         }
@@ -2079,7 +2098,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (removeFromMultiMap) {
                 hashLookup.removePrevPos(searchState);
                 long entrySizeInBytes = entry.positionAddr() + valueSize - entry.startAddr();
-                free(pos, inBlocks(entrySizeInBytes));
+                free(pos, inChunks(entrySizeInBytes));
             } else {
                 hashLookup.removePosition(pos);
             }
@@ -2237,7 +2256,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
          * Replaces value in existing entry. May cause entry relocation, because there may be not
          * enough space for new value in location already allocated for this entry.
          *
-         * @param pos          index of the first block occupied by the entry
+         * @param pos          index of the first chunk occupied by the entry
          * @param offset       relative offset of the entry in Segment bytes (before, i. e.
          *                     including metaData)
          * @param entry        relative pointer in Segment bytes
@@ -2260,20 +2279,20 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             newValueDoesNotFit:
             if (newEntryEndAddr != entryEndAddr) {
                 long oldEntrySize = entryEndAddr - entryStartAddr;
-                int oldSizeInBlocks = inBlocks(oldEntrySize);
-                int newSizeInBlocks = inBlocks(newEntryEndAddr - entryStartAddr);
-                if (newSizeInBlocks > oldSizeInBlocks) {
-                    if (newSizeInBlocks > maxEntryOversizeFactor) {
+                int oldSizeInChunks = inChunks(oldEntrySize);
+                int newSizeInChunks = inChunks(newEntryEndAddr - entryStartAddr);
+                if (newSizeInChunks > oldSizeInChunks) {
+                    if (newSizeInChunks > maxChunksPerEntry) {
                         throw new IllegalArgumentException("Value too large: " +
-                                "entry takes " + newSizeInBlocks + " blocks, " +
-                                maxEntryOversizeFactor + " is maximum.");
+                                "entry takes " + newSizeInChunks + " chunks, " +
+                                maxChunksPerEntry + " is maximum.");
                     }
-                    if (realloc(pos, oldSizeInBlocks, newSizeInBlocks))
+                    if (realloc(pos, oldSizeInChunks, newSizeInChunks))
                         break newValueDoesNotFit;
                     // RELOCATION
-                    free(pos, oldSizeInBlocks);
+                    free(pos, oldSizeInChunks);
                     onRelocation(this, pos);
-                    pos = alloc(newSizeInBlocks);
+                    pos = alloc(newSizeInChunks);
                     // putValue() is called from put() and replace()
                     // after successful search by key
                     searchedHashLookup.replacePrevPos(segmentState.searchState, pos);
@@ -2286,12 +2305,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             newEntryStartAddr, valueSizeAddr - entryStartAddr);
                     entry = reuse(entry, offset);
                     // END OF RELOCATION
-                } else if (newSizeInBlocks < oldSizeInBlocks) {
-                    // Freeing extra blocks
-                    freeList.clear(pos + newSizeInBlocks, pos + oldSizeInBlocks);
+                } else if (newSizeInChunks < oldSizeInChunks) {
+                    // Freeing extra chunks
+                    freeList.clear(pos + newSizeInChunks, pos + oldSizeInChunks);
                     // Do NOT reset nextPosToSearchFrom, because if value
-                    // once was larger it could easily became oversized again,
-                    // But if these blocks will be taken by that time,
+                    // once was larger it could easily became larger again,
+                    // But if these chunks will be taken by that time,
                     // this entry will need to be relocated.
                 }
             }
@@ -2356,10 +2375,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     manageReplicationBytes(entry, false, false);
                     long valueSize = valueSizeMarshaller.readSize(entry);
                     long sizeInBytes = entrySize(keySize, valueSize);
-                    int entrySizeInBlocks = inBlocks(sizeInBytes);
-                    if (!freeList.allSet(pos, pos + entrySizeInBlocks))
+                    int entrySizeInChunks = inChunks(sizeInBytes);
+                    if (!freeList.allSet(pos, pos + entrySizeInChunks))
                         throw new AssertionError();
-                    pos += entrySizeInBlocks;
+                    pos += entrySizeInChunks;
                 }
             } finally {
                 readUnlock();
@@ -2503,7 +2522,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             final long entryEndAddr = entry.positionAddr() + valueSize;
             if (removeFromMultiMap) {
                 segment.hashLookup().remove(segmentHash, pos);
-                segment.free(pos, segment.inBlocks(entryEndAddr - entry.address()));
+                segment.free(pos, segment.inChunks(entryEndAddr - entry.address()));
             } else {
                 segment.hashLookup().removePosition(pos);
             }

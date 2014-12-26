@@ -35,7 +35,7 @@ public class TestNesterInterfaceMarshal {
             ChronicleMapBuilder builder = ChronicleMapBuilder
                     .of(CharSequence.class, TestInstrumentVOInterface.class)
                     .entries(5000L)
-                    .keySize(10)
+                    .averageKeySize(10)
                     .replication((byte) 1, tcpTransportAndNetworkConfig);
 
 
@@ -56,7 +56,7 @@ public class TestNesterInterfaceMarshal {
                     .of(CharSequence.class, TestInstrumentVOInterface.class)
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
-                    .entries(5000L).keySize(10)
+                    .entries(5000L).averageKeySize(10)
                     .replication((byte) 2, tcpTransportAndNetworkConfig1);
 
 
@@ -120,7 +120,7 @@ public class TestNesterInterfaceMarshal {
             ChronicleMapBuilder builder = ChronicleMapBuilder
                     .of(CharSequence.class, TestInstrumentVOInterface.class)
                     .entries(5000L)
-                    .keySize(10)
+                    .averageKeySize(10)
                     .replication((byte) 1, tcpTransportAndNetworkConfig);
 
 
@@ -145,7 +145,7 @@ public class TestNesterInterfaceMarshal {
                     .putReturnsNull(true)
                     .removeReturnsNull(true)
                     .entries(5000L)
-                    .keySize(10)
+                    .averageKeySize(10)
                     .replication((byte) 2, tcpTransportAndNetworkConfig);
 
 

@@ -69,12 +69,10 @@ public class MarkTest {
     private static void test(Function<ChronicleMapBuilder<Integer, Integer>,
             ChronicleMap<Integer, Integer>> createMap) {
         long ms = System.currentTimeMillis();
-        double entriesWithMargin = ENTRIES * 1.1;
-        long actualEntriesPerSegment = (1L << 17) / 3L;
         try (ChronicleMap<Integer, Integer> map = createMap.apply(ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
-                .actualSegments((int) (entriesWithMargin / actualEntriesPerSegment))
-                .actualEntriesPerSegment(actualEntriesPerSegment)
+                .entries(ENTRIES)
+                .entriesPerSegment((1 << 17) / 3)
                 .putReturnsNull(true)
                 .removeReturnsNull(true))) {
 

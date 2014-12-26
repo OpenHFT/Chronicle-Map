@@ -53,7 +53,8 @@ public class LargeEntriesTest {
                 .valueMarshaller(SnappyStringMarshaller.INSTANCE)
                 .actualSegments(1) // to force an error.
                 .entries(ENTRIES)
-                .entrySize(ENTRY_SIZE / 6)
+                .averageKeySize(10)
+                .averageValueSize(ENTRY_SIZE)
                 .putReturnsNull(true)
                 .createPersistedTo(file);
         {
@@ -69,7 +70,8 @@ public class LargeEntriesTest {
                     futureList.add(es.submit(new Runnable() {
                         @Override
                         public void run() {
-                            exerciseLargeStrings(map, finalT * block, finalT * block + block, ENTRY_SIZE);
+                            exerciseLargeStrings(map, finalT * block, finalT * block + block,
+                                    ENTRY_SIZE);
                         }
                     }));
                 }
@@ -78,7 +80,8 @@ public class LargeEntriesTest {
                 }
                 long time = System.currentTimeMillis() - start;
                 long operations = 3;
-                System.out.printf("Put/Get rate was %.1f MB/s%n", operations * ENTRIES * ENTRY_SIZE / 1e6 / (time / 1e3));
+                System.out.printf("Put/Get rate was %.1f MB/s%n",
+                        operations * ENTRIES * ENTRY_SIZE / 1e6 / (time / 1e3));
             }
             es.shutdown();
             if (es.isTerminated())
@@ -117,7 +120,8 @@ public class LargeEntriesTest {
                 .of(String.class, String.class)
                 .valueMarshaller(SnappyStringMarshaller.INSTANCE)
                 .entries(ENTRIES)
-                .entrySize(ENTRY_SIZE / 7 + 200)
+                .averageKeySize(10)
+                .averageValueSize(ENTRY_SIZE)
                 .putReturnsNull(true)
                 .createPersistedTo(file);
         {
@@ -133,7 +137,8 @@ public class LargeEntriesTest {
                     futureList.add(es.submit(new Runnable() {
                         @Override
                         public void run() {
-                            exerciseLargeStrings(map, finalT * block, finalT * block + block, ENTRY_SIZE);
+                            exerciseLargeStrings(map, finalT * block, finalT * block + block,
+                                    ENTRY_SIZE);
                         }
                     }));
                 }

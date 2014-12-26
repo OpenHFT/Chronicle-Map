@@ -81,7 +81,8 @@ class ReplicationHubFindByName<K> implements FindByName {
 
         this.map = (Map) ChronicleMapBuilder
                 .of(CharSequence.class, MapInstanceConfig.class)
-                .entrySize(4000)
+                .averageKeySize(10)
+                .averageValueSize(4000)
                 .entries(128)
                 .eventListener(listener)
                 .instance()

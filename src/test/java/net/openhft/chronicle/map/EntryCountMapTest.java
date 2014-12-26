@@ -32,11 +32,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.Math.log10;
 import static java.lang.Math.round;
-import static net.openhft.chronicle.map.Alignment.OF_4_BYTES;
 import static net.openhft.lang.model.DataValueClasses.newDirectReference;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -56,10 +54,9 @@ public class EntryCountMapTest {
             long entries, int segments, int keySize) throws IOException {
         ChronicleMapBuilder<CharSequence, LongValue> mapBuilder =
                 ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
-                .entries(entries)
-                .actualSegments(segments)
-                .keySize(keySize)
-                .maxEntryOversizeFactor(1);
+                        .entries(entries)
+                        .actualSegments(segments)
+                        .averageKeySize(keySize);
         return mapBuilder.createPersistedTo(getPersistenceFile());
     }
 
@@ -87,7 +84,7 @@ public class EntryCountMapTest {
             // regression test.
             testEntriesMaxSize(s, 8, 16, t);
             testEntriesMaxSize(s, 16, 32, t);
-            testEntriesMaxSize(s, 32, 60, t);
+            testEntriesMaxSize(s, 32, 64, t);
             testEntriesMaxSize(s, 64, 95, t);
             testEntriesMaxSize(s, 128, 168, t);
             testEntriesMaxSize(s, 256, 322, t);
@@ -124,30 +121,30 @@ public class EntryCountMapTest {
             List<Future<?>> futures = new ArrayList<>();
             {
                 int s = 8;
-                futures.add(testEntriesMaxSize(es, s, 250, 400, t));
-                futures.add(testEntriesMaxSize(es, s, 500, 770, t));
-                futures.add(testEntriesMaxSize(es, s, 1000, 1400, t));
-                futures.add(testEntriesMaxSize(es, s, 2000, 2800, t));
+                futures.add(testEntriesMaxSize(es, s, 250, 450, t));
+                futures.add(testEntriesMaxSize(es, s, 500, 840, t));
+                futures.add(testEntriesMaxSize(es, s, 1000, 1550, t));
+                futures.add(testEntriesMaxSize(es, s, 2000, 3200, t));
             }
             // regression test.
             for (int s : new int[]{8, 16}) {
-                futures.add(testEntriesMaxSize(es, s, 3000, 4200, t));
-                futures.add(testEntriesMaxSize(es, s, 5000, 6900, t));
-                futures.add(testEntriesMaxSize(es, s, 10000, 13000, t));
+                futures.add(testEntriesMaxSize(es, s, 3000, 5000, t));
+                futures.add(testEntriesMaxSize(es, s, 5000, 7500, t));
+                futures.add(testEntriesMaxSize(es, s, 10000, 15000, t));
             }
 
-            for(int s : new int[] { 32, 64, 128})
-                futures.add(testEntriesMaxSize(es, s, 250 * s, 250 * s * 3 / 2, t));
+            for (int s : new int[]{32, 64, 128})
+                futures.add(testEntriesMaxSize(es, s, 250 * s, 250 * s * 5 / 3, t));
 
             int s = 32;
-            for (int e : new int[]{ 16000, 25000, 50000})
-                futures.add(testEntriesMaxSize(es, s, e, e * 4 / 3, t));
+            for (int e : new int[]{16000, 25000, 50000})
+                futures.add(testEntriesMaxSize(es, s, e, e * 5 / 3, t));
             s = 64;
-            for (int e : new int[]{ 25000, 50000, 100000})
-                futures.add(testEntriesMaxSize(es, s, e, e * 4 / 3, t));
+            for (int e : new int[]{25000, 50000, 100000})
+                futures.add(testEntriesMaxSize(es, s, e, e * 5 / 3, t));
             s = 128;
-            for (int e : new int[]{ 50000, 100000, 200000})
-                futures.add(testEntriesMaxSize(es, s, e, e *  4 / 3, t));
+            for (int e : new int[]{50000, 100000, 200000})
+                futures.add(testEntriesMaxSize(es, s, e, e * 5 / 3, t));
             for (Future<?> future : futures) {
                 System.out.print(".");
                 future.get();
@@ -216,12 +213,14 @@ public class EntryCountMapTest {
         testEntriesMaxSize0(segments, minSize, maxSize, counter, stride, map);
     }
 
-     void testEntriesMaxSize0(int segments, int minSize, int maxSize, int counter, int stride,
-                              ChronicleMap<CharSequence, LongValue> map) {
+    void testEntriesMaxSize0(int segments, int minSize, int maxSize, int counter, int stride,
+                             ChronicleMap<CharSequence, LongValue> map) {
         LongValue longValue = newDirectReference(LongValue.class);
         try {
             for (int j = 0; j < moreThanMaxSize(maxSize); j++) {
                 String key = "key:" + counter;
+                if (minSize > 10 && (counter & 15) == 7)
+                    key += "-oversized-key";
                 counter += stride;
                 // give a biased hashcode distribution.
                 if ((Integer.bitCount(key.hashCode()) & 7) != 0) {
@@ -237,15 +236,19 @@ public class EntryCountMapTest {
             // calculate the hyperbolic average.
             score += (double) minSize / map.size();
             scoreCount++;
-            boolean condition = minSize <= map.size() && map.size() <= maxSize;
+            boolean condition = minSize <= map.size() && map.size() <= minSize * 2;
             if (!condition) {
                 dumpMapStats(segments, minSize, map);
                 assertTrue("stride: " + stride + ", seg: " + segments + ", min: " + minSize +
                         ", size: " + map.size(), condition);
-            }
+            } else if (map.size() > maxSize)
+                System.err.println(" warning, larger than expected, stride: " + stride +
+                        ", seg: " + segments + ", min: " + minSize +
+                        ", size: " + map.size());
         } finally {
             map.close();
         }
+
     }
 
     private static int moreThanMaxSize(int maxSize) {
