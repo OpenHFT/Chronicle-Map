@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import junit.framework.Assert;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
@@ -677,6 +678,34 @@ public class StatelessClientTest {
                 assertEquals(SIZE, statelessMap.size());
             }
         }
+    }
+
+    @org.junit.Ignore("HCOLL-276 Improve serializer resilience")
+    @Test
+    public void startChronicleMapServer() throws IOException {
+
+        TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8875)
+                .name("serverMap");
+
+        try (ChronicleMap server = ChronicleMapBuilder.of(byte[].class, CharSequence.class)
+                .replication((byte) 1, serverConfig)
+                .constantKeySizeBySample(new byte[14])
+                .create()) {
+
+            try (ChronicleMap<byte[], CharSequence> map2 = ChronicleMapBuilder.of(byte[].class, CharSequence.class)
+                    // .constantKeySizeBySample(new byte[14])
+                    .statelessClient(new InetSocketAddress("localhost", 8875))
+                    .create()) {
+
+                byte[] key = new byte[14];
+                System.arraycopy("A".getBytes(), 0, key, 0, "A".length());
+
+                map2.put(key, "hello world");
+                Assert.assertNotNull(map2.get(key));
+
+            }
+        }
+
     }
 
     @Test(timeout = 10000)
