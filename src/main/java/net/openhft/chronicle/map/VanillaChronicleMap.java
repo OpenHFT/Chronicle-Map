@@ -102,6 +102,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     final Class nativeValueClass;
     final MultiMapFactory multiMapFactory;
     final int maxChunksPerEntry;
+    private final List jsonConverters;
     transient Provider<BytesReader<K>> keyReaderProvider;
     transient Provider<KI> keyInteropProvider;
     transient Provider<BytesReader<V>> valueReaderProvider;
@@ -119,6 +120,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         keySizeMarshaller = keyBuilder.sizeMarshaller();
         originalKeyReader = keyBuilder.reader();
         dataFileVersion = BuildVersion.version();
+        jsonConverters = builder.jsonConverters();
 
         originalKeyInterop = (KI) keyBuilder.interop();
 
@@ -339,8 +341,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     private long segmentSize() {
         long ss = (CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
                 * multiMapsPerSegment())
-                 // the free list and 0+ dirty lists.
-                 + numberOfBitSets() * sizeOfSegmentFreeListBitSets()
+                // the free list and 0+ dirty lists.
+                + numberOfBitSets() * sizeOfSegmentFreeListBitSets()
                 + sizeOfEntrySpaceInSegment();
         if ((ss & 63L) != 0)
             throw new AssertionError();
@@ -671,12 +673,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     public synchronized void getAll(File toFile) throws IOException {
-        JsonSerializer.getAll(toFile, this);
+        JsonSerializer.getAll(toFile, this, jsonConverters);
     }
 
     @Override
     public synchronized void putAll(File fromFile) throws IOException {
-        JsonSerializer.putAll(fromFile, this);
+        JsonSerializer.putAll(fromFile, this, jsonConverters);
     }
 
     @Override

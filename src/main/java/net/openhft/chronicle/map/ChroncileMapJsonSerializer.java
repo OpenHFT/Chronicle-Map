@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -39,8 +40,8 @@ class JsonSerializer {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
 
-    static synchronized <K, V> void getAll(File toFile, Map<K, V> map) throws IOException {
-        final XStream xstream = xStream(map);
+    static synchronized <K, V> void getAll(File toFile, Map<K, V> map, List jsonConverters) throws IOException {
+        final XStream xstream = xStream(map, jsonConverters);
         OutputStream outputStream = new FileOutputStream(toFile);
         if (toFile.getName().toLowerCase().endsWith(".gz"))
             outputStream = new GZIPOutputStream(outputStream);
@@ -50,8 +51,9 @@ class JsonSerializer {
     }
 
 
-    static synchronized <K, V> void putAll(File fromFile, Map<K, V> map) throws IOException {
-        final XStream xstream = xStream(map);
+    static synchronized <K, V> void putAll(File fromFile, Map<K, V> map, List jsonConverters)
+            throws IOException {
+        final XStream xstream = xStream(map, jsonConverters);
 
         InputStream inputStream = new FileInputStream(fromFile);
         if (fromFile.getName().toLowerCase().endsWith(".gz"))
@@ -61,7 +63,7 @@ class JsonSerializer {
         }
     }
 
-    private static <K, V> XStream xStream(Map<K, V> map) {
+    private static <K, V> XStream xStream(Map<K, V> map, List jsonConverters) {
         try {
             final XStream xstream = new XStream(new JettisonMappedXmlDriver());
             xstream.setMode(XStream.NO_REFERENCES);
@@ -70,6 +72,18 @@ class JsonSerializer {
             registerChronicleMapConverter(map, xstream);
             xstream.registerConverter(new ByteBufferConverter());
             xstream.registerConverter(new DataValueConverter());
+
+            for (Object c : jsonConverters) {
+                if (c instanceof Converter) {
+                    xstream.registerConverter((Converter) c);
+                } else {
+                    LOG.warn("Skipping Converter of type class=" + c.getClass().getName() + " as " +
+                            " expecting an object of type com.thoughtworks.xstream.converters" +
+                            ".Converter");
+                }
+
+            }
+
             return xstream;
         } catch (NoClassDefFoundError e) {
             logErrorSuggestXStreem(e);

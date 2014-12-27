@@ -59,7 +59,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final ByteBuffer connectionOutBuffer = ByteBuffer.wrap(connectionByte);
     private final String name;
 
-
+    private final List jsonConverters;
     private ByteBuffer outBuffer;
     private ByteBufferBytes outBytes;
 
@@ -139,6 +139,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                           @NotNull final ChronicleMapBuilder chronicleMapBuilder) {
 
         this.config = config;
+        this.jsonConverters = chronicleMapBuilder.jsonConverters();
 
         final BufferResizer outBufferResizer = new BufferResizer() {
             @Override
@@ -191,12 +192,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @Override
     public void getAll(File toFile) throws IOException {
-        JsonSerializer.getAll(toFile, this);
+        JsonSerializer.getAll(toFile, this, jsonConverters);
     }
 
     @Override
     public void putAll(File fromFile) throws IOException {
-        JsonSerializer.putAll(fromFile, this);
+        JsonSerializer.putAll(fromFile, this, jsonConverters);
     }
 
     @Override

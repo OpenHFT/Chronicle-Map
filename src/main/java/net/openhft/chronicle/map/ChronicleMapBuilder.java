@@ -80,16 +80,16 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * {@code ChronicleMap} implementations with completely different properties.
  *
  * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
- * doesn't support resizing. That is why you <i>must</i> configure {@linkplain
- * #entries(long) number of entries} you are going to insert into the created map <i>at most</i>.
- * See {@link #entries(long)} method documentation for more information on this.
+ * doesn't support resizing. That is why you <i>must</i> configure {@linkplain #entries(long) number
+ * of entries} you are going to insert into the created map <i>at most</i>. See {@link
+ * #entries(long)} method documentation for more information on this.
  *
- * <p>If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder},
- * i. e. it is not a boxed primitive, data value generated interface, {@link Byteable}, etc. (see
- * the complete list TODO insert the link to the complete list),
- * you <i>must</i> provide the {@code ChronicleHashBuilder} with some information about you keys
- * or values: if they are constantly-sized, call {@link #constantKeySizeBySample(Object)}, otherwise
- * {@link ChronicleHashBuilder#averageKeySize(double)} method, accordingly for values.
+ * <p>If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder}, i.
+ * e. it is not a boxed primitive, data value generated interface, {@link Byteable}, etc. (see the
+ * complete list TODO insert the link to the complete list), you <i>must</i> provide the {@code
+ * ChronicleHashBuilder} with some information about you keys or values: if they are
+ * constantly-sized, call {@link #constantKeySizeBySample(Object)}, otherwise {@link
+ * ChronicleHashBuilder#averageKeySize(double)} method, accordingly for values.
  *
  * @param <K> key type of the maps, produced by this builder
  * @param <V> value type of the maps, produced by this builder
@@ -111,6 +111,9 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     private static final StringBuilder EMTRY_STRING_BUILDER = new StringBuilder();
 
     private static final double UNDEFINED_DOUBLE_CONFIG = Double.NaN;
+
+
+    private List jsonConverters = new ArrayList();
 
     private static boolean isDefined(double config) {
         return !Double.isNaN(config);
@@ -246,12 +249,12 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
      * encoded (and each character takes 2 bytes on-heap), because default off-heap {@link String}
      * encoding is UTF-8 in {@code ChronicleMap}.)
      *
+     * @param averageKeySize
      * @throws IllegalStateException    {@inheritDoc}
      * @throws IllegalArgumentException {@inheritDoc}
      * @see #constantKeySizeBySample(Object)
      * @see #averageValueSize(double)
      * @see #actualChunkSize(int)
-     * @param averageKeySize
      */
     @Override
     public ChronicleMapBuilder<K, V> averageKeySize(double averageKeySize) {
@@ -280,6 +283,30 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
+
+    /**
+     * Used to a add a custom xStream converter, this converter may be used while chronicle maps
+     * serialises/deserialized and object(s) to and from JSON. You should add a custom converter if
+     * you wish to customise the JSON format, or support object(s) that can not be serialised into
+     * JSON.
+     *
+     * The method signature purposely has a loose coupling to xStream, it exposes {@code Object}
+     * parameter, rather than the com.thoughtworks.xstream.jsonConverters.Converter this is so that
+     * the the {@code ChronicleMapBuilder} class does not require xStream artifact/jars, however the
+     * parameter pass must be of type com.thoughtworks.xstream.jsonConverters.Converter as no other
+     * type is currently accepted.
+     *
+     * @param converter an xStream converter of type com.thoughtworks.xstream.jsonConverters.Converter
+     * @return this builder back
+     * @see ChronicleMap#putAll(java.io.File)
+     * @see ChronicleMap#putAll(java.io.File)
+     */
+    public ChronicleMapBuilder<K, V> addJsonConverter(Object converter) {
+        this.jsonConverters.add(converter);
+        return this;
+    }
+
+
     private double averageKeySize() {
         return averageKeyOrValueSize(averageKeySize, keyBuilder);
     }
@@ -289,12 +316,12 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
      * created by this builder. If value size is always the same, call {@link
      * #constantValueSizeBySample(Object)} method instead of this one.
      *
-     * <p>{@code ChronicleHashBuilder} implementation heuristically chooses
-     * {@linkplain #actualChunkSize(int) the actual chunk size} based on this configuration and
-     * the key size, that, however, might result to quite high internal fragmentation,
-     * i. e. losses because only integral number of chunks could be allocated for the entry. If you
-     * want to avoid this, you should manually configure the actual chunk size in addition to this
-     * average value size configuration, which is anyway needed.
+     * <p>{@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
+     * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
+     * that, however, might result to quite high internal fragmentation, i. e. losses because only
+     * integral number of chunks could be allocated for the entry. If you want to avoid this, you
+     * should manually configure the actual chunk size in addition to this average value size
+     * configuration, which is anyway needed.
      *
      * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and shouldn't be specified by user.
@@ -366,8 +393,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
      * {@inheritDoc}
      *
      * @throws IllegalStateException is sizes of both keys and values of maps created by this
-     *                               builder are constant, hence chunk size shouldn't be
-     *                               configured by user
+     *                               builder are constant, hence chunk size shouldn't be configured
+     *                               by user
      * @see #entryAndValueAlignment(Alignment)
      * @see #entries(long)
      * @see #maxChunksPerEntry(int)
@@ -383,6 +410,10 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
             throw new IllegalArgumentException("Chunk size must be positive");
         this.actualChunkSize = actualChunkSize;
         return this;
+    }
+
+    public List jsonConverters() {
+        return this.jsonConverters;
     }
 
     static class EntrySizeInfo {
@@ -444,8 +475,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * This is needed, if chunkSize = constant entry size is not aligned, for entry alignment to
-     * be always the same, we should _misalign_ the first chunk.
+     * This is needed, if chunkSize = constant entry size is not aligned, for entry alignment to be
+     * always the same, we should _misalign_ the first chunk.
      */
     int specialEntrySpaceOffset(boolean replicated) {
         if (!constantlySizedEntries() || valueAlignment() == Alignment.NO_ALIGNMENT)
