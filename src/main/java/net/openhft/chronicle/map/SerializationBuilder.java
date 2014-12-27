@@ -108,7 +108,10 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
                 DataValueModel<E> model = DataValueModels.acquireModel(eClass);
                 int size = DataValueGenerator.computeNonScalarOffset(model, eClass);
                 reader(reader);
-                writer(writer);
+                copyingInterop(null);
+                setInterop(writer);
+                metaInterop((MetaBytesInterop<E, ?>) DataValueMetaBytesInterop.forIdentity(role));
+                metaInteropProvider(DataValueMetaBytesInterop.interopProvider(eClass));
                 sizeMarshaller(constant((long) size));
                 return;
             } catch (Exception e) {

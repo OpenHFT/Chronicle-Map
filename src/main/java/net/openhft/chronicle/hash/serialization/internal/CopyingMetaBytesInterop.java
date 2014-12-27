@@ -19,23 +19,15 @@
 package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesWriter;
-import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.lang.MemoryUnit;
 import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.DirectBytes;
-import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.io.serialization.BytesMarshaller;
-import net.openhft.lang.io.serialization.JDKObjectSerializer;
-import net.openhft.lang.threadlocal.Provider;
-import net.openhft.lang.threadlocal.StatefulCopyable;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 
-public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<E, W> {
-    private static final long serialVersionUID = 0L;
+public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaBytesInterop<E, W> {
+    private static final long serialVersionUID = 1L;
 
     private static final long MAX_REASONABLE_SERIALIZED_SIZE = MemoryUnit.MEGABYTES.toBytes(512L);
 
@@ -50,14 +42,11 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
         }
     }
 
-    final DirectBytesBuffer buffer;
-    transient long size;
-    transient long hash;
     transient W writer;
     transient E cur;
 
-    private CopyingMetaBytesInterop(DirectBytesBuffer buffer) {
-        this.buffer = buffer;
+    protected CopyingMetaBytesInterop(DirectBytesBuffer buffer) {
+        super(buffer);
     }
 
     void init(W writer, E e, boolean mutable, long maxSize) {
@@ -82,29 +71,6 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
 
     abstract void innerWrite(W writer, Bytes bytes, E e);
 
-    @Override
-    public long size(W writer, E e) {
-        return size;
-    }
-
-    @Override
-    public boolean startsWith(W writer, Bytes bytes, E e) {
-        return bytes.startsWith(buffer.buffer);
-    }
-
-    @Override
-    public long hash(W writer, E e) {
-        long h;
-        if ((h = hash) == 0L)
-            return hash = Hasher.hash(buffer.buffer);
-        return h;
-    }
-
-    @Override
-    public void write(W writer, Bytes bytes, E e) {
-        bytes.write(buffer.buffer);
-    }
-
     DirectBytesBuffer buffer() {
         return buffer;
     }
@@ -119,20 +85,6 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
         return new DirectBytesBuffer(bufferIdentity).forBytesWriter;
     }
 
-    private static final Provider<DirectBytesBuffer> provider =
-            Provider.of(DirectBytesBuffer.class);
-
-    private static abstract class AbstractCopyingMetaBytesInteropProvider<E, I,
-            MI extends CopyingMetaBytesInterop<E, I>>
-            implements MetaProvider<E, I, MI> {
-        private static final long serialVersionUID = 0L;
-
-        @Override
-        public ThreadLocalCopies getCopies(ThreadLocalCopies copies) {
-            return provider.getCopies(copies);
-        }
-    }
-
     public static <E, M extends BytesMarshaller<E>>
     MetaProvider<E, M, CopyingMetaBytesInterop<E, M>> providerForBytesMarshaller(boolean mutable,
                                                                                  long maxSize) {
@@ -141,7 +93,7 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
 
     private static class BytesMarshallerCopyingMetaBytesInteropProvider<E,
             M extends BytesMarshaller<E>>
-            extends AbstractCopyingMetaBytesInteropProvider<E, M, CopyingMetaBytesInterop<E, M>> {
+            extends BasicCopyingMetaBytesInteropProvider<E, M, CopyingMetaBytesInterop<E, M>> {
         private static final long serialVersionUID = 0L;
         private final boolean mutable;
         private final long maxSize;
@@ -169,7 +121,7 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
     }
 
     private static class BytesWriterCopyingMetaBytesInteropProvider<E, W extends BytesWriter<E>>
-            extends AbstractCopyingMetaBytesInteropProvider<E, W, CopyingMetaBytesInterop<E, W>> {
+            extends BasicCopyingMetaBytesInteropProvider<E, W, CopyingMetaBytesInterop<E, W>> {
         private static final long serialVersionUID = 0L;
         private final boolean mutable;
         private final long maxSize;
@@ -187,85 +139,6 @@ public abstract class CopyingMetaBytesInterop<E, W> implements MetaBytesInterop<
                     provider.get(copies, originalMetaWriter.buffer()).forBytesWriter;
             forBytesWriter.init(writer, e, mutable, maxSize);
             return forBytesWriter;
-        }
-    }
-
-    private static class DirectBytesBuffer
-            implements StatefulCopyable<DirectBytesBuffer>, Serializable {
-        private static final long serialVersionUID = 0L;
-        private final Serializable identity;
-        private transient DirectBytes buffer;
-
-        private transient ForBytesMarshaller forBytesMarshaller;
-        private transient ForBytesWriter forBytesWriter;
-
-        DirectBytesBuffer(Serializable identity) {
-            this.identity = identity;
-            initTransients();
-        }
-
-        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-            in.defaultReadObject();
-            initTransients();
-        }
-
-        private void initTransients() {
-            forBytesMarshaller = new ForBytesMarshaller();
-            forBytesWriter = new ForBytesWriter();
-        }
-
-        Bytes obtain(long maxSize) {
-            DirectBytes buf;
-            if ((buf = buffer) != null) {
-                if (maxSize <= buf.capacity()) {
-                    return buf.clear();
-                } else {
-                    DirectStore store = (DirectStore) buf.store();
-                    store.resize(maxSize, false);
-                    return buffer = store.bytes();
-                }
-            } else {
-                buffer = new DirectStore(JDKObjectSerializer.INSTANCE, maxSize, false).bytes();
-                return buffer;
-            }
-        }
-
-        @Override
-        public Object stateIdentity() {
-            return identity;
-        }
-
-        @Override
-        public DirectBytesBuffer copy() {
-            return new DirectBytesBuffer(identity);
-        }
-
-        private class ForBytesMarshaller<E, M extends BytesMarshaller<E>>
-                extends CopyingMetaBytesInterop<E, M> {
-            private static final long serialVersionUID = 0L;
-
-            private ForBytesMarshaller() {
-                super(DirectBytesBuffer.this);
-            }
-
-            @Override
-            void innerWrite(M writer, Bytes bytes, E e) {
-                writer.write(bytes, e);
-            }
-        }
-
-        private class ForBytesWriter<E, W extends BytesWriter<E>>
-                extends CopyingMetaBytesInterop<E, W> {
-            private static final long serialVersionUID = 0L;
-
-            private ForBytesWriter() {
-                super(DirectBytesBuffer.this);
-            }
-
-            @Override
-            void innerWrite(W writer, Bytes bytes, E e) {
-                writer.write(bytes, e);
-            }
         }
     }
 }

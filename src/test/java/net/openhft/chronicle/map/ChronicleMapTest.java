@@ -1483,7 +1483,7 @@ public class ChronicleMapTest {
     }
 
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testPutLongValue() throws IOException {
         final ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, LongValue.class)
@@ -1493,7 +1493,14 @@ public class ChronicleMapTest {
         final ChronicleMap<CharSequence, LongValue> map = builder.create();
 
         LongValue value = nativeLongValue();
-        map.put("x", value);
+        try {
+            map.put("x", value);
+        } catch (IllegalStateException | NullPointerException e) {
+            // ok
+            return;
+        }
+        throw new AssertionError("Should throw either IllegalStateException or " +
+                "NullPointerException, but succeed");
     }
 
     @Test
