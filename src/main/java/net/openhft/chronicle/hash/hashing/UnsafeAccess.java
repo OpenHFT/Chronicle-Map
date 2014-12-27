@@ -21,9 +21,7 @@ import sun.misc.Unsafe;
 import java.lang.reflect.Field;
 import java.nio.ByteOrder;
 
-import static net.openhft.chronicle.hash.hashing.Primitives.unsignedByte;
-import static net.openhft.chronicle.hash.hashing.Primitives.unsignedInt;
-import static net.openhft.chronicle.hash.hashing.Primitives.unsignedShort;
+import static net.openhft.chronicle.hash.hashing.Primitives.*;
 
 enum UnsafeAccess implements Access<Object> {
     INSTANCE;

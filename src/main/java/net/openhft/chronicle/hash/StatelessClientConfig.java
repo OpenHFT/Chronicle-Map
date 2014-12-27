@@ -18,10 +18,8 @@ package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**

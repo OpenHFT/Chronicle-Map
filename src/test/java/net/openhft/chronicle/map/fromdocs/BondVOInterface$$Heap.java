@@ -16,13 +16,12 @@
 
 package net.openhft.chronicle.map.fromdocs;
 
-import static net.openhft.lang.Compare.*;
-import java.io.IOException;
-import net.openhft.chronicle.map.fromdocs.BondVOInterface;
-import net.openhft.chronicle.map.fromdocs.BondVOInterface.MarketPx;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.model.Copyable;
+
+import static net.openhft.lang.Compare.calcLongHashCode;
+import static net.openhft.lang.Compare.isEqual;
 
 public class BondVOInterface$$Heap implements BondVOInterface, BytesMarshallable, Copyable<net.openhft.chronicle.map.fromdocs.BondVOInterface>  {
     private double _coupon;

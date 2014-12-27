@@ -1,7 +1,5 @@
 package eg;
 
-import com.sun.tools.internal.xjc.generator.bean.BeanGenerator;
-
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;

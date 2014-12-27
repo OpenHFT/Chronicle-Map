@@ -24,9 +24,7 @@ import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.io.NativeBytes;
 
 import static net.openhft.lang.Maths.isPowerOf2;
-import static net.openhft.lang.MemoryUnit.BITS;
-import static net.openhft.lang.MemoryUnit.BYTES;
-import static net.openhft.lang.MemoryUnit.LONGS;
+import static net.openhft.lang.MemoryUnit.*;
 
 /**
  * Created by peter on 09/11/14.
