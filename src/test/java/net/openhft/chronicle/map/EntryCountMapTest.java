@@ -84,7 +84,7 @@ public class EntryCountMapTest {
             s = 2;
             // regression test.
             testEntriesMaxSize(s, 8, 16, t);
-            testEntriesMaxSize(s, 16, 32, t);
+            testEntriesMaxSize(s, 16, 38, t);
             testEntriesMaxSize(s, 32, 64, t);
             testEntriesMaxSize(s, 64, 95, t);
             testEntriesMaxSize(s, 128, 168, t);
@@ -237,7 +237,7 @@ public class EntryCountMapTest {
             // calculate the hyperbolic average.
             score += (double) minSize / map.size();
             scoreCount++;
-            boolean condition = minSize <= map.size() && map.size() <= minSize * 2;
+            boolean condition = minSize <= map.size() && map.size() <= minSize * 2 + 8;
             if (!condition) {
                 dumpMapStats(segments, minSize, map);
                 assertTrue("stride: " + stride + ", seg: " + segments + ", min: " + minSize +

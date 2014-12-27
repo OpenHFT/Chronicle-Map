@@ -214,7 +214,7 @@ class IntIntMultiMap implements MultiMap {
     @Override
     public long nextPos(SearchState searchState) {
         long pos = searchState.searchPos;
-        while (true) {
+        for(long count = capacity; count > 0; count--) {
             long entry = bytes.readLong(pos);
             if (entry == UNSET_ENTRY) {
                 searchState.searchPos = pos;
@@ -226,6 +226,7 @@ class IntIntMultiMap implements MultiMap {
                 return value(entry);
             }
         }
+        throw new IllegalStateException();
     }
 
     @Override

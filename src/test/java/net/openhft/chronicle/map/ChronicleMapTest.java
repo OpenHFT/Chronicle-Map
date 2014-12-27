@@ -636,75 +636,205 @@ public class ChronicleMapTest {
     }
 
     @Test
+    public void testLargerEntries() {
+        for (int segments : new int[]{128, 256, 512, 1024}) {
+            int entries = 1000000, entrySize = 512;
+            ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                    .of(CharSequence.class, CharSequence.class)
+                    .entries(entries * 11 / 10)
+                    .actualSegments(segments)
+                    .averageKeySize(14)
+                    .averageValueSize(entrySize - 14 - 2);
+            ChronicleMap<CharSequence, CharSequence> map = builder.create();
+            int procs = Runtime.getRuntime().availableProcessors();
+            ExecutorService es = Executors.newFixedThreadPool(procs);
+
+            StringBuilder sb = new StringBuilder();
+            while (sb.length() < entrySize - 14 - 2)
+                sb.append('+');
+            for (int i = 0; i < entries; i++) {
+                map.put("us:" + i, sb);
+            }
+            map.close();
+        }
+    }
+
+    @Test
+    @Ignore("HCOLL-277")
+    public void testAcquirePerf256()
+            throws IOException, ClassNotFoundException, IllegalAccessException,
+            InstantiationException, InterruptedException, ExecutionException {
+//        int runs = Integer.getInteger("runs", 10);
+        int procs = 1; // Runtime.getRuntime().availableProcessors();
+        int threads = procs * 3;
+        for (int runs : new int[]{1, /*10, 250, 500, 1000, 2500*/}) {
+            for (int entrySize : new int[]{240,256}) {
+                int valuePadding = entrySize - 16;
+                char[] chars = new char[valuePadding];
+                Arrays.fill(chars, 'x');
+                final StringBuilder value0 = new StringBuilder();
+                value0.append(chars);
+
+                for (int segments : new int[]{/*128, 256, */512/*, 1024, 2048*/}) {
+                    final long entries = runs * 1000 * 1000L;
+                    ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                            .of(CharSequence.class, CharSequence.class)
+                            .entries(entries)
+                            .actualSegments(segments)
+                            .averageKeySize(14)
+                            .averageValueSize(value0.length() + 4);
+
+//                    File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
+//                    tmpFile.deleteOnExit();
+                    final ChronicleMap<CharSequence, CharSequence> map = builder.create(); //createPersistedTo(tmpFile);
+
+                    int count = runs > 500 ? 2 : 3;
+                    System.out.println("\nKey size: " + runs + " Million entries. " + builder);
+                    for (int j = 0; j < count; j++) {
+                        long start = System.currentTimeMillis();
+                        for (int i = 0; i < threads; i++) {
+                            final int t = i;
+
+                            Random rand = new Random(t);
+                            StringBuilder key = new StringBuilder();
+                            StringBuilder value = new StringBuilder();
+                            long next = 50 * 1000 * 1000;
+                            // use a factor to give up to 10 digit numbers.
+                            int factor = Math.max(1,
+                                    (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
+                            for (long k = t; k < entries; k ++) {
+                                key.setLength(0);
+                                key.append("us:");
+                                key.append(k * factor);
+                                // 75% reads, 25% writes.
+                                if (rand.nextInt(4) > 0) {
+                                    map.getUsing(key, value);
+
+                                } else {
+                                    try (WriteContext wc = map.acquireUsingLocked(key, value)) {
+                                        if (value.length() < value0.length() - 1)
+                                            value.append(value0);
+                                        else if (value.length() > value0.length())
+                                            value.setLength(value0.length() - 1);
+                                        else
+                                            value.append('+');
+                                    }
+                                }
+                                if (t == 0 && k >= next) {
+                                    long size = map.longSize();
+                                    if (size < 0) throw new AssertionError("size: " + size);
+                                    System.out.println(k + ", size: " + size);
+                                    next += 50 * 1000 * 1000;
+                                }
+                            }
+                        }
+
+                        long time = System.currentTimeMillis() - start;
+                        System.out.printf("EntrySize: %,d Entries: %,d M Segments: %,d Throughput %.1f M ops/sec%n",
+                                entrySize, runs, segments,
+                                threads * entries  / 1000.0 / time);
+                    }
+                    printStatus();
+                    File file = map.file();
+                    map.close();
+                    if (file != null)
+                        file.delete();
+                }
+            }
+        }
+    }
+    @Test
     @Ignore("Performance test")
     public void testAcquirePerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
 //        int runs = Integer.getInteger("runs", 10);
-        int procs = Runtime.getRuntime().availableProcessors();
+        int procs = 1; // Runtime.getRuntime().availableProcessors();
         int threads = procs * 3;
         ExecutorService es = Executors.newFixedThreadPool(procs);
-        for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
-            // JAVA 8 produces more garbage than previous versions for internal work.
-//            System.gc();
-            final long entries = runs * 1000 * 1000L;
-            ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
-                    .of(CharSequence.class, LongValue.class)
-                    .entries(entries)
-                    .actualSegments(8 * 1024)
-                    .entryAndValueAlignment(OF_8_BYTES)
-                    .averageKeySize(13);
+        for (int runs : new int[]{1, /*10, 250, 500, 1000, 2500*/}) {
+            for (int entrySize : new int[]{240, 256}) {
+                int valuePadding = entrySize - 16;
+                char[] chars = new char[valuePadding];
+                Arrays.fill(chars, 'x');
+                final StringBuilder value0 = new StringBuilder();
+                value0.append(chars);
 
-            File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
-            tmpFile.deleteOnExit();
-            final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
+                for (int segments : new int[]{/*128, 256, */512/*, 1024, 2048*/}) {
+                    final long entries = runs * 1000 * 1000L;
+                    ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                            .of(CharSequence.class, CharSequence.class)
+                            .entries(entries)
+                            .actualSegments(segments)
+                            .averageKeySize(14)
+                            .averageValueSize(value0.length() + 4);
 
-            int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
-            final int independence = Math.min(procs, runs > 500 ? 8 : 4);
-            System.out.println("\nKey size: " + runs + " Million entries. " + builder);
-            for (int j = 0; j < count; j++) {
-                long start = System.currentTimeMillis();
-                List<Future> futures = new ArrayList<Future>();
-                for (int i = 0; i < threads; i++) {
-                    final int t = i;
-                    futures.add(es.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            LongValue value = nativeLongValue();
-                            StringBuilder sb = new StringBuilder();
-                            long next = 50 * 1000 * 1000;
-                            // use a factor to give up to 10 digit numbers.
-                            int factor = Math.max(1,
-                                    (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
-                            for (long j = t % independence; j < entries + independence - 1;
-                                 j += independence) {
-                                sb.setLength(0);
-                                sb.append("us:");
-                                sb.append(j * factor);
-                                map.acquireUsing(sb, value);
-                                long n = value.addAtomicValue(1);
-                                assert n > 0 && n < 1000 : "Counter corrupted " + n;
-                                if (t == 0 && j >= next) {
-                                    long size = map.longSize();
-                                    if (size < 0) throw new AssertionError("size: " + size);
-                                    System.out.println(j + ", size: " + size);
-                                    next += 50 * 1000 * 1000;
+//                    File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
+//                    tmpFile.deleteOnExit();
+                    final ChronicleMap<CharSequence, CharSequence> map = builder.create(); //createPersistedTo(tmpFile);
+
+                    int count = runs > 500 ? 2 : 3;
+                    final int independence = Math.min(procs, runs > 500 ? 8 : 4);
+                    System.out.println("\nKey size: " + runs + " Million entries. " + builder);
+                    for (int j = 0; j < count; j++) {
+                        long start = System.currentTimeMillis();
+                        List<Future> futures = new ArrayList<>();
+                        for (int i = 0; i < threads; i++) {
+                            final int t = i;
+                            futures.add(es.submit(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Random rand = new Random(t);
+                                    StringBuilder key = new StringBuilder();
+                                    StringBuilder value = new StringBuilder();
+                                    long next = 50 * 1000 * 1000;
+                                    // use a factor to give up to 10 digit numbers.
+                                    int factor = Math.max(1,
+                                            (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
+                                    for (long j = t % independence; j < entries + independence - 1;
+                                         j += independence) {
+                                        key.setLength(0);
+                                        key.append("us:");
+                                        key.append(j * factor);
+                                        // 75% reads, 25% writes.
+                                        if (rand.nextInt(4) > 0) {
+                                            map.getUsing(key, value);
+
+                                        } else {
+                                            try (WriteContext wc = map.acquireUsingLocked(key, value)) {
+                                                if (value.length() < value0.length()-1)
+                                                    value.append(value0);
+                                                else if (value.length() > value0.length())
+                                                    value.setLength(value0.length()-1);
+                                                else
+                                                    value.append('+');
+                                            }
+                                        }
+                                        if (t == 0 && j >= next) {
+                                            long size = map.longSize();
+                                            if (size < 0) throw new AssertionError("size: " + size);
+                                            System.out.println(j + ", size: " + size);
+                                            next += 50 * 1000 * 1000;
+                                        }
+                                    }
                                 }
-                            }
+                            }));
                         }
-                    }));
+                        for (Future future : futures) {
+                            future.get();
+                        }
+                        long time = System.currentTimeMillis() - start;
+                        System.out.printf("EntrySize: %,d Entries: %,d M Segments: %,d Throughput %.1f M ops/sec%n",
+                                entrySize, runs, segments,
+                                threads * entries / independence / 1000.0 / time);
+                    }
+                    printStatus();
+                    File file = map.file();
+                    map.close();
+                    if (file != null)
+                        file.delete();
                 }
-                for (Future future : futures) {
-                    future.get();
-                }
-                long time = System.currentTimeMillis() - start;
-                System.out.printf("Throughput %.1f M ops/sec%n",
-                        threads * entries / independence / 1000.0 / time);
             }
-            printStatus();
-            File file = map.file();
-            map.close();
-            file.delete();
         }
         es.shutdown();
         es.awaitTermination(1, TimeUnit.MINUTES);

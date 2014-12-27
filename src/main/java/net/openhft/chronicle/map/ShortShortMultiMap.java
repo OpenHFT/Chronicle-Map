@@ -211,7 +211,7 @@ class ShortShortMultiMap implements MultiMap {
     @Override
     public long nextPos(SearchState searchState) {
         long pos = searchState.searchPos;
-        while (true) {
+        for(int count = capacity; count > 0; count--) {
             int entry = bytes.readInt(pos);
             if (entry == UNSET_ENTRY) {
                 searchState.searchPos = pos;
@@ -223,6 +223,7 @@ class ShortShortMultiMap implements MultiMap {
                 return value(entry);
             }
         }
+        throw new IllegalStateException();
     }
 
     @Override
