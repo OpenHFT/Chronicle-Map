@@ -46,7 +46,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>lang</artifactId>
-                <version>6.4.19-SNAPSHOT</version>
+                <version>6.4.18</version>
             </dependency>
 
             <dependency>
@@ -163,6 +163,9 @@
                     <links>
                         <link>http://openhft.github.io/Java-Lang/apidocs/</link>
                     </links>
+                    <excludePackageNames>net.openhft.chronicle.hash.serialization.internal
+                    </excludePackageNames>
+                    <excludePackageNames>net.openhft.xstreem.converters</excludePackageNames>
                     <excludePackageNames>net.openhft.chronicle.hash.serialization.internal
                     </excludePackageNames>
                 </configuration>
