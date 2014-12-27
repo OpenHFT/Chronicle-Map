@@ -19,7 +19,6 @@ package net.openhft.chronicle.hash.hashing;
 import net.openhft.lang.io.Bytes;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * Static methods returning useful {@link Access} implementations.

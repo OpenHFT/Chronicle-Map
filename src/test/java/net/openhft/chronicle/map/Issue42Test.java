@@ -18,8 +18,8 @@
 
 package net.openhft.chronicle.map;
 
- import org.junit.Assert;
 import net.openhft.lang.Jvm;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;

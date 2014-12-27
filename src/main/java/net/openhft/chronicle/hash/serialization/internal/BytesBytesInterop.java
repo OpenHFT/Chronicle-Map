@@ -16,8 +16,8 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.hashing.Hasher;
+import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.lang.io.Bytes;
 
 public enum BytesBytesInterop implements BytesInterop<Bytes> {

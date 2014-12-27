@@ -19,16 +19,18 @@
 package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.hashing.Hasher;
-import net.openhft.chronicle.hash.serialization.*;
+import net.openhft.chronicle.hash.serialization.BytesInterop;
+import net.openhft.chronicle.hash.serialization.DeserializationFactoryConfigurableBytesReader;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.MultiStoreBytes;
 import net.openhft.lang.io.NativeBytes;
-import net.openhft.lang.io.serialization.*;
+import net.openhft.lang.io.serialization.ObjectFactory;
 import net.openhft.lang.model.Byteable;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ByteableMarshaller<E extends Byteable>
-        implements BytesInterop<E>,
+        implements BytesInterop<E>, MetaBytesInterop<E, Object>,
         DeserializationFactoryConfigurableBytesReader<E, ByteableMarshaller<E>>,
         SizeMarshaller {
     private static final long serialVersionUID = 0L;
@@ -158,6 +160,26 @@ public abstract class ByteableMarshaller<E extends Byteable>
     @NotNull
     E getInstance() throws Exception {
         return (E) NativeBytes.UNSAFE.allocateInstance(tClass);
+    }
+
+    @Override
+    public boolean startsWith(Object interop, Bytes bytes, E e) {
+        return startsWith(bytes, e);
+    }
+
+    @Override
+    public long hash(Object interop, E e) {
+        return hash(e);
+    }
+
+    @Override
+    public long size(Object writer, E e) {
+        return size(e);
+    }
+
+    @Override
+    public void write(Object writer, Bytes bytes, E e) {
+        write(bytes, e);
     }
 
     private static class Default<E extends Byteable> extends ByteableMarshaller<E> {

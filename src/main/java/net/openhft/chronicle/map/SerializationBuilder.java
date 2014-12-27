@@ -21,7 +21,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.*;
 import net.openhft.chronicle.hash.serialization.internal.ByteBufferMarshaller;
-import net.openhft.lang.MemoryUnit;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
@@ -108,7 +107,10 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
                 DataValueModel<E> model = DataValueModels.acquireModel(eClass);
                 int size = DataValueGenerator.computeNonScalarOffset(model, eClass);
                 reader(reader);
-                writer(writer);
+                copyingInterop(null);
+                setInterop(writer);
+                metaInterop((MetaBytesInterop<E, ?>) DataValueMetaBytesInterop.forIdentity(role));
+                metaInteropProvider(DataValueMetaBytesInterop.interopProvider(eClass));
                 sizeMarshaller(constant((long) size));
                 return;
             } catch (Exception e) {
