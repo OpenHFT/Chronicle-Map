@@ -166,7 +166,6 @@ public class TCPSocketReplicationIntValueTest {
         assertEquals(map1, map2);
     }
 
-    @Ignore("HCOLL-244 TCP Replication fails under heavy load")
     @Test(timeout = 12000)
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         final long start = System.currentTimeMillis();
