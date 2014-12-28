@@ -67,9 +67,9 @@
     <dependencies>
 
         <dependency>
-            <optional>true</optional>
-            <groupId>xstream</groupId>
+            <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
+            <version>1.4.7</version>
         </dependency>
 
         <dependency>

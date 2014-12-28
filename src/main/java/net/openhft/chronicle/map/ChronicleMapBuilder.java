@@ -18,6 +18,8 @@
 
 package net.openhft.chronicle.map;
 
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.reflection.SunLimitedUnsafeReflectionProvider;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
@@ -412,7 +414,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
-    public List jsonConverters() {
+    List jsonConverters() {
         return this.jsonConverters;
     }
 
@@ -1330,13 +1332,12 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
             if (file.exists() && file.length() > 0) {
                 try (FileInputStream fis = new FileInputStream(file);
                      ObjectInputStream ois = new ObjectInputStream(fis)) {
+                    XStream xStream = new XStream(new SunLimitedUnsafeReflectionProvider());
                     VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
-                            (VanillaChronicleMap<K, ?, ?, V, ?, ?>) ois.readObject();
+                            (VanillaChronicleMap<K, ?, ?, V, ?, ?>) xStream.fromXML(ois);
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
                     map.createMappedStoreAndSegments(file);
                     return establishReplication(map, singleHashReplication, channel);
-                } catch (ClassNotFoundException e) {
-                    throw new IOException(e);
                 }
             }
             if (file.createNewFile() || file.length() == 0) {
@@ -1356,7 +1357,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
         try (FileOutputStream fos = new FileOutputStream(file);
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(map);
+            XStream xStream = new XStream(new SunLimitedUnsafeReflectionProvider());
+            xStream.toXML(map, oos);
             oos.flush();
             map.headerSize = roundUpMapHeaderSize(fos.getChannel().position());
             map.createMappedStoreAndSegments(file);
