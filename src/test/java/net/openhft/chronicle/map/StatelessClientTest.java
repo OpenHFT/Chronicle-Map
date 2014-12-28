@@ -681,7 +681,7 @@ public class StatelessClientTest {
     }
 
     @Test
-    public void startChronicleMapServer() throws IOException {
+    public void testsConstantKeySizeBySampleIsSentFromServer() throws IOException {
 
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8875)
                 .name("serverMap");
@@ -693,7 +693,6 @@ public class StatelessClientTest {
 
             try (ChronicleMap<byte[], CharSequence> map2 = ChronicleMapBuilder
                     .of(byte[].class, CharSequence.class)
-                    .constantKeySizeBySample(new byte[14])
                     .statelessClient(new InetSocketAddress("localhost", 8875))
                     .create()) {
 
