@@ -649,6 +649,108 @@ public class StatelessClientTest {
 
     }
 
+
+    @Test
+    public void testPutsStatelessClientWithReplication() throws IOException, InterruptedException {
+
+        int nThreads = 2;
+        final ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
+
+        int count = 50000;
+        final CountDownLatch latch = new CountDownLatch(count * 2);
+        final AtomicInteger got = new AtomicInteger();
+
+        long startTime = System.currentTimeMillis();
+
+
+        // server
+        try (ChronicleMap<Integer, Integer> server = ChronicleMapBuilder.of(Integer.class, Integer.class)
+                .putReturnsNull(true)
+                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8047)).create()) {
+
+            try (ChronicleMap<Integer, Integer> server2 = ChronicleMapBuilder.of(Integer.class, Integer.class)
+                    .putReturnsNull(true)
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.of(8046,new
+                            InetSocketAddress("localhost",8047))).create()) {
+
+
+                // stateless client
+                try (ChronicleMap<Integer, Integer> client = ChronicleMapBuilder.of(Integer.class,
+                        Integer.class)
+                        .statelessClient(new InetSocketAddress("localhost", 8046)).create()) {
+
+                    for (int i = 0; i < count; i++) {
+
+                        final int j = i;
+                        executorService.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    //   System.out.print("put("+j+")");
+                                    client.put(j, j);
+                                    latch.countDown();
+                                } catch (Error | Exception e) {
+                                    LOG.error("", e);
+                                    //executorService.shutdown();
+
+                                }
+                            }
+                        });
+                    }
+
+
+                    for (int i = 0; i < count; i++) {
+                        final int j = i;
+
+                        executorService.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+
+                                    Integer result = server.get(j);
+
+                                    if (result == null) {
+                                        System.out.print("entry not found so re-submitting");
+                                        executorService.submit(this);
+                                        return;
+                                    }
+
+                                    if (result.equals(j)) {
+                                        got.incrementAndGet();
+                                    } else {
+                                        System.out.println("expected j=" + j + " but got back=" + result);
+                                    }
+
+                                    latch.countDown();
+                                } catch (Error | Exception e) {
+                                    e.printStackTrace();
+                                    LOG.error("", e);
+                                    //     executorService.shutdown();
+                                }
+                            }
+                        });
+
+
+                    }
+
+                    latch.await(25, TimeUnit.SECONDS);
+                    System.out.println("" + count + " messages took " +
+                            TimeUnit.MILLISECONDS.toSeconds(System
+                                    .currentTimeMillis() - startTime) + " seconds, using " + nThreads + "" +
+                            " threads");
+
+                    assertEquals(count, got.get());
+
+                }
+            }
+        } finally {
+            executorService.shutdownNow();
+            executorService.awaitTermination(1000, TimeUnit.SECONDS);
+        }
+
+    }
+
+
     @Test(timeout = 10000)
     public void testCreateWithByteArrayKeyValue() throws IOException, InterruptedException {
 
