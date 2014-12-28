@@ -53,7 +53,7 @@ public class TCPSocketReplicationTest {
         ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
                         (byte) 1, port, new InetSocketAddress("localhost", port + 1));
-        map1 = map1Builder.create();
+        map1 = map1Builder.averageValueSize(10).create();
         map2 = newTcpSocketShmIntString((byte) 2, port + 1);
         s_port += 2;
     }
