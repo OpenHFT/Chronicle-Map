@@ -112,10 +112,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     transient BytesStore ms;
     transient long headerSize;
     transient Set<Map.Entry<K, V>> entrySet;
+    transient final SerializationBuilder<K> keyBuilder;
+    transient final SerializationBuilder<V> valueBuilder;
+
 
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
 
-        SerializationBuilder<K> keyBuilder = builder.keyBuilder;
+        keyBuilder = builder.keyBuilder;
         kClass = keyBuilder.eClass;
         keySizeMarshaller = keyBuilder.sizeMarshaller();
         originalKeyReader = keyBuilder.reader();
@@ -127,7 +130,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         originalMetaKeyInterop = (MKI) keyBuilder.metaInterop();
         metaKeyInteropProvider = (MetaProvider<K, KI, MKI>) keyBuilder.metaInteropProvider();
 
-        SerializationBuilder<V> valueBuilder = builder.valueBuilder;
+        valueBuilder = builder.valueBuilder;
         vClass = valueBuilder.eClass;
         if (vClass.getName().endsWith("$$Native")) {
             nativeValueClass = vClass;

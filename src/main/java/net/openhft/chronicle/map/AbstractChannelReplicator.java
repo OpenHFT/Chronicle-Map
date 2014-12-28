@@ -451,7 +451,7 @@ abstract class AbstractChannelReplicator implements Closeable {
             final ByteBuffer result = ByteBuffer.allocate(size).order(ByteOrder.nativeOrder());
             final long bytesPosition = in.position();
 
-            in = new ByteBufferBytes(result.slice());
+            in = new ByteBufferBytes(result);
 
             out.position(0);
             out.limit((int) bytesPosition);

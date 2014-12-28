@@ -67,13 +67,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private ByteBufferBytes inBytes;
 
     @NotNull
-    private final ReaderWithSize<K> keyReaderWithSize;
+    private ReaderWithSize<K> keyReaderWithSize;
     @NotNull
-    private final WriterWithSize<K> keyWriterWithSize;
+    private WriterWithSize<K> keyWriterWithSize;
     @NotNull
-    private final ReaderWithSize<V> valueReaderWithSize;
+    private ReaderWithSize<V> valueReaderWithSize;
     @NotNull
-    private final WriterWithSize<V> valueWriterWithSize;
+    private WriterWithSize<V> valueWriterWithSize;
     private SocketChannel clientChannel;
 
     @Nullable
@@ -83,13 +83,20 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     private final Class<K> kClass;
     private final Class<V> vClass;
-    private final boolean putReturnsNull;
-    private final boolean removeReturnsNull;
+    private boolean putReturnsNull;
+    private boolean removeReturnsNull;
 
 
     private final ReentrantLock inBytesLock = new ReentrantLock(true);
     private final ReentrantLock outBytesLock = new ReentrantLock();
 
+    private final BufferResizer outBufferResizer = new BufferResizer() {
+        @Override
+        public Bytes resizeBuffer(int newCapacity) {
+            return resizeBufferOutBuffer(newCapacity);
+
+        }
+    };
 
     static enum EventId {
         HEARTBEAT,
@@ -119,7 +126,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         PUT_ALL_WITHOUT_ACC,
         HASH_CODE,
         MAP_FOR_KEY,
-        PUT_MAPPED
+        PUT_MAPPED,
+        KEY_BUILDER,
+        VALUE_BUILDER
     }
 
 
@@ -141,38 +150,35 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         this.config = config;
         this.jsonConverters = chronicleMapBuilder.jsonConverters();
 
-        final BufferResizer outBufferResizer = new BufferResizer() {
-            @Override
-            public Bytes resizeBuffer(int newCapacity) {
-                return resizeBufferOutBuffer(newCapacity);
-
-            }
-        };
-
-        keyReaderWithSize = new ReaderWithSize(chronicleMapBuilder.keyBuilder);
-        keyWriterWithSize = new WriterWithSize(chronicleMapBuilder.keyBuilder, outBufferResizer);
-
-        valueReaderWithSize = new ReaderWithSize(chronicleMapBuilder.valueBuilder);
-
-        valueWriterWithSize = new WriterWithSize(chronicleMapBuilder.valueBuilder,
-                outBufferResizer);
-
-        this.putReturnsNull = chronicleMapBuilder.putReturnsNull();
-        this.removeReturnsNull = chronicleMapBuilder.removeReturnsNull();
-
-        this.vClass = chronicleMapBuilder.valueBuilder.eClass;
-        this.kClass = chronicleMapBuilder.keyBuilder.eClass;
-        this.name = config.name();
-        attemptConnect(config.remoteAddress());
 
         outBuffer = allocateDirect(128).order(ByteOrder.nativeOrder());
         outBytes = new ByteBufferBytes(outBuffer.slice());
 
-
         inBuffer = allocateDirect(128).order(ByteOrder.nativeOrder());
         inBytes = new ByteBufferBytes(inBuffer.slice());
 
+        this.vClass = chronicleMapBuilder.valueBuilder.eClass;
+        this.kClass = chronicleMapBuilder.keyBuilder.eClass;
+        this.name = config.name();
+
+        attemptConnect(config.remoteAddress());
+
         checkVersion();
+        loadKeyValueSerializers();
+
+        this.putReturnsNull = chronicleMapBuilder.putReturnsNull();
+        this.removeReturnsNull = chronicleMapBuilder.removeReturnsNull();
+    }
+
+    private void loadKeyValueSerializers() {
+        final SerializationBuilder keyBuilder = fetchObject(SerializationBuilder.class, KEY_BUILDER);
+        final SerializationBuilder valueBuilder = fetchObject(SerializationBuilder.class, VALUE_BUILDER);
+
+        keyReaderWithSize = new ReaderWithSize(keyBuilder);
+        keyWriterWithSize = new WriterWithSize(keyBuilder, outBufferResizer);
+
+        valueReaderWithSize = new ReaderWithSize(valueBuilder);
+        valueWriterWithSize = new WriterWithSize(valueBuilder, outBufferResizer);
 
     }
 
@@ -229,8 +235,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             throw new RemoteCallTimeoutException();
     }
 
-    private synchronized SocketChannel lazyConnect(final long timeoutMs,
-                                                   final InetSocketAddress remoteAddress) {
+    private synchronized void lazyConnect(final long timeoutMs,
+                                          final InetSocketAddress remoteAddress) {
+        if (clientChannel != null)
+            return;
 
         if (LOG.isDebugEnabled())
             LOG.debug("attempting to connect to " + remoteAddress + " ,name=" + name);
@@ -259,8 +267,34 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 throw e;
             }
         }
+        clientChannel = result;
+        byte[] bytes = copyBufferBytes();
 
-        return result;
+        long position = outBytes.position();
+        int limit = outBuffer.limit();
+
+        outBuffer.clear();
+        outBytes.clear();
+      //  outBytesLock.unlock();
+       // assert !outBytesLock.isHeldByCurrentThread();
+        try {
+            checkVersion();
+            loadKeyValueSerializers();
+        } finally {
+            outBuffer.clear();
+            outBuffer.put(bytes);
+            outBytes.limit(limit);
+            outBytes.position(position);
+       //     outBytesLock.lock();
+        }
+
+    }
+
+    private byte[] copyBufferBytes() {
+        byte[] bytes = new byte[outBuffer.limit()];
+        outBuffer.position(0);
+        outBuffer.get(bytes);
+        return bytes;
     }
 
     /**
@@ -453,6 +487,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @NotNull
     public String serverApplicationVersion() {
+
+
         return fetchObject(String.class, APPLICATION_VERSION);
     }
 
@@ -618,7 +654,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
     private void resizeBufferInBuffer(int newCapacity, long start) {
-        assert !outBytesLock.isHeldByCurrentThread();
+//        assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
 
         if (LOG.isDebugEnabled())
@@ -1053,7 +1089,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
             for (; ; ) {
                 if (clientChannel == null) {
-                    clientChannel = lazyConnect(config.timeoutMs(), config.remoteAddress());
+                    lazyConnect(config.timeoutMs(), config.remoteAddress());
                 }
                 try {
 
@@ -1069,7 +1105,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
                 } catch (@NotNull java.nio.channels.ClosedChannelException | ClosedConnectionException e) {
                     checkTimeout(timeoutTime);
-                    clientChannel = lazyConnect(config.timeoutMs(), config.remoteAddress());
+                    lazyConnect(config.timeoutMs(), config.remoteAddress());
                 }
             }
         } catch (IOException e) {
@@ -1084,10 +1120,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     private Bytes blockingFetchReadOnly(long timeoutTime, final long transactionId) {
 
-        assert !outBytesLock.isHeldByCurrentThread();
-        assert inBytesLock.isHeldByCurrentThread();
 
+        assert inBytesLock.isHeldByCurrentThread();
+      //  assert !outBytesLock.isHeldByCurrentThread();
         try {
+
             return blockingFetchThrowable(timeoutTime, transactionId);
         } catch (IOException e) {
             close();
@@ -1112,7 +1149,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private Bytes blockingFetchThrowable(long timeoutTime, long transactionId) throws IOException,
             InterruptedException {
 
-        assert !outBytesLock.isHeldByCurrentThread();
+//        assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
 
         int remainingBytes = nextEntry(timeoutTime, transactionId);
@@ -1157,7 +1194,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private int nextEntry(long timeoutTime, long transactionId) throws IOException {
-        assert !outBytesLock.isHeldByCurrentThread();
+//        assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
 
         int remainingBytes;
@@ -1235,7 +1272,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     private void clearParked() {
-        assert !outBytesLock.isHeldByCurrentThread();
+//        assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
         parkedTransactionId = 0;
         parkedRemainingBytes = 0;
@@ -1264,7 +1301,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     @SuppressWarnings("UnusedReturnValue")
     private Bytes receiveBytesFromSocket(int requiredNumberOfBytes, long timeoutTime) throws IOException {
 
-        assert !outBytesLock.isHeldByCurrentThread();
+//        assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
 
         inBytes.position(0);

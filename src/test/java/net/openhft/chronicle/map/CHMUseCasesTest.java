@@ -38,7 +38,7 @@ public class CHMUseCasesTest {
     private static final String TMP = System.getProperty("java.io.tmpdir");
 
 
-    enum TypeOfMap {SIMPLE, SIMPLE_PERSISTED, REPLICATED, STATELESS}
+    enum TypeOfMap {STATELESS,SIMPLE, SIMPLE_PERSISTED, REPLICATED}
 
     private final TypeOfMap typeOfMap;
 
