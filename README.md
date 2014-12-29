@@ -23,7 +23,6 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [Overview](https://github.com/OpenHFT/Chronicle-Map#Overview)
 * [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#should-i-use-chronicle-queue-or-chronicle-map)
 * [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#what-is-the-difference-between-sharedhashmap-and-chronicle-map)
-* [Overview](https://github.com/OpenHFT/Chronicle-Map#overview)
 * [JavaDoc](http://openhft.github.io/Chronicle-Map/apidocs)
 * [Getting Started Guide](https://github.com/OpenHFT/Chronicle-Map#getting-started)
  *  [Simple Construction](https://github.com/OpenHFT/Chronicle-Map#simple-construction)
@@ -331,8 +330,8 @@ impact).
 - on Mac OSX, we have no specific recommendations.
 
 ### ChronicleMap Interface
-The ChronicleMap interface adds a few methods above an beyond the standard ConcurrentMap,
-the ChronicleMapBuilder can also be used to return the ChronicleMap, see the example below :
+The ChronicleMap interface adds a few methods above and beyond the standard ConcurrentMap.
+The ChronicleMapBuilder can also be used to return the ChronicleMap, see the example below :
 
 ``` java
 ChronicleMap<Integer, CharSequence> map =
@@ -347,7 +346,7 @@ supports the following methods :
  - [`ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);`]  (https://github.com/OpenHFT/Chronicle-Map#off-heap-storage-and-how-using-a-proxy-object-can-improve-performance)
  - [`WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);`]    (https://github.com/OpenHFT/Chronicle-Map#acquireusinglocked)
 
-These methods let you provide the object which the data will be written to, but the value use to be mutable. For example
+These methods let you provide the object to which the data will be written so that the value used is mutable. For example
 
 ``` java
 CharSequence using = new StringBuilder();
@@ -356,27 +355,26 @@ CharSequence myResult = map.getUsing("key", using);
 ```
 
 The `map.getUsing()` method is similar to `map.get()`, but because Chronicle Map stores its data off
-heap, if you were to call get("key"), a new object would be created each time, map.getUsing() works
+heap, if you were to call get("key"), a new object would be created each time. map.getUsing() works
 by reusing the heap memory which was used by the original Object "using". This technique provides
 you with better control over your object creation.
 
 Exactly like `map.getUsing()`, `map.acquireUsing()` will give you back a reference to an value 
 based on
-a key, but unlike `map.getUsing()` if there is not an entry in the map for this key the entry 
+a key, but unlike `map.getUsing()` if there is no entry in the map for this key the entry 
 will be added and the value return will we the same value which you provided. ( The section below
  covers both `map.getUsing()` and `map.acquireUsing()` in more detail )
 
 #### Off heap storage and how using a Proxy Object can improve performance
 
-Chronicle Map stores its data off heap. There are some distinct advantages in using off heap data storage
+ChronicleMap stores its data off heap. There are some distinct advantages in using off heap data storage
 
  * When the off heap data is backed by a memory mapped file, the entire map and its contents are automatically persisted. So if you have to restart your system, you won’t lose the content of your map.
- * Off heap data structures are not visited by the garbage collector, with on heap maps like HashMap the garbage collector has to scan your entire object graph ( in fact just the live objects ) to remove garbage, if you are able to keep your on heap footprint low, the garbage collector has a lot less work to do, this in turn improves your performance.
- * Your Chronicle map and your data contained within it is serialised so it can be stored in off 
-heap memory. When this memory is shared between processes on the same server, 
-the chronicle map is able to distribute entries between processes with extremely low overhead, 
-as both processes are sharing the same off heap memory space. Since your objects are already stored off
-heap ( as a series of bytes ), replicating entries over the network adds relatively low over head.
+ * Off heap data structures are not visited by the garbage collector.  With on heap maps like HashMap the garbage collector has to scan your entire object graph ( in fact just the live objects ) to remove garbage.  If you are able to keep your on heap footprint low, the garbage collector has a lot less work to do, this in turn will improve performance.
+ * ChronicleMap and its data is serialised so it can be stored in off 
+heap (shared) memory. When this memory is shared between processes on the same server, 
+ChronicleMap is able to distribute entries between processes with extremely low overhead. 
+This is because both processes are sharing the same off heap memory space. Additionaly, since your objects are already stored off heap ( as a series of bytes ), replicating entries over the network adds relatively little overhead.
 
 For more information on the benefit's of off heap memory, see our article on - [On
 heap vs off
@@ -384,28 +382,28 @@ heap memory
 usage]
 (http://vanillajava.blogspot.co.uk/2014/12/on-heap-vs-off-heap-memory-usage.html)
 
-One of the downsides of an Off Heap Map is that whenever you wish to get a value ( on heap ) from an entry
+One of the downsides of an off heap map is that whenever you wish to get a value ( on heap ) from an entry
 which is off heap, for example calling :
 
  ``` java
 Value v = get(key)
 ```
 
-that entry has to be deserialised onto the java heap so that you can use its value just like any other java object. So if you were to call get(key) ten times, 
+that entry has to be deserialised onto the Java heap so that you can use its value just like any other Java object. So if you were to call get(key) ten times, 
 
  ``` java
 for(int i=1;i<=10;i++) {
   Value v = get(key)
 }
 ``` 
-this would create 10 separate instances of the value. As each time get() is called the map has to
+this would create 10 separate instances of the value. This is because each time get() is called, the map has to
 first create a Object to store the result in and then deserialise the value stored in the off 
-heap entry. If you want to get the value back on heap so that you can use it like a normal java 
-value, There is nothing we can do about the deserialisation as this has to occur every time, 
+heap entry. Assuming you want to get the value back on heap so that you can use it like a normal Java 
+value, deserialisation is unavoidable.  Deserialisation has to occur every time, 
 ( since the value may have been changed by another thread ), but we don’t have to create the 
-object each time. This is why we create `getUsing(key,using)`. By reducing the number of objects
-you create, you reduce the amount of work that the garbage collector has to carry out, 
-this in turn may, improve your overall performance. So back to `getUsing(key,using)`, If you wish to reuse
+object each time. This is why we introduced the method `getUsing(key,using)`. By reducing the number of objects
+you create, the amount of work that the garbage collector has to carry out is reduced, 
+this in turn may improve overall performance. So back to `getUsing(key,using)`, if you wish to reuse
 and existing object ( in this case the ‘using’ value ), you can instead call :
  
  ``` java
@@ -417,7 +415,7 @@ for(int i=1;i<=10;i++) {
 }
 ``` 
 We can get a further performance improvement if we don't deserialize the whole object, 
-but only deserialize only the bytes that we are actually interested in, 
+but deserialize only the bytes that in which we are actually interested, 
 
 Lets assume that we had the following interface :
 
@@ -427,7 +425,7 @@ public interface LongValue {
     void setValue(long value);
 }
 ``` 
-It is possible to use chronicle as an off heap proxy that can go directly to the memory location off heap and just get back the long that you require. This is especially use full if the value object has a lot of fields in it like the BondVOInterface
+It is possible to use chronicle as an off heap proxy that can go directly to the memory location off heap and just get back the long that you require. This is especially useful if the value object has a lot of fields in it like the BondVOInterface
 ``` java
 public interface BondVOInterface {
  ... 
@@ -462,7 +460,7 @@ deserialise the whole object that implements the `BondVOInterface`. The `Chronic
   time it is accessed, The off heap proxies are able to read
 and write into
 the off heap data structures directly, this reduced serialisation can give you a big performance boost.
-Below we show you how you can work directly with the off heap entries.
+See the example below which demonstartes how you can work directly with off heap entries.
 
 ``` java
 ChronicleMap<CharSequence, BondVOInterface> map = ChronicleMapBuilder
@@ -473,10 +471,9 @@ ChronicleMap<CharSequence, BondVOInterface> map = ChronicleMapBuilder
 by default, builder assume that we are going to work directly with the off heap
 entries (`DataValueClasses.directClassFor(BondVOInterface.class)`).
 
-The value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  now
-like before, we can
+The value class, in our case `BondVOInterface.class` is an `interface` rather than a `class`,  as before, we can
 use the `getUsing(key,using)` method, but this time we have to create the ‘using’ instance slightly
-differently, we have to call either the `map.newValueInstance()` or `map.newKeyInstance()` method.
+differently. We call either the `map.newValueInstance()` or `map.newKeyInstance()` method.
 
 ``` java
 BondVOInterface using = map.newValueInstance();
@@ -501,7 +498,7 @@ As above, ideally you would reuse the `using` variable.
 BondVOInterface using = map.newValueInstance();
 
 for(int i=1;i<=10;i++) {
-  Value bond = map.getUsing(key,using); // this won’t create a new value each time.
+  BondVOInterface bond = map.getUsing(key,using); // this won’t create a new value each time.
   double coupon = bond.getCoupon()
   assert using == bond; // this will always be the same instance
 }
@@ -513,9 +510,9 @@ so when you call :
 bond.getCoupon()
 ```
 
-its only the coupon that gets deserialized.
+Note: It is only the coupon that gets deserialized.
 
-Just like any other concurrent map, chronicle map uses segment locking, if you wish to obtain a read lock
+Just like any other ConcurrentMap, ChronicleMap uses segment locking, if you wish to obtain a read lock
 when calling getUsing(key,using) you can do this :
 
 ``` java
@@ -530,10 +527,10 @@ try (ReadContext<?, BondVOInterface> context = map.getUsingLocked(key,bond)) {
 
 ```
 
-To ensure that you can read the 'issueDate' and 'symbol' can be read atomically, these values
+To ensure that 'issueDate' and 'symbol' can be read atomically, these values
 must be read while the segment read lock is in place.
 
-when you call map.getUsingLocked(key,using) we return a ReadContext, the ReadContext extends
+When you call map.getUsingLocked(key,using) we return a ReadContext, the ReadContext extends
 AutoCloseable so will automatically unlock the segment when the try block is exited.
 
 If you wish not to use a try block you must manually release the segment lock by calling
