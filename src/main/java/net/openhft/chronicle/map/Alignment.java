@@ -47,7 +47,7 @@ public enum Alignment {
 
         @Override
         int alignment() {
-            return 0;
+            return 1;
         }
     },
 
