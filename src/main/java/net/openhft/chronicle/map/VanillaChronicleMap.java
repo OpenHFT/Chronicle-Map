@@ -1448,7 +1448,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     * multiMapsPerSegment();
             final NativeBytes bsBytes = new NativeBytes(ms.objectSerializer(),
                     start,
-                    start + LONGS.align(BYTES.alignAndConvert(actualChunksPerSegment, BITS), BYTES),
+                    start + MultiMapFactory.sizeOfBitSetInBytes(actualChunksPerSegment),
                     null);
             freeList = new SingleThreadedDirectBitSet(bsBytes);
             start += numberOfBitSets() * sizeOfSegmentFreeListBitSets();

@@ -80,8 +80,8 @@ enum MultiMapFactory {
         throw new IllegalArgumentException("Capacity " + capacity + " not supported");
     }
 
-    public static long sizeOfBitSetInBytes(long minCapacity) {
-        return BYTES.convert(LONGS.align(multiMapCapacity(minCapacity), BITS), BITS);
+    public static long sizeOfBitSetInBytes(long actualChunksPerSegment) {
+        return LONGS.align(BYTES.alignAndConvert(actualChunksPerSegment, BITS), BYTES);
     }
 
     public static ATSDirectBitSet newPositions(long capacity) {
