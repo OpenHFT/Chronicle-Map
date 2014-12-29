@@ -20,11 +20,13 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.HashBiMap;
 import com.google.common.primitives.Ints;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.DataValueGenerator;
 import net.openhft.lang.values.IntValue;
 import net.openhft.lang.values.LongValue;
 import net.openhft.lang.values.LongValue$$Native;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -32,6 +34,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -668,7 +671,7 @@ public class ChronicleMapTest {
         int procs = 1; // Runtime.getRuntime().availableProcessors();
         int threads = procs * 3;
         for (int runs : new int[]{1, /*10, 250, 500, 1000, 2500*/}) {
-            for (int entrySize : new int[]{240,256}) {
+            for (int entrySize : new int[]{240, 256}) {
                 int valuePadding = entrySize - 16;
                 char[] chars = new char[valuePadding];
                 Arrays.fill(chars, 'x');
@@ -702,7 +705,7 @@ public class ChronicleMapTest {
                             // use a factor to give up to 10 digit numbers.
                             int factor = Math.max(1,
                                     (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
-                            for (long k = t; k < entries; k ++) {
+                            for (long k = t; k < entries; k++) {
                                 key.setLength(0);
                                 key.append("us:");
                                 key.append(k * factor);
@@ -732,7 +735,7 @@ public class ChronicleMapTest {
                         long time = System.currentTimeMillis() - start;
                         System.out.printf("EntrySize: %,d Entries: %,d M Segments: %,d Throughput %.1f M ops/sec%n",
                                 entrySize, runs, segments,
-                                threads * entries  / 1000.0 / time);
+                                threads * entries / 1000.0 / time);
                     }
                     printStatus();
                     File file = map.file();
@@ -743,6 +746,7 @@ public class ChronicleMapTest {
             }
         }
     }
+
     @Test
     @Ignore("Performance test")
     public void testAcquirePerf()
@@ -802,10 +806,10 @@ public class ChronicleMapTest {
 
                                         } else {
                                             try (WriteContext wc = map.acquireUsingLocked(key, value)) {
-                                                if (value.length() < value0.length()-1)
+                                                if (value.length() < value0.length() - 1)
                                                     value.append(value0);
                                                 else if (value.length() > value0.length())
-                                                    value.setLength(value0.length()-1);
+                                                    value.setLength(value0.length() - 1);
                                                 else
                                                     value.append('+');
                                             }
@@ -1688,6 +1692,40 @@ public class ChronicleMapTest {
         }
 
         map.close();
+    }
+
+
+    @Ignore("HCOLL-283 issue with net.openhft.chronicle.map" +
+            ".ChronicleMapTest#testByteArrayKeySizeBySample")
+    @Test
+    public void testByteArrayKeySizeBySample() throws IOException {
+        TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877)
+                .name("serverMap");
+
+        File mapFile = new File("map201.dat");
+        try (ChronicleMap server = ChronicleMapBuilder.of(byte[].class, byte[][].class)
+                .replication((byte) 1, serverConfig)
+                .constantKeySizeBySample(new byte[14])
+                .createPersistedTo(mapFile)) {
+
+            try (ChronicleMap<byte[], byte[][]> map2 = ChronicleMapBuilder.of(byte[].class, byte[][].class)
+                    .constantKeySizeBySample(new byte[14])
+                    .statelessClient(new InetSocketAddress("localhost", 8877))
+                    .create()) {
+
+
+                byte[] key = new byte[14];
+                System.arraycopy("A".getBytes(), 0, key, 0, "A".length());
+                byte[][] value = {new byte[11], new byte[11]};
+                System.arraycopy("A".getBytes(), 0, value[0], 0, "A".length());
+                System.arraycopy("A".getBytes(), 0, value[1], 0, "A".length());
+
+
+                map2.put(key, value);
+                Assert.assertNotNull(map2.get(key));
+            }
+        }
+
     }
 
     @Test(expected = IllegalArgumentException.class)
