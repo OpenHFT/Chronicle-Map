@@ -20,7 +20,7 @@ A low latency replicated Key Value Store across your network, with eventual cons
 Click here to get the [Latest Version Number](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22) 
 
 #### Contents
-* [Overview](https://github.com/OpenHFT/Chronicle-Map#overview)
+* [Overview](https://github.com/OpenHFT/Chronicle-Map#Overview)
 * [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#should-i-use-chronicle-queue-or-chronicle-map)
 * [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#what-is-the-difference-between-sharedhashmap-and-chronicle-map)
 * [Overview](https://github.com/OpenHFT/Chronicle-Map#overview)
@@ -79,44 +79,41 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 * [ConcurrentHashMap v ChronicleMap](https://github.com/OpenHFT/Chronicle-Map#concurrenthashmap-v-chroniclemap)
 
 ### Overview
-Chronicle Map implements the `java.util.concurrent.ConcurrentMap`, however unlike the standard
-java map, ChronicleMap is able to share your entries accross processes:
+Chronicle Map implements the interface `java.util.concurrent.ConcurrentMap`, however unlike the standard
+jdk implementations, ChronicleMap is both persistent and able to share your entries accross processes:
 
 ![](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-diagram_04.jpg)
 
-## When to use
+## When to use HashMap, ConcurrentHashMap and ChronicleMap
 #### When to use HashMap
 If you compare `HashMap`, `ConcurrentHashMap` and `ChronicleMap`, most of the maps in your system
-are likely to be HashMap.  This is because `HashMap` is lightweight and synchronized HashMap works
+are likely to be HashMap.  This is because `HashMap` is lightweight.  Synchronized HashMap works
 well for lightly contended use cases.  By contention we mean, how many threads on average are trying
 to use a Map.  One reason you can't have many contended resources, is that you only have so many
-CPUs and they can only be accessing so many resources at once (ideally no more than one or two
+CPUs and they can only be accessing a limited resources at once (ideally no more than one or two
 per thread at a time).
 
 ####  When to use ConcurrentHashMap
 `ConcurrentHashMap` scales very well when highly contended.  It uses more memory but if you only
 have a few of them, this doesn't matter.  They have higher throughput than the other two solutions,
-but also it creates the highest garbage.  If garbage pressure is an issue for you, you may want
-to consider `ChronicleMap`
+but it does create the highest amount of garbage.  If garbage pressure is an issue for you (for example in 
+a low latency evironment), you should consider `ChronicleMap`.
 
-One of the main differences between chronicle and ConcurrentHashMap, is how you go about creating
-an instance see the getting started guide below for details.
-
-####  When to use Chronicle Map
+####  When to use ChronicleMap
 If you have;
 * lots of small key-values
 * you want to minimise garbage produced, and medium lived objects.
 * you need to share data between JVMs
 * you need persistence
 
-#### Should I use Chronicle Queue or Chronicle Map
-Chronicle queue is designed to send every update. If your network can't do this something has
+#### Should I use ChronicleQueue or ChronicleMap
+ChronicleQueue is 'lossless', designed to send every update. If your network can't do this something has
 to give. You could compress the data but at some point you have to work within the limits of your
-hardware or get more hardware. Chronicle Map on the other hand sends the latest value only.
+hardware or get more hardware. ChronicleMap on the other hand sends the latest value only.
 This will naturally drop updates and is a more natural choice for low bandwidth connections.
 
-#### What is the difference between [SharedHashMap](https://github.com/OpenHFT/HugeCollections) and Chronicle Map
-SharedHashMap was the old name given to ChronicleMap, Since the last release of SharedHashMap
+#### What is the difference between [SharedHashMap](https://github.com/OpenHFT/HugeCollections) and ChronicleMap
+SharedHashMap was the old name of what is now ChronicleMap. Since the last release of SharedHashMap
  we have added a lot of new features to ChronicleMap, most of these are listed in this readme.
 
 ## Getting Started
@@ -174,7 +171,7 @@ and define the snapshot version in your pom.xml, for example:
 
 #### Key Value Object Types
 
-Unlike HashMap which will support any heap object, Chronicle Map only works with objects that it 
+Unlike HashMap which will support any heap object, ChronicleMap only works with objects that it 
 can store off heap, so the objects have to be  :  (one of the following )
 
 - AutoBoxed primitives - for good performance.
@@ -194,9 +191,9 @@ or value objects that are created through, a directClass interface, for example 
 
 Object graphs can also be included as long as the outer object supports Serializable, Externalizable or BytesMarshallable.
 
-#### Java Class Construction
+#### ChronicleMap Construction
 
-Creating an instance of Chronicle Map is a little more complex than just calling a constructor.
+Creating an instance of ChronicleMap is a little more complex than just calling a constructor.
 To create an instance you have to use the ChronicleMapBuilder.
 
 ``` java
@@ -219,19 +216,19 @@ try {
 }
 ```
 
-Chronicle Map stores its data off the java heap, If you wish to share this off-heap memory between
+ChronicleMap stores its data off the java heap, If you wish to share this off-heap memory between
 processes on the same server, you must provide a "file", this file must be the same "file" for all
 the instances of Chronicle Map on the same server. The name and location of the "file" is entirely
 up to you.  For the best performance on many unix systems we recommend using
 [tmpfs](http://en.wikipedia.org/wiki/Tmpfs).
 
 ### Sharing Data Between Two or More Maps
-Since this file is memory mapped, if you were to create another instance of the Chronicle Map,
-pointing to the same file, both Chronicle Maps use this file as a common memory store, which they
-both read and write into. The good thing about this is the two ( or more instances of the Chronicle Map )
-don't have to be running in the same java process. Ideally and for best performance, the two processes
+Since this file is memory mapped, if you were to create another instance of the ChronicleMap,
+pointing to the same file, both ChronicleMaps use this file as a common memory store, into which they
+both read and write. The good thing about this, is that the two ( or more instances of the ChronicleMap )
+don't have to be running in the same Java process. Ideally and for best performance, the two processes
 should be running on the same server. Since the file is memory mapped, ( in most cases ) the read
-and writes to the file are hitting the disk cache. Allowing the chronicle map to exchange data
+and writes to the file are hitting the disk cache. This allows the ChronicleMap to exchange data
 between processes by just using memory and in around 40 nanoseconds. 
 
 ``` java 
@@ -248,14 +245,14 @@ on your server.
 
 ### Entries
 
-One of the differences with Chronicle Map against ConcurrentHashMap, is that it can't be resized,
-unlike the ConcurrentHashMap, Chronicle Map is not limited to the available on heap memory.
-Resizing is a very expensive operation for Hash Maps, as it can stall your application, so as such
-we don't do it. When you are building a Chronicle Map you can set the maximum number of entries that
-you are ever likely to support, its ok to over exaggerate this number. As the Chronicle Map is not
-limited to your available memory, At worst you will end up having a very large file on disk.
+One of the differences with ChronicleMap against ConcurrentHashMap, is that it can't be resized.
+Unlike the ConcurrentHashMap, ChronicleMap is not limited to the available on heap memory.
+Resizing is a very expensive operation for HashMaps as it can stall your application, this is why
+we don't do it. When you are building a ChronicleMap you can set the maximum number of entries that
+you are ever likely to support but it's fine to overestimate this number. This is because ChronicleMap is not
+limited to your available memory therefore, at worst, you will end up having a large file on disk.
 
-You set the maximum number of entries by the builder:
+You set the maximum number of entries using the builder:
 
 ``` java
 ConcurrentMap<Integer, CharSequence> map =
@@ -267,13 +264,13 @@ ConcurrentMap<Integer, CharSequence> map =
 In this example above we have set 1000 entries.
 
 
-We have optimised chronicle, So that you can have situations where you either don't use;
+We have optimised ChronicleMap so that you can have situations where you either don't use;
 
-- all the entries you have allowed for.  This works best on Unix where the disk space and memory
-used reflect the number of actual entries, not the number you allowed for.
+- All the entries for which you have allowed.  This works best on Unix where the disk space and memory
+used reflect the number of actual entries, not the number for which you have allowed.
 
-- all the space you allow for each entry.  This helps if you have entries which are multiple cache
-lines (128 bytes +), only the lines you touch sit in your CPU cache and if you have multiple pages
+- All the space you allow for each entry (see below).  This helps if you have entries which are multiple cache
+lines (128 bytes +). Only the lines you touch sit in your CPU cache and if you have multiple pages
 (8+ Kbytes) only the pages you touch use memory or disk.  The CPU cache usage matters as it can be
 10000x smaller than main memory.
 
@@ -289,18 +286,18 @@ Also, if you create a replicated map, there is an additional 10 bytes per entry.
 
 We suggest you don't configure size for constant-sized keys or values, instead you can use the
 builder methods .constantKeySizeBySample(sampleKey) and
-.constantValueSizeBySample(sampleValue), For common types like Integer we suggest you don't use
-these methods, for example ChronicleMap knows that Integer is 4 bytes long, Long is 8, etc.
+.constantValueSizeBySample(sampleValue). For common types like Integer we suggest you don't use
+these methods, for example ChronicleMap understands that Integer is 4 bytes long, Long is 8, etc.
 
 
 ### Size of space reserved on disk
 
-In linux, if you looked at the size of the 'file', it will report the used entry size so if you
-have just added one entry, it will report the size of this entry, but Windows will report
+In Linux, if you looked at the size of the 'file', it will report the used entry size so if you
+have just added one entry, it will report the size of this entry. Windows will report
 the reserved size, as it reserves the disk space eagerly ( in fact windows also reserves the memory
-eagerly as well ) in other words number-of-entries x entry-size. 
+eagerly as well ) in other words, number-of-entries x entry-size. 
 
-so on linux, if your type
+so on Linux, if you type
 ``` 
 # It shows you the extents. 
 ls -l <file>
@@ -309,23 +306,23 @@ ls -l <file>
 du <file>
 ```
 
-To illustrate this with an example - On Ubuntu we can create a 100 TB chronicle map.  Both `top` and
+To illustrate this with an example - On Ubuntu we can create a 100 TB ChronicleMap.  Both `top` and
 `ls -l` say the process virtual size / file size is 100 TB, however the resident memory via `du`
 says the size is 71 MB after adding 10000 entries. You can see the size actually used with du.
 
 ### How Operating Systems differ
 
-As a pure java library, the same chronicle map java byte code can be run on Windows, Linux and Mac OSX.
-However these operating systems work with memory mapped files differently, these differences effect how
-chronicle is able to map memory to a file, and hence this can impact the total number of entries that you are
+As a pure Java library, the same ChronicleMap Java byte code can be run on Windows, Linux and Mac OSX,
+however these operating systems work with memory mapped files differently. These differences effect how
+ChronicleMap is able to map memory to a file and hence this can impact the total number of entries that you are
 able to configure.
 
-- Windows allocates memory and disk eagerly, Windows will fail if more than 4 GB is allocated in a single memory
+- Windows allocates memory and disk eagerly. Windows will fail if more than 4 GB is allocated in a single memory
 mapping, ( calculated as 4GB = 2^20 * 4 KB pages). Windows doesn't fail when a memory mapped region is mapped, rather it will fail when it is used up. This limitation doesn't apply to newer or server based versions of Windows. Eager memory allocation means you can't map more than free memory, but it should reduce jitter when you use it. In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.
 - Linux allocates memory and disk lazily. Linux systems see a performance degradation at around 200% of main memory.
 - Mac OSX allocates memory lazily and disk eagerly.
 
-Chronicle Map allocates head room which is a waste on Windows (Linux's sparse allocation means the head room has little
+ChronicleMap allocates head room which is a waste on Windows (Linux's sparse allocation means the head room has little
 impact).
 
 ##### For production
@@ -333,8 +330,8 @@ impact).
 - on Linux we recommend you use small to large maps of less than double main memory. e.g. if you have a 128 GB server, we recommend you have less than 256 GB of maps on the server.
 - on Mac OSX, we have no specific recommendations.
 
-### Chronicle Map Interface
-The Chronicle Map interface adds a few methods above an beyond the standard ConcurrentMap,
+### ChronicleMap Interface
+The ChronicleMap interface adds a few methods above an beyond the standard ConcurrentMap,
 the ChronicleMapBuilder can also be used to return the ChronicleMap, see the example below :
 
 ``` java
