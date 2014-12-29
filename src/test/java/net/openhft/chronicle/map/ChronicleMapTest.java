@@ -1695,8 +1695,7 @@ public class ChronicleMapTest {
     }
 
 
-    @Ignore("HCOLL-283 issue with net.openhft.chronicle.map" +
-            ".ChronicleMapTest#testByteArrayKeySizeBySample")
+    @Ignore("HCOLL-283 run it twice with the same filename it fails")
     @Test
     public void testByteArrayKeySizeBySample() throws IOException {
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877)
