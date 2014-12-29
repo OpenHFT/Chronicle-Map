@@ -20,9 +20,9 @@ A low latency replicated Key Value Store across your network, with eventual cons
 Click here to get the [Latest Version Number](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22) 
 
 #### Contents
-* [Overview](https://github.com/OpenHFT/Chronicle-Map#Overview)
-* [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#should-i-use-chronicle-queue-or-chronicle-map)
-* [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#what-is-the-difference-between-sharedhashmap-and-chronicle-map)
+* [Overview](https://github.com/OpenHFT/Chronicle-Map#overview)
+* [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#should-i-use-chroniclequeue-or-chroniclemap)
+* [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#what-is-the-difference-between-sharedhashmap-and-chroniclemap)
 * [JavaDoc](http://openhft.github.io/Chronicle-Map/apidocs)
 * [Getting Started Guide](https://github.com/OpenHFT/Chronicle-Map#getting-started)
  *  [Simple Construction](https://github.com/OpenHFT/Chronicle-Map#simple-construction)
