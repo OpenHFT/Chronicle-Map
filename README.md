@@ -1,12 +1,12 @@
 *We can help you get Chronicle up and running in your organisation, we suggest you invite us in for
 consultancy, charged on an ad-hoc basis, we can discuss the best options tailored to your individual
-requirements. - [Contact Us](sales@higherfrequencytrading.com)*
+requirements. - [Contact Us](http://openhft.net/support/)*
 
 *Or you may already be using Chronicle and just want some help - [find out more..](http://openhft.net/support/)*
 
 # Chronicle Map
 
-Replicate your Key Value Store across your network, with eventual consistency, persistence and performance.
+A low latency replicated Key Value Store across your network, with eventual consistency, persistence and performance.
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
 
 #### Maven Artifact Download
@@ -20,7 +20,7 @@ Replicate your Key Value Store across your network, with eventual consistency, p
 Click here to get the [Latest Version Number](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22) 
 
 #### Contents
-
+* [Overview](https://github.com/OpenHFT/Chronicle-Map#overview)
 * [Should I use Chronicle Queue or Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#should-i-use-chronicle-queue-or-chronicle-map)
 * [What is the difference between SharedHashMap and Chronicle Map](https://github.com/OpenHFT/Chronicle-Map#what-is-the-difference-between-sharedhashmap-and-chronicle-map)
 * [Overview](https://github.com/OpenHFT/Chronicle-Map#overview)
