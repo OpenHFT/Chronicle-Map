@@ -77,9 +77,12 @@ public class AbstractChronicleMapConverter<K, V> implements Converter {
     @Override
     public Object unmarshal(HierarchicalStreamReader reader,
                             UnmarshallingContext context) {
-        reader.moveDown();
+        // empty map
+        if ("[\"\"]".equals(reader.getValue()))
+            return null;
         if (!"cmap".equals(reader.getNodeName()))
-            throw new ConversionException("root node should be cmap, was " + reader.getNodeName());
+            throw new ConversionException("should be under 'cmap' node");
+        reader.moveDown();
         while (reader.hasMoreChildren()) {
             reader.moveDown();
 
