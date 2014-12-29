@@ -1614,10 +1614,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             return entry;
         }
 
-        long entrySize(long keySize, long valueSize) {
-            long sizeOfEverythingBeforeValue = metaDataBytes +
-                    keySizeMarshaller.sizeEncodingSize(keySize) + keySize +
-                    valueSizeMarshaller.sizeEncodingSize(valueSize);
+        final long entrySize(long keySize, long valueSize) {
+            long sizeOfEverythingBeforeValue = sizeOfEverythingBeforeValue(keySize, valueSize);
             if (constantlySizedEntry) {
                 return alignment.alignAddr(sizeOfEverythingBeforeValue + valueSize);
             } else if (couldNotDetermineAlignmentBeforeAllocation) {
@@ -1625,6 +1623,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             } else {
                 return alignment.alignAddr(sizeOfEverythingBeforeValue) + valueSize;
             }
+        }
+
+        long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
+            return metaDataBytes +
+                    keySizeMarshaller.sizeEncodingSize(keySize) + keySize +
+                    valueSizeMarshaller.sizeEncodingSize(valueSize);
         }
 
         final int inChunks(long sizeInBytes) {

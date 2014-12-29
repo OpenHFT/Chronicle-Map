@@ -683,19 +683,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         @Override
-        long entrySize(long keySize, long valueSize) {
-            long result = alignment.alignAddr(metaDataBytes +
-                    keySizeMarshaller.sizeEncodingSize(keySize) + keySize + ADDITIONAL_ENTRY_BYTES +
-                    valueSizeMarshaller.sizeEncodingSize(valueSize)) + valueSize;
-            // replication enforces that the entry size will never be larger than an unsigned short
-            if (result > Integer.MAX_VALUE)
-                throw new IllegalStateException("ENTRY WRITE_BUFFER_SIZE TOO LARGE : Replicated " +
-                        "ChronicleMap's" +
-                        " are restricted to an " +
-                        "entry size of " + Integer.MAX_VALUE + ", " +
-                        "your entry size=" + result);
-
-            return result;
+        long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
+            return super.sizeOfEverythingBeforeValue(keySize, valueSize) + ADDITIONAL_ENTRY_BYTES;
         }
 
         @Override
