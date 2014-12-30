@@ -20,7 +20,6 @@ package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.lang.MemoryUnit;
-import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 
@@ -49,28 +48,6 @@ public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaByte
         super(buffer);
     }
 
-    void init(W writer, E e, boolean mutable, long maxSize) {
-        if (mutable || writer != this.writer || e != cur) {
-            this.writer = writer;
-            cur = e;
-            while (true) {
-                try {
-                    Bytes buffer = this.buffer.obtain(maxSize);
-                    innerWrite(writer, buffer, e);
-                    buffer.flip();
-                    size = buffer.remaining();
-                    hash = 0L;
-                    return;
-                } catch (Exception ex) {
-                    checkMaxSizeStillReasonable(maxSize, ex);
-                    maxSize *= 2L;
-                }
-            }
-        }
-    }
-
-    abstract void innerWrite(W writer, Bytes bytes, E e);
-
     DirectBytesBuffer buffer() {
         return buffer;
     }
@@ -88,7 +65,7 @@ public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaByte
     public static <E, M extends BytesMarshaller<E>>
     MetaProvider<E, M, CopyingMetaBytesInterop<E, M>> providerForBytesMarshaller(boolean mutable,
                                                                                  long maxSize) {
-        return new BytesMarshallerCopyingMetaBytesInteropProvider<E, M>(mutable, maxSize);
+        return new BytesMarshallerCopyingMetaBytesInteropProvider<>(mutable, maxSize);
     }
 
     private static class BytesMarshallerCopyingMetaBytesInteropProvider<E,
@@ -115,30 +92,25 @@ public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaByte
     }
 
     public static <E, W extends BytesWriter<E>>
-    MetaProvider<E, W, CopyingMetaBytesInterop<E, W>> providerForBytesWriter(boolean mutable,
-                                                                             long maxSize) {
-        return new BytesWriterCopyingMetaBytesInteropProvider<E, W>(mutable, maxSize);
+    MetaProvider<E, W, CopyingMetaBytesInterop<E, W>> providerForBytesWriter(boolean mutable) {
+        return new BytesWriterCopyingMetaBytesInteropProvider<>(mutable);
     }
 
     private static class BytesWriterCopyingMetaBytesInteropProvider<E, W extends BytesWriter<E>>
             extends BasicCopyingMetaBytesInteropProvider<E, W, CopyingMetaBytesInterop<E, W>> {
         private static final long serialVersionUID = 0L;
         private final boolean mutable;
-        private final long maxSize;
 
-        public BytesWriterCopyingMetaBytesInteropProvider(boolean mutable, long maxSize) {
+        public BytesWriterCopyingMetaBytesInteropProvider(boolean mutable) {
             this.mutable = mutable;
-            this.maxSize = maxSize;
         }
 
         @Override
-        public CopyingMetaBytesInterop<E, W> get(
-                ThreadLocalCopies copies,
+        public CopyingMetaBytesInterop<E, W> get(ThreadLocalCopies copies,
                 CopyingMetaBytesInterop<E, W> originalMetaWriter, W writer, E e) {
             DirectBytesBuffer.ForBytesWriter forBytesWriter =
                     provider.get(copies, originalMetaWriter.buffer()).forBytesWriter;
-            forBytesWriter.buffer.obtain(writer.size(e));
-            forBytesWriter.init(writer, e, mutable, maxSize);
+            forBytesWriter.init(writer, e, mutable);
             return forBytesWriter;
         }
     }

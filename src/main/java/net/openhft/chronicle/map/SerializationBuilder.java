@@ -240,7 +240,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         } else if (copyingInterop == CopyingInterop.FROM_WRITER) {
             this.maxSize = maxSize;
             metaInteropProvider(CopyingMetaBytesInterop
-                    .<E, BytesWriter<E>>providerForBytesWriter(instancesAreMutable, maxSize));
+                    .<E, BytesWriter<E>>providerForBytesWriter(instancesAreMutable));
         }
         return this;
     }
