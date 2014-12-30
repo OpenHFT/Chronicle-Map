@@ -1421,7 +1421,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
          */
         static final long LOCK_OFFSET = 0L; // 64-bit
         static final long SIZE_OFFSET = LOCK_OFFSET + 8L; // 32-bit
-        ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
         final NativeBytes segmentHeader;
         final NativeBytes bytes;
         final long entriesOffset;
