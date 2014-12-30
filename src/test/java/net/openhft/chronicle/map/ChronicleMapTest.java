@@ -1701,28 +1701,35 @@ public class ChronicleMapTest {
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877)
                 .name("serverMap");
 
-        File mapFile = new File("map201.dat");
-        try (ChronicleMap server = ChronicleMapBuilder.of(byte[].class, byte[][].class)
-                .replication((byte) 1, serverConfig)
-                .constantKeySizeBySample(new byte[14])
-                .createPersistedTo(mapFile)) {
+        File mapFile = getPersistenceFile();
 
-            try (ChronicleMap<byte[], byte[][]> map2 = ChronicleMapBuilder.of(byte[].class, byte[][].class)
+
+        // this test only appear to fail when we reuse the mapFile
+        for (int i = 0; i < 2; i++) {
+
+            try (ChronicleMap server = ChronicleMapBuilder.of(byte[].class, byte[][].class)
+                    .replication((byte) 1, serverConfig)
                     .constantKeySizeBySample(new byte[14])
-                    .statelessClient(new InetSocketAddress("localhost", 8877))
-                    .create()) {
+                    .createPersistedTo(mapFile)) {
+
+                try (ChronicleMap<byte[], byte[][]> map2 = ChronicleMapBuilder.of(byte[].class, byte[][].class)
+                        .constantKeySizeBySample(new byte[14])
+                        .statelessClient(new InetSocketAddress("localhost", 8877))
+                        .create()) {
 
 
-                byte[] key = new byte[14];
-                System.arraycopy("A".getBytes(), 0, key, 0, "A".length());
-                byte[][] value = {new byte[11], new byte[11]};
-                System.arraycopy("A".getBytes(), 0, value[0], 0, "A".length());
-                System.arraycopy("A".getBytes(), 0, value[1], 0, "A".length());
+                    byte[] key = new byte[14];
+                    System.arraycopy("A".getBytes(), 0, key, 0, "A".length());
+                    byte[][] value = {new byte[11], new byte[11]};
+                    System.arraycopy("A".getBytes(), 0, value[0], 0, "A".length());
+                    System.arraycopy("A".getBytes(), 0, value[1], 0, "A".length());
 
 
-                map2.put(key, value);
-                Assert.assertNotNull(map2.get(key));
+                    map2.put(key, value);
+                    Assert.assertNotNull(map2.get(key));
+                }
             }
+
         }
 
     }
