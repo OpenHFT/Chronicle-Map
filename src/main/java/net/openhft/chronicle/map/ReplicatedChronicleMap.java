@@ -944,7 +944,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     // is still held
                     if (isDeleted) {
                         incrementSize();
-                        hashLookup.putPosition(segmentState.pos);
+                        // if they are NOT equal, it means the entry was relocated in putValue(),
+                        // hence position is already set
+                        if (pos == segmentState.pos) {
+                            hashLookup.putPosition(segmentState.pos);
+                        } else {
+                            assert hashLookup.getPositions().isSet(segmentState.pos);
+                        }
                     }
                     if (resultUnused)
                         return null;
