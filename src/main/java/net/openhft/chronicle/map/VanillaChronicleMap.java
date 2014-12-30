@@ -1409,6 +1409,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         assert booleanResult || expectedValue == null;
     }
 
+    static final boolean checkSegmentMultiMapsAndBitSetsConsistencyOnBootstrap = Boolean.getBoolean(
+            "chronicleMap.checkSegmentMultiMapsAndBitSetsConsistencyOnBootstrap");
+
     // these methods should be package local, not public or private.
     class Segment implements SharedSegment {
         /*
@@ -1454,6 +1457,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             start += specialEntrySpaceOffset;
             entriesOffset = start - bytes.startAddr();
             assert bytes.capacity() >= entriesOffset + actualChunksPerSegment * chunkSize;
+            if (checkSegmentMultiMapsAndBitSetsConsistencyOnBootstrap)
+                checkMultiMapsAndBitSetsConsistency();
         }
 
         final MultiMap hashLookup() {
@@ -1470,6 +1475,30 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             start + sizeOfMultiMapBitSet(), null);
 //            multiMapBytes.load();
             return multiMapFactory.create(multiMapBytes, sizeOfMultiMapBitSetBytes);
+        }
+
+        void checkMultiMapsAndBitSetsConsistency() {
+            MultiMap hashLookup = hashLookup();
+            final DirectBitSet positions = hashLookup.getPositions();
+            class EntryChecker implements MultiMap.EntryConsumer {
+                long size = 0;
+                @Override
+                public void accept(long key, long value) {
+                    if (positions.isSet(value))
+                        size++;
+                    if (freeList.isClear(value))
+                        throw new IllegalStateException("Position " + value + " is present in " +
+                                "multiMap but available in the free chunk list");
+                }
+            }
+            EntryChecker entryChecker = new EntryChecker();
+            hashLookup.forEach(entryChecker);
+            if (size() != entryChecker.size || entryChecker.size != positions.cardinality()) {
+                throw new IllegalStateException("Segment inconsistent: " +
+                        "size by Segment counter: " + size() +
+                        ", size by multiMap records present in bit set: " + entryChecker.size +
+                        ", size by multiMap bit set cardinality: " + positions.cardinality());
+            }
         }
 
         public final int getIndex() {
