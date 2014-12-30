@@ -724,7 +724,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     // deleted flag
                     entry.writeBoolean(false);
 
-                    long prevValueSize = readValueSize(entry);
+                    long prevValueSize = valueSizeMarshaller.readSize(entry);
+                    long sizeOfEverythingBeforeValue = entry.position();
+                    alignment.alignPositionAddr(entry);
                     long valueAddr = entry.positionAddr();
                     long entryEndAddr = valueAddr + prevValueSize;
 
@@ -747,9 +749,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     } else {
                         throw defaultValueOrPrepareBytesShouldBeSpecified();
                     }
-                    putValue(pos, offset, entry, valueSizePos, entryEndAddr,
-                            segmentState, metaElemWriter, elemWriter, elem,
-                            metaElemWriter.size(elemWriter, elem), hashLookup);
+                    putValue(pos, offset, entry, valueSizePos, entryEndAddr, segmentState,
+                            metaElemWriter, elemWriter, elem, metaElemWriter.size(elemWriter, elem),
+                            hashLookup, sizeOfEverythingBeforeValue);
                     pos = segmentState.pos;
 
                     incrementSize();
@@ -1146,8 +1148,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 }
                 // key is not found
                 if (remote) {
-                    long entrySize = entrySize(keySize, valueSizeMarshaller.minEncodableSize());
-                    long pos = alloc(inChunks(entrySize));
+                    long minEncodableValueSize = valueSizeMarshaller.minEncodableSize();
+                    long entrySize = entrySize(keySize, minEncodableValueSize);
+                    int allocatedChunks = inChunks(entrySize);
+                    long pos = alloc(allocatedChunks);
                     long offset = offsetFromPos(pos);
                     clearMetaData(offset);
                     reuse(entry, offset);
@@ -1158,8 +1162,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     entry.writeLong(timestamp);
                     entry.writeByte(identifier);
                     entry.writeBoolean(true);
-                    
-                    valueSizeMarshaller.writeSize(entry, valueSizeMarshaller.minEncodableSize());
+
+                    valueSizeMarshaller.writeSize(entry, minEncodableValueSize);
+                    alignment.alignPositionAddr(entry);
+                    entry.skip(minEncodableValueSize);
+
+                    freeExtraAllocatedChunks(pos, allocatedChunks, entry);
 
                     hashLookup.putAfterFailedSearch(searchState, pos);
                     hashLookup.removePosition(pos);
