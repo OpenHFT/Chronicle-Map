@@ -137,6 +137,7 @@ public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaByte
                 CopyingMetaBytesInterop<E, W> originalMetaWriter, W writer, E e) {
             DirectBytesBuffer.ForBytesWriter forBytesWriter =
                     provider.get(copies, originalMetaWriter.buffer()).forBytesWriter;
+            forBytesWriter.buffer.obtain(writer.size(e));
             forBytesWriter.init(writer, e, mutable, maxSize);
             return forBytesWriter;
         }
