@@ -26,6 +26,8 @@ public interface SizeMarshaller extends Serializable {
 
     int sizeEncodingSize(long size);
 
+    long minEncodableSize();
+
     int minSizeEncodingSize();
 
     int maxSizeEncodingSize();

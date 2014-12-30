@@ -1146,7 +1146,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 }
                 // key is not found
                 if (remote) {
-                    long entrySize = entrySize(keySize, 0);
+                    long entrySize = entrySize(keySize, valueSizeMarshaller.minEncodableSize());
                     long pos = alloc(inChunks(entrySize));
                     long offset = offsetFromPos(pos);
                     clearMetaData(offset);
@@ -1158,6 +1158,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     entry.writeLong(timestamp);
                     entry.writeByte(identifier);
                     entry.writeBoolean(true);
+                    
+                    valueSizeMarshaller.writeSize(entry, valueSizeMarshaller.minEncodableSize());
 
                     hashLookup.putAfterFailedSearch(searchState, pos);
                     hashLookup.removePosition(pos);
