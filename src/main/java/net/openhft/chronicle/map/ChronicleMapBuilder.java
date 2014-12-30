@@ -1390,7 +1390,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         Class<?> xStreamClass;
         try {
             xStreamClass =
-                    Class.forName("net.openhft.xstreem.MapHeaderSerializationXStream");
+                    Class.forName("net.openhft.xstream.MapHeaderSerializationXStream");
         } catch (ClassNotFoundException e) {
             xStreamClass = null;
         }
@@ -1412,7 +1412,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     private static Object deserializeHeaderViaXStream(ObjectInputStream ois) {
         try {
             Class<?> xStreamClass =
-                    Class.forName("net.openhft.xstreem.MapHeaderSerializationXStream");
+                    Class.forName("net.openhft.xstream.MapHeaderSerializationXStream");
             Method fromXML = xStreamClass.getMethod("fromXML", InputStream.class);
             return fromXML.invoke(xStreamClass.newInstance(), ois);
         } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |

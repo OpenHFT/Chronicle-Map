@@ -166,8 +166,8 @@
                     </links>
                     <excludePackageNames>net.openhft.chronicle.hash.serialization.internal
                     </excludePackageNames>
-                    <excludePackageNames>net.openhft.xstreem</excludePackageNames>
-                    <excludePackageNames>net.openhft.xstreem.converters</excludePackageNames>
+                    <excludePackageNames>net.openhft.xstream</excludePackageNames>
+                    <excludePackageNames>net.openhft.xstream.converters</excludePackageNames>
                 </configuration>
             </plugin>
 

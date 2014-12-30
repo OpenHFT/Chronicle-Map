@@ -20,10 +20,10 @@ package net.openhft.chronicle.map;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
-import net.openhft.xstreem.converters.ByteBufferConverter;
-import net.openhft.xstreem.converters.DataValueConverter;
-import net.openhft.xstreem.converters.StatelessChronicleMapConverter;
-import net.openhft.xstreem.converters.VanillaChronicleMapConverter;
+import net.openhft.xstream.converters.ByteBufferConverter;
+import net.openhft.xstream.converters.DataValueConverter;
+import net.openhft.xstream.converters.StatelessChronicleMapConverter;
+import net.openhft.xstream.converters.VanillaChronicleMapConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

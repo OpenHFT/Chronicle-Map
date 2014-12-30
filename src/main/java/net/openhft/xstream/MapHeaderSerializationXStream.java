@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.openhft.xstreem;
+package net.openhft.xstream;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.reflection.SunLimitedUnsafeReflectionProvider;
