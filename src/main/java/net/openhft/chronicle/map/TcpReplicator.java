@@ -1456,6 +1456,8 @@ class StatelessServerConnector<K, V> {
 
     @NotNull
     private final VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
+    private final SerializationBuilder<K> keySerializationBuilder;
+    private final SerializationBuilder<V> valueSerializationBuilder;
     private final int tcpBufferSize;
 
 
@@ -1466,6 +1468,8 @@ class StatelessServerConnector<K, V> {
             final SerializationBuilder<V> valueSerializationBuilder) {
         this.tcpBufferSize = tcpBufferSize;
 
+        this.keySerializationBuilder = keySerializationBuilder;
+        this.valueSerializationBuilder = valueSerializationBuilder;
         keyReaderWithSize = new ReaderWithSize<>(keySerializationBuilder);
         keyWriterWithSize = new WriterWithSize<>(keySerializationBuilder, bufferResizer);
         valueReaderWithSize = new ReaderWithSize<>(valueSerializationBuilder);
@@ -1575,10 +1579,10 @@ class StatelessServerConnector<K, V> {
                 return putMapped(reader, writer, sizeLocation);
 
             case KEY_BUILDER:
-                return writeBuilder(writer, sizeLocation, map.keyBuilder);
+                return writeBuilder(writer, sizeLocation, keySerializationBuilder);
 
             case VALUE_BUILDER:
-                return writeBuilder(writer, sizeLocation, map.valueBuilder);
+                return writeBuilder(writer, sizeLocation, valueSerializationBuilder);
 
             default:
                 throw new IllegalStateException("unsupported event=" + event);

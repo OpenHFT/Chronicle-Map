@@ -1695,14 +1695,12 @@ public class ChronicleMapTest {
     }
 
 
-    @Ignore("HCOLL-283 run it twice with the same filename it fails")
     @Test
     public void testByteArrayKeySizeBySample() throws IOException {
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877)
                 .name("serverMap");
 
         File mapFile = getPersistenceFile();
-
 
         // this test only appear to fail when we reuse the mapFile
         for (int i = 0; i < 2; i++) {
@@ -1712,7 +1710,8 @@ public class ChronicleMapTest {
                     .constantKeySizeBySample(new byte[14])
                     .createPersistedTo(mapFile)) {
 
-                try (ChronicleMap<byte[], byte[][]> map2 = ChronicleMapBuilder.of(byte[].class, byte[][].class)
+                try (ChronicleMap<byte[], byte[][]> map2 = ChronicleMapBuilder
+                        .of(byte[].class, byte[][].class)
                         .constantKeySizeBySample(new byte[14])
                         .statelessClient(new InetSocketAddress("localhost", 8877))
                         .create()) {

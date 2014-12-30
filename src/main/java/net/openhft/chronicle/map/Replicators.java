@@ -118,7 +118,8 @@ final class Replicators {
 
                 TcpTransportAndNetworkConfig tcpConfig = replication.tcpTransportAndNetwork();
 
-                TcpReplicator.StatelessClientParameters statelessClientParameters = new TcpReplicator.StatelessClientParameters(
+                TcpReplicator.StatelessClientParameters statelessClientParameters =
+                        new TcpReplicator.StatelessClientParameters(
                         (VanillaChronicleMap) chronicleMap,
                         builder.keyBuilder,
                         builder.valueBuilder);

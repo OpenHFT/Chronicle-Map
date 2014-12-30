@@ -1332,6 +1332,11 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
                             (VanillaChronicleMap<K, ?, ?, V, ?, ?>) xStream.fromXML(ois);
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
                     map.createMappedStoreAndSegments(file);
+                    // This is needed to property initialize key and value serialization builders,
+                    // which are later used in replication
+                    // TODO don't use SerializationBuilders in replication, extract marshallers
+                    // needed to transmit to stateless clients directly from map instance
+                    preMapConstruction(singleHashReplication != null || channel != null);
                     return establishReplication(map, singleHashReplication, channel);
                 }
             }
