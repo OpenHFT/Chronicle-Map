@@ -439,37 +439,34 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         size += averageSizeEncodingSize(valueBuilder, valueSize);
         Alignment alignment = valueAlignment();
         int worstAlignment;
-        if (alignment != Alignment.NO_ALIGNMENT) {
-            if (constantlySizedKeys() && valueBuilder.constantSizeEncodingSizeMarshaller()) {
-                long constantSizeBeforeAlignment = round(size);
-                if (constantlySizedValues()) {
-                    // see specialEntrySpaceOffset()
-                    long totalDataSize = constantSizeBeforeAlignment + constantValueSize();
-                    worstAlignment = (int) (alignment.alignAddr(totalDataSize) - totalDataSize);
-                } else {
-                    determineAlignment:
-                    if (actualChunkSize > 0) {
-                        worstAlignment = worstAlignmentAssumingChunkSize(constantSizeBeforeAlignment,
-                                actualChunkSize);
-                    } else {
-                        int chunkSize = 8;
-                        worstAlignment = worstAlignmentAssumingChunkSize(
-                                constantSizeBeforeAlignment, chunkSize);
-                        if (size + worstAlignment + valueSize >=
-                                maxDefaultChunksPerAverageEntry(replicated) * chunkSize) {
-                            break determineAlignment;
-                        }
-                        chunkSize = 4;
-                        worstAlignment = worstAlignmentAssumingChunkSize(
-                                constantSizeBeforeAlignment, chunkSize);
-                    }
-                }
+        if (alignment != Alignment.NO_ALIGNMENT &&
+                constantlySizedKeys() && valueBuilder.constantSizeEncodingSizeMarshaller()) {
+            long constantSizeBeforeAlignment = round(size);
+            if (constantlySizedValues()) {
+                // see specialEntrySpaceOffset()
+                long totalDataSize = constantSizeBeforeAlignment + constantValueSize();
+                worstAlignment = (int) (alignment.alignAddr(totalDataSize) - totalDataSize);
             } else {
-                // assume worst case, we always lose most possible bytes for alignment
-                worstAlignment = alignment.alignment() - 1;
+                determineAlignment:
+                if (actualChunkSize > 0) {
+                    worstAlignment = worstAlignmentAssumingChunkSize(constantSizeBeforeAlignment,
+                            actualChunkSize);
+                } else {
+                    int chunkSize = 8;
+                    worstAlignment = worstAlignmentAssumingChunkSize(
+                            constantSizeBeforeAlignment, chunkSize);
+                    if (size + worstAlignment + valueSize >=
+                            maxDefaultChunksPerAverageEntry(replicated) * chunkSize) {
+                        break determineAlignment;
+                    }
+                    chunkSize = 4;
+                    worstAlignment = worstAlignmentAssumingChunkSize(
+                            constantSizeBeforeAlignment, chunkSize);
+                }
             }
         } else {
-            worstAlignment = 0;
+            // assume worst case, we always lose most possible bytes for alignment
+            worstAlignment = alignment.alignment() - 1;
         }
         size += worstAlignment;
         size += valueSize;
@@ -481,7 +478,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
      * always the same, we should _misalign_ the first chunk.
      */
     int specialEntrySpaceOffset(boolean replicated) {
-        if (!constantlySizedEntries() || valueAlignment() == Alignment.NO_ALIGNMENT)
+        if (!constantlySizedEntries())
             return 0;
         return (int) (constantValueSize() % valueAlignment().alignment());
     }
@@ -510,8 +507,6 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
     private int worstAlignmentAssumingChunkSize(
             long constantSizeBeforeAlignment, int chunkSize) {
-        if (valueAlignment() == Alignment.NO_ALIGNMENT)
-            return 0;
         Alignment valueAlignment = valueAlignment();
         long firstAlignment = valueAlignment.alignAddr(constantSizeBeforeAlignment) -
                 constantSizeBeforeAlignment;

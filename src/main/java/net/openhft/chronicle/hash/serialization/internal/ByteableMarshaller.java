@@ -72,6 +72,11 @@ public abstract class ByteableMarshaller<E extends Byteable>
     }
 
     @Override
+    public long minEncodableSize() {
+        return size;
+    }
+
+    @Override
     public int minSizeEncodingSize() {
         return 0;
     }

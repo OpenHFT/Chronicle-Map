@@ -683,19 +683,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         @Override
-        long entrySize(long keySize, long valueSize) {
-            long result = alignment.alignAddr(metaDataBytes +
-                    keySizeMarshaller.sizeEncodingSize(keySize) + keySize + ADDITIONAL_ENTRY_BYTES +
-                    valueSizeMarshaller.sizeEncodingSize(valueSize)) + valueSize;
-            // replication enforces that the entry size will never be larger than an unsigned short
-            if (result > Integer.MAX_VALUE)
-                throw new IllegalStateException("ENTRY WRITE_BUFFER_SIZE TOO LARGE : Replicated " +
-                        "ChronicleMap's" +
-                        " are restricted to an " +
-                        "entry size of " + Integer.MAX_VALUE + ", " +
-                        "your entry size=" + result);
-
-            return result;
+        long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
+            return super.sizeOfEverythingBeforeValue(keySize, valueSize) + ADDITIONAL_ENTRY_BYTES;
         }
 
         @Override
@@ -735,7 +724,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     // deleted flag
                     entry.writeBoolean(false);
 
-                    long prevValueSize = readValueSize(entry);
+                    long prevValueSize = valueSizeMarshaller.readSize(entry);
+                    long sizeOfEverythingBeforeValue = entry.position();
+                    alignment.alignPositionAddr(entry);
                     long valueAddr = entry.positionAddr();
                     long entryEndAddr = valueAddr + prevValueSize;
 
@@ -758,9 +749,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     } else {
                         throw defaultValueOrPrepareBytesShouldBeSpecified();
                     }
-                    putValue(pos, offset, entry, valueSizePos, entryEndAddr,
-                            segmentState, metaElemWriter, elemWriter, elem,
-                            metaElemWriter.size(elemWriter, elem), hashLookup);
+                    putValue(pos, offset, entry, valueSizePos, entryEndAddr, segmentState,
+                            metaElemWriter, elemWriter, elem, metaElemWriter.size(elemWriter, elem),
+                            hashLookup, sizeOfEverythingBeforeValue);
                     pos = segmentState.pos;
 
                     incrementSize();
@@ -953,7 +944,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     // is still held
                     if (isDeleted) {
                         incrementSize();
-                        hashLookup.putPosition(segmentState.pos);
+                        // if they are NOT equal, it means the entry was relocated in putValue(),
+                        // hence position is already set
+                        if (pos == segmentState.pos) {
+                            hashLookup.putPosition(segmentState.pos);
+                        } else {
+                            assert hashLookup.getPositions().isSet(segmentState.pos);
+                        }
                     }
                     if (resultUnused)
                         return null;
@@ -1157,8 +1154,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 }
                 // key is not found
                 if (remote) {
-                    long entrySize = entrySize(keySize, 0);
-                    long pos = alloc(inChunks(entrySize));
+                    long minEncodableValueSize = valueSizeMarshaller.minEncodableSize();
+                    long entrySize = entrySize(keySize, minEncodableValueSize);
+                    int allocatedChunks = inChunks(entrySize);
+                    long pos = alloc(allocatedChunks);
                     long offset = offsetFromPos(pos);
                     clearMetaData(offset);
                     reuse(entry, offset);
@@ -1169,6 +1168,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     entry.writeLong(timestamp);
                     entry.writeByte(identifier);
                     entry.writeBoolean(true);
+
+                    valueSizeMarshaller.writeSize(entry, minEncodableValueSize);
+                    alignment.alignPositionAddr(entry);
+                    entry.skip(minEncodableValueSize);
+
+                    freeExtraAllocatedChunks(pos, allocatedChunks, entry);
 
                     hashLookup.putAfterFailedSearch(searchState, pos);
                     hashLookup.removePosition(pos);

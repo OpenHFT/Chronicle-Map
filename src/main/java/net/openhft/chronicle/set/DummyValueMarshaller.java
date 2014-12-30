@@ -65,6 +65,11 @@ enum DummyValueMarshaller
     }
 
     @Override
+    public long minEncodableSize() {
+        return 0L;
+    }
+
+    @Override
     public int minSizeEncodingSize() {
         return 0;
     }

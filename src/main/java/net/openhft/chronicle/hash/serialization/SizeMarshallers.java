@@ -37,6 +37,11 @@ public final class SizeMarshallers {
         }
 
         @Override
+        public long minEncodableSize() {
+            return 0L;
+        }
+
+        @Override
         public int minSizeEncodingSize() {
             return 1;
         }
@@ -73,6 +78,11 @@ public final class SizeMarshallers {
         @Override
         public int sizeEncodingSize(long size) {
             return 0;
+        }
+
+        @Override
+        public long minEncodableSize() {
+            return size;
         }
 
         @Override

@@ -39,6 +39,11 @@ public enum IntegerMarshaller
     }
 
     @Override
+    public long minEncodableSize() {
+        return 4L;
+    }
+
+    @Override
     public int minSizeEncodingSize() {
         return 0;
     }
