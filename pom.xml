@@ -70,6 +70,7 @@
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
             <version>1.4.7</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -165,9 +166,8 @@
                     </links>
                     <excludePackageNames>net.openhft.chronicle.hash.serialization.internal
                     </excludePackageNames>
+                    <excludePackageNames>net.openhft.xstreem</excludePackageNames>
                     <excludePackageNames>net.openhft.xstreem.converters</excludePackageNames>
-                    <excludePackageNames>net.openhft.chronicle.hash.serialization.internal
-                    </excludePackageNames>
                 </configuration>
             </plugin>
 

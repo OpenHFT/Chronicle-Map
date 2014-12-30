@@ -18,8 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.converters.reflection.SunLimitedUnsafeReflectionProvider;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
@@ -44,6 +42,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -113,6 +113,9 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     private static final StringBuilder EMTRY_STRING_BUILDER = new StringBuilder();
 
     private static final double UNDEFINED_DOUBLE_CONFIG = Double.NaN;
+
+    private static final int XML_SERIALIZATION = 1;
+    private static final int BINARY_SERIALIZATION = 2;
 
 
     private List jsonConverters = new ArrayList();
@@ -1327,9 +1330,22 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
             if (file.exists() && file.length() > 0) {
                 try (FileInputStream fis = new FileInputStream(file);
                      ObjectInputStream ois = new ObjectInputStream(fis)) {
-                    XStream xStream = new XStream(new SunLimitedUnsafeReflectionProvider());
+                    Object m;
+                    byte serialization = ois.readByte();
+                    if (serialization == XML_SERIALIZATION) {
+                        m = deserializeHeaderViaXStream(ois);
+                    } else if (serialization == BINARY_SERIALIZATION) {
+                        try {
+                            m = ois.readObject();
+                        } catch (ClassNotFoundException e) {
+                            throw new AssertionError(e);
+                        }
+                    } else {
+                        throw new IOException("Unknown map header serialization type: " +
+                                serialization);
+                    }
                     VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
-                            (VanillaChronicleMap<K, ?, ?, V, ?, ?>) xStream.fromXML(ois);
+                            (VanillaChronicleMap<K, ?, ?, V, ?, ?>) m;
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
                     map.createMappedStoreAndSegments(file);
                     // This is needed to property initialize key and value serialization builders,
@@ -1357,14 +1373,52 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
         try (FileOutputStream fos = new FileOutputStream(file);
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            XStream xStream = new XStream(new SunLimitedUnsafeReflectionProvider());
-            xStream.toXML(map, oos);
+            if (!trySerializeHeaderViaXStream(map, oos)) {
+                oos.writeByte(BINARY_SERIALIZATION);
+                oos.writeObject(map);
+            }
             oos.flush();
             map.headerSize = roundUpMapHeaderSize(fos.getChannel().position());
             map.createMappedStoreAndSegments(file);
         }
 
         return establishReplication(map, singleHashReplication, channel);
+    }
+
+    private static <K, V> boolean trySerializeHeaderViaXStream(
+            VanillaChronicleMap<K, ?, ?, V, ?, ?> map, ObjectOutputStream oos) throws IOException {
+        Class<?> xStreamClass;
+        try {
+            xStreamClass =
+                    Class.forName("net.openhft.xstreem.MapHeaderSerializationXStream");
+        } catch (ClassNotFoundException e) {
+            xStreamClass = null;
+        }
+        if (xStreamClass == null) {
+            LOG.info("xStream not found, use binary ChronicleMap header serialization");
+            return false;
+        }
+        try {
+            oos.writeByte(XML_SERIALIZATION);
+            Method toXML = xStreamClass.getMethod("toXML", Object.class, OutputStream.class);
+            toXML.invoke(xStreamClass.newInstance(), map, oos);
+            return true;
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException |
+                InstantiationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static Object deserializeHeaderViaXStream(ObjectInputStream ois) {
+        try {
+            Class<?> xStreamClass =
+                    Class.forName("net.openhft.xstreem.MapHeaderSerializationXStream");
+            Method fromXML = xStreamClass.getMethod("fromXML", InputStream.class);
+            return fromXML.invoke(xStreamClass.newInstance(), ois);
+        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
+                IllegalAccessException | InstantiationException e) {
+            throw new AssertionError(e);
+        }
     }
 
     ChronicleMap<K, V> createWithoutFile(
