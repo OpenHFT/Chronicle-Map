@@ -48,7 +48,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>lang</artifactId>
-                <version>6.4.20-SNAPSHOT</version>
+                <version>6.4.21</version>
             </dependency>
 
             <dependency>
