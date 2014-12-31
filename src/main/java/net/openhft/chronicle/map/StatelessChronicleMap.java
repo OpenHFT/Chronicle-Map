@@ -255,9 +255,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
             try {
                 result = AbstractChannelReplicator.openSocketChannel(closeables);
-                result.connect(config.remoteAddress());
-                result.socket().setTcpNoDelay(true);
+                if (!result.connect(config.remoteAddress())) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    continue;
+                }
 
+                result.socket().setTcpNoDelay(true);
                 doHandShaking(result);
                 break;
             } catch (IOException e) {
@@ -275,8 +282,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         outBuffer.clear();
         outBytes.clear();
-      //  outBytesLock.unlock();
-       // assert !outBytesLock.isHeldByCurrentThread();
+        //  outBytesLock.unlock();
+        // assert !outBytesLock.isHeldByCurrentThread();
         try {
             checkVersion();
             loadKeyValueSerializers();
@@ -285,7 +292,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             outBuffer.put(bytes);
             outBytes.limit(limit);
             outBytes.position(position);
-       //     outBytesLock.lock();
+            //     outBytesLock.lock();
         }
 
     }
@@ -316,9 +323,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         closeExisting();
 
         try {
-            clientChannel = AbstractChannelReplicator.openSocketChannel(closeables);
-            clientChannel.connect(remoteAddress);
-            doHandShaking(clientChannel);
+            SocketChannel socketChannel = AbstractChannelReplicator.openSocketChannel(closeables);
+            if (socketChannel.connect(remoteAddress)) {
+                doHandShaking(socketChannel);
+                clientChannel = socketChannel;
+            }
+
         } catch (IOException e) {
             if (closeables != null) closeables.closeQuietly();
             clientChannel = null;
@@ -366,7 +376,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         // read a single byte back
         while (this.connectionOutBuffer.position() <= 0) {
-            clientChannel.read(this.connectionOutBuffer);  // the remote identifier
+            int read = clientChannel.read(this.connectionOutBuffer);// the remote identifier
+            if (read ==-1)
+                throw new IOException("server conncetion closed");
             checkTimeout(timeoutTime);
         }
 
@@ -487,8 +499,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @NotNull
     public String serverApplicationVersion() {
-
-
         return fetchObject(String.class, APPLICATION_VERSION);
     }
 
@@ -1122,7 +1132,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
         assert inBytesLock.isHeldByCurrentThread();
-      //  assert !outBytesLock.isHeldByCurrentThread();
+        //  assert !outBytesLock.isHeldByCurrentThread();
         try {
 
             return blockingFetchThrowable(timeoutTime, transactionId);
