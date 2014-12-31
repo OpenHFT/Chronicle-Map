@@ -32,13 +32,13 @@ import java.util.Map;
 /**
  * @author Rob Austin.
  */
-public class AbstractChronicleMapConverter<K, V> implements Converter {
+class AbstractChronicleMapConverter<K, V> implements Converter {
 
 
     private final Map<K, V> map;
-     final Class mapClazz;
+    private final Class mapClazz;
 
-    public AbstractChronicleMapConverter(@NotNull Map<K, V> map) {
+    AbstractChronicleMapConverter(@NotNull Map<K, V> map) {
         this.map = map;
         this.mapClazz = map.getClass();
     }
@@ -111,8 +111,8 @@ public class AbstractChronicleMapConverter<K, V> implements Converter {
         return null;
     }
 
-    static <E> E deserialize(@NotNull UnmarshallingContext unmarshallingContext,
-                             @NotNull HierarchicalStreamReader reader) {
+    private static <E> E deserialize(@NotNull UnmarshallingContext unmarshallingContext,
+                                     @NotNull HierarchicalStreamReader reader) {
 
         switch (reader.getNodeName()) {
 
@@ -131,7 +131,7 @@ public class AbstractChronicleMapConverter<K, V> implements Converter {
         return (E) unmarshallingContext.convertAnother(null, forName(reader.getNodeName()));
     }
 
-    static Class forName(String clazz) {
+    private static Class forName(String clazz) {
 
         try {
             return Class.forName(clazz);

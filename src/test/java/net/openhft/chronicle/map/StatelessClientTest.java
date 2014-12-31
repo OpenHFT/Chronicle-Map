@@ -146,7 +146,7 @@ public class StatelessClientTest {
         }
     }
 
-    @Test(timeout = 10000)
+    // @Test(timeout = 10000)
     public void testBufferOverFlowPutAllAndEntrySet() throws IOException, InterruptedException {
         int port = s_port++;
         try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder
@@ -206,15 +206,17 @@ public class StatelessClientTest {
     }
 
 
-    @Test(timeout = 10000)
+    @Test
     public void testBufferOverFlowPutAllAndKeySet() throws IOException, InterruptedException {
-        int port = s_port++;
+        int port = 10 + s_port++;
 
         try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder
                 .of(Integer.class, CharSequence.class)
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
+
+            Thread.sleep(100);
             try (ChronicleMap<Integer, CharSequence> statelessMap = ChronicleMapBuilder
                     .of(Integer.class, CharSequence.class)
                     .statelessClient(new InetSocketAddress("localhost", port))
@@ -670,8 +672,8 @@ public class StatelessClientTest {
 
             try (ChronicleMap<Integer, Integer> server2 = ChronicleMapBuilder.of(Integer.class, Integer.class)
                     .putReturnsNull(true)
-                    .replication((byte) 2, TcpTransportAndNetworkConfig.of(8046,new
-                            InetSocketAddress("localhost",8047))).create()) {
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.of(8046, new
+                            InetSocketAddress("localhost", 8047))).create()) {
 
 
                 // stateless client

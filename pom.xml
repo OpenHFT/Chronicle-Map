@@ -28,7 +28,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-map</artifactId>
-    <version>2.0.22b-SNAPSHOT</version>
+    <version>2.0.22rc2-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
 
@@ -39,14 +39,14 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
                 <type>pom</type>
-                <version>3.4.15</version>
+                <version>3.4.18</version>
                 <scope>import</scope>
             </dependency>
 
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>lang</artifactId>
-                <version>6.4.20-SNAPSHOT</version>
+                <version>6.4.21</version>
             </dependency>
 
             <dependency>
@@ -67,25 +67,6 @@
     <dependencies>
 
         <dependency>
-            <groupId>com.thoughtworks.xstream</groupId>
-            <artifactId>xstream</artifactId>
-            <version>1.4.7</version>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <optional>true</optional>
-            <groupId>org.codehaus.jettison</groupId>
-            <artifactId>jettison</artifactId>
-        </dependency>
-
-        <dependency>
-            <optional>true</optional>
-            <groupId>org.ops4j.pax.url</groupId>
-            <artifactId>pax-url-aether</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>compiler</artifactId>
         </dependency>
@@ -103,6 +84,26 @@
         <dependency>
             <groupId>com.intellij</groupId>
             <artifactId>annotations</artifactId>
+        </dependency>
+
+        <!-- optional dependencies -->
+
+        <dependency>
+            <optional>true</optional>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+        </dependency>
+
+        <dependency>
+            <optional>true</optional>
+            <groupId>org.codehaus.jettison</groupId>
+            <artifactId>jettison</artifactId>
+        </dependency>
+
+        <dependency>
+            <optional>true</optional>
+            <groupId>org.ops4j.pax.url</groupId>
+            <artifactId>pax-url-aether</artifactId>
         </dependency>
 
         <!-- test dependencies -->
@@ -164,10 +165,9 @@
                     <links>
                         <link>http://openhft.github.io/Java-Lang/apidocs/</link>
                     </links>
-                    <excludePackageNames>net.openhft.chronicle.hash.serialization.internal
+                    <excludePackageNames>
+                        net.openhft.chronicle.hash.serialization.internal:net.openhft.xstream:net.openhft.xstream.*
                     </excludePackageNames>
-                    <excludePackageNames>net.openhft.xstream</excludePackageNames>
-                    <excludePackageNames>net.openhft.xstream.converters</excludePackageNames>
                 </configuration>
             </plugin>
 

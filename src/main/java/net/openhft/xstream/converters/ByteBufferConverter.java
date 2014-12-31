@@ -33,8 +33,8 @@ import java.nio.charset.*;
  */
 public class ByteBufferConverter implements Converter {
 
-    Charset charset = Charset.forName("ISO-8859-1");
-    CharsetDecoder decoder = charset.newDecoder();
+    private final Charset charset = Charset.forName("ISO-8859-1");
+    private final CharsetDecoder decoder = charset.newDecoder();
 
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext marshallingContext) {

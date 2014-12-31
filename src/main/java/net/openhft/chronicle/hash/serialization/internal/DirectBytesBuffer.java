@@ -17,6 +17,7 @@
 package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.lang.io.BoundsCheckingNativeBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;
@@ -33,6 +34,7 @@ class DirectBytesBuffer
     private static final long serialVersionUID = 0L;
     private final Serializable identity;
     transient DirectBytes buffer;
+    transient BoundsCheckingNativeBytes checkingBuffer;
 
     transient ForBytesMarshaller forBytesMarshaller;
     transient ForBytesWriter forBytesWriter;
@@ -54,19 +56,33 @@ class DirectBytesBuffer
         forDataValueWriter = new ForDataValueWriter();
     }
 
-    Bytes obtain(long maxSize) {
+    Bytes obtain(long maxSize, boolean boundsChecking) {
         DirectBytes buf;
         if ((buf = buffer) != null) {
             if (maxSize <= buf.capacity()) {
-                return buf.clear();
+                if (!boundsChecking)
+                    return buf.clear();
+                Bytes checkingBuf;
+                if ((checkingBuf = checkingBuffer) != null) {
+                    return checkingBuf.clear();
+                } else {
+                    return (checkingBuffer = new BoundsCheckingNativeBytes(buf)).clear();
+                }
             } else {
                 DirectStore store = (DirectStore) buf.store();
-                store.resize(maxSize, false);
-                return buffer = store.bytes();
+                store.resize(maxSize, true);
+                buf = buffer = store.bytes();
+                if (!boundsChecking)
+                    return buf;
+                return (checkingBuffer = new BoundsCheckingNativeBytes(buf));
             }
         } else {
-            buffer = new DirectStore(JDKObjectSerializer.INSTANCE, maxSize, false).bytes();
-            return buffer;
+            buf = buffer = new DirectStore(JDKObjectSerializer.INSTANCE,
+                    // don't allocate 0 bytes
+                    Math.max(1, maxSize), true).bytes();
+            if (!boundsChecking)
+                return buf;
+            return (checkingBuffer = new BoundsCheckingNativeBytes(buf));
         }
     }
 
@@ -88,9 +104,26 @@ class DirectBytesBuffer
             super(DirectBytesBuffer.this);
         }
 
-        @Override
-        void innerWrite(M writer, Bytes bytes, E e) {
-            writer.write(bytes, e);
+        void init(M writer, E e, boolean mutable, long maxSize) {
+            if (mutable || writer != this.writer || e != cur) {
+                this.writer = writer;
+                cur = e;
+                while (true) {
+                    try {
+                        Bytes buffer = this.buffer.obtain(maxSize, true);
+                        writer.write(buffer, e);
+                        buffer.flip();
+                        long size = this.size = buffer.remaining();
+                        this.buffer.buffer.position(0L);
+                        this.buffer.buffer.limit(size);
+                        hash = 0L;
+                        return;
+                    } catch (Exception ex) {
+                        checkMaxSizeStillReasonable(maxSize, ex);
+                        maxSize *= 2L;
+                    }
+                }
+            }
         }
     }
 
@@ -102,9 +135,18 @@ class DirectBytesBuffer
             super(DirectBytesBuffer.this);
         }
 
-        @Override
-        void innerWrite(W writer, Bytes bytes, E e) {
-            writer.write(bytes, e);
+        void init(W writer, E e, boolean mutable) {
+            if (mutable || writer != this.writer || e != cur) {
+                this.writer = writer;
+                cur = e;
+                long size = writer.size(e);
+                Bytes buffer = this.buffer.obtain(size, false);
+                writer.write(buffer, e);
+                buffer.flip();
+                this.size = size;
+                assert size == buffer.remaining();
+                hash = 0L;
+            }
         }
     }
 
