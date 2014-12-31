@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
@@ -223,7 +222,7 @@ public class DataValueConverter implements Converter {
 
     }
 
-    private void fillInObject(HierarchicalStreamReader reader, UnmarshallingContext context, Object using) throws IntrospectionException, ClassNotFoundException {
+    private void fillInObject(HierarchicalStreamReader reader, UnmarshallingContext context, Object using) throws ClassNotFoundException {
 
         while (reader.hasMoreChildren()) {
             reader.moveDown();
@@ -282,9 +281,9 @@ public class DataValueConverter implements Converter {
     }
 
 
-    static Object toNativeValueObjects(HierarchicalStreamReader reader,
-                                       final Class aClass,
-                                       UnmarshallingContext context) {
+    private static Object toNativeValueObjects(HierarchicalStreamReader reader,
+                                               final Class aClass,
+                                               UnmarshallingContext context) {
 
         final Object o = DataValueClasses.newDirectInstance(aClass);
 
