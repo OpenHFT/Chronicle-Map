@@ -59,13 +59,10 @@ public class TCPSocketReplicationIntValueTest {
         ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
         map1Builder = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 (byte) 1, s_port, new InetSocketAddress("localhost", s_port + 1));
-        map1Builder.keyMarshaller(ByteableIntValueMarshaller.INSTANCE);
-        map1 = map1Builder.keyMarshaller(ByteableIntValueMarshaller.INSTANCE)
-                .createPersistedTo(getPersistenceFile());
+        map1 = map1Builder.createPersistedTo(getPersistenceFile());
         map2 = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 (byte) 2, s_port + 1)
                 .entries(Builder.SIZE)
-                .keyMarshaller(ByteableIntValueMarshaller.INSTANCE)
                 .create();
         s_port += 2;
     }
