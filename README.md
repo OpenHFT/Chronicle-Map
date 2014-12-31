@@ -539,8 +539,9 @@ context.close() //  releases the lock
 ```
 
 ####  acquireUsing()
-Just like getUsing(), acquireUsing() will also recycle the value you pass it, the following
-code is a pattern that you will often come across,
+Just like getUsing(), acquireUsing() will also recycle the value you pass it. The following
+code snippet is a pattern that you will often come across. `acquireUsing(key,value)` offers this 
+functionality from a single method call, reducing the hash look-ups and making your code run slightly faster.
 
  ``` java
 V acquireUsing(key,value) {
@@ -559,8 +560,7 @@ V acquireUsing(key,value) {
 }
 ```
 
-`acquireUsing(key,value)` offers this functionality from a single method call, reducing the hash
-look-ups and making your code run slightly faster.
+
 
 ####  acquireUsingLocked()
 
@@ -569,7 +569,7 @@ and don't care about atomic reads. Then its simpler ( and faster ) to use `acqui
 value)` otherwise werecommend you use `acquireUsingLocked(key,value)` as this gives you atomicity.
 
 The acquireUsingLocked(key,value) method holds a segment write lock, as it will update or put a
-new entry into the map, this is unlike getUsing
+new entry into the map, this is unlike getUsingLocked
 (key,using) which only holds a segment read lock. Below is an example of how to use
 acquireUsingLocked(..,..).
 
@@ -597,11 +597,11 @@ If after some business logic, in our example after reading the 'issueDate' and
 ![Serialization](http://openhft.net/wp-content/uploads/2014/09/Serialization_01.jpg)
 
 
-Chronicle Map stores your data into off heap memory, so when you give it a Key or Value, it will
+ChronicleMap stores your data into off heap memory, so when you give it a Key or Value, it will
 serialise these objects into bytes.
 
 ### Simple Types
-If you are using simple auto boxed objects based on the primitive types, Chronicle Map will
+If you are using simple auto boxed objects based on the primitive types, ChronicleMap will
 automatically handle the serialisation for you.  
 
 ### Complex Types
@@ -616,14 +616,14 @@ for a single type or a number of types.
 ### Import/Export entries as JSON
 ![Import/Export](http://openhft.net/wp-content/uploads/2014/09/Export-import_04.jpg)
 
-Chronicle Map supports importing and exporting all the entries into a JSON encoded file.
+ChronicleMap supports importing and exporting all the entries into a JSON encoded file.
 
 ``` java
 void getAll(File toFile) throws IOException;
 void putAll(File fromFile) throws IOException;
 ```
 
-Its only the entries of your map that are exported, not the configuration of your map. So care
+Only the entries of your map are exported, not the configuration of your map. So care
 must be taken to populate the data in to a map of the correct Key/Value type and with enough
 available entries. When importing data :
 
@@ -631,77 +631,77 @@ available entries. When importing data :
 * entries that are in the map and in the JSON file will be updated.
 * entries that are not in the map but are in the JSON file will be added.
 
-In other words importing data into a Chronicle Map works like `map.putAll(<JSON entries>)`.
+In other words importing data into a ChronicleMap works like `map.putAll(<JSON entries>)`.
 
-When Importing data if you are also writing to the map at the same time, the last update will win.
+When importing data, if you are also writing to the map at the same time, the last update will win.
 In other words a write lock is not held for the entire import process.
 Importing and exporting the map, is ideal if you wish to:
-* Bulk load data from one chronicle map into another.
-* migrate data between versions of chronicle map.
+* Bulk load data from one ChronicleMap into another.
+* migrate data between versions of ChronicleMap.
 
 WARNING : The current version only supports Chronicle Maps that contained serialized KEYS and
 VALUES, future versions will support a binary encoding of objects that are `net.openhft.lang.io
 .serialization.BytesMarshallable`.
 
 ## Close
-Unlike ConcurrentHashMap, chronicle map stores its data off heap, often in a memory mapped file.
-Its recommended that you call close() once you have finished working with a Chronicle Map.
+Unlike ConcurrentHashMap, ChronicleMap stores its data off heap, often in a memory mapped file.
+Its recommended that you call close() once you have finished working with a ChronicleMap.
 
 ``` java
 map.close()
 ```
 
-This is especially important when working with chronicle map replication, as failure to call close may prevent
+This is especially important when working with ChronicleMap replication, as failure to call close may prevent
 you from restarting a replicated map on the same port. In the event that your application crashes it may not
 be possible to call close(). Your operating system will usually close dangling ports automatically,
 so although it is recommended that you close() when you have finished with the map,
-its not something that you must do, its just something that we recommend you should do.
+its not something that you must do, it's just something that we recommend you should do.
 
 ###### WARNING
 
-If you call close too early before you have finished working with the map, this can cause
+If you call close() too early before you have finished working with the map, this can cause
 your JVM to crash. Close MUST BE the last thing that you do with the map.
 
 
 # TCP / UDP Replication
 
-Chronicle Map supports both TCP and UDP replication
+ChronicleMap supports both TCP and UDP replication
 
 ![TCP/IP Replication](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-TCP-Replication_simple_02.jpg)
 
 ### TCP / UDP Background.
-TCP/IP is a reliable protocol, what this means is unless you have a network failure or hardware
+TCP/IP is a reliable protocol, what this means is that unless you have a network failure or hardware
 outage the data is guaranteed to arrive. TCP/IP provides point to point connectivity. So in effect
-( over simplified ), if the message was sent to 100 hosts, The message would have to be sent
+( over simplified ), if the message was sent to 100 hosts, the message would have to be sent
 100 times. With UDP, the message is only sent once. This is ideal if you have a large number of
-hosts and you wish to broadcast the same data to each off them.   However, one of the big drawbacks
-with UDP is its not a reliable protocol. This means, if the UDP message is Broadcast onto
-the network, The hosts are not guaranteed to receive it, so they can miss data. Some solutions
+hosts and you wish to broadcast the same data to each of them.   However, one of the big drawbacks
+with UDP is that it's not a reliable protocol. This means, if the UDP message is Broadcast onto
+the network, the hosts are not guaranteed to receive it, so they can miss data. Some solutions
 attempt to build resilience into UDP, but arguably, this is in effect reinventing TCP/IP.
 
 ### How to setup UDP Replication
-In reality on a good quality wired LAN, when using UDP, you will rarely miss messages, this is
+In reality on a good quality wired LAN, when using UDP, you will rarely miss messages. Nevertheless this is
 a risk that we suggest you don't take. We suggest that whenever you use UDP replication you use it
 in conjunction with a throttled TCP replication, therefore if a host misses a message over UDP, they
 will later pick it up via TCP/IP. 
 
 ###  TCP/IP  Throttling
 We are careful not to swamp your network with too much TCP/IP traffic, We do this by providing
-a throttled version of TCP replication. This works because Chronicle Map only broadcasts the latest
+a throttled version of TCP replication. This works because ChronicleMap only broadcasts the latest
 update of each entry. 
 
 ### Replication How it works
 
-Chronicle Map provides multi master hash map replication, What this means, is that each remote
-hash-map, mirrors its changes over to another remote hash map, neither hash map is considered
-the master store of data, each hash map uses timestamps to reconcile changes.
-We refer to in instance of a remote hash-map as a node.
+ChronicleMap provides multi master hash map replication. What this means, is that each remote
+map, mirrors its changes over to another remote map, neither map is considered
+the master store of data. Each map uses timestamps to reconcile changes.
+We refer to in instance of a remote map as a node.
 A node can be connected to up to 128 other nodes.
 The data that is stored locally in each node becomes eventually consistent. So changes made to one
-node, for example by calling put() will be replicated over to the other node. To achieve a high
+node, for example by calling put(), will be replicated over to the other node. To achieve a high
 level of performance and throughput, the call to put() won’t block, 
-With concurrentHashMap, It is typical to check the return code of some methods to obtain the old
-value for example remove(). Due to the loose coupling and lock free nature of this multi master
+With ConcurrentHashMap, It is typical to check the return code of some methods to obtain the old
+value, for example remove(). Due to the loose coupling and lock free nature of this multi master
 implementation,  this return value is only the old value on the nodes local data store. In other
 words the nodes are only concurrent locally. Its worth realising that another node performing
 exactly the same operation may return a different value. However reconciliation will ensure the maps
@@ -709,9 +709,9 @@ themselves become eventually consistent.
 
 ### Reconciliation 
 If two ( or more nodes ) receive a change to their maps for the same key but different values, say
-by a user of the maps, calling the put(key,value). Then, initially each node will update its local
-store and each local store will hold a different value, but the aim of multi master replication is
-to provide eventual consistency across the nodes. So, with multi master when ever a node is changed
+by a user of the maps, calling the put(key,value), then, initially each node will update its local
+store and each local store will hold a different value. The aim of multi master replication is
+to provide eventual consistency across the nodes. So, with multi master whenever a node is changed
 it will notify the other nodes of its change. We will refer to this notification as an event.
 The event will hold a timestamp indicating the time the change occurred, it will also hold the state
 transition, in this case it was a put with a key and value.
@@ -722,40 +722,37 @@ none of the nodes is a primary, each node holds information about the other node
 own identifier is referred to as its 'localIdentifier', the identifiers of other nodes are the
 'remoteIdentifiers'. On an update or insert of a key/value, this node pushes the information of
 the change to the remote nodes. The nodes use non-blocking java NIO I/O and all replication is done
-on a single thread. However there is an edge case, If two nodes update their map at the same time
-with different values, we had to deterministically resolve which update wins, because of eventual
-consistency both nodes should end up locally holding the same data. Although it is rare two remote
-nodes could receive an update to their maps at exactly the same time for the same key, we had
-to handle this edge case, its therefore important not to rely on timestamps alone to reconcile
+on a single thread. However there is an edge case. If two nodes update their map at the same time
+with different values, we have to deterministically resolve which update wins. This is because eventual
+consistency mandates that both nodes should end up locally holding the same data. Although it is rare that two remote
+nodes receive an update to their maps at exactly the same time for the same key, we have
+to handle this edge case.  We can not therefore rely on timestamps alone to reconcile
 the updates. Typically the update with the newest timestamp should win, but in this example both
 timestamps are the same, and the decision made to one node should be identical to the decision made
 to the other. This dilemma is resolved by using a node identifier, the node identifier is a unique
-'byte' value that is assigned to each node, So when the time stamps are the same if the remoteNodes
-identifier is smaller than the local nodes identifier, this update will be accepted otherwise it
-will be ignored.
+'byte' value that is assigned to each node. When the time stamps are the same the remote node with the
+smaller identifier will be preferred.
 
 ### Multiple Processes on the same server with Replication
 
-On a server if you have a number of java processes and then within each java process you create a  instance of the same Chronicle map which binds to the same underline 'file', they exchange data via shared memory rather than TCP or UDP replication. So if a Chronicle Map which is not performing TCP Replication is updated, this update can be picked up by another Chronicle Map, this other Chronicle Hash Map could be a TCP replicated Chronicle Map, In this example the TCP replicated Chronicle Map would then push the update to the remote nodes.
+On a server if you have a number of Java processes and then within each Java process you create an instance of a ChronicleMap which binds to the same underline 'file', they exchange data via shared memory rather than TCP or UDP replication. So if a ChronicleMap which is not performing TCP Replication is updated, this update can be picked up by another ChronicleMap. This other ChronicleMap could be a TCP replicated ChronicleMap. In such an example the TCP replicated ChronicleMap would then push the update to the remote nodes.
 
-Likewise, If the TCP replicated Chronicle Map was to received an update from a remote node, then
-
-this update would be immediately available to all the Chronicle Maps on the server.
+Likewise, if the TCP replicated ChronicleMap was to received an update from a remote node, then this update would be immediately available to all the ChronicleMaps on the server.
 
 ### Identifier for Replication
-If all you are doing is replicating your chronicle maps on the same server you don't have to set up
-TCP and UDP replication. You also don't have to set the identifiers. 
+If all you are doing is replicating your ChronicleMaps on the same server you don't have to set up
+TCP and UDP replication. You also don't have to set the identifiers - as explained earlier this identifier is only for the resolution of conflicts amongst remote servers.
 
-If however you wish to replicate data between 2 or more servers, then ALL of the Chronicle Maps
+If however you wish to replicate data between 2 or more servers, then ALL of the ChronicleMaps
 including those not actively participating in TCP or UDP replication must have the identifier set.
-The identifier must be unique to each server. Each Chronicle Map on the same server must have
-the same identifier. The reason that all Chronicle Maps must have the identifier set, is because
+The identifier must be unique to each server. Each ChronicleMap on the same server must have
+the same identifier. The reason that all ChronicleMaps must have the identifier set, is because
 the memory is laid out slightly differently when using replication, so even if a Map is not actively
-performing TCP or UDP replication its self, if it wishes to replicate with one that is, it must have
+performing TCP or UDP replication itself, if it wishes to replicate with one that is, it must have
 its memory laid out the same way to be compatible. 
 
 If the identifiers are not set up uniquely then the updates will be ignored, as for example
-a Chronicle Map set up with the identifiers equals '1', will ignore all events which contain
+a ChronicleMap set up with the identifiers equals '1', will ignore all events which contain
 the remote identifier of '1', in other words Chronicle Map replication is set up to ignore updates
 which have originated from itself. This is to avoid the circularity of events.
 
@@ -872,18 +869,18 @@ is dropped and re-established.
 
 ![Chronicle Maps Network Distributed](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map_channels_diagram_02.jpg)
 
-Chronicle Map TCP Replication lets you distribute a single Chronicle Map, to a number of servers
+ChronicleMap TCP Replication lets you distribute a single ChronicleMap, to a number of servers
 across your network. Replication is point to point and the data transfer is bidirectional, so in the
-example of just two servers, they only have to be connected via a single tcp socket connection and
-the data is transferred both ways. Which is great, however what if you wanted to replicate more than
-just one chronicle map, what if you were going to replicate two chronicle maps across your network,
+example of just two servers, they only have to be connected via a single TCP socket connection and
+the data is transferred both ways. This is great, but what if you wanted to replicate more than
+just one ChronicleMap, what if you were going to replicate two ChronicleMaps across your network,
 unfortunately with just TCP replication you would have to have two tcp socket connections, which is
 not ideal. This is why we created the `ReplicationHub`. The `ReplicationHub` lets you replicate numerous
-Chronicle Maps via a single point to point socket connection.
+ChronicleMaps via a single point to point socket connection.
 
 The `ReplicationHub` encompasses TCP replication, where each map has to be given a
 unique identifier, but when using the `ReplicationHub` we use a channel to identify the map,
-rather than the identifier, As the identifier is used to identify the host/server which broadcasts the
+rather than the identifier.  The identifier is used to identify the host/server which broadcasts the
 update. Put simply:
 
 * Each host must be given a unique identifier.
@@ -919,14 +916,13 @@ ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, 
   .create();
 ```
 
-The chronicle channel is use to identify which map is to be replicated to which other map on
-the remote node, in the example above this is assigned to '(short) 1', so for example if you have
+The Chronicle channel is use to identify which map is to be replicated to which other map on
+the remote node. In the example above this is assigned to '(short) 1', so for example if you have
 two maps, lets call them map1 and map2, you could assign them with chronicle
 channels 1 and 2 respectively. Map1 would have the chronicle channel of 1 on both servers. You
 should not confuse the Chronicle Channels with the identifiers, the identifiers are unique per
 replicating node ( in this case which host, the reason we say replicating node rather than host as it is
-possible to have more than one replicating node per host if each of them had a different TCP/IP port )
- ), where as the chronicle channels are used to identify which map you are referring. No additional socket
+possible to have more than one replicating node per host if each of them had a different TCP/IP port ), where as the chronicle channels are used to identify which map you are referring. No additional socket
  connection is made per chronicle channel that
 you use, so we allow up to 32767 chronicle channels.
 
@@ -1049,7 +1045,7 @@ data
  holds all your data, the server can not it’s self be a stateless client. Your stateless client must
  be connected to the server via TCP/IP.
 
- ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/09/State-Transition_1-thread_02.jpg)
+ ![ChronicleMap](http://openhft.net/wp-content/uploads/2014/09/State-Transition_1-thread_02.jpg)
 
  The stateless client delegates all your method calls to
  the remote server. The stateless client operations will block, in other words the stateless
@@ -1087,8 +1083,8 @@ serverMap.close();
 statelessMap.close();
 ```
 
-When used with a stateless client, Each state-full server has to be configured with TCP 
-replication, when you set up TCP Replication you must define a port for the replication to 
+When used with a stateless client, each statefull server has to be configured with TCP 
+replication, when you set up TCP replication you must define a port for the replication to 
 run on, the port you choose is up to you, but you should pick a free port that is not currently 
 being used by another application. In this example we choose the port 8076
 
@@ -1103,7 +1099,7 @@ On the "stateless client" we connect to the server via TCP/IP on localhost:8076 
 .statelessClient(new InetSocketAddress("localhost", 8076))
 ```
 
-but in your example you should choose the host of the state-full server and the port you allocated
+but in your example you should choose the host of the statefull server and the port you allocated
  it. 
 
 ``` java
@@ -1113,12 +1109,11 @@ but in your example you should choose the host of the state-full server and the 
 the ".statelessClient(..)" returns an instance of `StatelessClientConfig`, which has only a few
 of its own configurations, such as the `create()` method, which can be used to create a new
 stateless client.
-If you don’t add this line, a normal state-full `ChronicleMap` will be created. For this example
-we ran both 
-the client an the server on the same host ( hence the “localhost" setting ), 
-but in a real life example the stateless client will typically be on a different server than the
-state-full host. If you are aiming to create a stateless client and server on the same host, its
-better not to do this, as the stateless client connects to the server via TCP/IP. It better to
+For this example we ran both 
+the client and the server on the same host ( hence the “localhost" setting ), 
+but in a real scanario the stateless client will typically be on a different server than its
+statefull host. If you are aiming to create a stateless client and server on the same host, it's
+better not to do this, as the stateless client connects to the server via TCP/IP. It would be better to
 share the maps via memory as this will give you better performance ( read more about
 this at [Sharing Data Between Two or More Maps](https://github
 .com/OpenHFT/Chronicle-Map#sharing-data-between-two-or-more-maps).
@@ -1129,10 +1124,9 @@ click [here](https://github.com/OpenHFT/Chronicle-Map#sharing-data-between-two-o
 
 When calling the stateless client, you will get better throughput if you invoke your requests from a
  number of threads, this is because by default when you make a method call to a `ChronicleMap`
- stateless client, your method call is wrapped into an event which is sent over tcp and processed
-  by the server,
-your stateless client will block until an acknowledgement has been received from the server that
-your event was processed.
+ stateless client, your method call is wrapped into an event which is sent over TCP and processed
+  by the server. Your stateless client will block until an acknowledgement has been received from the server that
+the event was processed.
 
 ![Chronicle Map](http://openhft.net/wp-content/uploads/2014/09/State-Transition_2-thread_03.jpg)
 
@@ -1234,8 +1228,8 @@ statelessMap.close();
 
 ##### Memory issue on Windows
 
-Chronicle map lets you assign a map larger than your available memory, If you were to create more
-entries than the available memory, chronicle map will page the segments that are accessed least to
+ChronicleMap lets you assign a map larger than your available memory, If you were to create more
+entries than the available memory, ChronicleMap will page the segments that are accessed least to
 disk, and load the recently used segments into available memory. This feature lets you work with
 extremely large maps, it works brilliantly on Linux but unfortunately, this paging feature is not
 supported on Windows, if you use more memory than is physically available on windows you will
@@ -1263,7 +1257,7 @@ java.lang.IllegalStateException: VanillaShortShortMultiMap is full
 	at net.openhft.collections.AbstractVanillaSharedHashMap.put(VanillaSharedHashMap.java:330)
 ```
 
-Chronicle Map doesn't resize automatically.  It is assumed you will make the virtual size of the map
+ChronicleMap doesn't resize automatically.  It is assumed you will make the virtual size of the map
 larger than you need and it will handle this reasonably efficiently. With the default settings you
 will run out of space between 1 and 2 million entries.
 
@@ -1592,7 +1586,7 @@ into that state you have to be loading a lot of data which exceeds main memory w
 this is done if you also want good worst case latency characteristics. (the throughput should be
 much the same)
 
-When you create a Chronicle Map, it has many segments. By default it has a minimum of 128, but one
+When you create a ChronicleMap, it has many segments. By default it has a minimum of 128, but one
 for every 32 K entries. e.g. for 500M entries you can expect ~16K segments (being the next power of
 2). With so many segments, the chances of a perfect hash distribution is low and so the Chronicle
 Map allows for double what you asked for but is designed to do this with almost no extra main memory
@@ -1642,14 +1636,14 @@ of a general problem with what the system is doing, so you may experience a dela
 
 ### Better to use small keys
 
-If you put() a small number of large entries into Chronicle Map, you are unlikely to see any
+If you put() a small number of large entries into ChronicleMap, you are unlikely to see any
 performance gains over a standard map, So we recommend you use a standard ConcurrentHashMap, unless
-you need Chronicle Maps other features.
+you need ChronicleMaps other features.
 
 Chronicle Map gives better performance for smaller keys and values due to the low overhead per
 entry. It can use 1/5th the memory of ConcurrentHashMap. When you have larger entries, the overhead
 per entry doesn't matter so much and the relative waste per entry starts to matter. For Example,
-Chronicle Map assumes every entry is the same size and if you have 10kB-20kB entries the 10K entries
+ChronicleMap assumes every entry is the same size and if you have 10kB-20kB entries the 10K entries
 can be using 20 kB of virtual memory or at least 12 KB of actual memory (since virtual memory turns
 into physical memory in multiples of a page)
 
@@ -1671,12 +1665,12 @@ For large key/values it is not total memory use but other factors which matter s
 
 ### ConcurrentHashMap v ChronicleMap
 ConcurrentHashMap ( CHM ) outperforms `ChronicleMap` ( CM ) on throughput.  If you don't need
-the extra features SharedHashMap gives you, it is not worth the extra complexity it brings.
+the extra features ChronicleMap gives you, it is not worth the extra complexity it brings.
 i.e. don't use it just because you think it is cool. The test can be found in
 [ChronicleMapTest](https://github.com/OpenHFT/Chronicle-Map/blob/master/src/test/java/net/openhft/chronicle/map/ChronicleMapTest.java)
 under testAcquirePerf() and testCHMAcquirePerf()
 
-Chronicle Map out performs ConcurrentHashMap on memory consumption, and worst case latencies.
+ChronicleMap outperforms ConcurrentHashMap on memory consumption, and worst case latencies.
 It can be used to reduce or eliminate GCs.
 
 #### Performance Test for many small key-values
@@ -1736,7 +1730,7 @@ to be performed in memory as possible.
 I'm searching for a Map implementation that is backed by either direct off-heap or a memory 
 mapped file. I want to use it as write-once, read-n-times kind of cache.
 #### Answer
-The latest version of chronicle map has been optimised for this use case. Ie for heavy read to write ratios. 
+The latest version of ChronicleMap has been optimised for this use case. Ie for heavy read to write ratios. 
 Note: heavy writers will see about the same performance.
 
 ---
