@@ -639,9 +639,6 @@ Importing and exporting the map, is ideal if you wish to:
 * Bulk load data from one ChronicleMap into another.
 * migrate data between versions of ChronicleMap.
 
-WARNING : The current version only supports Chronicle Maps that contained serialized KEYS and
-VALUES, future versions will support a binary encoding of objects that are `net.openhft.lang.io
-.serialization.BytesMarshallable`.
 
 ## Close
 Unlike ConcurrentHashMap, ChronicleMap stores its data off heap, often in a memory mapped file.
