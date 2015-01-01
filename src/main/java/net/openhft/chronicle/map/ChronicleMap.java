@@ -241,12 +241,58 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     void putAll(File fromFile) throws IOException;
 
     /**
+     * Creates an empty value instance, which can be used with the
+     * following methods :
+     *
+     * {@link ChronicleMap#getUsing(java.lang.Object, java.lang.Object) }
+     * {@link ChronicleMap#getUsingLocked(java.lang.Object, java.lang.Object)    }
+     * {@link ChronicleMap#acquireUsing(java.lang.Object, java.lang.Object)      }
+     * {@link ChronicleMap#acquireUsingLocked(java.lang.Object, java.lang.Object)  }
+     *
+     * for example like this :
+     *
+     *  <pre>{@code
+     * V value = map.newValueInstance();
+     * try (ReadContext rc = map.getUsingLocked(key, value)) {
+     *  // add your logic here
+     * } // the read lock is released here
+     * }</pre>
+     *
+     *
      * @return a new empty instance based on the Value type
+     * @see ChronicleMap#getUsing(java.lang.Object, java.lang.Object)
+     * @see ChronicleMap#getUsingLocked(java.lang.Object, java.lang.Object)
+     * @see ChronicleMap#acquireUsing(java.lang.Object, java.lang.Object)
+     * @see ChronicleMap#acquireUsingLocked(java.lang.Object, java.lang.Object)
      */
     V newValueInstance();
 
     /**
+     * Creates an empty value instance, which can be used with the
+     * following methods :
+     *
+     * {@link ChronicleMap#getUsing(java.lang.Object, java.lang.Object) }
+     * {@link ChronicleMap#getUsingLocked(java.lang.Object, java.lang.Object)    }
+     * {@link ChronicleMap#acquireUsing(java.lang.Object, java.lang.Object)      }
+     * {@link ChronicleMap#acquireUsingLocked(java.lang.Object, java.lang.Object)  }
+     *
+     * for example like this :
+     *
+     *  <pre>{@code
+     * K key = map.newKeyInstance();
+     * key.setMyStringField("some key");
+     *
+     * try (ReadContext rc = map.getUsingLocked(key, value)) {
+     *  // add your logic here
+     * } // the read lock is released here
+     * }</pre>
+     *
+     *
      * @return a new empty instance based on the Key type
+     * @see ChronicleMap#getUsing(java.lang.Object, java.lang.Object)
+     * @see ChronicleMap#getUsingLocked(java.lang.Object, java.lang.Object)
+     * @see ChronicleMap#acquireUsing(java.lang.Object, java.lang.Object)
+     * @see ChronicleMap#acquireUsingLocked(java.lang.Object, java.lang.Object)
      */
     K newKeyInstance();
 
