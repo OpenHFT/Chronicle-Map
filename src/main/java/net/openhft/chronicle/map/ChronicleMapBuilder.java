@@ -46,9 +46,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -99,7 +97,8 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * @see ChronicleSetBuilder
  */
 public final class ChronicleMapBuilder<K, V> implements Cloneable,
-        ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>, Serializable {
+        ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>,
+        MapBuilder<ChronicleMapBuilder<K, V>>, Serializable {
 
     static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte) 128;
     private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
@@ -108,7 +107,6 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     private static final int MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS = (1 << 20);
     private static final Logger LOG =
             LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
-    static final long DEFAULT_STATELESS_CLIENT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
     private static final StringBuilder EMTRY_STRING_BUILDER = new StringBuilder();
 
@@ -116,9 +114,6 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
     private static final int XML_SERIALIZATION = 1;
     private static final int BINARY_SERIALIZATION = 2;
-
-
-    private List jsonConverters = new ArrayList();
 
     private static boolean isDefined(double config) {
         return !Double.isNaN(config);
@@ -288,30 +283,6 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
-
-    /**
-     * Used to a add a custom xStream converter, this converter may be used while chronicle maps
-     * serialises/deserialized and object(s) to and from JSON. You should add a custom converter if
-     * you wish to customise the JSON format, or support object(s) that can not be serialised into
-     * JSON.
-     *
-     * The method signature purposely has a loose coupling to xStream, it exposes {@code Object}
-     * parameter, rather than the com.thoughtworks.xstream.jsonConverters.Converter this is so that
-     * the the {@code ChronicleMapBuilder} class does not require xStream artifact/jars, however the
-     * parameter pass must be of type com.thoughtworks.xstream.jsonConverters.Converter as no other
-     * type is currently accepted.
-     *
-     * @param converter an xStream converter of type com.thoughtworks.xstream.jsonConverters.Converter
-     * @return this builder back
-     * @see ChronicleMap#putAll(java.io.File)
-     * @see ChronicleMap#putAll(java.io.File)
-     */
-    public ChronicleMapBuilder<K, V> addJsonConverter(Object converter) {
-        this.jsonConverters.add(converter);
-        return this;
-    }
-
-
     private double averageKeySize() {
         return averageKeyOrValueSize(averageKeySize, keyBuilder);
     }
@@ -415,10 +386,6 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
             throw new IllegalArgumentException("Chunk size must be positive");
         this.actualChunkSize = actualChunkSize;
         return this;
-    }
-
-    List jsonConverters() {
-        return this.jsonConverters;
     }
 
     static class EntrySizeInfo {
@@ -858,22 +825,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return errorListener;
     }
 
-    /**
-     * Configures if the maps created by this builder should return {@code null} instead of previous
-     * mapped values on {@link ChronicleMap#put(Object, Object) ChornicleMap.put(key, value)} calls.
-     * <p> <p>{@link Map#put(Object, Object) Map.put()} returns the previous value, functionality
-     * which is rarely used but fairly cheap for {@link HashMap}. In the case, for an off heap
-     * collection, it has to create a new object and deserialize the data from off-heap memory. It's
-     * expensive for something you probably don't use. <p> <p>By default, of cause, {@code
-     * ChronicleMap} conforms the general {@code Map} contract and returns the previous mapped value
-     * on {@code put()} calls.
-     *
-     * @param putReturnsNull {@code true} if you want {@link ChronicleMap#put(Object, Object)
-     *                       ChronicleMap.put()} to not return the value that was replaced but
-     *                       instead return {@code null}
-     * @return this builder back
-     * @see #removeReturnsNull(boolean)
-     */
+    @Override
     public ChronicleMapBuilder<K, V> putReturnsNull(boolean putReturnsNull) {
         this.putReturnsNull = putReturnsNull;
         return this;
@@ -883,21 +835,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return putReturnsNull;
     }
 
-    /**
-     * Configures if the maps created by this builder should return {@code null} instead of the last
-     * mapped value on {@link ChronicleMap#remove(Object) ChronicleMap.remove(key)} calls. <p>
-     * <p>{@link Map#remove(Object) Map.remove()} returns the previous value, functionality which is
-     * rarely used but fairly cheap for {@link HashMap}. In the case, for an off heap collection, it
-     * has to create a new object and deserialize the data from off-heap memory. It's expensive for
-     * something you probably don't use. <p> <p>By default, of cause, {@code ChronicleMap} conforms
-     * the general {@code Map} contract and returns the mapped value on {@code remove()} calls.
-     *
-     * @param removeReturnsNull {@code true} if you want {@link ChronicleMap#remove(Object)
-     *                          ChronicleMap.remove()} to not return the value of the removed entry
-     *                          but instead return {@code null}
-     * @return this builder back
-     * @see #putReturnsNull(boolean)
-     */
+    @Override
     public ChronicleMapBuilder<K, V> removeReturnsNull(boolean removeReturnsNull) {
         this.removeReturnsNull = removeReturnsNull;
         return this;
@@ -1274,22 +1212,9 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     @Override
-    public ChronicleHashInstanceConfig<ChronicleMap<K, V>> instance() {
-        return new MapInstanceConfig<>(this.clone(), singleHashReplication, null, null, null,
+    public ChronicleHashInstanceBuilder<ChronicleMap<K, V>> instance() {
+        return new MapInstanceBuilder<>(this.clone(), singleHashReplication, null, null, null,
                 new AtomicBoolean(false));
-    }
-
-    @Override
-    public ChronicleMap<K, V> createStatelessClient(InetSocketAddress serverAddress)
-            throws IOException {
-        return statelessClient(serverAddress).create();
-    }
-
-    ChronicleMap<K, V> createStatelessClient(StatelessMapConfig<K, V> statelessClientConfig)
-            throws IOException {
-        pushingToMapEventListener();
-        preMapConstruction(false);
-        return new StatelessChronicleMap<>(statelessClientConfig, this);
     }
 
     @Override
@@ -1301,13 +1226,6 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     @Override
-    public StatelessClientConfig<ChronicleMap<K, V>> statelessClient(
-            InetSocketAddress remoteAddress) {
-        return new StatelessMapConfig<>(clone(), remoteAddress, DEFAULT_STATELESS_CLIENT_TIMEOUT,
-                null, new AtomicBoolean(false));
-    }
-
-    @Override
     public ChronicleMap<K, V> create() {
         // clone() to make this builder instance thread-safe, because createWithoutFile() method
         // computes some state based on configurations, but doesn't synchronize on configuration
@@ -1315,7 +1233,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return clone().createWithoutFile(singleHashReplication, null);
     }
 
-    ChronicleMap<K, V> create(MapInstanceConfig<K, V> ib) throws IOException {
+    ChronicleMap<K, V> create(MapInstanceBuilder<K, V> ib) throws IOException {
         if (ib.file != null) {
             return createWithFile(ib.file, ib.singleHashReplication, ib.channel);
         } else {
@@ -1450,7 +1368,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
             ChronicleMapBuilder<K, V> cmb = clone();
             cmb.pushTo((InetSocketAddress[]) null);
             for (int i = 0; i < pushToAddresses.length; i++) {
-                statelessClients[i] = cmb.createStatelessClient(pushToAddresses[i]);
+                statelessClients[i] = ChronicleMapStatelessClientBuilder.of(pushToAddresses[i])
+                        .create();
             }
             eventListener =
                     (MapEventListener<K, V>) constructor.newInstance((Object) statelessClients);

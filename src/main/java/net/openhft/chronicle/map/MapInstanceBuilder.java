@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
+import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
@@ -26,21 +26,21 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-final class MapInstanceConfig<K, V>
-        implements ChronicleHashInstanceConfig<ChronicleMap<K, V>>, Serializable{
+final class MapInstanceBuilder<K, V>
+        implements ChronicleHashInstanceBuilder<ChronicleMap<K, V>>, Serializable{
 
     final ChronicleMapBuilder<K, V> mapBuilder;
-    final SingleChronicleHashReplication singleHashReplication;
-    final ReplicationChannel channel;
-    final File file;
-    final String name;
+    SingleChronicleHashReplication singleHashReplication;
+    ReplicationChannel channel;
+    File file;
+    String name;
 
     final AtomicBoolean used;
 
-    MapInstanceConfig(ChronicleMapBuilder<K, V> mapBuilder,
-                      SingleChronicleHashReplication singleHashReplication,
-                      ReplicationChannel channel,
-                      File file, String name, AtomicBoolean used) {
+    MapInstanceBuilder(ChronicleMapBuilder<K, V> mapBuilder,
+                       SingleChronicleHashReplication singleHashReplication,
+                       ReplicationChannel channel,
+                       File file, String name, AtomicBoolean used) {
         this.mapBuilder = mapBuilder;
         this.singleHashReplication = singleHashReplication;
         this.channel = channel;
@@ -50,30 +50,36 @@ final class MapInstanceConfig<K, V>
     }
 
     @Override
-    public MapInstanceConfig<K, V> replicated(
+    public MapInstanceBuilder<K, V> replicated(
             byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork) {
         return replicated(SingleChronicleHashReplication.builder()
                 .tcpTransportAndNetwork(tcpTransportAndNetwork).createWithId(identifier));
     }
 
     @Override
-    public MapInstanceConfig<K, V> replicated(SingleChronicleHashReplication replication) {
-        return new MapInstanceConfig<>(mapBuilder, replication, null, file, name, used);
+    public MapInstanceBuilder<K, V> replicated(SingleChronicleHashReplication replication) {
+        singleHashReplication = replication;
+        channel = null;
+        return this;
     }
 
     @Override
-    public MapInstanceConfig<K, V> replicatedViaChannel(ReplicationChannel channel) {
-        return new MapInstanceConfig<>(mapBuilder, null, channel, file, name, used);
+    public MapInstanceBuilder<K, V> replicatedViaChannel(ReplicationChannel channel) {
+        singleHashReplication = null;
+        this.channel = channel;
+        return this;
     }
 
     @Override
-    public MapInstanceConfig<K, V> persistedTo(File file) {
-        return new MapInstanceConfig<>(mapBuilder, singleHashReplication, channel, file, name, used);
+    public MapInstanceBuilder<K, V> persistedTo(File file) {
+        this.file = file;
+        return this;
     }
 
     @Override
-    public MapInstanceConfig<K, V> name(String name) {
-        return new MapInstanceConfig<>(mapBuilder, singleHashReplication, channel, file, name, used);
+    public MapInstanceBuilder<K, V> name(String name) {
+        this.name = name;
+        return this;
     }
 
     @Override

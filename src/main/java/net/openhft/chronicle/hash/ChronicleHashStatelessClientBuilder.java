@@ -35,13 +35,16 @@ import java.util.concurrent.TimeUnit;
  * consider to be a ClientProxy to  {@link ChronicleMap} or {@link ChronicleSet}  running on
  * another host
  *
- * @param <C> the type of {@code ChronicleHash} accessed remotely, {@code ChronicleMap} or
+ * @param <H> the type of {@code ChronicleHash} accessed remotely, {@code ChronicleMap} or
  *           {@code ChronicleSet}
  */
-public interface StatelessClientConfig<C extends ChronicleHash> {
-    StatelessClientConfig<C> timeout(long timeout, TimeUnit units);
+public interface ChronicleHashStatelessClientBuilder<
+        C extends ChronicleHashStatelessClientBuilder<C, H>, H extends ChronicleHash> {
+    C timeout(long timeout, TimeUnit units);
 
-    StatelessClientConfig<C> name(String name);
+    C name(String name);
 
-    C create() throws IOException;
+    C tcpBufferSize(int tcpBufferSize);
+
+    H create() throws IOException;
 }

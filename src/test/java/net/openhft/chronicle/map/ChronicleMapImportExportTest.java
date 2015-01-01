@@ -15,6 +15,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
+import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -210,14 +211,12 @@ public class ChronicleMapImportExportTest {
         file.deleteOnExit();
         File file2 = new File(TMP + "/chronicle-map-" + System.nanoTime() + "-2.json");
         file.deleteOnExit();
-        try (ChronicleMap<CharSequence, CharSequence> expected = ChronicleMapBuilder.of(CharSequence.class, CharSequence
-                .class)
-                .create()) {
-            try (ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        try (ChronicleMap<CharSequence, CharSequence> expected =
+                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).create()) {
+            try (ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder
+                    .of(CharSequence.class, CharSequence.class)
                     .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-                try (ChronicleMap<CharSequence, CharSequence> actual = ChronicleMapBuilder.of(CharSequence
-                        .class, CharSequence.class)
-                        .statelessClient(new InetSocketAddress("localhost", 8056)).create()) {
+                try (ChronicleMap<CharSequence, CharSequence> actual = localClient(8056)) {
 
                     expected.put("hello", "world");
                     expected.getAll(file);

@@ -3,6 +3,7 @@ package eg;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder;
 
 import java.io.Closeable;
 import java.io.File;
@@ -99,13 +100,12 @@ public class BGChronicleTest {
             futureList.add(es.submit(new Callable<Void>() {
                 @Override
                 public Void call() throws IOException {
-                    try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
-                            .of(byte[].class, byte[].class)
-                            .constantKeySizeBySample(new byte[KEY_SIZE])
-                            .constantValueSizeBySample(new byte[VALUE_SIZE])
+                    InetSocketAddress serverAddress =
+                            REPLICAS > 1 && clientId % 2 == 0 ? remoteAddress2 : remoteAddress;
+                    try (ChronicleMap<byte[], byte[]> map = ChronicleMapStatelessClientBuilder
+                            .<byte[], byte[]>of(serverAddress)
                             .putReturnsNull(true)
                             .removeReturnsNull(true)
-                            .statelessClient(REPLICAS > 1 && clientId % 2 == 0 ? remoteAddress2 : remoteAddress)
                             .create()) {
 
                         System.out.println((clientId + 1) + "/" + CLIENTS + " client started");
@@ -138,13 +138,10 @@ public class BGChronicleTest {
             futureList2.add(es.submit(new Callable<long[]>() {
                 @Override
                 public long[] call() throws IOException, InterruptedException {
-                    try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
-                            .of(byte[].class, byte[].class)
-                            .constantKeySizeBySample(new byte[KEY_SIZE])
-                            .constantValueSizeBySample(new byte[VALUE_SIZE])
+                    try (ChronicleMap<byte[], byte[]> map = ChronicleMapStatelessClientBuilder
+                            .<byte[], byte[]>of(remoteAddress)
                             .putReturnsNull(true)
                             .removeReturnsNull(true)
-                            .statelessClient(remoteAddress)
                             .create()) {
                         map.size();
 

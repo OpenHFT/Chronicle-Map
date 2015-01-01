@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
+import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static net.openhft.chronicle.map.fromdocs.OpenJDKAndHashMapExamplesTest.parseYYYYMMDD;
 import static org.junit.Assert.*;
 
@@ -294,9 +295,7 @@ public class CHMUseCasesTest {
 
                 }
                 {
-                    map1 = builder
-                            .statelessClient(new InetSocketAddress("localhost", 8086))
-                            .create();
+                    map1 = localClient(8086);
 
                     closeables.add(map1);
                     return map1;

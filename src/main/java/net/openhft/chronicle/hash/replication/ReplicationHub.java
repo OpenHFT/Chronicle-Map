@@ -18,7 +18,7 @@ package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
+import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ import java.util.Arrays;
  *     .persistedTo(myMapFile) // optional, for this example
  *     .create();}</pre>
  *
- * @see ChronicleHashInstanceConfig#replicatedViaChannel(ReplicationChannel)
+ * @see ChronicleHashInstanceBuilder#replicatedViaChannel(ReplicationChannel)
  * @see ReplicationChannel
  */
 public final class ReplicationHub extends AbstractReplication {

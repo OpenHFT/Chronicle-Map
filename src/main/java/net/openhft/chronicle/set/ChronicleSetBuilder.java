@@ -20,8 +20,7 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
-import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
-import net.openhft.chronicle.hash.StatelessClientConfig;
+import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -289,20 +287,8 @@ public final class ChronicleSetBuilder<E>
     }
 
     @Override
-    public StatelessClientConfig<ChronicleSet<E>> statelessClient(
-            InetSocketAddress remoteAddress) {
-        return new StatelessSetConfig<>(chronicleMapBuilder.statelessClient(remoteAddress));
-    }
-
-    @Override
-    public ChronicleSet<E> createStatelessClient(InetSocketAddress serverAddress)
-            throws IOException {
-        return statelessClient(serverAddress).create();
-    }
-
-    @Override
-    public ChronicleHashInstanceConfig<ChronicleSet<E>> instance() {
-        return new SetInstanceConfig<>(chronicleMapBuilder.instance());
+    public ChronicleHashInstanceBuilder<ChronicleSet<E>> instance() {
+        return new SetInstanceBuilder<>(chronicleMapBuilder.instance());
     }
 
     @Override

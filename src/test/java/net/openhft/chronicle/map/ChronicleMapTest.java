@@ -40,6 +40,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.map.Alignment.*;
+import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static org.junit.Assert.*;
 
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
@@ -1710,11 +1711,7 @@ public class ChronicleMapTest {
                     .constantKeySizeBySample(new byte[14])
                     .createPersistedTo(mapFile)) {
 
-                try (ChronicleMap<byte[], byte[][]> map2 = ChronicleMapBuilder
-                        .of(byte[].class, byte[][].class)
-                        .constantKeySizeBySample(new byte[14])
-                        .statelessClient(new InetSocketAddress("localhost", 8877))
-                        .create()) {
+                try (ChronicleMap<byte[], byte[][]> map2 = localClient(8877)) {
 
 
                     byte[] key = new byte[14];
