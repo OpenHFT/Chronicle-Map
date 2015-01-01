@@ -219,9 +219,6 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * differ. This method is not performant and as such we recommend it is not used in performance
      * sensitive code.
      *
-     * MAPS CONTAINING KEYS/VALUES GENERATED WITH OFF-HEAP INTERFACES ARE NOT CURRENTLY SUPPORTED,
-     * CURRENTLY ONLY KEYS/VALUES THAT IMPLEMENT SERIALIZABLE ARE SUPPORTED
-     *
      * @param toFile the file to store all the entries to, the entries will be stored in JSON
      *               format
      * @throws IOException its not possible store the data to {@code toFile}
@@ -235,9 +232,6 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * similar to {@link java.util.Map#put(java.lang.Object, java.lang.Object)} where existing
      * entries are overwritten. A write lock is only held while each individual entry is inserted
      * into the map, not over all the entries in the {@link java.io.File}
-     *
-     * MAPS CONTAINING KEYS/VALUES GENERATED WITH OFF-HEAP INTERFACES ARE NOT CURRENTLY SUPPORTED,
-     * CURRENTLY ONLY KEYS/VALUES THAT IMPLEMENT SERIALIZABLE ARE SUPPORTED
      *
      * @param fromFile the file containing entries ( in JSON format ) which will be deserialized and
      *                 {@link java.util.Map#put(java.lang.Object, java.lang.Object)} into the map
