@@ -209,7 +209,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator);
 
     /**
-     * exports all the entries to a {@link java.io.File} storing them in JSON format, an attempt is
+     * Exports all the entries to a {@link java.io.File} storing them in JSON format, an attempt is
      * made where possible to use standard java serialisation and keep the data human readable, data
      * serialized using the custom serialises are converted to a binary format which is not human
      * readable but this is only done if the Keys or Values are not {@link java.io.Serializable}.
@@ -227,7 +227,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     void getAll(File toFile) throws IOException;
 
     /**
-     * imports all the entries from a {@link java.io.File}, the {@code fromFile} must be created
+     * Imports all the entries from a {@link java.io.File}, the {@code fromFile} must be created
      * using or the same format as {@link ChronicleMap#get(java.lang.Object)}, this method behaves
      * similar to {@link java.util.Map#put(java.lang.Object, java.lang.Object)} where existing
      * entries are overwritten. A write lock is only held while each individual entry is inserted
