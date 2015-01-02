@@ -300,6 +300,10 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 }
 
                 final Attached attachment = (Attached) key.attachment();
+
+                if (attachment == null)
+                    continue;
+
                 if (!attachment.hasRemoteHeartbeatInterval)
                     continue;
 
