@@ -455,18 +455,7 @@ abstract class AbstractChannelReplicator implements Closeable {
 
             out.position(0);
             out.limit((int) bytesPosition);
-
-            int numberOfLongs = (int) bytesPosition / 8;
-
-            // chunk in longs first
-            for (int i = 0; i < numberOfLongs; i++) {
-                in.writeLong(out.getLong());
-            }
-
-            for (int i = numberOfLongs * 8; i < bytesPosition; i++) {
-                in.writeByte(out.get());
-            }
-
+            in.write(out);
             out = result;
 
             assert out.capacity() == in.capacity();
