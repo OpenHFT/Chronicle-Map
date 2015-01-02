@@ -31,7 +31,7 @@ enum DummyValueMarshaller
 
     @Override
     public boolean startsWith(Bytes bytes, DummyValue dummyValue) {
-        throw new UnsupportedOperationException();
+        return true;
     }
 
     @Override

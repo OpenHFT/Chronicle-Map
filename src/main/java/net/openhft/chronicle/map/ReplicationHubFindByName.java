@@ -18,7 +18,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
+import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ class ReplicationHubFindByName<K> implements FindByName {
     public static final int MAP_BY_NAME_CHANNEL = 1;
 
     private final AtomicInteger nextFreeChannel = new AtomicInteger(2);
-    private final Map<String, MapInstanceConfig> map;
+    private final Map<String, MapInstanceBuilder> map;
     private final ReplicationHub replicationHub;
 
     /**
@@ -52,12 +52,12 @@ class ReplicationHubFindByName<K> implements FindByName {
         this.replicationHub = replicationHub;
         ReplicationChannel channel = replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL);
 
-        final MapEventListener<CharSequence, MapInstanceConfig> listener =
-                new MapEventListener<CharSequence, MapInstanceConfig>() {
+        final MapEventListener<CharSequence, MapInstanceBuilder> listener =
+                new MapEventListener<CharSequence, MapInstanceBuilder>() {
                     // creates a map based on the details that are sent to the map of builders
                     @Override
-                    public void onPut(CharSequence key, MapInstanceConfig value,
-                                      MapInstanceConfig replacedValue) {
+                    public void onPut(CharSequence key, MapInstanceBuilder value,
+                                      MapInstanceBuilder replacedValue) {
                         super.onPut(key, value, replacedValue);
                         boolean added = replacedValue == null;
                         if (!added || value == null)
@@ -80,7 +80,7 @@ class ReplicationHubFindByName<K> implements FindByName {
                 };
 
         this.map = (Map) ChronicleMapBuilder
-                .of(CharSequence.class, MapInstanceConfig.class)
+                .of(CharSequence.class, MapInstanceBuilder.class)
                 .averageKeySize(10)
                 .averageValueSize(4000)
                 .entries(128)
@@ -93,7 +93,7 @@ class ReplicationHubFindByName<K> implements FindByName {
     }
 
     public <T extends ChronicleHash> T create(
-            MapInstanceConfig<CharSequence, CharSequence> config)
+            MapInstanceBuilder<CharSequence, CharSequence> config)
             throws IOException, TimeoutException, InterruptedException {
 
         int withChannelId = nextFreeChannel.incrementAndGet();
@@ -109,11 +109,11 @@ class ReplicationHubFindByName<K> implements FindByName {
         return (T) get(name).create();
     }
 
-    MapInstanceConfig get(String name) throws IllegalArgumentException,
+    MapInstanceBuilder get(String name) throws IllegalArgumentException,
             TimeoutException,
             InterruptedException {
 
-        MapInstanceConfig config = waitTillEntryReceived(5000, name);
+        MapInstanceBuilder config = waitTillEntryReceived(5000, name);
         if (config == null)
             throw new IllegalArgumentException("A map name=" + name + " can not be found.");
 
@@ -126,11 +126,11 @@ class ReplicationHubFindByName<K> implements FindByName {
      * @param timeOutMs timeout in milliseconds
      * @throws InterruptedException
      */
-    private MapInstanceConfig waitTillEntryReceived(final int timeOutMs, String name)
+    private MapInstanceBuilder waitTillEntryReceived(final int timeOutMs, String name)
             throws TimeoutException, InterruptedException {
         int t = 0;
         for (; t < timeOutMs; t++) {
-            MapInstanceConfig config = map.get(name);
+            MapInstanceBuilder config = map.get(name);
 
             if (config != null)
                 return config;
@@ -156,7 +156,7 @@ class ReplicationHubFindByName<K> implements FindByName {
         return (T) get(name).persistedTo(file).create();
     }
 
-    private ChronicleHashInstanceConfig toReplicatedViaChannel(ChronicleMapBuilder builder) {
+    private ChronicleHashInstanceBuilder toReplicatedViaChannel(ChronicleMapBuilder builder) {
         int channelId = nextFreeChannel.incrementAndGet();
         if (channelId > replicationHub.maxNumberOfChannels())
             throw new IllegalStateException("There are no more free channels, you can increase the number " +
@@ -164,7 +164,7 @@ class ReplicationHubFindByName<K> implements FindByName {
         return builder.instance().replicatedViaChannel(replicationHub.createChannel((short) channelId));
     }
 
-    private ChronicleHashInstanceConfig toReplicatedViaChannel(ChronicleHashBuilder<K, ?, ?> builder, int
+    private ChronicleHashInstanceBuilder toReplicatedViaChannel(ChronicleHashBuilder<K, ?, ?> builder, int
             withChannelId) {
         return builder.instance().replicatedViaChannel(replicationHub.createChannel((short) withChannelId));
     }

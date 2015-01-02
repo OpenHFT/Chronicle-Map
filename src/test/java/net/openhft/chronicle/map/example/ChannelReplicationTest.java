@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map.example;
 
-import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
+import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -197,7 +197,7 @@ public class ChannelReplicationTest {
             // this demotes favoriteColour
             short channel1 = (short) 1;
 
-            ChronicleHashInstanceConfig<ChronicleMap<CharSequence, CharSequence>> instance = builder.instance().replicatedViaChannel(hubOnServer.createChannel(channel1));
+            ChronicleHashInstanceBuilder<ChronicleMap<CharSequence, CharSequence>> instance = builder.instance().replicatedViaChannel(hubOnServer.createChannel(channel1));
 
             favoriteColourServer2 = instance.create();
         }

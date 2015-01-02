@@ -51,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
+import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.map.Asserts.assertNotNull;
 import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDivisor;
 import static net.openhft.lang.MemoryUnit.*;
@@ -101,7 +102,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     final Class nativeValueClass;
     final MultiMapFactory multiMapFactory;
     final int maxChunksPerEntry;
-    private final List jsonConverters;
+
     transient Provider<BytesReader<K>> keyReaderProvider;
     transient Provider<KI> keyInteropProvider;
     transient Provider<BytesReader<V>> valueReaderProvider;
@@ -119,7 +120,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         keySizeMarshaller = keyBuilder.sizeMarshaller();
         originalKeyReader = keyBuilder.reader();
         dataFileVersion = BuildVersion.version();
-        jsonConverters = builder.jsonConverters();
 
         originalKeyInterop = (KI) keyBuilder.interop();
 
@@ -672,12 +672,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     public synchronized void getAll(File toFile) throws IOException {
-        JsonSerializer.getAll(toFile, this, jsonConverters);
+        JsonSerializer.getAll(toFile, this, emptyList());
     }
 
     @Override
     public synchronized void putAll(File fromFile) throws IOException {
-        JsonSerializer.putAll(fromFile, this, jsonConverters);
+        JsonSerializer.putAll(fromFile, this, emptyList());
     }
 
     @Override

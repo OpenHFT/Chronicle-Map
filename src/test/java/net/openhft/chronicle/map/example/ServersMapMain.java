@@ -21,6 +21,7 @@ package net.openhft.chronicle.map.example;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,10 +55,10 @@ public class ServersMapMain {
     public static void startRemoteClient(String hostname) throws IOException {
         final ChronicleMap<byte[], byte[]> map;
         if (stateless) {
-            map = ChronicleMapBuilder.of(
-                    byte[].class, byte[].class)
+            map = ChronicleMapStatelessClientBuilder
+                    .<byte[], byte[]>of(new InetSocketAddress(hostname, port))
                     .putReturnsNull(true)
-                    .statelessClient(new InetSocketAddress(hostname, port)).create();
+                    .create();
         } else {
             File file = File.createTempFile("testServersMapMain", ".deleteme");
             file.deleteOnExit();

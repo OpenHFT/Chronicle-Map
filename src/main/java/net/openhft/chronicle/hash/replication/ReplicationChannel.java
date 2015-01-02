@@ -17,14 +17,14 @@
 package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.ChronicleHashInstanceConfig;
+import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
 /**
  * A token which should be created via {@link ReplicationHub#createChannel(int)} call and passed to {@link
- * ChronicleHashInstanceConfig#replicatedViaChannel(ReplicationChannel)} method, to establish a channel
+ * ChronicleHashInstanceBuilder#replicatedViaChannel(ReplicationChannel)} method, to establish a channel
  * replication. See <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
  * the corresponding section in ChronicleMap manual</a> for more information.
  *

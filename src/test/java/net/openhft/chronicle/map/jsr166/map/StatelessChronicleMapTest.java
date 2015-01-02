@@ -34,6 +34,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static org.junit.Assert.*;
 
 /*
@@ -239,9 +240,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                         .replication((byte) 1, TcpTransportAndNetworkConfig.of(port))
                         .create();
 
-        final ChronicleMap<Integer, String> statelessMap = ChronicleMapBuilder.of(Integer
-                .class, String.class)
-                .statelessClient(new InetSocketAddress("localhost", port)).create();
+        final ChronicleMap<Integer, String> statelessMap = localClient(port);
 
         return new SingleCloseMap(statelessMap, statelessMap, serverMap);
     }
@@ -254,10 +253,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create();
 
-        final ChronicleMap<CharSequence, CharSequence> statelessMap = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class)
-                .statelessClient(new InetSocketAddress("localhost", port))
-                .create();
+        final ChronicleMap<CharSequence, CharSequence> statelessMap = localClient(port);
 
         return new SingleCloseMap<>(statelessMap, statelessMap, serverMap);
     }
@@ -271,10 +267,10 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create();
 
-        final ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapBuilder
-                .of(byte[].class, byte[].class)
+        final ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapStatelessClientBuilder
+                .<byte[], byte[]>of(new InetSocketAddress("localhost", port))
                 .putReturnsNull(true)
-                .statelessClient(new InetSocketAddress("localhost", port)).create();
+                .create();
 
         return new SingleCloseMap<>(statelessMap, statelessMap, serverMap);
     }

@@ -46,8 +46,8 @@ public class MapByNameTest {
     @Test
     public void testSerializingBuilder() throws TimeoutException, InterruptedException, IOException {
 
-        final MapInstanceConfig<CharSequence, CharSequence> config =
-                (MapInstanceConfig<CharSequence, CharSequence>)
+        final MapInstanceBuilder<CharSequence, CharSequence> config =
+                (MapInstanceBuilder<CharSequence, CharSequence>)
                         ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                                 .averageKeySize("hello".length()).averageValueSize("world".length())
                                 .entries(2)
@@ -73,8 +73,8 @@ public class MapByNameTest {
 
         NodeDiscovery nodeDiscovery = new NodeDiscovery();
 
-        MapInstanceConfig<CharSequence, CharSequence> config =
-                (MapInstanceConfig<CharSequence, CharSequence>)
+        MapInstanceBuilder<CharSequence, CharSequence> config =
+                (MapInstanceBuilder<CharSequence, CharSequence>)
                         ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                                 .minSegments(2)
                                 .removeReturnsNull(true)
@@ -93,8 +93,8 @@ public class MapByNameTest {
         final ReplicationHubFindByName<CharSequence> mapByName = nodeDiscovery.mapByName();
         Thread.sleep(2000);
 
-        MapInstanceConfig<CharSequence, CharSequence> config =
-                (MapInstanceConfig<CharSequence, CharSequence>)
+        MapInstanceBuilder<CharSequence, CharSequence> config =
+                (MapInstanceBuilder<CharSequence, CharSequence>)
                         ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                                 .minSegments(2)
                                 .entries(2)
