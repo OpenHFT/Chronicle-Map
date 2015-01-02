@@ -2348,26 +2348,26 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     onRelocation(this, pos);
                     int allocatedChunks =
                             inChunks(innerEntrySize(sizeOfEverythingBeforeValue, newElemSize));
-                    pos = alloc(allocatedChunks);
+                    long newPos = alloc(allocatedChunks);
                     // putValue() is called from put() and replace()
                     // after successful search by key
-                    searchedHashLookup.replacePrevPos(segmentState.searchState, pos);
-                    offset = offsetFromPos(pos);
+                    searchedHashLookup.replacePrevPos(segmentState.searchState, newPos);
+                    long newOffset = offsetFromPos(newPos);
+                    reuse(entry, newOffset);
                     // Moving metadata, key size and key.
                     // Don't want to fiddle with pseudo-buffers for this,
                     // since we already have all absolute addresses.
                     long newEntryStartAddr = entry.address();
                     NativeBytes.UNSAFE.copyMemory(entryStartAddr,
                             newEntryStartAddr, valueSizeAddr - entryStartAddr);
-                    entry = reuse(entry, offset);
                     entry.position(valueSizePos);
                     valueSizeMarshaller.writeSize(entry, newElemSize);
                     alignment.alignPositionAddr(entry);
                     metaElemWriter.write(elemWriter, entry, newElem);
 
-                    freeExtraAllocatedChunks(pos, allocatedChunks, entry);
+                    freeExtraAllocatedChunks(newPos, allocatedChunks, entry);
 
-                    segmentState.pos = pos;
+                    segmentState.pos = newPos;
                     return offset;
                     // END OF RELOCATION
                 } else if (newSizeInChunks < oldSizeInChunks) {

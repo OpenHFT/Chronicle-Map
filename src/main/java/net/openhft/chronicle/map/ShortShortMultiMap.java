@@ -206,6 +206,7 @@ class ShortShortMultiMap implements MultiMap {
         key = maskUnsetKey(key);
         searchStateToReuse.searchPos = pos(key);
         searchStateToReuse.searchHash = key;
+        searchStateToReuse.putAfterFailedSearch = false;
     }
 
     @Override
@@ -237,9 +238,12 @@ class ShortShortMultiMap implements MultiMap {
     @Override
     public void replacePrevPos(SearchState searchState, long newValue) {
         checkValueForPut(newValue);
-        long prevPos = stepBack(searchState.searchPos);
+        long prevPos = searchState.searchPos;
+        if (!searchState.putAfterFailedSearch)
+            prevPos = stepBack(prevPos);
         int oldEntry = bytes.readInt(prevPos);
         long oldValue = value(oldEntry);
+        checkValueForRemove(oldValue);
         positions.clear(oldValue);
         positions.set(newValue);
         bytes.writeInt(prevPos, entry(searchState.searchHash, newValue));
@@ -250,6 +254,7 @@ class ShortShortMultiMap implements MultiMap {
         checkValueForPut(value);
         positions.set(value);
         bytes.writeInt(searchState.searchPos, entry(searchState.searchHash, value));
+        searchState.putAfterFailedSearch = true;
     }
 
     @Override

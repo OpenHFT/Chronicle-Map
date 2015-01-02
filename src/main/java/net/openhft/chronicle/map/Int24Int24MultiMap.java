@@ -239,9 +239,12 @@ class Int24Int24MultiMap implements MultiMap {
     @Override
     public void replacePrevPos(SearchState searchState, long newValue) {
         checkValueForPut(newValue);
-        long prevPos = stepBack(searchState.searchPos);
+        long prevPos = searchState.searchPos;
+        if (!searchState.putAfterFailedSearch)
+            prevPos = stepBack(prevPos);
         long oldEntry = bytes.readInt48(prevPos);
         long oldValue = value(oldEntry);
+        checkValueForRemove(oldValue);
         positions.clear(oldValue);
         positions.set(newValue);
         bytes.writeInt48(prevPos, entry(searchState.searchHash, newValue));

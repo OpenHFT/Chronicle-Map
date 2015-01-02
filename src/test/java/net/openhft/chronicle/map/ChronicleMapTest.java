@@ -664,7 +664,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore("HCOLL-277")
+    @Ignore("Performance test")
     public void testAcquirePerf256()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
@@ -690,7 +690,8 @@ public class ChronicleMapTest {
 
 //                    File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
 //                    tmpFile.deleteOnExit();
-                    final ChronicleMap<CharSequence, CharSequence> map = builder.create(); //createPersistedTo(tmpFile);
+                    //createPersistedTo(tmpFile);
+                    final ChronicleMap<CharSequence, CharSequence> map = builder.create();
 
                     int count = runs > 500 ? 2 : 3;
                     System.out.println("\nKey size: " + runs + " Million entries. " + builder);
@@ -734,7 +735,8 @@ public class ChronicleMapTest {
                         }
 
                         long time = System.currentTimeMillis() - start;
-                        System.out.printf("EntrySize: %,d Entries: %,d M Segments: %,d Throughput %.1f M ops/sec%n",
+                        System.out.printf("EntrySize: %,d Entries: %,d M Segments: " +
+                                        "%,d Throughput %.1f M ops/sec%n",
                                 entrySize, runs, segments,
                                 threads * entries / 1000.0 / time);
                     }

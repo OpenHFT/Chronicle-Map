@@ -240,9 +240,12 @@ class IntIntMultiMap implements MultiMap {
     @Override
     public void replacePrevPos(SearchState searchState, long newValue) {
         checkValueForPut(newValue);
-        long prevPos = stepBack(searchState.searchPos);
+        long prevPos = searchState.searchPos;
+        if (!searchState.putAfterFailedSearch)
+            prevPos = stepBack(prevPos);
         long oldEntry = bytes.readLong(prevPos);
         long oldValue = value(oldEntry);
+        checkValueForRemove(oldValue);
         positions.clear(oldValue);
         positions.set(newValue);
         bytes.writeLong(prevPos, entry(searchState.searchHash, newValue));
