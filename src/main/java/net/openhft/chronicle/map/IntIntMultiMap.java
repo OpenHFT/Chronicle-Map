@@ -209,6 +209,7 @@ class IntIntMultiMap implements MultiMap {
         key = maskUnsetKey(key);
         searchStateToReuse.searchPos = pos(key);
         searchStateToReuse.searchHash = key;
+        searchStateToReuse.putAfterFailedSearch = false;
     }
 
     @Override
