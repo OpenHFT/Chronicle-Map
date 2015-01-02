@@ -236,15 +236,18 @@ class ShortShortMultiMap implements MultiMap {
     }
 
     @Override
-    public void replacePrevPos(SearchState searchState, long newValue) {
+    public void replacePrevPos(SearchState searchState, long newValue,
+                               boolean oldValueInPositions) {
         checkValueForPut(newValue);
         long prevPos = searchState.searchPos;
         if (!searchState.putAfterFailedSearch)
             prevPos = stepBack(prevPos);
-        int oldEntry = bytes.readInt(prevPos);
-        long oldValue = value(oldEntry);
-        checkValueForRemove(oldValue);
-        positions.clear(oldValue);
+        if (oldValueInPositions) {
+            int oldEntry = bytes.readInt(prevPos);
+            long oldValue = value(oldEntry);
+            checkValueForRemove(oldValue);
+            positions.clear(oldValue);
+        }
         positions.set(newValue);
         bytes.writeInt(prevPos, entry(searchState.searchHash, newValue));
     }

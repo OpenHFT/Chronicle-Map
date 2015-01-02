@@ -749,7 +749,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     } else {
                         throw defaultValueOrPrepareBytesShouldBeSpecified();
                     }
-                    putValue(pos, offset, entry, valueSizePos, entryEndAddr, segmentState,
+                    putValue(pos, offset, entry, valueSizePos, entryEndAddr, isDeleted,
+                            segmentState,
                             metaElemWriter, elemWriter, elem, metaElemWriter.size(elemWriter, elem),
                             hashLookup, sizeOfEverythingBeforeValue);
                     pos = segmentState.pos;
@@ -771,7 +772,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         V valueInstance = toValue.toInstance(copies, v, valueSize);
                         eventListener.onPut(keyInstance, valueInstance, null);
                     }
-
+                    entryCreated(lock);
                     return v;
                 } else {
                     segmentState.pos = pos; // for WriteLocked.close()
@@ -785,11 +786,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             RV result = createEntryOnAcquire(copies, segmentState,
                     metaKeyInterop, keyInterop, key, keySize, toKey,
                     readValue, usingValue, toValue, entry);
-
-            //  notify the context that the entry was created
-            if (lock instanceof WriteLocked)
-                ((WriteLocked) lock).created(false);
-
+            entryCreated(lock);
             return result;
         }
 
@@ -1298,13 +1295,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             V value = valueReaderProvider.get(copies, originalValueReader).read(entry, valueSize);
 
             return new TimestampTrackingEntry(key, value, timestamp);
-        }
-
-        @Override
-        boolean isDeleted(long pos) {
-            bytes.position(offsetFromPos(pos) + metaDataBytes);
-            long keySize = keySizeMarshaller.readSize(bytes);
-            return bytes.readBoolean(bytes.position() + keySize + ADDITIONAL_ENTRY_BYTES - 1L);
         }
     }
 

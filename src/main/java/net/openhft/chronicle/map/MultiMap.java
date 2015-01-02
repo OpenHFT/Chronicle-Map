@@ -65,7 +65,7 @@ interface MultiMap {
 
     void removePrevPos(SearchState searchState);
 
-    void replacePrevPos(SearchState searchState, long newValue);
+    void replacePrevPos(SearchState searchState, long newValue, boolean oldValueInPositions);
 
     void putAfterFailedSearch(SearchState searchState, long value);
 
