@@ -34,7 +34,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -177,6 +176,22 @@ public class ChronicleMapTest {
         map.close();
     }
 
+
+    @Test
+    public void testByteArrayPersistenceFileReuse() throws Exception {
+        final File persistenceFile = Builder.getPersistenceFile();
+
+        for (int i = 0; i < 2; i++) {
+            ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[]
+                    .class).createPersistedTo(persistenceFile);
+
+            byte[] o = map.get("hello".getBytes());
+            System.out.println(o == null ? "null" : new String(o));
+            map.put("hello".getBytes(), "world".getBytes());
+        }
+
+
+    }
 
     @Test
     public void testEqualsCharSequence() throws Exception {
