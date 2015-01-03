@@ -779,17 +779,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         checkReallyUsingValue(usingValue, mustReuseValue, v);
 
-        lock.copies = copies;
-        lock.metaKeyInterop = metaKeyInterop;
-        lock.keyInterop = keyInterop;
-        lock.keySize = keySize;
-        lock.segmentHash = segmentHash;
+        lock.initKey(copies, metaKeyInterop, keyInterop, keySize, segmentHash, key);
 
         if (!nativeValueClass && lockType == LockType.WRITE_LOCK && v == null)
             v = usingValue;
-
         lock.value(v);
-        lock.key(key);
 
         return (T) lock;
     }
@@ -1373,24 +1367,21 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         <K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         ReadLocked<K, KI, MKI, V, VI, MVI> readLocked(VanillaChronicleMap.Segment segment) {
-            readLocked.segment = segment;
-            readLocked.map = segment.map();
+            readLocked.initSegment(segment);
             return readLocked;
         }
 
         <K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         WriteLocked<K, KI, MKI, V, VI, MVI> nativeWriteLocked(VanillaChronicleMap.Segment segment) {
-            nativeWriteLocked.segment = segment;
-            nativeWriteLocked.map = segment.map();
+            nativeWriteLocked.initSegment(segment);
             return nativeWriteLocked;
         }
 
         <K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         WriteLocked<K, KI, MKI, V, VI, MVI> heapWriteLocked(VanillaChronicleMap.Segment segment) {
-            heapWriteLocked.segment = segment;
-            heapWriteLocked.map = segment.map();
+            heapWriteLocked.initSegment(segment);
             return heapWriteLocked;
         }
     }
@@ -1720,12 +1711,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             RV result = createEntryOnAcquire(copies, segmentState,
                     metaKeyInterop, keyInterop, key, keySize, toKey,
                     readValue, usingValue, toValue, entry);
+            entryCreated(lock);
+            return result;
+        }
 
+        final void entryCreated(MutableLockedEntry lock) {
             //  notify the context that the entry was created
             if (lock instanceof WriteLocked)
                 ((WriteLocked) lock).created(true);
-
-            return result;
         }
 
         final <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
@@ -1911,7 +1904,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
 
             // putValue may relocate entry and change offset
-            putValue(pos, offset, entry, valueSizePos, entryEndAddr, segmentState,
+            putValue(pos, offset, entry, valueSizePos, entryEndAddr, entryIsDeleted, segmentState,
                     metaValueInterop, valueInterop, value, valueSize, searchedHashLookup,
                     sizeOfEverythingBeforeValue);
 
@@ -2288,7 +2281,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             MVBI metaValueInterop = getNewValueInterops.getMetaValueInterop(
                     copies, valueInterop, newValue);
             long newValueSize = metaValueInterop.size(valueInterop, newValue);
-            putValue(pos, offset, entry, valueSizePos, entryEndAddr, segmentState,
+            boolean entryIsDeleted = false; // couldn't replace deleted entry
+            putValue(pos, offset, entry, valueSizePos, entryEndAddr, entryIsDeleted, segmentState,
                     metaValueInterop, valueInterop, newValue, newValueSize, searchedHashLookup,
                     sizeOfEverythingBeforeValue);
 
@@ -2321,6 +2315,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
          */
         final <E, EW> long putValue(
                 long pos, long offset, MultiStoreBytes entry, long valueSizePos, long entryEndAddr,
+                boolean entryIsDeleted,
                 SegmentState segmentState,
                 MetaBytesWriter<E, ? super EW> metaElemWriter, EW elemWriter, E newElem,
                 long newElemSize,
@@ -2351,7 +2346,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     long newPos = alloc(allocatedChunks);
                     // putValue() is called from put() and replace()
                     // after successful search by key
-                    searchedHashLookup.replacePrevPos(segmentState.searchState, newPos);
+                    searchedHashLookup.replacePrevPos(segmentState.searchState, newPos,
+                            !entryIsDeleted);
                     long newOffset = offsetFromPos(newPos);
                     reuse(entry, newOffset);
                     // Moving metadata, key size and key.
@@ -2414,10 +2410,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             V value = valueReaderProvider.get(copies, originalValueReader).read(entry, valueSize);
 
             return new WriteThroughEntry(key, value);
-        }
-
-        boolean isDeleted(long pos) {
-            return false;
         }
 
         /**
@@ -2669,13 +2661,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             V, VI, MVI extends MetaBytesInterop<V, ? super VI>> implements Context<K, V> {
         final SegmentState segmentState;
 
-        VanillaChronicleMap<K, KI, MKI, V, VI, MVI> map;
-        VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment;
-        ThreadLocalCopies copies;
-        MKI metaKeyInterop;
-        KI keyInterop;
-        long keySize;
-        long segmentHash;
+        private VanillaChronicleMap<K, KI, MKI, V, VI, MVI> map;
+        private VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment;
+        private ThreadLocalCopies copies;
+        private MKI metaKeyInterop;
+        private KI keyInterop;
+        private long keySize;
+        private long segmentHash;
 
         private K key;
         private V value;
@@ -2684,22 +2676,72 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             this.segmentState = segmentState;
         }
 
-        public final K key() {
-            return key;
+        final void initSegment(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment) {
+            this.map = segment.map();
+            this.segment = segment;
+            init();
         }
 
-        final void key(K key) {
+        final void initKey(ThreadLocalCopies copies, MKI metaKeyInterop, KI keyInterop,
+                           long keySize, long segmentHash, K key) {
+            this.copies = copies;
+            this.metaKeyInterop = metaKeyInterop;
+            this.keyInterop = keyInterop;
+            this.keySize = keySize;
+            this.segmentHash = segmentHash;
             this.key = key;
+            init();
+        }
+
+        void init() {
+            // nothing
+        }
+
+        final VanillaChronicleMap<K, KI, MKI, V, VI, MVI> map() {
+            return map;
+        }
+
+        final VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment() {
+            return segment;
+        }
+
+        final ThreadLocalCopies copies() {
+            return copies;
+        }
+
+        final MKI metaKeyInterop() {
+            return metaKeyInterop;
+        }
+
+        final KI keyInterop() {
+            return keyInterop;
+        }
+
+        final long keySize() {
+            return keySize;
+        }
+
+        final long segmentHash() {
+            return segmentHash;
+        }
+
+        public final K key() {
+            return key;
         }
 
         public final V value() {
             return value;
         }
 
-        void value(V value) {
+        final void value(V value) {
             this.value = value;
         }
 
+        @Override
+        public void close() {
+            segmentState.close();
+            segment().readUnlock();
+        }
     }
 
     private static class ReadLocked<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
@@ -2707,15 +2749,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             extends MutableLockedEntry<K, KI, MKI, V, VI, MVI>
             implements ReadContext<K, V> {
 
-
         ReadLocked(SegmentState segmentState) {
             super(segmentState);
-        }
-
-        @Override
-        public void close() {
-            segmentState.close();
-            segment.readUnlock();
         }
 
         /**
@@ -2731,10 +2766,18 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             extends MutableLockedEntry<K, KI, MKI, V, VI, MVI>
             implements WriteContext<K, V> {
 
-        private boolean created = false;
+        private boolean created;
+        boolean removed;
 
         WriteLocked(SegmentState segmentState) {
             super(segmentState);
+        }
+
+        @Override
+        void init() {
+            super.init();
+            created = false;
+            removed = false;
         }
 
         /**
@@ -2757,32 +2800,36 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             super(segmentState);
         }
 
-
         @Override
         public void close() {
-            // TODO optimize -- keep replication bytes offset in SegmentState to jump directly
-            long pos = segmentState.pos;
-            long offset = segment.offsetFromPos(pos);
-            MultiStoreBytes entry = segment.reuse(segmentState.tmpBytes, offset);
-            long keySize = map.keySizeMarshaller.readSize(entry);
-            entry.skip(keySize);
-            segment.manageReplicationBytes(entry, true, false);
-            map.onPut(segment, pos);
-            segmentState.close();
-            segment.writeUnlock();
+            if (!removed) {
+                // TODO optimize -- keep replication bytes offset in SegmentState to jump directly
+                long pos = segmentState.pos;
+                VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment = segment();
+                VanillaChronicleMap<K, KI, MKI, V, VI, MVI> map = map();
+                long offset = segment.offsetFromPos(pos);
+                MultiStoreBytes entry = segment.reuse(segmentState.tmpBytes, offset);
+                long keySize = map.keySizeMarshaller.readSize(entry);
+                entry.skip(keySize);
+                segment.manageReplicationBytes(entry, true, false);
+                map.onPut(segment, pos);
+            }
+            super.close();
         }
 
         @Override
         public void dontPutOnClose() {
             throw new IllegalStateException(
-                    "This method is not supported for native value classes");
+                    "dontPutOnClose() method is not supported for native value classes");
         }
 
         @Override
         public void removeEntry() {
-            segment.removeWithoutLock(copies, segmentState,
-                    metaKeyInterop, keyInterop, key(), keySize, map.keyIdentity(),
-                    map, null, map.valueIdentity(), segmentHash, map, true);
+            removed = true;
+            VanillaChronicleMap<K, KI, MKI, V, VI, MVI> map = map();
+            segment().removeWithoutLock(copies(), segmentState,
+                    metaKeyInterop(), keyInterop(), key(), keySize(), map.keyIdentity(),
+                    map, null, map.valueIdentity(), segmentHash(), map, true);
         }
     }
 
@@ -2790,18 +2837,28 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
             extends WriteLocked<K, KI, MKI, V, VI, MVI> {
 
-        private boolean putOnClose = true;
+        private boolean putOnClose;
 
         HeapWriteLocked(SegmentState segmentState) {
             super(segmentState);
         }
 
         @Override
+        void init() {
+            super.init();
+            putOnClose = true;
+        }
+
+        @Override
         public void close() {
+            VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment = segment();
             if (putOnClose) {
+                assert !removed;
                 // TODO optimize -- keep keySize, valueSizePos, entryEndAddr, etc. inside
                 // segmentState
                 long pos = segmentState.pos;
+                VanillaChronicleMap<K, KI, MKI, V, VI, MVI> map = map();
+                ThreadLocalCopies copies = copies();
                 long offset = segment.offsetFromPos(pos);
                 MultiStoreBytes entry = segment.reuse(segmentState.tmpBytes, offset);
                 long keySize = map.keySizeMarshaller.readSize(entry);
@@ -2817,28 +2874,31 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 MVI metaValueInterop = map.metaValueInteropProvider
                         .get(copies, map.originalMetaValueInterop, valueInterop, value);
                 long newValueSize = metaValueInterop.size(valueInterop, value);
-                segment.putValue(pos, offset, entry, valueSizePos, entryEndAddr, segmentState,
+                segment.putValue(pos, offset, entry, valueSizePos, entryEndAddr, removed,
+                        segmentState,
                         metaValueInterop, valueInterop, value, newValueSize, segment.hashLookup(),
                         sizeOfEverythingBeforeValue);
                 map.onPut(segment, segmentState.pos);
             }
-            putOnClose = true;
-            segmentState.close();
-            segment.writeUnlock();
+            super.close();
         }
 
 
         @Override
         public void dontPutOnClose() {
+            if (removed)
+                throw new IllegalStateException("Shouldn't call this method after removeEntry()");
             putOnClose = false;
         }
 
         @Override
         public void removeEntry() {
             putOnClose = false;
-            segment.removeWithoutLock(copies, segmentState,
-                    metaKeyInterop, keyInterop, key(), keySize, map.keyIdentity(),
-                    map, null, map.valueIdentity(), segmentHash, map, true);
+            removed = true;
+            VanillaChronicleMap<K, KI, MKI, V, VI, MVI> map = map();
+            segment().removeWithoutLock(copies(), segmentState,
+                    metaKeyInterop(), keyInterop(), key(), keySize(), map.keyIdentity(),
+                    map, null, map.valueIdentity(), segmentHash(), map, true);
         }
     }
 
