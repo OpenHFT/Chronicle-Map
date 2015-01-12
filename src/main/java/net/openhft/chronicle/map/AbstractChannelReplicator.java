@@ -474,52 +474,69 @@ abstract class AbstractChannelReplicator implements Closeable {
         @Override
         public boolean onEntry(final Bytes entry, final int chronicleId) {
 
+            long startOfEntry = entry.position();
             long pos0 = in.position();
+            long start = 0;
+            try {
+                // used to denote that this is not a stateless map event
+                in.writeByte(StatelessChronicleMap.EventId.STATEFUL_UPDATE.ordinal());
 
-            // used to denote that this is not a stateless map event
-            in.writeByte(StatelessChronicleMap.EventId.STATEFUL_UPDATE.ordinal());
+                long sizeLocation = in.position();
 
-            long sizeLocation = in.position();
+                // this is where we will store the size of the entry
+                in.skip(SIZE_OF_SIZE);
 
-            // this is where we will store the size of the entry
-            in.skip(SIZE_OF_SIZE);
+                start = in.position();
 
-            int entrySize = externalizable.sizeOfEntry(entry, chronicleId);
+                externalizable.writeExternalEntry(entry, in, chronicleId);
 
-            if (entrySize > in.remaining()) {
-
-                long newSize = in.position() + entrySize;
-
-                // This can occur when we pack a number of entries into the buffer and the
-                // last entry is very large.
-                if (newSize > Integer.MAX_VALUE)
+                if (in.position() == start) {
+                    in.position(pos0);
                     return false;
+                }
 
-                resizeBuffer((int) newSize);
-            }
+                // write the length of the entry, just before the start, so when we read it back
+                // we read the length of the entry first and hence know how many preceding writer to read
+                final long bytesWritten = (int) (in.position() - start);
 
-            final long start = in.position();
+                if (bytesWritten > Integer.MAX_VALUE)
+                    throw new IllegalStateException("entry too large, " +
+                            "entries are limited to a size of " + Integer.MAX_VALUE);
 
-            externalizable.writeExternalEntry(entry, in, chronicleId);
+                if (LOG.isDebugEnabled())
+                    LOG.debug("sending entry of entrySize=" + (int) bytesWritten);
 
-            if (in.position() == start) {
+                in.writeInt(sizeLocation, (int) bytesWritten);
+
+            } catch (IllegalArgumentException e) {
+
+                // reset the entries position
+                entry.position(startOfEntry);
+
+                // reset the in-buffers position
                 in.position(pos0);
-                return false;
+                long remaining = in.remaining();
+                int entrySize = externalizable.sizeOfEntry(entry, chronicleId);
+
+
+                if (entrySize > remaining) {
+
+                    long newSize = start + entrySize;
+
+                    // This can occur when we pack a number of entries into the buffer and the
+                    // last entry is very large.
+                    if (newSize > Integer.MAX_VALUE)
+                        return false;
+
+                    resizeBuffer((int) newSize);
+
+                    in.position(pos0);
+                    entry.position(startOfEntry);
+                    return onEntry(entry, chronicleId);
+                } else
+                    throw e;
+
             }
-
-            // write the length of the entry, just before the start, so when we read it back
-            // we read the length of the entry first and hence know how many preceding writer to read
-            final long bytesWritten = (int) (in.position() - start);
-
-            if (bytesWritten > Integer.MAX_VALUE)
-                throw new IllegalStateException("entry too large, the entry size=" + entrySize + ", " +
-                        "entries are limited to a size of " + Integer.MAX_VALUE);
-
-            if (LOG.isDebugEnabled())
-                LOG.debug("sending entry of entrySize=" + (int) bytesWritten);
-
-            in.writeInt(sizeLocation, (int) bytesWritten);
-
             return true;
         }
     }

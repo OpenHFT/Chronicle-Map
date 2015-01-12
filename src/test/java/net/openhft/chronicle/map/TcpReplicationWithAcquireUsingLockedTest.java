@@ -35,9 +35,9 @@ public class TcpReplicationWithAcquireUsingLockedTest {
 
             try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
                          ChronicleMapBuilder.of(CharSequence.class,
-                    TestInstrumentVOInterface.class)
-                    .replication((byte) 2, config2)
-                    .create()) {
+                                 TestInstrumentVOInterface.class)
+                                 .replication((byte) 2, config2)
+                                 .create()) {
 
                 map2a = map2;
 
@@ -58,6 +58,7 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                         break;
                     Thread.sleep(1);
                 }
+
 
                 Assert.assertEquals(map1a, map2a);
             }
@@ -91,11 +92,11 @@ public class TcpReplicationWithAcquireUsingLockedTest {
 
             try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
                          ChronicleMapBuilder.of(CharSequence.class,
-                    TestInstrumentVOInterface.class)
-                    .putReturnsNull(true)
-                    .removeReturnsNull(true)
-                    .replication((byte) 2, config2)
-                    .entries(5000L).averageKeySize("hello".length()).create()) {
+                                 TestInstrumentVOInterface.class)
+                                 .putReturnsNull(true)
+                                 .removeReturnsNull(true)
+                                 .replication((byte) 2, config2)
+                                 .entries(5000L).averageKeySize("hello".length()).create()) {
 
                 map2a = map2;
 
@@ -144,11 +145,11 @@ public class TcpReplicationWithAcquireUsingLockedTest {
 
             try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
                          ChronicleMapBuilder.of(CharSequence.class,
-                    TestInstrumentVOInterface.class)
-                    .putReturnsNull(true)
-                    .removeReturnsNull(true)
-                    .replication((byte) 2, config2)
-                    .entries(5000L).averageKeySize("hello".length()).create()) {
+                                 TestInstrumentVOInterface.class)
+                                 .putReturnsNull(true)
+                                 .removeReturnsNull(true)
+                                 .replication((byte) 2, config2)
+                                 .entries(5000L).averageKeySize("hello".length()).create()) {
 
                 map2a = map2;
 

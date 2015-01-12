@@ -1499,7 +1499,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                             continue;
                         }
 
-                        // it may not be successful if the buffer can not be resided so we will
+                        // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
                         final boolean success = entryCallback.onEntry(entry, chronicleId);
                         entryCallback.onAfterEntry();
