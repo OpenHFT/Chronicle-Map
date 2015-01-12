@@ -27,12 +27,12 @@ import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 final class MapInstanceBuilder<K, V>
-        implements ChronicleHashInstanceBuilder<ChronicleMap<K, V>>, Serializable{
+        implements ChronicleHashInstanceBuilder<ChronicleMap<K, V>>, Serializable {
 
     final ChronicleMapBuilder<K, V> mapBuilder;
-    SingleChronicleHashReplication singleHashReplication;
-    ReplicationChannel channel;
-    File file;
+    transient SingleChronicleHashReplication singleHashReplication;
+    transient ReplicationChannel channel;
+    transient File file;
     String name;
 
     final AtomicBoolean used;

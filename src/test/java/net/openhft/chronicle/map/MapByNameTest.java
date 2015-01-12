@@ -87,6 +87,27 @@ public class MapByNameTest {
         ChronicleMap<CharSequence, CharSequence> myMap2 = mapByName.from("myMap");
     }
 
+    @Test
+    public void testReplicationHubSerialization() throws IOException, InterruptedException,
+            TimeoutException {
+        NodeDiscovery nodeDiscovery = new NodeDiscovery();
+
+        final ReplicationHubFindByName<CharSequence> mapByName = nodeDiscovery.mapByName();
+        Thread.sleep(2000);
+
+        MapInstanceBuilder<CharSequence, CharSequence> config =
+                (MapInstanceBuilder<CharSequence, CharSequence>)
+                        ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                                .minSegments(2)
+                                .entries(2)
+                                .removeReturnsNull(true)
+                                .instance()
+                                .name("myMap6");
+
+        mapByName.create(config);
+
+    }
+
     public static void main(String... args) throws IOException, InterruptedException, TimeoutException {
         NodeDiscovery nodeDiscovery = new NodeDiscovery();
 

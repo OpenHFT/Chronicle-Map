@@ -34,7 +34,7 @@ public abstract class AbstractReplication implements Serializable {
     UdpTransportConfig udpConfig;
     private final
     @Nullable
-    RemoteNodeValidator remoteNodeValidator;
+    transient RemoteNodeValidator remoteNodeValidator;
     private final boolean bootstrapOnlyLocalEntries;
 
     // package-private to forbid subclassing from outside of the package
@@ -79,13 +79,14 @@ public abstract class AbstractReplication implements Serializable {
     }
 
     /**
-     * Builder of {@link AbstractReplication} configurations. This class and it's subclasses are mutable,
-     * configuration methods mutate the builder and return it back for convenient chaining.
+     * Builder of {@link AbstractReplication} configurations. This class and it's subclasses are
+     * mutable, configuration methods mutate the builder and return it back for convenient
+     * chaining.
      *
-     * @param <R> the concrete {@link AbstractReplication} subclass: {@link SingleChronicleHashReplication} or
-     *            {@link ReplicationHub}
-     * @param <B> the concrete builder subclass: {@link SingleChronicleHashReplication.Builder} or {@link
-     *            ReplicationHub.Builder}
+     * @param <R> the concrete {@link AbstractReplication} subclass: {@link
+     *            SingleChronicleHashReplication} or {@link ReplicationHub}
+     * @param <B> the concrete builder subclass: {@link SingleChronicleHashReplication.Builder} or
+     *            {@link ReplicationHub.Builder}
      */
     public static abstract class Builder<R extends AbstractReplication, B extends Builder<R, B>> {
         private TcpTransportAndNetworkConfig tcpConfig = null;
@@ -104,8 +105,8 @@ public abstract class AbstractReplication implements Serializable {
         }
 
         /**
-         * Configures UDP transport settings, used by Replications, created by this builder. {@code null}
-         * means that UDP transport shouldn't being used.
+         * Configures UDP transport settings, used by Replications, created by this builder. {@code
+         * null} means that UDP transport shouldn't being used.
          *
          * @param udpConfig the new UDP transport config for replications, created by this builder.
          * @return this builder back, for chaining
@@ -135,8 +136,8 @@ public abstract class AbstractReplication implements Serializable {
          * currently running.
          *
          * @param bootstrapOnlyLocalEntries if a node provided with this replication should
-         *                                  replicate only local data to the new nodes joining
-         *                                  the replication network
+         *                                  replicate only local data to the new nodes joining the
+         *                                  replication network
          * @return this builder back
          */
         @NotNull
@@ -153,9 +154,9 @@ public abstract class AbstractReplication implements Serializable {
          * @return a new Replication instance with the specified node (server) identifier
          * @throws IllegalArgumentException if the given identifier is non-positive
          * @throws IllegalStateException    if neither {@link #tcpTransportAndNetwork(TcpTransportAndNetworkConfig)}
-         *                                  nor {@link #udpTransport(UdpTransportConfig)} are configured to
-         *                                  non-{@code null}. At least one of the transport-level configs
-         *                                  should be specified.
+         *                                  nor {@link #udpTransport(UdpTransportConfig)} are
+         *                                  configured to non-{@code null}. At least one of the
+         *                                  transport-level configs should be specified.
          */
         @NotNull
         public abstract R createWithId(byte identifier);

@@ -37,6 +37,7 @@ public final class UdpTransportConfig {
     private final ThrottlingConfig throttlingConfig;
 
     private final int udpBufferSize;
+    private String name;
 
     private UdpTransportConfig(
             InetAddress address,
@@ -156,4 +157,7 @@ public final class UdpTransportConfig {
         return create(address(), port(), networkInterface(), throttlingConfig(), udpBufferSize);
     }
 
+    public String name() {
+        return this.name;
+    }
 }

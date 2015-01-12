@@ -25,10 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.StandardSocketOptions;
+import java.net.*;
+import java.nio.BufferUnderflowException;
 import java.nio.channels.*;
 import java.util.Set;
 
@@ -61,6 +59,7 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
 
     private SelectableChannel writeChannel;
     private volatile boolean shouldEnableOpWrite;
+    private final String name;
 
     /**
      * @param replicationConfig
@@ -79,6 +78,7 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
         address = replicationConfig.address();
         port = replicationConfig.port();
         networkInterface = replicationConfig.networkInterface();
+        name = replicationConfig.name();
         serverConnector = new ServerConnector();
     }
 
@@ -99,13 +99,15 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
     /**
      * binds to the server socket and process data This method will block until interrupted
      */
+
+
     @Override
     void processEvent() throws IOException {
-
-        connectClient().register(selector, OP_READ);
-        serverConnector.connectLater();
-
         try {
+
+            connectClient().register(selector, OP_READ);
+            serverConnector.connectLater();
+
             while (selector.isOpen()) {
                 registerPendingRegistrations();
 
@@ -122,44 +124,86 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
                     continue;    // nothing to do
                 }
 
-                final Set<SelectionKey> selectionKeys = selector.selectedKeys();
-                for (final SelectionKey key : selectionKeys) {
+                if (useJavaNIOSelectionKeys) {
+                    // use the standard java nio selector
+
+                    final Set<SelectionKey> selectionKeys = selector.selectedKeys();
+                    for (final SelectionKey key : selectionKeys) {
+                        processKey(key);
+                    }
+                    selectionKeys.clear();
+                } else {
+                    // use the netty like selector
+
+                    final SelectionKey[] keys = selectedKeys.flip();
+
                     try {
+                        for (int i = 0; i < keys.length && keys[i] != null; i++) {
+                            final SelectionKey key = keys[i];
 
-                        if (key.isReadable()) {
-                            final DatagramChannel socketChannel = (DatagramChannel) key.channel();
-                            reader.readAll(socketChannel);
-                        }
-
-                        if (key.isWritable()) {
-                            final DatagramChannel socketChannel = (DatagramChannel) key.channel();
                             try {
-                                int bytesJustWritten = writer.writeAll(socketChannel);
-                                contemplateThrottleWrites(bytesJustWritten);
-                            } catch (NotYetConnectedException e) {
-                                if (LOG.isDebugEnabled())
-                                    LOG.debug("", e);
-                                serverConnector.connectLater();
-                            } catch (IOException e) {
-                                if (LOG.isDebugEnabled())
-                                    LOG.debug("", e);
-                                serverConnector.connectLater();
+                                processKey(key);
+                            } catch (BufferUnderflowException e) {
+                                if (!isClosed)
+                                    LOG.error("", e);
                             }
                         }
-                    } catch (Exception e) {
-                        LOG.error("", e);
-                        if (!isClosed)
-                            closeEarlyAndQuietly(key.channel());
+                    } finally {
+                        for (int i = 0; i < keys.length && keys[i] != null; i++) {
+                            keys[i] = null;
+                        }
                     }
                 }
-
-                selectionKeys.clear();
             }
+        } catch (CancelledKeyException | ConnectException | ClosedChannelException |
+                ClosedSelectorException e) {
+            if (LOG.isDebugEnabled())
+                LOG.debug("", e);
+        } catch (Exception e) {
+            LOG.error("", e);
+        } catch (Throwable e) {
+            LOG.error("", e);
+            throw e;
         } finally {
+
+            if (LOG.isDebugEnabled())
+                LOG.debug("closing name=" + this.name);
             if (!isClosed) {
                 closeResources();
             }
         }
+    }
+
+    private void processKey(SelectionKey key) {
+
+        try {
+
+            if (key.isReadable()) {
+                final DatagramChannel socketChannel = (DatagramChannel) key.channel();
+                reader.readAll(socketChannel);
+            }
+
+            if (key.isWritable()) {
+                final DatagramChannel socketChannel = (DatagramChannel) key.channel();
+                try {
+                    int bytesJustWritten = writer.writeAll(socketChannel);
+                    contemplateThrottleWrites(bytesJustWritten);
+                } catch (NotYetConnectedException e) {
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("", e);
+                    serverConnector.connectLater();
+                } catch (IOException e) {
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("", e);
+                    serverConnector.connectLater();
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("", e);
+            if (!isClosed)
+                closeEarlyAndQuietly(key.channel());
+        }
+
     }
 
     private DatagramChannel connectClient() throws IOException {
