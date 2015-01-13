@@ -21,16 +21,14 @@ package net.openhft.chronicle.map;
 import shaded.org.apache.maven.model.Model;
 import shaded.org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.Reader;
+import java.io.*;
 
 /**
  * gets the version of the current build
  */
 class BuildVersion {
 
-   private static String version = null;
+    private static String version = null;
 
     /**
      * @return version of ChronicleMap being used, or NULL if its not known
@@ -41,7 +39,23 @@ class BuildVersion {
             return version;
         }
 
-        // the best way to get the version is to read it from the manifest
+        try {
+            // the best way to get the version is to read the map.version file
+            InputStream resource = BuildVersion.class.getClassLoader().getResourceAsStream("map" +
+                    ".version");
+            BufferedReader in = new BufferedReader(new InputStreamReader(resource));
+
+            version = in.readLine().trim();
+            if (!"${project.version}".equals(version()))
+                return version;
+
+            return version;
+        } catch (Exception e) {
+            // do nothing
+        }
+
+
+        // another way to get the version is to read it from the manifest
         final String versionFromManifest = getVersionFromManifest();
 
         if (versionFromManifest != null) {
