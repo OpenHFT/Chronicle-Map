@@ -39,6 +39,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
@@ -71,7 +72,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
     private static final int BUFFER_SIZE = 0x100000; // 1MB
 
-    public static final int SPIN_LOOP_TIME_IN_MILLIS = 10;
+    public static final long SPIN_LOOP_TIME_IN_NONOSECONDS = TimeUnit.MICROSECONDS.toNanos(500);
     private final SelectionKey[] selectionKeysStore = new SelectionKey[Byte.MAX_VALUE + 1];
     // used to instruct the selector thread to set OP_WRITE on a key correlated by the bit index
     // in the bitset
@@ -275,9 +276,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      */
     private int select() throws IOException {
 
-        long start = System.currentTimeMillis();
+        long start = System.nanoTime();
 
-        while (System.currentTimeMillis() < start + SPIN_LOOP_TIME_IN_MILLIS) {
+        while (System.nanoTime() < start + SPIN_LOOP_TIME_IN_NONOSECONDS) {
             final int keys = selector.selectNow();
             if (keys != 0)
                 return keys;
