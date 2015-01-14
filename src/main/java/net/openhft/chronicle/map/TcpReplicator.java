@@ -70,8 +70,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     private static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
     private static final int BUFFER_SIZE = 0x100000; // 1MB
-    private static final int SPIN_LOOP_COUNT = 10;
-    public static final int SPIN_LOOP_TIME_IN_MILLIS = 100;
+
+    public static final int SPIN_LOOP_TIME_IN_MILLIS = 10;
     private final SelectionKey[] selectionKeysStore = new SelectionKey[Byte.MAX_VALUE + 1];
     // used to instruct the selector thread to set OP_WRITE on a key correlated by the bit index
     // in the bitset
