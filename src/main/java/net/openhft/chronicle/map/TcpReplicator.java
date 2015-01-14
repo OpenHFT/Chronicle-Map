@@ -273,14 +273,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      * @throws IOException
      */
     private int select() throws IOException {
-
-        // spin loop 100000 times
-        for (int i = 0; i < SPIN_LOOP_COUNT; i++) {
-            final int keys = selector.selectNow();
-            if (keys != 0)
-                return keys;
-        }
-
         return selector.select(selectorTimeout);
     }
 
