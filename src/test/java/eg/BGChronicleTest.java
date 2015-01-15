@@ -3,7 +3,6 @@ package eg;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder;
 
 import java.io.Closeable;
 import java.io.File;
@@ -102,8 +101,8 @@ public class BGChronicleTest {
                 public Void call() throws IOException {
                     InetSocketAddress serverAddress =
                             REPLICAS > 1 && clientId % 2 == 0 ? remoteAddress2 : remoteAddress;
-                    try (ChronicleMap<byte[], byte[]> map = ChronicleMapStatelessClientBuilder
-                            .<byte[], byte[]>of(serverAddress)
+                    try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
+                            .of(byte[].class, byte[].class, serverAddress)
                             .putReturnsNull(true)
                             .removeReturnsNull(true)
                             .create()) {
@@ -138,8 +137,8 @@ public class BGChronicleTest {
             futureList2.add(es.submit(new Callable<long[]>() {
                 @Override
                 public long[] call() throws IOException, InterruptedException {
-                    try (ChronicleMap<byte[], byte[]> map = ChronicleMapStatelessClientBuilder
-                            .<byte[], byte[]>of(remoteAddress)
+                    try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
+                            .of(byte[].class, byte[].class, remoteAddress)
                             .putReturnsNull(true)
                             .removeReturnsNull(true)
                             .create()) {

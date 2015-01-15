@@ -34,7 +34,7 @@ public final class ChronicleMapStatelessClientBuilder<K, V> implements
                 ChronicleMap<K, V>>,
         MapBuilder<ChronicleMapStatelessClientBuilder<K, V>> {
 
-    public static <K, V> ChronicleMapStatelessClientBuilder<K, V> of(
+    static <K, V> ChronicleMapStatelessClientBuilder<K, V> of(
             InetSocketAddress serverAddress) {
         return new ChronicleMapStatelessClientBuilder<>(serverAddress);
     }

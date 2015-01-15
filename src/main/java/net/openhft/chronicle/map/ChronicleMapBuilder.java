@@ -18,7 +18,10 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.*;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.ChronicleHashErrorListener;
+import net.openhft.chronicle.hash.ChronicleHashErrorListeners;
+import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
@@ -186,6 +189,11 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     public static <K, V> ChronicleMapBuilder<K, V> of(
             @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
         return new ChronicleMapBuilder<>(keyClass, valueClass);
+    }
+
+    public static <K, V> ChronicleMapStatelessClientBuilder<K, V> of(
+            @NotNull Class<K> keyClass, @NotNull Class<V> valueClass, InetSocketAddress socketAddress) {
+        return ChronicleMapStatelessClientBuilder.of(socketAddress);
     }
 
     private static long roundUpMapHeaderSize(long headerSize) {

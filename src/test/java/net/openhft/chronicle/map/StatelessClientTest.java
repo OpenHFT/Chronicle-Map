@@ -117,8 +117,8 @@ public class StatelessClientTest {
             serverMap.put(10, new StringBuilder("Hello World"));
 
             try (ChronicleMap<Integer, StringBuilder> statelessMap =
-                    ChronicleMapStatelessClientBuilder
-                    .<Integer, StringBuilder>of(new InetSocketAddress("localhost", port))
+                         ChronicleMapBuilder
+                                 .of(Integer.class, StringBuilder.class, new InetSocketAddress("localhost", port))
                     .putReturnsNull(true)
                     .create()) {
                 String actual = statelessMap.getMapped(10, ToString.INSTANCE);

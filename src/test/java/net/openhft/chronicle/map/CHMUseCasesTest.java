@@ -1126,12 +1126,12 @@ public class CHMUseCasesTest {
             }));
 
             try {
-                map.putMapped(1.0, new UnaryOperator<Double>() {
-                    @Override
-                    public Double update(Double s) {
-                        return s + 1;
-                    }
-                });
+map.putMapped(1.0, new UnaryOperator<Double>() {
+    @Override
+    public Double update(Double s) {
+        return s + 1;
+    }
+});
 
             } catch (Exception todoMoreSpecificException) {
             }

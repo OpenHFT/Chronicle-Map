@@ -267,8 +267,8 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create();
 
-        final ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapStatelessClientBuilder
-                .<byte[], byte[]>of(new InetSocketAddress("localhost", port))
+        final ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapBuilder
+                .of(byte[].class, byte[].class, new InetSocketAddress("localhost", port))
                 .putReturnsNull(true)
                 .create();
 

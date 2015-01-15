@@ -21,7 +21,6 @@ package net.openhft.chronicle.map.example;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,11 +41,11 @@ public class ServersMapMain {
         file.deleteOnExit();
         final ChronicleMap<byte[], byte[]> serverMap =
                 ChronicleMapBuilder.of(byte[].class, byte[].class)
-                .putReturnsNull(true)
-                .constantKeySizeBySample(new byte[8])
-                .constantValueSizeBySample(new byte[32])
-                .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
-                .createPersistedTo(file);
+                        .putReturnsNull(true)
+                        .constantKeySizeBySample(new byte[8])
+                        .constantValueSizeBySample(new byte[32])
+                        .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
+                        .createPersistedTo(file);
         System.out.println("Server started");
         System.in.read();
         serverMap.close();
@@ -55,8 +54,8 @@ public class ServersMapMain {
     public static void startRemoteClient(String hostname) throws IOException {
         final ChronicleMap<byte[], byte[]> map;
         if (stateless) {
-            map = ChronicleMapStatelessClientBuilder
-                    .<byte[], byte[]>of(new InetSocketAddress(hostname, port))
+            map = ChronicleMapBuilder
+                    .of(byte[].class, byte[].class, new InetSocketAddress(hostname, port))
                     .putReturnsNull(true)
                     .create();
         } else {
@@ -65,8 +64,8 @@ public class ServersMapMain {
             TcpTransportAndNetworkConfig tcpConfig =
                     TcpTransportAndNetworkConfig.of(port, new InetSocketAddress(hostname, port));
 
-            map = ChronicleMapBuilder.of(
-                    byte[].class, byte[].class)
+            map = ChronicleMapBuilder
+                    .of(byte[].class, byte[].class)
                     .putReturnsNull(true)
                     .replication((byte) 1, tcpConfig)
                     .createPersistedTo(file);

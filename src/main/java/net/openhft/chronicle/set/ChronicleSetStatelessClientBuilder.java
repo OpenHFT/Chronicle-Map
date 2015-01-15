@@ -17,6 +17,7 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHashStatelessClientBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder;
 
 import java.io.IOException;
@@ -34,7 +35,8 @@ public final class ChronicleSetStatelessClientBuilder<E> implements
     private final ChronicleMapStatelessClientBuilder<E, DummyValue> mapClientBuilder;
 
     ChronicleSetStatelessClientBuilder(InetSocketAddress serverAddress) {
-        this.mapClientBuilder = ChronicleMapStatelessClientBuilder.of(serverAddress);
+        Class<E> eClass = null;
+        this.mapClientBuilder = ChronicleMapBuilder.of(eClass, DummyValue.class, serverAddress);
     }
 
     @Override
