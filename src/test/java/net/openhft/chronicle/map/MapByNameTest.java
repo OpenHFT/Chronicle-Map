@@ -87,6 +87,7 @@ public class MapByNameTest {
         ChronicleMap<CharSequence, CharSequence> myMap2 = mapByName.from("myMap");
     }
 
+    @Ignore("causing issues on windows")
     @Test
     public void testReplicationHubSerialization() throws IOException, InterruptedException,
             TimeoutException {

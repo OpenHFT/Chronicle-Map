@@ -39,6 +39,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
@@ -70,7 +71,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     private static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
     private static final int BUFFER_SIZE = 0x100000; // 1MB
-    private static final int SPIN_LOOP_COUNT = 100000;
+
+    public static final long SPIN_LOOP_TIME_IN_NONOSECONDS = TimeUnit.MICROSECONDS.toNanos(500);
     private final SelectionKey[] selectionKeysStore = new SelectionKey[Byte.MAX_VALUE + 1];
     // used to instruct the selector thread to set OP_WRITE on a key correlated by the bit index
     // in the bitset
@@ -269,13 +271,14 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     /**
      * spin loops 100000 times first before calling the selector with timeout
      *
-     * @return
+     * @return The number of keys, possibly zero, whose ready-operation sets were updated
      * @throws IOException
      */
     private int select() throws IOException {
 
-        // spin loop 100000 times
-        for (int i = 0; i < SPIN_LOOP_COUNT; i++) {
+        long start = System.nanoTime();
+
+        while (System.nanoTime() < start + SPIN_LOOP_TIME_IN_NONOSECONDS) {
             final int keys = selector.selectNow();
             if (keys != 0)
                 return keys;
@@ -1632,7 +1635,7 @@ class StatelessServerConnector<K, V> {
         final Function<V, ?> function = (Function<V, ?>) reader.readObject();
         try {
             Object result = map.getMapped(key, function);
-          writeObject(writer,result);
+            writeObject(writer, result);
         } catch (Throwable e) {
             LOG.info("", e);
             return sendException(writer, sizeLocation, e);
@@ -1649,7 +1652,7 @@ class StatelessServerConnector<K, V> {
         final UnaryOperator<V> unaryOperator = (UnaryOperator<V>) reader.readObject();
         try {
             Object result = map.putMapped(key, unaryOperator);
-           writeObject(writer,result);
+            writeObject(writer, result);
         } catch (Throwable e) {
             LOG.info("", e);
             return sendException(writer, sizeLocation, e);
@@ -1756,7 +1759,7 @@ class StatelessServerConnector<K, V> {
         final long remaining = writer.in().remaining();
         try {
             String result = map.persistedDataVersion();
-            writeObject(writer,result);
+            writeObject(writer, result);
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         }
