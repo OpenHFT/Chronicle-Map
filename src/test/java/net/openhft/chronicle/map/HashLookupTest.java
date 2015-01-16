@@ -22,9 +22,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.DirectStore;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import net.openhft.lang.io.NativeBytes;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -33,40 +32,50 @@ import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.util.*;
 
+import static net.openhft.lang.io.NativeBytes.UNSAFE;
+
 /**
  * User: peter Date: 09/12/13
  */
 @RunWith(value = Parameterized.class)
-public class IntIntMultiMapTest {
+public class HashLookupTest {
 
-    MultiMap map;
+    static final long CAPACITY = 64;
+    static long address;
+    HashLookup map = new HashLookup();
     Multimap<Long, Long> referenceMap = HashMultimap.create();
-    private Class<? extends MultiMap> c;
 
-    public IntIntMultiMapTest(Class<? extends MultiMap> c)
+    public HashLookupTest(Integer entrySize, Integer keyBits, Integer valueBits)
             throws Exception {
-        this.c = c;
+        map.reuse(address, CAPACITY, entrySize, keyBits, valueBits);
+        clean();
+    }
+
+    void clean() {
+        UNSAFE.setMemory(address, CAPACITY * 8L, (byte) 0);
+    }
+
+    @BeforeClass
+    public static void setUp() {
+        address = UNSAFE.allocateMemory(CAPACITY * 8L);
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        UNSAFE.freeMemory(address);
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {ShortShortMultiMap.class},
-                {Int24Int24MultiMap.class},
-                {IntIntMultiMap.class},
+                {3, 12, 9},
+                {4, 18, 14},
+                {8, 33, 29},
         });
     }
 
-    private void initMap(long capacity) {
-        try {
-            map = c.getConstructor(long.class).newInstance(capacity);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private void multiMapEquals() {
-        class Action implements MultiMap.EntryConsumer {
+        class Action implements HashLookup.EntryConsumer {
             int mapSize = 0;
 
             @Override
@@ -83,9 +92,10 @@ public class IntIntMultiMapTest {
     private void valuesEqualsByKey(long k) {
         List<Long> values = new ArrayList<Long>();
         SearchState searchState = new SearchState();
-        map.startSearch(k, searchState);
+        map.init0(k);
+        map.initSearch0();
         long v;
-        while ((v = map.nextPos(searchState)) >= 0L)
+        while ((v = map.nextPos()) >= 0L)
             values.add(v);
         Set<Long> valueSet = new HashSet<Long>(values);
         Assert.assertEquals(values.size(), valueSet.size());
@@ -93,18 +103,41 @@ public class IntIntMultiMapTest {
     }
 
     private void put(long k, long v) {
-        map.put(k, v);
+        put0(k, v);
         referenceMap.put(k, v);
     }
 
-    private void remove(long k, long v) {
-        map.remove(k, v);
+    private void put0(long k, long v) {
+        map.init0(k);
+        map.initSearch0();
+        while (map.nextPos() >= 0L)
+            ;
+        map.put(v);
+        map.closeSearch0();
+        map.close0();
+    }
+
+    private void remove(long k, long value) {
+        long v = remove0(k, value);
         referenceMap.remove(k, v);
+    }
+
+    private long remove0(long k, long value) {
+        map.init0(k);
+        map.initSearch0();
+        long v;
+        while ((v = map.nextPos()) >= 0L && v != value)
+            ;
+        map.found();
+        map.remove();
+        map.closeSearch0();
+        map.close0();
+        return v;
     }
 
     @Test
     public void testPutRemoveSearch() {
-        initMap(16);
+        clean();
         multiMapEquals();
         put(1, 11);
         valuesEqualsByKey(1);
@@ -143,54 +176,12 @@ public class IntIntMultiMapTest {
         // Testing a specific case when the remove method on the map
         // does (did) not work as expected. The size goes correctly to
         // 0 but the value is still present in the map.
-        initMap(10);
+        clean();
 
-        map.put(15, 1);
-        map.remove(15, 1);
-        SearchState searchState = new SearchState();
-        map.startSearch(15, searchState);
-        Assert.assertTrue(map.nextPos(searchState) < 0);
-    }
-
-    @Test
-    @Ignore("Very long running test")
-    public void testMaxCapacity() throws NoSuchFieldException, IllegalAccessException {
-        Field maxCapacityField = c.getDeclaredField("MAX_CAPACITY");
-        long maxCapacity = maxCapacityField.getLong(null);
-        Field entrySizeField = c.getDeclaredField("ENTRY_SIZE");
-        entrySizeField.setAccessible(true);
-        long entrySize = entrySizeField.getLong(null);
-        if (maxMemory() * 1024L < maxCapacity * entrySize * 3L / 2L) {
-            System.out.println("Skipped " + c + " maxCapacity test because there is not enough " +
-                    "memory in system");
-            return;
-        }
-        initMap(maxCapacity);
-        Random r = new Random();
-        int bound = maxCapacity > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCapacity;
-        for (long i = 0L; i < maxCapacity; i++) {
-            map.put(r.nextInt(bound), i);
-        }
-        final SingleThreadedDirectBitSet bs =
-                new SingleThreadedDirectBitSet(new DirectStore(maxCapacity / 8).bytes());
-        map.forEach(new MultiMap.EntryConsumer() {
-            @Override
-            public void accept(long key, long value) {
-                bs.set(value);
-            }
-        });
-        Assert.assertTrue(bs.allSet(0L, maxCapacity));
-    }
-
-    private long maxMemory() {
-        File meminfo = new File("/proc/meminfo");
-        try {
-            try (Scanner sc = new Scanner(meminfo)) {
-                sc.next();
-                return sc.nextLong();
-            }
-        } catch (FileNotFoundException e) {
-            return -1;
-        }
+        put0(15, 1);
+        remove0(15, 1);
+        map.init0(15);
+        map.initSearch0();
+        Assert.assertTrue(map.nextPos() < 0);
     }
 }

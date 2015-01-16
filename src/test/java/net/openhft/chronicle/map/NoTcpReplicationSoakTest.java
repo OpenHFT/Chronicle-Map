@@ -33,7 +33,7 @@ public class NoTcpReplicationSoakTest {
 
     TimeProvider timeProvider = new TimeProvider() {
         @Override
-        public long currentTimeMillis() {
+        public long currentTime() {
             return time;
         }
     };
@@ -123,25 +123,49 @@ public class NoTcpReplicationSoakTest {
             if (rnd.nextBoolean()) {
                 final CharSequence value = "test" + j;
                 if (rnd.nextBoolean()) {
-                    map1.put(key, value, (byte) 1, t);
+                    try (MapKeyContext<CharSequence> c = map1.context(key)) {
+                        ReplicatedChronicleMap.ReplicatedContext rc =
+                                (ReplicatedChronicleMap.ReplicatedContext) c;
+                        rc.newTimestamp = t;
+                        rc.newIdentifier = (byte) 1;
+                        c.put(value);
+                    }
 
                     task.incrementAndGet();
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            map2.put0(key, value, true, (byte) 1, t);
+                            try (MapKeyContext<CharSequence> c = map2.context(key)) {
+                                ReplicatedChronicleMap.ReplicatedContext rc =
+                                        (ReplicatedChronicleMap.ReplicatedContext) c;
+                                rc.newTimestamp = t;
+                                rc.newIdentifier = (byte) 1;
+                                c.put(value);
+                            }
                             task.decrementAndGet();
                         }
                     });
 
                 } else {
-                    map2.put(key, value, (byte) 2, t);
+                    try (MapKeyContext<CharSequence> c = map2.context(key)) {
+                        ReplicatedChronicleMap.ReplicatedContext rc =
+                                (ReplicatedChronicleMap.ReplicatedContext) c;
+                        rc.newTimestamp = t;
+                        rc.newIdentifier = (byte) 2;
+                        c.put(value);
+                    }
 
                     task.incrementAndGet();
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            map1.put0(key, value, true, (byte) 2, t);
+                            try (MapKeyContext<CharSequence> c = map1.context(key)) {
+                                ReplicatedChronicleMap.ReplicatedContext rc =
+                                        (ReplicatedChronicleMap.ReplicatedContext) c;
+                                rc.newTimestamp = t;
+                                rc.newIdentifier = (byte) 2;
+                                c.put(value);
+                            }
                             task.decrementAndGet();
                         }
                     });
@@ -150,25 +174,49 @@ public class NoTcpReplicationSoakTest {
             } else {
 
                 if (rnd.nextBoolean()) {
-                    map1.remoteRemove(key, (byte) 1, t);
+                    try (MapKeyContext<CharSequence> c = map1.context(key)) {
+                        ReplicatedChronicleMap.ReplicatedContext rc =
+                                (ReplicatedChronicleMap.ReplicatedContext) c;
+                        rc.newTimestamp = t;
+                        rc.newIdentifier = (byte) 1;
+                        c.remove();
+                    }
 
                     task.incrementAndGet();
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            map2.remoteRemove(key, (byte) 1, t);
+                            try (MapKeyContext<CharSequence> c = map2.context(key)) {
+                                ReplicatedChronicleMap.ReplicatedContext rc =
+                                        (ReplicatedChronicleMap.ReplicatedContext) c;
+                                rc.newTimestamp = t;
+                                rc.newIdentifier = (byte) 1;
+                                c.remove();
+                            }
                             task.decrementAndGet();
                         }
                     });
 
                 } else {
-                    map2.remoteRemove(key, (byte) 2, t);
+                    try (MapKeyContext<CharSequence> c = map2.context(key)) {
+                        ReplicatedChronicleMap.ReplicatedContext rc =
+                                (ReplicatedChronicleMap.ReplicatedContext) c;
+                        rc.newTimestamp = t;
+                        rc.newIdentifier = (byte) 2;
+                        c.remove();
+                    }
 
                     task.incrementAndGet();
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            map1.remoteRemove(key, (byte) 2, t);
+                            try (MapKeyContext<CharSequence> c = map1.context(key)) {
+                                ReplicatedChronicleMap.ReplicatedContext rc =
+                                        (ReplicatedChronicleMap.ReplicatedContext) c;
+                                rc.newTimestamp = t;
+                                rc.newIdentifier = (byte) 2;
+                                c.remove();
+                            }
                             task.decrementAndGet();
                         }
                     });

@@ -119,7 +119,11 @@ public abstract class ByteableMarshaller<E extends Byteable>
     public void write(Bytes bytes, E e) {
         Bytes eBytes = e.bytes();
         if (eBytes != null) {
-            bytes.write(eBytes, e.offset(), size);
+            if (eBytes != bytes || bytes.position() != e.offset()) {
+                bytes.write(eBytes, e.offset(), size);
+            } else {
+                bytes.skip(size);
+            }
         } else {
             throw new NullPointerException("You are trying to write a byteable object of " +
                     e.getClass() + ", " +
@@ -142,7 +146,7 @@ public abstract class ByteableMarshaller<E extends Byteable>
         try {
             if (toReuse == null)
                 toReuse = getInstance();
-            setBytesAndOffset(toReuse, bytes);
+            toReuse.bytes(bytes, bytes.position());
             bytes.skip(size);
             return toReuse;
         } catch (Exception ex) {

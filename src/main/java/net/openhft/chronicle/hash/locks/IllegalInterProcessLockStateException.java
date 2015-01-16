@@ -14,22 +14,11 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.locks;
 
-import net.openhft.lang.io.Bytes;
-
-final class ZeroOutValueBytes<K, V> implements PrepareValueBytes<K, V> {
+public class IllegalInterProcessLockStateException extends IllegalMonitorStateException {
     private static final long serialVersionUID = 0L;
-    private final long valueSize;
-
-    ZeroOutValueBytes(long valueSize) {
-        this.valueSize = valueSize;
-    }
-
-    @Override
-    public void prepare(Bytes bytes, K key) {
-        long pos = bytes.position();
-        bytes.zeroOut(pos, pos + valueSize);
-        bytes.skip(valueSize);
+    public IllegalInterProcessLockStateException(String s) {
+        super(s);
     }
 }

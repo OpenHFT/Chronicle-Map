@@ -731,7 +731,7 @@ public class ChronicleMapTest {
                                     map.getUsing(key, value);
 
                                 } else {
-                                    try (WriteContext wc = map.acquireUsingLocked(key, value)) {
+                                    try (MapKeyContext wc = map.acquireContext(key, value)) {
                                         if (value.length() < value0.length() - 1)
                                             value.append(value0);
                                         else if (value.length() > value0.length())
@@ -823,7 +823,8 @@ public class ChronicleMapTest {
                                             map.getUsing(key, value);
 
                                         } else {
-                                            try (WriteContext wc = map.acquireUsingLocked(key, value)) {
+                                            try (MapKeyContext wc = map.acquireContext(key,
+                                                    value)) {
                                                 if (value.length() < value0.length() - 1)
                                                     value.append(value0);
                                                 else if (value.length() > value0.length())
@@ -862,6 +863,12 @@ public class ChronicleMapTest {
         es.awaitTermination(1, TimeUnit.MINUTES);
     }
 
+
+    static final LongValue ONE = DataValueClasses.newInstance(LongValue.class);
+    static {
+        ONE.setValue(1);
+    }
+
     @Test
     @Ignore("Performance test")
     public void testAcquireLockedPerf()
@@ -889,6 +896,8 @@ public class ChronicleMapTest {
             int count = runs >= 5 ? 2 : 3;
             final int independence = Math.min(procs, runs > 500 ? 8 : 4);
             System.out.println("\nKey size: " + runs + " Million entries. " + builder);
+
+
             for (int j = 0; j < count; j++) {
                 long start = System.currentTimeMillis();
                 List<Future> futures = new ArrayList<Future>();
@@ -912,12 +921,23 @@ public class ChronicleMapTest {
                                 long n;
                                 // 75% read
                                 if (rand.nextBoolean() || rand.nextBoolean()) {
-                                    try (ReadContext rc = map.getUsingLocked(sb, value)) {
-                                        n = rc.present() ? value.getValue() + 1 : 1;
+                                    try (MapKeyContext<LongValue> c = map.context(sb)) {
+                                        if (c.containsKey()) {
+                                            // Attempt to pass abstraction hierarchies
+                                            n = c.entry().readVolatileLong(c.valueOffset()) + 1;
+                                        } else {
+                                            n = 1;
+                                        }
                                     }
                                 } else {
-                                    try (WriteContext wc = map.acquireUsingLocked(sb, value)) {
-                                        n = value.addValue(1);
+                                    try (MapKeyContext<LongValue> wc = map.context(sb)) {
+                                        wc.updateLock().lock();
+                                        if (wc.containsKey()) {
+                                            n = wc.entry().addLong(wc.valueOffset(), 1);
+                                        } else {
+                                            wc.put(ONE);
+                                            n = 1;
+                                        }
                                     }
                                 }
                                 assert n > 0 && n < 1000 : "Counter corrupted " + n;
@@ -990,7 +1010,7 @@ public class ChronicleMapTest {
                                  j += independence) {
                                 key.setValue(j * factor);
                                 long n;
-                                try (WriteContext wc = map.acquireUsingLocked(key, value)) {
+                                try (MapKeyContext wc = map.acquireContext(key, value)) {
                                     n = value.addValue(1);
                                 }
                                 assert n > 0 && n < 1000 : "Counter corrupted " + n;
@@ -1534,58 +1554,6 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testEntriesSpanningSeveralChunksPutRemoveReplace() throws IOException {
-        ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .entries(10)
-                .minSegments(1)
-                .actualChunkSize(10);
-        testEntriesSpanningSeveralChunksPutRemoveReplace(
-                (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
-                        builder.createPersistedTo(getPersistenceFile())
-        );
-    }
-
-    public void testEntriesSpanningSeveralChunksPutRemoveReplace(
-            VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?> map) {
-        String key = "k";
-        String largeKey = "very large key";
-        String value = "v";
-        String largeValue = "vary large value";
-
-        map.put(key, largeValue);
-        assertEquals(largeValue, map.get(key));
-        map.replace(key, value);
-        map.checkConsistency();
-        assertEquals(value, map.get(key));
-        map.replace(key, largeValue);
-        map.checkConsistency();
-        assertEquals(largeValue, map.get(key));
-
-        map.put(largeKey, value);
-        map.checkConsistency();
-        assertEquals(value, map.get(largeKey));
-        map.replace(largeKey, largeValue);
-        map.checkConsistency();
-        assertEquals(largeValue, map.get(largeKey));
-        map.remove(largeKey);
-        map.checkConsistency();
-        assertEquals(null, map.get(largeKey));
-        map.put(largeKey, largeValue);
-        map.checkConsistency();
-        assertEquals(largeValue, map.get(largeKey));
-        map.replace(largeKey, largeValue, value);
-        map.checkConsistency();
-        assertEquals(value, map.get(largeKey));
-
-        assertEquals(value, map.remove(largeKey));
-        map.checkConsistency();
-        assertEquals(largeValue, map.remove(key));
-        map.checkConsistency();
-
-        map.close();
-    }
-
-    @Test
     public void equalsTest() throws IOException {
         final ChronicleMap<Integer, String> map1 = ChronicleMapBuilder
                 .of(Integer.class, String.class).create();
@@ -1612,7 +1580,8 @@ public class ChronicleMapTest {
 
         private final CyclicBarrier barrier;
 
-        private IncrementRunnable(ChronicleMap<CharSequence, LongValue> map, CharSequence key, int iterations, CyclicBarrier barrier) {
+        private IncrementRunnable(ChronicleMap<CharSequence, LongValue> map, CharSequence key,
+                                  int iterations, CyclicBarrier barrier) {
             this.map = map;
             this.key = key;
             this.iterations = iterations;
@@ -1667,46 +1636,49 @@ public class ChronicleMapTest {
         LongValue value = nativeLongValue();
 
         // this will add the entry
-        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            assertEquals(0, context.value().getValue());
-            assert value == context.value();
-            LongValue value1 = context.value();
+        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+            assertEquals(0, context.get().getValue());
+            assert value == context.get();
+            LongValue value1 = context.get();
             value1.addValue(1);
         }
 
         // check that the entry was added
-        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
-            assert value == context.value();
-            assertEquals(true, context.present());
-            assertEquals(1, context.value().getValue());
+        try (MapKeyContext<LongValue> context = map.context("one")) {
+            assertEquals(true, context.containsKey());
+            LongValue v = context.getUsing(value);
+            assert v == value;
+            assertEquals(1, v.getValue());
         }
 
         // this will remove the entry
-        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            assert value == context.value();
-            context.removeEntry();
+        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+            assert value == context.get();
+            context.remove();
         }
 
         // check that the entry was removed
-        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
-            assertEquals(false, context.present());
-            assertEquals(null, context.value());
+        try (MapKeyContext<LongValue> context = map.context("one")) {
+            context.updateLock().lock();
+            assertEquals(false, context.containsKey());
+            assertEquals(null, context.get());
         }
 
-        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            assert value == context.value();
-            assertEquals(0, context.value().getValue());
+        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+            assert value == context.get();
+            assertEquals(0, context.get().getValue());
         }
 
-        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            assert value == context.value();
-            context.value().addValue(1);
+        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+            assert value == context.get();
+            context.get().addValue(1);
         }
 
         // check that the entry was removed
-        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
-            assert value == context.value();
-            assertEquals(1, context.value().getValue());
+        try (MapKeyContext<LongValue> context = map.context("one")) {
+            LongValue v = context.getUsing(value);
+            assert value == v;
+            assertEquals(1, context.get().getValue());
         }
 
         map.close();
@@ -1757,7 +1729,7 @@ public class ChronicleMapTest {
 
         try (final ChronicleMap<CharSequence, String> map = builder.create()) {
             // this will add the entry
-            try (WriteContext<?, String> context = map.acquireUsingLocked("one", "")) {
+            try (MapKeyContext<String> context = map.acquireContext("one", "")) {
                 // do nothing
             }
         }
@@ -1775,7 +1747,7 @@ public class ChronicleMapTest {
                 .create()) {
             StringBuilder value = new StringBuilder();
 
-            try (WriteContext<?, CharSequence> context = map.acquireUsingLocked("one", value)) {
+            try (MapKeyContext<CharSequence> context = map.acquireContext("one", value)) {
                 value.append("Hello World");
             }
 
@@ -1795,56 +1767,56 @@ public class ChronicleMapTest {
 
         LongValue value = DataValueClasses.newDirectReference(LongValue.class);
 
-        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
-            assertEquals(false, context.present());
-            assertEquals(null, context.value());
+        try (MapKeyContext<LongValue> context = map.context("one")) {
+            assertEquals(false, context.containsKey());
+            assertEquals(null, context.get());
         }
 
-        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
+        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
             value.setValue(10);
         }
 
         // this will add the entry
-        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            LongValue value1 = context.value();
+        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+            LongValue value1 = context.get();
             value1.addValue(1);
         }
 
         // check that the entry was added
-        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
-            assertEquals(true, context.present());
-            assertEquals(11, context.value().getValue());
+        try (MapKeyContext<LongValue> context = map.context("one")) {
+            assertEquals(true, context.containsKey());
+            assertEquals(11, context.get().getValue());
         }
 
         // this will remove the entry
-        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            context.removeEntry();
+        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+            context.remove();
         }
 
         // check that the entry was removed
-        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
-            assertEquals(false, context.present());
-            assertEquals(null, context.value());
+        try (MapKeyContext<LongValue> context = map.context("one")) {
+            assertEquals(false, context.containsKey());
+            assertEquals(null, context.get());
         }
 
-        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            assertEquals(0, context.value().getValue());
+        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+            assertEquals(0, context.get().getValue());
         }
 
         value.setValue(1);
 
-        try (ReadContext<?, LongValue> lockedEntry = map.getUsingLocked("one", value)) {
-            assertEquals(1, lockedEntry.value().getValue());
+        try (MapKeyContext<LongValue> lockedEntry = map.context("one")) {
+            assertEquals(1, lockedEntry.get().getValue());
         }
 
-        try (WriteContext<?, LongValue> context = map.acquireUsingLocked("one", value)) {
-            LongValue value1 = context.value();
+        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+            LongValue value1 = context.get();
             value1.addValue(1);
         }
 
         // check that the entry was removed
-        try (ReadContext<?, LongValue> context = map.getUsingLocked("one", value)) {
-            LongValue value1 = context.value();
+        try (MapKeyContext<LongValue> context = map.context("one")) {
+            LongValue value1 = context.get();
             assertEquals(2, value1.getValue());
         }
 

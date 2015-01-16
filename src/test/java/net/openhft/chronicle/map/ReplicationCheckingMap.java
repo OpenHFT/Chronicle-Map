@@ -264,13 +264,12 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @NotNull
     @Override
-    public WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue) {
+    public MapKeyContext<V> acquireContext(@NotNull K key, @NotNull V usingValue) {
         throw new UnsupportedOperationException();
     }
 
-    @NotNull
     @Override
-    public ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue) {
+    public MapKeyContext<V> context(K key) {
         throw new UnsupportedOperationException();
     }
 

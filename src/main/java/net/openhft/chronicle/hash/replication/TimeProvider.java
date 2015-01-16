@@ -27,7 +27,7 @@ import java.io.Serializable;
 
 /**
  * TimeProvider was aims to possibly later provide an optimization to
- * {@link System#currentTimeMillis()} on every call to replicated {@link ChronicleMap}
+ * {@link System#currentTime()} on every call to replicated {@link ChronicleMap}
  * or {@link ChronicleSet}.
  *
  * Subclasses should be immutable, because {@link ChronicleHashBuilder} doesn't make defensive
@@ -38,17 +38,17 @@ import java.io.Serializable;
  */
 public abstract class TimeProvider implements Serializable {
     /**
-     * Delegates {@link #currentTimeMillis()} to {@link System#currentTimeMillis()}.
+     * Delegates {@link #currentTime()} to {@link System#currentTime()}.
      */
     public static final TimeProvider SYSTEM = new System();
     private static final long serialVersionUID = 0L;
 
-    public abstract long currentTimeMillis();
+    public abstract long currentTime();
 
     private static class System extends TimeProvider {
         private static final long serialVersionUID = 0L;
 
-        public long currentTimeMillis() {
+        public long currentTime() {
             return java.lang.System.currentTimeMillis();
         }
 

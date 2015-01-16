@@ -20,20 +20,18 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.TimeProvider;
-import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.internal.BytesBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.DelegatingMetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
+import net.openhft.chronicle.map.VanillaContext.ContextFactory;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
+import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.MultiStoreBytes;
-import net.openhft.lang.io.NativeBytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +43,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static net.openhft.chronicle.hash.hashing.Hasher.hash;
+import static net.openhft.chronicle.map.VanillaContext.SearchState.DELETED;
+import static net.openhft.chronicle.map.VanillaContext.SearchState.PRESENT;
 import static net.openhft.lang.MemoryUnit.*;
 import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 
@@ -125,25 +125,15 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     @Override
-    VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment createSegment(
-            NativeBytes segmentHeader, NativeBytes bytes, int index) {
-        return new Segment(segmentHeader, bytes, index);
-    }
-
-    Class segmentType() {
-        return Segment.class;
-    }
-
-    @Override
     void initTransients() {
         super.initTransients();
         modificationIterators =
-                new AtomicReferenceArray<ModificationIterator>(127 + RESERVED_MOD_ITER);
-        closeables = new CopyOnWriteArraySet<Closeable>();
+                new AtomicReferenceArray<>(127 + RESERVED_MOD_ITER);
+        closeables = new CopyOnWriteArraySet<>();
     }
 
     long modIterBitSetSizeInBytes() {
-        long bytes = BITS.toBytes(bitsPerSegmentInModIterBitSet() * segments.length);
+        long bytes = BITS.toBytes(bitsPerSegmentInModIterBitSet() * actualSegments);
         return CACHE_LINES.align(bytes, BYTES);
     }
 
@@ -154,8 +144,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     @Override
-    long getHeaderSize() {
-        return super.getHeaderSize() + LAST_UPDATED_HEADER_SIZE +
+    long mapHeaderInnerSize() {
+        return super.mapHeaderInnerSize() + LAST_UPDATED_HEADER_SIZE +
                 (modIterBitSetSizeInBytes() * (128 + RESERVED_MOD_ITER)) +
                 assignedModIterBitSetSizeInBytes();
     }
@@ -180,7 +170,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
     @Override
     void onHeaderCreated() {
-        long offset = super.getHeaderSize();
+        long offset = super.mapHeaderInnerSize();
 
         identifierUpdatedBytes = ms.bytes(offset, LAST_UPDATED_HEADER_SIZE).zeroOut();
         offset += LAST_UPDATED_HEADER_SIZE;
@@ -191,141 +181,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         modIterSet = new ATSDirectBitSet(modDelBytes);
     }
 
-    /**
-     * @param segmentNum a unique index of the segment
-     * @return the segment associated with the {@code segmentNum}
-     */
-    private Segment segment(int segmentNum) {
-        return (Segment) segments[segmentNum];
-    }
-
-    private long currentTime() {
-        return timeProvider.currentTimeMillis();
-    }
-
-    @Override
-    void putBytes(ThreadLocalCopies copies, SegmentState segmentState, Bytes key, long keySize,
-                  GetRemoteBytesValueInterops getRemoteBytesValueInterops, MultiStoreBytes value,
-                  boolean replaceIfPresent, ReadValue<Bytes> readValue) {
-        put(copies, segmentState,
-                DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
-                BytesBytesInterop.INSTANCE, key, keySize, keyBytesToInstance,
-                getRemoteBytesValueInterops, value, valueBytesToInstance,
-                replaceIfPresent, readValue, false, localIdentifier, currentTime());
-        ;
-    }
-
-    /**
-     * Used in conjunction with map replication, all put events that originate from a remote node
-     * will be processed using this method.
-     *
-     * @param key        key with which the specified value is to be associated
-     * @param value      value to be associated with the specified key
-     * @param identifier a unique identifier for a replicating node
-     * @param timeStamp  timestamp in milliseconds, when the put event originally occurred
-     * @return the previous value
-     * @see #put(Object, Object)
-     */
-    V put(K key, V value, byte identifier, long timeStamp) {
-        assert identifier > 0;
-        return put0(key, value, true, identifier, timeStamp);
-    }
-
-    @Override
-    V put1(@NotNull K key, V value, boolean replaceIfPresent) {
-        return put0(key, value, replaceIfPresent, localIdentifier, currentTime());
-    }
-
-    /**
-     * @param key              key with which the specified value is associated
-     * @param value            value expected to be associated with the specified key
-     * @param replaceIfPresent set to false for putIfAbsent()
-     * @param identifier       used to identify which replicating node made the change
-     * @param timeStamp        the time that that change was made, this is used for replication
-     * @return the value that was replaced
-     */
-    V put0(K key, V value, boolean replaceIfPresent,
-           final byte identifier, long timeStamp) {
-        checkKey(key);
-        checkValue(value);
-        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
-        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
-        copies = metaKeyInteropProvider.getCopies(copies);
-        MKI metaKeyInterop =
-                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
-        long keySize = metaKeyInterop.size(keyInterop, key);
-        return put(copies, null, metaKeyInterop, keyInterop, key, keySize, keyIdentity(),
-                this, value, valueIdentity(), replaceIfPresent, this, putReturnsNull,
-                identifier, timeStamp);
-    }
-
-
-    Object remoteRemove(K key,
-                        final byte remoteIdentifier, long timeStamp) {
-        checkKey(key);
-        K key1 = (K) key;
-        ThreadLocalCopies copies = SegmentState.getCopies(null);
-        SegmentState segmentState = SegmentState.get(copies);
-        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
-        MKI metaKeyInterop =
-                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key1);
-        long keySize = metaKeyInterop.size(keyInterop, key1);
-        long hash = metaKeyInterop.hash(keyInterop, key1);
-        int segmentNum = getSegment(hash);
-        long segmentHash = segmentHash(hash);
-        ReplicatedChronicleMap.Segment segment = segment(segmentNum);
-        segment.writeLock();
-        try {
-            return segment.removeWithoutLock(copies, segmentState, metaKeyInterop, keyInterop, key1,
-                    keySize, keyIdentity(), this, (V) null, valueIdentity(), segmentHash, this,
-                    removeReturnsNull, timeStamp, remoteIdentifier, true, false);
-        } finally {
-            segment.writeUnlock();
-        }
-
-    }
-
-
-    @Override
-    <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-            RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
-    RV put2(ThreadLocalCopies copies, SegmentState segmentState,
-            MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-            InstanceOrBytesToInstance<KB, K> toKey,
-            GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-            InstanceOrBytesToInstance<? super VB, V> toValue,
-            boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused) {
-        return put(copies, segmentState, metaKeyInterop, keyInterop, key, keySize, toKey,
-                getValueInterops, value, toValue, replaceIfPresent, readValue, resultUnused,
-                localIdentifier, currentTime());
-    }
-
     @Override
     public void clear() {
         // we have to make sure that every calls notifies on remove,
         // so that the replicators can pick it up
-        for (K k : keySet()) {
-            ReplicatedChronicleMap.this.remove(k);
+        for (Iterator<Entry<K, V>> iterator = entrySet().iterator(); iterator.hasNext(); ) {
+            iterator.next();
+            iterator.remove();
         }
-    }
-
-    private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-            RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
-    RV put(ThreadLocalCopies copies, SegmentState segmentState,
-           MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-           InstanceOrBytesToInstance<KB, K> toKey,
-           GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-           InstanceOrBytesToInstance<? super VB, V> toValue,
-           boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused,
-           byte identifier, long timeStamp) {
-        long hash = metaKeyInterop.hash(keyInterop, key);
-        int segmentNum = getSegment(hash);
-        long segmentHash = segmentHash(hash);
-        return segment(segmentNum).put(copies, segmentState,
-                metaKeyInterop, keyInterop, key, keySize, toKey,
-                getValueInterops, value, toValue,
-                segmentHash, replaceIfPresent, readValue, resultUnused,
-                identifier, timeStamp);
     }
 
     void addCloseable(Closeable closeable) {
@@ -375,46 +238,22 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
     }
 
-    @Override
-    void onPut(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
+    void raiseChange(long segmentIndex, long pos) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                modificationIterators.get((int) next).onPut(pos, segment);
+                modificationIterators.get((int) next).raiseChange(segmentIndex, pos);
             } catch (Exception e) {
                 LOG.error("", e);
             }
         }
     }
 
-    @Override
-    void onRemotePut(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
-        onRelocation(segment, pos); // erase modification bits
-    }
-
-    @Override
-    void onRemove(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
+    void dropChange(long segmentIndex, long pos) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                modificationIterators.get((int) next).onRemove(pos, segment);
-            } catch (Exception e) {
-                LOG.error("", e);
-            }
-        }
-    }
-
-    @Override
-    void onRemoteRemove(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
-        onRelocation(segment, pos); // erase modification bits
-    }
-
-    @Override
-    void onRelocation(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
-        for (long next = modIterSet.nextSetBit(0L); next > 0L;
-             next = modIterSet.nextSetBit(next + 1L)) {
-            try {
-                modificationIterators.get((int) next).onRelocation(pos, segment);
+                modificationIterators.get((int) next).dropChange(segmentIndex, pos);
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -433,6 +272,422 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
     }
 
+    static class ReplicatedContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
+            V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
+            extends VanillaContext<K, KI, MKI, V, VI, MVI> {
+
+        ReplicatedContext() {
+            super();
+        }
+
+        ReplicatedContext(VanillaContext contextCache, int indexInContextCache) {
+            super(contextCache, indexInContextCache);
+        }
+
+        ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI> m() {
+            return (ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI>) m;
+        }
+
+        /////////////////////////////////////////////////
+        // Replication state
+        long replicationBytesOffset;
+        long timestamp;
+        byte identifier;
+
+        @Override
+        void keyFound() {
+            initReplicationBytesOffset0();
+            timestamp = entry.readLong(replicationBytesOffset);
+            identifier = entry.readByte(replicationBytesOffset + 8L);
+            state = entry.readBoolean(replicationBytesOffset + 9L) ? DELETED : PRESENT;
+        }
+
+        void initReplicationBytesOffset0() {
+            replicationBytesOffset = keyOffset + keySize;
+        }
+
+        @Override
+        void initKeyOffset0() {
+            super.initKeyOffset0();
+            initReplicationBytesOffset0();
+        }
+
+        void closeReplicationState() {
+            if (replicationBytesOffset == 0L)
+                return;
+            closeReplicationState0();
+        }
+
+        void closeReplicationState0() {
+            replicationBytesOffset = 0L;
+            timestamp = 0L;
+            identifier = (byte) 0;
+        }
+
+        @Override
+        void closeKeySearchDependants() {
+            super.closeKeySearchDependants();
+            closeReplicationState();
+        }
+
+        @Override
+        void initValueSizeOffset0() {
+            valueSizeOffset = replicationBytesOffset + ADDITIONAL_ENTRY_BYTES;
+        }
+
+        /////////////////////////////////////////////////
+        // Replication update
+        long newTimestamp;
+        byte newIdentifier;
+
+        void initReplicationUpdate() {
+            if (newTimestamp != 0L)
+                return;
+            checkMapInit();
+            initReplicationUpdate0();
+        }
+
+        void initReplicationUpdate0() {
+            newTimestamp = m().timeProvider.currentTime();
+            newIdentifier = m().identifier();
+        }
+
+        boolean remoteUpdate() {
+            return newIdentifier != m().identifier();
+        }
+
+        void closeReplicationUpdate() {
+            if (newTimestamp == 0L)
+                return;
+            closeReplicationUpdate0();
+        }
+
+        void closeReplicationUpdate0() {
+            newTimestamp = 0L;
+            newIdentifier = (byte) 0;
+        }
+
+        @Override
+        void initRemoveDependencies() {
+            super.initRemoveDependencies();
+            initReplicationUpdate();
+        }
+
+        void writeReplicationBytes() {
+            entry.writeLong(replicationBytesOffset, newTimestamp);
+            entry.writeByte(replicationBytesOffset + 8L, newIdentifier);
+
+        }
+
+        void writeDeleted() {
+            entry.writeBoolean(replicationBytesOffset + 9L, true);
+        }
+
+        void writePresent() {
+            entry.writeBoolean(replicationBytesOffset + 9L, false);
+        }
+
+        @Override
+        boolean put0() {
+            try {
+                switch (state) {
+                    case PRESENT:
+                    case DELETED:
+                        if (!shouldIgnore()) {
+                            initValueBytes();
+                            putValue();
+                            break;
+                        } else {
+                            return false;
+                        }
+                    case ABSENT:
+                        putEntry();
+                }
+                state = PRESENT;
+                return true;
+            } finally {
+                closeReplicationUpdate();
+            }
+        }
+
+        @Override
+        void initPutDependencies() {
+            super.initPutDependencies();
+            initReplicationUpdate();
+        }
+
+        @Override
+        void writeNewValueAndSwitch() {
+            super.writeNewValueAndSwitch();
+            writeReplicationBytes();
+            updateChange();
+            timestamp = newTimestamp;
+            identifier = newIdentifier;
+        }
+
+        @Override
+        void beforePutPos() {
+            writePresent();
+        }
+
+        class PseudoMetaBytesInterop implements MetaBytesInterop<Object, Object> {
+
+            @Override
+            public boolean startsWith(Object interop, Bytes bytes, Object o) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public long hash(Object interop, Object o) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public long size(Object writer, Object o) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void write(Object writer, Bytes bytes, Object o) {
+                bytes.skip(newValueSize);
+            }
+        }
+
+        final MetaBytesInterop<V, VI> pseudoMetaValueInterop =
+                (MetaBytesInterop<V, VI>) new PseudoMetaBytesInterop();
+
+        @Override
+        boolean remove0() {
+            if (containsKey()) {
+                if (!shouldIgnore()) {
+                    writeReplicationBytes();
+                    writeDeleted();
+                    updateChange();
+                    size(size() - 1L);
+                    state = DELETED;
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                if (pos >= 0L) {
+                    if (!shouldIgnore()) {
+                        writeReplicationBytes();
+                        updateChange();
+                    }
+                } else {
+                    newValue = (V) pseudoMetaValueInterop;
+                    metaValueInterop = (MVI) pseudoMetaValueInterop;
+                    newValueSize = m.valueSizeMarshaller.minEncodableSize();
+                    put0();
+                    size(size() - 1L);
+                    writeDeleted();
+                    state = DELETED;
+                }
+                return false;
+            }
+        }
+
+        void updateChange() {
+            if (remoteUpdate()) {
+                m().dropChange(segmentIndex, pos);
+            } else {
+                m().raiseChange(segmentIndex, pos);
+            }
+        }
+
+        @Override
+        void closeRemove() {
+            closeReplicationUpdate();
+        }
+
+        boolean shouldIgnore() {
+            if (timestamp == 0L || newTimestamp == 0L)
+                throw new IllegalStateException("Own entry replication state or " +
+                        "update replication state is not initialized");
+            if (timestamp < newTimestamp)
+                return false;
+            if (timestamp > newTimestamp)
+                return true;
+            return identifier > newIdentifier;
+        }
+
+        public void dirtyEntries(final long dirtyFromTimeStamp,
+                                 final ReplicatedChronicleMap.ModificationIterator modIter,
+                                 final boolean bootstrapOnlyLocalEntries) {
+            readLock().lock();
+            try {
+                hashLookup.forEach(new HashLookup.EntryConsumer() {
+                    @Override
+                    public void accept(long hash, long pos) {
+                        ReplicatedContext.this.pos = pos;
+                        initKeyFromPos();
+                        keyFound();
+                        assert timestamp > 0L;
+                        if (timestamp >= dirtyFromTimeStamp && (!bootstrapOnlyLocalEntries ||
+                                identifier == m().identifier()))
+                            modIter.raiseChange(segmentIndex, pos);
+                    }
+                });
+            } finally {
+                readLock().unlock();
+            }
+        }
+    }
+
+    enum ReplicatedContextFactory implements ContextFactory<ReplicatedContext> {
+        INSTANCE;
+
+        @Override
+        public ReplicatedContext createContext(VanillaContext root,
+                                               int indexInContextCache) {
+            return new ReplicatedContext(root, indexInContextCache);
+        }
+
+        @Override
+        public ReplicatedContext createRootContext() {
+            return new ReplicatedContext();
+        }
+
+        @Override
+        public Class<ReplicatedContext> contextClass() {
+            return ReplicatedContext.class;
+        }
+    }
+
+    @Override
+    ReplicatedContext<K, KI, MKI, V, VI, MVI> rawContext() {
+        return VanillaContext.get(ReplicatedContextFactory.INSTANCE);
+    }
+
+    @Override
+    VanillaContext rawBytesContext() {
+        return VanillaContext.get(BytesReplicatedContextFactory.INSTANCE);
+    }
+
+    static class BytesReplicatedContext
+            extends ReplicatedContext<Bytes, BytesBytesInterop,
+            DelegatingMetaBytesInterop<Bytes, BytesBytesInterop>,
+            Bytes, BytesBytesInterop,
+            DelegatingMetaBytesInterop<Bytes, BytesBytesInterop>> {
+        BytesReplicatedContext() {
+            super();
+        }
+
+        BytesReplicatedContext(VanillaContext contextCache, int indexInContextCache) {
+            super(contextCache, indexInContextCache);
+        }
+
+        @Override
+        void initKeyModel0() {
+            initBytesKeyModel0();
+        }
+
+        @Override
+        void initKey0(Bytes key) {
+            initBytesKey0(key);
+        }
+
+        @Override
+        void initValueModel0() {
+            initBytesValueModel0();
+        }
+
+        @Override
+        void initNewValue0(Bytes newValue) {
+            initNewBytesValue0(newValue);
+        }
+
+        @Override
+        void closeValue0() {
+            closeBytesValue0();
+        }
+
+        @Override
+        public Bytes get() {
+            return getBytes();
+        }
+
+        @Override
+        public Bytes getUsing(Bytes usingValue) {
+            return getBytesUsing(usingValue);
+        }
+    }
+
+    enum BytesReplicatedContextFactory implements ContextFactory<BytesReplicatedContext> {
+        INSTANCE;
+
+        @Override
+        public BytesReplicatedContext createContext(VanillaContext root, int indexInContextCache) {
+            return new BytesReplicatedContext(root, indexInContextCache);
+        }
+
+        @Override
+        public BytesReplicatedContext createRootContext() {
+            return new BytesReplicatedContext();
+        }
+
+        @Override
+        public Class<BytesReplicatedContext> contextClass() {
+            return BytesReplicatedContext.class;
+        }
+    }
+
+    @Override
+    VanillaContext<K, KI, MKI, V, VI, MVI> acquireContext(K key) {
+        ReplicatedAcquireContext<K, KI, MKI, V, VI, MVI> c =
+                VanillaContext.get(ReplicatedAcquireContextFactory.INSTANCE);
+        c.initMap(this);
+        c.initKey(key);
+        return c;
+    }
+
+    static class ReplicatedAcquireContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
+            V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
+            extends ReplicatedContext<K, KI, MKI, V, VI, MVI> {
+        ReplicatedAcquireContext() {
+            super();
+        }
+
+        ReplicatedAcquireContext(VanillaContext contextCache, int indexInContextCache) {
+            super(contextCache, indexInContextCache);
+        }
+
+        @Override
+        public boolean put(V newValue) {
+            return acquirePut(newValue);
+        }
+
+        @Override
+        public boolean remove() {
+            return acquireRemove();
+        }
+
+        @Override
+        public void close() {
+            acquireClose();
+        }
+    }
+
+    enum ReplicatedAcquireContextFactory implements ContextFactory<ReplicatedAcquireContext> {
+        INSTANCE;
+
+        @Override
+        public ReplicatedAcquireContext createContext(VanillaContext root,
+                                            int indexInContextCache) {
+            return new ReplicatedAcquireContext(root, indexInContextCache);
+        }
+
+        @Override
+        public ReplicatedAcquireContext createRootContext() {
+            return new ReplicatedAcquireContext();
+        }
+
+        @Override
+        public Class<ReplicatedAcquireContext> contextClass() {
+            return ReplicatedAcquireContext.class;
+        }
+    }
 
     public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
 
@@ -467,7 +722,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         } finally {
             entry.position(start);
         }
-
     }
 
 
@@ -551,70 +805,84 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
      * this method, especially when being used in a multi threaded context.
      */
     @Override
-    public void readExternalEntry(
-            @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
+    public void readExternalEntry(@NotNull BytesReplicatedContext context,
             @NotNull Bytes source) {
-        final long keySize = keySizeMarshaller.readSize(source);
-        final long valueSize = valueSizeMarshaller.readSize(source);
-        final long timeStamp = source.readStopBit();
+        // TODO cache contexts per map -- don't init map on each readExternalEntry()
+        context.initMap(this);
+        try {
+            final long keySize = keySizeMarshaller.readSize(source);
+            final long valueSize = valueSizeMarshaller.readSize(source);
+            final long timeStamp = source.readStopBit();
 
-        final byte id = source.readByte();
-        final boolean isDeleted = source.readBoolean();
+            final byte id = source.readByte();
+            final boolean isDeleted = source.readBoolean();
 
-        final byte remoteIdentifier;
+            final byte remoteIdentifier;
 
-        if (id != 0) {
-            remoteIdentifier = id;
-        } else {
-            throw new IllegalStateException("identifier can't be 0");
-        }
-
-        if (remoteIdentifier == ReplicatedChronicleMap.this.identifier()) {
-            // this may occur when working with UDP, as we may receive our own data
-            return;
-        }
-
-        final long keyPosition = source.position();
-        final long keyLimit = keyPosition + keySize;
-
-        source.limit(keyLimit);
-        long hash = hash(source);
-
-        int segmentNum = getSegment(hash);
-        long segmentHash = segmentHash(hash);
-
-        boolean debugEnabled = LOG.isDebugEnabled();
-
-        if (isDeleted) {
-            if (debugEnabled) {
-                LOG.debug("READING FROM SOURCE -  into local-id={}, remote={}, remove(key={})",
-                        localIdentifier, remoteIdentifier, source.toString().trim()
-                );
+            if (id != 0) {
+                remoteIdentifier = id;
+            } else {
+                throw new IllegalStateException("identifier can't be 0");
             }
 
-            segment(segmentNum).remoteRemove(copies, segmentState,
-                    source, segmentHash, timeStamp, remoteIdentifier);
-            setLastModificationTime(remoteIdentifier, timeStamp);
-            return;
-        }
+            if (remoteIdentifier == ReplicatedChronicleMap.this.identifier()) {
+                // this may occur when working with UDP, as we may receive our own data
+                return;
+            }
 
-        String message = null;
-        if (debugEnabled) {
-            message = String.format(
-                    "READING FROM SOURCE -  into local-id=%d, remote-id=%d, put(key=%s,",
-                    localIdentifier, remoteIdentifier, source.toString().trim());
-        }
+            context.newTimestamp = timeStamp;
+            context.newIdentifier = remoteIdentifier;
 
-        final long valuePosition = keyLimit;
-        final long valueLimit = valuePosition + valueSize;
-        segment(segmentNum).remotePut(copies, segmentState, source,
-                keySize, valueSize, segmentHash, remoteIdentifier, timeStamp);
-        setLastModificationTime(remoteIdentifier, timeStamp);
+            final long keyPosition = source.position();
+            final long keyLimit = keyPosition + keySize;
+            source.limit(keyLimit);
 
-        if (debugEnabled) {
+            context.metaKeyInterop = DelegatingMetaBytesInterop.instance();
+            context.keySize = keySize;
+            context.initBytesKey00(source);
+
+            boolean debugEnabled = LOG.isDebugEnabled();
+
+            context.updateLock().lock();
+            if (isDeleted) {
+                if (debugEnabled) {
+                    LOG.debug("READING FROM SOURCE -  into local-id={}, remote={}, remove(key={})",
+                            localIdentifier, remoteIdentifier, source.toString().trim()
+                    );
+                }
+                context.remove();
+                setLastModificationTime(remoteIdentifier, timeStamp);
+                return;
+            }
+
+            String message = null;
+            if (debugEnabled) {
+                message = String.format(
+                        "READING FROM SOURCE -  into local-id=%d, remote-id=%d, put(key=%s,",
+                        localIdentifier, remoteIdentifier, source.toString().trim());
+            }
+
+            final long valuePosition = keyLimit;
+            final long valueLimit = valuePosition + valueSize;
+
+            // compute hash => segment and locate the entry
+            context.containsKey();
+
+            context.metaValueInterop = DelegatingMetaBytesInterop.instance();
+            context.newValueSize = valueSize;
             source.limit(valueLimit);
             source.position(valuePosition);
-            LOG.debug(message + "value=" + source.toString().trim() + ")");
+            context.initNewBytesValue00(source);
+
+            context.initPutDependencies();
+            context.put0();
+            setLastModificationTime(remoteIdentifier, timeStamp);
+
+            if (debugEnabled) {
+                LOG.debug(message + "value=" + source.toString().trim() + ")");
+            }
+        } finally {
+            context.closeMap();
         }
     }
 
@@ -676,707 +944,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
     }
 
-    class Segment extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment {
-
-        Segment(NativeBytes segmentHeader, NativeBytes bytes, int index) {
-            super(segmentHeader, bytes, index);
-        }
-
-        @Override
-        long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-            return super.sizeOfEverythingBeforeValue(keySize, valueSize) + ADDITIONAL_ENTRY_BYTES;
-        }
-
-        @Override
-        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, RV>
-        RV acquireWithoutLock(
-                @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
-                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                InstanceOrBytesToInstance<KB, K> toKey,
-                ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
-                long hash2, boolean create, MutableLockedEntry lock) {
-            MultiStoreBytes entry = segmentState.tmpBytes;
-            MultiMap hashLookup = hashLookup();
-            SearchState searchState = segmentState.searchState;
-            hashLookup.startSearch(hash2, searchState);
-            for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
-                long offset = offsetFromPos(pos);
-                reuse(entry, offset);
-                if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
-                    continue;
-                // key is found
-                entry.skip(keySize);
-                entry.skip(ADDITIONAL_ENTRY_BYTES - 1L);
-                boolean isDeleted = entry.readBoolean();
-                if (isDeleted) {
-                    if (!create)
-                        return readValue.readNull();
-
-                    long valueSizePos = entry.position();
-
-                    entry.position(valueSizePos - ADDITIONAL_ENTRY_BYTES);
-                    // todo theoretically, currentTime() call should be outside locking
-                    // because locking might take time > 1 ms. but making current time a param
-                    // of acquireWithoutLock would complicate code much, requiring putting
-                    // lookupUsing() back into ReplicatedChMap, and other methods
-                    entry.writeLong(currentTime());
-                    entry.writeByte(localIdentifier);
-                    // deleted flag
-                    entry.writeBoolean(false);
-
-                    long prevValueSize = valueSizeMarshaller.readSize(entry);
-                    long sizeOfEverythingBeforeValue = entry.position();
-                    alignment.alignPositionAddr(entry);
-                    long valueAddr = entry.positionAddr();
-                    long entryEndAddr = valueAddr + prevValueSize;
-
-                    // todo add api which doesn't require key instance
-                    K keyInstance = toKey.toInstance(copies, key, keySize);
-                    MetaBytesWriter metaElemWriter;
-                    Object elemWriter;
-                    Object elem;
-                    if (defaultValueProvider != null) {
-                        V defaultValue = defaultValueProvider.get(keyInstance);
-                        elem = defaultValue;
-                        VI valueInterop = valueInteropProvider.get(copies, originalValueInterop);
-                        elemWriter = valueInterop;
-                        metaElemWriter = metaValueInteropProvider.get(
-                                copies, originalMetaValueInterop, valueInterop, defaultValue);
-                    } else if (prepareValueBytesAsWriter != null) {
-                        elem = keyInstance;
-                        elemWriter = null;
-                        metaElemWriter = prepareValueBytesAsWriter;
-                    } else {
-                        throw defaultValueOrPrepareBytesShouldBeSpecified();
-                    }
-                    putValue(pos, offset, entry, valueSizePos, entryEndAddr, isDeleted,
-                            segmentState,
-                            metaElemWriter, elemWriter, elem, metaElemWriter.size(elemWriter, elem),
-                            hashLookup, sizeOfEverythingBeforeValue);
-                    pos = segmentState.pos;
-
-                    incrementSize();
-                    hashLookup.putPosition(pos);
-
-                    entry.position(valueSizePos);
-                    long valueSize = readValueSize(entry);
-                    long valuePos = entry.position();
-                    RV v = readValue.readValue(copies, entry, usingValue, valueSize);
-
-                    // put callbacks
-                    onPut(this, pos);
-                    if (bytesEventListener != null) {
-                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valuePos, true);
-                    }
-                    if (eventListener != null) {
-                        V valueInstance = toValue.toInstance(copies, v, valueSize);
-                        eventListener.onPut(keyInstance, valueInstance, null);
-                    }
-                    entryCreated(lock);
-                    return v;
-                } else {
-                    segmentState.pos = pos; // for WriteLocked.close()
-                    return readValueAndNotifyGet(copies, key, keySize, toKey,
-                            readValue, usingValue, toValue, entry);
-                }
-            }
-            if (!create)
-                return readValue.readNull();
-
-            RV result = createEntryOnAcquire(copies, segmentState,
-                    metaKeyInterop, keyInterop, key, keySize, toKey,
-                    readValue, usingValue, toValue, entry);
-            entryCreated(lock);
-            return result;
-        }
-
-        /**
-         * called from a remote node as part of replication
-         */
-        void remoteRemove(
-                @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
-                Bytes keyBytes, long hash2, final long timestamp, final byte identifier) {
-            writeLock();
-            try {
-                ReadValueToBytes readValueToLazyBytes = segmentState.readValueToLazyBytes;
-                readValueToLazyBytes.valueSizeMarshaller(valueSizeMarshaller);
-                Boolean removed = (Boolean) removeWithoutLock(copies, segmentState,
-                        DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
-                        BytesBytesInterop.INSTANCE, keyBytes, keyBytes.remaining(),
-                        keyBytesToInstance, null, null, outputValueBytesToInstance,
-                        hash2, readValueToLazyBytes, true,
-                        timestamp, identifier, true, true);
-                if (!removed && LOG.isDebugEnabled()) {
-                    LOG.debug("Segment.remoteRemove() : key=" + keyBytes.toString().trim() +
-                            " was not found (or the remote update is late)");
-                }
-            } finally {
-                writeUnlock();
-            }
-        }
-
-        /**
-         * called from a remote node when it wishes to propagate a remove event
-         */
-        void remotePut(@NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
-                       @NotNull final Bytes entry, long keySize, long valueSize, long hash2,
-                       final byte identifier, final long timestamp) {
-            GetRemoteBytesValueInterops getRemoteBytesValueInterops =
-                    segmentState.getRemoteBytesValueInterops;
-            MultiStoreBytes value = getRemoteBytesValueInterops.getValueBytes(
-                    entry, entry.position() + keySize);
-            getRemoteBytesValueInterops.valueSize(valueSize);
-            ReadValueToBytes readValueToLazyBytes = segmentState.readValueToLazyBytes;
-            readValueToLazyBytes.valueSizeMarshaller(valueSizeMarshaller);
-
-            writeLock();
-            try {
-                putWithoutLock(copies, segmentState,
-                        DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
-                        BytesBytesInterop.INSTANCE, entry, keySize, keyBytesToInstance,
-                        getRemoteBytesValueInterops, value, valueBytesToInstance,
-                        hash2, true, readValueToLazyBytes, true, identifier, timestamp,
-                        true);
-            } finally {
-                writeUnlock();
-            }
-        }
-
-        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
-        RV put(@Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
-               MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-               InstanceOrBytesToInstance<KB, K> toKey,
-               GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-               InstanceOrBytesToInstance<? super VB, V> toValue,
-               long hash2, boolean replaceIfPresent,
-               ReadValue<RV> readValue, boolean resultUnused,
-               byte identifier, long timeStamp) {
-            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
-            if (segmentState == null) {
-                copies = SegmentState.getCopies(copies);
-                segmentState = SegmentState.get(copies);
-            }
-            writeLock();
-            try {
-                return putWithoutLock(copies, segmentState,
-                        metaKeyInterop, keyInterop, key, keySize, toKey,
-                        getValueInterops, value, toValue,
-                        hash2, replaceIfPresent, readValue, resultUnused,
-                        identifier, timeStamp, false);
-            } finally {
-                segmentState.close();
-                writeUnlock();
-            }
-        }
-
-        @Override
-        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
-        RV putWithoutLock(
-                @Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
-                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                InstanceOrBytesToInstance<KB, K> toKey,
-                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-                InstanceOrBytesToInstance<? super VB, V> toValue, long hash2,
-                boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused) {
-            return putWithoutLock(copies, segmentState, metaKeyInterop, keyInterop, key, keySize,
-                    toKey, getValueInterops, value, toValue, hash2, replaceIfPresent, readValue,
-                    resultUnused, localIdentifier, currentTime(), false);
-        }
-
-        private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
-        RV putWithoutLock(
-                @Nullable ThreadLocalCopies copies, final @Nullable SegmentState segmentState,
-                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                InstanceOrBytesToInstance<KB, K> toKey,
-                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-                InstanceOrBytesToInstance<? super VB, V> toValue,
-                long hash2, boolean replaceIfPresent,
-                ReadValue<RV> readValue, boolean resultUnused,
-                byte identifier, long timestamp, boolean remote) {
-            MultiMap hashLookup = hashLookup();
-            SearchState searchState = segmentState.searchState;
-            hashLookup.startSearch(hash2, searchState);
-            MultiStoreBytes entry = segmentState.tmpBytes;
-            for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
-                long offset = offsetFromPos(pos);
-                reuse(entry, offset);
-                if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
-                    continue;
-                // key is found
-                entry.skip(keySize);
-
-                final long timeStampPosAddr = entry.positionAddr();
-
-                if (shouldIgnore(entry, timestamp, identifier)) {
-                    // the following assert should be enabled, but TimeBasedReplicationTest
-                    // intentionally violates the explained invariant, => assertion fails.
-                    // todo do something with this
-
-                    // we should ignore only external remote updates
-                    // which don't use put and remove results
-                    // assert resultUnused;
-                    return null;
-                }
-
-                boolean isDeleted = entry.readBoolean();
-
-                if (replaceIfPresent || isDeleted) {
-                    entry.positionAddr(timeStampPosAddr);
-                    entry.writeLong(timestamp);
-                    entry.writeByte(identifier);
-                    // deleted flag
-                    entry.writeBoolean(false);
-
-                    RV prevValue = replaceValueAndNotifyPut(copies, segmentState,
-                            key, keySize, toKey,
-                            getValueInterops, value, toValue,
-                            entry, pos, offset, hashLookup, readValue,
-                            resultUnused, isDeleted, remote);
-                    // for DRY (reusing replaceValueAndNotifyPut() method),
-                    // size is updated AFTER callbacks are called.
-                    // however this shouldn't be an issue because exclusive segment lock
-                    // is still held
-                    if (isDeleted) {
-                        incrementSize();
-                        // if they are NOT equal, it means the entry was relocated in putValue(),
-                        // hence position is already set
-                        if (pos == segmentState.pos) {
-                            hashLookup.putPosition(segmentState.pos);
-                        } else {
-                            assert hashLookup.getPositions().isSet(segmentState.pos);
-                        }
-                    }
-                    if (resultUnused)
-                        return null;
-                    return isDeleted ? readValue.readNull() : prevValue;
-                } else {
-                    long valueSize = readValueSize(entry);
-                    return resultUnused ? null :
-                            readValue.readValue(copies, entry, null, valueSize);
-                }
-            }
-            // key is not found
-            VBI valueInterop = getValueInterops.getValueInterop(copies);
-            MVBI metaValueInterop =
-                    getValueInterops.getMetaValueInterop(copies, valueInterop, value);
-            long valueSize = metaValueInterop.size(valueInterop, value);
-            putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
-                    metaValueInterop, valueInterop, value, entry, false);
-            entry.position(segmentState.valueSizePos - ADDITIONAL_ENTRY_BYTES);
-            entry.writeLong(timestamp);
-            entry.writeByte(identifier);
-            entry.writeBoolean(false);
-
-            // put callbacks
-            onPutMaybeRemote(segmentState.pos, remote);
-            if (bytesEventListener != null)
-                bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                        segmentState.valueSizePos, true);
-            if (eventListener != null)
-                eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), null);
-
-            return resultUnused ? null : readValue.readNull();
-        }
-
-        /**
-         * Used only with replication, its sometimes possible to receive an old ( or stale update )
-         * from a remote map. This method is used to determine if we should ignore such updates.
-         *
-         * <p>We can reject put() and removes() when comparing times stamps with remote systems
-         *
-         * @param entry      the maps entry
-         * @param timestamp  the time the entry was created or updated
-         * @param identifier the unique identifier relating to this map
-         * @return true if the entry should not be processed
-         */
-        private boolean shouldIgnore(@NotNull final NativeBytes entry, final long timestamp,
-                                     final byte identifier) {
-            final long lastModifiedTimeStamp = entry.readLong();
-
-            // if the readTimeStamp is newer then we'll reject this put()
-            // or they are the same and have a larger id
-            if (lastModifiedTimeStamp < timestamp) {
-                entry.skip(1); // skip the byte used for the identifier
-                return false;
-            }
-
-            if (lastModifiedTimeStamp > timestamp)
-                return true;
-
-            // check the identifier
-            return entry.readByte() > identifier;
-        }
-
-        @Override
-        void manageReplicationBytes(Bytes entry, boolean writeDefaultInitialReplicationValues,
-                                    boolean remove) {
-            if (!writeDefaultInitialReplicationValues) {
-                entry.skip(ADDITIONAL_ENTRY_BYTES);
-            } else {
-                entry.writeLong(currentTime());
-                entry.writeByte(localIdentifier);
-                entry.writeBoolean(remove);
-            }
-        }
-
-        @Override
-        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
-        Object remove(@Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
-                      MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                      InstanceOrBytesToInstance<KB, K> toKey,
-                      GetValueInterops<VB, VBI, MVBI> getValueInterops, VB expectedValue,
-                      InstanceOrBytesToInstance<RV, V> toValue,
-                      long hash2, ReadValue<RV> readValue, boolean resultUnused) {
-            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
-            if (segmentState == null) {
-                copies = SegmentState.getCopies(copies);
-                segmentState = SegmentState.get(copies);
-            }
-            writeLock();
-            try {
-                return removeWithoutLock(copies, segmentState,
-                        metaKeyInterop, keyInterop, key, keySize, toKey,
-                        getValueInterops, expectedValue, toValue,
-                        hash2, readValue, resultUnused, currentTime(), localIdentifier, false,
-                        expectedValue != null);
-            } finally {
-                segmentState.close();
-                writeUnlock();
-            }
-        }
-
-        @Override
-        boolean isDeleted(Bytes entry, long keySize) {
-            return entry.readBoolean(entry.position() + keySize + ADDITIONAL_ENTRY_BYTES - 1L);
-        }
-
-        @Override
-        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
-        Object removeWithoutLock(
-                @Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
-                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                InstanceOrBytesToInstance<KB, K> toKey,
-                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB expectedValue,
-                InstanceOrBytesToInstance<RV, V> toValue,
-                long hash2, ReadValue<RV> readValue, boolean resultUnused) {
-            return removeWithoutLock(copies, segmentState, metaKeyInterop, keyInterop, key, keySize,
-                    toKey, getValueInterops, expectedValue, toValue, hash2, readValue, resultUnused,
-                    currentTime(), localIdentifier, false, expectedValue != null);
-        }
-
-        /**
-         * - if expectedValue is not null, returns Boolean.TRUE (removed) or Boolean.FALSE (entry
-         * not found), regardless the expectedValue object is Bytes instance (RPC call) or the value
-         * instance - if expectedValue is null: - if resultUnused is false, null or removed value is
-         * returned - if resultUnused is true, null is always returned
-         */
-        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>>
-        Object removeWithoutLock(
-                @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
-                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                InstanceOrBytesToInstance<KB, K> toKey,
-                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB expectedValue,
-                InstanceOrBytesToInstance<RV, V> toValue,
-                long hash2, ReadValue<RV> readValue, boolean resultUnused,
-                long timestamp, byte identifier, boolean remote, boolean booleanResult) {
-            assert identifier > 0;
-            expectedValueNotNullImpliesBooleanResult(expectedValue, booleanResult);
-            MultiMap hashLookup = hashLookup();
-            SearchState searchState = segmentState.searchState;
-            hashLookup.startSearch(hash2, searchState);
-            MultiStoreBytes entry = segmentState.tmpBytes;
-            returnNothing:
-            {
-                for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
-                    long offset = offsetFromPos(pos);
-                    reuse(entry, offset);
-                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
-                        continue;
-                    // key is found
-                    entry.skip(keySize);
-
-                    long timestampPos = entry.position();
-                    if (shouldIgnore(entry, timestamp, identifier)) {
-                        // the following assert should be enabled, but TimeBasedReplicationTest
-                        // intentionally violates the explained invariant, => assertion fails.
-                        // todo do something with this
-
-                        // we should ignore only remote updates
-                        // which don't use remove, put results
-                        // assert booleanResult || resultUnused;
-                        return booleanResult ? Boolean.FALSE : null;
-                    }
-                    boolean isDeleted = entry.readBoolean();
-                    if (isDeleted) {
-                        if (expectedValue != null)
-                            return Boolean.FALSE;
-                        entry.position(timestampPos);
-                        entry.writeLong(timestamp);
-                        entry.writeByte(identifier);
-                        onRemoveMaybeRemote(pos, remote);
-                        break returnNothing;
-                    }
-
-                    long valueSizePos = entry.position();
-                    long valueSize = readValueSize(entry);
-                    long valuePos = entry.position();
-
-                    // check the value assigned for the key is that we expect
-                    if (expectedValue != null) {
-                        VBI valueInterop = getValueInterops.getValueInterop(copies);
-                        MVBI metaValueInterop = getValueInterops.getMetaValueInterop(
-                                copies, valueInterop, expectedValue);
-                        if (metaValueInterop.size(valueInterop, expectedValue) != valueSize)
-                            return Boolean.FALSE;
-                        if (!metaValueInterop.startsWith(valueInterop, entry, expectedValue))
-                            return Boolean.FALSE;
-                    }
-
-                    entry.position(timestampPos);
-                    entry.writeLong(timestamp);
-                    entry.writeByte(identifier);
-                    entry.writeBoolean(true);
-                    entry.position(valuePos);
-
-                    return removeEntry(copies, searchState, key, keySize, toKey, toValue, readValue,
-                            resultUnused, hashLookup, entry, pos, valueSizePos,
-                            valueSize, remote, false, booleanResult);
-                }
-                // key is not found
-                if (remote) {
-                    long minEncodableValueSize = valueSizeMarshaller.minEncodableSize();
-                    long entrySize = entrySize(keySize, minEncodableValueSize);
-                    int allocatedChunks = inChunks(entrySize);
-                    long pos = alloc(allocatedChunks);
-                    long offset = offsetFromPos(pos);
-                    clearMetaData(offset);
-                    reuse(entry, offset);
-
-                    keySizeMarshaller.writeSize(entry, keySize);
-                    metaKeyInterop.write(keyInterop, entry, key);
-
-                    entry.writeLong(timestamp);
-                    entry.writeByte(identifier);
-                    entry.writeBoolean(true);
-
-                    valueSizeMarshaller.writeSize(entry, minEncodableValueSize);
-                    alignment.alignPositionAddr(entry);
-                    entry.skip(minEncodableValueSize);
-
-                    freeExtraAllocatedChunks(pos, allocatedChunks, entry);
-
-                    hashLookup.putAfterFailedSearch(searchState, pos);
-                    hashLookup.removePosition(pos);
-                }
-            }
-            // return nothing
-            if (booleanResult) {
-                return Boolean.FALSE;
-            } else {
-                return resultUnused ? null : readValue.readNull();
-            }
-        }
-
-        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
-                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
-        Object replace(
-                @Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
-                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                InstanceOrBytesToInstance<KB, K> toKey,
-                GetValueInterops<VB, VBI, MVBI> getExpectedValueInterops, VB expectedValue,
-                GetValueInterops<VB, VBI, MVBI> getNewValueInterops, VB newValue,
-                ReadValue<RV> readValue, InstanceOrBytesToInstance<? super RV, V> toValue,
-                long hash2) {
-            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
-            if (segmentState == null) {
-                copies = SegmentState.getCopies(copies);
-                segmentState = SegmentState.get(copies);
-            }
-            long timestamp = currentTime();
-            byte identifier = localIdentifier;
-            writeLock();
-            try {
-                MultiMap hashLookup = hashLookup();
-                SearchState searchState = segmentState.searchState;
-                hashLookup.startSearch(hash2, searchState);
-                MultiStoreBytes entry = segmentState.tmpBytes;
-                for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
-                    long offset = offsetFromPos(pos);
-                    reuse(entry, offset);
-                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
-                        continue;
-                    // key is found
-                    entry.skip(keySize);
-
-                    long timestampPos = entry.position();
-                    if (shouldIgnore(entry, timestamp, identifier)) {
-                        LOG.error("Trying to replace a value for key={} on the node with id={} " +
-                                        "at time={} (current time), but the entry is updated " +
-                                        "by node with id={} at time={}. Time is not monotonic " +
-                                        "across nodes!?",
-                                key, identifier, timestamp, entry.readByte(entry.position() - 1),
-                                entry.readLong(entry.position() - ADDITIONAL_ENTRY_BYTES + 1));
-                        return readValue.readNull();
-                    }
-                    boolean isDeleted = entry.readBoolean();
-                    if (isDeleted)
-                        break;
-
-                    Object result = onKeyPresentOnReplace(copies, segmentState, key, keySize, toKey,
-                            getExpectedValueInterops, expectedValue, getNewValueInterops, newValue,
-                            readValue, toValue, pos, offset, entry, hashLookup);
-                    if (result != Boolean.FALSE) {
-                        entry.position(timestampPos);
-                        entry.writeLong(timestamp);
-                        entry.writeByte(identifier);
-                    }
-                    return result;
-                }
-                // key is not found
-                return readValue.readNull();
-            } finally {
-                segmentState.close();
-                writeUnlock();
-            }
-        }
-
-        /**
-         * @param bootstrapOnlyLocalEntries if true - only entries that have been create from this
-         *                                  node will be published during a bootstrap
-         */
-        public void dirtyEntries(final long timeStamp,
-                                 final ModificationIterator.EntryModifiableCallback callback,
-                                 final boolean bootstrapOnlyLocalEntries) {
-            readLock(null);
-            ThreadLocalCopies copies = SegmentState.getCopies(null);
-            try (SegmentState segmentState = SegmentState.get(copies)) {
-                final int index = Segment.this.getIndex();
-                final MultiStoreBytes tmpBytes = segmentState.tmpBytes;
-                hashLookup().forEach(new MultiMap.EntryConsumer() {
-                    @Override
-                    public void accept(long hash, long pos) {
-                        final NativeBytes entry = reuse(tmpBytes, offsetFromPos(pos));
-                        long keySize = keySizeMarshaller.readSize(entry);
-                        entry.skip(keySize);
-
-                        final long entryTimestamp = entry.readLong();
-
-                        if (entryTimestamp >= timeStamp && (!bootstrapOnlyLocalEntries ||
-                                entry.readByte() == ReplicatedChronicleMap.this.identifier()))
-                            callback.set(index, pos);
-                    }
-                });
-            } finally {
-                readUnlock();
-            }
-        }
-
-        @Override
-        public Entry<K, V> getEntry(@NotNull SegmentState segmentState, long pos) {
-            Bytes entry = reuse(segmentState.tmpBytes, offsetFromPos(pos));
-
-            long keySize = keySizeMarshaller.readSize(entry);
-            ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
-            K key = keyReaderProvider.get(copies, originalKeyReader).read(entry, keySize);
-
-            long timestamp = entry.readLong();
-            entry.skip(2L); // identifier and isDeleted flag
-
-            long valueSize = valueSizeMarshaller.readSize(entry);
-            alignment.alignPositionAddr(entry);
-            copies = valueReaderProvider.getCopies(copies);
-            V value = valueReaderProvider.get(copies, originalValueReader).read(entry, valueSize);
-
-            return new TimestampTrackingEntry(key, value, timestamp);
-        }
-    }
-
-    @Override
-    void shouldNotBeCalledFromReplicatedChronicleMap(String method) {
-        throw new AssertionError(method + "() method should not be called by " +
-                "ReplicatedChronicleMap instance");
-    }
-
-    class TimestampTrackingEntry extends SimpleEntry<K, V> {
-        private static final long serialVersionUID = 0L;
-
-        transient long timestamp;
-
-        public TimestampTrackingEntry(K key, V value, long timestamp) {
-            super(key, value);
-            this.timestamp = timestamp;
-        }
-
-        @Override
-        public V setValue(V value) {
-            long newTimestamp = timestamp = currentTime();
-            put(getKey(), value, localIdentifier, newTimestamp);
-            return super.setValue(value);
-        }
-    }
-
-    class EntryIterator extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.EntryIterator {
-
-        @Override
-        public Entry<K, V> next() {
-            return super.next();
-        }
-
-        @Override
-        void removePresent(VanillaChronicleMap.Segment seg, long pos) {
-            @SuppressWarnings("unchecked")
-            Segment segment = (Segment) seg;
-
-            final long offset = segment.offsetFromPos(pos);
-            final NativeBytes entry = segment.reuse(this.entry, offset);
-
-            final long keySize = keySizeMarshaller.readSize(entry);
-            long keyPosition = entry.position();
-            entry.skip(keySize);
-            long timestamp = entry.readLong();
-            entry.position(keyPosition);
-            if (timestamp > ((TimestampTrackingEntry) returnedEntry).timestamp) {
-                // The entry was updated after being returned from iterator.next()
-                // Check that it is still the entry with the same key
-                K key = returnedEntry.getKey();
-                ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
-                KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
-                copies = metaKeyInteropProvider.getCopies(copies);
-                MKI metaKeyInterop =
-                        metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
-                long returnedKeySize = metaKeyInterop.size(keyInterop, key);
-                if (returnedKeySize != keySize ||
-                        !metaKeyInterop.startsWith(keyInterop, entry, key)) {
-                    // The case:
-                    // 1. iterator.next() - thread 1
-                    // 2. map.put() which cause relocation of the key, returned above - thread 2
-                    // OR map.remove() which remove this key - thread 2
-                    // 3. map.put() which place a new key on the `pos` in current segment - thread 3
-                    // 4. iterator.remove() - thread 1
-                    ReplicatedChronicleMap.this.remove(key);
-                    return;
-                }
-            }
-
-            removePresent(segment, pos, entry, keySize, 0L, false);
-        }
-    }
-
-    class EntrySet extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.EntrySet {
-        @NotNull
-        @Override
-        public Iterator<Entry<K, V>> iterator() {
-            return new EntryIterator();
-        }
-    }
-
     /**
      * <p>Once a change occurs to a map, map replication requires that these changes are picked up
      * by another thread, this class provides an iterator like interface to poll for such changes.
@@ -1392,18 +959,18 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
      */
     class ModificationIterator implements Replica.ModificationIterator {
         private final ModificationNotifier modificationNotifier;
-        private final ATSDirectBitSet changes;
+        private final SingleThreadedDirectBitSet changesForUpdates;
+        // to getVolatile when reading changes bits, because we iterate when without lock.
+        // hardly this is needed on x86, probably on other architectures too.
+        // Anyway getVolatile is cheap.
+        private final ATSDirectBitSet changesForIteration;
         private final int segmentIndexShift;
         private final long posMask;
-
-        private final EntryModifiableCallback entryModifiableCallback =
-                new EntryModifiableCallback();
+        private final ReplicatedContext<K, KI, MKI, V, VI, MVI> context =
+                (ReplicatedContext<K, KI, MKI, V, VI, MVI>) mapContext();
 
         // records the current position of the cursor in the bitset
         private long position = -1L;
-
-        // todo get rid of this
-        private final MultiStoreBytes tmpBytes = new MultiStoreBytes();
 
         /**
          * @param bytes                the back the bitset, used to mark which entries have changed
@@ -1415,7 +982,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             long bitsPerSegment = bitsPerSegmentInModIterBitSet();
             segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
             posMask = bitsPerSegment - 1L;
-            changes = new ATSDirectBitSet(bytes);
+            changesForUpdates = new SingleThreadedDirectBitSet(bytes);
+            changesForIteration = new ATSDirectBitSet(bytes);
         }
 
         /**
@@ -1426,25 +994,17 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          * @return and index the has combined the {@code segmentIndex}  and  {@code pos} into a
          * single value
          */
-        private long combine(int segmentIndex, long pos) {
-            return (((long) segmentIndex) << segmentIndexShift) | pos;
+        private long combine(long segmentIndex, long pos) {
+            return (segmentIndex << segmentIndexShift) | pos;
         }
 
-        public void onPut(long pos, SharedSegment segment) {
-            changes.set(combine(segment.getIndex(), pos));
+        void raiseChange(long segmentIndex, long pos) {
+            changesForUpdates.set(combine(segmentIndex, pos));
             modificationNotifier.onChange();
         }
 
-        public void onRemove(long pos, SharedSegment segment) {
-            changes.set(combine(segment.getIndex(), pos));
-            modificationNotifier.onChange();
-        }
-
-        /**
-         * Ensures that garbage in the old entry's location won't be broadcast as changed entry.
-         */
-        void onRelocation(long pos, SharedSegment segment) {
-            changes.clear(combine(segment.getIndex(), pos));
+        void dropChange(long segmentIndex, long pos) {
+            changesForUpdates.clear(combine(segmentIndex, pos));
         }
 
         /**
@@ -1457,8 +1017,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         @Override
         public boolean hasNext() {
             final long position = this.position;
-            return changes.nextSetBit(position == NOT_FOUND ? 0L : position) != NOT_FOUND ||
-                    (position > 0L && changes.nextSetBit(0L) != NOT_FOUND);
+            return changesForIteration.nextSetBit(position == NOT_FOUND ? 0L : position)
+                    != NOT_FOUND ||
+                    (position > 0L && changesForIteration.nextSetBit(0L) != NOT_FOUND);
         }
 
         /**
@@ -1466,11 +1027,11 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          * @return true if an entry was processed
          */
         @Override
-        public boolean nextEntry(@NotNull final EntryCallback entryCallback, final int chronicleId) {
+        public boolean nextEntry(@NotNull EntryCallback entryCallback, int chronicleId) {
             long position = this.position;
             while (true) {
                 long oldPosition = position;
-                position = changes.nextSetBit(oldPosition + 1L);
+                position = changesForIteration.nextSetBit(oldPosition + 1L);
 
                 if (position == NOT_FOUND) {
                     if (oldPosition == NOT_FOUND) {
@@ -1481,70 +1042,62 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 }
 
                 this.position = position;
-                final VanillaChronicleMap.Segment segment =
-                        segment((int) (position >>> segmentIndexShift));
-                segment.readLock(null);
+                int segmentIndex = (int) (position >>> segmentIndexShift);
+                if (context.segmentIndex != segmentIndex) {
+                    context.closeSegmentIndex();
+                    context.segmentIndex = segmentIndex;
+                    context.initLocks();
+                    context.initSegment();
+                }
+                context.updateLock().lock();
                 try {
-                    if (changes.get(position)) {
+                    if (changesForUpdates.get(position)) {
 
                         entryCallback.onBeforeEntry();
 
                         final long segmentPos = position & posMask;
-                        final NativeBytes entry =
-                                segment.reuse(tmpBytes, segment.offsetFromPos(segmentPos));
+                        context.reuse(segmentPos);
 
                         // if the entry should be ignored, we'll move the next entry
-                        if (entryCallback.shouldBeIgnored(entry, chronicleId)) {
-                            changes.clear(position);
+                        if (entryCallback.shouldBeIgnored(context.entry, chronicleId)) {
+                            changesForUpdates.clear(position);
                             continue;
                         }
 
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
-                        final boolean success = entryCallback.onEntry(entry, chronicleId);
+                        boolean success = entryCallback.onEntry(context.entry, chronicleId);
                         entryCallback.onAfterEntry();
 
                         if (success)
-                            changes.clear(position);
+                            changesForUpdates.clear(position);
 
                         return success;
-
                     }
-
-
                     // if the position was already cleared by another thread
                     // while we were trying to obtain segment lock (for example, in onRelocation()),
                     // go to pick up next (next iteration in while (true) loop)
                 } finally {
-                    segment.readUnlock();
+                    context.updateLock().unlock();
                 }
             }
         }
 
         @Override
         public void dirtyEntries(long fromTimeStamp) {
-            // iterate over all the segments and mark bit in the modification iterator
-            // that correspond to entries with an older timestamp
-            for (final Segment segment : (Segment[]) segments) {
-                segment.dirtyEntries(fromTimeStamp, entryModifiableCallback,
-                        bootstrapOnlyLocalEntries);
-            }
-        }
-
-        /**
-         * details about when a modification to an entry was made
-         */
-        class EntryModifiableCallback {
-
-            /**
-             * set the bit related to {@code segment} and {@code pos}
-             *
-             * @param segmentIndex the segment relating to the bit to set
-             * @param pos          the position relating to the bit to set
-             */
-            public void set(int segmentIndex, long pos) {
-                final long combine = combine(segmentIndex, pos);
-                changes.set(combine);
+            try (ReplicatedContext<K, KI, MKI, V, VI, MVI> context =
+                         (ReplicatedContext<K, KI, MKI, V, VI, MVI>) mapContext()) {
+                // iterate over all the segments and mark bit in the modification iterator
+                // that correspond to entries with an older timestamp
+                for (int i = 0; i < actualSegments; i++) {
+                    context.segmentIndex = i;
+                    context.initSegment();
+                    try {
+                        context.dirtyEntries(fromTimeStamp, this, bootstrapOnlyLocalEntries);
+                    } finally {
+                        context.closeSegmentIndex();
+                    }
+                }
             }
         }
     }

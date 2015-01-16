@@ -10,7 +10,7 @@ import java.net.InetSocketAddress;
 /**
  * @author Rob Austin.
  */
-public class TcpReplicationWithAcquireUsingLockedTest {
+public class TcpReplicationWithAcquireContextTest {
 
 
     @Test
@@ -45,8 +45,8 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 TestInstrumentVOInterface instrumentVOInterface = map1.newValueInstance();
 
 
-                try (WriteContext<CharSequence, TestInstrumentVOInterface> wc =
-                             map1.acquireUsingLocked("KEY1", instrumentVOInterface)) {
+                try (MapKeyContext<TestInstrumentVOInterface> wc =
+                             map1.acquireContext("KEY1", instrumentVOInterface)) {
                     instrumentVOInterface.setSymbol("Flyer");
                     instrumentVOInterface.setCurrencyCode("USA");
                 }

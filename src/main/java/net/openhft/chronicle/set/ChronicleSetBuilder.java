@@ -19,7 +19,6 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.hash.ChronicleHashErrorListener;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
@@ -46,16 +45,16 @@ import java.util.concurrent.TimeUnit;
  * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link
  * ChronicleHashBuilder} interface documentation.
  *
- * @param <E> element type of the sets, created by this builder
+ * @param <K> element type of the sets, created by this builder
  * @see ChronicleSet
- * @see net.openhft.chronicle.map.ChronicleMapBuilder
+ * @see ChronicleMapBuilder
  */
-public final class ChronicleSetBuilder<E>
-        implements ChronicleHashBuilder<E, ChronicleSet<E>, ChronicleSetBuilder<E>> {
+public final class ChronicleSetBuilder<K>
+        implements ChronicleHashBuilder<K, ChronicleSet<K>, ChronicleSetBuilder<K>> {
 
-    private ChronicleMapBuilder<E, DummyValue> chronicleMapBuilder;
+    private ChronicleMapBuilder<K, DummyValue> chronicleMapBuilder;
 
-    ChronicleSetBuilder(Class<E> keyClass) {
+    ChronicleSetBuilder(Class<K> keyClass) {
         chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
                 .valueMarshallers(DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE)
                 .valueSizeMarshaller(DummyValueMarshaller.INSTANCE);
@@ -66,10 +65,10 @@ public final class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> clone() {
+    public ChronicleSetBuilder<K> clone() {
         try {
             @SuppressWarnings("unchecked")
-            final ChronicleSetBuilder<E> result = (ChronicleSetBuilder<E>) super.clone();
+            final ChronicleSetBuilder<K> result = (ChronicleSetBuilder<K>) super.clone();
             result.chronicleMapBuilder = chronicleMapBuilder.clone();
             return result;
         } catch (CloneNotSupportedException e) {
@@ -78,25 +77,25 @@ public final class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> actualSegments(int actualSegments) {
+    public ChronicleSetBuilder<K> actualSegments(int actualSegments) {
         chronicleMapBuilder.actualSegments(actualSegments);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> minSegments(int minSegments) {
+    public ChronicleSetBuilder<K> minSegments(int minSegments) {
         chronicleMapBuilder.minSegments(minSegments);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> entriesPerSegment(long entriesPerSegment) {
+    public ChronicleSetBuilder<K> entriesPerSegment(long entriesPerSegment) {
         chronicleMapBuilder.entriesPerSegment(entriesPerSegment);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> actualChunksPerSegment(long actualChunksPerSegment) {
+    public ChronicleSetBuilder<K> actualChunksPerSegment(long actualChunksPerSegment) {
         chronicleMapBuilder.actualChunksPerSegment(actualChunksPerSegment);
         return this;
     }
@@ -120,7 +119,7 @@ public final class ChronicleSetBuilder<E>
      * @param averageKeySize
      */
     @Override
-    public ChronicleSetBuilder<E> averageKeySize(double averageKeySize) {
+    public ChronicleSetBuilder<K> averageKeySize(double averageKeySize) {
         chronicleMapBuilder.averageKeySize(averageKeySize);
         return this;
     }
@@ -136,44 +135,26 @@ public final class ChronicleSetBuilder<E>
      * @see ChronicleHashBuilder#averageKeySize(double)
      */
     @Override
-    public ChronicleSetBuilder<E> constantKeySizeBySample(E sampleKey) {
+    public ChronicleSetBuilder<K> constantKeySizeBySample(K sampleKey) {
         chronicleMapBuilder.constantKeySizeBySample(sampleKey);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> actualChunkSize(int actualChunkSize) {
+    public ChronicleSetBuilder<K> actualChunkSize(int actualChunkSize) {
         chronicleMapBuilder.actualChunkSize(actualChunkSize);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> maxChunksPerEntry(int maxChunksPerEntry) {
+    public ChronicleSetBuilder<K> maxChunksPerEntry(int maxChunksPerEntry) {
         chronicleMapBuilder.maxChunksPerEntry(maxChunksPerEntry);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> entries(long entries) {
+    public ChronicleSetBuilder<K> entries(long entries) {
         chronicleMapBuilder.entries(entries);
-        return this;
-    }
-
-    @Override
-    public ChronicleSetBuilder<E> lockTimeOut(long lockTimeOut, TimeUnit unit) {
-        chronicleMapBuilder.lockTimeOut(lockTimeOut, unit);
-        return this;
-    }
-
-    @Override
-    public ChronicleSetBuilder<E> errorListener(ChronicleHashErrorListener errorListener) {
-        chronicleMapBuilder.errorListener(errorListener);
-        return this;
-    }
-
-    @Override
-    public ChronicleSetBuilder<E> metaDataBytes(int metaDataBytes) {
-        chronicleMapBuilder.metaDataBytes(metaDataBytes);
         return this;
     }
 
@@ -187,9 +168,8 @@ public final class ChronicleSetBuilder<E>
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof ChronicleSetBuilder))
-            return false;
-        return chronicleMapBuilder.equals(((ChronicleSetBuilder) o).chronicleMapBuilder);
+        return o instanceof ChronicleSetBuilder &&
+                chronicleMapBuilder.equals(((ChronicleSetBuilder) o).chronicleMapBuilder);
     }
 
     @Override
@@ -198,13 +178,13 @@ public final class ChronicleSetBuilder<E>
     }
 
     @Override
-    public ChronicleSetBuilder<E> timeProvider(TimeProvider timeProvider) {
+    public ChronicleSetBuilder<K> timeProvider(TimeProvider timeProvider) {
         chronicleMapBuilder.timeProvider(timeProvider);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> bytesMarshallerFactory(
+    public ChronicleSetBuilder<K> bytesMarshallerFactory(
             BytesMarshallerFactory bytesMarshallerFactory) {
         chronicleMapBuilder.bytesMarshallerFactory(bytesMarshallerFactory);
         return this;
@@ -221,26 +201,26 @@ public final class ChronicleSetBuilder<E>
      *     .create();}</pre>
      */
     @Override
-    public ChronicleSetBuilder<E> objectSerializer(ObjectSerializer objectSerializer) {
+    public ChronicleSetBuilder<K> objectSerializer(ObjectSerializer objectSerializer) {
         chronicleMapBuilder.objectSerializer(objectSerializer);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> keyMarshaller(@NotNull BytesMarshaller<? super E> keyMarshaller) {
+    public ChronicleSetBuilder<K> keyMarshaller(@NotNull BytesMarshaller<? super K> keyMarshaller) {
         chronicleMapBuilder.keyMarshaller(keyMarshaller);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> keyMarshallers(@NotNull BytesWriter<E> keyWriter,
-                                                 @NotNull BytesReader<E> keyReader) {
+    public ChronicleSetBuilder<K> keyMarshallers(
+            @NotNull BytesWriter<? super K> keyWriter, @NotNull BytesReader<K> keyReader) {
         chronicleMapBuilder.keyMarshallers(keyWriter, keyReader);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> keySizeMarshaller(@NotNull SizeMarshaller keySizeMarshaller) {
+    public ChronicleSetBuilder<K> keySizeMarshaller(@NotNull SizeMarshaller keySizeMarshaller) {
         chronicleMapBuilder.keySizeMarshaller(keySizeMarshaller);
         return this;
     }
@@ -256,50 +236,51 @@ public final class ChronicleSetBuilder<E>
      * @see #of(Class)
      */
     @Override
-    public ChronicleSetBuilder<E> keyDeserializationFactory(
-            @NotNull ObjectFactory<E> keyDeserializationFactory) {
+    public ChronicleSetBuilder<K> keyDeserializationFactory(
+            @NotNull ObjectFactory<? extends K> keyDeserializationFactory) {
         chronicleMapBuilder.keyDeserializationFactory(keyDeserializationFactory);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> immutableKeys() {
+    public ChronicleSetBuilder<K> immutableKeys() {
         chronicleMapBuilder.immutableKeys();
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> replication(SingleChronicleHashReplication replication) {
+    public ChronicleSetBuilder<K> replication(SingleChronicleHashReplication replication) {
         chronicleMapBuilder.replication(replication);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> replication(byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork) {
+    public ChronicleSetBuilder<K> replication(
+            byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork) {
         chronicleMapBuilder.replication(identifier, tcpTransportAndNetwork);
         return this;
     }
 
     @Override
-    public ChronicleSetBuilder<E> replication(byte identifier) {
+    public ChronicleSetBuilder<K> replication(byte identifier) {
         chronicleMapBuilder.replication(identifier);
         return this;
     }
 
     @Override
-    public ChronicleHashInstanceBuilder<ChronicleSet<E>> instance() {
+    public ChronicleHashInstanceBuilder<ChronicleSet<K>> instance() {
         return new SetInstanceBuilder<>(chronicleMapBuilder.instance());
     }
 
     @Override
-    public ChronicleSet<E> create() {
-        final ChronicleMap<E, DummyValue> map = chronicleMapBuilder.create();
+    public ChronicleSet<K> create() {
+        final ChronicleMap<K, DummyValue> map = chronicleMapBuilder.create();
         return new SetFromMap<>(map);
     }
 
     @Override
-    public ChronicleSet<E> createPersistedTo(File file) throws IOException {
-        ChronicleMap<E, DummyValue> map = chronicleMapBuilder.createPersistedTo(file);
+    public ChronicleSet<K> createPersistedTo(File file) throws IOException {
+        ChronicleMap<K, DummyValue> map = chronicleMapBuilder.createPersistedTo(file);
         return new SetFromMap<>(map);
     }
 }

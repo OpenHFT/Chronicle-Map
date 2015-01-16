@@ -19,8 +19,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.hash.ChronicleHashErrorListener;
-import net.openhft.chronicle.hash.ChronicleHashErrorListeners;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
@@ -32,11 +30,13 @@ import net.openhft.lang.Maths;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.BytesStore;
 import net.openhft.lang.io.DirectStore;
+import net.openhft.lang.io.NativeBytes;
 import net.openhft.lang.io.serialization.*;
 import net.openhft.lang.io.serialization.impl.AllocateInstanceObjectFactory;
 import net.openhft.lang.io.serialization.impl.NewInstanceObjectFactory;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.model.Byteable;
+import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -99,7 +98,7 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * @see ChronicleMap
  * @see ChronicleSetBuilder
  */
-public final class ChronicleMapBuilder<K, V> implements Cloneable,
+public final class ChronicleMapBuilder<K, V> implements
         ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>,
         MapBuilder<ChronicleMapBuilder<K, V>>, Serializable {
 
@@ -107,16 +106,17 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
     private static final long DEFAULT_ENTRIES = 1 << 20;
     private static final int MAX_SEGMENTS = (1 << 30);
-    private static final int MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS = (1 << 20);
     private static final Logger LOG =
             LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
 
-    private static final StringBuilder EMTRY_STRING_BUILDER = new StringBuilder();
+    private static final StringBuilder EMPTY_STRING_BUILDER = new StringBuilder();
 
     private static final double UNDEFINED_DOUBLE_CONFIG = Double.NaN;
 
     private static final int XML_SERIALIZATION = 1;
     private static final int BINARY_SERIALIZATION = 2;
+
+    static final long RUNTIME_PAGE_SIZE = (long) NativeBytes.UNSAFE.pageSize();
 
     private static boolean isDefined(double config) {
         return !Double.isNaN(config);
@@ -143,11 +143,10 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     private int actualChunkSize = 0;
     private int maxChunksPerEntry = -1;
     private Alignment alignment = null;
-    private long entries = -1;
-    private long lockTimeOut = 20000;
+    private long entries = -1L;
+    private long lockTimeOut = 20000L;
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
     private int metaDataBytes = 0;
-    private ChronicleHashErrorListener errorListener = ChronicleHashErrorListeners.logging();
     private boolean putReturnsNull = false;
     private boolean removeReturnsNull = false;
 
@@ -155,11 +154,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     private TimeProvider timeProvider = TimeProvider.SYSTEM;
     private BytesMarshallerFactory bytesMarshallerFactory;
     private ObjectSerializer objectSerializer;
-    private MapEventListener<K, V> eventListener = null;
-    private BytesMapEventListener bytesEventListener = null;
     private V defaultValue = null;
     private DefaultValueProvider<K, V> defaultValueProvider = null;
-    private PrepareValueBytes<K, V> prepareValueBytes = null;
 
     private SingleChronicleHashReplication singleHashReplication = null;
     private InetSocketAddress[] pushToAddresses;
@@ -171,7 +167,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         if (CharSequence.class == valueClass)
             defaultValue = (V) "";
         if (StringBuilder.class == valueClass)
-            defaultValue = (V) EMTRY_STRING_BUILDER;
+            defaultValue = (V) EMPTY_STRING_BUILDER;
     }
 
     /**
@@ -421,7 +417,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
                 constantlySizedKeys() && valueBuilder.constantSizeEncodingSizeMarshaller()) {
             long constantSizeBeforeAlignment = round(size);
             if (constantlySizedValues()) {
-                // see specialEntrySpaceOffset()
+                // see segmentEntrySpaceInnerOffset()
                 long totalDataSize = constantSizeBeforeAlignment + constantValueSize();
                 worstAlignment = (int) (alignment.alignAddr(totalDataSize) - totalDataSize);
             } else {
@@ -455,7 +451,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
      * This is needed, if chunkSize = constant entry size is not aligned, for entry alignment to be
      * always the same, we should _misalign_ the first chunk.
      */
-    int specialEntrySpaceOffset(boolean replicated) {
+    int segmentEntrySpaceInnerOffset(boolean replicated) {
         if (!constantlySizedEntries())
             return 0;
         return (int) (constantValueSize() % valueAlignment().alignment());
@@ -643,12 +639,15 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         if (actualChunksPerSegment > 0)
             return entriesPerSegment;
         double averageChunksPerEntry = averageChunksPerEntry(replicated);
-        if (entriesPerSegment * averageChunksPerEntry > MultiMapFactory.MAX_CAPACITY)
+        if (entriesPerSegment * averageChunksPerEntry > HashLookup.MAX_SEGMENT_CHUNKS)
             throw new IllegalStateException("Max chunks per segment is " +
-                    MultiMapFactory.MAX_CAPACITY + " configured entries() and " +
+                    HashLookup.MAX_SEGMENT_CHUNKS + " configured entries() and " +
                     "actualSegments() so that there should be " + entriesPerSegment +
                     " entries per segment, while average chunks per entry is " +
                     averageChunksPerEntry);
+        if (entriesPerSegment > HashLookup.MAX_SEGMENT_ENTRIES)
+            throw new IllegalStateException("shouldn't be more than " +
+                    HashLookup.MAX_SEGMENT_ENTRIES + " entries per segment");
         return entriesPerSegment;
     }
 
@@ -781,12 +780,10 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
                 segments = Math.max(minSegments, segments);
             return (int) segments;
         }
-        long shortMMapSegments = trySegments(MultiMapFactory.I16_MAX_CAPACITY,
-                MAX_SEGMENTS_TO_CHAISE_COMPACT_MULTI_MAPS, replicated);
-        // TODO why not try I24 multiMap?
-        if (shortMMapSegments > 0L)
-            return (int) shortMMapSegments;
-        long intMMapSegments = trySegments(MultiMapFactory.MAX_CAPACITY, MAX_SEGMENTS, replicated);
+        long smallSegments = trySegments(HashLookup.SMALL_SEGMENT_CHUNKS, MAX_SEGMENTS, replicated);
+        if (smallSegments > 0L)
+            return (int) smallSegments;
+        long intMMapSegments = trySegments(HashLookup.MAX_SEGMENT_CHUNKS, MAX_SEGMENTS, replicated);
         if (intMMapSegments > 0L)
             return (int) intMMapSegments;
         throw new IllegalStateException("Max segments is " + MAX_SEGMENTS + ", configured so much" +
@@ -809,30 +806,6 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return segments <= 16 * 1024 ? 64 : 32;
     }
 
-    MultiMapFactory multiMapFactory(boolean replicated) {
-        return MultiMapFactory.forCapacity(actualChunksPerSegment(replicated));
-    }
-
-    public ChronicleMapBuilder<K, V> lockTimeOut(long lockTimeOut, TimeUnit unit) {
-        this.lockTimeOut = lockTimeOut;
-        lockTimeOutUnit = unit;
-        return this;
-    }
-
-    long lockTimeOut(TimeUnit unit) {
-        return unit.convert(lockTimeOut, lockTimeOutUnit);
-    }
-
-    @Override
-    public ChronicleMapBuilder<K, V> errorListener(ChronicleHashErrorListener errorListener) {
-        this.errorListener = errorListener;
-        return this;
-    }
-
-    ChronicleHashErrorListener errorListener() {
-        return errorListener;
-    }
-
     @Override
     public ChronicleMapBuilder<K, V> putReturnsNull(boolean putReturnsNull) {
         this.putReturnsNull = putReturnsNull;
@@ -853,8 +826,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return removeReturnsNull;
     }
 
-    @Override
-    public ChronicleMapBuilder<K, V> metaDataBytes(int metaDataBytes) {
+    // hidden for initial release.
+    ChronicleMapBuilder<K, V> metaDataBytes(int metaDataBytes) {
         if (metaDataBytes < 0 || metaDataBytes > 255)
             throw new IllegalArgumentException("MetaDataBytes must be [0..255] was " + metaDataBytes);
         this.metaDataBytes = metaDataBytes;
@@ -882,7 +855,6 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
                 ", entries=" + entries() +
                 ", lockTimeOut=" + lockTimeOut + " " + lockTimeOutUnit +
                 ", metaDataBytes=" + metaDataBytes() +
-                ", errorListener=" + errorListener() +
                 ", putReturnsNull=" + putReturnsNull() +
                 ", removeReturnsNull=" + removeReturnsNull() +
                 ", timeProvider=" + timeProvider() +
@@ -890,10 +862,8 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
                 ", objectSerializer=" + pretty(objectSerializer) +
                 ", keyBuilder=" + keyBuilder +
                 ", valueBuilder=" + valueBuilder +
-                ", eventListener=" + eventListener +
                 ", defaultValue=" + defaultValue +
                 ", defaultValueProvider=" + pretty(defaultValueProvider) +
-                ", prepareValueBytes=" + pretty(prepareValueBytes) +
                 '}';
     }
 
@@ -965,7 +935,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
     @Override
     public ChronicleMapBuilder<K, V> keyMarshallers(
-            @NotNull BytesWriter<K> keyWriter, @NotNull BytesReader<K> keyReader) {
+            @NotNull BytesWriter<? super K> keyWriter, @NotNull BytesReader<K> keyReader) {
         keyBuilder.writer(keyWriter);
         keyBuilder.reader(keyReader);
         return this;
@@ -983,7 +953,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
      */
     @Override
     public ChronicleMapBuilder<K, V> keyDeserializationFactory(
-            @NotNull ObjectFactory<K> keyDeserializationFactory) {
+            @NotNull ObjectFactory<? extends K> keyDeserializationFactory) {
         keyBuilder.factory(keyDeserializationFactory);
         return this;
     }
@@ -1036,11 +1006,11 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
     /**
      * Configures the marshaller used to serialize actual value sizes to off-heap memory in maps,
-     * created by this builder. <p> <p>Default value size marshaller is so-called {@linkplain
-     * SizeMarshallers#stopBit() stop bit encoding marshalling}, unless {@link
+     * created by this builder.
+     *
+     * <p>Default value size marshaller is so-called "stop bit encoding" marshalling, unless {@link
      * #constantValueSizeBySample(Object)} or the builder statically knows the value size is
-     * constant -- {@link SizeMarshallers#constant(long)} or equivalents are used by default in
-     * these cases.
+     * constant -- special constant size marshalling is used by default in these cases.
      *
      * @param valueSizeMarshaller the new marshaller, used to serialize actual value sizes to
      *                            off-heap memory
@@ -1078,108 +1048,42 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
-    public ChronicleMapBuilder<K, V> eventListener(MapEventListener<K, V> eventListener) {
-        this.eventListener = eventListener;
-        return this;
-    }
-
-    MapEventListener<K, V> eventListener() {
-        return eventListener;
-    }
-
-    public ChronicleMapBuilder<K, V> bytesEventListener(BytesMapEventListener eventListener) {
-        this.bytesEventListener = eventListener;
-        return this;
-    }
-
-    BytesMapEventListener bytesEventListener() {
-        return bytesEventListener;
-    }
-
     /**
      * Specifies the value to be put for each key queried in {@link ChronicleMap#acquireUsing
-     * acquireUsing()} method, if the key is absent in the map, created by this builder. <p> <p>This
-     * configuration overrides any previous {@link #defaultValueProvider(DefaultValueProvider)} and
-     * {@link #prepareDefaultValueBytes(PrepareValueBytes)} configurations to this builder.
+     * acquireUsing()} method, if the key is absent in the map, created by this builder.
+     *
+     * <p>This configuration overrides any previous {@link #defaultValueProvider(
+     * DefaultValueProvider)} configuration to this builder.
      *
      * @param defaultValue the default value to be put to the map for absent keys during {@code
      *                     acquireUsing()} calls
      * @return this builder object back
      * @see #defaultValueProvider(DefaultValueProvider)
-     * @see #prepareDefaultValueBytes(PrepareValueBytes)
      */
     public ChronicleMapBuilder<K, V> defaultValue(V defaultValue) {
         if (defaultValue == null)
             throw new IllegalArgumentException("default ChronicleMap value couldn't be null");
         this.defaultValue = defaultValue;
         this.defaultValueProvider = null;
-        this.prepareValueBytes = null;
         return this;
     }
 
     /**
      * Specifies the function to obtain a value for the key during {@link ChronicleMap#acquireUsing
-     * acquireUsing()} calls, if the key is absent in the map, created by this builder. <p> <p>This
-     * configuration overrides any previous {@link #defaultValue(Object)} and {@link
-     * #prepareDefaultValueBytes(PrepareValueBytes)} configurations to this builder.
+     * acquireUsing()} calls, if the key is absent in the map, created by this builder.
+     *
+     * <p>This configuration overrides any previous {@link #defaultValue(Object)} configuration
+     * to this builder.
      *
      * @param defaultValueProvider the strategy to obtain a default value by the absent key
      * @return this builder object back
      * @see #defaultValue(Object)
-     * @see #prepareDefaultValueBytes(PrepareValueBytes)
      */
     public ChronicleMapBuilder<K, V> defaultValueProvider(
             @NotNull DefaultValueProvider<K, V> defaultValueProvider) {
         this.defaultValueProvider = defaultValueProvider;
         this.defaultValue = null;
-        this.prepareValueBytes = null;
         return this;
-    }
-
-    /**
-     * Configures the procedure which is called on the bytes, which later the returned value is
-     * pointing to or deserialized from, if the key is absent, on {@link ChronicleMap#acquireUsing
-     * acquireUsing()} call on maps, created by this builder. See {@link PrepareValueBytes} for more
-     * information. <p> <p>This method of value initialization on {@code acquireUsing()} calls is
-     * allowed only if value size is constant. Otherwise you should use either {@link
-     * #defaultValue(Object)} or {@link #defaultValueProvider(DefaultValueProvider)} methods. <p>
-     * <p>This configuration overrides any previous {@link #defaultValue(Object)} and {@link
-     * #defaultValueProvider(DefaultValueProvider)} configurations to this builder. <p> <p>The
-     * default preparation callback zeroes out the value bytes.
-     *
-     * @param prepareValueBytes what to do with the value bytes before assigning them into the
-     *                          {@link Byteable} value or deserializing the value from, to return
-     *                          from {@code acquireUsing()} call
-     * @return this builder back
-     * @throws IllegalStateException is value size is not constant
-     * @see PrepareValueBytes
-     * @see #defaultValue(Object)
-     * @see #defaultValueProvider(DefaultValueProvider)
-     */
-    public ChronicleMapBuilder<K, V> prepareDefaultValueBytes(
-            @NotNull PrepareValueBytes<K, V> prepareValueBytes) {
-        this.prepareValueBytes = prepareValueBytes;
-        this.defaultValue = null;
-        this.defaultValueProvider = null;
-        checkPrepareValueBytesOnlyIfConstantValueSize();
-        return this;
-    }
-
-    private void checkPrepareValueBytesOnlyIfConstantValueSize() {
-        if (prepareValueBytes != null && !constantlySizedValues())
-            throw new IllegalStateException("Prepare value bytes could be used only if " +
-                    "value size is constant");
-    }
-
-    PrepareValueBytesAsWriter<K> prepareValueBytesAsWriter() {
-        PrepareValueBytes<K, V> prepareValueBytes = this.prepareValueBytes;
-        if ((prepareValueBytes == null && defaultValueProvider() != null) ||
-                !constantlySizedValues())
-            return null;
-        long constantValueSize = constantValueSize();
-        if (prepareValueBytes == null)
-            prepareValueBytes = new ZeroOutValueBytes<>(constantValueSize);
-        return new PrepareValueBytesAsWriter<>(prepareValueBytes, constantValueSize);
     }
 
     /**
@@ -1188,6 +1092,9 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     DefaultValueProvider<K, V> defaultValueProvider() {
         if (defaultValueProvider != null)
             return defaultValueProvider;
+        V defaultValue = this.defaultValue;
+        if (defaultValue == null)
+            defaultValue = zeroValue();
         if (defaultValue == null)
             return null;
         Object originalValueWriter = valueBuilder.interop();
@@ -1198,7 +1105,26 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         copies = metaWriterProvider.getCopies(copies);
         MetaBytesWriter metaValueWriter = metaWriterProvider.get(copies,
                 valueBuilder.metaInterop(), valueWriter, defaultValue);
-        return new ConstantValueProvider<K, V>(defaultValue, metaValueWriter, valueWriter);
+        return new ConstantValueProvider<>(defaultValue, metaValueWriter, valueWriter);
+    }
+
+    private V zeroValue() {
+        if (Byteable.class.isAssignableFrom(valueBuilder.eClass)) {
+            try {
+                Object v = NativeBytes.UNSAFE.allocateInstance(valueBuilder.eClass);
+                Byteable defaultValue = (Byteable) v;
+                defaultValue.bytes(DirectStore.allocate(defaultValue.maxSize()).bytes(), 0);
+                return (V) v;
+            } catch (InstantiationException e) {
+                return null;
+            }
+        } else {
+            try {
+                return DataValueClasses.newDirectInstance(valueBuilder.eClass);
+            } catch (Exception e) {
+                return null;
+            }
+        }
     }
 
     @Override
@@ -1251,7 +1177,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
 
     ChronicleMap<K, V> createWithFile(File file, SingleChronicleHashReplication singleHashReplication,
                                       ReplicationChannel channel) throws IOException {
-        pushingToMapEventListener();
+        // pushingToMapEventListener();
         for (int i = 0; i < 10; i++) {
             if (file.exists() && file.length() > 0) {
                 try (FileInputStream fis = new FileInputStream(file);
@@ -1350,7 +1276,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
     ChronicleMap<K, V> createWithoutFile(
             SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) {
         try {
-            pushingToMapEventListener();
+            // pushingToMapEventListener();
             VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
             map.warnOnWindows();
             BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
@@ -1362,33 +1288,33 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
             throw new AssertionError(e);
         }
     }
-
-    private void pushingToMapEventListener() {
-        if (pushToAddresses == null || pushToAddresses.length == 0) {
-            return;
-        }
-        try {
-            Class<?> pmel = Class.forName(
-                    "com.higherfrequencytrading.chronicle.enterprise.map.PushingMapEventListener");
-            Constructor<?> constructor = pmel.getConstructor(ChronicleMap[].class);
-            // create a stateless client for each address
-            ChronicleMap[] statelessClients = new ChronicleMap[pushToAddresses.length];
-            ChronicleMapBuilder<K, V> cmb = clone();
-            cmb.pushTo((InetSocketAddress[]) null);
-            for (int i = 0; i < pushToAddresses.length; i++) {
-                statelessClients[i] = ChronicleMapStatelessClientBuilder.of(pushToAddresses[i])
-                        .create();
-            }
-            eventListener =
-                    (MapEventListener<K, V>) constructor.newInstance((Object) statelessClients);
-        } catch (ClassNotFoundException e) {
-            LoggerFactory.getLogger(getClass().getName())
-                    .warn("Chronicle Enterprise not found in the class path");
-        } catch (Exception e) {
-            LoggerFactory.getLogger(getClass().getName())
-                    .error("PushingMapEventListener failed to load", e);
-        }
-    }
+//
+//    private void pushingToMapEventListener() {
+//        if (pushToAddresses == null || pushToAddresses.length == 0) {
+//            return;
+//        }
+//        try {
+//            Class<?> pmel = Class.forName(
+//                    "com.higherfrequencytrading.chronicle.enterprise.map.PushingMapEventListener");
+//            Constructor<?> constructor = pmel.getConstructor(ChronicleMap[].class);
+//            // create a stateless client for each address
+//            ChronicleMap[] statelessClients = new ChronicleMap[pushToAddresses.length];
+//            ChronicleMapBuilder<K, V> cmb = clone();
+//            cmb.pushTo((InetSocketAddress[]) null);
+//            for (int i = 0; i < pushToAddresses.length; i++) {
+//                statelessClients[i] = ChronicleMapStatelessClientBuilder.of(pushToAddresses[i])
+//                        .create();
+//            }
+//            eventListener =
+//                    (MapEventListener<K, V>) constructor.newInstance((Object) statelessClients);
+//        } catch (ClassNotFoundException e) {
+//            LoggerFactory.getLogger(getClass().getName())
+//                    .warn("Chronicle Enterprise not found in the class path");
+//        } catch (Exception e) {
+//            LoggerFactory.getLogger(getClass().getName())
+//                    .error("PushingMapEventListener failed to load", e);
+//        }
+//    }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap(
             SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel)
@@ -1440,7 +1366,6 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
                 throw new IllegalStateException("No info about value size");
         }
         checkAlignmentOnlyIfValuesPossiblyReferenceOffHeap();
-        checkPrepareValueBytesOnlyIfConstantValueSize();
         checkActualChunksPerSegmentIsConfiguredOnlyIfOtherLowLevelConfigsAreManual();
         checkActualChunksPerSegmentGreaterOrEqualToEntries();
     }

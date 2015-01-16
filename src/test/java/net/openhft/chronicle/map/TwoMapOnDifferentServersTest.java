@@ -90,7 +90,8 @@ public class TwoMapOnDifferentServersTest {
         map1.put(5, "EXAMPLE-2");
 
         // allow time for the recompilation to resolve
-        waitTillEqual(5000);
+        // waitTillEqual(5000);
+        Thread.sleep(5000);
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());

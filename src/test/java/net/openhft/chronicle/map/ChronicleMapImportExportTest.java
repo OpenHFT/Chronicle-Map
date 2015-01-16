@@ -11,7 +11,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -256,10 +255,10 @@ public class ChronicleMapImportExportTest {
             LongValue value = expected.newValueInstance();
 
             // this will add the entry
-            try (WriteContext<?, LongValue> context = expected.acquireUsingLocked("one", value)) {
-                assertEquals(0, context.value().getValue());
-                assert value == context.value();
-                LongValue value1 = context.value();
+            try (MapKeyContext<LongValue> context = expected.acquireContext("one", value)) {
+                assertEquals(0, context.get().getValue());
+                assert value == context.get();
+                LongValue value1 = context.get();
                 value1.addValue(1);
             }
 
@@ -293,13 +292,14 @@ public class ChronicleMapImportExportTest {
             final BondVOInterface value = expected.newValueInstance();
 
             // this will add the entry
-            try (WriteContext context = expected.acquireUsingLocked("one", value)) {
+            try (MapKeyContext context = expected.acquireContext("one", value)) {
                 value.setCoupon(8.98);
-                BondVOInterface.MarketPx marketPxIntraDayHistoryAt = value.getMarketPxIntraDayHistoryAt(1);
+                BondVOInterface.MarketPx marketPxIntraDayHistoryAt =
+                        value.getMarketPxIntraDayHistoryAt(1);
 
                 marketPxIntraDayHistoryAt.setAskPx(12.0);
 
-                assert value == context.value();
+                assert value == context.get();
             }
 
             expected.getAll(file);

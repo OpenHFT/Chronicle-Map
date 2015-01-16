@@ -39,7 +39,7 @@ class ReplicationHubFindByName<K> implements FindByName {
     public static final int MAP_BY_NAME_CHANNEL = 1;
 
     private final AtomicInteger nextFreeChannel = new AtomicInteger(2);
-    private final Map<String, MapInstanceBuilder> map;
+    private final ChronicleMap<CharSequence, MapInstanceBuilder> map;
     private final ReplicationHub replicationHub;
 
     /**
@@ -52,39 +52,11 @@ class ReplicationHubFindByName<K> implements FindByName {
         this.replicationHub = replicationHub;
         ReplicationChannel channel = replicationHub.createChannel((short) MAP_BY_NAME_CHANNEL);
 
-        final MapEventListener<CharSequence, MapInstanceBuilder> listener =
-                new MapEventListener<CharSequence, MapInstanceBuilder>() {
-                    // creates a map based on the details that are sent to the map of builders
-                    @Override
-                    public void onPut(CharSequence key, MapInstanceBuilder value,
-                                      MapInstanceBuilder replacedValue) {
-                        super.onPut(key, value, replacedValue);
-                        boolean added = replacedValue == null;
-                        if (!added || value == null)
-                            return;
-
-                        // establish the new map based on this channel ID
-                        LOG.info("create new map for name=" + value.name
-                                + ",channelId=" + value.channel.channelId());
-
-                        try {
-                            toReplicatedViaChannel(value.mapBuilder, value.channel.channelId()).create();
-                        } catch (IllegalStateException e) {
-                            // channel is already created
-                            LOG.debug("while creating channel for name=" + value.name
-                                    + ",channelId=" + value.channel.channelId(), e);
-                        } catch (IOException e) {
-                            LOG.error("", e);
-                        }
-                    }
-                };
-
-        this.map = (Map) ChronicleMapBuilder
+        this.map = ChronicleMapBuilder
                 .of(CharSequence.class, MapInstanceBuilder.class)
                 .averageKeySize(10)
                 .averageValueSize(4000)
                 .entries(128)
-                .eventListener(listener)
                 .instance()
                 .replicatedViaChannel(channel)
                 .create();
@@ -98,8 +70,28 @@ class ReplicationHubFindByName<K> implements FindByName {
 
         int withChannelId = nextFreeChannel.incrementAndGet();
 
-        map.put(config.name,
-                config.replicatedViaChannel(replicationHub.createChannel(withChannelId)));
+        try (MapKeyContext<MapInstanceBuilder> c = map.context(config.name)) {
+            MapInstanceBuilder value =
+                    config.replicatedViaChannel(replicationHub.createChannel(withChannelId));
+            boolean added = !c.containsKey();
+            c.put(value);
+
+            if (added) {
+                // establish the new map based on this channel ID
+                LOG.info("create new map for name=" + value.name
+                        + ",channelId=" + value.channel.channelId());
+
+                try {
+                    toReplicatedViaChannel(value.mapBuilder, value.channel.channelId()).create();
+                } catch (IllegalStateException e) {
+                    // channel is already created
+                    LOG.debug("while creating channel for name=" + value.name
+                            + ",channelId=" + value.channel.channelId(), e);
+                } catch (IOException e) {
+                    LOG.error("", e);
+                }
+            }
+        }
 
         return (T) get(config.name).mapBuilder.create();
     }

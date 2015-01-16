@@ -1,7 +1,5 @@
 /*
- * Copyright 2014 Higher Frequency Trading
- *
- * http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +14,23 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash;
+package net.openhft.chronicle.hash.locks;
 
-import java.io.Serializable;
+import org.jetbrains.annotations.NotNull;
 
-public interface ChronicleHashErrorListener extends Serializable {
-    void onLockTimeout(long threadId) throws IllegalStateException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 
-    void errorOnUnlock(IllegalMonitorStateException e);
+public interface InterProcessReadWriteUpdateLock extends ReadWriteLock {
+
+    @NotNull
+    @Override
+    InterProcessLock readLock();
+
+    @NotNull
+    InterProcessLock updateLock();
+
+    @NotNull
+    @Override
+    InterProcessLock writeLock();
 }

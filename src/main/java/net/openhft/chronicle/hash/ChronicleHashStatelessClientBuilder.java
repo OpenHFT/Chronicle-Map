@@ -39,12 +39,12 @@ import java.util.concurrent.TimeUnit;
  *           {@code ChronicleSet}
  */
 public interface ChronicleHashStatelessClientBuilder<
-        C extends ChronicleHashStatelessClientBuilder<C, H>, H extends ChronicleHash> {
-    C timeout(long timeout, TimeUnit units);
+        B extends ChronicleHashStatelessClientBuilder<B, H>, H extends ChronicleHash> {
+    B timeout(long timeout, TimeUnit units);
 
-    C name(String name);
+    B name(String name);
 
-    C tcpBufferSize(int tcpBufferSize);
+    B tcpBufferSize(int tcpBufferSize);
 
     H create() throws IOException;
 }

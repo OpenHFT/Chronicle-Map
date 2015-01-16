@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.Object;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -51,14 +53,10 @@ import java.util.concurrent.ConcurrentMap;
  * @param <K> the map key type
  * @param <V> the map value type
  */
-public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
-    /**
-     * Returns the number of entries in this map.
-     *
-     * @return number of entries in this map
-     * @see Map#size()
-     */
-    long longSize();
+public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash<K> {
+
+    @Override
+    MapKeyContext<V> context(K key);
 
     /**
      * Returns the value to which the specified key is mapped, or {@code null} if this map contains
@@ -103,50 +101,6 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     V getUsing(K key, V usingValue);
 
     /**
-     * The method is similar {@link  V getUsing(K key, V usingValue);}  but in addition read locks
-     * the map segment to operations to be performed atomically. ( see the example below )
-     *
-     * Returns the  ReadContext which holds a map segment lock and provides method to get the value
-     * ( to which the specified key is mapped)  atomically ( see example below for an explanation ),
-     * read to the provided {@code value} object, if possible, or returns {@code null}, if this map
-     * contains no mapping for the key.
-     *
-     * <p>If the specified key is present in the map, the readContext.value() uses the provided
-     * {@code usingValue} object via value marshaller's {@link BytesMarshaller#read(Bytes, Object)
-     * read(Bytes, value)} or value reader's {@link BytesReader#read(Bytes, long, Object)
-     * read(Bytes, size, value)} method, depending on what deserialization strategy is configured on
-     * the builder, using which this map was constructed. If the value deserializer is able to reuse
-     * the given {@code usingValue} object, calling this method instead of {@link #get(Object)}
-     * could help to reduce garbage creation.
-     * <pre>{@code
-     * try (ReadContext rc = map.getUsingLocked(key, bond)) {
-     *    if (rc.present ()) { // check whether the key was present
-     *    long issueDate = bond.getIssueDate();
-     *    String symbol = bond.getSymbol();
-     * // add your logic here ( the lock will ensure this bond can not be changed by another thread
-     * )
-     * }
-     * } // the read lock is released here
-     * }</pre>
-     * To ensure that you can read the 'issueDate' and 'symbol' can be read atomically, these values
-     * must be read while the segment lock is in place.
-     *
-     *
-     * <p>The provided {@code value} object is allowed to be {@code null}, in this case
-     *
-     * @param key        the key whose associated value is to be returned
-     * @param usingValue the object to read value data in, if possible
-     * @return the read context containing the value to which the specified key is mapped
-     *
-     * no mapping for the key
-     * @see #get(Object)
-     * @see #getUsing(Object, Object)
-     * @see ChronicleMapBuilder#valueMarshaller(BytesMarshaller)
-     */
-    @NotNull
-    ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue);
-
-    /**
      * Acquire a value for a key, creating if absent.
      *
      * <p>If the specified key is absent in the map, {@linkplain ChronicleMapBuilder#defaultValue(Object)
@@ -186,7 +140,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     V acquireUsing(@NotNull K key, V usingValue);
 
     @NotNull
-    WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue);
+    MapKeyContext<V> acquireContext(@NotNull K key, @NotNull V usingValue);
 
     /**
      * Apply a mapping to the value returned by a key and return a result. A read lock is assumed.
@@ -209,11 +163,11 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator);
 
     /**
-     * Exports all the entries to a {@link java.io.File} storing them in JSON format, an attempt is
+     * Exports all the entries to a {@link File} storing them in JSON format, an attempt is
      * made where possible to use standard java serialisation and keep the data human readable, data
      * serialized using the custom serialises are converted to a binary format which is not human
-     * readable but this is only done if the Keys or Values are not {@link java.io.Serializable}.
-     * This method can be used in conjunction with {@link ChronicleMap#putAll(java.io.File)} and is
+     * readable but this is only done if the Keys or Values are not {@link Serializable}.
+     * This method can be used in conjunction with {@link ChronicleMap#putAll(File)} and is
      * especially useful if you wish to import/export entries from one chronicle map into another.
      * This import and export of the entries can be performed even when the versions of ChronicleMap
      * differ. This method is not performant and as such we recommend it is not used in performance
@@ -222,21 +176,21 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * @param toFile the file to store all the entries to, the entries will be stored in JSON
      *               format
      * @throws IOException its not possible store the data to {@code toFile}
-     * @see ChronicleMap#putAll(java.io.File)
+     * @see ChronicleMap#putAll(File)
      */
     void getAll(File toFile) throws IOException;
 
     /**
-     * Imports all the entries from a {@link java.io.File}, the {@code fromFile} must be created
-     * using or the same format as {@link ChronicleMap#get(java.lang.Object)}, this method behaves
-     * similar to {@link java.util.Map#put(java.lang.Object, java.lang.Object)} where existing
+     * Imports all the entries from a {@link File}, the {@code fromFile} must be created
+     * using or the same format as {@link ChronicleMap#get(Object)}, this method behaves
+     * similar to {@link Map#put(Object, Object)} where existing
      * entries are overwritten. A write lock is only held while each individual entry is inserted
-     * into the map, not over all the entries in the {@link java.io.File}
+     * into the map, not over all the entries in the {@link File}
      *
      * @param fromFile the file containing entries ( in JSON format ) which will be deserialized and
-     *                 {@link java.util.Map#put(java.lang.Object, java.lang.Object)} into the map
+     *                 {@link Map#put(Object, Object)} into the map
      * @throws IOException its not possible read the {@code fromFile}
-     * @see ChronicleMap#getAll(java.io.File)
+     * @see ChronicleMap#getAll(File)
      */
     void putAll(File fromFile) throws IOException;
 
@@ -244,26 +198,24 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * Creates an empty value instance, which can be used with the
      * following methods :
      *
-     * {@link ChronicleMap#getUsing(java.lang.Object, java.lang.Object) }
-     * {@link ChronicleMap#getUsingLocked(java.lang.Object, java.lang.Object)    }
-     * {@link ChronicleMap#acquireUsing(java.lang.Object, java.lang.Object)      }
-     * {@link ChronicleMap#acquireUsingLocked(java.lang.Object, java.lang.Object)  }
+     * {@link ChronicleMap#getUsing(Object, Object) }
+     * {@link ChronicleMap#acquireUsing(Object, Object)      }
+     * {@link ChronicleMap#acquireContext(Object, Object)  }
      *
      * for example like this :
      *
      *  <pre>{@code
      * V value = map.newValueInstance();
-     * try (ReadContext rc = map.getUsingLocked(key, value)) {
+     * try (ReadMapContext rc = map.getUsingLocked(key, value)) {
      *  // add your logic here
      * } // the read lock is released here
      * }</pre>
      *
      *
      * @return a new empty instance based on the Value type
-     * @see ChronicleMap#getUsing(java.lang.Object, java.lang.Object)
-     * @see ChronicleMap#getUsingLocked(java.lang.Object, java.lang.Object)
-     * @see ChronicleMap#acquireUsing(java.lang.Object, java.lang.Object)
-     * @see ChronicleMap#acquireUsingLocked(java.lang.Object, java.lang.Object)
+     * @see ChronicleMap#getUsing(Object, Object)
+     * @see ChronicleMap#acquireUsing(Object, Object)
+     * @see ChronicleMap#acquireContext(Object, Object)
      */
     V newValueInstance();
 
@@ -271,10 +223,9 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * Creates an empty value instance, which can be used with the
      * following methods :
      *
-     * {@link ChronicleMap#getUsing(java.lang.Object, java.lang.Object) }
-     * {@link ChronicleMap#getUsingLocked(java.lang.Object, java.lang.Object)    }
-     * {@link ChronicleMap#acquireUsing(java.lang.Object, java.lang.Object)      }
-     * {@link ChronicleMap#acquireUsingLocked(java.lang.Object, java.lang.Object)  }
+     * {@link ChronicleMap#getUsing(Object, Object) }
+     * {@link ChronicleMap#acquireUsing(Object, Object)      }
+     * {@link ChronicleMap#acquireContext(Object, Object)  }
      *
      * for example like this :
      *
@@ -282,24 +233,18 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      * K key = map.newKeyInstance();
      * key.setMyStringField("some key");
      *
-     * try (ReadContext rc = map.getUsingLocked(key, value)) {
+     * try (ReadMapContext rc = map.getUsingLocked(key, value)) {
      *  // add your logic here
      * } // the read lock is released here
      * }</pre>
      *
      *
      * @return a new empty instance based on the Key type
-     * @see ChronicleMap#getUsing(java.lang.Object, java.lang.Object)
-     * @see ChronicleMap#getUsingLocked(java.lang.Object, java.lang.Object)
-     * @see ChronicleMap#acquireUsing(java.lang.Object, java.lang.Object)
-     * @see ChronicleMap#acquireUsingLocked(java.lang.Object, java.lang.Object)
+     * @see ChronicleMap#getUsing(Object, Object)
+     * @see ChronicleMap#acquireUsing(Object, Object)
+     * @see ChronicleMap#acquireContext(Object, Object)
      */
     K newKeyInstance();
-
-    /**
-     * @return the class of {@code <K>}
-     */
-    Class<K> keyClass();
 
     /**
      * @return the class of {@code <V>}

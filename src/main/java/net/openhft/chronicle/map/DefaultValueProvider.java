@@ -18,6 +18,8 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.KeyContext;
+
 import java.io.Serializable;
 
 /**
@@ -32,8 +34,8 @@ public interface DefaultValueProvider<K, V> extends Serializable {
      * Returns a value to be put during {@link ChronicleMap#acquireUsing(Object, Object)} call
      * for the specified key, if it is absent in the map.
      *
-     * @param key key absent in the map
+     * @param keyContext key absent in the map
      * @return value to be put for the specified key in the map
      */
-    V get(K key);
+    V get(KeyContext keyContext);
 }

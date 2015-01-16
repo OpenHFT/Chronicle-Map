@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -48,7 +49,7 @@ final class ConstantValueProvider<K, V> implements DefaultValueProvider<K, V> {
     }
 
     @Override
-    public V get(K key) {
+    public V get(KeyContext keyContext) {
         return value;
     }
 }

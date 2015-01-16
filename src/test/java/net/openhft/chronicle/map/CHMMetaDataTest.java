@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.Bytes;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -27,16 +27,19 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore("event listener API is not yet determined")
 public class CHMMetaDataTest {
     private static final String TMP = System.getProperty("java.io.tmpdir");
 
     @Test
     public void testAccessTimes() throws IOException {
         File file = new File(TMP, "testAccessTimes");
-        BytesMapEventListener listener =
-                new StringStringMapEventListener(new AtomicLong(1));
+//        MapBytesEventListener listener =
+//                new StringStringMapEventListener(new AtomicLong(1));
         ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class)
-                .metaDataBytes(8).bytesEventListener(listener).create();
+                .metaDataBytes(8)
+//                .bytesEventListener(listener)
+                .create();
 
         try {
             map.put("a", "aye");
@@ -60,31 +63,31 @@ public class CHMMetaDataTest {
         }
     }
 
-    private static class StringStringMapEventListener
-            extends BytesMapEventListener {
-        private static final long serialVersionUID = 0L;
-
-        private final AtomicLong timeStamps;
-
-        public StringStringMapEventListener(AtomicLong timeStamps) {
-            this.timeStamps = timeStamps;
-        }
-
-        @Override
-        public void onGetFound(Bytes entry, long metaDataPos, long keyPos, long valuePos) {
-            entry.writeLong(metaDataPos, timeStamps.incrementAndGet());
-        }
-
-        @Override
-        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added) {
-            if (added)
-                assertEquals(0, entry.readLong(metaDataPos));
-            entry.writeLong(metaDataPos, timeStamps.incrementAndGet());
-        }
-
-        @Override
-        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos) {
-            System.out.println("Removed entry with ts of " + entry.readLong(metaDataPos));;
-        }
-    }
+//    private static class StringStringMapEventListener
+//            extends MapBytesEventListener {
+//        private static final long serialVersionUID = 0L;
+//
+//        private final AtomicLong timeStamps;
+//
+//        public StringStringMapEventListener(AtomicLong timeStamps) {
+//            this.timeStamps = timeStamps;
+//        }
+//
+//        @Override
+//        public void onGetFound(MapBytesEvent event) {
+//            entry.writeLong(metaDataPos, timeStamps.incrementAndGet());
+//        }
+//
+//        @Override
+//        public void onPut(MapPutBytesEvent event) {
+//            if (added)
+//                assertEquals(0, entry.readLong(metaDataPos));
+//            entry.writeLong(metaDataPos, timeStamps.incrementAndGet());
+//        }
+//
+//        @Override
+//        public void onRemove(MapBytesEvent event) {
+//            System.out.println("Removed entry with ts of " + entry.readLong(metaDataPos));;
+//        }
+//    }
 }

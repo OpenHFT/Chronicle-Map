@@ -23,11 +23,12 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import java.io.File;
 import java.io.IOException;
 
-public interface ChronicleHashInstanceBuilder<C extends ChronicleHash> {
+public interface ChronicleHashInstanceBuilder<H extends ChronicleHash> {
 
-    ChronicleHashInstanceBuilder<C> replicated(byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork);
+    ChronicleHashInstanceBuilder<H> replicated(
+            byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork);
 
-    ChronicleHashInstanceBuilder<C> replicated(SingleChronicleHashReplication replication);
+    ChronicleHashInstanceBuilder<H> replicated(SingleChronicleHashReplication replication);
 
     /**
      * Configures replication of the hash containers, created by this builder, via so called
@@ -49,11 +50,11 @@ public interface ChronicleHashInstanceBuilder<C extends ChronicleHash> {
      * @return this builder object back
      * @see #replicated(SingleChronicleHashReplication)
      */
-    ChronicleHashInstanceBuilder<C> replicatedViaChannel(ReplicationChannel channel);
+    ChronicleHashInstanceBuilder<H> replicatedViaChannel(ReplicationChannel channel);
 
-    ChronicleHashInstanceBuilder<C> persistedTo(File file);
+    ChronicleHashInstanceBuilder<H> persistedTo(File file);
 
-    ChronicleHashInstanceBuilder<C> name(String name);
+    ChronicleHashInstanceBuilder<H> name(String name);
 
-    C create() throws IOException;
+    H create() throws IOException;
 }

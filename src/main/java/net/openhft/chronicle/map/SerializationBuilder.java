@@ -45,8 +45,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.openhft.chronicle.hash.serialization.SizeMarshallers.constant;
-import static net.openhft.chronicle.hash.serialization.SizeMarshallers.stopBit;
+import static net.openhft.chronicle.hash.serialization.internal.SizeMarshallers.constant;
+import static net.openhft.chronicle.hash.serialization.internal.SizeMarshallers.stopBit;
 import static net.openhft.chronicle.map.Objects.hash;
 
 final class SerializationBuilder<E> implements Cloneable, Serializable {
@@ -206,7 +206,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         return this;
     }
 
-    public SerializationBuilder<E> interop(BytesInterop<E> interop) {
+    public SerializationBuilder<E> interop(BytesInterop<? super E> interop) {
         return copyingInterop(null)
                 .setInterop(interop)
                 .metaInterop(DelegatingMetaBytesInterop.<E, BytesInterop<E>>instance())
@@ -214,9 +214,9 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
                         .<E, BytesInterop<E>>instance());
     }
 
-    public SerializationBuilder<E> writer(BytesWriter<E> writer) {
+    public SerializationBuilder<E> writer(BytesWriter<? super E> writer) {
         if (writer instanceof BytesInterop)
-            return interop((BytesInterop<E>) writer);
+            return interop((BytesInterop) writer);
         return copyingInterop(CopyingInterop.FROM_WRITER)
                 .setInterop(writer)
                 .metaInterop(CopyingMetaBytesInterop
@@ -370,7 +370,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    public SerializationBuilder<E> factory(ObjectFactory<E> factory) {
+    public SerializationBuilder<E> factory(ObjectFactory<? extends E> factory) {
         if (reader instanceof DeserializationFactoryConfigurableBytesReader) {
             DeserializationFactoryConfigurableBytesReader newReader =
                     ((DeserializationFactoryConfigurableBytesReader) reader)

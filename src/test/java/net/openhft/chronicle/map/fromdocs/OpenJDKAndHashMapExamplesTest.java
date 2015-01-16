@@ -20,8 +20,7 @@ package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.ReadContext;
-import net.openhft.chronicle.map.WriteContext;
+import net.openhft.chronicle.map.MapKeyContext;
 import org.junit.Test;
 
 import java.io.File;
@@ -61,7 +60,7 @@ public class OpenJDKAndHashMapExamplesTest {
                 .createPersistedTo(file);
 
         BondVOInterface bondVO = chm.newValueInstance();
-        try (WriteContext wc = chm.acquireUsingLocked("369604103", bondVO)) {
+        try (MapKeyContext wc = chm.acquireContext("369604103", bondVO)) {
             bondVO.setIssueDate(parseYYYYMMDD("20130915"));
             bondVO.setMaturityDate(parseYYYYMMDD("20140915"));
             bondVO.setCoupon(5.0 / 100); // 5.0%
@@ -81,11 +80,9 @@ public class OpenJDKAndHashMapExamplesTest {
                 .entries(1000)
                 .createPersistedTo(file);
 
-        // ZERO Copy but creates a new off heap reference each time
-        // our reusable, mutable off heap reference, generated from the interface.
-        BondVOInterface bond = chm.newValueInstance();
-        try (ReadContext rc = chmB.getUsingLocked("369604103", bond)) {
-            if (rc.present()) {
+        try (MapKeyContext<BondVOInterface> c = chmB.context("369604103")) {
+            BondVOInterface bond = c.get();
+            if (bond != null) {
                 assertEquals(5.0 / 100, bond.getCoupon(), 0.0);
 
                 BondVOInterface.MarketPx mpx930B = bond.getMarketPxIntraDayHistoryAt(0);
@@ -98,8 +95,9 @@ public class OpenJDKAndHashMapExamplesTest {
             }
         }
 
+        BondVOInterface bond = chm.newValueInstance();
         // lookup the key and give me a reference I can update in a thread safe way.
-        try (WriteContext wc = chm.acquireUsingLocked("369604103", bond)) {
+        try (MapKeyContext<BondVOInterface> c = chm.acquireContext("369604103", bond)) {
             // found a key and bond has been set
             // get directly without touching the rest of the record.
             long _matDate = bond.getMaturityDate();

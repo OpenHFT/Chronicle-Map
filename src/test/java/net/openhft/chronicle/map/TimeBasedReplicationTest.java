@@ -283,7 +283,12 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             // now test assume that we receive a late update to the map, the following update should be ignored
             // now test assume that we receive a late update to the map, the following update should be ignored
             final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5);
-            assertEquals(null, map.put("key-1", "value-2", IDENTIFIER, late));
+            try (MapKeyContext<CharSequence> c = map.context("key-1")) {
+                c.writeLock().lock();
+                ((ReplicatedChronicleMap.ReplicatedContext) c).newIdentifier = IDENTIFIER;
+                ((ReplicatedChronicleMap.ReplicatedContext) c).newTimestamp = late;
+                assertFalse(((ReplicatedChronicleMap.ReplicatedContext) c).put("value-2"));
+            }
 
             // we'll now flip the time back to the current in order to do the read the result
             current(timeProvider);
@@ -314,7 +319,12 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
             // test assume that we receive a late update to the map, the following update should be ignored
             final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(50);
-            assertEquals(null, map.put("key-1", "value-2", IDENTIFIER, late));
+            try (MapKeyContext<CharSequence> c = map.context("key-1")) {
+                c.writeLock().lock();
+                ((ReplicatedChronicleMap.ReplicatedContext) c).newIdentifier = IDENTIFIER;
+                ((ReplicatedChronicleMap.ReplicatedContext) c).newTimestamp = late;
+                assertFalse(((ReplicatedChronicleMap.ReplicatedContext) c).put("value-2"));
+            }
 
             assertEquals(null, map.get("key-1"));
             assertEquals(false, map.containsKey("key-1"));
@@ -345,10 +355,10 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     }
 
     private void current(TimeProvider timeProvider) {
-        Mockito.when(timeProvider.currentTimeMillis()).thenReturn(System.currentTimeMillis());
+        Mockito.when(timeProvider.currentTime()).thenReturn(System.currentTimeMillis());
     }
 
     private void late(TimeProvider timeProvider) {
-        Mockito.when(timeProvider.currentTimeMillis()).thenReturn(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5));
+        Mockito.when(timeProvider.currentTime()).thenReturn(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5));
     }
 }

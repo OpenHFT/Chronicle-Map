@@ -28,7 +28,7 @@ import java.io.File;
  * This interface defines common {@link ChronicleMap} and {@link ChronicleSet}, related to off-heap
  * memory management and file-mapping. Not usable by itself.
  */
-public interface ChronicleHash extends Closeable {
+public interface ChronicleHash<K> extends Closeable {
     /**
      * Returns the file this hash container mapped to, i. e. when it is created by
      * {@link ChronicleHashBuilder#create()} call, or {@code null} if it is purely in-memory,
@@ -39,6 +39,15 @@ public interface ChronicleHash extends Closeable {
      * @see ChronicleHashBuilder#createPersistedTo(java.io.File)
      */
     File file();
+
+    long longSize();
+
+    KeyContext context(K key);
+
+    /**
+     * @return the class of {@code <K>}
+     */
+    Class<K> keyClass();
 
     /**
      * Releases the off-heap memory, used by this hash container and resources, used by replication,

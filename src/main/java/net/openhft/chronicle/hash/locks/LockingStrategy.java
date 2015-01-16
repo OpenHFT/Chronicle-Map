@@ -1,7 +1,5 @@
 /*
- * Copyright 2014 Higher Frequency Trading
- *
- * http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +14,9 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.locks;
 
-/**
- * @author Rob Austin.
- */
-public interface ReadContext<K, V> extends Context<K, V> {
+public interface LockingStrategy {
 
-    /**
-     * @return true if the entry was present
-     */
-    boolean present();
-
+    void lock(InterProcessLock lock);
 }

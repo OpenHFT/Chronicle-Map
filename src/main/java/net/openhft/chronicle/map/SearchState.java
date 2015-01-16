@@ -17,7 +17,4 @@
 package net.openhft.chronicle.map;
 
 final class SearchState {
-    long searchHash = -1L;
-    long searchPos = -1L;
-    boolean putAfterFailedSearch = false;
 }

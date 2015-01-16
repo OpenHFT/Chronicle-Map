@@ -16,8 +16,9 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.serialization;
+package net.openhft.chronicle.hash.serialization.internal;
 
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
 
 import static net.openhft.lang.io.IOTools.stopBitLength;

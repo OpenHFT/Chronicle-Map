@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.hash.locks.InterProcessReadWriteUpdateLock;
 import org.jetbrains.annotations.NotNull;
 
-interface GetValueInterops<VB, VBI, MVBI extends MetaBytesInterop<? super VB, ? super VBI>> {
-    MVBI getMetaValueInterop(@NotNull ThreadLocalCopies copies, VBI valueInterop, VB value);
+public interface Segment {
+    long index();
 
-    VBI getValueInterop(@NotNull ThreadLocalCopies copies);
+    @NotNull
+    InterProcessReadWriteUpdateLock lock();
 }

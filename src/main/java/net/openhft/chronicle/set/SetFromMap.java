@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.set;
 
+import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.map.ChronicleMap;
 
 import java.io.File;
@@ -117,6 +118,16 @@ class SetFromMap<E> extends AbstractSet<E>
     @Override
     public long longSize() {
         return m.longSize();
+    }
+
+    @Override
+    public KeyContext context(E key) {
+        return m.context(key);
+    }
+
+    @Override
+    public Class<E> keyClass() {
+        return m.keyClass();
     }
 
     @Override

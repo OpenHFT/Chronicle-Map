@@ -534,6 +534,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return fetchLong(LONG_SIZE);
     }
 
+    @Override
+    public MapKeyContext<V> context(K key) {
+        throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
+    }
+
     public V get(Object key) {
         return fetchObject(vClass, GET, (K) key);
     }
@@ -573,15 +578,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @NotNull
     @Override
-    public WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V
-            usingValue) {
-        throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue) {
-        throw new UnsupportedOperationException();
+    public MapKeyContext<V> acquireContext(@NotNull K key, @NotNull V usingValue) {
+        throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
     }
 
     public V remove(Object key) {
@@ -1223,8 +1221,10 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 final long transactionId0 = inBytes.readLong();
 
                 // check the transaction id is reasonable
-                assert transactionId0 > 1410000000000L * TcpReplicator.TIMESTAMP_FACTOR : "TransactionId too small " + transactionId0 + " messageSize " + messageSize;
-                assert transactionId0 < 2100000000000L * TcpReplicator.TIMESTAMP_FACTOR : "TransactionId too large " + transactionId0 + " messageSize " + messageSize;
+                assert transactionId0 > 1410000000000L * TcpReplicator.TIMESTAMP_FACTOR :
+                        "TransactionId too small " + transactionId0 + " messageSize " + messageSize;
+                assert transactionId0 < 2100000000000L * TcpReplicator.TIMESTAMP_FACTOR :
+                        "TransactionId too large " + transactionId0 + " messageSize " + messageSize;
 
                 // if the transaction id is for this thread process it
                 if (transactionId0 == transactionId) {

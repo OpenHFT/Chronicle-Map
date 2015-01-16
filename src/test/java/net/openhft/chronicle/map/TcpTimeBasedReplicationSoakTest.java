@@ -43,7 +43,7 @@ public class TcpTimeBasedReplicationSoakTest {
             Random rnd = new Random(4);
 
             @Override
-            public long currentTimeMillis() {
+            public long currentTime() {
 
                 if (rnd.nextBoolean())
                     return t++;
@@ -160,7 +160,7 @@ public class TcpTimeBasedReplicationSoakTest {
     }
 
     private void late(TimeProvider timeProvider) {
-        Mockito.when(timeProvider.currentTimeMillis()).thenReturn(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5));
+        Mockito.when(timeProvider.currentTime()).thenReturn(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5));
     }
 }
 

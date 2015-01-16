@@ -25,7 +25,6 @@ import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,8 +135,7 @@ final class ChannelProvider implements Closeable {
 
         @Override
         public void readExternalEntry(
-                @NotNull ThreadLocalCopies copies,
-                @NotNull VanillaChronicleMap.SegmentState segmentState, @NotNull Bytes source) {
+                @NotNull ReplicatedChronicleMap.BytesReplicatedContext context, @NotNull Bytes source) {
             channelDataLock.readLock().lock();
             try {
                 final int chronicleId = (int) source.readStopBit();
@@ -145,7 +143,7 @@ final class ChannelProvider implements Closeable {
                     // this channel is has not currently been created so it updates will be ignored
                     if (channelEntryExternalizables[chronicleId] != null)
                         channelEntryExternalizables[chronicleId]
-                                .readExternalEntry(copies, segmentState, source);
+                                .readExternalEntry(context, source);
                 } else
                     LOG.info("skipped entry with chronicleId=" + chronicleId + ", ");
             } finally {
@@ -509,8 +507,7 @@ final class ChannelProvider implements Closeable {
 
             @Override
             public void readExternalEntry(
-                    @NotNull ThreadLocalCopies copies,
-                    @NotNull VanillaChronicleMap.SegmentState segmentState, @NotNull Bytes source) {
+                    @NotNull ReplicatedChronicleMap.BytesReplicatedContext context, @NotNull Bytes source) {
                 messageHandler.onMessage(source);
             }
         };

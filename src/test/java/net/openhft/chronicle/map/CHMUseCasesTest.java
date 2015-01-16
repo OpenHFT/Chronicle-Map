@@ -379,14 +379,14 @@ public class CHMUseCasesTest {
     public void bondExample() throws IOException, InterruptedException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // acquireUsingLocked not supported by the STATELESS client
+            return; // acquireContext not supported by the STATELESS client
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(String.class, BondVOInterface.class)
                 .averageKeySize(10);
 
         try (ChronicleMap<String, BondVOInterface> chm = newInstance(builder)) {
             BondVOInterface bondVO = chm.newValueInstance();
-            try (WriteContext wc = chm.acquireUsingLocked("369604103", bondVO)) {
+            try (MapKeyContext wc = chm.acquireContext("369604103", bondVO)) {
                 bondVO.setIssueDate(parseYYYYMMDD("20130915"));
                 bondVO.setMaturityDate(parseYYYYMMDD("20140915"));
                 bondVO.setCoupon(5.0 / 100); // 5.0%
@@ -635,7 +635,7 @@ public class CHMUseCasesTest {
     public void testAcquireUsingWithCharSequence() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
@@ -645,7 +645,7 @@ public class CHMUseCasesTest {
 
             CharSequence using = map.newValueInstance();
 
-            try (WriteContext wc = map.acquireUsingLocked("1", using)) {
+            try (MapKeyContext wc = map.acquireContext("1", using)) {
                 assertTrue(using instanceof StringBuilder);
                 ((StringBuilder) using).append("Hello World");
             }
@@ -661,15 +661,14 @@ public class CHMUseCasesTest {
                 .of(CharSequence.class, CharSequence.class);
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
 
-            CharSequence using = map.newValueInstance();
-
-            try (ReadContext rc = map.getUsingLocked("1", using)) {
-                assertTrue(using instanceof StringBuilder);
-                ((StringBuilder) using).append("Hello World");
+            try (MapKeyContext<CharSequence> c = map.context("1")) {
+                CharSequence value = c.get();
+                assertTrue(value instanceof StringBuilder);
+                ((StringBuilder) value).append("Hello World");
             }
 
             assertEquals(null, map.get("1"));
@@ -682,18 +681,16 @@ public class CHMUseCasesTest {
     public void testGetUsingWithIntValueNoValue() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, IntValue.class);
 
         try (ChronicleMap<CharSequence, IntValue> map = newInstance(builder)) {
 
-            IntValue using = map.newValueInstance();
-
-            try (ReadContext rc = map.getUsingLocked("1", using)) {
-                assertTrue(using instanceof IntValue);
-                using.setValue(1);
+            try (MapKeyContext<IntValue> c = map.context("1")) {
+                IntValue value = c.get();
+                assertNull(value);
             }
 
             assertEquals(null, map.get("1"));
@@ -706,7 +703,7 @@ public class CHMUseCasesTest {
     public void testAcquireUsingWithIntValueNoValue() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            throw new IllegalStateException(); // acquireUsingLocked supported by the STATELESS
+            throw new IllegalStateException(); // acquireContext supported by the STATELESS
 
 
         ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
@@ -714,12 +711,11 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<CharSequence, IntValue> map = newInstance(builder)) {
 
-            IntValue using = map.newValueInstance();
-
-            try (WriteContext rc = map.acquireUsingLocked("1", using)) {
-                assertTrue(using instanceof IntValue);
-                using.setValue(1);
-                rc.dontPutOnClose();
+            try (MapKeyContext<IntValue> c = map.context("1")) {
+                c.updateLock().lock();
+                IntValue value = c.get();
+                assertTrue(value instanceof IntValue);
+                value.setValue(1);
             }
 
             assertEquals(null, map.get("1"));
@@ -732,7 +728,7 @@ public class CHMUseCasesTest {
     public void testAcquireUsingImmutableUsing() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            throw new IllegalArgumentException(); // acquireUsingLocked supported by the STATELESS
+            throw new IllegalArgumentException(); // acquireContext supported by the STATELESS
 
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class);
@@ -743,10 +739,9 @@ public class CHMUseCasesTest {
             IntValue using = map.newKeyInstance();
             using.setValue(1);
 
-            try (WriteContext rc = map.acquireUsingLocked(using, "")) {
+            try (MapKeyContext c = map.acquireContext(using, "")) {
                 assertTrue(using instanceof IntValue);
                 using.setValue(1);
-                rc.dontPutOnClose();
             }
 
             assertEquals(null, map.get("1"));
@@ -758,7 +753,7 @@ public class CHMUseCasesTest {
     public void testAcquireUsingWithIntValueKeyStringBuilderValue() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // acquireUsingLocked supported by the STATELESS client
+            return; // acquireContext supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, StringBuilder> builder = ChronicleMapBuilder
                 .of(IntValue.class, StringBuilder.class);
@@ -771,7 +766,7 @@ public class CHMUseCasesTest {
 
             StringBuilder using = map.newValueInstance();
 
-            try (WriteContext rc = map.acquireUsingLocked(key, using)) {
+            try (MapKeyContext rc = map.acquireContext(key, using)) {
                 using.append("Hello");
             }
 
@@ -784,7 +779,7 @@ public class CHMUseCasesTest {
     public void testAcquireUsingWithIntValueKey() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class);
@@ -796,13 +791,13 @@ public class CHMUseCasesTest {
 
             CharSequence using = map.newValueInstance();
 
-            try (WriteContext rc = map.acquireUsingLocked(key, using)) {
+            try (MapKeyContext rc = map.acquireContext(key, using)) {
                 key.setValue(3);
                 ((StringBuilder) using).append("Hello");
             }
 
             key.setValue(2);
-            try (WriteContext rc = map.acquireUsingLocked(key, using)) {
+            try (MapKeyContext rc = map.acquireContext(key, using)) {
                 ((StringBuilder) using).append("World");
             }
 
@@ -829,7 +824,7 @@ public class CHMUseCasesTest {
             ByteBufferBytes value = new ByteBufferBytes(ByteBuffer.allocate(10));
             value.limit(0);
 
-            try (WriteContext rc = map.acquireUsingLocked(key, value)) {
+            try (MapKeyContext rc = map.acquireContext(key, value)) {
                 assertTrue(key instanceof IntValue);
                 assertTrue(value instanceof CharSequence);
             }
@@ -847,7 +842,7 @@ public class CHMUseCasesTest {
     public void testStringValueStringValueMap() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<StringValue, StringValue> builder = ChronicleMapBuilder
                 .of(StringValue.class, StringValue.class);
@@ -871,51 +866,55 @@ public class CHMUseCasesTest {
             mapChecks();
 
             StringBuilder sb = new StringBuilder();
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals("11", value1.getValue());
-                value1.getUsingValue(sb);
+            try (MapKeyContext<StringValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                StringValue v = rc.get();
+                assertEquals("11", v.getValue());
+                v.getUsingValue(sb);
                 assertEquals("11", sb.toString());
             }
 
             mapChecks();
 
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals("22", value2.getValue());
-                value2.getUsingValue(sb);
+            try (MapKeyContext<StringValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                StringValue v = rc.get();
+                assertEquals("22", v.getValue());
+                v.getUsingValue(sb);
                 assertEquals("22", sb.toString());
             }
 
             mapChecks();
 
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals("11", value2.getValue());
-                value2.getUsingValue(sb);
+            try (MapKeyContext<StringValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                StringValue v = rc.get();
+                assertEquals("11", v.getValue());
+                v.getUsingValue(sb);
                 assertEquals("11", sb.toString());
             }
 
             mapChecks();
 
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals("22", value2.getValue());
-                value2.getUsingValue(sb);
+            try (MapKeyContext<StringValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                StringValue v = rc.get();
+                assertEquals("22", v.getValue());
+                v.getUsingValue(sb);
                 assertEquals("22", sb.toString());
             }
 
             key1.setValue("3");
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
 
             key2.setValue("4");
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext wc = map.acquireContext(key1, value1)) {
                 assertEquals("", value1.getValue());
                 value1.getUsingValue(sb);
                 assertEquals("", sb.toString());
@@ -925,7 +924,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext wc = map.acquireContext(key1, value2)) {
                 assertEquals("123", value2.getValue());
                 value2.setValue(value2.getValue() + '4');
                 assertEquals("1234", value2.getValue());
@@ -933,14 +932,14 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals("1234", value1.getValue());
+            try (MapKeyContext<StringValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals("1234", rc.get().getValue());
             }
 
             mapChecks();
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext wc = map.acquireContext(key2, value2)) {
                 assertEquals("", value2.getValue());
                 value2.getUsingValue(sb);
                 assertEquals("", sb.toString());
@@ -950,7 +949,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext wc = map.acquireContext(key2, value1)) {
                 assertEquals("123", value1.getValue());
                 value1.setValue(value1.getValue() + '4');
                 assertEquals("1234", value1.getValue());
@@ -958,9 +957,9 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals("1234", value2.getValue());
+            try (MapKeyContext<StringValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals("1234", rc.get().getValue());
             }
 
             mapChecks();
@@ -968,7 +967,8 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testIntegerIntegerMap() throws ExecutionException, InterruptedException, IOException {
+    public void testIntegerIntegerMap()
+            throws ExecutionException, InterruptedException, IOException {
 
 
         if (typeOfMap == TypeOfMap.STATELESS)
@@ -1141,7 +1141,8 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     }
 
     @Test
-    public void testByteArrayByteArrayMap() throws ExecutionException, InterruptedException, IOException {
+    public void testByteArrayByteArrayMap()
+            throws ExecutionException, InterruptedException, IOException {
 
 
         if (typeOfMap == TypeOfMap.STATELESS)
@@ -1164,7 +1165,8 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key1, value1);
 
 
-            assertTrue(Arrays.equals(new byte[]{11, 11}, map.getMapped(key1, new Function<byte[], byte[]>() {
+            assertTrue(Arrays.equals(new byte[]{11, 11},
+                    map.getMapped(key1, new Function<byte[], byte[]>() {
                 @Override
                 public byte[] apply(byte[] s) {
                     return Arrays.copyOf(s, 2);
@@ -1177,7 +1179,8 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 }
             }));
 
-            assertTrue(Arrays.equals(new byte[]{12, 10}, map.putMapped(key1, new UnaryOperator<byte[]>() {
+            assertTrue(Arrays.equals(new byte[]{12, 10},
+                    map.putMapped(key1, new UnaryOperator<byte[]>() {
                 @Override
                 public byte[] update(byte[] s) {
                     s[0]++;
@@ -1230,7 +1233,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             throws ExecutionException, InterruptedException, IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
@@ -1250,7 +1253,8 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             assertBBEquals(value2, map.get(key1));
             assertNull(map.get(key2));
 
-            final Function<ByteBuffer, ByteBuffer> function = new Function<ByteBuffer, ByteBuffer>() {
+            final Function<ByteBuffer, ByteBuffer> function =
+                    new Function<ByteBuffer, ByteBuffer>() {
                 @Override
                 public ByteBuffer apply(ByteBuffer s) {
                     ByteBuffer slice = s.slice();
@@ -1282,25 +1286,25 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             ByteBuffer valueA = ByteBuffer.allocateDirect(8);
             ByteBuffer valueB = ByteBuffer.allocate(8);
 //            assertBBEquals(value1, valueA);
-            try (ReadContext<ByteBuffer, ByteBuffer> rc = map.getUsingLocked(key1, valueA)) {
-                assertTrue(rc.present());
-                assertBBEquals(value1, valueA);
+            try (MapKeyContext<ByteBuffer> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertBBEquals(value1, rc.getUsing(valueA));
             }
-            try (ReadContext rc = map.getUsingLocked(key2, valueA)) {
-                assertTrue(rc.present());
-                assertBBEquals(value2, valueA);
-            }
-
-            try (ReadContext rc = map.getUsingLocked(key1, valueB)) {
-                assertTrue(rc.present());
-                assertBBEquals(value1, valueB);
-            }
-            try (ReadContext rc = map.getUsingLocked(key2, valueB)) {
-                assertTrue(rc.present());
-                assertBBEquals(value2, valueB);
+            try (MapKeyContext<ByteBuffer> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertBBEquals(value2, rc.getUsing(valueA));
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, valueA)) {
+            try (MapKeyContext<ByteBuffer> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertBBEquals(value1, rc.getUsing(valueB));
+            }
+            try (MapKeyContext<ByteBuffer> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertBBEquals(value2, rc.getUsing(valueB));
+            }
+
+            try (MapKeyContext<ByteBuffer> wc = map.acquireContext(key1, valueA)) {
                 assertBBEquals(value1, valueA);
                 appendMode(valueA);
                 valueA.clear();
@@ -1314,21 +1318,21 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             value1.flip();
 
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, valueB)) {
+            try (MapKeyContext wc = map.acquireContext(key1, valueB)) {
                 assertBBEquals(value1, valueB);
                 appendMode(valueB);
                 valueB.putShort((short) 12345);
                 valueB.flip();
             }
 
-            try (ReadContext rc = map.getUsingLocked(key1, valueA)) {
-                assertTrue(rc.present());
+            try (MapKeyContext<ByteBuffer> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
 
                 ByteBuffer bb1 = ByteBuffer.allocate(8);
                 bb1.put(value1);
                 bb1.putShort((short) 12345);
                 bb1.flip();
-                assertBBEquals(bb1, valueA);
+                assertBBEquals(bb1, rc.getUsing(valueA));
             }
 
             mapChecks();
@@ -1342,7 +1346,8 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 
     //@Ignore("HCOLL-268 JSON serialisation issue")
     @Test
-    public void testByteBufferDirectByteBufferMap() throws ExecutionException, InterruptedException, IOException {
+    public void testByteBufferDirectByteBufferMap()
+            throws ExecutionException, InterruptedException, IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
             return; //  not supported by the STATELESS client
@@ -1369,7 +1374,8 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             assertNull(map.get(key2));
             map.put(key1, value1);
             mapChecks();
-            final Function<ByteBuffer, ByteBuffer> function = new Function<ByteBuffer, ByteBuffer>() {
+            final Function<ByteBuffer, ByteBuffer> function =
+                    new Function<ByteBuffer, ByteBuffer>() {
                 @Override
                 public ByteBuffer apply(ByteBuffer s) {
                     ByteBuffer slice = s.slice();
@@ -1380,7 +1386,8 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
             assertEquals(null, map.getMapped(key2, function));
             mapChecks();
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
+                    map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
                 @Override
                 public ByteBuffer update(ByteBuffer s) {
                     s.put(0, (byte) (s.get(0) + 1));
@@ -1403,7 +1410,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     @Test
     public void testIntValueIntValueMap() throws IOException {
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, IntValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, IntValue.class);
@@ -1428,59 +1435,65 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(11, value1.getValue());
+            try (MapKeyContext<IntValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            // TODO review -- the previous version of this block:
+            // acquiring for value1, comparing value2 -- as intended?
+//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+//                assertTrue(rc.present());
+//                assertEquals(22, value2.getValue());
+//            }
+            try (MapKeyContext<IntValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals(11, value2.getValue());
+            try (MapKeyContext<IntValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            try (MapKeyContext<IntValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<IntValue> rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<IntValue> rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext<IntValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue(123);
                 assertEquals(123, value1.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext<IntValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue());
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value1.getValue());
+            try (MapKeyContext<IntValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext<IntValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue(123);
                 assertEquals(123, value2.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext<IntValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value2.getValue());
+            try (MapKeyContext<IntValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue());
             }
             mapChecks();
 
@@ -1519,7 +1532,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     public void testUnsignedIntValueUnsignedIntValueMap() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<UnsignedIntValue, UnsignedIntValue> builder = ChronicleMapBuilder
                 .of(UnsignedIntValue.class, UnsignedIntValue.class);
@@ -1542,59 +1555,64 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(11, value1.getValue());
+            try (MapKeyContext<UnsignedIntValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            // TODO review suspicious block
+//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+//                assertTrue(rc.present());
+//                assertEquals(22, value2.getValue());
+//            }
+            try (MapKeyContext<UnsignedIntValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals(11, value2.getValue());
+            try (MapKeyContext<UnsignedIntValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            try (MapKeyContext<UnsignedIntValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue(123);
                 assertEquals(123, value1.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue());
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value1.getValue());
+            try (MapKeyContext<UnsignedIntValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue(123);
                 assertEquals(123, value2.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value2.getValue());
+            try (MapKeyContext<UnsignedIntValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue());
             }
             mapChecks();
         }
@@ -1607,7 +1625,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     public void testIntValueShortValueMap() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, ShortValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, ShortValue.class);
@@ -1634,59 +1652,64 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(11, value1.getValue());
+            try (MapKeyContext<ShortValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            // TODO the same as above.
+//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+//                assertTrue(rc.present());
+//                assertEquals(22, value2.getValue());
+//            }
+            try (MapKeyContext<ShortValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals(11, value2.getValue());
+            try (MapKeyContext<ShortValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            try (MapKeyContext<ShortValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<ShortValue> rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<ShortValue> rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext<ShortValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue((short) 123);
                 assertEquals(123, value1.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext<ShortValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue());
                 value2.addValue((short) (1230 - 123));
                 assertEquals(1230, value2.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value1.getValue());
+            try (MapKeyContext<ShortValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext<ShortValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue((short) 123);
                 assertEquals(123, value2.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext<ShortValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue((short) (1230 - 123));
                 assertEquals(1230, value1.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value2.getValue());
+            try (MapKeyContext<ShortValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue());
             }
             mapChecks();
         }
@@ -1726,59 +1749,64 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(11, value1.getValue());
+            try (MapKeyContext<UnsignedShortValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            // TODO the same as above.
+//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+//                assertTrue(rc.present());
+//                assertEquals(22, value2.getValue());
+//            }
+            try (MapKeyContext<UnsignedShortValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals(11, value2.getValue());
+            try (MapKeyContext<UnsignedShortValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            try (MapKeyContext<UnsignedShortValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<UnsignedShortValue> rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<UnsignedShortValue> rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext<UnsignedShortValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue(123);
                 assertEquals(123, value1.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext<UnsignedShortValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue());
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value1.getValue());
+            try (MapKeyContext<UnsignedShortValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext<UnsignedShortValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue(123);
                 assertEquals(123, value2.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext<UnsignedShortValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value2.getValue());
+            try (MapKeyContext<UnsignedShortValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue());
             }
             mapChecks();
         }
@@ -1791,7 +1819,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     public void testIntValueCharValueMap() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, CharValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharValue.class);
@@ -1815,59 +1843,64 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(11, value1.getValue());
+            try (MapKeyContext<CharValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            // TODO The same as above
+//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+//                assertTrue(rc.present());
+//                assertEquals(22, value2.getValue());
+//            }
+            try (MapKeyContext<CharValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals(11, value2.getValue());
+            try (MapKeyContext<CharValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            try (MapKeyContext<CharValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<CharValue> rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<CharValue> rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext<CharValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals('\0', value1.getValue());
                 value1.setValue('@');
                 assertEquals('@', value1.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext wc = map.acquireContext(key1, value2)) {
                 assertEquals('@', value2.getValue());
                 value2.setValue('#');
                 assertEquals('#', value2.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals('#', value1.getValue());
+            try (MapKeyContext<CharValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals('#', rc.get().getValue());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext<CharValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals('\0', value2.getValue());
                 value2.setValue(';');
                 assertEquals(';', value2.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext<CharValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(';', value1.getValue());
                 value1.setValue('[');
                 assertEquals('[', value1.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals('[', value2.getValue());
+            try (MapKeyContext<CharValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals('[', rc.get().getValue());
             }
         }
     }
@@ -1879,7 +1912,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     public void testIntValueUnsignedByteMap() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, UnsignedByteValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedByteValue.class);
@@ -1908,59 +1941,64 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(11, value1.getValue());
+            try (MapKeyContext<UnsignedByteValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            // TODO the same as above
+//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+//                assertTrue(rc.present());
+//                assertEquals(22, value2.getValue());
+//            }
+            try (MapKeyContext<UnsignedByteValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals(11, value2.getValue());
+            try (MapKeyContext<UnsignedByteValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            try (MapKeyContext<UnsignedByteValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<UnsignedByteValue> rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<UnsignedByteValue> rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext<UnsignedByteValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue(234);
                 assertEquals(234, value1.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext<UnsignedByteValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(234, value2.getValue());
                 value2.addValue(-100);
                 assertEquals(134, value2.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(134, value1.getValue());
+            try (MapKeyContext<UnsignedByteValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(134, rc.get().getValue());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext<UnsignedByteValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue((byte) 123);
                 assertEquals(123, value2.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext<UnsignedByteValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue((byte) -111);
                 assertEquals(12, value1.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(12, value2.getValue());
+            try (MapKeyContext<UnsignedByteValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(12, rc.get().getValue());
             }
             mapChecks();
         }
@@ -1973,7 +2011,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     public void testIntValueBooleanValueMap() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, BooleanValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, BooleanValue.class);
@@ -1999,59 +2037,64 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(true, value1.getValue());
+            try (MapKeyContext<BooleanValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(true, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals(false, value2.getValue());
+            // TODO the same as above. copy paste, copy paste, copy-paste...
+//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+//                assertTrue(rc.present());
+//                assertEquals(false, value2.getValue());
+//            }
+            try (MapKeyContext<BooleanValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(false, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals(true, value2.getValue());
+            try (MapKeyContext<BooleanValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(true, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(false, value2.getValue());
+            try (MapKeyContext<BooleanValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(false, rc.get().getValue());
             }
             key1.setValue(3);
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<BooleanValue> rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<BooleanValue> rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext<BooleanValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(false, value1.getValue());
                 value1.setValue(true);
                 assertEquals(true, value1.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext<BooleanValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(true, value2.getValue());
                 value2.setValue(false);
                 assertEquals(false, value2.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(false, value1.getValue());
+            try (MapKeyContext<BooleanValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(false, rc.get().getValue());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext<BooleanValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(false, value2.getValue());
                 value2.setValue(true);
                 assertEquals(true, value2.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext<BooleanValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(true, value1.getValue());
                 value1.setValue(false);
                 assertEquals(false, value1.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(false, value2.getValue());
+            try (MapKeyContext<BooleanValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(false, rc.get().getValue());
             }
             mapChecks();
         }
@@ -2065,7 +2108,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<FloatValue, FloatValue> builder = ChronicleMapBuilder
                 .of(FloatValue.class, FloatValue.class);
@@ -2090,59 +2133,64 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(11, value1.getValue(), 0);
+            try (MapKeyContext<FloatValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue(), 0);
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue(), 0);
+            // TODO see above
+//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+//                assertTrue(rc.present());
+//                assertEquals(22, value2.getValue(), 0);
+//            }
+            try (MapKeyContext<FloatValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue(), 0);
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals(11, value2.getValue(), 0);
+            try (MapKeyContext<FloatValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue(), 0);
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue(), 0);
+            try (MapKeyContext<FloatValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue(), 0);
             }
             key1.setValue(3);
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<FloatValue> rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<FloatValue> rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext<FloatValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue(), 0);
                 value1.addValue(123);
                 assertEquals(123, value1.getValue(), 0);
             }
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext<FloatValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue(), 0);
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue(), 0);
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value1.getValue(), 0);
+            try (MapKeyContext<FloatValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue(), 0);
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext<FloatValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue(), 0);
                 value2.addValue(123);
                 assertEquals(123, value2.getValue(), 0);
             }
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext<FloatValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue(), 0);
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue(), 0);
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value2.getValue(), 0);
+            try (MapKeyContext<FloatValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue(), 0);
             }
             mapChecks();
         }
@@ -2156,7 +2204,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     public void testDoubleValueDoubleValueMap() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<DoubleValue, DoubleValue> builder = ChronicleMapBuilder
                 .of(DoubleValue.class, DoubleValue.class);
@@ -2186,59 +2234,63 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(11, value1.getValue(), 0);
+            try (MapKeyContext<DoubleValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue(), 0);
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue(), 0);
+//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+//                assertTrue(rc.present());
+//                assertEquals(22, value2.getValue(), 0);
+//            }
+            try (MapKeyContext<DoubleValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue(), 0);
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals(11, value2.getValue(), 0);
+            try (MapKeyContext<DoubleValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue(), 0);
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue(), 0);
+            try (MapKeyContext<DoubleValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue(), 0);
             }
             key1.setValue(3);
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<DoubleValue> rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<DoubleValue> rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext<DoubleValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue(), 0);
                 value1.addValue(123);
                 assertEquals(123, value1.getValue(), 0);
             }
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext<DoubleValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue(), 0);
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue(), 0);
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value1.getValue(), 0);
+            try (MapKeyContext<DoubleValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue(), 0);
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext<DoubleValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue(), 0);
                 value2.addValue(123);
                 assertEquals(123, value2.getValue(), 0);
             }
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext<DoubleValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue(), 0);
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue(), 0);
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value2.getValue(), 0);
+            try (MapKeyContext<DoubleValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue(), 0);
             }
             mapChecks();
         }
@@ -2279,59 +2331,64 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(11, value1.getValue());
+            try (MapKeyContext<LongValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            // TODO see above
+//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+//                assertTrue(rc.present());
+//                assertEquals(22, value2.getValue());
+//            }
+            try (MapKeyContext<LongValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value2)) {
-                assertTrue(rc.present());
-                assertEquals(11, value2.getValue());
+            try (MapKeyContext<LongValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(11, rc.get().getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(22, value2.getValue());
+            try (MapKeyContext<LongValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<LongValue> rc = map.context(key1)) {
+                assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertFalse(rc.present());
+            try (MapKeyContext<LongValue> rc = map.context(key2)) {
+                assertFalse(rc.containsKey());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key1, value1)) {
+            try (MapKeyContext<LongValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue(123);
                 assertEquals(123, value1.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key1, value2)) {
+            try (MapKeyContext<LongValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue());
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key1, value1)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value1.getValue());
+            try (MapKeyContext<LongValue> rc = map.context(key1)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue());
             }
 
-            try (WriteContext wc = map.acquireUsingLocked(key2, value2)) {
+            try (MapKeyContext<LongValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue(123);
                 assertEquals(123, value2.getValue());
             }
-            try (WriteContext wc = map.acquireUsingLocked(key2, value1)) {
+            try (MapKeyContext<LongValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue());
             }
-            try (ReadContext rc = map.getUsingLocked(key2, value2)) {
-                assertTrue(rc.present());
-                assertEquals(1230, value2.getValue());
+            try (MapKeyContext<LongValue> rc = map.context(key2)) {
+                assertTrue(rc.containsKey());
+                assertEquals(1230, rc.get().getValue());
             }
             mapChecks();
         }
@@ -2348,7 +2405,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     public void testListValue() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<String, List<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<List<String>>) (Class) List.class)
@@ -2360,30 +2417,31 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put("2", asList("two-A"));
 
             List<String> list1 = new ArrayList<>();
-            try (WriteContext wc = map.acquireUsingLocked("1", list1)) {
+            try (MapKeyContext wc = map.acquireContext("1", list1)) {
                 list1.add("one");
                 assertEquals(asList("one"), list1);
             }
             List<String> list2 = new ArrayList<>();
-            try (ReadContext rc = map.getUsingLocked("1", list2)) {
-                assertTrue(rc.present());
-                assertEquals(asList("one"), list2);
+            try (MapKeyContext rc = map.context("1")) {
+                assertTrue(rc.containsKey());
+                assertEquals(asList("one"), rc.getUsing(list2));
             }
 
-            try (ReadContext rc = map.getUsingLocked("2", list2)) {
-                assertTrue(rc.present());
+            try (MapKeyContext rc = map.context("2")) {
+                assertTrue(rc.containsKey());
+                rc.getUsing(list2);
                 list2.add("two-B");     // this is not written as it only a read context
                 assertEquals(asList("two-A", "two-B"), list2);
             }
 
-            try (WriteContext wc = map.acquireUsingLocked("2", list1)) {
+            try (MapKeyContext wc = map.acquireContext("2", list1)) {
                 list1.add("two-C");
                 assertEquals(asList("two-A", "two-C"), list1);
             }
 
-            try (ReadContext rc = map.getUsingLocked("2", list2)) {
-                assertTrue(rc.present());
-                assertEquals(asList("two-A", "two-C"), list2);
+            try (MapKeyContext rc = map.context("2")) {
+                assertTrue(rc.containsKey());
+                assertEquals(asList("two-A", "two-C"), rc.getUsing(list2));
             }
         }
     }
@@ -2392,7 +2450,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     public void testSetValue() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<String, Set<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)
@@ -2404,22 +2462,22 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put("2", new LinkedHashSet<String>(asList("one")));
 
             Set<String> list1 = new LinkedHashSet<>();
-            try (WriteContext wc = map.acquireUsingLocked("1", list1)) {
+            try (MapKeyContext wc = map.acquireContext("1", list1)) {
                 list1.add("two");
                 assertEquals(new LinkedHashSet<String>(asList("two")), list1);
             }
             Set<String> list2 = new LinkedHashSet<>();
-            try (ReadContext rc = map.getUsingLocked("1", list2)) {
-                assertTrue(rc.present());
-                assertEquals(new LinkedHashSet<String>(asList("two")), list2);
+            try (MapKeyContext<Set<String>> rc = map.context("1")) {
+                assertTrue(rc.containsKey());
+                assertEquals(new LinkedHashSet<String>(asList("two")), rc.getUsing(list2));
             }
-            try (WriteContext wc = map.acquireUsingLocked("2", list1)) {
+            try (MapKeyContext wc = map.acquireContext("2", list1)) {
                 list1.add("three");
                 assertEquals(new LinkedHashSet<String>(asList("one", "three")), list1);
             }
-            try (ReadContext rc = map.getUsingLocked("2", list2)) {
-                assertTrue(rc.present());
-                assertEquals(new LinkedHashSet<String>(asList("one", "three")), list2);
+            try (MapKeyContext<Set<String>> rc = map.context("2")) {
+                assertTrue(rc.containsKey());
+                assertEquals(new LinkedHashSet<String>(asList("one", "three")), rc.getUsing(list2));
             }
 
             for (Map.Entry<String, Set<String>> entry : map.entrySet()) {
@@ -2436,7 +2494,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     public void testMapStringStringValue() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked supported by the STATELESS client
+            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<String, Map<String, String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, String>>) (Class) Map.class)
@@ -2449,22 +2507,22 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put("2", mapOf("one", "uni"));
 
             Map<String, String> map1 = new LinkedHashMap<>();
-            try (WriteContext wc = map.acquireUsingLocked("1", map1)) {
+            try (MapKeyContext wc = map.acquireContext("1", map1)) {
                 map1.put("two", "bi");
                 assertEquals(mapOf("two", "bi"), map1);
             }
             Map<String, String> map2 = new LinkedHashMap<>();
-            try (ReadContext rc = map.getUsingLocked("1", map2)) {
-                assertTrue(rc.present());
-                assertEquals(mapOf("two", "bi"), map2);
+            try (MapKeyContext<Map<String, String>> rc = map.context("1")) {
+                assertTrue(rc.containsKey());
+                assertEquals(mapOf("two", "bi"), rc.getUsing(map2));
             }
-            try (WriteContext wc = map.acquireUsingLocked("2", map1)) {
+            try (MapKeyContext wc = map.acquireContext("2", map1)) {
                 map1.put("three", "tri");
                 assertEquals(mapOf("one", "uni", "three", "tri"), map1);
             }
-            try (ReadContext rc = map.getUsingLocked("2", map2)) {
-                assertTrue(rc.present());
-                assertEquals(mapOf("one", "uni", "three", "tri"), map2);
+            try (MapKeyContext<Map<String, String>> rc = map.context("2")) {
+                assertTrue(rc.containsKey());
+                assertEquals(mapOf("one", "uni", "three", "tri"), rc.getUsing(map2));
             }
             mapChecks();
         }
@@ -2475,7 +2533,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // getUsingLocked not supported by the STATELESS client
+            return; // context not supported by the STATELESS client
 
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
@@ -2487,22 +2545,22 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put("2", mapOf("one", 1));
 
             Map<String, Integer> map1 = new LinkedHashMap<>();
-            try (WriteContext wc = map.acquireUsingLocked("1", map1)) {
+            try (MapKeyContext wc = map.acquireContext("1", map1)) {
                 map1.put("two", 2);
                 assertEquals(mapOf("two", 2), map1);
             }
             Map<String, Integer> map2 = new LinkedHashMap<>();
-            try (ReadContext rc = map.getUsingLocked("1", map2)) {
-                assertTrue(rc.present());
-                assertEquals(mapOf("two", 2), map2);
+            try (MapKeyContext<Map<String, Integer>> rc = map.context("1")) {
+                assertTrue(rc.containsKey());
+                assertEquals(mapOf("two", 2), rc.getUsing(map2));
             }
-            try (WriteContext wc = map.acquireUsingLocked("2", map1)) {
+            try (MapKeyContext wc = map.acquireContext("2", map1)) {
                 map1.put("three", 3);
                 assertEquals(mapOf("one", 1, "three", 3), map1);
             }
-            try (ReadContext rc = map.getUsingLocked("2", map2)) {
-                assertTrue(rc.present());
-                assertEquals(mapOf("one", 1, "three", 3), map2);
+            try (MapKeyContext<Map<String, Integer>> rc = map.context("2")) {
+                assertTrue(rc.containsKey());
+                assertEquals(mapOf("one", 1, "three", 3), rc.getUsing(map2));
             }
             mapChecks();
         }
@@ -2536,14 +2594,14 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
     public void testGeneratedDataValue() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
-            return; // acquireUsingLocked not supported by the STATELESS client
+            return; // acquireContext not supported by the STATELESS client
 
         ChronicleMapBuilder<String, IBean> builder = ChronicleMapBuilder
                 .of(String.class, IBean.class).averageKeySize(5).entries(1000);
         try (ChronicleMap<String, IBean> map = newInstance(builder)) {
 
             IBean iBean = map.newValueInstance();
-            try (WriteContext cx = map.acquireUsingLocked("1",
+            try (MapKeyContext cx = map.acquireContext("1",
                     iBean)) {
                 iBean.setDouble(1.2);
                 iBean.setLong(2);

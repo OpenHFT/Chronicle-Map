@@ -85,7 +85,7 @@ public class SetForTCPSocketReplication3wayTest {
         waitTillEqual(15000);
 
         assertEquals(set1, set2);
-        assertEquals(set3, set2);
+        assertEquals(set2, set2);
         assertTrue(!set1.isEmpty());
     }
 
@@ -108,7 +108,7 @@ public class SetForTCPSocketReplication3wayTest {
         waitTillEqual(5000);
 
         assertEquals(set1, set2);
-        assertEquals(set3, set3);
+        assertEquals(set2, set3);
         assertTrue(!set1.isEmpty());
     }
 
@@ -132,7 +132,7 @@ public class SetForTCPSocketReplication3wayTest {
         waitTillEqual(15000);
 
         assertEquals(set1, set2);
-        assertEquals(set3, set3);
+        assertEquals(set2, set3);
         assertTrue(!set1.isEmpty());
     }
 

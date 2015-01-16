@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -61,13 +60,13 @@ import java.util.concurrent.TimeUnit;
  * adjustments, etc.
  *
  * @param <K> the type of keys in hash containers, created by this builder
- * @param <C> the container type, created by this builder, i. e. {@link ChronicleMap} or {@link
+ * @param <H> the container type, created by this builder, i. e. {@link ChronicleMap} or {@link
  *            ChronicleSet}
  * @param <B> the concrete builder type, i. e. {@link ChronicleMapBuilder}
  *            or {@link ChronicleSetBuilder}
  */
-public interface ChronicleHashBuilder<K, C extends ChronicleHash,
-        B extends ChronicleHashBuilder<K, C, B>> extends Cloneable {
+public interface ChronicleHashBuilder<K, H extends ChronicleHash<K>,
+        B extends ChronicleHashBuilder<K, H, B>> extends Cloneable {
 
     /**
      * Clones this builder. Useful for configuration persisting, because {@code
@@ -258,28 +257,6 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
     B actualSegments(int actualSegments);
 
     /**
-     * Configures timeout of locking on {@linkplain #actualSegments(int) segments} of hash
-     * containers, created by this builder, when performing any queries, as well as bulk operations
-     * like iteration. If timeout expires, {@link ChronicleHashErrorListener#onLockTimeout(long)} is
-     * called, and then thread tries to obtain the segment lock one more time, and so in a loop,
-     * until thread is interrupted. However, you can configure {@linkplain
-     * #errorListener(ChronicleHashErrorListener) error listener} to throw an exception on the first
-     * (or n-th) lock acquisition fail.
-     *
-     * <p>Default lock time out is 2 seconds.
-     *
-     * @param lockTimeOut new lock timeout for segments of containers created by this builder, in
-     *                    the given time units
-     * @param unit        time unit of the given lock timeout
-     * @return this builder back
-     */
-    B lockTimeOut(long lockTimeOut, TimeUnit unit);
-
-    B errorListener(ChronicleHashErrorListener errorListener);
-
-    B metaDataBytes(int metaDataBytes);
-
-    /**
      * Configures a time provider, used by hash containers, created by this builder, for needs of
      * replication consensus protocol (conflicting data updates resolution).
      *
@@ -358,19 +335,19 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @return this builder back
      * @see #keyMarshaller(BytesMarshaller)
      */
-    B keyMarshallers(@NotNull BytesWriter<K> keyWriter, @NotNull BytesReader<K> keyReader);
+    B keyMarshallers(@NotNull BytesWriter<? super K> keyWriter, @NotNull BytesReader<K> keyReader);
 
     /**
      * Configures the marshaller used to serialize actual key sizes to off-heap memory in hash
      * containers, created by this builder.
      *
-     * <p>Default key size marshaller is so-called {@linkplain SizeMarshallers#stopBit() stop bit
-     * encoding marshalling}. If {@linkplain #constantKeySizeBySample(Object) constant key size} is
-     * configured, or defaulted if the key type is always constant and {@code ChronicleHashBuilder}
-     * implementation knows about it, this configuration takes no effect, because a special {@link
-     * SizeMarshaller} implementation, which doesn't actually do any marshalling, and just returns
-     * the known constant size on {@link SizeMarshaller#readSize(Bytes)} calls, is used instead of
-     * any {@code SizeMarshaller} configured using this method.
+     * <p>Default key size marshaller is so-called "stop bit encoding" marshalling. If {@linkplain
+     * #constantKeySizeBySample(Object) constant key size} is configured, or defaulted if the key
+     * type is always constant and {@code ChronicleHashBuilder} implementation knows about it, this
+     * configuration takes no effect, because a special {@link SizeMarshaller} implementation, which
+     * doesn't actually do any marshalling, and just returns the known constant size on {@link
+     * SizeMarshaller#readSize(Bytes)} calls, is used instead of any {@code SizeMarshaller}
+     * configured using this method.
      *
      * @param keySizeMarshaller the new marshaller, used to serialize actual key sizes to off-heap
      *                          memory
@@ -398,7 +375,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @throws IllegalStateException if it is not possible to apply deserialization factory to
      *                               key deserializers, currently configured for this builder
      */
-    B keyDeserializationFactory(@NotNull ObjectFactory<K> keyDeserializationFactory);
+    B keyDeserializationFactory(@NotNull ObjectFactory<? extends K> keyDeserializationFactory);
 
     /**
      * Specifies that key objects, queried with the hash containers, created by this builder, are
@@ -447,7 +424,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
 
     B replication(byte identifier);
 
-    ChronicleHashInstanceBuilder<C> instance();
+    ChronicleHashInstanceBuilder<H> instance();
 
     /**
      * Creates a new hash container, storing it's data in off-heap memory, not mapped to any file.
@@ -461,7 +438,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @see #createPersistedTo(File)
      * @see #instance()
      */
-    C create();
+    H create();
 
     /**
      * Opens a hash container residing the specified file, or creates a new one if the file not yet
@@ -490,5 +467,5 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @see #create()
      * @see ChronicleHashInstanceBuilder#persistedTo(File)
      */
-    C createPersistedTo(File file) throws IOException;
+    H createPersistedTo(File file) throws IOException;
 }

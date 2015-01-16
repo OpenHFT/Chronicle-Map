@@ -16,17 +16,19 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
-import org.jetbrains.annotations.NotNull;
+import net.openhft.chronicle.hash.KeyContext;
 
-/**
- * @param <RV> result type, map value type or Bytes
- */
-interface ReadValue<RV> {
-    /**
-     * Updates the entry position by valueSize.
-     */
-    RV readValue(@NotNull ThreadLocalCopies copies, Bytes entry, RV usingValue, long valueSize);
-    RV readNull();
+public interface MapKeyContext<V> extends KeyContext {
+
+    long valueOffset();
+
+    long valueSize();
+
+    boolean valueEqualTo(V value);
+
+    V get();
+
+    V getUsing(V usingValue);
+
+    boolean put(V newValue);
 }
