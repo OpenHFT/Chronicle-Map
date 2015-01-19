@@ -25,6 +25,7 @@ import java.io.Serializable;
 import java.util.*;
 
 import static java.util.Collections.emptyList;
+import static net.openhft.chronicle.map.Objects.requireNonNull;
 
 abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
         implements ChronicleMap<K, V>, Serializable {
@@ -63,6 +64,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
 
     @Override
     public final V putIfAbsent(K key, V value) {
+        checkValue(value);
         try (MapKeyContext<V> c = context(key)) {
             // putIfAbsent() shouldn't actually put most of the time,
             // so check if the key is present under read lock first:
@@ -86,6 +88,8 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
             return null;
         }
     }
+
+    abstract void checkValue(V value);
 
     @Override
     @SuppressWarnings("unchecked")
@@ -137,6 +141,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
 
     @Override
     public <R> R getMapped(K key, @NotNull Function<? super V, R> function) {
+        requireNonNull(function);
         try (MapKeyContext<V> c = context(key)) {
             return c.containsKey() ? function.apply(c.get()) : null;
         }
@@ -144,6 +149,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
 
     @Override
     public V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
+        requireNonNull(unaryOperator);
         try (MapKeyContext<V> c = context(key)) {
             // putMapped() should find a value, update & put most of the time,
             // so don't try to check key presence under read lock first,
@@ -193,6 +199,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
     public final boolean remove(Object key, Object value) {
         if (value == null)
             return false; // CHM compatibility; General ChronicleMap policy is to throw NPE
+        checkValue((V) value);
         try (MapKeyContext<V> c = context((K) key)) {
             // remove(key, value) should find the entry & remove most of the time,
             // so don't try to check key presence and value equivalence under read lock first,
@@ -204,6 +211,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
 
     @Override
     public final V replace(K key, V value) {
+        checkValue(value);
         try (MapKeyContext<V> c = context(key)) {
             // replace(key, value) should find the key & put the value most of the time,
             // so don't try to check key presence under read lock first,
@@ -223,6 +231,8 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
 
     @Override
     public final boolean replace(K key, V oldValue, V newValue) {
+        checkValue(oldValue);
+        checkValue(newValue);
         try (MapKeyContext<V> c = context(key)) {
             // replace(key, old, new) should find the entry & put new value most of the time,
             // so don't try to check key presence and value equivalence under read lock first,

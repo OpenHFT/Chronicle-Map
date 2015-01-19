@@ -40,4 +40,9 @@ final class Objects {
                 o != null && builder.getClass() == o.getClass() &&
                         builder.toString().equals(o.toString());
     }
+
+    static void requireNonNull(Object obj) {
+        if (obj == null)
+            throw new NullPointerException();
+    }
 }

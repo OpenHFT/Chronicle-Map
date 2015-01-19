@@ -370,6 +370,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
+    @Override
     final void checkValue(Object value) {
         if (vClass != Void.class && !vClass.isInstance(value)) {
             throw new ClassCastException("Value must be a " + vClass.getName() +

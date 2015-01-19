@@ -71,6 +71,11 @@ public class BytesChronicleMap extends AbstractChronicleMap<Bytes, Bytes> {
     }
 
     @Override
+    void checkValue(Bytes value) {
+        Objects.requireNonNull(value);
+    }
+
+    @Override
     public Class<Bytes> keyClass() {
         return Bytes.class;
     }
