@@ -387,6 +387,11 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         @Override
+        long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
+            return super.sizeOfEverythingBeforeValue(keySize, valueSize) + ADDITIONAL_ENTRY_BYTES;
+        }
+
+        @Override
         boolean put0() {
             try {
                 switch (state) {
