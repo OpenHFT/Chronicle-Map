@@ -24,10 +24,6 @@ import static net.openhft.lang.io.NativeBytes.UNSAFE;
 
 class HashLookup {
 
-    // 9 bits for value, at most 9 + 3 = 12 bits for key, and a room for 2 bit slot state is left
-    // to fit 3 bytes/slot
-    static final int SMALL_SEGMENT_CHUNKS = 512;
-
     // to fit 64 bits per slot.
     static final int MAX_SEGMENT_CHUNKS = 1 << 30;
     static final int MAX_SEGMENT_ENTRIES = 1 << 29;

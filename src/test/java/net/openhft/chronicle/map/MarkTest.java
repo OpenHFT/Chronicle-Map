@@ -72,7 +72,7 @@ public class MarkTest {
         try (ChronicleMap<Integer, Integer> map = createMap.apply(ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
                 .entries(ENTRIES)
-                .entriesPerSegment((1 << 17) / 3)
+                .entriesPerSegment((1 << 15) / 3)
                 .putReturnsNull(true)
                 .removeReturnsNull(true))) {
 

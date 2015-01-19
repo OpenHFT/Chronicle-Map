@@ -683,15 +683,19 @@ public final class ChronicleMapBuilder<K, V> implements
     long actualChunksPerSegment(boolean replicated) {
         if (actualChunksPerSegment > 0)
             return actualChunksPerSegment;
-        return round(entriesPerSegment(replicated) * averageChunksPerEntry(replicated));
+        return chunksPerSegment(entriesPerSegment(replicated), replicated);
     }
 
-    private long totalEntriesIfPoorDistribution(int segments) {
+    private long chunksPerSegment(long entriesPerSegment, boolean replicated) {
+        return round(entriesPerSegment * averageChunksPerEntry(replicated));
+    }
+
+    private long totalEntriesIfPoorDistribution(long segments) {
         if (segments == 1)
             return entries();
         long entries = entries();
         // check if the number of entries is small compared with the number of segments.
-        long s3 = (long) Math.min(8, segments) * Math.min(32, segments) * Math.min(128, segments);
+        long s3 = Math.min(8, segments) * Math.min(32, segments) * Math.min(128, segments);
         if (entries * 4 <= s3)
             entries *= 1.8;
         else if (entries <= s3)
@@ -780,22 +784,75 @@ public final class ChronicleMapBuilder<K, V> implements
                 segments = Math.max(minSegments, segments);
             return (int) segments;
         }
-        long smallSegments = trySegments(HashLookup.SMALL_SEGMENT_CHUNKS, MAX_SEGMENTS, replicated);
-        if (smallSegments > 0L)
-            return (int) smallSegments;
-        long intMMapSegments = trySegments(HashLookup.MAX_SEGMENT_CHUNKS, MAX_SEGMENTS, replicated);
-        if (intMMapSegments > 0L)
-            return (int) intMMapSegments;
+        // iteratively try to fit 3..8 bytes per hash lookup slot. Trying to apply small slot
+        // sizes (=> segment sizes, because slot size depends on segment size) not only because
+        // they take less memory per entry (if entries are of KBs or MBs, it doesn't matter), but
+        // also because if segment size is small, slot and free list are likely to lie on a single
+        // memory page, reducing number of memory pages to update, if Chronicle Map is persisted.
+        // Actually small segments are all ways better: many segments => better parallelism, lesser
+        // pauses for per-key operations, if parallel/background operation blocks the segment for
+        // the whole time while it operates on it (like iteration, probably replication background
+        // thread will require some level of full segment lock, however currently if doesn't, in
+        // future durability background thread could update slot states), because smaller segments
+        // contain less entries/slots and are processed faster.
+        //
+        // The only problem with small segments is that due to probability theory, if there are
+        // a lot of segments each of little number of entries, difference between most filled
+        // and least filled segment in the Chronicle Map grows. It is critical, because we don't
+        // support segment resize yet, and are required to allocate unnecessarily many entries per
+        // each segment. To compensate this at least on linux, don't accept segment sizes that
+        // with the given entry sizes, lead to too small total segment sizes in native memory pages,
+        // see comment in tryHashLookupSlotSize()
+        for (int hashLookupSlotSize = 3; hashLookupSlotSize <= 7; hashLookupSlotSize++) {
+            long segments = tryHashLookupSlotSize(hashLookupSlotSize, replicated);
+            if (segments > 0)
+                return (int) segments;
+        }
+        long maxEntriesPerSegment = findMaxEntriesPerSegmentToFitHashLookupSlotSize(8, replicated);
+        long maxSegments = trySegments(maxEntriesPerSegment, MAX_SEGMENTS, replicated);
+        if (maxSegments > 0L)
+            return (int) maxSegments;
         throw new IllegalStateException("Max segments is " + MAX_SEGMENTS + ", configured so much" +
                 " entries (" + entries() + ") or average chunks per entry is too high (" +
                 averageChunksPerEntry(replicated) + ") that builder automatically decided to use " +
-                (-intMMapSegments) + " segments");
+                (-maxSegments) + " segments");
     }
 
-    private long trySegments(long maxSegmentCapacity, int maxSegments, boolean replicated) {
-        long totalChunks = round(totalEntriesIfPoorDistribution(minSegments()) *
-                averageChunksPerEntry(replicated));
-        long segments = divideUpper(totalChunks, maxSegmentCapacity);
+    private long tryHashLookupSlotSize(int hashLookupSlotSize, boolean replicated) {
+        long entriesPerSegment = findMaxEntriesPerSegmentToFitHashLookupSlotSize(
+                hashLookupSlotSize, replicated);
+        long entrySpaceSize = round(entriesPerSegment * entrySizeInfo(replicated).averageEntrySize);
+        // Not to lose too much on linux because of "poor distribution" entry over-allocation.
+        // This condition should likely filter cases when we target very small hash lookup
+        // size + entry size is small.
+        // * 5 => segment will lose not more than 20% of memory, 10% on average
+        if (entrySpaceSize < RUNTIME_PAGE_SIZE * 5L)
+            return -1;
+        return trySegments(entriesPerSegment, MAX_SEGMENTS, replicated);
+    }
+
+    private long findMaxEntriesPerSegmentToFitHashLookupSlotSize(
+            int targetHashLookupSlotSize, boolean replicated) {
+        long entriesPerSegment = 1L << 62;
+        long step = entriesPerSegment / 2L;
+        while (step > 0L) {
+            if (hashLookupSlotBytes(entriesPerSegment, replicated) > targetHashLookupSlotSize)
+                entriesPerSegment -= step;
+            step /= 2L;
+        }
+        return entriesPerSegment - 1L;
+    }
+
+    private int hashLookupSlotBytes(long entriesPerSegment, boolean replicated) {
+        int valueBits = HashLookup.valueBits(chunksPerSegment(entriesPerSegment, replicated));
+        int keyBits = HashLookup.keyBits(entriesPerSegment, valueBits);
+        return HashLookup.entrySize(keyBits, valueBits);
+    }
+
+    private long trySegments(long entriesPerSegment, int maxSegments, boolean replicated) {
+        long firstSegmentsApproximation = Math.max(minSegments(), entries() / entriesPerSegment);
+        long adjustedEntries = totalEntriesIfPoorDistribution(firstSegmentsApproximation);
+        long segments = divideUpper(adjustedEntries, entriesPerSegment);
         segments = Maths.nextPower2(Math.max(segments, minSegments()), 1L);
         return segments <= maxSegments ? segments : -segments;
     }
