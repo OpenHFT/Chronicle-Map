@@ -341,7 +341,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         byte newIdentifier;
 
         void initReplicationUpdate() {
-            if (newTimestamp != 0L)
+            if (newIdentifier != 0)
                 return;
             checkMapInit();
             initReplicationUpdate0();
@@ -357,7 +357,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         void closeReplicationUpdate() {
-            if (newTimestamp == 0L)
+            if (newIdentifier == 0)
                 return;
             closeReplicationUpdate0();
         }
@@ -376,7 +376,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         void writeReplicationBytes() {
             entry.writeLong(replicationBytesOffset, newTimestamp);
             entry.writeByte(replicationBytesOffset + 8L, newIdentifier);
-
         }
 
         void writeDeleted() {
@@ -502,9 +501,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         boolean shouldIgnore() {
-            if (timestamp == 0L || newTimestamp == 0L)
-                throw new IllegalStateException("Own entry replication state or " +
-                        "update replication state is not initialized");
+            assert identifier != 0 && newIdentifier != 0 :
+                    "Own entry replication state or " +
+                            "update replication state is not initialized";
             if (timestamp < newTimestamp)
                 return false;
             if (timestamp > newTimestamp)
