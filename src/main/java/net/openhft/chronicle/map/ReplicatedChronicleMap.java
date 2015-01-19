@@ -19,6 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.AbstractReplication;
+import net.openhft.chronicle.hash.replication.LateUpdateException;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.internal.BytesBytesInterop;
@@ -515,11 +516,19 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             assert identifier != 0 && newIdentifier != 0 :
                     "Own entry replication state or " +
                             "update replication state is not initialized";
-            if (timestamp < newTimestamp)
-                return false;
-            if (timestamp > newTimestamp)
-                return true;
-            return identifier > newIdentifier;
+            boolean shouldIgnore;
+            if (timestamp < newTimestamp) {
+                shouldIgnore = false;
+            } else if (timestamp > newTimestamp) {
+                shouldIgnore = true;
+            } else {
+                shouldIgnore = identifier > newIdentifier;
+            }
+            if (shouldIgnore && !remoteUpdate()) {
+                assert newIdentifier == m().identifier();
+                throw new LateUpdateException(identifier, timestamp, newIdentifier, newTimestamp);
+            }
+            return shouldIgnore;
         }
 
         public void dirtyEntries(final long dirtyFromTimeStamp,

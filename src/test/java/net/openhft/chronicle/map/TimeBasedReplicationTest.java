@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.LateUpdateException;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
 import org.junit.After;
@@ -77,7 +78,12 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             // now test assume that we receive a late update to the map, the following update should be ignored
             late(timeProvider);
 
-            map.put("key-1", "value-2");
+            assertThrows(LateUpdateException.class, new Runnable() {
+                @Override
+                public void run() {
+                    map.put("key-1", "value-2");
+                }
+            });
 
             // we'll now flip the time back to the current in order to do the read the result
             current(timeProvider);
@@ -102,11 +108,13 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             assertEquals(map.size(), 1);
             assertEquals(map.get("key-1"), "value-1");
 
-            // now test assume that we receive a late update to the map, the following update should be ignored
+            // now test assume that we receive a late update to the map, the following update
+            // should be ignored
             late(timeProvider);
 
-            final Object o = map.putIfAbsent("key-1", "value-2");
-            assertEquals(o, null);
+            // should NOT throw LateUpdateException because the value is present and it is just
+            // returned.
+            assertEquals(map.putIfAbsent("key-1", "value-2"), null);
 
             // we'll now flip the time back to the current in order to do the read the result
             current(timeProvider);
@@ -135,8 +143,12 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             // the following update should be ignored
             late(timeProvider);
 
-            final Object o = map.replace("key-1", "value-2");
-            assertEquals(o, null);
+            assertThrows(LateUpdateException.class, new Runnable() {
+                @Override
+                public void run() {
+                    map.replace("key-1", "value-2");
+                }
+            });
 
             // we'll now flip the time back to the current in order to do the read the result
             current(timeProvider);
@@ -161,10 +173,16 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             assertEquals(1, map.size());
             assertEquals("value-1", map.get("key-1"));
 
-            // now test assume that we receive a late update to the map, the following update should be ignored
+            // now test assume that we receive a late update to the map, the following update
+            // should be ignored
             late(timeProvider);
 
-            assertEquals(null, map.replace("key-1", "value-2"));
+            assertThrows(LateUpdateException.class, new Runnable() {
+                @Override
+                public void run() {
+                    map.replace("key-1", "value-1", "value-2");
+                }
+            });
 
             // we'll now flip the time back to the current in order to do the read the result
             current(timeProvider);
@@ -189,10 +207,16 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             assertEquals(1, map.size());
             assertEquals("value-1", map.get("key-1"));
 
-            // now test assume that we receive a late update to the map, the following update should be ignored
+            // now test assume that we receive a late update to the map, the following update
+            // should be ignored
             late(timeProvider);
 
-            assertEquals(false, map.remove("key-1", "value-1"));
+            assertThrows(LateUpdateException.class, new Runnable() {
+                @Override
+                public void run() {
+                    map.remove("key-1", "value-1");
+                }
+            });
 
             // we'll now flip the time back to the current in order to do the read the result
             current(timeProvider);
@@ -211,25 +235,32 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 .replication((byte) 1)
                 .create())  {
 
-        current(timeProvider);
+            current(timeProvider);
 
-        // we do a put at the current time
-        map.put("key-1", "value-1");
-        assertEquals(1, map.size());
-        assertEquals("value-1", map.get("key-1"));
+            // we do a put at the current time
+            map.put("key-1", "value-1");
+            assertEquals(1, map.size());
+            assertEquals("value-1", map.get("key-1"));
 
-        // now test assume that we receive a late update to the map, the following update should be ignored
-        late(timeProvider);
+            // now test assume that we receive a late update to the map, the following update
+            // should be ignored
+            late(timeProvider);
 
-        map.remove("key-1");
+            assertThrows(LateUpdateException.class, new Runnable() {
+                @Override
+                public void run() {
+                    map.remove("key-1");
+                }
+            });
 
-        // we'll now flip the time back to the current in order to do the read the result
-        current(timeProvider);
-        assertEquals(1, map.size());
-        assertEquals("value-1", map.get("key-1"));
+
+            // we'll now flip the time back to the current in order to do the read the result
+            current(timeProvider);
+            assertEquals(1, map.size());
+            assertEquals("value-1", map.get("key-1"));
+        }
+
     }
-
-}
 
     @Test
     public void testIgnoreWithRemoteRemove() throws IOException {
@@ -280,12 +311,12 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             assertEquals(1, map.size());
             assertEquals("value-1", map.get("key-1"));
 
-            // now test assume that we receive a late update to the map, the following update should be ignored
-            // now test assume that we receive a late update to the map, the following update should be ignored
+            // now test assume that we receive a late update to the map, the following update
+            // should be ignored
             final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5);
             try (MapKeyContext<CharSequence> c = map.context("key-1")) {
                 c.writeLock().lock();
-                ((ReplicatedChronicleMap.ReplicatedContext) c).newIdentifier = IDENTIFIER;
+                ((ReplicatedChronicleMap.ReplicatedContext) c).newIdentifier = (byte) 2;
                 ((ReplicatedChronicleMap.ReplicatedContext) c).newTimestamp = late;
                 assertFalse(((ReplicatedChronicleMap.ReplicatedContext) c).put("value-2"));
             }
@@ -323,7 +354,12 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 c.writeLock().lock();
                 ((ReplicatedChronicleMap.ReplicatedContext) c).newIdentifier = IDENTIFIER;
                 ((ReplicatedChronicleMap.ReplicatedContext) c).newTimestamp = late;
-                assertFalse(((ReplicatedChronicleMap.ReplicatedContext) c).put("value-2"));
+                assertThrows(LateUpdateException.class, new Runnable() {
+                    @Override
+                    public void run() {
+                        ((ReplicatedChronicleMap.ReplicatedContext) c).put("value-2");
+                    }
+                });
             }
 
             assertEquals(null, map.get("key-1"));

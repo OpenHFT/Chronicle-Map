@@ -222,9 +222,8 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
             // 2. Always "try to read" the previous value (not via if (c.containsKey()) {...
             // because BytesChronicleMap relies on it to write null to the output stream
             V prevValue = c.getUsing(null);
-            if (prevValue != null) {
+            if (prevValue != null)
                 c.put(value);
-            }
             return prevValue;
         }
     }
