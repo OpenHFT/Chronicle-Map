@@ -410,6 +410,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         @Override
+        boolean freeListBitsSet() {
+            // As of now, ReplicatedChMap's remove() never clear the bits
+            return true;
+        }
+
+        @Override
         void initPutDependencies() {
             super.initPutDependencies();
             initReplicationUpdate();

@@ -1458,9 +1458,9 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         entrySizeInChunks = 0;
     }
 
-    void checkUpdateLocked() {
+    void updateLockIfNeeded() {
         if (!isUpdateLocked())
-            throw new IllegalStateException("At least update lock should be held");
+            updateLock().lock();
     }
 
     public boolean put(V newValue) {
@@ -1476,7 +1476,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     void initPutDependencies() {
         initLocks();
-        checkUpdateLocked();
+        updateLockIfNeeded();
         initKeySearch();
         initValueModel();
         initKeyModel();
@@ -1547,13 +1547,13 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             m.maxChunksPerEntry + " is maximum.");
                 }
                 if (freeList.allClear(pos + entrySizeInChunks, pos + newSizeInChunks)) {
-                    long setFrom = state == PRESENT ? pos + entrySizeInChunks : pos;
+                    long setFrom = freeListBitsSet() ? pos + entrySizeInChunks : pos;
                     freeList.set(setFrom, pos + newSizeInChunks);
                     break newValueDoesNotFit;
                 }
                 // RELOCATION
                 beforeRelocation();
-                if (state == PRESENT)
+                if (freeListBitsSet())
                     free(pos, entrySizeInChunks);
                 int allocatedChunks =
                         inChunks(innerEntrySize(newSizeOfEverythingBeforeValue, newValueSize));
@@ -1564,7 +1564,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 return;
             } else if (newSizeInChunks < entrySizeInChunks) {
                 // Freeing extra chunks
-                if (state == PRESENT)
+                if (freeListBitsSet())
                     freeList.clear(pos + newSizeInChunks, pos + entrySizeInChunks);
                 lesserChunks = newSizeInChunks;
                 // Do NOT reset nextPosToSearchFrom, because if value
@@ -1600,13 +1600,18 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
         writeNewValueAndSwitch();
         if (state != PRESENT) {
-            freeList.set(pos, entrySizeInChunks);
+            if (!freeListBitsSet())
+                freeList.set(pos, pos + entrySizeInChunks);
             size(size() + 1L);
             beforePutPos();
             hashLookup.putVolatile(pos);
         }
         if (lesserChunks > 0)
             freeExtraAllocatedChunks(lesserChunks);
+    }
+
+    boolean freeListBitsSet() {
+        return state == PRESENT;
     }
 
     void beforeRelocation() {
@@ -1654,7 +1659,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     void initRemoveDependencies() {
         initSegment();
         initLocks();
-        checkUpdateLocked();
+        updateLockIfNeeded();
     }
 
     void closeRemove() {
