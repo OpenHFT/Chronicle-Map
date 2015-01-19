@@ -647,10 +647,11 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 segmentHeader.readUnlock(segmentHeaderAddress);
                 closeKeySearch();
             }
-            rootContextOnThisSegment.totalReadLockCount -= readLockCount;
-            rootContextOnThisSegment.totalUpdateLockCount -= updateLockCount;
-            rootContextOnThisSegment.totalWriteLockCount -= writeLockCount;
         }
+        rootContextOnThisSegment.totalReadLockCount -= readLockCount;
+        rootContextOnThisSegment.totalUpdateLockCount -= updateLockCount;
+        rootContextOnThisSegment.totalWriteLockCount -= writeLockCount;
+        readLockCount = updateLockCount = writeLockCount = 0;
         rootContextOnThisSegment = null;
     }
 
@@ -1089,7 +1090,8 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     SearchState state;
     long pos;
     long keyOffset;
-    final MultiStoreBytes entry = new MultiStoreBytes();
+    final MultiStoreBytes entryCache = new MultiStoreBytes();
+    MultiStoreBytes entry;
 
     void initKeySearch() {
         if (state != null)
@@ -1141,6 +1143,8 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     void closeKeySearch0() {
         state = null;
+        pos = -1;
+        entry = null;
         hashLookup.closeSearch0();
     }
 
@@ -1626,6 +1630,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void writeNewValueAndSwitch() {
+        entry.position(valueOffset);
         metaValueInterop.write(valueInterop, entry, newValue);
         value = newValue;
         closeNewValue0();
@@ -1693,7 +1698,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     final void reuse(long pos) {
-        reuse(entry, pos);
+        entry = reuse(entryCache, pos);
     }
 
     final long entrySize(long keySize, long valueSize) {

@@ -299,12 +299,18 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
         }
 
         @Override
-        public void accept(long key, long pos) {
+        public void accept(long hash, long pos) {
             context.pos = pos;
             context.initKeyFromPos();
-            if (!context.containsKey()) // for replicated map
-                return;
-            entryBuffer.add(new WriteThroughEntry(context.immutableKey(), context.getUsing(null)));
+            try {
+                if (!context.containsKey()) // for replicated map
+                    return;
+                K key = context.immutableKey();
+                V value = context.getUsing(null);
+                entryBuffer.add(new WriteThroughEntry(key, value));
+            } finally {
+                context.closeKeySearch();
+            }
         }
 
         @Override

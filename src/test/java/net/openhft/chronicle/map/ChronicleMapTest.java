@@ -1652,8 +1652,7 @@ public class ChronicleMapTest {
         }
 
         // this will remove the entry
-        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
-            assert value == context.get();
+        try (MapKeyContext<LongValue> context = map.context("one")) {
             context.remove();
         }
 
@@ -1789,7 +1788,7 @@ public class ChronicleMapTest {
         }
 
         // this will remove the entry
-        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+        try (MapKeyContext<LongValue> context = map.context("one")) {
             context.remove();
         }
 
