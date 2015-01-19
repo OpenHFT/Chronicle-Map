@@ -107,7 +107,7 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
 
         assertEquals(null, map1.put(1, "EXAMPLE-1"));
         assertEquals(null, map1.put(2, "EXAMPLE-2"));
-        assertEquals(null, map1.put(2, "EXAMPLE-1"));
+        assertEquals("EXAMPLE-2", map1.put(2, "EXAMPLE-1"));
 
         assertEquals(null, map2.put(5, "EXAMPLE-2"));
         assertEquals(null, map2.put(6, "EXAMPLE-2"));
@@ -129,7 +129,7 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
     public void testPutIfAbsent() throws IOException, InterruptedException {
 
         assertEquals(null, map1.putIfAbsent(1, "EXAMPLE-1"));
-        assertEquals(null, map1.putIfAbsent(1, "EXAMPLE-2"));
+        assertEquals("EXAMPLE-1", map1.putIfAbsent(1, "EXAMPLE-2"));
         assertEquals(null, map1.putIfAbsent(2, "EXAMPLE-2"));
         assertEquals(null, map1.putIfAbsent(3, "EXAMPLE-1"));
 
