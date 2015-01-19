@@ -217,15 +217,15 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
             // so don't try to check key presence under read lock first,
             // as in putIfAbsent()/acquireUsing(), start with update lock:
             c.updateLock().lock();
-            if (c.containsKey()) {
-                // c.get() returns cached value, that might be unexpected by user,
-                // so use getUsing(null) which surely creates a new value instance:
-                V prevValue = c.getUsing(null);
+            // 1. c.get() returns cached value, that might be unexpected by user,
+            // so use getUsing(null) which surely creates a new value instance:
+            // 2. Always "try to read" the previous value (not via if (c.containsKey()) {...
+            // because BytesChronicleMap relies on it to write null to the output stream
+            V prevValue = c.getUsing(null);
+            if (prevValue != null) {
                 c.put(value);
-                return prevValue;
-            } else {
-                return null;
             }
+            return prevValue;
         }
     }
 
