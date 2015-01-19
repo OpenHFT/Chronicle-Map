@@ -318,9 +318,10 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
         public Entry<K, V> next() {
             checkSingleThreaded();
             fillEntryBuffer();
-            if ((returned = entryBuffer.poll()) == null)
+            Entry<K, V> e;
+            if ((e = entryBuffer.poll()) == null)
                 throw new NoSuchElementException();
-            return returned;
+            return returned = e;
         }
 
         @Override
