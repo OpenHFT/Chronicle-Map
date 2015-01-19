@@ -180,11 +180,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeMapDependants() {
-        // TODO update dependents
+        // TODO update dependants
         closeMapAndContextLocals();
         closeSegmentHeader();
         closeKeyModel();
         closeValueModel();
+        closeKey();
+        closeValue();
+        closeKeyReader();
         closeValueReader();
         closeSegmentIndex();
         closeLocks();
