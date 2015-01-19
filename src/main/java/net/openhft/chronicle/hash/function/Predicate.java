@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.function;
 
-import net.openhft.chronicle.hash.KeyContext;
 
-public interface MapKeyContext<K, V> extends KeyContext<K> {
+/**
+ * Represents a predicate (boolean-valued function) of one argument.
+ *
+ * <p>This is a functional interface whose functional method is {@link #test(Object)}.
+ *
+ * <p>This is a copy of Java 8's {@code java.util.function.Predicate} interface.
+ *
+ * @param <T> the type of the input to the predicate
+ */
+public interface Predicate<T> {
 
-    long valueOffset();
-
-    long valueSize();
-
-    boolean valueEqualTo(V value);
-
-    V get();
-
-    V getUsing(V usingValue);
-
-    boolean put(V newValue);
+    /**
+     * Evaluates this predicate on the given argument.
+     *
+     * @param t the input argument
+     * @return {@code true} if the input argument matches the predicate,
+     * otherwise {@code false}
+     */
+    boolean test(T t);
 }

@@ -92,7 +92,7 @@ public class TCPSocketReplicationNativeTest {
 
         LongValue value = DataValueClasses.newDirectReference(LongValue.class);
 
-        try (MapKeyContext<LongValue> c = map1.acquireContext(1, value)) {
+        try (MapKeyContext<Integer, LongValue> c = map1.acquireContext(1, value)) {
             value.setValue(10);
         }
 
@@ -108,11 +108,11 @@ public class TCPSocketReplicationNativeTest {
 
         LongValue value = DataValueClasses.newDirectReference(LongValue.class);
 
-        try (MapKeyContext<LongValue> c = map1.acquireContext(1, value)) {
+        try (MapKeyContext<Integer, LongValue> c = map1.acquireContext(1, value)) {
             value.setValue(10);
         }
 
-        try (MapKeyContext<LongValue> c = map1.acquireContext(1, value)) {
+        try (MapKeyContext<Integer, LongValue> c = map1.acquireContext(1, value)) {
             value.setValue(20);
         }
 

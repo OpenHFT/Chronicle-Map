@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.primitives.Chars;
+import net.openhft.chronicle.hash.function.Function;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -665,7 +666,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
 
-            try (MapKeyContext<CharSequence> c = map.context("1")) {
+            try (MapKeyContext<CharSequence, CharSequence> c = map.context("1")) {
                 CharSequence value = c.get();
                 assertTrue(value instanceof StringBuilder);
                 ((StringBuilder) value).append("Hello World");
@@ -688,7 +689,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<CharSequence, IntValue> map = newInstance(builder)) {
 
-            try (MapKeyContext<IntValue> c = map.context("1")) {
+            try (MapKeyContext<CharSequence, IntValue> c = map.context("1")) {
                 IntValue value = c.get();
                 assertNull(value);
             }
@@ -711,7 +712,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<CharSequence, IntValue> map = newInstance(builder)) {
 
-            try (MapKeyContext<IntValue> c = map.context("1")) {
+            try (MapKeyContext<CharSequence, IntValue> c = map.context("1")) {
                 c.updateLock().lock();
                 IntValue value = c.get();
                 assertTrue(value instanceof IntValue);
@@ -866,7 +867,7 @@ public class CHMUseCasesTest {
             mapChecks();
 
             StringBuilder sb = new StringBuilder();
-            try (MapKeyContext<StringValue> rc = map.context(key1)) {
+            try (MapKeyContext<StringValue, StringValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 StringValue v = rc.get();
                 assertEquals("11", v.getValue());
@@ -876,7 +877,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try (MapKeyContext<StringValue> rc = map.context(key2)) {
+            try (MapKeyContext<StringValue, StringValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 StringValue v = rc.get();
                 assertEquals("22", v.getValue());
@@ -886,7 +887,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try (MapKeyContext<StringValue> rc = map.context(key1)) {
+            try (MapKeyContext<StringValue, StringValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 StringValue v = rc.get();
                 assertEquals("11", v.getValue());
@@ -896,7 +897,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try (MapKeyContext<StringValue> rc = map.context(key2)) {
+            try (MapKeyContext<StringValue, StringValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 StringValue v = rc.get();
                 assertEquals("22", v.getValue());
@@ -932,7 +933,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try (MapKeyContext<StringValue> rc = map.context(key1)) {
+            try (MapKeyContext<StringValue, StringValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals("1234", rc.get().getValue());
             }
@@ -957,7 +958,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try (MapKeyContext<StringValue> rc = map.context(key2)) {
+            try (MapKeyContext<StringValue, StringValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals("1234", rc.get().getValue());
             }
@@ -1286,25 +1287,25 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             ByteBuffer valueA = ByteBuffer.allocateDirect(8);
             ByteBuffer valueB = ByteBuffer.allocate(8);
 //            assertBBEquals(value1, valueA);
-            try (MapKeyContext<ByteBuffer> rc = map.context(key1)) {
+            try (MapKeyContext<ByteBuffer, ByteBuffer> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertBBEquals(value1, rc.getUsing(valueA));
             }
-            try (MapKeyContext<ByteBuffer> rc = map.context(key2)) {
+            try (MapKeyContext<ByteBuffer, ByteBuffer> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertBBEquals(value2, rc.getUsing(valueA));
             }
 
-            try (MapKeyContext<ByteBuffer> rc = map.context(key1)) {
+            try (MapKeyContext<ByteBuffer, ByteBuffer> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertBBEquals(value1, rc.getUsing(valueB));
             }
-            try (MapKeyContext<ByteBuffer> rc = map.context(key2)) {
+            try (MapKeyContext<ByteBuffer, ByteBuffer> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertBBEquals(value2, rc.getUsing(valueB));
             }
 
-            try (MapKeyContext<ByteBuffer> wc = map.acquireContext(key1, valueA)) {
+            try (MapKeyContext<ByteBuffer, ByteBuffer> wc = map.acquireContext(key1, valueA)) {
                 assertBBEquals(value1, valueA);
                 appendMode(valueA);
                 valueA.clear();
@@ -1325,7 +1326,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 valueB.flip();
             }
 
-            try (MapKeyContext<ByteBuffer> rc = map.context(key1)) {
+            try (MapKeyContext<ByteBuffer, ByteBuffer> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
 
                 ByteBuffer bb1 = ByteBuffer.allocate(8);
@@ -1435,7 +1436,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (MapKeyContext<IntValue> rc = map.context(key1)) {
+            try (MapKeyContext<IntValue, IntValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
@@ -1445,53 +1446,53 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 //                assertTrue(rc.present());
 //                assertEquals(22, value2.getValue());
 //            }
-            try (MapKeyContext<IntValue> rc = map.context(key2)) {
+            try (MapKeyContext<IntValue, IntValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
-            try (MapKeyContext<IntValue> rc = map.context(key1)) {
+            try (MapKeyContext<IntValue, IntValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
-            try (MapKeyContext<IntValue> rc = map.context(key2)) {
+            try (MapKeyContext<IntValue, IntValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (MapKeyContext<IntValue> rc = map.context(key1)) {
+            try (MapKeyContext<IntValue, IntValue> rc = map.context(key1)) {
                 assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (MapKeyContext<IntValue> rc = map.context(key2)) {
+            try (MapKeyContext<IntValue, IntValue> rc = map.context(key2)) {
                 assertFalse(rc.containsKey());
             }
 
-            try (MapKeyContext<IntValue> wc = map.acquireContext(key1, value1)) {
+            try (MapKeyContext<IntValue, IntValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue(123);
                 assertEquals(123, value1.getValue());
             }
-            try (MapKeyContext<IntValue> wc = map.acquireContext(key1, value2)) {
+            try (MapKeyContext<IntValue, IntValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue());
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue());
             }
-            try (MapKeyContext<IntValue> rc = map.context(key1)) {
+            try (MapKeyContext<IntValue, IntValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue());
             }
 
-            try (MapKeyContext<IntValue> wc = map.acquireContext(key2, value2)) {
+            try (MapKeyContext<IntValue, IntValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue(123);
                 assertEquals(123, value2.getValue());
             }
-            try (MapKeyContext<IntValue> wc = map.acquireContext(key2, value1)) {
+            try (MapKeyContext<IntValue, IntValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue());
             }
-            try (MapKeyContext<IntValue> rc = map.context(key2)) {
+            try (MapKeyContext<IntValue, IntValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue());
             }
@@ -1555,7 +1556,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (MapKeyContext<UnsignedIntValue> rc = map.context(key1)) {
+            try (MapKeyContext<UnsignedIntValue, UnsignedIntValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
@@ -1564,15 +1565,15 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 //                assertTrue(rc.present());
 //                assertEquals(22, value2.getValue());
 //            }
-            try (MapKeyContext<UnsignedIntValue> rc = map.context(key2)) {
+            try (MapKeyContext<UnsignedIntValue, UnsignedIntValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
-            try (MapKeyContext<UnsignedIntValue> rc = map.context(key1)) {
+            try (MapKeyContext<UnsignedIntValue, UnsignedIntValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
-            try (MapKeyContext<UnsignedIntValue> rc = map.context(key2)) {
+            try (MapKeyContext<UnsignedIntValue, UnsignedIntValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
@@ -1595,7 +1596,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue());
             }
-            try (MapKeyContext<UnsignedIntValue> rc = map.context(key1)) {
+            try (MapKeyContext<UnsignedIntValue, UnsignedIntValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue());
             }
@@ -1610,7 +1611,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue());
             }
-            try (MapKeyContext<UnsignedIntValue> rc = map.context(key2)) {
+            try (MapKeyContext<UnsignedIntValue, UnsignedIntValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue());
             }
@@ -1652,7 +1653,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (MapKeyContext<ShortValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, ShortValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
@@ -1661,53 +1662,53 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 //                assertTrue(rc.present());
 //                assertEquals(22, value2.getValue());
 //            }
-            try (MapKeyContext<ShortValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, ShortValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
-            try (MapKeyContext<ShortValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, ShortValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
-            try (MapKeyContext<ShortValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, ShortValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (MapKeyContext<ShortValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, ShortValue> rc = map.context(key1)) {
                 assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (MapKeyContext<ShortValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, ShortValue> rc = map.context(key2)) {
                 assertFalse(rc.containsKey());
             }
 
-            try (MapKeyContext<ShortValue> wc = map.acquireContext(key1, value1)) {
+            try (MapKeyContext<?, ShortValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue((short) 123);
                 assertEquals(123, value1.getValue());
             }
-            try (MapKeyContext<ShortValue> wc = map.acquireContext(key1, value2)) {
+            try (MapKeyContext<?, ShortValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue());
                 value2.addValue((short) (1230 - 123));
                 assertEquals(1230, value2.getValue());
             }
-            try (MapKeyContext<ShortValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, ShortValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue());
             }
 
-            try (MapKeyContext<ShortValue> wc = map.acquireContext(key2, value2)) {
+            try (MapKeyContext<?, ShortValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue((short) 123);
                 assertEquals(123, value2.getValue());
             }
-            try (MapKeyContext<ShortValue> wc = map.acquireContext(key2, value1)) {
+            try (MapKeyContext<?, ShortValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue((short) (1230 - 123));
                 assertEquals(1230, value1.getValue());
             }
-            try (MapKeyContext<ShortValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, ShortValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue());
             }
@@ -1749,7 +1750,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (MapKeyContext<UnsignedShortValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, UnsignedShortValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
@@ -1758,53 +1759,53 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 //                assertTrue(rc.present());
 //                assertEquals(22, value2.getValue());
 //            }
-            try (MapKeyContext<UnsignedShortValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, UnsignedShortValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
-            try (MapKeyContext<UnsignedShortValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, UnsignedShortValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
-            try (MapKeyContext<UnsignedShortValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, UnsignedShortValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (MapKeyContext<UnsignedShortValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, UnsignedShortValue> rc = map.context(key1)) {
                 assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (MapKeyContext<UnsignedShortValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, UnsignedShortValue> rc = map.context(key2)) {
                 assertFalse(rc.containsKey());
             }
 
-            try (MapKeyContext<UnsignedShortValue> wc = map.acquireContext(key1, value1)) {
+            try (MapKeyContext<?, UnsignedShortValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue(123);
                 assertEquals(123, value1.getValue());
             }
-            try (MapKeyContext<UnsignedShortValue> wc = map.acquireContext(key1, value2)) {
+            try (MapKeyContext<?, UnsignedShortValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue());
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue());
             }
-            try (MapKeyContext<UnsignedShortValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, UnsignedShortValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue());
             }
 
-            try (MapKeyContext<UnsignedShortValue> wc = map.acquireContext(key2, value2)) {
+            try (MapKeyContext<?, UnsignedShortValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue(123);
                 assertEquals(123, value2.getValue());
             }
-            try (MapKeyContext<UnsignedShortValue> wc = map.acquireContext(key2, value1)) {
+            try (MapKeyContext<?, UnsignedShortValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue());
             }
-            try (MapKeyContext<UnsignedShortValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, UnsignedShortValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue());
             }
@@ -1843,7 +1844,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (MapKeyContext<CharValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, CharValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
@@ -1852,28 +1853,28 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 //                assertTrue(rc.present());
 //                assertEquals(22, value2.getValue());
 //            }
-            try (MapKeyContext<CharValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, CharValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
-            try (MapKeyContext<CharValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, CharValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
-            try (MapKeyContext<CharValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, CharValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (MapKeyContext<CharValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, CharValue> rc = map.context(key1)) {
                 assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (MapKeyContext<CharValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, CharValue> rc = map.context(key2)) {
                 assertFalse(rc.containsKey());
             }
 
-            try (MapKeyContext<CharValue> wc = map.acquireContext(key1, value1)) {
+            try (MapKeyContext<?, CharValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals('\0', value1.getValue());
                 value1.setValue('@');
                 assertEquals('@', value1.getValue());
@@ -1883,22 +1884,22 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 value2.setValue('#');
                 assertEquals('#', value2.getValue());
             }
-            try (MapKeyContext<CharValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, CharValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals('#', rc.get().getValue());
             }
 
-            try (MapKeyContext<CharValue> wc = map.acquireContext(key2, value2)) {
+            try (MapKeyContext<?, CharValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals('\0', value2.getValue());
                 value2.setValue(';');
                 assertEquals(';', value2.getValue());
             }
-            try (MapKeyContext<CharValue> wc = map.acquireContext(key2, value1)) {
+            try (MapKeyContext<?, CharValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(';', value1.getValue());
                 value1.setValue('[');
                 assertEquals('[', value1.getValue());
             }
-            try (MapKeyContext<CharValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, CharValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals('[', rc.get().getValue());
             }
@@ -1941,7 +1942,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (MapKeyContext<UnsignedByteValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, UnsignedByteValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
@@ -1950,53 +1951,53 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 //                assertTrue(rc.present());
 //                assertEquals(22, value2.getValue());
 //            }
-            try (MapKeyContext<UnsignedByteValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, UnsignedByteValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
-            try (MapKeyContext<UnsignedByteValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, UnsignedByteValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
-            try (MapKeyContext<UnsignedByteValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, UnsignedByteValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (MapKeyContext<UnsignedByteValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, UnsignedByteValue> rc = map.context(key1)) {
                 assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (MapKeyContext<UnsignedByteValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, UnsignedByteValue> rc = map.context(key2)) {
                 assertFalse(rc.containsKey());
             }
 
-            try (MapKeyContext<UnsignedByteValue> wc = map.acquireContext(key1, value1)) {
+            try (MapKeyContext<?, UnsignedByteValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue(234);
                 assertEquals(234, value1.getValue());
             }
-            try (MapKeyContext<UnsignedByteValue> wc = map.acquireContext(key1, value2)) {
+            try (MapKeyContext<?, UnsignedByteValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(234, value2.getValue());
                 value2.addValue(-100);
                 assertEquals(134, value2.getValue());
             }
-            try (MapKeyContext<UnsignedByteValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, UnsignedByteValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(134, rc.get().getValue());
             }
 
-            try (MapKeyContext<UnsignedByteValue> wc = map.acquireContext(key2, value2)) {
+            try (MapKeyContext<?, UnsignedByteValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue((byte) 123);
                 assertEquals(123, value2.getValue());
             }
-            try (MapKeyContext<UnsignedByteValue> wc = map.acquireContext(key2, value1)) {
+            try (MapKeyContext<?, UnsignedByteValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue((byte) -111);
                 assertEquals(12, value1.getValue());
             }
-            try (MapKeyContext<UnsignedByteValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, UnsignedByteValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(12, rc.get().getValue());
             }
@@ -2037,7 +2038,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (MapKeyContext<BooleanValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, BooleanValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(true, rc.get().getValue());
             }
@@ -2046,53 +2047,53 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 //                assertTrue(rc.present());
 //                assertEquals(false, value2.getValue());
 //            }
-            try (MapKeyContext<BooleanValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, BooleanValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(false, rc.get().getValue());
             }
-            try (MapKeyContext<BooleanValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, BooleanValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(true, rc.get().getValue());
             }
-            try (MapKeyContext<BooleanValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, BooleanValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(false, rc.get().getValue());
             }
             key1.setValue(3);
-            try (MapKeyContext<BooleanValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, BooleanValue> rc = map.context(key1)) {
                 assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (MapKeyContext<BooleanValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, BooleanValue> rc = map.context(key2)) {
                 assertFalse(rc.containsKey());
             }
 
-            try (MapKeyContext<BooleanValue> wc = map.acquireContext(key1, value1)) {
+            try (MapKeyContext<?, BooleanValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(false, value1.getValue());
                 value1.setValue(true);
                 assertEquals(true, value1.getValue());
             }
-            try (MapKeyContext<BooleanValue> wc = map.acquireContext(key1, value2)) {
+            try (MapKeyContext<?, BooleanValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(true, value2.getValue());
                 value2.setValue(false);
                 assertEquals(false, value2.getValue());
             }
-            try (MapKeyContext<BooleanValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, BooleanValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(false, rc.get().getValue());
             }
 
-            try (MapKeyContext<BooleanValue> wc = map.acquireContext(key2, value2)) {
+            try (MapKeyContext<?, BooleanValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(false, value2.getValue());
                 value2.setValue(true);
                 assertEquals(true, value2.getValue());
             }
-            try (MapKeyContext<BooleanValue> wc = map.acquireContext(key2, value1)) {
+            try (MapKeyContext<?, BooleanValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(true, value1.getValue());
                 value1.setValue(false);
                 assertEquals(false, value1.getValue());
             }
-            try (MapKeyContext<BooleanValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, BooleanValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(false, rc.get().getValue());
             }
@@ -2133,7 +2134,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (MapKeyContext<FloatValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, FloatValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue(), 0);
             }
@@ -2142,53 +2143,53 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 //                assertTrue(rc.present());
 //                assertEquals(22, value2.getValue(), 0);
 //            }
-            try (MapKeyContext<FloatValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, FloatValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue(), 0);
             }
-            try (MapKeyContext<FloatValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, FloatValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue(), 0);
             }
-            try (MapKeyContext<FloatValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, FloatValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue(), 0);
             }
             key1.setValue(3);
-            try (MapKeyContext<FloatValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, FloatValue> rc = map.context(key1)) {
                 assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (MapKeyContext<FloatValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, FloatValue> rc = map.context(key2)) {
                 assertFalse(rc.containsKey());
             }
 
-            try (MapKeyContext<FloatValue> wc = map.acquireContext(key1, value1)) {
+            try (MapKeyContext<?, FloatValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue(), 0);
                 value1.addValue(123);
                 assertEquals(123, value1.getValue(), 0);
             }
-            try (MapKeyContext<FloatValue> wc = map.acquireContext(key1, value2)) {
+            try (MapKeyContext<?, FloatValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue(), 0);
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue(), 0);
             }
-            try (MapKeyContext<FloatValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, FloatValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue(), 0);
             }
 
-            try (MapKeyContext<FloatValue> wc = map.acquireContext(key2, value2)) {
+            try (MapKeyContext<?, FloatValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue(), 0);
                 value2.addValue(123);
                 assertEquals(123, value2.getValue(), 0);
             }
-            try (MapKeyContext<FloatValue> wc = map.acquireContext(key2, value1)) {
+            try (MapKeyContext<?, FloatValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue(), 0);
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue(), 0);
             }
-            try (MapKeyContext<FloatValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, FloatValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue(), 0);
             }
@@ -2234,7 +2235,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (MapKeyContext<DoubleValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, DoubleValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue(), 0);
             }
@@ -2242,53 +2243,53 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 //                assertTrue(rc.present());
 //                assertEquals(22, value2.getValue(), 0);
 //            }
-            try (MapKeyContext<DoubleValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, DoubleValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue(), 0);
             }
-            try (MapKeyContext<DoubleValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, DoubleValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue(), 0);
             }
-            try (MapKeyContext<DoubleValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, DoubleValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue(), 0);
             }
             key1.setValue(3);
-            try (MapKeyContext<DoubleValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, DoubleValue> rc = map.context(key1)) {
                 assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (MapKeyContext<DoubleValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, DoubleValue> rc = map.context(key2)) {
                 assertFalse(rc.containsKey());
             }
 
-            try (MapKeyContext<DoubleValue> wc = map.acquireContext(key1, value1)) {
+            try (MapKeyContext<?, DoubleValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue(), 0);
                 value1.addValue(123);
                 assertEquals(123, value1.getValue(), 0);
             }
-            try (MapKeyContext<DoubleValue> wc = map.acquireContext(key1, value2)) {
+            try (MapKeyContext<?, DoubleValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue(), 0);
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue(), 0);
             }
-            try (MapKeyContext<DoubleValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, DoubleValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue(), 0);
             }
 
-            try (MapKeyContext<DoubleValue> wc = map.acquireContext(key2, value2)) {
+            try (MapKeyContext<?, DoubleValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue(), 0);
                 value2.addValue(123);
                 assertEquals(123, value2.getValue(), 0);
             }
-            try (MapKeyContext<DoubleValue> wc = map.acquireContext(key2, value1)) {
+            try (MapKeyContext<?, DoubleValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue(), 0);
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue(), 0);
             }
-            try (MapKeyContext<DoubleValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, DoubleValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue(), 0);
             }
@@ -2331,7 +2332,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             map.put(key2, value2);
             assertEquals(value2, map.get(key2));
 
-            try (MapKeyContext<LongValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, LongValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
@@ -2340,53 +2341,53 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 //                assertTrue(rc.present());
 //                assertEquals(22, value2.getValue());
 //            }
-            try (MapKeyContext<LongValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, LongValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
-            try (MapKeyContext<LongValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, LongValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(11, rc.get().getValue());
             }
-            try (MapKeyContext<LongValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, LongValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(22, rc.get().getValue());
             }
             key1.setValue(3);
-            try (MapKeyContext<LongValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, LongValue> rc = map.context(key1)) {
                 assertFalse(rc.containsKey());
             }
             key2.setValue(4);
-            try (MapKeyContext<LongValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, LongValue> rc = map.context(key2)) {
                 assertFalse(rc.containsKey());
             }
 
-            try (MapKeyContext<LongValue> wc = map.acquireContext(key1, value1)) {
+            try (MapKeyContext<?, LongValue> wc = map.acquireContext(key1, value1)) {
                 assertEquals(0, value1.getValue());
                 value1.addValue(123);
                 assertEquals(123, value1.getValue());
             }
-            try (MapKeyContext<LongValue> wc = map.acquireContext(key1, value2)) {
+            try (MapKeyContext<?, LongValue> wc = map.acquireContext(key1, value2)) {
                 assertEquals(123, value2.getValue());
                 value2.addValue(1230 - 123);
                 assertEquals(1230, value2.getValue());
             }
-            try (MapKeyContext<LongValue> rc = map.context(key1)) {
+            try (MapKeyContext<?, LongValue> rc = map.context(key1)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue());
             }
 
-            try (MapKeyContext<LongValue> wc = map.acquireContext(key2, value2)) {
+            try (MapKeyContext<?, LongValue> wc = map.acquireContext(key2, value2)) {
                 assertEquals(0, value2.getValue());
                 value2.addValue(123);
                 assertEquals(123, value2.getValue());
             }
-            try (MapKeyContext<LongValue> wc = map.acquireContext(key2, value1)) {
+            try (MapKeyContext<?, LongValue> wc = map.acquireContext(key2, value1)) {
                 assertEquals(123, value1.getValue());
                 value1.addValue(1230 - 123);
                 assertEquals(1230, value1.getValue());
             }
-            try (MapKeyContext<LongValue> rc = map.context(key2)) {
+            try (MapKeyContext<?, LongValue> rc = map.context(key2)) {
                 assertTrue(rc.containsKey());
                 assertEquals(1230, rc.get().getValue());
             }
@@ -2467,7 +2468,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 assertEquals(new LinkedHashSet<String>(asList("two")), list1);
             }
             Set<String> list2 = new LinkedHashSet<>();
-            try (MapKeyContext<Set<String>> rc = map.context("1")) {
+            try (MapKeyContext<?, Set<String>> rc = map.context("1")) {
                 assertTrue(rc.containsKey());
                 assertEquals(new LinkedHashSet<String>(asList("two")), rc.getUsing(list2));
             }
@@ -2475,7 +2476,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 list1.add("three");
                 assertEquals(new LinkedHashSet<String>(asList("one", "three")), list1);
             }
-            try (MapKeyContext<Set<String>> rc = map.context("2")) {
+            try (MapKeyContext<?, Set<String>> rc = map.context("2")) {
                 assertTrue(rc.containsKey());
                 assertEquals(new LinkedHashSet<String>(asList("one", "three")), rc.getUsing(list2));
             }
@@ -2512,7 +2513,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 assertEquals(mapOf("two", "bi"), map1);
             }
             Map<String, String> map2 = new LinkedHashMap<>();
-            try (MapKeyContext<Map<String, String>> rc = map.context("1")) {
+            try (MapKeyContext<?, Map<String, String>> rc = map.context("1")) {
                 assertTrue(rc.containsKey());
                 assertEquals(mapOf("two", "bi"), rc.getUsing(map2));
             }
@@ -2520,7 +2521,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 map1.put("three", "tri");
                 assertEquals(mapOf("one", "uni", "three", "tri"), map1);
             }
-            try (MapKeyContext<Map<String, String>> rc = map.context("2")) {
+            try (MapKeyContext<?, Map<String, String>> rc = map.context("2")) {
                 assertTrue(rc.containsKey());
                 assertEquals(mapOf("one", "uni", "three", "tri"), rc.getUsing(map2));
             }
@@ -2550,7 +2551,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 assertEquals(mapOf("two", 2), map1);
             }
             Map<String, Integer> map2 = new LinkedHashMap<>();
-            try (MapKeyContext<Map<String, Integer>> rc = map.context("1")) {
+            try (MapKeyContext<?, Map<String, Integer>> rc = map.context("1")) {
                 assertTrue(rc.containsKey());
                 assertEquals(mapOf("two", 2), rc.getUsing(map2));
             }
@@ -2558,7 +2559,7 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
                 map1.put("three", 3);
                 assertEquals(mapOf("one", 1, "three", 3), map1);
             }
-            try (MapKeyContext<Map<String, Integer>> rc = map.context("2")) {
+            try (MapKeyContext<?, Map<String, Integer>> rc = map.context("2")) {
                 assertTrue(rc.containsKey());
                 assertEquals(mapOf("one", 1, "three", 3), rc.getUsing(map2));
             }

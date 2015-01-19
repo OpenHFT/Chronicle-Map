@@ -20,6 +20,9 @@ package net.openhft.chronicle.map;
 
 import com.sun.jdi.connect.spi.ClosedConnectionException;
 import net.openhft.chronicle.hash.RemoteCallTimeoutException;
+import net.openhft.chronicle.hash.function.Consumer;
+import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.function.Predicate;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
@@ -221,6 +224,18 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     @Override
     public Class<K> keyClass() {
         return kClass;
+    }
+
+    @Override
+    public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
+        // TODO implement!
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
+        // TODO implement!
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -535,7 +550,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     @Override
-    public MapKeyContext<V> context(K key) {
+    public MapKeyContext<K, V> context(K key) {
         throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
     }
 
@@ -578,7 +593,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @NotNull
     @Override
-    public MapKeyContext<V> acquireContext(@NotNull K key, @NotNull V usingValue) {
+    public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
         throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
     }
 
@@ -1894,7 +1909,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             return null;
 
         return (R) readObject(transactionId, startTime);
-
     }
 }
 

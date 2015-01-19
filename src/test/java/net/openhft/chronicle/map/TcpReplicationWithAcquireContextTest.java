@@ -45,7 +45,7 @@ public class TcpReplicationWithAcquireContextTest {
                 TestInstrumentVOInterface instrumentVOInterface = map1.newValueInstance();
 
 
-                try (MapKeyContext<TestInstrumentVOInterface> wc =
+                try (MapKeyContext<?, TestInstrumentVOInterface> wc =
                              map1.acquireContext("KEY1", instrumentVOInterface)) {
                     instrumentVOInterface.setSymbol("Flyer");
                     instrumentVOInterface.setCurrencyCode("USA");

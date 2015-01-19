@@ -493,7 +493,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @NotNull
     @Override
-    public final MapKeyContext<V> acquireContext(K key, V usingValue) {
+    public final MapKeyContext<K, V> acquireContext(K key, V usingValue) {
         VanillaContext<K, KI, MKI, V, VI, MVI> c = acquireContext(key);
         // TODO optimize to update lock in certain cases
         c.writeLock().lock();

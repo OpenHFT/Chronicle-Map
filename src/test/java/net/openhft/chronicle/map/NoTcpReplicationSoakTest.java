@@ -123,7 +123,7 @@ public class NoTcpReplicationSoakTest {
             if (rnd.nextBoolean()) {
                 final CharSequence value = "test" + j;
                 if (rnd.nextBoolean()) {
-                    try (MapKeyContext<CharSequence> c = map1.context(key)) {
+                    try (MapKeyContext<?, CharSequence> c = map1.context(key)) {
                         ReplicatedChronicleMap.ReplicatedContext rc =
                                 (ReplicatedChronicleMap.ReplicatedContext) c;
                         rc.newTimestamp = t;
@@ -135,7 +135,7 @@ public class NoTcpReplicationSoakTest {
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            try (MapKeyContext<CharSequence> c = map2.context(key)) {
+                            try (MapKeyContext<?, CharSequence> c = map2.context(key)) {
                                 ReplicatedChronicleMap.ReplicatedContext rc =
                                         (ReplicatedChronicleMap.ReplicatedContext) c;
                                 rc.newTimestamp = t;
@@ -147,7 +147,7 @@ public class NoTcpReplicationSoakTest {
                     });
 
                 } else {
-                    try (MapKeyContext<CharSequence> c = map2.context(key)) {
+                    try (MapKeyContext<?, CharSequence> c = map2.context(key)) {
                         ReplicatedChronicleMap.ReplicatedContext rc =
                                 (ReplicatedChronicleMap.ReplicatedContext) c;
                         rc.newTimestamp = t;
@@ -159,7 +159,7 @@ public class NoTcpReplicationSoakTest {
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            try (MapKeyContext<CharSequence> c = map1.context(key)) {
+                            try (MapKeyContext<?, CharSequence> c = map1.context(key)) {
                                 ReplicatedChronicleMap.ReplicatedContext rc =
                                         (ReplicatedChronicleMap.ReplicatedContext) c;
                                 rc.newTimestamp = t;
@@ -174,7 +174,7 @@ public class NoTcpReplicationSoakTest {
             } else {
 
                 if (rnd.nextBoolean()) {
-                    try (MapKeyContext<CharSequence> c = map1.context(key)) {
+                    try (MapKeyContext<?, CharSequence> c = map1.context(key)) {
                         ReplicatedChronicleMap.ReplicatedContext rc =
                                 (ReplicatedChronicleMap.ReplicatedContext) c;
                         rc.newTimestamp = t;
@@ -186,7 +186,7 @@ public class NoTcpReplicationSoakTest {
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            try (MapKeyContext<CharSequence> c = map2.context(key)) {
+                            try (MapKeyContext<?, CharSequence> c = map2.context(key)) {
                                 ReplicatedChronicleMap.ReplicatedContext rc =
                                         (ReplicatedChronicleMap.ReplicatedContext) c;
                                 rc.newTimestamp = t;
@@ -198,7 +198,7 @@ public class NoTcpReplicationSoakTest {
                     });
 
                 } else {
-                    try (MapKeyContext<CharSequence> c = map2.context(key)) {
+                    try (MapKeyContext<?, CharSequence> c = map2.context(key)) {
                         ReplicatedChronicleMap.ReplicatedContext rc =
                                 (ReplicatedChronicleMap.ReplicatedContext) c;
                         rc.newTimestamp = t;
@@ -210,7 +210,7 @@ public class NoTcpReplicationSoakTest {
                     executorService.submit(new Runnable() {
                         @Override
                         public void run() {
-                            try (MapKeyContext<CharSequence> c = map1.context(key)) {
+                            try (MapKeyContext<?, CharSequence> c = map1.context(key)) {
                                 ReplicatedChronicleMap.ReplicatedContext rc =
                                         (ReplicatedChronicleMap.ReplicatedContext) c;
                                 rc.newTimestamp = t;

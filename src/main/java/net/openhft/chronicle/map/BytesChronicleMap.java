@@ -87,7 +87,8 @@ public class BytesChronicleMap extends AbstractChronicleMap<Bytes, Bytes> {
 
     @NotNull
     @Override
-    public MapKeyContext<Bytes> acquireContext(@NotNull Bytes key, @NotNull Bytes usingValue) {
+    public MapKeyContext<Bytes, Bytes> acquireContext(
+            @NotNull Bytes key, @NotNull Bytes usingValue) {
         throw new UnsupportedOperationException();
     }
 

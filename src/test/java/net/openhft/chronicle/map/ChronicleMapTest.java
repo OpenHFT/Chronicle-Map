@@ -921,7 +921,7 @@ public class ChronicleMapTest {
                                 long n;
                                 // 75% read
                                 if (rand.nextBoolean() || rand.nextBoolean()) {
-                                    try (MapKeyContext<LongValue> c = map.context(sb)) {
+                                    try (MapKeyContext<?, LongValue> c = map.context(sb)) {
                                         if (c.containsKey()) {
                                             // Attempt to pass abstraction hierarchies
                                             n = c.entry().readVolatileLong(c.valueOffset()) + 1;
@@ -930,7 +930,7 @@ public class ChronicleMapTest {
                                         }
                                     }
                                 } else {
-                                    try (MapKeyContext<LongValue> wc = map.context(sb)) {
+                                    try (MapKeyContext<?, LongValue> wc = map.context(sb)) {
                                         wc.updateLock().lock();
                                         if (wc.containsKey()) {
                                             n = wc.entry().addLong(wc.valueOffset(), 1);
@@ -1636,7 +1636,7 @@ public class ChronicleMapTest {
         LongValue value = nativeLongValue();
 
         // this will add the entry
-        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
             assertEquals(0, context.get().getValue());
             assert value == context.get();
             LongValue value1 = context.get();
@@ -1644,7 +1644,7 @@ public class ChronicleMapTest {
         }
 
         // check that the entry was added
-        try (MapKeyContext<LongValue> context = map.context("one")) {
+        try (MapKeyContext<?, LongValue> context = map.context("one")) {
             assertEquals(true, context.containsKey());
             LongValue v = context.getUsing(value);
             assert v == value;
@@ -1652,29 +1652,29 @@ public class ChronicleMapTest {
         }
 
         // this will remove the entry
-        try (MapKeyContext<LongValue> context = map.context("one")) {
+        try (MapKeyContext<?, LongValue> context = map.context("one")) {
             context.remove();
         }
 
         // check that the entry was removed
-        try (MapKeyContext<LongValue> context = map.context("one")) {
+        try (MapKeyContext<?, LongValue> context = map.context("one")) {
             context.updateLock().lock();
             assertEquals(false, context.containsKey());
             assertEquals(null, context.get());
         }
 
-        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
             assert value == context.get();
             assertEquals(0, context.get().getValue());
         }
 
-        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
             assert value == context.get();
             context.get().addValue(1);
         }
 
         // check that the entry was removed
-        try (MapKeyContext<LongValue> context = map.context("one")) {
+        try (MapKeyContext<?, LongValue> context = map.context("one")) {
             LongValue v = context.getUsing(value);
             assert value == v;
             assertEquals(1, context.get().getValue());
@@ -1728,7 +1728,7 @@ public class ChronicleMapTest {
 
         try (final ChronicleMap<CharSequence, String> map = builder.create()) {
             // this will add the entry
-            try (MapKeyContext<String> context = map.acquireContext("one", "")) {
+            try (MapKeyContext<?, String> context = map.acquireContext("one", "")) {
                 // do nothing
             }
         }
@@ -1746,7 +1746,7 @@ public class ChronicleMapTest {
                 .create()) {
             StringBuilder value = new StringBuilder();
 
-            try (MapKeyContext<CharSequence> context = map.acquireContext("one", value)) {
+            try (MapKeyContext<?, CharSequence> context = map.acquireContext("one", value)) {
                 value.append("Hello World");
             }
 
@@ -1766,55 +1766,55 @@ public class ChronicleMapTest {
 
         LongValue value = DataValueClasses.newDirectReference(LongValue.class);
 
-        try (MapKeyContext<LongValue> context = map.context("one")) {
+        try (MapKeyContext<?, LongValue> context = map.context("one")) {
             assertEquals(false, context.containsKey());
             assertEquals(null, context.get());
         }
 
-        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
             value.setValue(10);
         }
 
         // this will add the entry
-        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
             LongValue value1 = context.get();
             value1.addValue(1);
         }
 
         // check that the entry was added
-        try (MapKeyContext<LongValue> context = map.context("one")) {
+        try (MapKeyContext<?, LongValue> context = map.context("one")) {
             assertEquals(true, context.containsKey());
             assertEquals(11, context.get().getValue());
         }
 
         // this will remove the entry
-        try (MapKeyContext<LongValue> context = map.context("one")) {
+        try (MapKeyContext<?, LongValue> context = map.context("one")) {
             context.remove();
         }
 
         // check that the entry was removed
-        try (MapKeyContext<LongValue> context = map.context("one")) {
+        try (MapKeyContext<?, LongValue> context = map.context("one")) {
             assertEquals(false, context.containsKey());
             assertEquals(null, context.get());
         }
 
-        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
             assertEquals(0, context.get().getValue());
         }
 
         value.setValue(1);
 
-        try (MapKeyContext<LongValue> lockedEntry = map.context("one")) {
+        try (MapKeyContext<?, LongValue> lockedEntry = map.context("one")) {
             assertEquals(1, lockedEntry.get().getValue());
         }
 
-        try (MapKeyContext<LongValue> context = map.acquireContext("one", value)) {
+        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
             LongValue value1 = context.get();
             value1.addValue(1);
         }
 
         // check that the entry was removed
-        try (MapKeyContext<LongValue> context = map.context("one")) {
+        try (MapKeyContext<?, LongValue> context = map.context("one")) {
             LongValue value1 = context.get();
             assertEquals(2, value1.getValue());
         }

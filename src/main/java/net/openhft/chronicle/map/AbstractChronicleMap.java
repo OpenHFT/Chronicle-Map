@@ -17,6 +17,10 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.KeyContext;
+import net.openhft.chronicle.hash.function.Consumer;
+import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.function.Predicate;
+import net.openhft.chronicle.map.ReplicatedChronicleMap.ReplicatedContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -26,6 +30,7 @@ import java.util.*;
 
 import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.map.Objects.requireNonNull;
+import static net.openhft.chronicle.map.VanillaContext.SearchState.DELETED;
 
 abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
         implements ChronicleMap<K, V>, Serializable {
@@ -39,14 +44,14 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
     @Override
     @SuppressWarnings("unchecked")
     public final boolean containsKey(Object key) {
-        try (MapKeyContext<V> c = context((K) key)) {
+        try (MapKeyContext<K, V> c = context((K) key)) {
             return c.containsKey();
         }
     }
 
     @Override
     public final V put(K key, V value) {
-        try (MapKeyContext<V> c = context(key)) {
+        try (MapKeyContext<K, V> c = context(key)) {
             // We cannot read the previous value under read lock, because then we will need
             // to release the read lock -> acquire write lock, the value might be updated in
             // between, that will break ConcurrentMap.put() atomicity guarantee. So, we acquire
@@ -58,14 +63,14 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-    V prevValueOnPut(MapKeyContext<V> context) {
+    V prevValueOnPut(MapKeyContext<K, V> context) {
         return context.getUsing(null);
     }
 
     @Override
     public final V putIfAbsent(K key, V value) {
         checkValue(value);
-        try (MapKeyContext<V> c = context(key)) {
+        try (MapKeyContext<K, V> c = context(key)) {
             // putIfAbsent() shouldn't actually put most of the time,
             // so check if the key is present under read lock first:
             if (c.readLock().tryLock()) {
@@ -99,7 +104,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
 
     @Override
     public final V getUsing(K key, V usingValue) {
-        try (MapKeyContext<V> c = context(key)) {
+        try (MapKeyContext<K, V> c = context(key)) {
             return c.getUsing(usingValue);
         }
     }
@@ -142,7 +147,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
     @Override
     public <R> R getMapped(K key, @NotNull Function<? super V, R> function) {
         requireNonNull(function);
-        try (MapKeyContext<V> c = context(key)) {
+        try (MapKeyContext<K, V> c = context(key)) {
             return c.containsKey() ? function.apply(c.get()) : null;
         }
     }
@@ -150,7 +155,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
     @Override
     public V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
         requireNonNull(unaryOperator);
-        try (MapKeyContext<V> c = context(key)) {
+        try (MapKeyContext<K, V> c = context(key)) {
             // putMapped() should find a value, update & put most of the time,
             // so don't try to check key presence under read lock first,
             // as in putIfAbsent()/acquireUsing(), start with update lock:
@@ -178,7 +183,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
     @Override
     @SuppressWarnings("unchecked")
     public final V remove(Object key) {
-        try (MapKeyContext<V> c = context((K) key)) {
+        try (MapKeyContext<K, V> c = context((K) key)) {
             // We cannot read the previous value under read lock, because then we will need
             // to release the read lock -> acquire write lock, the value might be updated in
             // between, that will break ConcurrentMap.remove() atomicity guarantee. So, we acquire
@@ -190,7 +195,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
         }
     }
 
-    V prevValueOnRemove(MapKeyContext<V> context) {
+    V prevValueOnRemove(MapKeyContext<K, V> context) {
         return context.getUsing(null);
     }
 
@@ -200,7 +205,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
         if (value == null)
             return false; // CHM compatibility; General ChronicleMap policy is to throw NPE
         checkValue((V) value);
-        try (MapKeyContext<V> c = context((K) key)) {
+        try (MapKeyContext<K, V> c = context((K) key)) {
             // remove(key, value) should find the entry & remove most of the time,
             // so don't try to check key presence and value equivalence under read lock first,
             // as in putIfAbsent()/acquireUsing(), start with update lock:
@@ -212,7 +217,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
     @Override
     public final V replace(K key, V value) {
         checkValue(value);
-        try (MapKeyContext<V> c = context(key)) {
+        try (MapKeyContext<K, V> c = context(key)) {
             // replace(key, value) should find the key & put the value most of the time,
             // so don't try to check key presence under read lock first,
             // as in putIfAbsent()/acquireUsing(), start with update lock:
@@ -232,7 +237,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
     public final boolean replace(K key, V oldValue, V newValue) {
         checkValue(oldValue);
         checkValue(newValue);
-        try (MapKeyContext<V> c = context(key)) {
+        try (MapKeyContext<K, V> c = context(key)) {
             // replace(key, old, new) should find the entry & put new value most of the time,
             // so don't try to check key presence and value equivalence under read lock first,
             // as in putIfAbsent()/acquireUsing(), start with update lock:
@@ -261,7 +266,6 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
     class EntryIterator implements Iterator<Entry<K, V>>, HashLookup.EntryConsumer {
         /**
          * Very inefficient (esp. if segments are large), but CORRECT implementation
-         * TODO map.forEachEntry(Consumer<MapKeyContext<V>>)
          */
         private final Thread ownerThread = Thread.currentThread();
         private int segmentIndex = actualSegments() - 1;
@@ -347,7 +351,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
 
         @Override
         public V setValue(V value) {
-            try (MapKeyContext<V> c = AbstractChronicleMap.this.context(getKey())) {
+            try (MapKeyContext<K, V> c = AbstractChronicleMap.this.context(getKey())) {
                 c.put(value);
             }
             return super.setValue(value);
@@ -399,6 +403,83 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
 
         public final void clear() {
             AbstractChronicleMap.this.clear();
+        }
+    }
+
+    @Override
+    public void forEachEntry(final Consumer<? super MapKeyContext<K, V>> action) {
+        forEachEntryWhile(new Predicate<MapKeyContext<K, V>>() {
+            @Override
+            public boolean test(MapKeyContext<K, V> c) {
+                action.accept(c);
+                return true;
+            }
+        });
+    }
+
+    @Override
+    public boolean forEachEntryWhile(final Predicate<? super MapKeyContext<K, V>> predicate) {
+        boolean interrupt = false;
+        iteration:
+        try (VanillaContext<K, ?, ?, V, ?, ?> c = mapContext()) {
+            ForEachWhilePredicate<K, V> hashLookupPredicate =
+                    new ForEachWhilePredicate<>(c, predicate);
+            for (int segmentIndex = actualSegments() - 1; segmentIndex >= 0; segmentIndex--) {
+                c.segmentIndex = segmentIndex;
+                c.forEachEntry = true;
+                try {
+                    c.updateLock().lock();
+                    if (c.size() == 0)
+                        continue;
+                    c.initSegment();
+                    c.hashLookup.forEachRemoving(hashLookupPredicate);
+                    if (hashLookupPredicate.shouldBreak) {
+                        interrupt = true;
+                        break iteration;
+                    }
+                } finally {
+                    c.forEachEntry = false;
+                    c.closeSegmentIndex();
+                }
+            }
+        }
+        return !interrupt;
+    }
+
+
+    private static class ForEachWhilePredicate<K, V> implements HashLookup.EntryPredicate {
+        private final VanillaContext<K, ?, ?, V, ?, ?> c;
+        private final Predicate<? super MapKeyContext<K, V>> predicate;
+        boolean shouldBreak = false;
+
+        public ForEachWhilePredicate(VanillaContext<K, ?, ?, V, ?, ?> c,
+                                     Predicate<? super MapKeyContext<K, V>> predicate) {
+            this.c = c;
+            this.predicate = predicate;
+            shouldBreak = false;
+        }
+
+        @Override
+        public boolean remove(long hash, long pos) {
+            c.pos = pos;
+            c.initKeyFromPos();
+            try {
+                if (!c.containsKey()) // for replicated map
+                    return false;
+                shouldBreak = predicate.test(c);
+                // release all exclusive locks: possibly if context.remove() is performed
+                // in the callback, or acquired manually
+                while (c.writeLockCount > 0) {
+                    c.writeLock().unlock();
+                }
+                if (!c.isUpdateLocked()) {
+                    throw new IllegalStateException("Shouldn't release update lock " +
+                            "inside forEachEntry() callback");
+                }
+                return c.state == DELETED && !(c instanceof ReplicatedContext);
+            } finally {
+                c.closeKeySearch();
+            }
         }
     }
 }

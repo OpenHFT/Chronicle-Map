@@ -14,21 +14,8 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
-
-import net.openhft.chronicle.hash.KeyContext;
-
-public interface MapKeyContext<K, V> extends KeyContext<K> {
-
-    long valueOffset();
-
-    long valueSize();
-
-    boolean valueEqualTo(V value);
-
-    V get();
-
-    V getUsing(V usingValue);
-
-    boolean put(V newValue);
-}
+/**
+ * Copies of some interfaces from Java 8 used by Chronicle Map project
+ * for Java 7+.
+ */
+package net.openhft.chronicle.hash.function;

@@ -19,6 +19,9 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.KeyContext;
+import net.openhft.chronicle.hash.function.Consumer;
+import net.openhft.chronicle.hash.function.Function;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshaller;
@@ -53,10 +56,8 @@ import java.util.concurrent.ConcurrentMap;
  * @param <K> the map key type
  * @param <V> the map value type
  */
-public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash<K> {
-
-    @Override
-    MapKeyContext<V> context(K key);
+public interface ChronicleMap<K, V>
+        extends ConcurrentMap<K, V>, ChronicleHash<K, MapKeyContext<K, V>> {
 
     /**
      * Returns the value to which the specified key is mapped, or {@code null} if this map contains
@@ -140,7 +141,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash<K
     V acquireUsing(@NotNull K key, V usingValue);
 
     @NotNull
-    MapKeyContext<V> acquireContext(@NotNull K key, @NotNull V usingValue);
+    MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue);
 
     /**
      * Apply a mapping to the value returned by a key and return a result. A read lock is assumed.

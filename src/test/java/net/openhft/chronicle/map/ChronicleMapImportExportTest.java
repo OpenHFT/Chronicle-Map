@@ -255,7 +255,7 @@ public class ChronicleMapImportExportTest {
             LongValue value = expected.newValueInstance();
 
             // this will add the entry
-            try (MapKeyContext<LongValue> context = expected.acquireContext("one", value)) {
+            try (MapKeyContext<?, LongValue> context = expected.acquireContext("one", value)) {
                 assertEquals(0, context.get().getValue());
                 assert value == context.get();
                 LongValue value1 = context.get();

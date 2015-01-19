@@ -19,6 +19,8 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.KeyContext;
+import net.openhft.chronicle.hash.function.Consumer;
+import net.openhft.chronicle.hash.function.Predicate;
 import net.openhft.chronicle.map.ChronicleMap;
 
 import java.io.File;
@@ -128,6 +130,16 @@ class SetFromMap<E> extends AbstractSet<E>
     @Override
     public Class<E> keyClass() {
         return m.keyClass();
+    }
+
+    @Override
+    public boolean forEachEntryWhile(Predicate<? super KeyContext<E>> predicate) {
+        return m.forEachEntryWhile(predicate);
+    }
+
+    @Override
+    public void forEachEntry(Consumer<? super KeyContext<E>> action) {
+        m.forEachEntry(action);
     }
 
     @Override

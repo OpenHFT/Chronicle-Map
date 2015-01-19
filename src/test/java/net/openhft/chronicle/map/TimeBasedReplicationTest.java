@@ -314,7 +314,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             // now test assume that we receive a late update to the map, the following update
             // should be ignored
             final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5);
-            try (MapKeyContext<CharSequence> c = map.context("key-1")) {
+            try (MapKeyContext<?, CharSequence> c = map.context("key-1")) {
                 c.writeLock().lock();
                 ((ReplicatedChronicleMap.ReplicatedContext) c).newIdentifier = (byte) 2;
                 ((ReplicatedChronicleMap.ReplicatedContext) c).newTimestamp = late;
@@ -350,7 +350,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
             // test assume that we receive a late update to the map, the following update should be ignored
             final long late = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(50);
-            try (MapKeyContext<CharSequence> c = map.context("key-1")) {
+            try (MapKeyContext<?, CharSequence> c = map.context("key-1")) {
                 c.writeLock().lock();
                 ((ReplicatedChronicleMap.ReplicatedContext) c).newIdentifier = IDENTIFIER;
                 ((ReplicatedChronicleMap.ReplicatedContext) c).newTimestamp = late;

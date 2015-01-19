@@ -18,6 +18,9 @@
 
 package net.openhft.chronicle.map.jsr166.map;
 
+import net.openhft.chronicle.hash.function.Consumer;
+import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.function.Predicate;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.map.MapKeyContext;
@@ -107,7 +110,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
-        public MapKeyContext<V> context(K key) {
+        public MapKeyContext<K, V> context(K key) {
             return d.context(key);
         }
 
@@ -166,7 +169,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
         @NotNull
         @Override
-        public MapKeyContext<V> acquireContext(@NotNull K key, @NotNull V usingValue) {
+        public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
             throw new UnsupportedOperationException();
         }
 
@@ -203,6 +206,16 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         @Override
         public Class<K> keyClass() {
             return d.keyClass();
+        }
+
+        @Override
+        public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
+            return d.forEachEntryWhile(predicate);
+        }
+
+        @Override
+        public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
+            d.forEachEntry(action);
         }
 
         @Override

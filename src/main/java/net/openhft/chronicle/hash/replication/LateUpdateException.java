@@ -16,11 +16,13 @@
 
 package net.openhft.chronicle.hash.replication;
 
+import net.openhft.chronicle.hash.ChronicleHash;
+
 /**
- * Thrown if update to replicated {@link net.openhft.chronicle.hash.ChronicleHash} is rejected
- * due to local time is lesser than the time of the latest update to the entry. This most likely
- * indicates bugs or largely inconsistent timing across replicating nodes. If this is tolerated,
- * you should catch {@code LateUpdateException} and ignore it.
+ * Thrown if update to replicated {@link ChronicleHash} is rejected due to local time is lesser
+ * than the time of the latest update to the entry. This most likely indicates bugs or largely
+ * inconsistent timing across replicating nodes. If this is tolerated, you should catch
+ * {@code LateUpdateException} and ignore it.
  */
 public class LateUpdateException extends RuntimeException {
     private static final long serialVersionUID = 0L;

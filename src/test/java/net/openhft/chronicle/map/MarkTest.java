@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.function.Function;
 import net.openhft.lang.MemoryUnit;
 import org.junit.Test;
 

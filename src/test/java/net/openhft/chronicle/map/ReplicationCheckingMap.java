@@ -18,6 +18,9 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.function.Consumer;
+import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -253,6 +256,16 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
+        return map1.forEachEntryWhile(predicate);
+    }
+
+    @Override
+    public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
+        map1.forEachEntry(action);
+    }
+
+    @Override
     public Class<V> valueClass() {
         return map1.valueClass();
     }
@@ -264,12 +277,12 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @NotNull
     @Override
-    public MapKeyContext<V> acquireContext(@NotNull K key, @NotNull V usingValue) {
+    public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public MapKeyContext<V> context(K key) {
+    public MapKeyContext<K, V> context(K key) {
         throw new UnsupportedOperationException();
     }
 

@@ -19,6 +19,7 @@
 package net.openhft.chronicle.map;
 
 import junit.framework.Assert;
+import net.openhft.chronicle.hash.function.Function;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;

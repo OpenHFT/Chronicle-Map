@@ -218,8 +218,11 @@ class HashLookup {
     }
 
     private long remove0() {
-        long posToRemove = searchPos;
-        long entryToRemove = readEntry(searchPos);
+        return remove00(searchPos);
+    }
+
+    private long remove00(long posToRemove) {
+        long entryToRemove = readEntry(posToRemove);
         long posToShift = posToRemove;
         while (true) {
             posToShift = step(posToShift);
@@ -284,5 +287,27 @@ class HashLookup {
             if (!empty(entry))
                 action.accept(key(entry), value(entry));
         }
+    }
+
+    static interface EntryPredicate {
+        boolean remove(long hash, long pos);
+    }
+
+    public void forEachRemoving(EntryPredicate predicate) {
+        long pos = 0L;
+        while (!empty(readEntry(pos))) {
+            pos = step(pos);
+        }
+        long startPos = pos;
+        do {
+            pos = step(pos);
+            long entry = readEntry(pos);
+            if (!empty(entry)) {
+                if (predicate.remove(key(entry), value(entry))) {
+                    remove00(pos);
+                    pos = stepBack(pos);
+                }
+            }
+        } while (pos != startPos);
     }
 }

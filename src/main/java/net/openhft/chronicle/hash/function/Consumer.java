@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.function;
 
-import net.openhft.chronicle.hash.KeyContext;
+/**
+ * Represents an operation that accepts a single input argument and returns no
+ * result. Unlike most other functional interfaces, {@code Consumer} is expected
+ * to operate via side-effects.
+ *
+ * <p>This is a functional interface whose functional method is {@link #accept(Object)}.
+ *
+ * <p>This is a copy of Java 8's {@code java.util.function.Consumer} interface.
+ *
+ * @param <T> the type of the input to the operation
+ */
+public interface Consumer<T> {
 
-public interface MapKeyContext<K, V> extends KeyContext<K> {
-
-    long valueOffset();
-
-    long valueSize();
-
-    boolean valueEqualTo(V value);
-
-    V get();
-
-    V getUsing(V usingValue);
-
-    boolean put(V newValue);
+    /**
+     * Performs this operation on the given argument.
+     *
+     * @param t the input argument
+     */
+    void accept(T t);
 }

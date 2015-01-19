@@ -31,8 +31,21 @@ import java.util.ConcurrentModificationException;
  *     <li>All methods throw {@code IllegalStateException} immediately, if called after
  *     {@link #close()} called on this context and returned.</li>
  * </ul>
+ *
+ * @param <K> key type
  */
-public interface KeyContext extends AutoCloseable, InterProcessReadWriteUpdateLock {
+public interface KeyContext<K> extends AutoCloseable, InterProcessReadWriteUpdateLock {
+
+    /**
+     * Returns the key object of this context. The instance might be reused, so you shouldn't
+     * save the returned object and use it after the context is closed or the callback (to which
+     * this context is provided) return. Might acquire {@link #readLock} before reading the key,
+     * if the context is not locked yet.
+     *
+     * @return the key object of this context
+     */
+    @NotNull
+    K key();
 
     /**
      * Returns the entry bytes, if the key is present in the hash, otherwise throws
@@ -78,8 +91,7 @@ public interface KeyContext extends AutoCloseable, InterProcessReadWriteUpdateLo
      * is already held.
      *
      * @return {@code true} if the key was actually removed (hash was updated),
-     * {@code false} if the key is already absent in the hash, or the remove operation was rejected
-     * by the hash for some reason
+     * {@code false} if the key is already absent in the hash
      * @throws IllegalStateException if the context is locked for read, but not for update, and
      * update or write lock is actually required for {@code remove()} in this {@code KeyContext}
      * implementation

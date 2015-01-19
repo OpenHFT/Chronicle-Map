@@ -73,7 +73,7 @@ public class TestNesterInterfaceMarshal {
         TestInstrumentVOInterface intrumentVOInterface = map.newValueInstance();
 
 
-        try (MapKeyContext<TestInstrumentVOInterface> wc = map.acquireContext
+        try (MapKeyContext<?, TestInstrumentVOInterface> wc = map.acquireContext
                 ("KEY1", intrumentVOInterface)) {
             intrumentVOInterface.setSymbol("Flyer");
             intrumentVOInterface.setCurrencyCode("USA");

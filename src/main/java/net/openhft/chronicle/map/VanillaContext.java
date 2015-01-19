@@ -44,7 +44,7 @@ import static net.openhft.lang.io.NativeBytes.UNSAFE;
 
 class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
-        implements MapKeyContext<V> {
+        implements MapKeyContext<K, V> {
 
     static interface ContextFactory<T extends VanillaContext> {
         T createContext(VanillaContext root, int indexInContextCache);
@@ -433,6 +433,18 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return keySize;
     }
 
+    @NotNull
+    @Override
+    public K key() {
+        if (key != null)
+            return key;
+        initKeySearch();
+        initMapAndContextLocals();
+        mapAndContextLocalsReference.mapAndContextLocals.reusableKey =
+                key0(mapAndContextLocalsReference.mapAndContextLocals.reusableKey);
+        assert key != null;
+        return key;
+    }
 
     /////////////////////////////////////////////////
     // Key hash
@@ -1654,7 +1666,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         if (containsKey()) {
             initEntrySizeInChunks();
             upgradeToWriteLock();
-            hashLookup.remove();
+            hashLookupRemove();
             free(pos, entrySizeInChunks);
             size(size() - 1L);
             state = DELETED;
@@ -1662,6 +1674,13 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         } else {
             return false;
         }
+    }
+
+    boolean forEachEntry;
+
+    void hashLookupRemove() {
+        if (!forEachEntry)
+            hashLookup.remove();
     }
 
     void initRemoveDependencies() {
@@ -1901,9 +1920,13 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     K immutableKey() {
+        return key0(null);
+    }
+
+    K key0(K usingKey) {
         initKeyReader();
         entry.position(keyOffset);
-        key = keyReader.read(entry, keySize, null);
+        key = keyReader.read(entry, keySize, usingKey);
         return key;
     }
 

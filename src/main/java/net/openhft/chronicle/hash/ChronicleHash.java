@@ -18,6 +18,8 @@
 
 package net.openhft.chronicle.hash;
 
+import net.openhft.chronicle.hash.function.Consumer;
+import net.openhft.chronicle.hash.function.Predicate;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 
@@ -28,7 +30,7 @@ import java.io.File;
  * This interface defines common {@link ChronicleMap} and {@link ChronicleSet}, related to off-heap
  * memory management and file-mapping. Not usable by itself.
  */
-public interface ChronicleHash<K> extends Closeable {
+public interface ChronicleHash<K, C extends KeyContext<K>> extends Closeable {
     /**
      * Returns the file this hash container mapped to, i. e. when it is created by
      * {@link ChronicleHashBuilder#create()} call, or {@code null} if it is purely in-memory,
@@ -42,12 +44,42 @@ public interface ChronicleHash<K> extends Closeable {
 
     long longSize();
 
-    KeyContext context(K key);
+    C context(K key);
 
     /**
      * @return the class of {@code <K>}
      */
     Class<K> keyClass();
+
+    /**
+     * Checks the given predicate on each entry in this {@code ChronicleHash} until all entries
+     * have been processed or the predicate returns {@code false} for some entry, or throws
+     * an {@code Exception}. Exceptions thrown by the predicate are relayed to the caller.
+     *
+     * <p>The order in which the entries will be processed is unspecified. It might differ from
+     * the order of iteration via {@code Iterator} returned by any method of this
+     * {@code ChronicleHash} or it's collection view.
+     *
+     * <p>If the {@code ChronicleHash} is empty, this method returns {@code true} immediately.
+     *
+     * @param predicate the predicate to be checked for each entry
+     * @return {@code true} if the predicate returned {@code true} for all entries of
+     * the {@code ChronicleHash}, {@code false} if it returned {@code false} for the entry
+     */
+    boolean forEachEntryWhile(Predicate<? super C> predicate);
+
+    /**
+     * Performs the given action for each entry in this {@code ChronicleHash} until all entries have
+     * been processed or the action throws an {@code Exception}. Exceptions thrown by the action are
+     * relayed to the caller.
+     *
+     * <p>The order in which the entries will be processed is unspecified. It might differ from
+     * the order of iteration via {@code Iterator} returned by any method of this
+     * {@code ChronicleHash} or it's collection view.
+     *
+     * @param action the action to be performed for each entry
+     */
+    void forEachEntry(Consumer<? super C> action);
 
     /**
      * Releases the off-heap memory, used by this hash container and resources, used by replication,

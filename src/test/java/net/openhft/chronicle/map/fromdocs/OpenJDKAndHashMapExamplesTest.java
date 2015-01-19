@@ -80,7 +80,7 @@ public class OpenJDKAndHashMapExamplesTest {
                 .entries(1000)
                 .createPersistedTo(file);
 
-        try (MapKeyContext<BondVOInterface> c = chmB.context("369604103")) {
+        try (MapKeyContext<String, BondVOInterface> c = chmB.context("369604103")) {
             BondVOInterface bond = c.get();
             if (bond != null) {
                 assertEquals(5.0 / 100, bond.getCoupon(), 0.0);
@@ -97,7 +97,7 @@ public class OpenJDKAndHashMapExamplesTest {
 
         BondVOInterface bond = chm.newValueInstance();
         // lookup the key and give me a reference I can update in a thread safe way.
-        try (MapKeyContext<BondVOInterface> c = chm.acquireContext("369604103", bond)) {
+        try (MapKeyContext<String, BondVOInterface> c = chm.acquireContext("369604103", bond)) {
             // found a key and bond has been set
             // get directly without touching the rest of the record.
             long _matDate = bond.getMaturityDate();
