@@ -1687,7 +1687,7 @@ class StatelessServerConnector<K, V> {
                                       final long sizeLocation, long timestamp, byte id) {
         try {
             writer.ensureBufferSize(1L);
-            bytesMap.replace(reader, reader, reader);
+            writer.in().writeBoolean(bytesMap.replace(reader, reader, reader));
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         }
@@ -1813,7 +1813,7 @@ class StatelessServerConnector<K, V> {
                              @NotNull TcpReplicator.TcpSocketChannelEntryWriter writer,
                              final long sizeLocation) {
         try {
-            writer.in().writeBoolean(map.containsKey(reader));
+            writer.in().writeBoolean(bytesMap.containsKey(reader));
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         }
@@ -1843,7 +1843,7 @@ class StatelessServerConnector<K, V> {
                      final long sizeLocation, long transactionId) {
         bytesMap.output = writer;
         try {
-            map.get(reader);
+            bytesMap.get(reader);
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         } finally {
