@@ -54,16 +54,18 @@ public class OffHeapByteArrayExampleTest {
 
         chm.put(key, value);
 
-        // clear the byteValue just to prove it works when we read it back
-        byteValue.setValue((byte) '0');
+        // clear the value to prove it works
+        byteValue.setValue((byte) 0);
+        value.setByteValueAt(1, byteValue);
 
         chm.getUsing(key, value);
 
+        Assert.assertEquals(0, value.getByteValueAt(2).getValue());
+        Assert.assertEquals(0, value.getByteValueAt(3).getValue());
 
         byte actual = value.getByteValueAt(1).getValue();
         Assert.assertEquals(EXPECTED, actual);
 
-        Assert.assertEquals(0, value.getByteValueAt(2).getValue());
-        Assert.assertEquals(0, value.getByteValueAt(3).getValue());
+
     }
 }
