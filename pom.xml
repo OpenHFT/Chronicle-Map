@@ -174,11 +174,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-scm-publish-plugin</artifactId>
                 <configuration>
-                    <checkoutDirectory>${project.build.directory}/scmpublish/javadoc
+                    <checkoutDirectory>${project.build.directory}/scmpublish/javadoc/
                     </checkoutDirectory>
                     <checkinComment>Publishing javadoc for ${project.artifactId}:${project.version}
                     </checkinComment>
-                    <content>${project.reporting.outputDirectory}</content>
+                    <content>${project.reporting.outputDirectory}/2.1.x</content>
                     <skipDeletedFiles>true</skipDeletedFiles>
                     <pubScmUrl>scm:git:git@github.com:OpenHFT/Chronicle-Map</pubScmUrl>
                     <scmBranch>gh-pages</scmBranch>
