@@ -66,6 +66,5 @@ public class OffHeapByteArrayExampleTest {
         byte actual = value.getByteValueAt(1).getValue();
         Assert.assertEquals(EXPECTED, actual);
 
-
     }
 }
