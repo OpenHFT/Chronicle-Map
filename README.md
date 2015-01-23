@@ -592,6 +592,82 @@ If after some business logic, in our example after reading the 'issueDate' and
 'context' is already aware of the entries location in memory. So it will be quicker to call
 `context.removeEntry()` rather than `map.remove(key)`.
 
+
+####  Example of an off heap byte[7]
+
+You can also create off heap arrays, see the following example
+
+``` java
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.lang.model.DataValueClasses;
+import net.openhft.lang.model.constraints.MaxSize;
+import net.openhft.lang.values.ByteValue;
+import net.openhft.lang.values.LongValue;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+public class OffHeapByteArrayExampleTest {
+
+    public static final char EXPECTED = 'b';
+
+    interface ByteArray {
+        void setByteValueAt(@MaxSize(7) int index, ByteValue value);
+
+        ByteValue getByteValueAt(int index);
+    }
+
+    private static ChronicleMap<LongValue, ByteArray> chm;
+
+    @BeforeClass
+    public static void beforeClass() {
+        chm = ChronicleMapBuilder
+                .of(LongValue.class, ByteArray.class)
+                .entries(1000)
+                .create();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        if (chm != null)
+            chm.close();
+    }
+
+    @Test
+    public void test() {
+
+        // this objects will be reused
+        ByteValue byteValue = DataValueClasses.newDirectInstance(ByteValue.class);
+        ByteArray value = chm.newValueInstance();
+        LongValue key = chm.newKeyInstance();
+
+
+        key.setValue(1);
+
+        // this is kind of like byteValue[1] = 'b'
+        byteValue.setValue((byte) EXPECTED);
+        value.setByteValueAt(1, byteValue);
+
+        chm.put(key, value);
+
+        // clear the value to prove it works
+        byteValue.setValue((byte) 0);
+        value.setByteValueAt(1, byteValue);
+
+        chm.getUsing(key, value);
+
+        Assert.assertEquals(0, value.getByteValueAt(2).getValue());
+        Assert.assertEquals(0, value.getByteValueAt(3).getValue());
+
+        byte actual = value.getByteValueAt(1).getValue();
+        Assert.assertEquals(EXPECTED, actual);
+
+    }
+}
+```
+
 ## Serialization
 
 ![Serialization](http://openhft.net/wp-content/uploads/2014/09/Serialization_01.jpg)
