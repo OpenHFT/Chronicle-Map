@@ -154,6 +154,10 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     // Map
     VanillaChronicleMap<K, KI, MKI, V, VI, MVI> m;
 
+    boolean mapInit() {
+        return m != null;
+    }
+
     void initMap(VanillaChronicleMap map) {
         initMapDependencies();
         initMap0(map);
@@ -168,12 +172,12 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void checkMapInit() {
-        if (m == null)
+        if (!mapInit())
             throw new IllegalStateException("Map should be init");
     }
 
     void closeMap() {
-        if (m == null)
+        if (!mapInit())
             return;
         closeMapDependants();
         closeMap0();
@@ -206,6 +210,28 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     void doClose() {
         closeMap();
         used = false;
+        totalCheckClosed();
+    }
+
+    void totalCheckClosed() {
+        assert !mapInit() : "map not closed";
+        assert !mapAndContextLocalsInit() : "map&context locals not closed";
+        assert !keyModelInit() : "key model not closed";
+        assert !keyReaderInit() : "key reader not closed";
+        assert !keyInit() : "key not closed";
+        assert !keyHashInit() : "key hash not closed";
+        assert !segmentIndexInit() : "segment index not closed";
+        assert !segmentHeaderInit() : "segment header not closed";
+        assert !locksInit() : "locks not closed";
+        assert !segmentInit() : "segment not closed";
+        assert !hashLookupInit() : "hash lookup not closed";
+        assert !keySearchInit() : "key search not closed";
+        assert !valueBytesInit() : "value bytes not closed";
+        assert !valueReaderInit() : "value reader not closed";
+        assert !valueInit() : "value not closed";
+        assert !valueModelInit() : "value model not closed";
+        assert !newValueInit() : "new value not closed";
+        assert !entrySizeInChunksInit() : "entry size in chunks not closed";
     }
 
     synchronized void closeFromAnotherThread() {
@@ -249,8 +275,12 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
+    boolean mapAndContextLocalsInit() {
+        return mapAndContextLocalsReference != null;
+    }
+
     void initMapAndContextLocals() {
-        if (mapAndContextLocalsReference != null)
+        if (mapAndContextLocalsInit())
             return;
         initMapAndContextLocalsDependencies();
         initMapAndContextLocals0();
@@ -296,7 +326,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeMapAndContextLocals() {
-        if (mapAndContextLocalsReference == null)
+        if (!mapAndContextLocalsInit())
             return;
         closeMapContextAndLocalsDependants();
         closeMapAndContextLocals0();
@@ -317,10 +347,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     KI keyInterop;
 
     void initKeyModel() {
-        if (keyInterop != null)
+        if (keyModelInit())
             return;
         initKeyModelDependencies();
         initKeyModel0();
+    }
+
+    boolean keyModelInit() {
+        return keyInterop != null;
     }
 
     void initKeyModelDependencies() {
@@ -332,7 +366,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeKeyModel() {
-        if (keyInterop == null)
+        if (!keyModelInit())
             return;
         closeKeyModelDependants();
         closeKeyModel0();
@@ -352,10 +386,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     BytesReader<K> keyReader;
 
     void initKeyReader() {
-        if (keyReader != null)
+        if (keyReaderInit())
             return;
         initKeyReaderDependencies();
         initKeyReader0();
+    }
+
+    boolean keyReaderInit() {
+        return keyReader != null;
     }
 
     void initKeyReaderDependencies() {
@@ -367,7 +405,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeKeyReader() {
-        if (keyReader == null)
+        if (!keyReaderInit())
             return;
         closeKeyReaderDependants();
         closeKeyReader0();
@@ -387,10 +425,13 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     MKI metaKeyInterop;
     long keySize;
 
-
     void initKey(K key) {
         initKeyDependencies();
         initKey0(key);
+    }
+
+    boolean keyInit() {
+        return key != null;
     }
 
     void initKeyDependencies() {
@@ -406,12 +447,12 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void checkKeyInit() {
-        if (key == null)
+        if (!keyInit())
             throw new IllegalStateException("Key should be init");
     }
 
     void closeKey() {
-        if (key == null)
+        if (!keyInit())
             return;
         closeKeyDependants();
         closeKey0();
@@ -436,7 +477,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     @NotNull
     @Override
     public K key() {
-        if (key != null)
+        if (keyInit())
             return key;
         initKeySearch();
         initMapAndContextLocals();
@@ -451,10 +492,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     long hash;
 
     void initKeyHash() {
-        if (hash != 0)
+        if (keyHashInit())
             return;
         initKeyHashDependencies();
         initKeyHash0();
+    }
+
+    boolean keyHashInit() {
+        return hash != 0;
     }
 
     void initKeyHashDependencies() {
@@ -486,10 +531,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     int segmentIndex = -1;
 
     void initSegmentIndex() {
-        if (segmentIndex >= 0)
+        if (segmentIndexInit())
             return;
         initSegmentIndexDependencies();
         initSegmentIndex0();
+    }
+
+    boolean segmentIndexInit() {
+        return segmentIndex >= 0;
     }
 
     void initSegmentIndexDependencies() {
@@ -501,7 +550,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeSegmentIndex() {
-        if (segmentIndex < 0)
+        if (!segmentIndexInit())
             return;
         closeSegmentIndexDependants();
         closeSegmentIndex0();
@@ -522,10 +571,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     SegmentHeader segmentHeader;
 
     void initSegmentHeader() {
-        if (segmentHeader != null)
+        if (segmentHeaderInit())
             return;
         initSegmentHeaderDependencies();
         initSegmentHeader0();
+    }
+
+    boolean segmentHeaderInit() {
+        return segmentHeader != null;
     }
 
     void initSegmentHeaderDependencies() {
@@ -538,7 +591,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeSegmentHeader() {
-        if (segmentHeader == null)
+        if (!segmentHeaderInit())
             return;
         closeSegmentHeaderDependants();
         closeSegmentHeader0();
@@ -586,10 +639,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     final InterProcessLock writeLock = new WriteLock();
 
     void initLocks() {
-        if (rootContextOnThisSegment != null)
+        if (locksInit())
             return;
         initLocksDependencies();
         initLocks0();
+    }
+
+    boolean locksInit() {
+        return rootContextOnThisSegment != null;
     }
 
     void initLocksDependencies() {
@@ -615,7 +672,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeLocks() {
-        if (rootContextOnThisSegment == null)
+        if (!locksInit())
             return;
         closeLocksDependants();
         closeLocks0();
@@ -627,6 +684,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeLocks0() {
+        // TODO should throw ISE on attempt to close root context when children not closed
         if (rootContextOnThisSegment == this) {
             if (totalWriteLockCount > 0) {
                 segmentHeader.writeUnlock(segmentHeaderAddress);
@@ -1034,10 +1092,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     long entrySpaceOffset;
 
     void initSegment() {
-        if (entrySpaceOffset != 0L)
+        if (segmentInit())
             return;
         initSegmentDependencies();
         initSegment0();
+    }
+
+    boolean segmentInit() {
+        return entrySpaceOffset != 0;
     }
 
     void initSegmentDependencies() {
@@ -1057,7 +1119,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeSegment() {
-        if (entrySpaceOffset == 0L)
+        if (!segmentInit())
             return;
         closeSegmentDependants();
         closeSegment0();
@@ -1074,10 +1136,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     /////////////////////////////////////////////////
     // Hash lookup
     public void initHashLookup() {
-        if (hashLookup.isInit())
+        if (hashLookupInit())
             return;
         initHashLookupDependencies();
         hashLookup.init0(m.hashSplitting.segmentHash(hash));
+    }
+
+    boolean hashLookupInit() {
+        return hashLookup.isInit();
     }
 
     void initHashLookupDependencies() {
@@ -1085,7 +1151,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     public void closeHashLookup() {
-        if (!hashLookup.isInit())
+        if (!hashLookupInit())
             return;
         closeHashLookupDependants();
         hashLookup.close0();
@@ -1109,10 +1175,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     MultiStoreBytes entry;
 
     void initKeySearch() {
-        if (state != null)
+        if (keySearchInit())
             return;
         initKeySearchDependencies();
         initKeySearch0();
+    }
+
+    boolean keySearchInit() {
+        return state != null;
     }
 
     void initKeySearchDependencies() {
@@ -1145,7 +1215,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeKeySearch() {
-        if (state == null)
+        if (!keySearchInit())
             return;
         closeKeySearchDependants();
         closeKeySearch0();
@@ -1194,10 +1264,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     long valueSize;
 
     void initValueBytes() {
-        if (valueSizeOffset != 0L)
+        if (valueBytesInit())
             return;
         initValueBytesDependencies();
         initValueBytes0();
+    }
+
+    boolean valueBytesInit() {
+        return valueSizeOffset != 0;
     }
 
     void initValueBytesDependencies() {
@@ -1219,7 +1293,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeValueBytes() {
-        if (valueSizeOffset == 0L)
+        if (!valueBytesInit())
             return;
         closeValueBytesDependants();
         closeValueBytes0();
@@ -1253,10 +1327,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     BytesReader<V> valueReader;
 
     void initValueReader() {
-        if (valueReader != null)
+        if (valueReaderInit())
             return;
         initValueReaderDependencies();
         initValueReader0();
+    }
+
+    boolean valueReaderInit() {
+        return valueReader != null;
     }
 
     void initValueReaderDependencies() {
@@ -1268,7 +1346,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeValueReader() {
-        if (valueReader == null)
+        if (!valueReaderInit())
             return;
         closeValueReaderDependants();
         closeValueReader0();
@@ -1290,7 +1368,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     @Override
     public V get() {
         checkOnEachPublicOperation();
-        if (value != null)
+        if (valueInit())
             return value;
         initKeySearch();
         if (state != PRESENT)
@@ -1300,6 +1378,10 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         initValue0(mapAndContextLocalsReference.mapAndContextLocals.reusableValue);
         mapAndContextLocalsReference.mapAndContextLocals.reusableValue = value;
         return value;
+    }
+
+    boolean valueInit() {
+        return value != null;
     }
 
     void initValueDependencies() {
@@ -1327,7 +1409,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeValue() {
-        if (value == null)
+        if (!valueInit())
             return;
         closeValueDependants();
         closeValue0();
@@ -1351,10 +1433,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     VI valueInterop;
 
     void initValueModel() {
-        if (valueInterop != null)
+        if (valueModelInit())
             return;
         initValueModelDependencies();
         initValueModel0();
+    }
+
+    boolean valueModelInit() {
+        return valueInterop != null;
     }
 
     void initValueModelDependencies() {
@@ -1370,7 +1456,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeValueModel() {
-        if (valueInterop == null)
+        if (!valueModelInit())
             return;
         closeValueModelDependants();
         closeValueModel0();
@@ -1391,10 +1477,12 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     long newValueSize;
 
     void initNewValue(V newValue) {
-        if (this.newValue != null)
-            return;
         initNewValueDependencies();
         initNewValue0(newValue);
+    }
+
+    boolean newValueInit() {
+        return newValue != null;
     }
 
     void initNewValueDependencies() {
@@ -1414,7 +1502,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeNewValue() {
-        if (newValue == null)
+        if (!newValueInit())
             return;
         closeNewValueDependants();
         closeNewValue0();
@@ -1434,12 +1522,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         checkOnEachPublicOperation();
         initValueBytes();
         initNewValue(value);
-        if (newValueSize != valueSize)
-            return false;
-        entry.position(valueOffset);
-        boolean result = metaValueInterop.startsWith(valueInterop, entry, newValue);
-        closeNewValue();
-        return result;
+        try {
+            if (newValueSize != valueSize)
+                return false;
+            entry.position(valueOffset);
+            return metaValueInterop.startsWith(valueInterop, entry, newValue);
+        } finally {
+            closeNewValue();
+        }
     }
 
 
@@ -1448,10 +1538,14 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     int entrySizeInChunks;
 
     void initEntrySizeInChunks() {
-        if (entrySizeInChunks != 0)
+        if (entrySizeInChunksInit())
             return;
         initEntrySizeInChunksDependencies();
         initEntrySizeInChunks0();
+    }
+
+    boolean entrySizeInChunksInit() {
+        return entrySizeInChunks != 0;
     }
 
     void initEntrySizeInChunksDependencies() {
@@ -1463,7 +1557,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void closeEntrySizeInChunks() {
-        if (entrySizeInChunks == 0)
+        if (!entrySizeInChunksInit())
             return;
         closeEntrySizeInChunksDependants();
         closeEntrySizeInChunks0();
@@ -1745,8 +1839,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     final int inChunks(long sizeInBytes) {
-        // TODO optimize for the case when chunkSize is power of 2, that is default (and often)
-        // now
+        // TODO optimize for the case when chunkSize is power of 2, that is default (and often) now
         if (sizeInBytes <= m.chunkSize)
             return 1;
         // int division is MUCH faster than long on Intel CPUs

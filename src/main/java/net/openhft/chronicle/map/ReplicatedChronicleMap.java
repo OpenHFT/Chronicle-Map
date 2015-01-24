@@ -289,6 +289,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             return (ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI>) m;
         }
 
+        @Override
+        void totalCheckClosed() {
+            super.totalCheckClosed();
+            assert !replicationStateInit() : "replication state not closed";
+            assert !replicationUpdateInit() : "replication update not closed";
+        }
+
         /////////////////////////////////////////////////
         // Replication state
         long replicationBytesOffset;
@@ -314,9 +321,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         void closeReplicationState() {
-            if (replicationBytesOffset == 0L)
+            if (!replicationStateInit())
                 return;
             closeReplicationState0();
+        }
+
+        boolean replicationStateInit() {
+            return replicationBytesOffset != 0;
         }
 
         void closeReplicationState0() {
@@ -342,10 +353,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         byte newIdentifier;
 
         void initReplicationUpdate() {
-            if (newIdentifier != 0)
+            if (replicationUpdateInit())
                 return;
             checkMapInit();
             initReplicationUpdate0();
+        }
+
+        boolean replicationUpdateInit() {
+            return newIdentifier != 0;
         }
 
         void initReplicationUpdate0() {
@@ -358,7 +373,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         void closeReplicationUpdate() {
-            if (newIdentifier == 0)
+            if (!replicationUpdateInit())
                 return;
             closeReplicationUpdate0();
         }
@@ -493,6 +508,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     put0();
                     size(size() - 1L);
                     writeDeleted();
+                    closeNewValue();
                     state = DELETED;
                 }
                 return false;
@@ -513,9 +529,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         boolean shouldIgnore() {
-            assert identifier != 0 && newIdentifier != 0 :
-                    "Own entry replication state or " +
-                            "update replication state is not initialized";
+            assert replicationStateInit() : "replication state not init";
+            assert replicationUpdateInit() : "replication update not init";
             boolean shouldIgnore;
             if (timestamp < newTimestamp) {
                 shouldIgnore = false;
