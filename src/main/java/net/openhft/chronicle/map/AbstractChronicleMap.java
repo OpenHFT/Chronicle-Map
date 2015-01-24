@@ -295,6 +295,7 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
                     c.updateLock().lock();
                     c.initSegment();
                     c.hashLookup.forEach(this);
+                    return;
                 } finally {
                     context = null;
                 }
@@ -466,7 +467,8 @@ abstract class AbstractChronicleMap<K, V> extends AbstractMap<K, V>
             try {
                 if (!c.containsKey()) // for replicated map
                     return false;
-                shouldBreak = predicate.test(c);
+                shouldBreak = !predicate.test(c);
+                c.closeKey0();
                 // release all exclusive locks: possibly if context.remove() is performed
                 // in the callback, or acquired manually
                 while (c.writeLockCount > 0) {
