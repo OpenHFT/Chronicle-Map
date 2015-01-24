@@ -58,7 +58,7 @@ public final class Hasher {
         long remaining = length;
         while (remaining >= 16L) {
             long k1 = access.getLong(input, offset);
-            long k2 = access.getLong(input, offset);
+            long k2 = access.getLong(input, offset + 8L);
             offset += 16L;
             remaining -= 16L;
             h1 ^= mixK1(k1);
