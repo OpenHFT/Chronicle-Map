@@ -1614,8 +1614,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 errorListener.errorOnUnlock(e);
             }
             long lockTime = System.nanoTime() - startWriteLock;
-            if (lockTime > 1e8)
-                System.out.printf("Thread took %,d ms to release lock%n", lockTime / 1000000);
+
+
+            if (lockTime > 1e8 && LOG.isInfoEnabled())
+                LOG.info("Thread took %,d ms to release lock%n", lockTime / 1000000 + "(Was there a GC?)");
         }
 
         @Override
