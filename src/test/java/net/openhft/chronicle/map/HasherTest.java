@@ -19,17 +19,20 @@ package net.openhft.chronicle.map;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import net.openhft.chronicle.hash.hashing.Hasher;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class HasherTest {
-    public static void main(String[] args) {
-
+    @Test
+    public void test() {
         HashFunction hashFunction = Hashing.murmur3_128();
         for (int i=0;i<10;i++)
         {
             String key = "010758403"+String.format("%06d",i)+"S-INJFIX_SLE";
             long hashCode = Hasher.hash(key.getBytes());
             long guavaHashCode = hashFunction.hashBytes(key.getBytes()).asLong();
-            System.out.println("<"+key+"> => "+hashCode+" "+guavaHashCode);
+            assertEquals(guavaHashCode, hashCode);
         }
     }
 }
