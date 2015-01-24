@@ -178,10 +178,9 @@
                     </checkoutDirectory>
                     <checkinComment>Publishing javadoc for ${project.artifactId}:${project.version}
                     </checkinComment>
-                    <content>${project.reporting.outputDirectory}/apidocs/2.1</content>
-                    <!--<content>${project.reporting.outputDirectory}</content>-->
+                    <content>${project.reporting.outputDirectory}</content>
                     <skipDeletedFiles>true</skipDeletedFiles>
-                    <pubScmUrl>scm:git:git@github.com:OpenHFT/Chronicle-Map</pubScmUrl>
+                    <pubScmUrl>scm:git:git@github.com:OpenHFT/Chronicle-Map/2.1</pubScmUrl>
                     <scmBranch>gh-pages</scmBranch>
                 </configuration>
             </plugin>
