@@ -114,7 +114,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
             // should NOT throw LateUpdateException because the value is present and it is just
             // returned.
-            assertEquals(map.putIfAbsent("key-1", "value-2"), null);
+            assertEquals("value-1", map.putIfAbsent("key-1", "value-2"));
 
             // we'll now flip the time back to the current in order to do the read the result
             current(timeProvider);
