@@ -433,6 +433,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 "during map building");
     }
 
+    @Override
+    V prevValueOnPut(MapKeyContext<K, V> context) {
+        return putReturnsNull ? null : super.prevValueOnPut(context);
+    }
+
+    @Override
+    V prevValueOnRemove(MapKeyContext<K, V> context) {
+        return removeReturnsNull ? null : super.prevValueOnRemove(context);
+    }
 
     @Override
     public V newValueInstance() {
