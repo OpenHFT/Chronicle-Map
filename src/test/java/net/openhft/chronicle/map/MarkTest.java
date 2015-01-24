@@ -42,7 +42,7 @@ public class MarkTest {
         });
     }
 
-    @Test(timeout = 25000)
+    @Test(timeout = 50000)
     public void persistedTest() {
         final File db = Paths.get(System.getProperty("java.io.tmpdir"), "mark").toFile();
         try {
