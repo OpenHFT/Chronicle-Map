@@ -403,12 +403,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     void putDefaultValue(VanillaContext context) {
-        context.initPutDependencies();
-        context.initInstanceValueModel0();
-        context.initNewInstanceValue0(defaultValue(context));
-        context.put0();
-        context.closeValueModel();
-        context.closeValue();
+        context.doPut(defaultValue(context));
     }
 
     @Override
@@ -509,7 +504,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         try {
             if (!c.containsKey()) {
                 c.doPut(defaultValue(c));
-                c.closeValue();
             }
             V value = c.getUsing(usingValue);
             if (value != usingValue) {
