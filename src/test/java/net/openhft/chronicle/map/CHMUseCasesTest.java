@@ -657,28 +657,6 @@ public class CHMUseCasesTest {
     }
 
     @Test
-    public void testGetUsingWithCharSequenceNoValue() throws IOException {
-        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class);
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
-
-        try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
-
-            try (MapKeyContext<CharSequence, CharSequence> c = map.context("1")) {
-                CharSequence value = c.get();
-                assertTrue(value instanceof StringBuilder);
-                ((StringBuilder) value).append("Hello World");
-            }
-
-            assertEquals(null, map.get("1"));
-            mapChecks();
-        }
-    }
-
-
-    @Test
     public void testGetUsingWithIntValueNoValue() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
@@ -698,32 +676,6 @@ public class CHMUseCasesTest {
             mapChecks();
         }
     }
-
-
-    @Test(expected = IllegalStateException.class)
-    public void testAcquireUsingWithIntValueNoValue() throws IOException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            throw new IllegalStateException(); // acquireContext supported by the STATELESS
-
-
-        ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
-                .of(CharSequence.class, IntValue.class);
-
-        try (ChronicleMap<CharSequence, IntValue> map = newInstance(builder)) {
-
-            try (MapKeyContext<CharSequence, IntValue> c = map.context("1")) {
-                c.updateLock().lock();
-                IntValue value = c.get();
-                assertTrue(value instanceof IntValue);
-                value.setValue(1);
-            }
-
-            assertEquals(null, map.get("1"));
-            mapChecks();
-        }
-    }
-
 
     @Test(expected = IllegalArgumentException.class)
     public void testAcquireUsingImmutableUsing() throws IOException {
