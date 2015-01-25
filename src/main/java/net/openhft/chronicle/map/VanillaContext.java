@@ -1807,8 +1807,8 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     final MultiStoreBytes reuse(MultiStoreBytes entry, long pos) {
         long offsetWithinEntrySpace = pos * m.chunkSize;
-        entry.storePositionAndSize(m.ms, entrySpaceOffset + offsetWithinEntrySpace,
-                m.segmentEntrySpaceInnerSize - offsetWithinEntrySpace);
+        entry.setBytesOffset(m.bytes, entrySpaceOffset + offsetWithinEntrySpace);
+        entry.limit(m.segmentEntrySpaceInnerSize - offsetWithinEntrySpace);
         entry.position(m.metaDataBytes);
         return entry;
     }

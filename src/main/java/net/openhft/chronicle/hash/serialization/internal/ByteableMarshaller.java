@@ -146,7 +146,7 @@ public abstract class ByteableMarshaller<E extends Byteable>
         try {
             if (toReuse == null)
                 toReuse = getInstance();
-            toReuse.bytes(bytes, bytes.position());
+            setBytesAndOffset(toReuse, bytes);
             bytes.skip(size);
             return toReuse;
         } catch (Exception ex) {

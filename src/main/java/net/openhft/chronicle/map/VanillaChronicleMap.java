@@ -134,6 +134,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     /////////////////////////////////////////////////
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
     transient BytesStore ms;
+    transient Bytes bytes;
 
     transient long headerSize;
     transient long segmentHeadersOffset;
@@ -272,6 +273,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
         this.ms = bytesStore;
+        bytes = ms.bytes();
 
         onHeaderCreated();
 
@@ -362,6 +364,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public void close() {
         if (ms == null)
             return;
+        bytes.release();
+        bytes = null;
         ms.free();
         ms = null;
     }
