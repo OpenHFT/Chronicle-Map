@@ -44,10 +44,11 @@ public class MarkTest {
         });
     }
 
-    @Ignore("fails sometimes on TC")
-    @Test(timeout = 50000)
+    @Test(timeout = 25000)
     public void persistedTest() {
         final File db = Paths.get(System.getProperty("java.io.tmpdir"), "mark").toFile();
+        if (db.exists())
+            db.delete();
         try {
             test(new Function<ChronicleMapBuilder<Integer, Integer>,
                     ChronicleMap<Integer, Integer>>() {
