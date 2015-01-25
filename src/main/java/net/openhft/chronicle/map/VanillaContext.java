@@ -251,16 +251,11 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         K reusableKey;
         V reusableValue;
         MapAndContextLocals(ChronicleMap<K, V> map) {
-//            try {
-//                reusableKey = map.newKeyInstance();
-//            } catch (Exception e) {
-//                // ignore
-//            }
-//            try {
-//                reusableValue = map.newValueInstance();
-//            } catch (Exception e) {
-//                // ignore
-//            }
+            // TODO why not using map.newKeyInstance() and newValueInstance()
+            if (map.keyClass() == CharSequence.class)
+                reusableKey = (K) new StringBuilder();
+            if (map.valueClass() == CharSequence.class)
+                reusableValue = (V) new StringBuilder();
         }
     }
 
