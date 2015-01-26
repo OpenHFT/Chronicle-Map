@@ -414,7 +414,8 @@ public class CHMUseCasesTest {
         Arrays.fill(expected, 'X');
 
         ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
-                .of(CharSequence.class, char[].class).entries(1).constantValueSizeBySample(expected);
+                .of(CharSequence.class, char[].class).entries(1)
+                .constantValueSizeBySample(expected);
 
         try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
             map.put("Key", expected);

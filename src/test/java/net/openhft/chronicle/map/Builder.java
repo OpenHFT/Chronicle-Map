@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.serialization.internal.DummyValue;
+import net.openhft.chronicle.hash.serialization.internal.DummyValueMarshaller;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,7 +65,9 @@ public class Builder {
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
         return (T) newTcpSocketShmBuilder(Integer.class, DummyValue.class,
-                identifier, serverPort, endpoints).create();
+                identifier, serverPort, endpoints)
+                .valueMarshallers(DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE)
+                .valueSizeMarshaller(DummyValueMarshaller.INSTANCE).create();
     }
 
     public static <K, V> ChronicleMapBuilder<K, V> newTcpSocketShmBuilder(
