@@ -21,6 +21,7 @@ package net.openhft.chronicle.hash.serialization.internal;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshaller;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Utility methods returning {@link BytesReader} implementations.
@@ -62,13 +63,15 @@ public final class BytesReaders {
             this.marshaller = marshaller;
         }
 
+        @NotNull
         @Override
-        public E read(Bytes bytes, long size) {
+        public E read(@NotNull Bytes bytes, long size) {
             return (E) marshaller.read(bytes);
         }
 
+        @NotNull
         @Override
-        public E read(Bytes bytes, long size, E toReuse) {
+        public E read(@NotNull Bytes bytes, long size, E toReuse) {
             return (E) marshaller.read(bytes, toReuse);
         }
     }

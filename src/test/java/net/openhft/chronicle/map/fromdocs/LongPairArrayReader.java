@@ -18,19 +18,22 @@ package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 enum LongPairArrayReader implements BytesReader<LongPair[]> {
     INSTANCE;
 
+    @NotNull
     @Override
-    public LongPair[] read(Bytes bytes, long size) {
+    public LongPair[] read(@NotNull Bytes bytes, long size) {
         return read(bytes, size, null);
     }
 
+    @NotNull
     @Override
-    public LongPair[] read(Bytes bytes, long size, LongPair[] toReuse) {
+    public LongPair[] read(@NotNull Bytes bytes, long size, LongPair[] toReuse) {
         if (size > Integer.MAX_VALUE * 16L)
             throw new IllegalStateException("LongPair[] size couldn't be " + (size / 16L));
         int resLen = (int) (size / 16L);

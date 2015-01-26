@@ -138,10 +138,6 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         } else if (eClass == StringBuilder.class) {
             reader((BytesReader<E>) CharSequenceReader.ofStringBuilder());
             writer((BytesWriter<E>) CharSequenceWriter.instance());
-        } else if (eClass == Void.class) {
-            sizeMarshaller(VoidMarshaller.INSTANCE);
-            reader((BytesReader<E>) VoidMarshaller.INSTANCE);
-            interop((BytesInterop<E>) VoidMarshaller.INSTANCE);
         } else if (eClass == Long.class) {
             sizeMarshaller(LongMarshaller.INSTANCE);
             reader((BytesReader<E>) LongMarshaller.INSTANCE);
@@ -175,8 +171,6 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
 
     boolean possibleOffHeapReferences() {
         if (reader instanceof CharSequenceReader)
-            return false;
-        if (reader instanceof VoidMarshaller)
             return false;
         // exclude some known classes, most notably boxed primitive types
         if (!instancesAreMutable(eClass))

@@ -21,6 +21,7 @@ package net.openhft.chronicle.hash.serialization.internal;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ObjectStreamException;
 
@@ -35,12 +36,12 @@ public final class CharSequenceWriter<CS extends CharSequence> implements BytesW
     private CharSequenceWriter() {}
 
     @Override
-    public long size(CS s) {
+    public long size(@NotNull CS s) {
         return AbstractBytes.findUTFLength(s, s.length());
     }
 
     @Override
-    public void write(Bytes bytes, CS s) {
+    public void write(@NotNull Bytes bytes, @NotNull CS s) {
         AbstractBytes.writeUTF0(bytes, s, s.length());
     }
 

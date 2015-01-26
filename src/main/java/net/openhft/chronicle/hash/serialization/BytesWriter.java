@@ -20,6 +20,7 @@ package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
@@ -63,7 +64,7 @@ public interface BytesWriter<E> extends Serializable {
      * @param e the object which serialized form length should be returned
      * @return the length (in bytes) of the serialized form of the given object
      */
-    long size(E e);
+    long size(@NotNull E e);
 
     /**
      * Serializes the given object to the given {@code bytes}, without writing the length of the
@@ -79,5 +80,5 @@ public interface BytesWriter<E> extends Serializable {
      * @param e the object to serialize to the given bytes
      * @see BytesReader#read(Bytes, long)
      */
-    void write(Bytes bytes, E e);
+    void write(@NotNull Bytes bytes, @NotNull E e);
 }

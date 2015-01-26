@@ -20,6 +20,7 @@ package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -85,7 +86,8 @@ public interface BytesReader<E> extends Serializable {
      * @see BytesWriter#write(Bytes, Object)
      * @see #read(Bytes, long, Object)
      */
-    E read(Bytes bytes, long size);
+    @NotNull
+    E read(@NotNull Bytes bytes, long size);
 
     /**
      * Similar to {@link #read(Bytes, long)}, but should attempt to reuse the given object, i. e.
@@ -101,5 +103,6 @@ public interface BytesReader<E> extends Serializable {
      * @return the object read from the bytes, either reused or newly created
      * @see #read(Bytes, long)
      */
-    E read(Bytes bytes, long size, @Nullable E toReuse);
+    @NotNull
+    E read(@NotNull Bytes bytes, long size, @Nullable E toReuse);
 }

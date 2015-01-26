@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.lang.io.Bytes;
 
@@ -46,8 +47,14 @@ public final class DelegatingMetaBytesInterop<E, I extends BytesInterop<E>>
     }
 
     @Override
-    public long hash(I interop, E e) {
-        return interop.hash(e);
+    public <I2> boolean equivalent(
+            I interop, E e, MetaBytesInterop<E, I2> otherMetaInterop, I2 otherInterop, E other) {
+        return interop.equivalent(e, other);
+    }
+
+    @Override
+    public long hash(I interop, LongHashFunction hashFunction, E e) {
+        return interop.hash(hashFunction, e);
     }
 
     @Override

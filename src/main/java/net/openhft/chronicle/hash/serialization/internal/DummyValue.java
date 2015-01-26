@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +16,8 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.serialization;
+package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.lang.io.serialization.ObjectFactory;
-import org.jetbrains.annotations.NotNull;
-
-public interface DeserializationFactoryConfigurableBytesReader<E,
-        R extends DeserializationFactoryConfigurableBytesReader<E, R>>
-        extends BytesReader<E> {
-
-    @NotNull
-    R withDeserializationFactory(@NotNull ObjectFactory<E> deserializationFactory);
+public enum DummyValue {
+    DUMMY_VALUE
 }

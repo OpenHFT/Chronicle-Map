@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.locks.IllegalInterProcessLockStateException;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.chronicle.hash.serialization.BytesReader;
@@ -503,7 +504,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     void initKeyHash0() {
-        hash = metaKeyInterop.hash(keyInterop, key);
+        hash = metaKeyInterop.hash(keyInterop, LongHashFunction.city_1_1(), key);
     }
 
     void closeKeyHash() {

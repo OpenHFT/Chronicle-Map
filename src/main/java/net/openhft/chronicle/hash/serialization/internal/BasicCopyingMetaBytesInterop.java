@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.hashing.Hasher;
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -56,10 +56,10 @@ public abstract class BasicCopyingMetaBytesInterop<E, W> implements MetaBytesInt
     }
 
     @Override
-    public long hash(W writer, E e) {
+    public long hash(W writer, LongHashFunction hashFunction, E e) {
         long h;
         if ((h = hash) == 0L)
-            return hash = Hasher.hash(buffer.buffer);
+            return hash = hashFunction.hashBytes(buffer.buffer);
         return h;
     }
 

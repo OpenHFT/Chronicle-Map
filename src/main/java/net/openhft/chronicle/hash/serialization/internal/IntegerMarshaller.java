@@ -18,18 +18,19 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.hashing.Hasher;
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 public enum IntegerMarshaller
         implements BytesInterop<Integer>, BytesReader<Integer>, SizeMarshaller {
     INSTANCE;
 
     @Override
-    public long size(Integer e) {
+    public long size(@NotNull Integer e) {
         return 4L;
     }
 
@@ -59,17 +60,22 @@ public enum IntegerMarshaller
     }
 
     @Override
-    public boolean startsWith(Bytes bytes, Integer e) {
+    public boolean startsWith(@NotNull Bytes bytes, @NotNull Integer e) {
         return e == bytes.readInt(bytes.position());
     }
 
     @Override
-    public long hash(Integer e) {
-        return Hasher.hash(e);
+    public boolean equivalent(@NotNull Integer a, @NotNull Integer b) {
+        return a.intValue() == b.intValue();
     }
 
     @Override
-    public void write(Bytes bytes, Integer e) {
+    public long hash(@NotNull LongHashFunction hashFunction, @NotNull Integer e) {
+        return hashFunction.hashInt(e);
+    }
+
+    @Override
+    public void write(@NotNull Bytes bytes, @NotNull Integer e) {
         bytes.writeInt(e);
     }
 
@@ -78,13 +84,15 @@ public enum IntegerMarshaller
         return 4L;
     }
 
+    @NotNull
     @Override
-    public Integer read(Bytes bytes, long size) {
+    public Integer read(@NotNull Bytes bytes, long size) {
         return bytes.readInt();
     }
 
+    @NotNull
     @Override
-    public Integer read(Bytes bytes, long size, Integer toReuse) {
+    public Integer read(@NotNull Bytes bytes, long size, Integer toReuse) {
         return bytes.readInt();
     }
 }

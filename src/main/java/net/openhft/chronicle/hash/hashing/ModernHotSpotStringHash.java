@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map.fromdocs;
+package net.openhft.chronicle.hash.hashing;
 
-import net.openhft.chronicle.hash.serialization.BytesWriter;
-import net.openhft.lang.io.Bytes;
-import org.jetbrains.annotations.NotNull;
+import java.lang.reflect.Field;
 
-enum LongPairArrayWriter implements BytesWriter<LongPair[]> {
+enum ModernHotSpotStringHash implements StringHash {
     INSTANCE;
 
-    @Override
-    public long size(@NotNull LongPair[] longPairs) {
-        return longPairs.length * 16L;
+    private static final long valueOffset;
+
+    static {
+        try {
+            Field valueField = String.class.getDeclaredField("value");
+            valueOffset = UnsafeAccess.UNSAFE.objectFieldOffset(valueField);
+        } catch (NoSuchFieldException e) {
+            throw new AssertionError(e);
+        }
     }
 
     @Override
-    public void write(@NotNull Bytes bytes, @NotNull LongPair[] longPairs) {
-        for (LongPair pair : longPairs) {
-            bytes.writeLong(pair.first);
-            bytes.writeLong(pair.second);
-        }
+    public long longHash(String s, LongHashFunction hashFunction, int off, int len) {
+        char[] value = (char[]) UnsafeAccess.UNSAFE.getObject(s, valueOffset);
+        return hashFunction.hashChars(value, off, len);
     }
 }

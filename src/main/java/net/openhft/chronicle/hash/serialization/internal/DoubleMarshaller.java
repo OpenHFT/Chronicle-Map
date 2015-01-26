@@ -18,11 +18,12 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.hashing.Hasher;
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 import static java.lang.Double.doubleToLongBits;
 
@@ -30,7 +31,7 @@ public enum DoubleMarshaller implements BytesInterop<Double>, BytesReader<Double
     INSTANCE;
 
     @Override
-    public long size(Double e) {
+    public long size(@NotNull Double e) {
         return 8L;
     }
 
@@ -61,17 +62,22 @@ public enum DoubleMarshaller implements BytesInterop<Double>, BytesReader<Double
     }
 
     @Override
-    public boolean startsWith(Bytes bytes, Double e) {
+    public boolean startsWith(@NotNull Bytes bytes, @NotNull Double e) {
         return doubleToLongBits(e) == bytes.readLong(bytes.position());
     }
 
     @Override
-    public long hash(Double e) {
-        return Hasher.hash(doubleToLongBits(e));
+    public boolean equivalent(@NotNull Double a, @NotNull Double b) {
+        return doubleToLongBits(a) == doubleToLongBits(b);
     }
 
     @Override
-    public void write(Bytes bytes, Double e) {
+    public long hash(@NotNull LongHashFunction hashFunction, @NotNull Double e) {
+        return hashFunction.hashLong(doubleToLongBits(e));
+    }
+
+    @Override
+    public void write(@NotNull Bytes bytes, @NotNull Double e) {
         bytes.writeLong(doubleToLongBits(e));
     }
 
@@ -80,13 +86,15 @@ public enum DoubleMarshaller implements BytesInterop<Double>, BytesReader<Double
         return 8L;
     }
 
+    @NotNull
     @Override
-    public Double read(Bytes bytes, long size) {
+    public Double read(@NotNull Bytes bytes, long size) {
         return Double.longBitsToDouble(bytes.readLong());
     }
 
+    @NotNull
     @Override
-    public Double read(Bytes bytes, long size, Double toReuse) {
+    public Double read(@NotNull Bytes bytes, long size, Double toReuse) {
         return read(bytes, size);
     }
 }

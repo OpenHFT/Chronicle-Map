@@ -704,6 +704,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             c.get(null);
             shouldThrow();
         } catch (NullPointerException success) {
+        } catch (IllegalArgumentException success) {
         }
     }
 
@@ -716,6 +717,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             c.containsKey(null);
             shouldThrow();
         } catch (NullPointerException success) {
+        } catch (IllegalArgumentException success) {
         }
     }
 

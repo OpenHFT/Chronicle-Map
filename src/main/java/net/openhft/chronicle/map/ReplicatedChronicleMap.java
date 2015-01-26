@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.LateUpdateException;
 import net.openhft.chronicle.hash.replication.TimeProvider;
@@ -30,7 +31,6 @@ import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.MultiStoreBytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -43,7 +43,6 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-import static net.openhft.chronicle.hash.hashing.Hasher.hash;
 import static net.openhft.chronicle.map.VanillaContext.SearchState.DELETED;
 import static net.openhft.chronicle.map.VanillaContext.SearchState.PRESENT;
 import static net.openhft.lang.MemoryUnit.*;
@@ -464,7 +463,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             }
 
             @Override
-            public long hash(Object interop, Object o) {
+            public <I2> boolean equivalent(
+                    Object interop, Object o,
+                    MetaBytesInterop<Object, I2> otherMetaInterop, I2 otherInterop, Object other) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public long hash(Object interop, LongHashFunction hashFunction, Object o) {
                 throw new UnsupportedOperationException();
             }
 

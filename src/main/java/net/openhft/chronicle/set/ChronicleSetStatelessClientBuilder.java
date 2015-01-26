@@ -17,6 +17,7 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHashStatelessClientBuilder;
+import net.openhft.chronicle.hash.serialization.internal.DummyValue;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder;
 
