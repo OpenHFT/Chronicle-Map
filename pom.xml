@@ -32,6 +32,7 @@
     <version>3.0.0a-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
+    <packaging>bundle</packaging>
 
     <dependencyManagement>
         <dependencies>
@@ -217,6 +218,60 @@
                     </archive>
                 </configuration>
 
+            </plugin>
+            <!--
+                generate maven dependencies versions file that can be used later
+                to install the right bundle in test phase.
+
+                The file is:
+
+                    target/classes/META-INF/maven/dependencies.properties
+            -->
+            <plugin>
+                <groupId>org.apache.servicemix.tooling</groupId>
+                <artifactId>depends-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-depends-file</id>
+                        <goals>
+                            <goal>generate-depends-file</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>                        
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>OpenHFT :: ${project.artifactId}</Bundle-Name>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Import-Package>
+                            com.thoughtworks.xstream;resolution:=optional,
+                            org.jetbrains.annotations;resolution:=optional,
+                            org.intellij.lang.annotations;resolution:=optional,
+                            *
+                        </Import-Package>
+                        <Export-Package>
+                            net.openhft.chronicle.map.*,
+                            net.openhft.chronicle.set.*,
+                            net.openhft.chronicle.hash.*
+                        </Export-Package>
+                    </instructions>
+                </configuration>
+                <executions>
+                    <!--
+                      This execution makes sure that the manifest is available
+                      when the tests are executed
+                    -->
+                    <execution>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
 
