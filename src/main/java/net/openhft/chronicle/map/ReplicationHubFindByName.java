@@ -57,8 +57,8 @@ class ReplicationHubFindByName<K> implements FindByName {
                     // creates a map based on the details that are sent to the map of builders
                     @Override
                     public void onPut(CharSequence key, MapInstanceBuilder value,
-                                      MapInstanceBuilder replacedValue) {
-                        super.onPut(key, value, replacedValue);
+                                      MapInstanceBuilder replacedValue, boolean replicationEvent) {
+                        super.onPut(key, value, replacedValue, replicationEvent);
                         boolean added = replacedValue == null;
                         if (!added || value == null)
                             return;

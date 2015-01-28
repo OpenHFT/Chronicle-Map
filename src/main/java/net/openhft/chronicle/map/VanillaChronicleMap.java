@@ -1758,11 +1758,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             onPut(this, segmentState.pos);
             if (bytesEventListener != null) {
                 long keyPos = metaDataBytes;
-                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true);
+                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true, false);
             }
             if (eventListener != null) {
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, v, valueSize), null);
+                        toValue.toInstance(copies, v, valueSize), null, false);
             }
 
             return v;
@@ -1866,10 +1866,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             onPut(this, segmentState.pos);
             if (bytesEventListener != null)
                 bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                        segmentState.valueSizePos, true);
+                        segmentState.valueSizePos, true, false);
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), null);
+                        toValue.toInstance(copies, value, valueSize), null, false);
 
             return resultUnused ? null : readValue.readNull();
         }
@@ -1913,10 +1913,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // put callbacks
             onPutMaybeRemote(segmentState.pos, remote);
             if (bytesEventListener != null)
-                bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false);
+                bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, remote);
             if (eventListener != null) {
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), prevValueInstance);
+                        toValue.toInstance(copies, value, valueSize), prevValueInstance, remote);
             }
 
             return resultUnused ? null : prevValue;
@@ -2153,12 +2153,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // remove callbacks
             onRemoveMaybeRemote(pos, remote);
             if (bytesEventListener != null)
-                bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos);
+                bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos, remote);
             if (eventListener != null) {
                 V removedValueForEventListener =
                         toValue.toInstance(copies, removedValue, valueSize);
                 eventListener.onRemove(toKey.toInstance(copies, key, keySize),
-                        removedValueForEventListener);
+                        removedValueForEventListener, remote);
             }
 
             return booleanResult ? Boolean.TRUE : removedValue;
@@ -2292,12 +2292,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             onPut(this, segmentState.pos);
             if (bytesEventListener != null) {
                 long keyPos = metaDataBytes;
-                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true);
+                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true, false);
             }
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, newValue, newValueSize),
-                        toValue.toInstance(copies, prevValue, valueSize));
+                        toValue.toInstance(copies, prevValue, valueSize), false);
 
             return expectedValue == null ? prevValue : Boolean.TRUE;
         }
@@ -2590,9 +2590,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // remove callbacks
             onRemove(segment, pos);
             if (bytesEventListener != null)
-                bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos);
+                bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos, false);
             if (eventListener != null)
-                eventListener.onRemove(returnedEntry.getKey(), returnedEntry.getValue());
+                eventListener.onRemove(returnedEntry.getKey(), returnedEntry.getValue(), false);
         }
     }
 

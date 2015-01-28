@@ -55,7 +55,7 @@ public class EventListenerWithTCPSocketReplicationTest {
                 private static final long serialVersionUID = 1L;
 
                 @Override
-                public void onPut(Integer key, CharSequence value, CharSequence replacedValue) {
+                public void onPut(Integer key, CharSequence value, CharSequence replacedValue, boolean replicationEvent) {
                     putWasCalled.getAndSet(true);
                     keyRef.set(key);
                     valueRef.set(value);
@@ -63,7 +63,7 @@ public class EventListenerWithTCPSocketReplicationTest {
                 }
 
                 @Override
-                public void onRemove(Integer key, CharSequence value) {
+                public void onRemove(Integer key, CharSequence value, boolean replicationEvent) {
                     wasRemoved.set(true);
                     valueRemoved.set(value);
                 }
