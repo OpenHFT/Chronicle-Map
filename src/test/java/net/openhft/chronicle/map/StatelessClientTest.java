@@ -300,7 +300,7 @@ public class StatelessClientTest {
 
                 serverMap.put("hello", "world");
 
-                statelessMap.replace("hello", "world", "hello");
+                assertTrue(statelessMap.replace("hello", "world", "hello"));
 
                 assertEquals("hello", statelessMap.get("hello"));
                 assertEquals(1, statelessMap.size());

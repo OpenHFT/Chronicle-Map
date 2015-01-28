@@ -808,7 +808,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         // write the key
         entry.position(keyPosition);
         entry.limit(keyLimit);
-        destination.write(entry);
+        destination.write(entry, entry.position(), entry.remaining());
 
         boolean debugEnabled = LOG.isDebugEnabled();
         String message = null;
@@ -833,7 +833,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
         // writes the value
         entry.limit(entry.position() + valueSize);
-        destination.write(entry);
+        destination.write(entry, entry.position(), entry.remaining());
 
         if (debugEnabled) {
             LOG.debug(message + "value=" + entry.toString().trim() + ")");
