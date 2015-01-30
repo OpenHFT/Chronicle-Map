@@ -3,6 +3,7 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 import net.openhft.lang.values.IntValue;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -14,7 +15,7 @@ public class DemoChronicleMapTest {
 
     @Test
     public void testMap() throws Exception {
-        File file = File.createTempFile("DummyOrders", ".test");
+        File file = File.createTempFile("DummyOrders"+System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
         try (ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
@@ -52,9 +53,10 @@ public class DemoChronicleMapTest {
         }
     }
 
+    @Ignore
     @Test
     public void testMapLocked() throws Exception {
-        File file = File.createTempFile("DummyOrders", ".test");
+        File file = File.createTempFile("DummyOrders-"+System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
         try (ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
