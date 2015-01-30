@@ -5,6 +5,8 @@ import net.openhft.chronicle.hash.function.Function;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.io.ByteBufferBytes;
+import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.model.constraints.MaxSize;
 import net.openhft.lang.model.constraints.NotNull;
@@ -40,7 +42,7 @@ public class CHMUseCasesTest {
     private static final String TMP = System.getProperty("java.io.tmpdir");
 
 
-    enum TypeOfMap {STATELESS,SIMPLE, SIMPLE_PERSISTED, REPLICATED}
+    enum TypeOfMap {STATELESS, SIMPLE, SIMPLE_PERSISTED, REPLICATED}
 
     private final TypeOfMap typeOfMap;
 
@@ -368,7 +370,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<byte[], byte[][]> map = newInstance(builder)) {
             byte[] bytes1 = "value1".getBytes();
             byte[] bytes2 = "value2".getBytes();
-            byte[][] value = {bytes1,bytes2};
+            byte[][] value = {bytes1, bytes2};
             map.put("Key".getBytes(), value);
 
             assertEquals(value, map.get("Key".getBytes()));
@@ -563,8 +565,8 @@ public class CHMUseCasesTest {
 
 
     /**
-     * CharSequence is more efficient when object creation is avoided. The key can only be on heap
-     * and variable length serialised.
+     * CharSequence is more efficient when object creation is avoided. The key can only be on heap and variable length
+     * serialised.
      */
     @Test
     public void testCharSequenceCharSequenceMap() throws ExecutionException, InterruptedException, IOException {
@@ -1127,12 +1129,12 @@ public class CHMUseCasesTest {
             }));
 
             try {
-map.putMapped(1.0, new UnaryOperator<Double>() {
-    @Override
-    public Double update(Double s) {
-        return s + 1;
-    }
-});
+                map.putMapped(1.0, new UnaryOperator<Double>() {
+                    @Override
+                    public Double update(Double s) {
+                        return s + 1;
+                    }
+                });
 
             } catch (Exception todoMoreSpecificException) {
             }
@@ -1168,11 +1170,11 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 
             assertTrue(Arrays.equals(new byte[]{11, 11},
                     map.getMapped(key1, new Function<byte[], byte[]>() {
-                @Override
-                public byte[] apply(byte[] s) {
-                    return Arrays.copyOf(s, 2);
-                }
-            })));
+                        @Override
+                        public byte[] apply(byte[] s) {
+                            return Arrays.copyOf(s, 2);
+                        }
+                    })));
             assertEquals(null, map.getMapped(key2, new Function<byte[], byte[]>() {
                 @Override
                 public byte[] apply(byte[] s) {
@@ -1182,13 +1184,13 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 
             assertTrue(Arrays.equals(new byte[]{12, 10},
                     map.putMapped(key1, new UnaryOperator<byte[]>() {
-                @Override
-                public byte[] update(byte[] s) {
-                    s[0]++;
-                    s[1]--;
-                    return Arrays.copyOf(s, 2);
-                }
-            })));
+                        @Override
+                        public byte[] update(byte[] s) {
+                            s[0]++;
+                            s[1]--;
+                            return Arrays.copyOf(s, 2);
+                        }
+                    })));
 
             byte[] a2 = map.get(key1);
             assertTrue(Arrays.equals(new byte[]{12, 10}, a2));
@@ -1256,13 +1258,13 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
 
             final Function<ByteBuffer, ByteBuffer> function =
                     new Function<ByteBuffer, ByteBuffer>() {
-                @Override
-                public ByteBuffer apply(ByteBuffer s) {
-                    ByteBuffer slice = s.slice();
-                    slice.limit(2);
-                    return slice;
-                }
-            };
+                        @Override
+                        public ByteBuffer apply(ByteBuffer s) {
+                            ByteBuffer slice = s.slice();
+                            slice.limit(2);
+                            return slice;
+                        }
+                    };
 
             map.put(key1, value1);
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
@@ -1270,13 +1272,13 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             mapChecks();
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
                     map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
-                @Override
-                public ByteBuffer update(ByteBuffer s) {
-                    s.put(0, (byte) (s.get(0) + 1));
-                    s.put(1, (byte) (s.get(1) - 1));
-                    return function.apply(s);
-                }
-            }));
+                        @Override
+                        public ByteBuffer update(ByteBuffer s) {
+                            s.put(0, (byte) (s.get(0) + 1));
+                            s.put(1, (byte) (s.get(1) - 1));
+                            return function.apply(s);
+                        }
+                    }));
 
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.get(key1));
 
@@ -1377,25 +1379,25 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             mapChecks();
             final Function<ByteBuffer, ByteBuffer> function =
                     new Function<ByteBuffer, ByteBuffer>() {
-                @Override
-                public ByteBuffer apply(ByteBuffer s) {
-                    ByteBuffer slice = s.slice();
-                    slice.limit(2);
-                    return slice;
-                }
-            };
+                        @Override
+                        public ByteBuffer apply(ByteBuffer s) {
+                            ByteBuffer slice = s.slice();
+                            slice.limit(2);
+                            return slice;
+                        }
+                    };
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
             assertEquals(null, map.getMapped(key2, function));
             mapChecks();
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
                     map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
-                @Override
-                public ByteBuffer update(ByteBuffer s) {
-                    s.put(0, (byte) (s.get(0) + 1));
-                    s.put(1, (byte) (s.get(1) - 1));
-                    return function.apply(s);
-                }
-            }));
+                        @Override
+                        public ByteBuffer update(ByteBuffer s) {
+                            s.put(0, (byte) (s.get(0) + 1));
+                            s.put(1, (byte) (s.get(1) - 1));
+                            return function.apply(s);
+                        }
+                    }));
 
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.get(key1));
             mapChecks();
@@ -2617,7 +2619,107 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
         }
     }
 
+    @Test
+    public void testBytesMarshallable() throws IOException {
+        ChronicleMapBuilder<IData, IData> builder = ChronicleMapBuilder
+                .of(IData.class, IData.class)
+                        // TODO if the keyMarshaller is set, the map.newKeyInstance() blows up.
+//                .keyMarshaller(new BytesMarshallableMarshaller<>(IData.class))
+                .entries(1000);
+        try (ChronicleMap<IData, IData> map = newInstance(builder)) {
+            for (int i = 0; i < 100; i++) {
+                IData key = map.newKeyInstance();
+                IData value = map.newValueInstance();
+                key.setText("key-" + i);
+                key.setNumber(i);
+                value.setNumber(i);
+                value.setText("value-" + i);
+                map.put(key, value);
+                // check the map is still valid.
+                map.entrySet().toString();
+            }
+        }
+    }
 
+    @Test
+    public void testBytesMarshallable2() throws IOException {
+        ChronicleMapBuilder<Data, Data> builder = ChronicleMapBuilder
+                .of(Data.class, Data.class)
+                .keyMarshaller(new BytesMarshallableMarshaller<>(Data.class))
+                .actualChunkSize(64)
+                .entries(1000);
+        try (ChronicleMap<Data, Data> map = newInstance(builder)) {
+            for (int i = 0; i < 100; i++) {
+                Data key = map.newKeyInstance();
+                Data value = map.newValueInstance();
+                key.setText("key-" + i);
+                key.setNumber(i);
+                value.setNumber(i);
+                value.setText("value-" + i);
+                map.put(key, value);
+                // check the map is still valid.
+                map.entrySet().toString();
+            }
+        }
+    }
+}
+
+interface IData extends BytesMarshallable {
+    void setText(@MaxSize String text);
+
+    void setNumber(int number);
+
+    String getText();
+
+    int getNumber();
+}
+
+class Data implements IData, BytesMarshallable {
+    static final long MAGIC = 0x8081828384858687L;
+    static final long MAGIC2 = 0xa0a1a2a3a4a5a6a7L;
+
+    String text;
+    int number;
+
+    @Override
+    public String getText() {
+        return text;
+    }
+
+    @Override
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    @Override
+    public int getNumber() {
+        return number;
+    }
+
+    @Override
+    public void setNumber(int number) {
+        this.number = number;
+    }
+
+    @Override
+    public void readMarshallable(@NotNull Bytes in) throws IllegalStateException {
+        long magic = in.readLong();
+        if (magic != MAGIC)
+            throw new AssertionError("Start " + Long.toHexString(magic));
+        text = in.readUTFΔ();
+        number = in.readInt();
+        long magic2 = in.readLong();
+        if (magic2 != MAGIC2)
+            throw new AssertionError("End " + Long.toHexString(magic2));
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull Bytes out) {
+        out.writeLong(MAGIC);
+        out.writeUTFΔ(text);
+        out.writeInt(number);
+        out.writeLong(MAGIC2);
+    }
 }
 
 enum ToString implements Function<Object, String> {

@@ -47,7 +47,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>lang</artifactId>
-                <version>6.4.23-SNAPSHOT</version>
+                <version>6.5.1-SNAPSHOT</version>
             </dependency>
 
             <dependency>
@@ -90,13 +90,13 @@
         <!-- optional dependencies -->
 
         <dependency>
-            <optional>true</optional>
+            <!--<optional>true</optional>-->
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
         </dependency>
 
         <dependency>
-            <optional>true</optional>
+            <!--<optional>true</optional>-->
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
         </dependency>
