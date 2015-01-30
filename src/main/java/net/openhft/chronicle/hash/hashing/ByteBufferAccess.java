@@ -19,8 +19,10 @@ package net.openhft.chronicle.hash.hashing;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-enum ByteBufferAccess implements Access<ByteBuffer> {
-    INSTANCE;
+final class ByteBufferAccess extends Access<ByteBuffer> {
+    public static final ByteBufferAccess INSTANCE = new ByteBufferAccess();
+
+    private ByteBufferAccess() {}
 
     @Override
     public long getLong(ByteBuffer input, long offset) {

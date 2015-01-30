@@ -16,34 +16,38 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.hashing.Hasher;
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 public enum BytesBytesInterop implements BytesInterop<Bytes> {
     INSTANCE;
 
     @Override
-    public boolean startsWith(Bytes bytes, Bytes e) {
-        long limit = bytes.limit();
-        bytes.limit(bytes.capacity());
-        boolean result = bytes.startsWith(e);
-        bytes.limit(limit);
-        return result;
+    public boolean startsWith(@NotNull Bytes bytes, @NotNull Bytes e) {
+        return bytes.compare(bytes.position(), e, e.position(), e.remaining());
     }
 
     @Override
-    public long hash(Bytes e) {
-        return Hasher.hash(e);
+    public boolean equivalent(@NotNull Bytes a, @NotNull Bytes b) {
+        if (a.remaining() != b.remaining())
+            return false;
+        return a.compare(a.position(), b, b.position(), b.remaining());
     }
 
     @Override
-    public long size(Bytes e) {
+    public long hash(@NotNull LongHashFunction hashFunction, @NotNull Bytes e) {
+        return hashFunction.hashBytes(e);
+    }
+
+    @Override
+    public long size(@NotNull Bytes e) {
         return e.remaining();
     }
 
     @Override
-    public void write(Bytes bytes, Bytes e) {
-        bytes.write(e);
+    public void write(@NotNull Bytes bytes, @NotNull Bytes e) {
+        bytes.write(e, e.position(), e.remaining());
     }
 }

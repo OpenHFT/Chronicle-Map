@@ -16,11 +16,11 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.hashing.Accesses;
-import net.openhft.chronicle.hash.hashing.Hasher;
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
@@ -29,7 +29,7 @@ public enum ByteBufferMarshaller implements BytesInterop<ByteBuffer>, BytesReade
     INSTANCE;
 
     @Override
-    public boolean startsWith(Bytes bytes, ByteBuffer bb) {
+    public boolean startsWith(@NotNull Bytes bytes, @NotNull ByteBuffer bb) {
         int inputRemaining = bb.remaining();
         if(bytes.capacity() - bytes.position() < (long) inputRemaining)
             return false;
@@ -55,17 +55,24 @@ public enum ByteBufferMarshaller implements BytesInterop<ByteBuffer>, BytesReade
     }
 
     @Override
-    public long hash(ByteBuffer bb) {
-        return Hasher.hash(bb, Accesses.toByteBuffer(), 0L, (long) bb.remaining());
+    public boolean equivalent(@NotNull ByteBuffer a, @NotNull ByteBuffer b) {
+        return a.equals(b);
     }
 
     @Override
-    public ByteBuffer read(Bytes bytes, long size) {
+    public long hash(@NotNull LongHashFunction hashFunction, @NotNull ByteBuffer bb) {
+        return hashFunction.hashBytes(bb);
+    }
+
+    @NotNull
+    @Override
+    public ByteBuffer read(@NotNull Bytes bytes, long size) {
         return read(bytes, size, null);
     }
 
+    @NotNull
     @Override
-    public ByteBuffer read(Bytes bytes, long size, @Nullable ByteBuffer toReuse) {
+    public ByteBuffer read(@NotNull Bytes bytes, long size, @Nullable ByteBuffer toReuse) {
         if (size < 0L || size > (long) Integer.MAX_VALUE)
             throw new IllegalArgumentException("ByteBuffer size should be non-negative int, " +
                     size + " given. Memory corruption?");
@@ -82,12 +89,12 @@ public enum ByteBufferMarshaller implements BytesInterop<ByteBuffer>, BytesReade
     }
 
     @Override
-    public long size(ByteBuffer bb) {
+    public long size(@NotNull ByteBuffer bb) {
         return (long) bb.remaining();
     }
 
     @Override
-    public void write(Bytes bytes, ByteBuffer bb) {
+    public void write(@NotNull Bytes bytes, @NotNull ByteBuffer bb) {
         int position = bb.position();
         bytes.write(bb);
         bb.position(position);

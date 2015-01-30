@@ -19,6 +19,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.hash.serialization.internal.DummyValue;
+import net.openhft.chronicle.hash.serialization.internal.DummyValueMarshaller;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,12 +60,14 @@ public class Builder {
         return file;
     }
 
-    public static <T extends ChronicleMap<Integer, Void>> T newMapVoid(
+    public static <T extends ChronicleMap<Integer, DummyValue>> T newMapDummyValue(
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        return (T) newTcpSocketShmBuilder(Integer.class, Void.class,
-                identifier, serverPort, endpoints).create();
+        return (T) newTcpSocketShmBuilder(Integer.class, DummyValue.class,
+                identifier, serverPort, endpoints)
+                .valueMarshallers(DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE)
+                .valueSizeMarshaller(DummyValueMarshaller.INSTANCE).create();
     }
 
     public static <K, V> ChronicleMapBuilder<K, V> newTcpSocketShmBuilder(

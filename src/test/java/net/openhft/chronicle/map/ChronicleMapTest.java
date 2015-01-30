@@ -592,9 +592,12 @@ public class ChronicleMapTest {
                 CharSequence userCS = getUserCharSequence(i);
 
                 if (j > 1) {
-                    assertNotNull(userCS.toString(), map.getUsing(userCS, value));
+                    LongValue v = map.getUsing(userCS, value);
+                    assertNotNull(userCS.toString(), v);
+                    assertTrue(userCS.toString(), v == value);
                 } else {
-                    map.acquireUsing(userCS, value);
+                    LongValue v = map.acquireUsing(userCS, value);
+                    assertTrue(userCS.toString(), v == value);
                 }
                 if (i >= 1)
                     assertTrue(userCS.toString(), map.containsKey(getUserCharSequence(1)));

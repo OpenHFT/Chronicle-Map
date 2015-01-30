@@ -21,6 +21,7 @@ package net.openhft.chronicle.set;
 import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.function.Consumer;
 import net.openhft.chronicle.hash.function.Predicate;
+import net.openhft.chronicle.hash.serialization.internal.DummyValue;
 import net.openhft.chronicle.map.ChronicleMap;
 
 import java.io.File;
@@ -31,7 +32,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;
+import static net.openhft.chronicle.hash.serialization.internal.DummyValue.DUMMY_VALUE;
 
 class SetFromMap<E> extends AbstractSet<E>
         implements ChronicleSet<E>, Serializable {

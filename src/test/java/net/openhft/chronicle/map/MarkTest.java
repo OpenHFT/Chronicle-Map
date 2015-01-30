@@ -45,7 +45,10 @@ public class MarkTest {
 
     @Test(timeout = 25000)
     public void persistedTest() {
-        final File db = Paths.get(System.getProperty("java.io.tmpdir"), "mark").toFile();
+        int rnd = new Random().nextInt();
+        final File db = Paths.get(System.getProperty("java.io.tmpdir"), "mark" + rnd).toFile();
+        if (db.exists())
+            db.delete();
         try {
             test(new Function<ChronicleMapBuilder<Integer, Integer>,
                     ChronicleMap<Integer, Integer>>() {

@@ -107,7 +107,7 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
 
         assertEquals(null, map1.put(1, "EXAMPLE-1"));
         assertEquals(null, map1.put(2, "EXAMPLE-2"));
-        assertEquals("EXAMPLE-2", map1.put(2, "EXAMPLE-1"));
+        assertEquals(null, map1.put(2, "EXAMPLE-1"));
 
         assertEquals(null, map2.put(5, "EXAMPLE-2"));
         assertEquals(null, map2.put(6, "EXAMPLE-2"));

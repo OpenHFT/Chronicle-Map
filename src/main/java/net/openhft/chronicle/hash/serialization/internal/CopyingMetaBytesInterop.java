@@ -48,6 +48,13 @@ public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaByte
         super(buffer);
     }
 
+    @Override
+    public <I2> boolean equivalent(
+            W interop, E e, MetaBytesInterop<E, I2> otherMetaInterop, I2 otherInterop, E other) {
+        return otherMetaInterop.size(otherInterop, other) == size(interop, e) &&
+                otherMetaInterop.startsWith(otherInterop, buffer.buffer, other);
+    }
+
     DirectBytesBuffer buffer() {
         return buffer;
     }

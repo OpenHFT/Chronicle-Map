@@ -18,12 +18,15 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.lang.io.Bytes;
 
 public interface MetaBytesInterop<E, I> extends MetaBytesWriter<E, I> {
 
     boolean startsWith(I interop, Bytes bytes, E e);
+    
+    <I2> boolean equivalent(I interop, E e,
+                            MetaBytesInterop<E, I2> otherMetaInterop, I2 otherInterop, E other);
 
-    long hash(I interop, E e);
-
+    long hash(I interop, LongHashFunction hashFunction, E e);
 }

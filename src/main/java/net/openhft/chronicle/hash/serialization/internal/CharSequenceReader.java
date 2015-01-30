@@ -81,8 +81,9 @@ public final class CharSequenceReader<S extends CharSequence>
         this.identity = identity;
     }
 
+    @NotNull
     @Override
-    public S read(Bytes bytes, long size) {
+    public S read(@NotNull Bytes bytes, long size) {
         sb.setLength(0);
         try {
             AbstractBytes.readUTF0(bytes, sb, (int) size);
@@ -92,8 +93,9 @@ public final class CharSequenceReader<S extends CharSequence>
         return interner.intern(sb);
     }
 
+    @NotNull
     @Override
-    public S read(Bytes bytes, long size, S toReuse) {
+    public S read(@NotNull Bytes bytes, long size, S toReuse) {
         Appendable appendable;
         if (toReuse instanceof Appendable) {
             appendable = (Appendable) toReuse;

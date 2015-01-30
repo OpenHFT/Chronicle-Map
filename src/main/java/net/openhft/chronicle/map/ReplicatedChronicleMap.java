@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.LateUpdateException;
 import net.openhft.chronicle.hash.replication.TimeProvider;
@@ -30,7 +31,6 @@ import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.MultiStoreBytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -43,7 +43,6 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-import static net.openhft.chronicle.hash.hashing.Hasher.hash;
 import static net.openhft.chronicle.map.VanillaContext.SearchState.DELETED;
 import static net.openhft.chronicle.map.VanillaContext.SearchState.PRESENT;
 import static net.openhft.lang.MemoryUnit.*;
@@ -289,6 +288,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             return (ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI>) m;
         }
 
+        @Override
+        void totalCheckClosed() {
+            super.totalCheckClosed();
+            assert !replicationStateInit() : "replication state not closed";
+            assert !replicationUpdateInit() : "replication update not closed";
+        }
+
         /////////////////////////////////////////////////
         // Replication state
         long replicationBytesOffset;
@@ -314,9 +320,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         void closeReplicationState() {
-            if (replicationBytesOffset == 0L)
+            if (!replicationStateInit())
                 return;
             closeReplicationState0();
+        }
+
+        boolean replicationStateInit() {
+            return replicationBytesOffset != 0;
         }
 
         void closeReplicationState0() {
@@ -342,10 +352,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         byte newIdentifier;
 
         void initReplicationUpdate() {
-            if (newIdentifier != 0)
+            if (replicationUpdateInit())
                 return;
             checkMapInit();
             initReplicationUpdate0();
+        }
+
+        boolean replicationUpdateInit() {
+            return newIdentifier != 0;
         }
 
         void initReplicationUpdate0() {
@@ -358,7 +372,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         void closeReplicationUpdate() {
-            if (newIdentifier == 0)
+            if (!replicationUpdateInit())
                 return;
             closeReplicationUpdate0();
         }
@@ -449,7 +463,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             }
 
             @Override
-            public long hash(Object interop, Object o) {
+            public <I2> boolean equivalent(
+                    Object interop, Object o,
+                    MetaBytesInterop<Object, I2> otherMetaInterop, I2 otherInterop, Object other) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public long hash(Object interop, LongHashFunction hashFunction, Object o) {
                 throw new UnsupportedOperationException();
             }
 
@@ -493,6 +514,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     put0();
                     size(size() - 1L);
                     writeDeleted();
+                    closeNewValue();
                     state = DELETED;
                 }
                 return false;
@@ -513,9 +535,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         boolean shouldIgnore() {
-            assert identifier != 0 && newIdentifier != 0 :
-                    "Own entry replication state or " +
-                            "update replication state is not initialized";
+            assert replicationStateInit() : "replication state not init";
+            assert replicationUpdateInit() : "replication update not init";
             boolean shouldIgnore;
             if (timestamp < newTimestamp) {
                 shouldIgnore = false;
@@ -787,7 +808,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         // write the key
         entry.position(keyPosition);
         entry.limit(keyLimit);
-        destination.write(entry);
+        destination.write(entry, entry.position(), entry.remaining());
 
         boolean debugEnabled = LOG.isDebugEnabled();
         String message = null;
@@ -812,7 +833,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
         // writes the value
         entry.limit(entry.position() + valueSize);
-        destination.write(entry);
+        destination.write(entry, entry.position(), entry.remaining());
 
         if (debugEnabled) {
             LOG.debug(message + "value=" + entry.toString().trim() + ")");

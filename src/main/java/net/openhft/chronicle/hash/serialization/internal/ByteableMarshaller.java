@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.hashing.Hasher;
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.DeserializationFactoryConfigurableBytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
@@ -39,9 +39,10 @@ public abstract class ByteableMarshaller<E extends Byteable>
         return new Default<>(eClass);
     }
 
+    @NotNull
     @Override
     public ByteableMarshaller<E> withDeserializationFactory(
-            ObjectFactory<E> deserializationFactory) {
+            @NotNull ObjectFactory<E> deserializationFactory) {
         return new WithCustomFactory<>(tClass, deserializationFactory);
     }
 
@@ -62,7 +63,7 @@ public abstract class ByteableMarshaller<E extends Byteable>
     }
 
     @Override
-    public long size(E e) {
+    public long size(@NotNull E e) {
         return size;
     }
 
@@ -92,7 +93,7 @@ public abstract class ByteableMarshaller<E extends Byteable>
     }
 
     @Override
-    public boolean startsWith(Bytes bytes, E e) {
+    public boolean startsWith(@NotNull Bytes bytes, @NotNull E e) {
         if (bytes.capacity() - bytes.position() < size)
             return false;
         Bytes input = e.bytes();
@@ -111,12 +112,17 @@ public abstract class ByteableMarshaller<E extends Byteable>
     }
 
     @Override
-    public long hash(E e) {
-        return Hasher.hash(e.bytes(), e.offset(), e.offset() + size);
+    public boolean equivalent(@NotNull E a, @NotNull E b) {
+        return a.bytes().compare(a.offset(), b.bytes(), b.offset(), size);
     }
 
     @Override
-    public void write(Bytes bytes, E e) {
+    public long hash(@NotNull LongHashFunction hashFunction, @NotNull E e) {
+        return hashFunction.hashBytes(e.bytes(), e.offset(), size);
+    }
+
+    @Override
+    public void write(@NotNull Bytes bytes, @NotNull E e) {
         Bytes eBytes = e.bytes();
         if (eBytes != null) {
             if (eBytes != bytes || bytes.position() != e.offset()) {
@@ -136,17 +142,19 @@ public abstract class ByteableMarshaller<E extends Byteable>
         return size;
     }
 
+    @NotNull
     @Override
-    public E read(Bytes bytes, long size) {
+    public E read(@NotNull Bytes bytes, long size) {
         return read(bytes, size, null);
     }
 
+    @NotNull
     @Override
-    public E read(Bytes bytes, long size, E toReuse) {
+    public E read(@NotNull Bytes bytes, long size, E toReuse) {
         try {
             if (toReuse == null)
                 toReuse = getInstance();
-            toReuse.bytes(bytes, bytes.position());
+            setBytesAndOffset(toReuse, bytes);
             bytes.skip(size);
             return toReuse;
         } catch (Exception ex) {
@@ -177,8 +185,15 @@ public abstract class ByteableMarshaller<E extends Byteable>
     }
 
     @Override
-    public long hash(Object interop, E e) {
-        return hash(e);
+    public <I2> boolean equivalent(
+            Object interop, E e,
+            MetaBytesInterop<E, I2> otherMetaInterop, I2 otherInterop, E other) {
+        return equivalent(e, other);
+    }
+
+    @Override
+    public long hash(Object interop, LongHashFunction hashFunction, E e) {
+        return hash(hashFunction, e);
     }
 
     @Override

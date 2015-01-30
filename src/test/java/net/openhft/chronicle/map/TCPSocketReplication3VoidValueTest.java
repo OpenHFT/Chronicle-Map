@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.serialization.internal.DummyValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +28,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Set;
 
-import static net.openhft.chronicle.map.Builder.newMapVoid;
+import static net.openhft.chronicle.hash.serialization.internal.DummyValue.DUMMY_VALUE;
+import static net.openhft.chronicle.map.Builder.newMapDummyValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -39,16 +41,16 @@ import static org.junit.Assert.assertTrue;
 
 public class TCPSocketReplication3VoidValueTest {
 
-    private ChronicleMap<Integer, Void> map1;
-    private ChronicleMap<Integer, Void> map2;
-    private ChronicleMap<Integer, Void> map3;
+    private ChronicleMap<Integer, DummyValue> map1;
+    private ChronicleMap<Integer, DummyValue> map2;
+    private ChronicleMap<Integer, DummyValue> map3;
 
     @Before
     public void setup() throws IOException {
-        map1 = newMapVoid((byte) 1, 8036, new InetSocketAddress("localhost", 8037),
+        map1 = newMapDummyValue((byte) 1, 8036, new InetSocketAddress("localhost", 8037),
                 new InetSocketAddress("localhost", 8039));
-        map2 = newMapVoid((byte) 2, 8037, new InetSocketAddress("localhost", 8039));
-        map3 = newMapVoid((byte) 3, 8039);
+        map2 = newMapDummyValue((byte) 2, 8037, new InetSocketAddress("localhost", 8039));
+        map3 = newMapDummyValue((byte) 3, 8039);
     }
 
     @After
@@ -78,7 +80,7 @@ public class TCPSocketReplication3VoidValueTest {
     @Test
     public void test3() throws IOException, InterruptedException {
 
-        assertEquals(null, map3.put(5, null));
+        assertEquals(null, map3.put(5, DUMMY_VALUE));
 
         // allow time for the recompilation to resolve
         assertTrue(waitTillEqual(15000));
@@ -90,16 +92,16 @@ public class TCPSocketReplication3VoidValueTest {
     @Test
     public void test() throws IOException, InterruptedException {
 
-        assertEquals(null, map1.put(1, null));
-        assertEquals(null, map1.put(2, null));
+        assertEquals(null, map1.put(1, DUMMY_VALUE));
+        assertEquals(null, map1.put(2, DUMMY_VALUE));
 
-        assertEquals(null, map2.put(5, null));
-        assertEquals(null, map2.put(6, null));
+        assertEquals(null, map2.put(5, DUMMY_VALUE));
+        assertEquals(null, map2.put(6, DUMMY_VALUE));
 
         map1.remove(2);
         map2.remove(3);
         map1.remove(3);
-        map2.put(5, null);
+        map2.put(5, DUMMY_VALUE);
 
         // allow time for the recompilation to resolve
         assertTrue(waitTillEqual(5000));
@@ -111,15 +113,15 @@ public class TCPSocketReplication3VoidValueTest {
     @Test
     public void testClear() throws IOException, InterruptedException {
 
-        assertEquals(null, map1.put(1, null));
-        assertEquals(null, map1.put(2, null));
+        assertEquals(null, map1.put(1, DUMMY_VALUE));
+        assertEquals(null, map1.put(2, DUMMY_VALUE));
 
-        assertEquals(null, map2.put(5, null));
-        assertEquals(null, map2.put(6, null));
+        assertEquals(null, map2.put(5, DUMMY_VALUE));
+        assertEquals(null, map2.put(6, DUMMY_VALUE));
 
         map1.clear();
 
-        map2.put(5, null);
+        map2.put(5, DUMMY_VALUE);
 
         // allow time for the recompilation to resolve
         assertTrue("test timed out", waitTillEqual(15000));

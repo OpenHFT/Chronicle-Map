@@ -18,18 +18,19 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.hashing.Hasher;
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 public enum LongMarshaller
         implements BytesInterop<Long>, BytesReader<Long>, SizeMarshaller {
     INSTANCE;
 
     @Override
-    public long size(Long e) {
+    public long size(@NotNull Long e) {
         return 8L;
     }
 
@@ -59,17 +60,22 @@ public enum LongMarshaller
     }
 
     @Override
-    public boolean startsWith(Bytes bytes, Long e) {
+    public boolean startsWith(@NotNull Bytes bytes, @NotNull Long e) {
         return e == bytes.readLong(bytes.position());
     }
 
     @Override
-    public long hash(Long e) {
-        return Hasher.hash(e);
+    public boolean equivalent(@NotNull Long a, @NotNull Long b) {
+        return a.longValue() == b.longValue();
     }
 
     @Override
-    public void write(Bytes bytes, Long e) {
+    public long hash(@NotNull LongHashFunction hashFunction, @NotNull Long e) {
+        return hashFunction.hashLong(e);
+    }
+
+    @Override
+    public void write(@NotNull Bytes bytes, @NotNull Long e) {
         bytes.writeLong(e);
     }
 
@@ -78,13 +84,15 @@ public enum LongMarshaller
         return 8L;
     }
 
+    @NotNull
     @Override
-    public Long read(Bytes bytes, long size) {
+    public Long read(@NotNull Bytes bytes, long size) {
         return bytes.readLong();
     }
 
+    @NotNull
     @Override
-    public Long read(Bytes bytes, long size, Long toReuse) {
+    public Long read(@NotNull Bytes bytes, long size, Long toReuse) {
         return bytes.readLong();
     }
 }

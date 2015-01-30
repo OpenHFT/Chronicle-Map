@@ -492,7 +492,8 @@ public final class DataValueBytesMarshallers {
         sb.append("        if (toReuse == null)\n");
         sb.append("            toReuse = getInstance();\n");
         sb.append("        if (toReuse instanceof Byteable) {\n");
-        sb.append("            ((Byteable) toReuse).bytes(bytes, bytes.position());\n");
+        sb.append("            " +
+                "ByteableMarshaller.setBytesAndOffset(((Byteable) toReuse), bytes);\n");
         sb.append("            bytes.skip(size);\n");
         sb.append("            return toReuse;\n");
         sb.append("        }\n");

@@ -134,6 +134,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     /////////////////////////////////////////////////
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
     transient BytesStore ms;
+    transient Bytes bytes;
 
     transient long headerSize;
     transient long segmentHeadersOffset;
@@ -272,6 +273,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
         this.ms = bytesStore;
+        bytes = ms.bytes();
 
         onHeaderCreated();
 
@@ -362,6 +364,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public void close() {
         if (ms == null)
             return;
+        bytes.release();
+        bytes = null;
         ms.free();
         ms = null;
     }
@@ -376,7 +380,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     final void checkValue(Object value) {
-        if (vClass != Void.class && !vClass.isInstance(value)) {
+        if (!vClass.isInstance(value)) {
             throw new ClassCastException("Value must be a " + vClass.getName() +
                     " but was a " + value.getClass());
         }
@@ -403,12 +407,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     void putDefaultValue(VanillaContext context) {
-        context.initPutDependencies();
-        context.initInstanceValueModel0();
-        context.initNewInstanceValue0(defaultValue(context));
-        context.put0();
-        context.closeValueModel();
-        context.closeValue();
+        context.doPut(defaultValue(context));
     }
 
     @Override
@@ -433,6 +432,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 "during map building");
     }
 
+    @Override
+    V prevValueOnPut(MapKeyContext<K, V> context) {
+        return putReturnsNull ? null : super.prevValueOnPut(context);
+    }
+
+    @Override
+    V prevValueOnRemove(MapKeyContext<K, V> context) {
+        return removeReturnsNull ? null : super.prevValueOnRemove(context);
+    }
 
     @Override
     public V newValueInstance() {
@@ -500,7 +508,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         try {
             if (!c.containsKey()) {
                 c.doPut(defaultValue(c));
-                c.closeValue();
             }
             V value = c.getUsing(usingValue);
             if (value != usingValue) {

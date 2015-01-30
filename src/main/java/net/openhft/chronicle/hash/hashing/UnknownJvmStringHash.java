@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.serialization;
+package net.openhft.chronicle.hash.hashing;
 
-import net.openhft.lang.io.serialization.ObjectFactory;
-import org.jetbrains.annotations.NotNull;
+enum UnknownJvmStringHash implements StringHash {
+    INSTANCE;
 
-public interface DeserializationFactoryConfigurableBytesReader<E,
-        R extends DeserializationFactoryConfigurableBytesReader<E, R>>
-        extends BytesReader<E> {
-
-    @NotNull
-    R withDeserializationFactory(@NotNull ObjectFactory<E> deserializationFactory);
+    @Override
+    public long longHash(String s, LongHashFunction hashFunction, int off, int len) {
+        return hashFunction.hashNativeChars(s, off, len);
+    }
 }

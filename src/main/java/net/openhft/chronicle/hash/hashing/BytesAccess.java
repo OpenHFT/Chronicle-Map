@@ -20,8 +20,10 @@ import net.openhft.lang.io.Bytes;
 
 import java.nio.ByteOrder;
 
-enum BytesAccess implements Access<Bytes> {
-    INSTANCE;
+public final class BytesAccess extends Access<Bytes> {
+    public static final BytesAccess INSTANCE = new BytesAccess();
+    
+    private BytesAccess() {}
 
     @Override
     public long getLong(Bytes input, long offset) {
@@ -62,5 +64,4 @@ enum BytesAccess implements Access<Bytes> {
     public ByteOrder byteOrder(Bytes input) {
         return input.byteOrder();
     }
-
 }

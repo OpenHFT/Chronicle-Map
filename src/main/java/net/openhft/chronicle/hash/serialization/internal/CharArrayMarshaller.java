@@ -18,16 +18,19 @@
 
 package net.openhft.chronicle.hash.serialization.internal;
 
-import net.openhft.chronicle.hash.hashing.Hasher;
+import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<char[]> {
     INSTANCE;
 
     @Override
-    public boolean startsWith(Bytes bytes, char[] chars) {
+    public boolean startsWith(@NotNull Bytes bytes, @NotNull char[] chars) {
         if (bytes.capacity() - bytes.position() < chars.length * 2L)
             return false;
         long pos = bytes.position();
@@ -39,19 +42,26 @@ public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<cha
     }
 
     @Override
-    public long hash(char[] chars) {
-        return Hasher.hash(chars);
+    public boolean equivalent(@NotNull char[] a, @NotNull char[] b) {
+        return Arrays.equals(a, b);
     }
 
     @Override
-    public char[] read(Bytes bytes, long size) {
+    public long hash(@NotNull LongHashFunction hashFunction, @NotNull char[] chars) {
+        return hashFunction.hashChars(chars);
+    }
+
+    @NotNull
+    @Override
+    public char[] read(@NotNull Bytes bytes, long size) {
         char[] chars = new char[resLen(size)];
         bytes.readFully(chars);
         return chars;
     }
 
+    @NotNull
     @Override
-    public char[] read(Bytes bytes, long size, char[] toReuse) {
+    public char[] read(@NotNull Bytes bytes, long size, char[] toReuse) {
         int resLen = resLen(size);
         if (toReuse == null || toReuse.length != resLen)
             toReuse = new char[resLen];
@@ -68,12 +78,12 @@ public enum CharArrayMarshaller implements BytesInterop<char[]>, BytesReader<cha
     }
 
     @Override
-    public long size(char[] chars) {
+    public long size(@NotNull char[] chars) {
         return chars.length * 2L;
     }
 
     @Override
-    public void write(Bytes bytes, char[] chars) {
+    public void write(@NotNull Bytes bytes, @NotNull char[] chars) {
         bytes.write(chars);
     }
 }

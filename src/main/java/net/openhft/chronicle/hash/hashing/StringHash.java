@@ -1,7 +1,5 @@
 /*
- * Copyright 2014 Higher Frequency Trading
- *
- * http://www.higherfrequencytrading.com
+ * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +14,9 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.hash.hashing;
 
-  enum DummyValue {
-    DUMMY_VALUE
+interface StringHash {
+
+    long longHash(String s, LongHashFunction hashFunction, int off, int len);
 }

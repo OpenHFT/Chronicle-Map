@@ -45,7 +45,8 @@ public class StatelessChronicleMapConverter<K, V> extends AbstractChronicleMapCo
 
         try {
 
-            final Method entrySize = o.getClass().getDeclaredMethod("entrySet", MapEntryCallback.class);
+            final Method entrySize = o.getClass()
+                    .getDeclaredMethod("entrySet", MapEntryCallback.class);
             entrySize.setAccessible(true);
             entrySize.invoke(o,
 

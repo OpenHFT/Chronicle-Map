@@ -33,6 +33,13 @@ public abstract class DataValueMetaBytesInterop<E>
         super(buffer);
     }
 
+    @Override
+    public <I2> boolean equivalent(
+            BytesWriter<E> interop, E e, MetaBytesInterop<E, I2> otherMetaInterop, I2 otherInterop,
+            E other) {
+        return e.equals(other);
+    }
+
     void init(BytesWriter<E> writer, E e, long size) {
         Bytes buffer = this.buffer.obtain(size, false);
         writer.write(buffer, e);
