@@ -1469,6 +1469,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             final DirectBitSet positions = hashLookup.getPositions();
             class EntryChecker implements MultiMap.EntryConsumer {
                 long size = 0;
+
                 @Override
                 public void accept(long key, long value) {
                     if (positions.isSet(value))
@@ -1527,7 +1528,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 @Nullable SegmentState segmentState) {
             while (true) {
 //                final boolean success = segmentHeader.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
-                final boolean success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+                final boolean success;
+                try {
+                    success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+                } catch (InterruptedException e) {
+                    throw new IllegalStateException(e);
+                }
 /*
                 boolean success = false;
                 try {
@@ -1563,7 +1569,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 SegmentState segmentState, boolean nativeValueClass) {
             startWriteLock = System.nanoTime();
             while (true) {
-                final boolean success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+                final boolean success;
+                try {
+                    success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+                } catch (InterruptedException e) {
+                    throw new IllegalStateException(e);
+                }
 /*
                 boolean success = false;
                 try {
@@ -1970,7 +1981,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         final void freeExtraAllocatedChunks(long pos, int allocatedChunks, Bytes entry) {
             int actuallyUsedChunks;
             if (!constantlySizedEntry && couldNotDetermineAlignmentBeforeAllocation && // fast path
-                    (actuallyUsedChunks = inChunks(entry.position())) < allocatedChunks)  {
+                    (actuallyUsedChunks = inChunks(entry.position())) < allocatedChunks) {
                 free(pos + actuallyUsedChunks, allocatedChunks - actuallyUsedChunks);
             }
         }
