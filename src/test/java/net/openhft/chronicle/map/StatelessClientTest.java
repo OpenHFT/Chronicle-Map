@@ -119,8 +119,8 @@ public class StatelessClientTest {
             try (ChronicleMap<Integer, StringBuilder> statelessMap =
                          ChronicleMapBuilder
                                  .of(Integer.class, StringBuilder.class, new InetSocketAddress("localhost", port))
-                    .putReturnsNull(true)
-                    .create()) {
+                                 .putReturnsNull(true)
+                                 .create()) {
                 String actual = statelessMap.getMapped(10, ToString.INSTANCE);
 
                 assertEquals("{10=Hello World}", statelessMap.toString());
@@ -259,7 +259,7 @@ public class StatelessClientTest {
 
         try (ChronicleMap<Integer, CharSequence> serverMap =
                      ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create()) {
+                             .replication((byte) 2, TcpTransportAndNetworkConfig.of(port)).create()) {
             try (ChronicleMap<Integer, CharSequence> statelessMap = localClient(port)) {
                 serverMap.put(10, "EXAMPLE-10");
 
@@ -268,7 +268,7 @@ public class StatelessClientTest {
             }
         }
     }
-
+    @Ignore
     @Test(timeout = 10000)
     public void testServerPutStringKeyMap() throws IOException, InterruptedException {
 
@@ -286,7 +286,7 @@ public class StatelessClientTest {
         }
     }
 
-
+    @Ignore
     @Test(timeout = 10000)
     public void testServerPutClientReplace() throws IOException, InterruptedException {
 
