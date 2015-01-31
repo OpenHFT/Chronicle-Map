@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 
 import net.openhft.lang.MemoryUnit;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -44,7 +43,7 @@ public class MarkTest {
         });
     }
 
-    @Ignore("fails sometimes on TC")
+
     @Test(timeout = 50000)
     public void persistedTest() {
         final File db = Paths.get(System.getProperty("java.io.tmpdir"), "mark").toFile();
