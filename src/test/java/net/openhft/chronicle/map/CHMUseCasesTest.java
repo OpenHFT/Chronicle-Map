@@ -39,7 +39,7 @@ public class CHMUseCasesTest {
     private static final String TMP = System.getProperty("java.io.tmpdir");
 
 
-    enum TypeOfMap {STATELESS,SIMPLE, SIMPLE_PERSISTED, REPLICATED}
+    enum TypeOfMap {STATELESS, SIMPLE, SIMPLE_PERSISTED, REPLICATED}
 
     private final TypeOfMap typeOfMap;
 
@@ -227,7 +227,7 @@ public class CHMUseCasesTest {
                 return map1;
 
             case SIMPLE_PERSISTED:
-                final File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".map");
+                final File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + System.currentTimeMillis() + ".map");
                 file.deleteOnExit();
                 map1 = builder.createPersistedTo(file);
                 closeables.add(map1);
@@ -367,7 +367,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<byte[], byte[][]> map = newInstance(builder)) {
             byte[] bytes1 = "value1".getBytes();
             byte[] bytes2 = "value2".getBytes();
-            byte[][] value = {bytes1,bytes2};
+            byte[][] value = {bytes1, bytes2};
             map.put("Key".getBytes(), value);
 
             assertEquals(value, map.get("Key".getBytes()));
@@ -1126,12 +1126,12 @@ public class CHMUseCasesTest {
             }));
 
             try {
-map.putMapped(1.0, new UnaryOperator<Double>() {
-    @Override
-    public Double update(Double s) {
-        return s + 1;
-    }
-});
+                map.putMapped(1.0, new UnaryOperator<Double>() {
+                    @Override
+                    public Double update(Double s) {
+                        return s + 1;
+                    }
+                });
 
             } catch (Exception todoMoreSpecificException) {
             }
@@ -1265,13 +1265,13 @@ map.putMapped(1.0, new UnaryOperator<Double>() {
             mapChecks();
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
                     map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
-                @Override
-                public ByteBuffer update(ByteBuffer s) {
-                    s.put(0, (byte) (s.get(0) + 1));
-                    s.put(1, (byte) (s.get(1) - 1));
-                    return function.apply(s);
-                }
-            }));
+                        @Override
+                        public ByteBuffer update(ByteBuffer s) {
+                            s.put(0, (byte) (s.get(0) + 1));
+                            s.put(1, (byte) (s.get(1) - 1));
+                            return function.apply(s);
+                        }
+                    }));
 
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.get(key1));
 
