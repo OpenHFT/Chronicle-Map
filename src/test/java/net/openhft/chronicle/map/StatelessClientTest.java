@@ -268,6 +268,7 @@ public class StatelessClientTest {
             }
         }
     }
+
     @Ignore
     @Test(timeout = 10000)
     public void testServerPutStringKeyMap() throws IOException, InterruptedException {
@@ -328,6 +329,8 @@ public class StatelessClientTest {
         }
     }
 
+
+    @Ignore
     @Test(timeout = 10000)
     public void testStringKeyMapPutIfAbsentIntoStatelessMap() throws IOException,
             InterruptedException {
