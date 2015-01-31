@@ -231,7 +231,8 @@ public class CHMUseCasesTest {
                 return map1;
 
             case SIMPLE_PERSISTED:
-                final File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".map");
+                final File file = new File(TMP + "/chronicle-map-" + System.nanoTime() +
+                        System.currentTimeMillis() + ".map");
                 file.deleteOnExit();
                 map1 = builder.createPersistedTo(file);
                 closeables.add(map1);
