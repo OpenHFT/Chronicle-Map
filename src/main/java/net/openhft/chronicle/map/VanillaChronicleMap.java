@@ -230,7 +230,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     final long createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
-        this.ms = bytesStore;
+        // checks the the store has not been closed
+        // todo remove the CheckedBytesStore before the release
+        this.ms = new CheckedBytesStore(bytesStore);
 
         onHeaderCreated();
 
@@ -242,9 +244,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         long segmentSize = segmentSize();
         long headerOffset = 0;
         for (int i = 0; i < this.segments.length; i++) {
-            NativeBytes segmentHeader =
-                    (NativeBytes) segmentHeaders.bytes(headerOffset, segmentHeaderSize);
-            NativeBytes segmentData = (NativeBytes) ms.bytes(offset, segmentSize);
+            NativeBytesI segmentHeader =
+                    (NativeBytesI) segmentHeaders.bytes(headerOffset, segmentHeaderSize);
+            NativeBytesI segmentData = (NativeBytesI) ms.bytes(offset, segmentSize);
             this.segments[i] = createSegment(segmentHeader, segmentData, i);
             headerOffset += segmentHeaderSize;
             offset += segmentSize;
@@ -306,7 +308,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return segmentHeaderSize;
     }
 
-    Segment createSegment(NativeBytes segmentHeader, NativeBytes bytes, int index) {
+    Segment createSegment(NativeBytesI segmentHeader, NativeBytesI bytes, int index) {
         return new Segment(segmentHeader, bytes, index);
     }
 
@@ -1411,8 +1413,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
          */
         static final long LOCK_OFFSET = 0L; // 64-bit
         static final long SIZE_OFFSET = LOCK_OFFSET + 8L; // 32-bit
-        final NativeBytes segmentHeader;
-        final NativeBytes bytes;
+        final NativeBytesI segmentHeader;
+        final NativeBytesI bytes;
         final long entriesOffset;
         private final int index;
         private final SingleThreadedDirectBitSet freeList;
@@ -1426,7 +1428,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         /**
          * @param index the index of this segment held by the map
          */
-        Segment(NativeBytes segmentHeader, NativeBytes bytes, int index) {
+        Segment(NativeBytesI segmentHeader, NativeBytesI bytes, int index) {
             this.segmentHeader = segmentHeader;
             this.bytes = bytes;
             this.index = index;
@@ -1435,7 +1437,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             hashLookup = createMultiMap(start);
             start += CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
                     * multiMapsPerSegment();
-            final NativeBytes bsBytes = new NativeBytes(ms.objectSerializer(),
+            final NativeBytesI bsBytes = new NativeBytes(ms.objectSerializer(),
                     start,
                     start + MultiMapFactory.sizeOfBitSetInBytes(actualChunksPerSegment),
                     null);
@@ -1453,11 +1455,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
 
         private MultiMap createMultiMap(long start) {
-            final NativeBytes multiMapBytes =
+            final NativeBytesI multiMapBytes =
                     new NativeBytes((ObjectSerializer) null, start,
                             start = start + sizeOfMultiMap(), null);
 
-            final NativeBytes sizeOfMultiMapBitSetBytes =
+            final NativeBytesI sizeOfMultiMapBitSetBytes =
                     new NativeBytes((ObjectSerializer) null, start,
                             start + sizeOfMultiMapBitSet(), null);
 //            multiMapBytes.load();
@@ -2574,7 +2576,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // of returnedEntry.getKey(), but it seems rather wasteful to workaround so rare
             // case.
             final long offset = segment.offsetFromPos(pos);
-            final NativeBytes entry = segment.reuse(this.entry, offset);
+            final NativeBytesI entry = segment.reuse(this.entry, offset);
 
             final long keySize = keySizeMarshaller.readSize(entry);
             long position = entry.position();
@@ -2583,7 +2585,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             removePresent(segment, pos, entry, keySize, segmentHash, true);
         }
 
-        final void removePresent(Segment segment, long pos, NativeBytes entry, long keySize,
+        final void removePresent(Segment segment, long pos, NativeBytesI entry, long keySize,
                                  long segmentHash, boolean removeFromMultiMap) {
             entry.skip(keySize);
             segment.manageReplicationBytes(entry, true, true);
