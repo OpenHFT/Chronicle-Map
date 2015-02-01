@@ -44,6 +44,6 @@ public enum BytesBytesInterop implements BytesInterop<Bytes> {
 
     @Override
     public void write(Bytes bytes, Bytes e) {
-        bytes.write(e);
+        bytes.write(e, e.position(), e.remaining());
     }
 }

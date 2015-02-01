@@ -973,7 +973,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         @Override
         public void write(Void writer, Bytes bytes, Bytes value) {
-            bytes.write(value);
+            bytes.write(value, value.position(), value.remaining());
         }
     }
 
