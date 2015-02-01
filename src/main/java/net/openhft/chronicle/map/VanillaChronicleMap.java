@@ -1630,7 +1630,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
 
             if (lockTime > 1e8 && LOG.isInfoEnabled())
-                LOG.info("Thread took %,d ms to release lock%n", lockTime / 1000000 + "(Was there a GC?)");
+                LOG.info("Thread took " + lockTime / 1000000 + "ms to release the lock, (Was there a GC?)");
         }
 
         @Override
