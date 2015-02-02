@@ -504,7 +504,7 @@ final class ChannelProvider implements Closeable {
             @Override
             public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
                                            int na) {
-                destination.write(entry);
+                destination.write(entry, entry.position(), entry.remaining());
             }
 
             @Override

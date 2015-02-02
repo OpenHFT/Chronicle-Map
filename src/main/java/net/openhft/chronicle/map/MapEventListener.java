@@ -81,12 +81,12 @@ public abstract class MapEventListener<K, V> implements Serializable {
         }
 
         @Override
-        public void onPut(Object key, Object value, Object replacedValue) {
+        public void onPut(Object key, Object value, Object replacedValue, boolean replicationEvent) {
             LOGGER.info("{} put {} => {}", prefix, key, value);
         }
 
         @Override
-        public void onRemove(Object key, Object value) {
+        public void onRemove(Object key, Object value, boolean replicationEvent) {
             LOGGER.info("{} remove {} was {}", prefix, key, value);
         }
     }
@@ -112,24 +112,24 @@ public abstract class MapEventListener<K, V> implements Serializable {
      * as well.
      *
      * <p>This method is called when put is already happened.
-     *
-     * @param key           the key the given value is put for
+     *  @param key           the key the given value is put for
      * @param newValue      the value which is now associated with the given key
      * @param replacedValue the value which was replaced by {@code newValue}, {@code null} if the
-     *                      key was absent in the map before current {@code ChronicleMap}
+ *                      key was absent in the map before current {@code ChronicleMap}
+     * @param replicationEvent
      */
-    public void onPut(K key, V newValue, @Nullable V replacedValue) {
+    public void onPut(K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
         // do nothing
     }
 
     /**
      * This is called when an entry is removed. Misses, i. e. when {@code map.remove(key)} is
      * called, but key is already absent in the map, are not notified.
-     *
-     * @param key   the key removed from the map
+     *  @param key   the key removed from the map
      * @param value the value which was associated with the given key
+     * @param replicationEvent
      */
-    public void onRemove(K key, V value) {
+    public void onRemove(K key, V value, boolean replicationEvent) {
         // do nothing
     }
 }

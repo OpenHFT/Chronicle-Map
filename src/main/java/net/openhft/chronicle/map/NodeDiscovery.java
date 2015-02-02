@@ -755,7 +755,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             return false;
 
         BOOTSTRAP_BYTES.clear();
-        out.write(BOOTSTRAP_BYTES);
+        out.write(BOOTSTRAP_BYTES, BOOTSTRAP_BYTES.position(), BOOTSTRAP_BYTES.remaining());
 
         ourProposedIdentifier.writeMarshallable(out);
         return true;

@@ -65,6 +65,6 @@ public abstract class BasicCopyingMetaBytesInterop<E, W> implements MetaBytesInt
 
     @Override
     public void write(W writer, Bytes bytes, E e) {
-        bytes.write(buffer.buffer);
+        bytes.write(buffer.buffer, buffer.buffer.position(), buffer.buffer.remaining());
     }
 }

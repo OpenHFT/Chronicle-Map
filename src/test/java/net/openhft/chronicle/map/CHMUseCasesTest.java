@@ -480,7 +480,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore
     @Test
     public void testStringStringMap() throws ExecutionException, InterruptedException,
             IOException {
@@ -516,7 +515,6 @@ public class CHMUseCasesTest {
     }
 
 
-    @Ignore
     @Test
     public void testStringStringMapMutableValue() throws ExecutionException, InterruptedException, IOException {
 
@@ -2510,7 +2508,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore
     @Test
     public void testMapStringIntegerValueWithoutListMarshallers() throws IOException {
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
