@@ -1191,8 +1191,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         } else
             inBytes.limit(inBytes.capacity());
 
-        // block until we have received all the bytes in this chunk
-        receiveBytesFromSocket(remainingBytes, timeoutTime);
+        try {
+            // block until we have received all the bytes in this chunk
+            receiveBytesFromSocket(remainingBytes, timeoutTime);
+        }catch (java.nio.channels.AsynchronousCloseException e ){
+            return inBytes;
+        }
 
         final boolean isException = inBytes.readBoolean();
 
