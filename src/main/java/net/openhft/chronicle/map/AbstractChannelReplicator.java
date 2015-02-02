@@ -265,10 +265,9 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
     }
 
-    public void closeResources() throws InterruptedException {
+    public void closeResources() {
         isClosed = true;
         executorService.shutdown();
-
 
         closeables.closeQuietly();
         if (segmentState != null)
