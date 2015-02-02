@@ -41,7 +41,6 @@ import static org.junit.Assert.*;
  */
 public class LargeEntriesTest {
 
-    @Ignore("Issues with TC")
     @Test
     public void testLargeStrings() throws ExecutionException, InterruptedException, IOException {
         final int ENTRIES = 250;
@@ -49,7 +48,7 @@ public class LargeEntriesTest {
 
         File file = File.createTempFile("largeEntries" + System.currentTimeMillis(), ".deleteme");
         file.deleteOnExit();
-        final ChronicleMap<String, String> map = ChronicleMapBuilder
+        try (final ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
                 .valueMarshaller(SnappyStringMarshaller.INSTANCE)
                 .actualSegments(1) // to force an error.
@@ -57,37 +56,38 @@ public class LargeEntriesTest {
                 .averageKeySize(10)
                 .averageValueSize(ENTRY_SIZE)
                 .putReturnsNull(true)
-                .createPersistedTo(file);
-        {
-            warmUpCompression(ENTRY_SIZE);
-            int threads = 4; //Runtime.getRuntime().availableProcessors();
-            ExecutorService es = Executors.newFixedThreadPool(threads);
-            final int block = ENTRIES / threads;
-            for (int i = 0; i < 3; i++) {
-                long start = System.currentTimeMillis();
-                List<Future<?>> futureList = new ArrayList<>();
-                for (int t = 0; t < threads; t++) {
-                    final int finalT = t;
-                    futureList.add(es.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            exerciseLargeStrings(map, finalT * block, finalT * block + block,
-                                    ENTRY_SIZE);
-                        }
-                    }));
+                .createPersistedTo(file)) {
+            {
+                warmUpCompression(ENTRY_SIZE);
+                int threads = 4; //Runtime.getRuntime().availableProcessors();
+                ExecutorService es = Executors.newFixedThreadPool(threads);
+                final int block = ENTRIES / threads;
+                for (int i = 0; i < 3; i++) {
+                    long start = System.currentTimeMillis();
+                    List<Future<?>> futureList = new ArrayList<>();
+                    for (int t = 0; t < threads; t++) {
+                        final int finalT = t;
+                        futureList.add(es.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                exerciseLargeStrings(map, finalT * block, finalT * block + block,
+                                        ENTRY_SIZE);
+                            }
+                        }));
+                    }
+                    for (Future<?> future : futureList) {
+                        future.get();
+                    }
+                    long time = System.currentTimeMillis() - start;
+                    long operations = 3;
+                    System.out.printf("Put/Get rate was %.1f MB/s%n",
+                            operations * ENTRIES * ENTRY_SIZE / 1e6 / (time / 1e3));
                 }
-                for (Future<?> future : futureList) {
-                    future.get();
-                }
-                long time = System.currentTimeMillis() - start;
-                long operations = 3;
-                System.out.printf("Put/Get rate was %.1f MB/s%n",
-                        operations * ENTRIES * ENTRY_SIZE / 1e6 / (time / 1e3));
+                es.shutdown();
+
             }
-            es.shutdown();
-            if (es.isTerminated())
-                map.close();
         }
+        file.delete();
     }
 
     private void warmUpCompression(int entrySize) {

@@ -55,7 +55,6 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     public static final int SIZE_OF_SIZE = 4;
     public static final int SIZE_OF_TRANSACTION_ID = 8;
-    public static final int SIZE_OF_TIME_SHIFT = 2;
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractChannelReplicator.class);
 
@@ -67,6 +66,15 @@ abstract class AbstractChannelReplicator implements Closeable {
     final CloseablesManager closeables = new CloseablesManager();
     final Selector selector = openSelector(closeables);
     private final ExecutorService executorService;
+
+    private final ExecutorService connectExecutorService = Executors.newCachedThreadPool(
+            new NamedThreadFactory("TCP-connect", true) {
+                @Override
+                public Thread newThread(@net.openhft.lang.model.constraints.NotNull Runnable r) {
+                    return lastThread = super.newThread(r);
+                }
+            });
+
     private volatile Thread lastThread;
     private Throwable startedHere;
     private Future<?> future;
@@ -228,10 +236,31 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     @Override
     public void close() {
+
         if (Thread.interrupted())
             LOG.warn("Already interrupted");
         long start = System.currentTimeMillis();
-        closeResources();
+        isClosed = true;
+        connectExecutorService.shutdown();
+        try {
+            if (!connectExecutorService.awaitTermination(5, TimeUnit.MILLISECONDS)) {
+                connectExecutorService.shutdownNow();
+                connectExecutorService.awaitTermination(10, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {
+            LOG.error("", e);
+        }
+
+        try {
+            closeResources();
+            if (!executorService.awaitTermination(5, TimeUnit.MILLISECONDS)) {
+                executorService.shutdownNow();
+                executorService.awaitTermination(10, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {
+            LOG.error("", e);
+        }
+
 
         try {
             if (future != null)
@@ -260,18 +289,6 @@ abstract class AbstractChannelReplicator implements Closeable {
     public void closeResources() {
         isClosed = true;
         executorService.shutdown();
-
-
-        try {
-            executorService.awaitTermination(5, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            executorService.shutdownNow();
-            try {
-                executorService.awaitTermination(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e1) {
-                LOG.error("", e);
-            }
-        }
 
         closeables.closeQuietly();
         if (segmentState != null)
@@ -593,50 +610,53 @@ abstract class AbstractChannelReplicator implements Closeable {
          * @param reconnectionInterval the period to wait before connecting
          */
         private void doConnect(final long reconnectionInterval) {
-            final Thread thread = new Thread(new Runnable() {
-                public void run() {
-                    SelectableChannel socketChannel = null;
-                    try {
-                        if (reconnectionInterval > 0)
-                            Thread.sleep(reconnectionInterval);
-
-                        socketChannel = doConnect();
-
+            try {
+                connectExecutorService.submit(new Runnable() {
+                    public void run() {
+                        SelectableChannel socketChannel = null;
                         try {
-                            closeables.add(socketChannel);
-                        } catch (IllegalStateException e) {
-                            // close could have be called from another thread, while we were in Thread.sleep()
-                            // which would cause a IllegalStateException
+                            if (reconnectionInterval > 0)
+                                Thread.sleep(reconnectionInterval);
+
+                            socketChannel = doConnect();
+
+                            try {
+                                closeables.add(socketChannel);
+                            } catch (IllegalStateException e) {
+                                // close could have be called from another thread, while we were in Thread.sleep()
+                                // which would cause a IllegalStateException
+                                closeQuietly(socketChannel);
+                                return;
+                            }
+
+                            AbstractConnector.this.socketChannel = socketChannel;
+                        } catch (Exception e) {
                             closeQuietly(socketChannel);
-                            return;
+                            LOG.debug("", e);
                         }
-
-                        AbstractConnector.this.socketChannel = socketChannel;
-                    } catch (Exception e) {
-                        closeQuietly(socketChannel);
-                        LOG.debug("", e);
                     }
-                }
-
-                private void closeQuietly(SelectableChannel socketChannel) {
-                    if (socketChannel == null)
-                        return;
-                    try {
-                        socketChannel.close();
-                    } catch (Exception e1) {
-                        // do nothing
-                    }
-                }
-            });
-
-            thread.setName(name);
-            thread.setDaemon(true);
-            thread.start();
+                });
+            } catch (Exception e) {
+                if (!isClosed)
+                    LOG.error("", e);
+            }
         }
+
+        private void closeQuietly(SelectableChannel socketChannel) {
+            if (socketChannel == null)
+                return;
+            try {
+                socketChannel.close();
+            } catch (Exception e1) {
+                // do nothing
+            }
+        }
+
 
         public void setSuccessfullyConnected() {
             connectionAttempts = 0;
         }
+
     }
 
 }

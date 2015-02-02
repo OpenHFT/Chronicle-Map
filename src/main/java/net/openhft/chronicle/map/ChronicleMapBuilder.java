@@ -103,7 +103,7 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
         ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>,
         MapBuilder<ChronicleMapBuilder<K, V>>, Serializable {
 
-    static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte) 128;
+    static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte) 127;
     private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
     private static final long DEFAULT_ENTRIES = 1 << 20;
     private static final int MAX_SEGMENTS = (1 << 30);

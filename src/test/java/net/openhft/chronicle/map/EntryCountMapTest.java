@@ -190,17 +190,26 @@ public class EntryCountMapTest {
         Random random = new Random(seed);
         int counter = minSize + random.nextInt(9999 + maxSize);
         final int stride = 1 + random.nextInt(100);
-        int maxKeySize = "key:".length() +
+        final int maxKeySize = "key:".length() +
                 (int) round(log10(moreThanMaxSize(maxSize) * stride + counter)) + 1;
-        final ChronicleMap<CharSequence, LongValue> map =
-                getSharedMap(minSize, segments, maxKeySize);
+
+
         return es.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                testEntriesMaxSize0(segments, minSize, maxSize, seed, stride, map);
-                return null;
+                File f = null;
+                try (final ChronicleMap<CharSequence, LongValue> map =
+                             getSharedMap(minSize, segments, maxKeySize)) {
+                    f = map.file();
+                    testEntriesMaxSize0(segments, minSize, maxSize, seed, stride, map);
+                } finally {
+                    if (f != null && f.exists())
+                        f.delete();
+                    return null;
+                }
             }
         });
+
     }
 
     void testEntriesMaxSize(int segments, int minSize, int maxSize, int seed) throws IOException {
@@ -210,8 +219,12 @@ public class EntryCountMapTest {
         int stride = 1 + random.nextInt(100);
         int maxKeySize = "key:".length() +
                 (int) round(log10(moreThanMaxSize(maxSize) * stride + counter)) + 1;
-        ChronicleMap<CharSequence, LongValue> map = getSharedMap(minSize, segments, maxKeySize);
-        testEntriesMaxSize0(segments, minSize, maxSize, counter, stride, map);
+        File file;
+        try (ChronicleMap<CharSequence, LongValue> map = getSharedMap(minSize, segments, maxKeySize)) {
+            file = map.file();
+            testEntriesMaxSize0(segments, minSize, maxSize, counter, stride, map);
+        }
+        file.delete();
     }
 
     void testEntriesMaxSize0(int segments, int minSize, int maxSize, int counter, int stride,

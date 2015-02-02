@@ -24,7 +24,6 @@ import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -34,7 +33,6 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.Set;
 
-import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -59,7 +57,7 @@ public class TCPSocketReplicationIntValueTest {
         ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
         map1Builder = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 (byte) 1, s_port, new InetSocketAddress("localhost", s_port + 1));
-        map1 = map1Builder.createPersistedTo(getPersistenceFile());
+        map1 = map1Builder.create();
         map2 = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 (byte) 2, s_port + 1)
                 .entries(Builder.SIZE)
@@ -72,7 +70,9 @@ public class TCPSocketReplicationIntValueTest {
 
         for (final Closeable closeable : new Closeable[]{map1, map2}) {
             try {
+
                 closeable.close();
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
