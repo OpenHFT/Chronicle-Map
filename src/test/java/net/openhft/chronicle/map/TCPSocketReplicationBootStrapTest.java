@@ -56,8 +56,9 @@ public class TCPSocketReplicationBootStrapTest {
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
                         (byte) 2, 8092, new InetSocketAddress("localhost", 8091));
+        File persistenceFile = getPersistenceFile();
         final ChronicleMap<Integer, CharSequence> map2a =
-                map2aBuilder.createPersistedTo(getPersistenceFile());
+                map2aBuilder.createPersistedTo(persistenceFile);
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2
 
         long lastModificationTime;
@@ -86,6 +87,9 @@ public class TCPSocketReplicationBootStrapTest {
         // add data into it
         waitTillEqual(5000);
         assertEquals("ADDED WHEN DISCONNECTED TO MAP1", map1.get(11));
+
+        map2.file().delete();
+        persistenceFile.delete();
     }
 
     @Test

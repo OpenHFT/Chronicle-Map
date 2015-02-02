@@ -205,7 +205,7 @@ public class ChronicleMapTest {
     public void testByteArrayPersistenceFileReuse() throws Exception {
         final File persistenceFile = Builder.getPersistenceFile();
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; i++) {
             try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[]
                     .class).createPersistedTo(persistenceFile)) {
 
@@ -213,6 +213,9 @@ public class ChronicleMapTest {
                 System.out.println(o == null ? "null" : new String(o));
                 map.put("hello".getBytes(), "world".getBytes());
             }
+        }
+
+        persistenceFile.delete();
     }
 
     @Test
@@ -1851,7 +1854,9 @@ public class ChronicleMapTest {
                 assertEquals(2, value1.getValue());
             }
         }
+        tmpFile.delete();
     }
+
 }
 
 

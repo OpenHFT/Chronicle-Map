@@ -83,6 +83,7 @@ public class LargeEntriesTest {
             es.awaitTermination(1, TimeUnit.MINUTES);
             assertTrue(es.isTerminated());
         }
+        file.delete();
     }
 
     private void warmUpCompression(int entrySize) {
