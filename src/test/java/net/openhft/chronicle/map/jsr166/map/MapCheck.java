@@ -111,12 +111,6 @@ public class MapCheck {
             serTest(size);
     }
 
-    private static File getPersistenceFile() {
-        String TMP = System.getProperty("java.io.tmpdir");
-        File file = new File(TMP + "/chm-test" + System.nanoTime());
-        file.deleteOnExit();
-        return file;
-    }
 
     static Map newMap() {
         try {

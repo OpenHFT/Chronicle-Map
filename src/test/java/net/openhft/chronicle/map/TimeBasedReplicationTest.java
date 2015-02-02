@@ -25,7 +25,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -39,12 +38,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
     public static final byte IDENTIFIER = 1;
 
-    private static File getPersistenceFile() {
-        String TMP = System.getProperty("java.io.tmpdir");
-        File file = new File(TMP + "/chm-test" + System.nanoTime());
-        file.deleteOnExit();
-        return file;
-    }
 
     Set<Thread> threads;
 

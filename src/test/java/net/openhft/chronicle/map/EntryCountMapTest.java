@@ -219,8 +219,12 @@ public class EntryCountMapTest {
         int stride = 1 + random.nextInt(100);
         int maxKeySize = "key:".length() +
                 (int) round(log10(moreThanMaxSize(maxSize) * stride + counter)) + 1;
-        ChronicleMap<CharSequence, LongValue> map = getSharedMap(minSize, segments, maxKeySize);
-        testEntriesMaxSize0(segments, minSize, maxSize, counter, stride, map);
+        File file;
+        try (ChronicleMap<CharSequence, LongValue> map = getSharedMap(minSize, segments, maxKeySize)) {
+            file = map.file();
+            testEntriesMaxSize0(segments, minSize, maxSize, counter, stride, map);
+        }
+        file.delete();
     }
 
     void testEntriesMaxSize0(int segments, int minSize, int maxSize, int counter, int stride,

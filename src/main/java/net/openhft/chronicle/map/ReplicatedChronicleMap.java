@@ -29,6 +29,7 @@ import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.CheckedBytes;
 import net.openhft.lang.io.MultiStoreBytes;
 import net.openhft.lang.io.NativeBytesI;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -188,7 +189,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         Bytes modDelBytes = ms.bytes(offset, assignedModIterBitSetSizeInBytes()).zeroOut();
         offset += assignedModIterBitSetSizeInBytes();
         startOfModificationIterators = offset;
-        modIterSet = new ATSDirectBitSet(modDelBytes);
+        modIterSet = new ATSDirectBitSet(new CheckedBytes(modDelBytes));
     }
 
     /**
