@@ -1679,7 +1679,7 @@ public class ChronicleMapTest {
 
 
     @Test
-    public void testEntriesSpanningSeveralChunksPutRemoveReplace() throws IOException {
+    public void testEntriesSpanningSeveralChunksPutRemoveReplace() throws IOException, InterruptedException {
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
                 .minSegments(1)

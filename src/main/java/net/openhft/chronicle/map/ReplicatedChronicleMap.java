@@ -1254,7 +1254,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          */
         public void dirtyEntries(final long timeStamp,
                                  final ModificationIterator.EntryModifiableCallback callback,
-                                 final boolean bootstrapOnlyLocalEntries) {
+                                 final boolean bootstrapOnlyLocalEntries) throws InterruptedException {
             readLock(null);
             ThreadLocalCopies copies = SegmentState.getCopies(null);
             try (SegmentState segmentState = SegmentState.get(copies)) {
@@ -1467,7 +1467,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          * @return true if an entry was processed
          */
         @Override
-        public boolean nextEntry(@NotNull final EntryCallback entryCallback, final int chronicleId) {
+        public boolean nextEntry(@NotNull final EntryCallback entryCallback, final int chronicleId) throws InterruptedException {
             long position = this.position;
             while (true) {
                 long oldPosition = position;
@@ -1523,7 +1523,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         @Override
-        public void dirtyEntries(long fromTimeStamp) {
+        public void dirtyEntries(long fromTimeStamp) throws InterruptedException {
             // iterate over all the segments and mark bit in the modification iterator
             // that correspond to entries with an older timestamp
             for (final Segment segment : (Segment[]) segments) {

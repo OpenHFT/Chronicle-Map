@@ -541,7 +541,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      */
     private void doHandShaking(@NotNull final SelectionKey key,
                                @NotNull SocketChannel socketChannel)
-            throws IOException {
+            throws IOException, InterruptedException {
         final Attached attached = (Attached) key.attachment();
         final TcpSocketChannelEntryWriter writer = attached.entryWriter;
         final TcpSocketChannelEntryReader reader = attached.entryReader;
@@ -652,7 +652,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      * called when the selector receives a OP_WRITE message
      */
     private void onWrite(@NotNull final SelectionKey key,
-                         final long approxTime) throws IOException {
+                         final long approxTime) throws IOException, InterruptedException {
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
         if (attached == null) {
@@ -1077,7 +1077,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
          * @param selectionKey
          */
         void entriesToBuffer(@NotNull final Replica.ModificationIterator modificationIterator,
-                             @NotNull final SelectionKey selectionKey) {
+                             @NotNull final SelectionKey selectionKey) throws InterruptedException {
 
             final SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
             final Attached attached = (Attached) selectionKey.attachment();

@@ -191,7 +191,7 @@ final class ChannelProvider implements Closeable {
 
                     @Override
                     public boolean nextEntry(@NotNull EntryCallback callback,
-                                             final int na) {
+                                             final int na) throws InterruptedException {
                         channelDataLock.readLock().lock();
                         try {
                             for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
@@ -213,9 +213,13 @@ final class ChannelProvider implements Closeable {
                         channelDataLock.readLock().lock();
                         try {
                             for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
-                                chronicleChannelList.get(i)
-                                        .acquireModificationIterator(remoteIdentifier, notifier)
-                                        .dirtyEntries(fromTimeStamp);
+                                try {
+                                    chronicleChannelList.get(i)
+                                            .acquireModificationIterator(remoteIdentifier, notifier)
+                                            .dirtyEntries(fromTimeStamp);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
                                 notifier.onChange();
                             }
                         } finally {
@@ -335,8 +339,12 @@ final class ChannelProvider implements Closeable {
 
         // this could be null if one node has a chronicle channel before the other
         if (chronicleChannels[chronicleChannel] != null) {
-            chronicleChannels[chronicleChannel].acquireModificationIterator(remoteIdentifier, NOP)
-                    .dirtyEntries(lastModificationTime);
+            try {
+                chronicleChannels[chronicleChannel].acquireModificationIterator(remoteIdentifier, NOP)
+                        .dirtyEntries(lastModificationTime);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

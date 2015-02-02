@@ -109,7 +109,7 @@ interface Replica extends Closeable {
          * @return {@code true} if the entry was accepted by the {@code callback.onEntry()} method,
          * {@code false} if the entry was not accepted or was not available
          */
-        boolean nextEntry(@NotNull final EntryCallback callback, final int chronicleId);
+        boolean nextEntry(@NotNull final EntryCallback callback, final int chronicleId) throws InterruptedException;
 
         /**
          * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer. It
@@ -119,7 +119,7 @@ interface Replica extends Closeable {
          *
          * @param fromTimeStamp the timestamp from which all entries should be dirty
          */
-        void dirtyEntries(long fromTimeStamp);
+        void dirtyEntries(long fromTimeStamp) throws InterruptedException;
     }
 
     /**
