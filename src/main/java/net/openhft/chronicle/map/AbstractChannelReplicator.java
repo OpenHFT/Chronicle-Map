@@ -55,7 +55,6 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     public static final int SIZE_OF_SIZE = 4;
     public static final int SIZE_OF_TRANSACTION_ID = 8;
-    public static final int SIZE_OF_TIME_SHIFT = 2;
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractChannelReplicator.class);
 
@@ -231,7 +230,16 @@ abstract class AbstractChannelReplicator implements Closeable {
         if (Thread.interrupted())
             LOG.warn("Already interrupted");
         long start = System.currentTimeMillis();
-        closeResources();
+        try {
+            closeResources();
+            if (!executorService.awaitTermination(5, TimeUnit.MILLISECONDS)) {
+                executorService.shutdownNow();
+                executorService.awaitTermination(10, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {
+            LOG.error("", e);
+        }
+
 
         try {
             if (future != null)
@@ -257,21 +265,10 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
     }
 
-    public void closeResources() {
+    public void closeResources() throws InterruptedException {
         isClosed = true;
         executorService.shutdown();
 
-
-        try {
-            executorService.awaitTermination(5, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            executorService.shutdownNow();
-            try {
-                executorService.awaitTermination(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e1) {
-                LOG.error("", e);
-            }
-        }
 
         closeables.closeQuietly();
         if (segmentState != null)
