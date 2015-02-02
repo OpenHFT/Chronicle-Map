@@ -46,7 +46,7 @@ public class LargeEntriesTest {
         final int ENTRIES = 250;
         final int ENTRY_SIZE = 100 * 1024;
 
-        File file = File.createTempFile("largeEntries", ".deleteme");
+        File file = File.createTempFile("largeEntries" + System.currentTimeMillis(), ".deleteme");
         file.deleteOnExit();
         final ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
