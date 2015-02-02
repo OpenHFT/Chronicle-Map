@@ -133,7 +133,7 @@ public class ChronicleMapTest {
             for (String line; (line = br.readLine()) != null; )
                 if (line.startsWith("Vm"))
                     System.out.print(line.replaceAll("  +", " ") + ", ");
-            System.out.println();
+
             br.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -696,6 +696,7 @@ public class ChronicleMapTest {
     }
 
 
+    @Ignore("Possible candidate for TC JVM crashes")
     @Test
     public void testAcquireFromMultipleThreads() throws Exception {
         int entries = 1000 * 1000;
@@ -805,8 +806,6 @@ public class ChronicleMapTest {
                     .averageKeySize(14)
                     .averageValueSize(entrySize - 14 - 2);
             try (ChronicleMap<CharSequence, CharSequence> map = builder.create()) {
-                int procs = Runtime.getRuntime().availableProcessors();
-                ExecutorService es = Executors.newFixedThreadPool(procs);
 
                 StringBuilder sb = new StringBuilder();
                 while (sb.length() < entrySize - 14 - 2)
@@ -1228,7 +1227,7 @@ public class ChronicleMapTest {
     @Test
     public void testPutAndRemove() throws IOException, ClassNotFoundException,
             IllegalAccessException, InstantiationException {
-        String TMP = System.getProperty("java.io.tmpdir");
+
         int entries = 100 * 1000;
         try (ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
