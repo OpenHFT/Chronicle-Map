@@ -1718,7 +1718,6 @@ public class ChronicleMapTest {
     public void testByteArrayKeySizeBySample() throws IOException {
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877);
 
-        File mapFile = getPersistenceFile();
 
         // this test only appear to fail when we reuse the mapFile
         for (int i = 0; i < 2; i++) {
@@ -1729,7 +1728,7 @@ public class ChronicleMapTest {
                             .name("serverMap")
                             .createWithId((byte) 1))
                     .constantKeySizeBySample(new byte[14])
-                    .createPersistedTo(mapFile)) {
+                    .create()) {
 
                 try (ChronicleMap<byte[], byte[][]> map2 = localClient(8877)) {
 
