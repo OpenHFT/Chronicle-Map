@@ -41,7 +41,6 @@ import static org.junit.Assert.*;
  */
 public class LargeEntriesTest {
 
-    @Ignore("Issues with TC")
     @Test
     public void testLargeStrings() throws ExecutionException, InterruptedException, IOException {
         final int ENTRIES = 250;
