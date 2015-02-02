@@ -1567,48 +1567,44 @@ public class ChronicleMapTest {
                 .entries(10)
                 .minSegments(1)
                 .actualChunkSize(10);
-        testEntriesSpanningSeveralChunksPutRemoveReplace(
-                (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
-                        builder.createPersistedTo(getPersistenceFile())
-        );
-    }
+        try (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?> map =
+                     (VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?>)
+                             builder.create()) {
+            String key = "k";
+            String largeKey = "very large key";
+            String value = "v";
+            String largeValue = "vary large value";
 
-    public void testEntriesSpanningSeveralChunksPutRemoveReplace(
-            VanillaChronicleMap<CharSequence, ?, ?, CharSequence, ?, ?> map) {
-        String key = "k";
-        String largeKey = "very large key";
-        String value = "v";
-        String largeValue = "vary large value";
+            map.put(key, largeValue);
+            assertEquals(largeValue, map.get(key));
+            map.replace(key, value);
+            map.checkConsistency();
+            assertEquals(value, map.get(key));
+            map.replace(key, largeValue);
+            map.checkConsistency();
+            assertEquals(largeValue, map.get(key));
 
-        map.put(key, largeValue);
-        assertEquals(largeValue, map.get(key));
-        map.replace(key, value);
-        map.checkConsistency();
-        assertEquals(value, map.get(key));
-        map.replace(key, largeValue);
-        map.checkConsistency();
-        assertEquals(largeValue, map.get(key));
+            map.put(largeKey, value);
+            map.checkConsistency();
+            assertEquals(value, map.get(largeKey));
+            map.replace(largeKey, largeValue);
+            map.checkConsistency();
+            assertEquals(largeValue, map.get(largeKey));
+            map.remove(largeKey);
+            map.checkConsistency();
+            assertEquals(null, map.get(largeKey));
+            map.put(largeKey, largeValue);
+            map.checkConsistency();
+            assertEquals(largeValue, map.get(largeKey));
+            map.replace(largeKey, largeValue, value);
+            map.checkConsistency();
+            assertEquals(value, map.get(largeKey));
 
-        map.put(largeKey, value);
-        map.checkConsistency();
-        assertEquals(value, map.get(largeKey));
-        map.replace(largeKey, largeValue);
-        map.checkConsistency();
-        assertEquals(largeValue, map.get(largeKey));
-        map.remove(largeKey);
-        map.checkConsistency();
-        assertEquals(null, map.get(largeKey));
-        map.put(largeKey, largeValue);
-        map.checkConsistency();
-        assertEquals(largeValue, map.get(largeKey));
-        map.replace(largeKey, largeValue, value);
-        map.checkConsistency();
-        assertEquals(value, map.get(largeKey));
-
-        assertEquals(value, map.remove(largeKey));
-        map.checkConsistency();
-        assertEquals(largeValue, map.remove(key));
-        map.checkConsistency();
+            assertEquals(value, map.remove(largeKey));
+            map.checkConsistency();
+            assertEquals(largeValue, map.remove(key));
+            map.checkConsistency();
+        }
 
     }
 
@@ -1753,7 +1749,6 @@ public class ChronicleMapTest {
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877)
                 .name("serverMap");
 
-        File mapFile = getPersistenceFile();
 
         // this test only appear to fail when we reuse the mapFile
         for (int i = 0; i < 2; i++) {
@@ -1761,7 +1756,7 @@ public class ChronicleMapTest {
             try (ChronicleMap server = ChronicleMapBuilder.of(byte[].class, byte[][].class)
                     .replication((byte) 1, serverConfig)
                     .constantKeySizeBySample(new byte[14])
-                    .createPersistedTo(mapFile)) {
+                    .create()) {
 
                 try (ChronicleMap<byte[], byte[][]> map2 = localClient(8877)) {
 
