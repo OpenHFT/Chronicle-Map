@@ -42,6 +42,7 @@ import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1151,6 +1152,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         try {
 
             return blockingFetchThrowable(timeoutTime, transactionId);
+        } catch (AsynchronousCloseException e) {
+            LOG.error("name=" + name, e);
+            throw new RuntimeException(e);
         } catch (IOException e) {
             close();
             throw new IORuntimeException(e);
