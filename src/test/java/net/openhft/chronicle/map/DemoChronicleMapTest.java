@@ -3,7 +3,6 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 import net.openhft.lang.values.IntValue;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -52,6 +51,8 @@ public class DemoChronicleMapTest {
                 assertNotNull(v);
             }
         }
+
+        file.delete();
     }
 
     @Ignore
@@ -97,6 +98,7 @@ public class DemoChronicleMapTest {
                 assertNotNull(v);
             }
         }
+        file.delete();
     }
 }
 
