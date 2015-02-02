@@ -67,6 +67,15 @@ abstract class AbstractChannelReplicator implements Closeable {
     final CloseablesManager closeables = new CloseablesManager();
     final Selector selector = openSelector(closeables);
     private final ExecutorService executorService;
+
+    private final ExecutorService connectExecutorService = Executors.newCachedThreadPool(
+            new NamedThreadFactory("TCP-connect", true) {
+                @Override
+                public Thread newThread(@net.openhft.lang.model.constraints.NotNull Runnable r) {
+                    return lastThread = super.newThread(r);
+                }
+            });
+
     private volatile Thread lastThread;
     private Throwable startedHere;
     private Future<?> future;
@@ -227,6 +236,17 @@ abstract class AbstractChannelReplicator implements Closeable {
         if (Thread.interrupted())
             LOG.warn("Already interrupted");
         long start = System.currentTimeMillis();
+
+        connectExecutorService.shutdown();
+        try {
+            if (!connectExecutorService.awaitTermination(5, TimeUnit.MILLISECONDS)) {
+                connectExecutorService.shutdownNow();
+                connectExecutorService.awaitTermination(10, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {
+            LOG.error("", e);
+        }
+
         try {
             closeResources();
             if (!executorService.awaitTermination(5, TimeUnit.MILLISECONDS)) {
@@ -585,7 +605,8 @@ abstract class AbstractChannelReplicator implements Closeable {
          * @param reconnectionInterval the period to wait before connecting
          */
         private void doConnect(final long reconnectionInterval) {
-            final Thread thread = new Thread(new Runnable() {
+
+            connectExecutorService.submit(new Runnable() {
                 public void run() {
                     SelectableChannel socketChannel = null;
                     try {
@@ -621,9 +642,7 @@ abstract class AbstractChannelReplicator implements Closeable {
                 }
             });
 
-            thread.setName(name);
-            thread.setDaemon(true);
-            thread.start();
+
         }
 
         public void setSuccessfullyConnected() {
