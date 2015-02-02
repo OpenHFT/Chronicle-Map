@@ -533,7 +533,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    public final V putIfAbsent(@net.openhft.lang.model.constraints.NotNull K key, V value) {
+    public final V putIfAbsent(  K key, V value) {
+        if (key == null )
+            throw new NullPointerException();
         return put1(key, value, false);
     }
 
