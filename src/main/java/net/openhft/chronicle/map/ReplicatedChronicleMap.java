@@ -232,7 +232,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     @Override
-    V put1(@NotNull K key, V value, boolean replaceIfPresent) {
+    V put1(K key, V value, boolean replaceIfPresent) {
         return put0(key, value, replaceIfPresent, localIdentifier, currentTime());
     }
 
