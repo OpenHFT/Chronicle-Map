@@ -232,7 +232,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     final long createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
         // checks the the store has not been closed
         // todo remove the CheckedBytesStore before the release
-        this.ms = new CheckedBytesStore(bytesStore);
+        //this.ms = new CheckedBytesStore(bytesStore);
+
+
+        this.ms = bytesStore;
 
         onHeaderCreated();
 
