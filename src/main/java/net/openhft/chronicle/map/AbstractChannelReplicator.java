@@ -236,10 +236,11 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     @Override
     public void close() {
+
         if (Thread.interrupted())
             LOG.warn("Already interrupted");
         long start = System.currentTimeMillis();
-
+        isClosed = true;
         connectExecutorService.shutdown();
         try {
             if (!connectExecutorService.awaitTermination(5, TimeUnit.MILLISECONDS)) {
