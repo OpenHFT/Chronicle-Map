@@ -108,17 +108,6 @@ public class ChronicleMapTest {
         return file;
     }
 
-    private static ChronicleMap<CharSequence, LongValue> getSharedMap(
-            long entries, int segments, Alignment alignment, int keySize)
-            throws IOException {
-        return ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
-                .entries(entries)
-                .minSegments(segments)
-                .averageKeySize(keySize)
-                .entryAndValueAlignment(alignment)
-                .create();
-    }
-
     private ChronicleMap<Integer, CharSequence> getViewTestMap(int noOfElements) throws IOException {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -600,79 +589,202 @@ public class ChronicleMapTest {
     public void testAcquireAndGet() throws IOException, ClassNotFoundException,
             IllegalAccessException, InstantiationException {
         int entries = 3/*00 * 1000*/;
-        testAcquireAndGet(getSharedMap(entries, 1, OF_4_BYTES, 10), entries);
-        testAcquireAndGet(getSharedMap(entries, 1, NO_ALIGNMENT, 10), entries);
-        testAcquireAndGet(getSharedMap(entries, 1, OF_8_BYTES, 10), entries);
-    }
+        try (ChronicleMap<CharSequence, LongValue> map2 = ChronicleMapBuilder.of(CharSequence.class,
+                LongValue.class)
+                .entries((long) entries)
+                .minSegments(1)
+                .averageKeySize(10)
+                .entryAndValueAlignment(OF_4_BYTES)
+                .create()) {
+            LongValue value4 = new LongValue$$Native();
+            LongValue value22 = new LongValue$$Native();
+            LongValue value32 = new LongValue$$Native();
 
-    public void testAcquireAndGet(ChronicleMap<CharSequence, LongValue> map, int entries)
-            throws IOException, ClassNotFoundException, IllegalAccessException,
-            InstantiationException {
-        LongValue value = new LongValue$$Native();
-        LongValue value2 = new LongValue$$Native();
-        LongValue value3 = new LongValue$$Native();
+            for (int j2 = 1; j2 <= 3; j2++) {
+                for (int i2 = 0; i2 < entries; i2++) {
+                    CharSequence userCS2 = getUserCharSequence(i2);
 
-        for (int j = 1; j <= 3; j++) {
-            for (int i = 0; i < entries; i++) {
-                CharSequence userCS = getUserCharSequence(i);
+                    if (j2 > 1) {
+                        assertNotNull(userCS2.toString(), map2.getUsing(userCS2, value4));
+                    } else {
+                        map2.acquireUsing(userCS2, value4);
+                    }
+                    if (i2 >= 1)
+                        assertTrue(userCS2.toString(), map2.containsKey(getUserCharSequence(1)));
+                    assertEquals(userCS2.toString(), j2 - 1, value4.getValue());
 
-                if (j > 1) {
-                    LongValue v = map.getUsing(userCS, value);
-                    assertNotNull(userCS.toString(), v);
-                    assertTrue(userCS.toString(), v == value);
-                } else {
-                    LongValue v = map.acquireUsing(userCS, value);
-                    assertTrue(userCS.toString(), v == value);
+                    value4.addAtomicValue(1);
+
+                    assertEquals(value22, map2.acquireUsing(userCS2, value22));
+                    assertEquals(j2, value22.getValue());
+
+                    assertEquals(value32, map2.getUsing(userCS2, value32));
+                    assertEquals(j2, value32.getValue());
                 }
-                if (i >= 1)
-                    assertTrue(userCS.toString(), map.containsKey(getUserCharSequence(1)));
-                assertEquals(userCS.toString(), j - 1, value.getValue());
+            }
 
-                value.addAtomicValue(1);
+            try (ChronicleMap<CharSequence, LongValue> map1 = ChronicleMapBuilder.of(CharSequence.class,
+                    LongValue.class)
+                    .entries((long) entries)
+                    .minSegments(1)
+                    .averageKeySize(10)
+                    .entryAndValueAlignment(NO_ALIGNMENT)
+                    .create()) {
+                LongValue value1 = new LongValue$$Native();
+                LongValue value21 = new LongValue$$Native();
+                LongValue value31 = new LongValue$$Native();
 
-                assertEquals(value2, map.acquireUsing(userCS, value2));
-                assertEquals(j, value2.getValue());
+                for (int j1 = 1; j1 <= 3; j1++) {
+                    for (int i1 = 0; i1 < entries; i1++) {
+                        CharSequence userCS1 = getUserCharSequence(i1);
 
-                assertEquals(value3, map.getUsing(userCS, value3));
-                assertEquals(j, value3.getValue());
+                        if (j1 > 1) {
+                            assertNotNull(userCS1.toString(), map1.getUsing(userCS1, value1));
+                        } else {
+                            map1.acquireUsing(userCS1, value1);
+                        }
+                        if (i1 >= 1)
+                            assertTrue(userCS1.toString(), map1.containsKey(getUserCharSequence(1)));
+                        assertEquals(userCS1.toString(), j1 - 1, value1.getValue());
+
+                        value1.addAtomicValue(1);
+
+                        assertEquals(value21, map1.acquireUsing(userCS1, value21));
+                        assertEquals(j1, value21.getValue());
+
+                        assertEquals(value31, map1.getUsing(userCS1, value31));
+                        assertEquals(j1, value31.getValue());
+                    }
+                }
+            }
+            try (ChronicleMap<CharSequence, LongValue> map = ChronicleMapBuilder.of(CharSequence
+                    .class, LongValue.class)
+                    .entries((long) entries)
+                    .minSegments(1)
+                    .averageKeySize(10)
+                    .entryAndValueAlignment(OF_8_BYTES)
+                    .create()) {
+                LongValue value = new LongValue$$Native();
+                LongValue value2 = new LongValue$$Native();
+                LongValue value3 = new LongValue$$Native();
+
+                for (int j = 1; j <= 3; j++) {
+                    for (int i = 0; i < entries; i++) {
+                        CharSequence userCS = getUserCharSequence(i);
+
+                        if (j > 1) {
+                            assertNotNull(userCS.toString(), map.getUsing(userCS, value));
+                        } else {
+                            map.acquireUsing(userCS, value);
+                        }
+                        if (i >= 1)
+                            assertTrue(userCS.toString(), map.containsKey(getUserCharSequence(1)));
+                        assertEquals(userCS.toString(), j - 1, value.getValue());
+
+                        value.addAtomicValue(1);
+
+                        assertEquals(value2, map.acquireUsing(userCS, value2));
+                        assertEquals(j, value2.getValue());
+
+                        assertEquals(value3, map.getUsing(userCS, value3));
+                        assertEquals(j, value3.getValue());
+                    }
+                }
+
             }
         }
-
     }
 
 
     @Test
     public void testAcquireFromMultipleThreads() throws Exception {
         int entries = 1000 * 1000;
-        testAcquireFromMultipleThreads(getSharedMap(entries, 128, NO_ALIGNMENT, 10));
-        testAcquireFromMultipleThreads(getSharedMap(entries, 128, OF_4_BYTES, 10));
-        testAcquireFromMultipleThreads(getSharedMap(entries, 128, OF_8_BYTES, 10));
-    }
+        try (ChronicleMap<CharSequence, LongValue> map2 = ChronicleMapBuilder.of(CharSequence.class,
+                LongValue.class)
+                .entries((long) entries)
+                .minSegments(128)
+                .averageKeySize(10)
+                .entryAndValueAlignment(NO_ALIGNMENT)
+                .create()) {
 
-    public void testAcquireFromMultipleThreads(ChronicleMap<CharSequence, LongValue> map)
-            throws Exception {
+            CharSequence key2 = getUserCharSequence(0);
+            map2.acquireUsing(key2, new LongValue$$Native());
 
-        CharSequence key = getUserCharSequence(0);
-        map.acquireUsing(key, new LongValue$$Native());
+            int iterations2 = 10000;
+            int noOfThreads2 = 10;
+            CyclicBarrier barrier2 = new CyclicBarrier(noOfThreads2);
 
-        int iterations = 10000;
-        int noOfThreads = 10;
-        CyclicBarrier barrier = new CyclicBarrier(noOfThreads);
+            Thread[] threads2 = new Thread[noOfThreads2];
+            for (int t2 = 0; t2 < noOfThreads2; t2++) {
+                threads2[t2] = new Thread(new IncrementRunnable(map2, key2, iterations2, barrier2));
+                threads2[t2].start();
+            }
+            for (int t2 = 0; t2 < noOfThreads2; t2++) {
+                threads2[t2].join();
+            }
 
-        Thread[] threads = new Thread[noOfThreads];
-        for (int t = 0; t < noOfThreads; t++) {
-            threads[t] = new Thread(new IncrementRunnable(map, key, iterations, barrier));
-            threads[t].start();
+            assertEquals(noOfThreads2 * iterations2,
+                    map2.acquireUsing(key2, new LongValue$$Native()).getValue());
+
+            try (ChronicleMap<CharSequence, LongValue> map1 = ChronicleMapBuilder.of(CharSequence
+                    .class, LongValue.class)
+                    .entries((long) entries)
+                    .minSegments(128)
+                    .averageKeySize(10)
+                    .entryAndValueAlignment(OF_4_BYTES)
+                    .create()) {
+
+                CharSequence key1 = getUserCharSequence(0);
+                map1.acquireUsing(key1, new LongValue$$Native());
+
+                int iterations1 = 10000;
+                int noOfThreads1 = 10;
+                CyclicBarrier barrier1 = new CyclicBarrier(noOfThreads1);
+
+                Thread[] threads1 = new Thread[noOfThreads1];
+                for (int t1 = 0; t1 < noOfThreads1; t1++) {
+                    threads1[t1] = new Thread(new IncrementRunnable(map1, key1, iterations1, barrier1));
+                    threads1[t1].start();
+                }
+                for (int t1 = 0; t1 < noOfThreads1; t1++) {
+                    threads1[t1].join();
+                }
+
+                assertEquals(noOfThreads1 * iterations1,
+                        map1.acquireUsing(key1, new LongValue$$Native()).getValue());
+
+                try (ChronicleMap<CharSequence, LongValue> map = ChronicleMapBuilder.of(CharSequence
+                        .class, LongValue.class)
+                        .entries((long) entries)
+                        .minSegments(128)
+                        .averageKeySize(10)
+                        .entryAndValueAlignment(OF_8_BYTES)
+                        .create()) {
+
+                    CharSequence key = getUserCharSequence(0);
+                    map.acquireUsing(key, new LongValue$$Native());
+
+                    int iterations = 10000;
+                    int noOfThreads = 10;
+                    CyclicBarrier barrier = new CyclicBarrier(noOfThreads);
+
+                    Thread[] threads = new Thread[noOfThreads];
+                    for (int t = 0; t < noOfThreads; t++) {
+                        threads[t] = new Thread(new IncrementRunnable(map, key, iterations, barrier));
+                        threads[t].start();
+                    }
+                    for (int t = 0; t < noOfThreads; t++) {
+                        threads[t].join();
+                    }
+
+                    assertEquals(noOfThreads * iterations,
+                            map.acquireUsing(key, new LongValue$$Native()).getValue());
+
+                }
+            }
         }
-        for (int t = 0; t < noOfThreads; t++) {
-            threads[t].join();
-        }
-
-        assertEquals(noOfThreads * iterations,
-                map.acquireUsing(key, new LongValue$$Native()).getValue());
 
     }
-
 
     @Test
     public void testIntValue() {
@@ -870,8 +982,8 @@ public class ChronicleMapTest {
                                     entrySize, runs, segments,
                                     threads * entries / independence / 1000.0 / time);
                         }
-                        printStatus();
                     }
+                    printStatus();
                 }
             }
         }
@@ -908,83 +1020,77 @@ public class ChronicleMapTest {
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
-            final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile);
+            try (ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile)) {
 
-            int count = runs >= 5 ? 2 : 3;
-            final int independence = Math.min(procs, runs > 500 ? 8 : 4);
-            System.out.println("\nKey size: " + runs + " Million entries. " + builder);
+                int count = runs >= 5 ? 2 : 3;
+                final int independence = Math.min(procs, runs > 500 ? 8 : 4);
+                System.out.println("\nKey size: " + runs + " Million entries. " + builder);
 
 
-            for (int j = 0; j < count; j++) {
-                long start = System.currentTimeMillis();
-                List<Future> futures = new ArrayList<Future>();
-                for (int i = 0; i < threads; i++) {
-                    final int t = i;
-                    futures.add(es.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            LongValue value = nativeLongValue();
-                            StringBuilder sb = new StringBuilder();
-                            long next = 50 * 1000 * 1000;
-                            Random rand = new Random();
-                            // use a factor to give up to 10 digit numbers.
-                            int factor = Math.max(1,
-                                    (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
-                            for (long j = t % independence; j < entries + independence - 1;
-                                 j += independence) {
-                                sb.setLength(0);
-                                sb.append("us:");
-                                sb.append(j * factor);
-                                long n;
-                                // 75% read
-                                if (rand.nextBoolean() || rand.nextBoolean()) {
-                                    try (ExternalMapQueryContext<?, LongValue, ?> c =
-                                                 map.queryContext(sb)) {
-                                        MapEntry<?, LongValue> entry = c.entry();
-                                        if (entry != null) {
-                                            // Attempt to pass abstraction hierarchies
-                                            Data<LongValue> v = entry.value();
-                                            n = v.bytes().readVolatileLong(v.offset()) + 1;
-                                        } else {
-                                            n = 1;
+                for (int j = 0; j < count; j++) {
+                    long start = System.currentTimeMillis();
+                    List<Future> futures = new ArrayList<Future>();
+                    for (int i = 0; i < threads; i++) {
+                        final int t = i;
+                        futures.add(es.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                LongValue value = nativeLongValue();
+                                StringBuilder sb = new StringBuilder();
+                                long next = 50 * 1000 * 1000;
+                                Random rand = new Random();
+                                // use a factor to give up to 10 digit numbers.
+                                int factor = Math.max(1,
+                                        (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
+                                for (long j = t % independence; j < entries + independence - 1;
+                                     j += independence) {
+                                    sb.setLength(0);
+                                    sb.append("us:");
+                                    sb.append(j * factor);
+                                    long n;
+                                    // 75% read
+                                    if (rand.nextBoolean() || rand.nextBoolean()) {
+                                        try (ExternalMapQueryContext<?, LongValue, ?> c =
+                                                     map.queryContext(sb)) {
+                                            MapEntry<?, LongValue> entry = c.entry();
+                                            if (entry != null) {
+                                                // Attempt to pass abstraction hierarchies
+                                                Data<LongValue> v = entry.value();
+                                                n = v.bytes().readVolatileLong(v.offset()) + 1;
+                                            } else {
+                                                n = 1;
+                                            }
+                                        }
+                                    } else {
+                                        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c =
+                                                     map.queryContext(sb)) {
+                                            c.updateLock().lock();
+                                            MapEntry<?, LongValue> entry = c.entry();
+                                            if (entry != null) {
+                                                Data<LongValue> v = entry.value();
+                                                n = ((BytesStore) v.bytes()).addAndGetLong(
+                                                        v.offset(), 1);
+                                            } else {
+                                                c.insert(c.absentEntry(), c.wrapValueAsData(ONE));
+                                                n = 1;
+                                            }
                                         }
                                     }
-                                } else {
-                                    try (ExternalMapQueryContext<CharSequence, LongValue, ?> c =
-                                                 map.queryContext(sb)) {
-                                        c.updateLock().lock();
-                                        MapEntry<?, LongValue> entry = c.entry();
-                                        if (entry != null) {
-                                            Data<LongValue> v = entry.value();
-                                            n = ((BytesStore) v.bytes()).addAndGetLong(v.offset(), 1);
-                                        } else {
-                                            c.insert(c.absentEntry(), c.wrapValueAsData(ONE));
-                                            n = 1;
-                                        }
-                                    }
-                                }
-                                assert n > 0 && n < 1000 : "Counter corrupted " + n;
-                                if (t == 0 && j >= next) {
-                                    long size = map.longSize();
-                                    if (size < 0) throw new AssertionError("size: " + size);
-                                    System.out.println(j + ", size: " + size);
-                                    next += 50 * 1000 * 1000;
                                 }
                             }
-                        }
-                    }));
+                        }));
+                    }
+                    for (Future future : futures) {
+                        future.get();
+                    }
+                    long time = System.currentTimeMillis() - start;
+                    System.out.printf("Throughput %.1f M ops/sec%n",
+                            threads * entries / independence / 1000.0 / time);
                 }
-                for (Future future : futures) {
-                    future.get();
-                }
-                long time = System.currentTimeMillis() - start;
-                System.out.printf("Throughput %.1f M ops/sec%n",
-                        threads * entries / independence / 1000.0 / time);
             }
             printStatus();
-            File file = map.file();
 
-            file.delete();
+            tmpFile.delete();
         }
         es.shutdown();
         es.awaitTermination(1, TimeUnit.MINUTES);
@@ -1010,55 +1116,54 @@ public class ChronicleMapTest {
 
             File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
             tmpFile.deleteOnExit();
-            final ChronicleMap<LongValue, LongValue> map = builder.createPersistedTo(tmpFile);
-
-            int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
-            final int independence = Math.min(procs, runs > 500 ? 8 : 4);
-            System.out.println("\nKey size: " + runs + " Million entries. " + builder);
-            for (int j = 0; j < count; j++) {
-                long start = System.currentTimeMillis();
-                List<Future> futures = new ArrayList<Future>();
-                for (int i = 0; i < threads; i++) {
-                    final int t = i;
-                    futures.add(es.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            LongValue key = DataValueClasses.newDirectInstance(LongValue.class);
-                            LongValue value = nativeLongValue();
-                            long next = 50 * 1000 * 1000;
-                            // use a factor to give up to 10 digit numbers.
-                            int factor = Math.max(1,
-                                    (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
-                            for (long j = t % independence; j < entries + independence - 1;
-                                 j += independence) {
-                                key.setValue(j * factor);
-                                long n;
-                                try (net.openhft.chronicle.core.io.Closeable c =
-                                             map.acquireContext(key, value)) {
-                                    n = value.addValue(1);
-                                }
-                                assert n > 0 && n < 1000 : "Counter corrupted " + n;
-                                if (t == 0 && j >= next) {
-                                    long size = map.longSize();
-                                    if (size < 0) throw new AssertionError("size: " + size);
-                                    System.out.println(j + ", size: " + size);
-                                    next += 50 * 1000 * 1000;
+            try (ChronicleMap<LongValue, LongValue> map = builder.createPersistedTo(tmpFile)) {
+                int count = runs > 500 ? runs > 1200 ? 3 : 5 : 5;
+                final int independence = Math.min(procs, runs > 500 ? 8 : 4);
+                System.out.println("\nKey size: " + runs + " Million entries. " + builder);
+                for (int j = 0; j < count; j++) {
+                    long start = System.currentTimeMillis();
+                    List<Future> futures = new ArrayList<Future>();
+                    for (int i = 0; i < threads; i++) {
+                        final int t = i;
+                        futures.add(es.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                LongValue key = DataValueClasses.newDirectInstance(LongValue.class);
+                                LongValue value = nativeLongValue();
+                                long next = 50 * 1000 * 1000;
+                                // use a factor to give up to 10 digit numbers.
+                                int factor = Math.max(1,
+                                        (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
+                                for (long j = t % independence; j < entries + independence - 1;
+                                     j += independence) {
+                                    key.setValue(j * factor);
+                                    long n;
+                                    try (net.openhft.chronicle.core.io.Closeable c =
+                                                 map.acquireContext(key, value)) {
+                                        n = value.addValue(1);
+                                    }
+                                    assert n > 0 && n < 1000 : "Counter corrupted " + n;
+                                    if (t == 0 && j >= next) {
+                                        long size = map.longSize();
+                                        if (size < 0) throw new AssertionError("size: " + size);
+                                        System.out.println(j + ", size: " + size);
+                                        next += 50 * 1000 * 1000;
+                                    }
                                 }
                             }
-                        }
-                    }));
+                        }));
+                    }
+                    for (Future future : futures) {
+                        future.get();
+                    }
+                    long time = System.currentTimeMillis() - start;
+                    System.out.printf("Throughput %.1f M ops/sec%n",
+                            threads * entries / independence / 1000.0 / time);
                 }
-                for (Future future : futures) {
-                    future.get();
-                }
-                long time = System.currentTimeMillis() - start;
-                System.out.printf("Throughput %.1f M ops/sec%n",
-                        threads * entries / independence / 1000.0 / time);
             }
             printStatus();
-            File file = map.file();
 
-            file.delete();
+            tmpFile.delete();
         }
         es.shutdown();
         es.awaitTermination(1, TimeUnit.MINUTES);
@@ -1788,13 +1893,12 @@ public class ChronicleMapTest {
 
     @Test
     public void testOnheapAcquireUsingLocked() throws IOException {
-        ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
-                .of(CharSequence.class, LongValue.class)
-                .entries(1000)
-                .averageKeySize("one".length());
         File tmpFile = File.createTempFile("testAcquireUsingLocked", ".deleteme");
         tmpFile.deleteOnExit();
-        try (final ChronicleMap<CharSequence, LongValue> map = builder.createPersistedTo(tmpFile)) {
+        try (final ChronicleMap<CharSequence, LongValue> map = ChronicleMapBuilder
+                .of(CharSequence.class, LongValue.class)
+                .entries(1000)
+                .averageKeySize("one".length()).createPersistedTo(tmpFile)) {
 
             LongValue value = DataValueClasses.newDirectReference(LongValue.class);
 
