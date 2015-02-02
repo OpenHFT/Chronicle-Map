@@ -355,25 +355,27 @@ public class CHMUseCasesTest {
 
 
     @Ignore
-    @Test
+
     public void testByteArrayArrayValue() throws ExecutionException, InterruptedException, IOException {
 
-        int valueSize = 10;
+        for (int i=0; i < 10000; i++) {
+            int valueSize = 10;
 
-        char[] expected = new char[valueSize];
-        Arrays.fill(expected, 'X');
+            char[] expected = new char[valueSize];
+            Arrays.fill(expected, 'X');
 
-        ChronicleMapBuilder<byte[], byte[][]> builder = ChronicleMapBuilder
-                .of(byte[].class, byte[][].class);
+            ChronicleMapBuilder<byte[], byte[][]> builder = ChronicleMapBuilder
+                    .of(byte[].class, byte[][].class);
 
-        try (ChronicleMap<byte[], byte[][]> map = newInstance(builder)) {
-            byte[] bytes1 = "value1".getBytes();
-            byte[] bytes2 = "value2".getBytes();
-            byte[][] value = {bytes1, bytes2};
-            map.put("Key".getBytes(), value);
+            try (ChronicleMap<byte[], byte[][]> map = newInstance(builder)) {
+                byte[] bytes1 = "value1".getBytes();
+                byte[] bytes2 = "value2".getBytes();
+                byte[][] value = {bytes1, bytes2};
+                map.put("Key".getBytes(), value);
 
-            assertEquals(value, map.get("Key".getBytes()));
-            mapChecks();
+                assertEquals(value, map.get("Key".getBytes()));
+                mapChecks();
+            }
         }
     }
 

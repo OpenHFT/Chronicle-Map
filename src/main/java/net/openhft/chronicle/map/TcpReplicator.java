@@ -257,7 +257,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                     LOG.debug("onWrite - " + name);
                 onWrite(key, approxTime);
             }
-        } catch (BufferUnderflowException | InterruptedException | IOException |
+        } catch (InterruptedException e) {
+            quietClose(key, e);
+        } catch (BufferUnderflowException | IOException |
                 ClosedSelectorException | CancelledKeyException e) {
             if (!isClosed)
                 quietClose(key, e);
