@@ -605,49 +605,53 @@ abstract class AbstractChannelReplicator implements Closeable {
          * @param reconnectionInterval the period to wait before connecting
          */
         private void doConnect(final long reconnectionInterval) {
-
-            connectExecutorService.submit(new Runnable() {
-                public void run() {
-                    SelectableChannel socketChannel = null;
-                    try {
-                        if (reconnectionInterval > 0)
-                            Thread.sleep(reconnectionInterval);
-
-                        socketChannel = doConnect();
-
+            try {
+                connectExecutorService.submit(new Runnable() {
+                    public void run() {
+                        SelectableChannel socketChannel = null;
                         try {
-                            closeables.add(socketChannel);
-                        } catch (IllegalStateException e) {
-                            // close could have be called from another thread, while we were in Thread.sleep()
-                            // which would cause a IllegalStateException
+                            if (reconnectionInterval > 0)
+                                Thread.sleep(reconnectionInterval);
+
+                            socketChannel = doConnect();
+
+                            try {
+                                closeables.add(socketChannel);
+                            } catch (IllegalStateException e) {
+                                // close could have be called from another thread, while we were in Thread.sleep()
+                                // which would cause a IllegalStateException
+                                closeQuietly(socketChannel);
+                                return;
+                            }
+
+                            AbstractConnector.this.socketChannel = socketChannel;
+                        } catch (Exception e) {
                             closeQuietly(socketChannel);
-                            return;
+                            LOG.debug("", e);
                         }
-
-                        AbstractConnector.this.socketChannel = socketChannel;
-                    } catch (Exception e) {
-                        closeQuietly(socketChannel);
-                        LOG.debug("", e);
                     }
-                }
-
-                private void closeQuietly(SelectableChannel socketChannel) {
-                    if (socketChannel == null)
-                        return;
-                    try {
-                        socketChannel.close();
-                    } catch (Exception e1) {
-                        // do nothing
-                    }
-                }
-            });
-
-
+                });
+            } catch (Exception e) {
+                if (!isClosed)
+                    LOG.error("", e);
+            }
         }
+
+        private void closeQuietly(SelectableChannel socketChannel) {
+            if (socketChannel == null)
+                return;
+            try {
+                socketChannel.close();
+            } catch (Exception e1) {
+                // do nothing
+            }
+        }
+
 
         public void setSuccessfullyConnected() {
             connectionAttempts = 0;
         }
+
     }
 
 }
