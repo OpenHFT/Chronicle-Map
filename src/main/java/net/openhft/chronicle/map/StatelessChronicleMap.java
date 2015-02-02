@@ -1328,6 +1328,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     @SuppressWarnings("UnusedReturnValue")
     private Bytes receiveBytesFromSocket(int requiredNumberOfBytes, long timeoutTime) throws IOException {
 
+
 //        assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
 
@@ -1335,11 +1336,14 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         inBytes.limit(requiredNumberOfBytes);
         inBytes.buffer().position(0);
         inBytes.buffer().limit(requiredNumberOfBytes);
+        SocketChannel clientChannel0 = clientChannel;
+        if (clientChannel0 == null)
+            return inBytes;
 
         while (inBytes.buffer().remaining() > 0) {
             assert requiredNumberOfBytes <= inBytes.capacity();
 
-            int len = clientChannel.read(inBytes.buffer());
+            int len = clientChannel0.read(inBytes.buffer());
 
             if (len == -1)
                 throw new IORuntimeException("Disconnection to server");
