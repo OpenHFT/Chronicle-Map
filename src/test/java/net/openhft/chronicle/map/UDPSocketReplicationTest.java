@@ -78,7 +78,7 @@ public class UDPSocketReplicationTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("just used for manual testing")
     public void testBufferOverflow() throws IOException, InterruptedException {
 
         for (int i = 0; i < 1024; i++) {

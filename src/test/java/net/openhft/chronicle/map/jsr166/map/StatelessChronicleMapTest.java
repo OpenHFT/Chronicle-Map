@@ -308,7 +308,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     static int s_port = 11050;
 
     @Test(timeout = 30000)
-    @Ignore
+    @Ignore("performance test")
     public void testByteArrayPerf() throws IOException {
         ByteBuffer key = ByteBuffer.allocate(8);
         ByteBuffer value = ByteBuffer.allocate(50);
