@@ -539,7 +539,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return put1(key, value, false);
     }
 
-    V put1(@net.openhft.lang.model.constraints.NotNull K key, V value, boolean replaceIfPresent) {
+    V put1( K key, V value, boolean replaceIfPresent) {
+        if (key == null)
+            throw new NullPointerException();
         checkKey(key);
         checkValue(value);
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
