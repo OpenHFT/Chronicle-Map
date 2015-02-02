@@ -190,24 +190,26 @@ public class EntryCountMapTest {
         Random random = new Random(seed);
         int counter = minSize + random.nextInt(9999 + maxSize);
         final int stride = 1 + random.nextInt(100);
-        int maxKeySize = "key:".length() +
+        final int maxKeySize = "key:".length() +
                 (int) round(log10(moreThanMaxSize(maxSize) * stride + counter)) + 1;
 
-        File f = null;
-        try ( final ChronicleMap<CharSequence, LongValue> map =
-                        getSharedMap(minSize, segments, maxKeySize)) {
-            f = map.file();
-            return es.submit(new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
+
+        return es.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                File f = null;
+                try (final ChronicleMap<CharSequence, LongValue> map =
+                             getSharedMap(minSize, segments, maxKeySize)) {
+                    f = map.file();
                     testEntriesMaxSize0(segments, minSize, maxSize, seed, stride, map);
+                } finally {
+                    if (f != null && f.exists())
+                        f.delete();
                     return null;
                 }
-            });
-        } finally {
-            if (f != null && f.exists())
-                f.delete();
-        }
+            }
+        });
+
     }
 
     void testEntriesMaxSize(int segments, int minSize, int maxSize, int seed) throws IOException {

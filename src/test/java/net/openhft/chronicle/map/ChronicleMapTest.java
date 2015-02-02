@@ -203,13 +203,16 @@ public class ChronicleMapTest {
         final File persistenceFile = Builder.getPersistenceFile();
 
         for (int i = 0; i < 2; i++) {
-            ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[]
-                    .class).createPersistedTo(persistenceFile);
+            try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[]
+                    .class).createPersistedTo(persistenceFile)) {
 
-            byte[] o = map.get("hello".getBytes());
-            System.out.println(o == null ? "null" : new String(o));
-            map.put("hello".getBytes(), "world".getBytes());
+                byte[] o = map.get("hello".getBytes());
+                System.out.println(o == null ? "null" : new String(o));
+                map.put("hello".getBytes(), "world".getBytes());
+            }
         }
+
+        persistenceFile.delete();
 
 
     }
@@ -1880,7 +1883,9 @@ public class ChronicleMapTest {
                 assertEquals(2, value1.getValue());
             }
         }
+        tmpFile.delete();
     }
+
 }
 
 
