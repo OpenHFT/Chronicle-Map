@@ -81,7 +81,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final InetSocketAddress remoteAddress;
     private final long timeoutMs;
     private final int tcpBufferSize;
-    
+
     private Class<K> kClass;
     private Class<V> vClass;
     private boolean putReturnsNull;
@@ -376,7 +376,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         // read a single byte back
         while (this.connectionOutBuffer.position() <= 0) {
             int read = clientChannel.read(this.connectionOutBuffer);// the remote identifier
-            if (read ==-1)
+            if (read == -1)
                 throw new IOException("server conncetion closed");
             checkTimeout(timeoutTime);
         }
@@ -1308,6 +1308,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     @SuppressWarnings("UnusedReturnValue")
     private Bytes receiveBytesFromSocket(int requiredNumberOfBytes, long timeoutTime) throws IOException {
 
+
 //        assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
 
@@ -1315,11 +1316,14 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         inBytes.limit(requiredNumberOfBytes);
         inBytes.buffer().position(0);
         inBytes.buffer().limit(requiredNumberOfBytes);
+        SocketChannel clientChannel0 = clientChannel;
+        if (clientChannel0 == null)
+            return inBytes;
 
         while (inBytes.buffer().remaining() > 0) {
             assert requiredNumberOfBytes <= inBytes.capacity();
 
-            int len = clientChannel.read(inBytes.buffer());
+            int len = clientChannel0.read(inBytes.buffer());
 
             if (len == -1)
                 throw new IORuntimeException("Disconnection to server");
