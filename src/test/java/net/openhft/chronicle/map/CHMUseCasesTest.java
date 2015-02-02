@@ -185,7 +185,7 @@ public class CHMUseCasesTest {
 
     private void checkJsonSerilization() {
 
-        File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
+        File file = new File(TMP + "/chronicle-map-" + System.currentTimeMillis() + (i++) + System.nanoTime() + ".json");
         file.deleteOnExit();
         try {
 
@@ -368,7 +368,7 @@ public class CHMUseCasesTest {
     public void testByteArrayArrayValue()
             throws ExecutionException, InterruptedException, IOException {
 
-        for (int i=0; i < 10000; i++) {
+        for (int i = 0; i < 10000; i++) {
             int valueSize = 10;
 
             char[] expected = new char[valueSize];
