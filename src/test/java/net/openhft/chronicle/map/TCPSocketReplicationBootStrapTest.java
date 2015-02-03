@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
@@ -90,22 +91,32 @@ public class TCPSocketReplicationBootStrapTest {
     @Test
     public void testBootstrapAndHeartbeat() throws IOException, InterruptedException {
 
-        TcpTransportAndNetworkConfig map1Config = TcpTransportAndNetworkConfig.of(8068, Arrays.asList(new InetSocketAddress("localhost", 8067)))
-                .heartBeatInterval(1L, TimeUnit.SECONDS).name("map1").autoReconnectedUponDroppedConnection
-                        (true);
+        TcpTransportAndNetworkConfig map1Config = TcpTransportAndNetworkConfig
+                .of(8068, Arrays.asList(new InetSocketAddress("localhost", 8067)))
+                .heartBeatInterval(1L, TimeUnit.SECONDS)
+                .autoReconnectedUponDroppedConnection(true);
 
-        map1 = (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .replication((byte) 1, map1Config).create();
+        map1 = (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>)
+                ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .replication(SingleChronicleHashReplication.builder()
+                        .tcpTransportAndNetwork(map1Config)
+                        .name("map1")
+                        .createWithId((byte) 1))
+                .create();
 
         File persistenceFile = getPersistenceFile();
 
         TcpTransportAndNetworkConfig map2Config = TcpTransportAndNetworkConfig.of(8067)
-                .heartBeatInterval(1L, TimeUnit.SECONDS).name("map2");
+                .heartBeatInterval(1L, TimeUnit.SECONDS);
 
         final ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map2a =
                 (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>)
                         ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                                .replication((byte) 2, map2Config).createPersistedTo(persistenceFile);
+                                .replication(SingleChronicleHashReplication.builder()
+                                        .tcpTransportAndNetwork(map2Config)
+                                        .name("map2")
+                                        .createWithId((byte) 2))
+                                .createPersistedTo(persistenceFile);
 
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2
 
@@ -130,9 +141,13 @@ public class TCPSocketReplicationBootStrapTest {
 
         // now restart map2a and doConnect it to map1, map1 should bootstrap the missing entry
         TcpTransportAndNetworkConfig tcpConfigNewMap2 = TcpTransportAndNetworkConfig.of(8067)
-                .heartBeatInterval(1L, TimeUnit.SECONDS).name("newMap2");
+                .heartBeatInterval(1L, TimeUnit.SECONDS);
         map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .replication((byte) 2, tcpConfigNewMap2).createPersistedTo(persistenceFile);
+                .replication(SingleChronicleHashReplication.builder()
+                        .tcpTransportAndNetwork(tcpConfigNewMap2)
+                        .name("newMap2")
+                        .createWithId((byte) 2))
+                .createPersistedTo(persistenceFile);
 
         // add data into it
         waitTillEqual(5000);

@@ -2,6 +2,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.primitives.Chars;
 import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -248,13 +249,15 @@ public class CHMUseCasesTest {
                 map2 = null;
                 {
                     final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig
-                            .of(8086).name("server")
+                            .of(8086)
                             .heartBeatInterval(1, TimeUnit.SECONDS)
                             .tcpBufferSize(1024 * 64);
 
 
                     map2 = builder
-                            .replication((byte) 1, tcpConfig1)
+                            .replication(SingleChronicleHashReplication.builder()
+                                    .tcpTransportAndNetwork(tcpConfig1).name("server")
+                                    .createWithId((byte) 1))
                             .instance()
                             .name("server")
                             .create();
@@ -263,12 +266,14 @@ public class CHMUseCasesTest {
                 }
                 {
                     final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of
-                            (8087, new InetSocketAddress("localhost", 8086)).name("map2")
+                            (8087, new InetSocketAddress("localhost", 8086))
                             .heartBeatInterval(1, TimeUnit.SECONDS)
                             .tcpBufferSize(1024 * 64);
 
                     map1 = builder
-                            .replication((byte) 2, tcpConfig2)
+                            .replication(SingleChronicleHashReplication.builder()
+                                    .tcpTransportAndNetwork(tcpConfig2).name("map2")
+                                    .createWithId((byte) 2))
                             .instance()
                             .name("map2")
                             .create();
@@ -284,13 +289,15 @@ public class CHMUseCasesTest {
             case STATELESS: {
                 {
                     final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig
-                            .of(8086).name("server")
+                            .of(8086)
                             .heartBeatInterval(1, TimeUnit.SECONDS)
                             .tcpBufferSize(1024 * 64);
 
 
                     map2 = builder
-                            .replication((byte) 1, tcpConfig1)
+                            .replication(SingleChronicleHashReplication.builder()
+                                    .tcpTransportAndNetwork(tcpConfig1).name("server")
+                                    .createWithId((byte) 1))
                             .instance()
                             .name("server")
                             .create();

@@ -1,5 +1,6 @@
 package eg;
 
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -38,18 +39,21 @@ public class BGChronicleTest {
     public Closeable startChronicleMapServer(int port) throws InterruptedException, IOException {
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(port)
                 .heartBeatInterval(CHRONICLE_HEARTBEAT_SECONDS, TimeUnit.SECONDS)
-                .name("serverMap")
                 .autoReconnectedUponDroppedConnection(true);
 
         File file = File.createTempFile("bg-test", ".deleteme");
         file.deleteOnExit();
-        final ChronicleMap<byte[], byte[]> replica1 = ChronicleMapBuilder.of(byte[].class, byte[].class)
+        final ChronicleMap<byte[], byte[]> replica1 =
+                ChronicleMapBuilder.of(byte[].class, byte[].class)
                 .entries(KEYS)
                 .constantKeySizeBySample(new byte[KEY_SIZE])
                 .constantValueSizeBySample(new byte[VALUE_SIZE])
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
-                .replication((byte) 1, serverConfig)
+                .replication(SingleChronicleHashReplication.builder()
+                        .tcpTransportAndNetwork(serverConfig)
+                        .name("serverMap")
+                        .createWithId((byte) 1))
                 .createPersistedTo(file);
 
         if (REPLICAS == 1)
@@ -59,17 +63,22 @@ public class BGChronicleTest {
         file2.deleteOnExit();
         final InetSocketAddress serverHostPort = new InetSocketAddress("localhost", port);
 
-        final TcpTransportAndNetworkConfig clientConfig = TcpTransportAndNetworkConfig.of(port + 1, serverHostPort)
-                .heartBeatInterval(CHRONICLE_HEARTBEAT_SECONDS, TimeUnit.SECONDS).name("clientMap")
+        final TcpTransportAndNetworkConfig clientConfig =
+                TcpTransportAndNetworkConfig.of(port + 1, serverHostPort)
+                .heartBeatInterval(CHRONICLE_HEARTBEAT_SECONDS, TimeUnit.SECONDS)
                 .autoReconnectedUponDroppedConnection(true);
 
-        final ChronicleMap<byte[], byte[]> replica2 = ChronicleMapBuilder.of(byte[].class, byte[].class)
+        final ChronicleMap<byte[], byte[]> replica2 =
+                ChronicleMapBuilder.of(byte[].class, byte[].class)
                 .entries(KEYS)
                 .constantKeySizeBySample(new byte[KEY_SIZE])
                 .constantValueSizeBySample(new byte[VALUE_SIZE])
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
-                .replication((byte) 2, clientConfig)
+                .replication(SingleChronicleHashReplication.builder()
+                        .tcpTransportAndNetwork(clientConfig)
+                        .name("clientMap")
+                        .createWithId((byte) 2))
                 .createPersistedTo(file2);
 
         return new Closeable() {
@@ -261,8 +270,9 @@ public class BGChronicleTest {
 
         final InetSocketAddress serverHostPort = new InetSocketAddress(hostNameOrIpAddress, port);
 
-        final TcpTransportAndNetworkConfig clientConfig = TcpTransportAndNetworkConfig.of(port + 1, serverHostPort)
-                .heartBeatInterval(CHRONICLE_HEARTBEAT_SECONDS, TimeUnit.SECONDS).name("clientMap")
+        final TcpTransportAndNetworkConfig clientConfig =
+                TcpTransportAndNetworkConfig.of(port + 1, serverHostPort)
+                .heartBeatInterval(CHRONICLE_HEARTBEAT_SECONDS, TimeUnit.SECONDS)
                 .autoReconnectedUponDroppedConnection(true);
 
         System.out.println("clients connecting to " + serverHostPort);
@@ -276,13 +286,17 @@ public class BGChronicleTest {
             futureList.add(es.submit(new Callable<Void>() {
                 @Override
                 public Void call() throws IOException {
-                    try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[].class)
+                    try (ChronicleMap<byte[], byte[]> map =
+                                 ChronicleMapBuilder.of(byte[].class, byte[].class)
                             .entries(KEYS)
                             .constantKeySizeBySample(new byte[KEY_SIZE])
                             .constantValueSizeBySample(new byte[VALUE_SIZE])
                             .putReturnsNull(true)
                             .removeReturnsNull(true)
-                            .replication((byte) (10 + clientId), clientConfig)
+                            .replication(SingleChronicleHashReplication.builder()
+                                    .tcpTransportAndNetwork(clientConfig)
+                                    .name("clientMap")
+                                    .createWithId((byte) (10 + clientId)))
                             .create()) {
 
                         System.out.println((clientId + 1) + "/" + CLIENTS + " client started");

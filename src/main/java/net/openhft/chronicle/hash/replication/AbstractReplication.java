@@ -36,6 +36,7 @@ public abstract class AbstractReplication implements Serializable {
     @Nullable
     transient RemoteNodeValidator remoteNodeValidator;
     private final boolean bootstrapOnlyLocalEntries;
+    private final String name;
 
     // package-private to forbid subclassing from outside of the package
     AbstractReplication(byte localIdentifier, Builder builder) {
@@ -44,6 +45,7 @@ public abstract class AbstractReplication implements Serializable {
         udpConfig = builder.udpConfig;
         remoteNodeValidator = builder.remoteNodeValidator;
         bootstrapOnlyLocalEntries = builder.bootstrapOnlyLocalEntries;
+        name = builder.name;
     }
 
     @Override
@@ -52,7 +54,8 @@ public abstract class AbstractReplication implements Serializable {
                 ", tcpConfig=" + tcpConfig +
                 ", udpConfig=" + udpConfig +
                 ", remoteNodeValidator=" + remoteNodeValidator +
-                ", bootstrapOnlyLocalEntries=" + bootstrapOnlyLocalEntries;
+                ", bootstrapOnlyLocalEntries=" + bootstrapOnlyLocalEntries +
+                ", name=" + name;
     }
 
     public byte identifier() {
@@ -77,6 +80,10 @@ public abstract class AbstractReplication implements Serializable {
     public boolean bootstrapOnlyLocalEntries() {
         return bootstrapOnlyLocalEntries;
     }
+    
+    public String name() {
+        return name;
+    }
 
     /**
      * Builder of {@link AbstractReplication} configurations. This class and it's subclasses are
@@ -93,6 +100,7 @@ public abstract class AbstractReplication implements Serializable {
         private UdpTransportConfig udpConfig = null;
         private RemoteNodeValidator remoteNodeValidator = null;
         private boolean bootstrapOnlyLocalEntries = false;
+        private String name = "(unknown)";
 
         // package-private to forbid subclassing from outside of the package
         Builder() {
@@ -146,6 +154,17 @@ public abstract class AbstractReplication implements Serializable {
             return (B) this;
         }
 
+        /**
+         * Configures replication "name", which could appear in log messages and replication
+         * thread names. Default is {@code "(unknown)"}.
+         *
+         * @param name human-readable replication name
+         * @return this builder back
+         */
+        public B name(String name) {
+            this.name = name;
+            return (B) this;
+        }
 
         /**
          * Creates a Replication instance with the given node (server) identifier.
@@ -153,10 +172,10 @@ public abstract class AbstractReplication implements Serializable {
          * @param identifier the node (server) identifier of the returned replication
          * @return a new Replication instance with the specified node (server) identifier
          * @throws IllegalArgumentException if the given identifier is non-positive
-         * @throws IllegalStateException    if neither {@link #tcpTransportAndNetwork(TcpTransportAndNetworkConfig)}
-         *                                  nor {@link #udpTransport(UdpTransportConfig)} are
-         *                                  configured to non-{@code null}. At least one of the
-         *                                  transport-level configs should be specified.
+         * @throws IllegalStateException if neither {@link #tcpTransportAndNetwork(
+         *         TcpTransportAndNetworkConfig)} nor {@link #udpTransport(UdpTransportConfig)} are
+         *         configured to non-{@code null}. At least one of the transport-level configs
+         *         should be specified.
          */
         @NotNull
         public abstract R createWithId(byte identifier);
@@ -165,12 +184,6 @@ public abstract class AbstractReplication implements Serializable {
             if (identifier <= 0)
                 throw new IllegalArgumentException("Identifier must be positive, " + identifier +
                         " given");
-        }
-
-        @Override
-        public String toString() {
-            return ", udpConfig=" + udpConfig +
-                    ", remoteNodeValidator=" + remoteNodeValidator;
         }
     }
 }

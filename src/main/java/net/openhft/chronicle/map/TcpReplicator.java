@@ -123,7 +123,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                          @NotNull final Replica.EntryExternalizable externalizable,
                          @NotNull final TcpTransportAndNetworkConfig replicationConfig,
                          @Nullable final RemoteNodeValidator remoteNodeValidator,
-                         @Nullable final StatelessClientParameters statelessClientParameters)
+                         @Nullable final StatelessClientParameters statelessClientParameters,
+                         String name)
             throws IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig());
@@ -144,7 +145,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         this.replicationConfig = replicationConfig;
 
         this.remoteNodeValidator = remoteNodeValidator;
-        this.name = replicationConfig.name();
+        this.name = name;
         start();
     }
 

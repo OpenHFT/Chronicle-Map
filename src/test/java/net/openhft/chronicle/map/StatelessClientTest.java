@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import junit.framework.Assert;
 import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
@@ -751,11 +752,11 @@ public class StatelessClientTest {
     @Test
     public void testsConstantKeySizeBySampleIsSentFromServer() throws IOException {
 
-        TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8875)
-                .name("serverMap");
-
         try (ChronicleMap server = ChronicleMapBuilder.of(byte[].class, CharSequence.class)
-                .replication((byte) 1, serverConfig)
+                .replication(SingleChronicleHashReplication.builder()
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(8875))
+                        .name("serverMap")
+                        .createWithId((byte) 1))
                 .constantKeySizeBySample(new byte[14])
                 .create()) {
 

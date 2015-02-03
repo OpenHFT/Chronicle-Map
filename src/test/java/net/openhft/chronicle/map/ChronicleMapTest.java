@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.HashBiMap;
 import com.google.common.primitives.Ints;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.DataValueGenerator;
@@ -1689,8 +1690,7 @@ public class ChronicleMapTest {
 
     @Test
     public void testByteArrayKeySizeBySample() throws IOException {
-        TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877)
-                .name("serverMap");
+        TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877);
 
         File mapFile = getPersistenceFile();
 
@@ -1698,7 +1698,10 @@ public class ChronicleMapTest {
         for (int i = 0; i < 2; i++) {
 
             try (ChronicleMap server = ChronicleMapBuilder.of(byte[].class, byte[][].class)
-                    .replication((byte) 1, serverConfig)
+                    .replication(SingleChronicleHashReplication.builder()
+                            .tcpTransportAndNetwork(serverConfig)
+                            .name("serverMap")
+                            .createWithId((byte) 1))
                     .constantKeySizeBySample(new byte[14])
                     .createPersistedTo(mapFile)) {
 

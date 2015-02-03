@@ -42,7 +42,6 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
     private final ThrottlingConfig throttlingConfig;
     private final long heartBeatInterval;
     private final TimeUnit heartBeatIntervalUnit;
-    private String name = "(unknown)";
 
     private TcpTransportAndNetworkConfig(int serverPort, Set<InetSocketAddress> endpoints,
                                          int tcpBufferSize,
@@ -138,16 +137,6 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
         return tcpBufferSize;
     }
 
-    /**
-     * @param name the name used here is reflected in the Tcp Replicator and is typically used when
-     *             debugging
-     * @return self
-     */
-    public TcpTransportAndNetworkConfig name(String name) {
-        this.name = name;
-        return this;
-    }
-
     public TcpTransportAndNetworkConfig tcpBufferSize(int tcpBufferSize) {
         if (tcpBufferSize <= 0)
             throw new IllegalArgumentException();
@@ -200,8 +189,7 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
     @Override
     public String toString() {
         return "TcpReplicationConfig{" +
-                "name=" + name() +
-                ", serverPort=" + serverPort +
+                "serverPort=" + serverPort +
                 ", endpoints=" + endpoints +
                 ", tcpBufferSize=" + tcpBufferSize +
                 ", autoReconnectedUponDroppedConnection=" + autoReconnectedUponDroppedConnection +
@@ -209,12 +197,5 @@ public final class TcpTransportAndNetworkConfig implements Serializable {
                 ", heartBeatInterval=" + heartBeatInterval +
                 ", heartBeatIntervalUnit=" + heartBeatIntervalUnit +
                 '}';
-    }
-
-    /**
-     * @return the name of this configuration
-     */
-    public String name() {
-        return this.name;
     }
 }

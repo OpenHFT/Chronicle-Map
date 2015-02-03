@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.MemoryUnit;
 import org.junit.After;
@@ -40,7 +41,7 @@ public class TcpReplicationLargeEntryTest {
 
         {
             final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(s_port,
-                    endpoint).autoReconnectedUponDroppedConnection(true).name("      map1")
+                    endpoint).autoReconnectedUponDroppedConnection(true)
                     .heartBeatInterval(1, TimeUnit.SECONDS)
                     .tcpBufferSize(1024 * 64);
 
@@ -49,21 +50,27 @@ public class TcpReplicationLargeEntryTest {
                     .constantValueSizeBySample(sampleValue)
                     .entries(2)
                     .actualSegments(1)
-                    .replication((byte) 1, tcpConfig1)
+                    .replication(SingleChronicleHashReplication.builder()
+                            .tcpTransportAndNetwork(tcpConfig1)
+                            .name("map1")
+                            .createWithId((byte) 1))
                     .instance()
                     .name("map1")
                     .create();
         }
         {
             final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of
-                    (s_port + 1).autoReconnectedUponDroppedConnection(true).name("map2")
+                    (s_port + 1).autoReconnectedUponDroppedConnection(true)
                     .heartBeatInterval(1, TimeUnit.SECONDS)
                     .tcpBufferSize(1024 * 64);
 
             map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .constantValueSizeBySample(sampleValue)
                     .entries(2)
-                    .replication((byte) 2, tcpConfig2)
+                    .replication(SingleChronicleHashReplication.builder()
+                            .tcpTransportAndNetwork(tcpConfig2)
+                            .name("map2")
+                            .createWithId((byte) 2))
                     .instance()
                     .name("map2")
                     .create();
