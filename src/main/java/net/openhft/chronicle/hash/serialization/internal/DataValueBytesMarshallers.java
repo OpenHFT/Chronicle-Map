@@ -272,7 +272,7 @@ public final class DataValueBytesMarshallers {
         StringBuilder read = new StringBuilder();
 
         Map.Entry<String, FieldModel>[] entries =
-                heapSizeOrderedFields(dvModel);
+                heapSizeOrderedFieldsGrouped(dvModel);
         for (Map.Entry<String, FieldModel> entry : entries) {
             String name = entry.getKey();
             FieldModel model = entry.getValue();
@@ -407,7 +407,7 @@ public final class DataValueBytesMarshallers {
         StringBuilder write = new StringBuilder();
 
         Map.Entry<String, FieldModel>[] entries =
-                heapSizeOrderedFields(dvModel);
+                heapSizeOrderedFieldsGrouped(dvModel);
         for (Map.Entry<String, FieldModel> entry : entries) {
             String name = entry.getKey();
             FieldModel model = entry.getValue();
