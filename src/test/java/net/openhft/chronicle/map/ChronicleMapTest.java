@@ -22,14 +22,13 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.primitives.Ints;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.lang.io.MappedStore;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.DataValueGenerator;
 import net.openhft.lang.values.IntValue;
 import net.openhft.lang.values.LongValue;
 import net.openhft.lang.values.LongValue$$Native;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -182,16 +181,14 @@ public class ChronicleMapTest {
     public void testByteArrayPersistenceFileReuse() throws Exception {
         final File persistenceFile = Builder.getPersistenceFile();
 
-        for (int i = 0; i < 2; i++) {
-            ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[]
-                    .class).createPersistedTo(persistenceFile);
+        for (int i = 0; i < 3; i++)
+            try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[]
+                    .class).createPersistedTo(persistenceFile)) {
 
-            byte[] o = map.get("hello".getBytes());
-            System.out.println(o == null ? "null" : new String(o));
-            map.put("hello".getBytes(), "world".getBytes());
-        }
-
-
+                byte[] o = map.get("hello".getBytes());
+                System.out.println(o == null ? "null" : new String(o));
+                map.put("hello".getBytes(), "world".getBytes());
+            }
     }
 
     @Test
@@ -661,7 +658,7 @@ public class ChronicleMapTest {
     @Test
     public void testLargerEntries() {
         for (int segments : new int[]{128, 256, 512, 1024}) {
-            int entries = 1000000, entrySize = 512;
+            int entries = 100000, entrySize = 512;
             ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                     .of(CharSequence.class, CharSequence.class)
                     .entries(entries * 11 / 10)
@@ -869,6 +866,7 @@ public class ChronicleMapTest {
 
 
     static final LongValue ONE = DataValueClasses.newInstance(LongValue.class);
+
     static {
         ONE.setValue(1);
     }
@@ -1826,6 +1824,18 @@ public class ChronicleMapTest {
         }
 
         map.close();
+    }
+
+    @BeforeClass
+    public static void initGlobals() {
+        assertFalse("Unfriendly clean in a previous test", MappedStore.unfriendlyClean.getAndSet(false));
+
+    }
+
+    @After
+    public void systemGC() {
+        System.gc();
+        assertFalse("Unfriendly clean", MappedStore.unfriendlyClean.getAndSet(false));
     }
 }
 

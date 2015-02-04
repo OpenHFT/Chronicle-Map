@@ -7,15 +7,13 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.MappedStore;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.model.constraints.MaxSize;
 import net.openhft.lang.model.constraints.NotNull;
 import net.openhft.lang.values.*;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -2621,6 +2619,19 @@ public class CHMUseCasesTest {
                 map.entrySet().toString();
             }
         }
+    }
+
+
+    @BeforeClass
+    public static void initGlobals() {
+        assertFalse("Unfriendly clean in a previous test", MappedStore.unfriendlyClean.getAndSet(false));
+
+    }
+
+    @After
+    public void systemGC() {
+        System.gc();
+        assertFalse("Unfriendly clean", MappedStore.unfriendlyClean.getAndSet(false));
     }
 }
 

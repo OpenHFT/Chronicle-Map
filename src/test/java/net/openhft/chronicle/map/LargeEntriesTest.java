@@ -20,7 +20,10 @@ package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;
+import net.openhft.lang.io.MappedStore;
 import net.openhft.lang.io.serialization.impl.SnappyStringMarshaller;
+import org.junit.After;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -29,10 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
 
@@ -48,7 +48,7 @@ public class LargeEntriesTest {
 
         File file = File.createTempFile("largeEntries" + System.currentTimeMillis(), ".deleteme");
         file.deleteOnExit();
-        final ChronicleMap<String, String> map = ChronicleMapBuilder
+        try (final ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
                 .valueMarshaller(SnappyStringMarshaller.INSTANCE)
                 .actualSegments(1) // to force an error.
@@ -56,8 +56,7 @@ public class LargeEntriesTest {
                 .averageKeySize(10)
                 .averageValueSize(ENTRY_SIZE)
                 .putReturnsNull(true)
-                .createPersistedTo(file);
-        {
+                .createPersistedTo(file)) {
             warmUpCompression(ENTRY_SIZE);
             int threads = 4; //Runtime.getRuntime().availableProcessors();
             ExecutorService es = Executors.newFixedThreadPool(threads);
@@ -84,8 +83,8 @@ public class LargeEntriesTest {
                         operations * ENTRIES * ENTRY_SIZE / 1e6 / (time / 1e3));
             }
             es.shutdown();
-            if (es.isTerminated())
-                map.close();
+            es.awaitTermination(1, TimeUnit.MINUTES);
+            assertTrue(es.isTerminated());
         }
     }
 
@@ -214,5 +213,17 @@ public class LargeEntriesTest {
         xml.writeObject(map2);
         xml.close();
         return baos.toString().substring(0, entrySize);
+    }
+
+    @BeforeClass
+    public static void initGlobals() {
+        assertFalse("Unfriendly clean in a previous test", MappedStore.unfriendlyClean.getAndSet(false));
+
+    }
+
+    @After
+    public void systemGC() {
+        System.gc();
+        assertFalse("Unfriendly clean", MappedStore.unfriendlyClean.getAndSet(false));
     }
 }
