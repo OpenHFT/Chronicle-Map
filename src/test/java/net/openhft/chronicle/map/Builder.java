@@ -41,8 +41,8 @@ public class Builder {
     static String WIN_OS = "WINDOWS";
 
     public static File getPersistenceFile() throws IOException {
-        String TMP = System.getProperty("java.io.tmpdir");
-        File file = new File(TMP + "/chm-test" + System.nanoTime() + (count++));
+
+        final File file = File.createTempFile("chm-test-", "map");
 
         //Not Guaranteed to work on Windows, since OS file-lock takes precedence
         if (System.getProperty("os.name").indexOf(WIN_OS) > 0) {

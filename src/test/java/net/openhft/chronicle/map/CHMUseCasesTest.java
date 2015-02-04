@@ -40,8 +40,6 @@ import static org.junit.Assert.*;
 @RunWith(value = Parameterized.class)
 public class CHMUseCasesTest {
 
-    private static final String TMP = System.getProperty("java.io.tmpdir");
-
 
     enum TypeOfMap {STATELESS, SIMPLE, SIMPLE_PERSISTED, REPLICATED}
 
@@ -184,8 +182,13 @@ public class CHMUseCasesTest {
 
 
     private void checkJsonSerilization() {
+        File file = null;
+        try {
+            file = File.createTempFile("chronicle-map-", ".json");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        File file = new File(TMP + "/chronicle-map-" + System.currentTimeMillis() + (i++) + System.nanoTime() + ".json");
         file.deleteOnExit();
         try {
 
@@ -232,9 +235,15 @@ public class CHMUseCasesTest {
                 return map1;
 
             case SIMPLE_PERSISTED:
-                final File file = new File(TMP + "/chronicle-map-" +
-                        (i++) + System.nanoTime() + System.currentTimeMillis() + ".map");
-                file.deleteOnExit();
+                File file0 = null;
+                try {
+                    file0 = File.createTempFile("chronicle-map-", ".map");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                file0.deleteOnExit();
+                final File file = file0;
                 map1 = builder.createPersistedTo(file);
                 closeables.add(map1);
                 closeables.add(new Closeable() {
