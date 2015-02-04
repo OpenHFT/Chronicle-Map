@@ -26,7 +26,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
@@ -47,12 +46,7 @@ public class SingleMapChannelTest {
     private ReplicationHub hubA;
     private ReplicationHub hubB;
 
-    public static File getPersistenceFile() {
-        String TMP = System.getProperty("java.io.tmpdir");
-        File file = new File(TMP + "/test" + System.nanoTime());
-        file.deleteOnExit();
-        return file;
-    }
+
 
     @Before
     public void setup() throws IOException {

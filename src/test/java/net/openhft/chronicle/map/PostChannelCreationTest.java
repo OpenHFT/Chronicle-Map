@@ -50,8 +50,13 @@ public class PostChannelCreationTest {
     private ReplicationHub hubB;
 
     public static File getPersistenceFile() {
-        String TMP = System.getProperty("java.io.tmpdir");
-        File file = new File(TMP + "/test" + System.nanoTime());
+        File file = null;
+        try {
+            file = File.createTempFile("chm-test", "map");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         file.deleteOnExit();
         return file;
     }
@@ -110,7 +115,8 @@ public class PostChannelCreationTest {
     }
 
     /**
-     * sets up a 2 clusters ( notionally one for each host ), and replicates 2 Chronicle Maps between them
+     * sets up a 2 clusters ( notionally one for each host ), and replicates 2 Chronicle Maps
+     * between them
      *
      * @throws IOException
      * @throws InterruptedException
