@@ -259,8 +259,6 @@ public class EntryCountMapTest {
                 System.err.println(" warning, larger than expected, stride: " + stride +
                         ", seg: " + segments + ", min: " + minSize +
                         ", size: " + map.size());
-        } finally {
-            map.close();
         }
 
     }
