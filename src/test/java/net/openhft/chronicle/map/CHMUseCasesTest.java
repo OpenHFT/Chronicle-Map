@@ -34,6 +34,7 @@ import static org.junit.Assert.*;
  * This test enumerates common use cases for keys and values.
  */
 @RunWith(value = Parameterized.class)
+@Ignore
 public class CHMUseCasesTest {
 
     private static final String TMP = System.getProperty("java.io.tmpdir");
