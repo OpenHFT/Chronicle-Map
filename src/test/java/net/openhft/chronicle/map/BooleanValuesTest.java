@@ -19,6 +19,7 @@
 package net.openhft.chronicle.map;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -32,6 +33,7 @@ public class BooleanValuesTest {
      * see issue http://stackoverflow.com/questions/26219313/strange-npe-from-chronicle-map-toy-code
      */
     @Test
+    @Ignore
     public void testTestBooleanValues() throws IOException, InterruptedException {
         try (ChronicleMap<Integer, Boolean> map =
                      ChronicleMapBuilder.of(Integer.class, Boolean.class).create()) {

@@ -2474,6 +2474,7 @@ public class CHMUseCasesTest {
         }
     }
 
+    @Ignore
     @Test
     public void testMapStringIntegerValue() throws IOException {
 
