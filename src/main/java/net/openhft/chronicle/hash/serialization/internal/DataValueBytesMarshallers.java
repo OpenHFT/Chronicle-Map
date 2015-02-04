@@ -193,7 +193,6 @@ public final class DataValueBytesMarshallers {
     }
 
 
-
     private static String bytesReaderName(Class type, boolean simple) {
         return (simple ? type.getSimpleName() : type.getName()) + "$$BytesReader";
     }
@@ -272,7 +271,7 @@ public final class DataValueBytesMarshallers {
         StringBuilder read = new StringBuilder();
 
         Map.Entry<String, FieldModel>[] entries =
-                heapSizeOrderedFields(dvModel);
+                DataValueGenerator.heapSizeOrderedFieldsGrouped(dvModel);
         for (Map.Entry<String, FieldModel> entry : entries) {
             String name = entry.getKey();
             FieldModel model = entry.getValue();
@@ -379,16 +378,16 @@ public final class DataValueBytesMarshallers {
             sb.append("        if (e instanceof Byteable) {\n");
             sb.append(
                     "            Bytes eBytes = ((Byteable) e).bytes();\n" +
-                    "            if (eBytes != null) {\n" +
-                    "                bytes.write(eBytes, ((Byteable) e).offset(), " +
+                            "            if (eBytes != null) {\n" +
+                            "                bytes.write(eBytes, ((Byteable) e).offset(), " +
                             size + ");\n" +
-                    "            } else {\n" +
-                    "                throw new NullPointerException(" +
+                            "            } else {\n" +
+                            "                throw new NullPointerException(" +
                             "\"You are trying to write a byteable object of \" +\n" +
-                    "                        e.getClass() + \", \" +\n" +
-                    "                        \"which bytes are not assigned. I. e. most likely " +
+                            "                        e.getClass() + \", \" +\n" +
+                            "                        \"which bytes are not assigned. I. e. most likely " +
                             "the object is uninitialized.\");\n" +
-                    "            }\n");
+                            "            }\n");
             sb.append("            return;\n");
             sb.append("        }\n");
         }
@@ -407,7 +406,7 @@ public final class DataValueBytesMarshallers {
         StringBuilder write = new StringBuilder();
 
         Map.Entry<String, FieldModel>[] entries =
-                heapSizeOrderedFields(dvModel);
+                heapSizeOrderedFieldsGrouped(dvModel);
         for (Map.Entry<String, FieldModel> entry : entries) {
             String name = entry.getKey();
             FieldModel model = entry.getValue();
