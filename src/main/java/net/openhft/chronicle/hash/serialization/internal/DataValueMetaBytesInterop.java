@@ -41,7 +41,7 @@ public abstract class DataValueMetaBytesInterop<E>
     }
 
     void init(BytesWriter<E> writer, E e, long size) {
-        Bytes buffer = this.buffer.obtain(size, false);
+        Bytes buffer = this.buffer.obtain(size, true);
         writer.write(buffer, e);
         buffer.flip();
         assert buffer.remaining() == size;
