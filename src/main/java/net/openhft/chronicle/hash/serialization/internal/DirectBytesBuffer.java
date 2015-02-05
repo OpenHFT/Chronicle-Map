@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesWriter;
-import net.openhft.lang.io.BoundsCheckingNativeBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;
@@ -34,7 +33,6 @@ class DirectBytesBuffer
     private static final long serialVersionUID = 0L;
     private final Serializable identity;
     transient DirectBytes buffer;
-    transient BoundsCheckingNativeBytes checkingBuffer;
 
     transient ForBytesMarshaller forBytesMarshaller;
     transient ForBytesWriter forBytesWriter;
@@ -60,29 +58,16 @@ class DirectBytesBuffer
         DirectBytes buf;
         if ((buf = buffer) != null) {
             if (maxSize <= buf.capacity()) {
-                if (!boundsChecking)
-                    return buf.clear();
-                Bytes checkingBuf;
-                if ((checkingBuf = checkingBuffer) != null) {
-                    return checkingBuf.clear();
-                } else {
-                    return (checkingBuffer = new BoundsCheckingNativeBytes(buf)).clear();
-                }
+                return buf.clear();
             } else {
                 DirectStore store = (DirectStore) buf.store();
-                store.resize(maxSize, true);
-                buf = buffer = store.bytes();
-                if (!boundsChecking)
-                    return buf;
-                return (checkingBuffer = new BoundsCheckingNativeBytes(buf));
+                store.resize(maxSize, false);
+                return buffer = store.bytes();
             }
         } else {
-            buf = buffer = new DirectStore(JDKObjectSerializer.INSTANCE,
-                    // don't allocate 0 bytes
-                    Math.max(1, maxSize), true).bytes();
-            if (!boundsChecking)
-                return buf;
-            return (checkingBuffer = new BoundsCheckingNativeBytes(buf));
+            buffer = new DirectStore(JDKObjectSerializer.INSTANCE, Math.max(1, maxSize), true)
+                    .bytes();
+            return buffer;
         }
     }
 
@@ -140,7 +125,7 @@ class DirectBytesBuffer
                 this.writer = writer;
                 cur = e;
                 long size = writer.size(e);
-                Bytes buffer = this.buffer.obtain(size, false);
+                Bytes buffer = this.buffer.obtain(size, true);
                 writer.write(buffer, e);
                 buffer.flip();
                 this.size = size;
