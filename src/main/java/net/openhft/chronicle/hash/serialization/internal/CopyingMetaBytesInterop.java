@@ -28,7 +28,7 @@ import java.io.Serializable;
 public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaBytesInterop<E, W> {
     private static final long serialVersionUID = 1L;
 
-    private static final long MAX_REASONABLE_SERIALIZED_SIZE = MemoryUnit.MEGABYTES.toBytes(512L);
+    private static final long MAX_REASONABLE_SERIALIZED_SIZE = MemoryUnit.MEGABYTES.toBytes(16L);
 
     public static void checkMaxSizeStillReasonable(long maxSize, Exception ex) {
         if (maxSize > MAX_REASONABLE_SERIALIZED_SIZE) {
