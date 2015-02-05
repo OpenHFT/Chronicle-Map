@@ -50,12 +50,18 @@ public class LongValue$$Native implements LongValue, BytesMarshallable, Byteable
 
     public long addValue(long $) {
         return _bytes.addLong(_offset + VALUE, $);
-    }    public long addAtomicValue(long $) {
+    }
+
+    public long addAtomicValue(long $) {
         return _bytes.addAtomicLong(_offset + VALUE, $);
-    }    public boolean compareAndSwapValue(long _1, long _2) {
+    }
+
+    public boolean compareAndSwapValue(long _1, long _2) {
         return _bytes.compareAndSwapLong(_offset + VALUE, _1, _2);
-    }    @Override
-         public void copyFrom(net.openhft.lang.values.LongValue from) {
+    }
+
+    @Override
+    public void copyFrom(net.openhft.lang.values.LongValue from) {
         setValue(from.getValue());
     }
 
@@ -63,27 +69,33 @@ public class LongValue$$Native implements LongValue, BytesMarshallable, Byteable
     public void writeMarshallable(Bytes out) {
         out.writeLong(getValue());
     }
+
     @Override
     public void readMarshallable(Bytes in) {
         setValue(in.readLong());
     }
+
     @Override
     public void bytes(Bytes bytes, long offset) {
         this._bytes = bytes;
         this._offset = offset;
     }
+
     @Override
     public Bytes bytes() {
         return _bytes;
     }
+
     @Override
     public long offset() {
         return _offset;
     }
+
     @Override
     public int maxSize() {
         return 8;
     }
+
     public int hashCode() {
         long lhc = longHashCode();
         return (int) ((lhc >>> 32) ^ lhc);
@@ -98,7 +110,7 @@ public class LongValue$$Native implements LongValue, BytesMarshallable, Byteable
         if (!(o instanceof LongValue)) return false;
         LongValue that = (LongValue) o;
 
-        if(!isEqual(getValue(), that.getValue())) return false;
+        if (!isEqual(getValue(), that.getValue())) return false;
         return true;
     }
 
