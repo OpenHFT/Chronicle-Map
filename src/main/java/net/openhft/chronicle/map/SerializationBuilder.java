@@ -34,9 +34,7 @@ import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -50,6 +48,7 @@ import static net.openhft.chronicle.hash.serialization.internal.SizeMarshallers.
 import static net.openhft.chronicle.map.Objects.hash;
 
 final class SerializationBuilder<E> implements Cloneable, Serializable {
+    private static final long serialVersionUID = 0L;
 
     private static final Bytes EMPTY_BYTES = new ByteBufferBytes(ByteBuffer.allocate(0));
 
@@ -88,6 +87,8 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
     private long maxSize;
 
     final boolean sizeIsStaticallyKnown;
+    
+    boolean serializesGeneratedClasses = false;
 
     @SuppressWarnings("unchecked")
     SerializationBuilder(Class<E> eClass, Role role) {
@@ -112,10 +113,12 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
                 metaInterop((MetaBytesInterop<E, ?>) DataValueMetaBytesInterop.forIdentity(role));
                 metaInteropProvider(DataValueMetaBytesInterop.interopProvider(eClass));
                 sizeMarshaller(constant((long) size));
+                serializesGeneratedClasses = true;
                 return;
             } catch (Exception e) {
                 try {
                     eClass = DataValueClasses.directClassFor(eClass);
+                    serializesGeneratedClasses = true;
                 } catch (Exception ex) {
                     // ignore, fall through
                 }
@@ -167,6 +170,25 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         if (concreteClass(eClass) && marshallerUseFactory(eClass)) {
             factory(factory);
         }
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeBoolean(serializesGeneratedClasses);
+        if (serializesGeneratedClasses) {
+            out.writeObject(eClass);
+            out.writeObject(role);
+        }
+        out.defaultWriteObject();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        boolean generatedClassesSerialized = in.readBoolean();
+        if (generatedClassesSerialized) {
+            Class eClass = (Class) in.readObject();
+            Role role = (Role) in.readObject();
+            new SerializationBuilder(eClass, role);
+        }
+        in.defaultReadObject();
     }
 
     boolean possibleOffHeapReferences() {
