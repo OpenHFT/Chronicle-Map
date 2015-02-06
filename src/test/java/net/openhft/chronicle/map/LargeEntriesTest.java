@@ -20,10 +20,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;
-import net.openhft.lang.io.MappedStore;
 import net.openhft.lang.io.serialization.impl.SnappyStringMarshaller;
-import org.junit.After;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -213,17 +210,5 @@ public class LargeEntriesTest {
         xml.writeObject(map2);
         xml.close();
         return baos.toString().substring(0, entrySize);
-    }
-
-    @BeforeClass
-    public static void initGlobals() {
-        assertFalse("Unfriendly clean in a previous test", MappedStore.unfriendlyClean.getAndSet(false));
-
-    }
-
-    @After
-    public void systemGC() {
-        System.gc();
-        assertFalse("Unfriendly clean", MappedStore.unfriendlyClean.getAndSet(false));
     }
 }

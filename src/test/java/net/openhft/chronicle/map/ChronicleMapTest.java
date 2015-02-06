@@ -22,13 +22,14 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.primitives.Ints;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.lang.io.MappedStore;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.DataValueGenerator;
 import net.openhft.lang.values.IntValue;
 import net.openhft.lang.values.LongValue;
 import net.openhft.lang.values.LongValue$$Native;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -1824,18 +1825,6 @@ public class ChronicleMapTest {
         }
 
         map.close();
-    }
-
-    @BeforeClass
-    public static void initGlobals() {
-        assertFalse("Unfriendly clean in a previous test", MappedStore.unfriendlyClean.getAndSet(false));
-
-    }
-
-    @After
-    public void systemGC() {
-        System.gc();
-        assertFalse("Unfriendly clean", MappedStore.unfriendlyClean.getAndSet(false));
     }
 }
 
