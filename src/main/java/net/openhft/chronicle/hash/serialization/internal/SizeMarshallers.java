@@ -98,6 +98,7 @@ public final class SizeMarshallers {
 
         @Override
         public void writeSize(Bytes bytes, long size) {
+            assert size == this.size;
             // do nothing
         }
 

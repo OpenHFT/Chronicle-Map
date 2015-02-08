@@ -56,6 +56,7 @@ public enum LongMarshaller
 
     @Override
     public void writeSize(Bytes bytes, long size) {
+        assert size == 8L;
         // do nothing
     }
 

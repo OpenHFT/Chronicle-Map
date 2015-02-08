@@ -90,6 +90,7 @@ public enum DummyValueMarshaller
 
     @Override
     public void writeSize(Bytes bytes, long size) {
+        assert size == 0L;
         // do nothing
     }
 

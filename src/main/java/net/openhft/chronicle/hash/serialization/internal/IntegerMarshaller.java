@@ -56,6 +56,7 @@ public enum IntegerMarshaller
 
     @Override
     public void writeSize(Bytes bytes, long size) {
+        assert size == 4L;
         // do nothing
     }
 

@@ -743,13 +743,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 return 0;
             }
 
-            final boolean isDeleted = entry.readBoolean();
-            long valueSize;
-            if (!isDeleted) {
-                valueSize = valueSizeMarshaller.readSize(entry);
-            } else {
-                valueSize = 0L;
-            }
+            entry.skip(1); // is Deleted
+            long valueSize = valueSizeMarshaller.readSize(entry);
 
             alignment.alignPositionAddr(entry);
             long result = (entry.position() + valueSize - start);
@@ -793,7 +788,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         if (!isDeleted) {
             valueSize = valueSizeMarshaller.readSize(entry);
         } else {
-            valueSize = 0L;
+            valueSize = valueSizeMarshaller.minEncodableSize();
         }
 
         final long valuePosition = entry.position();

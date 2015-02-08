@@ -89,6 +89,7 @@ public abstract class ByteableMarshaller<E extends Byteable>
 
     @Override
     public void writeSize(Bytes bytes, long size) {
+        assert size == this.size;
         // do nothing
     }
 
