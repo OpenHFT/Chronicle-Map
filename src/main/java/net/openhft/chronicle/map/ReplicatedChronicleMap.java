@@ -430,6 +430,11 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         @Override
+        void beforeRelocation() {
+            m().dropChange(segmentIndex, pos);
+        }
+
+        @Override
         boolean freeListBitsSet() {
             // As of now, ReplicatedChMap's remove() never clear the bits
             return true;

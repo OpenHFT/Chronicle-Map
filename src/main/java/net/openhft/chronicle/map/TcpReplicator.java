@@ -1367,8 +1367,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                                 }
                             }
                         }
-                    } else
+                    } else {
                         externalizable.readExternalEntry(context, out);
+                    }
 
                     out.limit(limit);
 
