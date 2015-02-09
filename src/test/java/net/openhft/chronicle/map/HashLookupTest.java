@@ -90,8 +90,7 @@ public class HashLookupTest {
     }
 
     private void valuesEqualsByKey(long k) {
-        List<Long> values = new ArrayList<Long>();
-        SearchState searchState = new SearchState();
+        List<Long> values = new ArrayList<>();
         map.init0(k);
         map.initSearch0();
         long v;
@@ -99,7 +98,7 @@ public class HashLookupTest {
             values.add(v);
         Set<Long> valueSet = new HashSet<Long>(values);
         Assert.assertEquals(values.size(), valueSet.size());
-        Assert.assertEquals(new HashSet<Long>(referenceMap.get(k)), valueSet);
+        Assert.assertEquals(new HashSet<>(referenceMap.get(k)), valueSet);
     }
 
     private void put(long k, long v) {
