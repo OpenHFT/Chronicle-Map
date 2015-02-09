@@ -573,11 +573,13 @@ public class CHMUseCasesTest {
 
 
     /**
-     * CharSequence is more efficient when object creation is avoided. The key can only be on heap and variable length
-     * serialised.
+     * CharSequence is more efficient when object creation is avoided.
+     * * The key can only be on heap and variable length serialised.
      */
+    @Ignore("TODO HCOLL-306")
     @Test
-    public void testCharSequenceCharSequenceMap() throws ExecutionException, InterruptedException, IOException {
+    public void testCharSequenceCharSequenceMap()
+            throws ExecutionException, InterruptedException, IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
             return; // Function supported by the STATELESS client
