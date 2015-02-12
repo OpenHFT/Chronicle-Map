@@ -14,26 +14,13 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.function;
+package net.openhft.chronicle.hash.impl;
 
-
-/**
- * Represents a predicate (boolean-valued function) of one argument.
- *
- * <p>This is a functional interface whose functional method is {@link #test(Object)}.
- *
- * <p>This is a copy of Java 8's {@code java.util.function.Predicate} interface.
- *
- * @param <T> the type of the input to the predicate
- */
-public interface Predicate<T> {
-
-    /**
-     * Evaluates this predicate on the given argument.
-     *
-     * @param t the input argument
-     * @return {@code true} if the input argument matches the predicate,
-     * otherwise {@code false}
-     */
-    boolean test(T t);
+public interface ContextFactory<T extends HashContext> {
+    
+    T createContext(HashContext root, int indexInContextCache);
+    
+    T createRootContext();
+    
+    Class<T> contextClass();
 }

@@ -16,12 +16,14 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.impl.util.Objects;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Set;
 
-public class BytesChronicleMap extends AbstractChronicleMap<Bytes, Bytes> {
+public class BytesChronicleMap implements AbstractChronicleMap<Bytes, Bytes> {
 
     private final VanillaChronicleMap<?, ?, ?, ?, ?, ?> delegate;
     TcpReplicator.TcpSocketChannelEntryWriter output;
@@ -31,22 +33,17 @@ public class BytesChronicleMap extends AbstractChronicleMap<Bytes, Bytes> {
     }
 
     @Override
-    void putDefaultValue(VanillaContext context) {
+    public void putDefaultValue(VanillaContext context) {
         delegate.putDefaultValue(context);
     }
 
     @Override
-    int actualSegments() {
+    public int actualSegments() {
         return delegate.actualSegments();
     }
 
     @Override
-    VanillaContext<Bytes, ?, ?, Bytes, ?, ?> rawContext() {
-        return delegate.rawBytesContext();
-    }
-
-    @Override
-    VanillaContext<Bytes, ?, ?, Bytes, ?, ?> mapContext() {
+    public VanillaContext<Bytes, ?, ?, Bytes, ?, ?> mapContext() {
         VanillaContext context = delegate.bytesMapContext();
         context.output = output;
         return context;
@@ -71,7 +68,7 @@ public class BytesChronicleMap extends AbstractChronicleMap<Bytes, Bytes> {
     }
 
     @Override
-    void checkValue(Bytes value) {
+    public void checkValue(Bytes value) {
         Objects.requireNonNull(value);
     }
 
@@ -121,5 +118,21 @@ public class BytesChronicleMap extends AbstractChronicleMap<Bytes, Bytes> {
             entryPosition = nextEntryPosition;
             entries.position(entryPosition);
         }
+    }
+
+    @Override
+    public int size() {
+        return delegate.size();
+    }
+
+    @Override
+    public void clear() {
+        delegate.clear();
+    }
+
+    @NotNull
+    @Override
+    public Set<Entry<Bytes, Bytes>> entrySet() {
+        throw new UnsupportedOperationException();
     }
 }

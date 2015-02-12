@@ -18,11 +18,14 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.function.SerializableFunction;
+import net.openhft.chronicle.hash.serialization.internal.ReaderWithSize;
+import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
@@ -47,7 +50,7 @@ import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTION_ID;
-import static net.openhft.chronicle.map.BuildVersion.version;
+import static net.openhft.chronicle.hash.impl.util.BuildVersion.version;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 interface Work {
@@ -1639,7 +1642,7 @@ class StatelessServerConnector<K, V> {
                           @NotNull TcpReplicator.TcpSocketChannelEntryWriter writer,
                           long sizeLocation) {
         final K key = keyReaderWithSize.read(reader, null, null);
-        final Function<V, ?> function = (Function<V, ?>) reader.readObject();
+        final SerializableFunction<V, ?> function = (SerializableFunction<V, ?>) reader.readObject();
         try {
             Object result = map.getMapped(key, function);
             writeObject(writer, result);

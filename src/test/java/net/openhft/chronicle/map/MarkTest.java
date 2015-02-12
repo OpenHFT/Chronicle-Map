@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.lang.MemoryUnit;
 import org.junit.Test;
 
@@ -34,7 +34,7 @@ public class MarkTest {
 
     @Test(timeout = 25000)
     public void inMemoryTest() {
-        test(new Function<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>() {
+        test(new SerializableFunction<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>() {
             @Override
             public ChronicleMap<Integer, Integer> apply(
                     ChronicleMapBuilder<Integer, Integer> builder) {
@@ -50,8 +50,8 @@ public class MarkTest {
         if (db.exists())
             db.delete();
         try {
-            test(new Function<ChronicleMapBuilder<Integer, Integer>,
-                    ChronicleMap<Integer, Integer>>() {
+            test(new SerializableFunction<ChronicleMapBuilder<Integer, Integer>,
+                                ChronicleMap<Integer, Integer>>() {
                 @Override
                 public ChronicleMap<Integer, Integer> apply(
                         ChronicleMapBuilder<Integer, Integer> builder) {
@@ -70,8 +70,8 @@ public class MarkTest {
         }
     }
 
-    private static void test(Function<ChronicleMapBuilder<Integer, Integer>,
-            ChronicleMap<Integer, Integer>> createMap) {
+    private static void test(SerializableFunction<ChronicleMapBuilder<Integer, Integer>,
+                ChronicleMap<Integer, Integer>> createMap) {
         long ms = System.currentTimeMillis();
         try (ChronicleMap<Integer, Integer> map = createMap.apply(ChronicleMapBuilder
                 .of(Integer.class, Integer.class)

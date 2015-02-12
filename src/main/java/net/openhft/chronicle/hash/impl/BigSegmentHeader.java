@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.hash.locks.IllegalInterProcessLockStateException;
 
@@ -25,8 +25,8 @@ import static java.nio.ByteOrder.nativeOrder;
 import static net.openhft.lang.io.AbstractBytes.UNSIGNED_INT_MASK;
 import static net.openhft.lang.io.NativeBytes.UNSAFE;
 
-enum BigSegmentHeader implements SegmentHeader {
-    INSTANCE;
+public final class BigSegmentHeader implements SegmentHeader {
+    public static final BigSegmentHeader INSTANCE = new BigSegmentHeader();
 
     static final long LOCK_OFFSET = 0L; // 64-bit
     static final long COUNT_WORD_OFFSET = LOCK_OFFSET;
@@ -51,8 +51,13 @@ enum BigSegmentHeader implements SegmentHeader {
     static final long SIZE_OFFSET = LOCK_OFFSET + 8L; // 32-bit
     static final long NEXT_POS_TO_SEARCH_FROM_OFFSET = SIZE_OFFSET + 4L;
 
+
     static final long EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET = NEXT_POS_TO_SEARCH_FROM_OFFSET + 4L;
 
+    static final long DELETED_OFFSET = EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET + 8L;
+
+    private BigSegmentHeader() {}
+    
     @Override
     public long size(long address) {
         return UNSAFE.getInt(address + SIZE_OFFSET) & UNSIGNED_INT_MASK;
@@ -61,6 +66,16 @@ enum BigSegmentHeader implements SegmentHeader {
     @Override
     public void size(long address, long size) {
         UNSAFE.putInt(address + SIZE_OFFSET, (int) size);
+    }
+
+    @Override
+    public long deleted(long address) {
+        return UNSAFE.getInt(address + DELETED_OFFSET) & UNSIGNED_INT_MASK;
+    }
+
+    @Override
+    public void deleted(long address, long deleted) {
+        UNSAFE.putInt(address + DELETED_OFFSET, (int) deleted);
     }
 
     @Override

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.serialization.internal;
 
+import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.lang.io.Bytes;
@@ -23,12 +24,12 @@ import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.Nullable;
 
-final class ReaderWithSize<T> {
+public final class ReaderWithSize<T> {
     private final SizeMarshaller sizeMarshaller;
     private final BytesReader<T> originalReader;
     private final Provider<BytesReader<T>> readerProvider;
 
-    ReaderWithSize(SerializationBuilder<T> serializationBuilder) {
+    public ReaderWithSize(SerializationBuilder<T> serializationBuilder) {
         sizeMarshaller = serializationBuilder.sizeMarshaller();
         originalReader = serializationBuilder.reader();
         readerProvider = (Provider<BytesReader<T>>) Provider.of(originalReader.getClass());

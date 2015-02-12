@@ -19,10 +19,7 @@ package net.openhft.xstream.converters;
 
 import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
-import net.openhft.chronicle.hash.function.Consumer;
-import net.openhft.chronicle.hash.function.Predicate;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.MapKeyContext;
 import net.openhft.lang.model.constraints.NotNull;
 
 import java.util.Map;
@@ -39,23 +36,20 @@ public class VanillaChronicleMapConverter<K, V> extends AbstractChronicleMapConv
     @Override
     public void marshal(Object o, final HierarchicalStreamWriter writer, final MarshallingContext
             marshallingContext) {
-        ((ChronicleMap<K, V>) o).forEachEntry(new Consumer<MapKeyContext<K,V>>() {
-            @Override
-            public void accept(MapKeyContext<K, V> c) {
-                writer.startNode("entry");
-                {
-                    final Object key = c.key();
-                    writer.startNode(key.getClass().getName());
-                    marshallingContext.convertAnother(key);
-                    writer.endNode();
+        ((ChronicleMap<K, V>) o).forEachEntry(c -> {
+            writer.startNode("entry");
+            {
+                final Object key = c.key();
+                writer.startNode(key.getClass().getName());
+                marshallingContext.convertAnother(key);
+                writer.endNode();
 
-                    Object value = c.get();
-                    writer.startNode(value.getClass().getName());
-                    marshallingContext.convertAnother(value);
-                    writer.endNode();
-                }
+                Object value = c.get();
+                writer.startNode(value.getClass().getName());
+                marshallingContext.convertAnother(value);
                 writer.endNode();
             }
+            writer.endNode();
         });
     }
 }

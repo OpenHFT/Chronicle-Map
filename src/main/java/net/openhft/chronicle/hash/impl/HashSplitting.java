@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.impl;
 
 import java.io.Serializable;
 
 import static net.openhft.lang.Maths.isPowerOf2;
 
-interface HashSplitting extends Serializable {
+public interface HashSplitting extends Serializable {
 
     int segmentIndex(long hash);
     long segmentHash(long hash);

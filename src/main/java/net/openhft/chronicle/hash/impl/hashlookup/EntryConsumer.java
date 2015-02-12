@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-/**
- * Serializable versions of functions for convenience of anonymous implementation
- */
-package net.openhft.chronicle.hash.function;
+package net.openhft.chronicle.hash.impl.hashlookup;
+
+public interface EntryConsumer {
+    void accept(long key, long value);
+}

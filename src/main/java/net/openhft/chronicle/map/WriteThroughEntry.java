@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.hash.function;
+package net.openhft.chronicle.map;
 
-/**
- * Represents an operation that accepts a single input argument and returns no
- * result. Unlike most other functional interfaces, {@code Consumer} is expected
- * to operate via side-effects.
- *
- * <p>This is a functional interface whose functional method is {@link #accept(Object)}.
- *
- * <p>This is a copy of Java 8's {@code java.util.function.Consumer} interface.
- *
- * @param <T> the type of the input to the operation
- */
-public interface Consumer<T> {
+import java.util.AbstractMap;
 
-    /**
-     * Performs this operation on the given argument.
-     *
-     * @param t the input argument
-     */
-    void accept(T t);
+class WriteThroughEntry<K, V> extends AbstractMap.SimpleEntry<K, V> {
+    private static final long serialVersionUID = 0L;
+
+    private final ChronicleMap<K, V> map;
+
+    public WriteThroughEntry(ChronicleMap<K, V> map, K key, V value) {
+        super(key, value);
+        this.map = map;
+    }
+
+    @Override
+    public V setValue(V value) {
+        try (MapKeyContext<K, V> c = map.context(getKey())) {
+            c.put(value);
+        }
+        return super.setValue(value);
+    }
 }

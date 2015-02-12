@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.impl;
 
 import java.util.concurrent.TimeUnit;
 
 public interface SegmentHeader {
     long size(long address);
     void size(long address, long size);
+
+    long deleted(long address);
+    void deleted(long address, long deleted);
 
     long nextPosToSearchFrom(long address);
     void nextPosToSearchFrom(long address, long nextPosToSearchFrom);

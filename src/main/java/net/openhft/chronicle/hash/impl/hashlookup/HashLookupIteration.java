@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-/**
- * Serializable versions of functions for convenience of anonymous implementation
- */
-package net.openhft.chronicle.hash.function;
+package net.openhft.chronicle.hash.impl.hashlookup;
+
+public interface HashLookupIteration {
+    void accept(long hash, long pos);
+
+    boolean remove();
+
+    boolean continueIteration();
+}

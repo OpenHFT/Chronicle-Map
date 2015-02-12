@@ -16,8 +16,9 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.impl.util;
 
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import shaded.org.apache.maven.model.Model;
 import shaded.org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 
@@ -26,7 +27,7 @@ import java.io.*;
 /**
  * gets the version of the current build
  */
-class BuildVersion {
+public final class BuildVersion {
 
     private static String version = null;
 
@@ -106,6 +107,6 @@ class BuildVersion {
             return null;
         }
     }
-
-
+    
+    private BuildVersion() {}
 }

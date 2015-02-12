@@ -19,9 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.KeyContext;
-import net.openhft.chronicle.hash.function.Consumer;
-import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshaller;
@@ -151,7 +149,7 @@ public interface ChronicleMap<K, V>
      * @param <R>      return type.
      * @return the result of the function, or null if there is no entry for the key.
      */
-    <R> R getMapped(K key, @NotNull Function<? super V, R> function);
+    <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function);
 
     /**
      * Apply a unaryOperator to the value for a key and return a result. A write lock is assumed.

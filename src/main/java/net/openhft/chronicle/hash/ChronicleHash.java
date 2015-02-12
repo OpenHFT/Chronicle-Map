@@ -18,13 +18,13 @@
 
 package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.hash.function.Consumer;
-import net.openhft.chronicle.hash.function.Predicate;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * This interface defines common {@link ChronicleMap} and {@link ChronicleSet}, related to off-heap

@@ -150,7 +150,7 @@ public class TCPSocketReplicationTest {
         map1.remove(1);
 
         map2.put(1, "EXAMPLE-1");
-      map2.remove(1);
+        map2.remove(1);
 
         // allow time for the recompilation to resolve
         waitTillEqual(5000);

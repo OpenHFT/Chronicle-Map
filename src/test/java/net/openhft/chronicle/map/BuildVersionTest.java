@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.impl.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-final class CloseablesManager implements Closeable {
+public final class CloseablesManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(CloseablesManager.class.getName());
 
     private final List<Closeable> closeables = new ArrayList<>();

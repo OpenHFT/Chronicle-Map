@@ -20,16 +20,12 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import net.openhft.lang.collection.SingleThreadedDirectBitSet;
-import net.openhft.lang.io.DirectStore;
-import net.openhft.lang.io.NativeBytes;
+import net.openhft.chronicle.hash.impl.hashlookup.EntryConsumer;
+import net.openhft.chronicle.hash.impl.hashlookup.HashLookup;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.lang.reflect.Field;
 import java.util.*;
 
 import static net.openhft.lang.io.NativeBytes.UNSAFE;
@@ -75,7 +71,7 @@ public class HashLookupTest {
     }
 
     private void multiMapEquals() {
-        class Action implements HashLookup.EntryConsumer {
+        class Action implements EntryConsumer {
             int mapSize = 0;
 
             @Override

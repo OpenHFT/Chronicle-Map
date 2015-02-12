@@ -20,10 +20,12 @@ package net.openhft.chronicle.map;
 
 import com.sun.jdi.connect.spi.ClosedConnectionException;
 import net.openhft.chronicle.hash.RemoteCallTimeoutException;
-import net.openhft.chronicle.hash.function.Consumer;
-import net.openhft.chronicle.hash.function.Function;
-import net.openhft.chronicle.hash.function.Predicate;
+import net.openhft.chronicle.hash.function.SerializableFunction;
+import net.openhft.chronicle.hash.serialization.internal.ReaderWithSize;
+import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.impl.util.BuildVersion;
+import net.openhft.chronicle.hash.impl.util.CloseablesManager;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.NativeBytes;
@@ -44,6 +46,8 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.util.Collections.emptyList;
@@ -610,7 +614,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     @Nullable
-    public <R> R getMapped(@Nullable K key, @NotNull Function<? super V, R> function) {
+    public <R> R getMapped(@Nullable K key, @NotNull SerializableFunction<? super V, R> function) {
         if (key == null)
             throw keyNotNullNPE();
         return fetchObject(MAP_FOR_KEY, key, function);

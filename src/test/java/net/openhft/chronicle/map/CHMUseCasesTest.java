@@ -1,7 +1,7 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.primitives.Chars;
-import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
@@ -318,7 +318,7 @@ public class CHMUseCasesTest {
         }
     }
 
-    static class PrefixStringFunction implements Function<String, String> {
+    static class PrefixStringFunction implements SerializableFunction<String, String> {
         private final String prefix;
 
         public PrefixStringFunction(@NotNull String prefix) {
@@ -605,14 +605,14 @@ public class CHMUseCasesTest {
 
 
             assertEquals("New World", map.getMapped("Hello", new
-                    Function<CharSequence, CharSequence>() {
+                    SerializableFunction<CharSequence, CharSequence>() {
                         @Override
                         public CharSequence apply(CharSequence s) {
                             return "New " + s;
                         }
                     }));
             assertEquals(null, map.getMapped("No key", new
-                    Function<CharSequence, CharSequence>() {
+                    SerializableFunction<CharSequence, CharSequence>() {
                         @Override
                         public CharSequence apply(CharSequence s) {
                             return "New " + s;
@@ -968,7 +968,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            assertEquals((Integer) 110, map.getMapped(1, new Function<Integer, Integer>() {
+            assertEquals((Integer) 110, map.getMapped(1, new SerializableFunction<Integer, Integer>() {
                 @Override
                 public Integer apply(Integer s) {
                     return 10 * s;
@@ -977,7 +977,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            assertEquals(null, map.getMapped(-1, new Function<Integer, Integer>() {
+            assertEquals(null, map.getMapped(-1, new SerializableFunction<Integer, Integer>() {
                 @Override
                 public Integer apply(Integer s) {
                     return 10 * s;
@@ -1025,13 +1025,13 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            assertEquals((Long) 110L, map.getMapped(1L, new Function<Long, Long>() {
+            assertEquals((Long) 110L, map.getMapped(1L, new SerializableFunction<Long, Long>() {
                 @Override
                 public Long apply(Long s) {
                     return 10 * s;
                 }
             }));
-            assertEquals(null, map.getMapped(-1L, new Function<Long, Long>() {
+            assertEquals(null, map.getMapped(-1L, new SerializableFunction<Long, Long>() {
                 @Override
                 public Long apply(Long s) {
                     return 10 * s;
@@ -1077,13 +1077,13 @@ public class CHMUseCasesTest {
             assertEquals(null, map.get(3.0));
             assertEquals(null, map.get(4.0));
 
-            assertEquals((Double) 110.0, map.getMapped(1.0, new Function<Double, Double>() {
+            assertEquals((Double) 110.0, map.getMapped(1.0, new SerializableFunction<Double, Double>() {
                 @Override
                 public Double apply(Double s) {
                     return 10 * s;
                 }
             }));
-            assertEquals(null, map.getMapped(-1.0, new Function<Double, Double>() {
+            assertEquals(null, map.getMapped(-1.0, new SerializableFunction<Double, Double>() {
                 @Override
                 public Double apply(Double s) {
                     return 10 * s;
@@ -1131,13 +1131,13 @@ public class CHMUseCasesTest {
 
 
             assertTrue(Arrays.equals(new byte[]{11, 11},
-                    map.getMapped(key1, new Function<byte[], byte[]>() {
+                    map.getMapped(key1, new SerializableFunction<byte[], byte[]>() {
                         @Override
                         public byte[] apply(byte[] s) {
                             return Arrays.copyOf(s, 2);
                         }
                     })));
-            assertEquals(null, map.getMapped(key2, new Function<byte[], byte[]>() {
+            assertEquals(null, map.getMapped(key2, new SerializableFunction<byte[], byte[]>() {
                 @Override
                 public byte[] apply(byte[] s) {
                     return Arrays.copyOf(s, 2);
@@ -1218,8 +1218,8 @@ public class CHMUseCasesTest {
             assertBBEquals(value2, map.get(key1));
             assertNull(map.get(key2));
 
-            final Function<ByteBuffer, ByteBuffer> function =
-                    new Function<ByteBuffer, ByteBuffer>() {
+            final SerializableFunction<ByteBuffer, ByteBuffer> function =
+                    new SerializableFunction<ByteBuffer, ByteBuffer>() {
                         @Override
                         public ByteBuffer apply(ByteBuffer s) {
                             ByteBuffer slice = s.slice();
@@ -1339,8 +1339,8 @@ public class CHMUseCasesTest {
             assertNull(map.get(key2));
             map.put(key1, value1);
             mapChecks();
-            final Function<ByteBuffer, ByteBuffer> function =
-                    new Function<ByteBuffer, ByteBuffer>() {
+            final SerializableFunction<ByteBuffer, ByteBuffer> function =
+                    new SerializableFunction<ByteBuffer, ByteBuffer>() {
                         @Override
                         public ByteBuffer apply(ByteBuffer s) {
                             ByteBuffer slice = s.slice();
@@ -2684,7 +2684,7 @@ class Data implements IData, BytesMarshallable {
     }
 }
 
-enum ToString implements Function<Object, String> {
+enum ToString implements SerializableFunction<Object, String> {
     INSTANCE;
 
     @Override

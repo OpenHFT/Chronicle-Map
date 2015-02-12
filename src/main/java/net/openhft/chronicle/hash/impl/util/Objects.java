@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.impl.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,23 +26,25 @@ import java.util.Arrays;
 /**
  * java.util.Objects since Java 7
  */
-final class Objects {
-    static int hash(Object... values) {
+public final class Objects {
+    public static int hash(Object... values) {
         return Arrays.hashCode(values);
     }
 
-    static boolean equal(@Nullable Object a, @Nullable Object b) {
+    public static boolean equal(@Nullable Object a, @Nullable Object b) {
         return a != null ? a.equals(b) : b == null;
     }
 
-    static boolean builderEquals(@NotNull Object builder, @Nullable Object o) {
+    public static boolean builderEquals(@NotNull Object builder, @Nullable Object o) {
         return builder == o ||
                 o != null && builder.getClass() == o.getClass() &&
                         builder.toString().equals(o.toString());
     }
 
-    static void requireNonNull(Object obj) {
+    public static void requireNonNull(Object obj) {
         if (obj == null)
             throw new NullPointerException();
     }
+    
+    private Objects() {}
 }

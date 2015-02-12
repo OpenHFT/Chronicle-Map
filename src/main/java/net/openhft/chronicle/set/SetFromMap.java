@@ -19,8 +19,6 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.KeyContext;
-import net.openhft.chronicle.hash.function.Consumer;
-import net.openhft.chronicle.hash.function.Predicate;
 import net.openhft.chronicle.hash.serialization.internal.DummyValue;
 import net.openhft.chronicle.map.ChronicleMap;
 
@@ -31,6 +29,8 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static net.openhft.chronicle.hash.serialization.internal.DummyValue.DUMMY_VALUE;
 

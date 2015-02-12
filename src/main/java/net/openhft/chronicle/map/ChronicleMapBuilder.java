@@ -20,6 +20,9 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
+import net.openhft.chronicle.hash.impl.ChronicleHashBuilderImpl;
+import net.openhft.chronicle.hash.impl.hashlookup.HashLookup;
+import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
@@ -53,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.round;
-import static net.openhft.chronicle.map.Objects.builderEquals;
+import static net.openhft.chronicle.hash.impl.util.Objects.builderEquals;
 import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
 
 /**
@@ -99,7 +102,7 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * @see ChronicleSetBuilder
  */
 public final class ChronicleMapBuilder<K, V> implements
-        ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>,
+        ChronicleHashBuilderImpl<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>,
         MapBuilder<ChronicleMapBuilder<K, V>>, Serializable {
 
     static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte) 128;
@@ -392,6 +395,11 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
+    @Override
+    public SerializationBuilder<K> keyBuilder() {
+        return keyBuilder;
+    }
+
     static class EntrySizeInfo {
         final double averageEntrySize;
         final int worstAlignment;
@@ -451,7 +459,8 @@ public final class ChronicleMapBuilder<K, V> implements
      * This is needed, if chunkSize = constant entry size is not aligned, for entry alignment to be
      * always the same, we should _misalign_ the first chunk.
      */
-    int segmentEntrySpaceInnerOffset(boolean replicated) {
+    @Override
+    public int segmentEntrySpaceInnerOffset(boolean replicated) {
         if (!constantlySizedEntries())
             return 0;
         return (int) (constantValueSize() % valueAlignment().alignment());
@@ -505,7 +514,8 @@ public final class ChronicleMapBuilder<K, V> implements
         return greatestCommonDivisor(b, a % b);
     }
 
-    long chunkSize(boolean replicated) {
+    @Override
+    public long chunkSize(boolean replicated) {
         if (actualChunkSize > 0)
             return actualChunkSize;
         double averageEntrySize = entrySizeInfo(replicated).averageEntrySize;
@@ -546,7 +556,8 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    int maxChunksPerEntry() {
+    @Override
+    public int maxChunksPerEntry() {
         if (maxChunksPerEntry > 0)
             return maxChunksPerEntry;
         if (constantlySizedEntries()) {
@@ -627,7 +638,8 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    long entriesPerSegment(boolean replicated) {
+    @Override
+    public long entriesPerSegment(boolean replicated) {
         long entriesPerSegment;
         if (this.entriesPerSegment > 0L) {
             entriesPerSegment = this.entriesPerSegment;
@@ -680,7 +692,8 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    long actualChunksPerSegment(boolean replicated) {
+    @Override
+    public long actualChunksPerSegment(boolean replicated) {
         if (actualChunksPerSegment > 0)
             return actualChunksPerSegment;
         return chunksPerSegment(entriesPerSegment(replicated), replicated);
@@ -769,7 +782,8 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    int actualSegments(boolean replicated) {
+    @Override
+    public int actualSegments(boolean replicated) {
         if (actualSegments > 0)
             return actualSegments;
         if (entriesPerSegment > 0) {
@@ -857,7 +871,8 @@ public final class ChronicleMapBuilder<K, V> implements
         return segments <= maxSegments ? segments : -segments;
     }
 
-    int segmentHeaderSize(boolean replicated) {
+    @Override
+    public int segmentHeaderSize(boolean replicated) {
         int segments = actualSegments(replicated);
         // reduce false sharing unless we have a lot of segments.
         return segments <= 16 * 1024 ? 64 : 32;
@@ -1389,7 +1404,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     V, Object, MetaBytesInterop<V, Object>>(this, replication);
         } else {
             return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
-                    V, Object, MetaBytesInterop<V, Object>>(this);
+                    V, Object, MetaBytesInterop<V, Object>>(this, false);
         }
     }
 

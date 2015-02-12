@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.impl.hashlookup;
 
 import net.openhft.lang.Maths;
 
@@ -22,17 +22,17 @@ import static net.openhft.lang.MemoryUnit.BITS;
 import static net.openhft.lang.MemoryUnit.BYTES;
 import static net.openhft.lang.io.NativeBytes.UNSAFE;
 
-class HashLookup {
+public class HashLookup {
 
     // to fit 64 bits per slot.
-    static final int MAX_SEGMENT_CHUNKS = 1 << 30;
-    static final int MAX_SEGMENT_ENTRIES = 1 << 29;
+    public static final int MAX_SEGMENT_CHUNKS = 1 << 30;
+    public static final int MAX_SEGMENT_ENTRIES = 1 << 29;
 
-    static int valueBits(long actualChunksPerSegment) {
+    public static int valueBits(long actualChunksPerSegment) {
         return 64 - Long.numberOfLeadingZeros(actualChunksPerSegment - 1L);
     }
 
-    static int keyBits(long entriesPerSegment, int valueBits) {
+    public static int keyBits(long entriesPerSegment, int valueBits) {
         // key hash cardinality is between 1.0 and 2.0 of key cardinality
         int minKeyBits = 64 - Long.numberOfLeadingZeros(entriesPerSegment - 1L);
         // This minimizes probability of hash collision => on search, additional cache line touch
@@ -44,11 +44,11 @@ class HashLookup {
         return actualEntryBits - valueBits;
     }
 
-    static int entrySize(int keyBits, int valueBits) {
+    public static int entrySize(int keyBits, int valueBits) {
         return (int) BYTES.alignAndConvert((long) (keyBits + valueBits), BITS);
     }
 
-    static long capacityFor(long entriesPerSegment) {
+    public static long capacityFor(long entriesPerSegment) {
         if (entriesPerSegment < 0L)
             throw new IllegalArgumentException("entriesPerSegment should be positive");
         long capacity = Maths.nextPower2(entriesPerSegment, 64L);
@@ -83,7 +83,7 @@ class HashLookup {
     private long searchStartPos = -1L;
     private long searchPos = -1L;
 
-    void reuse(long address, long capacity, int entrySize, int keyBits, int valueBits) {
+    public void reuse(long address, long capacity, int entrySize, int keyBits, int valueBits) {
         this.address = address;
 
         this.capacityMask = capacity - 1L;
@@ -267,18 +267,9 @@ class HashLookup {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
-        forEach(new EntryConsumer() {
-            @Override
-            public void accept(long key, long value) {
-                sb.append(key).append('=').append(value).append(',');
-            }
-        });
+        forEach((key, value) -> sb.append(key).append('=').append(value).append(','));
         sb.append('}');
         return sb.toString();
-    }
-
-    static interface EntryConsumer {
-        void accept(long key, long value);
     }
 
     public void forEach(EntryConsumer action) {
@@ -289,11 +280,7 @@ class HashLookup {
         }
     }
 
-    static interface EntryPredicate {
-        boolean remove(long hash, long pos);
-    }
-
-    public void forEachRemoving(EntryPredicate predicate) {
+    public void forEachRemoving(HashLookupIteration iteration) {
         long pos = 0L;
         while (!empty(readEntry(pos))) {
             pos = step(pos);
@@ -303,11 +290,12 @@ class HashLookup {
             pos = step(pos);
             long entry = readEntry(pos);
             if (!empty(entry)) {
-                if (predicate.remove(key(entry), value(entry))) {
+                iteration.accept(key(entry), value(entry));
+                if (iteration.remove()) {
                     remove00(pos);
                     pos = stepBack(pos);
                 }
             }
-        } while (pos != startPos);
+        } while (pos != startPos && iteration.continueIteration());
     }
 }

@@ -18,9 +18,7 @@
 
 package net.openhft.chronicle.map.jsr166.map;
 
-import net.openhft.chronicle.hash.function.Consumer;
-import net.openhft.chronicle.hash.function.Function;
-import net.openhft.chronicle.hash.function.Predicate;
+import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.map.MapKeyContext;
@@ -37,6 +35,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static org.junit.Assert.*;
@@ -174,7 +174,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
-        public <R> R getMapped(K key, @NotNull Function<? super V, R> function) {
+        public <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function) {
             return d.getMapped(key, function);
         }
 

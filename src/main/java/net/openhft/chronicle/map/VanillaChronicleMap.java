@@ -19,18 +19,13 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.KeyContext;
+import net.openhft.chronicle.hash.impl.ContextFactory;
+import net.openhft.chronicle.hash.impl.HashContext;
+import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
-import net.openhft.chronicle.hash.serialization.internal.BytesBytesInterop;
-import net.openhft.chronicle.hash.serialization.internal.DelegatingMetaBytesInterop;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
-import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
-import net.openhft.chronicle.map.VanillaContext.ContextFactory;
-import net.openhft.lang.Jvm;
+import net.openhft.chronicle.hash.serialization.internal.*;
 import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.BytesStore;
-import net.openhft.lang.io.MappedStore;
-import net.openhft.lang.io.serialization.JDKObjectSerializer;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -38,37 +33,24 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.nio.channels.FileChannel;
+import java.util.Map;
+import java.util.Set;
 
-import static java.lang.Long.numberOfTrailingZeros;
-import static java.lang.Math.max;
-import static net.openhft.chronicle.map.ChronicleMapBuilder.RUNTIME_PAGE_SIZE;
 import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDivisor;
-import static net.openhft.lang.MemoryUnit.*;
 
 class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        V, VI, MVI extends MetaBytesInterop<V, ? super VI>> extends AbstractChronicleMap<K, V>  {
+        V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
+        extends VanillaChronicleHash<K, KI, MKI, MapKeyContext<K, V>>
+        implements AbstractChronicleMap<K, V>  {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
 
     private static final long serialVersionUID = 3L;
 
     /////////////////////////////////////////////////
-    // Version
-    final String dataFileVersion;
-
-    /////////////////////////////////////////////////
-    // Data model
-    final Class<K> kClass;
-    final SizeMarshaller keySizeMarshaller;
-    final BytesReader<K> originalKeyReader;
-    final KI originalKeyInterop;
-    final MKI originalMetaKeyInterop;
-    final MetaProvider<K, KI, MKI> metaKeyInteropProvider;
-
+    // Value Data model
     final Class<V> vClass;
     final Class nativeValueClass;
     final SizeMarshaller valueSizeMarshaller;
@@ -80,9 +62,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     final DefaultValueProvider<K, V> defaultValueProvider;
 
     final boolean constantlySizedEntry;
-
-    transient Provider<BytesReader<K>> keyReaderProvider;
-    transient Provider<KI> keyInteropProvider;
 
     transient Provider<BytesReader<V>> valueReaderProvider;
     transient Provider<VI> valueInteropProvider;
@@ -97,66 +76,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     final boolean removeReturnsNull;
 
     /////////////////////////////////////////////////
-    // Concurrency (number of segments), memory management and dependent fields
-    final int actualSegments;
-    final HashSplitting hashSplitting;
-
-    final long entriesPerSegment;
-
-    final long chunkSize;
-    final int maxChunksPerEntry;
-    final long actualChunksPerSegment;
-
+    // Memory management and dependent fields
     final Alignment alignment;
     final int worstAlignment;
     final boolean couldNotDetermineAlignmentBeforeAllocation;
 
-    /////////////////////////////////////////////////
-    // Precomputed offsets and sizes for fast Context init
-    final int segmentHeaderSize;
+    transient Set<Map.Entry<K, V>> entrySet;
 
-    final int segmentHashLookupValueBits;
-    final int segmentHashLookupKeyBits;
-    final int segmentHashLookupEntrySize;
-    final long segmentHashLookupCapacity;
-    final long segmentHashLookupInnerSize;
-    final long segmentHashLookupOuterSize;
-
-    final long segmentFreeListInnerSize;
-    final long segmentFreeListOuterSize;
-
-    final long segmentEntrySpaceInnerSize;
-    final int segmentEntrySpaceInnerOffset;
-    final long segmentEntrySpaceOuterSize;
-
-    final long segmentSize;
-
-    /////////////////////////////////////////////////
-    // Bytes Store (essentially, the base address) and serialization-dependent offsets
-    transient BytesStore ms;
-    transient Bytes bytes;
-
-    transient long headerSize;
-    transient long segmentHeadersOffset;
-    transient long segmentsOffset;
-
-    /////////////////////////////////////////////////
-    // Cached Entry Set instance
-
-
-    public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
-        // Version
-        dataFileVersion = BuildVersion.version();
-
-        // Data model
-        SerializationBuilder<K> keyBuilder = builder.keyBuilder;
-        kClass = keyBuilder.eClass;
-        keySizeMarshaller = keyBuilder.sizeMarshaller();
-        originalKeyReader = keyBuilder.reader();
-        originalKeyInterop = (KI) keyBuilder.interop();
-        originalMetaKeyInterop = (MKI) keyBuilder.metaInterop();
-        metaKeyInteropProvider = (MetaProvider<K, KI, MKI>) keyBuilder.metaInteropProvider();
-
+    public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder, boolean replicated)
+            throws IOException {
+        super(builder, replicated);
         SerializationBuilder<V> valueBuilder = builder.valueBuilder;
         vClass = valueBuilder.eClass;
         if (vClass.getName().endsWith("$$Native")) {
@@ -190,73 +119,22 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         removeReturnsNull = builder.removeReturnsNull();
 
         // Concurrency (number of segments), memory management and dependent fields
-        boolean replicated = getClass() == ReplicatedChronicleMap.class;
-        actualSegments = builder.actualSegments(replicated);
-        hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
-
-        entriesPerSegment = builder.entriesPerSegment(replicated);
-
-        chunkSize = builder.chunkSize(replicated);
-        maxChunksPerEntry = builder.maxChunksPerEntry();
-        actualChunksPerSegment = builder.actualChunksPerSegment(replicated);
-
         alignment = builder.valueAlignment();
         worstAlignment = builder.worstAlignment(replicated);
         int alignment = this.alignment.alignment();
         couldNotDetermineAlignmentBeforeAllocation =
                 greatestCommonDivisor((int) chunkSize, alignment) != alignment;
 
-        // Precomputed offsets and sizes for fast Context init
-        segmentHeaderSize = builder.segmentHeaderSize(replicated);
-
-        segmentHashLookupValueBits = HashLookup.valueBits(actualChunksPerSegment);
-        segmentHashLookupKeyBits =
-                HashLookup.keyBits(entriesPerSegment, segmentHashLookupValueBits);
-        segmentHashLookupEntrySize =
-                HashLookup.entrySize(segmentHashLookupKeyBits, segmentHashLookupValueBits);
-        segmentHashLookupCapacity = HashLookup.capacityFor(entriesPerSegment);
-        segmentHashLookupInnerSize = segmentHashLookupCapacity * segmentHashLookupEntrySize;
-        segmentHashLookupOuterSize = CACHE_LINES.align(segmentHashLookupInnerSize, BYTES);
-
-        segmentFreeListInnerSize = LONGS.align(
-                BYTES.alignAndConvert(actualChunksPerSegment, BITS), BYTES);
-        segmentFreeListOuterSize = CACHE_LINES.align(segmentFreeListInnerSize, BYTES);
-
-        segmentEntrySpaceInnerSize = chunkSize * actualChunksPerSegment;
-        segmentEntrySpaceInnerOffset = builder.segmentEntrySpaceInnerOffset(replicated);
-        segmentEntrySpaceOuterSize = CACHE_LINES.align(
-                segmentEntrySpaceInnerOffset + segmentEntrySpaceInnerSize, BYTES);
-
-        segmentSize = segmentSize();
-
         initTransients();
     }
 
-    private long segmentSize() {
-        long ss = segmentHashLookupOuterSize
-                + segmentFreeListOuterSize
-                + segmentEntrySpaceOuterSize;
-        if ((ss & 63L) != 0)
-            throw new AssertionError();
-        return breakL1CacheAssociativityContention(ss);
+    @Override
+    public void initTransients() {
+        super.initTransients();
+        ownInitTransients();
     }
 
-    private long breakL1CacheAssociativityContention(long segmentSize) {
-        // Conventional alignment to break is 4096 (given Intel's 32KB 8-way L1 cache),
-        // for any case break 2 times smaller alignment
-        int alignmentToBreak = 2048;
-        int eachNthSegmentFallIntoTheSameSet =
-                max(1, alignmentToBreak >> numberOfTrailingZeros(segmentSize));
-        if (eachNthSegmentFallIntoTheSameSet < actualSegments) {
-            segmentSize |= CACHE_LINES.toBytes(1L); // make segment size "odd" (in cache lines)
-        }
-        return segmentSize;
-    }
-
-    void initTransients() {
-        keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
-        keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
-
+    private void ownInitTransients() {
         valueReaderProvider = Provider.of((Class) originalValueReader.getClass());
         valueInteropProvider = Provider.of((Class) originalValueInterop.getClass());
 
@@ -271,130 +149,29 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
-        this.ms = bytesStore;
-        bytes = ms.bytes();
-
-        onHeaderCreated();
-
-        segmentHeadersOffset = mapHeaderOuterSize();
-        long segmentHeadersSize = actualSegments * segmentHeaderSize;
-        segmentsOffset = segmentHeadersOffset + segmentHeadersSize;
-    }
-
-    void warnOnWindows() {
-        if (!Jvm.isWindows())
-            return;
-        long offHeapMapSize = sizeInBytes();
-        long oneGb = GIGABYTES.toBytes(1L);
-        double offHeapMapSizeInGb = offHeapMapSize * 1.0 / oneGb;
-        if (offHeapMapSize > GIGABYTES.toBytes(4L)) {
-            System.out.printf(
-                    "WARNING: On Windows, you probably cannot create a ChronicleMap\n" +
-                            "of more than 4 GB. The configured map requires %.2f GB of " +
-                            "off-heap memory.\n",
-                    offHeapMapSizeInGb);
-        }
-        try {
-            long freePhysicalMemory = Jvm.freePhysicalMemoryOnWindowsInBytes();
-            if (offHeapMapSize > freePhysicalMemory * 0.9) {
-                double freePhysicalMemoryInGb = freePhysicalMemory * 1.0 / oneGb;
-                System.out.printf(
-                        "WARNING: On Windows, you probably cannot create a ChronicleMap\n" +
-                                "of more than 90%% of available free memory in the system.\n" +
-                                "The configured map requires %.2f GB of off-heap memory.\n" +
-                                "There is only %.2f GB of free physical memory in the system.\n",
-                        offHeapMapSizeInGb, freePhysicalMemoryInGb);
-
-            }
-        } catch (IOException e) {
-            // ignore -- anyway we just warn the user
-        }
-    }
-
-    final void createMappedStoreAndSegments(File file) throws IOException {
-        warnOnWindows();
-        createMappedStoreAndSegments(new MappedStore(file, FileChannel.MapMode.READ_WRITE,
-                sizeInBytes(), JDKObjectSerializer.INSTANCE));
-    }
-
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        initTransients();
-    }
-
-    void onHeaderCreated() {
-    }
-
-    /**
-     * @return the version of Chronicle Map that was used to create the current data file
-     */
-    public String persistedDataVersion() {
-        return dataFileVersion;
-    }
-
-    /**
-     * @return the version of chronicle map that is currently running
-     */
-    public String applicationVersion() {
-        return BuildVersion.version();
-    }
-
-    private long mapHeaderOuterSize() {
-        // Align segment headers on page boundary to minimize number of pages that
-        // segment headers span
-        long pageMask = RUNTIME_PAGE_SIZE - 1L;
-        return (mapHeaderInnerSize() + pageMask) & ~pageMask;
-    }
-
-    long mapHeaderInnerSize() {
-        return headerSize;
+        ownInitTransients();
     }
 
     @Override
-    public File file() {
-        return ms.file();
-    }
-
-    final long sizeInBytes() {
-        return mapHeaderOuterSize() + actualSegments * (segmentHeaderSize + segmentSize);
-    }
-
-    @Override
-    public void close() {
-        if (ms == null)
-            return;
-        bytes.release();
-        bytes = null;
-        ms.free();
-        ms = null;
-    }
-
-    final void checkKey(Object key) {
-        if (!kClass.isInstance(key)) {
-            // key.getClass will cause NPE exactly as needed
-            throw new ClassCastException("Key must be a " + kClass.getName() +
-                    " but was a " + key.getClass());
-        }
-    }
-
-    @Override
-    final void checkValue(Object value) {
+    public final void checkValue(Object value) {
         if (!vClass.isInstance(value)) {
             throw new ClassCastException("Value must be a " + vClass.getName() +
                     " but was a " + value.getClass());
         }
     }
 
-    VanillaContext<K, KI, MKI, V, VI, MVI> mapContext() {
+    @Override
+    public VanillaContext<K, KI, MKI, V, VI, MVI> mapContext() {
         VanillaContext<K, KI, MKI, V, VI, MVI> context = rawContext();
-        context.initMap(this);
+        context.initHash(this);
         return context;
     }
 
     VanillaContext bytesMapContext() {
         VanillaContext context = rawBytesContext();
-        context.initMap(this);
+        context.initHash(this);
         return context;
     }
 
@@ -406,22 +183,22 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    void putDefaultValue(VanillaContext context) {
+    public void putDefaultValue(VanillaContext context) {
         context.doPut(defaultValue(context));
     }
 
     @Override
-    int actualSegments() {
+    public int actualSegments() {
         return actualSegments;
     }
 
-    @Override
+
     VanillaContext<K, KI, MKI, V, VI, MVI> rawContext() {
         return VanillaContext.get(VanillaContext.VanillaChronicleMapContextFactory.INSTANCE);
     }
 
     VanillaContext rawBytesContext() {
-        return VanillaContext.get(BytesContextFactory.INSTANCE);
+        return HashContext.get(BytesContextFactory.INSTANCE);
     }
 
     V defaultValue(KeyContext keyContext) {
@@ -433,13 +210,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
-    V prevValueOnPut(MapKeyContext<K, V> context) {
-        return putReturnsNull ? null : super.prevValueOnPut(context);
+    public V prevValueOnPut(MapKeyContext<K, V> context) {
+        return putReturnsNull ? null : AbstractChronicleMap.super.prevValueOnPut(context);
     }
 
     @Override
-    V prevValueOnRemove(MapKeyContext<K, V> context) {
-        return removeReturnsNull ? null : super.prevValueOnRemove(context);
+    public V prevValueOnRemove(MapKeyContext<K, V> context) {
+        return removeReturnsNull ? null : AbstractChronicleMap.super.prevValueOnRemove(context);
     }
 
     @Override
@@ -517,7 +294,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             return c;
         } catch (Throwable e) {
             try {
-                c.closeMap();
+                c.closeHash();
             } catch (Throwable suppressed) {
                 e.addSuppressed(suppressed);
             }
@@ -528,9 +305,30 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     VanillaContext<K, KI, MKI, V, VI, MVI> acquireContext(K key) {
         AcquireContext<K, KI, MKI, V, VI, MVI> c =
                 VanillaContext.get(AcquireContextFactory.INSTANCE);
-        c.initMap(this);
+        c.initHash(this);
         c.initKey(key);
         return c;
+    }
+
+    @NotNull
+    @Override
+    public final Set<Entry<K, V>> entrySet() {
+        return (entrySet != null) ? entrySet : (entrySet = newEntrySet());
+    }
+
+    @Override
+    public int hashCode() {
+        return mapHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return mapEquals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return mapToString();
     }
 
     static class AcquireContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
@@ -540,7 +338,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             super();
         }
 
-        AcquireContext(VanillaContext contextCache, int indexInContextCache) {
+        AcquireContext(HashContext contextCache, int indexInContextCache) {
             super(contextCache, indexInContextCache);
         }
 
@@ -564,8 +362,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         INSTANCE;
 
         @Override
-        public AcquireContext createContext(VanillaContext root,
-                                                   int indexInContextCache) {
+        public AcquireContext createContext(HashContext root, int indexInContextCache) {
             return new AcquireContext(root, indexInContextCache);
         }
 
@@ -593,21 +390,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    @Override
-    public final long longSize() {
-        long result = 0L;
-        for (int i = 0; i < actualSegments; i++) {
-            result += BigSegmentHeader.INSTANCE.size(ms.address() + segmentHeaderOffset(i));
-        }
-        return result;
-    }
-
-    @Override
-    public final int size() {
-        long size = longSize();
-        return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
-    }
-
     final long readValueSize(Bytes entry) {
         long valueSize = valueSizeMarshaller.readSize(entry);
         alignment.alignPositionAddr(entry);
@@ -623,17 +405,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             super();
         }
 
-        BytesContext(VanillaContext contextCache, int indexInContextCache) {
+        BytesContext(HashContext contextCache, int indexInContextCache) {
             super(contextCache, indexInContextCache);
         }
 
         @Override
-        void initKeyModel0() {
+        public void initKeyModel0() {
             initBytesKeyModel0();
         }
 
         @Override
-        void initKey0(Bytes key) {
+        public void initKey0(Bytes key) {
             initBytesKey0(key);
         }
 
@@ -667,7 +449,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         INSTANCE;
 
         @Override
-        public BytesContext createContext(VanillaContext root, int indexInContextCache) {
+        public BytesContext createContext(HashContext root, int indexInContextCache) {
             return new BytesContext(root, indexInContextCache);
         }
 
@@ -680,24 +462,5 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         public Class<BytesContext> contextClass() {
             return BytesContext.class;
         }
-    }
-
-    /**
-     * For testing
-     */
-    final long[] segmentSizes() {
-        long[] sizes = new long[actualSegments];
-        for (int i = 0; i < actualSegments; i++) {
-            sizes[i] = BigSegmentHeader.INSTANCE.size(ms.address() + segmentHeaderOffset(i));
-        }
-        return sizes;
-    }
-
-    final long segmentHeaderOffset(int segmentIndex) {
-        return segmentHeadersOffset + ((long) segmentIndex) * segmentHeaderSize;
-    }
-
-    final long segmentOffset(int segmentIndex) {
-        return segmentsOffset + ((long) segmentIndex) * segmentSize;
     }
 }

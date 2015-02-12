@@ -18,9 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.function.Consumer;
-import net.openhft.chronicle.hash.function.Function;
-import net.openhft.chronicle.hash.function.Predicate;
+import net.openhft.chronicle.hash.function.SerializableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -29,6 +27,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * @author Rob Austin.
@@ -221,7 +221,7 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public <R> R getMapped(K key, @NotNull Function<? super V, R> function) {
+    public <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function) {
         return map1.getMapped(key, function);
     }
 

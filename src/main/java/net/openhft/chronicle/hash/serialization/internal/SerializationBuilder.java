@@ -16,11 +16,9 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.*;
-import net.openhft.chronicle.hash.serialization.internal.*;
-import net.openhft.chronicle.hash.serialization.internal.ByteBufferMarshaller;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
@@ -45,9 +43,9 @@ import java.util.List;
 
 import static net.openhft.chronicle.hash.serialization.internal.SizeMarshallers.constant;
 import static net.openhft.chronicle.hash.serialization.internal.SizeMarshallers.stopBit;
-import static net.openhft.chronicle.map.Objects.hash;
+import static net.openhft.chronicle.hash.impl.util.Objects.hash;
 
-final class SerializationBuilder<E> implements Cloneable, Serializable {
+public final class SerializationBuilder<E> implements Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
 
     private static final Bytes EMPTY_BYTES = new ByteBufferBytes(ByteBuffer.allocate(0));
@@ -71,12 +69,12 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         return !knownJDKImmutableClasses.contains(c);
     }
 
-    enum Role {KEY, VALUE}
+    public enum Role {KEY, VALUE}
 
     private enum CopyingInterop {FROM_MARSHALLER, FROM_WRITER}
 
     private final Role role;
-    final Class<E> eClass;
+    public final Class<E> eClass;
     private boolean instancesAreMutable;
     private SizeMarshaller sizeMarshaller = stopBit();
     private BytesReader<E> reader;
@@ -86,12 +84,12 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
     private MetaProvider<E, ?, ?> metaInteropProvider;
     private long maxSize;
 
-    final boolean sizeIsStaticallyKnown;
+    public final boolean sizeIsStaticallyKnown;
     
     boolean serializesGeneratedClasses = false;
 
     @SuppressWarnings("unchecked")
-    SerializationBuilder(Class<E> eClass, Role role) {
+    public SerializationBuilder(Class<E> eClass, Role role) {
         this.role = role;
         this.eClass = eClass;
         configureByDefault(eClass, role);
@@ -191,7 +189,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         in.defaultReadObject();
     }
 
-    boolean possibleOffHeapReferences() {
+    public boolean possibleOffHeapReferences() {
         if (reader instanceof CharSequenceReader)
             return false;
         // exclude some known classes, most notably boxed primitive types
@@ -323,7 +321,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         return sizeMarshaller;
     }
 
-    boolean constantSizeMarshaller() {
+    public boolean constantSizeMarshaller() {
         try {
             return sizeMarshaller().sizeEncodingSize(1L) == 0;
         } catch (Exception e) {
@@ -334,11 +332,11 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         }
     }
 
-    boolean constantSizeEncodingSizeMarshaller() {
+    public boolean constantSizeEncodingSizeMarshaller() {
         return sizeMarshaller().minSizeEncodingSize() == sizeMarshaller().maxSizeEncodingSize();
     }
 
-    long pseudoReadConstantSize() {
+    public long pseudoReadConstantSize() {
         return sizeMarshaller().readSize(EMPTY_BYTES);
     }
 

@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import junit.framework.Assert;
-import net.openhft.chronicle.hash.function.Function;
+import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -51,7 +51,7 @@ public class StatelessClientTest {
     public static final int SIZE = 2500;
     static int s_port = 9070;
 
-    enum ToString implements Function<Object, String> {
+    enum ToString implements SerializableFunction<Object, String> {
         INSTANCE;
 
         @Override

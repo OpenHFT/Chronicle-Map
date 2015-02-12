@@ -19,11 +19,11 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
+import net.openhft.chronicle.hash.impl.util.CloseablesManager;
 import net.openhft.chronicle.map.ReplicatedChronicleMap.BytesReplicatedContextFactory;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.thread.NamedThreadFactory;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
