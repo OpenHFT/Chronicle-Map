@@ -37,14 +37,22 @@ public enum ByteBufferMarshaller implements BytesInterop<ByteBuffer>, BytesReade
         long pos = bytes.position();
         int inputPos = bb.position();
 
-        int i;
-        for(i = 0; i < inputRemaining - 7; i += 8) {
-            if (bytes.readLong(pos + (long) i) != bb.getLong(inputPos + i))
-                return false;
-        }
-        for(; i < inputRemaining - 3; i += 4) {
-            if (bytes.readInt(pos + (long) i) != bb.getInt(inputPos + i))
-                return false;
+        int i = 0;
+        if (bytes.byteOrder() == bb.order()) {
+            for (; i < inputRemaining - 7; i += 8) {
+                if (bytes.readLong(pos + (long) i) != bb.getLong(inputPos + i))
+                    return false;
+            }
+            if (i < inputRemaining - 3) {
+                if (bytes.readInt(pos + (long) i) != bb.getInt(inputPos + i))
+                    return false;
+                i += 4;
+            }
+            if (i < inputRemaining - 1) {
+                if (bytes.readChar(pos + (long) i) != bb.getChar(inputPos + i))
+                    return false;
+                i += 2;
+            }
         }
         for(; i < inputRemaining; i++) {
             if (bytes.readByte(pos + (long) i) != bb.get(inputPos + i))
