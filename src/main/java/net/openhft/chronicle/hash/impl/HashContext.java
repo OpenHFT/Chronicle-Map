@@ -389,7 +389,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     // Key
     K key;
     public MKI metaKeyInterop;
-    public long keySize;
+    public long keySize = -1;
 
     public void initKey(K key) {
         initKeyDependencies();
@@ -397,7 +397,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     }
 
     public boolean keyInit() {
-        return keySize != 0;
+        return keySize >= 0;
     }
 
     public void initKeyDependencies() {
@@ -430,7 +430,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     }
 
     public void closeKey0() {
-        keySize = 0;
+        keySize = -1;
         metaKeyInterop = null;
         key = null;
     }
