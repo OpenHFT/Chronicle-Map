@@ -397,7 +397,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     }
 
     public boolean keyInit() {
-        return key != null;
+        return keySize != 0;
     }
 
     public void initKeyDependencies() {
@@ -406,10 +406,11 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
 
     public void initKey0(K key) {
         h.checkKey(key);
-        this.key = key;
-        metaKeyInterop = h.metaKeyInteropProvider.get(
+        MKI mki = h.metaKeyInteropProvider.get(
                 copies, h.originalMetaKeyInterop, keyInterop, key);
-        keySize = metaKeyInterop.size(keyInterop, key);
+        keySize = mki.size(keyInterop, key);
+        metaKeyInterop = mki;
+        this.key = key;
     }
 
     public void checkKeyInit() {
@@ -429,8 +430,9 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     }
 
     public void closeKey0() {
-        key = null;
+        keySize = 0;
         metaKeyInterop = null;
+        key = null;
     }
 
     @Override
@@ -447,7 +449,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     @NotNull
     @Override
     public K key() {
-        if (keyInit())
+        if (key != null)
             return key;
         initKeySearch();
         initHashAndContextLocals();
