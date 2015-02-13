@@ -1309,7 +1309,6 @@ public class CHMUseCasesTest {
         valueA.limit(valueA.capacity());
     }
 
-    //@Ignore("HCOLL-268 JSON serialisation issue")
     @Test
     public void testByteBufferDirectByteBufferMap()
             throws ExecutionException, InterruptedException, IOException {
@@ -1340,25 +1339,19 @@ public class CHMUseCasesTest {
             map.put(key1, value1);
             mapChecks();
             final SerializableFunction<ByteBuffer, ByteBuffer> function =
-                    new SerializableFunction<ByteBuffer, ByteBuffer>() {
-                        @Override
-                        public ByteBuffer apply(ByteBuffer s) {
-                            ByteBuffer slice = s.slice();
-                            slice.limit(2);
-                            return slice;
-                        }
+                    s -> {
+                        ByteBuffer slice = s.slice();
+                        slice.limit(2);
+                        return slice;
                     };
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
             assertEquals(null, map.getMapped(key2, function));
             mapChecks();
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
-                    map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
-                        @Override
-                        public ByteBuffer update(ByteBuffer s) {
-                            s.put(0, (byte) (s.get(0) + 1));
-                            s.put(1, (byte) (s.get(1) - 1));
-                            return function.apply(s);
-                        }
+                    map.putMapped(key1, s -> {
+                        s.put(0, (byte) (s.get(0) + 1));
+                        s.put(1, (byte) (s.get(1) - 1));
+                        return function.apply(s);
                     }));
 
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.get(key1));

@@ -19,6 +19,9 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.impl.hashlookup.HashLookupIteration;
+import net.openhft.chronicle.hash.impl.util.CharSequences;
+import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.MultiStoreBytes;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -33,7 +36,7 @@ import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.hash.impl.HashContext.SearchState.DELETED;
 import static net.openhft.chronicle.hash.impl.util.Objects.requireNonNull;
 
-public interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
+interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
 
     @Override
     VanillaContext<K, ?, ?, V, ?, ?> context(K key);
@@ -370,7 +373,11 @@ public interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializ
             return false;
 
         try {
-            return forEachEntryWhile(c -> c.get().equals(m.get(c.key())));
+            return forEachEntryWhile(c -> {
+                K k = c.key();
+                V v = (V) m.get(k instanceof CharSequence ? k.toString() : k);
+                return v != null && c.valueEqualTo(v);
+            });
         } catch (ClassCastException unused) {
             return false;
         } catch (NullPointerException unused) {
@@ -380,8 +387,18 @@ public interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializ
 
     default int mapHashCode() {
         int[] h = new int[1];
-        forEach((k, v) -> h[0] += k.hashCode() ^ v.hashCode());
+        forEach((k, v) -> h[0] += hashCode(k) ^ hashCode(v));
         return h[0];
+    }
+
+    // TODO quick and dirty. Think about how generic guava/koloboke equivalence interface could be
+    // used. See also BytesInterop.equivalent() and hash().
+    public static int hashCode(Object obj) {
+        if (!(obj instanceof CharSequence)) {
+            return obj.hashCode();
+        } else {
+            return CharSequences.hash((CharSequence) obj);
+        }
     }
 
     default String mapToString() {
