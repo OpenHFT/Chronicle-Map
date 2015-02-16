@@ -98,7 +98,6 @@ public class TCPSocketReplicationTest {
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
 
-        Thread.sleep(9999999);
     }
 
     @Test
