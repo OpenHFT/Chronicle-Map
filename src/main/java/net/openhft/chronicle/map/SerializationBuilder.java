@@ -309,7 +309,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         }
         // set max size once more, because current maxSize could be x64 or x2 larger than needed
         maxSize(constantSize);
-        sizeMarshaller(SizeMarshallers.constant(constantSize));
+        sizeMarshaller(net.openhft.chronicle.hash.serialization.SizeMarshallers.constant(constantSize));
         return this;
     }
 
