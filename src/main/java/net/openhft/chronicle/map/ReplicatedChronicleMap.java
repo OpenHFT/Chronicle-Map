@@ -541,22 +541,28 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             closeReplicationUpdate();
         }
 
+        private boolean testTimeStampInSensibleRange() {
+            if (rm().timeProvider == TimeProvider.SYSTEM) {
+                long currentTime = TimeProvider.SYSTEM.currentTime();
+                assert Math.abs(currentTime - timestamp) <= 100000000 :
+                        "unrealistic timestamp: " + timestamp;
+                assert Math.abs(currentTime - newTimestamp) <= 100000000 :
+                        "unrealistic newTimestamp: " + newTimestamp;
+            }
+            return true;
+        }
+
+
         boolean shouldIgnore() {
             assert replicationStateInit() : "replication state not init";
             assert replicationUpdateInit() : "replication update not init";
-            boolean shouldIgnore;
-            if (timestamp < newTimestamp) {
-                shouldIgnore = false;
-            } else if (timestamp > newTimestamp) {
-                shouldIgnore = true;
-            } else {
-                shouldIgnore = identifier > newIdentifier;
+            assert testTimeStampInSensibleRange();
+            if (!remoteUpdate()) {
+                newTimestamp = timestamp + 1L;
+                return false;
             }
-            if (shouldIgnore && !remoteUpdate()) {
-                assert newIdentifier == rm().identifier();
-                throw new LateUpdateException(identifier, timestamp, newIdentifier, newTimestamp);
-            }
-            return shouldIgnore;
+            return timestamp > newTimestamp ||
+                    (timestamp == newTimestamp && identifier > newIdentifier);
         }
 
         public void dirtyEntries(final long dirtyFromTimeStamp,

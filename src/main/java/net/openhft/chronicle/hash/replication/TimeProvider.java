@@ -37,19 +37,21 @@ import java.io.Serializable;
  * @see ChronicleHashBuilder#timeProvider(TimeProvider)
  */
 public abstract class TimeProvider implements Serializable {
+    private static final long serialVersionUID = 0L;
+
     /**
      * Delegates {@link #currentTime()} to {@link System#currentTime()}.
      */
     public static final TimeProvider SYSTEM = new System();
-    private static final long serialVersionUID = 0L;
 
     public abstract long currentTime();
 
     private static class System extends TimeProvider {
-        private static final long serialVersionUID = 0L;
+        private static final long serialVersionUID = 1L;
+        private static final long SCALE = 1000;
 
         public long currentTime() {
-            return java.lang.System.currentTimeMillis();
+            return java.lang.System.currentTimeMillis() * SCALE;
         }
 
         @Override

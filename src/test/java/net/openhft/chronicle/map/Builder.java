@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,6 +59,18 @@ public class Builder {
         file.deleteOnExit();//isnt guaranteed on windows.
 
         return file;
+    }
+
+    public static void waitTillEqual(Map map1, Map map2, int timeOut) {
+        for (int t = 0; t < timeOut; t++) {
+            if (map1.equals(map2))
+                break;
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public static <T extends ChronicleMap<Integer, DummyValue>> T newMapDummyValue(
