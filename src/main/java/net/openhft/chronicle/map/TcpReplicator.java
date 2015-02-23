@@ -653,19 +653,23 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                 attached.serverVersion = reader.readRemoteServerVersion();
             } catch (IllegalStateException e1) {
                 socketChannel.close();
+                return;
             }
 
             if (attached.serverVersion == null)
                 return;
 
             if (!isValidVersionNumber(attached.serverVersion)) {
-                LOG.warn("Please check that you don't have a third party system incorrectly " +
-                        "connecting to ChronicleMap, " +
-                        "Closing the remote connection as Chronicle can not make sense of the remote " +
-                        "version number received from the external connection, " +
-                        "version=" + attached.serverVersion + ", Chronicle is expecting the version " +
-                        "number to only contain '.',A-Z,a-z,0-9");
+                LOG.warn("Closing the remote connection : Please check that you don't have " +
+                        "a third party system incorrectly connecting to ChronicleMap, " +
+                        "remoteAddress=" + socketChannel.getRemoteAddress() + ", " +
+                        "so closing the remote connection as Chronicle can not make sense " +
+                        "of the remote version number received from the external connection, " +
+                        "version=" + attached.serverVersion + ", " +
+                        "Chronicle is expecting the version number to only contain " +
+                        "'.','-', ,A-Z,a-z,0-9");
                 socketChannel.close();
+                return;
             }
 
             checkVersions(attached);
