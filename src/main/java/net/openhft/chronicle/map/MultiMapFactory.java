@@ -20,8 +20,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
+import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectStore;
-import net.openhft.lang.io.NativeBytesI;
 
 import static net.openhft.lang.Maths.isPowerOf2;
 import static net.openhft.lang.MemoryUnit.*;
@@ -39,7 +39,7 @@ enum MultiMapFactory {
         }
 
         @Override
-        public MultiMap create(NativeBytesI bytes, NativeBytesI bitSetBytes) {
+        public MultiMap create(Bytes bytes, Bytes bitSetBytes) {
             return new ShortShortMultiMap(bytes, bitSetBytes);
         }
     },
@@ -50,7 +50,7 @@ enum MultiMapFactory {
         }
 
         @Override
-        public MultiMap create(NativeBytesI bytes, NativeBytesI bitSetBytes) {
+        public MultiMap create(Bytes bytes, Bytes bitSetBytes) {
             return new Int24Int24MultiMap(bytes, bitSetBytes);
         }
     },
@@ -61,7 +61,7 @@ enum MultiMapFactory {
         }
 
         @Override
-        public MultiMap create(NativeBytesI bytes, NativeBytesI bitSetBytes) {
+        public MultiMap create(Bytes bytes, Bytes bitSetBytes) {
             return new IntIntMultiMap(bytes, bitSetBytes);
         }
     };
@@ -104,5 +104,5 @@ enum MultiMapFactory {
 
     public abstract long sizeInBytes(long minCapacity);
 
-    public abstract MultiMap create(NativeBytesI bytes, NativeBytesI bitSetBytes);
+    public abstract MultiMap create(Bytes bytes, Bytes bitSetBytes);
 }

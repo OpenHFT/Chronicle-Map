@@ -31,7 +31,7 @@ import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.CheckedBytes;
 import net.openhft.lang.io.MultiStoreBytes;
-import net.openhft.lang.io.NativeBytesI;
+import net.openhft.lang.io.NativeBytes;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +127,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
     @Override
     VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment createSegment(
-            NativeBytesI segmentHeader, NativeBytesI bytes, int index) {
+            Bytes segmentHeader, NativeBytes bytes, int index) {
         return new Segment(segmentHeader, bytes, index);
     }
 
@@ -679,7 +679,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
     class Segment extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment {
 
-        Segment(NativeBytesI segmentHeader, NativeBytesI bytes, int index) {
+        Segment(Bytes segmentHeader, NativeBytes bytes, int index) {
             super(segmentHeader, bytes, index);
         }
 
@@ -994,7 +994,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          * @param identifier the unique identifier relating to this map
          * @return true if the entry should not be processed
          */
-        private boolean shouldIgnore(@NotNull final NativeBytesI entry, final long timestamp,
+        private boolean shouldIgnore(@NotNull final Bytes entry, final long timestamp,
                                      final byte identifier) {
             final long lastModifiedTimeStamp = entry.readLong();
 
@@ -1263,7 +1263,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 hashLookup().forEach(new MultiMap.EntryConsumer() {
                     @Override
                     public void accept(long hash, long pos) {
-                        final NativeBytesI entry = reuse(tmpBytes, offsetFromPos(pos));
+                        final Bytes entry = reuse(tmpBytes, offsetFromPos(pos));
                         long keySize = keySizeMarshaller.readSize(entry);
                         entry.skip(keySize);
 
@@ -1336,7 +1336,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             Segment segment = (Segment) seg;
 
             final long offset = segment.offsetFromPos(pos);
-            final NativeBytesI entry = segment.reuse(this.entry, offset);
+            final NativeBytes entry = segment.reuse(this.entry, offset);
 
             final long keySize = keySizeMarshaller.readSize(entry);
             long keyPosition = entry.position();
@@ -1491,7 +1491,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         entryCallback.onBeforeEntry();
 
                         final long segmentPos = position & posMask;
-                        final NativeBytesI entry =
+                        final Bytes entry =
                                 segment.reuse(tmpBytes, segment.offsetFromPos(segmentPos));
 
                         // if the entry should be ignored, we'll move the next entry
