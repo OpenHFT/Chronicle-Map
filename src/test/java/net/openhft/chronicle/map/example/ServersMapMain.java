@@ -28,7 +28,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
 /**
- * Created by peter on 12/11/14.
+ * Created by peter.lawrey on 12/11/14.
  */
 public class ServersMapMain {
     static final int port = Integer.getInteger("port", 8989);

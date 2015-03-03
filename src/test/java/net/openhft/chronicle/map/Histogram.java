@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 /**
- * Created by peter on 28/02/14.
+ * Created by peter.lawrey on 28/02/14.
  */
 public class Histogram {
     static final String[] FRACTION_STR = "worst,99.99,99.9,99,90,50".split(",");

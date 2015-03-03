@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 /**
- * Created by peter on 12/11/14.
+ * Created by peter.lawrey on 12/11/14.
  */
 public class StringsMapMain {
     static final int port = Integer.getInteger("port", 8998);

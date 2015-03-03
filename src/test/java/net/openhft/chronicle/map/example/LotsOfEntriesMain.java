@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * Created by peter on 19/12/14.
+ * Created by peter.lawrey on 19/12/14.
  */
 public class LotsOfEntriesMain {
     public static void main(String[] args)

@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 /**
- * Created by peter on 28/02/14.
+ * Created by peter.lawrey on 28/02/14.
  */
 public class PageLatencyMain {
     public static final int PAGES = Integer.getInteger("pages", 1024 * 1024);

@@ -34,7 +34,7 @@ import java.util.concurrent.*;
 import static org.junit.Assert.*;
 
 /**
- * Created by peter on 06/12/14.
+ * Created by peter.lawrey on 06/12/14.
  */
 public class LargeEntriesTest {
 

@@ -28,7 +28,7 @@ import java.io.IOException;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * Created by peter on 28/02/14.
+ * Created by peter.lawrey on 28/02/14.
  * <pre>
  * For 1M entries
  * run 1 1000000 : 50/90/99/99.9/99.99/worst: 1.0/3.2/14/18/116/172

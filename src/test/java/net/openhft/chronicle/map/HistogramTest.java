@@ -21,7 +21,7 @@ package net.openhft.chronicle.map;
 import org.junit.Test;
 
 /**
- * Created by peter on 28/02/14.
+ * Created by peter.lawrey on 28/02/14.
  */
 public class HistogramTest {
 

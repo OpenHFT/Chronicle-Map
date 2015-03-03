@@ -22,7 +22,10 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.openhft.chronicle.hash.impl.hashlookup.EntryConsumer;
 import net.openhft.chronicle.hash.impl.hashlookup.HashLookup;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -31,7 +34,7 @@ import java.util.*;
 import static net.openhft.lang.io.NativeBytes.UNSAFE;
 
 /**
- * User: peter Date: 09/12/13
+ * User: peter.lawrey Date: 09/12/13
  */
 @RunWith(value = Parameterized.class)
 public class HashLookupTest {

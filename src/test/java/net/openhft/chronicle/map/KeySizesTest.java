@@ -27,7 +27,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Created by peter on 28/02/14.
+ * Created by peter.lawrey on 28/02/14.
  */
 public class KeySizesTest {
     @Test
