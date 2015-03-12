@@ -45,7 +45,7 @@ import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
 /**
  * Created by Rob Austin
  */
-public class ClientWiredStatelessClientTcpConnectionHub {
+public class ClientWiredStatelessTcpConnectionHub {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
 
@@ -59,7 +59,7 @@ public class ClientWiredStatelessClientTcpConnectionHub {
 
     @NotNull
     private final AtomicLong transactionID = new AtomicLong(0);
-    private final ClientWiredChronicleMapStatelessClientBuilder config;
+    private final ClientWiredChronicleMapStatelessBuilder config;
     @Nullable
     protected CloseablesManager closeables;
 
@@ -84,7 +84,7 @@ public class ClientWiredStatelessClientTcpConnectionHub {
     private boolean doHandShaking;
 
 
-    public ClientWiredStatelessClientTcpConnectionHub(ClientWiredChronicleMapStatelessClientBuilder config, byte localIdentifier, boolean doHandShaking) {
+    public ClientWiredStatelessTcpConnectionHub(ClientWiredChronicleMapStatelessBuilder config, byte localIdentifier, boolean doHandShaking) {
         this.localIdentifier = localIdentifier;
         this.doHandShaking = doHandShaking;
         this.remoteAddress = config.remoteAddress();

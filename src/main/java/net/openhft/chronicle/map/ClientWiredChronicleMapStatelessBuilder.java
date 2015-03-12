@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashStatelessClientBuilder;
-import net.openhft.chronicle.map.ChronicleMap;import net.openhft.chronicle.map.ClientWiredStatelessChronicleMap;import net.openhft.chronicle.map.ClientWiredStatelessClientTcpConnectionHub;import net.openhft.chronicle.map.MapBuilder;import net.openhft.lang.MemoryUnit;
+import net.openhft.lang.MemoryUnit;
 
 import java.io.IOException;
 import java.lang.Class;import java.lang.IllegalStateException;import java.lang.Override;import java.lang.String;import java.net.InetSocketAddress;
@@ -29,26 +29,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Rob Austin.
  */
- public final class ClientWiredChronicleMapStatelessClientBuilder<K, V> implements
-        ChronicleHashStatelessClientBuilder<ClientWiredChronicleMapStatelessClientBuilder<K, V>,
+ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
+        ChronicleHashStatelessClientBuilder<ClientWiredChronicleMapStatelessBuilder<K, V>,
                 ChronicleMap<K, V>>,
-        MapBuilder<ClientWiredChronicleMapStatelessClientBuilder<K, V>> {
+        MapBuilder<ClientWiredChronicleMapStatelessBuilder<K, V>> {
 
-    ClientWiredStatelessClientTcpConnectionHub hub;
+    ClientWiredStatelessTcpConnectionHub hub;
     private Class keyClass;
     private Class valueClass;
     private byte localIdentifier;
     private short channelID;
     private boolean doHandShaking;
 
-    public ClientWiredChronicleMapStatelessClientBuilder(InetSocketAddress remoteAddress, Class keyClass, Class valueClass, short channelID) {
+    public ClientWiredChronicleMapStatelessBuilder(InetSocketAddress remoteAddress, Class keyClass, Class valueClass, short channelID) {
         this.keyClass = keyClass;
         this.valueClass = valueClass;
         this.remoteAddress = remoteAddress;
         this.channelID = channelID;
     }
 
-    public ClientWiredChronicleMapStatelessClientBuilder(ClientWiredStatelessClientTcpConnectionHub hub, Class keyClass, Class valueClass, short channelID) {
+    public ClientWiredChronicleMapStatelessBuilder(ClientWiredStatelessTcpConnectionHub hub, Class keyClass, Class valueClass, short channelID) {
         this.keyClass = keyClass;
         this.valueClass = valueClass;
         this.hub = hub;
@@ -79,7 +79,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
 
     @Override
-    public ClientWiredChronicleMapStatelessClientBuilder<K, V> putReturnsNull(boolean putReturnsNull) {
+    public ClientWiredChronicleMapStatelessBuilder<K, V> putReturnsNull(boolean putReturnsNull) {
         this.putReturnsNull = putReturnsNull;
         return this;
     }
@@ -89,7 +89,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
 
     @Override
-    public ClientWiredChronicleMapStatelessClientBuilder<K, V> removeReturnsNull(boolean removeReturnsNull) {
+    public ClientWiredChronicleMapStatelessBuilder<K, V> removeReturnsNull(boolean removeReturnsNull) {
         this.removeReturnsNull = removeReturnsNull;
         return this;
     }
@@ -99,7 +99,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
 
     @Override
-    public ClientWiredChronicleMapStatelessClientBuilder<K, V> timeout(long timeout, TimeUnit units) {
+    public ClientWiredChronicleMapStatelessBuilder<K, V> timeout(long timeout, TimeUnit units) {
         this.timeoutMs = units.toMillis(timeout);
         return this;
     }
@@ -109,7 +109,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
 
     @Override
-    public ClientWiredChronicleMapStatelessClientBuilder<K, V> name(String name) {
+    public ClientWiredChronicleMapStatelessBuilder<K, V> name(String name) {
         this.name = name;
         return this;
     }
@@ -119,7 +119,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
 
     @Override
-    public ClientWiredChronicleMapStatelessClientBuilder<K, V> tcpBufferSize(int tcpBufferSize) {
+    public ClientWiredChronicleMapStatelessBuilder<K, V> tcpBufferSize(int tcpBufferSize) {
         this.tcpBufferSize = tcpBufferSize;
         return this;
     }
@@ -133,7 +133,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
         // todo clean this up
         if (hub == null)
-            hub = new ClientWiredStatelessClientTcpConnectionHub(this, localIdentifier, doHandShaking);
+            hub = new ClientWiredStatelessTcpConnectionHub(this, localIdentifier, doHandShaking);
 
         if (!used.getAndSet(true)) {
             return new ClientWiredStatelessChronicleMap<K, V>(this, keyClass, valueClass, channelID);
@@ -155,7 +155,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
 
 
-    public ClientWiredStatelessClientTcpConnectionHub hub() {
+    public ClientWiredStatelessTcpConnectionHub hub() {
         return hub;
     }
 

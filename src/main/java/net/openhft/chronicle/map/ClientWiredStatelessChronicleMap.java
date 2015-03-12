@@ -44,7 +44,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientWiredStatelessChronicleMap.class);
 
-    private final ClientWiredStatelessClientTcpConnectionHub hub;
+    private final ClientWiredStatelessTcpConnectionHub hub;
 
     protected Class<K> kClass;
     protected Class<V> vClass;
@@ -53,7 +53,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     private boolean removeReturnsNull;
     private short channelID;
 
-    public ClientWiredStatelessChronicleMap(@NotNull final ClientWiredChronicleMapStatelessClientBuilder config,
+    public ClientWiredStatelessChronicleMap(@NotNull final ClientWiredChronicleMapStatelessBuilder config,
                                             @NotNull final Class kClass,
                                             @NotNull final Class vClass,
                                             short channelID) {
@@ -199,7 +199,38 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
     @NotNull
     public String toString() {
-        return hub.proxyReturnString(TO_STRING.toString(), channelID);
+        final Map<K, V> result = toMap();
+        return result.toString();
+    }
+
+    private Map<K, V> toMap() {
+        final long startTime = System.currentTimeMillis();
+        final Map<K, V> result = new HashMap<K, V>();
+
+        // send
+        final long transactionId = proxySend("ENTRY_SET", startTime);
+        assert !hub.outBytesLock().isHeldByCurrentThread();
+        final long timeoutTime = startTime + hub.timeoutMs;
+
+        for (; ; ) {
+
+            // receive
+            hub.inBytesLock().lock();
+            try {
+                final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
+
+                if (wireIn.read(Fields.HAS_NEXT).bool()) {
+                    result.put(
+                            readK(Fields.RESULT_KEY, wireIn, null),
+                            readV(Fields.RESULT_VALUE, wireIn, null));
+                } else
+                    break;
+
+            } finally {
+                hub.inBytesLock().unlock();
+            }
+        }
+        return result;
     }
 
     @NotNull

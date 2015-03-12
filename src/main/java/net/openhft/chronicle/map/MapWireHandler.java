@@ -125,11 +125,42 @@ class MapWireHandler<K, V> implements WireHandler {
     }
 
     private void writeChunked(long transactionId,
-                              @NotNull final Function<Map, Iterator<byte[]>> function,
+                              @NotNull final Function<BytesChronicleMap, Iterator> function,
                               @NotNull final Consumer<Iterator<byte[]>> c) {
 
         final BytesChronicleMap m = bytesMap(channelId);
         final Iterator<byte[]> iterator = function.apply(m);
+
+        // this allows us to write more data than the buffer will allow
+        out = () -> {
+
+            // each chunk has its own transaction-id
+            outWire.write(TRANSACTION_ID).int64(transactionId);
+
+            write(map -> {
+
+                boolean hasNext = iterator.hasNext();
+                outWire.write(HAS_NEXT).bool(hasNext);
+
+                if (hasNext)
+                    c.accept(iterator);
+                else
+                    // setting out to NULL denotes that there are no more chunks
+                    out = null;
+            });
+
+        };
+
+        out.run();
+
+    }
+
+    private void writeEntryChunked(long transactionId,
+                                   @NotNull final Function<BytesChronicleMap, Iterator> function,
+                                   @NotNull final Consumer<Iterator<Map.Entry<byte[], byte[]>>> c) {
+
+        final BytesChronicleMap m = bytesMap(channelId);
+        final Iterator<Map.Entry<byte[], byte[]>> iterator = function.apply(m);
 
         // this allows us to write more data than the buffer will allow
         out = () -> {
@@ -182,12 +213,12 @@ class MapWireHandler<K, V> implements WireHandler {
             }
 
             if ("VALUES".contentEquals(methodName)) {
-                writeChunked(transactionId, map -> map.values().iterator(), writeElement);
+                writeChunked(transactionId, map -> map.delegate.values().iterator(), writeElement);
                 return;
             }
 
             if ("ENTRY_SET".contentEquals(methodName)) {
-                writeChunked(transactionId, map -> map.entrySet().iterator(), writeEntry);
+                writeEntryChunked(transactionId, m -> m.delegate.entrySet().iterator(), writeEntry);
                 return;
             }
 
@@ -303,10 +334,6 @@ class MapWireHandler<K, V> implements WireHandler {
                 return;
             }
 
-            if ("TO_STRING".contentEquals(methodName)) {
-                write(b -> outWire.write(RESULT).text(b.toString()));
-                return;
-            }
 
             if ("APPLICATION_VERSION".contentEquals(methodName)) {
                 write(b -> outWire.write(RESULT).text(applicationVersion()));
