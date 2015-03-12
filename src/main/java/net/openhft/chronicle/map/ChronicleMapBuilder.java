@@ -77,19 +77,19 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * ChronicleMap<Key, Value> map2 = builder.create();}</pre>
  * i. e. created {@code ChronicleMap} instances don't depend on the builder.
  *
- * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
+ * {@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
  * documentation.
  *
- * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
+ * Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
  * ChronicleMapBuilder}", unless specified different, because theoretically someone might provide
  * {@code ChronicleMap} implementations with completely different properties.
  *
- * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
+ * {@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
  * doesn't support resizing. That is why you <i>must</i> configure {@linkplain #entries(long) number
  * of entries} you are going to insert into the created map <i>at most</i>. See {@link
  * #entries(long)} method documentation for more information on this.
  *
- * <p>If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder}, i.
+ * If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder}, i.
  * e. it is not a boxed primitive, data value generated interface, {@link Byteable}, etc. (see the
  * complete list TODO insert the link to the complete list), you <i>must</i> provide the {@code
  * ChronicleHashBuilder} with some information about you keys or values: if they are
@@ -245,7 +245,7 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * {@inheritDoc}
      *
-     * <p>Example: if keys in your map(s) are English words in {@link String} form, average English
+     * Example: if keys in your map(s) are English words in {@link String} form, average English
      * word length is 5.1, configure average key size of 6: <pre>{@code
      * ChronicleMap<String, LongValue> wordFrequencies = ChronicleMapBuilder
      *     .of(String.class, LongValue.class)
@@ -274,7 +274,7 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * {@inheritDoc}
      *
-     * <p>For example, if your keys are Git commit hashes:<pre>{@code
+     * For example, if your keys are Git commit hashes:<pre>{@code
      * Map<byte[], String> gitCommitMessagesByHash =
      *     ChronicleMapBuilder.of(byte[].class, String.class)
      *     .constantKeySizeBySample(new byte[20])
@@ -299,14 +299,14 @@ public final class ChronicleMapBuilder<K, V> implements
      * created by this builder. If value size is always the same, call {@link
      * #constantValueSizeBySample(Object)} method instead of this one.
      *
-     * <p>{@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
+     * {@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
      * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
      * that, however, might result to quite high internal fragmentation, i. e. losses because only
      * integral number of chunks could be allocated for the entry. If you want to avoid this, you
      * should manually configure the actual chunk size in addition to this average value size
      * configuration, which is anyway needed.
      *
-     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
+     * If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and shouldn't be specified by user.
      *
      * @param averageValueSize number of bytes, taken by serialized form of values
@@ -344,10 +344,10 @@ public final class ChronicleMapBuilder<K, V> implements
      * created by this builder. This is done by providing the {@code sampleValue}, all values should
      * take the same number of bytes in serialized form, as this sample object.
      *
-     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
+     * If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and this method shouldn't be called.
      *
-     * <p>If value size varies, method {@link #averageValueSize(double)} should be called instead of
+     * If value size varies, method {@link #averageValueSize(double)} should be called instead of
      * this one.
      *
      * @param sampleValue the sample value
@@ -575,14 +575,14 @@ public final class ChronicleMapBuilder<K, V> implements
      * Configures alignment strategy of address in memory of entries and independently of address in
      * memory of values within entries in ChronicleMaps, created by this builder.
      *
-     * <p>Useful when values of the map are updated intensively, particularly fields with volatile
+     * Useful when values of the map are updated intensively, particularly fields with volatile
      * access, because it doesn't work well if the value crosses cache lines. Also, on some
      * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
      *
-     * <p>If values couldn't reference off-heap memory (i. e. it is not {@link Byteable} or "data
+     * If values couldn't reference off-heap memory (i. e. it is not {@link Byteable} or "data
      * value generated"), alignment configuration makes no sense and forbidden.
      *
-     * <p>Default is {@link Alignment#NO_ALIGNMENT} if values couldn't reference off-heap memory,
+     * Default is {@link Alignment#NO_ALIGNMENT} if values couldn't reference off-heap memory,
      * otherwise chosen heuristically (configure explicitly for being sure and to compare
      * performance in your case).
      *
@@ -980,15 +980,15 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     /**
-     * {@inheritDoc} <p>
-     * <p>Example: <pre>{@code Map<Key, Value> map =
+     * {@inheritDoc} 
+     * Example: <pre>{@code Map<Key, Value> map =
      *     ChronicleMapBuilder.of(Key.class, Value.class)
      *     .entries(1_000_000)
      *     .averageKeySize(50).averageValueSize(200)
      *     // this class hasn't implemented yet, just for example
      *     .objectSerializer(new KryoObjectSerializer())
      *     .create();}</pre>
-     * <p> <p>This serializer is used to serialize both keys and values, if they both require this:
+     *  This serializer is used to serialize both keys and values, if they both require this:
      * loosely typed, nullable, and custom {@linkplain #keyMarshaller(BytesMarshaller) key} and
      * {@linkplain #valueMarshaller(BytesMarshaller) value} marshallers are not configured.
      */
@@ -1056,10 +1056,10 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * Configures the marshallers, used to serialize/deserialize values to/from off-heap memory in
      * maps, created by this builder. See <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the
-     * section about serialization in ChronicleMap manual</a> for more information. <p>
-     * <p>Configuring marshalling this way results to a little bit more compact in-memory layout of
+     * section about serialization in ChronicleMap manual</a> for more information. 
+     * Configuring marshalling this way results to a little bit more compact in-memory layout of
      * the map, comparing to a single interface configuration: {@link #valueMarshaller(
-     *BytesMarshaller)}. <p> <p>Passing {@link BytesInterop} instead of plain {@link BytesWriter}
+     *BytesMarshaller)}.  Passing {@link BytesInterop} instead of plain {@link BytesWriter}
      * is, of cause, possible, but currently pointless for values.
      *
      * @param valueWriter the new value object &rarr; {@link Bytes} writer (interop) strategy
@@ -1080,7 +1080,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * Configures the marshaller used to serialize actual value sizes to off-heap memory in maps,
      * created by this builder.
      *
-     * <p>Default value size marshaller is so-called "stop bit encoding" marshalling, unless {@link
+     * Default value size marshaller is so-called "stop bit encoding" marshalling, unless {@link
      * #constantValueSizeBySample(Object)} or the builder statically knows the value size is
      * constant -- special constant size marshalling is used by default in these cases.
      *
@@ -1099,8 +1099,8 @@ public final class ChronicleMapBuilder<K, V> implements
      * Configures factory which is used to create a new value instance, if value class is either
      * {@link Byteable}, {@link BytesMarshallable} or {@link Externalizable} subclass, or value type
      * is eligible for data value generation, or configured custom value reader is an instance of
-     * {@link DeserializationFactoryConfigurableBytesReader}, in maps, created by this builder. <p>
-     * <p>Default value deserialization factory is {@link NewInstanceObjectFactory}, which creates a
+     * {@link DeserializationFactoryConfigurableBytesReader}, in maps, created by this builder. 
+     * Default value deserialization factory is {@link NewInstanceObjectFactory}, which creates a
      * new value instance using {@link Class#newInstance()} default constructor. You could provide
      * an {@link AllocateInstanceObjectFactory}, which uses {@code Unsafe.allocateInstance(Class)}
      * (you might want to do this for better performance or if you don't want to initialize fields),
@@ -1124,7 +1124,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * Specifies the value to be put for each key queried in {@link ChronicleMap#acquireUsing
      * acquireUsing()} method, if the key is absent in the map, created by this builder.
      *
-     * <p>This configuration overrides any previous {@link #defaultValueProvider(
+     * This configuration overrides any previous {@link #defaultValueProvider(
      * DefaultValueProvider)} configuration to this builder.
      *
      * @param defaultValue the default value to be put to the map for absent keys during {@code
@@ -1144,7 +1144,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * Specifies the function to obtain a value for the key during {@link ChronicleMap#acquireUsing
      * acquireUsing()} calls, if the key is absent in the map, created by this builder.
      *
-     * <p>This configuration overrides any previous {@link #defaultValue(Object)} configuration
+     * This configuration overrides any previous {@link #defaultValue(Object)} configuration
      * to this builder.
      *
      * @param defaultValueProvider the strategy to obtain a default value by the absent key
