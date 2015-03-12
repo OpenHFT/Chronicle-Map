@@ -18,8 +18,8 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.chronicle.hash.impl.util.CloseablesManager;
+import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.chronicle.map.ReplicatedChronicleMap.BytesReplicatedContextFactory;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
@@ -54,7 +54,7 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     public static final int BITS_IN_A_BYTE = 8;
 
-    public static final int SIZE_OF_SIZE = 4;
+    static final int SIZE_OF_SIZE = 4;
     public static final int SIZE_OF_TRANSACTION_ID = 8;
     public static final int SIZE_OF_TIME_SHIFT = 2;
 

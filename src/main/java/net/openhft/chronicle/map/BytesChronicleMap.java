@@ -25,7 +25,7 @@ import java.util.Set;
 
 public class BytesChronicleMap implements AbstractChronicleMap<Bytes, Bytes> {
 
-    private final VanillaChronicleMap<?, ?, ?, ?, ?, ?> delegate;
+      final VanillaChronicleMap<?, ?, ?, ?, ?, ?> delegate;
     TcpReplicator.TcpSocketChannelEntryWriter output;
 
     public BytesChronicleMap(VanillaChronicleMap<?, ?, ?, ?, ?, ?> delegate) {

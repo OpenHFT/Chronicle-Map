@@ -48,12 +48,12 @@ import static net.openhft.chronicle.map.Replica.ModificationNotifier.NOP;
 /**
  * @author Rob Austin.
  */
-final class ChannelProvider implements Closeable {
+public final class ChannelProvider implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(ChannelProvider.class.getName());
 
     static final Map<ReplicationHub, ChannelProvider> implMapping = new IdentityHashMap<>();
 
-    static synchronized ChannelProvider getProvider(ReplicationHub hub) throws IOException {
+    public static synchronized ChannelProvider getProvider(ReplicationHub hub) throws IOException {
         ChannelProvider channelProvider = implMapping.get(hub);
         if (channelProvider != null)
             return channelProvider;
@@ -409,6 +409,10 @@ final class ChannelProvider implements Closeable {
 
     void add(Closeable replicator) {
         replicators.add(replicator);
+    }
+
+    public List<Replica> chronicleChannelList() {
+        return Collections.unmodifiableList(chronicleChannelList);
     }
 
     private interface MessageHandler {

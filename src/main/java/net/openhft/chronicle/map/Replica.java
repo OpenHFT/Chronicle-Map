@@ -26,7 +26,7 @@ import java.io.Closeable;
 /**
  * @author Rob Austin.
  */
-interface Replica extends Closeable {
+public interface Replica extends Closeable {
 
     /**
      * Provides the unique Identifier associated with this map instance. <p> An identifier is used

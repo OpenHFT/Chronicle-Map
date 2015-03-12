@@ -63,6 +63,24 @@
                 <version>2.2.0</version>
             </dependency>
 
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>chronicle-wire</artifactId>
+                <version>1.0.1-alpha-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>chronicle-bytes</artifactId>
+                <version>1.0.0-alpha-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>chronicle-network</artifactId>
+                <version>1.0.0-alpha-SNAPSHOT</version>
+            </dependency>
+
         </dependencies>
 
     </dependencyManagement>
@@ -88,6 +106,16 @@
             <artifactId>annotations</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-wire</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-bytes</artifactId>
+        </dependency>
+
         <!-- optional dependencies -->
 
         <dependency>
@@ -107,6 +135,12 @@
             <groupId>org.ops4j.pax.url</groupId>
             <artifactId>pax-url-aether</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-network</artifactId>
+        </dependency>
+
 
         <!-- test dependencies -->
 
