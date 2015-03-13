@@ -134,7 +134,7 @@ public class ConcurrentMap8Test extends JSR166TestCase {
     static ConcurrentMap<Long, Long> longMap() {
         if (longMap == null) {
             longMap = newLongMap();
-            for (int i = 0; i < SIZE; ++i)
+            for (int i = 0; i < size; ++i)
                 longMap.put(Long.valueOf(i), Long.valueOf(2 * i));
         }
 

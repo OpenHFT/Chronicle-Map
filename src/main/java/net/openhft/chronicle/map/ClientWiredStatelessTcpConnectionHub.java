@@ -39,7 +39,7 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static net.openhft.chronicle.map.MapWireHandler.EventId.APPLICATION_VERSION;
+import static net.openhft.chronicle.map.MapWireHandler.EventId.applicationVersion;
 import static net.openhft.chronicle.map.MapWireHandler.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
 
@@ -234,7 +234,7 @@ public class ClientWiredStatelessTcpConnectionHub {
     @NotNull
     public String serverApplicationVersion(short channelID) {
         TextWire wire = new TextWire(Bytes.elasticByteBuffer());
-        String result = proxyReturnString(APPLICATION_VERSION, channelID, wire);
+        String result = proxyReturnString(applicationVersion, channelID, wire);
         return (result == null) ? "" : result;
     }
 

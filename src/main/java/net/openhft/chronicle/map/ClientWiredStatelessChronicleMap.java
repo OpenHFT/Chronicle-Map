@@ -136,7 +136,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         if (key == null || value == null)
             throw new NullPointerException();
 
-        return proxyReturnObject(PUT_IF_ABSENT, key, value, vClass);
+        return proxyReturnObject(putIfAbsent, key, value, vClass);
     }
 
     @SuppressWarnings("NullableProblems")
@@ -145,7 +145,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         if (key == null)
             throw new NullPointerException();
 
-        return value != null && proxyReturnBoolean(REMOVE_WITH_VALUE.toString(), (K) key, (V) value);
+        return value != null && proxyReturnBoolean(removeWithValue.toString(), (K) key, (V) value);
 
     }
 
@@ -153,14 +153,14 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     public boolean replace(K key, V oldValue, V newValue) {
         if (key == null || oldValue == null || newValue == null)
             throw new NullPointerException();
-        return proxyReturnBoolean(REPLACE_WITH_OLD_AND_NEW_VALUE.toString(), key, oldValue, newValue);
+        return proxyReturnBoolean(replaceWithOldAndNewValue.toString(), key, oldValue, newValue);
     }
 
     @SuppressWarnings("NullableProblems")
     public V replace(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
-        return proxyReturnObject(REPLACE, key, value, vClass);
+        return proxyReturnObject(replace, key, value, vClass);
     }
 
     public int size() {
@@ -195,7 +195,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
     @Override
     public int hashCode() {
-        return proxyReturnInt(HASH_CODE.toString());
+        return proxyReturnInt(hashCode.toString());
     }
 
     @NotNull
@@ -205,15 +205,15 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
     @NotNull
     public String serverPersistedDataVersion() {
-        return hub.proxyReturnString(PERSISTED_DATA_VERSION, channelID);
+        return hub.proxyReturnString(persistedDataVersion, channelID);
     }
 
     public boolean isEmpty() {
-        return proxyReturnBoolean(IS_EMPTY.toString());
+        return proxyReturnBoolean(isEmpty.toString());
     }
 
     public boolean containsKey(Object key) {
-        return proxyReturnBooleanK(CONTAINS_KEY, (K) key);
+        return proxyReturnBooleanK(containsKey, (K) key);
     }
 
     @NotNull
@@ -222,11 +222,11 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     public boolean containsValue(Object value) {
-        return proxyReturnBooleanV(CONTAINS_VALUE, (V) value);
+        return proxyReturnBooleanV(containsValue, (V) value);
     }
 
     public long longSize() {
-        return proxyReturnLong(LONG_SIZE.toString());
+        return proxyReturnLong(longSize.toString());
     }
 
     @Override
@@ -235,7 +235,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     public V get(Object key) {
-        return proxyReturnObject(vClass, GET, (K) key);
+        return proxyReturnObject(vClass, get, (K) key);
     }
 
     @Nullable
@@ -258,14 +258,14 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     public V remove(Object key) {
         if (key == null)
             throw keyNotNullNPE();
-        return proxyReturnObject(vClass, removeReturnsNull ? REMOVE_WITHOUT_ACC : REMOVE, (K) key);
+        return proxyReturnObject(vClass, removeReturnsNull ? removeWithoutAcc : remove, (K) key);
     }
 
     @Override
     public void createChannel(short channelID) {
         proxyReturnVoid(
                 () -> {
-                    hub.outWire().write(Fields.methodName).text(CREATE_CHANNEL.toString());
+                    hub.outWire().write(Fields.methodName).text(createChannel.toString());
                     hub.outWire().write(Fields.arg1).int16(channelID);
                 });
     }
@@ -295,7 +295,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
                 wire.write(Fields.transactionId).int64(transactionId);
                 wire.write(Fields.timeStamp).int64(startTime);
                 wire.write(Fields.channelId).int16(channelID);
-                hub.outWire().write(Fields.methodName).text(PUT_ALL.toString());
+                hub.outWire().write(Fields.methodName).text(putAll.toString());
 
                 while (iterator.hasNext()) {
 
@@ -330,7 +330,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     public V put(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
-        return proxyReturnObject(putReturnsNull ? PUT_WITHOUT_ACC : PUT, key, value, vClass);
+        return proxyReturnObject(putReturnsNull ? putWithoutAcc : put, key, value, vClass);
     }
 
     @Nullable
@@ -345,14 +345,14 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     public void clear() {
-        proxyReturnVoid(() -> writeField(Fields.methodName, CLEAR.toString()));
+        proxyReturnVoid(() -> writeField(Fields.methodName, clear.toString()));
     }
 
 
     @NotNull
     public Set<K> keySet() {
         final Set<K> usingCollection = new HashSet<K>();
-        readChunked(kClass, KEY_SET, usingCollection);
+        readChunked(kClass, keySet, usingCollection);
         return usingCollection;
     }
 
@@ -360,7 +360,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     @NotNull
     public Collection<V> values() {
         final List<V> usingCollection = new ArrayList<>();
-        return readChunked(vClass, VALUES, usingCollection);
+        return readChunked(vClass, values, usingCollection);
     }
 
     private <E, A extends Collection<E>> Collection<E> readChunked(Class<E> vClass1, EventId values, A usingCollection) {
@@ -406,7 +406,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         final Map<K, V> result = new HashMap<K, V>();
         final long startTime = System.currentTimeMillis();
         // send
-        final long transactionId = proxySend(ENTRY_SET, startTime);
+        final long transactionId = proxySend(entrySet, startTime);
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 
@@ -821,9 +821,9 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     private boolean eventReturnsNull(@NotNull EventId methodName) {
 
         switch (methodName) {
-            case PUT_ALL_WITHOUT_ACC:
-            case PUT_WITHOUT_ACC:
-            case REMOVE_WITHOUT_ACC:
+            case putAllWithoutAcc:
+            case putWithoutAcc:
+            case removeWithoutAcc:
                 return true;
             default:
                 return false;
@@ -845,37 +845,37 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
 
 /*    static enum EventId {
-        CREATE_CHANNEL,
+        createChannel,
         HEARTBEAT,
         STATEFUL_UPDATE,
-        LONG_SIZE,
-        SIZE,
-        IS_EMPTY,
-        CONTAINS_KEY,
-        CONTAINS_VALUE,
-        GET,
-        PUT,
-        PUT_WITHOUT_ACC,
-        REMOVE,
-        REMOVE_WITHOUT_ACC,
-        CLEAR,
+        longSize,
+        size,
+        isEmpty,
+        containsKey,
+        containsValue,
+        get,
+        put,
+        putWithoutAcc,
+        remove,
+        removeWithoutAcc,
+        clear,
         KEY_SET,
         VALUES,
-        ENTRY_SET,
-        REPLACE,
-        REPLACE_WITH_OLD_AND_NEW_VALUE,
-        PUT_IF_ABSENT,
-        REMOVE_WITH_VALUE,
-        TO_STRING,
-        APPLICATION_VERSION,
-        PERSISTED_DATA_VERSION,
-        PUT_ALL,
-        PUT_ALL_WITHOUT_ACC,
-        HASH_CODE,
-        MAP_FOR_KEY,
-        PUT_MAPPED,
-        KEY_BUILDER,
-        VALUE_BUILDER
+        entrySet,
+        replace,
+        replaceWithOldAndNewValue,
+        putIfAbsent,
+        removeWithValue,
+        toString,
+        applicationVersion,
+        persistedDataVersion,
+        putAll,
+        putAllWithoutAcc,
+        hashCode,
+        mapForKey,
+        putMapped,
+        keyBuilder,
+        valueBuilder
     }*/
 
     class Entry implements Map.Entry<K, V> {
