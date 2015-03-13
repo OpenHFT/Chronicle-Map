@@ -256,7 +256,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * encoded (and each character takes 2 bytes on-heap), because default off-heap {@link String}
      * encoding is UTF-8 in {@code ChronicleMap}.)
      *
-     * @param averageKeySize
+     * @param averageKeySize  the average size of the key
      * @throws IllegalStateException    {@inheritDoc}
      * @throws IllegalArgumentException {@inheritDoc}
      * @see #constantKeySizeBySample(Object)

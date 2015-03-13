@@ -48,12 +48,13 @@ public final class ChronicleMapStatelessClientBuilder<K, V> implements
     // -- the second is really shorter.
 
     /**
-     * Equivalent of {@code ChronicleMapStatelessClientBuilder.<K, V>of(serverAddress).create()}.
+     * Equivalent of {@code ChronicleMapStatelessClientBuilder.<K,V>of(serverAddress).create()}.
      *
      * @param serverAddress address of the server map
      * @param <K> key type of the map
      * @param <V> value type of the map
      * @return stateless client of the ChronicleMap of server
+     * @throws IOException if it not possible to connect to the {@code serverAddress}
      */
     public static <K, V> ChronicleMap<K, V> createClientOf(InetSocketAddress serverAddress)
             throws IOException {
