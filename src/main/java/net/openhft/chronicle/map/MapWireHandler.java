@@ -194,7 +194,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         }
         try {
 
-            if (putWithoutAcc.toString().contentEquals(methodName)) {
+            if (putWithoutAcc.contentEquals(methodName)) {
                 writeVoid(bytesMap -> {
                     final net.openhft.lang.io.Bytes reader = toReader(inWire, arg1, arg2);
                     // todo  bytesMap.put(reader, reader, timestamp, identifier());
@@ -203,22 +203,22 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
             }
 
-            if (keySet.toString().contentEquals(methodName)) {
+            if (keySet.contentEquals(methodName)) {
                 writeChunked(transactionId, map -> map.keySet().iterator(), writeElement);
                 return;
             }
 
-            if (values.toString().contentEquals(methodName)) {
+            if (values.contentEquals(methodName)) {
                 writeChunked(transactionId, map -> map.delegate.values().iterator(), writeElement);
                 return;
             }
 
-            if (entrySet.toString().contentEquals(methodName)) {
+            if (entrySet.contentEquals(methodName)) {
                 writeChunked(transactionId, m -> m.delegate.entrySet().iterator(), writeEntry);
                 return;
             }
 
-            if (putAll.toString().contentEquals(methodName)) {
+            if (putAll.contentEquals(methodName)) {
                 putAll(transactionId);
                 return;
             }
@@ -227,7 +227,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             outWire.write(Fields.transactionId).int64(transactionId);
 
 
-            if (createChannel.toString().contentEquals(methodName)) {
+            if (createChannel.contentEquals(methodName)) {
                 writeVoid(() -> {
                     short channelId1 = inWire.read(arg1).int16();
                     chronicleHashInstanceBuilder.get().replicatedViaChannel(hub.createChannel(channelId1)).create();
@@ -237,37 +237,37 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             }
 
 
-            if (EventId.remoteIdentifier.toString().contentEquals(methodName)) {
+            if (EventId.remoteIdentifier.contentEquals(methodName)) {
                 this.remoteIdentifier = inWire.read(result).int8();
                 return;
             }
 
-            if (longSize.toString().contentEquals(methodName)) {
+            if (longSize.contentEquals(methodName)) {
                 write(b -> outWire.write(result).int64(b.longSize()));
                 return;
             }
 
-            if (isEmpty.toString().contentEquals(methodName)) {
+            if (isEmpty.contentEquals(methodName)) {
                 write(b -> outWire.write(result).bool(b.isEmpty()));
                 return;
             }
 
-            if (containsKey.toString().contentEquals(methodName)) {
+            if (containsKey.contentEquals(methodName)) {
                 write(b -> outWire.write(result).bool(b.delegate.containsKey(toByteArray(inWire, arg1))));
                 return;
             }
 
-            if (containsValue.toString().contentEquals(methodName)) {
+            if (containsValue.contentEquals(methodName)) {
                 write(b -> outWire.write(result).bool(b.delegate.containsValue(toByteArray(inWire, arg1))));
                 return;
             }
 
-            if (get.toString().contentEquals(methodName)) {
+            if (get.contentEquals(methodName)) {
                 writeValueUsingDelegate(map -> map.get(toByteArray(inWire, arg1)));
                 return;
             }
 
-            if (put.toString().contentEquals(methodName)) {
+            if (put.contentEquals(methodName)) {
                 writeValue(b -> {
                     final net.openhft.lang.io.Bytes reader = MapWireHandler.this.toReader(inWire, arg1, arg2);
 
@@ -278,17 +278,17 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
             }
 
-            if (remove.toString().contentEquals(methodName)) {
+            if (remove.contentEquals(methodName)) {
                 writeValue(b -> b.remove(toReader(inWire, arg1)));
                 return;
             }
 
-            if (clear.toString().contentEquals(methodName)) {
+            if (clear.contentEquals(methodName)) {
                 writeVoid(BytesChronicleMap::clear);
                 return;
             }
 
-            if (replace.toString().contentEquals(methodName)) {
+            if (replace.contentEquals(methodName)) {
                 write(bytesMap -> {
 
 
@@ -313,7 +313,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
             }
 
-            if (replaceWithOldAndNewValue.toString().contentEquals(methodName)) {
+            if (replaceWithOldAndNewValue.contentEquals(methodName)) {
 
                 write(bytesMap -> {
                     final net.openhft.lang.io.Bytes reader = toReader(inWire, arg1, arg2, arg3);
@@ -324,7 +324,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
             }
 
-            if (putIfAbsent.toString().contentEquals(methodName)) {
+            if (putIfAbsent.contentEquals(methodName)) {
 
 
                 // todo call bytesMap.putIfAbsent(reader, reader, timestamp, identifier());
@@ -338,7 +338,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
             }
 
-            if (removeWithValue.toString().contentEquals(methodName)) {
+            if (removeWithValue.contentEquals(methodName)) {
                 write(bytesMap -> {
                     final net.openhft.lang.io.Bytes reader = toReader(inWire, arg1, arg2);
                     // todo call   outWire.write(result).bool(bytesMap.remove(reader, reader, timestamp, identifier()));
@@ -348,18 +348,18 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             }
 
 
-            if (applicationVersion.toString().contentEquals(methodName)) {
+            if (applicationVersion.contentEquals(methodName)) {
                 write(b -> outWire.write(result).text(applicationVersion()));
                 return;
             }
 
-            if (persistedDataVersion.toString().contentEquals(methodName)) {
+            if (persistedDataVersion.contentEquals(methodName)) {
                 write(b -> outWire.write(result).text(persistedDataVersion()));
 
                 return;
             }
 
-            if (hashCode.toString().contentEquals(methodName)) {
+            if (hashCode.contentEquals(methodName)) {
                 write(b -> outWire.write(result).int32(b.hashCode()));
                 return;
             }
@@ -804,7 +804,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         createChannel,
         remoteIdentifier;
 
-        public boolean contentEquals(CharSequence c) {
+         public boolean contentEquals(CharSequence c) {
             return this.toString().contentEquals(c);
         }
     }
