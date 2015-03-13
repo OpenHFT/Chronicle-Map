@@ -28,6 +28,7 @@ import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.network2.WireHandler;
 import net.openhft.chronicle.network2.event.EventGroup;
+import net.openhft.chronicle.network2.event.WireHandlers;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireKey;
@@ -41,14 +42,11 @@ import java.io.PrintWriter;
 import java.io.StreamCorruptedException;
 import java.io.StringWriter;
 import java.nio.BufferOverflowException;
-import java.nio.channels.SelectionKey;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -58,10 +56,7 @@ import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
 /**
  * @author Rob Austin.
  */
-class MapWireHandler<K, V> implements WireHandler {
-
-
-    ExecutorService work = Executors.newSingleThreadExecutor();
+class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     public static final int SIZE_OF_SIZE = 2;
@@ -81,6 +76,15 @@ class MapWireHandler<K, V> implements WireHandler {
             outWire.bytes().write(iterator.next());
         }
     };
+
+    private WireHandlers publishLater;
+
+    @Override
+    public void accept(WireHandlers wireHandlers) {
+        this.publishLater = wireHandlers;
+    }
+
+
     private final Consumer writeEntry = new Consumer<Iterator<Map.Entry<byte[], byte[]>>>() {
 
         @Override
@@ -102,8 +106,6 @@ class MapWireHandler<K, V> implements WireHandler {
     private ReplicationHub hub;
     private byte remoteIdentifier;
 
-    private SelectionKey key = null;
-
 
     public MapWireHandler(@NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> chronicleHashInstanceBuilder,
                           @NotNull final ReplicationHub hub,
@@ -121,49 +123,61 @@ class MapWireHandler<K, V> implements WireHandler {
         this.hub = hub;
     }
 
+
     @Override
     public void process(Wire in, Wire out) throws StreamCorruptedException {
-
-
-        //      if(LOG.isDebugEnabled()) {
-        System.out.println("--------------------------------------------\nserver read:\n\n" + Bytes.toDebugString(in.bytes()));
-        //    }
-
-        this.inWire = in;
-        this.outWire = out;
-        onEvent();
-
-
+        try {
+            this.inWire = in;
+            this.outWire = out;
+            onEvent();
+        } catch (Exception e) {
+            LOG.error("", e);
+        }
     }
 
-    private void writeChunked(long transactionId,
-                              @NotNull final Function<BytesChronicleMap, Iterator> function,
-                              @NotNull final Consumer<Iterator> c) {
+
+    private void writeChunked(long transactionId, @NotNull final Function<BytesChronicleMap, Iterator> function,
+                              @NotNull final Consumer<Iterator> c) throws StreamCorruptedException {
 
         final BytesChronicleMap m = bytesMap(channelId);
         final Iterator<byte[]> iterator = function.apply(m);
 
-        // this allows us to write more data than the buffer will allow
-        for (; ; ) {
+        final WireHandler that = new WireHandler() {
 
-            // each chunk has its own transaction-id
+            @Override
+            public void process(Wire in, Wire out) throws StreamCorruptedException {
 
-            final boolean hasNext = iterator.hasNext();
+                outWire.write(TRANSACTION_ID).int64(transactionId);
 
-            write(map -> {
+                // this allows us to write more data than the buffer will allow
+                for (; ; ) {
 
-                outWire.write(HAS_NEXT).bool(hasNext);
+                    final boolean hasNext = iterator.hasNext();
 
-                if (hasNext)
-                    c.accept(iterator);
+                    write(map -> {
 
-            });
+                        outWire.write(HAS_NEXT).bool(hasNext);
 
-            if (!hasNext)
-                break;
+                        if (hasNext)
+                            c.accept(iterator);
 
-        }
+                    });
 
+                    if (!hasNext)
+                        return;
+
+                    // quit if we have filled the buffer
+                    if (outWire.bytes().remaining() < (outWire.bytes().capacity() * 0.75)) {
+                        publishLater.add(this);
+                        return;
+                    }
+
+
+                }
+            }
+        };
+
+        that.process(inWire, outWire);
 
     }
 
@@ -197,7 +211,7 @@ class MapWireHandler<K, V> implements WireHandler {
     }*/
 
     @SuppressWarnings("UnusedReturnValue")
-    void onEvent() {
+    void onEvent() throws StreamCorruptedException {
 
         // it is assumed by this point that the buffer has all the bytes in it for this message
 
@@ -215,25 +229,26 @@ class MapWireHandler<K, V> implements WireHandler {
             return;
         }
 
+        if ("KEY_SET".contentEquals(methodName)) {
+            writeChunked(transactionId, map -> map.keySet().iterator(), writeElement);
+            return;
+        }
+
+        if ("VALUES".contentEquals(methodName)) {
+            writeChunked(transactionId, map -> map.delegate.values().iterator(), writeElement);
+            return;
+        }
+
+        if ("ENTRY_SET".contentEquals(methodName)) {
+            writeChunked(transactionId, m -> m.delegate.entrySet().iterator(), writeEntry);
+            return;
+        }
+
         // write the transaction id
         outWire.write(() -> "TRANSACTION_ID").int64(transactionId);
 
         try {
 
-            if ("KEY_SET".contentEquals(methodName)) {
-                writeChunked(transactionId, map -> map.keySet().iterator(), writeElement);
-                return;
-            }
-
-            if ("VALUES".contentEquals(methodName)) {
-                writeChunked(transactionId, map -> map.delegate.values().iterator(), writeElement);
-                return;
-            }
-
-            if ("ENTRY_SET".contentEquals(methodName)) {
-                writeChunked(transactionId, m -> m.delegate.entrySet().iterator(), writeEntry);
-                return;
-            }
 
             if ("PUT_ALL".contentEquals(methodName)) {
                 putAll(transactionId);

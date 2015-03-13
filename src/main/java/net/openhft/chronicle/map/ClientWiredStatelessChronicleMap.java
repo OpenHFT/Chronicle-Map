@@ -423,8 +423,11 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
                     } else
                         break OUTER;
 
-                    // todo process the exception
-                    boolean isException = wireIn.read(Fields.IS_EXCEPTION).bool();
+
+                    if (wireIn.bytes().remaining() > 0) {
+                        // todo process the exception
+                        boolean isException = wireIn.read(Fields.IS_EXCEPTION).bool();
+                    }
                 }
 
             } finally {
