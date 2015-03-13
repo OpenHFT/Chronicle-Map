@@ -164,8 +164,7 @@ public interface Replica extends Closeable {
          * writeExternalEntry()}. This method is typically called when we receive a remote
          * replication event, this event could originate from either a remote {@code put(K key, V
          *value)} or {@code remove(Object key)}
-         * @param copies
-         * @param context
+         * @param context       the Bytes Replicated Context
          * @param source       bytes to read an entry from
          */
         void readExternalEntry(

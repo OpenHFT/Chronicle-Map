@@ -117,7 +117,7 @@ public final class ChronicleSetBuilder<K>
      *
      * @see #constantKeySizeBySample(Object)
      * @see #actualChunkSize(int)
-     * @param averageKeySize
+     * @param averageKeySize   the average size in bytes of the key
      */
     @Override
     public ChronicleSetBuilder<K> averageKeySize(double averageKeySize) {
