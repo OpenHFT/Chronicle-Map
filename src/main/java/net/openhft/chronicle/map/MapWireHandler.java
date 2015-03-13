@@ -42,10 +42,7 @@ import java.io.PrintWriter;
 import java.io.StreamCorruptedException;
 import java.io.StringWriter;
 import java.nio.BufferOverflowException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -181,34 +178,46 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
     }
 
-   /* private void writeEntryChunked(long transactionId,
-                                   @NotNull final Function<BytesChronicleMap, Iterator> function,
-                                   @NotNull final Consumer<Iterator<Map.Entry<byte[], byte[]>>> c) {
 
-        final BytesChronicleMap m = bytesMap(channelId);
-        final Iterator<Map.Entry<byte[], byte[]>> iterator = function.apply(m);
+    final Map<Long, Runnable> incompleteWork = new HashMap<Long, Runnable>();
 
-        // this allows us to write more data than the buffer will allow
-        for (; ; ) {
+    private byte[] toByteArray(net.openhft.lang.io.Bytes bytes) {
+        if (bytes == null || bytes.remaining() == 0)
+            return new byte[]{};
 
-            // each chunk has its own transaction-id
-            outWire.write(TRANSACTION_ID).int64(transactionId);
+        if (bytes.remaining() > Integer.MAX_VALUE)
+            throw new BufferOverflowException();
 
-            write(map -> {
+        byte[] result = new byte[(int) bytes.remaining()];
+        bytes.write(result);
+        return result;
+    }
 
-                boolean hasNext = iterator.hasNext();
-                outWire.write(HAS_NEXT).bool(hasNext);
+    private byte[] toBytes(WireKey fieldName) {
 
-                if (!hasNext)
-                    return;
+        final Wire wire = inWire;
 
-                c.accept(iterator);
+        final ValueIn read = wire.read(fieldName);
+        final long l = read.readLength();
 
-            });
+        if (l > Integer.MAX_VALUE)
+            throw new BufferOverflowException();
 
+        final int fieldLength = (int) l;
+
+        final long endPos = wire.bytes().position() + fieldLength;
+        final long limit = wire.bytes().limit();
+
+        try {
+            byte[] bytes = new byte[fieldLength];
+
+            wire.bytes().read(bytes);
+            return bytes;
+        } finally {
+            wire.bytes().position(endPos);
+            wire.bytes().limit(limit);
         }
-
-    }*/
+    }
 
     @SuppressWarnings("UnusedReturnValue")
     void onEvent() throws StreamCorruptedException {
@@ -220,40 +229,47 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         channelId = inWire.read(CHANNEL_ID).int16();
         inWire.read(METHOD_NAME).text(methodName);
 
-        if ("PUT_WITHOUT_ACC".contentEquals(methodName)) {
-            writeVoid(bytesMap -> {
-                final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2);
-                // todo  bytesMap.put(reader, reader, timestamp, identifier());
-                bytesMap.put(reader, reader);
-            });
-            return;
+        if (!incompleteWork.isEmpty()) {
+            Runnable runnable = incompleteWork.get(transactionId);
+            if (runnable != null) {
+                runnable.run();
+                return;
+            }
         }
-
-        if ("KEY_SET".contentEquals(methodName)) {
-            writeChunked(transactionId, map -> map.keySet().iterator(), writeElement);
-            return;
-        }
-
-        if ("VALUES".contentEquals(methodName)) {
-            writeChunked(transactionId, map -> map.delegate.values().iterator(), writeElement);
-            return;
-        }
-
-        if ("ENTRY_SET".contentEquals(methodName)) {
-            writeChunked(transactionId, m -> m.delegate.entrySet().iterator(), writeEntry);
-            return;
-        }
-
-        // write the transaction id
-        outWire.write(() -> "TRANSACTION_ID").int64(transactionId);
-
         try {
 
+            if ("PUT_WITHOUT_ACC".contentEquals(methodName)) {
+                writeVoid(bytesMap -> {
+                    final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2);
+                    // todo  bytesMap.put(reader, reader, timestamp, identifier());
+                    bytesMap.put(reader, reader);
+                });
+                return;
+            }
+
+            if ("KEY_SET".contentEquals(methodName)) {
+                writeChunked(transactionId, map -> map.keySet().iterator(), writeElement);
+                return;
+            }
+
+            if ("VALUES".contentEquals(methodName)) {
+                writeChunked(transactionId, map -> map.delegate.values().iterator(), writeElement);
+                return;
+            }
+
+            if ("ENTRY_SET".contentEquals(methodName)) {
+                writeChunked(transactionId, m -> m.delegate.entrySet().iterator(), writeEntry);
+                return;
+            }
 
             if ("PUT_ALL".contentEquals(methodName)) {
                 putAll(transactionId);
                 return;
             }
+
+            // write the transaction id
+            outWire.write(() -> "TRANSACTION_ID").int64(transactionId);
+
 
             if ("CREATE_CHANNEL".contentEquals(methodName)) {
                 writeVoid(() -> {
@@ -394,55 +410,19 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             //  if (len > 4)
             if (EventGroup.IS_DEBUG) {
                 long len = outWire.bytes().position() - SIZE_OF_SIZE;
-                System.out.println("--------------------------------------------\nserver wrote:\n\n" + Bytes.toDebugString(outWire.bytes(), SIZE_OF_SIZE, len));
+                if (len == 0)
+                    System.out.println("--------------------------------------------\nserver wrote:\n\n<EMPTY>");
+                else
+                    System.out.println("--------------------------------------------\nserver wrote:\n\n" + Bytes.toDebugString(outWire.bytes(), SIZE_OF_SIZE, len));
             }
         }
 
 
     }
 
-    private byte[] toByteArray(net.openhft.lang.io.Bytes bytes) {
-        if (bytes == null || bytes.remaining() == 0)
-            return new byte[]{};
-
-        if (bytes.remaining() > Integer.MAX_VALUE)
-            throw new BufferOverflowException();
-
-        byte[] result = new byte[(int) bytes.remaining()];
-        bytes.write(result);
-        return result;
-    }
-
-    private byte[] toBytes(WireKey fieldName) {
-
-        final Wire wire = inWire;
-        System.out.println(Bytes.toDebugString(inWire.bytes()));
-
-        final ValueIn read = wire.read(fieldName);
-        final long l = read.readLength();
-
-        if (l > Integer.MAX_VALUE)
-            throw new BufferOverflowException();
-
-        final int fieldLength = (int) l;
-
-        final long endPos = wire.bytes().position() + fieldLength;
-        final long limit = wire.bytes().limit();
-
-        try {
-            byte[] bytes = new byte[fieldLength];
-
-            wire.bytes().read(bytes);
-            return bytes;
-        } finally {
-            wire.bytes().position(endPos);
-            wire.bytes().limit(limit);
-        }
-    }
-
     private void putAll(long transactionId) {
 
-        /*final BytesChronicleMap bytesMap = bytesMap(MapWireHandler.this.channelId);
+        final BytesChronicleMap bytesMap = bytesMap(MapWireHandler.this.channelId);
 
         if (bytesMap == null)
             return;
@@ -455,6 +435,9 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             return;
         }
 
+        // Note : you can not assume that all the entries in a putAll will be continuous, they maybe other transactions from other threads.
+        // we it should be possible for a single entry to fill the Tcp buffer, so each entry should have the ability to be processed separately
+        // and then only applied to the map once all the entries are received.
         runnable = new Runnable() {
 
             // we should try and collect the data and then apply it atomically as quickly possible
@@ -462,18 +445,21 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
             @Override
             public void run() {
-                if (inWire.read(HAS_NEXT).bool()) {
-                    collectData.put(toBytes(ARG_1), toBytes(ARG_2));
-                } else {
+                boolean hasNext = inWire.read(HAS_NEXT).bool();
+                collectData.put(toBytes(ARG_1), toBytes(ARG_2));
+                if (!hasNext) {
                     // the old code assumed that all the data would fit into a single buffer
                     // this assumption is invalid
                     if (!collectData.isEmpty()) {
-                        bytesMap.delegate.putAll((Map) collectData);
+
                         incompleteWork.remove(transactionId);
+
                         outWire.write(TRANSACTION_ID).int64(transactionId);
 
-                        // todo handle the case where there is an exception
-                        outWire.write(IS_EXCEPTION).bool(false);
+                        writeVoid(() -> {
+                            bytesMap.delegate.putAll((Map) collectData);
+                            return null;
+                        });
 
                     }
                 }
@@ -481,7 +467,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         };
 
         incompleteWork.put(transactionId, runnable);
-        runnable.run();*/
+        runnable.run();
 
     }
 
@@ -715,10 +701,10 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
         bytesMap.output = null;
         outWire.bytes().mark();
-        outWire.write(IS_EXCEPTION).bool(false);
 
         try {
             r.call();
+            outWire.write(IS_EXCEPTION).bool(false);
         } catch (Exception e) {
             outWire.bytes().reset();
             // the idea of wire is that is platform independent,

@@ -274,18 +274,13 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         final long startTime = System.currentTimeMillis();
         long transactionId = hub.nextUniqueTransaction(startTime);
 
-
         Set<? extends Map.Entry<? extends K, ? extends V>> entries = map.entrySet();
         Iterator<? extends Map.Entry<? extends K, ? extends V>> iterator = entries.iterator();
 
-        boolean hasNext;
-
-        do {
-
-            hasNext = iterator.hasNext();
-
+        while (iterator.hasNext()) {
             hub.outBytesLock().lock();
             try {
+
                 assert hub.outBytesLock().isHeldByCurrentThread();
                 assert !hub.inBytesLock().isHeldByCurrentThread();
 
@@ -294,20 +289,19 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
                 assert hub.outBytesLock().isHeldByCurrentThread();
                 hub.markSize(wire);
                 hub.startTime(startTime);
-
+                wire.write(Fields.TYPE).text("MAP");
                 wire.write(Fields.TRANSACTION_ID).int64(transactionId);
                 wire.write(Fields.TIME_STAMP).int64(startTime);
                 wire.write(Fields.CHANNEL_ID).int16(channelID);
-
                 writeField(Fields.METHOD_NAME, "PUT_ALL");
 
-                hub.outWire().write(Fields.HAS_NEXT).bool(hasNext);
+                Map.Entry<? extends K, ? extends V> e = iterator.next();
 
-                if (hasNext) {
-                    Map.Entry<? extends K, ? extends V> e = iterator.next();
-                    writeField(Fields.ARG_1, e.getKey());
-                    writeField(Fields.ARG_2, e.getValue());
-                }
+                hub.outWire().write(Fields.HAS_NEXT).bool(iterator.hasNext());
+
+                writeField(Fields.ARG_1, e.getKey());
+                writeField(Fields.ARG_2, e.getValue());
+
 
                 hub.writeSocket(hub.outWire());
 
@@ -315,7 +309,8 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
                 hub.outBytesLock().unlock();
             }
 
-        } while (hasNext);
+        }
+
 
         // wait for the transaction id to be received, this will only be received once the
         // last chunk has been processed
