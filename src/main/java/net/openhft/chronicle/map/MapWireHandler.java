@@ -32,6 +32,7 @@ import net.openhft.chronicle.network2.event.WireHandlers;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireKey;
+import net.openhft.chronicle.wire.Wires;
 import net.openhft.lang.io.DirectStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();
     @NotNull
 
-    private final StringBuilder methodName = new StringBuilder();
+
     private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> chronicleHashInstanceBuilder;
     private Wire inWire = null;
     private Wire outWire = null;
@@ -227,6 +228,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         long transactionId = inWire.read(TRANSACTION_ID).int64();
         timestamp = inWire.read(TIME_STAMP).int64();
         channelId = inWire.read(CHANNEL_ID).int16();
+
+        final StringBuilder methodName = Wires.acquireStringBuilder();
         inWire.read(METHOD_NAME).text(methodName);
 
         if (!incompleteWork.isEmpty()) {

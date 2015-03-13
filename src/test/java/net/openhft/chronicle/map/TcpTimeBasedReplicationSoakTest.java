@@ -6,10 +6,7 @@ import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.mockito.Mockito;
 
 import java.io.Closeable;
@@ -104,6 +101,7 @@ public class TcpTimeBasedReplicationSoakTest {
     }
 
 
+    @Ignore
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
 
