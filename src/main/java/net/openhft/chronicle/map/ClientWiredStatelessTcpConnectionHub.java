@@ -23,6 +23,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.RemoteCallTimeoutException;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.impl.util.CloseablesManager;
+import net.openhft.chronicle.map.MapWireHandler.EventId;
 import net.openhft.chronicle.network2.event.EventGroup;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
@@ -38,7 +39,7 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static net.openhft.chronicle.map.ClientWiredStatelessChronicleMap.EventId.APPLICATION_VERSION;
+import static net.openhft.chronicle.map.MapWireHandler.EventId.APPLICATION_VERSION;
 import static net.openhft.chronicle.map.MapWireHandler.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
 
@@ -233,7 +234,7 @@ public class ClientWiredStatelessTcpConnectionHub {
     @NotNull
     public String serverApplicationVersion(short channelID) {
         TextWire wire = new TextWire(Bytes.elasticByteBuffer());
-        String result = proxyReturnString(APPLICATION_VERSION.toString(), channelID, wire);
+        String result = proxyReturnString(APPLICATION_VERSION, channelID, wire);
         return (result == null) ? "" : result;
     }
 
@@ -306,9 +307,9 @@ public class ClientWiredStatelessTcpConnectionHub {
 
             final Wire wire = proxyReplyThrowable(timeoutTime, transactionId);
 
-            // handle an exception if the message contains the IS_EXCEPTION field
-            if (wire.read(() -> "IS_EXCEPTION").bool()) {
-                final String text = wire.read(() -> "EXCEPTION").text();
+            // handle an exception if the message contains the isException field
+            if (wire.read(() -> "isException").bool()) {
+                final String text = wire.read(() -> "exception").text();
                 throw new RuntimeException(text);
             }
             return wire;
@@ -363,7 +364,7 @@ public class ClientWiredStatelessTcpConnectionHub {
                 System.out.println("\n--------------------------------\n" +
                         "client read:\n\n" + Bytes.toDebugString(intWire.bytes()));
 
-                long transactionId0 = intWire.read(() -> "TRANSACTION_ID").int64();
+                long transactionId0 = intWire.read(MapWireHandlerBuilder.Fields.transactionId).int64();
 
 
                 // check the transaction id is reasonable
@@ -552,7 +553,7 @@ public class ClientWiredStatelessTcpConnectionHub {
     }
 
 
-    private long proxySend(@NotNull final String methodName,
+    private long proxySend(@NotNull final EventId methodName,
                            final long startTime,
                            short channelID,
                            @NotNull final Wire wire) {
@@ -564,7 +565,7 @@ public class ClientWiredStatelessTcpConnectionHub {
         outBytesLock().lock();
         try {
             long transactionId = writeHeader(startTime, channelID, wire);
-            wire.write(() -> "METHOD_NAME").text(methodName);
+            wire.write(MapWireHandlerBuilder.Fields.methodName).text(methodName.toString());
             writeSocket(wire);
             return transactionId;
         } finally {
@@ -574,13 +575,13 @@ public class ClientWiredStatelessTcpConnectionHub {
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
-    String proxyReturnString(@NotNull final String messageId, short channelID) {
+    String proxyReturnString(@NotNull final EventId messageId, short channelID) {
         return proxyReturnString(messageId, channelID, outWire);
     }
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
-    String proxyReturnString(@NotNull final String messageId, short channelID, Wire outWire) {
+    String proxyReturnString(@NotNull final EventId messageId, short channelID, Wire outWire) {
         final long startTime = System.currentTimeMillis();
         long transactionId;
 
@@ -596,7 +597,7 @@ public class ClientWiredStatelessTcpConnectionHub {
         // receive
         inBytesLock().lock();
         try {
-            return proxyReply(timeoutTime, transactionId).read(() -> "RESULT").text();
+            return proxyReply(timeoutTime, transactionId).read(() -> "result").text();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -617,10 +618,10 @@ public class ClientWiredStatelessTcpConnectionHub {
         startTime(startTime);
 
         long transactionId = nextUniqueTransaction(startTime);
-        wire.write(TYPE).text("MAP");
-        wire.write(TRANSACTION_ID).int64(transactionId);
-        wire.write(TIME_STAMP).int64(startTime);
-        wire.write(CHANNEL_ID).int16(channelID);
+        wire.write(type).text("MAP");
+        wire.write(MapWireHandlerBuilder.Fields.transactionId).int64(transactionId);
+        wire.write(timeStamp).int64(startTime);
+        wire.write(channelId).int16(channelID);
 
         return transactionId;
     }

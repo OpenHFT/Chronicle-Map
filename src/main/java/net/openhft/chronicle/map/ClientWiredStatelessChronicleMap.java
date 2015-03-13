@@ -34,7 +34,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
-import static net.openhft.chronicle.map.ClientWiredStatelessChronicleMap.EventId.*;
+import static net.openhft.chronicle.map.MapWireHandler.EventId;
+import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
 
 
 /**
@@ -135,7 +136,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         if (key == null || value == null)
             throw new NullPointerException();
 
-        return proxyReturnObject(PUT_IF_ABSENT.toString(), key, value, vClass);
+        return proxyReturnObject(PUT_IF_ABSENT, key, value, vClass);
     }
 
     @SuppressWarnings("NullableProblems")
@@ -159,7 +160,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     public V replace(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
-        return proxyReturnObject(REPLACE.toString(), key, value, vClass);
+        return proxyReturnObject(REPLACE, key, value, vClass);
     }
 
     public int size() {
@@ -204,7 +205,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
     @NotNull
     public String serverPersistedDataVersion() {
-        return hub.proxyReturnString(PERSISTED_DATA_VERSION.toString(), channelID);
+        return hub.proxyReturnString(PERSISTED_DATA_VERSION, channelID);
     }
 
     public boolean isEmpty() {
@@ -212,7 +213,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     public boolean containsKey(Object key) {
-        return proxyReturnBooleanK(CONTAINS_KEY.toString(), (K) key);
+        return proxyReturnBooleanK(CONTAINS_KEY, (K) key);
     }
 
     @NotNull
@@ -221,7 +222,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     public boolean containsValue(Object value) {
-        return proxyReturnBooleanV(CONTAINS_VALUE.toString(), (V) value);
+        return proxyReturnBooleanV(CONTAINS_VALUE, (V) value);
     }
 
     public long longSize() {
@@ -234,7 +235,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     public V get(Object key) {
-        return proxyReturnObject(vClass, GET.toString(), (K) key);
+        return proxyReturnObject(vClass, GET, (K) key);
     }
 
     @Nullable
@@ -257,15 +258,15 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     public V remove(Object key) {
         if (key == null)
             throw keyNotNullNPE();
-        return proxyReturnObject(vClass, removeReturnsNull ? REMOVE_WITHOUT_ACC.toString() : REMOVE.toString(), (K) key);
+        return proxyReturnObject(vClass, removeReturnsNull ? REMOVE_WITHOUT_ACC : REMOVE, (K) key);
     }
 
     @Override
     public void createChannel(short channelID) {
         proxyReturnVoid(
                 () -> {
-                    writeField(Fields.METHOD_NAME, "CREATE_CHANNEL");
-                    hub.outWire().write(Fields.ARG_1).int16(channelID);
+                    hub.outWire().write(Fields.methodName).text(CREATE_CHANNEL.toString());
+                    hub.outWire().write(Fields.arg1).int16(channelID);
                 });
     }
 
@@ -290,22 +291,20 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
                 assert hub.outBytesLock().isHeldByCurrentThread();
                 hub.markSize(wire);
                 hub.startTime(startTime);
-                wire.write(Fields.TYPE).text("MAP");
-                wire.write(Fields.TRANSACTION_ID).int64(transactionId);
-                wire.write(Fields.TIME_STAMP).int64(startTime);
-                wire.write(Fields.CHANNEL_ID).int16(channelID);
-                writeField(Fields.METHOD_NAME, "PUT_ALL");
-
-
+                wire.write(Fields.type).text("MAP");
+                wire.write(Fields.transactionId).int64(transactionId);
+                wire.write(Fields.timeStamp).int64(startTime);
+                wire.write(Fields.channelId).int16(channelID);
+                hub.outWire().write(Fields.methodName).text(PUT_ALL.toString());
 
                 while (iterator.hasNext()) {
 
                     Map.Entry<? extends K, ? extends V> e = iterator.next();
 
 
-                    hub.outWire().write(Fields.HAS_NEXT).bool(iterator.hasNext());
-                    writeField(Fields.ARG_1, e.getKey());
-                    writeField(Fields.ARG_2, e.getValue());
+                    hub.outWire().write(Fields.hasNext).bool(iterator.hasNext());
+                    writeField(Fields.arg1, e.getKey());
+                    writeField(Fields.arg2, e.getValue());
 
                     if (wire.bytes().remaining() < wire.bytes().capacity() * 0.5)
                         break OUTER;
@@ -331,7 +330,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     public V put(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
-        return proxyReturnObject(putReturnsNull ? PUT_WITHOUT_ACC.toString() : PUT.toString(), key, value, vClass);
+        return proxyReturnObject(putReturnsNull ? PUT_WITHOUT_ACC : PUT, key, value, vClass);
     }
 
     @Nullable
@@ -346,14 +345,14 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     public void clear() {
-        proxyReturnVoid(() -> writeField(Fields.METHOD_NAME, CLEAR.toString()));
+        proxyReturnVoid(() -> writeField(Fields.methodName, CLEAR.toString()));
     }
 
 
     @NotNull
     public Set<K> keySet() {
         final Set<K> usingCollection = new HashSet<K>();
-        readChunked(kClass, "KEY_SET", usingCollection);
+        readChunked(kClass, KEY_SET, usingCollection);
         return usingCollection;
     }
 
@@ -361,10 +360,10 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     @NotNull
     public Collection<V> values() {
         final List<V> usingCollection = new ArrayList<>();
-        return readChunked(vClass, "VALUES", usingCollection);
+        return readChunked(vClass, VALUES, usingCollection);
     }
 
-    private <E, A extends Collection<E>> Collection<E> readChunked(Class<E> vClass1, String values, A usingCollection) {
+    private <E, A extends Collection<E>> Collection<E> readChunked(Class<E> vClass1, EventId values, A usingCollection) {
         final long startTime = System.currentTimeMillis();
 
         // send
@@ -381,14 +380,14 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
                 final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
 
                 while (wireIn.bytes().remaining() > 0) {
-                    boolean bool = wireIn.read(Fields.HAS_NEXT).bool();
+                    boolean bool = wireIn.read(Fields.hasNext).bool();
                     if (bool) {
-                        usingCollection.add(readObject(Fields.RESULT, wireIn, null, vClass1));
+                        usingCollection.add(readObject(Fields.result, wireIn, null, vClass1));
                     } else
                         break OUTER;
 
                     // todo process the exception
-                    boolean isException = wireIn.read(Fields.IS_EXCEPTION).bool();
+                    boolean isException = wireIn.read(Fields.isException).bool();
                 }
 
             } finally {
@@ -407,7 +406,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         final Map<K, V> result = new HashMap<K, V>();
         final long startTime = System.currentTimeMillis();
         // send
-        final long transactionId = proxySend("ENTRY_SET", startTime);
+        final long transactionId = proxySend(ENTRY_SET, startTime);
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 
@@ -420,18 +419,18 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
                 final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
 
                 while (wireIn.bytes().remaining() > 0) {
-                    boolean bool = wireIn.read(Fields.HAS_NEXT).bool();
+                    boolean bool = wireIn.read(Fields.hasNext).bool();
                     if (bool) {
                         result.put(
-                                readK(Fields.RESULT_KEY, wireIn, null),
-                                readV(Fields.RESULT_VALUE, wireIn, null));
+                                readK(Fields.resultKey, wireIn, null),
+                                readV(Fields.resultValue, wireIn, null));
                     } else
                         break OUTER;
 
 
                     if (wireIn.bytes().remaining() > 0) {
                         // todo process the exception
-                        boolean isException = wireIn.read(Fields.IS_EXCEPTION).bool();
+                        boolean isException = wireIn.read(Fields.isException).bool();
                     }
                 }
 
@@ -457,7 +456,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         // receive
         hub.inBytesLock().lock();
         try {
-            return hub.proxyReply(timeoutTime, transactionId).read(Fields.RESULT).int64();
+            return hub.proxyReply(timeoutTime, transactionId).read(Fields.result).int64();
         } finally {
             hub.inBytesLock().unlock();
         }
@@ -503,7 +502,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
             final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
 
-            if (wireIn.read(Fields.RESULT_IS_NULL).bool())
+            if (wireIn.read(Fields.resultIsNull).bool())
                 return null;
 
             return readV(argName, wireIn, usingValue);
@@ -589,7 +588,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         hub.inBytesLock().lock();
         try {
             final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
-            return wireIn.read(Fields.RESULT).bool();
+            return wireIn.read(Fields.result).bool();
         } finally {
             hub.inBytesLock().unlock();
         }
@@ -604,7 +603,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         hub.inBytesLock().lock();
         try {
             final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
-            return wireIn.read(Fields.RESULT).int32();
+            return wireIn.read(Fields.result).int32();
         } finally {
             hub.inBytesLock().unlock();
         }
@@ -619,9 +618,9 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         hub.outBytesLock().lock();
         try {
             transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
-            writeField(Fields.METHOD_NAME, methodName);
-            writeField(Fields.ARG_1, key);
-            writeField(Fields.ARG_2, value);
+            hub.outWire().write(Fields.methodName).text(methodName.toString());
+            writeField(Fields.arg1, key);
+            writeField(Fields.arg2, value);
 
             hub.writeSocket(hub.outWire());
         } finally {
@@ -640,10 +639,10 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         hub.outBytesLock().lock();
         try {
             transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
-            writeField(Fields.METHOD_NAME, methodName);
-            writeField(Fields.ARG_1, key);
-            writeField(Fields.ARG_2, value1);
-            writeField(Fields.ARG_3, value2);
+            hub.outWire().write(Fields.methodName).text(methodName.toString());
+            writeField(Fields.arg1, key);
+            writeField(Fields.arg2, value1);
+            writeField(Fields.arg3, value2);
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -654,13 +653,13 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBooleanV(@NotNull final String methodName, V value) {
+    private boolean proxyReturnBooleanV(@NotNull final EventId methodName, V value) {
         final long startTime = System.currentTimeMillis();
         return readBoolean(proxySend(methodName, startTime, value), startTime);
     }
 
     @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBooleanK(@NotNull final String methodName, K key) {
+    private boolean proxyReturnBooleanK(@NotNull final EventId methodName, K key) {
         final long startTime = System.currentTimeMillis();
 
         return readBoolean(proxySend(methodName, startTime, key), startTime);
@@ -675,7 +674,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         hub.outBytesLock().lock();
         try {
             transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
-            writeField(Fields.METHOD_NAME, methodName);
+            hub.outWire().write(Fields.methodName).text(methodName.toString());
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -693,7 +692,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         hub.outBytesLock().lock();
         try {
             transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
-            writeField(Fields.METHOD_NAME, methodName);
+            hub.outWire().write(Fields.methodName).text(methodName.toString());
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -731,7 +730,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         hub.outBytesLock().lock();
         try {
             transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
-            writeField(Fields.METHOD_NAME, methodName);
+            hub.outWire().write(Fields.methodName).text(methodName.toString());
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -742,7 +741,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
 
     @Nullable
-    private <R> R proxyReturnObject(@NotNull final String methodName, K key, V value, Class<V> resultType) {
+    private <R> R proxyReturnObject(@NotNull final EventId methodName, K key, V value, Class<V> resultType) {
 
         final long startTime = System.currentTimeMillis();
         long transactionId;
@@ -753,9 +752,9 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
             assert !hub.inBytesLock().isHeldByCurrentThread();
 
             transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
-            writeField(Fields.METHOD_NAME, methodName);
-            writeField(Fields.ARG_1, key);
-            writeField(Fields.ARG_2, value);
+            hub.outWire().write(Fields.methodName).text(methodName.toString());
+            writeField(Fields.arg1, key);
+            writeField(Fields.arg2, value);
             hub.writeSocket(hub.outWire());
 
         } finally {
@@ -766,7 +765,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
             return null;
 
         if (resultType == vClass)
-            return (R) readValue(Fields.RESULT, transactionId, startTime, null);
+            return (R) readValue(Fields.result, transactionId, startTime, null);
 
         else
             throw new UnsupportedOperationException("class of type class=" + resultType + " is not " +
@@ -774,7 +773,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     @Nullable
-    private <R> R proxyReturnObject(Class<R> rClass, @NotNull final String methodName, Object key) {
+    private <R> R proxyReturnObject(Class<R> rClass, @NotNull final EventId methodName, Object key) {
         final long startTime = System.currentTimeMillis();
 
         long transactionId;
@@ -785,19 +784,19 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
             return null;
 
         if (rClass == vClass)
-            return (R) readValue(Fields.RESULT, transactionId, startTime, null);
+            return (R) readValue(Fields.result, transactionId, startTime, null);
         else
             throw new UnsupportedOperationException("class of type class=" + rClass + " is not " +
                     "supported");
     }
 
-    private long proxySend(String methodName, long startTime, Object arg1) {
+    private long proxySend(EventId methodName, long startTime, Object arg1) {
         long transactionId;
         hub.outBytesLock().lock();
         try {
             transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
-            writeField(Fields.METHOD_NAME, methodName);
-            writeField(Fields.ARG_1, arg1);
+            hub.outWire().write(Fields.methodName).text(methodName.toString());
+            writeField(Fields.arg1, arg1);
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -806,12 +805,12 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
 
-    private long proxySend(String methodName, long startTime) {
+    private long proxySend(EventId methodName, long startTime) {
         long transactionId;
         hub.outBytesLock().lock();
         try {
             transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
-            writeField(Fields.METHOD_NAME, methodName);
+            hub.outWire().write(Fields.methodName).text(methodName.toString());
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -819,12 +818,12 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         return transactionId;
     }
 
-    private boolean eventReturnsNull(@NotNull String methodName) {
+    private boolean eventReturnsNull(@NotNull EventId methodName) {
 
         switch (methodName) {
-            case "PUT_ALL_WITHOUT_ACC":
-            case "PUT_WITHOUT_ACC":
-            case "REMOVE_WITHOUT_ACC":
+            case PUT_ALL_WITHOUT_ACC:
+            case PUT_WITHOUT_ACC:
+            case REMOVE_WITHOUT_ACC:
                 return true;
             default:
                 return false;
@@ -845,7 +844,8 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
 
-    static enum EventId {
+/*    static enum EventId {
+        CREATE_CHANNEL,
         HEARTBEAT,
         STATEFUL_UPDATE,
         LONG_SIZE,
@@ -876,7 +876,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         PUT_MAPPED,
         KEY_BUILDER,
         VALUE_BUILDER
-    }
+    }*/
 
     class Entry implements Map.Entry<K, V> {
 
