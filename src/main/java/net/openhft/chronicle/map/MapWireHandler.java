@@ -236,7 +236,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
             }
 
-
             if (EventId.remoteIdentifier.contentEquals(methodName)) {
                 this.remoteIdentifier = inWire.read(result).int8();
                 return;
@@ -253,16 +252,19 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             }
 
             if (containsKey.contentEquals(methodName)) {
+                // todo remove the    toByteArray(..)
                 write(b -> outWire.write(result).bool(b.delegate.containsKey(toByteArray(inWire, arg1))));
                 return;
             }
 
             if (containsValue.contentEquals(methodName)) {
+                // todo remove the    toByteArray(..)
                 write(b -> outWire.write(result).bool(b.delegate.containsValue(toByteArray(inWire, arg1))));
                 return;
             }
 
             if (get.contentEquals(methodName)) {
+                // todo remove the    toByteArray(..)
                 writeValueUsingDelegate(map -> map.get(toByteArray(inWire, arg1)));
                 return;
             }
@@ -293,11 +295,10 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
 
                     // todo fix this this is a hack to get to work for now.
-                    // todo may use somehting like :
+                    // todo may use something like :
                     // todo bytesMap.replace(reader, reader, timestamp, identifier());
 
-
-                    VanillaChronicleMap map = bytesMap.delegate;
+                    final VanillaChronicleMap map = bytesMap.delegate;
                     byte[] result = (byte[]) map.replace(
                             toByteArray(inWire, arg1),
                             toByteArray(inWire, arg2));
@@ -329,6 +330,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
                 // todo call bytesMap.putIfAbsent(reader, reader, timestamp, identifier());
                 writeValueFromBytes(b -> {
+                    // todo remove the    toByteArray(..)
                     byte[] key = MapWireHandler.this.toByteArray(inWire, arg1);
                     byte[] value = MapWireHandler.this.toByteArray(inWire, arg2);
                     return ((Map<byte[], byte[]>) b.delegate).putIfAbsent(key, value);
@@ -381,6 +383,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
     }
 
+    // todo remove
     private byte[] toByteArray(net.openhft.lang.io.Bytes bytes) {
         if (bytes == null || bytes.remaining() == 0)
             return new byte[]{};
@@ -393,6 +396,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         return result;
     }
 
+    // todo remove
     private byte[] toBytes(WireKey fieldName) {
 
         final Wire wire = inWire;
@@ -452,7 +456,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 for (; ; ) {
 
                     hasNext = inWire.read(Fields.hasNext).bool();
-
+                    // todo remove  toBytes()
                     collectData.put(toBytes(arg1), toBytes(arg2));
 
                     if (!hasNext) {

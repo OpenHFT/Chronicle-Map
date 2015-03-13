@@ -308,10 +308,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
                     if (wire.bytes().remaining() < wire.bytes().capacity() * 0.5)
                         break OUTER;
-
                 }
-
-
 
             } finally {
                 hub.writeSocket(hub.outWire());
