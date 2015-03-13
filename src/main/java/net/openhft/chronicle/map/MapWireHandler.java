@@ -448,12 +448,18 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
             @Override
             public void run() {
-                boolean hasNext = inWire.read(HAS_NEXT).bool();
-                collectData.put(toBytes(ARG_1), toBytes(ARG_2));
-                if (!hasNext) {
-                    // the old code assumed that all the data would fit into a single buffer
-                    // this assumption is invalid
-                    if (!collectData.isEmpty()) {
+
+
+                // the old code assumed that ALL of the entries would fit into a single buffer
+                // this assumption is invalid
+                boolean hasNext;
+                for(;;) {
+
+                    hasNext = inWire.read(HAS_NEXT).bool();
+
+                    collectData.put(toBytes(ARG_1), toBytes(ARG_2));
+
+                    if (!hasNext) {
 
                         incompleteWork.remove(transactionId);
 
@@ -463,8 +469,10 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                             bytesMap.delegate.putAll((Map) collectData);
                             return null;
                         });
-
+                        return;
                     }
+                    if (inWire.bytes().remaining() == 0)
+                        return;
                 }
             }
         };

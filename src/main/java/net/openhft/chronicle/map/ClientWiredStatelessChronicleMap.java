@@ -277,6 +277,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         Set<? extends Map.Entry<? extends K, ? extends V>> entries = map.entrySet();
         Iterator<? extends Map.Entry<? extends K, ? extends V>> iterator = entries.iterator();
 
+        OUTER:
         while (iterator.hasNext()) {
             hub.outBytesLock().lock();
             try {
@@ -295,17 +296,26 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
                 wire.write(Fields.CHANNEL_ID).int16(channelID);
                 writeField(Fields.METHOD_NAME, "PUT_ALL");
 
-                Map.Entry<? extends K, ? extends V> e = iterator.next();
-
-                hub.outWire().write(Fields.HAS_NEXT).bool(iterator.hasNext());
-
-                writeField(Fields.ARG_1, e.getKey());
-                writeField(Fields.ARG_2, e.getValue());
 
 
-                hub.writeSocket(hub.outWire());
+                while (iterator.hasNext()) {
+
+                    Map.Entry<? extends K, ? extends V> e = iterator.next();
+
+
+                    hub.outWire().write(Fields.HAS_NEXT).bool(iterator.hasNext());
+                    writeField(Fields.ARG_1, e.getKey());
+                    writeField(Fields.ARG_2, e.getValue());
+
+                    if (wire.bytes().remaining() < wire.bytes().capacity() * 0.5)
+                        break OUTER;
+
+                }
+
+
 
             } finally {
+                hub.writeSocket(hub.outWire());
                 hub.outBytesLock().unlock();
             }
 
