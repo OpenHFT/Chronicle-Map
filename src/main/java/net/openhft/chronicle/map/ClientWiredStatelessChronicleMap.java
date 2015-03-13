@@ -199,38 +199,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
     @NotNull
     public String toString() {
-        final Map<K, V> result = toMap();
-        return result.toString();
-    }
-
-    private Map<K, V> toMap() {
-        final long startTime = System.currentTimeMillis();
-        final Map<K, V> result = new HashMap<K, V>();
-
-        // send
-        final long transactionId = proxySend("ENTRY_SET", startTime);
-        assert !hub.outBytesLock().isHeldByCurrentThread();
-        final long timeoutTime = startTime + hub.timeoutMs;
-
-        for (; ; ) {
-
-            // receive
-            hub.inBytesLock().lock();
-            try {
-                final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
-
-                if (wireIn.read(Fields.HAS_NEXT).bool()) {
-                    result.put(
-                            readK(Fields.RESULT_KEY, wireIn, null),
-                            readV(Fields.RESULT_VALUE, wireIn, null));
-                } else
-                    break;
-
-            } finally {
-                hub.inBytesLock().unlock();
-            }
-        }
-        return result;
+        return toMap().toString();
     }
 
     @NotNull
@@ -376,44 +345,29 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
 
+    @NotNull
     public Set<K> keySet() {
-        final long startTime = System.currentTimeMillis();
-        final Set<K> result = new HashSet<K>();
-        // send
-        final long transactionId = proxySend("KEY_SET", startTime);
-        assert !hub.outBytesLock().isHeldByCurrentThread();
-        final long timeoutTime = startTime + hub.timeoutMs;
-
-        for (; ; ) {
-
-            // receive
-            hub.inBytesLock().lock();
-            try {
-                final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
-
-
-                if (wireIn.read(Fields.HAS_NEXT).bool()) {
-                    K k = readK(Fields.RESULT, wireIn, null);
-                    result.add(k);
-                } else
-                    break;
-
-            } finally {
-                hub.inBytesLock().unlock();
-            }
-        }
-        return result;
+        final Set<K> usingCollection = new HashSet<K>();
+        readChunked(kClass, "KEY_SET", usingCollection);
+        return usingCollection;
     }
 
 
+    @NotNull
     public Collection<V> values() {
+        final List<V> usingCollection = new ArrayList<>();
+        return readChunked(vClass, "VALUES", usingCollection);
+    }
+
+    private <E, A extends Collection<E>> Collection<E> readChunked(Class<E> vClass1, String values, A usingCollection) {
         final long startTime = System.currentTimeMillis();
-        final Set<V> result = new HashSet<V>();
+
         // send
-        final long transactionId = proxySend("VALUES", startTime);
+        final long transactionId = proxySend(values, startTime);
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 
+        OUTER:
         for (; ; ) {
 
             // receive
@@ -421,30 +375,38 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
             try {
                 final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
 
+                while (wireIn.bytes().remaining() > 0) {
+                    boolean bool = wireIn.read(Fields.HAS_NEXT).bool();
+                    if (bool) {
+                        usingCollection.add(readObject(Fields.RESULT, wireIn, null, vClass1));
+                    } else
+                        break OUTER;
 
-                if (wireIn.read(Fields.HAS_NEXT).bool()) {
-                    V v = readV(Fields.RESULT, wireIn, null);
-                    result.add(v);
-                } else
-                    break;
+                    // todo process the exception
+                    boolean isException = wireIn.read(Fields.IS_EXCEPTION).bool();
+                }
 
             } finally {
                 hub.inBytesLock().unlock();
             }
         }
-        return result;
+        return usingCollection;
     }
 
     @NotNull
     public Set<Map.Entry<K, V>> entrySet() {
-        final long startTime = System.currentTimeMillis();
-        final Map<K, V> result = new HashMap<K, V>();
+        return toMap().entrySet();
+    }
 
+    private Map<K, V> toMap() {
+        final Map<K, V> result = new HashMap<K, V>();
+        final long startTime = System.currentTimeMillis();
         // send
         final long transactionId = proxySend("ENTRY_SET", startTime);
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 
+        OUTER:
         for (; ; ) {
 
             // receive
@@ -452,18 +414,24 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
             try {
                 final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
 
-                if (wireIn.read(Fields.HAS_NEXT).bool()) {
-                    result.put(
-                            readK(Fields.RESULT_KEY, wireIn, null),
-                            readV(Fields.RESULT_VALUE, wireIn, null));
-                } else
-                    break;
+                while (wireIn.bytes().remaining() > 0) {
+                    boolean bool = wireIn.read(Fields.HAS_NEXT).bool();
+                    if (bool) {
+                        result.put(
+                                readK(Fields.RESULT_KEY, wireIn, null),
+                                readV(Fields.RESULT_VALUE, wireIn, null));
+                    } else
+                        break OUTER;
+
+                    // todo process the exception
+                    boolean isException = wireIn.read(Fields.IS_EXCEPTION).bool();
+                }
 
             } finally {
                 hub.inBytesLock().unlock();
             }
         }
-        return result.entrySet();
+        return result;
     }
 
     /**
@@ -500,7 +468,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         if (value instanceof Byte)
             wire.write(fieldName).int8((Byte) value);
         else if (value instanceof Character)
-            wire.write(fieldName).text(((Character) value).toString());
+            wire.write(fieldName).text(value.toString());
         else if (value instanceof Short)
             wire.write(fieldName).int16((Short) value);
         else if (value instanceof Integer)
@@ -537,14 +505,22 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     private V readV(Fields argName, Wire wireIn, V usingValue) {
-        if (StringBuilder.class.isAssignableFrom(vClass)) {
+        return readObject(argName, wireIn, usingValue, vClass);
+    }
+
+    private K readK(Fields argName, Wire wireIn, K usingValue) {
+        return readObject(argName, wireIn, usingValue, kClass);
+    }
+
+    private <E> E readObject(Fields argName, Wire wireIn, E usingValue, Class<E> clazz) {
+        if (StringBuilder.class.isAssignableFrom(clazz)) {
             wireIn.read(argName).text((StringBuilder) usingValue);
             return usingValue;
-        } else if (Marshallable.class.isAssignableFrom(vClass)) {
+        } else if (Marshallable.class.isAssignableFrom(clazz)) {
 
             if (usingValue == null)
                 try {
-                    V v = vClass.newInstance();
+                    E v = clazz.newInstance();
                     wireIn.read(argName).marshallable((Marshallable) v);
                     return v;
                 } catch (Exception e) {
@@ -554,39 +530,39 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
             wireIn.read(argName).marshallable((Marshallable) usingValue);
             return usingValue;
 
-        } else if (String.class.isAssignableFrom(vClass)) {
+        } else if (String.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (V) wireIn.read(argName).text();
+            return (E) wireIn.read(argName).text();
 
-        } else if (Long.class.isAssignableFrom(vClass)) {
+        } else if (Long.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (V) (Long) wireIn.read(argName).int64();
-        } else if (Double.class.isAssignableFrom(vClass)) {
+            return (E) (Long) wireIn.read(argName).int64();
+        } else if (Double.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (V) (Double) wireIn.read(argName).float64();
+            return (E) (Double) wireIn.read(argName).float64();
 
-        } else if (Integer.class.isAssignableFrom(vClass)) {
+        } else if (Integer.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (V) (Integer) wireIn.read(argName).int32();
+            return (E) (Integer) wireIn.read(argName).int32();
 
-        } else if (Float.class.isAssignableFrom(vClass)) {
+        } else if (Float.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (V) (Float) wireIn.read(argName).float32();
+            return (E) (Float) wireIn.read(argName).float32();
 
-        } else if (Short.class.isAssignableFrom(vClass)) {
+        } else if (Short.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (V) (Short) wireIn.read(argName).int16();
+            return (E) (Short) wireIn.read(argName).int16();
 
-        } else if (Character.class.isAssignableFrom(vClass)) {
+        } else if (Character.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
             final String text = wireIn.read(argName).text();
             if (text == null || text.length() == 0)
                 return null;
-            return (V) (Character) text.charAt(0);
+            return (E) (Character) text.charAt(0);
 
-        } else if (Byte.class.isAssignableFrom(vClass)) {
+        } else if (Byte.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (V) (Byte) wireIn.read(argName).int8();
+            return (E) (Byte) wireIn.read(argName).int8();
 
 
         } else {
@@ -594,32 +570,6 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         }
     }
 
-    private K readK(Fields argName, Wire wireIn, K usingValue) {
-        if (StringBuilder.class.isAssignableFrom(kClass)) {
-            wireIn.read(argName).text((StringBuilder) usingValue);
-            return usingValue;
-        } else if (Marshallable.class.isAssignableFrom(kClass)) {
-
-            if (usingValue == null)
-                try {
-                    K v = kClass.newInstance();
-                    wireIn.read(argName).marshallable((Marshallable) v);
-                    return v;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-
-            wireIn.read(argName).marshallable((Marshallable) usingValue);
-            return usingValue;
-
-        } else if (String.class.isAssignableFrom(vClass)) {
-            //noinspection unchecked
-            return (K) wireIn.read(argName).text();
-
-        } else {
-            throw new IllegalStateException("unsupported type");
-        }
-    }
 
     private boolean readBoolean(long transactionId, long startTime) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
