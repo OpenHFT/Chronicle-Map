@@ -460,6 +460,7 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         writeField(fieldName, value, hub.outWire());
     }
 
+
     private void writeField(Fields fieldName, Object value, Wire wire) {
 
         assert hub.outBytesLock().isHeldByCurrentThread();
@@ -632,8 +633,9 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         try {
             transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
             writeField(Fields.METHOD_NAME, methodName);
-            writeField(Fields.ARG_1, value1);
-            writeField(Fields.ARG_2, value2);
+            writeField(Fields.ARG_1, key);
+            writeField(Fields.ARG_2, value1);
+            writeField(Fields.ARG_3, value2);
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();

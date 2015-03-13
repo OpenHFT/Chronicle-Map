@@ -240,8 +240,6 @@ class MapWireHandler<K, V> implements WireHandler {
                 return;
             }
 
-
-
             if ("CREATE_CHANNEL".contentEquals(methodName)) {
                 writeVoid(() -> {
                     short channelId1 = inWire.read(ARG_1).int16();
@@ -304,9 +302,26 @@ class MapWireHandler<K, V> implements WireHandler {
             }
 
             if ("REPLACE".contentEquals(methodName)) {
-                writeValue(bytesMap -> {
-                    final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2);
-                    return bytesMap.replace(reader, reader);
+                write(bytesMap -> {
+
+
+                    // todo fix this this is a hack to get to work for now.
+                    // todo may use somehting like :
+                    // todo bytesMap.replace(reader, reader, timestamp, identifier());
+
+
+                    VanillaChronicleMap map = bytesMap.delegate;
+                    byte[] result = (byte[]) map.replace(
+                            toByteArray(inWire, ARG_1),
+                            toByteArray(inWire, ARG_2));
+
+                    boolean isNull = result == null || result.length == 0;
+                    outWire.write(() -> "RESULT_IS_NULL").bool(isNull);
+                    if (!isNull) {
+                        outWire.write(() -> "RESULT");
+                        outWire.bytes().write(result);
+                    }
+
                 });
                 return;
             }
@@ -723,7 +738,9 @@ class MapWireHandler<K, V> implements WireHandler {
         bytesMap.output = null;
         try {
             process.accept(bytesMap);
+            outWire.write(IS_EXCEPTION).bool(false);
         } catch (Exception e) {
+            outWire.write(IS_EXCEPTION).bool(true);
             LOG.error("", e);
         }
 
