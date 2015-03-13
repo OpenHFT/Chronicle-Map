@@ -158,7 +158,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
                         if (hasNext)
                             c.accept(iterator);
-
                     });
 
                     if (!hasNext)
@@ -372,11 +371,16 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             }
 
             if ("PUT_IF_ABSENT".contentEquals(methodName)) {
-                writeValue(bytesMap -> {
-                    final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2);
-                    // todo call bytesMap.putIfAbsent(reader, reader, timestamp, identifier());
-                    return bytesMap.putIfAbsent(reader, reader);
+
+
+                // todo call bytesMap.putIfAbsent(reader, reader, timestamp, identifier());
+                writeValueFromBytes(b -> {
+                    byte[] key = MapWireHandler.this.toByteArray(inWire, ARG_1);
+                    byte[] value = MapWireHandler.this.toByteArray(inWire, ARG_2);
+                    return ((Map<byte[], byte[]>) b.delegate).putIfAbsent(key, value);
                 });
+
+
                 return;
             }
 
@@ -633,11 +637,17 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
     @SuppressWarnings("SameReturnValue")
     private void writeValue(final Function<BytesChronicleMap, net.openhft.lang.io.Bytes> f) {
+        writeValueFromBytes(b -> toByteArray(f.apply(b)));
+    }
+
+
+    @SuppressWarnings("SameReturnValue")
+    private void writeValueFromBytes(final Function<BytesChronicleMap, byte[]> f) {
 
         write(b -> {
 
-            byte[] fromBytes = toByteArray(f.apply(b));
-            boolean isNull = fromBytes.length == 0;
+            byte[] fromBytes = f.apply(b);
+            boolean isNull = fromBytes == null || fromBytes.length == 0;
             outWire.write(RESULT_IS_NULL).bool(isNull);
             if (isNull)
                 return;
@@ -647,7 +657,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
         });
     }
-
 
     @SuppressWarnings("SameReturnValue")
     private void writeValueUsingDelegate(final Function<ChronicleMap<byte[], byte[]>, byte[]> f) {
