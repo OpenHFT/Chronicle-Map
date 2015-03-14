@@ -22,14 +22,14 @@ import net.openhft.chronicle.hash.ChronicleHashStatelessClientBuilder;
 import net.openhft.lang.MemoryUnit;
 
 import java.io.IOException;
-import java.lang.Class;import java.lang.IllegalStateException;import java.lang.Override;import java.lang.String;import java.net.InetSocketAddress;
+import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Rob Austin.
  */
- public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
+public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
         ChronicleHashStatelessClientBuilder<ClientWiredChronicleMapStatelessBuilder<K, V>,
                 ChronicleMap<K, V>>,
         MapBuilder<ClientWiredChronicleMapStatelessBuilder<K, V>> {
@@ -41,27 +41,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
     private short channelID;
     private boolean doHandShaking;
 
-    public ClientWiredChronicleMapStatelessBuilder(InetSocketAddress remoteAddress, Class keyClass, Class valueClass, short channelID) {
+    public ClientWiredChronicleMapStatelessBuilder(
+            InetSocketAddress remoteAddress, Class keyClass, Class valueClass, short channelID) {
         this.keyClass = keyClass;
         this.valueClass = valueClass;
         this.remoteAddress = remoteAddress;
         this.channelID = channelID;
     }
 
-    public ClientWiredChronicleMapStatelessBuilder(ClientWiredStatelessTcpConnectionHub hub, Class keyClass, Class valueClass, short channelID) {
+    public ClientWiredChronicleMapStatelessBuilder(
+            ClientWiredStatelessTcpConnectionHub hub, Class keyClass, Class valueClass,
+            short channelID) {
         this.keyClass = keyClass;
         this.valueClass = valueClass;
         this.hub = hub;
         this.channelID = channelID;
     }
-
-    // This method is meaningful, despite you could call of().create(), because Java 7 doesn't
-    // infer type parameters if case of chained calls, like this; and then you couldn't omit class
-    // name. Then it is
-    // ChronicleMapStatelessClientBuilder.<Integer, Integer>.of(addr).create()
-    // vs
-    // createClientOf(addr) // static import
-    // -- the second is really shorter.
 
 
     private InetSocketAddress remoteAddress;
@@ -89,7 +84,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
     }
 
     @Override
-    public ClientWiredChronicleMapStatelessBuilder<K, V> removeReturnsNull(boolean removeReturnsNull) {
+    public ClientWiredChronicleMapStatelessBuilder<K, V> removeReturnsNull(
+            boolean removeReturnsNull) {
         this.removeReturnsNull = removeReturnsNull;
         return this;
     }
@@ -136,7 +132,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
             hub = new ClientWiredStatelessTcpConnectionHub(this, localIdentifier, doHandShaking);
 
         if (!used.getAndSet(true)) {
-            return new ClientWiredStatelessChronicleMap<K, V>(this, keyClass, valueClass, channelID);
+            return new ClientWiredStatelessChronicleMap<K, V>(
+                    this, keyClass, valueClass, channelID);
 
         } else {
             throw new IllegalStateException(
@@ -158,7 +155,4 @@ import java.util.concurrent.atomic.AtomicBoolean;
     public ClientWiredStatelessTcpConnectionHub hub() {
         return hub;
     }
-
-
-
 }

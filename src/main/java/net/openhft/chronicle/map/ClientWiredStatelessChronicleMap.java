@@ -40,9 +40,11 @@ import static net.openhft.chronicle.map.ClientWiredStatelessChronicleMap.EventId
 /**
  * @author Rob Austin.
  */
-class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
+class ClientWiredStatelessChronicleMap<K, V>
+        implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientWiredStatelessChronicleMap.class);
+    private static final Logger LOG =
+            LoggerFactory.getLogger(ClientWiredStatelessChronicleMap.class);
 
     private final ClientWiredStatelessTcpConnectionHub hub;
 
@@ -53,10 +55,9 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     private boolean removeReturnsNull;
     private short channelID;
 
-    public ClientWiredStatelessChronicleMap(@NotNull final ClientWiredChronicleMapStatelessBuilder config,
-                                            @NotNull final Class kClass,
-                                            @NotNull final Class vClass,
-                                            short channelID) {
+    public ClientWiredStatelessChronicleMap(
+            @NotNull final ClientWiredChronicleMapStatelessBuilder config,
+            @NotNull final Class kClass, @NotNull final Class vClass, short channelID) {
         this.channelID = channelID;
         hub = config.hub;
         this.putReturnsNull = config.putReturnsNull();
@@ -140,19 +141,19 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
     @SuppressWarnings("NullableProblems")
     public boolean remove(Object key, Object value) {
-
         if (key == null)
             throw new NullPointerException();
 
-        return value != null && proxyReturnBoolean(REMOVE_WITH_VALUE.toString(), (K) key, (V) value);
-
+        return value != null &&
+                proxyReturnBoolean(REMOVE_WITH_VALUE.toString(), (K) key, (V) value);
     }
 
     @SuppressWarnings("NullableProblems")
     public boolean replace(K key, V oldValue, V newValue) {
         if (key == null || oldValue == null || newValue == null)
             throw new NullPointerException();
-        return proxyReturnBoolean(REPLACE_WITH_OLD_AND_NEW_VALUE.toString(), key, oldValue, newValue);
+        return proxyReturnBoolean(
+                REPLACE_WITH_OLD_AND_NEW_VALUE.toString(), key, oldValue, newValue);
     }
 
     @SuppressWarnings("NullableProblems")
@@ -257,7 +258,8 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     public V remove(Object key) {
         if (key == null)
             throw keyNotNullNPE();
-        return proxyReturnObject(vClass, removeReturnsNull ? REMOVE_WITHOUT_ACC.toString() : REMOVE.toString(), (K) key);
+        return proxyReturnObject(vClass,
+                removeReturnsNull ? REMOVE_WITHOUT_ACC.toString() : REMOVE.toString(), (K) key);
     }
 
     @Override
@@ -326,7 +328,8 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     public V put(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
-        return proxyReturnObject(putReturnsNull ? PUT_WITHOUT_ACC.toString() : PUT.toString(), key, value, vClass);
+        return proxyReturnObject(putReturnsNull ? PUT_WITHOUT_ACC.toString() : PUT.toString(),
+                key, value, vClass);
     }
 
     @Nullable
@@ -359,7 +362,8 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         return readChunked(vClass, "VALUES", usingCollection);
     }
 
-    private <E, A extends Collection<E>> Collection<E> readChunked(Class<E> vClass1, String values, A usingCollection) {
+    private <E, A extends Collection<E>> Collection<E> readChunked(
+            Class<E> vClass1, String values, A usingCollection) {
         final long startTime = System.currentTimeMillis();
 
         // send
@@ -484,7 +488,8 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
         } else if (value instanceof Marshallable) {
             wire.write(fieldName).marshallable((Marshallable) value);
         } else {
-            throw new IllegalStateException("type=" + value.getClass() + " is unsupported, it must either be of type Marshallable or CharSequence");
+            throw new IllegalStateException("type=" + value.getClass() +
+                    " is unsupported, it must either be of type Marshallable or CharSequence");
         }
     }
 
@@ -628,7 +633,8 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
     }
 
     @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBoolean(@NotNull final String methodName, K key, V value1, V value2) {
+    private boolean proxyReturnBoolean(
+            @NotNull final String methodName, K key, V value1, V value2) {
         final long startTime = System.currentTimeMillis();
 
         long transactionId;
@@ -737,7 +743,8 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
 
 
     @Nullable
-    private <R> R proxyReturnObject(@NotNull final String methodName, K key, V value, Class<V> resultType) {
+    private <R> R proxyReturnObject(
+            @NotNull final String methodName, K key, V value, Class<V> resultType) {
 
         final long startTime = System.currentTimeMillis();
         long transactionId;
@@ -764,8 +771,8 @@ class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Clon
             return (R) readValue(Fields.RESULT, transactionId, startTime, null);
 
         else
-            throw new UnsupportedOperationException("class of type class=" + resultType + " is not " +
-                    "supported");
+            throw new UnsupportedOperationException("class of type class=" + resultType +
+                    " is not supported");
     }
 
     @Nullable

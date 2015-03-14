@@ -65,7 +65,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     @NotNull
 
     private final StringBuilder methodName = new StringBuilder();
-    private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> chronicleHashInstanceBuilder;
+    private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory;
     private Wire inWire = null;
     private Wire outWire = null;
     private final Consumer writeElement = new Consumer<Iterator<byte[]>>() {
@@ -102,24 +102,24 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     private byte localIdentifier;
     private long timestamp;
     private short channelId;
-    private List<Replica> channelList;
+    private List<Replica> channels;
     private ReplicationHub hub;
     private byte remoteIdentifier;
 
 
-    public MapWireHandler(@NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> chronicleHashInstanceBuilder,
-                          @NotNull final ReplicationHub hub,
-                          byte localIdentifier,
-                          @NotNull final List<Replica> channelList) {
-        this(chronicleHashInstanceBuilder, hub);
-        this.channelList = channelList;
+    public MapWireHandler(
+            @NotNull Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
+            @NotNull ReplicationHub hub, byte localIdentifier, @NotNull List<Replica> channels) {
+        this(mapFactory, hub);
+        this.channels = channels;
         this.localIdentifier = localIdentifier;
 
 
     }
 
-    public MapWireHandler(Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> chronicleHashInstanceBuilder, ReplicationHub hub) {
-        this.chronicleHashInstanceBuilder = chronicleHashInstanceBuilder;
+    public MapWireHandler(Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
+                          ReplicationHub hub) {
+        this.mapFactory = mapFactory;
         this.hub = hub;
     }
 
@@ -136,8 +136,9 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     }
 
 
-    private void writeChunked(long transactionId, @NotNull final Function<BytesChronicleMap, Iterator> function,
-                              @NotNull final Consumer<Iterator> c) throws StreamCorruptedException {
+    private void writeChunked(
+            long transactionId, @NotNull final Function<BytesChronicleMap, Iterator> function,
+            @NotNull final Consumer<Iterator> c) throws StreamCorruptedException {
 
         final BytesChronicleMap m = bytesMap(channelId);
         final Iterator<byte[]> iterator = function.apply(m);
@@ -258,7 +259,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             if ("CREATE_CHANNEL".contentEquals(methodName)) {
                 writeVoid(() -> {
                     short channelId1 = inWire.read(ARG_1).int16();
-                    chronicleHashInstanceBuilder.get().replicatedViaChannel(hub.createChannel(channelId1)).create();
+                    mapFactory.get().replicatedViaChannel(hub.createChannel(channelId1)).create();
                     return null;
                 });
                 return;
@@ -281,12 +282,14 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             }
 
             if ("CONTAINS_KEY".contentEquals(methodName)) {
-                write(b -> outWire.write(RESULT).bool(b.delegate.containsKey(toByteArray(inWire, ARG_1))));
+                write(b -> outWire.write(RESULT).bool(
+                        b.delegate.containsKey(toByteArray(inWire, ARG_1))));
                 return;
             }
 
             if ("CONTAINS_VALUE".contentEquals(methodName)) {
-                write(b -> outWire.write(RESULT).bool(b.delegate.containsValue(toByteArray(inWire, ARG_1))));
+                write(b -> outWire.write(RESULT).bool(
+                        b.delegate.containsValue(toByteArray(inWire, ARG_1))));
                 return;
             }
 
@@ -297,7 +300,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
             if ("PUT".contentEquals(methodName)) {
                 writeValue(b -> {
-                    final net.openhft.lang.io.Bytes reader = MapWireHandler.this.toReader(inWire, ARG_1, ARG_2);
+                    final net.openhft.lang.io.Bytes reader =
+                            MapWireHandler.this.toReader(inWire, ARG_1, ARG_2);
 
                     // todo call return b.put(reader, reader, timestamp, identifier());
                     return b.put(reader, reader);
@@ -364,7 +368,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             if ("REMOVE_WITH_VALUE".contentEquals(methodName)) {
                 write(bytesMap -> {
                     final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2);
-                    // todo call   outWire.write(RESULT).bool(bytesMap.remove(reader, reader, timestamp, identifier()));
+                    // todo call   outWire.write(RESULT)
+                    // .bool(bytesMap.remove(reader, reader, timestamp, identifier()));
                     outWire.write(RESULT).bool(bytesMap.remove(reader, reader));
                 });
                 return;
@@ -394,7 +399,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             //  if (len > 4)
             if (EventGroup.IS_DEBUG) {
                 long len = outWire.bytes().position() - SIZE_OF_SIZE;
-                System.out.println("--------------------------------------------\nserver wrote:\n\n" + Bytes.toDebugString(outWire.bytes(), SIZE_OF_SIZE, len));
+                System.out.println("--------------------------------------------\nserver wrote:\n\n"
+                        + Bytes.toDebugString(outWire.bytes(), SIZE_OF_SIZE, len));
             }
         }
 
@@ -486,7 +492,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     }
 
     private byte identifier() {
-        // if the client provides a remote identifier then we will use that otherwise we will use the local identifier
+        // if the client provides a remote identifier then we will use that otherwise we will use
+        // the local identifier
         return remoteIdentifier == 0 ? localIdentifier : remoteIdentifier;
     }
 
@@ -597,11 +604,11 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     private ReplicatedChronicleMap map(short channelId) {
 
         // todo this cast is a bit of a hack, improve later
-        final ReplicatedChronicleMap replicas =
-                (ReplicatedChronicleMap) channelList.get(channelId);
+        final ReplicatedChronicleMap map =
+                (ReplicatedChronicleMap) channels.get(channelId);
 
-        if (replicas != null)
-            return replicas;
+        if (map != null)
+            return map;
 
         throw new IllegalStateException();
     }
@@ -736,7 +743,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
      */
     @SuppressWarnings("UnusedDeclaration")
     private void showOutWire() {
-        System.out.println("pos=" + outWire.bytes().position() + ",bytes=" + Bytes.toDebugString(outWire.bytes(), 0, outWire.bytes().position()));
+        System.out.println("pos=" + outWire.bytes().position() + ",bytes=" +
+                Bytes.toDebugString(outWire.bytes(), 0, outWire.bytes().position()));
     }
 
     @SuppressWarnings("SameReturnValue")

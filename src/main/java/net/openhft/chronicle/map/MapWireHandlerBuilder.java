@@ -34,11 +34,9 @@ import java.util.function.Supplier;
 public class MapWireHandlerBuilder {
 
     public static <K, V> WireHandler of(
-            @NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> chronicleHashInstanceBuilder,
-            @NotNull final ReplicationHub hub,
-            byte localIdentifier,
-            @NotNull final List<Replica> channelList) {
-        return new MapWireHandler<K, V>(chronicleHashInstanceBuilder, hub, localIdentifier, channelList);
+            @NotNull Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
+            @NotNull ReplicationHub hub, byte localIdentifier, @NotNull List<Replica> channels) {
+        return new MapWireHandler<>(mapFactory, hub, localIdentifier, channels);
     }
 
     public static enum Fields implements WireKey {

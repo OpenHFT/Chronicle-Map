@@ -84,7 +84,9 @@ public class ClientWiredStatelessTcpConnectionHub {
     private boolean doHandShaking;
 
 
-    public ClientWiredStatelessTcpConnectionHub(ClientWiredChronicleMapStatelessBuilder config, byte localIdentifier, boolean doHandShaking) {
+    public ClientWiredStatelessTcpConnectionHub(
+            ClientWiredChronicleMapStatelessBuilder config, byte localIdentifier,
+            boolean doHandShaking) {
         this.localIdentifier = localIdentifier;
         this.doHandShaking = doHandShaking;
         this.remoteAddress = config.remoteAddress();
@@ -132,7 +134,8 @@ public class ClientWiredStatelessTcpConnectionHub {
             LOG.warn("DIFFERENT CHRONICLE-MAP VERSIONS: The Chronicle-Map-Server and " +
                     "Stateless-Client are on different " +
                     "versions, " +
-                    " we suggest that you use the same version, server=" + serverApplicationVersion(channelID) + ", " +
+                    " we suggest that you use the same version, server=" +
+                    serverApplicationVersion(channelID) + ", " +
                     "client=" + clientVersion);
         }
     }
@@ -268,7 +271,8 @@ public class ClientWiredStatelessTcpConnectionHub {
                     writeSocket(wire, timeoutTime);
                     break;
 
-                } catch (@NotNull java.nio.channels.ClosedChannelException | ClosedConnectionException e) {
+                } catch (@NotNull java.nio.channels.ClosedChannelException |
+                        ClosedConnectionException e) {
                     checkTimeout(timeoutTime);
                     lazyConnect(timeoutMs, remoteAddress);
                 }
@@ -347,8 +351,8 @@ public class ClientWiredStatelessTcpConnectionHub {
                 // reads just the size
                 readSocket(SIZE_OF_SIZE, timeoutTime);
 
-                final int messageSize = intWire.bytes().readUnsignedShort(intWire.bytes().position());
-
+                final int messageSize =
+                        intWire.bytes().readUnsignedShort(intWire.bytes().position());
 
                 assert messageSize > 0 : "Invalid message size " + messageSize;
                 assert messageSize < 16 << 20 : "Invalid message size " + messageSize;
@@ -487,8 +491,8 @@ public class ClientWiredStatelessTcpConnectionHub {
         long outBytesPosition = outWire.bytes().position();
 
 
-        // if we have other threads waiting to send and the buffer is not full, let the other threads
-        // write to the buffer
+        // if we have other threads waiting to send and the buffer is not full,
+        // let the other threads write to the buffer
         if (outBytesLock().hasQueuedThreads() &&
                 outBytesPosition + largestChunkSoFar <= tcpBufferSize) {
             return;
