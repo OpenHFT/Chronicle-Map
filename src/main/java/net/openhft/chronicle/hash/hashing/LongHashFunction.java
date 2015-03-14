@@ -63,6 +63,7 @@ public abstract class LongHashFunction implements Serializable {
      * CityHash64 algorithm, version 1.1</a> without seed values. This implementation produce
      * equal results for equal input on platforms with different {@link ByteOrder}, but is slower
      * on big-endian platforms than on little-endian.
+     * @return an instance of LongHashFunction
      *
      * @see #city_1_1(long)
      * @see #city_1_1(long, long)
@@ -91,7 +92,7 @@ public abstract class LongHashFunction implements Serializable {
      * CityHash64 algorithm, version 1.1</a> using the two given seed values. This implementation
      * produce equal results for equal input on platforms with different {@link ByteOrder}, but
      * is slower on big-endian platforms than on little-endian.
-     *
+     * @return an instance of LongHashFunction
      * @see #city_1_1()
      * @see #city_1_1(long)
      */
@@ -136,6 +137,8 @@ public abstract class LongHashFunction implements Serializable {
      * value is interpreted in {@linkplain ByteOrder#nativeOrder() native} byte order. For example,
      * the result of {@code hashLong(v)} call is identical to the result of
      * {@code hashLongs(new long[] {v})} call for any {@code long} value.
+     * @param input the input
+     * @return a hashLong
      */
     public abstract long hashLong(long input);
 
@@ -145,6 +148,8 @@ public abstract class LongHashFunction implements Serializable {
      * value is interpreted in {@linkplain ByteOrder#nativeOrder() native} byte order. For example,
      * the result of {@code hashInt(v)} call is identical to the result of
      * {@code hashInts(new int[] {v})} call for any {@code int} value.
+           * @param input the input
+     * @return a hashLong
      */
     public abstract long hashInt(int input);
 
@@ -156,6 +161,9 @@ public abstract class LongHashFunction implements Serializable {
      * {@code hashShorts(new short[] {v})} call for any {@code short} value.
      * As a consequence, {@code hashShort(v)} call produce always the same result as {@code
      * hashChar((char) v)}.
+     *
+     * @param input the input
+     * @return a hashShort
      */
     public abstract long hashShort(short input);
 
@@ -175,12 +183,16 @@ public abstract class LongHashFunction implements Serializable {
      * {@code LongHashFunction} methods that accept sequences of bytes. For example, the result of
      * {@code hashByte(v)} call is identical to the result of
      * {@code hashBytes(new byte[] {v})} call for any {@code byte} value.
+     *
+     * @param input the input
+     * @return a hashByte
      */
     public abstract long hashByte(byte input);
 
     /**
      * Returns the hash code for the empty (zero-length) bytes sequence,
      * for example {@code hashBytes(new byte[0])}.
+     * @return a hash
      */
     public abstract long hashVoid();
 

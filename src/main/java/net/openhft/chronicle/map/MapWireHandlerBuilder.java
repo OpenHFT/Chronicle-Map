@@ -21,7 +21,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.network2.WireHandler;
-
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,22 +38,23 @@ public class MapWireHandlerBuilder {
         return new MapWireHandler<>(mapFactory, hub, localIdentifier, channels);
     }
 
+    // note : peter has asked for these to be in camel case
     public static enum Fields implements WireKey {
-        HAS_NEXT,
-        TIME_STAMP,
-        CHANNEL_ID,
-        METHOD_NAME,
-        TYPE,
-        TRANSACTION_ID,
-        RESULT,
-        RESULT_KEY,
-        RESULT_VALUE,
-        ARG_1,
-        ARG_2,
-        ARG_3,
-        IS_EXCEPTION,
-        EXCEPTION,
-        RESULT_IS_NULL
+        hasNext,
+        timeStamp,
+        channelId,
+        methodName,
+        type,
+        transactionId,
+        result,
+        resultKey,
+        resultValue,
+        arg1,
+        arg2,
+        arg3,
+        isException,
+        exception,
+        resultIsNull
     }
 }
 

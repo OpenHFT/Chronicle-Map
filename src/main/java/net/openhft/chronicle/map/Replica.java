@@ -164,8 +164,7 @@ public interface Replica extends Closeable {
          * writeExternalEntry()}. This method is typically called when we receive a remote
          * replication event, this event could originate from either a remote {@code put(K key, V
          *value)} or {@code remove(Object key)}
-         * @param copies
-         * @param context
+         * @param context       the Bytes Replicated Context
          * @param source       bytes to read an entry from
          */
         void readExternalEntry(
@@ -210,7 +209,7 @@ public interface Replica extends Closeable {
         /**
          * Called whenever a put() or remove() has occurred to a replicating map.
          *
-         * @param context       the entry you will receive, this does not have to be locked, as
+         * @param entry       the entry you will receive, this does not have to be locked, as
          *                    locking is already provided from the caller.
          * @param chronicleId only assigned when clustering
          * @return {@code false} if this entry should be ignored because the identifier of the
@@ -220,13 +219,13 @@ public interface Replica extends Closeable {
         public abstract boolean onEntry(final Bytes entry, final int chronicleId);
 
         /**
-         * Called just after {@link #onEntry(VanillaContext, int)}. No-op by default.
+         * Called just after {@link  #onEntry(net.openhft.lang.io.Bytes, int)}. No-op by default.
          */
         public void onAfterEntry() {
         }
 
         /**
-         * Called just before {@link #onEntry(VanillaContext, int)}. No-op by default.
+         * Called just before {@link #onEntry(net.openhft.lang.io.Bytes, int)}. No-op by default.
          */
         public void onBeforeEntry() {
         }
