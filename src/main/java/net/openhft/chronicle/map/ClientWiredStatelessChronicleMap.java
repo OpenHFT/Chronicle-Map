@@ -199,7 +199,12 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     @NotNull
     public String toString() {
-        return toMap().toString();
+        int maxNumEntries = 100;
+        if (size() > 100) {
+            return toMap(maxNumEntries).toString() + "....";
+        } else {
+            return toMap().toString();
+        }
     }
 
     @NotNull
@@ -404,6 +409,53 @@ class ClientWiredStatelessChronicleMap<K, V>
         final long startTime = System.currentTimeMillis();
         // send
         final long transactionId = proxySend(entrySet, startTime);
+        assert !hub.outBytesLock().isHeldByCurrentThread();
+        final long timeoutTime = startTime + hub.timeoutMs;
+
+        OUTER:
+        for (; ; ) {
+
+            // receive
+            hub.inBytesLock().lock();
+            try {
+                final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
+
+                while (wireIn.bytes().remaining() > 0) {
+                    boolean bool = wireIn.read(Fields.hasNext).bool();
+                    if (bool) {
+                        result.put(
+                                readK(Fields.resultKey, wireIn, null),
+                                readV(Fields.resultValue, wireIn, null));
+                    } else
+                        break OUTER;
+
+
+                    if (wireIn.bytes().remaining() > 0) {
+                        // todo process the exception
+                        boolean isException = wireIn.read(Fields.isException).bool();
+                    }
+                }
+
+            } finally {
+                hub.inBytesLock().unlock();
+            }
+        }
+        return result;
+    }
+
+
+    /**
+     * returns a chunk of entries
+     *
+     * @return
+     * @param maxNumEntries
+     */
+    private Map<K, V> toMap(int maxNumEntries) {
+        final Map<K, V> result = new HashMap<K, V>();
+        final long startTime = System.currentTimeMillis();
+
+        // send
+        final long transactionId = proxySend(entrySetRestricted, maxNumEntries, startTime);
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 
@@ -818,6 +870,21 @@ class ClientWiredStatelessChronicleMap<K, V>
         }
         return transactionId;
     }
+
+    private long proxySend(EventId methodName, long arg1, long startTime) {
+        long transactionId;
+        hub.outBytesLock().lock();
+        try {
+            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            hub.outWire().write(Fields.methodName).text(methodName.toString());
+            hub.outWire().write(Fields.arg1).int64(arg1);
+            hub.writeSocket(hub.outWire());
+        } finally {
+            hub.outBytesLock().unlock();
+        }
+        return transactionId;
+    }
+
 
     private boolean eventReturnsNull(@NotNull EventId methodName) {
 

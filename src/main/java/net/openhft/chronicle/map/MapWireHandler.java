@@ -117,12 +117,19 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         this.publishLater = wireHandlers;
     }
 
+    /**
+     * @param transactionId the transaction id
+     * @param function      provides that returns items bases on a BytesChronicleMap
+     * @param c             an iterator that contains items
+     * @param maxEntries    the maximum number of items that can be written
+     * @throws StreamCorruptedException
+     */
     private void writeChunked(
             long transactionId, @NotNull final Function<BytesChronicleMap, Iterator> function,
-            @NotNull final Consumer<Iterator> c) throws StreamCorruptedException {
+            @NotNull final Consumer<Iterator> c, long maxEntries) throws StreamCorruptedException {
 
         final BytesChronicleMap m = bytesMap(channelId);
-        final Iterator<byte[]> iterator = function.apply(m);
+        final Iterator iterator = function.apply(m);
 
         final WireHandler that = new WireHandler() {
 
@@ -132,7 +139,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 outWire.write(Fields.transactionId).int64(transactionId);
 
                 // this allows us to write more data than the buffer will allow
-                for (; ; ) {
+                for (int count = 0; count < maxEntries; count++) {
 
                     final boolean hasNext = iterator.hasNext();
 
@@ -140,8 +147,10 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
                         outWire.write(Fields.hasNext).bool(hasNext);
 
-                        if (hasNext)
+                        if (hasNext) {
                             c.accept(iterator);
+                        }
+
                     });
 
                     if (!hasNext)
@@ -161,6 +170,13 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         that.process(inWire, outWire);
 
     }
+
+    private void writeChunked(
+            long transactionId, @NotNull final Function<BytesChronicleMap, Iterator> function,
+            @NotNull final Consumer<Iterator> c) throws StreamCorruptedException {
+        writeChunked(transactionId, function, c, Long.MAX_VALUE);
+    }
+
 
     @Override
     public void process(Wire in, Wire out) throws StreamCorruptedException {
@@ -215,6 +231,12 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
             if (entrySet.contentEquals(methodName)) {
                 writeChunked(transactionId, m -> m.delegate.entrySet().iterator(), writeEntry);
+                return;
+            }
+
+            if (entrySetRestricted.contentEquals(methodName)) {
+                long maxEntries = inWire.read(arg1).int64();
+                writeChunked(transactionId, m -> m.delegate.entrySet().iterator(), writeEntry,maxEntries);
                 return;
             }
 
@@ -803,6 +825,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         keySet,
         values,
         entrySet,
+        entrySetRestricted,
         replace,
         replaceWithOldAndNewValue,
         putIfAbsent,
