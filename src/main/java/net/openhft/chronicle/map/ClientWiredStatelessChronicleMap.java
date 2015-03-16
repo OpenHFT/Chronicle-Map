@@ -56,6 +56,10 @@ class ClientWiredStatelessChronicleMap<K, V>
     private boolean removeReturnsNull;
     private short channelID;
 
+
+    // used with toString()
+    private static final int MAX_NUM_ENTRIES = 20;
+
     public ClientWiredStatelessChronicleMap(
             @NotNull final ClientWiredChronicleMapStatelessBuilder config,
             @NotNull final Class kClass, @NotNull final Class vClass, short channelID) {
@@ -199,9 +203,10 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     @NotNull
     public String toString() {
-        int maxNumEntries = 100;
-        if (size() > 100) {
-            return toMap(maxNumEntries).toString() + "....";
+        if (size() > MAX_NUM_ENTRIES) {
+            StringBuilder s = new StringBuilder(toMap(MAX_NUM_ENTRIES).toString());
+            s.deleteCharAt(s.length() - 1).append(", ...");
+            return s.toString();
         } else {
             return toMap().toString();
         }
