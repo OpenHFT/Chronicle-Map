@@ -139,9 +139,11 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 outWire.write(Fields.transactionId).int64(transactionId);
 
                 // this allows us to write more data than the buffer will allow
-                for (int count = 0; count < maxEntries; count++) {
+                for (int count = 0; ; count++) {
 
-                    final boolean hasNext = iterator.hasNext();
+                    boolean finished = count == maxEntries;
+
+                    final boolean hasNext = iterator.hasNext() && !finished;
 
                     write(map -> {
 
@@ -401,10 +403,10 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 long len = outWire.bytes().position() - SIZE_OF_SIZE;
                 if (len == 0) {
                     System.out.println("--------------------------------------------\n" +
-                            "server wrote:\n\n<EMPTY>");
+                            "server writes:\n\n<EMPTY>");
                 } else {
                     System.out.println("--------------------------------------------\n" +
-                            "server wrote:\n\n" +
+                            "server writes:\n\n" +
                             Bytes.toDebugString(outWire.bytes(), SIZE_OF_SIZE, len));
                 }
             }

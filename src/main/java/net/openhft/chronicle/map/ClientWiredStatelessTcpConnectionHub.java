@@ -107,12 +107,12 @@ public class ClientWiredStatelessTcpConnectionHub {
         try {
             SocketChannel socketChannel = AbstractChannelReplicator.openSocketChannel(closeables);
 
-            if (socketChannel.connect(remoteAddress)) {
-
+            if (socketChannel.connect(remoteAddress))
                 clientChannel = socketChannel;
-            }
+
 
         } catch (IOException e) {
+            LOG.error("", e);
             if (closeables != null) closeables.closeQuietly();
             clientChannel = null;
         }
@@ -457,12 +457,23 @@ public class ClientWiredStatelessTcpConnectionHub {
     private void readSocket(int requiredNumberOfBytes, long timeoutTime) throws IOException {
 
         assert inBytesLock().isHeldByCurrentThread();
-        ByteBuffer buffer = inWireByteBuffer();
 
-        buffer.limit(buffer.position() + requiredNumberOfBytes);
+        ByteBuffer buffer = inWireByteBuffer();
+        int position = buffer.position();
+
+        try {
+            buffer.limit(position + requiredNumberOfBytes);
+        } catch (IllegalArgumentException e) {
+            buffer = inWireByteBuffer(position + requiredNumberOfBytes);
+            buffer.limit(position + requiredNumberOfBytes);
+            buffer.position(position);
+
+        }
+
         long start = buffer.position();
 
         while (buffer.position() - start < requiredNumberOfBytes) {
+            assert clientChannel != null;
 
             int len = clientChannel.read(buffer);
 
@@ -474,6 +485,11 @@ public class ClientWiredStatelessTcpConnectionHub {
     }
 
     private ByteBuffer inWireByteBuffer() {
+        return (ByteBuffer) intWire.bytes().underlyingObject();
+    }
+
+    private ByteBuffer inWireByteBuffer(long requiredCapacity) {
+        intWire.bytes().ensureCapacity(requiredCapacity);
         return (ByteBuffer) intWire.bytes().underlyingObject();
     }
 
@@ -505,7 +521,7 @@ public class ClientWiredStatelessTcpConnectionHub {
 
         if (EventGroup.IS_DEBUG ) {
             System.out.println("\n--------------------------------------------\n" +
-                    "client wrote:\n\n" + Bytes.toDebugString(outBuffer));
+                    "client writes:\n\n" + Bytes.toDebugString(outBuffer));
         }
 
         outBuffer.position(0);

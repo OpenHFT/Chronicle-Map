@@ -478,11 +478,14 @@ class ClientWiredStatelessChronicleMap<K, V>
 
 
                     if (wireIn.bytes().remaining() > 0) {
-                        // todo process the exception
                         boolean isException = wireIn.read(Fields.isException).bool();
+                        if (isException)
+                            throw new RuntimeException(wireIn.read(Fields.result).text());
                     }
                 }
 
+            } catch (Exception e) {
+                throw e;
             } finally {
                 hub.inBytesLock().unlock();
             }
