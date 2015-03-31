@@ -45,7 +45,7 @@ public class MapWireHandlerBuilder {
         channelId,
         methodName,
         type,
-        transactionId,
+        tid,   // transactionId
         result,
         resultKey,
         resultValue,

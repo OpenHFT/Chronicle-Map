@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.map.MapWireHandlerBuilder.Fields;
 import net.openhft.chronicle.wire.Marshallable;
@@ -282,7 +283,7 @@ class ClientWiredStatelessChronicleMap<K, V>
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {
 
         final long startTime = System.currentTimeMillis();
-        long transactionId = hub.nextUniqueTransaction(startTime);
+        long tid = hub.nextUniqueTransaction(startTime);
 
         Set<? extends Map.Entry<? extends K, ? extends V>> entries = map.entrySet();
         Iterator<? extends Map.Entry<? extends K, ? extends V>> iterator = entries.iterator();
@@ -301,7 +302,7 @@ class ClientWiredStatelessChronicleMap<K, V>
                 hub.markSize(wire);
                 hub.startTime(startTime);
                 wire.write(Fields.type).text("MAP");
-                wire.write(Fields.transactionId).int64(transactionId);
+                wire.write(Fields.tid).int64(tid);
                 wire.write(Fields.timeStamp).int64(startTime);
                 wire.write(Fields.channelId).int16(channelID);
                 hub.outWire().write(Fields.methodName).text(putAll.toString());
@@ -315,7 +316,8 @@ class ClientWiredStatelessChronicleMap<K, V>
                     writeField(Fields.arg1, e.getKey());
                     writeField(Fields.arg2, e.getValue());
 
-                    if (wire.bytes().remaining() < wire.bytes().capacity() * 0.5)
+                    final Bytes<?> bytes = wire.bytes();
+                    if (bytes.remaining() < bytes.capacity() * 0.5)
                         break OUTER;
                 }
 
@@ -329,7 +331,7 @@ class ClientWiredStatelessChronicleMap<K, V>
 
         // wait for the transaction id to be received, this will only be received once the
         // last chunk has been processed
-        readVoid(transactionId, startTime);
+        readVoid(tid, startTime);
     }
 
 
@@ -374,7 +376,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         final long startTime = System.currentTimeMillis();
 
         // send
-        final long transactionId = proxySend(values, startTime);
+        final long tid = proxySend(values, startTime);
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 
@@ -384,9 +386,10 @@ class ClientWiredStatelessChronicleMap<K, V>
             // receive
             hub.inBytesLock().lock();
             try {
-                final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
+                final Wire wireIn = hub.proxyReply(timeoutTime, tid);
 
-                while (wireIn.bytes().remaining() > 0) {
+                final Bytes<?> bytes = wireIn.bytes();
+                while (bytes.remaining() > 0) {
                     boolean bool = wireIn.read(Fields.hasNext).bool();
                     if (bool) {
                         usingCollection.add(readObject(Fields.result, wireIn, null, vClass1));
@@ -413,7 +416,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         final Map<K, V> result = new HashMap<K, V>();
         final long startTime = System.currentTimeMillis();
         // send
-        final long transactionId = proxySend(entrySet, startTime);
+        final long tid = proxySend(entrySet, startTime);
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 
@@ -423,9 +426,10 @@ class ClientWiredStatelessChronicleMap<K, V>
             // receive
             hub.inBytesLock().lock();
             try {
-                final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
+                final Wire wireIn = hub.proxyReply(timeoutTime, tid);
 
-                while (wireIn.bytes().remaining() > 0) {
+                final Bytes<?> bytes = wireIn.bytes();
+                while (bytes.remaining() > 0) {
                     boolean bool = wireIn.read(Fields.hasNext).bool();
                     if (bool) {
                         result.put(
@@ -435,7 +439,7 @@ class ClientWiredStatelessChronicleMap<K, V>
                         break OUTER;
 
 
-                    if (wireIn.bytes().remaining() > 0) {
+                    if (bytes.remaining() > 0) {
                         // todo process the exception
                         boolean isException = wireIn.read(Fields.isException).bool();
                     }
@@ -460,7 +464,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         final long startTime = System.currentTimeMillis();
 
         // send
-        final long transactionId = proxySend(entrySetRestricted, maxNumEntries, startTime);
+        final long tid = proxySend(entrySetRestricted, maxNumEntries, startTime);
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 
@@ -470,9 +474,10 @@ class ClientWiredStatelessChronicleMap<K, V>
             // receive
             hub.inBytesLock().lock();
             try {
-                final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
+                final Wire wireIn = hub.proxyReply(timeoutTime, tid);
 
-                while (wireIn.bytes().remaining() > 0) {
+                final Bytes<?> bytes = wireIn.bytes();
+                while (bytes.remaining() > 0) {
                     boolean bool = wireIn.read(Fields.hasNext).bool();
                     if (bool) {
                         result.put(
@@ -482,7 +487,7 @@ class ClientWiredStatelessChronicleMap<K, V>
                         break OUTER;
 
 
-                    if (wireIn.bytes().remaining() > 0) {
+                    if (bytes.remaining() > 0) {
                         boolean isException = wireIn.read(Fields.isException).bool();
                         if (isException)
                             throw new RuntimeException(wireIn.read(Fields.result).text());
@@ -506,14 +511,14 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
 
-    private long readLong(long transactionId, long startTime) {
+    private long readLong(long tid, long startTime) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 
         // receive
         hub.inBytesLock().lock();
         try {
-            return hub.proxyReply(timeoutTime, transactionId).read(Fields.result).int64();
+            return hub.proxyReply(timeoutTime, tid).read(Fields.result).int64();
         } finally {
             hub.inBytesLock().unlock();
         }
@@ -551,14 +556,14 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
 
-    private V readValue(Fields argName, long transactionId, long startTime, final V usingValue) {
+    private V readValue(Fields argName, long tid, long startTime, final V usingValue) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
         long timeoutTime = startTime + hub.timeoutMs;
 
         hub.inBytesLock().lock();
         try {
 
-            final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
+            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
 
             if (wireIn.read(Fields.resultIsNull).bool())
                 return null;
@@ -637,7 +642,7 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
 
-    private boolean readBoolean(long transactionId, long startTime) {
+    private boolean readBoolean(long tid, long startTime) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
 
         long timeoutTime = startTime + hub.timeoutMs;
@@ -645,14 +650,14 @@ class ClientWiredStatelessChronicleMap<K, V>
         // receive
         hub.inBytesLock().lock();
         try {
-            final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
+            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
             return wireIn.read(Fields.result).bool();
         } finally {
             hub.inBytesLock().unlock();
         }
     }
 
-    private int readInt(long transactionId, long startTime) {
+    private int readInt(long tid, long startTime) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
 
         long timeoutTime = startTime + hub.timeoutMs;
@@ -660,7 +665,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         // receive
         hub.inBytesLock().lock();
         try {
-            final Wire wireIn = hub.proxyReply(timeoutTime, transactionId);
+            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
             return wireIn.read(Fields.result).int32();
         } finally {
             hub.inBytesLock().unlock();
@@ -671,11 +676,11 @@ class ClientWiredStatelessChronicleMap<K, V>
     private boolean proxyReturnBoolean(@NotNull final String methodName, K key, V value) {
         final long startTime = System.currentTimeMillis();
 
-        long transactionId;
+        long tid;
 
         hub.outBytesLock().lock();
         try {
-            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.methodName).text(methodName.toString());
             writeField(Fields.arg1, key);
             writeField(Fields.arg2, value);
@@ -685,7 +690,7 @@ class ClientWiredStatelessChronicleMap<K, V>
             hub.outBytesLock().unlock();
         }
 
-        return readBoolean(transactionId, startTime);
+        return readBoolean(tid, startTime);
 
     }
 
@@ -694,10 +699,10 @@ class ClientWiredStatelessChronicleMap<K, V>
             @NotNull final String methodName, K key, V value1, V value2) {
         final long startTime = System.currentTimeMillis();
 
-        long transactionId;
+        long tid;
         hub.outBytesLock().lock();
         try {
-            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.methodName).text(methodName.toString());
             writeField(Fields.arg1, key);
             writeField(Fields.arg2, value1);
@@ -707,7 +712,7 @@ class ClientWiredStatelessChronicleMap<K, V>
             hub.outBytesLock().unlock();
         }
 
-        return readBoolean(transactionId, startTime);
+        return readBoolean(tid, startTime);
 
     }
 
@@ -728,36 +733,36 @@ class ClientWiredStatelessChronicleMap<K, V>
     private long proxyReturnLong(@NotNull final String methodName) {
         final long startTime = System.currentTimeMillis();
 
-        long transactionId;
+        long tid;
 
         hub.outBytesLock().lock();
         try {
-            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.methodName).text(methodName.toString());
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
         }
 
-        return readLong(transactionId, startTime);
+        return readLong(tid, startTime);
     }
 
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBoolean(@NotNull final String methodName) {
         final long startTime = System.currentTimeMillis();
 
-        long transactionId;
+        long tid;
 
         hub.outBytesLock().lock();
         try {
-            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.methodName).text(methodName.toString());
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
         }
 
-        return readBoolean(transactionId, startTime);
+        return readBoolean(tid, startTime);
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -765,18 +770,18 @@ class ClientWiredStatelessChronicleMap<K, V>
 
 
         final long startTime = System.currentTimeMillis();
-        long transactionId;
+        long tid;
 
         hub.outBytesLock().lock();
         try {
-            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
             r.run();
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
         }
 
-        readVoid(transactionId, startTime);
+        readVoid(tid, startTime);
     }
 
 
@@ -784,18 +789,18 @@ class ClientWiredStatelessChronicleMap<K, V>
     private int proxyReturnInt(@NotNull final String methodName) {
         final long startTime = System.currentTimeMillis();
 
-        long transactionId;
+        long tid;
 
         hub.outBytesLock().lock();
         try {
-            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.methodName).text(methodName.toString());
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
         }
 
-        return readInt(transactionId, startTime);
+        return readInt(tid, startTime);
     }
 
 
@@ -804,14 +809,14 @@ class ClientWiredStatelessChronicleMap<K, V>
             @NotNull final EventId methodName, K key, V value, Class<V> resultType) {
 
         final long startTime = System.currentTimeMillis();
-        long transactionId;
+        long tid;
 
         hub.outBytesLock().lock();
         try {
             assert hub.outBytesLock().isHeldByCurrentThread();
             assert !hub.inBytesLock().isHeldByCurrentThread();
 
-            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.methodName).text(methodName.toString());
             writeField(Fields.arg1, key);
             writeField(Fields.arg2, value);
@@ -825,7 +830,7 @@ class ClientWiredStatelessChronicleMap<K, V>
             return null;
 
         if (resultType == vClass)
-            return (R) readValue(Fields.result, transactionId, startTime, null);
+            return (R) readValue(Fields.result, tid, startTime, null);
 
         else
             throw new UnsupportedOperationException("class of type class=" + resultType +
@@ -837,60 +842,60 @@ class ClientWiredStatelessChronicleMap<K, V>
             Class<R> rClass, @NotNull final EventId methodName, Object key) {
         final long startTime = System.currentTimeMillis();
 
-        long transactionId;
+        long tid;
 
-        transactionId = proxySend(methodName, startTime, key);
+        tid = proxySend(methodName, startTime, key);
 
         if (eventReturnsNull(methodName))
             return null;
 
         if (rClass == vClass)
-            return (R) readValue(Fields.result, transactionId, startTime, null);
+            return (R) readValue(Fields.result, tid, startTime, null);
         else
             throw new UnsupportedOperationException("class of type class=" + rClass + " is not " +
                     "supported");
     }
 
     private long proxySend(EventId methodName, long startTime, Object arg1) {
-        long transactionId;
+        long tid;
         hub.outBytesLock().lock();
         try {
-            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.methodName).text(methodName.toString());
             writeField(Fields.arg1, arg1);
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
         }
-        return transactionId;
+        return tid;
     }
 
 
     private long proxySend(EventId methodName, long startTime) {
-        long transactionId;
+        long tid;
         hub.outBytesLock().lock();
         try {
-            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.methodName).text(methodName.toString());
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
         }
-        return transactionId;
+        return tid;
     }
 
     private long proxySend(EventId methodName, long arg1, long startTime) {
-        long transactionId;
+        long tid;
         hub.outBytesLock().lock();
         try {
-            transactionId = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.methodName).text(methodName.toString());
             hub.outWire().write(Fields.arg1).int64(arg1);
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
         }
-        return transactionId;
+        return tid;
     }
 
 
@@ -907,13 +912,13 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     }
 
-    private void readVoid(long transactionId, long startTime) {
+    private void readVoid(long tid, long startTime) {
         long timeoutTime = startTime + hub.timeoutMs;
 
         // receive
         hub.inBytesLock().lock();
         try {
-            hub.proxyReply(timeoutTime, transactionId);
+            hub.proxyReply(timeoutTime, tid);
         } finally {
             hub.inBytesLock().unlock();
         }

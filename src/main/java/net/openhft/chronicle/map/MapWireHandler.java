@@ -121,14 +121,14 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     }
 
     /**
-     * @param transactionId the transaction id
+     * @param tid the transaction id
      * @param function      provides that returns items bases on a BytesChronicleMap
      * @param c             an iterator that contains items
      * @param maxEntries    the maximum number of items that can be written
      * @throws StreamCorruptedException
      */
     private void writeChunked(
-            long transactionId, @NotNull final Function<BytesChronicleMap, Iterator> function,
+            long tid, @NotNull final Function<BytesChronicleMap, Iterator> function,
             @NotNull final Consumer<Iterator> c, long maxEntries) throws StreamCorruptedException {
 
         final BytesChronicleMap m = bytesMap(channelId);
@@ -139,7 +139,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             @Override
             public void process(Wire in, Wire out) throws StreamCorruptedException {
 
-                outWire.write(Fields.transactionId).int64(transactionId);
+                outWire.write(Fields.tid).int64(tid);
 
                 // this allows us to write more data than the buffer will allow
                 for (int count = 0; ; count++) {
@@ -178,9 +178,9 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     }
 
     private void writeChunked(
-            long transactionId, @NotNull final Function<BytesChronicleMap, Iterator> function,
+            long tid, @NotNull final Function<BytesChronicleMap, Iterator> function,
             @NotNull final Consumer<Iterator> c) throws StreamCorruptedException {
-        writeChunked(transactionId, function, c, Long.MAX_VALUE);
+        writeChunked(tid, function, c, Long.MAX_VALUE);
     }
 
 
@@ -200,7 +200,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
         // it is assumed by this point that the buffer has all the bytes in it for this message
 
-        long transactionId = inWire.read(Fields.transactionId).int64();
+        long tid = inWire.read(Fields.tid).int64();
         timestamp = inWire.read(timeStamp).int64();
         channelId = inWire.read(Fields.channelId).int16();
 
@@ -208,7 +208,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         inWire.read(Fields.methodName).text(methodName);
 
         if (!incompleteWork.isEmpty()) {
-            Runnable runnable = incompleteWork.get(transactionId);
+            Runnable runnable = incompleteWork.get(tid);
             if (runnable != null) {
                 runnable.run();
                 return;
@@ -227,33 +227,33 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             }
 
             if (keySet.contentEquals(methodName)) {
-                writeChunked(transactionId, map -> map.keySet().iterator(), writeElement);
+                writeChunked(tid, map -> map.keySet().iterator(), writeElement);
                 return;
             }
 
             if (values.contentEquals(methodName)) {
-                writeChunked(transactionId, map -> map.delegate.values().iterator(), writeElement);
+                writeChunked(tid, map -> map.delegate.values().iterator(), writeElement);
                 return;
             }
 
             if (entrySet.contentEquals(methodName)) {
-                writeChunked(transactionId, m -> m.delegate.entrySet().iterator(), writeEntry);
+                writeChunked(tid, m -> m.delegate.entrySet().iterator(), writeEntry);
                 return;
             }
 
             if (entrySetRestricted.contentEquals(methodName)) {
                 long maxEntries = inWire.read(arg1).int64();
-                writeChunked(transactionId, m -> m.delegate.entrySet().iterator(), writeEntry,maxEntries);
+                writeChunked(tid, m -> m.delegate.entrySet().iterator(), writeEntry,maxEntries);
                 return;
             }
 
             if (putAll.contentEquals(methodName)) {
-                putAll(transactionId);
+                putAll(tid);
                 return;
             }
 
             // write the transaction id
-            outWire.write(Fields.transactionId).int64(transactionId);
+            outWire.write(Fields.tid).int64(tid);
 
 
             if (createChannel.contentEquals(methodName)) {
@@ -461,7 +461,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         }
     }
 
-    private void putAll(long transactionId) {
+    private void putAll(long tid) {
 
         final BytesChronicleMap bytesMap = bytesMap(MapWireHandler.this.channelId);
 
@@ -469,7 +469,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             return;
 
         // note: a number of client threads can be using the same socket
-        Runnable runnable = incompleteWork.get(transactionId);
+        Runnable runnable = incompleteWork.get(tid);
 
         if (runnable != null) {
             runnable.run();
@@ -501,9 +501,9 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
                     if (!hasNext) {
 
-                        incompleteWork.remove(transactionId);
+                        incompleteWork.remove(tid);
 
-                        outWire.write(Fields.transactionId).int64(transactionId);
+                        outWire.write(Fields.tid).int64(tid);
 
                         writeVoid(() -> {
                             bytesMap.delegate.putAll((Map) collectData);
@@ -518,7 +518,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             }
         };
 
-        incompleteWork.put(transactionId, runnable);
+        incompleteWork.put(tid, runnable);
         runnable.run();
 
     }
