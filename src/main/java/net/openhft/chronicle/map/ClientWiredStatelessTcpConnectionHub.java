@@ -27,6 +27,8 @@ import net.openhft.chronicle.map.MapWireHandler.EventId;
 import net.openhft.chronicle.network2.event.EventGroup;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -38,6 +40,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 import static net.openhft.chronicle.map.MapWireHandler.EventId.applicationVersion;
 import static net.openhft.chronicle.map.MapWireHandler.SIZE_OF_SIZE;
@@ -470,7 +473,6 @@ public class ClientWiredStatelessTcpConnectionHub {
             buffer = inWireByteBuffer(position + requiredNumberOfBytes);
             buffer.limit(position + requiredNumberOfBytes);
             buffer.position(position);
-
         }
 
         long start = buffer.position();
@@ -644,10 +646,15 @@ public class ClientWiredStatelessTcpConnectionHub {
         startTime(startTime);
 
         long tid = nextUniqueTransaction(startTime);
-        wire.write(type).text("MAP");
-        wire.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
-        wire.write(timeStamp).int64(startTime);
-        wire.write(channelId).int16(channelID);
+        wire.writeDocument(true, new Consumer<WireOut>() {
+            @Override
+            public void accept(WireOut wireOut) {
+                wireOut.write(type).text("MAP");
+                wireOut.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
+                wireOut.write(timeStamp).int64(startTime);
+                wireOut.write(channelId).int16(channelID);
+            }
+        });
 
         return tid;
     }
