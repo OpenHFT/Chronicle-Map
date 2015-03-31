@@ -23,6 +23,7 @@ import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.map.MapWireHandlerBuilder.Fields;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -275,8 +276,15 @@ class ClientWiredStatelessChronicleMap<K, V>
     public void createChannel(short channelID) {
         proxyReturnVoid(
                 () -> {
-                    hub.outWire().write(Fields.methodName).text(createChannel.toString());
-                    hub.outWire().write(Fields.arg1).int16(channelID);
+
+                    hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                        @Override
+                        public void accept(WireOut wireOut) {
+                            hub.outWire().write(Fields.methodName).text(createChannel.toString());
+                            hub.outWire().write(Fields.arg1).int16(channelID);
+                        }
+                    });
+
                 });
     }
 
@@ -301,7 +309,7 @@ class ClientWiredStatelessChronicleMap<K, V>
                 assert hub.outBytesLock().isHeldByCurrentThread();
                 hub.markSize(wire);
                 hub.startTime(startTime);
-                wire.write(Fields.type).text("MAP");
+                wire.write(Fields.csp).text("MAP");
                 wire.write(Fields.tid).int64(tid);
                 wire.write(Fields.timeStamp).int64(startTime);
                 wire.write(Fields.channelId).int16(channelID);
@@ -313,8 +321,10 @@ class ClientWiredStatelessChronicleMap<K, V>
 
 
                     hub.outWire().write(Fields.hasNext).bool(iterator.hasNext());
-                    writeField(Fields.arg1, e.getKey());
-                    writeField(Fields.arg2, e.getValue());
+
+                    // todo
+                    // writeField(wireOut, Fields.arg1, e.getKey());
+                    // writeField(wireOut, Fields.arg2, e.getValue());
 
                     final Bytes<?> bytes = wire.bytes();
                     if (bytes.remaining() < bytes.capacity() * 0.5)
@@ -353,7 +363,15 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
     public void clear() {
-        proxyReturnVoid(() -> writeField(Fields.methodName, clear.toString()));
+        proxyReturnVoid(() -> hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                    @Override
+                    public void accept(WireOut wireOut) {
+                        wireOut.write(Fields.methodName).text(clear.toString());
+
+                    }
+                }
+        ));
+
     }
 
 
@@ -525,12 +543,12 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
 
-    private void writeField(Fields fieldName, Object value) {
-        writeField(fieldName, value, hub.outWire());
+    private void writeField(WireOut wireOut, Fields fieldName, Object value) {
+        writeField(fieldName, value, wireOut);
     }
 
 
-    private void writeField(Fields fieldName, Object value, Wire wire) {
+    private void writeField(Fields fieldName, Object value, WireOut wire) {
 
         assert hub.outBytesLock().isHeldByCurrentThread();
         assert !hub.inBytesLock().isHeldByCurrentThread();
@@ -681,9 +699,17 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().write(Fields.methodName).text(methodName.toString());
-            writeField(Fields.arg1, key);
-            writeField(Fields.arg2, value);
+
+            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                        @Override
+                        public void accept(WireOut wireOut) {
+                            wireOut.write(Fields.methodName).text(methodName.toString());
+                            writeField(wireOut, Fields.arg1, key);
+                            writeField(wireOut, Fields.arg2, value);
+                        }
+                    }
+            );
+
 
             hub.writeSocket(hub.outWire());
         } finally {
@@ -703,10 +729,18 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().write(Fields.methodName).text(methodName.toString());
-            writeField(Fields.arg1, key);
-            writeField(Fields.arg2, value1);
-            writeField(Fields.arg3, value2);
+
+            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                        @Override
+                        public void accept(WireOut wireOut) {
+                            wireOut.write(Fields.methodName).text(methodName.toString());
+                            writeField(wireOut, Fields.arg1, key);
+                            writeField(wireOut, Fields.arg2, value1);
+                            writeField(wireOut, Fields.arg3, value2);
+                        }
+                    }
+            );
+
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -738,7 +772,16 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().write(Fields.methodName).text(methodName.toString());
+
+            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                        @Override
+                        public void accept(WireOut wireOut) {
+                            wireOut.write(Fields.methodName).text(methodName.toString());
+                        }
+                    }
+            );
+
+
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -756,7 +799,13 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().write(Fields.methodName).text(methodName.toString());
+            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                        @Override
+                        public void accept(WireOut wireOut) {
+                            wireOut.write(Fields.methodName).text(methodName.toString());
+                        }
+                    }
+            );
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -794,7 +843,15 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().write(Fields.methodName).text(methodName.toString());
+
+            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                        @Override
+                        public void accept(WireOut wireOut) {
+                            wireOut.write(Fields.methodName).text(methodName.toString());
+                        }
+                    }
+            );
+
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -817,9 +874,19 @@ class ClientWiredStatelessChronicleMap<K, V>
             assert !hub.inBytesLock().isHeldByCurrentThread();
 
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().write(Fields.methodName).text(methodName.toString());
-            writeField(Fields.arg1, key);
-            writeField(Fields.arg2, value);
+
+            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                        @Override
+                        public void accept(WireOut wireOut) {
+                            wireOut.write(Fields.methodName).text(methodName.toString());
+                            writeField(wireOut, Fields.arg1, key);
+                            writeField(wireOut, Fields.arg2, value);
+
+                        }
+                    }
+            );
+
+
             hub.writeSocket(hub.outWire());
 
         } finally {
@@ -861,8 +928,19 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().write(Fields.methodName).text(methodName.toString());
-            writeField(Fields.arg1, arg1);
+
+            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                        @Override
+                        public void accept(WireOut wireOut) {
+                            wireOut.write(Fields.methodName).text(methodName.toString());
+                            writeField(wireOut, Fields.arg1, arg1);
+
+
+                        }
+                    }
+            );
+
+
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -876,8 +954,17 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().write(Fields.methodName).text(methodName.toString());
+            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                        @Override
+                        public void accept(WireOut wireOut) {
+                            wireOut.write(Fields.methodName).text(methodName.toString());
+                        }
+                    }
+            );
+
             hub.writeSocket(hub.outWire());
+
+
         } finally {
             hub.outBytesLock().unlock();
         }
@@ -890,7 +977,17 @@ class ClientWiredStatelessChronicleMap<K, V>
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.methodName).text(methodName.toString());
-            hub.outWire().write(Fields.arg1).int64(arg1);
+
+            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
+                        @Override
+                        public void accept(WireOut wireOut) {
+                            wireOut.write(Fields.methodName).text(methodName.toString());
+                            writeField(wireOut, Fields.arg1, arg1);
+                        }
+                    }
+            );
+
+
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();

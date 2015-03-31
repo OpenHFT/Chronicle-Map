@@ -27,8 +27,8 @@ import net.openhft.chronicle.map.MapWireHandler.EventId;
 import net.openhft.chronicle.network2.event.EventGroup;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
-import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -373,7 +373,12 @@ public class ClientWiredStatelessTcpConnectionHub {
                 System.out.println("\n--------------------------------\n" +
                         "client read:\n\n" + Bytes.toDebugString(bytes));
 
+                int headerlen = bytes.readVolatileInt();
+
+                assert !Wires.isData(headerlen);
+
                 long tid0 = intWire.read(MapWireHandlerBuilder.Fields.tid).int64();
+
 
 
                 // check the transaction id is reasonable
@@ -593,7 +598,13 @@ public class ClientWiredStatelessTcpConnectionHub {
         outBytesLock().lock();
         try {
             long tid = writeHeader(startTime, channelID, wire);
-            wire.write(MapWireHandlerBuilder.Fields.methodName).text(methodName.toString());
+            wire.writeDocument(false, new Consumer<WireOut>() {
+                @Override
+                public void accept(WireOut wireOut) {
+                    wireOut.write(MapWireHandlerBuilder.Fields.methodName).text(methodName.toString());
+                }
+            });
+
             writeSocket(wire);
             return tid;
         } finally {
@@ -649,12 +660,15 @@ public class ClientWiredStatelessTcpConnectionHub {
         wire.writeDocument(true, new Consumer<WireOut>() {
             @Override
             public void accept(WireOut wireOut) {
-                wireOut.write(type).text("MAP");
+                wireOut.write(csp).text("MAP");
                 wireOut.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
                 wireOut.write(timeStamp).int64(startTime);
                 wireOut.write(channelId).int16(channelID);
             }
         });
+
+        final Bytes<?> bytes = wire.bytes();
+        System.out.println(Bytes.toDebugString(wire.bytes(), 0, bytes.position()));
 
         return tid;
     }

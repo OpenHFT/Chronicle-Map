@@ -204,6 +204,11 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         timestamp = inWire.read(timeStamp).int64();
         channelId = inWire.read(Fields.channelId).int16();
 
+        final Bytes<?> bytes1 = inWire.bytes();
+
+        final int body = bytes1.readVolatileInt();
+        assert Wires.isData(body);
+
         final StringBuilder methodName = Wires.acquireStringBuilder();
         inWire.read(Fields.methodName).text(methodName);
 
@@ -252,8 +257,10 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
             }
 
+
+            outWire.writeDocument(true, wire -> outWire.write(Fields.tid).int64(tid));
+
             // write the transaction id
-            outWire.write(Fields.tid).int64(tid);
 
 
             if (createChannel.contentEquals(methodName)) {
