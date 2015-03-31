@@ -73,7 +73,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         @Override
         public void accept(Iterator<byte[]> iterator) {
             outWire.write(result);
-            outWire.bytes().write(iterator.next());
+            Bytes<?> bytes = outWire.bytes();
+            bytes.write(iterator.next());
         }
     };
     private final Consumer writeEntry = new Consumer<Iterator<Map.Entry<byte[], byte[]>>>() {
@@ -84,10 +85,12 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             final Map.Entry<byte[], byte[]> entry = iterator.next();
 
             outWire.write(resultKey);
-            outWire.bytes().write(entry.getKey());
+            Bytes<?> bytes = outWire.bytes();
+            bytes.write(entry.getKey());
 
             outWire.write(resultValue);
-            outWire.bytes().write(entry.getValue());
+            Bytes<?> bytes1 = outWire.bytes();
+            bytes1.write(entry.getValue());
         }
     };
     private WireHandlers publishLater;
@@ -159,7 +162,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                         return;
 
                     // quit if we have filled the buffer
-                    if (outWire.bytes().remaining() < (outWire.bytes().capacity() * 0.75)) {
+                    Bytes<?> bytes = outWire.bytes();
+                    if (bytes.remaining() < (bytes.capacity() * 0.75)) {
                         publishLater.add(this);
                         return;
                     }
@@ -210,6 +214,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
             }
         }
+        Bytes<?> bytes = outWire.bytes();
         try {
 
             if (putWithoutAcc.contentEquals(methodName)) {
@@ -334,7 +339,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                     outWire.write(resultIsNull).bool(isNull);
                     if (!isNull) {
                         outWire.write(Fields.result);
-                        outWire.bytes().write(result);
+                        bytes.write(result);
                     }
 
                 });
@@ -400,14 +405,14 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
             //  if (len > 4)
             if (EventGroup.IS_DEBUG) {
-                long len = outWire.bytes().position() - SIZE_OF_SIZE;
+                long len = bytes.position() - SIZE_OF_SIZE;
                 if (len == 0) {
                     System.out.println("--------------------------------------------\n" +
                             "server writes:\n\n<EMPTY>");
                 } else {
                     System.out.println("--------------------------------------------\n" +
                             "server writes:\n\n" +
-                            Bytes.toDebugString(outWire.bytes(), SIZE_OF_SIZE, len));
+                            Bytes.toDebugString(bytes, SIZE_OF_SIZE, len));
                 }
             }
         }
@@ -441,17 +446,18 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
         final int fieldLength = (int) l;
 
-        final long endPos = wire.bytes().position() + fieldLength;
-        final long limit = wire.bytes().limit();
+        Bytes<?> bytes1 = wire.bytes();
+        final long endPos = bytes1.position() + fieldLength;
+        final long limit = bytes1.limit();
 
         try {
             byte[] bytes = new byte[fieldLength];
 
-            wire.bytes().read(bytes);
+            bytes1.read(bytes);
             return bytes;
         } finally {
-            wire.bytes().position(endPos);
-            wire.bytes().limit(limit);
+            bytes1.position(endPos);
+            bytes1.limit(limit);
         }
     }
 
@@ -505,7 +511,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                         });
                         return;
                     }
-                    if (inWire.bytes().remaining() == 0)
+                    final Bytes<?> bytes = inWire.bytes();
+                    if (bytes.remaining() == 0)
                         return;
                 }
             }
@@ -528,7 +535,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
 
             outWire.write(result);
-            outWire.bytes().write(fromBytes);
+            Bytes<?> bytes = outWire.bytes();
+            bytes.write(fromBytes);
 
         });
     }
@@ -561,7 +569,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
      */
     private net.openhft.lang.io.Bytes toReader(@NotNull Wire wire, @NotNull WireKey... args) {
 
-        final long inSize = wire.bytes().limit();
+        Bytes<?> bytes1 = wire.bytes();
+        final long inSize = bytes1.limit();
         final net.openhft.lang.io.Bytes bytes = DirectStore.allocate(inSize).bytes();
 
         // copy the bytes to the reader
@@ -570,12 +579,12 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             final ValueIn read = wire.read(field);
             final long fieldLength = read.readLength();
 
-            final long endPos = wire.bytes().position() + fieldLength;
-            final long limit = wire.bytes().limit();
+            final long endPos = bytes1.position() + fieldLength;
+            final long limit = bytes1.limit();
 
             try {
 
-                final Bytes source = wire.bytes();
+                final Bytes source = bytes1;
                 source.limit(endPos);
 
                 // write the size
@@ -589,8 +598,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 }
 
             } finally {
-                wire.bytes().position(endPos);
-                wire.bytes().limit(limit);
+                bytes1.position(endPos);
+                bytes1.limit(limit);
             }
 
         }
@@ -611,12 +620,13 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         final ValueIn read = wire.read(field);
         final long fieldLength = read.readLength();
 
-        final long endPos = wire.bytes().position() + fieldLength;
-        final long limit = wire.bytes().limit();
+        Bytes<?> bytes = wire.bytes();
+        final long endPos = bytes.position() + fieldLength;
+        final long limit = bytes.limit();
         byte[] result = new byte[]{};
         try {
 
-            final Bytes source = wire.bytes();
+            final Bytes source = bytes;
             source.limit(endPos);
 
             if (source.remaining() > Integer.MAX_VALUE)
@@ -628,8 +638,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
 
         } finally {
-            wire.bytes().position(endPos);
-            wire.bytes().limit(limit);
+            bytes.position(endPos);
+            bytes.limit(limit);
         }
 
 
@@ -703,7 +713,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             isNull = result.length == 0;
 
             outWire.write(Fields.result);
-            outWire.bytes().write(result);
+            final Bytes<?> bytes = outWire.bytes();
+            bytes.write(result);
 
         });
 
@@ -721,13 +732,14 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         }
 
         bytesMap.output = null;
-        outWire.bytes().mark();
+        final Bytes<?> bytes = outWire.bytes();
+        bytes.mark();
         outWire.write(isException).bool(false);
 
         try {
             c.accept(bytesMap);
         } catch (Exception e) {
-            outWire.bytes().reset();
+            bytes.reset();
             // the idea of wire is that is platform independent,
             // so we wil have to send the exception as a String
             outWire.write(isException).bool(true);
@@ -749,13 +761,14 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         }
 
         bytesMap.output = null;
-        outWire.bytes().mark();
+        final Bytes<?> bytes = outWire.bytes();
+        bytes.mark();
 
         try {
             r.call();
             outWire.write(isException).bool(false);
         } catch (Exception e) {
-            outWire.bytes().reset();
+            bytes.reset();
             // the idea of wire is that is platform independent,
             // so we wil have to send the exception as a String
             outWire.write(isException).bool(true);
@@ -793,8 +806,9 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
      */
     @SuppressWarnings("UnusedDeclaration")
     private void showOutWire() {
-        System.out.println("pos=" + outWire.bytes().position() + ",bytes=" +
-                Bytes.toDebugString(outWire.bytes(), 0, outWire.bytes().position()));
+        Bytes<?> bytes = outWire.bytes();
+        System.out.println("pos=" + bytes.position() + ",bytes=" +
+                Bytes.toDebugString(bytes, 0, bytes.position()));
     }
 
     /**
