@@ -37,6 +37,13 @@
     <dependencyManagement>
         <dependencies>
 
+
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>chronicle-core</artifactId>
+                <version>1.0.0-alpha-SNAPSHOT</version>
+            </dependency>
+
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
@@ -85,6 +92,13 @@
 
     </dependencyManagement>
     <dependencies>
+
+
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-core</artifactId>
+        </dependency>
+
 
         <dependency>
             <groupId>net.openhft</groupId>
