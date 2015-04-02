@@ -43,10 +43,10 @@ public class MapWireHandlerBuilder {
         hasNext,
         timeStamp,
         channelId,
-        methodName,
+        eventName,
         csp,
         tid,   // transactionId
-        result,
+        reply,
         resultKey,
         resultValue,
         arg1,

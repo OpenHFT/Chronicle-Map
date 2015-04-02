@@ -144,9 +144,11 @@ public class ClientWiredStatelessTcpConnectionHub {
         }
     }
 
+    public static boolean IS_DEBUG = java.lang.management.ManagementFactory.getRuntimeMXBean().
+            getInputArguments().toString().indexOf("jdwp") >= 0;
 
     private void checkTimeout(long timeoutTime) {
-        if (timeoutTime < System.currentTimeMillis())
+        if (timeoutTime < System.currentTimeMillis() && !IS_DEBUG)
             throw new RemoteCallTimeoutException();
     }
 
@@ -380,13 +382,6 @@ public class ClientWiredStatelessTcpConnectionHub {
                 long tid0 = intWire.read(MapWireHandlerBuilder.Fields.tid).int64();
 
 
-
-                // check the transaction id is reasonable
-          /*      assert tid0 > 1410000000000L * TcpReplicator.TIMESTAMP_FACTOR :
-                        "TransactionId too small " + tid0 + " messageSize " + messageSize;
-                assert tid0 < 2100000000000L * TcpReplicator.TIMESTAMP_FACTOR :
-                        "TransactionId too large " + tid0 + " messageSize " + messageSize;
-*/
                 // if the transaction id is for this thread process it
                 if (tid0 == tid) {
                     clearParked();
@@ -533,8 +528,7 @@ public class ClientWiredStatelessTcpConnectionHub {
         outBuffer.position(SIZE_OF_SIZE);
 
         if (EventGroup.IS_DEBUG ) {
-            System.out.println("\n--------------------------------------------\n" +
-                    "client writes:\n\n" + Bytes.toDebugString(outBuffer));
+            writeBytesToStandardOut(bytes, outBuffer);
         }
 
         outBuffer.position(0);
@@ -572,6 +566,23 @@ public class ClientWiredStatelessTcpConnectionHub {
 
     }
 
+    private void writeBytesToStandardOut(Bytes<?> bytes, ByteBuffer outBuffer) {
+        final long position = bytes.position();
+        final long limit = bytes.limit();
+        try {
+
+            bytes.limit(outBuffer.limit());
+            bytes.position(outBuffer.position());
+            System.out.println("\n--------------------------------------------\n" +
+                    "client writes:\n\n" +
+                    //        Bytes.toDebugString(outBuffer));
+                    Wires.fromSizePrefixedBlobs(bytes));
+        } finally {
+            bytes.limit(limit);
+            bytes.position(position);
+        }
+    }
+
     /**
      * calculates the size of each chunk
      *
@@ -601,7 +612,7 @@ public class ClientWiredStatelessTcpConnectionHub {
             wire.writeDocument(false, new Consumer<WireOut>() {
                 @Override
                 public void accept(WireOut wireOut) {
-                    wireOut.write(MapWireHandlerBuilder.Fields.methodName).text(methodName.toString());
+                    wireOut.writeEventName(methodName);
                 }
             });
 
@@ -636,7 +647,7 @@ public class ClientWiredStatelessTcpConnectionHub {
         // receive
         inBytesLock().lock();
         try {
-            return proxyReply(timeoutTime, tid).read(() -> "result").text();
+            return proxyReply(timeoutTime, tid).read(reply).text();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
