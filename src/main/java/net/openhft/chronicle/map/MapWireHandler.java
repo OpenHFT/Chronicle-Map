@@ -825,7 +825,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     }
 
     enum Params implements WireKey {
-
         key,
         value,
         oldValue,
@@ -833,7 +832,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     }
 
     enum EventId implements WireKey {
-
         longSize,
         size,
         isEmpty,
