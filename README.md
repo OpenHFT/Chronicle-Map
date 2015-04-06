@@ -127,6 +127,9 @@ from [Maven Central](http://search.maven.org), once you have installed maven, al
 add the following to your projects `pom.xml`:
 
 #### Maven Artifact Download
+
+![Maven](http://openhft.net/wp-content/uploads/2014/09/maven.gif)
+
 ```xml
 <dependency>
   <groupId>net.openhft</groupId>
