@@ -126,8 +126,6 @@ To download the JAR which contains Chronicle Map, we recommend you use maven, wh
 from [Maven Central](http://search.maven.org), once you have installed maven, all you have to do is
 add the following to your projects `pom.xml`:
 
-#### Maven Artifact Download
-
 ![Maven](http://openhft.net/wp-content/uploads/2014/09/maven.gif)
 
 ```xml
