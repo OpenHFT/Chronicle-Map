@@ -66,6 +66,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory;
     private Wire inWire = null;
     private Wire outWire = null;
+
     private final Consumer writeElement = new Consumer<Iterator<byte[]>>() {
 
         @Override
@@ -75,6 +76,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             bytes.write(iterator.next());
         }
     };
+
     private final Consumer writeEntry = new Consumer<Iterator<Map.Entry<byte[], byte[]>>>() {
 
         @Override
@@ -93,7 +95,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     };
     private WireHandlers publishLater;
     private byte localIdentifier;
-    private long timestamp;
+
     private short channelId;
     private List<Replica> channels;
     private ReplicationHub hub;
@@ -201,7 +203,9 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         // it is assumed by this point that the buffer has all the bytes in it for this message
 
         final long tid = inWire.read(Fields.tid).int64();
-        timestamp = inWire.read(timeStamp).int64();
+
+        // timestamp
+        inWire.read(timeStamp).int64();
         channelId = inWire.read(Fields.channelId).int16();
 
         final Bytes<?> bytes1 = inWire.bytes();
@@ -330,8 +334,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
                     MapWireHandler.this.writeValue(b -> {
                         final byte[] result = b.put(key1, value1);
-
-                        System.out.println("key='" + new String(b.keySet().iterator().next()) + "'");
                         return result;
                     });
 
@@ -442,17 +444,11 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                             "server writes:\n\n<EMPTY>");
                 } else {
 
-                    try {
-                        System.out.println("--------------------------------------------\n" +
-                                "server writes:\n\n" +
 
-                                Wires.fromSizePrefixedBlobs(bytes, SIZE_OF_SIZE, len));
-                        //Bytes.toDebugString(bytes, SIZE_OF_SIZE, len));
-                    } catch (Exception e) {
-                        System.out.println("--------------------------------------------\n" +
+                    System.out.println("--------------------------------------------\n" +
                                 "server writes:\n\n" +
-                                Bytes.toDebugString(bytes, SIZE_OF_SIZE, len));
-                    }
+                                Wires.fromSizePrefixedBlobs(bytes, SIZE_OF_SIZE, len));
+
                 }
             }
         }
@@ -460,18 +456,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
     }
 
-    // todo remove
-    private byte[] toByteArray(net.openhft.lang.io.Bytes bytes) {
-        if (bytes == null || bytes.remaining() == 0)
-            return new byte[]{};
-
-        if (bytes.remaining() > Integer.MAX_VALUE)
-            throw new BufferOverflowException();
-
-        byte[] result = new byte[(int) bytes.remaining()];
-        bytes.write(result);
-        return result;
-    }
 
     // todo remove
     private byte[] toBytes(WireKey fieldName) {
@@ -616,39 +600,25 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         final net.openhft.lang.io.Bytes bytes = DirectStore.allocate(inSize + 1024).bytes();
 
 
-        valueIn.marshallable(new ReadMarshallable() {
-            @Override
-            public void readMarshallable(WireIn wire) throws IllegalStateException {
-                for (Params p : params) {
+        valueIn.marshallable(wire -> {
 
-                    final ValueIn read = wire.read(p);
-                    final Bytes<?> bytes2 = read.wireIn().bytes();
-                    final byte[] data = read.bytes();
-                    System.out.println("out='" + new String(data) + "'");
-                    bytes.writeStopBit(data.length);
-                    bytes.write(data);
-                }
+            for (Params p : params) {
 
+                final ValueIn read = wire.read(p);
+
+                final byte[] data = read.bytes();
+
+                bytes.writeStopBit(data.length);
+                bytes.write(data);
             }
+
         });
 
 
         return bytes.flip();
     }
 
-    /**
-     * creates a lang buffer that holds just the payload of the args
-     *
-     * @param wire the inbound wire
-     * @return a new lang buffer containing the bytes of the args
-     */
 
-    // todo remove this method - just added to get it to work for now
-    private byte[] toByteArray(@NotNull Wire wire, @NotNull Params field) {
-
-        final ValueIn read = wire.read(field);
-        return toByteArray(read);
-    }
 
     private byte[] toByteArray(ValueIn valueIn) {
 
@@ -839,15 +809,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
     }
 
-    /**
-     * only used for debugging
-     */
-    @SuppressWarnings("UnusedDeclaration")
-    private void showOutWire() {
-        Bytes<?> bytes = outWire.bytes();
-        System.out.println("pos=" + bytes.position() + ",bytes=" +
-                Bytes.toDebugString(bytes, 0, bytes.position()));
-    }
 
     /**
      * converts the exception into a String, so that it can be sent to c# clients
@@ -863,7 +824,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         this.localIdentifier = localIdentifier;
     }
 
-    static enum Params implements WireKey {
+    enum Params implements WireKey {
 
         key,
         value,
@@ -871,7 +832,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         newValue
     }
 
-    static enum EventId implements WireKey {
+    enum EventId implements WireKey {
 
         longSize,
         size,

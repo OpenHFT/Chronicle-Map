@@ -275,12 +275,9 @@ class ClientWiredStatelessChronicleMap<K, V>
         proxyReturnVoid(
                 () -> {
 
-                    hub.outWire().writeDocument(false, new Consumer<WireOut>() {
-                        @Override
-                        public void accept(WireOut wireOut) {
-                            hub.outWire().writeEventName(createChannel);
-                            hub.outWire().writeValue().int16(channelID);
-                        }
+                    hub.outWire().writeDocument(false, wireOut -> {
+                        hub.outWire().writeEventName(createChannel);
+                        hub.outWire().writeValue().int16(channelID);
                     });
 
                 });
@@ -364,12 +361,7 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
     public void clear() {
-        proxyReturnVoid(() -> hub.outWire().writeDocument(false, new Consumer<WireOut>() {
-                    @Override
-                    public void accept(WireOut wireOut) {
-                        wireOut.writeEventName(clear);
-                    }
-                }
+        proxyReturnVoid(() -> hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(clear)
         ));
 
     }
@@ -761,35 +753,32 @@ class ClientWiredStatelessChronicleMap<K, V>
 
         assert args.length > 0;
 
-        hub.outWire().writeDocument(false, new Consumer<WireOut>() {
-                    @Override
-                    public void accept(WireOut wireOut) {
+        hub.outWire().writeDocument(false, wireOut -> {
 
-                        final ValueOut out = wireOut.writeEventName(methodName);
+            final ValueOut out = wireOut.writeEventName(methodName);
 
-                        final MapWireHandler.Params[] paramNames = methodName.params();
+            final MapWireHandler.Params[] paramNames = methodName.params();
 
-                        if (paramNames.length == 1) {
-                            writeField(out, args[0]);
-                            return;
-                        }
+            if (paramNames.length == 1) {
+                writeField(out, args[0]);
+                return;
+            }
 
-                        assert args.length == paramNames.length :
-                                "methodName=" + methodName +
-                                        ", args.length=" + args.length +
-                                        ", paramNames.length=" + paramNames.length;
+            assert args.length == paramNames.length :
+                    "methodName=" + methodName +
+                            ", args.length=" + args.length +
+                            ", paramNames.length=" + paramNames.length;
 
-                        out.marshallable(m -> {
+            out.marshallable(m -> {
 
-                            for (int i = 0; i < paramNames.length; i++) {
-                                final ValueOut vo = m.write(paramNames[i]);
-                                writeField(vo, args[i]);
-                            }
-
-                        });
-
-                    }
+                for (int i = 0; i < paramNames.length; i++) {
+                    final ValueOut vo = m.write(paramNames[i]);
+                    writeField(vo, args[i]);
                 }
+
+            });
+
+        }
         );
     }
 
@@ -816,12 +805,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
 
-            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
-                        @Override
-                        public void accept(WireOut wireOut) {
-                            wireOut.writeEventName(() -> methodName);
-                        }
-                    }
+            hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(() -> methodName)
             );
 
 
@@ -842,12 +826,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
-                        @Override
-                        public void accept(WireOut wireOut) {
-                            wireOut.writeEventName(() -> methodName);
-                        }
-                    }
+            hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(() -> methodName)
             );
             hub.writeSocket(hub.outWire());
         } finally {
@@ -887,12 +866,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
 
-            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
-                        @Override
-                        public void accept(WireOut wireOut) {
-                            wireOut.writeEventName(() -> methodName);
-                        }
-                    }
+            hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(() -> methodName)
             );
 
             hub.writeSocket(hub.outWire());
@@ -977,12 +951,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
-                        @Override
-                        public void accept(WireOut wireOut) {
-                            wireOut.writeEventName(methodName);
-                        }
-                    }
+            hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(methodName)
             );
 
             hub.writeSocket(hub.outWire());
@@ -1001,13 +970,10 @@ class ClientWiredStatelessChronicleMap<K, V>
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
             hub.outWire().write(Fields.eventName).text(methodName.toString());
 
-            hub.outWire().writeDocument(false, new Consumer<WireOut>() {
-                        @Override
-                        public void accept(WireOut wireOut) {
-                            final ValueOut out = wireOut.writeEventName(methodName);
-                            writeField(out, arg1);
-                        }
-                    }
+            hub.outWire().writeDocument(false, wireOut -> {
+                final ValueOut out = wireOut.writeEventName(methodName);
+                writeField(out, arg1);
+            }
             );
 
 

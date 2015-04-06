@@ -359,11 +359,9 @@ public class ClientWiredStatelessTcpConnectionHub {
                 // reads just the size
                 readSocket(SIZE_OF_SIZE, timeoutTime);
 
-//                System.out.println("in=" + Bytes.toHex(intWire.bytes()));
-
                 final int messageSize = bytes.readUnsignedShort(bytes.position());
 
-                System.out.println("messageSize=" + messageSize);
+
                 try {
                     assert messageSize > 0 : "Invalid message size " + messageSize;
                     assert messageSize < 1024 : "Invalid message size " + messageSize;
@@ -378,18 +376,13 @@ public class ClientWiredStatelessTcpConnectionHub {
                 bytes.limit(bytes.position() + messageSize);
 
 
-                try {
+
                     System.out.println("\n--------------------------------\nclient reads\n" +
 
                             Wires.fromSizePrefixedBlobs(bytes));
 
-                } catch (Exception e) {
-                    System.out.println("\n--------------------------------\nclient reads\n" +
 
-                            "client read:\n\n" + Bytes.toDebugString(bytes));
 
-                }
-                System.out.println("client read:\n\n" + Bytes.toDebugString(bytes));
 
                 int headerlen = bytes.readVolatileInt();
 
@@ -633,12 +626,7 @@ public class ClientWiredStatelessTcpConnectionHub {
         outBytesLock().lock();
         try {
             long tid = writeHeader(startTime, channelID, wire);
-            wire.writeDocument(false, new Consumer<WireOut>() {
-                @Override
-                public void accept(WireOut wireOut) {
-                    wireOut.writeEventName(methodName);
-                }
-            });
+            wire.writeDocument(false, wireOut -> wireOut.writeEventName(methodName));
 
             writeSocket(wire);
             return tid;
@@ -699,20 +687,14 @@ public class ClientWiredStatelessTcpConnectionHub {
         startTime(startTime);
 
         long tid = nextUniqueTransaction(startTime);
-        wire.writeDocument(true, new Consumer<WireOut>() {
-            @Override
-            public void accept(WireOut wireOut) {
-                wireOut.write(csp).text("MAP");
-                wireOut.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
-                wireOut.write(timeStamp).int64(startTime);
-                wireOut.write(channelId).int16(channelID);
-            }
+        wire.writeDocument(true, wireOut -> {
+            wireOut.write(csp).text("MAP");
+            wireOut.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
+            wireOut.write(timeStamp).int64(startTime);
+            wireOut.write(channelId).int16(channelID);
         });
 
-        final Bytes<?> bytes = wire.bytes();
-        System.out.println(Bytes.toDebugString(wire.bytes(), 0, bytes.position()));
-
-        return tid;
+         return tid;
     }
 
 
