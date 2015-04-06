@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-import static net.openhft.chronicle.map.MapWireHandler.EventId.applicationVersion;
+import static net.openhft.chronicle.map.MapWireHandler.EventId.getApplicationVersion;
 import static net.openhft.chronicle.map.MapWireHandler.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
 
@@ -51,7 +51,7 @@ import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
  */
 public class ClientWiredStatelessTcpConnectionHub {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientWiredStatelessTcpConnectionHub.class);
 
     protected final String name;
     protected final InetSocketAddress remoteAddress;
@@ -242,7 +242,7 @@ public class ClientWiredStatelessTcpConnectionHub {
     @NotNull
     public String serverApplicationVersion(short channelID) {
         TextWire wire = new TextWire(Bytes.elasticByteBuffer());
-        String result = proxyReturnString(applicationVersion, channelID, wire);
+        String result = proxyReturnString(getApplicationVersion, channelID, wire);
         return (result == null) ? "" : result;
     }
 
@@ -318,10 +318,10 @@ public class ClientWiredStatelessTcpConnectionHub {
             final Wire wire = proxyReplyThrowable(timeoutTime, tid);
 
             // handle an exception if the message contains the isException field
-            if (wire.read(() -> "isException").bool()) {
-                final String text = wire.read(() -> "exception").text();
-                throw new RuntimeException(text);
-            }
+            //  if (wire.read(() -> "isException").bool()) {
+            //     final String text = wire.read(() -> "exception").text();
+            //    throw new RuntimeException(text);
+            // }
             return wire;
         } catch (IOException e) {
             close();
@@ -359,12 +359,17 @@ public class ClientWiredStatelessTcpConnectionHub {
                 // reads just the size
                 readSocket(SIZE_OF_SIZE, timeoutTime);
 
-                final int messageSize =
-                        bytes.readUnsignedShort(bytes.position());
+//                System.out.println("in=" + Bytes.toHex(intWire.bytes()));
 
-                assert messageSize > 0 : "Invalid message size " + messageSize;
-                assert messageSize < 16 << 20 : "Invalid message size " + messageSize;
+                final int messageSize = bytes.readUnsignedShort(bytes.position());
 
+                System.out.println("messageSize=" + messageSize);
+                try {
+                    assert messageSize > 0 : "Invalid message size " + messageSize;
+                    assert messageSize < 1024 : "Invalid message size " + messageSize;
+                } catch (AssertionError e) {
+                    assert messageSize < 1024 : "Invalid message size " + messageSize;
+                }
                 final int remainingBytes0 = messageSize;
                 readSocket(remainingBytes0, timeoutTime);
 
@@ -372,8 +377,19 @@ public class ClientWiredStatelessTcpConnectionHub {
                 bytes.skip(SIZE_OF_SIZE);
                 bytes.limit(bytes.position() + messageSize);
 
-                System.out.println("\n--------------------------------\n" +
-                        "client read:\n\n" + Bytes.toDebugString(bytes));
+
+                try {
+                    System.out.println("\n--------------------------------\nclient reads\n" +
+
+                            Wires.fromSizePrefixedBlobs(bytes));
+
+                } catch (Exception e) {
+                    System.out.println("\n--------------------------------\nclient reads\n" +
+
+                            "client read:\n\n" + Bytes.toDebugString(bytes));
+
+                }
+                System.out.println("client read:\n\n" + Bytes.toDebugString(bytes));
 
                 int headerlen = bytes.readVolatileInt();
 
@@ -573,10 +589,18 @@ public class ClientWiredStatelessTcpConnectionHub {
 
             bytes.limit(outBuffer.limit());
             bytes.position(outBuffer.position());
-            System.out.println("\n--------------------------------------------\n" +
-                    "client writes:\n\n" +
-                    //        Bytes.toDebugString(outBuffer));
-                    Wires.fromSizePrefixedBlobs(bytes));
+
+            try {
+                System.out.println("\n--------------------------------------------\n" +
+                        "client writes:\n\n" +
+                        //        Bytes.toDebugString(outBuffer));
+                        Wires.fromSizePrefixedBlobs(bytes));
+            } catch (Exception e) {
+                System.out.println("\n--------------------------------------------\n" +
+                        "client writes:\n\n" +
+                        //        Bytes.toDebugString(outBuffer));
+                        Bytes.toDebugString(bytes));
+            }
         } finally {
             bytes.limit(limit);
             bytes.position(position);
@@ -647,7 +671,14 @@ public class ClientWiredStatelessTcpConnectionHub {
         // receive
         inBytesLock().lock();
         try {
-            return proxyReply(timeoutTime, tid).read(reply).text();
+            final Wire wire = proxyReply(timeoutTime, tid);
+
+            int datalen = wire.bytes().readVolatileInt();
+
+            assert Wires.isData(datalen);
+
+            return wire.read(reply).text();
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {

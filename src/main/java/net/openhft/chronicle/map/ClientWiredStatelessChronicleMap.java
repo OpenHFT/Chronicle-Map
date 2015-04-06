@@ -21,10 +21,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.map.MapWireHandlerBuilder.Fields;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.ValueOut;
-import net.openhft.chronicle.wire.Wire;
-import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -409,6 +406,8 @@ class ClientWiredStatelessChronicleMap<K, V>
             try {
                 final Wire wireIn = hub.proxyReply(timeoutTime, tid);
 
+                checkIsData(wireIn);
+
                 final Bytes<?> bytes = wireIn.bytes();
                 while (bytes.remaining() > 0) {
                     boolean bool = wireIn.read(Fields.hasNext).bool();
@@ -418,7 +417,7 @@ class ClientWiredStatelessChronicleMap<K, V>
                         break OUTER;
 
                     // todo process the exception
-                    boolean isException = wireIn.read(Fields.isException).bool();
+                    // boolean isException = wireIn.read(Fields.isException).bool();
                 }
 
             } finally {
@@ -426,6 +425,15 @@ class ClientWiredStatelessChronicleMap<K, V>
             }
         }
         return usingCollection;
+    }
+
+    private void checkIsData(Wire wireIn) {
+        int datalen = wireIn.bytes().readVolatileInt();
+
+        //  if (Wires.isData(datalen))
+        //    throw new IllegalStateException("expecting a data blob, from ->" + Bytes.toDebugString
+        //          (wireIn.bytes(), 0, wireIn.bytes().limit()));
+        //
     }
 
     @NotNull
@@ -448,7 +456,7 @@ class ClientWiredStatelessChronicleMap<K, V>
             hub.inBytesLock().lock();
             try {
                 final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-
+                checkIsData(wireIn);
                 final Bytes<?> bytes = wireIn.bytes();
                 while (bytes.remaining() > 0) {
                     boolean bool = wireIn.read(Fields.hasNext).bool();
@@ -460,10 +468,10 @@ class ClientWiredStatelessChronicleMap<K, V>
                         break OUTER;
 
 
-                    if (bytes.remaining() > 0) {
+                   /* if (bytes.remaining() > 0) {
                         // todo process the exception
-                        boolean isException = wireIn.read(Fields.isException).bool();
-                    }
+                       // boolean isException = wireIn.read(Fields.isException).bool();
+                    }*/
                 }
 
             } finally {
@@ -496,7 +504,7 @@ class ClientWiredStatelessChronicleMap<K, V>
             hub.inBytesLock().lock();
             try {
                 final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-
+                checkIsData(wireIn);
                 final Bytes<?> bytes = wireIn.bytes();
                 while (bytes.remaining() > 0) {
                     boolean bool = wireIn.read(Fields.hasNext).bool();
@@ -539,7 +547,9 @@ class ClientWiredStatelessChronicleMap<K, V>
         // receive
         hub.inBytesLock().lock();
         try {
-            return hub.proxyReply(timeoutTime, tid).read(Fields.reply).int64();
+            final Wire wire = hub.proxyReply(timeoutTime, tid);
+            checkIsData(wire);
+            return wire.read(Fields.reply).int64();
         } finally {
             hub.inBytesLock().unlock();
         }
@@ -586,9 +596,9 @@ class ClientWiredStatelessChronicleMap<K, V>
         try {
 
             final Wire wireIn = hub.proxyReply(timeoutTime, tid);
+            checkIsData(wireIn);
 
-            if (wireIn.read(Fields.resultIsNull).bool())
-                return null;
+
 
             return readV(argName, wireIn, usingValue);
 
@@ -606,56 +616,64 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
     private <E> E readObject(Fields argName, Wire wireIn, E usingValue, Class<E> clazz) {
+
+        final ValueIn valueIn = wireIn.read(argName);
+        if (valueIn.isNull())
+            return null;
+
         if (StringBuilder.class.isAssignableFrom(clazz)) {
-            wireIn.read(argName).text((StringBuilder) usingValue);
+            valueIn.text((StringBuilder) usingValue);
             return usingValue;
         } else if (Marshallable.class.isAssignableFrom(clazz)) {
 
+
+            final E v;
             if (usingValue == null)
                 try {
-                    E v = clazz.newInstance();
-                    wireIn.read(argName).marshallable((Marshallable) v);
-                    return v;
+                    v = clazz.newInstance();
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
+            else
+                v = usingValue;
 
-            wireIn.read(argName).marshallable((Marshallable) usingValue);
-            return usingValue;
+
+            valueIn.marshallable((Marshallable) v);
+            return v;
 
         } else if (String.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (E) wireIn.read(argName).text();
+            return (E) valueIn.text();
 
         } else if (Long.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (E) (Long) wireIn.read(argName).int64();
+            return (E) (Long) valueIn.int64();
         } else if (Double.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (E) (Double) wireIn.read(argName).float64();
+            return (E) (Double) valueIn.float64();
 
         } else if (Integer.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (E) (Integer) wireIn.read(argName).int32();
+            return (E) (Integer) valueIn.int32();
 
         } else if (Float.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (E) (Float) wireIn.read(argName).float32();
+            return (E) (Float) valueIn.float32();
 
         } else if (Short.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (E) (Short) wireIn.read(argName).int16();
+            return (E) (Short) valueIn.int16();
 
         } else if (Character.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            final String text = wireIn.read(argName).text();
+            final String text = valueIn.text();
             if (text == null || text.length() == 0)
                 return null;
             return (E) (Character) text.charAt(0);
 
         } else if (Byte.class.isAssignableFrom(clazz)) {
             //noinspection unchecked
-            return (E) (Byte) wireIn.read(argName).int8();
+            return (E) (Byte) valueIn.int8();
 
 
         } else {
@@ -673,6 +691,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.inBytesLock().lock();
         try {
             final Wire wireIn = hub.proxyReply(timeoutTime, tid);
+            checkIsData(wireIn);
             return wireIn.read(Fields.reply).bool();
         } finally {
             hub.inBytesLock().unlock();
@@ -688,6 +707,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.inBytesLock().lock();
         try {
             final Wire wireIn = hub.proxyReply(timeoutTime, tid);
+            checkIsData(wireIn);
             return wireIn.read(Fields.reply).int32();
         } finally {
             hub.inBytesLock().unlock();

@@ -200,7 +200,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
         // it is assumed by this point that the buffer has all the bytes in it for this message
 
-        long tid = inWire.read(Fields.tid).int64();
+        final long tid = inWire.read(Fields.tid).int64();
         timestamp = inWire.read(timeStamp).int64();
         channelId = inWire.read(Fields.channelId).int16();
 
@@ -210,10 +210,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         assert Wires.isData(body);
 
         final StringBuilder eventName = Wires.acquireStringBuilder();
-
-
         final ValueIn valueIn = inWire.readEventName(eventName);
-
 
         if (!incompleteWork.isEmpty()) {
             Runnable runnable = incompleteWork.get(tid);
@@ -227,7 +224,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         final Bytes<?> bytes = outBytes;
 
         try {
-
 
             if (putWithoutAcc.contentEquals(eventName)) {
 
@@ -271,12 +267,9 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
             }
 
-
             outWire.writeDocument(true, wire -> outWire.write(Fields.tid).int64(tid));
 
             // write the transaction id
-
-
             if (createChannel.contentEquals(eventName)) {
                 writeVoid(() -> {
 
@@ -420,7 +413,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             }
 
 
-            if (applicationVersion.contentEquals(eventName)) {
+            if (getApplicationVersion.contentEquals(eventName)) {
                 write(b -> outWire.write(reply).text(applicationVersion()));
                 return;
             }
@@ -449,10 +442,17 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                             "server writes:\n\n<EMPTY>");
                 } else {
 
+                    try {
+                        System.out.println("--------------------------------------------\n" +
+                                "server writes:\n\n" +
 
-                    System.out.println("--------------------------------------------\n" +
-                            "server writes:\n\n" +
-                            Bytes.toDebugString(bytes, SIZE_OF_SIZE, len));
+                                Wires.fromSizePrefixedBlobs(bytes, SIZE_OF_SIZE, len));
+                        //Bytes.toDebugString(bytes, SIZE_OF_SIZE, len));
+                    } catch (Exception e) {
+                        System.out.println("--------------------------------------------\n" +
+                                "server writes:\n\n" +
+                                Bytes.toDebugString(bytes, SIZE_OF_SIZE, len));
+                    }
                 }
             }
         }
@@ -570,13 +570,14 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
             byte[] fromBytes = f.apply(b);
             boolean isNull = fromBytes == null || fromBytes.length == 0;
-            outWire.write(resultIsNull).bool(isNull);
-            if (isNull)
-                return;
-
             outWire.write(reply);
-            Bytes<?> bytes = outWire.bytes();
-            bytes.write(fromBytes);
+
+            if (isNull)
+                outWire.writeValue().text(null);
+            else {
+                Bytes<?> bytes = outWire.bytes();
+                bytes.write(fromBytes);
+            }
 
         });
     }
@@ -719,17 +720,15 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         write(b -> {
 
             byte[] result = f.apply((ChronicleMap<byte[], byte[]>) b.delegate);
-            boolean isNull = result == null;
-
-            outWire.write(resultIsNull).bool(isNull);
-            if (isNull)
-                return;
-
-            isNull = result.length == 0;
+            boolean isNull = result == null || result.length == 0;
 
             outWire.write(Fields.reply);
             final Bytes<?> bytes = outWire.bytes();
-            bytes.write(result);
+
+            if (isNull)
+                outWire.writeValue().text(null);
+            else
+                bytes.write(result);
 
         });
 
@@ -747,21 +746,31 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         }
 
         bytesMap.output = null;
-        final Bytes<?> bytes = outWire.bytes();
-        bytes.mark();
-        outWire.write(isException).bool(false);
+        //   final Bytes<?> bytes = outWire.bytes();
+        //     bytes.mark();
+        //   outWire.write(isException).bool(false);
 
-        try {
-            c.accept(bytesMap);
-        } catch (Exception e) {
-            bytes.reset();
-            // the idea of wire is that is platform independent,
-            // so we wil have to send the exception as a String
-            outWire.write(isException).bool(true);
-            outWire.write(exception).text(toString(e));
-            LOG.error("", e);
-            return;
-        }
+
+        outWire.writeDocument(false, out -> {
+            try {
+                outWire.bytes().mark();
+                c.accept(bytesMap);
+            } catch (Exception e) {
+                //      bytes.reset();
+                // the idea of wire is that is platform independent,
+                // so we wil have to send the exception as a String
+                outWire.bytes().reset();
+
+                WireOut o = out.write(reply)
+                        .type(e.getClass().getSimpleName());
+
+                if (e.getMessage() != null) {
+                    o.writeValue().text(e.getMessage());
+                }
+                LOG.error("", e);
+            }
+        });
+
 
     }
 
@@ -776,21 +785,24 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         }
 
         bytesMap.output = null;
-        final Bytes<?> bytes = outWire.bytes();
-        bytes.mark();
+
 
         try {
             r.call();
-            outWire.write(isException).bool(false);
         } catch (Exception e) {
-            bytes.reset();
+            //      bytes.reset();
             // the idea of wire is that is platform independent,
             // so we wil have to send the exception as a String
-            outWire.write(isException).bool(true);
-            outWire.write(exception).text(toString(e));
+            outWire.writeDocument(false, out -> {
+                out.write(reply)
+                        .type(e.getClass().getSimpleName())
+                        .writeValue().text(e.getMessage());
+
+            });
+
             LOG.error("", e);
-            return;
         }
+
 
     }
 
@@ -805,14 +817,25 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             return;
         }
 
-        bytesMap.output = null;
-        try {
-            process.accept(bytesMap);
-            outWire.write(isException).bool(false);
-        } catch (Exception e) {
-            outWire.write(isException).bool(true);
-            LOG.error("", e);
+
+
+            try {
+                outWire.bytes().mark();
+                process.accept(bytesMap);
+
+            } catch (Exception e) {
+                outWire.writeDocument(false, out -> {
+                //      bytes.reset();
+                // the idea of wire is that is platform independent,
+                // so we wil have to send the exception as a String
+                outWire.bytes().reset();
+                out.write(reply)
+                        .type(e.getClass().getSimpleName())
+                        .writeValue().text(e.getMessage());
+                LOG.error("", e);
+            });
         }
+
 
     }
 
@@ -870,7 +893,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         putIfAbsent(key, value),
         removeWithValue(key, value),
         toString,
-        applicationVersion,
+        getApplicationVersion,
         persistedDataVersion,
         putAll,
         putAllWithoutAcc,
