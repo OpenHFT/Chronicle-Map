@@ -344,7 +344,7 @@ class ClientWiredStatelessChronicleMap<K, V>
     public V put(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
-        return proxyReturnTypedObject(putReturnsNull ? putWithoutAcc : put, vClass, key,
+        return proxyReturnTypedObject(putReturnsNull ? put : getAndPut, vClass, key,
                 value);
     }
 
@@ -989,7 +989,7 @@ class ClientWiredStatelessChronicleMap<K, V>
 
         switch (methodName) {
             case putAllWithoutAcc:
-            case putWithoutAcc:
+            case put:
             case removeWithoutAcc:
                 return true;
             default:

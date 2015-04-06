@@ -229,7 +229,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
         try {
 
-            if (putWithoutAcc.contentEquals(eventName)) {
+            if (put.contentEquals(eventName)) {
 
                 valueIn.marshallable(wire -> {
 
@@ -323,11 +323,11 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 return;
             }
 
-            if (put.contentEquals(eventName)) {
+            if (getAndPut.contentEquals(eventName)) {
 
                 valueIn.marshallable(wire -> {
 
-                    final Params[] params = put.params;
+                    final Params[] params = getAndPut.params;
                     final byte[] key1 = wire.read(params[0]).bytes();
 
                     final byte[] value1 = wire.read(params[1]).bytes();
@@ -840,8 +840,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         containsKey(key),
         containsValue(value),
         get(key),
+        getAndPut(key, value),
         put(key, value),
-        putWithoutAcc(key, value),
         remove(key),
         removeWithoutAcc(key),
         clear,
