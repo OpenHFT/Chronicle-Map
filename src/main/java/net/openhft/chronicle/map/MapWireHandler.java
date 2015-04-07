@@ -204,8 +204,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
         final long tid = inWire.read(Fields.tid).int64();
 
-        // timestamp
-        inWire.read(timeStamp).int64();
         channelId = inWire.read(Fields.channelId).int16();
 
         final Bytes<?> bytes1 = inWire.bytes();
@@ -435,8 +433,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
         } finally {
 
-
-            //  if (len > 4)
             if (EventGroup.IS_DEBUG) {
                 long len = bytes.position() - SIZE_OF_SIZE;
                 if (len == 0) {

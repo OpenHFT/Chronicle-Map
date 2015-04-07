@@ -47,6 +47,16 @@ class ClientWiredStatelessChronicleMap<K, V>
     private static final Logger LOG =
             LoggerFactory.getLogger(ClientWiredStatelessChronicleMap.class);
 
+    private static final WriteMarshallable EMPTY = wire -> {
+    };
+    public static final Consumer<WireOut> VOID_METHOD = new Consumer<WireOut>() {
+        @Override
+        public void accept(WireOut wireOut) {
+
+            wireOut.writeValue().marshallable(EMPTY);
+        }
+    };
+
     private final ClientWiredStatelessTcpConnectionHub hub;
 
     protected Class<K> kClass;
@@ -198,7 +208,7 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     @Override
     public int hashCode() {
-        return proxyReturnInt(hashCode.toString());
+        return proxyReturnInt(hashCode);
     }
 
     @NotNull
@@ -218,7 +228,7 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
     public boolean isEmpty() {
-        return proxyReturnBoolean(isEmpty.toString());
+        return proxyReturnBoolean(isEmpty);
     }
 
     public boolean containsKey(Object key) {
@@ -235,7 +245,7 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
     public long longSize() {
-        return proxyReturnLong(longSize.toString());
+        return proxyReturnLong(longSize);
     }
 
     @Override
@@ -272,15 +282,8 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     @Override
     public void createChannel(short channelID) {
-        proxyReturnVoid(
-                () -> {
+        proxyReturnVoid(createChannel, wireOut -> wireOut.writeValue().int16(channelID));
 
-                    hub.outWire().writeDocument(false, wireOut -> {
-                        hub.outWire().writeEventName(createChannel);
-                        hub.outWire().writeValue().int16(channelID);
-                    });
-
-                });
     }
 
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {
@@ -306,7 +309,7 @@ class ClientWiredStatelessChronicleMap<K, V>
                 hub.startTime(startTime);
                 wire.write(Fields.csp).text("MAP");
                 wire.write(Fields.tid).int64(tid);
-                wire.write(Fields.timeStamp).int64(startTime);
+
                 wire.write(Fields.channelId).int16(channelID);
 
                 hub.outWire().writeEventName(putAll);
@@ -361,8 +364,7 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
     public void clear() {
-        proxyReturnVoid(() -> hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(clear)
-        ));
+        proxyReturnVoid(clear);
 
     }
 
@@ -705,41 +707,18 @@ class ClientWiredStatelessChronicleMap<K, V>
             hub.inBytesLock().unlock();
         }
     }
-/*
-    @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBoolean(@NotNull final EventId methodName, Object... parameters) {
-        final long startTime = System.currentTimeMillis();
 
-        long tid;
-
-        hub.outBytesLock().lock();
-        try {
-            tid = hub.writeHeader(startTime, channelID, hub.outWire());
-
-            sendEvent(methodName, parameters);
-
-
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
-
-        return readBoolean(tid, startTime);
-
-    }*/
 
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBoolean(
-            @NotNull final EventId methodName, Object... args) {
+            @NotNull final EventId eventId, Object... args) {
         final long startTime = System.currentTimeMillis();
 
         long tid;
         hub.outBytesLock().lock();
         try {
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
-
-            sendEvent(methodName, args);
-
+            sendEvent(eventId, args);
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
@@ -791,92 +770,70 @@ class ClientWiredStatelessChronicleMap<K, V>
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBooleanK(@NotNull final EventId methodName, K key) {
         final long startTime = System.currentTimeMillis();
-
         return readBoolean(proxySend(methodName, startTime, key), startTime);
     }
 
     @SuppressWarnings("SameParameterValue")
-    private long proxyReturnLong(@NotNull final String methodName) {
+    private long proxyReturnLong(@NotNull final EventId eventId) {
         final long startTime = System.currentTimeMillis();
-
-        long tid;
-
-        hub.outBytesLock().lock();
-        try {
-            tid = hub.writeHeader(startTime, channelID, hub.outWire());
-
-            hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(() -> methodName)
-            );
-
-
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
-
+        long tid = sendEvent(startTime, eventId, null);
         return readLong(tid, startTime);
     }
 
-    @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBoolean(@NotNull final String methodName) {
-        final long startTime = System.currentTimeMillis();
-
-        long tid;
-
-        hub.outBytesLock().lock();
-        try {
-            tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(() -> methodName)
-            );
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
-
-        return readBoolean(tid, startTime);
-    }
 
     @SuppressWarnings("SameParameterValue")
-    private void proxyReturnVoid(Runnable r) {
-
-
+    private void proxyReturnVoid(@NotNull final EventId eventId, Consumer<WireOut> consumer) {
         final long startTime = System.currentTimeMillis();
-        long tid;
-
-        hub.outBytesLock().lock();
-        try {
-            tid = hub.writeHeader(startTime, channelID, hub.outWire());
-            r.run();
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
-
+        long tid = sendEvent(startTime, eventId, consumer);
         readVoid(tid, startTime);
     }
 
 
     @SuppressWarnings("SameParameterValue")
-    private int proxyReturnInt(@NotNull final String methodName) {
-        final long startTime = System.currentTimeMillis();
+    private void proxyReturnVoid(@NotNull final EventId eventId) {
+        proxyReturnVoid(eventId, null);
+    }
 
+
+    private long sendEvent(final long startTime,
+                           @NotNull final EventId eventId,
+                           @Nullable final Consumer<WireOut> consumer) {
         long tid;
-
         hub.outBytesLock().lock();
         try {
-            tid = hub.writeHeader(startTime, channelID, hub.outWire());
 
-            hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(() -> methodName)
-            );
+            tid = hub.writeHeader(startTime, channelID, hub.outWire());
+            hub.outWire().writeDocument(false, wireOut -> {
+
+                wireOut.writeEventName(eventId);
+
+                if (consumer == null)
+                    wireOut.writeValue().marshallable(EMPTY);
+                else
+                    consumer.accept(wireOut);
+
+            });
 
             hub.writeSocket(hub.outWire());
+
         } finally {
             hub.outBytesLock().unlock();
         }
-
-        return readInt(tid, startTime);
+        return tid;
     }
 
+    @SuppressWarnings("SameParameterValue")
+    private boolean proxyReturnBoolean(@NotNull final EventId eventId) {
+        final long startTime = System.currentTimeMillis();
+        return readBoolean(sendEvent(startTime, eventId, VOID_METHOD), startTime);
+    }
+
+
+    @SuppressWarnings("SameParameterValue")
+    private int proxyReturnInt(@NotNull final EventId eventId) {
+        final long startTime = System.currentTimeMillis();
+        return readInt(sendEvent(startTime, eventId, VOID_METHOD), startTime);
+    }
 
     @Nullable
     private <R> R proxyReturnTypedObject(
@@ -912,14 +869,23 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     @Nullable
     private <R> R proxyReturnObject(
-            Class<R> rClass, @NotNull final EventId methodName, Object key) {
+            Class<R> rClass, @NotNull final EventId eventId, Object key) {
+
         final long startTime = System.currentTimeMillis();
+       /* long tid = sendEvent(startTime, eventId, wireOut -> {
 
-        long tid;
+            wireOut.writeValue().marshallable(m -> {
+                    final ValueOut vo = m.write(eventId.params()[0]);
+                    writeField(vo, key);
 
-        tid = proxySend(methodName, startTime, key);
+            });
+        });*/
 
-        if (eventReturnsNull(methodName))
+
+      long  tid = proxySend(eventId, startTime, key);
+
+
+        if (eventReturnsNull(eventId))
             return null;
 
         if (rClass == vClass)
@@ -933,11 +899,8 @@ class ClientWiredStatelessChronicleMap<K, V>
         long tid;
         hub.outBytesLock().lock();
         try {
-
             tid = hub.writeHeader(startTime, channelID, hub.outWire());
             sendEvent(methodName, args);
-
-
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();

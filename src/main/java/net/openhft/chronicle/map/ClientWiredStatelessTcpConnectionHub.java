@@ -27,7 +27,6 @@ import net.openhft.chronicle.map.MapWireHandler.EventId;
 import net.openhft.chronicle.network2.event.EventGroup;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
-import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +39,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 import static net.openhft.chronicle.map.MapWireHandler.EventId.getApplicationVersion;
 import static net.openhft.chronicle.map.MapWireHandler.SIZE_OF_SIZE;
@@ -626,7 +624,11 @@ public class ClientWiredStatelessTcpConnectionHub {
         outBytesLock().lock();
         try {
             long tid = writeHeader(startTime, channelID, wire);
-            wire.writeDocument(false, wireOut -> wireOut.writeEventName(methodName));
+            wire.writeDocument(false, wireOut -> {
+                wireOut.writeEventName(methodName);
+                wireOut.writeValue().marshallable(w -> {
+                });
+            });
 
             writeSocket(wire);
             return tid;
@@ -643,13 +645,13 @@ public class ClientWiredStatelessTcpConnectionHub {
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
-    String proxyReturnString(@NotNull final EventId messageId, short channelID, Wire outWire) {
+    String proxyReturnString(@NotNull final EventId eventId, short channelID, Wire outWire) {
         final long startTime = System.currentTimeMillis();
         long tid;
 
         outBytesLock().lock();
         try {
-            tid = proxySend(messageId, startTime, channelID, outWire);
+            tid = proxySend(eventId, startTime, channelID, outWire);
         } finally {
             outBytesLock().unlock();
         }
@@ -690,7 +692,7 @@ public class ClientWiredStatelessTcpConnectionHub {
         wire.writeDocument(true, wireOut -> {
             wireOut.write(csp).text("MAP");
             wireOut.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
-            wireOut.write(timeStamp).int64(startTime);
+       //     wireOut.write(timeStamp).int64(startTime);
             wireOut.write(channelId).int16(channelID);
         });
 
