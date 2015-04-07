@@ -64,12 +64,14 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     // used with toString()
     private static final int MAX_NUM_ENTRIES = 20;
+    private String csp;
 
     public ClientWiredStatelessChronicleMap(
             @NotNull final ClientWiredChronicleMapStatelessBuilder config,
             @NotNull final Class kClass, @NotNull final Class vClass, short channelID) {
         this.channelID = channelID;
-        hub = config.hub;
+        this.csp = "//server/path/" + channelID + "#MAP";
+        this.hub = config.hub;
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();
         this.kClass = kClass;
@@ -121,7 +123,7 @@ class ClientWiredStatelessChronicleMap<K, V>
 
 
     public String serverApplicationVersion() {
-        return hub.serverApplicationVersion(channelID);
+        return hub.serverApplicationVersion(csp);
     }
 
     @Override
@@ -219,7 +221,8 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     @NotNull
     public String serverPersistedDataVersion() {
-        return hub.proxyReturnString(persistedDataVersion, channelID);
+
+        return hub.proxyReturnString(persistedDataVersion, csp);
     }
 
     public boolean isEmpty() {
@@ -305,7 +308,7 @@ class ClientWiredStatelessChronicleMap<K, V>
                 wire.write(Fields.csp).text("MAP");
                 wire.write(Fields.tid).int64(tid);
 
-                wire.write(Fields.channelId).int16(channelID);
+                //     wire.write(Fields.channelId).int16(channelID);
 
                 hub.outWire().writeEventName(putAll);
 
@@ -715,11 +718,12 @@ class ClientWiredStatelessChronicleMap<K, V>
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBooleanV(@NotNull final EventId eventId, V value) {
         final long startTime = System.currentTimeMillis();
-        return readBoolean(sendEvent(startTime, eventId, out -> writeField(out, value)), startTime);
+        return readBoolean(sendEvent(startTime, eventId, out -> writeField(out, value)),
+                startTime);
     }
 
     @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBooleanK(@NotNull final EventId eventId, K key) {
+    private boolean proxyReturnBooleanK(@NotNull final EventId eventId, K key ) {
         final long startTime = System.currentTimeMillis();
         return readBoolean(sendEvent(startTime, eventId, out -> writeField(out, key)), startTime);
     }
@@ -733,7 +737,8 @@ class ClientWiredStatelessChronicleMap<K, V>
 
 
     @SuppressWarnings("SameParameterValue")
-    private void proxyReturnVoid(@NotNull final EventId eventId, Consumer<ValueOut> consumer) {
+    private void proxyReturnVoid(@NotNull final EventId eventId,
+                                 @Nullable final Consumer<ValueOut> consumer) {
         final long startTime = System.currentTimeMillis();
         long tid = sendEvent(startTime, eventId, consumer);
         readVoid(tid, startTime);
@@ -753,7 +758,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
 
-            tid = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = writeHeader(startTime);
             hub.outWire().writeDocument(false, wireOut -> {
 
                 final ValueOut valueOut = wireOut.writeEventName(eventId);
@@ -771,6 +776,10 @@ class ClientWiredStatelessChronicleMap<K, V>
             hub.outBytesLock().unlock();
         }
         return tid;
+    }
+
+    private long writeHeader(long startTime) {
+        return hub.writeHeader(startTime, hub.outWire(), csp);
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -855,7 +864,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         long tid;
         hub.outBytesLock().lock();
         try {
-            tid = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = writeHeader(startTime);
             hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(methodName));
             hub.writeSocket(hub.outWire());
         } finally {
@@ -868,7 +877,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         long tid;
         hub.outBytesLock().lock();
         try {
-            tid = hub.writeHeader(startTime, channelID, hub.outWire());
+            tid = writeHeader(startTime);
             hub.outWire().write(Fields.eventName).text(methodName.toString());
 
             hub.outWire().writeDocument(false, wireOut -> {

@@ -42,7 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static net.openhft.chronicle.map.MapWireHandler.EventId.getApplicationVersion;
 import static net.openhft.chronicle.map.MapWireHandler.SIZE_OF_SIZE;
-import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
+import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.reply;
 
 /**
  * Created by Rob Austin
@@ -57,7 +57,7 @@ public class ClientWiredStatelessTcpConnectionHub {
     protected final int tcpBufferSize;
     private final ReentrantLock inBytesLock = new ReentrantLock(true);
     private final ReentrantLock outBytesLock = new ReentrantLock();
-
+    private String type;
 
     @NotNull
     private final AtomicLong transactionID = new AtomicLong(0);
@@ -88,7 +88,7 @@ public class ClientWiredStatelessTcpConnectionHub {
 
     public ClientWiredStatelessTcpConnectionHub(
             ClientWiredChronicleMapStatelessBuilder config, byte localIdentifier,
-            boolean doHandShaking) {
+            boolean doHandShaking, String cspType) {
         this.localIdentifier = localIdentifier;
         this.doHandShaking = doHandShaking;
         this.remoteAddress = config.remoteAddress();
@@ -96,8 +96,9 @@ public class ClientWiredStatelessTcpConnectionHub {
         this.config = config;
         this.name = config.name();
         this.timeoutMs = config.timeoutMs();
+        this.type = cspType;
         attemptConnect(remoteAddress);
-        checkVersion(config.channelID());
+
     }
 
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
@@ -127,9 +128,9 @@ public class ClientWiredStatelessTcpConnectionHub {
         return outBytesLock;
     }
 
-    protected void checkVersion(short channelID) {
+    protected void checkVersion(@NotNull String csp) {
 
-        final String serverVersion = serverApplicationVersion(channelID);
+        final String serverVersion = serverApplicationVersion(csp);
         final String clientVersion = clientVersion();
 
         if (!serverVersion.equals(clientVersion)) {
@@ -137,7 +138,7 @@ public class ClientWiredStatelessTcpConnectionHub {
                     "Stateless-Client are on different " +
                     "versions, " +
                     " we suggest that you use the same version, server=" +
-                    serverApplicationVersion(channelID) + ", " +
+                    serverApplicationVersion(csp) + ", " +
                     "client=" + clientVersion);
         }
     }
@@ -192,7 +193,7 @@ public class ClientWiredStatelessTcpConnectionHub {
         }
         clientChannel = result;
 
-        checkVersion(config.channelID());
+        checkVersion("//#" + type);
 
     }
 
@@ -238,9 +239,9 @@ public class ClientWiredStatelessTcpConnectionHub {
     }
 
     @NotNull
-    public String serverApplicationVersion(short channelID) {
+    public String serverApplicationVersion(@NotNull String csp) {
         TextWire wire = new TextWire(Bytes.elasticByteBuffer());
-        String result = proxyReturnString(getApplicationVersion, channelID, wire);
+        String result = proxyReturnString(getApplicationVersion, wire, csp);
         return (result == null) ? "" : result;
     }
 
@@ -614,8 +615,8 @@ public class ClientWiredStatelessTcpConnectionHub {
 
     private long proxySend(@NotNull final EventId methodName,
                            final long startTime,
-                           short channelID,
-                           @NotNull final Wire wire) {
+                           @NotNull final Wire wire,
+                           @NotNull final String csp) {
 
         assert outBytesLock().isHeldByCurrentThread();
         assert !inBytesLock().isHeldByCurrentThread();
@@ -623,7 +624,7 @@ public class ClientWiredStatelessTcpConnectionHub {
         // send
         outBytesLock().lock();
         try {
-            long tid = writeHeader(startTime, channelID, wire);
+            long tid = writeHeader(startTime, wire, csp);
             wire.writeDocument(false, wireOut -> {
                 wireOut.writeEventName(methodName);
                 wireOut.writeValue().marshallable(w -> {
@@ -639,19 +640,19 @@ public class ClientWiredStatelessTcpConnectionHub {
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
-    String proxyReturnString(@NotNull final EventId messageId, short channelID) {
-        return proxyReturnString(messageId, channelID, outWire);
+    String proxyReturnString(@NotNull final EventId messageId, String csp) {
+        return proxyReturnString(messageId, outWire, csp);
     }
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
-    String proxyReturnString(@NotNull final EventId eventId, short channelID, Wire outWire) {
+    String proxyReturnString(@NotNull final EventId eventId, Wire outWire, String csp) {
         final long startTime = System.currentTimeMillis();
         long tid;
 
         outBytesLock().lock();
         try {
-            tid = proxySend(eventId, startTime, channelID, outWire);
+            tid = proxySend(eventId, startTime, outWire, csp);
         } finally {
             outBytesLock().unlock();
         }
@@ -682,7 +683,7 @@ public class ClientWiredStatelessTcpConnectionHub {
         return outWire;
     }
 
-    long writeHeader(long startTime, short channelID, Wire wire) {
+    long writeHeader(long startTime, Wire wire, String csp) {
 
         assert outBytesLock().isHeldByCurrentThread();
         markSize(wire);
@@ -690,10 +691,8 @@ public class ClientWiredStatelessTcpConnectionHub {
 
         long tid = nextUniqueTransaction(startTime);
         wire.writeDocument(true, wireOut -> {
-            wireOut.write(csp).text("MAP");
+            wireOut.write(MapWireHandlerBuilder.Fields.csp).text(csp);
             wireOut.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
-       //     wireOut.write(timeStamp).int64(startTime);
-            wireOut.write(channelId).int16(channelID);
         });
 
          return tid;

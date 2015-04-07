@@ -196,15 +196,27 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         }
     }
 
+    StringBuilder cspText = new StringBuilder();
 
     @SuppressWarnings("UnusedReturnValue")
     void onEvent() throws StreamCorruptedException {
 
         // it is assumed by this point that the buffer has all the bytes in it for this message
 
+
+        inWire.read(csp).text(cspText);
+
+        final int i = cspText.lastIndexOf("/");
+
+        if (i != -1 && i < (cspText.length() - 1)) {
+            final String channelStr = cspText.substring(i + 1, cspText.length() - "#MAP".length());
+            channelId = Short.parseShort(channelStr);
+        } else
+            channelId = 0;
+
+
         final long tid = inWire.read(Fields.tid).int64();
 
-        channelId = inWire.read(Fields.channelId).int16();
 
         final Bytes<?> bytes1 = inWire.bytes();
 

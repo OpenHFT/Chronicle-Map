@@ -129,7 +129,7 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
 
         // todo clean this up
         if (hub == null)
-            hub = new ClientWiredStatelessTcpConnectionHub(this, localIdentifier, doHandShaking);
+            hub = new ClientWiredStatelessTcpConnectionHub(this, localIdentifier, doHandShaking, "MAP");
 
         if (!used.getAndSet(true)) {
             return new ClientWiredStatelessChronicleMap<K, V>(
