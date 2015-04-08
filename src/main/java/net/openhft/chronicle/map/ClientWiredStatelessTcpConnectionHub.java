@@ -24,7 +24,7 @@ import net.openhft.chronicle.hash.RemoteCallTimeoutException;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.impl.util.CloseablesManager;
 import net.openhft.chronicle.map.MapWireHandler.EventId;
-import net.openhft.chronicle.network2.event.EventGroup;
+import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.Wires;

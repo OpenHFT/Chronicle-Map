@@ -20,7 +20,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
-import net.openhft.chronicle.network2.WireHandler;
+import net.openhft.chronicle.network.WireHandler;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 
