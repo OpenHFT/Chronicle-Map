@@ -37,13 +37,6 @@
     <dependencyManagement>
         <dependencies>
 
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-core</artifactId>
-                <version>1.0.0-alpha-SNAPSHOT</version>
-            </dependency>
-
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
@@ -54,38 +47,16 @@
 
             <dependency>
                 <groupId>net.openhft</groupId>
-                <artifactId>lang</artifactId>
-                <version>6.6.1</version>
-            </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>affinity</artifactId>
-                <version>2.2</version>
+                <artifactId>chronicle-bom</artifactId>
+                <type>pom</type>
+                <version>1.0.3</version>
+                <scope>import</scope>
             </dependency>
 
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>compiler</artifactId>
                 <version>2.2.0</version>
-            </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-wire</artifactId>
-                <version>1.0.1-alpha-SNAPSHOT</version>
-            </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-bytes</artifactId>
-                <version>1.0.1-alpha-SNAPSHOT</version>
-            </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-network</artifactId>
-                <version>1.0.0-alpha-SNAPSHOT</version>
             </dependency>
 
         </dependencies>
