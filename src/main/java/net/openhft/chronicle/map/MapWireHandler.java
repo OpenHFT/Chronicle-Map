@@ -23,6 +23,7 @@ package net.openhft.chronicle.map;
  */
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
@@ -60,9 +61,10 @@ import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
  */
 class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
-    public static final int SIZE_OF_SIZE = 2;
+
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     public static final int MAP_SERVICE = 3;
+    public static final int SIZE_OF_SIZE = ClientWiredStatelessTcpConnectionHub.SIZE_OF_SIZE;
     private final Map<Long, Runnable> incompleteWork = new HashMap<Long, Runnable>();
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();
 

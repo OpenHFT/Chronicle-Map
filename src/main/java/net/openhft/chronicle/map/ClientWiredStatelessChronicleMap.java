@@ -19,6 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.map.MapWireHandlerBuilder.Fields;
 import net.openhft.chronicle.wire.*;
@@ -69,10 +70,11 @@ class ClientWiredStatelessChronicleMap<K, V>
             @NotNull final ClientWiredChronicleMapStatelessBuilder config,
             @NotNull final Class kClass,
             @NotNull final Class vClass,
-            @NotNull final String channelName) {
+            @NotNull final String channelName,
+            ClientWiredStatelessTcpConnectionHub hub) {
 
         this.csp = "//" + channelName + "#MAP";
-        this.hub = config.hub;
+        this.hub = hub;
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();
         this.kClass = kClass;
@@ -124,7 +126,7 @@ class ClientWiredStatelessChronicleMap<K, V>
 
 
     public String serverApplicationVersion() {
-        return hub.serverApplicationVersion(csp);
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -477,8 +479,8 @@ class ClientWiredStatelessChronicleMap<K, V>
     /**
      * returns a chunk of entries
      *
-     * @return
      * @param maxNumEntries
+     * @return
      */
     private Map<K, V> toMap(int maxNumEntries) {
         final Map<K, V> result = new HashMap<K, V>();
@@ -589,7 +591,6 @@ class ClientWiredStatelessChronicleMap<K, V>
 
             final Wire wireIn = hub.proxyReply(timeoutTime, tid);
             checkIsData(wireIn);
-
 
 
             return readV(argName, wireIn, usingValue);
@@ -724,7 +725,7 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
     @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBooleanK(@NotNull final EventId eventId, K key ) {
+    private boolean proxyReturnBooleanK(@NotNull final EventId eventId, K key) {
         final long startTime = System.currentTimeMillis();
         return readBoolean(sendEvent(startTime, eventId, out -> writeField(out, key)), startTime);
     }
@@ -860,7 +861,6 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
 
-
     private long proxySend(EventId methodName, long startTime) {
         long tid;
         hub.outBytesLock().lock();
@@ -920,7 +920,6 @@ class ClientWiredStatelessChronicleMap<K, V>
             hub.inBytesLock().unlock();
         }
     }
-
 
 
     class Entry implements Map.Entry<K, V> {

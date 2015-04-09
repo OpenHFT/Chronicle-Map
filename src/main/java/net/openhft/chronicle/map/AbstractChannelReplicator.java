@@ -149,7 +149,7 @@ abstract class AbstractChannelReplicator implements Closeable {
      * @param selector
      * @return
      */
-    private Selector openSelector(@NotNull final Selector selector,
+    private static Selector openSelector(@NotNull final Selector selector,
                                   @NotNull final SelectedSelectionKeySet selectedKeySet) {
         try {
 

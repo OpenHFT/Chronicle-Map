@@ -18,11 +18,11 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.ChronicleHashStatelessClientBuilder;
 import net.openhft.lang.MemoryUnit;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -34,8 +34,8 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
                 ChronicleMap<K, V>>,
         MapBuilder<ClientWiredChronicleMapStatelessBuilder<K, V>> {
 
-    ClientWiredStatelessTcpConnectionHub hub;
 
+    private final ClientWiredStatelessTcpConnectionHub hub;
     private Class keyClass;
     private Class valueClass;
 
@@ -110,7 +110,7 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
 
         if (!used.getAndSet(true)) {
             return new ClientWiredStatelessChronicleMap<K, V>(
-                    this, keyClass, valueClass, name);
+                    this, keyClass, valueClass, name, hub);
 
         } else {
             throw new IllegalStateException(
