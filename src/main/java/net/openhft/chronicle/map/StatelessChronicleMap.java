@@ -52,6 +52,7 @@ import java.util.function.Predicate;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.util.Collections.emptyList;
+import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.IS_DEBUG;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTION_ID;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
@@ -84,7 +85,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final InetSocketAddress remoteAddress;
     private final long timeoutMs;
     private final int tcpBufferSize;
-    
+
     private Class<K> kClass;
     private Class<V> vClass;
     private boolean putReturnsNull;
@@ -239,7 +240,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
     private void checkTimeout(long timeoutTime) {
-        if (timeoutTime < System.currentTimeMillis())
+        if (timeoutTime < System.currentTimeMillis() && !IS_DEBUG)
             throw new RemoteCallTimeoutException();
     }
 
@@ -385,7 +386,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         // read a single byte back
         while (this.connectionOutBuffer.position() <= 0) {
             int read = clientChannel.read(this.connectionOutBuffer);// the remote identifier
-            if (read ==-1)
+            if (read == -1)
                 throw new IOException("server conncetion closed");
             checkTimeout(timeoutTime);
         }
