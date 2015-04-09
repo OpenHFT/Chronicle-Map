@@ -25,6 +25,7 @@ import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -34,12 +35,22 @@ public class MapWireHandlerBuilder {
 
     public static <K, V> WireHandler of(
             @NotNull Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
-            @NotNull ReplicationHub hub, byte localIdentifier, @NotNull List<Replica> channels) {
-        return new MapWireHandler<>(mapFactory, hub, localIdentifier, channels);
+            @NotNull Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>>
+                    channelNameToIdFactory,
+            @NotNull ReplicationHub hub,
+            byte localIdentifier,
+            @NotNull Map<Integer,Replica> channels) {
+
+        return new MapWireHandler<>(
+                mapFactory,
+                channelNameToIdFactory,
+                hub,
+                localIdentifier,
+                channels);
     }
 
     // note : peter has asked for these to be in camel case
-    public static enum Fields implements WireKey {
+    public enum Fields implements WireKey {
         hasNext,
         timeStamp,
         channelId,

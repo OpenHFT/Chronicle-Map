@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -119,6 +120,7 @@ public class TCPSocketReplication4WayMapTest {
         assertEquals("map4", map1, map4);
         assertTrue("map2.empty", !map2.isEmpty());
     }
+
 
     @Test
     public void testBufferOverflowPutIfAbsent() throws IOException, InterruptedException {

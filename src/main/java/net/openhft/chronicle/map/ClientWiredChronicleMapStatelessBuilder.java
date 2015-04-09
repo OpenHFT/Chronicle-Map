@@ -35,31 +35,21 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
         MapBuilder<ClientWiredChronicleMapStatelessBuilder<K, V>> {
 
     ClientWiredStatelessTcpConnectionHub hub;
+
     private Class keyClass;
     private Class valueClass;
-    private byte localIdentifier;
-    private short channelID;
-    private boolean doHandShaking;
 
     public ClientWiredChronicleMapStatelessBuilder(
-            InetSocketAddress remoteAddress, Class keyClass, Class valueClass, short channelID) {
-        this.keyClass = keyClass;
-        this.valueClass = valueClass;
-        this.remoteAddress = remoteAddress;
-        this.channelID = channelID;
-    }
-
-    public ClientWiredChronicleMapStatelessBuilder(
-            ClientWiredStatelessTcpConnectionHub hub, Class keyClass, Class valueClass,
-            short channelID) {
+            ClientWiredStatelessTcpConnectionHub hub,
+            Class keyClass,
+            Class valueClass,
+            String name) {
         this.keyClass = keyClass;
         this.valueClass = valueClass;
         this.hub = hub;
-        this.channelID = channelID;
+        this.name = name;
     }
 
-
-    private InetSocketAddress remoteAddress;
     private boolean putReturnsNull = false;
     private boolean removeReturnsNull = false;
     private long timeoutMs = TimeUnit.SECONDS.toMillis(10);
@@ -67,11 +57,6 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
     private int tcpBufferSize = (int) MemoryUnit.KILOBYTES.toBytes(64);
 
     private final AtomicBoolean used = new AtomicBoolean(false);
-
-
-    InetSocketAddress remoteAddress() {
-        return remoteAddress;
-    }
 
     @Override
     public ClientWiredChronicleMapStatelessBuilder<K, V> putReturnsNull(boolean putReturnsNull) {
@@ -100,10 +85,6 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
         return this;
     }
 
-    long timeoutMs() {
-        return timeoutMs;
-    }
-
     @Override
     public ClientWiredChronicleMapStatelessBuilder<K, V> name(String name) {
         this.name = name;
@@ -127,13 +108,9 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
     @Override
     public ChronicleMap<K, V> create() throws IOException {
 
-        // todo clean this up
-        if (hub == null)
-            hub = new ClientWiredStatelessTcpConnectionHub(this, localIdentifier, doHandShaking, "MAP");
-
         if (!used.getAndSet(true)) {
             return new ClientWiredStatelessChronicleMap<K, V>(
-                    this, keyClass, valueClass, channelID);
+                    this, keyClass, valueClass, name);
 
         } else {
             throw new IllegalStateException(
@@ -143,16 +120,5 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
         }
     }
 
-    public void identifier(byte identifier) {
-        this.localIdentifier = identifier;
-    }
 
-    public short channelID() {
-        return channelID;
-    }
-
-
-    public ClientWiredStatelessTcpConnectionHub hub() {
-        return hub;
-    }
 }

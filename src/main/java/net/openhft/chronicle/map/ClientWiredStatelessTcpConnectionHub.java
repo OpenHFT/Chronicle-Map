@@ -61,7 +61,7 @@ public class ClientWiredStatelessTcpConnectionHub {
 
     @NotNull
     private final AtomicLong transactionID = new AtomicLong(0);
-    private final ClientWiredChronicleMapStatelessBuilder config;
+
     @Nullable
     protected CloseablesManager closeables;
 
@@ -87,15 +87,20 @@ public class ClientWiredStatelessTcpConnectionHub {
 
 
     public ClientWiredStatelessTcpConnectionHub(
-            ClientWiredChronicleMapStatelessBuilder config, byte localIdentifier,
-            boolean doHandShaking, String cspType) {
+            byte localIdentifier,
+            boolean doHandShaking,
+            String cspType,
+            InetSocketAddress remoteAddress,
+            int tcpBufferSize,
+            long timeout) {
+
         this.localIdentifier = localIdentifier;
         this.doHandShaking = doHandShaking;
-        this.remoteAddress = config.remoteAddress();
-        this.tcpBufferSize = config.tcpBufferSize();
-        this.config = config;
-        this.name = config.name();
-        this.timeoutMs = config.timeoutMs();
+
+        this.tcpBufferSize = tcpBufferSize;
+        this.remoteAddress = remoteAddress;
+        this.name = cspType + " connected to " + remoteAddress.toString();
+        this.timeoutMs = timeout;
         this.type = cspType;
         attemptConnect(remoteAddress);
 

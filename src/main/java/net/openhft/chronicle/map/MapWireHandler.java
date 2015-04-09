@@ -37,11 +37,15 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StreamCorruptedException;
 import java.io.StringWriter;
 import java.nio.BufferOverflowException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -56,14 +60,16 @@ import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
  */
 class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
-
     public static final int SIZE_OF_SIZE = 2;
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
-    final Map<Long, Runnable> incompleteWork = new HashMap<Long, Runnable>();
+    public static final int MAP_SERVICE = 3;
+    private final Map<Long, Runnable> incompleteWork = new HashMap<Long, Runnable>();
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();
-    @NotNull
 
+    @NotNull
     private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory;
+    private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>> channelNameToIdFactory;
+
     private Wire inWire = null;
     private Wire outWire = null;
 
@@ -93,26 +99,44 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             bytes1.write(entry.getValue());
         }
     };
+
     private WireHandlers publishLater;
     private byte localIdentifier;
 
-    private short channelId;
-    private List<Replica> channels;
+    private int channelId;
+    private Map<Integer, Replica> channels;
     private ReplicationHub hub;
     private byte remoteIdentifier;
+    private ChronicleMap<String, Integer> channelNameToId;
 
     public MapWireHandler(
-            @NotNull Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
-            @NotNull ReplicationHub hub, byte localIdentifier, @NotNull List<Replica> channels) {
-        this(mapFactory, hub);
+            @NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
+            @NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>>
+                    channelNameToIdFactory,
+            @NotNull final ReplicationHub hub, byte localIdentifier,
+            @NotNull final Map<Integer, Replica> channels) {
+        this(mapFactory, channelNameToIdFactory, hub);
         this.channels = channels;
         this.localIdentifier = localIdentifier;
+
     }
 
-    public MapWireHandler(Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
-                          ReplicationHub hub) {
+    public MapWireHandler(
+            @NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
+            @NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>>
+                    channelNameToIdFactory,
+            @NotNull final ReplicationHub hub) {
+
         this.mapFactory = mapFactory;
+        this.channelNameToIdFactory = channelNameToIdFactory;
+
         this.hub = hub;
+        try {
+            channelNameToId = (ChronicleMap) channelNameToIdFactory.get()
+                    .replicatedViaChannel(hub.createChannel(MAP_SERVICE)).create();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -196,24 +220,74 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         }
     }
 
-    StringBuilder cspText = new StringBuilder();
+
+    /**
+     * @return the next free channel id
+     */
+    short getNextFreeChannel() {
+
+        // todo this is a horrible hack, it slow and not processor safe, but was added to get
+        // todo something working for now.
+
+        int max = 3;
+        for (Integer channel : channelNameToId.values()) {
+            max = Math.max(max, channel);
+        }
+
+        return (short) (max + 1);
+    }
+
+
+    /**
+     * gets the channel id for a name, or creates a new one if this name is not yet assosiated to a
+     * channel
+     *
+     * @param fromName the name of the channel
+     * @return the id assosiated with this name
+     */
+    int acquireChannelId(@NotNull String fromName) throws IOException {
+
+        // todo this is a horrible hack, it slow and NOT processor safe, but was added to get
+        // todo something working for now.
+
+        final Integer channelId = channelNameToId.get(fromName);
+
+        if (channelId != null)
+            return channelId;
+
+        final int nextFreeChannel = getNextFreeChannel();
+        try {
+
+            mapFactory.get().replicatedViaChannel(hub.createChannel(nextFreeChannel)).create();
+            channelNameToId.put(fromName, nextFreeChannel);
+
+            return nextFreeChannel;
+        } catch (IOException e) {
+            // todo send this error back to the user
+            LOG.error("", e);
+            throw e;
+        }
+
+    }
+
+
+
 
     @SuppressWarnings("UnusedReturnValue")
-    void onEvent() throws StreamCorruptedException {
+    void onEvent() throws IOException {
 
+        StringBuilder cspText = Wires.acquireStringBuilder();
         // it is assumed by this point that the buffer has all the bytes in it for this message
-
 
         inWire.read(csp).text(cspText);
 
         final int i = cspText.lastIndexOf("/");
-
         if (i != -1 && i < (cspText.length() - 1)) {
             final String channelStr = cspText.substring(i + 1, cspText.length() - "#MAP".length());
-            channelId = Short.parseShort(channelStr);
+            channelId = acquireChannelId(channelStr);
+
         } else
             channelId = 0;
-
 
         final long tid = inWire.read(Fields.tid).int64();
 
@@ -644,7 +718,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
      * @return the chronicle map with this {@code channelId}
      */
     @NotNull
-    private ReplicatedChronicleMap map(short channelId) {
+    private ReplicatedChronicleMap map(int channelId) {
 
         // todo this cast is a bit of a hack, improve later
         final ReplicatedChronicleMap map =
@@ -652,6 +726,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
         if (map != null)
             return map;
+
 
         throw new IllegalStateException();
     }
@@ -663,7 +738,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
      * @return a BytesChronicleMap used to update the memory which holds the chronicle map
      */
     @Nullable
-    private BytesChronicleMap bytesMap(short channelId) {
+    private BytesChronicleMap bytesMap(int channelId) {
 
         final BytesChronicleMap bytesChronicleMap = (channelId < bytesChronicleMaps.size())
                 ? bytesChronicleMaps.get(channelId)

@@ -60,7 +60,6 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     private boolean putReturnsNull;
     private boolean removeReturnsNull;
-    private short channelID;
 
     // used with toString()
     private static final int MAX_NUM_ENTRIES = 20;
@@ -68,9 +67,11 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     public ClientWiredStatelessChronicleMap(
             @NotNull final ClientWiredChronicleMapStatelessBuilder config,
-            @NotNull final Class kClass, @NotNull final Class vClass, short channelID) {
-        this.channelID = channelID;
-        this.csp = "//server/path/" + channelID + "#MAP";
+            @NotNull final Class kClass,
+            @NotNull final Class vClass,
+            @NotNull final String channelName) {
+
+        this.csp = "//" + channelName + "#MAP";
         this.hub = config.hub;
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();

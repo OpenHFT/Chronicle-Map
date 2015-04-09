@@ -72,14 +72,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     private ByteBuffer inBuffer;
     private ByteBufferBytes inBytes;
-
-    @NotNull
     private ReaderWithSize<K> keyReaderWithSize;
-    @NotNull
     private WriterWithSize<K> keyWriterWithSize;
-    @NotNull
     private ReaderWithSize<V> valueReaderWithSize;
-    @NotNull
     private WriterWithSize<V> valueWriterWithSize;
     private SocketChannel clientChannel;
 
@@ -98,15 +93,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final ReentrantLock inBytesLock = new ReentrantLock(true);
     private final ReentrantLock outBytesLock = new ReentrantLock();
 
-    private final BufferResizer outBufferResizer = new BufferResizer() {
-        @Override
-        public Bytes resizeBuffer(int newCapacity) {
-            return resizeBufferOutBuffer(newCapacity);
+    private final BufferResizer outBufferResizer = newCapacity -> resizeBufferOutBuffer(newCapacity);
 
-        }
-    };
-
-    static enum EventId {
+    enum EventId {
         HEARTBEAT,
         STATEFUL_UPDATE,
         LONG_SIZE,
