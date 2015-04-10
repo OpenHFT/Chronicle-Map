@@ -20,8 +20,9 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
+import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields;
 import net.openhft.chronicle.hash.function.SerializableFunction;
-import net.openhft.chronicle.map.MapWireHandlerBuilder.Fields;
+import net.openhft.chronicle.map.MapWireHandler.Fields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -308,8 +309,8 @@ class ClientWiredStatelessChronicleMap<K, V>
                 assert hub.outBytesLock().isHeldByCurrentThread();
                 hub.markSize(wire);
                 hub.startTime(startTime);
-                wire.write(Fields.csp).text("MAP");
-                wire.write(Fields.tid).int64(tid);
+                wire.write(MapWireHandler.Fields.csp).text("MAP");
+                wire.write(CoreFields.tid).int64(tid);
 
                 //     wire.write(Fields.channelId).int16(channelID);
 
@@ -320,7 +321,7 @@ class ClientWiredStatelessChronicleMap<K, V>
                     Map.Entry<? extends K, ? extends V> e = iterator.next();
 
 
-                    hub.outWire().write(Fields.hasNext).bool(iterator.hasNext());
+                    hub.outWire().write(MapWireHandler.Fields.hasNext).bool(iterator.hasNext());
 
                     // todo
                     // writeField(wireOut, Fields.arg1, e.getKey());
@@ -404,9 +405,9 @@ class ClientWiredStatelessChronicleMap<K, V>
 
                 final Bytes<?> bytes = wireIn.bytes();
                 while (bytes.remaining() > 0) {
-                    boolean bool = wireIn.read(Fields.hasNext).bool();
+                    boolean bool = wireIn.read(MapWireHandler.Fields.hasNext).bool();
                     if (bool) {
-                        usingCollection.add(readObject(Fields.reply, wireIn, null, vClass1));
+                        usingCollection.add(readObject(MapWireHandler.Fields.reply, wireIn, null, vClass1));
                     } else
                         break OUTER;
 
@@ -453,11 +454,11 @@ class ClientWiredStatelessChronicleMap<K, V>
                 checkIsData(wireIn);
                 final Bytes<?> bytes = wireIn.bytes();
                 while (bytes.remaining() > 0) {
-                    boolean bool = wireIn.read(Fields.hasNext).bool();
+                    boolean bool = wireIn.read(MapWireHandler.Fields.hasNext).bool();
                     if (bool) {
                         result.put(
-                                readK(Fields.resultKey, wireIn, null),
-                                readV(Fields.resultValue, wireIn, null));
+                                readK(MapWireHandler.Fields.resultKey, wireIn, null),
+                                readV(MapWireHandler.Fields.resultValue, wireIn, null));
                     } else
                         break OUTER;
 
@@ -501,19 +502,19 @@ class ClientWiredStatelessChronicleMap<K, V>
                 checkIsData(wireIn);
                 final Bytes<?> bytes = wireIn.bytes();
                 while (bytes.remaining() > 0) {
-                    boolean bool = wireIn.read(Fields.hasNext).bool();
+                    boolean bool = wireIn.read(MapWireHandler.Fields.hasNext).bool();
                     if (bool) {
                         result.put(
-                                readK(Fields.resultKey, wireIn, null),
-                                readV(Fields.resultValue, wireIn, null));
+                                readK(MapWireHandler.Fields.resultKey, wireIn, null),
+                                readV(MapWireHandler.Fields.resultValue, wireIn, null));
                     } else
                         break OUTER;
 
 
                     if (bytes.remaining() > 0) {
-                        boolean isException = wireIn.read(Fields.isException).bool();
+                        boolean isException = wireIn.read(MapWireHandler.Fields.isException).bool();
                         if (isException)
-                            throw new RuntimeException(wireIn.read(Fields.reply).text());
+                            throw new RuntimeException(wireIn.read(MapWireHandler.Fields.reply).text());
                     }
                 }
 
@@ -543,7 +544,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         try {
             final Wire wire = hub.proxyReply(timeoutTime, tid);
             checkIsData(wire);
-            return wire.read(Fields.reply).int64();
+            return wire.read(MapWireHandler.Fields.reply).int64();
         } finally {
             hub.inBytesLock().unlock();
         }
@@ -685,7 +686,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         try {
             final Wire wireIn = hub.proxyReply(timeoutTime, tid);
             checkIsData(wireIn);
-            return wireIn.read(Fields.reply).bool();
+            return wireIn.read(MapWireHandler.Fields.reply).bool();
         } finally {
             hub.inBytesLock().unlock();
         }
@@ -701,7 +702,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         try {
             final Wire wireIn = hub.proxyReply(timeoutTime, tid);
             checkIsData(wireIn);
-            return wireIn.read(Fields.reply).int32();
+            return wireIn.read(MapWireHandler.Fields.reply).int32();
         } finally {
             hub.inBytesLock().unlock();
         }
@@ -836,7 +837,7 @@ class ClientWiredStatelessChronicleMap<K, V>
             return null;
 
         if (resultType == vClass)
-            return (R) readValue(Fields.reply, tid, startTime, null);
+            return (R) readValue(MapWireHandler.Fields.reply, tid, startTime, null);
 
         else
             throw new UnsupportedOperationException("class of type class=" + resultType +
@@ -854,7 +855,7 @@ class ClientWiredStatelessChronicleMap<K, V>
             return null;
 
         if (rClass == vClass)
-            return (R) readValue(Fields.reply, tid, startTime, null);
+            return (R) readValue(MapWireHandler.Fields.reply, tid, startTime, null);
         else
             throw new UnsupportedOperationException("class of type class=" + rClass + " is not " +
                     "supported");
@@ -879,7 +880,7 @@ class ClientWiredStatelessChronicleMap<K, V>
         hub.outBytesLock().lock();
         try {
             tid = writeHeader(startTime);
-            hub.outWire().write(Fields.eventName).text(methodName.toString());
+            hub.outWire().write(MapWireHandler.Fields.eventName).text(methodName.toString());
 
             hub.outWire().writeDocument(false, wireOut -> {
                         final ValueOut out = wireOut.writeEventName(methodName);

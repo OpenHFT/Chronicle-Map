@@ -27,7 +27,6 @@ import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
-import net.openhft.chronicle.map.MapWireHandlerBuilder.Fields;
 import net.openhft.chronicle.network.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.network.event.WireHandlers;
@@ -52,25 +51,24 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields;
 import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
+import static net.openhft.chronicle.map.MapWireHandler.Fields.*;
 import static net.openhft.chronicle.map.MapWireHandler.Params.*;
-import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
 
 /**
  * @author Rob Austin.
  */
-class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
-
+public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     public static final int MAP_SERVICE = 3;
     public static final int SIZE_OF_SIZE = ClientWiredStatelessTcpConnectionHub.SIZE_OF_SIZE;
-    private final Map<Long, Runnable> incompleteWork = new HashMap<Long, Runnable>();
+    private final Map<Long, Runnable> incompleteWork = new HashMap<>();
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();
 
     @NotNull
     private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory;
-    private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>> channelNameToIdFactory;
 
     private Wire inWire = null;
     private Wire outWire = null;
@@ -84,6 +82,32 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             bytes.write(iterator.next());
         }
     };
+
+    private final Consumer<WireIn> metaDataConsumer = new Consumer<WireIn>() {
+
+        @Override
+        public void accept(WireIn wireIn) {
+
+            wireIn.read(csp).text(cspText);
+
+            final int i = cspText.lastIndexOf("/");
+
+            if (i != -1 && i < (cspText.length() - 1)) {
+                final String channelStr = cspText.substring(i + 1, cspText.length() - "#MAP".length());
+                try {
+                    channelId = MapWireHandler.this.acquireChannelId(channelStr);
+                } catch (IOException e) {
+                    // todo send to user
+                    LOG.error("", e);
+                }
+            } else
+                channelId = 0;
+
+            tid = inWire.read(CoreFields.tid).int64();
+
+        }
+    };
+
 
     private final Consumer writeEntry = new Consumer<Iterator<Map.Entry<byte[], byte[]>>>() {
 
@@ -130,9 +154,8 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             @NotNull final ReplicationHub hub) {
 
         this.mapFactory = mapFactory;
-        this.channelNameToIdFactory = channelNameToIdFactory;
-
         this.hub = hub;
+
         try {
             channelNameToId = (ChronicleMap) channelNameToIdFactory.get()
                     .replicatedViaChannel(hub.createChannel(MAP_SERVICE)).create();
@@ -142,19 +165,25 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     }
 
     @Override
-    public void accept(WireHandlers wireHandlers) {
+    public void accept(@NotNull final WireHandlers wireHandlers) {
         this.publishLater = wireHandlers;
     }
 
+
+    private void writeChunked(
+            @NotNull final Function<BytesChronicleMap, Iterator> function,
+            @NotNull final Consumer<Iterator> c) throws StreamCorruptedException {
+        writeChunked(function, c, Long.MAX_VALUE);
+    }
+
     /**
-     * @param tid the transaction id
-     * @param function      provides that returns items bases on a BytesChronicleMap
-     * @param c             an iterator that contains items
-     * @param maxEntries    the maximum number of items that can be written
+     * @param function   provides that returns items bases on a BytesChronicleMap
+     * @param c          an iterator that contains items
+     * @param maxEntries the maximum number of items that can be written
      * @throws StreamCorruptedException
      */
     private void writeChunked(
-            long tid, @NotNull final Function<BytesChronicleMap, Iterator> function,
+            @NotNull final Function<BytesChronicleMap, Iterator> function,
             @NotNull final Consumer<Iterator> c, long maxEntries) throws StreamCorruptedException {
 
         final BytesChronicleMap m = bytesMap(channelId);
@@ -165,7 +194,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
             @Override
             public void process(Wire in, Wire out) throws StreamCorruptedException {
 
-                outWire.write(Fields.tid).int64(tid);
+                outWire.write(CoreFields.tid).int64(tid);
 
                 // this allows us to write more data than the buffer will allow
                 for (int count = 0; ; count++) {
@@ -203,20 +232,13 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
     }
 
-    private void writeChunked(
-            long tid,
-            @NotNull final Function<BytesChronicleMap, Iterator> function,
-            @NotNull final Consumer<Iterator> c) throws StreamCorruptedException {
-        writeChunked(tid, function, c, Long.MAX_VALUE);
-    }
-
 
     @Override
-    public void process(Wire in, Wire out) throws StreamCorruptedException {
+    public void process(@NotNull final Wire in, @NotNull final Wire out) throws StreamCorruptedException {
         try {
             this.inWire = in;
             this.outWire = out;
-            onEvent();
+            inWire.readDocument(metaDataConsumer, dataConsumer);
         } catch (Exception e) {
             LOG.error("", e);
         }
@@ -247,7 +269,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
      * @param fromName the name of the channel
      * @return the id assosiated with this name
      */
-    int acquireChannelId(@NotNull String fromName) throws IOException {
+    int acquireChannelId(@NotNull final String fromName) throws IOException {
 
         // todo this is a horrible hack, it slow and NOT processor safe, but was added to get
         // todo something working for now.
@@ -272,274 +294,251 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
     }
 
+    final StringBuilder cspText = new StringBuilder();
 
+    public long tid;
 
+    private final Consumer<WireIn> dataConsumer = new Consumer<WireIn>() {
 
-    @SuppressWarnings("UnusedReturnValue")
-    void onEvent() throws IOException {
+        @Override
+        public void accept(WireIn wireIn) {
 
-        StringBuilder cspText = Wires.acquireStringBuilder();
-        // it is assumed by this point that the buffer has all the bytes in it for this message
+            final StringBuilder eventName = Wires.acquireStringBuilder();
+            final ValueIn valueIn = inWire.readEventName(eventName);
 
-        inWire.read(csp).text(cspText);
-
-        final int i = cspText.lastIndexOf("/");
-        if (i != -1 && i < (cspText.length() - 1)) {
-            final String channelStr = cspText.substring(i + 1, cspText.length() - "#MAP".length());
-            channelId = acquireChannelId(channelStr);
-
-        } else
-            channelId = 0;
-
-        final long tid = inWire.read(Fields.tid).int64();
-
-
-        final Bytes<?> bytes1 = inWire.bytes();
-
-        final int body = bytes1.readVolatileInt();
-        assert Wires.isData(body);
-
-        final StringBuilder eventName = Wires.acquireStringBuilder();
-        final ValueIn valueIn = inWire.readEventName(eventName);
-
-        if (!incompleteWork.isEmpty()) {
-            Runnable runnable = incompleteWork.get(tid);
-            if (runnable != null) {
-                runnable.run();
-                return;
-            }
-        }
-
-        final Bytes<?> outBytes = outWire.bytes();
-        final Bytes<?> bytes = outBytes;
-
-        try {
-
-            if (put.contentEquals(eventName)) {
-
-                valueIn.marshallable(wire -> {
-
-                    final Params[] params = putIfAbsent.params;
-                    final byte[] key = wire.read(params[0]).bytes();
-                    final byte[] value = wire.read(params[1]).bytes();
-
-                    writeVoid(b -> ((Map<byte[], byte[]>) b.delegate).putIfAbsent(key, value));
-
-                });
-
-                return;
+            if (!incompleteWork.isEmpty()) {
+                Runnable runnable = incompleteWork.get(CoreFields.tid);
+                if (runnable != null) {
+                    runnable.run();
+                    return;
+                }
             }
 
+            final Bytes<?> outBytes = outWire.bytes();
+            final Bytes<?> bytes = outBytes;
 
-            if (keySet.contentEquals(eventName)) {
-                writeChunked(tid, map -> map.keySet().iterator(), writeElement);
-                return;
-            }
+            try {
 
-            if (values.contentEquals(eventName)) {
-                writeChunked(tid, map -> map.delegate.values().iterator(), writeElement);
-                return;
-            }
+                if (put.contentEquals(eventName)) {
 
-            if (entrySet.contentEquals(eventName)) {
-                writeChunked(tid, m -> m.delegate.entrySet().iterator(), writeEntry);
-                return;
-            }
+                    valueIn.marshallable(wire -> {
 
-            if (entrySetRestricted.contentEquals(eventName)) {
-                long maxEntries = inWire.read(arg1).int64();
-                writeChunked(tid, m -> m.delegate.entrySet().iterator(), writeEntry,maxEntries);
-                return;
-            }
+                        final Params[] params = putIfAbsent.params;
+                        final byte[] key = wire.read(params[0]).bytes();
+                        final byte[] value = wire.read(params[1]).bytes();
 
-            if (putAll.contentEquals(eventName)) {
-                putAll(tid);
-                return;
-            }
+                        writeVoid(b -> ((Map<byte[], byte[]>) b.delegate).putIfAbsent(key, value));
 
-            outWire.writeDocument(true, wire -> outWire.write(Fields.tid).int64(tid));
-
-            // write the transaction id
-            if (createChannel.contentEquals(eventName)) {
-                writeVoid(() -> {
-
-                    short channelId1 = valueIn.int16();
-                    mapFactory.get().replicatedViaChannel(hub.createChannel(channelId1)).create();
-                    return null;
-                });
-                return;
-            }
-
-            if (EventId.remoteIdentifier.contentEquals(eventName)) {
-                this.remoteIdentifier = valueIn.int8();
-                return;
-            }
-
-            if (longSize.contentEquals(eventName)) {
-                write(b -> outWire.write(reply).int64(b.longSize()));
-                return;
-            }
-
-            if (isEmpty.contentEquals(eventName)) {
-                write(b -> outWire.write(reply).bool(b.isEmpty()));
-                return;
-            }
-
-            if (containsKey.contentEquals(eventName)) {
-                // todo remove the    toByteArray(..)
-                write(b -> outWire.write(reply)
-                        .bool(b.delegate.containsKey(toByteArray(valueIn))));
-                return;
-            }
-
-            if (containsValue.contentEquals(eventName)) {
-                // todo remove the    toByteArray(..)
-                write(b -> outWire.write(reply)
-                        .bool(b.delegate.containsValue(toByteArray(valueIn))));
-                return;
-            }
-
-            if (get.contentEquals(eventName)) {
-                // todo remove the    toByteArray(..)
-                writeValueUsingDelegate(map -> {
-                    final byte[] key = toByteArray(valueIn);
-                    final byte[] value = map.get(key);
-                    return value;
-                });
-                return;
-            }
-
-            if (getAndPut.contentEquals(eventName)) {
-
-                valueIn.marshallable(wire -> {
-
-                    final Params[] params = getAndPut.params;
-                    final byte[] key1 = wire.read(params[0]).bytes();
-
-                    final byte[] value1 = wire.read(params[1]).bytes();
-
-                    MapWireHandler.this.writeValue(b -> {
-                        final byte[] result = b.put(key1, value1);
-                        return result;
                     });
 
-                });
+                    return;
+                }
 
-                return;
-            }
 
-            if (remove.contentEquals(eventName)) {
+                if (keySet.contentEquals(eventName)) {
+                    writeChunked(map -> map.keySet().iterator(), writeElement);
+                    return;
+                }
 
-                MapWireHandler.this.writeValue(b -> {
-                    return b.remove(toByteArray(valueIn));
-                });
+                if (values.contentEquals(eventName)) {
+                    writeChunked(map -> map.delegate.values().iterator(), writeElement);
+                    return;
+                }
 
-                return;
-            }
+                if (entrySet.contentEquals(eventName)) {
+                    writeChunked(new Function<BytesChronicleMap, Iterator>() {
+                        @Override
+                        public Iterator apply(BytesChronicleMap m) {
+                            return m.delegate.entrySet().iterator();
+                        }
+                    }, writeEntry);
+                    return;
+                }
 
-            if (clear.contentEquals(eventName)) {
-                writeVoid(BytesChronicleMap::clear);
-                return;
-            }
+                if (entrySetRestricted.contentEquals(eventName)) {
+                    long maxEntries = inWire.read(arg1).int64();
+                    writeChunked(m -> m.delegate.entrySet().iterator(), writeEntry, maxEntries);
+                    return;
+                }
 
-            if (replace.contentEquals(eventName)) {
+                if (putAll.contentEquals(eventName)) {
+                    putAll(tid);
+                    return;
+                }
+
+                outWire.writeDocument(true, wire -> outWire.write(CoreFields.tid).int64(tid));
+
+                // write the transaction id
+                if (createChannel.contentEquals(eventName)) {
+                    writeVoid(() -> {
+
+                        short channelId1 = valueIn.int16();
+                        mapFactory.get().replicatedViaChannel(hub.createChannel(channelId1)).create();
+                        return null;
+                    });
+                    return;
+                }
+
+
+                if (longSize.contentEquals(eventName)) {
+                    write(b -> outWire.write(reply).int64(b.longSize()));
+                    return;
+                }
+
+                if (isEmpty.contentEquals(eventName)) {
+                    write(b -> outWire.write(reply).bool(b.isEmpty()));
+                    return;
+                }
+
+                if (containsKey.contentEquals(eventName)) {
+                    // todo remove the    toByteArray(..)
+                    write(b -> outWire.write(reply)
+                            .bool(b.delegate.containsKey(toByteArray(valueIn))));
+                    return;
+                }
+
+                if (containsValue.contentEquals(eventName)) {
+                    // todo remove the    toByteArray(..)
+                    write(b -> outWire.write(reply)
+                            .bool(b.delegate.containsValue(toByteArray(valueIn))));
+                    return;
+                }
+
+                if (get.contentEquals(eventName)) {
+                    // todo remove the    toByteArray(..)
+                    writeValueUsingDelegate(map -> {
+                        final byte[] key = toByteArray(valueIn);
+                        final byte[] value = map.get(key);
+                        return value;
+                    });
+                    return;
+                }
+
+                if (getAndPut.contentEquals(eventName)) {
+
+                    valueIn.marshallable(wire -> {
+
+                        final Params[] params = getAndPut.params;
+                        final byte[] key1 = wire.read(params[0]).bytes();
+
+                        final byte[] value1 = wire.read(params[1]).bytes();
+
+                        MapWireHandler.this.writeValue(b -> {
+                            final byte[] result = b.put(key1, value1);
+                            return result;
+                        });
+
+                    });
+
+                    return;
+                }
+
+                if (remove.contentEquals(eventName)) {
+
+                    MapWireHandler.this.writeValue(b -> b.remove(toByteArray(valueIn)));
+
+                    return;
+                }
+
+                if (clear.contentEquals(eventName)) {
+                    writeVoid(BytesChronicleMap::clear);
+                    return;
+                }
+
+                if (replace.contentEquals(eventName)) {
 
 
                     // todo fix this this is a hack to get to work for now.
                     // todo may use something like :
                     // todo bytesMap.replace(reader, reader, timestamp, identifier());
 
-                valueIn.marshallable(wire -> {
+                    valueIn.marshallable(wire -> {
+                        final Params[] params = replace.params;
+                        final byte[] key = wire.read(params[0]).bytes();
+                        final byte[] value = wire.read(params[1]).bytes();
 
-                    final Params[] params = replace.params;
-                    final byte[] key = wire.read(params[0]).bytes();
-                    final byte[] value = wire.read(params[1]).bytes();
+                        writeValueFromBytes(b -> ((Map<byte[], byte[]>) b.delegate).replace(key, value));
 
-                    writeValueFromBytes(b -> ((Map<byte[], byte[]>) b.delegate).replace(key, value));
-
-                });
-
-
-                return;
-            }
-
-            if (replaceWithOldAndNewValue.contentEquals(eventName)) {
-
-                write(bytesMap -> {
-                    final net.openhft.lang.io.Bytes reader = toReader(valueIn,
-                            replaceWithOldAndNewValue.params);
-                    boolean result = bytesMap.replace(reader, reader, reader);
-                    outWire.write(Fields.reply).bool(result);
-                });
-
-                return;
-            }
-
-            if (putIfAbsent.contentEquals(eventName)) {
-
-                valueIn.marshallable(wire -> {
-
-                    final Params[] params = putIfAbsent.params;
-                    final byte[] key = wire.read(params[0]).bytes();
-                    final byte[] value = wire.read(params[1]).bytes();
-
-                    writeValueFromBytes(b -> ((Map<byte[], byte[]>) b.delegate).putIfAbsent(key, value));
-
-                });
-
-                return;
-            }
-
-            if (removeWithValue.contentEquals(eventName)) {
-                write(bytesMap -> {
-                    final net.openhft.lang.io.Bytes reader = toReader(valueIn, removeWithValue.params);
-                    // todo call   outWire.write(result)
-                    // .bool(bytesMap.remove(reader, reader, timestamp, identifier()));
-                    outWire.write(reply).bool(bytesMap.remove(reader, reader));
-                });
-                return;
-            }
+                    });
 
 
-            if (getApplicationVersion.contentEquals(eventName)) {
-                write(b -> outWire.write(reply).text(applicationVersion()));
-                return;
-            }
+                    return;
+                }
 
-            if (persistedDataVersion.contentEquals(eventName)) {
-                write(b -> outWire.write(reply).text(persistedDataVersion()));
+                if (replaceWithOldAndNewValue.contentEquals(eventName)) {
+                    write(bytesMap -> {
+                        final net.openhft.lang.io.Bytes reader = toReader(valueIn,
+                                replaceWithOldAndNewValue.params);
+                        boolean result = bytesMap.replace(reader, reader, reader);
+                        outWire.write(Fields.reply).bool(result);
+                    });
 
-                return;
-            }
+                    return;
+                }
 
-            if (hashCode.contentEquals(eventName)) {
-                write(b -> outWire.write(reply).int32(b.hashCode()));
-                return;
-            }
+                if (putIfAbsent.contentEquals(eventName)) {
+                    valueIn.marshallable(wire -> {
+                        final Params[] params = putIfAbsent.params;
+                        final byte[] key = wire.read(params[0]).bytes();
+                        final byte[] value = wire.read(params[1]).bytes();
 
-            throw new IllegalStateException("unsupported event=" + eventName);
+                        writeValueFromBytes(b -> ((Map<byte[], byte[]>) b.delegate).putIfAbsent(key, value));
 
-        } finally {
+                    });
 
-            if (EventGroup.IS_DEBUG) {
-                long len = bytes.position() - SIZE_OF_SIZE;
-                if (len == 0) {
-                    System.out.println("--------------------------------------------\n" +
-                            "server writes:\n\n<EMPTY>");
-                } else {
+                    return;
+                }
+
+                if (removeWithValue.contentEquals(eventName)) {
+                    write(bytesMap -> {
+                        final net.openhft.lang.io.Bytes reader = toReader(valueIn, removeWithValue.params);
+                        // todo call   outWire.write(result)
+                        // .bool(bytesMap.remove(reader, reader, timestamp, identifier()));
+                        outWire.write(reply).bool(bytesMap.remove(reader, reader));
+                    });
+                    return;
+                }
 
 
-                    System.out.println("--------------------------------------------\n" +
+                if (getApplicationVersion.contentEquals(eventName)) {
+                    write(b -> outWire.write(reply).text(applicationVersion()));
+                    return;
+                }
+
+                if (persistedDataVersion.contentEquals(eventName)) {
+                    write(b -> outWire.write(reply).text(persistedDataVersion()));
+                    return;
+                }
+
+                if (hashCode.contentEquals(eventName)) {
+                    write(b -> outWire.write(reply).int32(b.hashCode()));
+                    return;
+                }
+
+                throw new IllegalStateException("unsupported event=" + eventName);
+
+            } catch (Exception e) {
+                LOG.error("", e);
+            } finally {
+
+                if (EventGroup.IS_DEBUG) {
+                    long len = bytes.position() - SIZE_OF_SIZE;
+                    if (len == 0) {
+                        System.out.println("--------------------------------------------\n" +
+                                "server writes:\n\n<EMPTY>");
+                    } else {
+
+
+                        System.out.println("--------------------------------------------\n" +
                                 "server writes:\n\n" +
                                 Wires.fromSizePrefixedBlobs(bytes, SIZE_OF_SIZE, len));
 
+                    }
                 }
             }
+
         }
-
-
-    }
-
+    };
 
     // todo remove
     private byte[] toBytes(WireKey fieldName) {
@@ -611,7 +610,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
 
                         incompleteWork.remove(tid);
 
-                        outWire.write(Fields.tid).int64(tid);
+                        outWire.write(CoreFields.tid).int64(tid);
 
                         writeVoid(() -> {
                             bytesMap.delegate.putAll((Map) collectData);
@@ -672,7 +671,6 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     /**
      * creates a lang buffer that holds just the payload of the args
      *
-
      * @return a new lang buffer containing the bytes of the args
      */
     private net.openhft.lang.io.Bytes toReader(ValueIn valueIn, Params... params) {
@@ -703,12 +701,10 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     }
 
 
-
     private byte[] toByteArray(ValueIn valueIn) {
 
         final String text = valueIn.text();
         return text.getBytes();
-
 
 
     }
@@ -816,7 +812,7 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
                 // so we wil have to send the exception as a String
                 outWire.bytes().reset();
 
-                WireOut o = out.write(reply)
+                final WireOut o = out.write(reply)
                         .type(e.getClass().getSimpleName());
 
                 if (e.getMessage() != null) {
@@ -873,13 +869,12 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
         }
 
 
+        try {
+            outWire.bytes().mark();
+            process.accept(bytesMap);
 
-            try {
-                outWire.bytes().mark();
-                process.accept(bytesMap);
-
-            } catch (Exception e) {
-                outWire.writeDocument(false, out -> {
+        } catch (Exception e) {
+            outWire.writeDocument(false, out -> {
                 //      bytes.reset();
                 // the idea of wire is that is platform independent,
                 // so we wil have to send the exception as a String
@@ -966,5 +961,22 @@ class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers> {
     }
 
 
+    // note : peter has asked for these to be in camel case
+    enum Fields implements WireKey {
+        hasNext,
+        timeStamp,
+        channelId,
+        eventName,
+        csp,
+        reply,
+        resultKey,
+        resultValue,
+        arg1,
+        arg2,
+        arg3,
+        isException,
+        exception,
+        resultIsNull
+    }
 }
 

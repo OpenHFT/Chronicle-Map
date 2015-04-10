@@ -33,39 +33,5 @@ import java.util.function.Supplier;
  */
 public class MapWireHandlerBuilder {
 
-    public static <K, V> WireHandler of(
-            @NotNull Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
-            @NotNull Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>>
-                    channelNameToIdFactory,
-            @NotNull ReplicationHub hub,
-            byte localIdentifier,
-            @NotNull Map<Integer,Replica> channels) {
-
-        return new MapWireHandler<>(
-                mapFactory,
-                channelNameToIdFactory,
-                hub,
-                localIdentifier,
-                channels);
-    }
-
-    // note : peter has asked for these to be in camel case
-    public enum Fields implements WireKey {
-        hasNext,
-        timeStamp,
-        channelId,
-        eventName,
-        csp,
-        tid,   // transactionId
-        reply,
-        resultKey,
-        resultValue,
-        arg1,
-        arg2,
-        arg3,
-        isException,
-        exception,
-        resultIsNull
-    }
 }
 
