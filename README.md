@@ -1244,16 +1244,7 @@ j net.openhft.collections.AbstractVanillaSharedHashMap$Segment.lock()V+12
 
 ##### When Chronicle Map is Full
 
-It will throw this exception :
-
-```java
-Caught: java.lang.IllegalStateException: VanillaShortShortMultiMap is full
-java.lang.IllegalStateException: VanillaShortShortMultiMap is full
-	at net.openhft.collections.VanillaShortShortMultiMap.nextPos(VanillaShortShortMultiMap.java:226)
-	at net.openhft.collections.AbstractVanillaSharedHashMap$Segment.put(VanillaSharedHashMap.java:834)
-	at net.openhft.collections.AbstractVanillaSharedHashMap.put0(VanillaSharedHashMap.java:348)
-	at net.openhft.collections.AbstractVanillaSharedHashMap.put(VanillaSharedHashMap.java:330)
-```
+`IllegalStateException` is thrown.
 
 ChronicleMap doesn't resize automatically.  It is assumed you will make the virtual size of the map
 larger than you need and it will handle this reasonably efficiently. With the default settings you
