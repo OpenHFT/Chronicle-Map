@@ -24,6 +24,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
+import net.openhft.chronicle.engine.client.ParameterizeWireKey;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
@@ -323,7 +324,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
                     valueIn.marshallable(wire -> {
 
-                        final Params[] params = putIfAbsent.params;
+                        final Params[] params = putIfAbsent.params();
                         final byte[] key = wire.read(params[0]).bytes();
                         final byte[] value = wire.read(params[1]).bytes();
 
@@ -418,7 +419,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
                     valueIn.marshallable(wire -> {
 
-                        final Params[] params = getAndPut.params;
+                        final Params[] params = getAndPut.params();
                         final byte[] key1 = wire.read(params[0]).bytes();
 
                         final byte[] value1 = wire.read(params[1]).bytes();
@@ -453,7 +454,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     // todo bytesMap.replace(reader, reader, timestamp, identifier());
 
                     valueIn.marshallable(wire -> {
-                        final Params[] params = replace.params;
+                        final Params[] params = replace.params();
                         final byte[] key = wire.read(params[0]).bytes();
                         final byte[] value = wire.read(params[1]).bytes();
 
@@ -468,7 +469,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                 if (replaceWithOldAndNewValue.contentEquals(eventName)) {
                     write(bytesMap -> {
                         final net.openhft.lang.io.Bytes reader = toReader(valueIn,
-                                replaceWithOldAndNewValue.params);
+                                replaceWithOldAndNewValue.params());
                         boolean result = bytesMap.replace(reader, reader, reader);
                         outWire.write(Fields.reply).bool(result);
                     });
@@ -478,7 +479,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
                 if (putIfAbsent.contentEquals(eventName)) {
                     valueIn.marshallable(wire -> {
-                        final Params[] params = putIfAbsent.params;
+                        final Params[] params = putIfAbsent.params();
                         final byte[] key = wire.read(params[0]).bytes();
                         final byte[] value = wire.read(params[1]).bytes();
 
@@ -491,7 +492,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
                 if (removeWithValue.contentEquals(eventName)) {
                     write(bytesMap -> {
-                        final net.openhft.lang.io.Bytes reader = toReader(valueIn, removeWithValue.params);
+                        final net.openhft.lang.io.Bytes reader = toReader(valueIn, removeWithValue.params());
                         // todo call   outWire.write(result)
                         // .bool(bytesMap.remove(reader, reader, timestamp, identifier()));
                         outWire.write(reply).bool(bytesMap.remove(reader, reader));
@@ -911,7 +912,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
         newValue
     }
 
-    enum EventId implements WireKey {
+    enum EventId implements ParameterizeWireKey {
         longSize,
         size,
         isEmpty,
@@ -944,18 +945,14 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
         createChannel,
         remoteIdentifier;
 
-        private final Params[] params;
+        private final WireKey[] params;
 
-        EventId(Params... params) {
+        <P extends WireKey> EventId(P... params) {
             this.params = params;
         }
 
-        public boolean contentEquals(CharSequence c) {
-            return this.toString().contentEquals(c);
-        }
-
-        public Params[] params() {
-            return this.params;
+        public <P extends WireKey> P[] params() {
+            return (P[]) this.params;
 
         }
     }

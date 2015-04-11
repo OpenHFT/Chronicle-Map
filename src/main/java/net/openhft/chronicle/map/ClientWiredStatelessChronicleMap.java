@@ -21,9 +21,13 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields;
+import net.openhft.chronicle.engine.client.ParameterizeWireKey;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.map.MapWireHandler.Fields;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.ValueOut;
+import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -43,19 +47,14 @@ import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
 /**
  * @author Rob Austin.
  */
-class ClientWiredStatelessChronicleMap<K, V>
+class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<EventId>
         implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
 
     private static final Logger LOG =
             LoggerFactory.getLogger(ClientWiredStatelessChronicleMap.class);
 
-    private static final WriteMarshallable EMPTY = wire -> {
-        // nothing
-    };
 
-    public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(EMPTY);
-
-    private final ClientWiredStatelessTcpConnectionHub hub;
+    public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(AbstactStatelessClient.EMPTY);
 
     protected Class<K> kClass;
     protected Class<V> vClass;
@@ -65,7 +64,6 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     // used with toString()
     private static final int MAX_NUM_ENTRIES = 20;
-    private String csp;
 
     public ClientWiredStatelessChronicleMap(
             @NotNull final ClientWiredChronicleMapStatelessBuilder config,
@@ -73,9 +71,8 @@ class ClientWiredStatelessChronicleMap<K, V>
             @NotNull final Class vClass,
             @NotNull final String channelName,
             ClientWiredStatelessTcpConnectionHub hub) {
+        super(channelName, hub);
 
-        this.csp = "//" + channelName + "#MAP";
-        this.hub = hub;
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();
         this.kClass = kClass;
@@ -422,15 +419,6 @@ class ClientWiredStatelessChronicleMap<K, V>
         return usingCollection;
     }
 
-    private void checkIsData(Wire wireIn) {
-        int datalen = wireIn.bytes().readVolatileInt();
-
-        //  if (Wires.isData(datalen))
-        //    throw new IllegalStateException("expecting a data blob, from ->" + Bytes.toDebugString
-        //          (wireIn.bytes(), 0, wireIn.bytes().limit()));
-        //
-    }
-
     @NotNull
     public Set<Map.Entry<K, V>> entrySet() {
         return toMap().entrySet();
@@ -535,54 +523,6 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
 
-    private long readLong(long tid, long startTime) {
-        assert !hub.outBytesLock().isHeldByCurrentThread();
-        final long timeoutTime = startTime + hub.timeoutMs;
-
-        // receive
-        hub.inBytesLock().lock();
-        try {
-            final Wire wire = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wire);
-            return wire.read(MapWireHandler.Fields.reply).int64();
-        } finally {
-            hub.inBytesLock().unlock();
-        }
-    }
-
-
-    private void writeField(ValueOut wireOut, Object value) {
-        writeField(value, wireOut);
-    }
-
-
-    private void writeField(Object value, ValueOut valueOut) {
-
-        assert hub.outBytesLock().isHeldByCurrentThread();
-        assert !hub.inBytesLock().isHeldByCurrentThread();
-
-
-        if (value instanceof Byte)
-            valueOut.int8((Byte) value);
-        else if (value instanceof Character)
-            valueOut.text(value.toString());
-        else if (value instanceof Short)
-            valueOut.int16((Short) value);
-        else if (value instanceof Integer)
-            valueOut.int32((Integer) value);
-        else if (value instanceof Long)
-            valueOut.int64((Long) value);
-        else if (value instanceof CharSequence) {
-            valueOut.text((CharSequence) value);
-        } else if (value instanceof Marshallable) {
-            valueOut.marshallable((Marshallable) value);
-        } else {
-            throw new IllegalStateException("type=" + value.getClass() +
-                    " is unsupported, it must either be of type Marshallable or CharSequence");
-        }
-    }
-
-
     private V readValue(Fields argName, long tid, long startTime, final V usingValue) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
         long timeoutTime = startTime + hub.timeoutMs;
@@ -676,22 +616,6 @@ class ClientWiredStatelessChronicleMap<K, V>
     }
 
 
-    private boolean readBoolean(long tid, long startTime) {
-        assert !hub.outBytesLock().isHeldByCurrentThread();
-
-        long timeoutTime = startTime + hub.timeoutMs;
-
-        // receive
-        hub.inBytesLock().lock();
-        try {
-            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wireIn);
-            return wireIn.read(MapWireHandler.Fields.reply).bool();
-        } finally {
-            hub.inBytesLock().unlock();
-        }
-    }
-
     private int readInt(long tid, long startTime) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
 
@@ -710,15 +634,6 @@ class ClientWiredStatelessChronicleMap<K, V>
 
 
     @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBoolean(
-            @NotNull final EventId eventId, Object... args) {
-        final long startTime = System.currentTimeMillis();
-        final long tid = sendEvent(startTime, eventId, toParameters(eventId, args));
-        return readBoolean(tid, startTime);
-
-    }
-
-    @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBooleanV(@NotNull final EventId eventId, V value) {
         final long startTime = System.currentTimeMillis();
         return readBoolean(sendEvent(startTime, eventId, out -> writeField(out, value)),
@@ -731,59 +646,6 @@ class ClientWiredStatelessChronicleMap<K, V>
         return readBoolean(sendEvent(startTime, eventId, out -> writeField(out, key)), startTime);
     }
 
-    @SuppressWarnings("SameParameterValue")
-    private long proxyReturnLong(@NotNull final EventId eventId) {
-        final long startTime = System.currentTimeMillis();
-        long tid = sendEvent(startTime, eventId, null);
-        return readLong(tid, startTime);
-    }
-
-
-    @SuppressWarnings("SameParameterValue")
-    private void proxyReturnVoid(@NotNull final EventId eventId,
-                                 @Nullable final Consumer<ValueOut> consumer) {
-        final long startTime = System.currentTimeMillis();
-        long tid = sendEvent(startTime, eventId, consumer);
-        readVoid(tid, startTime);
-    }
-
-
-    @SuppressWarnings("SameParameterValue")
-    private void proxyReturnVoid(@NotNull final EventId eventId) {
-        proxyReturnVoid(eventId, null);
-    }
-
-
-    private long sendEvent(final long startTime,
-                           @NotNull final EventId eventId,
-                           @Nullable final Consumer<ValueOut> consumer) {
-        long tid;
-        hub.outBytesLock().lock();
-        try {
-
-            tid = writeHeader(startTime);
-            hub.outWire().writeDocument(false, wireOut -> {
-
-                final ValueOut valueOut = wireOut.writeEventName(eventId);
-
-                if (consumer == null)
-                    valueOut.marshallable(EMPTY);
-                else
-                    consumer.accept(valueOut);
-
-            });
-
-            hub.writeSocket(hub.outWire());
-
-        } finally {
-            hub.outBytesLock().unlock();
-        }
-        return tid;
-    }
-
-    private long writeHeader(long startTime) {
-        return hub.writeHeader(startTime, hub.outWire(), csp);
-    }
 
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBoolean(@NotNull final EventId eventId) {
@@ -798,33 +660,6 @@ class ClientWiredStatelessChronicleMap<K, V>
         return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
     }
 
-
-    private Consumer<ValueOut> toParameters(@NotNull final EventId eventId, Object... args) {
-
-        return out -> {
-            final MapWireHandler.Params[] paramNames = eventId.params();
-
-            if (paramNames.length == 1) {
-                writeField(out, args[0]);
-                return;
-            }
-
-            assert args.length == paramNames.length :
-                    "methodName=" + eventId +
-                            ", args.length=" + args.length +
-                            ", paramNames.length=" + paramNames.length;
-
-            out.marshallable(m -> {
-
-                for (int i = 0; i < paramNames.length; i++) {
-                    final ValueOut vo = m.write(paramNames[i]);
-                    ClientWiredStatelessChronicleMap.this.writeField(vo, args[i]);
-                }
-
-            });
-
-        };
-    }
 
     @Nullable
     private <R> R proxyReturnTypedObject(
@@ -910,17 +745,7 @@ class ClientWiredStatelessChronicleMap<K, V>
 
     }
 
-    private void readVoid(long tid, long startTime) {
-        long timeoutTime = startTime + hub.timeoutMs;
 
-        // receive
-        hub.inBytesLock().lock();
-        try {
-            hub.proxyReply(timeoutTime, tid);
-        } finally {
-            hub.inBytesLock().unlock();
-        }
-    }
 
 
     class Entry implements Map.Entry<K, V> {
@@ -975,5 +800,33 @@ class ClientWiredStatelessChronicleMap<K, V>
             return getKey() + "=" + getValue();
         }
     }
+
+    protected Consumer<ValueOut> toParameters(@NotNull ParameterizeWireKey eventId, Object... args) {
+
+        return out -> {
+            final MapWireHandler.Params[] paramNames = eventId.params();
+
+            if (paramNames.length == 1) {
+                writeField(out, args[0]);
+                return;
+            }
+
+            assert args.length == paramNames.length :
+                    "methodName=" + eventId +
+                            ", args.length=" + args.length +
+                            ", paramNames.length=" + paramNames.length;
+
+            out.marshallable(m -> {
+
+                for (int i = 0; i < paramNames.length; i++) {
+                    final ValueOut vo = m.write(paramNames[i]);
+                    this.writeField(vo, args[i]);
+                }
+
+            });
+
+        };
+    }
+
 }
 
