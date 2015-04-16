@@ -39,14 +39,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StreamCorruptedException;
-import java.io.StringWriter;
-import java.nio.BufferOverflowException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -78,16 +74,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
     private Wire inWire = null;
     private Wire outWire = null;
-
-/*    private final Consumer writeElement = new Consumer<Iterator<byte[]>>() {
-
-        @Override
-        public void accept(Iterator<byte[]> iterator) {
-            outWire.write(reply);
-            Bytes<?> bytes = outWire.bytes();
-            bytes.write(iterator.next());
-        }
-    };*/
 
 
     private void setCspTextFromCid(long cid) {
@@ -132,23 +118,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
         }
     };
 
-
-  /*  private final Consumer writeEntry = new Consumer<Iterator<Map.Entry<byte[], byte[]>>>() {
-
-        @Override
-        public void accept(Iterator<Map.Entry<byte[], byte[]>> iterator) {
-
-            final Map.Entry<byte[], byte[]> entry = iterator.next();
-
-            outWire.write(resultKey);
-            Bytes<?> bytes = outWire.bytes();
-            bytes.write(entry.getKey());
-
-            outWire.write(resultValue);
-            Bytes<?> bytes1 = outWire.bytes();
-            bytes1.write(entry.getValue());
-        }
-    };*/
 
     private WireHandlers publishLater;
     private byte localIdentifier;
@@ -545,96 +514,10 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
         }
     };
 
-    // todo remove
-    private byte[] toBytes(WireKey fieldName) {
-
-        final Wire wire = inWire;
-
-        final ValueIn read = wire.read(fieldName);
-        final long l = read.readLength();
-
-        if (l > Integer.MAX_VALUE)
-            throw new BufferOverflowException();
-
-        final int fieldLength = (int) l;
-
-        Bytes<?> bytes1 = wire.bytes();
-        final long endPos = bytes1.position() + fieldLength;
-        final long limit = bytes1.limit();
-
-        try {
-            byte[] bytes = new byte[fieldLength];
-
-            bytes1.read(bytes);
-            return bytes;
-        } finally {
-            bytes1.position(endPos);
-            bytes1.limit(limit);
-        }
-    }
 
     private void putAll(long tid) {
 
         // todo
-/*
-        final BytesChronicleMap bytesMap = bytesMap(MapWireHandler.this.channelId);
-
-        if (bytesMap == null)
-            return;
-
-        // note: a number of client threads can be using the same socket
-        Runnable runnable = incompleteWork.get(tid);
-
-        if (runnable != null) {
-            runnable.run();
-            return;
-        }
-
-        // Note : you can not assume that all the entries in a putAll will be continuous,
-        // they maybe other transactions from other threads.
-        // we it should be possible for a single entry to fill the Tcp buffer, so each entry
-        // should have the ability to be processed separately
-        // and then only applied to the map once all the entries are received.
-        runnable = new Runnable() {
-
-            // we should try and collect the data and then apply it atomically as quickly possible
-            final Map<byte[], byte[]> collectData = new HashMap<>();
-
-            @Override
-            public void run() {
-
-
-                // the old code assumed that ALL of the entries would fit into a single buffer
-                // this assumption is invalid
-                boolean hasNext;
-                for (; ; ) {
-
-                    hasNext = inWire.read(Fields.hasNext).bool();
-                    // todo remove  toBytes()
-                    collectData.put(toBytes(arg1), toBytes(arg2));
-
-                    if (!hasNext) {
-
-                        incompleteWork.remove(tid);
-
-                        outWire.write(CoreFields.tid).int64(tid);
-
-                        writeVoid(() -> {
-                            bytesMap.delegate.putAll((Map) collectData);
-                            return null;
-                        });
-                        return;
-                    }
-                    final Bytes<?> bytes = inWire.bytes();
-                    if (bytes.remaining() == 0)
-                        return;
-                }
-            }
-        };
-
-        incompleteWork.put(tid, runnable);
-        runnable.run();*/
-
     }
 
     @SuppressWarnings("SameReturnValue")
@@ -794,9 +677,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
         }
 
         bytesMap.output = null;
-        //   final Bytes<?> bytes = outWire.bytes();
-        //     bytes.mark();
-        //   outWire.write(isException).bool(false);
 
         outWire.writeDocument(false, out -> {
             long position = 0;
@@ -822,37 +702,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
     }
 
-    @SuppressWarnings("SameReturnValue")
-    private void writeVoid(@NotNull Callable r) {
-
-        final BytesChronicleMap bytesMap = bytesMap(channelId);
-
-        if (bytesMap == null) {
-            LOG.error("no map for channelId=" + channelId + " can be found.");
-            return;
-        }
-
-        bytesMap.output = null;
-
-
-        try {
-            r.call();
-        } catch (Exception e) {
-            //      bytes.reset();
-            // the idea of wire is that is platform independent,
-            // so we wil have to send the exception as a String
-            outWire.writeDocument(false, out -> {
-                out.write(reply)
-                        .type(e.getClass().getSimpleName())
-                        .writeValue().text(e.getMessage());
-
-            });
-
-            LOG.error("", e);
-        }
-
-
-    }
 
     @SuppressWarnings("SameReturnValue")
     private void writeVoid(@NotNull Consumer<BytesChronicleMap> process) {
@@ -886,16 +735,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
     }
 
-
-    /**
-     * converts the exception into a String, so that it can be sent to c# clients
-     */
-    private String toString(@NotNull Throwable t) {
-        final StringWriter sw = new StringWriter();
-        final PrintWriter pw = new PrintWriter(sw);
-        t.printStackTrace(pw);
-        return sw.toString();
-    }
 
     public void localIdentifier(byte localIdentifier) {
         this.localIdentifier = localIdentifier;
