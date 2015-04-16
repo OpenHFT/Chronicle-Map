@@ -230,11 +230,8 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
     }
 
     final StringBuilder cspText = new StringBuilder();
-
     public long tid;
-
     private final AtomicLong cid = new AtomicLong();
-
 
     /**
      * create a new cid if one does not already exist for this csp
@@ -337,7 +334,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     write(b -> outWire.write(reply).type("set-proxy").writeValue()
 
                             .marshallable(w -> {
-
                                         CharSequence root = cspText.subSequence(0, cspText
                                                 .length() - "#map".length());
 
@@ -413,14 +409,11 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     final Map data = new HashMap();
 
                     writeVoid(b -> {
-
                         while (valueIn.hasNext()) {
-
                             valueIn.sequence(v -> valueIn.marshallable(wire -> data.put(
-                                    wire.read(getAndPut.params()[0]).bytes(),
-                                    wire.read(getAndPut.params()[1]).bytes())));
+                                    wire.read(put.params()[0]).bytes(),
+                                    wire.read(put.params()[1]).bytes())));
                         }
-
                         b.delegate.putAll(data);
 
                     });
