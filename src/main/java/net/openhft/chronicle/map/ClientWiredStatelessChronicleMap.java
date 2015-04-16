@@ -207,13 +207,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
 
     @NotNull
     public String toString() {
-        /*if (size() > MAX_NUM_ENTRIES) {
-            StringBuilder s = new StringBuilder(toMap(MAX_NUM_ENTRIES).toString());
-            s.deleteCharAt(s.length() - 1).append(", ...");
-            return s.toString();
-        } else {
-            return toMap().toString();
-        }*/
+
         return "";
     }
 
@@ -283,60 +277,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
 
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {
 
-    /*    final long startTime = System.currentTimeMillis();
-        long tid = hub.nextUniqueTransaction(startTime);
 
-        Set<? extends Map.Entry<? extends K, ? extends V>> entries = map.entrySet();
-        Iterator<? extends Map.Entry<? extends K, ? extends V>> iterator = entries.iterator();
-
-        OUTER:
-        while (iterator.hasNext()) {
-            hub.outBytesLock().lock();
-            try {
-
-                assert hub.outBytesLock().isHeldByCurrentThread();
-                assert !hub.inBytesLock().isHeldByCurrentThread();
-
-                Wire wire = hub.outWire();
-
-                assert hub.outBytesLock().isHeldByCurrentThread();
-                hub.markSize(wire);
-                hub.startTime(startTime);
-                wire.write(MapWireHandler.Fields.csp).text("MAP");
-                wire.write(CoreFields.tid).int64(tid);
-
-                //     wire.write(Fields.channelId).int16(channelID);
-
-                hub.outWire().writeEventName(putAll);
-
-                while (iterator.hasNext()) {
-
-                    Map.Entry<? extends K, ? extends V> e = iterator.next();
-
-
-                    hub.outWire().write(MapWireHandler.Fields.hasNext).bool(iterator.hasNext());
-
-                    // todo
-                    // writeField(wireOut, Fields.arg1, e.getKey());
-                    // writeField(wireOut, Fields.arg2, e.getValue());
-
-                    final Bytes<?> bytes = wire.bytes();
-                    if (bytes.remaining() < bytes.capacity() * 0.5)
-                        break OUTER;
-                }
-
-            } finally {
-                hub.writeSocket(hub.outWire());
-                hub.outBytesLock().unlock();
-            }
-
-        }
-
-
-        // wait for the transaction id to be received, this will only be received once the
-        // last chunk has been processed
-        readVoid(tid, startTime);
-            */
     }
 
 
@@ -378,59 +319,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
 
- /*   @NotNull
-    public Set<K> keySet() {
-        final Set<K> usingCollection = new HashSet<K>();
-        readChunked(kClass, keySet, usingCollection);
-        return usingCollection;
-    }
-
-
-    @NotNull
-    public Collection<V> values() {
-        final List<V> usingCollection = new ArrayList<>();
-        return readChunked(vClass, values, usingCollection);
-    }*/
-
-    /*private <E, A extends Collection<E>> Collection<E> readChunked(
-            Class<E> vClass1, EventId values, A usingCollection) {
-        final long startTime = System.currentTimeMillis();
-
-        // send
-        final long tid = proxySend(values, startTime);
-        assert !hub.outBytesLock().isHeldByCurrentThread();
-        final long timeoutTime = startTime + hub.timeoutMs;
-
-        OUTER:
-        for (; ; ) {
-
-            // receive
-            hub.inBytesLock().lock();
-            try {
-                final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-
-                checkIsData(wireIn);
-
-                final Bytes<?> bytes = wireIn.bytes();
-                while (bytes.remaining() > 0) {
-                    boolean bool = wireIn.read(MapWireHandler.Fields.hasNext).bool();
-                    if (bool) {
-                        usingCollection.add(readObject(MapWireHandler.Fields.reply, wireIn, null, vClass1));
-                    } else
-                        break OUTER;
-
-                    // todo process the exception
-                    // boolean isException = wireIn.read(Fields.isException).bool();
-                }
-
-            } finally {
-                hub.inBytesLock().unlock();
-            }
-        }
-        return usingCollection;
-    }*/
-
-
     private final Map<Long, String> cidToCsp = new HashMap<>();
 
     @NotNull
@@ -452,110 +340,18 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
             });
         });
 
-        final long cid = cidRef[0];
-        return new ClientWiredStatelessChronicleEntrySet<K, V>(channelName, hub, cid, vClass);
+        return new ClientWiredStatelessChronicleEntrySet<K, V>(channelName, hub, cidRef[0], vClass);
     }
 
 
-   /* private Map<K, V> toMap() {
-        final Map<K, V> result = new HashMap<K, V>();
-        final long startTime = System.currentTimeMillis();
-        // send
-        final long tid = proxySend(entrySet, startTime);
-        assert !hub.outBytesLock().isHeldByCurrentThread();
-        final long timeoutTime = startTime + hub.timeoutMs;
-
-        OUTER:
-        for (; ; ) {
-
-            // receive
-            hub.inBytesLock().lock();
-            try {
-                final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-                checkIsData(wireIn);
-                final Bytes<?> bytes = wireIn.bytes();
-                while (bytes.remaining() > 0) {
-                    boolean bool = wireIn.read(MapWireHandler.Fields.hasNext).bool();
-                    if (bool) {
-                        result.put(
-                                readK(MapWireHandler.Fields.resultKey, wireIn, null),
-                                readV(MapWireHandler.Fields.resultValue, wireIn, null));
-                    } else
-                        break OUTER;
-
-
-                   *//* if (bytes.remaining() > 0) {
-                        // todo process the exception
-                       // boolean isException = wireIn.read(Fields.isException).bool();
-                    }*//*
-                }
-
-            } finally {
-                hub.inBytesLock().unlock();
-            }
-        }
-        return result;
-    }*/
-
-
-    /**
-     * returns a chunk of entries
-     *
-     * @param maxNumEntries
-     * @return
-     */
-  /*  private Map<K, V> toMap(int maxNumEntries) {
-        final Map<K, V> result = new HashMap<K, V>();
-        final long startTime = System.currentTimeMillis();
-
-        // send
-        final long tid = proxySend(entrySetRestricted, maxNumEntries, startTime);
-        assert !hub.outBytesLock().isHeldByCurrentThread();
-        final long timeoutTime = startTime + hub.timeoutMs;
-
-        OUTER:
-        for (; ; ) {
-
-            // receive
-            hub.inBytesLock().lock();
-            try {
-                final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-                checkIsData(wireIn);
-                final Bytes<?> bytes = wireIn.bytes();
-                while (bytes.remaining() > 0) {
-                    boolean bool = wireIn.read(MapWireHandler.Fields.hasNext).bool();
-                    if (bool) {
-                        result.put(
-                                readK(MapWireHandler.Fields.resultKey, wireIn, null),
-                                readV(MapWireHandler.Fields.resultValue, wireIn, null));
-                    } else
-                        break OUTER;
-
-
-                    if (bytes.remaining() > 0) {
-                        boolean isException = wireIn.read(MapWireHandler.Fields.isException).bool();
-                        if (isException)
-                            throw new RuntimeException(wireIn.read(MapWireHandler.Fields.reply).text());
-                    }
-                }
-
-            } catch (Exception e) {
-                throw e;
-            } finally {
-                hub.inBytesLock().unlock();
-            }
-        }
-        return result;
-    }*/
+/*    */
 
     /**
      * @param callback each entry is passed to the callback
-     */
+     *//*
     void entrySet(@NotNull MapEntryCallback<K, V> callback) {
         throw new UnsupportedOperationException();
-    }
-
-
+    }*/
     private K readK(WireKey argName, Wire wireIn, K usingValue) {
         return (K) readObject(argName, wireIn, usingValue, kClass);
     }
@@ -605,7 +401,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
         return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
     }
 
-
+/*
     private long proxySend(EventId methodName, long startTime) {
         long tid;
         hub.outBytesLock().lock();
@@ -617,7 +413,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
             hub.outBytesLock().unlock();
         }
         return tid;
-    }
+    }*/
 
 
     @Override
@@ -633,28 +429,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
         }
 
     }
-
-
-   /* private long proxySend(EventId methodName, long arg1, long startTime) {
-        long tid;
-        hub.outBytesLock().lock();
-        try {
-            tid = writeHeader(startTime);
-            hub.outWire().write(MapWireHandler.Fields.eventName).text(methodName.toString());
-
-            hub.outWire().writeDocument(false, wireOut -> {
-                        final ValueOut out = wireOut.writeEventName(methodName);
-                        writeField(out, arg1);
-                    }
-            );
-
-
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
-        return tid;
-    }*/
 
 
     class Entry implements Map.Entry<K, V> {
