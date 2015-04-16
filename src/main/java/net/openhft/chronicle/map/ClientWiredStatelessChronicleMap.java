@@ -20,7 +20,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields;
-import net.openhft.chronicle.engine.client.ParameterizeWireKey;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,6 @@ import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
-import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.tid;
 import static net.openhft.chronicle.map.MapWireHandler.EventId;
 import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
 
@@ -47,7 +45,7 @@ import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
 /**
  * @author Rob Austin.
  */
-class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<EventId>
+class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, EventId>
         implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
 
     private static final Logger LOG =
@@ -57,7 +55,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
     public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(AbstactStatelessClient.EMPTY);
 
     protected Class<K> kClass;
-    protected Class<V> vClass;
 
     private boolean putReturnsNull;
     private boolean removeReturnsNull;
@@ -71,12 +68,11 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
             @NotNull final Class vClass,
             @NotNull final String channelName,
             ClientWiredStatelessTcpConnectionHub hub) {
-        super(channelName, hub, "MAP", 0);
+        super(channelName, hub, "MAP", 0, vClass);
 
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();
         this.kClass = kClass;
-        this.vClass = vClass;
     }
 
 
@@ -97,7 +93,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
 
     @Override
     public V newValueInstance() {
-        return VanillaChronicleMap.newInstance(vClass, false);
+        return (V) VanillaChronicleMap.newInstance(vClass, false);
     }
 
     @Override
@@ -149,7 +145,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
         if (key == null || value == null)
             throw new NullPointerException();
 
-        return proxyReturnTypedObject(putIfAbsent, vClass, key, value);
+        return (V) proxyReturnTypedObject(putIfAbsent, vClass, key, value);
     }
 
     @SuppressWarnings("NullableProblems")
@@ -171,7 +167,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
     public V replace(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
-        return proxyReturnTypedObject(replace, vClass, key, value);
+        return (V) proxyReturnTypedObject(replace, vClass, key, value);
     }
 
     public int size() {
@@ -253,7 +249,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
     }
 
     public V get(Object key) {
-        return proxyReturnObject(vClass, get, (K) key);
+        return (V) proxyReturnObject(vClass, get, (K) key);
     }
 
     @Nullable
@@ -276,7 +272,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
     public V remove(Object key) {
         if (key == null)
             throw keyNotNullNPE();
-        return proxyReturnObject(vClass, removeReturnsNull ? removeWithoutAcc : remove, (K) key);
+        return (V) proxyReturnObject(vClass, removeReturnsNull ? removeWithoutAcc : remove, key);
     }
 
     @Override
@@ -347,7 +343,9 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
     public V put(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
-        return proxyReturnTypedObject(putReturnsNull ? put : getAndPut, vClass, key,
+        return (V) proxyReturnTypedObject(putReturnsNull ? put : getAndPut,
+                vClass,
+                key,
                 value);
     }
 
@@ -455,7 +453,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
         });
 
         final long cid = cidRef[0];
-        return new ClientWiredStatelessChronicleEntrySet<K, V>(channelName, hub, "entrySet", cid);
+        return new ClientWiredStatelessChronicleEntrySet<K, V>(channelName, hub, cid, vClass);
     }
 
 
@@ -558,96 +556,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
     }
 
 
-    private V readValue(WireKey argName, long tid, long startTime, final V usingValue) {
-        assert !hub.outBytesLock().isHeldByCurrentThread();
-        long timeoutTime = startTime + hub.timeoutMs;
-
-        hub.inBytesLock().lock();
-        try {
-
-            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wireIn);
-
-
-            return readV(argName, wireIn, usingValue);
-
-        } finally {
-            hub.inBytesLock().unlock();
-        }
-    }
-
-    private V readV(WireKey argName, Wire wireIn, V usingValue) {
-        return readObject(argName, wireIn, usingValue, vClass);
-    }
-
     private K readK(WireKey argName, Wire wireIn, K usingValue) {
-        return readObject(argName, wireIn, usingValue, kClass);
-    }
-
-    private <E> E readObject(WireKey argName, Wire wireIn, E usingValue, Class<E> clazz) {
-
-        final ValueIn valueIn = wireIn.read(argName);
-        if (valueIn.isNull())
-            return null;
-
-        if (StringBuilder.class.isAssignableFrom(clazz)) {
-            valueIn.text((StringBuilder) usingValue);
-            return usingValue;
-        } else if (Marshallable.class.isAssignableFrom(clazz)) {
-
-
-            final E v;
-            if (usingValue == null)
-                try {
-                    v = clazz.newInstance();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            else
-                v = usingValue;
-
-
-            valueIn.marshallable((Marshallable) v);
-            return v;
-
-        } else if (String.class.isAssignableFrom(clazz)) {
-            //noinspection unchecked
-            return (E) valueIn.text();
-
-        } else if (Long.class.isAssignableFrom(clazz)) {
-            //noinspection unchecked
-            return (E) (Long) valueIn.int64();
-        } else if (Double.class.isAssignableFrom(clazz)) {
-            //noinspection unchecked
-            return (E) (Double) valueIn.float64();
-
-        } else if (Integer.class.isAssignableFrom(clazz)) {
-            //noinspection unchecked
-            return (E) (Integer) valueIn.int32();
-
-        } else if (Float.class.isAssignableFrom(clazz)) {
-            //noinspection unchecked
-            return (E) (Float) valueIn.float32();
-
-        } else if (Short.class.isAssignableFrom(clazz)) {
-            //noinspection unchecked
-            return (E) (Short) valueIn.int16();
-
-        } else if (Character.class.isAssignableFrom(clazz)) {
-            //noinspection unchecked
-            final String text = valueIn.text();
-            if (text == null || text.length() == 0)
-                return null;
-            return (E) (Character) text.charAt(0);
-
-        } else if (Byte.class.isAssignableFrom(clazz)) {
-            //noinspection unchecked
-            return (E) (Byte) valueIn.int8();
-
-
-        } else {
-            throw new IllegalStateException("unsupported type");
-        }
+        return (K) readObject(argName, wireIn, usingValue, kClass);
     }
 
 
@@ -696,42 +606,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
     }
 
 
-    @Nullable
-    private <R> R proxyReturnTypedObject(
-            @NotNull final EventId eventId, Class<V> resultType, Object... args) {
-
-        final long startTime = System.currentTimeMillis();
-        final long tid = sendEvent(startTime, eventId, toParameters(eventId, args));
-
-        if (eventReturnsNull(eventId))
-            return null;
-
-        if (resultType == vClass)
-            return (R) readValue(reply, tid, startTime, null);
-
-        else
-            throw new UnsupportedOperationException("class of type class=" + resultType +
-                    " is not supported");
-    }
-
-    @Nullable
-    private <R> R proxyReturnObject(
-            Class<R> rClass, @NotNull final EventId eventId, Object key) {
-
-        final long startTime = System.currentTimeMillis();
-        final long tid = sendEvent(startTime, eventId, out -> writeField(out, key));
-
-        if (eventReturnsNull(eventId))
-            return null;
-
-        if (rClass == vClass)
-            return (R) readValue(reply, tid, startTime, null);
-        else
-            throw new UnsupportedOperationException("class of type class=" + rClass + " is not " +
-                    "supported");
-    }
-
-
     private long proxySend(EventId methodName, long startTime) {
         long tid;
         hub.outBytesLock().lock();
@@ -744,6 +618,22 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
         }
         return tid;
     }
+
+
+    @Override
+    protected boolean eventReturnsNull(@NotNull EventId methodName) {
+
+        switch (methodName) {
+            case putAllWithoutAcc:
+            case put:
+            case removeWithoutAcc:
+                return true;
+            default:
+                return false;
+        }
+
+    }
+
 
    /* private long proxySend(EventId methodName, long arg1, long startTime) {
         long tid;
@@ -765,22 +655,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
         }
         return tid;
     }*/
-
-
-    private boolean eventReturnsNull(@NotNull EventId methodName) {
-
-        switch (methodName) {
-            case putAllWithoutAcc:
-            case put:
-            case removeWithoutAcc:
-                return true;
-            default:
-                return false;
-        }
-
-    }
-
-
 
 
     class Entry implements Map.Entry<K, V> {
@@ -836,7 +710,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
         }
     }
 
-    protected Consumer<ValueOut> toParameters(@NotNull ParameterizeWireKey eventId, Object... args) {
+    @Override
+    protected Consumer<ValueOut> toParameters(@NotNull EventId eventId, Object... args) {
 
         return out -> {
             final MapWireHandler.Params[] paramNames = eventId.params();
@@ -862,6 +737,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
 
         };
     }
+
 
 }
 

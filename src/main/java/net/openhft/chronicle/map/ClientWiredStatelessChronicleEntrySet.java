@@ -12,25 +12,27 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.EventId.isEmpty;
-import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.EventId.size;
+import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.EventId.*;
+import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.Params.key;
 
 
-class ClientWiredStatelessChronicleEntrySet<K, V> extends AbstactStatelessClient
+class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, V, ClientWiredStatelessChronicleEntrySet.EventId>
         implements Set<Map.Entry<K, V>> {
 
     public ClientWiredStatelessChronicleEntrySet(@NotNull final String channelName,
                                                  @NotNull final ClientWiredStatelessTcpConnectionHub hub,
-                                                 @NotNull final String type,
-                                                 final long cid) {
-        super(channelName, hub, type, cid);
+                                                 final long cid,
+                                                 @NotNull final Class<V> vClass) {
+
+        super(channelName, hub, "entrySet", cid, vClass);
     }
 
+
     @Override
-    protected Consumer<ValueOut> toParameters(@NotNull ParameterizeWireKey eventId, Object... args) {
+    protected Consumer<ValueOut> toParameters(@NotNull EventId eventId, Object... args) {
 
         return out -> {
-            final Params[] paramNames = eventId.params();
+            final WireKey[] paramNames = eventId.params();
 
             if (paramNames.length == 1) {
                 writeField(out, args[0]);
@@ -38,7 +40,8 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends AbstactStatelessClient
             }
 
             assert args.length == paramNames.length :
-                    "methodName=" + eventId +
+                    "looks like you are missing the paramameter in the EventId, EventId=" +
+                            eventId +
                             ", args.length=" + args.length +
                             ", paramNames.length=" + paramNames.length;
 
@@ -94,7 +97,7 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends AbstactStatelessClient
 
     @Override
     public boolean remove(Object o) {
-        return false;
+        return proxyReturnBoolean(remove, o);
     }
 
     @Override
@@ -122,13 +125,20 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends AbstactStatelessClient
 
     }
 
-    enum Params implements WireKey {
+    @Override
+    protected boolean eventReturnsNull(@NotNull EventId methodName) {
+        return false;
+    }
 
+
+    enum Params implements WireKey {
+        key
     }
 
     enum EventId implements ParameterizeWireKey {
         size,
-        isEmpty;
+        isEmpty,
+        remove(key);
 
         private final WireKey[] params;
 

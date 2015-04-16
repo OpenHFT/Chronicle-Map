@@ -45,7 +45,6 @@ import java.io.StringWriter;
 import java.nio.BufferOverflowException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
@@ -80,7 +79,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
     private Wire inWire = null;
     private Wire outWire = null;
 
-    private final Consumer writeElement = new Consumer<Iterator<byte[]>>() {
+/*    private final Consumer writeElement = new Consumer<Iterator<byte[]>>() {
 
         @Override
         public void accept(Iterator<byte[]> iterator) {
@@ -88,7 +87,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
             Bytes<?> bytes = outWire.bytes();
             bytes.write(iterator.next());
         }
-    };
+    };*/
 
 
     private void setCspTextFromCid(long cid) {
@@ -113,10 +112,12 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                 }
             }
 
-            final int i = cspText.lastIndexOf("/");
+            final int slash = cspText.lastIndexOf("/");
+            final int hash = cspText.lastIndexOf("#");
 
-            if (i != -1 && i < (cspText.length() - 1)) {
-                final String channelStr = cspText.substring(i + 1, cspText.length() - "#MAP".length());
+            if (slash != -1 && slash < (cspText.length() - 1) &&
+                    hash != -1 && hash < (cspText.length() - 1)) {
+                final String channelStr = cspText.substring(slash + 1, hash);
                 try {
                     channelId = MapWireHandler.this.acquireChannelId(channelStr);
                 } catch (IOException e) {
@@ -196,66 +197,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
     }
 
 
-/*    private void writeChunked(
-            @NotNull final Function<BytesChronicleMap, Iterator> function,
-            @NotNull final Consumer<Iterator> c) throws StreamCorruptedException {
-        writeChunked(function, c, Long.MAX_VALUE);
-    }*/
-
-    /**
-     * @param function   provides that returns items bases on a BytesChronicleMap
-     * @param c          an iterator that contains items
-     * @param maxEntries the maximum number of items that can be written
-     * @throws StreamCorruptedException
-     */
-    /*private void writeChunked(
-            @NotNull final Function<BytesChronicleMap, Iterator> function,
-            @NotNull final Consumer<Iterator> c, long maxEntries) throws StreamCorruptedException {
-
-        final BytesChronicleMap m = bytesMap(channelId);
-        final Iterator iterator = function.apply(m);
-
-        final WireHandler that = new WireHandler() {
-
-            @Override
-            public void process(Wire in, Wire out) throws StreamCorruptedException {
-
-                outWire.write(CoreFields.tid).int64(tid);
-
-                // this allows us to write more data than the buffer will allow
-                for (int count = 0; ; count++) {
-
-                    boolean finished = count == maxEntries;
-
-                    final boolean hasNext = iterator.hasNext() && !finished;
-
-                    write(map -> {
-
-                        outWire.write(Fields.hasNext).bool(hasNext);
-
-                        if (hasNext)
-                            c.accept(iterator);
-
-                    });
-
-                    if (!hasNext)
-                        return;
-
-                    // quit if we have filled the buffer
-                    Bytes<?> bytes = outWire.bytes();
-                    if (bytes.remaining() < (bytes.capacity() * 0.75)) {
-                        publishLater.add(this);
-                        return;
-                    }
-
-
-                }
-            }
-        };
-
-        that.process(inWire, outWire);
-
-    }*/
 
 
     @Override
@@ -363,7 +304,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
             }
 
             final Bytes<?> outBytes = outWire.bytes();
-            final Bytes<?> bytes = outBytes;
 
             outWire.writeDocument(true, wire -> outWire.write(CoreFields.tid).int64(tid));
 
@@ -391,12 +331,29 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                 }
 
                 if (isEmpty.contentEquals(eventName)) {
-                    write(b -> outWire.write(reply).bool(b.isEmpty()));
+                    write(b -> {
+                        final boolean result = b.isEmpty();
+                        outWire.write(reply).bool(result);
+                    });
                     return;
                 }
 
-                if (endsWith(cspText, "#entrySet"))
+                // -- THESE METHODS ARE ONLY ENTRY SET METHODS
+                if (endsWith(cspText, "#entrySet")) {
+
+                    // not remove on the key-set returns a boolean and on the map returns the old
+                    // value
+                    if (remove.contentEquals(eventName)) {
+                        write(b -> outWire.write(reply).bool(
+                                b.delegate.remove(toByteArray(valueIn)) != null));
+                        return;
+                    }
+
                     throw new IllegalStateException("unsupported event=" + eventName);
+                }
+
+
+                // -- THESE METHODS ARE ONLY MAP METHODS
 
                 if (keySet.contentEquals(eventName)) {
                     throw new UnsupportedOperationException("todo");
@@ -427,27 +384,11 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     return;
                 }
 
-               /* if (entrySetRestricted.contentEquals(eventName)) {
-                    long maxEntries = inWire.read(arg1).int64();
-                    writeChunked(m -> m.delegate.entrySet().iterator(), writeEntry, maxEntries);
-                    return;
-                }
-*/
+
                 if (putAll.contentEquals(eventName)) {
                     putAll(tid);
                     return;
                 }
-
-
-
-               /* if (createChannel.contentEquals(eventName)) {
-                    writeVoid(() -> {
-                        short channelId1 = valueIn.int16();
-                        mapFactory.get().replicatedViaChannel(hub.createChannel(channelId1)).create();
-                        return null;
-                    });
-                    return;
-                }*/
 
 
                 if (longSize.contentEquals(eventName)) {
@@ -586,7 +527,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
             } finally {
 
                 if (EventGroup.IS_DEBUG) {
-                    long len = bytes.position() - SIZE_OF_SIZE;
+                    long len = outBytes.position() - SIZE_OF_SIZE;
                     if (len == 0) {
                         System.out.println("--------------------------------------------\n" +
                                 "server writes:\n\n<EMPTY>");
@@ -595,7 +536,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
                         System.out.println("--------------------------------------------\n" +
                                 "server writes:\n\n" +
-                                Wires.fromSizePrefixedBlobs(bytes, SIZE_OF_SIZE, len));
+                                Wires.fromSizePrefixedBlobs(outBytes, SIZE_OF_SIZE, len));
 
                     }
                 }
