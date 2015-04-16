@@ -12,11 +12,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.EventId.*;
+import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.EntrySetEventId.*;
 import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.Params.key;
 
 
-class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, V, ClientWiredStatelessChronicleEntrySet.EventId>
+class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, V, ClientWiredStatelessChronicleEntrySet.EntrySetEventId>
         implements Set<Map.Entry<K, V>> {
 
     public ClientWiredStatelessChronicleEntrySet(@NotNull final String channelName,
@@ -27,35 +27,6 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
         super(channelName, hub, "entrySet", cid, vClass);
     }
 
-
-    @Override
-    protected Consumer<ValueOut> toParameters(@NotNull EventId eventId, Object... args) {
-
-        return out -> {
-            final WireKey[] paramNames = eventId.params();
-
-            if (paramNames.length == 1) {
-                writeField(out, args[0]);
-                return;
-            }
-
-            assert args.length == paramNames.length :
-                    "looks like you are missing the paramameter in the EventId, EventId=" +
-                            eventId +
-                            ", args.length=" + args.length +
-                            ", paramNames.length=" + paramNames.length;
-
-            out.marshallable(m -> {
-
-                for (int i = 0; i < paramNames.length; i++) {
-                    final ValueOut vo = m.write(paramNames[i]);
-                    this.writeField(vo, args[i]);
-                }
-
-            });
-
-        };
-    }
 
     @Override
     public int size() {
@@ -127,7 +98,7 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
     }
 
     @Override
-    protected boolean eventReturnsNull(@NotNull EventId methodName) {
+    protected boolean eventReturnsNull(@NotNull EntrySetEventId methodName) {
         return false;
     }
 
@@ -136,14 +107,15 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
         key
     }
 
-    enum EventId implements ParameterizeWireKey {
+    enum EntrySetEventId implements ParameterizeWireKey {
         size,
         isEmpty,
-        remove(key);
+        remove(key),
+        iterator;
 
         private final WireKey[] params;
 
-        <P extends WireKey> EventId(P... params) {
+        <P extends WireKey> EntrySetEventId(P... params) {
             this.params = params;
         }
 

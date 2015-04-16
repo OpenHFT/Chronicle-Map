@@ -28,6 +28,7 @@ import net.openhft.chronicle.engine.client.ParameterizeWireKey;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
+import net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.EntrySetEventId;
 import net.openhft.chronicle.network.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.network.event.WireHandlers;
@@ -52,6 +53,7 @@ import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnect
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.csp;
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
 import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
+import static net.openhft.chronicle.map.AbstactStatelessClient.toParameters;
 import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.map.MapWireHandler.Params.*;
 import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
@@ -307,13 +309,29 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                 // -- THESE METHODS ARE ONLY ENTRY SET METHODS
                 if (endsWith(cspText, "#entrySet")) {
 
-                    // not remove on the key-set returns a boolean and on the map returns the old
-                    // value
-                    if (remove.contentEquals(eventName)) {
+                    // note :  remove on the key-set returns a boolean and on the map returns the
+                    // old value
+                    if (EntrySetEventId.remove.contentEquals(eventName)) {
                         write(b -> outWire.write(reply).bool(
                                 b.delegate.remove(toByteArray(valueIn)) != null));
                         return;
                     }
+
+                    // note :  remove on the key-set returns a boolean and on the map returns the
+                    // old value
+                    if (EntrySetEventId.iterator.contentEquals(eventName)) {
+                        write(b -> {
+                                    final ValueOut valueOut = outWire.writeEventName(() -> "entry");
+                                    b.delegate.entrySet().forEach(e ->
+                                            valueOut.sequence(toParameters(put,
+                                                    e.getKey(),
+                                                    e.getValue())));
+                                }
+
+                        );
+                        return;
+                    }
+
 
                     throw new IllegalStateException("unsupported event=" + eventName);
                 }

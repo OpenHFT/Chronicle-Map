@@ -448,33 +448,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
         }
     }
 
-    @Override
-    protected Consumer<ValueOut> toParameters(@NotNull EventId eventId, Object... args) {
 
-        return out -> {
-            final MapWireHandler.Params[] paramNames = eventId.params();
-
-            if (paramNames.length == 1) {
-                writeField(out, args[0]);
-                return;
-            }
-
-            assert args.length == paramNames.length :
-                    "methodName=" + eventId +
-                            ", args.length=" + args.length +
-                            ", paramNames.length=" + paramNames.length;
-
-            out.marshallable(m -> {
-
-                for (int i = 0; i < paramNames.length; i++) {
-                    final ValueOut vo = m.write(paramNames[i]);
-                    this.writeField(vo, args[i]);
-                }
-
-            });
-
-        };
-    }
 
 
 }
