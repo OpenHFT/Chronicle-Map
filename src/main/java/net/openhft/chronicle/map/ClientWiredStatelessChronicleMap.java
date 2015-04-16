@@ -153,14 +153,14 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
         if (key == null)
             throw new NullPointerException();
 
-        return value != null && proxyReturnBoolean(removeWithValue, (K) key, (V) value);
+        return value != null && proxyReturnBooleanArgs(removeWithValue, (K) key, (V) value);
     }
 
     @SuppressWarnings("NullableProblems")
     public boolean replace(K key, V oldValue, V newValue) {
         if (key == null || oldValue == null || newValue == null)
             throw new NullPointerException();
-        return proxyReturnBoolean(replaceWithOldAndNewValue, key, oldValue, newValue);
+        return proxyReturnBooleanArgs(replaceWithOldAndNewValue, key, oldValue, newValue);
     }
 
     @SuppressWarnings("NullableProblems")
@@ -217,11 +217,11 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
     public boolean isEmpty() {
-        return proxyReturnBoolean(isEmpty);
+        return proxyReturnBoolean(isEmpty, null);
     }
 
     public boolean containsKey(Object key) {
-        return proxyReturnBooleanK(containsKey, (K) key);
+        return proxyReturnBoolean(containsKey, out -> writeField(out, (K) key));
     }
 
     @NotNull
@@ -230,8 +230,17 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
     public boolean containsValue(Object value) {
-        return proxyReturnBooleanV(containsValue, (V) value);
+        return proxyReturnBoolean(containsValue, out -> writeField(out, (V) value));
     }
+
+    public void putAll(@NotNull Map<? extends K, ? extends V> map) {
+
+        proxyReturnVoid(putAll, v ->
+                        map.entrySet().forEach(e -> v.sequence(toParameters(put, e.getKey(), e.getValue())))
+        );
+
+    }
+
 
     public long longSize() {
         return proxyReturnLong(longSize);
@@ -243,7 +252,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
     public V get(Object key) {
-        return (V) proxyReturnObject(vClass, get, (K) key);
+        return proxyReturnObject(vClass, get, (K) key);
     }
 
     @Nullable
@@ -266,17 +275,12 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     public V remove(Object key) {
         if (key == null)
             throw keyNotNullNPE();
-        return (V) proxyReturnObject(vClass, removeReturnsNull ? removeWithoutAcc : remove, key);
+        return proxyReturnObject(vClass, removeReturnsNull ? removeWithoutAcc : remove, key);
     }
 
     @Override
     public void createChannel(short channelID) {
         proxyReturnVoid(createChannel, outValue -> outValue.int16(channelID));
-
-    }
-
-    public void putAll(@NotNull Map<? extends K, ? extends V> map) {
-
 
     }
 
@@ -344,19 +348,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
 
-/*    */
-
-    /**
-     * @param callback each entry is passed to the callback
-     *//*
-    void entrySet(@NotNull MapEntryCallback<K, V> callback) {
-        throw new UnsupportedOperationException();
-    }*/
-    private K readK(WireKey argName, Wire wireIn, K usingValue) {
-        return (K) readObject(argName, wireIn, usingValue, kClass);
-    }
-
-
     private int readInt(long tid, long startTime) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
 
@@ -375,23 +366,10 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
 
 
     @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBooleanV(@NotNull final EventId eventId, V value) {
+    private boolean proxyReturnBoolean(@NotNull final EventId eventId,
+                                       @Nullable final Consumer<ValueOut> consumer) {
         final long startTime = System.currentTimeMillis();
-        return readBoolean(sendEvent(startTime, eventId, out -> writeField(out, value)),
-                startTime);
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBooleanK(@NotNull final EventId eventId, K key) {
-        final long startTime = System.currentTimeMillis();
-        return readBoolean(sendEvent(startTime, eventId, out -> writeField(out, key)), startTime);
-    }
-
-
-    @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBoolean(@NotNull final EventId eventId) {
-        final long startTime = System.currentTimeMillis();
-        return readBoolean(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
+        return readBoolean(sendEvent(startTime, eventId, consumer), startTime);
     }
 
 
@@ -400,20 +378,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
         final long startTime = System.currentTimeMillis();
         return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
     }
-
-/*
-    private long proxySend(EventId methodName, long startTime) {
-        long tid;
-        hub.outBytesLock().lock();
-        try {
-            tid = writeHeader(startTime);
-            hub.outWire().writeDocument(false, wireOut -> wireOut.writeEventName(methodName));
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
-        return tid;
-    }*/
 
 
     @Override

@@ -353,13 +353,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     return;
                 }
 
-
-                if (putAll.contentEquals(eventName)) {
-                    putAll(tid);
-                    return;
-                }
-
-
                 if (longSize.contentEquals(eventName)) {
                     write(b -> outWire.write(reply).int64(b.longSize()));
                     return;
@@ -395,14 +388,10 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     valueIn.marshallable(wire -> {
 
                         final Params[] params = getAndPut.params();
-                        final byte[] key1 = wire.read(params[0]).bytes();
 
-                        final byte[] value1 = wire.read(params[1]).bytes();
-
-                        MapWireHandler.this.writeValue(b -> {
-                            final byte[] result = b.put(key1, value1);
-                            return result;
-                        });
+                        MapWireHandler.this.writeValue(b -> b.put(
+                                wire.read(params[0]).bytes(),
+                                wire.read(params[1]).bytes()));
 
                     });
 
@@ -418,6 +407,28 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     writeVoid(BytesChronicleMap::clear);
                     return;
                 }
+
+                if (putAll.contentEquals(eventName)) {
+
+                    final Map data = new HashMap();
+
+                    writeVoid(b -> {
+
+                        while (valueIn.hasNext()) {
+
+                            valueIn.sequence(v -> valueIn.marshallable(wire -> data.put(
+                                    wire.read(getAndPut.params()[0]).bytes(),
+                                    wire.read(getAndPut.params()[1]).bytes())));
+                        }
+
+                        b.delegate.putAll(data);
+
+                    });
+
+                    return;
+                }
+
+
 
                 if (replace.contentEquals(eventName)) {
 

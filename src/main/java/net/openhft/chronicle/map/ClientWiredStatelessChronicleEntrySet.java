@@ -97,7 +97,7 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
 
     @Override
     public boolean remove(Object o) {
-        return proxyReturnBoolean(remove, o);
+        return proxyReturnBooleanArgs(remove, o);
     }
 
     @Override
