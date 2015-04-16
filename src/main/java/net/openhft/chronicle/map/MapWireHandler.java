@@ -48,14 +48,18 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields;
+import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.csp;
+import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
+import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
 import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
-import static net.openhft.chronicle.map.MapWireHandler.Fields.*;
 import static net.openhft.chronicle.map.MapWireHandler.Params.*;
+import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
 
 /**
  * @author Rob Austin.
@@ -70,6 +74,8 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
     @NotNull
     private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory;
+    private final Map<Long, CharSequence> cidToCsp;
+    private final Map<CharSequence, Long> cspToCid = new HashMap<>();
 
     private Wire inWire = null;
     private Wire outWire = null;
@@ -84,12 +90,28 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
         }
     };
 
+
+    private void setCspTextFromCid(long cid) {
+        cspText.setLength(0);
+        cspText.append(cidToCsp.get(cid));
+    }
+
     private final Consumer<WireIn> metaDataConsumer = new Consumer<WireIn>() {
 
         @Override
         public void accept(WireIn wireIn) {
 
-            wireIn.read(csp).text(cspText);
+            StringBuilder key = Wires.acquireStringBuilder();
+            final ValueIn read = wireIn.read(key);
+
+
+            if (csp.contentEquals(key)) {
+                read.text(cspText);
+            } else {
+                if (CoreFields.cid.contentEquals(key)) {
+                    setCspTextFromCid(read.int64());
+                }
+            }
 
             final int i = cspText.lastIndexOf("/");
 
@@ -110,7 +132,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
     };
 
 
-    private final Consumer writeEntry = new Consumer<Iterator<Map.Entry<byte[], byte[]>>>() {
+  /*  private final Consumer writeEntry = new Consumer<Iterator<Map.Entry<byte[], byte[]>>>() {
 
         @Override
         public void accept(Iterator<Map.Entry<byte[], byte[]>> iterator) {
@@ -125,7 +147,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
             Bytes<?> bytes1 = outWire.bytes();
             bytes1.write(entry.getValue());
         }
-    };
+    };*/
 
     private WireHandlers publishLater;
     private byte localIdentifier;
@@ -133,7 +155,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
     private int channelId;
     private Map<Integer, Replica> channels;
     private ReplicationHub hub;
-    private byte remoteIdentifier;
+
     private ChronicleMap<String, Integer> channelNameToId;
 
     public MapWireHandler(
@@ -141,8 +163,9 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
             @NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>>
                     channelNameToIdFactory,
             @NotNull final ReplicationHub hub, byte localIdentifier,
-            @NotNull final Map<Integer, Replica> channels) {
-        this(mapFactory, channelNameToIdFactory, hub);
+            @NotNull final Map<Integer, Replica> channels,
+            @NotNull final Map<Long, CharSequence> cidToCsp) {
+        this(mapFactory, channelNameToIdFactory, hub, cidToCsp);
         this.channels = channels;
         this.localIdentifier = localIdentifier;
 
@@ -152,10 +175,12 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
             @NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
             @NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>>
                     channelNameToIdFactory,
-            @NotNull final ReplicationHub hub) {
+            @NotNull final ReplicationHub hub,
+            @NotNull final Map<Long, CharSequence> cidToCsp) {
 
         this.mapFactory = mapFactory;
         this.hub = hub;
+        this.cidToCsp = cidToCsp;
 
         try {
             channelNameToId = (ChronicleMap) channelNameToIdFactory.get()
@@ -171,11 +196,11 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
     }
 
 
-    private void writeChunked(
+/*    private void writeChunked(
             @NotNull final Function<BytesChronicleMap, Iterator> function,
             @NotNull final Consumer<Iterator> c) throws StreamCorruptedException {
         writeChunked(function, c, Long.MAX_VALUE);
-    }
+    }*/
 
     /**
      * @param function   provides that returns items bases on a BytesChronicleMap
@@ -183,7 +208,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
      * @param maxEntries the maximum number of items that can be written
      * @throws StreamCorruptedException
      */
-    private void writeChunked(
+    /*private void writeChunked(
             @NotNull final Function<BytesChronicleMap, Iterator> function,
             @NotNull final Consumer<Iterator> c, long maxEntries) throws StreamCorruptedException {
 
@@ -208,9 +233,8 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
                         outWire.write(Fields.hasNext).bool(hasNext);
 
-                        if (hasNext) {
+                        if (hasNext)
                             c.accept(iterator);
-                        }
 
                     });
 
@@ -231,7 +255,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
         that.process(inWire, outWire);
 
-    }
+    }*/
 
 
     @Override
@@ -299,12 +323,35 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
     public long tid;
 
+    private final AtomicLong cid = new AtomicLong();
+
+
+    /**
+     * create a new cid if one does not already exist for this csp
+     *
+     * @param csp the csp we wish to check for a cid
+     * @return the cid for this csp
+     */
+    private long createCid(CharSequence csp) {
+
+        final long newCid = cid.incrementAndGet();
+        final Long aLong = cspToCid.putIfAbsent(csp, newCid);
+
+        if (aLong != null)
+            return aLong;
+
+        cidToCsp.put(newCid, csp.toString());
+        return newCid;
+
+    }
+
+
     private final Consumer<WireIn> dataConsumer = new Consumer<WireIn>() {
 
         @Override
         public void accept(WireIn wireIn) {
 
-            final StringBuilder eventName = Wires.acquireStringBuilder();
+            final StringBuilder eventName = acquireStringBuilder();
             final ValueIn valueIn = inWire.readEventName(eventName);
 
             if (!incompleteWork.isEmpty()) {
@@ -317,6 +364,8 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
             final Bytes<?> outBytes = outWire.bytes();
             final Bytes<?> bytes = outBytes;
+
+            outWire.writeDocument(true, wire -> outWire.write(CoreFields.tid).int64(tid));
 
             try {
 
@@ -335,54 +384,9 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     return;
                 }
 
-
-                if (keySet.contentEquals(eventName)) {
-                    writeChunked(map -> map.keySet().iterator(), writeElement);
-                    return;
-                }
-
-                if (values.contentEquals(eventName)) {
-                    writeChunked(map -> map.delegate.values().iterator(), writeElement);
-                    return;
-                }
-
-                if (entrySet.contentEquals(eventName)) {
-                    writeChunked(new Function<BytesChronicleMap, Iterator>() {
-                        @Override
-                        public Iterator apply(BytesChronicleMap m) {
-                            return m.delegate.entrySet().iterator();
-                        }
-                    }, writeEntry);
-                    return;
-                }
-
-                if (entrySetRestricted.contentEquals(eventName)) {
-                    long maxEntries = inWire.read(arg1).int64();
-                    writeChunked(m -> m.delegate.entrySet().iterator(), writeEntry, maxEntries);
-                    return;
-                }
-
-                if (putAll.contentEquals(eventName)) {
-                    putAll(tid);
-                    return;
-                }
-
-                outWire.writeDocument(true, wire -> outWire.write(CoreFields.tid).int64(tid));
-
-                // write the transaction id
-                if (createChannel.contentEquals(eventName)) {
-                    writeVoid(() -> {
-
-                        short channelId1 = valueIn.int16();
-                        mapFactory.get().replicatedViaChannel(hub.createChannel(channelId1)).create();
-                        return null;
-                    });
-                    return;
-                }
-
-
-                if (longSize.contentEquals(eventName)) {
-                    write(b -> outWire.write(reply).int64(b.longSize()));
+                // -- THESE METHODS ARE USED BOTH MY MAP AND ENTRY-SET
+                if (size.contentEquals(eventName)) {
+                    write(b -> outWire.write(reply).int32(b.size()));
                     return;
                 }
 
@@ -390,6 +394,67 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     write(b -> outWire.write(reply).bool(b.isEmpty()));
                     return;
                 }
+
+                if (endsWith(cspText, "#entrySet"))
+                    throw new IllegalStateException("unsupported event=" + eventName);
+
+                if (keySet.contentEquals(eventName)) {
+                    throw new UnsupportedOperationException("todo");
+                }
+
+                if (values.contentEquals(eventName)) {
+                    throw new UnsupportedOperationException("todo");
+                }
+
+
+                if (entrySet.contentEquals(eventName)) {
+                    write(b -> outWire.write(reply).type("set-proxy").writeValue()
+
+                            .marshallable(w -> {
+
+                                        CharSequence root = cspText.subSequence(0, cspText
+                                                .length() - "#map".length());
+
+                                        final StringBuilder csp = acquireStringBuilder()
+                                                .append(root)
+                                                .append("#entrySet");
+
+                                        w.write(CoreFields.csp).text(csp);
+                                        w.write(CoreFields.cid).int64(createCid(csp));
+                                    }
+
+                            ));
+                    return;
+                }
+
+               /* if (entrySetRestricted.contentEquals(eventName)) {
+                    long maxEntries = inWire.read(arg1).int64();
+                    writeChunked(m -> m.delegate.entrySet().iterator(), writeEntry, maxEntries);
+                    return;
+                }
+*/
+                if (putAll.contentEquals(eventName)) {
+                    putAll(tid);
+                    return;
+                }
+
+
+
+               /* if (createChannel.contentEquals(eventName)) {
+                    writeVoid(() -> {
+                        short channelId1 = valueIn.int16();
+                        mapFactory.get().replicatedViaChannel(hub.createChannel(channelId1)).create();
+                        return null;
+                    });
+                    return;
+                }*/
+
+
+                if (longSize.contentEquals(eventName)) {
+                    write(b -> outWire.write(reply).int64(b.longSize()));
+                    return;
+                }
+
 
                 if (containsKey.contentEquals(eventName)) {
                     // todo remove the    toByteArray(..)
@@ -435,9 +500,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                 }
 
                 if (remove.contentEquals(eventName)) {
-
-                    MapWireHandler.this.writeValue(b -> b.remove(toByteArray(valueIn)));
-
+                    writeValue(b -> b.remove(toByteArray(valueIn)));
                     return;
                 }
 
@@ -471,7 +534,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                         final net.openhft.lang.io.Bytes reader = toReader(valueIn,
                                 replaceWithOldAndNewValue.params());
                         boolean result = bytesMap.replace(reader, reader, reader);
-                        outWire.write(Fields.reply).bool(result);
+                        outWire.write(reply).bool(result);
                     });
 
                     return;
@@ -571,6 +634,8 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
     private void putAll(long tid) {
 
+        // todo
+/*
         final BytesChronicleMap bytesMap = bytesMap(MapWireHandler.this.channelId);
 
         if (bytesMap == null)
@@ -627,7 +692,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
         };
 
         incompleteWork.put(tid, runnable);
-        runnable.run();
+        runnable.run();*/
 
     }
 
@@ -650,11 +715,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
         });
     }
 
-    private byte identifier() {
-        // if the client provides a remote identifier then we will use that otherwise we will use
-        // the local identifier
-        return remoteIdentifier == 0 ? localIdentifier : remoteIdentifier;
-    }
 
     @NotNull
     private CharSequence persistedDataVersion() {
@@ -682,7 +742,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
         final net.openhft.lang.io.Bytes bytes = DirectStore.allocate(inSize + 1024).bytes();
 
-
         valueIn.marshallable(wire -> {
 
             for (Params p : params) {
@@ -703,11 +762,8 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
 
     private byte[] toByteArray(ValueIn valueIn) {
-
         final String text = valueIn.text();
         return text.getBytes();
-
-
     }
 
     /**
@@ -725,7 +781,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
         if (map != null)
             return map;
-
 
         throw new IllegalStateException();
     }
@@ -774,7 +829,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
             byte[] result = f.apply((ChronicleMap<byte[], byte[]>) b.delegate);
             boolean isNull = result == null || result.length == 0;
 
-            outWire.write(Fields.reply);
+            outWire.write(reply);
             final Bytes<?> bytes = outWire.bytes();
 
             if (isNull)
@@ -802,16 +857,16 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
         //     bytes.mark();
         //   outWire.write(isException).bool(false);
 
-
         outWire.writeDocument(false, out -> {
+            long position = 0;
             try {
-                outWire.bytes().mark();
+                position = outWire.bytes().position();
                 c.accept(bytesMap);
             } catch (Exception e) {
                 //      bytes.reset();
                 // the idea of wire is that is platform independent,
                 // so we wil have to send the exception as a String
-                outWire.bytes().reset();
+                outWire.bytes().position(position);
 
                 final WireOut o = out.write(reply)
                         .type(e.getClass().getSimpleName());
@@ -958,22 +1013,5 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
     }
 
 
-    // note : peter has asked for these to be in camel case
-    enum Fields implements WireKey {
-        hasNext,
-        timeStamp,
-        channelId,
-        eventName,
-        csp,
-        reply,
-        resultKey,
-        resultValue,
-        arg1,
-        arg2,
-        arg3,
-        isException,
-        exception,
-        resultIsNull
-    }
 }
 

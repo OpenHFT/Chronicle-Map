@@ -18,16 +18,11 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields;
 import net.openhft.chronicle.engine.client.ParameterizeWireKey;
 import net.openhft.chronicle.hash.function.SerializableFunction;
-import net.openhft.chronicle.map.MapWireHandler.Fields;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.ValueOut;
-import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -35,11 +30,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
+import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
+import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.tid;
 import static net.openhft.chronicle.map.MapWireHandler.EventId;
 import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
 
@@ -71,7 +71,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
             @NotNull final Class vClass,
             @NotNull final String channelName,
             ClientWiredStatelessTcpConnectionHub hub) {
-        super(channelName, hub);
+        super(channelName, hub, "MAP", 0);
 
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();
@@ -211,19 +211,19 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
 
     @NotNull
     public String toString() {
-        if (size() > MAX_NUM_ENTRIES) {
+        /*if (size() > MAX_NUM_ENTRIES) {
             StringBuilder s = new StringBuilder(toMap(MAX_NUM_ENTRIES).toString());
             s.deleteCharAt(s.length() - 1).append(", ...");
             return s.toString();
         } else {
             return toMap().toString();
-        }
+        }*/
+        return "";
     }
 
     @NotNull
     public String serverPersistedDataVersion() {
-
-        return hub.proxyReturnString(persistedDataVersion, csp);
+        return hub.proxyReturnString(persistedDataVersion, csp, 0);
     }
 
     public boolean isEmpty() {
@@ -287,7 +287,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
 
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {
 
-        final long startTime = System.currentTimeMillis();
+    /*    final long startTime = System.currentTimeMillis();
         long tid = hub.nextUniqueTransaction(startTime);
 
         Set<? extends Map.Entry<? extends K, ? extends V>> entries = map.entrySet();
@@ -340,6 +340,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
         // wait for the transaction id to be received, this will only be received once the
         // last chunk has been processed
         readVoid(tid, startTime);
+            */
     }
 
 
@@ -366,8 +367,20 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
         proxyReturnVoid(clear);
     }
 
+    @NotNull
+    @Override
+    public Set<K> keySet() {
+        return null;
+    }
 
     @NotNull
+    @Override
+    public Collection<V> values() {
+        return null;
+    }
+
+
+ /*   @NotNull
     public Set<K> keySet() {
         final Set<K> usingCollection = new HashSet<K>();
         readChunked(kClass, keySet, usingCollection);
@@ -379,9 +392,9 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
     public Collection<V> values() {
         final List<V> usingCollection = new ArrayList<>();
         return readChunked(vClass, values, usingCollection);
-    }
+    }*/
 
-    private <E, A extends Collection<E>> Collection<E> readChunked(
+    /*private <E, A extends Collection<E>> Collection<E> readChunked(
             Class<E> vClass1, EventId values, A usingCollection) {
         final long startTime = System.currentTimeMillis();
 
@@ -417,14 +430,36 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
             }
         }
         return usingCollection;
-    }
+    }*/
+
+
+    private final Map<Long, String> cidToCsp = new HashMap<>();
 
     @NotNull
     public Set<Map.Entry<K, V>> entrySet() {
-        return toMap().entrySet();
+
+        final long[] cidRef = new long[1];
+
+        proxyReturnWireConsumer(entrySet, (WireIn wireIn) -> {
+            final StringBuilder type = Wires.acquireStringBuilder();
+            final ValueIn read = wireIn.read(reply);
+            read.type(type);
+            read.marshallable(w -> {
+
+                final String csp1 = w.read(CoreFields.csp).text();
+                final long cid = w.read(CoreFields.cid).int64();
+                cidToCsp.put(cid, csp1);
+                cidRef[0] = cid;
+
+            });
+        });
+
+        final long cid = cidRef[0];
+        return new ClientWiredStatelessChronicleEntrySet<K, V>(channelName, hub, "entrySet", cid);
     }
 
-    private Map<K, V> toMap() {
+
+   /* private Map<K, V> toMap() {
         final Map<K, V> result = new HashMap<K, V>();
         final long startTime = System.currentTimeMillis();
         // send
@@ -451,10 +486,10 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
                         break OUTER;
 
 
-                   /* if (bytes.remaining() > 0) {
+                   *//* if (bytes.remaining() > 0) {
                         // todo process the exception
                        // boolean isException = wireIn.read(Fields.isException).bool();
-                    }*/
+                    }*//*
                 }
 
             } finally {
@@ -462,7 +497,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
             }
         }
         return result;
-    }
+    }*/
 
 
     /**
@@ -471,7 +506,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
      * @param maxNumEntries
      * @return
      */
-    private Map<K, V> toMap(int maxNumEntries) {
+  /*  private Map<K, V> toMap(int maxNumEntries) {
         final Map<K, V> result = new HashMap<K, V>();
         final long startTime = System.currentTimeMillis();
 
@@ -513,7 +548,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
             }
         }
         return result;
-    }
+    }*/
 
     /**
      * @param callback each entry is passed to the callback
@@ -523,7 +558,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
     }
 
 
-    private V readValue(Fields argName, long tid, long startTime, final V usingValue) {
+    private V readValue(WireKey argName, long tid, long startTime, final V usingValue) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
         long timeoutTime = startTime + hub.timeoutMs;
 
@@ -541,15 +576,15 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
         }
     }
 
-    private V readV(Fields argName, Wire wireIn, V usingValue) {
+    private V readV(WireKey argName, Wire wireIn, V usingValue) {
         return readObject(argName, wireIn, usingValue, vClass);
     }
 
-    private K readK(Fields argName, Wire wireIn, K usingValue) {
+    private K readK(WireKey argName, Wire wireIn, K usingValue) {
         return readObject(argName, wireIn, usingValue, kClass);
     }
 
-    private <E> E readObject(Fields argName, Wire wireIn, E usingValue, Class<E> clazz) {
+    private <E> E readObject(WireKey argName, Wire wireIn, E usingValue, Class<E> clazz) {
 
         final ValueIn valueIn = wireIn.read(argName);
         if (valueIn.isNull())
@@ -626,7 +661,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
         try {
             final Wire wireIn = hub.proxyReply(timeoutTime, tid);
             checkIsData(wireIn);
-            return wireIn.read(MapWireHandler.Fields.reply).int32();
+            return wireIn.read(reply).int32();
         } finally {
             hub.inBytesLock().unlock();
         }
@@ -672,7 +707,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
             return null;
 
         if (resultType == vClass)
-            return (R) readValue(MapWireHandler.Fields.reply, tid, startTime, null);
+            return (R) readValue(reply, tid, startTime, null);
 
         else
             throw new UnsupportedOperationException("class of type class=" + resultType +
@@ -690,7 +725,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
             return null;
 
         if (rClass == vClass)
-            return (R) readValue(MapWireHandler.Fields.reply, tid, startTime, null);
+            return (R) readValue(reply, tid, startTime, null);
         else
             throw new UnsupportedOperationException("class of type class=" + rClass + " is not " +
                     "supported");
@@ -710,7 +745,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
         return tid;
     }
 
-    private long proxySend(EventId methodName, long arg1, long startTime) {
+   /* private long proxySend(EventId methodName, long arg1, long startTime) {
         long tid;
         hub.outBytesLock().lock();
         try {
@@ -729,7 +764,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends AbstactStatelessClient<Even
             hub.outBytesLock().unlock();
         }
         return tid;
-    }
+    }*/
 
 
     private boolean eventReturnsNull(@NotNull EventId methodName) {
