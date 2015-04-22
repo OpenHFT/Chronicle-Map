@@ -1,9 +1,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields;
 import net.openhft.chronicle.wire.TextWire;
-import net.openhft.chronicle.wire.ValueOut;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,11 +10,12 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Created by Rob Austin
  */
-public class MapWireConnectionHubByName<K, V> implements Map<K, V> {
+public class WireMap<K, V> implements Map<K, V> {
 
     private final Class<K> kClass;
     private final Class<V> vClass;
@@ -28,13 +27,16 @@ public class MapWireConnectionHubByName<K, V> implements Map<K, V> {
     private final Map<byte[], byte[]> map;
 
 
-    Class<? extends Wire> wireType = TextWire.class;
+    // todo
+    private final Class<? extends Wire> wireType;
 
-    public MapWireConnectionHubByName(String name,
-                                      Class<V> vClass,
-                                      Class<K> kClass,
-                                      MapWireConnectionHub mapWireConnectionHub) throws IOException {
+    public WireMap(String name,
+                   Class<V> vClass,
+                   Class<K> kClass,
+                   MapWireConnectionHub mapWireConnectionHub,
+                   Class<? extends Wire> wireType) throws IOException {
         this.mapWireConnectionHub = mapWireConnectionHub;
+        this.wireType = wireType;
         final BytesChronicleMap b = this.mapWireConnectionHub.acquireMap(name);
         this.map = (Map) b.delegate;
         this.vClass = vClass;
@@ -75,41 +77,51 @@ public class MapWireConnectionHubByName<K, V> implements Map<K, V> {
     }
 
     private byte[] bytes(Object key) {
-        ValueOut valueOut = toWire().getValueOut();
-        AbstactStatelessClient.writeField(key, valueOut);
-        buffer.flip();
-        byte[] bytes = new byte[(int) buffer.limit()];
-        buffer.read(bytes);
-        return bytes;
+
+        final Wire wire = toWire();
+        AbstactStatelessClient.writeField(key, wire.getValueOut());
+        wire.bytes().flip();
+
+        return toWire().getValueIn().bytes();
     }
+
 
     @Override
     public boolean containsValue(Object value) {
         return map.containsValue(bytes(value));
-
     }
 
     @Override
-    public V get(Object key) {
-        byte[] bytes = map.get(bytes(key));
+    public V get(@NotNull final Object key) {
 
+        return toObject(vClass, new Supplier<byte[]>() {
+            @Override
+            public byte[] get() {
+
+                final byte[] bytes = bytes(key);
+                final byte[] bytes1 = map.get(bytes);
+                return bytes1;
+            }
+        });
+    }
+
+    private <E> E toObject(Class<E> eClass, Supplier<byte[]> b) {
+        final byte[] bytes = b.get();
         if (bytes == null)
             return null;
-
         final Wire wire = toWire(bytes);
-        return AbstactStatelessClient.<V>readObject(CoreFields.reply, wire, null, vClass);
+        buffer.flip();
+        return AbstactStatelessClient.readObject(wire.getValueIn(), null, eClass);
     }
 
     @Override
-    public V put(K key, V value) {
-        final Wire wire = toWire(map.put(bytes(key), bytes(value)));
-        return AbstactStatelessClient.<V>readObject(CoreFields.reply, wire, null, vClass);
+    public V put(@NotNull final K key, @NotNull final V value) {
+        return toObject(vClass, () -> map.put(bytes(key), bytes(value)));
     }
 
     @Override
     public V remove(Object key) {
-        final Wire wire = toWire(map.remove(bytes(key)));
-        return AbstactStatelessClient.<V>readObject(CoreFields.reply, wire, null, vClass);
+        return toObject(vClass, () -> map.remove(bytes(key)));
     }
 
     @Override
@@ -137,7 +149,7 @@ public class MapWireConnectionHubByName<K, V> implements Map<K, V> {
     @NotNull
     @Override
     public Set<Entry<K, V>> entrySet() {
-        return null;
+        throw new UnsupportedOperationException("todo");
     }
 
 }

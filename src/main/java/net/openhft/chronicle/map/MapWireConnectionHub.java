@@ -19,11 +19,11 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 /**
  * Created by Rob Austin
  */
-public class MapWireConnectionHub<K, V> {
+public class MapWireConnectionHub<K, V> implements Cloneable{
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     public static final int MAP_SERVICE = 3;
-    private final byte localIdentifier;
+
 
     protected ChronicleMap<String, Integer> channelNameToId;
     private Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory;
@@ -31,6 +31,7 @@ public class MapWireConnectionHub<K, V> {
     private final ReplicationHub hub;
 
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();
+    private final ChannelProvider provider;
 
 
     public MapWireConnectionHub(
@@ -42,7 +43,6 @@ public class MapWireConnectionHub<K, V> {
 
 
         this.mapFactory = mapFactory;
-        this.localIdentifier = localIdentifier;
 
         final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .of(serverPort)
@@ -50,14 +50,10 @@ public class MapWireConnectionHub<K, V> {
 
         hub = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig).createWithId(localIdentifier);
 
-        // this is how you add maps after the custer is created
-        of(byte[].class, byte[].class)
-                .instance().replicatedViaChannel(hub.createChannel((short) 1)).create();
-
         channelNameToId = (ChronicleMap) channelNameToIdFactory.get()
                 .replicatedViaChannel(hub.createChannel(MAP_SERVICE)).create();
 
-        ChannelProvider provider = ChannelProvider.getProvider(hub);
+        provider = ChannelProvider.getProvider(hub);
         channelMap = provider.chronicleChannelMap();
 
     }
@@ -161,4 +157,7 @@ public class MapWireConnectionHub<K, V> {
         throw new IllegalStateException();
     }
 
+    public void close() throws IOException {
+        provider.close();
+    }
 }
