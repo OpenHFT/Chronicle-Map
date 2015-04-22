@@ -53,6 +53,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
 
 
     public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(AbstactStatelessClient.EMPTY);
+    private final Class vClass;
 
     protected Class<K> kClass;
 
@@ -73,6 +74,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();
         this.kClass = kClass;
+        this.vClass = vClass;
+
     }
 
 
@@ -252,7 +255,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
     public V get(Object key) {
-        return proxyReturnObject(vClass, get, (K) key);
+        return (V)proxyReturnObject(vClass, get, (K) key);
     }
 
     @Nullable
@@ -275,7 +278,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     public V remove(Object key) {
         if (key == null)
             throw keyNotNullNPE();
-        return proxyReturnObject(vClass, removeReturnsNull ? removeWithoutAcc : remove, key);
+        return (V)proxyReturnObject(vClass, removeReturnsNull ? removeWithoutAcc : remove, key);
     }
 
     @Override
@@ -329,7 +332,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     public Set<Map.Entry<K, V>> entrySet() {
 
 
-
         long cid = proxyReturnWireConsumer(entrySet, (WireIn wireIn) -> {
             final long[] cidRef = new long[1];
             final StringBuilder type = Wires.acquireStringBuilder();
@@ -343,7 +345,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
                 cidRef[0] = cid0;
 
             });
-            return  cidRef[0];
+            return cidRef[0];
         });
 
         return new ClientWiredStatelessChronicleEntrySet<K, V>(channelName, hub, cid, vClass);
@@ -449,8 +451,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
             return getKey() + "=" + getValue();
         }
     }
-
-
 
 
 }
