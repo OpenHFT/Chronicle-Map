@@ -1,13 +1,13 @@
 *We can help you get Chronicle up and running in your organisation, we suggest you invite us in for
 consultancy, charged on an ad-hoc basis, we can discuss the best options tailored to your individual
-requirements. - [Contact Us](http://openhft.net/support/)*
+requirements. - [Contact Us](http://chronicle.software/support/)*
 
-*Or you may already be using Chronicle and just want some help - [find out more..](http://openhft.net/support/)*
+*Or you may already be using Chronicle and just want some help - [find out more..](http://chronicle.software/support/)*
 
 # Chronicle Map
 
 A low latency replicated Key Value Store across your network, with eventual consistency, persistence and performance.
-![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
+![Chronicle Map](http://chronicle.software/wp-content/uploads/2014/07/ChronicleMap_200px.png)
 
 #### Maven Artifact Download
 ```xml
@@ -60,7 +60,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
  * [Known Issues](https://github.com/OpenHFT/Chronicle-Map#known-issues)
  * [Stackoverflow](http://stackoverflow.com/tags/chronicle/info)
  * [Development Tasks - JIRA] (https://higherfrequencytrading.atlassian.net/browse/HCOLL)
- * [Use Case Which include Chronicle Map] (http://openhft.net/products/chronicle-engine/)
+ * [Use Case Which include Chronicle Map] (http://chronicle.software/products/chronicle-engine/)
  
 #### Examples
 
@@ -81,7 +81,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 Chronicle Map implements the interface `java.util.concurrent.ConcurrentMap`, however unlike the standard
 jdk implementations, ChronicleMap is both persistent and able to share your entries accross processes:
 
-![](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-diagram_04.jpg)
+![](http://chronicle.software/wp-content/uploads/2014/07/Chronicle-Map-diagram_04.jpg)
 
 ## When to use HashMap, ConcurrentHashMap and ChronicleMap
 #### When to use HashMap
@@ -118,7 +118,7 @@ SharedHashMap was the old name of what is now ChronicleMap. Since the last relea
 ## Getting Started
 
 #### Tutorial 1 - Creating an instance of Chronicle Map
-[![ScreenShot](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-14-at-17.49.36.png)](http://openhft.net/chronicle-map-video-tutorial-1/)
+[![ScreenShot](http://chronicle.software/wp-content/uploads/2014/09/Screen-Shot-2014-10-14-at-17.49.36.png)](http://chronicle.software/chronicle-map-video-tutorial-1/)
 
 ### Simple Construction
 
@@ -126,7 +126,7 @@ To download the JAR which contains Chronicle Map, we recommend you use maven, wh
 from [Maven Central](http://search.maven.org), once you have installed maven, all you have to do is
 add the following to your projects `pom.xml`:
 
-![Maven](http://openhft.net/wp-content/uploads/2014/09/maven.gif)
+![Maven](http://chronicle.software/wp-content/uploads/2014/09/maven.gif)
 
 ```xml
 <dependency>
@@ -595,7 +595,7 @@ If after some business logic, in our example after reading the 'issueDate' and
 
 ## Serialization
 
-![Serialization](http://openhft.net/wp-content/uploads/2014/09/Serialization_01.jpg)
+![Serialization](http://chronicle.software/wp-content/uploads/2014/09/Serialization_01.jpg)
 
 
 ChronicleMap stores your data into off heap memory, so when you give it a Key or Value, it will
@@ -615,7 +615,7 @@ an example of how to do this can be found at "IntValue$$Native"
 for a single type or a number of types.
 
 ### Import/Export entries as JSON
-![Import/Export](http://openhft.net/wp-content/uploads/2014/09/Export-import_04.jpg)
+![Import/Export](http://chronicle.software/wp-content/uploads/2014/09/Export-import_04.jpg)
 
 ChronicleMap supports importing and exporting all the entries into a JSON encoded file.
 
@@ -665,7 +665,7 @@ your JVM to crash. Close MUST BE the last thing that you do with the map.
 
 ChronicleMap supports both TCP and UDP replication
 
-![TCP/IP Replication](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-TCP-Replication_simple_02.jpg)
+![TCP/IP Replication](http://chronicle.software/wp-content/uploads/2014/07/Chronicle-Map-TCP-Replication_simple_02.jpg)
 
 ### TCP / UDP Background.
 TCP/IP is a reliable protocol, what this means is that unless you have a network failure or hardware
@@ -824,7 +824,7 @@ this, in other words its a bidirectional connection.
 
 ### Configuring Three Way TCP/IP Replication
 
-![TCP/IP Replication 3Way](http://openhft.net/wp-content/uploads/2014/09/Screen-Shot-2014-10-27-at-18.19.05.png)
+![TCP/IP Replication 3Way](http://chronicle.software/wp-content/uploads/2014/09/Screen-Shot-2014-10-27-at-18.19.05.png)
 
 Below is example how to set up tcpConfig for 3 host
 
@@ -865,7 +865,7 @@ is dropped and re-established.
 
 # Multiple Chronicle Maps - Network Distributed
 
-![Chronicle Maps Network Distributed](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map_channels_diagram_02.jpg)
+![Chronicle Maps Network Distributed](http://chronicle.software/wp-content/uploads/2014/07/Chronicle-Map_channels_diagram_02.jpg)
 
 ChronicleMap TCP Replication lets you distribute a single ChronicleMap, to a number of servers
 across your network. Replication is point to point and the data transfer is bidirectional, so in the
@@ -1034,7 +1034,7 @@ favoriteColourServer1.close();
 
 # Stateless Client
 
-![](http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-remote-stateless-map_04_vB.jpg)
+![](http://chronicle.software/wp-content/uploads/2014/07/Chronicle-Map-remote-stateless-map_04_vB.jpg)
 
 A stateless client is an instance of a `ChronicleMap` or a `ChronicleSet` that does not hold any 
 data
@@ -1043,7 +1043,7 @@ data
  holds all your data, the server can not it’s self be a stateless client. Your stateless client must
  be connected to the server via TCP/IP.
 
- ![ChronicleMap](http://openhft.net/wp-content/uploads/2014/09/State-Transition_1-thread_02.jpg)
+ ![ChronicleMap](http://chronicle.software/wp-content/uploads/2014/09/State-Transition_1-thread_02.jpg)
 
  The stateless client delegates all your method calls to
  the remote server. The stateless client operations will block, in other words the stateless
@@ -1126,7 +1126,7 @@ When calling the stateless client, you will get better throughput if you invoke 
   by the server. Your stateless client will block until an acknowledgement has been received from the server that
 the event was processed.
 
-![Chronicle Map](http://openhft.net/wp-content/uploads/2014/09/State-Transition_2-thread_03.jpg)
+![Chronicle Map](http://chronicle.software/wp-content/uploads/2014/09/State-Transition_2-thread_03.jpg)
 
 When you are calling methods that return a value like get() this
 blocking adds no additional overhead, because you have to wait for the return value anyway, 
