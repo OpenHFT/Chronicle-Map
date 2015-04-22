@@ -23,12 +23,13 @@ public class FilePerMapKeyTest {
     }
 
     /**
-     * Testing the put
+     * Testing all the methods of the map with simple tests.
      */
     @Test
-    public void testPut(){
+    public void testMapMethods() {
         //There are no entries in the map so null should be returned
         FilePerKeyMap<String, String> map = new FilePerKeyMap<>("/tmp/filepermaptests");
+
         //just in case it hasn't been cleared up last time
         map.clear();
 
@@ -90,26 +91,32 @@ public class FilePerMapKeyTest {
         assertTrue(set.contains("six"));
         assertTrue(set.contains("seven"));
 
-        set = (Set)map.values();
+        set = (Set) map.values();
         assertEquals(3, set.size());
         assertTrue(set.contains("test5"));
         assertTrue(set.contains("test6"));
         assertTrue(set.contains("test7"));
 
-        Set<Map.Entry> entryset = (Set)map.entrySet();
+        Set<Map.Entry> entryset = (Set) map.entrySet();
         assertEquals(3, entryset.size());
-        for(Iterator<Map.Entry> it = entryset.iterator(); it.hasNext();){
+        for (Iterator<Map.Entry> it = entryset.iterator(); it.hasNext(); ) {
             Map.Entry entry = it.next();
-            if(entry.getKey().equals("five")){
-                assertEquals(entry.getValue(),"test5");
-            }else if(entry.getKey().equals("six")){
-                assertEquals(entry.getValue(),"test6");
-            }else if(entry.getKey().equals("seven")){
-                assertEquals(entry.getValue(),"test7");
-            }else{
+            if (entry.getKey().equals("five")) {
+                assertEquals(entry.getValue(), "test5");
+            } else if (entry.getKey().equals("six")) {
+                assertEquals(entry.getValue(), "test6");
+            } else if (entry.getKey().equals("seven")) {
+                assertEquals(entry.getValue(), "test7");
+            } else {
                 //should never get here!!
                 assertTrue(false);
             }
         }
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
+
 }

@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,12 +22,71 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
 
     public FilePerKeyMap(String dir) {
         try {
+            this.dir = dir;
             dirPath = Paths.get(dir);
             Files.createDirectories(dirPath);
+
+            new Thread("WatcherThread") {
+                public void run() {
+                    try {
+                        WatchService watcher = FileSystems.getDefault().newWatchService();
+                        dirPath.register(watcher, new WatchEvent.Kind[]{
+                                    StandardWatchEventKinds.ENTRY_CREATE,
+                                    StandardWatchEventKinds.ENTRY_DELETE,
+                                    StandardWatchEventKinds.ENTRY_MODIFY},
+                                    SensitivityWatchEventModifier.HIGH
+                        );
+
+                        while(true){
+                            WatchKey key = null;
+                            try {
+                                key = watcher.take();
+                                System.out.println("Event Taken");
+                                for (WatchEvent<?> event : key.pollEvents()) {
+                                    // get event type
+                                    WatchEvent.Kind<?> kind = event.kind();
+
+                                    // get file name
+                                    @SuppressWarnings("unchecked")
+                                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                                    Path fileName = ev.context();
+
+                                    String mapKey = fileName.toString();
+
+
+                                    if (kind == StandardWatchEventKinds.OVERFLOW) {
+                                        System.out.println("OVERFLOW");
+                                        continue;
+                                    } else if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                                        Path p = dirPath.resolve(fileName);
+                                        String mapVal = getFileContents(p);
+                                        System.out.println("created " + mapKey + " : " + mapVal);
+                                    } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                                        System.out.println("deleted " + mapKey);
+                                    } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                                        Path p = dirPath.resolve(fileName);
+                                        String mapVal = getFileContents(p);
+                                        System.out.println("modified " + mapKey + " : " + mapVal);
+                                    }
+                                }
+
+                            } catch (InterruptedException e) {
+                                System.out.println("Watcher service exiting");
+                                return;
+                            }finally{
+                                key.reset();
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new AssertionError(e);
+                    }
+                }
+            }.start();
+
+
         } catch (IOException e) {
             throw new AssertionError(e);
         }
-        this.dir = dir;
     }
 
     @Override
