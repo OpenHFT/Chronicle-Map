@@ -6,9 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -48,7 +46,7 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public boolean containsValue(Object value) {
-        return false;
+        return getFiles(dirPath).anyMatch(p->getFileContents(p).equals(value));
     }
 
     @Override
@@ -70,52 +68,18 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
         return (V) existingValue;
     }
 
-    private Stream<Path> getFiles(Path path){
-        try {
-            return Files.walk(path).filter(p -> !Files.isDirectory(p));
-        } catch (IOException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    private String getFileContents(Path path){
-        String existingValue = null;
-        if(Files.exists(path)) {
-            try {
-                existingValue = Files.readAllLines(path).stream().collect(Collectors.joining());
-            } catch (IOException e) {
-                throw new AssertionError(e);
-            }
-        }
-        return existingValue;
-    }
-
-    private void writeToFile(Path path, String value){
-        try {
-            Files.write(path, value.getBytes(), StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING,
-                    StandardOpenOption.WRITE);
-        } catch (IOException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    private void deleteFile(Path path){
-        try {
-            Files.delete(path);
-        } catch (IOException e) {
-            throw new AssertionError(e);
-        }
-    }
-
     @Override
     public V remove(Object key) {
-        return null;
+        String existing = (String)get(key);
+        if(existing != null){
+            deleteFile(Paths.get(dir, (String)key));
+        }
+        return (V)existing;
     }
 
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
-
+        m.entrySet().stream().forEach(e->put(e.getKey(), e.getValue()));
     }
 
     @Override
@@ -126,19 +90,23 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
     @NotNull
     @Override
     public Set<K> keySet() {
-        return null;
+        return getFiles(dirPath).map(p -> (K) p.getFileName().toString())
+                                .collect(Collectors.toSet());
     }
 
     @NotNull
     @Override
     public Collection<V> values() {
-        return null;
+        return getFiles(dirPath).map(p -> (V) getFileContents(p))
+                .collect(Collectors.toSet());
     }
 
     @NotNull
     @Override
     public Set<Entry<K, V>> entrySet() {
-        return null;
+        return getFiles(dirPath).map(p ->
+                (Entry<K, V>) new FPMEntry(p.getFileName().toString(), getFileContents(p)))
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -247,11 +215,97 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
         return null;
     }
 
+
+    private Stream<Path> getFiles(Path path){
+        try {
+            return Files.walk(path).filter(p -> !Files.isDirectory(p));
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private String getFileContents(Path path){
+        String existingValue = null;
+        if(Files.exists(path)) {
+            try {
+                existingValue = Files.readAllLines(path).stream().collect(Collectors.joining());
+            } catch (IOException e) {
+                throw new AssertionError(e);
+            }
+        }
+        return existingValue;
+    }
+
+    private void writeToFile(Path path, String value){
+        try {
+            Files.write(path, value.getBytes(), StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private void deleteFile(Path path){
+        try {
+            Files.delete(path);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+
+
     private void checkTypeIsString(Object... objs) {
         for(Object o : objs){
             if(!(o instanceof String))
                 throw new AssertionError("FilePerKeyMap only accepts Key and Values " +
                     "of type String. Unsupported type: '" + o + "'");
+        }
+    }
+
+    private static class FPMEntry<K,V> implements Entry
+    {
+        private K key;
+        private V value;
+
+        public FPMEntry(K key, V value){
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public K getKey() {
+            return key;
+        }
+
+        @Override
+        public V getValue() {
+            return value;
+        }
+
+        @Override
+        public Object setValue(Object value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            FPMEntry<?, ?> entry = (FPMEntry<?, ?>) o;
+
+            if (key != null ? !key.equals(entry.key) : entry.key != null) return false;
+            return !(value != null ? !value.equals(entry.value) : entry.value != null);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = key != null ? key.hashCode() : 0;
+            result = 31 * result + (value != null ? value.hashCode() : 0);
+            return result;
         }
     }
 }

@@ -2,6 +2,11 @@ package net.openhft.chronicle.map;
 
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import static org.junit.Assert.*;
 
 /**
@@ -41,10 +46,12 @@ public class FilePerMapKeyTest {
 
         assertTrue(map.containsKey("one"));
         assertFalse(map.containsKey("two"));
+        assertTrue(map.containsValue("test2"));
+        assertFalse(map.containsValue("test5"));
 
         //Check the size is one
         int size = map.size();
-        assertEquals(1,size);
+        assertEquals(1, size);
         assertFalse(map.isEmpty());
 
         map.clear();
@@ -53,5 +60,56 @@ public class FilePerMapKeyTest {
         assertEquals(0, size);
 
         assertTrue(map.isEmpty());
+
+        map.put("one", "test1");
+        map.put("two", "test2");
+        map.put("three", "test3");
+
+        assertEquals(3, map.size());
+
+        val = map.remove("two");
+        assertEquals("test2", val);
+
+        assertEquals(2, map.size());
+
+        val = map.remove("four");//doesn't exist
+        assertEquals(null, val);
+
+        map.clear();
+
+        Map<String, String> copyFrom = new HashMap<>();
+        copyFrom.put("five", "test5");
+        copyFrom.put("six", "test6");
+        copyFrom.put("seven", "test7");
+        map.putAll(copyFrom);
+        assertEquals(3, map.size());
+
+        Set<String> set = map.keySet();
+        assertEquals(3, set.size());
+        assertTrue(set.contains("five"));
+        assertTrue(set.contains("six"));
+        assertTrue(set.contains("seven"));
+
+        set = (Set)map.values();
+        assertEquals(3, set.size());
+        assertTrue(set.contains("test5"));
+        assertTrue(set.contains("test6"));
+        assertTrue(set.contains("test7"));
+
+        Set<Map.Entry> entryset = (Set)map.entrySet();
+        assertEquals(3, entryset.size());
+        for(Iterator<Map.Entry> it = entryset.iterator(); it.hasNext();){
+            Map.Entry entry = it.next();
+            if(entry.getKey().equals("five")){
+                assertEquals(entry.getValue(),"test5");
+            }else if(entry.getKey().equals("six")){
+                assertEquals(entry.getValue(),"test6");
+            }else if(entry.getKey().equals("seven")){
+                assertEquals(entry.getValue(),"test7");
+            }else{
+                //should never get here!!
+                assertTrue(false);
+            }
+        }
     }
 }
