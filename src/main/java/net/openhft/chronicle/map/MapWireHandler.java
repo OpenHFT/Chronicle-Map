@@ -190,7 +190,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
             try {
 
-                if (put.contentEquals(eventName)) {
+                if (putIfAbsent.contentEquals(eventName)) {
 
                     valueIn.marshallable(wire -> {
 

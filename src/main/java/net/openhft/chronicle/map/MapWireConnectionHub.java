@@ -23,7 +23,7 @@ public class MapWireConnectionHub<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     public static final int MAP_SERVICE = 3;
-    private final byte localIdentifier;
+
 
     protected ChronicleMap<String, Integer> channelNameToId;
     private Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory;
@@ -42,17 +42,12 @@ public class MapWireConnectionHub<K, V> {
 
 
         this.mapFactory = mapFactory;
-        this.localIdentifier = localIdentifier;
 
         final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .of(serverPort)
                 .heartBeatInterval(1, SECONDS);
 
         hub = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig).createWithId(localIdentifier);
-
-        // this is how you add maps after the custer is created
-        of(byte[].class, byte[].class)
-                .instance().replicatedViaChannel(hub.createChannel((short) 1)).create();
 
         channelNameToId = (ChronicleMap) channelNameToIdFactory.get()
                 .replicatedViaChannel(hub.createChannel(MAP_SERVICE)).create();

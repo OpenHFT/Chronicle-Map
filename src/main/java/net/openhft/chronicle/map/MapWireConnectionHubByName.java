@@ -3,7 +3,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields;
 import net.openhft.chronicle.wire.TextWire;
-import net.openhft.chronicle.wire.ValueOut;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,13 +74,15 @@ public class MapWireConnectionHubByName<K, V> implements Map<K, V> {
     }
 
     private byte[] bytes(Object key) {
-        ValueOut valueOut = toWire().getValueOut();
-        AbstactStatelessClient.writeField(key, valueOut);
-        buffer.flip();
-        byte[] bytes = new byte[(int) buffer.limit()];
-        buffer.read(bytes);
-        return bytes;
+
+
+        final Wire wire = toWire();
+        AbstactStatelessClient.writeField(key, wire.getValueOut());
+        wire.bytes().flip();
+
+        return toWire().getValueIn().bytes();
     }
+
 
     @Override
     public boolean containsValue(Object value) {
@@ -91,13 +92,15 @@ public class MapWireConnectionHubByName<K, V> implements Map<K, V> {
 
     @Override
     public V get(Object key) {
-        byte[] bytes = map.get(bytes(key));
+        final byte[] bytes1 = bytes(key);
+        byte[] bytes = map.get(bytes1);
 
         if (bytes == null)
             return null;
 
         final Wire wire = toWire(bytes);
-        return AbstactStatelessClient.<V>readObject(CoreFields.reply, wire, null, vClass);
+        buffer.flip();
+        return AbstactStatelessClient.<V>readObject(wire.getValueIn(), null, vClass);
     }
 
     @Override
