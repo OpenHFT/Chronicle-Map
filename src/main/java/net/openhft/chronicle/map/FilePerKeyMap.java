@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import java.util.stream.Stream;
 public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
     private String dir;
     private Path dirPath;
+    private Map<File, Long> lastModifiedByProgram = new ConcurrentHashMap<>();
 
     public FilePerKeyMap(String dir) {
         try {
@@ -60,13 +62,27 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
                                     } else if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                                         Path p = dirPath.resolve(fileName);
                                         String mapVal = getFileContents(p);
-                                        System.out.println("created " + mapKey + " : " + mapVal);
+                                        if(isProgrammaticUpdate(p.toFile())){
+                                            System.out.println("Programmatic create to " + mapKey + " : " + mapVal);
+                                        }else {
+                                            System.out.println("created " + mapKey + " : " + mapVal);
+                                        }
                                     } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                                        System.out.println("deleted " + mapKey);
+                                        Path p = dirPath.resolve(fileName);
+                                        if(isProgrammaticUpdate(p.toFile())){
+                                            System.out.println("Programmatic delete to " + mapKey);
+                                            lastModifiedByProgram.remove(p.toFile());
+                                        }else {
+                                            System.out.println("User delete " + mapKey);
+                                        }
                                     } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                                         Path p = dirPath.resolve(fileName);
                                         String mapVal = getFileContents(p);
-                                        System.out.println("modified " + mapKey + " : " + mapVal);
+                                        if(isProgrammaticUpdate(p.toFile())){
+                                            System.out.println("Programmatic update to " + mapKey + " : " + mapVal);
+                                        }else {
+                                            System.out.println("User modified " + mapKey + " : " + mapVal);
+                                        }
                                     }
                                 }
 
@@ -86,6 +102,14 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
 
         } catch (IOException e) {
             throw new AssertionError(e);
+        }
+    }
+
+    private boolean isProgrammaticUpdate(File file){
+        if(lastModifiedByProgram.containsKey(file)){
+            return file.lastModified() == lastModifiedByProgram.get(file) ? true : false;
+        }else{
+            return false;
         }
     }
 
@@ -301,6 +325,7 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
             Files.write(path, value.getBytes(), StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE);
+            lastModifiedByProgram.put(path.toFile(), path.toFile().lastModified());
         } catch (IOException e) {
             throw new AssertionError(e);
         }
@@ -309,6 +334,7 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
     private void deleteFile(Path path){
         try {
             Files.delete(path);
+            lastModifiedByProgram.put(path.toFile(), path.toFile().lastModified());
         } catch (IOException e) {
             throw new AssertionError(e);
         }

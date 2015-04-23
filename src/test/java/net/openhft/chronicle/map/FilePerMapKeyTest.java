@@ -65,7 +65,6 @@ public class FilePerMapKeyTest {
         map.put("one", "test1");
         map.put("two", "test2");
         map.put("three", "test3");
-
         assertEquals(3, map.size());
 
         val = map.remove("two");
@@ -112,10 +111,11 @@ public class FilePerMapKeyTest {
                 assertTrue(false);
             }
         }
+
         try {
-            Thread.sleep(2000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+             e.printStackTrace();
         }
     }
 
