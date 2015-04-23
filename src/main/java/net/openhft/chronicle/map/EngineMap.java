@@ -19,25 +19,22 @@ import java.util.function.Supplier;
 /**
  * Created by Rob Austin
  */
-public class WireMap<K, V> implements ChronicleMap<K, V> {
+public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(WireMap.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EngineMap.class);
 
     private final Class<K> kClass;
     private final Class<V> vClass;
     private final MapWireConnectionHub mapWireConnectionHub;
-    private Bytes<ByteBuffer> buffer = Bytes.elasticByteBuffer();
+    private final Bytes<ByteBuffer> buffer = Bytes.elasticByteBuffer();
     private final Map<byte[], byte[]> map;
-
-
-    // todo
     private final Class<? extends Wire> wireType;
 
-    public WireMap(String name,
-                   Class<V> vClass,
-                   Class<K> kClass,
-                   MapWireConnectionHub mapWireConnectionHub,
-                   Class<? extends Wire> wireType) throws IOException {
+    public EngineMap(String name,
+                     Class<K> kClass,
+                     Class<V> vClass,
+                     MapWireConnectionHub mapWireConnectionHub,
+                     Class<? extends Wire> wireType) throws IOException {
         this.mapWireConnectionHub = mapWireConnectionHub;
         this.wireType = wireType;
         final BytesChronicleMap b = this.mapWireConnectionHub.acquireMap(name);
@@ -79,10 +76,11 @@ public class WireMap<K, V> implements ChronicleMap<K, V> {
         return map.containsKey(bytes(key));
     }
 
-    private byte[] bytes(Object key) {
-
+    private byte[] bytes(Object b) {
+        if (b == null)
+            return null;
         final Wire wire = toWire();
-        AbstactStatelessClient.writeField(key, wire.getValueOut());
+        AbstactStatelessClient.writeField(b, wire.getValueOut());
         wire.bytes().flip();
 
         return toWire().getValueIn().bytes();
@@ -166,12 +164,15 @@ public class WireMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public V put(@NotNull final K key, @NotNull final V value) {
+    public V put(final K key, final V value) {
+        nullCheck(key);
+        //  nullCheck(value);
         return toObject(vClass, () -> map.put(bytes(key), bytes(value)));
     }
 
     @Override
     public V remove(Object key) {
+        nullCheck(key);
         return toObject(vClass, () -> map.remove(bytes(key)));
     }
 
@@ -215,19 +216,19 @@ public class WireMap<K, V> implements ChronicleMap<K, V> {
             }
 
             public int size() {
-                return WireMap.this.size();
+                return EngineMap.this.size();
             }
 
             public boolean isEmpty() {
-                return WireMap.this.isEmpty();
+                return EngineMap.this.isEmpty();
             }
 
             public void clear() {
-                WireMap.this.clear();
+                EngineMap.this.clear();
             }
 
             public boolean contains(Object k) {
-                return WireMap.this.containsKey(bytes(k));
+                return EngineMap.this.containsKey(k);
             }
         };
 
@@ -255,19 +256,19 @@ public class WireMap<K, V> implements ChronicleMap<K, V> {
             }
 
             public int size() {
-                return WireMap.this.size();
+                return EngineMap.this.size();
             }
 
             public boolean isEmpty() {
-                return WireMap.this.isEmpty();
+                return EngineMap.this.isEmpty();
             }
 
             public void clear() {
-                WireMap.this.clear();
+                EngineMap.this.clear();
             }
 
             public boolean contains(Object v) {
-                return WireMap.this.containsValue(v);
+                return EngineMap.this.containsValue(v);
             }
         };
     }
@@ -321,25 +322,25 @@ public class WireMap<K, V> implements ChronicleMap<K, V> {
 
 
             public int size() {
-                return WireMap.this.size();
+                return EngineMap.this.size();
             }
 
             public boolean isEmpty() {
-                return WireMap.this.isEmpty();
+                return EngineMap.this.isEmpty();
             }
 
             public void clear() {
-                WireMap.this.clear();
+                EngineMap.this.clear();
             }
 
             public boolean contains(Object v) {
-                return WireMap.this.containsValue(v);
+                return EngineMap.this.containsValue(v);
             }
 
 
             @Override
             public boolean remove(Object o) {
-                return WireMap.this.remove(o) != null;
+                return EngineMap.this.remove(o) != null;
             }
         };
     }
@@ -347,22 +348,37 @@ public class WireMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public V putIfAbsent(K key, V value) {
-        throw new UnsupportedOperationException("todo");
+        nullCheck(key);
+        //  nullCheck(value);
+        return toObject(vClass, () -> map.putIfAbsent(bytes(key), bytes(value)));
+    }
+
+    private void nullCheck(Object o) {
+        if (o == null)
+            throw new NullPointerException();
     }
 
     @Override
     public boolean remove(Object key, Object value) {
-        throw new UnsupportedOperationException("todo");
+        nullCheck(key);
+
+        return map.remove(bytes(key), bytes(value));
     }
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        throw new UnsupportedOperationException("todo");
+
+        nullCheck(key);
+        nullCheck(oldValue);
+        nullCheck(newValue);
+        return map.replace(bytes(key), bytes(oldValue), bytes(newValue));
     }
 
     @Override
     public V replace(K key, V value) {
-        throw new UnsupportedOperationException("todo");
+        nullCheck(key);
+        //  nullCheck(value);
+        return toObject(vClass, () -> map.replace(bytes(key), bytes(value)));
     }
 
     @Override
@@ -402,5 +418,22 @@ public class WireMap<K, V> implements ChronicleMap<K, V> {
         } catch (IOException e) {
             LOG.error("", e);
         }
+    }
+
+    @Override
+    public String toString() {
+        if (isEmpty())
+            return "{}";
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        forEach((k, v) -> sb
+                .append(k != this ? k : "(this Map)")
+                .append('=')
+                .append(v != this ? v : "(this Map)")
+                .append(',').append(' '));
+        if (sb.length() > 2)
+            sb.setLength(sb.length() - 2);
+        sb.append('}');
+        return sb.toString();
     }
 }
