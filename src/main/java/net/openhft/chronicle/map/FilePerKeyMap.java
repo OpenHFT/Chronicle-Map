@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import org.jetbrains.annotations.NotNull;
 
@@ -7,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -18,15 +20,97 @@ import java.util.stream.Stream;
 public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
     private String dir;
     private Path dirPath;
+    private Map<File, Long> lastModifiedByProgram = new ConcurrentHashMap<>();
 
     public FilePerKeyMap(String dir) {
         try {
+            this.dir = dir;
             dirPath = Paths.get(dir);
             Files.createDirectories(dirPath);
+
+            new Thread("WatcherThread") {
+                public void run() {
+                    try {
+                        WatchService watcher = FileSystems.getDefault().newWatchService();
+                        dirPath.register(watcher, new WatchEvent.Kind[]{
+                                    StandardWatchEventKinds.ENTRY_CREATE,
+                                    StandardWatchEventKinds.ENTRY_DELETE,
+                                    StandardWatchEventKinds.ENTRY_MODIFY},
+                                    SensitivityWatchEventModifier.HIGH
+                        );
+
+                        while(true){
+                            WatchKey key = null;
+                            try {
+                                key = watcher.take();
+                                System.out.println("Event Taken");
+                                for (WatchEvent<?> event : key.pollEvents()) {
+                                    // get event type
+                                    WatchEvent.Kind<?> kind = event.kind();
+
+                                    // get file name
+                                    @SuppressWarnings("unchecked")
+                                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                                    Path fileName = ev.context();
+
+                                    String mapKey = fileName.toString();
+
+
+                                    if (kind == StandardWatchEventKinds.OVERFLOW) {
+                                        System.out.println("OVERFLOW");
+                                        continue;
+                                    } else if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                                        Path p = dirPath.resolve(fileName);
+                                        String mapVal = getFileContents(p);
+                                        if(isProgrammaticUpdate(p.toFile())){
+                                            System.out.println("Programmatic create to " + mapKey + " : " + mapVal);
+                                        }else {
+                                            System.out.println("created " + mapKey + " : " + mapVal);
+                                        }
+                                    } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                                        Path p = dirPath.resolve(fileName);
+                                        if(isProgrammaticUpdate(p.toFile())){
+                                            System.out.println("Programmatic delete to " + mapKey);
+                                            lastModifiedByProgram.remove(p.toFile());
+                                        }else {
+                                            System.out.println("User delete " + mapKey);
+                                        }
+                                    } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                                        Path p = dirPath.resolve(fileName);
+                                        String mapVal = getFileContents(p);
+                                        if(isProgrammaticUpdate(p.toFile())){
+                                            System.out.println("Programmatic update to " + mapKey + " : " + mapVal);
+                                        }else {
+                                            System.out.println("User modified " + mapKey + " : " + mapVal);
+                                        }
+                                    }
+                                }
+
+                            } catch (InterruptedException e) {
+                                System.out.println("Watcher service exiting");
+                                return;
+                            }finally{
+                                key.reset();
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new AssertionError(e);
+                    }
+                }
+            }.start();
+
+
         } catch (IOException e) {
             throw new AssertionError(e);
         }
-        this.dir = dir;
+    }
+
+    private boolean isProgrammaticUpdate(File file){
+        if(lastModifiedByProgram.containsKey(file)){
+            return file.lastModified() == lastModifiedByProgram.get(file) ? true : false;
+        }else{
+            return false;
+        }
     }
 
     @Override
@@ -241,6 +325,7 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
             Files.write(path, value.getBytes(), StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE);
+            lastModifiedByProgram.put(path.toFile(), path.toFile().lastModified());
         } catch (IOException e) {
             throw new AssertionError(e);
         }
@@ -249,6 +334,7 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
     private void deleteFile(Path path){
         try {
             Files.delete(path);
+            lastModifiedByProgram.put(path.toFile(), path.toFile().lastModified());
         } catch (IOException e) {
             throw new AssertionError(e);
         }
