@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -19,30 +20,27 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 /**
  * Created by Rob Austin
  */
-public class MapWireConnectionHub<K, V> implements Cloneable{
+public class MapWireConnectionHub implements Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     public static final int MAP_SERVICE = 3;
 
-
     protected ChronicleMap<String, Integer> channelNameToId;
-    private Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory;
     private final Map<Integer, Replica> channelMap;
     private final ReplicationHub hub;
 
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();
     private final ChannelProvider provider;
+    private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<byte[], byte[]>>> mapFactory;
 
 
     public MapWireConnectionHub(
-            @NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory,
-            @NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>>
-                    channelNameToIdFactory,
             byte localIdentifier,
             int serverPort) throws IOException {
 
-
-        this.mapFactory = mapFactory;
+        // this is used to hold the name to channel id
+        final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>>
+                channelNameToIdFactory = () -> of(String.class, Integer.class).instance();
 
         final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .of(serverPort)
@@ -55,6 +53,9 @@ public class MapWireConnectionHub<K, V> implements Cloneable{
 
         provider = ChannelProvider.getProvider(hub);
         channelMap = provider.chronicleChannelMap();
+
+        mapFactory = () -> of(byte[].class, byte[].class).instance();
+
 
     }
 
