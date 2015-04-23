@@ -3,11 +3,12 @@ package net.openhft.lang.values;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.model.Byteable;
+import net.openhft.lang.model.Copyable;
 
 /**
  * Created by peter.lawrey on 23/04/2015.
  */
-public class DoubleArray implements Byteable {
+public class DoubleArray implements Byteable, Copyable<DoubleArray> {
     private static int LENGTH = 0; // assume a 32-bit size.
     private static int CAPACITY = LENGTH + 4; // assume a 32-bit size.
     private static int BASE = CAPACITY + 4;
@@ -19,6 +20,7 @@ public class DoubleArray implements Byteable {
         bytes = DirectStore.allocate(BASE + capacity * 8L).bytes();
         offset = 0;
     }
+
 
     @Override
     public void bytes(Bytes bytes, long offset) {
@@ -85,5 +87,13 @@ public class DoubleArray implements Byteable {
         for (int index = 0; index < length; index++)
             doubles[index] = bytes.readDouble(BASE + offset + index * 8L);
         return length;
+    }
+
+    @Override
+    public void copyFrom(DoubleArray doubleArray) {
+        int length = length();
+        doubleArray.setLength(length);
+        for (int i = 0; i < length; i++)
+            doubleArray.setDataAt(i, getDataAt(i));
     }
 }
