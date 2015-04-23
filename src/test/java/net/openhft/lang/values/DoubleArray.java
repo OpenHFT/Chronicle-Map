@@ -92,6 +92,7 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray> {
     @Override
     public void copyFrom(DoubleArray doubleArray) {
         int length = length();
+        // set first so we check the length will fit.
         doubleArray.setLength(length);
         for (int i = 0; i < length; i++)
             doubleArray.setDataAt(i, getDataAt(i));
