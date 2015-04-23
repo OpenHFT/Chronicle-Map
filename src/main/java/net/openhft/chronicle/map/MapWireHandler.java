@@ -198,7 +198,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                         final byte[] key = wire.read(params[0]).bytes();
                         final byte[] value = wire.read(params[1]).bytes();
 
-                        writeVoid(b -> ((Map<byte[], byte[]>) b.delegate).putIfAbsent(key, value));
+                        writeValueFromBytes(b -> ((Map<byte[], byte[]>) b.delegate).putIfAbsent(key, value));
 
                     });
 

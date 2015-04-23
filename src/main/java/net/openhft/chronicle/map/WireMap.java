@@ -1,29 +1,32 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
  * Created by Rob Austin
  */
-public class WireMap<K, V> implements Map<K, V> {
+public class WireMap<K, V> implements ChronicleMap<K, V> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(WireMap.class);
 
     private final Class<K> kClass;
     private final Class<V> vClass;
     private final MapWireConnectionHub mapWireConnectionHub;
-
-
-    Bytes<ByteBuffer> buffer = Bytes.elasticByteBuffer();
-
+    private Bytes<ByteBuffer> buffer = Bytes.elasticByteBuffer();
     private final Map<byte[], byte[]> map;
 
 
@@ -94,15 +97,63 @@ public class WireMap<K, V> implements Map<K, V> {
     @Override
     public V get(@NotNull final Object key) {
 
-        return toObject(vClass, new Supplier<byte[]>() {
-            @Override
-            public byte[] get() {
+        return toObject(vClass, () -> {
 
-                final byte[] bytes = bytes(key);
-                final byte[] bytes1 = map.get(bytes);
-                return bytes1;
-            }
+            final byte[] bytes = bytes(key);
+            final byte[] bytes1 = map.get(bytes);
+            return bytes1;
         });
+    }
+
+    @Override
+    public V getUsing(K key, V usingValue) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public V acquireUsing(@NotNull K key, V usingValue) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @NotNull
+    @Override
+    public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void getAll(File toFile) throws IOException {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void putAll(File fromFile) throws IOException {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public V newValueInstance() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public K newKeyInstance() {
+        return null;
+    }
+
+    @Override
+    public Class<V> valueClass() {
+        return null;
     }
 
     private <E> E toObject(Class<E> eClass, Supplier<byte[]> b) {
@@ -126,7 +177,11 @@ public class WireMap<K, V> implements Map<K, V> {
 
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
-        throw new UnsupportedOperationException("todo");
+
+        for (final Map.Entry<? extends K, ? extends V> e : m.entrySet()) {
+            map.put(bytes(e.getKey()), bytes(e.getValue()));
+        }
+
     }
 
     @Override
@@ -134,22 +189,218 @@ public class WireMap<K, V> implements Map<K, V> {
         map.clear();
     }
 
-    @NotNull
-    @Override
-    public Set<K> keySet() {
-        throw new UnsupportedOperationException("todo");
-    }
 
     @NotNull
     @Override
-    public Collection<V> values() {
-        throw new UnsupportedOperationException("todo");
+    public Set<K> keySet() {
+
+        return new AbstractSet<K>() {
+
+            public Iterator<K> iterator() {
+                return new Iterator<K>() {
+                    private Iterator<Entry<K, V>> i = entrySet().iterator();
+
+                    public boolean hasNext() {
+                        return i.hasNext();
+                    }
+
+                    public K next() {
+                        return i.next().getKey();
+                    }
+
+                    public void remove() {
+                        i.remove();
+                    }
+                };
+            }
+
+            public int size() {
+                return WireMap.this.size();
+            }
+
+            public boolean isEmpty() {
+                return WireMap.this.isEmpty();
+            }
+
+            public void clear() {
+                WireMap.this.clear();
+            }
+
+            public boolean contains(Object k) {
+                return WireMap.this.containsKey(bytes(k));
+            }
+        };
+
     }
+
+
+    public Collection<V> values() {
+        return new AbstractCollection<V>() {
+            public Iterator<V> iterator() {
+                return new Iterator<V>() {
+                    private Iterator<Entry<K, V>> i = entrySet().iterator();
+
+                    public boolean hasNext() {
+                        return i.hasNext();
+                    }
+
+                    public V next() {
+                        return i.next().getValue();
+                    }
+
+                    public void remove() {
+                        i.remove();
+                    }
+                };
+            }
+
+            public int size() {
+                return WireMap.this.size();
+            }
+
+            public boolean isEmpty() {
+                return WireMap.this.isEmpty();
+            }
+
+            public void clear() {
+                WireMap.this.clear();
+            }
+
+            public boolean contains(Object v) {
+                return WireMap.this.containsValue(v);
+            }
+        };
+    }
+
 
     @NotNull
     @Override
     public Set<Entry<K, V>> entrySet() {
+
+        return new AbstractSet<Entry<K, V>>() {
+
+
+            @NotNull
+            @Override
+            public Iterator<Entry<K, V>> iterator() {
+                final Iterator<Entry<byte[], byte[]>> iterator = map.entrySet().iterator();
+                return new Iterator<Entry<K, V>>() {
+
+                    @Override
+                    public boolean hasNext() {
+                        return iterator.hasNext();
+                    }
+
+                    @Override
+                    public Entry<K, V> next() {
+
+                        final Entry<byte[], byte[]> next = iterator.next();
+
+                        return new Entry<K, V>() {
+
+                            @Override
+                            public K getKey() {
+                                return toObject(kClass, () -> next.getKey());
+                            }
+
+                            @Override
+                            public V getValue() {
+                                return toObject(vClass, () -> next.getValue());
+                            }
+
+                            @Override
+                            public V setValue(V value) {
+                                throw new UnsupportedOperationException("todo");
+                            }
+                        };
+
+
+                    }
+                };
+            }
+
+
+            public int size() {
+                return WireMap.this.size();
+            }
+
+            public boolean isEmpty() {
+                return WireMap.this.isEmpty();
+            }
+
+            public void clear() {
+                WireMap.this.clear();
+            }
+
+            public boolean contains(Object v) {
+                return WireMap.this.containsValue(v);
+            }
+
+
+            @Override
+            public boolean remove(Object o) {
+                return WireMap.this.remove(o) != null;
+            }
+        };
+    }
+
+
+    @Override
+    public V putIfAbsent(K key, V value) {
         throw new UnsupportedOperationException("todo");
     }
 
+    @Override
+    public boolean remove(Object key, Object value) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public boolean replace(K key, V oldValue, V newValue) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public V replace(K key, V value) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public File file() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public long longSize() {
+        return map.size();
+    }
+
+    @Override
+    public MapKeyContext<K, V> context(K key) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public Class<K> keyClass() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void close() {
+        try {
+            mapWireConnectionHub.close();
+        } catch (IOException e) {
+            LOG.error("", e);
+        }
+    }
 }
