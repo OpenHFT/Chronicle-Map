@@ -119,4 +119,32 @@ public class FilePerMapKeyTest {
         }
     }
 
+    @Test
+    public void perfTest(){
+        //There are no entries in the map so null should be returned
+        FilePerKeyMap<String, String> map = new FilePerKeyMap<>("/tmp/filepermaptests");
+
+        //just in case it hasn't been cleared up last time
+        map.clear();
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 2_000_000; i++) {
+            sb.append('x');
+        }
+        String value = sb.toString();
+
+        //warmup
+        for (int i = 0; i < 1000; i++) {
+            map.put("big file", value);
+        }
+
+
+        long time = System.currentTimeMillis();
+        int iterations = 50;
+        for (int i = 0; i < iterations; i++) {
+            map.put("big file", value);
+        }
+        System.out.println("Time to update "+ iterations + " iterations " + (System.currentTimeMillis()-time));
+    }
+
 }

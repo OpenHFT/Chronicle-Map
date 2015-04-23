@@ -63,9 +63,9 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
                                         Path p = dirPath.resolve(fileName);
                                         String mapVal = getFileContents(p);
                                         if(isProgrammaticUpdate(p.toFile())){
-                                            System.out.println("Programmatic create to " + mapKey + " : " + mapVal);
+                                            System.out.println("Programmatic create to " + mapKey);// + " : " + mapVal);
                                         }else {
-                                            System.out.println("created " + mapKey + " : " + mapVal);
+                                            System.out.println("created " + mapKey);// + " : " + mapVal);
                                         }
                                     } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                                         Path p = dirPath.resolve(fileName);
@@ -79,9 +79,9 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
                                         Path p = dirPath.resolve(fileName);
                                         String mapVal = getFileContents(p);
                                         if(isProgrammaticUpdate(p.toFile())){
-                                            System.out.println("Programmatic update to " + mapKey + " : " + mapVal);
+                                            System.out.println("Programmatic update to " + mapKey);// + " : " + mapVal);
                                         }else {
-                                            System.out.println("User modified " + mapKey + " : " + mapVal);
+                                            System.out.println("User modified " + mapKey + " : ");// + mapVal);
                                         }
                                     }
                                 }
