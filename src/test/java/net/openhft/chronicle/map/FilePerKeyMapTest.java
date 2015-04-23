@@ -10,9 +10,9 @@ import java.util.Set;
 import static org.junit.Assert.*;
 
 /**
- * JUnit test class to support {@link net.openhft.chronicle.map.FilePerMapKeyTest}
+ * JUnit test class to support {@link FilePerKeyMapTest}
  */
-public class FilePerMapKeyTest {
+public class FilePerKeyMapTest {
     /**
      * FilePerMapKey only works with Strings
      */
