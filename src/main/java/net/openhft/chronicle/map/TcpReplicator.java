@@ -897,16 +897,13 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             serverSocket.bind(details.address());
 
             // these can be run on this thread
-            addPendingRegistration(new Runnable() {
-                @Override
-                public void run() {
-                    final Attached attached = new Attached();
-                    attached.connector = ServerConnector.this;
-                    try {
-                        serverChannel.register(TcpReplicator.this.selector, OP_ACCEPT, attached);
-                    } catch (ClosedChannelException e) {
-                        LOG.debug("", e);
-                    }
+            addPendingRegistration(() -> {
+                final Attached attached = new Attached();
+                attached.connector = ServerConnector.this;
+                try {
+                    serverChannel.register(TcpReplicator.this.selector, OP_ACCEPT, attached);
+                } catch (ClosedChannelException e) {
+                    LOG.debug("", e);
                 }
             });
 
