@@ -108,6 +108,10 @@ public class FilePerKeyMapTest {
         } catch (InterruptedException e) {
              e.printStackTrace();
         }
+
+        map.clear();
+        map.close();
+
     }
 
     @Test
@@ -136,32 +140,31 @@ public class FilePerKeyMapTest {
             map.put("big file", value);
         }
         System.out.println("Time to update "+ iterations + " iterations " + (System.currentTimeMillis()-time));
+
+        map.clear();
+        map.close();
     }
 
     @Test
-    public void eventTest(){
+    public void eventTest() {
         //There are no entries in the map so null should be returned
         FilePerKeyMap map = new FilePerKeyMap("/tmp/filepermaptests");
 
         //just in case it hasn't been cleared up last time
         map.clear();
 
-        map.registerForEvents(new FPMListener() {
-            @Override
-            public void onEvent(FPMEvent e) {
-                System.out.println(e);
-            }
-
-        });
+        map.registerForEvents(e -> System.out.println(e));
 
         map.put("one", "one");
         map.put("one", "one");
 
         try {
-            Thread.sleep(300000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
 
+        map.clear();
+        map.close();
+    }
 }
