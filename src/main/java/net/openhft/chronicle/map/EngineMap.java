@@ -3,6 +3,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.ValueOut;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -80,7 +81,7 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         if (b == null)
             return null;
         final Wire wire = toWire();
-        AbstactStatelessClient.writeField(b, wire.getValueOut());
+        ((ValueOut) b).object(b);
         wire.bytes().flip();
 
         return toWire().getValueIn().bytes();
@@ -160,13 +161,12 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
             return null;
         final Wire wire = toWire(bytes);
         buffer.flip();
-        return AbstactStatelessClient.readObject(wire.getValueIn(), null, eClass);
+        return wire.getValueIn().object(eClass);
     }
 
     @Override
     public V put(final K key, final V value) {
         nullCheck(key);
-        //  nullCheck(value);
         return toObject(vClass, () -> map.put(bytes(key), bytes(value)));
     }
 

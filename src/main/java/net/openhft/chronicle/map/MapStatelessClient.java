@@ -57,7 +57,7 @@ public abstract class MapStatelessClient<K, V, E extends ParameterizeWireKey>
                                       @NotNull final E eventId, Object field) {
 
         final long startTime = System.currentTimeMillis();
-        final long tid = sendEvent(startTime, eventId, out -> writeField(out, field));
+        final long tid = sendEvent(startTime, eventId, out -> out.object(out));
 
         if (eventReturnsNull(eventId))
             return null;
