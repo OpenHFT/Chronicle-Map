@@ -280,12 +280,9 @@ public class FilePerKeyMap implements Map<String, String> {
         }
     }
 
-    private boolean isProgrammaticUpdate(File file){
-        if(lastModifiedByProgram.containsKey(file)){
-            return file.lastModified() == lastModifiedByProgram.get(file) ? true : false;
-        }else{
-            return false;
-        }
+    private boolean isProgrammaticUpdate(File file) {
+        return lastModifiedByProgram.containsKey(file)
+                && (file.lastModified() == lastModifiedByProgram.get(file));
     }
 
 }
