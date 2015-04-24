@@ -219,7 +219,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
     public boolean containsKey(Object key) {
-        return proxyReturnBoolean(containsKey, out -> out.object(out));
+        return proxyReturnBoolean(containsKey, out -> out.object(key));
     }
 
     @NotNull
@@ -228,7 +228,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
     public boolean containsValue(Object value) {
-        return proxyReturnBoolean(containsValue, out -> out.object(out));
+        return proxyReturnBoolean(containsValue, out -> out.object(value));
     }
 
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {
