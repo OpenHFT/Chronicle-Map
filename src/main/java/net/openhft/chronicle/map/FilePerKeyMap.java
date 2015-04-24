@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,7 +19,8 @@ public class FilePerKeyMap implements Map<String, String> {
     private final String dir;
     private final Path dirPath;
     private final Map<File, Long> lastModifiedByProgram = new ConcurrentHashMap<>();
-    private final List<FPMListener> listeners = new ArrayList<>();
+    private final List<Consumer<FPMEvent>> listeners = new ArrayList<>();
+    private final FPMWatcher fileFpmWatcher = new FPMWatcher();
 
     public FilePerKeyMap(String dir){
         this.dir = dir;
@@ -28,16 +30,20 @@ public class FilePerKeyMap implements Map<String, String> {
         }catch (IOException e){
             throw new RuntimeException(e);
         }
-        new FPMWatcher().start();
+        fileFpmWatcher.start();
     }
 
-    public void registerForEvents(FPMListener listener){
+    public void registerForEvents(Consumer<FPMEvent> listener){
         listeners.add(listener);
     }
 
+    public void unregisterForEvents(Consumer<FPMEvent> listener){
+        listeners.remove(listener);
+    }
+
     private void fireEvent(FPMEvent event){
-        for (FPMListener listener : listeners) {
-            listener.onEvent(event);
+        for (Consumer<FPMEvent> listener : listeners) {
+            listener.accept(event);
         }
     }
 
@@ -162,6 +168,9 @@ public class FilePerKeyMap implements Map<String, String> {
         }
     }
 
+    public void close(){
+        fileFpmWatcher.interrupt();
+    }
 
     private static class FPMEntry<String> implements Entry<String, String>
     {
@@ -238,7 +247,6 @@ public class FilePerKeyMap implements Map<String, String> {
 
 
                             if (kind == StandardWatchEventKinds.OVERFLOW) {
-                                System.out.println("OVERFLOW");
                                 continue;
                             } else if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                                 Path p = dirPath.resolve(fileName);
@@ -266,12 +274,10 @@ public class FilePerKeyMap implements Map<String, String> {
                                 }
                             }
                         }
-
                     } catch (InterruptedException e) {
-                        System.out.println("Watcher service exiting");
                         return;
                     }finally{
-                        key.reset();
+                        if(key!=null)key.reset();
                     }
                 }
             } catch (IOException e) {
