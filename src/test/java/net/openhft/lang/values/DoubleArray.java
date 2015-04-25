@@ -9,15 +9,16 @@ import net.openhft.lang.model.Copyable;
  * Created by peter.lawrey on 23/04/2015.
  */
 public class DoubleArray implements Byteable, Copyable<DoubleArray> {
-    private static int LENGTH = 0; // assume a 32-bit size.
-    private static int CAPACITY = LENGTH + 4; // assume a 32-bit size.
-    private static int BASE = CAPACITY + 4;
+    private static int CAPACITY = 0; // assume a 32-bit size.
+    private static int LENGTH = CAPACITY + 4; // assume a 32-bit size.
+    private static int BASE = LENGTH + 4;
 
     private Bytes bytes;
     private long offset;
 
     public DoubleArray(int capacity) {
         bytes = DirectStore.allocate(BASE + capacity * 8L).bytes();
+        bytes.writeInt(CAPACITY, capacity);
         offset = 0;
     }
 
