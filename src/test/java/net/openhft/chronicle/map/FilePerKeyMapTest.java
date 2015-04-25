@@ -14,21 +14,12 @@ import static org.junit.Assert.*;
  */
 public class FilePerKeyMapTest {
     /**
-     * FilePerMapKey only works with Strings
-     */
-    @Test(expected = AssertionError.class)
-    public void testWrongType(){
-        FilePerKeyMap<Integer, String> map = new FilePerKeyMap<>("/tmp/filepermaptests");
-        map.put(1, "test");
-    }
-
-    /**
      * Testing all the methods of the map with simple tests.
      */
     @Test
     public void testMapMethods() {
         //There are no entries in the map so null should be returned
-        FilePerKeyMap<String, String> map = new FilePerKeyMap<>("/tmp/filepermaptests");
+        FilePerKeyMap map = new FilePerKeyMap("/tmp/filepermaptests");
 
         //just in case it hasn't been cleared up last time
         map.clear();
@@ -117,12 +108,16 @@ public class FilePerKeyMapTest {
         } catch (InterruptedException e) {
              e.printStackTrace();
         }
+
+        map.clear();
+        map.close();
+
     }
 
     @Test
     public void perfTest(){
         //There are no entries in the map so null should be returned
-        FilePerKeyMap<String, String> map = new FilePerKeyMap<>("/tmp/filepermaptests");
+        FilePerKeyMap map = new FilePerKeyMap("/tmp/filepermaptests");
 
         //just in case it hasn't been cleared up last time
         map.clear();
@@ -133,8 +128,8 @@ public class FilePerKeyMapTest {
         }
         String value = sb.toString();
 
-        //warmup
-        for (int i = 0; i < 1000; i++) {
+        //small warm-up
+        for (int i = 0; i < 10; i++) {
             map.put("big file", value);
         }
 
@@ -145,6 +140,31 @@ public class FilePerKeyMapTest {
             map.put("big file", value);
         }
         System.out.println("Time to update "+ iterations + " iterations " + (System.currentTimeMillis()-time));
+
+        map.clear();
+        map.close();
     }
 
+    @Test
+    public void eventTest() {
+        //There are no entries in the map so null should be returned
+        FilePerKeyMap map = new FilePerKeyMap("/tmp/filepermaptests");
+
+        //just in case it hasn't been cleared up last time
+        map.clear();
+
+        map.registerForEvents(e -> System.out.println(e));
+
+        map.put("one", "one");
+        map.put("one", "one");
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        map.clear();
+        map.close();
+    }
 }

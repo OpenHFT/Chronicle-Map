@@ -54,10 +54,11 @@ public abstract class MapStatelessClient<K, V, E extends ParameterizeWireKey>
 
     @Nullable
     protected <R> R proxyReturnObject(@NotNull final Class<R> rClass,
-                                      @NotNull final E eventId, Object field) {
+                                      @NotNull final E eventId,
+                                      @NotNull final Object o) {
 
         final long startTime = System.currentTimeMillis();
-        final long tid = sendEvent(startTime, eventId, out -> writeField(out, field));
+        final long tid = sendEvent(startTime, eventId, out -> out.object(o));
 
         if (eventReturnsNull(eventId))
             return null;

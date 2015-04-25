@@ -1,7 +1,6 @@
 package net.openhft.chronicle.map;
 
 import com.sun.nio.file.SensitivityWatchEventModifier;
-import net.openhft.chronicle.hash.function.SerializableFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -10,112 +9,47 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Created by daniel on 22/04/15.
+ *
  */
-public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
-    private String dir;
-    private Path dirPath;
-    private Map<File, Long> lastModifiedByProgram = new ConcurrentHashMap<>();
+public class FilePerKeyMap implements Map<String, String> {
+    private final String dir;
+    private final Path dirPath;
+    private final Map<File, Long> lastModifiedByProgram = new ConcurrentHashMap<>();
+    private final List<Consumer<FPMEvent>> listeners = new ArrayList<>();
+    private final FPMWatcher fileFpmWatcher = new FPMWatcher();
 
-    public FilePerKeyMap(String dir) {
+    public FilePerKeyMap(String dir){
+        this.dir = dir;
+        this.dirPath = Paths.get(dir);
         try {
-            this.dir = dir;
-            dirPath = Paths.get(dir);
             Files.createDirectories(dirPath);
-
-            new Thread("WatcherThread") {
-                public void run() {
-                    try {
-                        WatchService watcher = FileSystems.getDefault().newWatchService();
-                        dirPath.register(watcher, new WatchEvent.Kind[]{
-                                    StandardWatchEventKinds.ENTRY_CREATE,
-                                    StandardWatchEventKinds.ENTRY_DELETE,
-                                    StandardWatchEventKinds.ENTRY_MODIFY},
-                                    SensitivityWatchEventModifier.HIGH
-                        );
-
-                        while(true){
-                            WatchKey key = null;
-                            try {
-                                key = watcher.take();
-                                System.out.println("Event Taken");
-                                for (WatchEvent<?> event : key.pollEvents()) {
-                                    // get event type
-                                    WatchEvent.Kind<?> kind = event.kind();
-
-                                    // get file name
-                                    @SuppressWarnings("unchecked")
-                                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
-                                    Path fileName = ev.context();
-
-                                    String mapKey = fileName.toString();
-
-
-                                    if (kind == StandardWatchEventKinds.OVERFLOW) {
-                                        System.out.println("OVERFLOW");
-                                        continue;
-                                    } else if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-                                        Path p = dirPath.resolve(fileName);
-                                        String mapVal = getFileContents(p);
-                                        if(isProgrammaticUpdate(p.toFile())){
-                                            System.out.println("Programmatic create to " + mapKey);// + " : " + mapVal);
-                                        }else {
-                                            System.out.println("created " + mapKey);// + " : " + mapVal);
-                                        }
-                                    } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                                        Path p = dirPath.resolve(fileName);
-                                        if(isProgrammaticUpdate(p.toFile())){
-                                            System.out.println("Programmatic delete to " + mapKey);
-                                            lastModifiedByProgram.remove(p.toFile());
-                                        }else {
-                                            System.out.println("User delete " + mapKey);
-                                        }
-                                    } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-                                        Path p = dirPath.resolve(fileName);
-                                        String mapVal = getFileContents(p);
-                                        if(isProgrammaticUpdate(p.toFile())){
-                                            System.out.println("Programmatic update to " + mapKey);// + " : " + mapVal);
-                                        }else {
-                                            System.out.println("User modified " + mapKey + " : ");// + mapVal);
-                                        }
-                                    }
-                                }
-
-                            } catch (InterruptedException e) {
-                                System.out.println("Watcher service exiting");
-                                return;
-                            }finally{
-                                key.reset();
-                            }
-                        }
-                    } catch (IOException e) {
-                        throw new AssertionError(e);
-                    }
-                }
-            }.start();
-
-
-        } catch (IOException e) {
-            throw new AssertionError(e);
+        }catch (IOException e){
+            throw new RuntimeException(e);
         }
+        fileFpmWatcher.start();
     }
 
-    private boolean isProgrammaticUpdate(File file){
-        if(lastModifiedByProgram.containsKey(file)){
-            return file.lastModified() == lastModifiedByProgram.get(file) ? true : false;
-        }else{
-            return false;
+    public void registerForEvents(Consumer<FPMEvent> listener){
+        listeners.add(listener);
+    }
+
+    public void unregisterForEvents(Consumer<FPMEvent> listener){
+        listeners.remove(listener);
+    }
+
+    private void fireEvent(FPMEvent event){
+        for (Consumer<FPMEvent> listener : listeners) {
+            listener.accept(event);
         }
     }
 
     @Override
     public int size() {
-        return (int)getFiles(dirPath).count();
+        return (int)getFiles().count();
     }
 
     @Override
@@ -125,184 +59,78 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public boolean containsKey(Object key) {
-        return getFiles(dirPath).anyMatch(p->p.getFileName().toString().equals(key));
+
+        return getFiles().anyMatch(p->p.getFileName().toString().equals(key));
     }
 
     @Override
     public boolean containsValue(Object value) {
-        return getFiles(dirPath).anyMatch(p->getFileContents(p).equals(value));
+        return getFiles().anyMatch(p->getFileContents(p).equals(value));
     }
 
     @Override
-    public V get(Object key) {
-        checkTypeIsString(key);
-
-        Path path = Paths.get(dir,(String)key);
-        return (V)getFileContents(path);
+    public String get(Object key) {
+        Path path = dirPath.resolve((String) key);
+        return getFileContents(path);
     }
 
     @Override
-    public V put(K key, V value) {
-        checkTypeIsString(key, value);
-
-        Path path = Paths.get(dir,(String)key);
+    public String put(String key, String value) {
+        Path path = dirPath.resolve(key);
         String existingValue = getFileContents(path);
-        writeToFile(path, (String) value);
+        writeToFile(path, value);
 
-        return (V) existingValue;
+        return existingValue;
     }
 
     @Override
-    public V remove(Object key) {
-        String existing = (String)get(key);
+    public String remove(Object key) {
+        String existing = get(key);
         if(existing != null){
             deleteFile(Paths.get(dir, (String)key));
         }
-        return (V)existing;
+        return existing;
+
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> m) {
+    public void putAll(Map<? extends String, ? extends String> m) {
         m.entrySet().stream().forEach(e->put(e.getKey(), e.getValue()));
     }
 
     @Override
     public void clear() {
-        getFiles(dirPath).forEach(this::deleteFile);
+        getFiles().forEach(this::deleteFile);
     }
 
     @NotNull
     @Override
-    public Set<K> keySet() {
-        return getFiles(dirPath).map(p -> (K) p.getFileName().toString())
-                                .collect(Collectors.toSet());
-    }
-
-    @NotNull
-    @Override
-    public Collection<V> values() {
-        return getFiles(dirPath).map(p -> (V) getFileContents(p))
+    public Set<String> keySet() {
+        return getFiles().map(p -> p.getFileName().toString())
                 .collect(Collectors.toSet());
     }
 
     @NotNull
     @Override
-    public Set<Entry<K, V>> entrySet() {
-        return getFiles(dirPath).map(p ->
-                (Entry<K, V>) new FPMEntry(p.getFileName().toString(), getFileContents(p)))
+    public Collection<String> values() {
+        return getFiles().map(p -> getFileContents(p))
                 .collect(Collectors.toSet());
-    }
 
-    @Override
-    public V getUsing(K key, V usingValue) {
-        return null;
-    }
-
-    @Override
-    public V acquireUsing(@NotNull K key, V usingValue) {
-        return null;
     }
 
     @NotNull
     @Override
-    public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
-        return null;
-    }
-
-    @Override
-    public <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function) {
-        return null;
-    }
-
-    @Override
-    public V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
-        return null;
-    }
-
-    @Override
-    public void getAll(File toFile) throws IOException {
-
-    }
-
-    @Override
-    public void putAll(File fromFile) throws IOException {
-
-    }
-
-    @Override
-    public V newValueInstance() {
-        return null;
-    }
-
-    @Override
-    public K newKeyInstance() {
-        return null;
-    }
-
-    @Override
-    public Class<V> valueClass() {
-        return null;
-    }
-
-    @Override
-    public File file() {
-        return null;
-    }
-
-    @Override
-    public long longSize() {
-        return 0;
-    }
-
-    @Override
-    public MapKeyContext<K, V> context(K key) {
-        return null;
-    }
-
-    @Override
-    public Class<K> keyClass() {
-        return null;
-    }
-
-    @Override
-    public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
-        return false;
-    }
-
-    @Override
-    public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
-
-    }
-
-    @Override
-    public void close() {
-
-    }
-
-    @Override
-    public V putIfAbsent(K key, V value) {
-        return null;
-    }
-
-    @Override
-    public boolean remove(Object key, Object value) {
-        return false;
-    }
-
-    @Override
-    public boolean replace(K key, V oldValue, V newValue) {
-        return false;
-    }
-
-    @Override
-    public V replace(K key, V value) {
-        return null;
+    public Set<Entry<String, String>> entrySet() {
+        return getFiles().map(p ->
+                (Entry<String, String>) new FPMEntry(p.getFileName().toString(), getFileContents(p)))
+                .collect(Collectors.toSet());
     }
 
 
-    private Stream<Path> getFiles(Path path){
+
+    private Stream<Path> getFiles(){
         try {
-            return Files.walk(path).filter(p -> !Files.isDirectory(p));
+            return Files.walk(dirPath).filter(p -> !Files.isDirectory(p));
         } catch (IOException e) {
             throw new AssertionError(e);
         }
@@ -340,39 +168,35 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
         }
     }
 
-
-
-    private void checkTypeIsString(Object... objs) {
-        for(Object o : objs){
-            if(!(o instanceof String))
-                throw new AssertionError("FilePerKeyMap only accepts Key and Values " +
-                    "of type String. Unsupported type: '" + o + "'");
-        }
+    public void close(){
+        fileFpmWatcher.interrupt();
     }
 
-    private static class FPMEntry<K,V> implements Entry
+    private static class FPMEntry<String> implements Entry<String, String>
     {
-        private K key;
-        private V value;
+        private String key;
+        private String value;
 
-        public FPMEntry(K key, V value){
+        public FPMEntry(String key, String value){
             this.key = key;
             this.value = value;
         }
 
         @Override
-        public K getKey() {
+        public String getKey() {
             return key;
         }
 
         @Override
-        public V getValue() {
+        public String getValue() {
             return value;
         }
 
         @Override
-        public Object setValue(Object value) {
-            throw new UnsupportedOperationException();
+        public String setValue(String value) {
+            String lastValue = this.value;
+            this.value = value;
+            return lastValue;
         }
 
         @Override
@@ -380,10 +204,10 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            FPMEntry<?, ?> entry = (FPMEntry<?, ?>) o;
+            FPMEntry<?> fpmEntry = (FPMEntry<?>) o;
 
-            if (key != null ? !key.equals(entry.key) : entry.key != null) return false;
-            return !(value != null ? !value.equals(entry.value) : entry.value != null);
+            if (key != null ? !key.equals(fpmEntry.key) : fpmEntry.key != null) return false;
+            return !(value != null ? !value.equals(fpmEntry.value) : fpmEntry.value != null);
 
         }
 
@@ -394,4 +218,77 @@ public class FilePerKeyMap<K, V> implements ChronicleMap<K, V> {
             return result;
         }
     }
+
+    private class FPMWatcher extends Thread{
+        @Override
+        public void run(){
+            try {
+                WatchService watcher = FileSystems.getDefault().newWatchService();
+                dirPath.register(watcher, new WatchEvent.Kind[]{
+                                StandardWatchEventKinds.ENTRY_CREATE,
+                                StandardWatchEventKinds.ENTRY_DELETE,
+                                StandardWatchEventKinds.ENTRY_MODIFY},
+                        SensitivityWatchEventModifier.HIGH
+                );
+
+                while(true){
+                    WatchKey key = null;
+                    try {
+                        key = watcher.take();
+                        for (WatchEvent<?> event : key.pollEvents()) {
+                            // get event type
+                            WatchEvent.Kind<?> kind = event.kind();
+
+                            // get file name
+                            WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                            Path fileName = ev.context();
+
+                            String mapKey = fileName.toString();
+
+
+                            if (kind == StandardWatchEventKinds.OVERFLOW) {
+                                continue;
+                            } else if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                                Path p = dirPath.resolve(fileName);
+                                String mapVal = getFileContents(p);
+                                if(isProgrammaticUpdate(p.toFile())){
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.NEW, true, mapKey,mapVal));
+                                }else {
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.NEW, false, mapKey, mapVal));
+                                }
+                            } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                                Path p = dirPath.resolve(fileName);
+                                if(isProgrammaticUpdate(p.toFile())){
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, true, mapKey, null));
+                                    lastModifiedByProgram.remove(p.toFile());
+                                }else {
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, false, mapKey, null));
+                                }
+                            } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                                Path p = dirPath.resolve(fileName);
+                                String mapVal = getFileContents(p);
+                                if(isProgrammaticUpdate(p.toFile())){
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.UPDATE, true, mapKey,mapVal));
+                                }else {
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.UPDATE, false, mapKey, mapVal));
+                                }
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        return;
+                    }finally{
+                        if(key!=null)key.reset();
+                    }
+                }
+            } catch (IOException e) {
+                throw new AssertionError(e);
+            }
+        }
+    }
+
+    private boolean isProgrammaticUpdate(File file) {
+        return lastModifiedByProgram.containsKey(file)
+                && (file.lastModified() == lastModifiedByProgram.get(file));
+    }
+
 }

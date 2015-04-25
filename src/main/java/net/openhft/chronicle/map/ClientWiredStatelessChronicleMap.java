@@ -40,6 +40,7 @@ import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
 import static net.openhft.chronicle.map.MapWireHandler.EventId;
 import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
+import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
 
 
 /**
@@ -51,24 +52,19 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     private static final Logger LOG =
             LoggerFactory.getLogger(ClientWiredStatelessChronicleMap.class);
 
-
     public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(AbstactStatelessClient.EMPTY);
     private final Class vClass;
-
     protected Class<K> kClass;
-
     private boolean putReturnsNull;
     private boolean removeReturnsNull;
 
-    // used with toString()
-    private static final int MAX_NUM_ENTRIES = 20;
 
     public ClientWiredStatelessChronicleMap(
             @NotNull final ClientWiredChronicleMapStatelessBuilder config,
             @NotNull final Class kClass,
             @NotNull final Class vClass,
             @NotNull final String channelName,
-            ClientWiredStatelessTcpConnectionHub hub) {
+            @NotNull final ClientWiredStatelessTcpConnectionHub hub) {
         super(channelName, hub, "MAP", 0, vClass);
 
         this.putReturnsNull = config.putReturnsNull();
@@ -96,12 +92,12 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
 
     @Override
     public V newValueInstance() {
-        return (V) VanillaChronicleMap.newInstance(vClass, false);
+        return (V) newInstance(vClass, false);
     }
 
     @Override
     public K newKeyInstance() {
-        return VanillaChronicleMap.newInstance(kClass, true);
+        return newInstance(kClass, true);
     }
 
     @Override
@@ -210,8 +206,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
 
     @NotNull
     public String toString() {
-
-        return "";
+        return "todo";
     }
 
     @NotNull
@@ -224,7 +219,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
     public boolean containsKey(Object key) {
-        return proxyReturnBoolean(containsKey, out -> writeField(out, (K) key));
+        return proxyReturnBoolean(containsKey, out -> out.object(key));
     }
 
     @NotNull
@@ -233,7 +228,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
     public boolean containsValue(Object value) {
-        return proxyReturnBoolean(containsValue, out -> writeField(out, (V) value));
+        return proxyReturnBoolean(containsValue, out -> out.object(value));
     }
 
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {

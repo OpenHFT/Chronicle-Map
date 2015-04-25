@@ -80,7 +80,7 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         if (b == null)
             return null;
         final Wire wire = toWire();
-        AbstactStatelessClient.writeField(b, wire.getValueOut());
+        wire.getValueOut().object(b);
         wire.bytes().flip();
 
         return toWire().getValueIn().bytes();
@@ -160,13 +160,12 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
             return null;
         final Wire wire = toWire(bytes);
         buffer.flip();
-        return AbstactStatelessClient.readObject(wire.getValueIn(), null, eClass);
+        return wire.getValueIn().object(eClass);
     }
 
     @Override
     public V put(final K key, final V value) {
         nullCheck(key);
-        //  nullCheck(value);
         return toObject(vClass, () -> map.put(bytes(key), bytes(value)));
     }
 
