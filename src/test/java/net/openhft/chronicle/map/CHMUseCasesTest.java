@@ -415,7 +415,7 @@ public class CHMUseCasesTest {
     }
 
 
-    @Ignore
+   @Ignore
     @Test
     public void testByteArrayArrayValue() throws ExecutionException, InterruptedException, IOException {
 
@@ -2538,7 +2538,7 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore
+
     @Test
     public void testMapStringIntegerValue() throws IOException {
 

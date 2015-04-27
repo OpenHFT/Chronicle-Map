@@ -728,8 +728,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
 
         try {
-            final int len = entryWriter.writeBufferToSocket(socketChannel,
-                    approxTime);
+            final int len = entryWriter.writeBufferToSocket(socketChannel, approxTime);
 
             if (len == -1)
                 socketChannel.close();
@@ -737,8 +736,11 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             if (len > 0)
                 contemplateThrottleWrites(len);
 
-            if (!entryWriter.hasBytesToWrite() && !entryWriter.isWorkIncomplete())
-                // TURN OP_WRITE_OFF
+            if (!entryWriter.hasBytesToWrite()
+                    && !entryWriter.isWorkIncomplete()
+                    && hasNext(attached))
+                // if we have no more data to write to the socket then we will
+                // un-register OP_WRITE on the selector, until more data becomes available
                 key.interestOps(key.interestOps() & ~OP_WRITE);
         } catch (IOException e) {
             quietClose(key, e);
@@ -746,6 +748,11 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 attached.connector.connectLater();
             throw e;
         }
+    }
+
+    private boolean hasNext(Attached attached) {
+        return attached.remoteModificationIterator != null
+                && !attached.remoteModificationIterator.hasNext();
     }
 
     /**
@@ -1156,15 +1163,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
                     if (entrySize > largestEntrySoFar)
                         largestEntrySoFar = entrySize;
-
-
-                    if (!modificationIterator.hasNext()) {
-                        // if we have no more data to write to the socket then we will
-                        // un-register OP_WRITE on the selector, until more data becomes available
-                        if (in().position() == 0 && handShakingComplete)
-                            disableWrite(socketChannel, attached);
-
-                    }
 
                     // we've filled up the buffer lets give another channel a chance to send
                     // some data

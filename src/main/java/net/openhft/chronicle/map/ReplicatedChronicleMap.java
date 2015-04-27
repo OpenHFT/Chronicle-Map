@@ -1401,7 +1401,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 new EntryModifiableCallback();
 
         // records the current position of the cursor in the bitset
-        private long position = -1L;
+        private volatile long position = -1L;
 
         // todo get rid of this
         private final MultiStoreBytes tmpBytes = new MultiStoreBytes();

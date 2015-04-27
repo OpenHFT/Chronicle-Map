@@ -43,7 +43,6 @@ import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static org.junit.Assert.*;
 
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
-@Ignore
 public class ChronicleMapTest {
 
     static long count = 0;
