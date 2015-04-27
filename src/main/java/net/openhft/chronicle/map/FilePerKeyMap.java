@@ -14,8 +14,8 @@ import java.util.stream.Stream;
 
 /**
  * A {@link Map} implementation that stores each entry as a file in a
- * directory. The <code>key</> is the file name and the <code>value</>
- * is the contents of the file. This map will only handle <code>String</>'s.
+ * directory. The <code>key</code> is the file name and the <code>value</code>
+ * is the contents of the file. This map will only handle <code>String</code>'s.
  * <p>
  * The class is effectively an abstraction over a directory in the file system.
  * Therefore when the underlying files are changed an event will be fired to those
@@ -25,6 +25,14 @@ import java.util.stream.Stream;
  * (i.e one caused my the actions of the map itself) and an event that
  * has been triggered as a direct result of a file being manipulated outside
  * this class.
+ * <p>
+ * Updates will be fired every time the file is saved but will be suppressed
+ * if the value has not changed.  To avoid temporary files (e.g. if edited in vi)
+ * being included in the map, any file starting with a '.' will be ignored.
+ * <p>
+ * Note the {@link WatchService} is extremely OS dependant.  Mas OSX registers
+ * very few events if they are done quickly and there is a significant delay
+ * between the event and the event being triggered.
  */
 public class FilePerKeyMap implements Map<String, String> {
     private final Path dirPath;
