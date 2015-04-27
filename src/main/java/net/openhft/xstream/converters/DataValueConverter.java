@@ -103,7 +103,18 @@ public class DataValueConverter implements Converter {
 
                         final String fieldName = "_" + fileModel.name();
 
-                        Field field = o.getClass().getDeclaredField(fieldName);
+                        Field field;
+
+                        try {
+                            field = o.getClass().getDeclaredField(fieldName);
+                        } catch (NoSuchFieldException e1) {
+
+                            throw new ConversionException("JSON conversion of Classes containing " +
+                                    "arrays is not " +
+                                    "currently supported" +
+                                    ", the following field could not be found=" + fileModel.name(), e1);
+                        }
+
                         field.setAccessible(true);
 
                         final Object[] o1 = (Object[]) field.get(o);
@@ -122,8 +133,8 @@ public class DataValueConverter implements Converter {
                         }
                         writer.endNode();
 
-                    } catch (NoSuchFieldException | IllegalAccessException e1) {
-                        throw new ConversionException("", e1);
+                    } catch (IllegalAccessException e) {
+                        throw new ConversionException("", e);
                     }
 
                     continue;

@@ -345,6 +345,56 @@ public class CHMUseCasesTest {
     }
 
 
+
+    interface I1 {
+        String getStrAt( @MaxSize(10) int i);
+        void setStrAt(@MaxSize(10) int i, @MaxSize(10) String str);
+    }
+
+    @Test
+    public void testArrayOfString() throws ExecutionException, InterruptedException,
+            IOException {
+
+        ChronicleMapBuilder<CharSequence, I1> builder = ChronicleMapBuilder
+                .of(CharSequence.class, I1.class)
+                .entries(10);
+
+        try (ChronicleMap<CharSequence, I1> map = newInstance(builder)) {
+
+            {
+                final I1 i1 = map.newValueInstance();
+                i1.setStrAt(1, "Hello");
+                i1.setStrAt(2, "World");
+                map.put("Key1", i1);
+            }
+
+            {
+                final I1 i1 = map.newValueInstance();
+                i1.setStrAt(1, "Hello2");
+                i1.setStrAt(2, "World2");
+                map.put("Key2", i1);
+            }
+
+            {
+                final I1 key = map.get("Key1");
+
+                assertEquals("Hello", key.getStrAt(1));
+                assertEquals("World", key.getStrAt(2));
+            }
+
+            {
+                final I1 key = map.get("Key2");
+
+                assertEquals("Hello2", key.getStrAt(1));
+                assertEquals("World2", key.getStrAt(2));
+            }
+
+            // todo not currently supported for arrays
+            // mapChecks();
+        }
+    }
+
+
     @Test
     public void testCharArrayValue() throws ExecutionException, InterruptedException, IOException {
 
@@ -366,7 +416,7 @@ public class CHMUseCasesTest {
 
 
     @Ignore
-
+    @Test
     public void testByteArrayArrayValue() throws ExecutionException, InterruptedException, IOException {
 
         for (int i = 0; i < 10000; i++) {
@@ -457,6 +507,9 @@ public class CHMUseCasesTest {
             mapChecks();
         }
     }
+
+
+
 
 
     @Test
