@@ -33,11 +33,11 @@ public class TestReplication {
 
         final ChronicleMap<Integer, Integer> map1 = ChronicleMapBuilder.of(Integer.class,
                 Integer.class)
-                .replication((byte) 1, tcpConfigServer1)
+                .replication((byte) 3, tcpConfigServer1)
                 .create();
 
 
-        for (int i = 0; i < 7000; i++) {
+        for (int i = 0; i < 70000; i++) {
             map1.put(i, i);
         }
 
