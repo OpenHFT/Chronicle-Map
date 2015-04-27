@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map;
 
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
@@ -130,6 +131,7 @@ public class FilePerKeyMapTest {
         map.clear();
     }
 
+    @Ignore //This doesn't work on all OS
     @Test
     public void eventTest() {
         final List<FPMEvent> events = new ArrayList<>();
@@ -147,7 +149,7 @@ public class FilePerKeyMapTest {
 
         try {
             //Allow all events to be played through
-            Thread.sleep(1000);
+            Thread.sleep(3000);
             //Check the events
             assertEquals(4, events.size());
 
