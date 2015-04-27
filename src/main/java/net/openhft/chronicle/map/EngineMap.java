@@ -166,7 +166,10 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
     @Override
     public V put(final K key, final V value) {
         nullCheck(key);
-        return toObject(vClass, () -> map.put(bytes(key), bytes(value)));
+        return toObject(vClass, () -> {
+            final byte[] put = map.put(bytes(key), bytes(value));
+            return put;
+        });
     }
 
     @Override
