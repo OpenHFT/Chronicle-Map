@@ -3,6 +3,8 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.lang.model.constraints.MaxSize;
+import net.openhft.lang.values.DoubleArray;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -147,7 +149,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             byte identifier = (byte) 1;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8023);
+                    .of(8053);
 
             ReplicationHub hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -175,7 +177,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             byte identifier = (byte) 2;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8024, new InetSocketAddress("localhost", 8023));
+                    .of(8054, new InetSocketAddress("localhost", 8053));
 
             ReplicationHub hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -340,6 +342,8 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
         Assert.assertEquals(charMap1,charMap2);
 
     }
+
+
 
 }
 
