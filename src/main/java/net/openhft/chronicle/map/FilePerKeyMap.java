@@ -13,17 +13,35 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- *
+ * A {@link Map} implementation that stores each entry as a file in a
+ * directory. The <code>key</code> is the file name and the <code>value</code>
+ * is the contents of the file. This map will only handle <code>String</code>'s.
+ * <p>
+ * The class is effectively an abstraction over a directory in the file system.
+ * Therefore when the underlying files are changed an event will be fired to those
+ * registered for notifications.
+ * Since every write to this map will cause a change to underlying
+ * file system the event will distinguish between a programmatic event
+ * (i.e one caused my the actions of the map itself) and an event that
+ * has been triggered as a direct result of a file being manipulated outside
+ * this class.
+ * <p>
+ * Updates will be fired every time the file is saved but will be suppressed
+ * if the value has not changed.  To avoid temporary files (e.g. if edited in vi)
+ * being included in the map, any file starting with a '.' will be ignored.
+ * <p>
+ * Note the {@link WatchService} is extremely OS dependant.  Mas OSX registers
+ * very few events if they are done quickly and there is a significant delay
+ * between the event and the event being triggered.
  */
 public class FilePerKeyMap implements Map<String, String> {
-    private final String dir;
     private final Path dirPath;
     private final Map<File, Long> lastModifiedByProgram = new ConcurrentHashMap<>();
+    private final Map<File, String> lastUpdate = new ConcurrentHashMap<>();
     private final List<Consumer<FPMEvent>> listeners = new ArrayList<>();
     private final FPMWatcher fileFpmWatcher = new FPMWatcher();
 
     public FilePerKeyMap(String dir){
-        this.dir = dir;
         this.dirPath = Paths.get(dir);
         try {
             Files.createDirectories(dirPath);
@@ -59,7 +77,6 @@ public class FilePerKeyMap implements Map<String, String> {
 
     @Override
     public boolean containsKey(Object key) {
-
         return getFiles().anyMatch(p->p.getFileName().toString().equals(key));
     }
 
@@ -87,10 +104,9 @@ public class FilePerKeyMap implements Map<String, String> {
     public String remove(Object key) {
         String existing = get(key);
         if(existing != null){
-            deleteFile(Paths.get(dir, (String)key));
+            deleteFile(dirPath.resolve((String) key));
         }
         return existing;
-
     }
 
     @Override
@@ -132,7 +148,7 @@ public class FilePerKeyMap implements Map<String, String> {
         try {
             return Files.walk(dirPath).filter(p -> !Files.isDirectory(p));
         } catch (IOException e) {
-            throw new AssertionError(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -140,9 +156,9 @@ public class FilePerKeyMap implements Map<String, String> {
         String existingValue = null;
         if(Files.exists(path)) {
             try {
-                existingValue = Files.readAllLines(path).stream().collect(Collectors.joining());
+                existingValue = Files.readAllLines(path).stream().collect(Collectors.joining("\n"));
             } catch (IOException e) {
-                throw new AssertionError(e);
+                throw new RuntimeException(e);
             }
         }
         return existingValue;
@@ -208,7 +224,6 @@ public class FilePerKeyMap implements Map<String, String> {
 
             if (key != null ? !key.equals(fpmEntry.key) : fpmEntry.key != null) return false;
             return !(value != null ? !value.equals(fpmEntry.value) : fpmEntry.value != null);
-
         }
 
         @Override
@@ -236,21 +251,24 @@ public class FilePerKeyMap implements Map<String, String> {
                     try {
                         key = watcher.take();
                         for (WatchEvent<?> event : key.pollEvents()) {
-                            // get event type
                             WatchEvent.Kind<?> kind = event.kind();
 
                             // get file name
                             WatchEvent<Path> ev = (WatchEvent<Path>) event;
                             Path fileName = ev.context();
-
                             String mapKey = fileName.toString();
 
+                            if(mapKey.startsWith(".")){
+                                //this avoids temporary files being added to the map
+                                continue;
+                            }
 
                             if (kind == StandardWatchEventKinds.OVERFLOW) {
                                 continue;
                             } else if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                                 Path p = dirPath.resolve(fileName);
                                 String mapVal = getFileContents(p);
+                                lastUpdate.put(p.toFile(), mapVal);
                                 if(isProgrammaticUpdate(p.toFile())){
                                     fireEvent(new FPMEvent(FPMEvent.EventType.NEW, true, mapKey,mapVal));
                                 }else {
@@ -258,15 +276,25 @@ public class FilePerKeyMap implements Map<String, String> {
                                 }
                             } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                                 Path p = dirPath.resolve(fileName);
+                                lastUpdate.remove(p.toFile());
                                 if(isProgrammaticUpdate(p.toFile())){
                                     fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, true, mapKey, null));
-                                    lastModifiedByProgram.remove(p.toFile());
                                 }else {
                                     fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, false, mapKey, null));
                                 }
                             } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                                 Path p = dirPath.resolve(fileName);
                                 String mapVal = getFileContents(p);
+                                String lastVal = null;
+                                if(mapVal != null) {
+                                    lastVal = lastUpdate.put(p.toFile(), mapVal);
+                                }
+
+                                if(lastVal != null && lastVal.equals(mapVal)){
+                                    //Nothing has changed don't fire an event
+                                    continue;
+                                }
+
                                 if(isProgrammaticUpdate(p.toFile())){
                                     fireEvent(new FPMEvent(FPMEvent.EventType.UPDATE, true, mapKey,mapVal));
                                 }else {
@@ -281,7 +309,7 @@ public class FilePerKeyMap implements Map<String, String> {
                     }
                 }
             } catch (IOException e) {
-                throw new AssertionError(e);
+                throw new RuntimeException(e);
             }
         }
     }

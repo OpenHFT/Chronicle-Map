@@ -23,7 +23,6 @@ import net.openhft.chronicle.hash.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.impl.ContextFactory;
 import net.openhft.chronicle.hash.impl.HashContext;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
-import net.openhft.chronicle.hash.replication.LateUpdateException;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.internal.BytesBytesInterop;
@@ -1009,7 +1008,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 (ReplicatedContext<K, KI, MKI, V, VI, MVI>) mapContext();
 
         // records the current position of the cursor in the bitset
-        private long position = -1L;
+        private volatile long position = -1L;
 
         /**
          * @param bytes                the back the bitset, used to mark which entries have changed

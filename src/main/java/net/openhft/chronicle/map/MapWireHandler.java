@@ -304,8 +304,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     // todo remove the    toByteArray(..)
                     writeValueUsingDelegate(map -> {
                         final byte[] key = toByteArray(valueIn);
-                        final byte[] value = map.get(key);
-                        return value;
+                        return map.get(key);
                     });
                     return;
                 }
@@ -316,9 +315,11 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
                         final Params[] params = getAndPut.params();
 
-                        MapWireHandler.this.writeValue(b -> b.put(
-                                wire.read(params[0]).bytes(),
-                                wire.read(params[1]).bytes()));
+                        MapWireHandler.this.writeValue(b -> {
+                            byte[] k = wire.read(params[0]).bytes();
+                            byte[] v = wire.read(params[1]).bytes();
+                            return b.put(k, v);
+                        });
 
                     });
 

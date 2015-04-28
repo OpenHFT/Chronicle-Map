@@ -3,13 +3,18 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.lang.model.constraints.MaxSize;
+import net.openhft.lang.values.DoubleArray;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -121,4 +126,224 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
         favoriteColourServer1.close();
     }
 
+
+    public static final int NUMBER_OF_CHANNELS = 1000;
+
+    @Test(timeout = 100000)
+    public void test1000Channels()
+            throws IOException, InterruptedException {
+
+
+        final HashMap<Short, ChronicleMap> map1 = new HashMap<>();
+        final HashMap<Short, ChronicleMap> map2 = new HashMap<>();
+
+
+        // server 1 with  identifier = 1
+        {
+            ChronicleMapBuilder<CharSequence, Short> builder =
+                    of(CharSequence.class, Short.class)
+                            .averageKeySize(10)
+                            .averageValueSize(100)
+                            .entries(1000);
+
+            byte identifier = (byte) 1;
+
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
+                    .of(8053);
+
+            ReplicationHub hubOnServer1 = ReplicationHub.builder()
+                    .tcpTransportAndNetwork(tcpConfig)
+                    .maxNumberOfChannels(NUMBER_OF_CHANNELS)
+                    .createWithId(identifier);
+
+            for (short channelId = 1; channelId < NUMBER_OF_CHANNELS; channelId++) {
+                ReplicationChannel channel = hubOnServer1.createChannel(channelId);
+                ChronicleMap map = builder.instance().replicatedViaChannel(channel).create();
+
+                map.put("key", channelId);
+                map1.put(channelId, map);
+
+            }
+        }
+
+
+        {
+            ChronicleMapBuilder<CharSequence, Short> builder =
+                    of(CharSequence.class, Short.class)
+                            .averageKeySize(10)
+                            .averageValueSize(100)
+                            .entries(1000);
+
+            byte identifier = (byte) 2;
+
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
+                    .of(8054, new InetSocketAddress("localhost", 8053));
+
+            ReplicationHub hubOnServer1 = ReplicationHub.builder()
+                    .tcpTransportAndNetwork(tcpConfig)
+                    .maxNumberOfChannels(NUMBER_OF_CHANNELS)
+                    .createWithId(identifier);
+
+            for (short channelId = 1; channelId < NUMBER_OF_CHANNELS; channelId++) {
+                ReplicationChannel channel = hubOnServer1.createChannel(channelId);
+                ChronicleMap map = builder.instance().replicatedViaChannel(channel).create();
+
+                map.put("key", channelId);
+                map2.put(channelId, map);
+
+            }
+        }
+
+        // check that the maps are the same, if the are not the same the test will timeout
+        // we have to give a few seconds for the replication to propagate
+        for (short channelId = 1; channelId < NUMBER_OF_CHANNELS; channelId++) {
+            // allow time for the recompilation to resolve
+
+            final ChronicleMap v1 = map1.get(channelId);
+            final ChronicleMap v2 = map2.get(channelId);
+
+            for (; ; ) {
+
+
+                if (v1 == null || v2 == null) {
+                    Thread.sleep(10);
+                    continue;
+                }
+
+                if (v1.isEmpty() || v2.isEmpty()) {
+                    Thread.sleep(10);
+                    continue;
+                }
+
+                if (!v1.equals(v2)) {
+                    Thread.sleep(10);
+                    continue;
+                }
+
+
+                Assert.assertEquals(channelId, v1.get("key"));
+                Assert.assertEquals(channelId, v2.get("key"));
+
+                break;
+            }
+
+        }
+
+        // close
+
+        for (short channelId = 1; channelId < NUMBER_OF_CHANNELS; channelId++) {
+
+            final ChronicleMap v1 = map1.get(channelId);
+            if (v1 != null)
+                v1.close();
+
+            final ChronicleMap v2 = map2.get(channelId);
+            if (v2 != null)
+                v2.close();
+        }
+    }
+
+    @Test
+    public void testChannelWithDifferentTypes() throws IOException, InterruptedException {
+
+
+        // server 1  - in this example only server 1 write any data
+        ChronicleMap<CharSequence, CharSequence> charMap1;
+        ChronicleMap<Integer, Integer> intMap1;
+        {
+            ChronicleMapBuilder<Integer, Integer> intMapBuilder =
+                    of(Integer.class, Integer.class)
+                            .entries(1000);
+
+            ChronicleMapBuilder<CharSequence, CharSequence> charMapBuilder =
+                    of(CharSequence.class, CharSequence.class)
+                            .averageKeySize(10)
+                            .averageValueSize(100)
+                            .entries(1000);
+
+            byte identifier = (byte) 1;
+
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8025);
+
+            ReplicationHub hubOnServer1 = ReplicationHub.builder()
+                    .tcpTransportAndNetwork(tcpConfig)
+                    .maxNumberOfChannels(NUMBER_OF_CHANNELS)
+                    .createWithId(identifier);
+
+
+            ReplicationChannel channel1 = hubOnServer1.createChannel(1);
+
+            intMap1 = intMapBuilder.instance()
+                    .replicatedViaChannel(channel1)
+                    .create();
+
+            ReplicationChannel channel2 = hubOnServer1.createChannel(2);
+
+            charMap1 = charMapBuilder.instance()
+                    .replicatedViaChannel
+                            (channel2)
+                    .create();
+
+            intMap1.put(1, 1);
+            charMap1.put("Hello", "World");
+
+        }
+
+
+        // server 2
+        ChronicleMap<CharSequence, CharSequence> charMap2;
+        ChronicleMap<Integer, Integer> intMap2;
+
+        {
+            ChronicleMapBuilder<Integer, Integer> intMapBuilder =
+                    of(Integer.class, Integer.class)
+                            .entries(1000);
+
+            ChronicleMapBuilder<CharSequence, CharSequence> charMapBuilder =
+                    of(CharSequence.class, CharSequence.class)
+                            .averageKeySize(10)
+                            .averageValueSize(100)
+                            .entries(1000);
+
+            byte identifier = (byte) 2;
+
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8026, new
+                    InetSocketAddress("localhost", 8025));  // change the localhost to your server
+
+            ReplicationHub hubOnServer1 = ReplicationHub.builder()
+                    .tcpTransportAndNetwork(tcpConfig)
+                    .maxNumberOfChannels(NUMBER_OF_CHANNELS)
+                    .createWithId(identifier);
+
+
+            ReplicationChannel channel1 = hubOnServer1.createChannel(1);
+
+            intMap2 = intMapBuilder.instance()
+                    .replicatedViaChannel(channel1)
+                    .create();
+
+            ReplicationChannel channel2 = hubOnServer1.createChannel(2);
+
+            charMap2 = charMapBuilder.instance().replicatedViaChannel
+                    (channel2)
+                    .create();
+
+        }
+
+        // allow time for the recompilation to resolve
+        for (int t = 0; t < 3500; t++) {
+            if (intMap1.equals(intMap2) &&
+                    charMap1.equals(charMap2))
+                break;
+            Thread.sleep(1);
+        }
+
+        Assert.assertEquals(intMap1,intMap2);
+        Assert.assertEquals(charMap1,charMap2);
+
+    }
+
+
+
 }
+
