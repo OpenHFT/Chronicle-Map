@@ -127,7 +127,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
     public static final int NUMBER_OF_CHANNELS = 1000;
 
-    @Test(timeout = 50000)
+    @Test(timeout = 100000)
     public void test1000Channels()
             throws IOException, InterruptedException {
 
@@ -239,6 +239,106 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             if (v2 != null)
                 v2.close();
         }
+    }
+
+    @Test
+    public void testChannelWithDifferentTypes() throws IOException, InterruptedException {
+
+
+        // server 1  - in this example only server 1 write any data
+        ChronicleMap<CharSequence, CharSequence> charMap1;
+        ChronicleMap<Integer, Integer> intMap1;
+        {
+            ChronicleMapBuilder<Integer, Integer> intMapBuilder =
+                    of(Integer.class, Integer.class)
+                            .entries(1000);
+
+            ChronicleMapBuilder<CharSequence, CharSequence> charMapBuilder =
+                    of(CharSequence.class, CharSequence.class)
+                            .averageKeySize(10)
+                            .averageValueSize(100)
+                            .entries(1000);
+
+            byte identifier = (byte) 1;
+
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8021);
+
+            ReplicationHub hubOnServer1 = ReplicationHub.builder()
+                    .tcpTransportAndNetwork(tcpConfig)
+                    .maxNumberOfChannels(NUMBER_OF_CHANNELS)
+                    .createWithId(identifier);
+
+
+            ReplicationChannel channel1 = hubOnServer1.createChannel(1);
+
+            intMap1 = intMapBuilder.instance()
+                    .replicatedViaChannel(channel1)
+                    .create();
+
+            ReplicationChannel channel2 = hubOnServer1.createChannel(2);
+
+            charMap1 = charMapBuilder.instance()
+                    .replicatedViaChannel
+                            (channel2)
+                    .create();
+
+            intMap1.put(1, 1);
+            charMap1.put("Hello", "World");
+
+        }
+
+
+        // server 2
+        ChronicleMap<CharSequence, CharSequence> charMap2;
+        ChronicleMap<Integer, Integer> intMap2;
+
+        {
+            ChronicleMapBuilder<Integer, Integer> intMapBuilder =
+                    of(Integer.class, Integer.class)
+                            .entries(1000);
+
+            ChronicleMapBuilder<CharSequence, CharSequence> charMapBuilder =
+                    of(CharSequence.class, CharSequence.class)
+                            .averageKeySize(10)
+                            .averageValueSize(100)
+                            .entries(1000);
+
+            byte identifier = (byte) 2;
+
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8022, new
+                    InetSocketAddress("localhost", 8021));  // change the localhost to your server
+
+            ReplicationHub hubOnServer1 = ReplicationHub.builder()
+                    .tcpTransportAndNetwork(tcpConfig)
+                    .maxNumberOfChannels(NUMBER_OF_CHANNELS)
+                    .createWithId(identifier);
+
+
+            ReplicationChannel channel1 = hubOnServer1.createChannel(1);
+
+            intMap2 = intMapBuilder.instance()
+                    .replicatedViaChannel(channel1)
+                    .create();
+
+            ReplicationChannel channel2 = hubOnServer1.createChannel(2);
+
+            charMap2 = charMapBuilder.instance().replicatedViaChannel
+                    (channel2)
+                    .create();
+
+        }
+
+        // allow time for the recompilation to resolve
+        for (int t = 0; t < 3500; t++) {
+            if (intMap1.equals(intMap2) &&
+                    charMap1.equals(charMap2))
+                break;
+            Thread.sleep(1);
+        }
+
+        Assert.assertEquals(intMap1,intMap2);
+        Assert.assertEquals(charMap1,charMap2);
+
     }
 
 }
