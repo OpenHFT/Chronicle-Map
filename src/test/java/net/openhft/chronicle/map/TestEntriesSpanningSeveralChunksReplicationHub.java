@@ -147,7 +147,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             byte identifier = (byte) 1;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8021);
+                    .of(8023);
 
             ReplicationHub hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -175,7 +175,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             byte identifier = (byte) 2;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8022, new InetSocketAddress("localhost", 8021));
+                    .of(8024, new InetSocketAddress("localhost", 8023));
 
             ReplicationHub hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -261,7 +261,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
             byte identifier = (byte) 1;
 
-            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8021);
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8025);
 
             ReplicationHub hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -305,8 +305,8 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
             byte identifier = (byte) 2;
 
-            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8022, new
-                    InetSocketAddress("localhost", 8021));  // change the localhost to your server
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8026, new
+                    InetSocketAddress("localhost", 8025));  // change the localhost to your server
 
             ReplicationHub hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
