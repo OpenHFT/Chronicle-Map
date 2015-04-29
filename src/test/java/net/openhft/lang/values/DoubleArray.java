@@ -16,6 +16,10 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray> {
     private Bytes bytes;
     private long offset;
 
+    // creates an empty DoubleArray
+    public DoubleArray() {
+    }
+
     public DoubleArray(int capacity) {
         bytes = DirectStore.allocate(BASE + capacity * 8L).bytes();
         bytes.writeInt(CAPACITY, capacity);
@@ -45,7 +49,7 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray> {
     }
 
     public int length() {
-        return bytes.readInt(LENGTH + offset);
+        return bytes == null ? 6 * 8 : bytes.readInt(LENGTH + offset);
     }
 
     public int capacity() {
@@ -97,5 +101,16 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray> {
         doubleArray.setLength(length);
         for (int i = 0; i < length; i++)
             doubleArray.setDataAt(i, getDataAt(i));
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[ ");
+        String sep = "";
+        for (int i = 0, len = length(); i < len; i++) {
+            sb.append(sep).append(getDataAt(i));
+            sep = ", ";
+        }
+        return sb.append(" ]").toString();
     }
 }

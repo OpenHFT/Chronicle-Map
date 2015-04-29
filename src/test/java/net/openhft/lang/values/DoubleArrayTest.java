@@ -1,5 +1,7 @@
 package net.openhft.lang.values;
 
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -44,5 +46,24 @@ public class DoubleArrayTest {
         }
         // free the memory.
         da.bytes().release();
+    }
+
+    @Test
+    public void addToAMap() {
+        DoubleArray a = new DoubleArray(10);
+        a.setData(new double[]{1, 2, 3, 4, 5});
+
+        DoubleArray b = new DoubleArray(10);
+        b.setData(new double[]{5, 6, 7, 8, 9});
+
+
+        ChronicleMap<Integer, DoubleArray> proxyMap = ChronicleMapBuilder.of(Integer.class, DoubleArray.class)
+                .create();
+        proxyMap.put(1, a);
+        proxyMap.put(2, b);
+
+        System.out.println(proxyMap.get(1));
+        System.out.println(proxyMap.get(2));
+        proxyMap.close();
     }
 }
