@@ -2,18 +2,15 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.engine.client.ParameterizeWireKey;
-import net.openhft.chronicle.wire.ValueOut;
+import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.util.*;
 
+import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
 import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.EntrySetEventId.*;
-import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.Params.key;
+import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.Params.*;
 
 
 class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, V, ClientWiredStatelessChronicleEntrySet.EntrySetEventId>
@@ -22,9 +19,10 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
     public ClientWiredStatelessChronicleEntrySet(@NotNull final String channelName,
                                                  @NotNull final ClientWiredStatelessTcpConnectionHub hub,
                                                  final long cid,
-                                                 @NotNull final Class<V> vClass) {
+                                                 @NotNull final Class<V> vClass,
+                                                 @NotNull final Class<K> kClass) {
 
-        super(channelName, hub, "entrySet", cid, vClass);
+        super(channelName, hub, "entrySet", cid, kClass, vClass);
     }
 
 
@@ -46,7 +44,47 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
     @NotNull
     @Override
     public Iterator<Map.Entry<K, V>> iterator() {
-        return null;
+        final int numberOfSegments = proxyReturnUint16(numberOfSegements);
+
+        // todo itterate the segments
+        return segmentIterator(1);
+
+    }
+
+
+    /**
+     * gets the iterator for a given segment
+     *
+     * @param segment the maps segment number
+     * @return and iterator for the {@code segment}
+     */
+    @NotNull
+    Iterator<Map.Entry<K, V>> segmentIterator(int segment) {
+
+        final Map<K, V> e = new HashMap<K, V>();
+
+        proxyReturnWireConsumerInOut(iterator,
+
+                valueOut -> valueOut.uint16(segment),
+
+                wireIn -> {
+
+                    final ValueIn read = wireIn.read(reply);
+
+                    while (read.hasNextSequenceItem()) {
+
+                        read.sequence(s -> s.marshallable(r -> {
+                            final K k = r.read(key).object(kClass);
+                            final V v = r.read(value).object(vClass);
+                            e.put(k, v);
+                        }));
+                    }
+
+                    return e;
+                });
+
+
+        return e.entrySet().iterator();
     }
 
     @NotNull
@@ -104,14 +142,17 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
 
 
     enum Params implements WireKey {
-        key
+        key,
+        value,
+        segment
     }
 
     enum EntrySetEventId implements ParameterizeWireKey {
         size,
         isEmpty,
         remove(key),
-        iterator;
+        numberOfSegements,
+        iterator(segment);
 
         private final WireKey[] params;
 

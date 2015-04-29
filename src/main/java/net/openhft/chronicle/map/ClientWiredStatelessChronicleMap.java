@@ -29,10 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -61,11 +58,11 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
 
     public ClientWiredStatelessChronicleMap(
             @NotNull final ClientWiredChronicleMapStatelessBuilder config,
-            @NotNull final Class kClass,
-            @NotNull final Class vClass,
+            @NotNull final Class<K> kClass,
+            @NotNull final Class<V> vClass,
             @NotNull final String channelName,
             @NotNull final ClientWiredStatelessTcpConnectionHub hub) {
-        super(channelName, hub, "MAP", 0, vClass);
+        super(channelName, hub, "MAP", 0, kClass, vClass);
 
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();
@@ -206,7 +203,32 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
 
     @NotNull
     public String toString() {
-        return "todo";
+        final ClientWiredStatelessChronicleEntrySet<K, V> entrySet = entrySet();
+
+        final Iterator<Map.Entry<K, V>> entries = entrySet.segmentIterator(1);
+
+        if (!entries.hasNext())
+            return "{}";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+
+
+        while (entries.hasNext()) {
+
+            final Map.Entry<K, V> e = entries.next();
+            final K key = e.getKey();
+            final V value = e.getValue();
+            sb.append(key == this ? "(this Map)" : key);
+            sb.append('=');
+            sb.append(value == this ? "(this Map)" : value);
+            if (!entries.hasNext())
+                return sb.append('}').toString();
+            sb.append(',').append(' ');
+        }
+
+        return sb.toString();
+
     }
 
     @NotNull
@@ -324,7 +346,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     private final Map<Long, String> cidToCsp = new HashMap<>();
 
     @NotNull
-    public Set<Map.Entry<K, V>> entrySet() {
+    public ClientWiredStatelessChronicleEntrySet entrySet() {
 
 
         long cid = proxyReturnWireConsumer(entrySet, (WireIn wireIn) -> {
@@ -343,7 +365,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
             return cidRef[0];
         });
 
-        return new ClientWiredStatelessChronicleEntrySet<K, V>(channelName, hub, cid, vClass);
+        return new ClientWiredStatelessChronicleEntrySet<K, V>(channelName, hub, cid, vClass, kClass);
     }
 
 

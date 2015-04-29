@@ -48,7 +48,6 @@ import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnect
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.csp;
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
 import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
-import static net.openhft.chronicle.map.AbstactStatelessClient.toParameters;
 import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.map.MapWireHandler.Params.*;
 import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
@@ -130,7 +129,6 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
     public void accept(@NotNull final WireHandlers wireHandlers) {
         this.publishLater = wireHandlers;
     }
-
 
     @Override
     public void process(@NotNull final Wire in, @NotNull final Wire out) throws StreamCorruptedException {
@@ -234,11 +232,29 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     // old value
                     if (EntrySetEventId.iterator.contentEquals(eventName)) {
                         write(b -> {
-                                    final ValueOut valueOut = outWire.writeEventName(() -> "entry");
-                                    b.delegate.entrySet().forEach(e ->
-                                            valueOut.sequence(toParameters(put,
-                                                    e.getKey(),
-                                                    e.getValue())));
+                                    final ValueOut valueOut = outWire.writeEventName(CoreFields.reply);
+                                    b.delegate.entrySet().forEach(e -> {
+
+                                                final Consumer<ValueOut> writer = out -> {
+
+                                                    out.marshallable(m -> {
+
+                                                        final byte[] key = (byte[]) e.getKey();
+                                                        final byte[] value = (byte[]) e.getValue();
+
+                                                        m.write(Params.key);
+                                                        outWire.bytes().write(key);
+
+                                                        m.write(Params.value);
+                                                        outWire.bytes().write(value);
+
+                                                    });
+
+                                                };
+                                                valueOut.sequence(writer);
+                                            }
+
+                                    );
                                 }
 
                         );
@@ -246,11 +262,20 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     }
 
 
+                    if (EntrySetEventId.numberOfSegements.contentEquals(eventName)) {
+                        write(b -> outWire.write(reply).int32(1));
+                        return;
+                    }
+
+
+
+
                     throw new IllegalStateException("unsupported event=" + eventName);
                 }
 
 
                 // -- THESE METHODS ARE ONLY MAP METHODS
+
 
                 if (keySet.contentEquals(eventName)) {
                     throw new UnsupportedOperationException("todo");

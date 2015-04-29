@@ -15,21 +15,27 @@ import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnect
 public abstract class MapStatelessClient<K, V, E extends ParameterizeWireKey>
         extends AbstactStatelessClient<E> {
 
-    private Class<V> vClass;
+    Class<K> kClass;
+    Class<V> vClass;
+
 
     /**
      * @param channelName
      * @param hub
      * @param type        the type of wire handler for example "MAP" or "QUEUE"
      * @param cid         used by proxies such as the entry-set
+     * @param kClass
      */
     public MapStatelessClient(@NotNull String channelName,
                               @NotNull ClientWiredStatelessTcpConnectionHub hub,
                               @NotNull String type,
-                              long cid, @NotNull final Class vClass) {
+                              long cid,
+                              @NotNull final Class<K> kClass,
+                              @NotNull final Class<V> vClass) {
         super(channelName, hub, type, cid);
 
         this.vClass = vClass;
+        this.kClass = kClass;
     }
 
     @Nullable
