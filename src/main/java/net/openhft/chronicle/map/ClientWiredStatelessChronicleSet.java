@@ -6,23 +6,30 @@ import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
-import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.EntrySetEventId.*;
-import static net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.Params.*;
+import static net.openhft.chronicle.map.ClientWiredStatelessChronicleSet.Params.key;
+import static net.openhft.chronicle.map.ClientWiredStatelessChronicleSet.Params.segment;
+import static net.openhft.chronicle.map.ClientWiredStatelessChronicleSet.SetEventId.*;
 
 
-class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, V, ClientWiredStatelessChronicleEntrySet.EntrySetEventId>
-        implements Set<Map.Entry<K, V>> {
+class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<ClientWiredStatelessChronicleSet.SetEventId>
+        implements Set<U> {
 
-    public ClientWiredStatelessChronicleEntrySet(@NotNull final String channelName,
-                                                 @NotNull final ClientWiredStatelessTcpConnectionHub hub,
-                                                 final long cid,
-                                                 @NotNull final Class<V> vClass,
-                                                 @NotNull final Class<K> kClass) {
+    private final Function<ValueIn, U> conumer;
 
-        super(channelName, hub, "entrySet", cid, kClass, vClass);
+    public ClientWiredStatelessChronicleSet(@NotNull final String channelName,
+                                            @NotNull final ClientWiredStatelessTcpConnectionHub hub,
+                                            final long cid,
+                                            @NotNull final Function<ValueIn, U> wireToSet) {
+
+        super(channelName, hub, "entrySet", cid);
+        this.conumer = wireToSet;
     }
 
 
@@ -43,7 +50,7 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
 
     @NotNull
     @Override
-    public Iterator<Map.Entry<K, V>> iterator() {
+    public Iterator<U> iterator() {
         final int numberOfSegments = proxyReturnUint16(numberOfSegements);
 
         // todo itterate the segments
@@ -59,9 +66,9 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
      * @return and iterator for the {@code segment}
      */
     @NotNull
-    Iterator<Map.Entry<K, V>> segmentIterator(int segment) {
+    Iterator<U> segmentIterator(int segment) {
 
-        final Map<K, V> e = new HashMap<K, V>();
+        final Set<U> e = new HashSet<U>();
 
         proxyReturnWireConsumerInOut(iterator,
 
@@ -72,19 +79,14 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
                     final ValueIn read = wireIn.read(reply);
 
                     while (read.hasNextSequenceItem()) {
-
-                        read.sequence(s -> s.marshallable(r -> {
-                            final K k = r.read(key).object(kClass);
-                            final V v = r.read(value).object(vClass);
-                            e.put(k, v);
-                        }));
+                        read.sequence(v -> e.add(conumer.apply(read)));
                     }
 
                     return e;
                 });
 
 
-        return e.entrySet().iterator();
+        return e.iterator();
     }
 
     @NotNull
@@ -100,7 +102,7 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
     }
 
     @Override
-    public boolean add(Map.Entry<K, V> kvEntry) {
+    public boolean add(U u) {
         return false;
     }
 
@@ -116,9 +118,10 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
     }
 
     @Override
-    public boolean addAll(Collection<? extends Map.Entry<K, V>> c) {
+    public boolean addAll(Collection<? extends U> c) {
         return false;
     }
+
 
     @Override
     public boolean retainAll(Collection<?> c) {
@@ -136,7 +139,7 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
     }
 
     @Override
-    protected boolean eventReturnsNull(@NotNull EntrySetEventId methodName) {
+    protected boolean eventReturnsNull(@NotNull SetEventId methodName) {
         return false;
     }
 
@@ -147,7 +150,7 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
         segment
     }
 
-    enum EntrySetEventId implements ParameterizeWireKey {
+    enum SetEventId implements ParameterizeWireKey {
         size,
         isEmpty,
         remove(key),
@@ -156,7 +159,7 @@ class ClientWiredStatelessChronicleEntrySet<K, V> extends MapStatelessClient<K, 
 
         private final WireKey[] params;
 
-        <P extends WireKey> EntrySetEventId(P... params) {
+        <P extends WireKey> SetEventId(P... params) {
             this.params = params;
         }
 

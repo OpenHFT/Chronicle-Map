@@ -31,10 +31,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
+import static net.openhft.chronicle.map.ClientWiredStatelessChronicleSet.Params.key;
+import static net.openhft.chronicle.map.ClientWiredStatelessChronicleSet.Params.value;
 import static net.openhft.chronicle.map.MapWireHandler.EventId;
 import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
@@ -43,14 +46,14 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
 /**
  * @author Rob Austin.
  */
-class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, EventId>
+class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
 
     private static final Logger LOG =
             LoggerFactory.getLogger(ClientWiredStatelessChronicleMap.class);
 
     public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(AbstactStatelessClient.EMPTY);
-    private final Class vClass;
+    private final Class<V> vClass;
     protected Class<K> kClass;
     private boolean putReturnsNull;
     private boolean removeReturnsNull;
@@ -62,7 +65,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
             @NotNull final Class<V> vClass,
             @NotNull final String channelName,
             @NotNull final ClientWiredStatelessTcpConnectionHub hub) {
-        super(channelName, hub, "MAP", 0, kClass, vClass);
+        super(channelName, hub, "MAP", 0);
 
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();
@@ -203,7 +206,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
 
     @NotNull
     public String toString() {
-        final ClientWiredStatelessChronicleEntrySet<K, V> entrySet = entrySet();
+        final ClientWiredStatelessChronicleSet<Map.Entry<K, V>> entrySet = entrySet();
 
         final Iterator<Map.Entry<K, V>> entries = entrySet.segmentIterator(1);
 
@@ -272,7 +275,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     }
 
     public V get(Object key) {
-        return (V)proxyReturnObject(vClass, get, (K) key);
+        return (V) this.proxyReturnTypedObject(get, vClass, key);
     }
 
     @Nullable
@@ -295,7 +298,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     public V remove(Object key) {
         if (key == null)
             throw keyNotNullNPE();
-        return (V)proxyReturnObject(vClass, removeReturnsNull ? removeWithoutAcc : remove, key);
+        final EventId eventId = removeReturnsNull ? removeWithoutAcc : remove;
+        return (V) this.proxyReturnTypedObject(eventId, vClass, key);
     }
 
     @Override
@@ -330,11 +334,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
         proxyReturnVoid(clear);
     }
 
-    @NotNull
-    @Override
-    public Set<K> keySet() {
-        return null;
-    }
 
     @NotNull
     @Override
@@ -346,7 +345,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
     private final Map<Long, String> cidToCsp = new HashMap<>();
 
     @NotNull
-    public ClientWiredStatelessChronicleEntrySet entrySet() {
+    public ClientWiredStatelessChronicleSet entrySet() {
 
 
         long cid = proxyReturnWireConsumer(entrySet, (WireIn wireIn) -> {
@@ -365,7 +364,51 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<K, V, Ev
             return cidRef[0];
         });
 
-        return new ClientWiredStatelessChronicleEntrySet<K, V>(channelName, hub, cid, vClass, kClass);
+
+        Function<ValueIn, Map.Entry<K, V>> conumer = new Function<ValueIn, Map.Entry<K, V>>() {
+            Map.Entry e = null;
+
+            @Override
+            public Map.Entry apply(ValueIn valueIn) {
+
+                valueIn.marshallable(r -> {
+                            final K k = r.read(key).object(kClass);
+                            final V v = r.read(value).object(vClass);
+
+                            e = new Map.Entry() {
+
+                                @Override
+                                public K getKey() {
+                                    return k;
+                                }
+
+                                @Override
+                                public V getValue() {
+                                    return v;
+                                }
+
+                                @Override
+                                public Object setValue(Object value) {
+                                    throw new UnsupportedOperationException();
+                                }
+                            };
+
+                        }
+
+                );
+
+                return e;
+            }
+        };
+
+        return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer);
+    }
+
+
+    @NotNull
+    public ClientWiredStatelessChronicleSet keySet() {
+
+        throw new UnsupportedOperationException("todo");
     }
 
 
