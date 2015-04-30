@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
@@ -15,6 +16,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 
 /**
  * Created by Rob Austin
@@ -34,10 +37,19 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
                      Class<K> kClass,
                      Class<V> vClass,
                      MapWireConnectionHub mapWireConnectionHub,
-                     Class<? extends Wire> wireType) throws IOException {
+                     Class<? extends Wire> wireType,
+                     long entries) throws IOException {
+
         this.mapWireConnectionHub = mapWireConnectionHub;
         this.wireType = wireType;
-        final BytesChronicleMap b = this.mapWireConnectionHub.acquireMap(name);
+
+
+        // todo - for the moment we will default to 100 entries per map, but this is for engine to
+        // todo decided later.
+        final ChronicleHashInstanceBuilder instance
+                = of(byte[].class, byte[].class).entries(entries).instance();
+
+        final BytesChronicleMap b = this.mapWireConnectionHub.acquireMap(name, instance);
         this.map = (Map) b.delegate;
         this.vClass = vClass;
         this.kClass = kClass;

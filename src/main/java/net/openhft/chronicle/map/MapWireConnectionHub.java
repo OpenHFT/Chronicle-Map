@@ -74,6 +74,7 @@ public class MapWireConnectionHub implements Closeable {
         }
 
         return (short) (max + 1);
+
     }
 
     /**
@@ -81,12 +82,12 @@ public class MapWireConnectionHub implements Closeable {
      * channel
      *
      * @param fromName the name of the channel
+     * @param builder
      * @return the id associated with this name
      */
-    BytesChronicleMap acquireMap(@NotNull final String fromName) throws IOException {
-
-        // todo this is a horrible hack, it slow and NOT processor safe, but was added to get
-        // todo something working for now.
+    BytesChronicleMap acquireMap(@NotNull final String fromName,
+                                 @NotNull final ChronicleHashInstanceBuilder builder)
+            throws IOException {
 
         final Integer channelId = channelNameToId.get(fromName);
 
@@ -96,12 +97,14 @@ public class MapWireConnectionHub implements Closeable {
         final int nextFreeChannel = getNextFreeChannel();
         try {
 
-            mapFactory.get().replicatedViaChannel(hub.createChannel(nextFreeChannel)).create();
+
+            builder.replicatedViaChannel(hub.createChannel(nextFreeChannel)).create();
             channelNameToId.put(fromName, nextFreeChannel);
 
             return bytesMap(nextFreeChannel);
+
         } catch (IOException e) {
-            // todo send this error back to the user
+            // todo send this error back to the user in wire
             LOG.error("", e);
             throw e;
         }

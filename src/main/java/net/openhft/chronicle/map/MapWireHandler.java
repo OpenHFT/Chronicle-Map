@@ -48,6 +48,7 @@ import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnect
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.csp;
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
 import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
+import static net.openhft.chronicle.map.ChronicleMapBuilder.*;
 import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.map.MapWireHandler.Params.*;
 import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
@@ -96,7 +97,10 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     hash != -1 && hash < (cspText.length() - 1)) {
                 final String channelStr = cspText.substring(slash + 1, hash);
                 try {
-                    bytesChronicleMap = mapWireConnectionHub.acquireMap(channelStr);
+
+                    // todo better get the number of entries
+                    bytesChronicleMap = mapWireConnectionHub.acquireMap(channelStr,
+                            of(byte[].class, byte[].class).entries(1000).instance());
 
                 } catch (IOException e) {
                     // todo send to user
