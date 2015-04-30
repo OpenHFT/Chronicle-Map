@@ -26,7 +26,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.engine.client.ParameterizeWireKey;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
-import net.openhft.chronicle.map.ClientWiredStatelessChronicleEntrySet.EntrySetEventId;
+import net.openhft.chronicle.map.ClientWiredStatelessChronicleSet.SetEventId;
 import net.openhft.chronicle.network.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.network.event.WireHandlers;
@@ -48,6 +48,7 @@ import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnect
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.csp;
 import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
 import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
+import static net.openhft.chronicle.map.ChronicleMapBuilder.*;
 import static net.openhft.chronicle.map.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.map.MapWireHandler.Params.*;
 import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
@@ -96,7 +97,10 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     hash != -1 && hash < (cspText.length() - 1)) {
                 final String channelStr = cspText.substring(slash + 1, hash);
                 try {
-                    bytesChronicleMap = mapWireConnectionHub.acquireMap(channelStr);
+
+                    // todo better get the number of entries
+                    bytesChronicleMap = mapWireConnectionHub.acquireMap(channelStr,
+                            of(byte[].class, byte[].class).entries(1000).instance());
 
                 } catch (IOException e) {
                     // todo send to user
@@ -222,7 +226,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
                     // note :  remove on the key-set returns a boolean and on the map returns the
                     // old value
-                    if (EntrySetEventId.remove.contentEquals(eventName)) {
+                    if (SetEventId.remove.contentEquals(eventName)) {
                         write(b -> outWire.write(reply).bool(
                                 b.delegate.remove(toByteArray(valueIn)) != null));
                         return;
@@ -230,7 +234,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
 
                     // note :  remove on the key-set returns a boolean and on the map returns the
                     // old value
-                    if (EntrySetEventId.iterator.contentEquals(eventName)) {
+                    if (SetEventId.iterator.contentEquals(eventName)) {
                         write(b -> {
                                     final ValueOut valueOut = outWire.writeEventName(CoreFields.reply);
                                     b.delegate.entrySet().forEach(e -> {
@@ -262,7 +266,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     }
 
 
-                    if (EntrySetEventId.numberOfSegements.contentEquals(eventName)) {
+                    if (SetEventId.numberOfSegements.contentEquals(eventName)) {
                         write(b -> outWire.write(reply).int32(1));
                         return;
                     }

@@ -2,40 +2,27 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.engine.client.ParameterizeWireKey;
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.reply;
-
 /**
  * Created by Rob Austin
  */
-public abstract class MapStatelessClient<K, V, E extends ParameterizeWireKey>
-        extends AbstactStatelessClient<E> {
-
-    Class<K> kClass;
-    Class<V> vClass;
-
+public abstract class MapStatelessClient< E extends ParameterizeWireKey> extends AbstactStatelessClient<E> {
 
     /**
      * @param channelName
      * @param hub
      * @param type        the type of wire handler for example "MAP" or "QUEUE"
      * @param cid         used by proxies such as the entry-set
-     * @param kClass
      */
     public MapStatelessClient(@NotNull String channelName,
                               @NotNull ClientWiredStatelessTcpConnectionHub hub,
                               @NotNull String type,
-                              long cid,
-                              @NotNull final Class<K> kClass,
-                              @NotNull final Class<V> vClass) {
+                              long cid) {
         super(channelName, hub, type, cid);
 
-        this.vClass = vClass;
-        this.kClass = kClass;
     }
 
     @Nullable
@@ -44,61 +31,33 @@ public abstract class MapStatelessClient<K, V, E extends ParameterizeWireKey>
             @NotNull final Class<R> resultType,
             @Nullable Object... args) {
 
-        final long startTime = System.currentTimeMillis();
-        final long tid = sendEvent(startTime, eventId, toParameters(eventId, args));
+        return proxyReturnWireConsumerInOut(eventId,
+                toParameters(eventId, args),
+                f -> f.read(ClientWiredStatelessTcpConnectionHub.CoreFields.reply)
+                        .object(resultType));
 
-        if (eventReturnsNull(eventId))
-            return null;
-
-        if (resultType == vClass)
-            return (R) readValue(reply, tid, startTime, null);
-
-        else
-            throw new UnsupportedOperationException("class of type class=" + resultType +
-                    " is not supported");
-    }
-
-    @Nullable
-    protected <R> R proxyReturnObject(@NotNull final Class<R> rClass,
-                                      @NotNull final E eventId,
-                                      @NotNull final Object o) {
-
-        final long startTime = System.currentTimeMillis();
-        final long tid = sendEvent(startTime, eventId, out -> out.object(o));
-
-        if (eventReturnsNull(eventId))
-            return null;
-
-        if (rClass == vClass)
-            return (R) readValue(reply, tid, startTime, null);
-        else
-            throw new UnsupportedOperationException("class of type class=" + rClass + " is not " +
-                    "supported");
     }
 
     protected abstract boolean eventReturnsNull(@NotNull E methodName);
 
 
-    protected V readValue(WireKey argName, long tid, long startTime, final V usingValue) {
-        assert !hub.outBytesLock().isHeldByCurrentThread();
-        long timeoutTime = startTime + hub.timeoutMs;
-
-        hub.inBytesLock().lock();
-        try {
-
-            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wireIn);
+    protected <E, O> E proxyReturnE(@NotNull final WireKey eventId,
+                                    @Nullable final O arg,
+                                    @NotNull final Class<E> eClass) {
 
 
-            return readV(argName, wireIn, usingValue);
+        return proxyReturnWireConsumerInOut(eventId,
+                valueOut -> valueOut.object(arg),
+                f -> f.read(ClientWiredStatelessTcpConnectionHub.CoreFields.reply)
+                        .object(eClass));
+    }
 
-        } finally {
-            hub.inBytesLock().unlock();
-        }
+    protected <E> E proxyReturnE(@NotNull final WireKey eventId,
+                                 @NotNull final Class<E> eClass) {
+        return proxyReturnWireConsumer(eventId,
+                f -> f.read(ClientWiredStatelessTcpConnectionHub.CoreFields.reply)
+                .object(eClass));
     }
 
 
-    private V readV(WireKey argName, Wire wireIn, V usingValue) {
-        return readObject(argName, wireIn, usingValue, vClass);
-    }
 }
