@@ -22,16 +22,14 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
  */
 public class MapWireConnectionHub implements Closeable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     public static final int MAP_SERVICE = 3;
-
-    protected ChronicleMap<String, Integer> channelNameToId;
+    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final Map<Integer, Replica> channelMap;
     private final ReplicationHub hub;
-
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();
     private final ChannelProvider provider;
     private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<byte[], byte[]>>> mapFactory;
+    protected ChronicleMap<String, Integer> channelNameToId;
 
 
     public MapWireConnectionHub(
@@ -94,19 +92,11 @@ public class MapWireConnectionHub implements Closeable {
             return bytesMap(channelId);
 
         final int nextFreeChannel = getNextFreeChannel();
-        try {
 
-            mapFactory.get().replicatedViaChannel(hub.createChannel(nextFreeChannel)).create();
-            channelNameToId.put(fromName, nextFreeChannel);
+        mapFactory.get().replicatedViaChannel(hub.createChannel(nextFreeChannel)).create();
+        channelNameToId.put(fromName, nextFreeChannel);
 
-            return bytesMap(nextFreeChannel);
-        } catch (IOException e) {
-            // todo send this error back to the user
-            LOG.error("", e);
-            throw e;
-        }
-
-
+        return bytesMap(nextFreeChannel);
 
     }
 
