@@ -38,7 +38,7 @@ public abstract class MapStatelessClient< E extends ParameterizeWireKey> extends
 
     }
 
-    protected abstract boolean eventReturnsNull(@NotNull E methodName);
+
 
 
     protected <E, O> E proxyReturnE(@NotNull final WireKey eventId,

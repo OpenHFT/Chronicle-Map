@@ -266,7 +266,7 @@ public class MapWireHandler<K, V> implements WireHandler, Consumer<WireHandlers>
                     }
 
 
-                    if (SetEventId.numberOfSegements.contentEquals(eventName)) {
+                    if (SetEventId.numberOfSegments.contentEquals(eventName)) {
                         write(b -> outWire.write(reply).int32(1));
                         return;
                     }

@@ -152,14 +152,14 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         if (key == null)
             throw new NullPointerException();
 
-        return value != null && proxyReturnBooleanArgs(removeWithValue, (K) key, (V) value);
+        return value != null && proxyReturnBooleanWithArgs(removeWithValue, (K) key, (V) value);
     }
 
     @SuppressWarnings("NullableProblems")
     public boolean replace(K key, V oldValue, V newValue) {
         if (key == null || oldValue == null || newValue == null)
             throw new NullPointerException();
-        return proxyReturnBooleanArgs(replaceWithOldAndNewValue, key, oldValue, newValue);
+        return proxyReturnBooleanWithArgs(replaceWithOldAndNewValue, key, oldValue, newValue);
     }
 
     @SuppressWarnings("NullableProblems")
@@ -206,10 +206,10 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
     @NotNull
     public String toString() {
-        final ClientWiredStatelessChronicleSet<Map.Entry<K, V>> entrySet = entrySet();
+        final ClientWiredStatelessChronicleSet entrySet = entrySet();
 
-        final Iterator<Map.Entry<K, V>> entries = entrySet.segmentIterator(1);
 
+        final Iterator<Map.Entry<K, V>> entries = entrySet.iterator();
         if (!entries.hasNext())
             return "{}";
 
@@ -234,10 +234,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
     }
 
-    @NotNull
-    public String serverPersistedDataVersion() {
-        return hub.proxyReturnString(persistedDataVersion, csp, 0);
-    }
 
     public boolean isEmpty() {
         return proxyReturnBoolean(isEmpty, null);
@@ -401,7 +397,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
             }
         };
 
-        return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer);
+        return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer, "entrySet");
     }
 
 
@@ -441,21 +437,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
     private int proxyReturnInt(@NotNull final EventId eventId) {
         final long startTime = System.currentTimeMillis();
         return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
-    }
-
-
-    @Override
-    protected boolean eventReturnsNull(@NotNull EventId methodName) {
-
-        switch (methodName) {
-            case putAllWithoutAcc:
-            case put:
-            case removeWithoutAcc:
-                return true;
-            default:
-                return false;
-        }
-
     }
 
 

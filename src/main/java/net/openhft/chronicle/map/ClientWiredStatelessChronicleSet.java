@@ -21,15 +21,16 @@ import static net.openhft.chronicle.map.ClientWiredStatelessChronicleSet.SetEven
 class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<ClientWiredStatelessChronicleSet.SetEventId>
         implements Set<U> {
 
-    private final Function<ValueIn, U> conumer;
+    private final Function<ValueIn, U> consumer;
 
     public ClientWiredStatelessChronicleSet(@NotNull final String channelName,
                                             @NotNull final ClientWiredStatelessTcpConnectionHub hub,
                                             final long cid,
-                                            @NotNull final Function<ValueIn, U> wireToSet) {
+                                            @NotNull final Function<ValueIn, U> wireToSet,
+                                            @NotNull final String type) {
 
-        super(channelName, hub, "entrySet", cid);
-        this.conumer = wireToSet;
+        super(channelName, hub, type, cid);
+        this.consumer = wireToSet;
     }
 
 
@@ -45,16 +46,18 @@ class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<ClientWired
 
     @Override
     public boolean contains(Object o) {
-        return false;
+        return proxyReturnBooleanWithArgs(contains, o);
     }
 
     @NotNull
     @Override
     public Iterator<U> iterator() {
-        final int numberOfSegments = proxyReturnUint16(numberOfSegements);
 
-        // todo itterate the segments
-        return segmentIterator(1);
+        // todo improve numberOfSegments
+        final int numberOfSegments = proxyReturnUint16(SetEventId.numberOfSegments);
+
+        // todo iterate the segments for the moment we just assume one segment
+        return segmentSet(1).iterator();
 
     }
 
@@ -66,7 +69,7 @@ class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<ClientWired
      * @return and iterator for the {@code segment}
      */
     @NotNull
-    Iterator<U> segmentIterator(int segment) {
+    private Set<U> segmentSet(int segment) {
 
         final Set<U> e = new HashSet<U>();
 
@@ -79,70 +82,91 @@ class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<ClientWired
                     final ValueIn read = wireIn.read(reply);
 
                     while (read.hasNextSequenceItem()) {
-                        read.sequence(v -> e.add(conumer.apply(read)));
+                        read.sequence(v -> e.add(consumer.apply(read)));
                     }
 
                     return e;
                 });
 
 
-        return e.iterator();
+        return e;
     }
 
     @NotNull
     @Override
     public Object[] toArray() {
-        return new Object[0];
+        return asSet().toArray();
+    }
+
+    @NotNull
+    private Set<U> asSet() {
+
+        final Set<U> e = new HashSet<U>();
+        final int numberOfSegments = proxyReturnUint16(SetEventId.numberOfSegments);
+
+        for (long j = 0; j < numberOfSegments; j++) {
+
+            final long i = j;
+            proxyReturnWireConsumerInOut(iterator,
+
+                    valueOut -> valueOut.uint16(i),
+
+                    wireIn -> {
+
+                        final ValueIn read = wireIn.read(reply);
+
+                        while (read.hasNextSequenceItem()) {
+                            read.sequence(v -> e.add(consumer.apply(read)));
+                        }
+
+                        return e;
+                    });
+        }
+        return e;
     }
 
     @NotNull
     @Override
-    public <T> T[] toArray(T[] a) {
-        return null;
+    public <T> T[] toArray(T[] array) {
+        return asSet().toArray(array);
     }
 
     @Override
     public boolean add(U u) {
-        return false;
+        return proxyReturnBoolean(add);
     }
 
 
     @Override
     public boolean remove(Object o) {
-        return proxyReturnBooleanArgs(remove, o);
+        return proxyReturnBooleanWithArgs(remove, o);
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        return false;
+        return proxyReturnBooleanWithSequence(containsAll, c);
     }
 
     @Override
     public boolean addAll(Collection<? extends U> c) {
-        return false;
+        return proxyReturnBooleanWithSequence(addAll, c);
     }
 
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        return false;
+        return proxyReturnBooleanWithSequence(retainAll, c);
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        return false;
+        return proxyReturnBooleanWithSequence(removeAll, c);
     }
 
     @Override
     public void clear() {
-
+        proxyReturnVoid(clear);
     }
-
-    @Override
-    protected boolean eventReturnsNull(@NotNull SetEventId methodName) {
-        return false;
-    }
-
 
     enum Params implements WireKey {
         key,
@@ -153,8 +177,15 @@ class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<ClientWired
     enum SetEventId implements ParameterizeWireKey {
         size,
         isEmpty,
+        add,
+        addAll,
+        retainAll,
+        containsAll,
+        removeAll,
+        clear,
         remove(key),
-        numberOfSegements,
+        numberOfSegments,
+        contains,
         iterator(segment);
 
         private final WireKey[] params;
