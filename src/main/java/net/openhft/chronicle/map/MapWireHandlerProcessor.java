@@ -272,7 +272,22 @@ public class MapWireHandlerProcessor<K, V> implements
                     }
 
                     if (keySet.contentEquals(eventName)) {
-                        throw new UnsupportedOperationException("todo");
+                        outWire.write(reply).type("set-proxy").writeValue()
+
+                                .marshallable(w -> {
+                                    CharSequence root = csp.subSequence(0, csp
+                                            .length() - "#map".length());
+
+                                    final StringBuilder csp = acquireStringBuilder()
+                                            .append(root)
+                                            .append("#keySet");
+
+                                    w.write(CoreFields.csp).text(csp);
+                                    w.write(CoreFields.cid).int64(createCid(csp));
+                                });
+
+
+                        return;
                     }
 
                     if (values.contentEquals(eventName)) {
