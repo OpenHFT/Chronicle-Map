@@ -41,7 +41,7 @@ public abstract class MapStatelessClient< E extends ParameterizeWireKey> extends
 
 
 
-
+/*
     protected <E, O> E proxyReturnE(@NotNull final WireKey eventId,
                                     @Nullable final O arg,
                                     @NotNull final Class<E> eClass) {
@@ -58,7 +58,7 @@ public abstract class MapStatelessClient< E extends ParameterizeWireKey> extends
         return proxyReturnWireConsumer(eventId,
                 f -> f.read(CoreFields.reply)
                 .object(eClass));
-    }
+    } */
 
 
 }
