@@ -50,7 +50,8 @@ import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
 /**
  * @author Rob Austin.
  */
-public class MapWireHandlerProcessor<K, V> implements MapWireHandler<ConcurrentMap<K, V>, K, V>,
+public class MapWireHandlerProcessor<K, V> implements
+        MapWireHandler<ConcurrentMap<K, V>, K, V>,
         Consumer<WireHandlers> {
 
     private CharSequence csp;
@@ -141,7 +142,6 @@ public class MapWireHandlerProcessor<K, V> implements MapWireHandler<ConcurrentM
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandlerProcessor.class);
 
     public static final int SIZE_OF_SIZE = ClientWiredStatelessTcpConnectionHub.SIZE_OF_SIZE;
-    private final Map<Long, Runnable> incompleteWork = new HashMap<>();
 
     private final Map<Long, CharSequence> cidToCsp;
     @NotNull
@@ -214,14 +214,6 @@ public class MapWireHandlerProcessor<K, V> implements MapWireHandler<ConcurrentM
 
                 final ValueIn valueIn = inWire.readEventName(eventName);
 
-                if (!incompleteWork.isEmpty()) {
-                    Runnable runnable = incompleteWork.get(CoreFields.tid);
-                    if (runnable != null) {
-                        runnable.run();
-                        return;
-                    }
-                }
-
                 outWire.writeDocument(true, wire -> outWire.write(CoreFields.tid).int64(tid));
 
                 writeData(out -> {
@@ -252,7 +244,6 @@ public class MapWireHandlerProcessor<K, V> implements MapWireHandler<ConcurrentM
                             final Params[] params = putIfAbsent.params();
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V value = wireToV.apply(wire.read(params[1]));
-
                             final V v = map.putIfAbsent(key, value);
                             vToWire.accept(outWire.write(reply), v);
 
