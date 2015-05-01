@@ -43,7 +43,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         this.mapWireConnectionHub = mapWireConnectionHub;
         this.wireType = wireType;
 
-
         // todo - for the moment we will default to 100 entries per map, but this is for engine to
         // todo decided later.
         final ChronicleHashInstanceBuilder instance
@@ -89,6 +88,10 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
     }
 
     private byte[] bytes(Object b) {
+
+        if (b instanceof byte[])
+            return (byte[]) b;
+
         if (b == null)
             return null;
         final Wire wire = toWire();
@@ -167,7 +170,11 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
     }
 
     private <E> E toObject(Class<E> eClass, Supplier<byte[]> b) {
+
         final byte[] bytes = b.get();
+        if (byte[].class.isAssignableFrom(eClass))
+            return (E) bytes;
+
         if (bytes == null)
             return null;
         final Wire wire = toWire(bytes);

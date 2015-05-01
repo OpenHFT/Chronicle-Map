@@ -23,7 +23,7 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 public class MapWireConnectionHub implements Closeable {
 
     public static final int MAP_SERVICE = 3;
-    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandlerProcessor.class);
     private final Map<Integer, Replica> channelMap;
     private final ReplicationHub hub;
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();
