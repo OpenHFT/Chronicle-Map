@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -28,30 +29,36 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
     private final Class<K> kClass;
     private final Class<V> vClass;
-    private final MapWireConnectionHub mapWireConnectionHub;
+
     private final Bytes<ByteBuffer> buffer = Bytes.elasticByteBuffer();
     private final Map<byte[], byte[]> map;
     private final Class<? extends Wire> wireType;
 
-    public EngineMap(String name,
+    public EngineMap(Map<byte[], byte[]> underlyingMap,
                      Class<K> kClass,
                      Class<V> vClass,
-                     MapWireConnectionHub mapWireConnectionHub,
-                     Class<? extends Wire> wireType,
-                     long entries) throws IOException {
-
-        this.mapWireConnectionHub = mapWireConnectionHub;
+                     Class<? extends Wire> wireType ) throws IOException {
         this.wireType = wireType;
+        this.kClass = kClass;
+        this.vClass = vClass;
+        this.map = underlyingMap;
+
+    }
+
+
+    public static Map<byte[], byte[]> underlyingMap(@NotNull final String name,
+                                                    @NotNull final MapWireConnectionHub
+                                                            mapWireConnectionHub,
+                                                    final long entries) throws IOException {
+
 
         // todo - for the moment we will default to 100 entries per map, but this is for engine to
         // todo decided later.
         final ChronicleHashInstanceBuilder instance
                 = of(byte[].class, byte[].class).entries(entries).instance();
 
-        final BytesChronicleMap b = this.mapWireConnectionHub.acquireMap(name, instance);
-        this.map = (Map) b.delegate;
-        this.vClass = vClass;
-        this.kClass = kClass;
+        final BytesChronicleMap b = mapWireConnectionHub.acquireMap(name, instance);
+        return (Map) b.delegate;
     }
 
     @Override
@@ -113,8 +120,7 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         return toObject(vClass, () -> {
 
             final byte[] bytes = bytes(key);
-            final byte[] bytes1 = map.get(bytes);
-            return bytes1;
+            return map.get(bytes);
         });
     }
 
@@ -434,12 +440,9 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public void close() {
-        try {
-            mapWireConnectionHub.close();
-        } catch (IOException e) {
-            LOG.error("", e);
-        }
+
     }
+
 
     @Override
     public String toString() {
