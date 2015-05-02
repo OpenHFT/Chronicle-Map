@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -50,29 +49,21 @@ import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
 /**
  * @author Rob Austin.
  */
-public class MapWireHandlerProcessor<K, V> implements
-        MapWireHandler<ConcurrentMap<K, V>, K, V>,
-        Consumer<WireHandlers> {
+public class MapWireHandlerProcessor implements
+        MapWireHandler, Consumer<WireHandlers> {
 
     private CharSequence csp;
 
-    private BiConsumer<ValueOut, V> vToWire;
-    private Function<ValueIn, K> wireToK;
-    private Function<ValueIn, V> wireToV;
+    private BiConsumer<ValueOut, Object> vToWire;
+    private Function<ValueIn, Object> wireToK;
+    private Function<ValueIn, Object> wireToV;
+
 
     @Override
-    public void process(@NotNull final Wire in,
-                        @NotNull final Wire out,
-                        @NotNull final ConcurrentMap<K, V> map,
-                        @NotNull final CharSequence csp,
-                        @NotNull final BiConsumer<ValueOut, V> vToWire,
-                        @NotNull final Function<ValueIn, K> kFromWire,
-                        @NotNull final Function<ValueIn, V> vFromWire) throws StreamCorruptedException {
-
-
-        this.vToWire = vToWire;
-        this.wireToK = kFromWire;
-        this.wireToV = vFromWire;
+    public <K, V> void process(Wire in, Wire out, Map<K, V> map, CharSequence csp, BiConsumer<ValueOut, V> vToWire, Function<ValueIn, K> kFromWire, Function<ValueIn, V> vFromWire) throws StreamCorruptedException {
+        this.vToWire = (BiConsumer<ValueOut, Object>) vToWire;
+        this.wireToK = (Function<ValueIn, Object>) kFromWire;
+        this.wireToV = (Function<ValueIn, Object>) vFromWire;
 
         try {
             this.inWire = in;
@@ -170,7 +161,7 @@ public class MapWireHandlerProcessor<K, V> implements
         }
     };
 
-    private ConcurrentMap<K, V> map;
+    private Map map;
 
     public MapWireHandlerProcessor(@NotNull final Map<Long, CharSequence> cidToCsp) throws IOException {
         this.cidToCsp = cidToCsp;
@@ -242,9 +233,9 @@ public class MapWireHandlerProcessor<K, V> implements
                         valueIn.marshallable(wire -> {
 
                             final Params[] params = putIfAbsent.params();
-                            final K key = wireToK.apply(wire.read(params[0]));
-                            final V value = wireToV.apply(wire.read(params[1]));
-                            final V v = map.putIfAbsent(key, value);
+                            final Object key = wireToK.apply(wire.read(params[0]));
+                            final Object value = wireToV.apply(wire.read(params[1]));
+                            final Object v = map.putIfAbsent(key, value);
                             vToWire.accept(outWire.write(reply), v);
 
                         });
@@ -333,7 +324,7 @@ public class MapWireHandlerProcessor<K, V> implements
                     }
 
                     if (get.contentEquals(eventName)) {
-                        final K key = wireToK.apply(valueIn);
+                        final Object key = wireToK.apply(valueIn);
                         vToWire.accept(outWire.write(reply),
                                 map.get(key));
                         return;
@@ -344,8 +335,8 @@ public class MapWireHandlerProcessor<K, V> implements
                         valueIn.marshallable(wire -> {
 
                             final Params[] params = getAndPut.params();
-                            final K key = wireToK.apply(wire.read(params[0]));
-                            final V value = wireToV.apply(wire.read(params[1]));
+                            final Object key = wireToK.apply(wire.read(params[0]));
+                            final Object value = wireToV.apply(wire.read(params[1]));
 
                             vToWire.accept(outWire.write(reply),
                                     map.put(key, value));
@@ -357,7 +348,7 @@ public class MapWireHandlerProcessor<K, V> implements
 
                     if (remove.contentEquals(eventName)) {
                         outWire.write(reply);
-                        final K key = wireToK.apply(valueIn);
+                        final Object key = wireToK.apply(valueIn);
                         vToWire.accept(outWire.write(reply), map.remove(key));
                         return;
                     }
@@ -366,8 +357,8 @@ public class MapWireHandlerProcessor<K, V> implements
                     if (replace.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
                             final Params[] params = replace.params();
-                            final K key = wireToK.apply(wire.read(params[0]));
-                            final V value = wireToV.apply(wire.read(params[1]));
+                            final Object key = wireToK.apply(wire.read(params[0]));
+                            final Object value = wireToV.apply(wire.read(params[1]));
 
                             vToWire.accept(outWire.write(reply),
                                     map.replace(key, value));
@@ -381,9 +372,9 @@ public class MapWireHandlerProcessor<K, V> implements
                     if (replaceWithOldAndNewValue.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
                             final Params[] params = replaceWithOldAndNewValue.params();
-                            final K key = wireToK.apply(wire.read(params[0]));
-                            final V oldValue = wireToV.apply(wire.read(params[1]));
-                            final V newValue = wireToV.apply(wire.read(params[2]));
+                            final Object key = wireToK.apply(wire.read(params[0]));
+                            final Object oldValue = wireToV.apply(wire.read(params[1]));
+                            final Object newValue = wireToV.apply(wire.read(params[2]));
                             outWire.write(reply).bool(map.replace(key, oldValue, newValue));
 
                         });
@@ -393,8 +384,8 @@ public class MapWireHandlerProcessor<K, V> implements
                     if (putIfAbsent.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
                             final Params[] params = putIfAbsent.params();
-                            final K key = wireToK.apply(wire.read(params[0]));
-                            final V value = wireToV.apply(wire.read(params[1]));
+                            final Object key = wireToK.apply(wire.read(params[0]));
+                            final Object value = wireToV.apply(wire.read(params[1]));
                             vToWire.accept(outWire.write(reply),
                                     map.putIfAbsent(key, value));
 
