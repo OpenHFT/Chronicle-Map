@@ -3,7 +3,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.wire.CoreFields;
 import net.openhft.chronicle.wire.ParameterizeWireKey;
-import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,32 +32,10 @@ public abstract class MapStatelessClient< E extends ParameterizeWireKey> extends
             @Nullable Object... args) {
 
         return proxyReturnWireConsumerInOut(eventId,
-                toParameters(eventId, args),
-                f -> f.read(CoreFields.reply)
-                        .object(resultType));
+                CoreFields.reply, toParameters(eventId, args),
+                f -> f.object(resultType));
 
     }
-
-
-
-/*
-    protected <E, O> E proxyReturnE(@NotNull final WireKey eventId,
-                                    @Nullable final O arg,
-                                    @NotNull final Class<E> eClass) {
-
-
-        return proxyReturnWireConsumerInOut(eventId,
-                valueOut -> valueOut.object(arg),
-                f -> f.read(CoreFields.reply)
-                        .object(eClass));
-    }
-
-    protected <E> E proxyReturnE(@NotNull final WireKey eventId,
-                                 @NotNull final Class<E> eClass) {
-        return proxyReturnWireConsumer(eventId,
-                f -> f.read(CoreFields.reply)
-                .object(eClass));
-    } */
 
 
 }

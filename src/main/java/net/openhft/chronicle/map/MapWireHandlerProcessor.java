@@ -209,7 +209,7 @@ public class MapWireHandlerProcessor<K, V> implements
 
                     if (clear.contentEquals(eventName)) {
                         map.clear();
-                        outWire.writeEventName(reply).marshallable(AbstactStatelessClient.EMPTY);
+
                         return;
                     }
 
@@ -223,7 +223,6 @@ public class MapWireHandlerProcessor<K, V> implements
                         }
 
                         map.putAll(data);
-                        outWire.writeEventName(reply).marshallable(AbstactStatelessClient.EMPTY);
                         return;
                     }
 
@@ -436,31 +435,26 @@ public class MapWireHandlerProcessor<K, V> implements
      */
     private void writeData(@NotNull Consumer<WireOut> c) {
 
-        final long position = outWire.bytes().position();
 
         outWire.writeDocument(false, out -> {
 
-            start = outWire.bytes().position();
-
+            final long position = outWire.bytes().position();
             try {
                 c.accept(outWire);
 
-            } catch (Exception e) {
-
-                LOG.error("", e);
-                out.getValueOut()
-                        .type(e.getClass().getSimpleName())
-                        .writeValue().text(e.getMessage());
+            } catch (Exception exception) {
+                outWire.bytes().position(position);
+                outWire.writeEventName(() -> "exception").marshallable(
+                        new net.openhft.chronicle.wire.util.ExceptionMarshaller(exception));
             }
+
+            // write 'reply : {} ' if no data was sent
+            if (position == outWire.bytes().position()) {
+                outWire.writeEventName(reply).marshallable(AbstactStatelessClient.EMPTY);
+            }
+
         });
 
-        // rollback if no data was written
-        if (start == outWire.bytes().position()) {
-            if (outWire.bytes().position() == start) {
-                outWire.bytes().position(position);
-            }
-
-        }
 
     }
 
