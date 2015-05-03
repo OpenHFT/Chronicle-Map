@@ -88,7 +88,6 @@ public class MapWireHandlerProcessor<K, V> implements
   public  enum EventId implements ParameterizeWireKey {
         longSize,
         size,
-        isEmpty,
         containsKey(key),
         containsValue(value),
         get(key),
@@ -157,7 +156,6 @@ public class MapWireHandlerProcessor<K, V> implements
                 }
             }
 
-
         }
     };
 
@@ -211,6 +209,7 @@ public class MapWireHandlerProcessor<K, V> implements
 
                     if (clear.contentEquals(eventName)) {
                         map.clear();
+                        outWire.writeEventName(reply).marshallable(AbstactStatelessClient.EMPTY);
                         return;
                     }
 
@@ -224,9 +223,9 @@ public class MapWireHandlerProcessor<K, V> implements
                         }
 
                         map.putAll(data);
+                        outWire.writeEventName(reply).marshallable(AbstactStatelessClient.EMPTY);
                         return;
                     }
-
 
                     if (EventId.putIfAbsent.contentEquals(eventName)) {
 
@@ -236,34 +235,20 @@ public class MapWireHandlerProcessor<K, V> implements
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V value = wireToV.apply(wire.read(params[1]));
                             final V v = map.putIfAbsent(key, value);
-                            vToWire.accept(outWire.write(reply), v);
+                            vToWire.accept(outWire.writeEventName(reply), v);
 
                         });
 
                         return;
                     }
 
-
-                    // -- THESE METHODS ARE USED BOTH MY MAP AND ENTRY-SET
                     if (size.contentEquals(eventName)) {
-                        outWire.write(reply).int32(map.size());
-                        return;
-                    }
-
-
-                    if (longSize.contentEquals(eventName)) {
-                        outWire.write(reply).int32(map.size());
-                        return;
-                    }
-
-
-                    if (isEmpty.contentEquals(eventName)) {
-                        outWire.write(reply).bool(map.isEmpty());
+                        outWire.writeEventName(reply).int64(map.size());
                         return;
                     }
 
                     if (keySet.contentEquals(eventName)) {
-                        outWire.write(reply).type("set-proxy").writeValue()
+                        outWire.writeEventName(reply).type("set-proxy").writeValue()
 
                                 .marshallable(w -> {
                                     CharSequence root = csp.subSequence(0, csp
@@ -287,7 +272,7 @@ public class MapWireHandlerProcessor<K, V> implements
 
 
                     if (entrySet.contentEquals(eventName)) {
-                        outWire.write(reply).type("set-proxy").writeValue()
+                        outWire.writeEventName(reply).type("set-proxy").writeValue()
 
                                 .marshallable(w -> {
                                     CharSequence root = csp.subSequence(0, csp
@@ -306,26 +291,26 @@ public class MapWireHandlerProcessor<K, V> implements
                     }
 
                     if (size.contentEquals(eventName)) {
-                        outWire.write(reply).int64(map.size());
+                        outWire.writeEventName(reply).int64(map.size());
                         return;
                     }
 
 
                     if (containsKey.contentEquals(eventName)) {
-                        outWire.write(reply)
+                        outWire.writeEventName(reply)
                                 .bool(map.containsKey(wireToK.apply(valueIn)));
                         return;
                     }
 
                     if (containsValue.contentEquals(eventName)) {
-                        outWire.write(reply).bool(
+                        outWire.writeEventName(reply).bool(
                                 map.containsValue(wireToV.apply(valueIn)));
                         return;
                     }
 
                     if (get.contentEquals(eventName)) {
                         final K key = wireToK.apply(valueIn);
-                        vToWire.accept(outWire.write(reply),
+                        vToWire.accept(outWire.writeEventName(reply),
                                 map.get(key));
                         return;
                     }
@@ -338,7 +323,7 @@ public class MapWireHandlerProcessor<K, V> implements
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V value = wireToV.apply(wire.read(params[1]));
 
-                            vToWire.accept(outWire.write(reply),
+                            vToWire.accept(outWire.writeEventName(reply),
                                     map.put(key, value));
 
                         });
@@ -347,9 +332,8 @@ public class MapWireHandlerProcessor<K, V> implements
                     }
 
                     if (remove.contentEquals(eventName)) {
-                        outWire.write(reply);
                         final K key = wireToK.apply(valueIn);
-                        vToWire.accept(outWire.write(reply), map.remove(key));
+                        vToWire.accept(outWire.writeEventName(reply), map.remove(key));
                         return;
                     }
 
@@ -360,7 +344,7 @@ public class MapWireHandlerProcessor<K, V> implements
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V value = wireToV.apply(wire.read(params[1]));
 
-                            vToWire.accept(outWire.write(reply),
+                            vToWire.accept(outWire.writeEventName(reply),
                                     map.replace(key, value));
 
                         });
@@ -375,7 +359,7 @@ public class MapWireHandlerProcessor<K, V> implements
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V oldValue = wireToV.apply(wire.read(params[1]));
                             final V newValue = wireToV.apply(wire.read(params[2]));
-                            outWire.write(reply).bool(map.replace(key, oldValue, newValue));
+                            outWire.writeEventName(reply).bool(map.replace(key, oldValue, newValue));
 
                         });
                         return;
@@ -386,7 +370,7 @@ public class MapWireHandlerProcessor<K, V> implements
                             final Params[] params = putIfAbsent.params();
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V value = wireToV.apply(wire.read(params[1]));
-                            vToWire.accept(outWire.write(reply),
+                            vToWire.accept(outWire.writeEventName(reply),
                                     map.putIfAbsent(key, value));
 
                         });
@@ -400,13 +384,13 @@ public class MapWireHandlerProcessor<K, V> implements
 
 
                     if (getApplicationVersion.contentEquals(eventName)) {
-                        outWire.write(reply).text(applicationVersion());
+                        outWire.writeEventName(reply).text(applicationVersion());
                         return;
                     }
 
 
                     if (hashCode.contentEquals(eventName)) {
-                        outWire.write(reply).int32(map.hashCode());
+                        outWire.writeEventName(reply).int32(map.hashCode());
                         return;
                     }
 
