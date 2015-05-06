@@ -270,17 +270,20 @@ public class FilePerKeyMap implements Map<String, String> {
                                 String mapVal = getFileContents(p);
                                 lastUpdate.put(p.toFile(), mapVal);
                                 if(isProgrammaticUpdate(p.toFile())){
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.NEW, true, mapKey,mapVal));
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.NEW, true, mapKey,null, mapVal));
                                 }else {
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.NEW, false, mapKey, mapVal));
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.NEW, false, mapKey, null, mapVal));
                                 }
                             } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                                 Path p = dirPath.resolve(fileName);
+
+                                String lastVal = lastUpdate.get(p.toFile());
                                 lastUpdate.remove(p.toFile());
+
                                 if(isProgrammaticUpdate(p.toFile())){
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, true, mapKey, null));
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, true, mapKey, lastVal, null));
                                 }else {
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, false, mapKey, null));
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, false, mapKey, lastVal, null));
                                 }
                             } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                                 Path p = dirPath.resolve(fileName);
@@ -296,9 +299,9 @@ public class FilePerKeyMap implements Map<String, String> {
                                 }
 
                                 if(isProgrammaticUpdate(p.toFile())){
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.UPDATE, true, mapKey,mapVal));
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.UPDATE, true, mapKey,lastVal,mapVal));
                                 }else {
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.UPDATE, false, mapKey, mapVal));
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.UPDATE, false, mapKey,lastVal,mapVal));
                                 }
                             }
                         }

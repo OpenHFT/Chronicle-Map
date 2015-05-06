@@ -4,18 +4,26 @@ package net.openhft.chronicle.map;
  * Created by daniel on 23/04/15.
  */
 public class FPMEvent {
-    public enum EventType {NEW, UPDATE, DELETE}
-
     private EventType eventType;
     private boolean programmatic;
     private String key;
     private String value;
+    private String lastValue;
 
-    public FPMEvent(EventType eventType, boolean programmatic, String key, String value) {
+    public FPMEvent(EventType eventType, boolean programmatic, String key, String lastValue, String value) {
         this.eventType = eventType;
         this.programmatic = programmatic;
         this.key = key;
         this.value = value;
+        this.lastValue = lastValue;
+    }
+
+    public String getLastValue() {
+        return lastValue;
+    }
+
+    public void setLastValue(String lastValue) {
+        this.lastValue = lastValue;
     }
 
     public EventType getEventType() {
@@ -57,6 +65,11 @@ public class FPMEvent {
                 ", programmatic=" + programmatic +
                 ", key='" + key + '\'' +
                 ", value='" + value + '\'' +
+                ", lastValue='" + lastValue + '\'' +
                 '}';
     }
+
+    public enum EventType {NEW, UPDATE, DELETE}
+
+
 }
