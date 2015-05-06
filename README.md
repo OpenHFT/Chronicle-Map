@@ -317,7 +317,7 @@ ChronicleMap is able to map memory to a file and hence this can impact the total
 able to configure.
 
 - Windows allocates memory and disk eagerly. Windows will fail if more than 4 GB is allocated in a single memory
-mapping, ( calculated as 4GB = 2^20 * 4 KB pages). Windows doesn't fail when a memory mapped region is mapped, rather it will fail when it is used up. This limitation doesn't apply to newer or server based versions of Windows. Eager memory allocation means you can't map more than free memory, but it should reduce jitter when you use it. In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.
+mapping, ( calculated as 4GB = 2^20 * 4 KB pages). Windows doesn't fail when a memory mapped region is mapped, rather it will fail when it is used up. Eager memory allocation means you can't map more than free memory, but it should reduce jitter when you use it. In the future we may support multiple mappings to avoid this limitation, but there is no immediate plan to do so.
 - Linux allocates memory and disk lazily. Linux systems see a performance degradation at around 200% of main memory.
 - Mac OSX allocates memory lazily and disk eagerly.
 
