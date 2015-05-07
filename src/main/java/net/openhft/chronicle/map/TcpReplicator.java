@@ -19,13 +19,13 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.function.SerializableFunction;
-import net.openhft.chronicle.hash.serialization.internal.ReaderWithSize;
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.impl.util.BuildVersion;
+import net.openhft.chronicle.hash.serialization.internal.ReaderWithSize;
+import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
@@ -36,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.*;
 import java.nio.BufferUnderflowException;
@@ -49,9 +48,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static net.openhft.chronicle.hash.impl.util.BuildVersion.version;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTION_ID;
-import static net.openhft.chronicle.hash.impl.util.BuildVersion.version;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
 
 interface Work {
@@ -657,8 +656,12 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 return;
 
             if (!isValidVersionNumber(attached.serverVersion)) {
-                LOG.warn("Please check that you don't have a third party system incorrectly connecting to ChronicleMap, " +
-                        "Closing the remote connection as Chronicle can not make sense of the remote version number received from the external connection, version="+attached.serverVersion+", Chronicle is expecting the version number to only contain '.',A-Z,a-z,0-9");
+                LOG.warn("Please check that you don't have a third party system incorrectly " +
+                        "connecting to ChronicleMap, " +
+                        "Closing the remote connection as Chronicle can not make sense of the remote " +
+                        "version number received from the external connection, " +
+                        "version=" + attached.serverVersion + ", Chronicle is expecting the version " +
+                        "number to only contain '.',A-Z,a-z,0-9");
                 socketChannel.close();
             }
 
@@ -690,9 +693,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             attached.hasRemoteHeartbeatInterval = true;
 
             // now we're finished we can get on with reading the entries
-            attached.handShakingComplete = true;
             attached.remoteModificationIterator.dirtyEntries(attached.remoteBootstrapTimestamp);
             reader.entriesFromBuffer(attached, key);
+            attached.handShakingComplete = true;
         }
     }
 
@@ -721,7 +724,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 entryWriter.workCompleted();
 
         } else if (attached.remoteModificationIterator != null)
-            entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
+            entryWriter.entriesToBuffer(attached.remoteModificationIterator);
 
         try {
             final int len = entryWriter.writeBufferToSocket(socketChannel, approxTime);
@@ -734,10 +737,18 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
             if (!entryWriter.hasBytesToWrite()
                     && !entryWriter.isWorkIncomplete()
-                    && hasNext(attached))
+                    && !hasNext(attached)
+                    && attached.isHandShakingComplete()) {
                 // if we have no more data to write to the socket then we will
                 // un-register OP_WRITE on the selector, until more data becomes available
+                // The OP_WRITE  will get added back in as soon as we have data to write
+
+                if (LOG.isDebugEnabled())
+                    LOG.debug("Disabling OP_WRITE to remoteIdentifier=" +
+                            attached.remoteIdentifier +
+                            ", localIdentifier=" + localIdentifier);
                 key.interestOps(key.interestOps() & ~OP_WRITE);
+            }
         } catch (IOException e) {
             quietClose(key, e);
             if (!attached.isServer)
@@ -748,7 +759,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
     private boolean hasNext(Attached attached) {
         return attached.remoteModificationIterator != null
-                && !attached.remoteModificationIterator.hasNext();
+                && attached.remoteModificationIterator.hasNext();
     }
 
     /**
@@ -887,6 +898,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
             final ServerSocketChannel serverChannel = openServerSocketChannel();
 
+            if (serverChannel == null)
+                return null;
+
             serverChannel.socket().setReceiveBufferSize(BUFFER_SIZE);
             serverChannel.configureBlocking(false);
             serverChannel.register(TcpReplicator.this.selector, 0);
@@ -898,6 +912,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 if (serverSocket != null)
                     closeables.add(serverSocket);
             }
+
+            if (serverSocket == null)
+                return null;
 
             serverSocket.setReuseAddress(true);
 
@@ -1007,6 +1024,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
         @Nullable
         public Replica.ModificationIterator remoteModificationIterator;
+        // used for connect later
         public AbstractConnector connector;
         public long remoteBootstrapTimestamp = Long.MIN_VALUE;
         public byte remoteIdentifier = Byte.MIN_VALUE;
@@ -1124,18 +1142,10 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         /**
          * writes all the entries that have changed, to the buffer which will later be written to
          * TCP/IP
+         *  @param modificationIterator a record of which entries have modification
          *
-         * @param modificationIterator a record of which entries have modification
-         * @param selectionKey
          */
-        void entriesToBuffer(@NotNull final Replica.ModificationIterator modificationIterator,
-                             @NotNull final SelectionKey selectionKey) {
-
-            final SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
-            final Attached attached = (Attached) selectionKey.attachment();
-
-            // this can occur when new map are added to a channel
-            final boolean handShakingComplete = attached.isHandShakingComplete();
+        void entriesToBuffer(@NotNull final Replica.ModificationIterator modificationIterator) {
 
             int entriesWritten = 0;
             try {
@@ -1230,30 +1240,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             in().writeLong(localHeartbeatInterval);
         }
 
-        /**
-         * removes back in the OP_WRITE from the selector, otherwise it'll spin loop. The OP_WRITE
-         * will get added back in as soon as we have data to write
-         *
-         * @param socketChannel the socketChannel we wish to stop writing to
-         * @param attached      data associated with the socketChannels key
-         */
-        public synchronized void disableWrite(@NotNull final SocketChannel socketChannel,
-                                              @NotNull final Attached attached) {
-            try {
-                SelectionKey key = socketChannel.keyFor(selector);
-                if (key != null) {
-                    if (attached.isHandShakingComplete() && selector.isOpen()) {
-                        if (LOG.isDebugEnabled())
-                            LOG.debug("Disabling OP_WRITE to remoteIdentifier=" +
-                                    attached.remoteIdentifier +
-                                    ", localIdentifier=" + localIdentifier);
-                        key.interestOps(key.interestOps() & ~OP_WRITE);
-                    }
-                }
-            } catch (Exception e) {
-                LOG.error("", e);
-            }
-        }
 
         public boolean doWork() {
             return uncompletedWork != null && uncompletedWork.doWork(in());
