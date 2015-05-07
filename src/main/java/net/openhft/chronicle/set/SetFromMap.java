@@ -41,8 +41,6 @@ class SetFromMap<E> extends AbstractSet<E>
     private transient Set<E> s;       // Its keySet
 
     SetFromMap(ChronicleMap<E, DummyValue> map) {
-        if (!map.isEmpty())
-            throw new IllegalArgumentException("Map is non-empty");
         m = map;
         s = map.keySet();
     }
