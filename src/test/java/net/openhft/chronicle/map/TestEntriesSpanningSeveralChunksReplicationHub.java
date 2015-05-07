@@ -40,7 +40,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             ChronicleMapBuilder<CharSequence, CharSequence> builder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                             .averageKeySize(10)
-                            .averageValueSize(100)
+                            .averageValueSize(10)
                             .entries(1000);
 
             byte identifier = (byte) 1;
@@ -76,7 +76,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             ChronicleMapBuilder<CharSequence, CharSequence> builder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                             .averageKeySize(10)
-                            .averageValueSize(100)
+                            .averageValueSize(10)
                             .entries(1000);
 
             byte identifier = (byte) 2;
