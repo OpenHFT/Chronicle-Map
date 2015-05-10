@@ -3,9 +3,8 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.lang.model.constraints.MaxSize;
-import net.openhft.lang.values.DoubleArray;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -22,6 +21,8 @@ import static org.junit.Assert.assertEquals;
  */
 public class TestEntriesSpanningSeveralChunksReplicationHub {
 
+
+    @Ignore("performacne test")
     @Test
     public void testReplicationHubHandlesSpanningSeveralChunksEntries()
             throws IOException, InterruptedException {
@@ -137,6 +138,8 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
         final HashMap<Short, ChronicleMap> map1 = new HashMap<>();
         final HashMap<Short, ChronicleMap> map2 = new HashMap<>();
 
+        ReplicationHub hubOnServer1;
+        ReplicationHub hubOnServer2;
 
         // server 1 with  identifier = 1
         {
@@ -149,9 +152,9 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             byte identifier = (byte) 1;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8053);
+                    .of(8059);
 
-            ReplicationHub hubOnServer1 = ReplicationHub.builder()
+            hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
                     .maxNumberOfChannels(NUMBER_OF_CHANNELS)
                     .createWithId(identifier);
@@ -177,15 +180,15 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             byte identifier = (byte) 2;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8054, new InetSocketAddress("localhost", 8053));
+                    .of(8054, new InetSocketAddress("localhost", 8059));
 
-            ReplicationHub hubOnServer1 = ReplicationHub.builder()
+            hubOnServer2 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
                     .maxNumberOfChannels(NUMBER_OF_CHANNELS)
                     .createWithId(identifier);
 
             for (short channelId = 1; channelId < NUMBER_OF_CHANNELS; channelId++) {
-                ReplicationChannel channel = hubOnServer1.createChannel(channelId);
+                ReplicationChannel channel = hubOnServer2.createChannel(channelId);
                 ChronicleMap map = builder.instance().replicatedViaChannel(channel).create();
 
                 map.put("key", channelId);
@@ -224,10 +227,49 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
                 Assert.assertEquals(channelId, v1.get("key"));
                 Assert.assertEquals(channelId, v2.get("key"));
 
+                v1.put("key2", (short) 1);
+                v2.put("key2", (short) 1);
                 break;
             }
 
         }
+
+
+        // check that the maps are the same, if the are not the same the test will timeout
+        // we have to give a few seconds for the replication to propagate
+        for (short channelId = 1; channelId < NUMBER_OF_CHANNELS; channelId++) {
+            // allow time for the recompilation to resolve
+
+            final ChronicleMap v1 = map1.get(channelId);
+            final ChronicleMap v2 = map2.get(channelId);
+
+            for (; ; ) {
+
+
+                if (v1 == null || v2 == null) {
+                    Thread.sleep(10);
+                    continue;
+                }
+
+                if (v1.isEmpty() || v2.isEmpty()) {
+                    Thread.sleep(10);
+                    continue;
+                }
+
+                if (!v1.equals(v2)) {
+                    Thread.sleep(10);
+                    continue;
+                }
+
+
+                Assert.assertEquals((short)1, v1.get("key2"));
+                Assert.assertEquals((short)1, v2.get("key2"));
+
+                break;
+            }
+
+        }
+
 
         // close
 

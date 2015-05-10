@@ -25,7 +25,6 @@ public class TestNesterInterfaceMarshal {
      * @throws Exception
      */
     @Test
-
     public void testReplicatedMap() throws Exception {
 
         ChronicleMap chronicleMap = null;

@@ -153,8 +153,7 @@ public class StatelessClientTest {
         }
     }
 
-    // TODO ignore why?
-    @Ignore
+
     @Test(timeout = 10000)
     public void testBufferOverFlowPutAllAndEntrySet() throws IOException, InterruptedException {
         int port = s_port++;

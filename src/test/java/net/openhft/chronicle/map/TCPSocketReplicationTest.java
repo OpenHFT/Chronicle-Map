@@ -122,7 +122,6 @@ public class TCPSocketReplicationTest {
         assertTrue(!map1.isEmpty());
     }
 
-    @Ignore("todo fix : failed on TC")
     @Test
     public void test2() throws IOException, InterruptedException {
 
