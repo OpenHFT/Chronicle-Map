@@ -130,6 +130,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
     public static final int NUMBER_OF_CHANNELS = 1000;
 
+    @Ignore
     @Test(timeout = 100000)
     public void test1000Channels()
             throws IOException, InterruptedException {
