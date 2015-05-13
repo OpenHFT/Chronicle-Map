@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
+import net.openhft.chronicle.hash.replication.ConnectionListener;
 import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
@@ -85,6 +86,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
             new KeyInterestUpdater(OP_WRITE, selectionKeysStore);
     private final BitSet activeKeys = new BitSet(selectionKeysStore.length);
     private final long heartBeatIntervalMillis;
+    private final ConnectionListener connectionListener;
     private long largestEntrySoFar = 128;
 
     @NotNull
@@ -128,7 +130,8 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                          @NotNull final TcpTransportAndNetworkConfig replicationConfig,
                          @Nullable final RemoteNodeValidator remoteNodeValidator,
                          @Nullable final StatelessClientParameters statelessClientParameters,
-                         String name)
+                         String name,
+                         @Nullable final ConnectionListener connectionListener)
             throws IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig());
@@ -147,7 +150,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
 
         this.externalizable = externalizable;
         this.replicationConfig = replicationConfig;
-
+        this.connectionListener = connectionListener;
         this.remoteNodeValidator = remoteNodeValidator;
         this.name = name;
         start();
@@ -328,6 +331,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                 try {
                     heartbeatCheckHasReceived(key, approxTime);
                 } catch (Exception e) {
+
                     if (LOG.isDebugEnabled())
                         LOG.debug("", e);
                 }
@@ -413,6 +417,12 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
     private void quietClose(@NotNull final SelectionKey key, @NotNull final Exception e) {
         if (LOG.isDebugEnabled())
             LOG.debug("", e);
+
+        // todo OZAN :
+        //  null check (Attached)key.attachment();
+        //      connectionListener.onDiconnect( ((SocketChannel)key.channel()).socket().getInetAddress(),         ((Attached)key.attachment()).remoteIdentifier);
+
+
         closeEarlyAndQuietly(key.channel());
     }
 
@@ -600,6 +610,11 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                 return;
 
             attached.remoteIdentifier = remoteIdentifier;
+
+
+            // todo OZAN : add call to onConnectedListener.
+            //connectionListener. onConnected(channel.socket().getInetAddress() ,  attached
+            //         .remoteIdentifier, attached.isServer );
 
             // we use the as iterating the activeKeys via the bitset wont create and Objects
             // but if we use the selector.keys() this will.
@@ -1040,7 +1055,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
         public byte remoteIdentifier = Byte.MIN_VALUE;
         public boolean hasRemoteHeartbeatInterval;
         // true if its socket is a ServerSocket
-        public boolean isServer;        // the frequency the remote node will send a heartbeat
+        public boolean isServer;
         public boolean handShakingComplete;
         public String serverVersion;
         public long remoteHeartbeatInterval = heartBeatIntervalMillis;
