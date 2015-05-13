@@ -126,7 +126,9 @@ final class Replicators {
 
                 return new TcpReplicator(replica, entryExternalizable,
                         tcpConfig,
-                        replication.remoteNodeValidator(), statelessClientParameters);
+                        replication.remoteNodeValidator(),
+                        statelessClientParameters,
+                        replication.connectionListener());
             }
         };
     }

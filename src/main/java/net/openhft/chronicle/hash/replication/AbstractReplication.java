@@ -26,16 +26,20 @@ import java.io.Serializable;
  */
 public abstract class AbstractReplication implements Serializable {
     private final byte localIdentifier;
-    private final
+
     @Nullable
-    TcpTransportAndNetworkConfig tcpConfig;
-    private final
+    private final TcpTransportAndNetworkConfig tcpConfig;
+
     @Nullable
-    UdpTransportConfig udpConfig;
-    private final
+    private final UdpTransportConfig udpConfig;
+
     @Nullable
-    transient RemoteNodeValidator remoteNodeValidator;
+    private final transient RemoteNodeValidator remoteNodeValidator;
+
     private final boolean bootstrapOnlyLocalEntries;
+
+    @Nullable
+    private final transient ConnectionListener connectionListener;
 
     // package-private to forbid subclassing from outside of the package
     AbstractReplication(byte localIdentifier, Builder builder) {
@@ -44,6 +48,7 @@ public abstract class AbstractReplication implements Serializable {
         udpConfig = builder.udpConfig;
         remoteNodeValidator = builder.remoteNodeValidator;
         bootstrapOnlyLocalEntries = builder.bootstrapOnlyLocalEntries;
+        connectionListener = builder.connectionListener;
     }
 
     @Override
@@ -78,6 +83,10 @@ public abstract class AbstractReplication implements Serializable {
         return bootstrapOnlyLocalEntries;
     }
 
+    public ConnectionListener connectionListener() {
+        return this.connectionListener;
+    }
+
     /**
      * Builder of {@link AbstractReplication} configurations. This class and it's subclasses are
      * mutable, configuration methods mutate the builder and return it back for convenient
@@ -92,6 +101,8 @@ public abstract class AbstractReplication implements Serializable {
         private TcpTransportAndNetworkConfig tcpConfig = null;
         private UdpTransportConfig udpConfig = null;
         private RemoteNodeValidator remoteNodeValidator = null;
+        private ConnectionListener connectionListener = null;
+
         private boolean bootstrapOnlyLocalEntries = false;
 
         // package-private to forbid subclassing from outside of the package
@@ -121,6 +132,13 @@ public abstract class AbstractReplication implements Serializable {
         @NotNull
         public B remoteNodeValidator(@Nullable RemoteNodeValidator remoteNodeValidator) {
             this.remoteNodeValidator = remoteNodeValidator;
+            return (B) this;
+        }
+
+
+        @NotNull
+        public B connectionListener(@Nullable ConnectionListener connectionListener) {
+            this.connectionListener = connectionListener;
             return (B) this;
         }
 
