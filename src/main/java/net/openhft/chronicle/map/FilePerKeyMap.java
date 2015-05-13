@@ -1,10 +1,14 @@
 package net.openhft.chronicle.map;
 
 import com.sun.nio.file.SensitivityWatchEventModifier;
+import net.openhft.chronicle.core.util.ThrowingFunction;
+import org.jcp.xml.dsig.internal.SignerOutputStream;
 import org.jetbrains.annotations.NotNull;
+import org.xerial.snappy.SnappyInputStream;
+import org.xerial.snappy.SnappyOutputStream;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,32 +38,48 @@ import java.util.stream.Stream;
  * very few events if they are done quickly and there is a significant delay
  * between the event and the event being triggered.
  */
-public class FilePerKeyMap implements Map<String, String> {
+public class FilePerKeyMap implements Map<String, String>, Closeable {
     private final Path dirPath;
-    private final Map<File, Long> lastModifiedByProgram = new ConcurrentHashMap<>();
-    private final Map<File, String> lastUpdate = new ConcurrentHashMap<>();
-    private final List<Consumer<FPMEvent>> listeners = new ArrayList<>();
-    private final FPMWatcher fileFpmWatcher = new FPMWatcher();
+    private final Map<File, FileRecord> lastFile = new ConcurrentHashMap<>();
 
-    public FilePerKeyMap(String dir){
+    private final List<Consumer<FPMEvent>> listeners = new ArrayList<>();
+    private final Thread fileFpmWatcher;
+    private volatile boolean closed = false;
+    private boolean putReturnsNull;
+    private boolean snappyValues;
+    private ThrowingFunction<InputStream, InputStream, IOException> reading = i -> i;
+    private ThrowingFunction<OutputStream, OutputStream, IOException> writing = o -> o;
+
+    public FilePerKeyMap(String dir) throws IOException {
         this.dirPath = Paths.get(dir);
-        try {
-            Files.createDirectories(dirPath);
-        }catch (IOException e){
-            throw new RuntimeException(e);
-        }
+        Files.createDirectories(dirPath);
+        WatchService watcher = FileSystems.getDefault().newWatchService();
+        dirPath.register(watcher, new WatchEvent.Kind[]{
+                        StandardWatchEventKinds.ENTRY_CREATE,
+                        StandardWatchEventKinds.ENTRY_DELETE,
+                        StandardWatchEventKinds.ENTRY_MODIFY},
+                SensitivityWatchEventModifier.HIGH
+        );
+
+        fileFpmWatcher = new Thread(new FPMWatcher(watcher), dir + "-watcher");
         fileFpmWatcher.start();
     }
 
-    public void registerForEvents(Consumer<FPMEvent> listener){
+    public void registerForEvents(Consumer<FPMEvent> listener) {
         listeners.add(listener);
     }
 
-    public void unregisterForEvents(Consumer<FPMEvent> listener){
+    public void unregisterForEvents(Consumer<FPMEvent> listener) {
         listeners.remove(listener);
     }
 
-    private void fireEvent(FPMEvent event){
+    public void valueMarshaller(ThrowingFunction<InputStream, InputStream, IOException> reading,
+                                ThrowingFunction<OutputStream, OutputStream, IOException> writing) {
+        this.reading = reading;
+        this.writing = writing;
+    }
+
+    private void fireEvent(FPMEvent event) {
         for (Consumer<FPMEvent> listener : listeners) {
             listener.accept(event);
         }
@@ -67,22 +87,22 @@ public class FilePerKeyMap implements Map<String, String> {
 
     @Override
     public int size() {
-        return (int)getFiles().count();
+        return (int) getFiles().count();
     }
 
     @Override
     public boolean isEmpty() {
-        return size()==0 ? true: false;
+        return size() == 0;
     }
 
     @Override
     public boolean containsKey(Object key) {
-        return getFiles().anyMatch(p->p.getFileName().toString().equals(key));
+        return getFiles().anyMatch(p -> p.getFileName().toString().equals(key));
     }
 
     @Override
     public boolean containsValue(Object value) {
-        return getFiles().anyMatch(p->getFileContents(p).equals(value));
+        return getFiles().anyMatch(p -> getFileContents(p).equals(value));
     }
 
     @Override
@@ -93,8 +113,9 @@ public class FilePerKeyMap implements Map<String, String> {
 
     @Override
     public String put(String key, String value) {
+        if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
-        String existingValue = getFileContents(path);
+        String existingValue = putReturnsNull ? null : getFileContents(path);
         writeToFile(path, value);
 
         return existingValue;
@@ -102,8 +123,9 @@ public class FilePerKeyMap implements Map<String, String> {
 
     @Override
     public String remove(Object key) {
+        if (closed) throw new IllegalStateException("closed");
         String existing = get(key);
-        if(existing != null){
+        if (existing != null) {
             deleteFile(dirPath.resolve((String) key));
         }
         return existing;
@@ -111,7 +133,7 @@ public class FilePerKeyMap implements Map<String, String> {
 
     @Override
     public void putAll(Map<? extends String, ? extends String> m) {
-        m.entrySet().stream().forEach(e->put(e.getKey(), e.getValue()));
+        m.entrySet().stream().forEach(e -> put(e.getKey(), e.getValue()));
     }
 
     @Override
@@ -143,8 +165,7 @@ public class FilePerKeyMap implements Map<String, String> {
     }
 
 
-
-    private Stream<Path> getFiles(){
+    private Stream<Path> getFiles() {
         try {
             return Files.walk(dirPath).filter(p -> !Files.isDirectory(p));
         } catch (IOException e) {
@@ -152,48 +173,64 @@ public class FilePerKeyMap implements Map<String, String> {
         }
     }
 
-    private String getFileContents(Path path){
-        String existingValue = null;
-        if(Files.exists(path)) {
-            try {
-                existingValue = Files.readAllLines(path).stream().collect(Collectors.joining("\n"));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+    String getFileContents(Path path) {
+        try {
+            File file = path.toFile();
+            FileRecord last = lastFile.get(file);
+            if (last != null && file.lastModified() == last.timestamp)
+                return last.contents;
+            return getFileContents0(path);
+        } catch (IOException ioe) {
+            throw new IllegalStateException(ioe);
         }
-        return existingValue;
     }
 
-    private void writeToFile(Path path, String value){
-        try {
-            Files.write(path, value.getBytes(), StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING,
-                    StandardOpenOption.WRITE);
-            lastModifiedByProgram.put(path.toFile(), path.toFile().lastModified());
+    String getFileContents0(Path path) throws IOException {
+        if (!Files.exists(path)) return null;
+        File file = path.toFile();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream((int) file.length());
+        byte[] bytes = new byte[1024];
+        try (InputStream fis = reading.apply(new FileInputStream(file))) {
+            for (int len; (len = fis.read(bytes)) > 0; )
+                baos.write(bytes, 0, len);
+        }
+        return baos.toString();
+    }
+
+    private void writeToFile(Path path, String value) {
+        File file = path.toFile();
+        File tmpFile = new File(file.getParentFile(), "." + file.getName());
+        try (PrintWriter pw = new PrintWriter(new BufferedOutputStream(writing.apply(new FileOutputStream(tmpFile))))) {
+            pw.write(value);
         } catch (IOException e) {
             throw new AssertionError(e);
         }
+        tmpFile.renameTo(file);
     }
 
-    private void deleteFile(Path path){
-        try {
-            Files.delete(path);
-            lastModifiedByProgram.put(path.toFile(), path.toFile().lastModified());
-        } catch (IOException e) {
-            throw new AssertionError(e);
-        }
+    private void deleteFile(Path path) {
+        File key = path.toFile();
+        key.delete();
     }
 
-    public void close(){
+    public void close() {
+        closed = true;
         fileFpmWatcher.interrupt();
     }
 
-    private static class FPMEntry<String> implements Entry<String, String>
-    {
+    public void putReturnsNull(boolean putReturnsNull) {
+        this.putReturnsNull = putReturnsNull;
+    }
+
+    public void snappyValues(boolean snappyValues) {
+        this.snappyValues = snappyValues;
+    }
+
+    private static class FPMEntry<String> implements Entry<String, String> {
         private String key;
         private String value;
 
-        public FPMEntry(String key, String value){
+        public FPMEntry(String key, String value) {
             this.key = key;
             this.value = value;
         }
@@ -234,92 +271,92 @@ public class FilePerKeyMap implements Map<String, String> {
         }
     }
 
-    private class FPMWatcher extends Thread{
-        @Override
-        public void run(){
-            try {
-                WatchService watcher = FileSystems.getDefault().newWatchService();
-                dirPath.register(watcher, new WatchEvent.Kind[]{
-                                StandardWatchEventKinds.ENTRY_CREATE,
-                                StandardWatchEventKinds.ENTRY_DELETE,
-                                StandardWatchEventKinds.ENTRY_MODIFY},
-                        SensitivityWatchEventModifier.HIGH
-                );
+    private class FPMWatcher implements Runnable {
+        private final WatchService watcher;
 
-                while(true){
+        public FPMWatcher(WatchService watcher) {
+            this.watcher = watcher;
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (true) {
                     WatchKey key = null;
                     try {
                         key = watcher.take();
                         for (WatchEvent<?> event : key.pollEvents()) {
                             WatchEvent.Kind<?> kind = event.kind();
 
+                            if (kind == StandardWatchEventKinds.OVERFLOW) {
+                                // todo log a warning.
+                                continue;
+                            }
+
                             // get file name
                             WatchEvent<Path> ev = (WatchEvent<Path>) event;
                             Path fileName = ev.context();
                             String mapKey = fileName.toString();
 
-                            if(mapKey.startsWith(".")){
+                            if (mapKey.startsWith(".")) {
                                 //this avoids temporary files being added to the map
                                 continue;
                             }
 
-                            if (kind == StandardWatchEventKinds.OVERFLOW) {
-                                continue;
-                            } else if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                             if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                                 Path p = dirPath.resolve(fileName);
-                                String mapVal = getFileContents(p);
-                                lastUpdate.put(p.toFile(), mapVal);
-                                if(isProgrammaticUpdate(p.toFile())){
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.NEW, true, mapKey,null, mapVal));
-                                }else {
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.NEW, false, mapKey, null, mapVal));
+                                try {
+                                    String mapVal = getFileContents0(p);
+                                    lastFile.put(p.toFile(), new FileRecord(p.toFile().lastModified(), mapVal));
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.NEW, mapKey, null, mapVal));
+                                } catch (FileNotFoundException ignored) {
                                 }
                             } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                                 Path p = dirPath.resolve(fileName);
 
-                                String lastVal = lastUpdate.get(p.toFile());
-                                lastUpdate.remove(p.toFile());
-
-                                if(isProgrammaticUpdate(p.toFile())){
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, true, mapKey, lastVal, null));
-                                }else {
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, false, mapKey, lastVal, null));
-                                }
+                                FileRecord lastVal = lastFile.remove(p.toFile());
+                                String lastContent = lastVal == null ? null : lastVal.contents;
+                                fireEvent(new FPMEvent(FPMEvent.EventType.DELETE, mapKey, lastContent, null));
                             } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-                                Path p = dirPath.resolve(fileName);
-                                String mapVal = getFileContents(p);
-                                String lastVal = null;
-                                if(mapVal != null) {
-                                    lastVal = lastUpdate.put(p.toFile(), mapVal);
-                                }
+                                try {
+                                    Path p = dirPath.resolve(fileName);
+                                    String mapVal = getFileContents0(p);
+                                    String lastVal = null;
+                                    if (mapVal != null) {
+                                        FileRecord rec = lastFile.put(p.toFile(), new FileRecord(p.toFile().lastModified(), mapVal));
+                                        if (rec != null) lastVal = rec.contents;
+                                    }
 
-                                if(lastVal != null && lastVal.equals(mapVal)){
-                                    //Nothing has changed don't fire an event
-                                    continue;
-                                }
+                                    if (lastVal != null && lastVal.equals(mapVal)) {
+                                        //Nothing has changed don't fire an event
+                                        continue;
+                                    }
 
-                                if(isProgrammaticUpdate(p.toFile())){
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.UPDATE, true, mapKey,lastVal,mapVal));
-                                }else {
-                                    fireEvent(new FPMEvent(FPMEvent.EventType.UPDATE, false, mapKey,lastVal,mapVal));
+                                    fireEvent(new FPMEvent(FPMEvent.EventType.UPDATE, mapKey, lastVal, mapVal));
+                                } catch (FileNotFoundException ignored) {
                                 }
                             }
                         }
                     } catch (InterruptedException e) {
                         return;
-                    }finally{
-                        if(key!=null)key.reset();
+                    } finally {
+                        if (key != null) key.reset();
                     }
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (Throwable e) {
+                if (!closed)
+                    e.printStackTrace();
             }
         }
     }
+}
 
-    private boolean isProgrammaticUpdate(File file) {
-        return lastModifiedByProgram.containsKey(file)
-                && (file.lastModified() == lastModifiedByProgram.get(file));
+class FileRecord {
+    final long timestamp;
+    final String contents;
+
+    FileRecord(long timestamp, String contents) {
+        this.timestamp = timestamp;
+        this.contents = contents;
     }
-
 }

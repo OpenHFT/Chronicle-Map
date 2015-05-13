@@ -5,14 +5,12 @@ package net.openhft.chronicle.map;
  */
 public class FPMEvent {
     private EventType eventType;
-    private boolean programmatic;
     private String key;
     private String value;
     private String lastValue;
 
-    public FPMEvent(EventType eventType, boolean programmatic, String key, String lastValue, String value) {
+    public FPMEvent(EventType eventType, String key, String lastValue, String value) {
         this.eventType = eventType;
-        this.programmatic = programmatic;
         this.key = key;
         this.value = value;
         this.lastValue = lastValue;
@@ -32,14 +30,6 @@ public class FPMEvent {
 
     public void setEventType(EventType eventType) {
         this.eventType = eventType;
-    }
-
-    public boolean isProgrammatic() {
-        return programmatic;
-    }
-
-    public void setProgrammatic(boolean programmatic) {
-        this.programmatic = programmatic;
     }
 
     public String getKey() {
@@ -62,7 +52,6 @@ public class FPMEvent {
     public String toString() {
         return "FPMEvent{" +
                 "eventType=" + eventType +
-                ", programmatic=" + programmatic +
                 ", key='" + key + '\'' +
                 ", value='" + value + '\'' +
                 ", lastValue='" + lastValue + '\'' +

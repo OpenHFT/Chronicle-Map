@@ -4,6 +4,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -15,7 +16,7 @@ import static org.junit.Assert.*;
 public class FilePerKeyMapTest {
     private static FilePerKeyMap map;
     @BeforeClass
-    public static void createMap(){
+    public static void createMap() throws IOException {
         map = new FilePerKeyMap("/tmp/filepermaptests");
         //just in case it hasn't been cleared up last time
         map.clear();
@@ -133,7 +134,7 @@ public class FilePerKeyMapTest {
 
     @Ignore //This doesn't work on all OS
     @Test
-    public void eventTest() {
+    public void eventTest() throws InterruptedException {
         final List<FPMEvent> events = new ArrayList<>();
 
         Consumer<FPMEvent> fpmEventConsumer = (FPMEvent e) -> {
@@ -147,7 +148,6 @@ public class FilePerKeyMapTest {
         map.remove("one");
         map.put("one", "one");
 
-        try {
             //Allow all events to be played through
             Thread.sleep(3000);
             //Check the events
@@ -158,13 +158,6 @@ public class FilePerKeyMapTest {
             assertEquals(FPMEvent.EventType.DELETE, events.get(2).getEventType());
             assertEquals(FPMEvent.EventType.NEW, events.get(3).getEventType());
 
-            assertEquals(true, events.get(0).isProgrammatic());
-            assertEquals(true, events.get(1).isProgrammatic());
-            assertEquals(true, events.get(2).isProgrammatic());
-            assertEquals(true, events.get(3).isProgrammatic());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
         map.unregisterForEvents(fpmEventConsumer);
         map.clear();

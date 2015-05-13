@@ -1,7 +1,10 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.function.SerializableFunction;
+import net.openhft.lang.Jvm;
 import org.jetbrains.annotations.NotNull;
+import org.xerial.snappy.SnappyInputStream;
+import org.xerial.snappy.SnappyOutputStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,18 +13,27 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Created by daniel on 22/04/15.
  */
 public class FilePerKeyChronicleMap implements ChronicleMap<String, String> {
-    private final ChronicleMap<String, String> chMap;
+    //    private final ChronicleMap<String, String> chMap;
     private final FilePerKeyMap fpMap;
 
-    public FilePerKeyChronicleMap(String dir) {
+    public FilePerKeyChronicleMap(String dir) throws IOException {
         fpMap = new FilePerKeyMap(dir);
-        chMap = ChronicleMapBuilder.of(String.class, String.class)
-                .entries(500).averageValueSize(2_000_000).create();
+        fpMap.putReturnsNull(true);
+//        fpMap.valueMarshaller(SnappyInputStream::new, SnappyOutputStream::new);
+//        fpMap.valueMarshaller(GZIPInputStream::new, GZIPOutputStream::new);
+//        chMap = ChronicleMapBuilder.of(String.class, String.class)
+//                .entries(500).averageValueSize(2_000_000).create();
+    }
+
+    public void registerForEvents(Consumer<FPMEvent> listener) {
+        fpMap.registerForEvents(listener);
     }
 
     @Override
@@ -51,20 +63,20 @@ public class FilePerKeyChronicleMap implements ChronicleMap<String, String> {
 
     @Override
     public String put(String key, String value) {
-        fpMap.put(key, value);
-        return chMap.put(key,value);
+        return fpMap.put(key, value);
+//        return chMap.put(key,value);
     }
 
     @Override
     public String remove(Object key) {
-        chMap.remove(key);
+//        chMap.remove(key);
         return fpMap.remove(key);
     }
 
     @Override
     public void putAll(Map<? extends String, ? extends String> m) {
         fpMap.putAll(m);
-        chMap.putAll(m);
+//        chMap.putAll(m);
     }
 
     @Override
@@ -92,24 +104,28 @@ public class FilePerKeyChronicleMap implements ChronicleMap<String, String> {
 
     @Override
     public String getUsing(String key, String usingValue) {
-        return chMap.getUsing(key, usingValue);
+        throw new UnsupportedOperationException();
+//        return chMap.getUsing(key, usingValue);
     }
 
     @Override
     public String acquireUsing(@NotNull String key, String usingValue) {
+        throw new UnsupportedOperationException();
         //@todo ADD THE LOGIC FOR FPMAP
-        return chMap.acquireUsing(key, usingValue);
+//        return chMap.acquireUsing(key, usingValue);
     }
 
     @NotNull
     @Override
     public MapKeyContext<String, String> acquireContext(@NotNull String key, @NotNull String usingValue) {
-        return chMap.acquireContext(key,usingValue);
+        throw new UnsupportedOperationException();
+//        return chMap.acquireContext(key,usingValue);
     }
 
     @Override
     public <R> R getMapped(String key, @NotNull SerializableFunction<? super String, R> function) {
-        return chMap.getMapped(key, function);
+        throw new UnsupportedOperationException();
+//        return chMap.getMapped(key, function);
     }
 
     @Override
@@ -154,7 +170,8 @@ public class FilePerKeyChronicleMap implements ChronicleMap<String, String> {
 
     @Override
     public MapKeyContext<String, String> context(String key) {
-        return chMap.context(key);
+        throw new UnsupportedOperationException();
+        // return chMap.context(key);
     }
 
     @Override
@@ -164,17 +181,20 @@ public class FilePerKeyChronicleMap implements ChronicleMap<String, String> {
 
     @Override
     public boolean forEachEntryWhile(Predicate<? super MapKeyContext<String, String>> predicate) {
-        return chMap.forEachEntryWhile(predicate);
+        throw new UnsupportedOperationException();
+
+        // return chMap.forEachEntryWhile(predicate);
     }
 
     @Override
     public void forEachEntry(Consumer<? super MapKeyContext<String, String>> action) {
-        chMap.forEachEntry(action);
+        throw new UnsupportedOperationException();
+//        chMap.forEachEntry(action);
     }
 
     @Override
     public void close() {
-        chMap.close();
+        fpMap.close();
     }
 
     @Override
