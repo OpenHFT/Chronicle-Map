@@ -597,6 +597,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             if (remoteIdentifier == STATELESS_CLIENT) {
                 attached.handShakingComplete = true;
                 attached.hasRemoteHeartbeatInterval = false;
+
+
                 return;
             }
 
