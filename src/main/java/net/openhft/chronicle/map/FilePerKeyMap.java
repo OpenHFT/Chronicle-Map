@@ -2,13 +2,9 @@ package net.openhft.chronicle.map;
 
 import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.core.util.ThrowingFunction;
-import org.jcp.xml.dsig.internal.SignerOutputStream;
 import org.jetbrains.annotations.NotNull;
-import org.xerial.snappy.SnappyInputStream;
-import org.xerial.snappy.SnappyOutputStream;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
