@@ -207,15 +207,21 @@ public class StatelessClientTest {
     }
 
 
-    @Test(timeout = 10000)
-    public void testLotsOfPuts() throws IOException, InterruptedException {
+    /**
+     * test that when the map is full and exception is thrown back to the user
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @Test(timeout = 10000, expected = IllegalStateException.class)
+    public void testExceptionFromServer() throws IOException, InterruptedException {
         int port = s_port++;
 
-        final int size = 10000;
+        final int size = 100;
 
         try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder
                 .of(Integer.class, CharSequence.class)
-                .entries(100)
+                .entries(10)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
             try (ChronicleMap<Integer, CharSequence> statelessMap = localClient(port)) {
