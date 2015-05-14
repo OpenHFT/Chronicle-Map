@@ -1832,7 +1832,7 @@ class StatelessServerConnector<K, V> {
 
         writeException(writer, e);
 
-        writeSizeAndFlags(sizeLocation + SIZE_OF_TRANSACTION_ID, true, writer.in());
+        writeSizeAndFlags(sizeLocation , true, writer.in());
         return null;
     }
 
