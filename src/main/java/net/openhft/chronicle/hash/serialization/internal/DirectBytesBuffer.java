@@ -20,8 +20,9 @@ import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;
+import net.openhft.lang.io.serialization.BytesMarshallableSerializer;
 import net.openhft.lang.io.serialization.BytesMarshaller;
-import net.openhft.lang.io.serialization.JDKObjectSerializer;
+import net.openhft.lang.io.serialization.ObjectSerializer;
 import net.openhft.lang.threadlocal.StatefulCopyable;
 
 import java.io.IOException;
@@ -37,6 +38,7 @@ class DirectBytesBuffer
     transient ForBytesMarshaller forBytesMarshaller;
     transient ForBytesWriter forBytesWriter;
     transient ForDataValueWriter forDataValueWriter;
+    private final ObjectSerializer objectSerializer = BytesMarshallableSerializer.create();
 
     DirectBytesBuffer(Serializable identity) {
         this.identity = identity;
@@ -65,7 +67,7 @@ class DirectBytesBuffer
                 return buffer = store.bytes();
             }
         } else {
-            buffer = new DirectStore(JDKObjectSerializer.INSTANCE, Math.max(1, maxSize), true)
+            buffer = new DirectStore(objectSerializer, Math.max(1, maxSize), true)
                     .bytes();
             return buffer;
         }

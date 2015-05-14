@@ -37,7 +37,7 @@ public final class CharSequenceWriter<CS extends CharSequence> implements BytesW
 
     @Override
     public long size(@NotNull CS s) {
-        return AbstractBytes.findUTFLength(s, s.length());
+        return AbstractBytes.findUTFLength(s);
     }
 
     @Override

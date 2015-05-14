@@ -19,18 +19,18 @@ package net.openhft.chronicle.hash.impl;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.impl.hashlookup.HashLookup;
+import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
 import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
-import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.lang.Jvm;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.BytesStore;
 import net.openhft.lang.io.MappedStore;
 import net.openhft.lang.io.NativeBytes;
-import net.openhft.lang.io.serialization.JDKObjectSerializer;
+import net.openhft.lang.io.serialization.BytesMarshallableSerializer;
 import net.openhft.lang.threadlocal.Provider;
 
 import java.io.File;
@@ -224,7 +224,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     public final void createMappedStoreAndSegments(File file) throws IOException {
         warnOnWindows();
         createMappedStoreAndSegments(new MappedStore(file, FileChannel.MapMode.READ_WRITE,
-                sizeInBytes(), JDKObjectSerializer.INSTANCE));
+                sizeInBytes(), BytesMarshallableSerializer.create()));
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
