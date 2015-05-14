@@ -85,7 +85,7 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * @param <K> the entries key type
  * @param <V> the entries value type
  */
-final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
+class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>
         implements Replica, Replica.EntryExternalizable, Replica.EntryResolver<K, V> {
