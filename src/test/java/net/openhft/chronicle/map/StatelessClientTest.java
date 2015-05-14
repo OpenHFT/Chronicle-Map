@@ -26,7 +26,6 @@ import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -206,6 +205,32 @@ public class StatelessClientTest {
             }
         }
     }
+
+
+    @Test(timeout = 10000)
+    public void testLotsOfPuts() throws IOException, InterruptedException {
+        int port = s_port++;
+
+        final int size = 10000;
+
+        try (ChronicleMap<Integer, CharSequence> serverMap = ChronicleMapBuilder
+                .of(Integer.class, CharSequence.class)
+                .entries(100)
+                .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
+                .create()) {
+            try (ChronicleMap<Integer, CharSequence> statelessMap = localClient(port)) {
+
+
+                for (int i = 0; i < size; i++) {
+                    statelessMap.put(i, "hello");
+                }
+
+                assertEquals(statelessMap.size(), size);
+
+            }
+        }
+    }
+
 
 
     @Test

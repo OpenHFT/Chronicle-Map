@@ -1818,12 +1818,16 @@ class StatelessServerConnector<K, V> {
     @Nullable
     private Work sendException(@NotNull TcpReplicator.TcpSocketChannelEntryWriter writer,
                                long sizeLocation, @NotNull Throwable e) {
+
+        LOG.error("cause by remote stateless client call", e);
+
         // move the position to ignore any bytes written so far
         writer.in().position(sizeLocation + HEADER_SIZE);
 
         writeException(writer, e);
 
-        writeSizeAndFlags(sizeLocation + SIZE_OF_TRANSACTION_ID, true, writer.in());
+        writeSizeAndFlags(sizeLocation, true, writer.in());
+
         return null;
     }
 
