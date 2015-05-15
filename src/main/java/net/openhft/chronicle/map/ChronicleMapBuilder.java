@@ -1481,5 +1481,40 @@ public final class ChronicleMapBuilder<K, V> implements
         return (int) Math.min(Math.max(2L, entries() >> 10),
                 Math.min(64, maxChunksPerEntry()));
     }
+
+    /**
+     * Inject your SPI code around basic {@code ChronicleMap}'s operations with present entries:
+     * removing entries and replacing the entries' value.
+     * 
+     * This affects behaviour of ordinary map.put(), map.remove(), etc. calls, as well as removes
+     * and replacing values <i>during iterations</i>, <i>remote map calls</i> and
+     * <i>internal replication operations</i>. 
+     */
+    public ChronicleMapBuilder<K, V> customizeEntryOperations(
+            MapEntryOperations<K, V> customEntryOperations) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Inject your SPI code around basic operation of inserting a new entry into the map.
+     *
+     * This affects behaviour of ordinary map.put(), map.computeIfAbsent(), etc. calls,
+     * as well as similar <i>remote map calls</i> and <i>internal replication operation</i>. 
+     */
+    public ChronicleMapBuilder<K, V> customizeAbsentEntryOperations(
+            MapAbsentEntryOperations<K, V> customAbsentEntryOperations) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Inject your SPI around logic of all {@code ChronicleMap}'s operations with individual keys:
+     * from {@link ChronicleMap#containsKey} to {@link ChronicleMap#acquireUsing} and
+     * {@link ChronicleMap#merge}.
+     * 
+     * This affects behaviour of ordinary map calls, as well as <i>remote calls</i>.
+     */
+    public ChronicleMapBuilder<K, V> customizeMapMethods(MapMethods<K, V> customMapMethods) {
+        throw new UnsupportedOperationException();
+    }
 }
 

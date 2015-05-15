@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.KeyContext;
 
+@Deprecated
 public interface MapKeyContext<K, V> extends KeyContext<K> {
 
     long valueOffset();

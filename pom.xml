@@ -99,6 +99,11 @@
             <artifactId>chronicle-bytes</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-algorithms</artifactId>
+        </dependency>
+
         <!-- optional dependencies -->
 
         <dependency>
@@ -215,6 +220,7 @@
                     <excludePackageNames>
                         net.openhft.chronicle.hash.serialization.internal:net.openhft.xstream:net.openhft.xstream.*:net.openhft.chronicle.hash.impl.*
                     </excludePackageNames>
+                    <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
             </plugin>
 
