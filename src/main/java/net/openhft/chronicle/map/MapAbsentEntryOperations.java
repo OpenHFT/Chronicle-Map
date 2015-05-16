@@ -21,12 +21,36 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.Value;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * SPI interface for customizing "low-level" insertion of a new entry into {@link ChronicleMap}.
+ *
+ * @param <K> type of the key in {@code ChronicleMap}
+ * @param <V> type of the value in {@code ChronicleMap}
+ */
 public interface MapAbsentEntryOperations<K, V> {
-    
+
+    /**
+     * Inserts the new entry into the map, of {@link MapAbsentEntry#absentKey() the key} from
+     * the given insertion context (<code>absentEntry</code>) and the given {@code value}.
+     * Returns {@code true} if the insertion  was successful, {@code false} if it failed
+     * for any reason.
+     *
+     * @implNote simply delegates to {@link MapAbsentEntry#defaultInsert(Value)}.
+     *
+     * @throws IllegalStateException if some locking/state conditions required to perform insertion
+     * operation are not met
+     */
     default boolean insert(@NotNull MapAbsentEntry<K, V> absentEntry, Value<V, ?> value) {
         return absentEntry.defaultInsert(value);
     }
 
+    /**
+     * Returns the "nil" value, which should be inserted into the map, in the given
+     * {@code absentEntry} context. This is primarily used in {@link ChronicleMap#acquireUsing}
+     * operation implementation, i. e. {@link MapMethods#acquireUsing}.
+     * 
+     * @implNote simply delegates to {@link MapAbsentEntry#defaultValue()}.
+     */
     default Value<V, ?> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
         return absentEntry.defaultValue();
     }

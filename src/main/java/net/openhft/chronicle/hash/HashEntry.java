@@ -30,6 +30,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface HashEntry<K> {
     /**
+     * Returns the context, in which the entry is accessed.
+     */
+    HashContext<K> context();
+    
+    /**
      * Returns the entry key.
      */
     @NotNull Value<K, ?> key();

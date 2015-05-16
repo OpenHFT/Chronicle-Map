@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Dual bytes/object access to keys/values/elements.
  * 
- * <p>Bytes access: {@link #access()} + {@link #handle()} + {@link #size()}.
+ * <p>Bytes access: {@link #access()} + {@link #handle()} + {@link #offset()} + {@link #size()}.
  * 
  * <p>Object access: {@link #get()}. 
  * 

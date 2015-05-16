@@ -22,6 +22,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.HashEntry;
 import net.openhft.chronicle.hash.Value;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Access to the <i>present</i> {@link ChronicleMap} entry.
@@ -32,10 +33,13 @@ import net.openhft.chronicle.hash.Value;
  * @see MapEntryOperations
  */
 public interface MapEntry<K, V> extends HashEntry<K> {
+    @Override
+    @NotNull MapContext<K, V> context();
+
     /**
      * Returns the entry value.
      */
-    Value<V, ?> value();
+    @NotNull Value<V, ?> value();
 
     /**
      * Replaces the entry's value with the new one. Returns {@code true} if the replace operation

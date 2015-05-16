@@ -49,7 +49,7 @@ public interface MapEntryOperations<K, V> {
      * operation was successful, {@code false} if it failed for any reason.
      *
      * @implNote simply delegates to {@link MapEntry#defaultReplaceValue(Value)
-     * entry.defaultReplace(newValue)} 
+     * entry.defaultReplace(newValue)}.
      *
      * @param entry the entry to replace the value in 
      * @throws IllegalStateException if some locking/state conditions required to perform replace

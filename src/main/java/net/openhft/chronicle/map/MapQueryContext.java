@@ -33,7 +33,7 @@ public interface MapQueryContext<K, V> extends InterProcessReadWriteUpdateLock,
         MapEntryOperations<K, V>, MapAbsentEntryOperations<K, V> {
 
     /**
-     * Returns the queried key as a value.
+     * Returns the queried key as a {@code Value}.
      */
     Value<K, ?> queriedKey();
 
