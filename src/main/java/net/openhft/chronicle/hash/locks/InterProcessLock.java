@@ -46,5 +46,8 @@ public interface InterProcessLock extends Lock {
      */
     @NotNull
     @Override
-    Condition newCondition();
+    default Condition newCondition() {
+        throw new UnsupportedOperationException(
+                "Conditions are not supported by inter-process locks");
+    }
 }

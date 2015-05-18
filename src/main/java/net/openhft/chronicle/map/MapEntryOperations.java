@@ -19,7 +19,11 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.replication.ReplicatedEntry;
+import net.openhft.chronicle.hash.replication.ReplicationContext;
 import org.jetbrains.annotations.NotNull;
+
+import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.shouldApplyRemoteModification;
 
 /**
  * SPI interface for customizing "low-level" modification operations on the <i>present</i>
@@ -29,33 +33,45 @@ import org.jetbrains.annotations.NotNull;
  * @param <V> type of the value in {@code ChronicleMap}
  */
 public interface MapEntryOperations<K, V> {
+    
+    static boolean shouldModify(@NotNull MapEntry<?, ?> entry) {
+        MapContext<?, ?> context = entry.context();
+        return !(context instanceof ReplicationContext) ||
+                shouldApplyRemoteModification((ReplicatedEntry) entry,
+                        (ReplicationContext) context);
+    }
+    
     /**
      * Removes the given entry from the {@code ChronicleHash}. Returns {@code true} if the remove
      * was successful, {@code false} if it failed for any reason.
-     * 
-     * @implNote simply delegates to {@link MapEntry#defaultRemove()}. 
      *
      * @param entry the entry to remove 
      * @throws IllegalStateException if some locking/state conditions required to perform remove
      * operation are not met
      */
     default boolean remove(@NotNull MapEntry<K, V> entry) {
-        return entry.defaultRemove();
+        if (shouldModify(entry)) {
+            entry.doRemove();
+            return true;
+        } else {
+            return false;
+        }
     }
-
-
+    
     /**
      * Replaces the given entry's value with the new one. Returns {@code true} if the replace
      * operation was successful, {@code false} if it failed for any reason.
-     *
-     * @implNote simply delegates to {@link MapEntry#defaultReplaceValue(Value)
-     * entry.defaultReplace(newValue)}.
      *
      * @param entry the entry to replace the value in 
      * @throws IllegalStateException if some locking/state conditions required to perform replace
      * operation are not met
      */
     default boolean replaceValue(@NotNull MapEntry<K, V> entry, Value<V, ?> newValue) {
-        return entry.defaultReplaceValue(newValue);
+        if (shouldModify(entry)) {
+            entry.doReplaceValue(newValue);
+            return true;
+        } else {
+            return false;
+        }
     }
 }

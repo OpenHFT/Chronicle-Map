@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.MapEntryOperations;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,14 +39,10 @@ public interface HashEntry<K> {
     @NotNull Value<K, ?> key();
 
     /**
-     * Removes the entry from the {@code ChronicleHash}. Returns {@code true} if the remove was
-     * successful, {@code false} if it failed for any reason.
-     * 
-     * <p>This method if the default implementation for {@link MapEntryOperations#remove(MapEntry)},
-     * which might be customized over the default.
+     * Removes the entry from the {@code ChronicleHash}.
      * 
      * @throws IllegalStateException if some locking/state conditions required to perform remove
      * operation are not met
      */
-    boolean defaultRemove();
+    void doRemove();
 }

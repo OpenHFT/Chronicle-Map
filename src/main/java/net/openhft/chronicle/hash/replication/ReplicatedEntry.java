@@ -16,12 +16,11 @@
  *  limitations under the License.
  */
 
-package net.openhft.chronicle.hash;
+package net.openhft.chronicle.hash.replication;
 
-/**
- * Context of internal replication operation.
- *
- * @param <K> the key type of accessed {@link ChronicleHash}
- */
-public interface ReplicationContext<K> extends HashContext<K> {
+public interface ReplicatedEntry {
+    
+    byte originIdentifier();
+    
+    long originTimestamp();
 }

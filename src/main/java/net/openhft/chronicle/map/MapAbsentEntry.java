@@ -45,16 +45,11 @@ public interface MapAbsentEntry<K, V> {
 
     /**
      * Inserts the new entry into the map, of {@link #absentKey() the key} and the given value.
-     * Returns {@code true} if the insertion  was successful, {@code false} if it failed for
-     * any reason.
-     *
-     * <p>This method if the default implementation for {@link MapAbsentEntryOperations#insert},
-     * which might be customized over the default.
      *
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
      * operation are not met
      */
-    boolean defaultInsert(Value<V, ?> value);
+    void doInsert(Value<V, ?> value);
 
     /**
      * Returns the "nil" value, which should be inserted into the map in this context. This
