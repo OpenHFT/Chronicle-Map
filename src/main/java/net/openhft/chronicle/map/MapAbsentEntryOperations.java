@@ -19,7 +19,11 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.replication.ReplicatedEntry;
+import net.openhft.chronicle.hash.replication.ReplicationContext;
 import org.jetbrains.annotations.NotNull;
+
+import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.shouldApplyRemoteModification;
 
 /**
  * SPI interface for customizing "low-level" insertion of a new entry into {@link ChronicleMap}.
@@ -35,13 +39,21 @@ public interface MapAbsentEntryOperations<K, V> {
      * Returns {@code true} if the insertion  was successful, {@code false} if it failed
      * for any reason.
      *
-     * @implNote simply delegates to {@link MapAbsentEntry#defaultInsert(Value)}.
-     *
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
      * operation are not met
      */
     default boolean insert(@NotNull MapAbsentEntry<K, V> absentEntry, Value<V, ?> value) {
-        return absentEntry.defaultInsert(value);
+        MapContext<K, V> context = absentEntry.context();
+        boolean shouldInsert = !(context instanceof ReplicationContext) ||
+                !(absentEntry instanceof ReplicatedEntry) ||
+                shouldApplyRemoteModification((ReplicatedEntry) absentEntry,
+                        (ReplicationContext) context);
+        if (shouldInsert) {
+            absentEntry.doInsert(value);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
