@@ -32,6 +32,14 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
  * @param <V> type of the value in {@code ChronicleMap}
  */
 public interface MapAbsentEntryOperations<K, V> {
+    
+    static boolean shoudInsert(@NotNull MapAbsentEntry<?, ?> absentEntry) {
+        MapContext<?, ?> context = absentEntry.context();
+        return !(context instanceof ReplicationContext) ||
+                !(absentEntry instanceof ReplicatedEntry) ||
+                shouldApplyRemoteModification((ReplicatedEntry) absentEntry,
+                        (ReplicationContext) context);
+    }
 
     /**
      * Inserts the new entry into the map, of {@link MapAbsentEntry#absentKey() the key} from
@@ -43,12 +51,7 @@ public interface MapAbsentEntryOperations<K, V> {
      * operation are not met
      */
     default boolean insert(@NotNull MapAbsentEntry<K, V> absentEntry, Value<V, ?> value) {
-        MapContext<K, V> context = absentEntry.context();
-        boolean shouldInsert = !(context instanceof ReplicationContext) ||
-                !(absentEntry instanceof ReplicatedEntry) ||
-                shouldApplyRemoteModification((ReplicatedEntry) absentEntry,
-                        (ReplicationContext) context);
-        if (shouldInsert) {
+        if (shoudInsert(absentEntry)) {
             absentEntry.doInsert(value);
             return true;
         } else {
