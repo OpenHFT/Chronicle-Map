@@ -19,6 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.replication.ReplicatedEntry;
 import net.openhft.chronicle.hash.replication.ReplicationContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,8 +28,12 @@ public class MaximizingValueMapEntryOperations<K, V extends Comparable<? super V
 
     @Override
     public boolean replaceValue(@NotNull MapEntry<K, V> entry, Value<V, ?> newValue) {
-        if (entry.context() instanceof ReplicationContext) {
-            if (newValue.get().compareTo(entry.value().get()) > 0) {
+        MapContext<K, V> context = entry.context();
+        if (context instanceof ReplicationContext) {
+            int compareResult = newValue.get().compareTo(entry.value().get());
+            if (compareResult > 0 || (compareResult == 0 &&
+                    ((ReplicationContext) context).remoteIdentifier() <=
+                            ((ReplicatedEntry) entry).originIdentifier())) {
                 // replace, if the new value is greater
                 entry.doReplaceValue(newValue);
                 return true;
