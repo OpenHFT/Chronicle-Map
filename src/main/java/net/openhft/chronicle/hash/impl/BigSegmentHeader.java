@@ -56,8 +56,9 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     static final long DELETED_OFFSET = EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET + 8L;
 
-    private BigSegmentHeader() {}
-    
+    private BigSegmentHeader() {
+    }
+
     @Override
     public long size(long address) {
         return UNSAFE.getInt(address + SIZE_OFFSET) & UNSIGNED_INT_MASK;
@@ -232,11 +233,37 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     private boolean tryReadLock0(long address, long time, TimeUnit unit) {
-        long end = System.nanoTime() + unit.toNanos(time);
+        long timeInNanos = unit.toNanos(time);
+        if (timeInNanos < 2000000) {
+            return tryReadLockNanos(address, timeInNanos);
+        } else {
+            return tryReadLockMillis(address, (timeInNanos + 900000) / 1000000);
+        }
+    }
+
+    private boolean tryReadLockNanos(long address, long timeInNanos) {
+        long end = System.nanoTime() + timeInNanos;
         do {
             if (tryReadLock(address))
                 return true;
         } while (System.nanoTime() <= end);
+        return false;
+    }
+
+    /**
+     * Use a timer which is more insensitive to jumps in time like GCs and context switches.
+     */
+    private boolean tryReadLockMillis(long address, long timeInMillis) {
+        long lastTime = System.currentTimeMillis();
+        do {
+            if (tryReadLock(address))
+                return true;
+            long now = System.currentTimeMillis();
+            if (now != lastTime) {
+                lastTime = now;
+                timeInMillis--;
+            }
+        } while (timeInMillis >= 0);
         return false;
     }
 
@@ -288,11 +315,37 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     private boolean tryUpdateLock0(long address, long time, TimeUnit unit) {
-        long end = System.nanoTime() + unit.toNanos(time);
+        long timeInNanos = unit.toNanos(time);
+        if (timeInNanos < 2000000) {
+            return tryUpdateLockNanos(address, timeInNanos);
+        } else {
+            return tryUpdateLockMillis(address, (timeInNanos + 900000) / 1000000);
+        }
+    }
+
+    private boolean tryUpdateLockNanos(long address, long timeInNanos) {
+        long end = System.nanoTime() + timeInNanos;
         do {
             if (tryUpdateLock(address))
                 return true;
         } while (System.nanoTime() <= end);
+        return false;
+    }
+
+    /**
+     * Use a timer which is more insensitive to jumps in time like GCs and context switches.
+     */
+    private boolean tryUpdateLockMillis(long address, long timeInMillis) {
+        long lastTime = System.currentTimeMillis();
+        do {
+            if (tryUpdateLock(address))
+                return true;
+            long now = System.currentTimeMillis();
+            if (now != lastTime) {
+                lastTime = now;
+                timeInMillis--;
+            }
+        } while (timeInMillis >= 0);
         return false;
     }
 
