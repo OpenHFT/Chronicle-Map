@@ -31,6 +31,8 @@ public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaByte
     private static final long MAX_REASONABLE_SERIALIZED_SIZE = MemoryUnit.MEGABYTES.toBytes(16L);
 
     public static void checkMaxSizeStillReasonable(long maxSize, Exception ex) {
+        if (ex != null)
+            throw new IllegalStateException("Unable to serialize the object " + ex, ex);
         if (maxSize > MAX_REASONABLE_SERIALIZED_SIZE) {
             throw new IllegalStateException("We try to figure out size of objects " +
                     "in serialized form, but it exceeds " +
