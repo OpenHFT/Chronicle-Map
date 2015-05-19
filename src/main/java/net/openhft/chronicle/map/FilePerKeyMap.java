@@ -58,6 +58,7 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
         );
 
         fileFpmWatcher = new Thread(new FPMWatcher(watcher), dir + "-watcher");
+        fileFpmWatcher.setDaemon(true);
         fileFpmWatcher.start();
     }
 
