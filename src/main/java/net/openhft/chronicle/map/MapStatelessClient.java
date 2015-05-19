@@ -31,19 +31,24 @@ public abstract class MapStatelessClient<E extends ParameterizeWireKey> extends 
     @Nullable
     protected <R> R proxyReturnTypedObject(
             @NotNull final E eventId,
-            R usingValue,
+            @Nullable R usingValue,
             @NotNull final Class<R> resultType,
             @Nullable Object... args) {
 
-        Function<ValueIn, R> consumerIn = resultType == CharSequence.class && usingValue != null
-                ? f -> {
+        final Function<ValueIn, R> valueInRFunction = f -> {
             f.text((StringBuilder) usingValue);
             return usingValue;
-        }
-                : f -> f.object(resultType);
+        };
+
+        final Function<ValueIn, R> consumerIn =
+                resultType == CharSequence.class && usingValue != null
+                        ? valueInRFunction
+                        : f -> f.object(resultType);
+
         return proxyReturnWireConsumerInOut(eventId,
                 CoreFields.reply,
                 toParameters(eventId, args),
                 consumerIn);
     }
+
 }
