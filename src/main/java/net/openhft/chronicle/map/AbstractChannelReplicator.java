@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.impl.util.CloseablesManager;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.chronicle.map.ReplicatedChronicleMap.BytesReplicatedContextFactory;
@@ -150,7 +151,7 @@ abstract class AbstractChannelReplicator implements Closeable {
      * @return
      */
     private static Selector openSelector(@NotNull final Selector selector,
-                                  @NotNull final SelectedSelectionKeySet selectedKeySet) {
+                                         @NotNull final SelectedSelectionKeySet selectedKeySet) {
         try {
 
             Class<?> selectorImplClass =
@@ -210,16 +211,12 @@ abstract class AbstractChannelReplicator implements Closeable {
     abstract void processEvent() throws IOException;
 
     final void start() {
-        future = executorService.submit(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            context = VanillaContext.get(BytesReplicatedContextFactory.INSTANCE);
-                            processEvent();
-                        } catch (Exception e) {
-                            LOG.error("", e);
-                        }
+        future = executorService.submit(() -> {
+                    try {
+                        context = VanillaContext.get(BytesReplicatedContextFactory.INSTANCE);
+                        processEvent();
+                    } catch (Exception e) {
+                        LOG.error("", e);
                     }
                 }
         );
@@ -286,9 +283,7 @@ abstract class AbstractChannelReplicator implements Closeable {
             sb.append(lastThread);
             sb.append(" isAlive= ");
             sb.append(lastThread.isAlive());
-            for (StackTraceElement ste : lastThread.getStackTrace()) {
-                sb.append("\n\t").append(ste);
-            }
+            Jvm.trimStackTrace(sb, lastThread.getStackTrace());
             LOG.warn(sb.toString());
         }
     }

@@ -24,6 +24,7 @@ import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.serialization.JDKZObjectSerializer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -374,6 +375,8 @@ public class StatelessClientTest {
         try (ChronicleMap<String, Map> serverMap = ChronicleMapBuilder
                 .of(String.class, Map.class)
                 .entries(1000)
+                .averageValueSize(2000)
+                .objectSerializer(JDKZObjectSerializer.INSTANCE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
                 .create()) {
             try (ChronicleMap<String, Map> statelessMap = localClient(8056)) {

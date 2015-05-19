@@ -59,7 +59,7 @@ public class SingleMapChannelTest {
 
         {
             final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8086, new InetSocketAddress("localhost", 8087))
+                    .of(18086, new InetSocketAddress("localhost", 18087))
                     .autoReconnectedUponDroppedConnection(true)
                     .heartBeatInterval(1, SECONDS);
 
@@ -75,7 +75,7 @@ public class SingleMapChannelTest {
 
         {
             final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8087, new InetSocketAddress("localhost", 8086))
+                    .of(18087, new InetSocketAddress("localhost", 18086))
                     .autoReconnectedUponDroppedConnection(true)
                     .heartBeatInterval(1, SECONDS);
 

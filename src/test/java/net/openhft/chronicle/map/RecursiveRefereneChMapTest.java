@@ -29,7 +29,7 @@ import static org.junit.Assert.assertSame;
 public class RecursiveRefereneChMapTest {
     public static final String TMP = System.getProperty("java.io.tmpdir");
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testRecursive() throws IOException {
         File file = new File(TMP + "/test." + System.nanoTime() + ".tmp");
         file.deleteOnExit();

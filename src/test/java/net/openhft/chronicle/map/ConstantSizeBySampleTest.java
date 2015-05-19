@@ -85,7 +85,7 @@ public class ConstantSizeBySampleTest {
         }
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testUnexpectedlyLongConstantExternalizableValues() throws IOException {
         try (  ChronicleMap<Long, ExternalizableData> map =
                 ChronicleMapBuilder.of(Long.class, ExternalizableData.class)
@@ -111,7 +111,7 @@ public class ConstantSizeBySampleTest {
         }
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testUnexpectedlyLongConstantSerializableValues() throws IOException {
         try (   ChronicleMap<Long, SerializableData> map =
                 ChronicleMapBuilder.of(Long.class, SerializableData.class)
