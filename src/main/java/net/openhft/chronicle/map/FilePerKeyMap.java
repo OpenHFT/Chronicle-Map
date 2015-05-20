@@ -203,12 +203,19 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
         } catch (IOException e) {
             throw new AssertionError(e);
         }
-        tmpFile.renameTo(file);
+        try {
+            Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private void deleteFile(Path path) {
-        File key = path.toFile();
-        key.delete();
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     public void close() {
@@ -297,7 +304,7 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
                                 continue;
                             }
 
-                             if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                            if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                                 Path p = dirPath.resolve(fileName);
                                 try {
                                     String mapVal = getFileContents0(p);

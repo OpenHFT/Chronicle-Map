@@ -31,12 +31,14 @@ public class FilePerKeyMapTest {
     public void testMapMethods() throws InterruptedException {
         String val = map.put("one", "test1");
         assertEquals(val, null);
-        Thread.sleep(5);
+        Thread.sleep(10);
 
         //After the entry has been written the value returned should be
         //the previous value
         val = map.put("one", "test2");
         assertEquals(val, "test1");
+
+        Thread.sleep(10);
 
         //Check that get returns the latest value
         val = map.get("one");
