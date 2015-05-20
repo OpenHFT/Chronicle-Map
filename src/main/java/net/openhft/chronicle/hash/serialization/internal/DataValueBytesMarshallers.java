@@ -47,6 +47,8 @@ public final class DataValueBytesMarshallers {
             new ConcurrentHashMap<>();
 
     public static <T> BytesReader<T> acquireBytesReader(Class<T> tClass) {
+        if (tClass == CharSequence.class)
+            throw new IllegalArgumentException("CharSequence not supported as a Data Value model");
         Class readerClass = acquireReaderClass(tClass);
         try {
             Field instanceField = readerClass.getDeclaredField("INSTANCE");

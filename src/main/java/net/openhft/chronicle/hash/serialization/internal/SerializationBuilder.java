@@ -41,9 +41,9 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
+import static net.openhft.chronicle.hash.impl.util.Objects.hash;
 import static net.openhft.chronicle.hash.serialization.internal.SizeMarshallers.constant;
 import static net.openhft.chronicle.hash.serialization.internal.SizeMarshallers.stopBit;
-import static net.openhft.chronicle.hash.impl.util.Objects.hash;
 
 public final class SerializationBuilder<E> implements Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
@@ -99,7 +99,7 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
     private void configureByDefault(Class<E> eClass, Role role) {
         instancesAreMutable = instancesAreMutable(eClass);
 
-        if (eClass.isInterface()) {
+        if (eClass.isInterface() && eClass != CharSequence.class) {
             try {
                 BytesReader<E> reader = DataValueBytesMarshallers.acquireBytesReader(eClass);
                 BytesWriter<E> writer = DataValueBytesMarshallers.acquireBytesWriter(eClass);
@@ -113,7 +113,7 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
                 sizeMarshaller(constant((long) size));
                 serializesGeneratedClasses = true;
                 return;
-            } catch (Exception e) {
+            } catch (IllegalArgumentException e) {
                 try {
                     eClass = DataValueClasses.directClassFor(eClass);
                     serializesGeneratedClasses = true;
