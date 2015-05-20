@@ -15,19 +15,22 @@ import static org.junit.Assert.*;
  */
 public class FilePerKeyMapTest {
     private static FilePerKeyMap map;
+
     @BeforeClass
     public static void createMap() throws IOException {
         map = new FilePerKeyMap("/tmp/filepermaptests");
         //just in case it hasn't been cleared up last time
         map.clear();
     }
+
     /**
      * Testing all the methods of the map with simple tests.
      */
     @Test
-    public void testMapMethods() {
+    public void testMapMethods() throws InterruptedException {
         String val = map.put("one", "test1");
         assertEquals(val, null);
+        Thread.sleep(5);
 
         //After the entry has been written the value returned should be
         //the previous value
@@ -49,6 +52,8 @@ public class FilePerKeyMapTest {
         assertFalse(map.isEmpty());
 
         map.clear();
+        Thread.sleep(5);
+
         //Check the size is now 0
         size = map.size();
         assertEquals(0, size);
@@ -109,7 +114,7 @@ public class FilePerKeyMapTest {
     }
 
     @Test
-    public void perfTest(){
+    public void perfTest() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 2_000_000; i++) {
             sb.append('x');
@@ -148,15 +153,15 @@ public class FilePerKeyMapTest {
         map.remove("one");
         map.put("one", "one");
 
-            //Allow all events to be played through
-            Thread.sleep(3000);
-            //Check the events
-            assertEquals(4, events.size());
+        //Allow all events to be played through
+        Thread.sleep(3000);
+        //Check the events
+        assertEquals(4, events.size());
 
-            assertEquals(FPMEvent.EventType.NEW,events.get(0).getEventType());
-            assertEquals(FPMEvent.EventType.UPDATE, events.get(1).getEventType());
-            assertEquals(FPMEvent.EventType.DELETE, events.get(2).getEventType());
-            assertEquals(FPMEvent.EventType.NEW, events.get(3).getEventType());
+        assertEquals(FPMEvent.EventType.NEW, events.get(0).getEventType());
+        assertEquals(FPMEvent.EventType.UPDATE, events.get(1).getEventType());
+        assertEquals(FPMEvent.EventType.DELETE, events.get(2).getEventType());
+        assertEquals(FPMEvent.EventType.NEW, events.get(3).getEventType());
 
 
         map.unregisterForEvents(fpmEventConsumer);
