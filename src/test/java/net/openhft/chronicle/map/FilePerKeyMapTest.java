@@ -125,18 +125,16 @@ public class FilePerKeyMapTest {
         String value = sb.toString();
 
         //small warm-up
-        for (int i = 0; i < 10; i++) {
-            map.put("big file", value);
+        for (int j = -1; j < 3; j++) {
+
+            long time = System.currentTimeMillis();
+            int iterations = 50;
+            for (int i = 0; i < iterations; i++) {
+                map.put("big file-" + i, value);
+            }
+            if (j >= 0)
+                System.out.println("Time to update " + iterations + " puts " + (System.currentTimeMillis() - time) + " ms.");
         }
-
-
-        long time = System.currentTimeMillis();
-        int iterations = 50;
-        for (int i = 0; i < iterations; i++) {
-            map.put("big file", value);
-        }
-        System.out.println("Time to update " + iterations + " iterations " + (System.currentTimeMillis() - time));
-
         map.clear();
     }
 

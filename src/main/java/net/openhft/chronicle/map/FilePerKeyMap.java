@@ -8,6 +8,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -136,7 +137,24 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
 
     @Override
     public void clear() {
-        getFiles().forEach(this::deleteFile);
+        AtomicInteger count = new AtomicInteger();
+        Stream<Path> files = getFiles();
+        files.forEach((path) -> {
+            try {
+                deleteFile(path);
+            } catch (Exception e) {
+                count.incrementAndGet();
+                // ignored at afirst.
+            }
+        });
+        if (count.intValue() > 0) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().isInterrupted();
+            }
+            getFiles().forEach(this::deleteFile);
+        }
     }
 
     @NotNull
