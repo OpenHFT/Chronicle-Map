@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: net.openhft:lang:6.6.5-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/lang/6.6.5-SNAPSHOT/lang-6.6.5-20150519.193141-8.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/lang/6.6.5-SNAPSHOT/lang-6.6.5-20150519.193141-8-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/lang/6.6.5-SNAPSHOT/lang-6.6.5-20150519.193141-8-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

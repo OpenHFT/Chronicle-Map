@@ -8,7 +8,7 @@
 *.war
 *.ear
 *.iml
-.idea*
+
 
 ### Maven template
 target/
