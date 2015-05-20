@@ -18,7 +18,8 @@ public class FilePerKeyMapTest {
 
     @BeforeClass
     public static void createMap() throws IOException {
-        map = new FilePerKeyMap("/tmp/filepermaptests");
+        String TMP = System.getProperty("java.io.tmpdir");
+        map = new FilePerKeyMap(TMP + "/filepermaptests");
         //just in case it hasn't been cleared up last time
         map.clear();
     }
