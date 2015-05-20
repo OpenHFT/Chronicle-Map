@@ -42,7 +42,7 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
     private final Thread fileFpmWatcher;
     private volatile boolean closed = false;
     private boolean putReturnsNull;
-    private boolean snappyValues;
+
     private ThrowingFunction<InputStream, InputStream, IOException> reading = i -> i;
     private ThrowingFunction<OutputStream, OutputStream, IOException> writing = o -> o;
 
@@ -112,9 +112,10 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
     public String put(String key, String value) {
         if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
+        FileRecord fr = lastFile.get(path.toFile());
         String existingValue = putReturnsNull ? null : getFileContents(path);
         writeToFile(path, value);
-
+        if (fr != null) fr.valid = false;
         return existingValue;
     }
 
@@ -174,7 +175,7 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
         try {
             File file = path.toFile();
             FileRecord last = lastFile.get(file);
-            if (last != null && file.lastModified() == last.timestamp)
+            if (last != null && last.valid && file.lastModified() == last.timestamp)
                 return last.contents;
             return getFileContents0(path);
         } catch (IOException ioe) {
@@ -217,10 +218,6 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
 
     public void putReturnsNull(boolean putReturnsNull) {
         this.putReturnsNull = putReturnsNull;
-    }
-
-    public void snappyValues(boolean snappyValues) {
-        this.snappyValues = snappyValues;
     }
 
     private static class FPMEntry<String> implements Entry<String, String> {
@@ -350,6 +347,7 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
 
 class FileRecord {
     final long timestamp;
+    boolean valid = true;
     final String contents;
 
     FileRecord(long timestamp, String contents) {
