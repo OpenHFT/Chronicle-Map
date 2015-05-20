@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
@@ -120,7 +119,7 @@ public class StatelessClientTest {
 
             try (ChronicleMap<Integer, StringBuilder> statelessMap =
                          ChronicleMapBuilder
-                                 .of(Integer.class, StringBuilder.class, new InetSocketAddress("localhost", port))
+                                 .of(Integer.class, StringBuilder.class, TcpUtil.localPort(port))
                     .putReturnsNull(true)
                     .create()) {
                 String actual = statelessMap.getMapped(10, ToString.INSTANCE);
@@ -132,7 +131,7 @@ public class StatelessClientTest {
     }
 
     public static <K, V> ChronicleMap<K, V> localClient(int port) throws IOException {
-        return createClientOf(new InetSocketAddress("localhost", port));
+        return createClientOf(TcpUtil.localPort(port));
     }
 
     @Test(timeout = 10000)
@@ -676,8 +675,7 @@ public class StatelessClientTest {
             try (ChronicleMap<Integer, Integer> server2 = ChronicleMapBuilder
                     .of(Integer.class, Integer.class)
                     .putReturnsNull(true)
-                    .replication((byte) 2, TcpTransportAndNetworkConfig.of(8046, new
-                            InetSocketAddress("localhost", 8047))).create()) {
+                    .replication((byte) 2, TcpTransportAndNetworkConfig.of(8046, TcpUtil.localPort(8047))).create()) {
 
 
                 // stateless client

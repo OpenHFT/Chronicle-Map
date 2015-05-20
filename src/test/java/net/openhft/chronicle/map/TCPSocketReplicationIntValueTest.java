@@ -24,12 +24,10 @@ import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.Set;
@@ -58,7 +56,7 @@ public class TCPSocketReplicationIntValueTest {
         value = DataValueClasses.newDirectReference(IntValue.class);
         ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
         map1Builder = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
-                (byte) 1, s_port, new InetSocketAddress("localhost", s_port + 1));
+                (byte) 1, s_port, TcpUtil.localPort(s_port + 1));
         map1 = map1Builder.createPersistedTo(getPersistenceFile());
         map2 = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 (byte) 2, s_port + 1)

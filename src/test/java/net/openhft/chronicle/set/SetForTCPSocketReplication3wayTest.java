@@ -19,6 +19,7 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.map.TcpUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,9 +58,9 @@ public class SetForTCPSocketReplication3wayTest {
 
     @Before
     public void setup() throws IOException {
-        set1 = newTcpSocketIntSet((byte) 1, 18076, new InetSocketAddress("localhost", 18077),
-                new InetSocketAddress("localhost", 18079));
-        set2 = newTcpSocketIntSet((byte) 2, 18077, new InetSocketAddress("localhost", 18079));
+        set1 = newTcpSocketIntSet((byte) 1, 18076, TcpUtil.localPort(18077),
+                TcpUtil.localPort(18079));
+        set2 = newTcpSocketIntSet((byte) 2, 18077, TcpUtil.localPort(18079));
         set3 = newTcpSocketIntSet((byte) 3, 18079);
     }
 

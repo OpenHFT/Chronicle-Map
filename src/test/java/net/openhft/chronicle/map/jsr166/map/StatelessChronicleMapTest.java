@@ -21,7 +21,6 @@ package net.openhft.chronicle.map.jsr166.map;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.*;
-import net.openhft.chronicle.map.MapKeyContext;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -32,7 +31,6 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Consumer;
@@ -281,7 +279,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
                 .create();
 
         final ChronicleMap<byte[], byte[]> statelessMap = ChronicleMapBuilder
-                .of(byte[].class, byte[].class, new InetSocketAddress("localhost", port))
+                .of(byte[].class, byte[].class, TcpUtil.localPort(port))
                 .putReturnsNull(true)
                 .create();
 

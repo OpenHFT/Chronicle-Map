@@ -27,7 +27,6 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +54,7 @@ public class TCPSocketReplicationBootStrapTest {
 
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
-                        (byte) 2, 8092, new InetSocketAddress("localhost", 8091));
+                        (byte) 2, 8092, TcpUtil.localPort(8091));
         final ChronicleMap<Integer, CharSequence> map2a =
                 map2aBuilder.createPersistedTo(getPersistenceFile());
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2
@@ -92,7 +91,7 @@ public class TCPSocketReplicationBootStrapTest {
     public void testBootstrapAndHeartbeat() throws IOException, InterruptedException {
 
         TcpTransportAndNetworkConfig map1Config = TcpTransportAndNetworkConfig
-                .of(8068, Arrays.asList(new InetSocketAddress("localhost", 8067)))
+                .of(8068, Arrays.asList(TcpUtil.localPort(8067)))
                 .heartBeatInterval(1L, TimeUnit.SECONDS)
                 .autoReconnectedUponDroppedConnection(true);
 

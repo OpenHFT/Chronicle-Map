@@ -23,7 +23,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -266,7 +265,7 @@ public class CHMUseCasesTest {
                 }
                 {
                     final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of
-                            (8087, new InetSocketAddress("localhost", 8086))
+                            (8087, TcpUtil.localPort(8086))
                             .heartBeatInterval(1, TimeUnit.SECONDS)
                             .tcpBufferSize(1024 * 64);
 

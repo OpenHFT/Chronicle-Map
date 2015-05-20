@@ -29,6 +29,7 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Set;
 
+import static net.openhft.chronicle.map.TcpUtil.localPort;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -58,9 +59,8 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
 
     @Before
     public void setup() throws IOException {
-        map1 = newTcpSocketShmIntString((byte) 1, 8026, new InetSocketAddress("localhost", 8027),
-                new InetSocketAddress("localhost", 8028));
-        map2 = newTcpSocketShmIntString((byte) 2, 8027, new InetSocketAddress("localhost", 8028));
+        map1 = newTcpSocketShmIntString((byte) 1, 8026, localPort(8027), localPort(8028));
+        map2 = newTcpSocketShmIntString((byte) 2, 8027, localPort(8028));
         map3 = newTcpSocketShmIntString((byte) 3, 8028);
     }
 

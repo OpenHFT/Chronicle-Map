@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -254,7 +253,7 @@ public class EventListenerWithTCPSocketReplicationTest {
     }
 
     private ChronicleMapBuilder<Integer, CharSequence> serverBuilder() {
-        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8076, new InetSocketAddress("localhost", 8077))
+        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8076, TcpUtil.localPort(8077))
                 .autoReconnectedUponDroppedConnection(true);
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000L)

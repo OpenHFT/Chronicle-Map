@@ -28,7 +28,6 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertTrue;
@@ -61,7 +60,7 @@ public class PostChannelCreationTest {
 
         {
             final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8086, new InetSocketAddress("localhost", 8087))
+                    .of(8086, TcpUtil.localPort(8087))
                     .heartBeatInterval(1, SECONDS);
 
             hubA = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
@@ -79,7 +78,7 @@ public class PostChannelCreationTest {
 
         {
             final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8087, new InetSocketAddress("localhost", 8086))
+                    .of(8087, TcpUtil.localPort(8086))
                     .heartBeatInterval(1, SECONDS);
 
             hubB = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)

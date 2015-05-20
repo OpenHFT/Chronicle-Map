@@ -28,7 +28,6 @@ import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -78,7 +77,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                                  .entries(10)
                                  .timeProvider(timeProvider)
                                  .replication((byte) 2, TcpTransportAndNetworkConfig.of(8087,
-                                         new InetSocketAddress("localhost", 8086)))
+                                         TcpUtil.localPort(8086)))
                                  .create()) {
                 current(timeProvider);
 
@@ -197,7 +196,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                                  .entries(10)
                                  .timeProvider(timeProvider)
                                  .replication((byte) 2, TcpTransportAndNetworkConfig.of(8087,
-                                         new InetSocketAddress("localhost", 8086)))
+                                         TcpUtil.localPort(8086)))
                                  .create()) {
                 current(timeProvider);
 

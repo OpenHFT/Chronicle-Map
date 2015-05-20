@@ -25,7 +25,6 @@ import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -52,7 +51,7 @@ public class TCPSocketReplicationTest {
         int port = s_port;
         ChronicleMapBuilder<Integer, CharSequence> map1Builder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
-                        (byte) 1, port, new InetSocketAddress("localhost", port + 1));
+                        (byte) 1, port, TcpUtil.localPort(port + 1));
         map1 = map1Builder.entries(Builder.SIZE).averageValueSize(10).create();
 
         ChronicleMapBuilder<Integer, CharSequence> map2Builder =

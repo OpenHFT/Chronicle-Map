@@ -28,7 +28,6 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertTrue;
@@ -59,7 +58,7 @@ public class SingleMapChannelTest {
 
         {
             final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(18086, new InetSocketAddress("localhost", 18087))
+                    .of(18086, TcpUtil.localPort(18087))
                     .autoReconnectedUponDroppedConnection(true)
                     .heartBeatInterval(1, SECONDS);
 
@@ -75,7 +74,7 @@ public class SingleMapChannelTest {
 
         {
             final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(18087, new InetSocketAddress("localhost", 18086))
+                    .of(18087, TcpUtil.localPort(18086))
                     .autoReconnectedUponDroppedConnection(true)
                     .heartBeatInterval(1, SECONDS);
 

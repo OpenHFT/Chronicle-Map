@@ -24,10 +24,10 @@ import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Set;
 
 import static net.openhft.chronicle.map.TCPSocketReplication4WayMapTest.newTcpSocketShmIntString;
+import static net.openhft.chronicle.map.TcpUtil.localPort;
 import static org.junit.Assert.*;
 
 /**
@@ -44,9 +44,8 @@ public class TCPSocketReplication3wayTest {
 
     @Before
     public void setup() throws IOException {
-        map1 = newTcpSocketShmIntString((byte) 1, 8026, new InetSocketAddress("localhost", 8027),
-                new InetSocketAddress("localhost", 8029));
-        map2 = newTcpSocketShmIntString((byte) 2, 8027, new InetSocketAddress("localhost", 8029));
+        map1 = newTcpSocketShmIntString((byte) 1, 8026, localPort(8027), localPort(8029));
+        map2 = newTcpSocketShmIntString((byte) 2, 8027, localPort(8029));
         map3 = newTcpSocketShmIntString((byte) 3, 8029);
     }
 

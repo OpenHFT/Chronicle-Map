@@ -24,7 +24,6 @@ import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Set;
 
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
@@ -63,7 +62,7 @@ public class TCPSocketReplicationPostConnectionTest {
         map1.put(5, "EXAMPLE-2");
         Thread.sleep(10);
         map2 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 2, port + 1,
-                new InetSocketAddress("localhost", port));
+                TcpUtil.localPort(port));
 
         // allow time for the recompilation to resolve
         waitTillEqual(15000);
@@ -79,7 +78,7 @@ public class TCPSocketReplicationPostConnectionTest {
         map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, port);
         map1.put(5, "EXAMPLE-2");
         map2 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 2, port + 1,
-                new InetSocketAddress("localhost", port));
+                TcpUtil.localPort(port));
 
         // allow time for the recompilation to resolve
         waitTillEqual(1000);
@@ -95,7 +94,7 @@ public class TCPSocketReplicationPostConnectionTest {
 
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
-                        (byte) 2, port + 1, new InetSocketAddress("localhost", port));
+                        (byte) 2, port + 1, TcpUtil.localPort(port));
         try (final ChronicleMap<Integer, CharSequence> map2a =
                 map2aBuilder.createPersistedTo(Builder.getPersistenceFile())) {
             map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, port);

@@ -25,11 +25,11 @@ import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Set;
 
 import static net.openhft.chronicle.hash.serialization.internal.DummyValue.DUMMY_VALUE;
 import static net.openhft.chronicle.map.Builder.newMapDummyValue;
+import static net.openhft.chronicle.map.TcpUtil.localPort;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -47,9 +47,8 @@ public class TCPSocketReplication3VoidValueTest {
 
     @Before
     public void setup() throws IOException {
-        map1 = newMapDummyValue((byte) 1, 8036, new InetSocketAddress("localhost", 8037),
-                new InetSocketAddress("localhost", 8039));
-        map2 = newMapDummyValue((byte) 2, 8037, new InetSocketAddress("localhost", 8039));
+        map1 = newMapDummyValue((byte) 1, 8036, localPort(8037), localPort(8039));
+        map2 = newMapDummyValue((byte) 2, 8037, localPort(8039));
         map3 = newMapDummyValue((byte) 3, 8039);
     }
 

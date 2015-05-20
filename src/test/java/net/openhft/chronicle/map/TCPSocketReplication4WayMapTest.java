@@ -29,6 +29,7 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
+import static net.openhft.chronicle.map.TcpUtil.localPort;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -55,11 +56,9 @@ public class TCPSocketReplication4WayMapTest {
     @Before
     public void setup() throws IOException {
 
-        map1 = newTcpSocketShmIntString((byte) 1, 8086, new InetSocketAddress("localhost", 8087),
-                new InetSocketAddress("localhost", 8088), new InetSocketAddress("localhost", 8089));
-        map2 = newTcpSocketShmIntString((byte) 2, 8087, new InetSocketAddress("localhost", 8088),
-                new InetSocketAddress("localhost", 8089));
-        map3 = newTcpSocketShmIntString((byte) 3, 8088, new InetSocketAddress("localhost", 8089));
+        map1 = newTcpSocketShmIntString((byte) 1, 8086, localPort(8087), localPort(8088), localPort(8089));
+        map2 = newTcpSocketShmIntString((byte) 2, 8087, localPort(8088), localPort(8089));
+        map3 = newTcpSocketShmIntString((byte) 3, 8088, localPort(8089));
         map4 = newTcpSocketShmIntString((byte) 4, 8089);
     }
 
@@ -152,12 +151,12 @@ public class TCPSocketReplication4WayMapTest {
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
         int t = 0;
         for (; t < timeOutMs; t++) {
-            if ( map1.equals(map2) &&
-                            map1.equals(map3) &&
-                            map1.equals(map4) &&
-                            map2.equals(map3) &&
-                            map2.equals(map4) &&
-                            map3.equals(map4))
+            if (map1.equals(map2) &&
+                    map1.equals(map3) &&
+                    map1.equals(map4) &&
+                    map2.equals(map3) &&
+                    map2.equals(map4) &&
+                    map3.equals(map4))
                 break;
             Thread.sleep(1);
         }

@@ -47,7 +47,7 @@ public class TCPSocketReplicationNativeTest {
 
     @Before
     public void setup() throws IOException {
-        InetSocketAddress endpoint = new InetSocketAddress("localhost", 8077);
+        InetSocketAddress endpoint = TcpUtil.localPort(8077);
 
         TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(8076, endpoint)
                 .heartBeatInterval(1L, TimeUnit.SECONDS).autoReconnectedUponDroppedConnection(true);

@@ -27,7 +27,6 @@ import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -53,7 +52,7 @@ public class ChannelReplicationTest {
     public void setup() throws IOException {
         {
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8086, new InetSocketAddress("localhost", 8087))
+                    .of(8086, TcpUtil.localPort(8087))
                     .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
 
             hubA = ReplicationHub.builder()

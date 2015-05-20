@@ -37,7 +37,7 @@ public class TcpReplicationLargeEntryTest {
         Arrays.fill(valueX, 'Y');
 
         String sampleValue = new String(valueX);
-        final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
+        final InetSocketAddress endpoint = TcpUtil.localPort(s_port + 1);
 
         {
             final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(s_port,

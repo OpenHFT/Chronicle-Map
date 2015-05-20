@@ -8,7 +8,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +46,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             byte identifier = (byte) 1;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8021, new InetSocketAddress("localhost", 8022))
+                    .of(8021, TcpUtil.localPort(8022))
                     .heartBeatInterval(1, TimeUnit.SECONDS);
 
             ReplicationHub hubOnServer1 = ReplicationHub.builder()
@@ -181,7 +180,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             byte identifier = (byte) 2;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8054, new InetSocketAddress("localhost", 8059));
+                    .of(8054, TcpUtil.localPort(8059));
 
             hubOnServer2 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -350,8 +349,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
             byte identifier = (byte) 2;
 
-            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8026, new
-                    InetSocketAddress("localhost", 8025));  // change the localhost to your server
+            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8026, TcpUtil.localPort(8025));  // change the localhost to your server
 
             ReplicationHub hubOnServer1 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)

@@ -23,11 +23,11 @@ import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.TcpUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
@@ -59,7 +59,7 @@ public class ChannelReplicationTest {
             byte identifier = (byte) 1;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8086, new InetSocketAddress("localhost", 8087))
+                    .of(8086, TcpUtil.localPort(8087))
                     .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
 
             hubOnServer1 = ReplicationHub.builder()
@@ -186,7 +186,7 @@ public class ChannelReplicationTest {
             byte identifier = (byte) 6;
 
             TcpTransportAndNetworkConfig tcpConfig =
-                    TcpTransportAndNetworkConfig.of(8087, new InetSocketAddress("localhost", 8086))
+                    TcpTransportAndNetworkConfig.of(8087, TcpUtil.localPort(8086))
                             .heartBeatInterval(1, SECONDS)
                             .autoReconnectedUponDroppedConnection(true);
 
@@ -210,7 +210,7 @@ public class ChannelReplicationTest {
             byte identifier = (byte) 3;
 
             TcpTransportAndNetworkConfig tcpConfig =
-                    TcpTransportAndNetworkConfig.of(8088, new InetSocketAddress("localhost", 8086))
+                    TcpTransportAndNetworkConfig.of(8088, TcpUtil.localPort(8086))
                             .heartBeatInterval(1, SECONDS)
                             .autoReconnectedUponDroppedConnection(true);
 
@@ -267,7 +267,7 @@ public class ChannelReplicationTest {
             byte identifier = (byte) 1;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8086, new InetSocketAddress("localhost", 8087))
+                    .of(8086, TcpUtil.localPort(8087))
                     .heartBeatInterval(1, SECONDS)
                     .autoReconnectedUponDroppedConnection(true);
 

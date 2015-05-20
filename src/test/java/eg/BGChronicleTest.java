@@ -4,6 +4,7 @@ import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.TcpUtil;
 
 import java.io.Closeable;
 import java.io.File;
@@ -61,7 +62,7 @@ public class BGChronicleTest {
 
         File file2 = File.createTempFile("bg-test", ".deleteme");
         file2.deleteOnExit();
-        final InetSocketAddress serverHostPort = new InetSocketAddress("localhost", port);
+        final InetSocketAddress serverHostPort = TcpUtil.localPort(port);
 
         final TcpTransportAndNetworkConfig clientConfig =
                 TcpTransportAndNetworkConfig.of(port + 1, serverHostPort)

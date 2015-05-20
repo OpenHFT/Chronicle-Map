@@ -34,7 +34,7 @@ public class TcpTimeBasedReplicationSoakTest {
         value = DataValueClasses.newDirectReference(IntValue.class);
         ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
 
-        final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
+        final InetSocketAddress endpoint = TcpUtil.localPort(s_port + 1);
         timeProvider = new TimeProvider() {
 
             Random rnd = new Random(4);
