@@ -1793,3 +1793,18 @@ Or is there a lot of overhead for other functionality which i do not intend to u
 #### Answer
 You can share the data between processes on the same machine but this doesn't add overhead.
 You can add replication between machines. But this uses extra classes which are not used in the simple case ie it is as if they were not there, only an option.
+
+
+#### Question
+I have  a chronicle map with StringValue as key and entries as 6 million. I have written a code just 
+to insert 6 million records in the chronicle where in the key of all the records is unique.  
+What I find is when I run this code on 2.x version it executes smoothly,  
+but when I run the same code under 3.0 it gives me "Segment is full" error even when the map is not full.
+
+#### Answer
+Three reasons you can get segment is full are:
+- the number entries was not specified and the default was too small.
+- the size of the entries is larger than the default allows. You can specify the size of the entries a number of ways. Eg with the averageXxxxSize
+- the distribution of keys is unfortunate so one segment fills while another is not. You can increase the possible entries a little or decrease the number of segments to avoid this.
+
+
