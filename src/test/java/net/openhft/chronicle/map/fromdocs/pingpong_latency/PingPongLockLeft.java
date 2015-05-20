@@ -70,7 +70,8 @@ public class PingPongLockLeft {
     }
 
     private static void toggleCoupon(BondVOInterface bond, double _coupon, double _coupon2) throws InterruptedException {
-        for (int i = 0; ; i++) {
+        throw new UnsupportedOperationException();
+      /*  for (int i = 0; ; i++) {
             bond.busyLockEntry();
             try {
                 if (bond.getCoupon() == _coupon) {
@@ -82,6 +83,6 @@ public class PingPongLockLeft {
             } finally {
                 bond.unlockEntry();
             }
-        }
+        }*/
     }
 }
