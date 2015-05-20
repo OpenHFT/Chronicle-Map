@@ -6,6 +6,10 @@ requirements. - [Contact Us](http://chronicle.software/support/)*
 
 # Chronicle Map
 
+*Please be aware this is an alpha release and as such we don’t recommend that you use it in a 
+production environment, I suggest you stick with version 2 until we have release the full version
+ of chronicle map 3.*
+
 A low latency replicated Key Value Store across your network, with eventual consistency, persistence and performance.
 ![Chronicle Map](http://chronicle.software/wp-content/uploads/2014/07/ChronicleMap_200px.png)
 
