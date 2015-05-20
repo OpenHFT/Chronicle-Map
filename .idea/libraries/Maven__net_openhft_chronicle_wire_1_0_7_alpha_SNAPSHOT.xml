@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: net.openhft:chronicle-wire:1.0.7-alpha-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/chronicle-wire/1.0.7-alpha-SNAPSHOT/chronicle-wire-1.0.7-alpha-20150520.111224-24.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/chronicle-wire/1.0.7-alpha-SNAPSHOT/chronicle-wire-1.0.7-alpha-20150520.111224-24-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/chronicle-wire/1.0.7-alpha-SNAPSHOT/chronicle-wire-1.0.7-alpha-20150520.111224-24-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

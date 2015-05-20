@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: net.openhft:chronicle-bytes:1.0.3-alpha-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/chronicle-bytes/1.0.3-alpha-SNAPSHOT/chronicle-bytes-1.0.3-alpha-20150520.134353-62.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/chronicle-bytes/1.0.3-alpha-SNAPSHOT/chronicle-bytes-1.0.3-alpha-20150520.134353-62-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/openhft/chronicle-bytes/1.0.3-alpha-SNAPSHOT/chronicle-bytes-1.0.3-alpha-20150520.134353-62-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
