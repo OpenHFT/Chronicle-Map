@@ -1,6 +1,5 @@
 package net.openhft.chronicle.map;
 
-import com.google.common.collect.Lists;
 import net.openhft.chronicle.wire.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -9,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -20,7 +20,8 @@ public class FilePerKeyMarshallableMapTest {
 
     @BeforeClass
     public static void createMap() throws IOException {
-        String TMP = "/tmp";//System.getProperty("java.io.tmpdir");
+        //String TMP = "/tmp";
+        String TMP = System.getProperty("java.io.tmpdir");
 
         map = new FilePerKeyMarshallableMap<>(TMP + "/filepermaptests", TextWire::new, TestMarshallable::new);
 
@@ -38,6 +39,35 @@ public class FilePerKeyMarshallableMapTest {
         assertEquals(1, map.size());
         assertEquals("testing1", map.get("testA").getS1());
         assertEquals(4.5, map.get("testA").getNested().getListDouble().get(1),0);
+
+        map.registerForEvents(new ChronicleMapEventListener<String, TestMarshallable>() {
+            @Override
+            public void update(String key, TestMarshallable oldValue, TestMarshallable newValue) {
+                System.out.println("Update");
+                System.out.println("key->" + key);
+                System.out.println("key->" + oldValue);
+                System.out.println("key->" + newValue);
+            }
+
+            @Override
+            public void insert(String key, TestMarshallable newValue) {
+                System.out.println("Insert");
+                System.out.println("key->" + key);
+                System.out.println("key->" + newValue);
+            }
+
+            @Override
+            public void remove(String key, TestMarshallable oldValue) {
+                System.out.println("Remove");
+                System.out.println("key->" + key);
+            }
+        });
+
+//        try {
+//            TimeUnit.SECONDS.sleep(5);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
     static class TestMarshallable implements Marshallable{
@@ -96,6 +126,15 @@ public class FilePerKeyMarshallableMapTest {
         private enum TestKey implements WireKey {
             S1,S2,nested
         }
+
+        @Override
+        public String toString() {
+            return "TestMarshallable{" +
+                    "s1='" + s1 + '\'' +
+                    ", s2='" + s2 + '\'' +
+                    ", nested=" + nested +
+                    '}';
+        }
     }
 
     static class Nested implements Marshallable{
@@ -136,6 +175,13 @@ public class FilePerKeyMarshallableMapTest {
 
         private enum TestKey implements WireKey {
             listDouble;
+        }
+
+        @Override
+        public String toString() {
+            return "Nested{" +
+                    "listDouble=" + listDouble +
+                    '}';
         }
     }
 

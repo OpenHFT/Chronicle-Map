@@ -2,11 +2,7 @@ package net.openhft.chronicle.map;
 
 import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.NativeBytes;
-import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,8 +13,6 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -27,16 +21,12 @@ import java.util.stream.Stream;
 /**
  * A {@link Map} implementation that stores each entry as a file in a
  * directory. The <code>key</code> is the file name and the <code>value</code>
- * is the contents of the file. This map will only handle <code>String</code>'s.
+ * is the contents of the file.
  * <p>
  * The class is effectively an abstraction over a directory in the file system.
  * Therefore when the underlying files are changed an event will be fired to those
  * registered for notifications.
- * Since every write to this map will cause a change to underlying
- * file system the event will distinguish between a programmatic event
- * (i.e one caused my the actions of the map itself) and an event that
- * has been triggered as a direct result of a file being manipulated outside
- * this class.
+ *
  * <p>
  * Updates will be fired every time the file is saved but will be suppressed
  * if the value has not changed.  To avoid temporary files (e.g. if edited in vi)
@@ -49,11 +39,11 @@ import java.util.stream.Stream;
 public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<String, V>, Closeable {
     private final Path dirPath;
     //Use BytesStore so that it can be shared safely between threads
-    private final Map<File, FileRecord<V>> lastFile = new ConcurrentHashMap<>();
+    private final Map<File, FileRecord<V>> lastFileRecordMap = new ConcurrentHashMap<>();
 
-    private final List<Consumer<FPMEvent>> listeners = new ArrayList<>();
+    private final List<ChronicleMapEventListener<String, V>> listeners = new ArrayList<>();
     private final Thread fileFpmWatcher;
-    private final Supplier<V> vSupplier;
+    private final Supplier<V> valueSupplier;
     private volatile boolean closed = false;
     private boolean putReturnsNull;
     private final Bytes<ByteBuffer> writingBytes = Bytes.elasticByteBuffer();
@@ -63,8 +53,8 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
 
     public FilePerKeyMarshallableMap(String dir,
                                      Function<Bytes, Wire> bytesToWire,
-                                     Supplier<V> vSupplier) throws IOException {
-        this.vSupplier = vSupplier;
+                                     Supplier<V> valueSupplier) throws IOException {
+        this.valueSupplier = valueSupplier;
         this.dirPath = Paths.get(dir);
         writingWire = bytesToWire.apply(writingBytes);
         readingWire = bytesToWire.apply(readingBytes);
@@ -82,20 +72,14 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
         fileFpmWatcher.start();
     }
 
-    public void registerForEvents(Consumer<FPMEvent> listener) {
+    public void registerForEvents(ChronicleMapEventListener<String, V> listener) {
         listeners.add(listener);
     }
 
-    public void unregisterForEvents(Consumer<FPMEvent> listener) {
+    public void unregisterForEvents(ChronicleMapEventListener<String, V> listener) {
         listeners.remove(listener);
     }
 
-
-    private void fireEvent(FPMEvent event) {
-        for (Consumer<FPMEvent> listener : listeners) {
-            listener.accept(event);
-        }
-    }
 
     @Override
     public int size() {
@@ -127,7 +111,7 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
     public V put(String key, V value) {
         if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
-        FileRecord fr = lastFile.get(path.toFile());
+        FileRecord fr = lastFileRecordMap.get(path.toFile());
         V existingValue = putReturnsNull ? null : getFileContents(path);
         writeToFile(path, value);
         if (fr != null) fr.valid = false;
@@ -145,8 +129,8 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
     }
 
     @Override
-    public void putAll(Map<? extends String, ? extends V> m) {
-        m.entrySet().stream().forEach(e -> put(e.getKey(), e.getValue()));
+    public void putAll(Map<? extends String, ? extends V> map) {
+        map.entrySet().stream().forEach(e -> put(e.getKey(), e.getValue()));
     }
 
     @Override
@@ -206,18 +190,19 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
     V getFileContents(Path path) {
         try {
             File file = path.toFile();
-            FileRecord<V> last = lastFile.get(file);
-            if (last != null && last.valid && file.lastModified() == last.timestamp)
+            FileRecord<V> lastFileRecord = lastFileRecordMap.get(file);
+            if (lastFileRecord != null && lastFileRecord.valid
+                    && file.lastModified() == lastFileRecord.timestamp)
             {
-                return last.contents;
+                return lastFileRecord.contents;
             }
-            return getFileContents0(path);
+            return getFileContentsFromDisk(path);
         } catch (IOException ioe) {
             throw new IllegalStateException(ioe);
         }
     }
 
-    V getFileContents0(Path path) throws IOException {
+    V getFileContentsFromDisk(Path path) throws IOException {
         if (!Files.exists(path)) return null;
         File file = path.toFile();
 
@@ -234,7 +219,7 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
                 readingBytes.limit(dst.position());
             }
 
-            V v = vSupplier.get();
+            V v = valueSupplier.get();
             v.readMarshallable(readingWire);
             return v;
         }
@@ -280,11 +265,11 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
         this.putReturnsNull = putReturnsNull;
     }
 
-    private static class FPMEntry<String> implements Entry<String, String> {
+    private static class FPMEntry<V> implements Entry<String, V> {
         private String key;
-        private String value;
+        private V value;
 
-        public FPMEntry(String key, String value) {
+        public FPMEntry(String key, V value) {
             this.key = key;
             this.value = value;
         }
@@ -295,13 +280,13 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
         }
 
         @Override
-        public String getValue() {
+        public V getValue() {
             return value;
         }
 
         @Override
-        public String setValue(String value) {
-            String lastValue = this.value;
+        public V setValue(V value) {
+            V lastValue = this.value;
             this.value = value;
             return lastValue;
         }
@@ -360,24 +345,24 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
                             if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                                 Path p = dirPath.resolve(fileName);
                                 try {
-                                    V mapVal = getFileContents0(p);
-                                    lastFile.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal));
-                                    fireEvent(new FPMEvent<>(FPMEvent.EventType.NEW, mapKey, null, mapVal));
+                                    V mapVal = getFileContentsFromDisk(p);
+                                    lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal));
+                                    listeners.forEach(l->l.insert(mapKey, mapVal));
                                 } catch (FileNotFoundException ignored) {
                                 }
                             } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                                 Path p = dirPath.resolve(fileName);
 
-                                FileRecord<V> lastVal = lastFile.remove(p.toFile());
+                                FileRecord<V> lastVal = lastFileRecordMap.remove(p.toFile());
                                 V lastContent = lastVal == null ? null : lastVal.contents;
-                                fireEvent(new FPMEvent<>(FPMEvent.EventType.DELETE, mapKey, lastContent, null));
+                                listeners.forEach(l->l.remove(mapKey, lastContent));
                             } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                                 try {
                                     Path p = dirPath.resolve(fileName);
-                                    V mapVal = getFileContents0(p);
-                                    V lastVal = null;
+                                    V mapVal = getFileContentsFromDisk(p);
+                                    V lastVal=null;
                                     if (mapVal != null) {
-                                        FileRecord<V> rec = lastFile.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal));
+                                        FileRecord<V> rec = lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal));
                                         if (rec != null) lastVal = rec.contents;
                                     }
 
@@ -386,7 +371,9 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
                                         continue;
                                     }
 
-                                    fireEvent(new FPMEvent<>(FPMEvent.EventType.UPDATE, mapKey, lastVal, mapVal));
+                                    //variable needs to be effectively final
+                                    V fLastVal = lastVal;
+                                    listeners.forEach(l->l.update(mapKey, fLastVal, mapVal));
                                 } catch (FileNotFoundException ignored) {
                                 }
                             }
