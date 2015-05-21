@@ -45,7 +45,8 @@ public abstract class MapStatelessClient<E extends ParameterizeWireKey> extends 
                         ? valueInRFunction
                         : f -> f.object(resultType);
 
-        return proxyReturnWireConsumerInOut(eventId,
+        return proxyReturnWireConsumerInOut(
+                eventId,
                 CoreFields.reply,
                 toParameters(eventId, args),
                 consumerIn);
