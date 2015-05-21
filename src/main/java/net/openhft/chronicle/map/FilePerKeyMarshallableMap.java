@@ -1,15 +1,26 @@
 package net.openhft.chronicle.map;
 
 import com.sun.nio.file.SensitivityWatchEventModifier;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.core.util.ThrowingFunction;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,20 +46,28 @@ import java.util.stream.Stream;
  * very few events if they are done quickly and there is a significant delay
  * between the event and the event being triggered.
  */
-public class FilePerKeyMap implements Map<String, String>, Closeable {
+public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<String, V>, Closeable {
     private final Path dirPath;
-    private final Map<File, FileRecord<String>> lastFile = new ConcurrentHashMap<>();
+    //Use BytesStore so that it can be shared safely between threads
+    private final Map<File, FileRecord<V>> lastFile = new ConcurrentHashMap<>();
 
     private final List<Consumer<FPMEvent>> listeners = new ArrayList<>();
     private final Thread fileFpmWatcher;
+    private final Supplier<V> vSupplier;
     private volatile boolean closed = false;
     private boolean putReturnsNull;
+    private final Bytes<ByteBuffer> writingBytes = Bytes.elasticByteBuffer();
+    private final Bytes<ByteBuffer> readingBytes = Bytes.elasticByteBuffer();
+    private final Wire writingWire;
+    private final Wire readingWire;
 
-    private ThrowingFunction<InputStream, InputStream, IOException> reading = i -> i;
-    private ThrowingFunction<OutputStream, OutputStream, IOException> writing = o -> o;
-
-    public FilePerKeyMap(String dir) throws IOException {
+    public FilePerKeyMarshallableMap(String dir,
+                                     Function<Bytes, Wire> bytesToWire,
+                                     Supplier<V> vSupplier) throws IOException {
+        this.vSupplier = vSupplier;
         this.dirPath = Paths.get(dir);
+        writingWire = bytesToWire.apply(writingBytes);
+        readingWire = bytesToWire.apply(readingBytes);
         Files.createDirectories(dirPath);
         WatchService watcher = FileSystems.getDefault().newWatchService();
         dirPath.register(watcher, new WatchEvent.Kind[]{
@@ -71,11 +90,6 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
         listeners.remove(listener);
     }
 
-    public void valueMarshaller(ThrowingFunction<InputStream, InputStream, IOException> reading,
-                                ThrowingFunction<OutputStream, OutputStream, IOException> writing) {
-        this.reading = reading;
-        this.writing = writing;
-    }
 
     private void fireEvent(FPMEvent event) {
         for (Consumer<FPMEvent> listener : listeners) {
@@ -104,26 +118,26 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
     }
 
     @Override
-    public String get(Object key) {
+    public V get(Object key) {
         Path path = dirPath.resolve((String) key);
         return getFileContents(path);
     }
 
     @Override
-    public String put(String key, String value) {
+    public V put(String key, V value) {
         if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
         FileRecord fr = lastFile.get(path.toFile());
-        String existingValue = putReturnsNull ? null : getFileContents(path);
+        V existingValue = putReturnsNull ? null : getFileContents(path);
         writeToFile(path, value);
         if (fr != null) fr.valid = false;
         return existingValue;
     }
 
     @Override
-    public String remove(Object key) {
+    public V remove(Object key) {
         if (closed) throw new IllegalStateException("closed");
-        String existing = get(key);
+        V existing = get(key);
         if (existing != null) {
             deleteFile(dirPath.resolve((String) key));
         }
@@ -131,7 +145,7 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
     }
 
     @Override
-    public void putAll(Map<? extends String, ? extends String> m) {
+    public void putAll(Map<? extends String, ? extends V> m) {
         m.entrySet().stream().forEach(e -> put(e.getKey(), e.getValue()));
     }
 
@@ -166,17 +180,17 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
 
     @NotNull
     @Override
-    public Collection<String> values() {
-        return getFiles().map(p -> getFileContents(p))
+    public Collection<V> values() {
+        return getFiles().map(this::getFileContents)
                 .collect(Collectors.toSet());
 
     }
 
     @NotNull
     @Override
-    public Set<Entry<String, String>> entrySet() {
+    public Set<Entry<String, V>> entrySet() {
         return getFiles().map(p ->
-                (Entry<String, String>) new FPMEntry(p.getFileName().toString(), getFileContents(p)))
+                (Entry<String, V>) new FPMEntry(p.getFileName().toString(), getFileContents(p)))
                 .collect(Collectors.toSet());
     }
 
@@ -189,42 +203,63 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
         }
     }
 
-    String getFileContents(Path path) {
+    V getFileContents(Path path) {
         try {
             File file = path.toFile();
-            FileRecord<String> last = lastFile.get(file);
+            FileRecord<V> last = lastFile.get(file);
             if (last != null && last.valid && file.lastModified() == last.timestamp)
+            {
                 return last.contents;
+            }
             return getFileContents0(path);
         } catch (IOException ioe) {
             throw new IllegalStateException(ioe);
         }
     }
 
-    String getFileContents0(Path path) throws IOException {
+    V getFileContents0(Path path) throws IOException {
         if (!Files.exists(path)) return null;
         File file = path.toFile();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream((int) file.length());
-        byte[] bytes = new byte[1024];
-        try (InputStream fis = reading.apply(new FileInputStream(file))) {
-            for (int len; (len = fis.read(bytes)) > 0; )
-                baos.write(bytes, 0, len);
+
+        synchronized (readingBytes) {
+            try (FileChannel fc = new FileInputStream(file).getChannel()) {
+                readingBytes.ensureCapacity(fc.size());
+
+                ByteBuffer dst = readingBytes.underlyingObject();
+                dst.clear();
+
+                fc.read(dst);
+
+                readingBytes.position(0);
+                readingBytes.limit(dst.position());
+            }
+
+            V v = vSupplier.get();
+            v.readMarshallable(readingWire);
+            return v;
         }
-        return baos.toString();
     }
 
-    private void writeToFile(Path path, String value) {
-        File file = path.toFile();
-        File tmpFile = new File(file.getParentFile(), "." + file.getName());
-        try (PrintWriter pw = new PrintWriter(new BufferedOutputStream(writing.apply(new FileOutputStream(tmpFile))))) {
-            pw.write(value);
-        } catch (IOException e) {
-            throw new AssertionError(e);
-        }
-        try {
-            Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
+    private void writeToFile(Path path, V value) {
+        synchronized (writingBytes) {
+            writingBytes.clear();
+            value.writeMarshallable(writingWire);
+
+            File file = path.toFile();
+            File tmpFile = new File(file.getParentFile(), "." + file.getName());
+            try (FileChannel fc = new FileOutputStream(tmpFile).getChannel()) {
+                ByteBuffer byteBuffer = writingBytes.underlyingObject();
+                byteBuffer.position(0);
+                byteBuffer.limit((int) writingBytes.position());
+                fc.write(byteBuffer);
+            } catch (IOException e) {
+                throw new AssertionError(e);
+            }
+            try {
+                Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
         }
     }
 
@@ -325,7 +360,7 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
                             if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
                                 Path p = dirPath.resolve(fileName);
                                 try {
-                                    String mapVal = getFileContents0(p);
+                                    V mapVal = getFileContents0(p);
                                     lastFile.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal));
                                     fireEvent(new FPMEvent<>(FPMEvent.EventType.NEW, mapKey, null, mapVal));
                                 } catch (FileNotFoundException ignored) {
@@ -333,16 +368,16 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
                             } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                                 Path p = dirPath.resolve(fileName);
 
-                                FileRecord<String> lastVal = lastFile.remove(p.toFile());
-                                String lastContent = lastVal == null ? null : lastVal.contents;
+                                FileRecord<V> lastVal = lastFile.remove(p.toFile());
+                                V lastContent = lastVal == null ? null : lastVal.contents;
                                 fireEvent(new FPMEvent<>(FPMEvent.EventType.DELETE, mapKey, lastContent, null));
                             } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                                 try {
                                     Path p = dirPath.resolve(fileName);
-                                    String mapVal = getFileContents0(p);
-                                    String lastVal = null;
+                                    V mapVal = getFileContents0(p);
+                                    V lastVal = null;
                                     if (mapVal != null) {
-                                        FileRecord<String> rec = lastFile.put(p.toFile(), new FileRecord(p.toFile().lastModified(), mapVal));
+                                        FileRecord<V> rec = lastFile.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal));
                                         if (rec != null) lastVal = rec.contents;
                                     }
 

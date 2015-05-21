@@ -3,24 +3,24 @@ package net.openhft.chronicle.map;
 /**
  * Created by daniel on 23/04/15.
  */
-public class FPMEvent {
+public class FPMEvent<V> {
     private EventType eventType;
     private String key;
-    private String value;
-    private String lastValue;
+    private V value;
+    private V lastValue;
 
-    public FPMEvent(EventType eventType, String key, String lastValue, String value) {
+    public FPMEvent(EventType eventType, String key, V lastValue, V value) {
         this.eventType = eventType;
         this.key = key;
         this.value = value;
         this.lastValue = lastValue;
     }
 
-    public String getLastValue() {
+    public V getLastValue() {
         return lastValue;
     }
 
-    public void setLastValue(String lastValue) {
+    public void setLastValue(V lastValue) {
         this.lastValue = lastValue;
     }
 
@@ -40,11 +40,11 @@ public class FPMEvent {
         this.key = key;
     }
 
-    public String getValue() {
+    public V getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(V value) {
         this.value = value;
     }
 
