@@ -1,10 +1,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -63,7 +60,7 @@ public class TestReplication {
         ChronicleMap<String, String> server1 = null;
         ChronicleMap<String, String> server2 = null;
 
-        // server 1  - for this test server1 and server 2 are on the same localhost but diffent
+        // server 1  - for this test server1 and server 2 are on the same localhost but different
         // ports, to make it easier to run in a unit test
         {
             final File tempFile = File.createTempFile("test", "chron");
@@ -82,7 +79,7 @@ public class TestReplication {
 
         }
 
-        // server 2- for this test server1 and server 2 are on the same localhost but diffent
+        // server 2- for this test server1 and server 2 are on the same localhost but different
         // ports, to make it easier to run in a unit test
         {
             TcpTransportAndNetworkConfig server2Config = TcpTransportAndNetworkConfig.of(8090, new
