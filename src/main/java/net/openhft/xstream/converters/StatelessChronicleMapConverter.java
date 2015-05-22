@@ -40,7 +40,6 @@ public class StatelessChronicleMapConverter<K, V> extends AbstractChronicleMapCo
     @Override
     public void marshal(Object o, final HierarchicalStreamWriter writer, final MarshallingContext
             marshallingContext) {
-
         final CountDownLatch countDownLatch = new CountDownLatch(1);
 
         try {
@@ -51,7 +50,6 @@ public class StatelessChronicleMapConverter<K, V> extends AbstractChronicleMapCo
             entrySize.invoke(o,
 
                     new MapEntryCallback() {
-
                         @Override
                         public void onEntry(Object key, Object value) {
                             writer.startNode("entry");
@@ -76,9 +74,6 @@ public class StatelessChronicleMapConverter<K, V> extends AbstractChronicleMapCo
             throw new ConversionException("", e);
         }
 
-
     }
-
-
 }
 

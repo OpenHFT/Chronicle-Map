@@ -36,6 +36,7 @@ public class AcquireGetUsingMain {
         String processType = "testkey";
         if (theSharedMap.getUsing(processType, data) == null) {
             System.out.println("Key " + processType + " does not exist, " + data);
+
         } else {
             System.out.println("Key " + processType + "  exists " + data);
         }
@@ -61,6 +62,7 @@ public class AcquireGetUsingMain {
         if (theSharedMap.getUsing(processType3, data) == null) {
             // should be unset as this key is not present.
             System.out.println("Key " + processType3 + " does not exist, " + data);
+
         } else {
             System.out.println("Key " + processType3 + "  exists " + data);
         }
@@ -93,5 +95,4 @@ public class AcquireGetUsingMain {
 
         void setMaxNumberOfProcessesAllowed(int num);
     }
-
 }

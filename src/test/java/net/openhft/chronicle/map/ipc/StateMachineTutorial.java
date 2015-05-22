@@ -70,18 +70,21 @@ public class StateMachineTutorial {
                             StateMachineState.STATE_1,
                             StateMachineState.STATE_1_WORKING,
                             StateMachineState.STATE_2);
+
                 } else if ("2".equalsIgnoreCase(args[0])) {
                     StateMachineProcessor.runProcessor(
                             map.acquireUsing(0, new StateMachineData()),
                             StateMachineState.STATE_2,
                             StateMachineState.STATE_2_WORKING,
                             StateMachineState.STATE_3);
+
                 } else if ("3".equalsIgnoreCase(args[0])) {
                     StateMachineProcessor.runProcessor(
                             map.acquireUsing(0, new StateMachineData()),
                             StateMachineState.STATE_3,
                             StateMachineState.STATE_3_WORKING,
                             StateMachineState.STATE_1);
+
                 } else if ("clean".equalsIgnoreCase(args[0])) {
                     LOGGER.info("deleting {}", dataFile.getAbsolutePath());
                     dataFile.delete();

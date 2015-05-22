@@ -146,6 +146,5 @@ public class ChannelReplicationTest {
             Thread.sleep(1);
         }
     }
-
 }
 

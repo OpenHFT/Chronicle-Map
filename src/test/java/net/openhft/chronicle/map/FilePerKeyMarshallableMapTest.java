@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -27,8 +26,6 @@ public class FilePerKeyMarshallableMapTest {
 
         //just in case it hasn't been cleared up last time
         map.clear();
-
-
     }
 
     @Test
@@ -184,6 +181,4 @@ public class FilePerKeyMarshallableMapTest {
                     '}';
         }
     }
-
-
 }

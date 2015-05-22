@@ -50,7 +50,6 @@ class JsonSerializer {
         }
     }
 
-
     static synchronized <K, V> void putAll(File fromFile, Map<K, V> map, List jsonConverters)
             throws IOException {
         final XStream xstream = xStream(map, jsonConverters);
@@ -76,6 +75,7 @@ class JsonSerializer {
             for (Object c : jsonConverters) {
                 if (c instanceof Converter) {
                     xstream.registerConverter((Converter) c);
+
                 } else {
                     LOG.warn("Skipping Converter of type class=" + c.getClass().getName() + " as " +
                             " expecting an object of type com.thoughtworks.xstream.converters" +
@@ -108,7 +108,6 @@ class JsonSerializer {
     }
 
     private static <K, V> void registerChronicleMapConverter(Map<K, V> map, XStream xstream) {
-
         Converter converter = map instanceof StatelessChronicleMap ?
                 new StatelessChronicleMapConverter<K, V>(map) :
                 new VanillaChronicleMapConverter<K, V>(map);
@@ -116,5 +115,4 @@ class JsonSerializer {
         xstream.registerConverter(converter);
     }
 }
-
 

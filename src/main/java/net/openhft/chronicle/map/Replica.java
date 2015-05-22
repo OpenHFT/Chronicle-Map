@@ -135,7 +135,6 @@ public interface Replica extends Closeable {
          */
         int sizeOfEntry(@NotNull Bytes entry, int chronicleId);
 
-
         /**
          * check that the identifier in the entry is from this node
          *
@@ -144,7 +143,6 @@ public interface Replica extends Closeable {
          * @return the size of the entry
          */
         boolean identifierCheck(@NotNull Bytes entry, int chronicleId);
-
 
         /**
          * The map implements this method to save its contents.
@@ -169,8 +167,6 @@ public interface Replica extends Closeable {
          */
         void readExternalEntry(
                 @NotNull ReplicatedChronicleMap.BytesReplicatedContext context, @NotNull Bytes source);
-
-
     }
 
     /**
@@ -230,7 +226,6 @@ public interface Replica extends Closeable {
         public void onBeforeEntry() {
         }
 
-
         /**
          * its possible that the entry should now be ignored, for example although rare its
          * identifier may have recently been changed by another thread, so its no longer applicable
@@ -243,7 +238,5 @@ public interface Replica extends Closeable {
          */
         public abstract boolean shouldBeIgnored(final Bytes entry, final int chronicleId);
     }
-
-
 }
 

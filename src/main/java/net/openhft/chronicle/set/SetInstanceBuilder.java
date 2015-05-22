@@ -77,6 +77,7 @@ final class SetInstanceBuilder<E> implements ChronicleHashInstanceBuilder<Chroni
                         "A ChronicleSet has already been created using this instance config. " +
                                 "Create a new instance config (builder.instance()) to create " +
                                 "a new ChronicleSet instance");
+
             } else {
                 throw e;
             }

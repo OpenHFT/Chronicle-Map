@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.impl.ContextFactory;
 import net.openhft.chronicle.hash.impl.HashContext;
-import net.openhft.chronicle.hash.impl.hashlookup.EntryConsumer;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.internal.BytesBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.DelegatingMetaBytesInterop;
@@ -72,7 +71,6 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         assert !newValueInit() : "new value not closed";
     }
 
-
     /////////////////////////////////////////////////
     // Map
     
@@ -117,7 +115,6 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         closeValue();
     }
 
-
     /////////////////////////////////////////////////
     // Key search
     @Override
@@ -125,7 +122,6 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         super.closeKeySearchDependants();
         closeValueBytes();
     }
-
 
     /////////////////////////////////////////////////
     // Value bytes
@@ -230,7 +226,6 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         valueReader = null;
     }
 
-
     /////////////////////////////////////////////////
     // Value
     V value;
@@ -294,7 +289,6 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     void closeInstanceValue0() {
         value = null;
     }
-
 
     /////////////////////////////////////////////////
     // Value model
@@ -400,7 +394,6 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-
     /////////////////////////////////////////////////
     // Entry size in chunks
     @Override
@@ -413,7 +406,6 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public void initEntrySizeInChunks0() {
         entrySizeInChunks = m().inChunks(valueOffset + valueSize);
     }
-
 
     /////////////////////////////////////////////////
     // Put
@@ -439,6 +431,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     boolean put0() {
         if (searchState0() == SearchState.ABSENT) {
             putEntry();
+
         } else {
             initValueBytes();
             putValue();
@@ -495,6 +488,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 UNSAFE.copyMemory(entryStartAddr, entry.address(), valueSizeOffset);
                 writeValueAndPutPos(allocatedChunks);
                 return;
+
             } else if (newSizeInChunks < entrySizeInChunks) {
                 // Freeing extra chunks
                 if (searchStatePresent())
@@ -513,6 +507,7 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // We MUST upgrade to exclusive lock
             upgradeToWriteLock();
             writeNewValueSize();
+
         } else {
             entry.position(valueOffset);
             // TODO to turn the following block on, JLANG-46 is required. Also unclear what happens
@@ -559,7 +554,6 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         closeNewValue0();
     }
 
-
     /////////////////////////////////////////////////
     // Entry size
     final long entrySize(long keySize, long valueSize) {
@@ -570,8 +564,10 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
         if (m().constantlySizedEntry) {
             return m().alignment.alignAddr(sizeOfEverythingBeforeValue + valueSize);
+
         } else if (m().couldNotDetermineAlignmentBeforeAllocation) {
             return sizeOfEverythingBeforeValue + m().worstAlignment + valueSize;
+
         } else {
             return m().alignment.alignAddr(sizeOfEverythingBeforeValue) + valueSize;
         }
@@ -583,10 +579,8 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 m().valueSizeMarshaller.sizeEncodingSize(valueSize);
     }
 
-
     /////////////////////////////////////////////////
     // For bytes contexts
-
 
     private final MultiStoreBytes valueCopy = new MultiStoreBytes();
     TcpReplicator.TcpSocketChannelEntryWriter output;
@@ -646,11 +640,11 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 (actuallyUsedChunks = m().inChunks(valueOffset + valueSize)) < allocatedChunks)  {
             free(pos + actuallyUsedChunks, allocatedChunks - actuallyUsedChunks);
             entrySizeInChunks = actuallyUsedChunks;
+
         } else {
             entrySizeInChunks = allocatedChunks;
         }
     }
-
 
     /////////////////////////////////////////////////
     // Iteration
@@ -660,7 +654,6 @@ class VanillaContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         super.initKeyFromPos();
         initValueBytes();
     }
-
 
     /////////////////////////////////////////////////
     // Acquire context

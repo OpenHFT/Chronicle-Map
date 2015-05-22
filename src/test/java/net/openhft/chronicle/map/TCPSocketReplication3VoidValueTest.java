@@ -140,6 +140,5 @@ public class TCPSocketReplication3VoidValueTest {
         }
         return false;
     }
-
 }
 

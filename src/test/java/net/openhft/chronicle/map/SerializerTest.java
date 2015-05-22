@@ -46,7 +46,6 @@ public class SerializerTest {
         b.clear();
         CHMUseCasesTest.PrefixStringFunction actual = b.readObject(CHMUseCasesTest.PrefixStringFunction.class);
         assertEquals(expected, actual);
-
     }
 
     @Test
@@ -62,9 +61,7 @@ public class SerializerTest {
 
         String actual = (String) b.readObject();
         assertEquals(expected, actual);
-
     }
-
 
     @Test
     public void testValueMarshallable() throws Exception {
@@ -283,5 +280,4 @@ public class SerializerTest {
             return delegate != null ? delegate.hashCode() : 0;
         }
     }
-
 }

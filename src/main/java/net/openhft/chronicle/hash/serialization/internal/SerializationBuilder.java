@@ -133,33 +133,42 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
             sizeMarshaller(byteableMarshaller);
             reader(byteableMarshaller);
             interop(byteableMarshaller);
+
         } else if (eClass == CharSequence.class || eClass == String.class) {
             reader((BytesReader<E>) CharSequenceReader.of());
             writer((BytesWriter<E>) CharSequenceWriter.instance());
+
         } else if (eClass == StringBuilder.class) {
             reader((BytesReader<E>) CharSequenceReader.ofStringBuilder());
             writer((BytesWriter<E>) CharSequenceWriter.instance());
+
         } else if (eClass == Long.class) {
             sizeMarshaller(LongMarshaller.INSTANCE);
             reader((BytesReader<E>) LongMarshaller.INSTANCE);
             interop((BytesInterop<E>) LongMarshaller.INSTANCE);
+
         } else if (eClass == Double.class) {
             sizeMarshaller(DoubleMarshaller.INSTANCE);
             reader((BytesReader<E>) DoubleMarshaller.INSTANCE);
             interop((BytesInterop<E>) DoubleMarshaller.INSTANCE);
+
         } else if (eClass == Integer.class) {
             sizeMarshaller(IntegerMarshaller.INSTANCE);
             reader((BytesReader<E>) IntegerMarshaller.INSTANCE);
             interop((BytesInterop<E>) IntegerMarshaller.INSTANCE);
+
         } else if (eClass == byte[].class) {
             reader((BytesReader<E>) ByteArrayMarshaller.INSTANCE);
             interop((BytesInterop<E>) ByteArrayMarshaller.INSTANCE);
+
         } else if (eClass == char[].class) {
             reader((BytesReader<E>) CharArrayMarshaller.INSTANCE);
             interop((BytesInterop<E>) CharArrayMarshaller.INSTANCE);
+
         } else if (eClass == ByteBuffer.class) {
             reader((BytesReader<E>) ByteBufferMarshaller.INSTANCE);
             writer((BytesWriter<E>) ByteBufferMarshaller.INSTANCE);
+
         } else if (concreteClass(eClass)) {
             BytesMarshaller<E> marshaller = chooseMarshaller(eClass, eClass);
             if (marshaller != null)
@@ -251,6 +260,7 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
             metaInteropProvider(CopyingMetaBytesInterop
                     .<E, BytesMarshaller<E>>providerForBytesMarshaller(
                             instancesAreMutable, maxSize));
+
         } else if (copyingInterop == CopyingInterop.FROM_WRITER) {
             this.maxSize = maxSize;
             metaInteropProvider(CopyingMetaBytesInterop
@@ -399,10 +409,12 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
         if (!marshallerUseFactory(eClass)) {
             throw new IllegalStateException("Default marshaller for " + eClass +
                     " value don't use object factory");
+
         } else if (interop instanceof BytesMarshallableMarshaller) {
             if (factory instanceof AllocateInstanceObjectFactory) {
                 interop = new BytesMarshallableMarshaller(
                         ((AllocateInstanceObjectFactory) factory).allocatedClass());
+
             } else {
                 interop = new BytesMarshallableMarshallerWithCustomFactory(
                         ((BytesMarshallableMarshaller) interop).marshaledClass(),
@@ -413,6 +425,7 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
             if (factory instanceof AllocateInstanceObjectFactory) {
                 interop = new ExternalizableMarshaller(
                         ((AllocateInstanceObjectFactory) factory).allocatedClass());
+
             } else {
                 interop = new ExternalizableMarshallerWithCustomFactory(
                         ((ExternalizableMarshaller) interop).marshaledClass(),

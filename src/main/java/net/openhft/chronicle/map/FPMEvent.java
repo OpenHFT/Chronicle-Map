@@ -59,6 +59,4 @@ public class FPMEvent<V> {
     }
 
     public enum EventType {NEW, UPDATE, DELETE}
-
-
 }

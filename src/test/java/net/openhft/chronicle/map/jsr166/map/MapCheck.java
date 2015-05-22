@@ -558,12 +558,16 @@ public class MapCheck {
         // Object cannot be used as it cannot be serialized.
         if (eclass == Object.class || eclass == Integer.class) {
             initInts(key, absent, size);
+
         } else if (eclass == Float.class) {
             initFloats(key, absent, size);
+
         } else if (eclass == Double.class) {
             initDoubles(key, absent, size);
+
         } else if (eclass == String.class) {
             initWords(size, key, absent);
+
         } else
             throw new Error("unknown type");
     }
@@ -711,6 +715,7 @@ public class MapCheck {
                 if (n == 0) {
                     n = stats.firstn;
                     s = stats.first;
+
                 } else
                     s = stats.sum;
 
@@ -753,5 +758,4 @@ public class MapCheck {
             number += n;
         }
     }
-
 }

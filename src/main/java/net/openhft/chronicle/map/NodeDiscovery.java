@@ -196,6 +196,7 @@ class NodeDiscovery {
                         LOG.info("Another node is using identifier=" + identifier + ", " +
                                 "going to have to select another one, we will wait 500ms before continuing");
                         continue OUTER;
+
                     } else {
                         break OUTER;
                     }
@@ -309,6 +310,7 @@ class NodeDiscovery {
                 lastAddress = lastAddress - 127;
 
             possible = (byte) lastAddress;
+
         } else
             possible = (byte) (Math.random() * 128);
 
@@ -331,7 +333,6 @@ class NodeDiscovery {
                 possible++;
         }
     }
-
 }
 
 /**
@@ -498,7 +499,6 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
             return socketChannel.write(out);
         }
     }
-
 }
 
 class KnownNodes implements BytesMarshallable {
@@ -602,7 +602,6 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
     public short port() {
         return port;
     }
-
 
     @Override
     public boolean equals(Object o) {
@@ -916,7 +915,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         bootstrapRequired.set(true);
         onChange();
     }
-
 }
 
 interface NodeDiscoveryEventListener {

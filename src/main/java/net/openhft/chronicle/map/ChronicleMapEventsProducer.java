@@ -77,6 +77,7 @@ public class ChronicleMapEventsProducer<K, V> implements MapEntryOperations<K, V
                             e.getKey().update(entry.key(),oldEntry, newValue.get());
                     });
             return true;
+
         } else {
             return false;
         }

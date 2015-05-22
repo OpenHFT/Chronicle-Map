@@ -185,5 +185,4 @@ public class NodeDiscoveryBroadcasterTest extends TestCase {
                     (new DiscoveryNodeBytesMarshallable.ProposedNodes(server1AddressAndPort, (byte) PROPOSED_IDENTIFIER)));
         }
     }
-
 }

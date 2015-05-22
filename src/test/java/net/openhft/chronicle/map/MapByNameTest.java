@@ -106,7 +106,6 @@ public class MapByNameTest {
                                 .name("myMap6");
 
         mapByName.create(config);
-
     }
 
     public static void main(String... args) throws IOException, InterruptedException, TimeoutException {
@@ -135,5 +134,4 @@ public class MapByNameTest {
 
         map.close();
     }
-
 }

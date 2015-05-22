@@ -17,19 +17,16 @@ public class KeyValueInstanceTest {
         try (ChronicleMap map = ChronicleMapBuilder
                 .of(Long.class, Long.class)
                 .create()) {
-
             map.newKeyInstance();
             map.newValueInstance();
         }
     }
-
 
     @Test(expected = IllegalStateException.class)
     public void testNewKeyValueInstanceWithMapType() {
         try (ChronicleMap map = ChronicleMapBuilder
                 .of(Map.class, Map.class)
                 .create()) {
-
             map.newKeyInstance();
             map.newValueInstance();
         }
@@ -40,13 +37,10 @@ public class KeyValueInstanceTest {
         try (ChronicleMap map = ChronicleMapBuilder
                 .of(HashMap.class, HashMap.class)
                 .create()) {
-
             Object key = map.newKeyInstance();
             Object value = map.newValueInstance();
-
         }
     }
-
 
     interface IBean {
         long getLong();
@@ -67,23 +61,18 @@ public class KeyValueInstanceTest {
         try (ChronicleMap map = ChronicleMapBuilder
                 .of(HashMap.class, IBean.class)
                 .create()) {
-
             map.newKeyInstance();
             Object value = map.newValueInstance();
 
             assertTrue(value.getClass().getCanonicalName().endsWith("$$Native"));
-
-
         }
     }
-
 
     @Test(expected = IllegalStateException.class)
     public void testNewKeyValueInstanceWithByteArray() {
         try (ChronicleMap map = ChronicleMapBuilder
                 .of(byte[].class, byte[].class)
                 .create()) {
-
             map.newKeyInstance();
             map.newValueInstance();
         }

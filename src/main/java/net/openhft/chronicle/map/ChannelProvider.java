@@ -60,9 +60,7 @@ public final class ChannelProvider implements Closeable {
         channelProvider = new ChannelProvider(hub);
         TcpTransportAndNetworkConfig tcpConfig = hub.tcpTransportAndNetwork();
 
-
         if (tcpConfig != null) {
-
             final TcpReplicator tcpReplicator = new TcpReplicator(
                     channelProvider.asReplica,
                     channelProvider.asEntryExternalizable,
@@ -144,6 +142,7 @@ public final class ChannelProvider implements Closeable {
                     if (channelEntryExternalizables[chronicleId] != null)
                         channelEntryExternalizables[chronicleId]
                                 .readExternalEntry(context, source);
+
                 } else
                     LOG.info("skipped entry with chronicleId=" + chronicleId + ", ");
             } finally {
@@ -194,7 +193,6 @@ public final class ChannelProvider implements Closeable {
                         try {
 
                             for (Map.Entry<Integer, Replica> chronicleChannel : chronicleChannelMap.entrySet()) {
-
                                 final ModificationIterator modificationIterator =
                                         chronicleChannel.getValue()
                                         .acquireModificationIterator(remoteIdentifier, notifier);
@@ -213,7 +211,6 @@ public final class ChannelProvider implements Closeable {
                         channelDataLock.readLock().lock();
                         try {
                             for (Replica chronicleChannel : chronicleChannelMap.values()) {
-
                                 chronicleChannel.acquireModificationIterator(remoteIdentifier, notifier)
                                         .dirtyEntries(fromTimeStamp);
                                 notifier.onChange();
@@ -258,7 +255,6 @@ public final class ChannelProvider implements Closeable {
 
     private final ReplicationHub hub;
 
-
     private final ReadWriteLock channelDataLock = new ReentrantReadWriteLock();
 
     // start of channel data
@@ -296,6 +292,7 @@ public final class ChannelProvider implements Closeable {
                 final byte type = bytes.readByte();
                 if (type == BOOTSTRAP_MESSAGE) {
                     onBootstrapMessage(bytes);
+
                 } else {
                     LOG.info("message of type=" + type + " was ignored.");
                 }
@@ -305,7 +302,6 @@ public final class ChannelProvider implements Closeable {
                 systemModificationIteratorBitSet, systemModificationIterator, systemMessageHandler);
         add((short) 0, systemMessageQueue.asReplica, systemMessageQueue.asEntryExternalizable);
     }
-
 
     /**
      * creates a bit set based on a number of bits

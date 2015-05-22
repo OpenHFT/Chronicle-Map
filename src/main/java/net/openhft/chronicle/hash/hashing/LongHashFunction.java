@@ -106,6 +106,7 @@ public abstract class LongHashFunction implements Serializable {
             if (System.getProperty("java.vm.name").contains("HotSpot")) {
                 if (System.getProperty("java.version").compareTo("1.7.0_06") >= 0) {
                     stringHash = ModernHotSpotStringHash.INSTANCE;
+
                 } else {
                     stringHash = HotSpotPrior7u6StringHash.INSTANCE;
                 }
@@ -323,6 +324,7 @@ public abstract class LongHashFunction implements Serializable {
             throw new IndexOutOfBoundsException();
         if (input instanceof NativeBytes) {
             return hashMemory(input.address() + off, len);
+
         } else {
             return hash(input, toBytes(), off, len);
         }

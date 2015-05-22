@@ -170,6 +170,7 @@ public abstract class Access<T> {
     public long getLong(T input, long offset) {
         if (byteOrder(input) == LITTLE_ENDIAN) {
             return getUnsignedInt(input, offset) | (getUnsignedInt(input, offset + 4L) << 32);
+
         } else {
             return getUnsignedInt(input, offset + 4L) | (getUnsignedInt(input, offset) << 32);
         }
@@ -202,6 +203,7 @@ public abstract class Access<T> {
     public int getInt(T input, long offset) {
         if (byteOrder(input) == LITTLE_ENDIAN) {
             return getUnsignedShort(input, offset) | (getUnsignedShort(input, offset + 2L) << 16);
+
         } else {
             return getUnsignedShort(input, offset + 2L) | (getUnsignedShort(input, offset) << 16);
         }
@@ -220,6 +222,7 @@ public abstract class Access<T> {
     public int getUnsignedShort(T input, long offset) {
         if (byteOrder(input) == LITTLE_ENDIAN) {
             return getUnsignedByte(input, offset) | (getUnsignedByte(input, offset + 1L) << 8);
+
         } else {
             return getUnsignedByte(input, offset + 1L) | (getUnsignedByte(input, offset) << 8);
         }

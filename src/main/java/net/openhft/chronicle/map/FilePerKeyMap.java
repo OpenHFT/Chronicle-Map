@@ -169,7 +169,6 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
     public Collection<String> values() {
         return getFiles().map(p -> getFileContents(p))
                 .collect(Collectors.toSet());
-
     }
 
     @NotNull
@@ -179,7 +178,6 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
                 (Entry<String, String>) new FPMEntry(p.getFileName().toString(), getFileContents(p)))
                 .collect(Collectors.toSet());
     }
-
 
     private Stream<Path> getFiles() {
         try {
@@ -336,6 +334,7 @@ public class FilePerKeyMap implements Map<String, String>, Closeable {
                                 FileRecord<String> lastVal = lastFile.remove(p.toFile());
                                 String lastContent = lastVal == null ? null : lastVal.contents;
                                 fireEvent(new FPMEvent<>(FPMEvent.EventType.DELETE, mapKey, lastContent, null));
+
                             } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                                 try {
                                     Path p = dirPath.resolve(fileName);

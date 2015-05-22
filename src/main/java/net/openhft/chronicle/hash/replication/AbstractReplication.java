@@ -132,7 +132,6 @@ public abstract class AbstractReplication implements Serializable {
             return (B) this;
         }
 
-
         /**
          * Configures if the node, provided with replication, created by this builder, should
          * replicate only local data, last updated with own identifier, or all data currently

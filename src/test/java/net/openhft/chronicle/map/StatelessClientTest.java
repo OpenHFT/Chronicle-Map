@@ -152,7 +152,6 @@ public class StatelessClientTest {
         }
     }
 
-
     @Test(timeout = 10000)
     public void testBufferOverFlowPutAllAndEntrySet() throws IOException, InterruptedException {
         int port = s_port++;
@@ -206,7 +205,6 @@ public class StatelessClientTest {
         }
     }
 
-
     /**
      * test that when the map is full and exception is thrown back to the user
      *
@@ -225,19 +223,14 @@ public class StatelessClientTest {
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
             try (ChronicleMap<Integer, CharSequence> statelessMap = localClient(port)) {
-
-
                 for (int i = 0; i < size; i++) {
                     statelessMap.put(i, "hello");
                 }
 
                 assertEquals(statelessMap.size(), size);
-
             }
         }
     }
-
-
 
     @Test
     public void testBufferOverFlowPutAllAndKeySet() throws IOException, InterruptedException {
@@ -248,7 +241,6 @@ public class StatelessClientTest {
                 .entries(SIZE)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
-
             Thread.sleep(100);
             try (ChronicleMap<Integer, CharSequence> statelessMap = localClient(port)) {
                 Map<Integer, CharSequence> payload = new HashMap<Integer, CharSequence>();
@@ -318,7 +310,6 @@ public class StatelessClientTest {
         }
     }
 
-
     @Test(timeout = 10000)
     public void testServerPutClientReplace() throws IOException, InterruptedException {
 
@@ -328,19 +319,15 @@ public class StatelessClientTest {
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
                 .create()) {
             try (ChronicleMap<String, String> statelessMap = localClient(8056)) {
-
                 serverMap.put("hello", "world");
 
                 assertTrue(statelessMap.replace("hello", "world", "hello"));
 
                 assertEquals("hello", statelessMap.get("hello"));
                 assertEquals(1, statelessMap.size());
-
-
             }
         }
     }
-
 
     @Test(timeout = 10000)
     public void testIsEmpty() throws IOException, InterruptedException {
@@ -351,11 +338,8 @@ public class StatelessClientTest {
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
                 .create()) {
             try (ChronicleMap<String, String> statelessMap = localClient(8056)) {
-
                 assertTrue(statelessMap.isEmpty());
                 assertEquals(0, statelessMap.size());
-
-
             }
         }
     }
@@ -474,7 +458,6 @@ public class StatelessClientTest {
         }
     }
 
-
     @Test(timeout = 10000)
     public void testLargeEntries() throws IOException,
             InterruptedException {
@@ -493,19 +476,16 @@ public class StatelessClientTest {
                                      .tcpBufferSize(128))
                              .create()) {
             try (ChronicleMap<Integer, CharSequence> statelessMap = localClient(8056)) {
-
                 statelessMap.put(1, new String(value));
 
                 assertEquals(new String(value), statelessMap.get(1));
                 assertEquals(1, statelessMap.size());
-
 
                 assertEquals(null, statelessMap.get(0));
                 assertEquals(1, statelessMap.size());
             }
         }
     }
-
 
     @Test(timeout = 10000)
     public void testGetAndEntryWeDontHave() throws IOException,
@@ -516,7 +496,6 @@ public class StatelessClientTest {
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
             try (ChronicleMap<Integer, CharSequence> statelessMap = localClient(8056)) {
                 assertEquals(null, statelessMap.get(3));
-
             }
         }
     }
@@ -558,7 +537,6 @@ public class StatelessClientTest {
         serverMap2.close();
     }
 
-
     @Test
     public void testThreadSafeness() throws IOException, InterruptedException {
 
@@ -575,12 +553,9 @@ public class StatelessClientTest {
                 .of(Integer.class, Integer.class)
                 .putReturnsNull(true)
                 .replication((byte) 1, TcpTransportAndNetworkConfig.of(8047)).create()) {
-
             // stateless client
             try (ChronicleMap<Integer, Integer> client = localClient(8047)) {
-
                 for (int i = 0; i < count; i++) {
-
                     final int j = i;
                     executorService.submit(new Runnable() {
                         @Override
@@ -592,12 +567,10 @@ public class StatelessClientTest {
                             } catch (Error | Exception e) {
                                 LOG.error("", e);
                                 //executorService.shutdown();
-
                             }
                         }
                     });
                 }
-
 
                 for (int i = 0; i < count; i++) {
                     final int j = i;
@@ -617,6 +590,7 @@ public class StatelessClientTest {
 
                                 if (result.equals(j)) {
                                     got.incrementAndGet();
+
                                 } else {
                                     System.out.println("expected j=" + j + " but got back=" +
                                             result);
@@ -630,8 +604,6 @@ public class StatelessClientTest {
                             }
                         }
                     });
-
-
                 }
 
                 latch.await(25, TimeUnit.SECONDS);
@@ -641,17 +613,13 @@ public class StatelessClientTest {
                         " threads");
 
                 assertEquals(count, got.get());
-
             }
         } finally {
             executorService.shutdownNow();
             executorService.awaitTermination(1000, TimeUnit.SECONDS);
-
         }
 
-
     }
-
 
     @Test
     public void testPutsStatelessClientWithReplication() throws IOException, InterruptedException {
@@ -665,24 +633,18 @@ public class StatelessClientTest {
 
         long startTime = System.currentTimeMillis();
 
-
         // server
         try (ChronicleMap<Integer, Integer> server = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
                 .putReturnsNull(true)
                 .replication((byte) 1, TcpTransportAndNetworkConfig.of(8047)).create()) {
-
             try (ChronicleMap<Integer, Integer> server2 = ChronicleMapBuilder
                     .of(Integer.class, Integer.class)
                     .putReturnsNull(true)
                     .replication((byte) 2, TcpTransportAndNetworkConfig.of(8046, TcpUtil.localPort(8047))).create()) {
-
-
                 // stateless client
                 try (ChronicleMap<Integer, Integer> client = localClient(8046)) {
-
                     for (int i = 0; i < count; i++) {
-
                         final int j = i;
                         executorService.submit(new Runnable() {
                             @Override
@@ -694,12 +656,10 @@ public class StatelessClientTest {
                                 } catch (Error | Exception e) {
                                     LOG.error("", e);
                                     //executorService.shutdown();
-
                                 }
                             }
                         });
                     }
-
 
                     for (int i = 0; i < count; i++) {
                         final int j = i;
@@ -719,6 +679,7 @@ public class StatelessClientTest {
 
                                     if (result.equals(j)) {
                                         got.incrementAndGet();
+
                                     } else {
                                         System.out.println("expected j=" + j + " but got back=" +
                                                 result);
@@ -732,8 +693,6 @@ public class StatelessClientTest {
                                 }
                             }
                         });
-
-
                     }
 
                     latch.await(25, TimeUnit.SECONDS);
@@ -743,7 +702,6 @@ public class StatelessClientTest {
                             nThreads + " threads");
 
                     assertEquals(count, got.get());
-
                 }
             }
         } finally {
@@ -752,7 +710,6 @@ public class StatelessClientTest {
         }
 
     }
-
 
     @Test(timeout = 10000)
     public void testCreateWithByteArrayKeyValue() throws IOException, InterruptedException {
@@ -766,9 +723,7 @@ public class StatelessClientTest {
                 .averageValueSize(4)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056))
                 .create()) {
-
             try (ChronicleMap<byte[], byte[]> statelessMap = localClient(8056)) {
-
                 for (int i = 0; i < SIZE; i++) {
                     keyBuffer.clear();
                     keyBuffer.writeInt(i);
@@ -790,15 +745,12 @@ public class StatelessClientTest {
                         .createWithId((byte) 1))
                 .constantKeySizeBySample(new byte[14])
                 .create()) {
-
             try (ChronicleMap<byte[], CharSequence> map2 = localClient(8875)) {
-
                 byte[] key = new byte[14];
                 System.arraycopy("A".getBytes(), 0, key, 0, "A".length());
 
                 map2.put(key, "hello world");
                 Assert.assertNotNull(map2.get(key));
-
             }
         }
 
@@ -811,18 +763,11 @@ public class StatelessClientTest {
                 .of(Integer.class, StringBuilder.class)
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
-
             try (ChronicleMap<Integer, StringBuilder> statelessMap = localClient(port)) {
-
                 assertTrue(!((StatelessChronicleMap) statelessMap).serverApplicationVersion()
                         .isEmpty());
-
             }
         }
     }
-
 }
-
-
-
 

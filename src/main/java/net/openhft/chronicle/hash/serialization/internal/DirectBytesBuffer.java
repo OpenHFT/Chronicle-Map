@@ -61,6 +61,7 @@ class DirectBytesBuffer
         if ((buf = buffer) != null) {
             if (maxSize <= buf.capacity()) {
                 return buf.clear();
+
             } else {
                 DirectStore store = (DirectStore) buf.store();
                 store.resize(maxSize, false);

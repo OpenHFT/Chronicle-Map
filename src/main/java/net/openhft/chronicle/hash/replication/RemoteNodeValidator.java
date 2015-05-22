@@ -34,5 +34,4 @@ public interface RemoteNodeValidator {
      * @return               true if unique
      */
     boolean validate(byte remoteIdentifier, SocketAddress remoteAddress);
-
 }

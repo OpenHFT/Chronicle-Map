@@ -132,6 +132,7 @@ public final class ChronicleMapStatelessClientBuilder<K, V> implements
     public ChronicleMap<K, V> create() throws IOException {
         if (!used.getAndSet(true)) {
             return new StatelessChronicleMap<>(this);
+
         } else {
             throw new IllegalStateException(
                     "A stateless client has already been created using this builder. " +

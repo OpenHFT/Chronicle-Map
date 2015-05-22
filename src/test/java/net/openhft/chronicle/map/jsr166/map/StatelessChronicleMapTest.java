@@ -948,6 +948,5 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             return r;
         }
     }
-
 }
 

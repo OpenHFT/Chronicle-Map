@@ -21,7 +21,6 @@ public class TestReplication {
                 .replication((byte) 2, tcpConfigServer2)
                 .create();
 
-
         final ChronicleMap<Integer, Integer> map1 = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
                 .replication((byte) 3, tcpConfigServer1)
@@ -39,5 +38,4 @@ public class TestReplication {
 
         Assert.assertEquals(map1.size(), map2.size());
     }
-
 }

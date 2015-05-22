@@ -53,6 +53,7 @@ public interface MapEntryOperations<K, V> {
         if (shouldModify(entry)) {
             entry.doRemove();
             return true;
+
         } else {
             return false;
         }
@@ -70,6 +71,7 @@ public interface MapEntryOperations<K, V> {
         if (shouldModify(entry)) {
             entry.doReplaceValue(newValue);
             return true;
+
         } else {
             return false;
         }

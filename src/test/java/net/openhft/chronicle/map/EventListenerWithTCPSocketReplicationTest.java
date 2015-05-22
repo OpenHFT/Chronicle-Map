@@ -237,6 +237,7 @@ public class EventListenerWithTCPSocketReplicationTest {
             if (map1.equals(map2)) {
                 if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
                     numberOfTimesTheSame++;
+
                 } else {
                     numberOfTimesTheSame = 0;
                     map1UnChanged = new HashMap(map1);
@@ -259,5 +260,4 @@ public class EventListenerWithTCPSocketReplicationTest {
                 .entries(20000L)
                 .replication((byte) 2, tcpConfig);
     }
-
 }

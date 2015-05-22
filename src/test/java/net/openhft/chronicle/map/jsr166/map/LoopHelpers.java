@@ -219,6 +219,7 @@ class LoopHelpers {
             if (!started) {
                 started = true;
                 startTime = t;
+
             } else
                 endTime = t;
         }
@@ -231,5 +232,4 @@ class LoopHelpers {
             return endTime - startTime;
         }
     }
-
 }

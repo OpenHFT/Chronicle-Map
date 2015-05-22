@@ -96,10 +96,12 @@ class CityHash_1_1 {
             long a = fetch64(access, in, off);
             long b = fetch64(access, in, off + len - 8L);
             return hash8To16Bytes(len, a, b);
+
         } else if (len >= 4L) {
             long a = Primitives.unsignedInt(fetch32(access, in, off));
             long b = Primitives.unsignedInt(fetch32(access, in, off + len - 4L));
             return hash4To7Bytes(len, a, b);
+
         } else if (len > 0L) {
             int a = access.getUnsignedByte(in, off);
             int b = access.getUnsignedByte(in, off + (len >> 1));
@@ -144,6 +146,7 @@ class CityHash_1_1 {
         if (len <= 32L) {
             if (len <= 16L) {
                 return hashLen0To16(access, in, off, len);
+
             } else {
                 return hashLen17To32(access, in, off, len);
             }
@@ -326,6 +329,7 @@ class CityHash_1_1 {
             long hash;
             if (access.byteOrder(input) == LITTLE_ENDIAN) {
                 hash = CityHash_1_1.INSTANCE.cityHash64(access, input, off, len);
+
             } else {
                 hash = BigEndian.INSTANCE.cityHash64(access, input, off, len);
             }

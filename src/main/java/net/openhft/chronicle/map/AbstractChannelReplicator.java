@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.hash.impl.util.CloseablesManager;
+import net.openhft.chronicle.core.util.CloseablesManager;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.chronicle.map.ReplicatedChronicleMap.BytesReplicatedContextFactory;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -183,6 +183,7 @@ abstract class AbstractChannelReplicator implements Closeable {
     static ClassLoader getSystemClassLoader() {
         if (System.getSecurityManager() == null) {
             return ClassLoader.getSystemClassLoader();
+
         } else {
             return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
                 @Override
@@ -258,7 +259,6 @@ abstract class AbstractChannelReplicator implements Closeable {
         // context.close();
         executorService.shutdown();
 
-
         try {
             executorService.awaitTermination(5, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
@@ -271,7 +271,6 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
 
         closeables.closeQuietly();
-
     }
 
     private void dumpThreadStackTrace(long start) {
@@ -444,10 +443,8 @@ abstract class AbstractChannelReplicator implements Closeable {
             return out;
         }
 
-
         @Override
         public Bytes resizeBuffer(int size) {
-
             if (LOG.isDebugEnabled())
                 LOG.debug("resizing buffer to size=" + size);
 
@@ -479,10 +476,8 @@ abstract class AbstractChannelReplicator implements Closeable {
             return !externalizable.identifierCheck(entry, chronicleId);
         }
 
-
         @Override
         public boolean onEntry(final Bytes entry, final int chronicleId) {
-
             long startOfEntry = entry.position();
             long pos0 = in.position();
             long start = 0;
@@ -516,9 +511,7 @@ abstract class AbstractChannelReplicator implements Closeable {
                     LOG.debug("sending entry of entrySize=" + (int) bytesWritten);
 
                 in.writeInt(sizeLocation, (int) bytesWritten);
-
             } catch (IllegalArgumentException e) {
-
                 // reset the entries position
                 entry.position(startOfEntry);
 
@@ -527,9 +520,7 @@ abstract class AbstractChannelReplicator implements Closeable {
                 long remaining = in.remaining();
                 int entrySize = externalizable.sizeOfEntry(entry, chronicleId);
 
-
                 if (entrySize > remaining) {
-
                     long newSize = start + entrySize;
 
                     // This can occur when we pack a number of entries into the buffer and the
@@ -542,9 +533,9 @@ abstract class AbstractChannelReplicator implements Closeable {
                     in.position(pos0);
                     entry.position(startOfEntry);
                     return onEntry(entry, chronicleId);
+
                 } else
                     throw e;
-
             }
             return true;
         }
@@ -634,5 +625,4 @@ abstract class AbstractChannelReplicator implements Closeable {
             connectionAttempts = 0;
         }
     }
-
 }

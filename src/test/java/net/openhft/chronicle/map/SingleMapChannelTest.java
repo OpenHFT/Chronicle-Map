@@ -130,6 +130,5 @@ public class SingleMapChannelTest {
             Thread.sleep(1);
         }
     }
-
 }
 

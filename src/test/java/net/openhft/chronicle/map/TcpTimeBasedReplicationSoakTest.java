@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class TcpTimeBasedReplicationSoakTest {
 
-
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     private IntValue value;
@@ -36,12 +35,10 @@ public class TcpTimeBasedReplicationSoakTest {
 
         final InetSocketAddress endpoint = TcpUtil.localPort(s_port + 1);
         timeProvider = new TimeProvider() {
-
             Random rnd = new Random(4);
 
             @Override
             public long currentTime() {
-
                 if (rnd.nextBoolean())
                     return t++;
                 else
@@ -52,7 +49,6 @@ public class TcpTimeBasedReplicationSoakTest {
         {
             final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(s_port,
                     endpoint);
-
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE)
@@ -68,11 +64,9 @@ public class TcpTimeBasedReplicationSoakTest {
                     .timeProvider(timeProvider)
                     .replication((byte) 2, tcpConfig2)
                     .create();
-
         }
         s_port += 2;
     }
-
 
     @After
     public void tearDown() throws InterruptedException {
@@ -100,7 +94,6 @@ public class TcpTimeBasedReplicationSoakTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-
     @Ignore("fails on TC")
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
@@ -117,6 +110,7 @@ public class TcpTimeBasedReplicationSoakTest {
 
             if (rnd.nextBoolean()) {
                 map.put((int) rnd.nextInt(100), "test" + j);
+
             } else {
                 map.remove((int) rnd.nextInt(100));
             }
@@ -128,9 +122,7 @@ public class TcpTimeBasedReplicationSoakTest {
         waitTillUnchanged(1000);
         System.out.println("time t=" + t);
         Assert.assertEquals(new TreeMap(map1), new TreeMap(map2));
-
     }
-
 
     private void waitTillUnchanged(final int timeOutMs) throws InterruptedException {
 
@@ -139,9 +131,9 @@ public class TcpTimeBasedReplicationSoakTest {
 
         int numberOfTimesTheSame = 0;
         for (int t = 0; t < timeOutMs + 100; t++) {
-
             if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
                 numberOfTimesTheSame++;
+
             } else {
                 numberOfTimesTheSame = 0;
                 map1UnChanged = new HashMap(map1);
@@ -149,10 +141,8 @@ public class TcpTimeBasedReplicationSoakTest {
             }
             Thread.sleep(50);
             if (numberOfTimesTheSame == 100) {
-
                 break;
             }
-
 
         }
     }

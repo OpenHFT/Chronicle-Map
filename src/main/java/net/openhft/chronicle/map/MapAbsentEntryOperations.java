@@ -54,6 +54,7 @@ public interface MapAbsentEntryOperations<K, V> {
         if (shoudInsert(absentEntry)) {
             absentEntry.doInsert(value);
             return true;
+
         } else {
             return false;
         }

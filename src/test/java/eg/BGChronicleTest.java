@@ -116,7 +116,6 @@ public class BGChronicleTest {
                             .putReturnsNull(true)
                             .removeReturnsNull(true)
                             .create()) {
-
                         System.out.println((clientId + 1) + "/" + CLIENTS + " client started");
 
                         exerciseMap(MESSAGES, map, clientId);
@@ -262,7 +261,6 @@ public class BGChronicleTest {
         return times;
     }
 
-
     /**
      * over loop-back on my mac I get around 50,000 messages per second of my local network ( LAN ),
      */
@@ -299,7 +297,6 @@ public class BGChronicleTest {
                                     .name("clientMap")
                                     .createWithId((byte) (10 + clientId)))
                             .create()) {
-
                         System.out.println((clientId + 1) + "/" + CLIENTS + " client started");
 
                         exerciseMap(MESSAGES, map, clientId);
@@ -376,13 +373,11 @@ public class BGChronicleTest {
         es.shutdown();
     }
 
-
     private long logMessagesPerSecond(double numberOfMessages, long start) {
         long messagesPerSecond = (long) (numberOfMessages * 1e9 / (System.nanoTime() - start));
         System.out.printf("messages per seconds: %,d%n", messagesPerSecond);
         return messagesPerSecond;
     }
-
 
     /**
      * for loop back args = []
@@ -430,6 +425,7 @@ public class BGChronicleTest {
                 o.startReplicatingChronicleMapClient(host, port);
                 break;
             }
+
             default:
                 System.err.println("Usage: java " + BGChronicleTest.class.getName() + " server {port}");
                 System.err.println("\tjava " + BGChronicleTest.class.getName() + " client {hostname} {port}");
@@ -451,9 +447,7 @@ public class BGChronicleTest {
         return port;
     }
 
-
     public void test() throws IOException, InterruptedException {
         main();
     }
-
 }

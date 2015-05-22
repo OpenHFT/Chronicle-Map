@@ -96,7 +96,6 @@ public class TCPSocketReplicationTest {
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
-
     }
 
     @Test
@@ -133,7 +132,6 @@ public class TCPSocketReplicationTest {
 
         map2.put(1, "EXAMPLE-1");
 
-
         // allow time for the recompilation to resolve
         waitTillEqual(5000);
 
@@ -159,7 +157,6 @@ public class TCPSocketReplicationTest {
         assertEquals(map1, map2);
         assertTrue(map1.isEmpty());
     }
-
 
     @Test
     public void testBufferOverflow() throws IOException, InterruptedException {
@@ -191,6 +188,7 @@ public class TCPSocketReplicationTest {
             if (map1.equals(map2)) {
                 if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
                     numberOfTimesTheSame++;
+
                 } else {
                     numberOfTimesTheSame = 0;
                     map1UnChanged = new HashMap(map1);
@@ -223,6 +221,7 @@ public class TCPSocketReplicationTest {
                     case 0:
                         map.put(rnd.nextInt(Builder.SIZE), "test");
                         break;
+
                     case 1:
                         map.remove(rnd.nextInt(Builder.SIZE));
                         break;
@@ -232,6 +231,5 @@ public class TCPSocketReplicationTest {
         System.out.println("");
         waitTillEqual(1000);
     }
-
 }
 

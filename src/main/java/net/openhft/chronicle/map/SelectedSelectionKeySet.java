@@ -76,6 +76,7 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
             keysA[keysASize] = null;
             keysBSize = 0;
             return keysA;
+
         } else {
             isA = true;
             keysB[keysBSize] = null;
@@ -88,6 +89,7 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
     public int size() {
         if (isA) {
             return keysASize;
+
         } else {
             return keysBSize;
         }

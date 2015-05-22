@@ -59,6 +59,7 @@ public class StringsMapMain {
                     .of(CharSequence.class, CharSequence.class, new InetSocketAddress(hostname, port))
                     .putReturnsNull(true)
                     .create();
+
         } else {
             File file = File.createTempFile("testServersMapMain", ".deleteme");
             file.deleteOnExit();
@@ -88,6 +89,7 @@ public class StringsMapMain {
                 if (stateless) {
                     value.setLength(0);
                     value.append(map.get(key));
+
                 } else {
                     map.getUsing(key, value);
                 }
@@ -111,5 +113,4 @@ public class StringsMapMain {
         else
             startServer();
     }
-
 }

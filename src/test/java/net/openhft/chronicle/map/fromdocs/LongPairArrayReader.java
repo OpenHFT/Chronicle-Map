@@ -41,6 +41,7 @@ enum LongPairArrayReader implements BytesReader<LongPair[]> {
         if (toReuse != null) {
             if (toReuse.length == resLen) {
                 res = toReuse;
+
             } else {
                 res = Arrays.copyOf(toReuse, resLen);
             }

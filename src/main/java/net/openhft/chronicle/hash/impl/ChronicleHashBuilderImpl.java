@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;

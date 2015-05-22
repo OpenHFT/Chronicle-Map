@@ -53,6 +53,7 @@ public interface MapMethods<K, V> {
         if (entry != null) {
             returnValue.returnValue(entry.value());
             return q.replaceValue(entry, value);
+
         } else {
             return q.insert(q.absentEntry(), value);
         }
@@ -86,6 +87,7 @@ public interface MapMethods<K, V> {
         if (entry != null) {
             returnValue.returnValue(entry.value());
             return q.remove(entry);
+
         } else {
             return false;
         }
@@ -112,6 +114,7 @@ public interface MapMethods<K, V> {
         if (entry != null) {
             returnValue.returnValue(entry.value());
             return q.replaceValue(entry, value);
+
         } else {
             return false;
         }
@@ -142,13 +145,16 @@ public interface MapMethods<K, V> {
             boolean updated;
             if (entry != null) {
                 updated = q.replaceValue(entry, newValueValue);
+
             } else {
                 updated = q.insert(q.absentEntry(), newValueValue);
             }
             returnValue.returnValue(newValueValue);
             return updated;
+
         } else if (entry != null) {
             return q.remove(entry);
+
         } else {
             return false;
         }
@@ -169,6 +175,7 @@ public interface MapMethods<K, V> {
                 return q.remove(entry);
             newValueValue = newValueObjectToValue.apply(newValue);
             updated = q.replaceValue(entry, newValueValue);
+
         } else {
             newValueValue = value;
             updated = q.insert(q.absentEntry(), newValueValue);

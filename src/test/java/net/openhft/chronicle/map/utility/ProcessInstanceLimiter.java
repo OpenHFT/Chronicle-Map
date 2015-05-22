@@ -250,6 +250,7 @@ public class ProcessInstanceLimiter implements Runnable {
         Data data = this.starttimedata.get(processType);
         if (data == null) {
             return -1;
+
         } else {
             return data.getMaxNumberOfProcessesAllowed();
         }
@@ -288,10 +289,12 @@ public class ProcessInstanceLimiter implements Runnable {
                     Data data = this.timedata.get(processType);
                     if (data == null) {
                         entrySet.remove(entry);
+
                     } else {
                         if (!lock(data, 100000)) {
                             entrySet.remove(entry);
                             this.callback.lockConflictDetected(processType, index);
+
                         } else {
                             try {
                                 if (!updateTheSharedMap(processType, index, data)) {
@@ -594,5 +597,4 @@ public class ProcessInstanceLimiter implements Runnable {
             System.exit(0);
         }
     }
-
 }

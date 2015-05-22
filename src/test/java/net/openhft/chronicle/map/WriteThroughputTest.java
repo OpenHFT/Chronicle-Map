@@ -24,7 +24,6 @@ public class WriteThroughputTest {
                 .averageValueSize(size)
                 .putReturnsNull(true)
                 .create()) {
-
             System.out.println("ChronicleMap.put to memory");
             doTest(count, size, map);
         }
@@ -37,7 +36,6 @@ public class WriteThroughputTest {
                 .averageValueSize(size)
                 .putReturnsNull(true)
                 .createPersistedTo(file)) {
-
             System.out.println("ChronicleMap.put to disk");
             doTest(count, size, map);
         }
@@ -51,7 +49,6 @@ public class WriteThroughputTest {
                 .valueMarshaller(SnappyStringMarshaller.INSTANCE)
                 .putReturnsNull(true)
                 .createPersistedTo(file2)) {
-
             System.out.println("ChronicleMap.put to snappy disk");
             doTest(count, size, map);
         }
@@ -71,7 +68,6 @@ public class WriteThroughputTest {
                 .valueMarshaller(DeflatorStringMarshaller.INSTANCE)
                 .putReturnsNull(true)
                 .createPersistedTo(file3)) {
-
             System.out.println("ChronicleMap.put to deflator disk");
             doTest(count, size, map);
         }

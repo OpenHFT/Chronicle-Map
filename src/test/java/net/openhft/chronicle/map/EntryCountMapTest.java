@@ -242,6 +242,7 @@ public class EntryCountMapTest {
                 dumpMapStats(segments, minSize, map);
                 assertTrue("stride: " + stride + ", seg: " + segments + ", min: " + minSize +
                         ", size: " + map.size(), condition);
+
             } else if (map.size() > maxSize)
                 System.err.println(" warning, larger than expected, stride: " + stride +
                         ", seg: " + segments + ", min: " + minSize +
@@ -271,5 +272,4 @@ public class EntryCountMapTest {
         }
         return sum;
     }
-
 }

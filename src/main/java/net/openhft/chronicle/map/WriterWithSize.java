@@ -16,11 +16,11 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
+import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -73,7 +73,6 @@ final class WriterWithSize<T> {
         }
         return out;
     }
-
 
     public ThreadLocalCopies writeNullable(Bytes out, T t, @Nullable ThreadLocalCopies copies) {
         out.writeBoolean(t == null);

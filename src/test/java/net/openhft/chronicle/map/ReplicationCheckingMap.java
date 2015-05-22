@@ -314,5 +314,4 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     interface Call<K, V> {
         Object method(ConcurrentMap<K, V> map);
     }
-
 }

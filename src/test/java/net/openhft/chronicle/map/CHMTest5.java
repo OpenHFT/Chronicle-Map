@@ -200,6 +200,7 @@ public class CHMTest5 {
                     //That's what we expect so just update the slot
                     data.setTimeAt(slotindex, timenow);
                     lastUpdateTime = timenow;
+
                 } else {
                     //Some other process has hijacked our slot - so
                     //the only thing we can do is terminate

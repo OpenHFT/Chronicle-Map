@@ -214,7 +214,6 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
                                 "The configured map requires %.2f GB of off-heap memory.\n" +
                                 "There is only %.2f GB of free physical memory in the system.\n",
                         offHeapMapSizeInGb, freePhysicalMemoryInGb);
-
             }
         } catch (IOException e) {
             // ignore -- anyway we just warn the user

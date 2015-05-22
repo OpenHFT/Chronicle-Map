@@ -45,7 +45,6 @@ public class TcpReplicationLargeEntryTest {
                     .heartBeatInterval(1, TimeUnit.SECONDS)
                     .tcpBufferSize(1024 * 64);
 
-
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .constantValueSizeBySample(sampleValue)
                     .entries(2)
@@ -74,11 +73,9 @@ public class TcpReplicationLargeEntryTest {
                     .instance()
                     .name("map2")
                     .create();
-
         }
         s_port += 2;
     }
-
 
     @After
     public void tearDown() throws InterruptedException {
@@ -106,7 +103,6 @@ public class TcpReplicationLargeEntryTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-
     @Test
     public void testLargeValues() throws IOException, InterruptedException {
 
@@ -122,9 +118,7 @@ public class TcpReplicationLargeEntryTest {
 
         Assert.assertEquals(xString, map2.get(1));
         Assert.assertEquals(yString, map2.get(2));
-
     }
-
 
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
 
@@ -136,6 +130,7 @@ public class TcpReplicationLargeEntryTest {
             if (map1.equals(map2)) {
                 if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
                     numberOfTimesTheSame++;
+
                 } else {
                     numberOfTimesTheSame = 0;
                     map1UnChanged = new HashMap(map1);

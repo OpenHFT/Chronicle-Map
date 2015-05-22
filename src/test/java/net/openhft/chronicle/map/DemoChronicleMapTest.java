@@ -3,14 +3,14 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 import net.openhft.lang.values.IntValue;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Map;
 
 import static net.openhft.lang.model.DataValueClasses.newDirectReference;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class DemoChronicleMapTest {
 
@@ -109,5 +109,4 @@ interface DemoOrderVOInterface {
     public double getOrderQty();
 
     public void setOrderQty(double orderQty);
-
 }

@@ -27,7 +27,6 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray> {
         offset = 0;
     }
 
-
     @Override
     public void bytes(Bytes bytes, long offset) {
         this.bytes = bytes;

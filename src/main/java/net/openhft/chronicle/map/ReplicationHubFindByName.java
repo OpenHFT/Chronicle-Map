@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -161,5 +160,4 @@ class ReplicationHubFindByName<K> implements FindByName {
             withChannelId) {
         return builder.instance().replicatedViaChannel(replicationHub.createChannel((short) withChannelId));
     }
-
 }

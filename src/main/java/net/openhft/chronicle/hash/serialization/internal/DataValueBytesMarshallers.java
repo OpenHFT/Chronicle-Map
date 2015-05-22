@@ -70,7 +70,6 @@ public final class DataValueBytesMarshallers {
         }
     }
 
-
     public static <T> Class acquireReaderClass(Class<T> tClass) {
         DataValueClasses.directClassFor(tClass);
         Class readerClass = readersClassMap.get(tClass);
@@ -194,8 +193,6 @@ public final class DataValueBytesMarshallers {
         return sb.toString();
     }
 
-
-
     private static String bytesReaderName(Class type, boolean simple) {
         return (simple ? type.getSimpleName() : type.getName()) + "$$BytesReader";
     }
@@ -301,6 +298,7 @@ public final class DataValueBytesMarshallers {
                             .append(computeNonScalarOffset(dvModel, type)).append(", ")
                             .append("toReuse.").append(defaultGetter.getName()).append("(i)));\n");
                     read.append("        }\n");
+
                 } else {
                     read.append("        toReuse.")
                             .append(defaultSetter.getName()).append("(")
@@ -318,6 +316,7 @@ public final class DataValueBytesMarshallers {
                             .append("(i, bytes.read").append(bytesType(type)).append("());\n");
                     updateCharSequencePosition(read, model, type);
                     read.append("        }\n");
+
                 } else {
                     read.append("        {\n");
                     saveCharSequencePosition(read, type);
@@ -438,6 +437,7 @@ public final class DataValueBytesMarshallers {
                             .append(bytesWriterName(type, false))
                             .append(".INSTANCE").append(".write(bytes, $);\n");
                     write.append("        }\n");
+
                 } else {
                     write.append("        {")
                             .append(normalize(type)).append(" $ = e.")
@@ -457,6 +457,7 @@ public final class DataValueBytesMarshallers {
                             .append("(e.").append(defaultGetter.getName()).append("(i));\n");
                     zeroOutRemainingCharSequenceBytesAndUpdatePosition(write, model, type);
                     write.append("        }\n");
+
                 } else {
                     write.append("        {\n");
                     saveCharSequencePosition(write, type);

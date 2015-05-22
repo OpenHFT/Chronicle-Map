@@ -91,5 +91,4 @@ final class UnsafeAccess extends Access<Object> {
     public ByteOrder byteOrder(Object input) {
         return ByteOrder.nativeOrder();
     }
-
 }

@@ -137,6 +137,5 @@ public class TCPSocketReplicationNativeTest {
             Thread.sleep(1);
         }
     }
-
 }
 

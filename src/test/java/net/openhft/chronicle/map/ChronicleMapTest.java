@@ -177,7 +177,6 @@ public class ChronicleMapTest {
         map.close();
     }
 
-
     @Test
     public void testByteArrayPersistenceFileReuse() throws Exception {
         final File persistenceFile = Builder.getPersistenceFile();
@@ -185,7 +184,6 @@ public class ChronicleMapTest {
         for (int i = 0; i < 3; i++)
             try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[]
                     .class).createPersistedTo(persistenceFile)) {
-
                 byte[] o = map.get("hello".getBytes());
                 System.out.println(o == null ? "null" : new String(o));
                 map.put("hello".getBytes(), "world".getBytes());
@@ -198,7 +196,6 @@ public class ChronicleMapTest {
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class);
 
         try (final ChronicleMap<CharSequence, CharSequence> map1 = builder.create()) {
-
             map1.put("hello", "world");
 
             try (final ChronicleMap<CharSequence, CharSequence> map2 = builder.create()) {
@@ -220,7 +217,6 @@ public class ChronicleMapTest {
         ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder.of(CharSequence.class, char[].class);
 
         try (final ChronicleMap<CharSequence, char[]> map1 = builder.create()) {
-
             map1.put("hello", value);
 
             try (final ChronicleMap<CharSequence, char[]> map2 = builder.create()) {
@@ -232,7 +228,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Ignore("HCOLL-265 Chronicle Maps with Identical byte[] & char[] values are not equal")
     @Test
     public void testEqualsByteArray() throws Exception {
@@ -243,7 +238,6 @@ public class ChronicleMapTest {
         ChronicleMapBuilder<CharSequence, byte[]> builder = ChronicleMapBuilder.of(CharSequence.class, byte[].class);
 
         try (final ChronicleMap<CharSequence, byte[]> map1 = builder.create()) {
-
             map1.put("hello", value);
 
             try (final ChronicleMap<CharSequence, byte[]> map2 = builder.create()) {
@@ -254,7 +248,6 @@ public class ChronicleMapTest {
 
         }
     }
-
 
     @Test
     public void testSize() throws Exception {
@@ -594,6 +587,7 @@ public class ChronicleMapTest {
                     LongValue v = map.getUsing(userCS, value);
                     assertNotNull(userCS.toString(), v);
                     assertTrue(userCS.toString(), v == value);
+
                 } else {
                     LongValue v = map.acquireUsing(userCS, value);
                     assertTrue(userCS.toString(), v == value);
@@ -865,7 +859,6 @@ public class ChronicleMapTest {
         es.awaitTermination(1, TimeUnit.MINUTES);
     }
 
-
     static final LongValue ONE = DataValueClasses.newInstance(LongValue.class);
 
     static {
@@ -883,7 +876,6 @@ public class ChronicleMapTest {
         int threads = procs * 3;
         ExecutorService es = Executors.newFixedThreadPool(procs);
         for (int runs : new int[]{1, 2, 5, 10, 25, 50, 100, 500, 1000, 2500}) {
-
             final long entries = runs * 1000 * 1000L;
             ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                     .of(CharSequence.class, LongValue.class)
@@ -899,7 +891,6 @@ public class ChronicleMapTest {
             int count = runs >= 5 ? 2 : 3;
             final int independence = Math.min(procs, runs > 500 ? 8 : 4);
             System.out.println("\nKey size: " + runs + " Million entries. " + builder);
-
 
             for (int j = 0; j < count; j++) {
                 long start = System.currentTimeMillis();
@@ -928,6 +919,7 @@ public class ChronicleMapTest {
                                         if (c.containsKey()) {
                                             // Attempt to pass abstraction hierarchies
                                             n = c.entry().readVolatileLong(c.valueOffset()) + 1;
+
                                         } else {
                                             n = 1;
                                         }
@@ -937,6 +929,7 @@ public class ChronicleMapTest {
                                         wc.updateLock().lock();
                                         if (wc.containsKey()) {
                                             n = wc.entry().addLong(wc.valueOffset(), 1);
+
                                         } else {
                                             wc.put(ONE);
                                             n = 1;
@@ -1606,7 +1599,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Test
     public void testPutLongValue() throws IOException {
         final ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
@@ -1686,7 +1678,6 @@ public class ChronicleMapTest {
         map.close();
     }
 
-
     @Test
     public void testByteArrayKeySizeBySample() throws IOException {
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877);
@@ -1695,7 +1686,6 @@ public class ChronicleMapTest {
 
         // this test only appear to fail when we reuse the mapFile
         for (int i = 0; i < 2; i++) {
-
             try (ChronicleMap server = ChronicleMapBuilder.of(byte[].class, byte[][].class)
                     .replication(SingleChronicleHashReplication.builder()
                             .tcpTransportAndNetwork(serverConfig)
@@ -1703,16 +1693,12 @@ public class ChronicleMapTest {
                             .createWithId((byte) 1))
                     .constantKeySizeBySample(new byte[14])
                     .createPersistedTo(mapFile)) {
-
                 try (ChronicleMap<byte[], byte[][]> map2 = localClient(8877)) {
-
-
                     byte[] key = new byte[14];
                     System.arraycopy("A".getBytes(), 0, key, 0, "A".length());
                     byte[][] value = {new byte[11], new byte[11]};
                     System.arraycopy("A".getBytes(), 0, value[0], 0, "A".length());
                     System.arraycopy("A".getBytes(), 0, value[1], 0, "A".length());
-
 
                     map2.put(key, value);
                     Assert.assertNotNull(map2.get(key));

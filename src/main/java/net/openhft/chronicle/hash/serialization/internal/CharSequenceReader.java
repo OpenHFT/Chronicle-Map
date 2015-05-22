@@ -101,6 +101,7 @@ public final class CharSequenceReader<S extends CharSequence>
             appendable = (Appendable) toReuse;
             if (toReuse instanceof StringBuilder) {
                 ((StringBuilder) toReuse).setLength(0);
+
             } else if (toReuse instanceof StringBuffer) {
                 ((StringBuffer) toReuse).setLength(0);
             }

@@ -5,7 +5,6 @@ package eg;
  */
 public class TestBeanClass {
 
-
     String name;
     int value;
 

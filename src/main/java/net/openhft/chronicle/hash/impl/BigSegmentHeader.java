@@ -51,7 +51,6 @@ public final class BigSegmentHeader implements SegmentHeader {
     static final long SIZE_OFFSET = LOCK_OFFSET + 8L; // 32-bit
     static final long NEXT_POS_TO_SEARCH_FROM_OFFSET = SIZE_OFFSET + 4L;
 
-
     static final long EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET = NEXT_POS_TO_SEARCH_FROM_OFFSET + 4L;
 
     static final long DELETED_OFFSET = EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET + 8L;
@@ -236,6 +235,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         long timeInNanos = unit.toNanos(time);
         if (timeInNanos < 2000000) {
             return tryReadLockNanos(address, timeInNanos);
+
         } else {
             return tryReadLockMillis(address, (timeInNanos + 900000) / 1000000);
         }
@@ -318,6 +318,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         long timeInNanos = unit.toNanos(time);
         if (timeInNanos < 2000000) {
             return tryUpdateLockNanos(address, timeInNanos);
+
         } else {
             return tryUpdateLockMillis(address, (timeInNanos + 900000) / 1000000);
         }
@@ -366,6 +367,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         if (getCountWord(address) == 0 && casCountWord(address, 0, WRITE_LOCKED_COUNT_WORD)) {
             writeExclusiveLockHolder(address);
             return true;
+
         } else {
             return false;
         }

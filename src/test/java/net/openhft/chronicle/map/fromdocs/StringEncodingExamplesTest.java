@@ -94,6 +94,7 @@ public class StringEncodingExamplesTest {
                 throw new IllegalStateException("length invalid: " + csLen);
             if (returnedCharBuffer == null || returnedCharBuffer.capacity() < csLen) {
                 returnedCharBuffer = CharBuffer.allocate((int) csLen);
+
             } else {
                 returnedCharBuffer.clear().limit((int) csLen);
             }

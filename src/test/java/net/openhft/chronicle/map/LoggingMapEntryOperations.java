@@ -34,6 +34,7 @@ class LoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V> {
                     entry.key(), entry.value(), newValue);
             entry.doReplaceValue(newValue);
             return true;
+
         } else {
             return false;
         }

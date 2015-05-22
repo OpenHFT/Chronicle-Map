@@ -191,6 +191,5 @@ public class TCPSocketReplicationBootStrapTest {
             Thread.sleep(1);
         }
     }
-
 }
 

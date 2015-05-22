@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 @Ignore("a test written by someone on the google groups")
 public class TestNesterInterfaceMarshal {
 
-
     /**
      * Test that both maps are created first and then populated the first map so that second will
      * get the contents
@@ -37,9 +36,7 @@ public class TestNesterInterfaceMarshal {
                     .averageKeySize(10)
                     .replication((byte) 1, tcpTransportAndNetworkConfig);
 
-
             chronicleMap = builder.create();
-
         } catch (Exception e) {
             System.out.println("Error(s) creating instrument cache: " + e);
         }
@@ -58,19 +55,15 @@ public class TestNesterInterfaceMarshal {
                     .entries(5000L).averageKeySize(10)
                     .replication((byte) 2, tcpTransportAndNetworkConfig1);
 
-
             chronicleMap1 = builder.create();
-
         } catch (Exception e) {
             System.out.println("*********************Error(s) creating launcher " +
                     "instrument cache: " + e);
         }
         ChronicleMap<CharSequence, TestInstrumentVOInterface> replicatedMap = chronicleMap1;
 
-
         //Store some data into MAP1
         TestInstrumentVOInterface intrumentVOInterface = map.newValueInstance();
-
 
         try (MapKeyContext<?, TestInstrumentVOInterface> wc = map.acquireContext
                 ("KEY1", intrumentVOInterface)) {
@@ -85,11 +78,9 @@ public class TestNesterInterfaceMarshal {
 
             // intrumentVOInterface.setInstrumentIDAt(0, instrumentIDVOInterface);
 
-
             //  Assert.assertNotNull(map);
             //  Assert.assertNotNull(replicatedMap);
         }
-
 
         int t = 0;
         for (; t < 5000; t++) {
@@ -107,11 +98,9 @@ public class TestNesterInterfaceMarshal {
 
         map.close();
         replicatedMap.close();
-
     }
 
     protected ChronicleMap createReplicatedMap1() {
-
         ChronicleMap chronicleMap = null;
         TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig =
                 TcpTransportAndNetworkConfig.of(8076).heartBeatInterval(1L, TimeUnit.SECONDS);
@@ -122,9 +111,7 @@ public class TestNesterInterfaceMarshal {
                     .averageKeySize(10)
                     .replication((byte) 1, tcpTransportAndNetworkConfig);
 
-
             chronicleMap = builder.create();
-
         } catch (Exception e) {
             System.out.println("Error(s) creating instrument cache: " + e);
         }
@@ -132,7 +119,6 @@ public class TestNesterInterfaceMarshal {
     }
 
     protected ChronicleMap createReplicatedMap2() {
-
         ChronicleMap chronicleMap = null;
         TcpTransportAndNetworkConfig tcpTransportAndNetworkConfig =
                 TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076))
@@ -147,16 +133,12 @@ public class TestNesterInterfaceMarshal {
                     .averageKeySize(10)
                     .replication((byte) 2, tcpTransportAndNetworkConfig);
 
-
             chronicleMap = builder.create();
-
         } catch (Exception e) {
             System.out.println("*********************Error(s) creating launcher " +
                     "instrument cache: " + e);
         }
         return chronicleMap;
     }
-
 }
-
 

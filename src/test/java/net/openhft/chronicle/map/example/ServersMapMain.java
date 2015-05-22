@@ -58,6 +58,7 @@ public class ServersMapMain {
                     .of(byte[].class, byte[].class, new InetSocketAddress(hostname, port))
                     .putReturnsNull(true)
                     .create();
+
         } else {
             File file = File.createTempFile("testServersMapMain", ".deleteme");
             file.deleteOnExit();
@@ -102,5 +103,4 @@ public class ServersMapMain {
         else
             startServer();
     }
-
 }

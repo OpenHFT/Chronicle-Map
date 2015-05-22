@@ -100,7 +100,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
      * binds to the server socket and process data This method will block until interrupted
      */
 
-
     @Override
     void processEvent() throws IOException {
         try {
@@ -132,6 +131,7 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
                         processKey(key);
                     }
                     selectionKeys.clear();
+
                 } else {
                     // use the netty like selector
 
@@ -175,7 +175,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
     }
 
     private void processKey(SelectionKey key) {
-
         try {
 
             if (key.isReadable()) {
@@ -222,11 +221,13 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
                 // I don't see any harm this config could make, I leave it here
                 client.setOption(IP_MULTICAST_IF, networkInterface);
                 client.join(address, networkInterface);
+
             } else {
                 client.join(address, NetworkInterface.getByInetAddress(hostAddress.getAddress()));
             }
             if (LOG.isDebugEnabled())
                 LOG.debug("Connecting via multicast, group=" + address);
+
         } else {
             client.bind(hostAddress);
         }
@@ -323,7 +324,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
             return server;
         }
     }
-
 }
 
 interface EntryReader {

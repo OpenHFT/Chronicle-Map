@@ -37,7 +37,6 @@ public class ServiceDescriptor<K, V> implements Marshallable {
             this.channelID = channelID;
         }
 
-
         @Override
         public void writeMarshallable(WireOut wire) {
             wire.write(() -> "keyClass").text(keyClass.getName());

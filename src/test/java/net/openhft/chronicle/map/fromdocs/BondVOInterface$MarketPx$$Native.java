@@ -33,11 +33,8 @@ public class BondVOInterface$MarketPx$$Native
     private static final int MATURITYPX = 24;
     private static final int PARPX = 32;
 
-
     private Bytes _bytes;
     private long _offset;
-
-
 
     public void setAskPx(double $) {
         _bytes.writeDouble(_offset + ASKPX, $);
@@ -47,8 +44,6 @@ public class BondVOInterface$MarketPx$$Native
         return _bytes.readDouble(_offset + ASKPX);
     }
 
-
-
     public void setBidPx(double $) {
         _bytes.writeDouble(_offset + BIDPX, $);
     }
@@ -56,8 +51,6 @@ public class BondVOInterface$MarketPx$$Native
     public double getBidPx() {
         return _bytes.readDouble(_offset + BIDPX);
     }
-
-
 
     public void setCallPx(double $) {
         _bytes.writeDouble(_offset + CALLPX, $);
@@ -67,8 +60,6 @@ public class BondVOInterface$MarketPx$$Native
         return _bytes.readDouble(_offset + CALLPX);
     }
 
-
-
     public void setMaturityPx(double $) {
         _bytes.writeDouble(_offset + MATURITYPX, $);
     }
@@ -76,8 +67,6 @@ public class BondVOInterface$MarketPx$$Native
     public double getMaturityPx() {
         return _bytes.readDouble(_offset + MATURITYPX);
     }
-
-
 
     public void setParPx(double $) {
         _bytes.writeDouble(_offset + PARPX, $);

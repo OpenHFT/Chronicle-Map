@@ -20,8 +20,6 @@ import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.impl.hashlookup.HashLookupIteration;
 import net.openhft.chronicle.hash.impl.util.CharSequences;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.MultiStoreBytes;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -120,6 +118,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
                     return value;
                 // Key is absent
                 upgradeReadToUpdateLockWithUnlockingIfNeeded(c);
+
             } else {
                 c.updateLock().lock();
             }
@@ -164,6 +163,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
                 V newValue = unaryOperator.update(c.get());
                 c.put(newValue);
                 return newValue;
+
             } else {
                 return null;
             }
@@ -396,6 +396,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
     public static int hashCode(Object obj) {
         if (!(obj instanceof CharSequence)) {
             return obj.hashCode();
+
         } else {
             return CharSequences.hash((CharSequence) obj);
         }
@@ -420,7 +421,6 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
     default Set<Entry<K, V>> newEntrySet() {
         return new ChronicleMapEntrySet<>(this);
     }
-
 
     @Override
     default void forEachEntry(final Consumer<? super MapKeyContext<K, V>> action) {
@@ -458,7 +458,6 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
         }
         return !interrupt;
     }
-
 
     static class ForEachWhilePredicate<K, V> implements HashLookupIteration {
         private final VanillaContext<K, ?, ?, V, ?, ?> c;

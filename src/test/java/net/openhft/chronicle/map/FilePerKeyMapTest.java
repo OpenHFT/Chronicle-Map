@@ -103,10 +103,13 @@ public class FilePerKeyMapTest {
             Map.Entry entry = it.next();
             if (entry.getKey().equals("five")) {
                 assertEquals(entry.getValue(), "test5");
+
             } else if (entry.getKey().equals("six")) {
                 assertEquals(entry.getValue(), "test6");
+
             } else if (entry.getKey().equals("seven")) {
                 assertEquals(entry.getValue(), "test7");
+
             } else {
                 //should never get here!!
                 assertTrue(false);
@@ -126,7 +129,6 @@ public class FilePerKeyMapTest {
 
         //small warm-up
         for (int j = -1; j < 3; j++) {
-
             long time = System.currentTimeMillis();
             int iterations = 50;
             for (int i = 0; i < iterations; i++) {
@@ -163,7 +165,6 @@ public class FilePerKeyMapTest {
         assertEquals(FPMEvent.EventType.UPDATE, events.get(1).getEventType());
         assertEquals(FPMEvent.EventType.DELETE, events.get(2).getEventType());
         assertEquals(FPMEvent.EventType.NEW, events.get(3).getEventType());
-
 
         map.unregisterForEvents(fpmEventConsumer);
         map.clear();

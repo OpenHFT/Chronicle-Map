@@ -34,7 +34,6 @@ import java.util.Map;
  */
 class AbstractChronicleMapConverter<K, V> implements Converter {
 
-
     private final Map<K, V> map;
     private final Class mapClazz;
 
@@ -43,20 +42,16 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
         this.mapClazz = map.getClass();
     }
 
-
     @Override
     public boolean canConvert(Class aClass) {
         //noinspection unchecked
         return mapClazz.isAssignableFrom(aClass);
     }
 
-
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext
             marshallingContext) {
-
         for (Map.Entry e : (Iterable<Map.Entry>) ((Map) o).entrySet()) {
-
             writer.startNode("entry");
             {
                 final Object key = e.getKey();
@@ -113,9 +108,7 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
 
     private static <E> E deserialize(@NotNull UnmarshallingContext unmarshallingContext,
                                      @NotNull HierarchicalStreamReader reader) {
-
         switch (reader.getNodeName()) {
-
             case "java.util.Collections$EmptySet":
                 return (E) Collections.EMPTY_SET;
 
@@ -125,18 +118,15 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             case "java.util.Collections$EmptyMap":
             case "java.util.Collections.EmptyMap":
                 return (E) Collections.EMPTY_MAP;
-
         }
 
         return (E) unmarshallingContext.convertAnother(null, forName(reader.getNodeName()));
     }
 
     private static Class forName(String clazz) {
-
         try {
             return Class.forName(clazz);
         } catch (ClassNotFoundException e) {
-
             boolean isNative = clazz.endsWith("$$Native");
             boolean isHeap = clazz.endsWith("$$Heap");
 
@@ -155,6 +145,5 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
 
         }
     }
-
 }
 

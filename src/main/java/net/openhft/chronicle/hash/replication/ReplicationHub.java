@@ -75,7 +75,6 @@ public final class ReplicationHub extends AbstractReplication {
                 ", channels=" + Arrays.toString(channels) + '}';
     }
 
-
     /**
      * Returns the maximum number of channels could be {@linkplain #createChannel(int) created} for
      * this {@code ReplicationHub}.
@@ -153,5 +152,4 @@ public final class ReplicationHub extends AbstractReplication {
             return new ReplicationHub(identifier, this);
         }
     }
-
 }

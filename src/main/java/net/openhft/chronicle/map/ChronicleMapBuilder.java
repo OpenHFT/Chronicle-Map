@@ -22,12 +22,12 @@ import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.ChronicleHashBuilderImpl;
 import net.openhft.chronicle.hash.impl.hashlookup.HashLookup;
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
+import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.Maths;
 import net.openhft.lang.io.Bytes;
@@ -428,11 +428,13 @@ public final class ChronicleMapBuilder<K, V> implements
                 // see segmentEntrySpaceInnerOffset()
                 long totalDataSize = constantSizeBeforeAlignment + constantValueSize();
                 worstAlignment = (int) (alignment.alignAddr(totalDataSize) - totalDataSize);
+
             } else {
                 determineAlignment:
                 if (actualChunkSize > 0) {
                     worstAlignment = worstAlignmentAssumingChunkSize(constantSizeBeforeAlignment,
                             actualChunkSize);
+
                 } else {
                     int chunkSize = 8;
                     worstAlignment = worstAlignmentAssumingChunkSize(
@@ -562,6 +564,7 @@ public final class ChronicleMapBuilder<K, V> implements
             return maxChunksPerEntry;
         if (constantlySizedEntries()) {
             return 1;
+
         } else {
             return Integer.MAX_VALUE;
         }
@@ -643,6 +646,7 @@ public final class ChronicleMapBuilder<K, V> implements
         long entriesPerSegment;
         if (this.entriesPerSegment > 0L) {
             entriesPerSegment = this.entriesPerSegment;
+
         } else {
             int actualSegments = actualSegments(replicated);
             long totalEntries = totalEntriesIfPoorDistribution(actualSegments);
@@ -1242,6 +1246,7 @@ public final class ChronicleMapBuilder<K, V> implements
     ChronicleMap<K, V> create(MapInstanceBuilder<K, V> ib) throws IOException {
         if (ib.file != null) {
             return createWithFile(ib.file, ib.singleHashReplication, ib.channel);
+
         } else {
             return createWithoutFile(ib.singleHashReplication, ib.channel);
         }
@@ -1258,6 +1263,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     byte serialization = ois.readByte();
                     if (serialization == XML_SERIALIZATION) {
                         m = deserializeHeaderViaXStream(ois);
+
                     } else if (serialization == BINARY_SERIALIZATION) {
                         try {
                             m = ois.readObject();
@@ -1397,11 +1403,13 @@ public final class ChronicleMapBuilder<K, V> implements
             AbstractReplication replication;
             if (singleHashReplication != null) {
                 replication = singleHashReplication;
+
             } else {
                 replication = channel.hub();
             }
             return new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                     V, Object, MetaBytesInterop<V, Object>>(this, replication);
+
         } else {
             return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                     V, Object, MetaBytesInterop<V, Object>>(this, false);
@@ -1457,6 +1465,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     replicators.add(Replicators.tcp(singleHashReplication));
                 if (singleHashReplication.udpTransport() != null)
                     replicators.add(Replicators.udp(singleHashReplication.udpTransport()));
+
             } else {
                 ReplicationHub hub = channel.hub();
 

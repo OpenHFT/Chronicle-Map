@@ -37,6 +37,7 @@ public class MaximizingValueMapEntryOperations<K, V extends Comparable<? super V
                 // replace, if the new value is greater
                 entry.doReplaceValue(newValue);
                 return true;
+
             } else {
                 // always fail, if the value came via replication is lesser than the current value.
                 return false;

@@ -41,7 +41,6 @@ final class Replicators {
     private Replicators() {
     }
 
-
     static class OutBuffer implements BufferResizer {
 
         @NotNull
@@ -60,7 +59,6 @@ final class Replicators {
             return out;
         }
 
-
         OutBuffer(final int tcpBufferSize) {
             out = ByteBuffer.allocateDirect(tcpBufferSize);
             in = new ByteBufferBytes(out);
@@ -68,8 +66,6 @@ final class Replicators {
 
         @Override
         public Bytes resizeBuffer(int newCapacity) {
-
-
             if (newCapacity < out.capacity())
                 throw new IllegalStateException("it not possible to resize the buffer smaller");
 
@@ -102,14 +98,11 @@ final class Replicators {
             assert out.capacity() == in.capacity();
             assert in.limit() == in.capacity();
             return in;
-
         }
     }
 
     static Replicator tcp(final AbstractReplication replication) {
         return new Replicator() {
-
-
             @Override
             protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
                                         @NotNull final Replica replica,

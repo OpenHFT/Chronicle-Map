@@ -188,6 +188,7 @@ public class BigData {
             BigDataStuff stuff = theMap.get(keyval);
             if (stuff == null) {
                 System.out.println("hit an empty at key " + keyval);
+
             } else {
                 count++;
                 stuff.x++;

@@ -145,6 +145,5 @@ public class PostChannelCreationTest {
             Thread.sleep(1);
         }
     }
-
 }
 

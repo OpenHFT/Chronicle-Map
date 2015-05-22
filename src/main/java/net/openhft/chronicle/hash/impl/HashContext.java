@@ -43,9 +43,7 @@ import java.util.ConcurrentModificationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
-import static net.openhft.chronicle.hash.impl.HashContext.SearchState.ABSENT;
-import static net.openhft.chronicle.hash.impl.HashContext.SearchState.DELETED;
-import static net.openhft.chronicle.hash.impl.HashContext.SearchState.PRESENT;
+import static net.openhft.chronicle.hash.impl.HashContext.SearchState.*;
 
 public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>>
         implements KeyContext<K> {
@@ -306,7 +304,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         hashAndContextLocalsReference = null;
     }
 
-
     /////////////////////////////////////////////////
     // Key model
     KI keyInterop;
@@ -344,7 +341,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     void closeKeyModel0() {
         keyInterop = null;
     }
-
 
     /////////////////////////////////////////////////
     // Key reader
@@ -458,7 +454,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         return key;
     }
 
-
     /////////////////////////////////////////////////
     // Key hash
     long hash;
@@ -497,7 +492,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         hash = 0L;
     }
 
-
     /////////////////////////////////////////////////
     // Segment index
     public int segmentIndex = -1;
@@ -535,7 +529,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     void closeSegmentIndex0() {
         segmentIndex = -1;
     }
-
 
     /////////////////////////////////////////////////
     // Segment header
@@ -608,7 +601,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         return entries() - deleted();
     }
 
-
     /////////////////////////////////////////////////
     // Locks
     HashContext rootContextOnThisSegment;
@@ -674,9 +666,11 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
             if (totalWriteLockCount > 0) {
                 segmentHeader.writeUnlock(segmentHeaderAddress);
                 closeKeySearch();
+
             } else if (totalUpdateLockCount > 0) {
                 segmentHeader.updateUnlock(segmentHeaderAddress);
                 closeKeySearch();
+
             } else if (totalReadLockCount > 0) {
                 segmentHeader.readUnlock(segmentHeaderAddress);
                 closeKeySearch();
@@ -688,6 +682,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
                     if (shouldReadUnlock()) {
                         segmentHeader.writeUnlock(segmentHeaderAddress);
                         closeKeySearch();
+
                     } else {
                         segmentHeader.downgradeWriteToReadLock(segmentHeaderAddress);
                     }
@@ -698,6 +693,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
                 if (shouldReadUnlock()) {
                     segmentHeader.updateUnlock(segmentHeaderAddress);
                     closeKeySearch();
+
                 } else {
                     segmentHeader.downgradeUpdateToReadLock(segmentHeaderAddress);
                 }
@@ -803,6 +799,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
             if (fastLock() || doTryLock(time, unit)) {
                 incrementCounts();
                 return true;
+
             } else {
                 return false;
             }
@@ -842,6 +839,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
             if (fastLock() || segmentHeader.tryReadLock(segmentHeaderAddress)) {
                 incrementCounts();
                 return true;
+
             } else {
                 return false;
             }
@@ -878,6 +876,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
                             "lock, while read lock is already held by this thread");
                 }
                 return false;
+
             } else {
                 return true;
             }
@@ -904,6 +903,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
             if (doTryLock()) {
                 incrementCounts();
                 return true;
+
             } else {
                 return false;
             }
@@ -913,6 +913,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
             if (rootContextOnThisSegment.totalUpdateLockCount == 0) {
                 if (rootContextOnThisSegment.totalReadLockCount > 0) {
                     return segmentHeader.tryUpgradeReadToUpdateLock(segmentHeaderAddress);
+
                 } else {
                     return segmentHeader.tryUpdateLock(segmentHeaderAddress);
                 }
@@ -939,6 +940,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
                 if (rootContextOnThisSegment.totalReadLockCount == 1) {
                     segmentHeader.updateUnlock(segmentHeaderAddress);
                     closeKeySearch();
+
                 } else {
                     segmentHeader.downgradeUpdateToReadLock(segmentHeaderAddress);
                 }
@@ -957,6 +959,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
                             "lock, while read lock is already held by this thread");
                 }
                 return false;
+
             } else {
                 return true;
             }
@@ -971,6 +974,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         void doLock() {
             if (rootContextOnThisSegment.totalUpdateLockCount > 0) {
                 segmentHeader.upgradeUpdateToWriteLock(segmentHeaderAddress);
+
             } else {
                 segmentHeader.writeLock(segmentHeaderAddress);
             }
@@ -980,6 +984,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         void doLockInterruptibly() {
             if (rootContextOnThisSegment.totalUpdateLockCount > 0) {
                 segmentHeader.upgradeUpdateToWriteLockInterruptibly(segmentHeaderAddress);
+
             } else {
                 segmentHeader.writeLockInterruptibly(segmentHeaderAddress);
             }
@@ -991,6 +996,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
             if (doTryLock()) {
                 incrementCounts();
                 return true;
+
             } else {
                 return false;
             }
@@ -1000,8 +1006,10 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
             if (rootContextOnThisSegment.totalWriteLockCount == 0) {
                 if (rootContextOnThisSegment.totalUpdateLockCount > 0) {
                     return segmentHeader.tryUpgradeUpdateToWriteLock(segmentHeaderAddress);
+
                 } else if (rootContextOnThisSegment.totalReadLockCount > 0) {
                     return segmentHeader.tryUpgradeReadToWriteLock(segmentHeaderAddress);
+
                 } else {
                     return segmentHeader.tryWriteLock(segmentHeaderAddress);
                 }
@@ -1015,6 +1023,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
             if (rootContextOnThisSegment.totalUpdateLockCount > 0) {
                 return segmentHeader.tryUpgradeUpdateToWriteLock(
                         segmentHeaderAddress, time, unit);
+
             } else {
                 return segmentHeader.tryWriteLock(segmentHeaderAddress, time, unit);
             }
@@ -1034,6 +1043,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
                     if (rootContextOnThisSegment.totalReadLockCount == 1) {
                         segmentHeader.writeUnlock(segmentHeaderAddress);
                         closeKeySearch();
+
                     } else {
                         segmentHeader.downgradeWriteToReadLock(segmentHeaderAddress);
                     }
@@ -1068,7 +1078,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         initLocks();
         return writeLock;
     }
-
 
     /////////////////////////////////////////////////
     // Segment
@@ -1164,7 +1173,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     public final void reuse(long pos) {
         entry = reuse(entryCache, pos);
     }
-
 
     /////////////////////////////////////////////////
     // Key search, key bytes and entry
@@ -1280,7 +1288,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         return keyOffset;
     }
 
-
     /////////////////////////////////////////////////
     // Entry size in chunks
     public int entrySizeInChunks;
@@ -1315,7 +1322,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     void closeEntrySizeInChunks0() {
         entrySizeInChunks = 0;
     }
-
 
     /////////////////////////////////////////////////
     // Write operations
@@ -1373,6 +1379,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
                 if (chunks == 1) {
                     throw new IllegalStateException(
                             "Segment is full, no free entries found");
+
                 } else {
                     throw new IllegalStateException(
                             "Segment is full or has no ranges of " + chunks
@@ -1381,6 +1388,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
                 }
             }
             updateNextPosToSearchFrom(ret, chunks);
+
         } else {
             // if bit at nextPosToSearchFrom is clear, it was skipped because
             // more than 1 chunk was requested. Don't move nextPosToSearchFrom
@@ -1405,7 +1413,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         nextPosToSearchFrom(nextPosToSearchFrom);
     }
 
-
     /////////////////////////////////////////////////
     // Remove
     @Override
@@ -1428,6 +1435,7 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
             entries(entries() - 1L);
             searchState = DELETED;
             return true;
+
         } else {
             return false;
         }
@@ -1449,7 +1457,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
     public void closeRemove() {
     }
 
-
     public void clear() {
         writeLock();
         initSegment();
@@ -1458,7 +1465,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         nextPosToSearchFrom(0L);
         entries(0L);
     }
-
 
     /////////////////////////////////////////////////
     // For bytes contexts
@@ -1481,7 +1487,6 @@ public abstract class HashContext<K, KI, MKI extends MetaBytesInterop<K, ? super
         keyCopy.limit(keySize);
         this.key = (K) keyCopy;
     }
-
 
     /////////////////////////////////////////////////
     // Iteration

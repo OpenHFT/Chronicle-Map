@@ -424,6 +424,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 if (!searchStatePresent()) {
                     putEntry();
                     writePresent();
+
                 } else {
                     if (!shouldIgnore()) {
                         boolean deleted = isDeleted();
@@ -505,6 +506,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     updateChange();
                     deleted(deleted() + 1);
                     return true;
+
                 } else {
                     return false;
                 }
@@ -530,6 +532,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         void updateChange() {
             if (remoteUpdate()) {
                 rm().dropChange(segmentIndex, pos);
+
             } else {
                 rm().raiseChange(segmentIndex, pos);
             }
@@ -550,7 +553,6 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
             return true;
         }
-
 
         boolean shouldIgnore() {
             assert replicationStateInit() : "replication state not init";
@@ -738,7 +740,6 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
-
         long start = entry.position();
         try {
             final long keySize = keySizeMarshaller.readSize(entry);
@@ -767,7 +768,6 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-
     /**
      * This method does not set a segment lock, A segment lock should be obtained before calling
      * this method, especially when being used in a multi threaded context.
@@ -795,6 +795,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         long valueSize;
         if (!isDeleted) {
             valueSize = valueSizeMarshaller.readSize(entry);
+
         } else {
             valueSize = valueSizeMarshaller.minEncodableSize();
         }
@@ -819,6 +820,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (isDeleted) {
                 LOG.debug("WRITING ENTRY TO DEST -  into local-id={}, remove(key={})",
                         localIdentifier, entry.toString().trim());
+
             } else {
                 message = String.format(
                         "WRITING ENTRY TO DEST  -  into local-id=%d, put(key=%s,",
@@ -864,6 +866,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
             if (id != 0) {
                 remoteIdentifier = id;
+
             } else {
                 throw new IllegalStateException("identifier can't be 0");
             }
@@ -960,6 +963,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (!isDeleted) {
                 valueSize = valueSizeMarshaller.readSize(entry);
                 assert valueSize > 0;
+
             } else {
                 return null;
             }
@@ -1090,7 +1094,6 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 context.updateLock().lock();
                 try {
                     if (changesForUpdates.get(position)) {
-
                         entryCallback.onBeforeEntry();
 
                         final long segmentPos = position & posMask;

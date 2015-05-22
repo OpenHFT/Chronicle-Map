@@ -55,5 +55,4 @@ public class CHMTestIterator1 {
             System.out.println("Average iteration time was " + time / runs / 1e3 + "us, for " + runs / 1e6 + "m entries");
         }
     }
-
 }

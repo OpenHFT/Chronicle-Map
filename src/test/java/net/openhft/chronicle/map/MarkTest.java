@@ -79,7 +79,6 @@ public class MarkTest {
                 .entriesPerSegment((1 << 15) / 3)
                 .putReturnsNull(true)
                 .removeReturnsNull(true))) {
-
             Random r = ThreadLocalRandom.current();
             for (int i = 0; i < ENTRIES; i++) {
                 map.put(r.nextInt(), r.nextInt());

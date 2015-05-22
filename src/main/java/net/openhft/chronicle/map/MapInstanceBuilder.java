@@ -86,6 +86,7 @@ final class MapInstanceBuilder<K, V>
     public synchronized ChronicleMap<K, V> create() throws IOException {
         if (!used.getAndSet(true)) {
             return mapBuilder.create(this);
+
         } else {
             throw new IllegalStateException(
                     "A ChronicleMap has already been created using this instance config chain. " +
@@ -93,5 +94,4 @@ final class MapInstanceBuilder<K, V>
                             "ChronicleMap instance");
         }
     }
-
 }

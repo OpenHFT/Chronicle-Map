@@ -87,6 +87,7 @@ public enum ByteBufferMarshaller implements BytesInterop<ByteBuffer>, BytesReade
         int intSize = (int) size;
         if (toReuse == null || toReuse.capacity() < intSize) {
             toReuse = ByteBuffer.allocate(intSize);
+
         } else {
             toReuse.position(0);
             toReuse.limit(intSize);

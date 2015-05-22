@@ -161,7 +161,6 @@ public class ChronicleMapImportExportTest {
         }
     }
 
-
     @Test
     public void testFromHashMap() throws IOException, InterruptedException {
 
@@ -175,19 +174,16 @@ public class ChronicleMapImportExportTest {
         map.put(1, "one");
         map.put(2, "two");
 
-
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
 
         xstream.toXML(map, new FileOutputStream(file));
-
 
         try (ChronicleMap<Integer, String> expected = ChronicleMapBuilder
                 .of(Integer.class, String.class)
                 .averageValueSize(10)
                 .entries(1000)
                 .create()) {
-
             expected.put(1, "one");
             expected.put(2, "two");
 
@@ -199,10 +195,8 @@ public class ChronicleMapImportExportTest {
             Assert.assertEquals("two", expected.get(2));
         }
 
-
         file.deleteOnExit();
     }
-
 
     @Test
     public void testToJsonWithStatelessClient() throws IOException, InterruptedException {
@@ -216,12 +210,10 @@ public class ChronicleMapImportExportTest {
                     .of(CharSequence.class, CharSequence.class)
                     .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
                 try (ChronicleMap<CharSequence, CharSequence> actual = localClient(8056)) {
-
                     expected.put("hello", "world");
                     expected.getAll(file);
 
                     actual.putAll(file);
-
 
                     Assert.assertEquals(expected, actual);
 
@@ -230,7 +222,6 @@ public class ChronicleMapImportExportTest {
                     actual.putAll(file2);
 
                     Assert.assertEquals(expected, actual);
-
                 }
             }
         }
@@ -238,7 +229,6 @@ public class ChronicleMapImportExportTest {
         file.delete();
         file2.delete();
     }
-
 
     @Test
     public void testWithLongValue() throws IOException, InterruptedException {
@@ -265,7 +255,6 @@ public class ChronicleMapImportExportTest {
             expected.getAll(file);
 
             try (ChronicleMap<CharSequence, LongValue> actual = builder.create()) {
-
                 actual.putAll(file);
 
                 Assert.assertEquals(expected, actual);
@@ -274,7 +263,6 @@ public class ChronicleMapImportExportTest {
             // file.delete();
         }
     }
-
 
     @Test
     public void testBondVOInterface() throws IOException, InterruptedException {
@@ -288,7 +276,6 @@ public class ChronicleMapImportExportTest {
                         .averageKeySize("one".length()).entries(1000);
         try (ChronicleMap<CharSequence, BondVOInterface> expected =
                      builder.create()) {
-
             final BondVOInterface value = expected.newValueInstance();
 
             // this will add the entry
@@ -305,7 +292,6 @@ public class ChronicleMapImportExportTest {
             expected.getAll(file);
 
             try (ChronicleMap<CharSequence, BondVOInterface> actual = builder.create()) {
-
                 actual.putAll(file);
 
                 Assert.assertEquals(expected.get("one").getCoupon(),

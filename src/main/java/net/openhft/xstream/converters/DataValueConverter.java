@@ -39,7 +39,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-
 /**
  * @author Rob Austin.
  */
@@ -49,7 +48,6 @@ public class DataValueConverter implements Converter {
 
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext context) {
-
         final String canonicalName = o.getClass().getCanonicalName();
 
         boolean isNative = canonicalName.endsWith("$$Native");
@@ -59,11 +57,9 @@ public class DataValueConverter implements Converter {
             return;
 
         if (canonicalName.startsWith("net.openhft.lang.values")) {
-
             Method[] methods = o.getClass().getMethods();
 
             for (Method method : methods) {
-
                 if (!method.getName().equals("getValue") ||
                         method.getParameterTypes().length != 0) {
                     continue;
@@ -80,12 +76,10 @@ public class DataValueConverter implements Converter {
             throw new ConversionException("class=" + canonicalName);
         }
 
-
         try {
             DataValueModel<?> dataValueModel = DataValueModels.acquireModel(interfaceClass(o.getClass()));
 
             for (Map.Entry<String, ? extends FieldModel> p : dataValueModel.fieldMap().entrySet()) {
-
                 final FieldModel fileModel = p.getValue();
 
                 if (fileModel.indexedGetter() != null) {
@@ -121,14 +115,12 @@ public class DataValueConverter implements Converter {
                             writer.endNode();
                         }
                         writer.endNode();
-
                     } catch (NoSuchFieldException | IllegalAccessException e1) {
                         throw new ConversionException("", e1);
                     }
 
                     continue;
                 }
-
 
                 try {
 
@@ -147,11 +139,9 @@ public class DataValueConverter implements Converter {
                     writer.startNode(fileModel.name());
                     context.convertAnother(value);
                     writer.endNode();
-
                 } catch (Exception e) {
                     LOG.error("class=" + fileModel.name(), e);
                 }
-
 
             }
 
@@ -179,11 +169,9 @@ public class DataValueConverter implements Converter {
         return Class.forName(nodeName);
     }
 
-
     @Override
     public Object unmarshal(HierarchicalStreamReader reader,
                             UnmarshallingContext context) {
-
         final String canonicalName = context.getRequiredType().getName();
 
         boolean isNative = canonicalName.endsWith("$$Native");
@@ -215,7 +203,6 @@ public class DataValueConverter implements Converter {
             fillInObject(reader, context, result);
 
             return result;
-
         } catch (Exception e) {
             throw new ConversionException("class=" + canonicalName, e);
         }
@@ -234,9 +221,7 @@ public class DataValueConverter implements Converter {
             FieldModel fieldModel = dataValueModel.fieldMap().get(name);
 
             if (fieldModel.indexedGetter() != null) {
-
                 while (reader.hasMoreChildren()) {
-
                     reader.moveDown();
                     try {
                         String index = reader.getNodeName();
@@ -280,11 +265,9 @@ public class DataValueConverter implements Converter {
         }
     }
 
-
     private static Object toNativeValueObjects(HierarchicalStreamReader reader,
                                                final Class aClass,
                                                UnmarshallingContext context) {
-
         final Object o = DataValueClasses.newDirectInstance(aClass);
 
         try {
@@ -292,7 +275,6 @@ public class DataValueConverter implements Converter {
             final BeanInfo info = Introspector.getBeanInfo(o.getClass());  //  new BeanGenerator
 
             for (PropertyDescriptor p : info.getPropertyDescriptors()) {
-
                 if (!p.getName().equals("value"))
                     continue;
 
@@ -309,7 +291,6 @@ public class DataValueConverter implements Converter {
                 p.getWriteMethod().invoke(o, o1);
 
                 return o;
-
             }
 
         } catch (Exception e) {

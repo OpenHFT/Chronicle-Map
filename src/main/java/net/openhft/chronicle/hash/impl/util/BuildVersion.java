@@ -35,7 +35,6 @@ public final class BuildVersion {
      * @return version of ChronicleMap being used, or NULL if its not known
      */
     public synchronized static String version() {
-
         if (version != null) {
             return version;
         }
@@ -54,7 +53,6 @@ public final class BuildVersion {
         } catch (Exception e) {
             // do nothing
         }
-
 
         // another way to get the version is to read it from the manifest
         final String versionFromManifest = getVersionFromManifest();
@@ -78,14 +76,12 @@ public final class BuildVersion {
         return ChronicleMapBuilder.class.getPackage().getImplementationVersion();
     }
 
-
     /**
      * reads the pom file to get this version, only to be used for development or within the IDE.
      *
      * @return gets the version from the pom.xml
      */
     private static String getVersionFromPom() {
-
         final String absolutePath = new File(BuildVersion.class.getResource(BuildVersion.class
                 .getSimpleName() + ".class").getPath())
                 .getParentFile().getParentFile().getParentFile().getParentFile().getParentFile()
@@ -94,11 +90,9 @@ public final class BuildVersion {
         final File file = new File(absolutePath + "/pom.xml");
 
         try (Reader reader = new FileReader(file)) {
-
             final MavenXpp3Reader xpp3Reader = new MavenXpp3Reader();
             Model model = xpp3Reader.read(reader);
             return model.getVersion();
-
         } catch (NoClassDefFoundError e) {
             // if you want to get the version possibly in development add in to your pom
             // pax-url-aether.jar

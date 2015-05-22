@@ -128,6 +128,7 @@ public abstract class ByteableMarshaller<E extends Byteable>
         if (eBytes != null) {
             if (eBytes != bytes || bytes.position() != e.offset()) {
                 bytes.write(eBytes, e.offset(), size);
+
             } else {
                 bytes.skip(size);
             }
@@ -169,6 +170,7 @@ public abstract class ByteableMarshaller<E extends Byteable>
         if (bytes instanceof MultiStoreBytes) {
             MultiStoreBytes msb = (MultiStoreBytes) bytes;
             e.bytes(msb.underlyingBytes(), msb.underlyingOffset() + msb.position());
+
         } else {
             e.bytes(bytes, bytes.position());
         }

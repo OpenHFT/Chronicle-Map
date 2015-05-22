@@ -44,16 +44,13 @@ public class ByteBufferConverter implements Converter {
         marshallingContext.convertAnother(buffer.position());
         writer.endNode();
 
-
         writer.startNode("capacity");
         marshallingContext.convertAnother(buffer.capacity());
         writer.endNode();
 
-
         writer.startNode("limit");
         marshallingContext.convertAnother(buffer.limit());
         writer.endNode();
-
 
         writer.startNode("isDirect");
         marshallingContext.convertAnother(buffer.isDirect());
@@ -76,7 +73,6 @@ public class ByteBufferConverter implements Converter {
             throw new ConversionException("", e);
         }
 
-
         writer.endNode();
 
         buffer.limit(limit);
@@ -85,11 +81,9 @@ public class ByteBufferConverter implements Converter {
 
     @Override
     public Object unmarshal(HierarchicalStreamReader reader, UnmarshallingContext unmarshallingContext) {
-
         reader.moveDown();
         int position = (Integer) unmarshallingContext.convertAnother(null, int.class);
         reader.moveUp();
-
 
         reader.moveDown();
         int capacity = (Integer) unmarshallingContext.convertAnother(null, int.class);

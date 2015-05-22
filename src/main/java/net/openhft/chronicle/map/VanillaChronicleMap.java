@@ -90,6 +90,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         vClass = valueBuilder.eClass;
         if (vClass.getName().endsWith("$$Native")) {
             nativeValueClass = vClass;
+
         } else if (vClass.isInterface()) {
             Class nativeValueClass = null;
             try {
@@ -98,6 +99,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 // fall through
             }
             this.nativeValueClass = nativeValueClass;
+
         } else {
             nativeValueClass = null;
         }
@@ -192,7 +194,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return actualSegments;
     }
 
-
     VanillaContext<K, KI, MKI, V, VI, MVI> rawContext() {
         return VanillaContext.get(VanillaContext.VanillaChronicleMapContextFactory.INSTANCE);
     }
@@ -247,7 +248,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // newInstance() on them directly
             return isKey ? DataValueClasses.newInstance(aClass) :
                     DataValueClasses.newDirectInstance(aClass);
-
         } catch (Exception e) {
             if (e.getCause() instanceof IllegalStateException)
                 throw e;
@@ -274,7 +274,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
         }
     }
-
 
     @NotNull
     @Override

@@ -120,7 +120,6 @@ public class TCPSocketReplication4WayMapTest {
         assertTrue("map2.empty", !map2.isEmpty());
     }
 
-
     @Test
     @Ignore("TODO fix this test.")
     public void testBufferOverflowPutIfAbsent() throws IOException, InterruptedException {
@@ -161,6 +160,5 @@ public class TCPSocketReplication4WayMapTest {
             Thread.sleep(1);
         }
     }
-
 }
 

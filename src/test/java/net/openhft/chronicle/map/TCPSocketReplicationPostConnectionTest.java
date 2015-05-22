@@ -144,6 +144,5 @@ public class TCPSocketReplicationPostConnectionTest {
             Thread.sleep(1);
         }
     }
-
 }
 

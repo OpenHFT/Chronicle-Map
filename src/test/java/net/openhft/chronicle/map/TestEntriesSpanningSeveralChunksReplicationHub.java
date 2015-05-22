@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
  */
 public class TestEntriesSpanningSeveralChunksReplicationHub {
 
-
     @Ignore("performacne test")
     @Test
     public void testReplicationHubHandlesSpanningSeveralChunksEntries()
@@ -126,14 +125,12 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
         favoriteColourServer1.close();
     }
 
-
     public static final int NUMBER_OF_CHANNELS = 1000;
 
     @Ignore
     @Test(timeout = 100000)
     public void test1000Channels()
             throws IOException, InterruptedException {
-
 
         final HashMap<Short, ChronicleMap> map1 = new HashMap<>();
         final HashMap<Short, ChronicleMap> map2 = new HashMap<>();
@@ -165,10 +162,8 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
                 map.put("key", channelId);
                 map1.put(channelId, map);
-
             }
         }
-
 
         {
             ChronicleMapBuilder<CharSequence, Short> builder =
@@ -193,7 +188,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
                 map.put("key", channelId);
                 map2.put(channelId, map);
-
             }
         }
 
@@ -206,8 +200,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             final ChronicleMap v2 = map2.get(channelId);
 
             for (; ; ) {
-
-
                 if (v1 == null || v2 == null) {
                     Thread.sleep(10);
                     continue;
@@ -222,7 +214,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
                     Thread.sleep(10);
                     continue;
                 }
-
 
                 Assert.assertEquals(channelId, v1.get("key"));
                 Assert.assertEquals(channelId, v2.get("key"));
@@ -234,7 +225,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
         }
 
-
         // check that the maps are the same, if the are not the same the test will timeout
         // we have to give a few seconds for the replication to propagate
         for (short channelId = 1; channelId < NUMBER_OF_CHANNELS; channelId++) {
@@ -244,8 +234,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             final ChronicleMap v2 = map2.get(channelId);
 
             for (; ; ) {
-
-
                 if (v1 == null || v2 == null) {
                     Thread.sleep(10);
                     continue;
@@ -261,7 +249,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
                     continue;
                 }
 
-
                 Assert.assertEquals((short)1, v1.get("key2"));
                 Assert.assertEquals((short)1, v2.get("key2"));
 
@@ -270,11 +257,9 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
         }
 
-
         // close
 
         for (short channelId = 1; channelId < NUMBER_OF_CHANNELS; channelId++) {
-
             final ChronicleMap v1 = map1.get(channelId);
             if (v1 != null)
                 v1.close();
@@ -287,7 +272,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
     @Test
     public void testChannelWithDifferentTypes() throws IOException, InterruptedException {
-
 
         // server 1  - in this example only server 1 write any data
         ChronicleMap<CharSequence, CharSequence> charMap1;
@@ -312,7 +296,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
                     .maxNumberOfChannels(NUMBER_OF_CHANNELS)
                     .createWithId(identifier);
 
-
             ReplicationChannel channel1 = hubOnServer1.createChannel(1);
 
             intMap1 = intMapBuilder.instance()
@@ -328,9 +311,7 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
             intMap1.put(1, 1);
             charMap1.put("Hello", "World");
-
         }
-
 
         // server 2
         ChronicleMap<CharSequence, CharSequence> charMap2;
@@ -356,7 +337,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
                     .maxNumberOfChannels(NUMBER_OF_CHANNELS)
                     .createWithId(identifier);
 
-
             ReplicationChannel channel1 = hubOnServer1.createChannel(1);
 
             intMap2 = intMapBuilder.instance()
@@ -368,7 +348,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
             charMap2 = charMapBuilder.instance().replicatedViaChannel
                     (channel2)
                     .create();
-
         }
 
         // allow time for the recompilation to resolve
@@ -381,10 +360,6 @@ public class TestEntriesSpanningSeveralChunksReplicationHub {
 
         Assert.assertEquals(intMap1,intMap2);
         Assert.assertEquals(charMap1,charMap2);
-
     }
-
-
-
 }
 

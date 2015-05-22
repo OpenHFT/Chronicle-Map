@@ -161,7 +161,6 @@ public class TCPSocketReplicationIntValueTest {
         assertEquals(map1, map2);
     }
 
-
     @Test(timeout = 12000)
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         final long start = System.currentTimeMillis();
@@ -176,6 +175,7 @@ public class TCPSocketReplicationIntValueTest {
 
                 if (rnd.nextBoolean()) {
                     map.put(set(rnd.nextInt(Builder.SIZE)), "test");
+
                 } else {
                     map.remove(set(rnd.nextInt(Builder.SIZE)));
                 }
@@ -189,6 +189,5 @@ public class TCPSocketReplicationIntValueTest {
         //assertTrue("timeTaken="+time, time < 2200);
         System.out.println("\ntime taken millis=" + time);
     }
-
 }
 

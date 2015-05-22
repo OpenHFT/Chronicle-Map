@@ -80,7 +80,6 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
         listeners.remove(listener);
     }
 
-
     @Override
     public int size() {
         return (int) getFiles().count();
@@ -167,7 +166,6 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
     public Collection<V> values() {
         return getFiles().map(this::getFileContents)
                 .collect(Collectors.toSet());
-
     }
 
     @NotNull
@@ -177,7 +175,6 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
                 (Entry<String, V>) new FPMEntry(p.getFileName().toString(), getFileContents(p)))
                 .collect(Collectors.toSet());
     }
-
 
     private Stream<Path> getFiles() {
         try {
@@ -356,6 +353,7 @@ public class FilePerKeyMarshallableMap<V extends Marshallable> implements Map<St
                                 FileRecord<V> lastVal = lastFileRecordMap.remove(p.toFile());
                                 V lastContent = lastVal == null ? null : lastVal.contents;
                                 listeners.forEach(l->l.remove(mapKey, lastContent));
+
                             } else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                                 try {
                                     Path p = dirPath.resolve(fileName);

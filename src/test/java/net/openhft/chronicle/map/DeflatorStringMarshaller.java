@@ -1,14 +1,12 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
-import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.CompactBytesMarshaller;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
-import java.nio.ByteBuffer;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -47,6 +45,7 @@ public enum DeflatorStringMarshaller implements CompactBytesMarshaller<CharSeque
         if (s == null) {
             bytes.writeStopBit(NULL_LENGTH);
             return;
+
         } else if (s.length() == 0) {
             bytes.writeStopBit(0);
             return;
@@ -94,7 +93,6 @@ public enum DeflatorStringMarshaller implements CompactBytesMarshaller<CharSeque
                     new InflaterInputStream(bytes.inputStream())));
             for (int i = 0; i < size; i++)
                 chars[i] = (char) (dis.readByte() & 0xff);
-
         } catch (IOException e) {
             throw new IORuntimeException(e);
         } finally {

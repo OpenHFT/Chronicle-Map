@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 @Ignore
 public class TcpReplicationSoakTest {
 
-
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     private IntValue value;
@@ -42,7 +41,6 @@ public class TcpReplicationSoakTest {
                     endpoint).autoReconnectedUponDroppedConnection(true)
                     .heartBeatInterval(1, TimeUnit.SECONDS)
                     .tcpBufferSize(1024 * 64);
-
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE + Builder.SIZE)
@@ -70,11 +68,9 @@ public class TcpReplicationSoakTest {
                     .instance()
                     .name("map2")
                     .create();
-
         }
         s_port += 2;
     }
-
 
     @After
     public void tearDown() throws InterruptedException {
@@ -102,7 +98,6 @@ public class TcpReplicationSoakTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         try {
@@ -117,6 +112,7 @@ public class TcpReplicationSoakTest {
 
                     if (rnd.nextBoolean()) {
                         map.put(rnd.nextInt(Builder.SIZE), "test" + j);
+
                     } else {
                         map.remove(rnd.nextInt(Builder.SIZE));
                     }
@@ -135,7 +131,6 @@ public class TcpReplicationSoakTest {
 
     }
 
-
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
 
         Map map1UnChanged = new HashMap();
@@ -146,6 +141,7 @@ public class TcpReplicationSoakTest {
             if (map1.equals(map2)) {
                 if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
                     numberOfTimesTheSame++;
+
                 } else {
                     numberOfTimesTheSame = 0;
                     map1UnChanged = new HashMap(map1);
