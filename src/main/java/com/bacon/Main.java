@@ -46,7 +46,7 @@ public class Main {
             actual = server2.get("key");
         } while (actual == null);
 
-        server2.close();
+        server1.close();
         server2.close();
         replicaitonMap.close();
     }
