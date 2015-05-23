@@ -18,12 +18,12 @@
 
 package net.openhft.chronicle.map.fromdocs;
 
+import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.CharBuffers;
 import net.openhft.lang.io.serialization.BytesMarshaller;
-import net.openhft.lang.model.constraints.NotNull;
 import net.openhft.lang.pool.CharSequenceInterner;
 import net.openhft.lang.threadlocal.StatefulCopyable;
 import org.jetbrains.annotations.Nullable;

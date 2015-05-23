@@ -532,7 +532,7 @@ class KnownNodes implements BytesMarshallable {
     }
 
     @Override
-    public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
+    public void readMarshallable(@net.openhft.chronicle.core.annotation.NotNull Bytes in) throws IllegalStateException {
         short size = in.readShort();
 
         for (int i = 0; i < size; i++) {
@@ -551,7 +551,7 @@ class KnownNodes implements BytesMarshallable {
     }
 
     @Override
-    public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
+    public void writeMarshallable(@net.openhft.chronicle.core.annotation.NotNull Bytes out) {
         // make a safe copy
         final Set<AddressAndPort> addressAndPorts = new HashSet<AddressAndPort>(this.addressAndPorts);
 
@@ -663,7 +663,7 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
     }
 
     @Override
-    public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
+    public void readMarshallable(@net.openhft.chronicle.core.annotation.NotNull Bytes in) throws IllegalStateException {
         short len = in.readShort();
         address = new byte[len];
 
@@ -674,7 +674,7 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
     }
 
     @Override
-    public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
+    public void writeMarshallable(@net.openhft.chronicle.core.annotation.NotNull Bytes out) {
         out.writeShort(getAddress().length);
         for (byte address : getAddress()) {
             out.write(address);
@@ -731,7 +731,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
      * along with all the identifiers.
      */
     @Override
-    public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
+    public void writeMarshallable(@net.openhft.chronicle.core.annotation.NotNull Bytes out) {
         if (bootstrapRequired.getAndSet(false)) {
             writeBootstrap(out);
             return;
@@ -793,7 +793,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
     }
 
     @Override
-    public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
+    public void readMarshallable(@net.openhft.chronicle.core.annotation.NotNull Bytes in) throws IllegalStateException {
 
         final ProposedNodes bootstrap = readBootstrapMessage(in);
         if (bootstrap != null) {
@@ -860,7 +860,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         }
 
         @Override
-        public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
+        public void readMarshallable(@net.openhft.chronicle.core.annotation.NotNull Bytes in) throws IllegalStateException {
             addressAndPort = new AddressAndPort();
             addressAndPort.readMarshallable(in);
             timestamp = in.readLong();
@@ -868,7 +868,7 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         }
 
         @Override
-        public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
+        public void writeMarshallable(@net.openhft.chronicle.core.annotation.NotNull Bytes out) {
             addressAndPort.writeMarshallable(out);
             out.writeLong(timestamp);
             out.writeByte(identifier);
@@ -942,7 +942,7 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
     }
 
     @Override
-    public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
+    public void readMarshallable(@net.openhft.chronicle.core.annotation.NotNull Bytes in) throws IllegalStateException {
 
         short size = in.readShort();
         try {
@@ -961,7 +961,7 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
     }
 
     @Override
-    public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
+    public void writeMarshallable(@net.openhft.chronicle.core.annotation.NotNull Bytes out) {
         final Map<K, V> safeCopy = new HashMap<K, V>(map);
         out.writeShort(safeCopy.size());
         for (Map.Entry<K, V> entry : safeCopy.entrySet()) {

@@ -20,8 +20,8 @@ package net.openhft.xstream.converters;
 import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
+import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.map.MapEntryCallback;
-import net.openhft.lang.model.constraints.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

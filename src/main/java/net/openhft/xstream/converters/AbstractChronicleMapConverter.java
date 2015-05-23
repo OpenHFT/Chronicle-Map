@@ -23,8 +23,8 @@ import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
+import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.model.constraints.NotNull;
 
 import java.util.Collections;
 import java.util.Map;

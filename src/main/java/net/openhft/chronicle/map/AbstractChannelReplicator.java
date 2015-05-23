@@ -84,7 +84,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         executorService = Executors.newSingleThreadExecutor(
                 new NamedThreadFactory(name, true) {
                     @Override
-                    public Thread newThread(@net.openhft.lang.model.constraints.NotNull Runnable r) {
+                    public Thread newThread(@net.openhft.chronicle.core.annotation.NotNull Runnable r) {
                         return lastThread = super.newThread(r);
                     }
                 });

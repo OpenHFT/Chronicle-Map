@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.primitives.Chars;
+import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
@@ -10,7 +11,6 @@ import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.io.serialization.impl.*;
 import net.openhft.lang.model.constraints.MaxSize;
-import net.openhft.lang.model.constraints.NotNull;
 import net.openhft.lang.values.*;
 import org.junit.After;
 import org.junit.Assert;
