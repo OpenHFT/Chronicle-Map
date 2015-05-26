@@ -25,7 +25,6 @@ import net.openhft.chronicle.hash.impl.hashlookup.HashLookup;
 import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
@@ -52,11 +51,14 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.round;
 import static net.openhft.chronicle.hash.impl.util.Objects.builderEquals;
+import static net.openhft.chronicle.map.DefaultSpi.*;
+import static net.openhft.chronicle.map.DefaultSpi.mapEntryOperations;
 import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
 
 /**
@@ -162,6 +164,9 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private SingleChronicleHashReplication singleHashReplication = null;
     private InetSocketAddress[] pushToAddresses;
+    
+    MapMethods<K, V, ?> methods = DefaultSpi.mapMethods();
+    MapEntryOperations<K, V, ?> entryOperations = mapEntryOperations();
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass, SerializationBuilder.Role.KEY);
@@ -1268,8 +1273,9 @@ public final class ChronicleMapBuilder<K, V> implements
                         throw new IOException("Unknown map header serialization type: " +
                                 serialization);
                     }
-                    VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
-                            (VanillaChronicleMap<K, ?, ?, V, ?, ?>) m;
+                    VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map =
+                            (VanillaChronicleMap<K, ?, ?, V, ?, ?, ?>) m;
+                    map.initTransientsFromBuilder(this);
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
                     map.createMappedStoreAndSegments(file);
                     // This is needed to property initialize key and value serialization builders,
@@ -1293,7 +1299,7 @@ public final class ChronicleMapBuilder<K, V> implements
         if (!file.exists())
             throw new FileNotFoundException("Unable to create " + file);
 
-        VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
+        VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map = newMap(singleHashReplication, channel);
 
         try (FileOutputStream fos = new FileOutputStream(file);
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {
@@ -1310,7 +1316,8 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private static <K, V> boolean trySerializeHeaderViaXStream(
-            VanillaChronicleMap<K, ?, ?, V, ?, ?> map, ObjectOutputStream oos) throws IOException {
+            VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map, ObjectOutputStream oos)
+            throws IOException {
         Class<?> xStreamClass;
         try {
             xStreamClass =
@@ -1349,7 +1356,7 @@ public final class ChronicleMapBuilder<K, V> implements
             SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) {
         try {
             // pushingToMapEventListener();
-            VanillaChronicleMap<K, ?, ?, V, ?, ?> map = newMap(singleHashReplication, channel);
+            VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map = newMap(singleHashReplication, channel);
             map.warnOnWindows();
             BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
                     map.sizeInBytes(), true);
@@ -1388,7 +1395,7 @@ public final class ChronicleMapBuilder<K, V> implements
 //        }
 //    }
 
-    private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap(
+    private VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> newMap(
             SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel)
             throws IOException {
         boolean replicated = singleHashReplication != null || channel != null;
@@ -1400,11 +1407,9 @@ public final class ChronicleMapBuilder<K, V> implements
             } else {
                 replication = channel.hub();
             }
-            return new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
-                    V, Object, MetaBytesInterop<V, Object>>(this, replication);
+            return new ReplicatedChronicleMap<>(this, replication);
         } else {
-            return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
-                    V, Object, MetaBytesInterop<V, Object>>(this, false);
+            return new VanillaChronicleMap<>(this, false);
         }
     }
 
@@ -1443,7 +1448,7 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private ChronicleMap<K, V> establishReplication(
-            VanillaChronicleMap<K, ?, ?, V, ?, ?> map,
+            VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map,
             SingleChronicleHashReplication singleHashReplication,
             ReplicationChannel channel) throws IOException {
         if (map instanceof ReplicatedChronicleMap) {
@@ -1490,20 +1495,10 @@ public final class ChronicleMapBuilder<K, V> implements
      * and replacing values <i>during iterations</i>, <i>remote map calls</i> and
      * <i>internal replication operations</i>. 
      */
-    public ChronicleMapBuilder<K, V> customizeEntryOperations(
-            MapEntryOperations<K, V> customEntryOperations) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Inject your SPI code around basic operation of inserting a new entry into the map.
-     *
-     * This affects behaviour of ordinary map.put(), map.computeIfAbsent(), etc. calls,
-     * as well as similar <i>remote map calls</i> and <i>internal replication operation</i>. 
-     */
-    public ChronicleMapBuilder<K, V> customizeAbsentEntryOperations(
-            MapAbsentEntryOperations<K, V> customAbsentEntryOperations) {
-        throw new UnsupportedOperationException();
+    public ChronicleMapBuilder<K, V> entryOperations(MapEntryOperations<K, V, ?> entryOperations) {
+        Objects.requireNonNull(entryOperations);
+        this.entryOperations = entryOperations;
+        return this;
     }
 
     /**
@@ -1513,8 +1508,10 @@ public final class ChronicleMapBuilder<K, V> implements
      * 
      * This affects behaviour of ordinary map calls, as well as <i>remote calls</i>.
      */
-    public ChronicleMapBuilder<K, V> customizeMapMethods(MapMethods<K, V> customMapMethods) {
-        throw new UnsupportedOperationException();
+    public ChronicleMapBuilder<K, V> mapMethods(MapMethods<K, V, ?> mapMethods) {
+        Objects.requireNonNull(mapMethods);
+        this.methods = mapMethods;
+        return this;
     }
 }
 

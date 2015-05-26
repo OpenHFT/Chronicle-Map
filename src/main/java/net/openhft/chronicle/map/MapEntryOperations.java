@@ -19,59 +19,63 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.Value;
-import net.openhft.chronicle.hash.replication.ReplicatedEntry;
-import net.openhft.chronicle.hash.replication.ReplicationContext;
 import org.jetbrains.annotations.NotNull;
 
-import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.shouldApplyRemoteModification;
-
 /**
- * SPI interface for customizing "low-level" modification operations on the <i>present</i>
- * {@link ChronicleMap} entry.
+ * SPI interface for customizing "low-level" modification operations on {@link ChronicleMap} entry.
  *
  * @param <K> type of the key in {@code ChronicleMap}
  * @param <V> type of the value in {@code ChronicleMap}
  */
-public interface MapEntryOperations<K, V> {
-    
-    static boolean shouldModify(@NotNull MapEntry<?, ?> entry) {
-        MapContext<?, ?> context = entry.context();
-        return !(context instanceof ReplicationContext) ||
-                shouldApplyRemoteModification((ReplicatedEntry) entry,
-                        (ReplicationContext) context);
-    }
+public interface MapEntryOperations<K, V, R> {
     
     /**
      * Removes the given entry from the {@code ChronicleHash}. Returns {@code true} if the remove
-     * was successful, {@code false} if it failed for any reason.
+     * was successful, {@code false} if it was discarded for any reason.
      *
      * @param entry the entry to remove 
      * @throws IllegalStateException if some locking/state conditions required to perform remove
      * operation are not met
      */
-    default boolean remove(@NotNull MapEntry<K, V> entry) {
-        if (shouldModify(entry)) {
-            entry.doRemove();
-            return true;
-        } else {
-            return false;
-        }
+    default R remove(@NotNull MapEntry<K, V> entry) {
+        entry.doRemove();
+        return null;
     }
     
     /**
-     * Replaces the given entry's value with the new one. Returns {@code true} if the replace
-     * operation was successful, {@code false} if it failed for any reason.
+     * Replaces the given entry's value with the new one.
      *
-     * @param entry the entry to replace the value in 
+     * @param entry the entry to replace the value in
      * @throws IllegalStateException if some locking/state conditions required to perform replace
      * operation are not met
      */
-    default boolean replaceValue(@NotNull MapEntry<K, V> entry, Value<V, ?> newValue) {
-        if (shouldModify(entry)) {
-            entry.doReplaceValue(newValue);
-            return true;
-        } else {
-            return false;
-        }
+    default R replaceValue(@NotNull MapEntry<K, V> entry, Value<V, ?> newValue) {
+        entry.doReplaceValue(newValue);
+        return null;
+    }
+
+    /**
+     * Inserts the new entry into the map, of {@link MapAbsentEntry#absentKey() the key} from
+     * the given insertion context (<code>absentEntry</code>) and the given {@code value}.
+     * Returns {@code true} if the insertion  was successful, {@code false} if it was discarded
+     * for any reason.
+     *
+     * @throws IllegalStateException if some locking/state conditions required to perform insertion
+     * operation are not met
+     */
+    default R insert(@NotNull MapAbsentEntry<K, V> absentEntry, Value<V, ?> value) {
+        absentEntry.doInsert(value);
+        return null;
+    }
+
+    /**
+     * Returns the "nil" value, which should be inserted into the map, in the given
+     * {@code absentEntry} context. This is primarily used in {@link ChronicleMap#acquireUsing}
+     * operation implementation, i. e. {@link MapMethods#acquireUsing}.
+     *
+     * @implNote simply delegates to {@link MapAbsentEntry#defaultValue()}.
+     */
+    default Value<V, ?> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
+        return absentEntry.defaultValue();
     }
 }

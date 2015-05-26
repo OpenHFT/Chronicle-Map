@@ -21,6 +21,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.serialization.internal.DummyValue;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -38,7 +39,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-
+@Ignore
 public class TCPSocketReplication3VoidValueTest {
 
     private ChronicleMap<Integer, DummyValue> map1;

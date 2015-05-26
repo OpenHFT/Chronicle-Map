@@ -20,17 +20,17 @@ package net.openhft.chronicle.map;
 
 final class MapMethodsSupport {
 
-    static <K, V> void returnCurrentValueIfPresent(
-            MapQueryContext<K, V> q, ReturnValue<? super V> returnValue) {
-        MapEntry<K, V> entry = q.entry();
+    static <V> void returnCurrentValueIfPresent(
+            MapQueryContext<?, V, ?> q, ReturnValue<V> returnValue) {
+        MapEntry<?, V> entry = q.entry();
         if (entry != null)
             returnValue.returnValue(entry.value());
     }
 
-    static <K, V> boolean tryReturnCurrentValueIfPresent(
-            MapQueryContext<K, V> q, ReturnValue<? super V> returnValue) {
+    static <V> boolean tryReturnCurrentValueIfPresent(
+            MapQueryContext<?, V, ?> q, ReturnValue<V> returnValue) {
         if (q.readLock().tryLock()) {
-            MapEntry<K, V> entry = q.entry();
+            MapEntry<?, V> entry = q.entry();
             if (entry != null) {
                 returnValue.returnValue(entry.value());
                 return true;
@@ -39,7 +39,7 @@ final class MapMethodsSupport {
             q.readLock().unlock();
         }
         q.updateLock().lock();
-        MapEntry<K, V> entry = q.entry();
+        MapEntry<?, V> entry = q.entry();
         if (entry != null) {
             returnValue.returnValue(entry.value());
             return true;

@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.HashReplicableEntry;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 
@@ -143,7 +144,7 @@ public interface Replica extends Closeable {
          * @param chronicleId is the channel id used to identify the canonical map or queue
          * @return the size of the entry
          */
-        boolean identifierCheck(@NotNull Bytes entry, int chronicleId);
+        boolean identifierCheck(@NotNull HashReplicableEntry<?> entry, int chronicleId);
 
 
         /**
@@ -164,11 +165,9 @@ public interface Replica extends Closeable {
          * writeExternalEntry()}. This method is typically called when we receive a remote
          * replication event, this event could originate from either a remote {@code put(K key, V
          *value)} or {@code remove(Object key)}
-         * @param context       the Bytes Replicated Context
          * @param source       bytes to read an entry from
          */
-        void readExternalEntry(
-                @NotNull ReplicatedChronicleMap.BytesReplicatedContext context, @NotNull Bytes source);
+        void readExternalEntry(@NotNull Bytes source);
 
 
     }
@@ -241,7 +240,7 @@ public interface Replica extends Closeable {
          * @param chronicleId only assigned when clustering
          * @return {@code true} if this entry should be ignored
          */
-        public abstract boolean shouldBeIgnored(final Bytes entry, final int chronicleId);
+        public abstract boolean shouldBeIgnored(final HashReplicableEntry<?> entry, final int chronicleId);
     }
 
 

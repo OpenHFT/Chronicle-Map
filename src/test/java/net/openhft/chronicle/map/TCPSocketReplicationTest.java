@@ -40,7 +40,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-
+@Ignore
 public class TCPSocketReplicationTest {
 
     static int s_port = 12050;

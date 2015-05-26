@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -35,7 +36,7 @@ import static org.junit.Assert.*;
  *
  * @author Rob Austin.
  */
-
+@Ignore
 public class TCPSocketReplication3wayTest {
 
     private ChronicleMap<Integer, CharSequence> map1;

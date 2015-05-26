@@ -21,6 +21,7 @@ package net.openhft.chronicle.set;
 import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.serialization.internal.DummyValue;
 import net.openhft.chronicle.map.ChronicleMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -129,6 +130,13 @@ class SetFromMap<E> extends AbstractSet<E>
     @Override
     public Class<E> keyClass() {
         return m.keyClass();
+    }
+
+    @NotNull
+    @Override
+    public ExternalSetQueryContext<E, ?> queryContext(E key) {
+        //TODO
+        return null;
     }
 
     @Override

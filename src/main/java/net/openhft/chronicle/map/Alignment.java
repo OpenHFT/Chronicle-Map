@@ -31,12 +31,12 @@ public enum Alignment {
      */
     NO_ALIGNMENT {
         @Override
-        void alignPositionAddr(Bytes bytes) {
+        public void alignPositionAddr(Bytes bytes) {
             // no-op
         }
 
         @Override
-        long alignAddr(long addr) {
+        public long alignAddr(long addr) {
             return addr;
         }
 
@@ -56,12 +56,12 @@ public enum Alignment {
      */
     OF_4_BYTES {
         @Override
-        void alignPositionAddr(Bytes bytes) {
+        public void alignPositionAddr(Bytes bytes) {
             bytes.alignPositionAddr(4);
         }
 
         @Override
-        long alignAddr(long addr) {
+        public long alignAddr(long addr) {
             return (addr + 3) & ~3;
         }
 
@@ -81,12 +81,12 @@ public enum Alignment {
      */
     OF_8_BYTES {
         @Override
-        void alignPositionAddr(Bytes bytes) {
+        public void alignPositionAddr(Bytes bytes) {
             bytes.alignPositionAddr(8);
         }
 
         @Override
-        long alignAddr(long addr) {
+        public long alignAddr(long addr) {
             return (addr + 7) & ~7;
         }
 
@@ -107,9 +107,9 @@ public enum Alignment {
         return VALUES[ordinal];
     }
 
-    abstract void alignPositionAddr(Bytes bytes);
+    public abstract void alignPositionAddr(Bytes bytes);
 
-    abstract long alignAddr(long addr);
+    public abstract long alignAddr(long addr);
 
     abstract int alignSize(int size);
 

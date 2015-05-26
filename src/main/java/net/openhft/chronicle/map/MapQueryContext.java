@@ -18,8 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.Value;
-import net.openhft.chronicle.hash.locks.InterProcessReadWriteUpdateLock;
+import net.openhft.chronicle.hash.HashQueryContext;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,27 +28,13 @@ import org.jetbrains.annotations.Nullable;
  * @param <K>
  * @param <V>
  */
-public interface MapQueryContext<K, V> extends InterProcessReadWriteUpdateLock,
-        MapEntryOperations<K, V>, MapAbsentEntryOperations<K, V> {
+public interface MapQueryContext<K, V, R> extends HashQueryContext<K>, MapContext<K, V, R> {
 
-    /**
-     * Returns the queried key as a {@code Value}.
-     */
-    Value<K, ?> queriedKey();
-
-    /**
-     * Returns the entry access object, if the entry with the queried key is <i>present</i>
-     * in the map, returns {@code null} is the entry is <i>absent</i>. Might acquire
-     * {@link #readLock} before searching for the key, if the context is not locked yet.
-     */
+    @Override
     @Nullable
     MapEntry<K, V> entry();
 
-    /**
-     * Returns the special <i>absent entry</i> object, if the entry with the queried key
-     * is <i>absent</i> in the map, returns {@code null}, if the entry is <i>present</i>. Might
-     * acquire {@link #readLock} before searching for the key, if the context is not locked yet.
-     */
+    @Override
     @Nullable
     MapAbsentEntry<K, V> absentEntry();
 }

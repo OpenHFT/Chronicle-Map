@@ -3,6 +3,7 @@ package net.openhft.chronicle.map;
 import eg.TestInstrumentVOInterface;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -10,6 +11,7 @@ import java.net.InetSocketAddress;
 /**
  * @author Rob Austin.
  */
+@Ignore
 public class TcpReplicationWithAcquireContextTest {
 
 

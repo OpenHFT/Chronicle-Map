@@ -26,6 +26,7 @@ import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Rob Austin.
  */
+@Ignore
 public class StatelessClientTest {
     private static final Logger LOG = LoggerFactory.getLogger(StatelessClientTest.class);
 

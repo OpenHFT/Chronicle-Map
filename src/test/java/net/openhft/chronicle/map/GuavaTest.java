@@ -33,6 +33,7 @@ import java.util.Map;
 
 import static com.google.common.collect.testing.features.MapFeature.*;
 
+@Ignore
 public class GuavaTest extends TestCase {
 
     public static Test suite() {

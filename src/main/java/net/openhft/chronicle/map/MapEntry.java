@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface MapEntry<K, V> extends HashEntry<K> {
     @Override
-    @NotNull MapContext<K, V> context();
+    @NotNull MapContext<K, V, ?> context();
 
     /**
      * Returns the entry value.

@@ -65,7 +65,7 @@ import java.util.concurrent.TimeUnit;
  * @param <B> the concrete builder type, i. e. {@link ChronicleMapBuilder}
  *            or {@link ChronicleSetBuilder}
  */
-public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?>,
+public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?>,
         B extends ChronicleHashBuilder<K, H, B>> extends Cloneable {
 
     /**

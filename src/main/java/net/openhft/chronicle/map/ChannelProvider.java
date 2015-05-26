@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.HashReplicableEntry;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.UdpTransportConfig;
@@ -100,7 +101,7 @@ public final class ChannelProvider implements Closeable {
         }
 
         @Override
-        public boolean identifierCheck(@NotNull Bytes entry, int chronicleChannel) {
+        public boolean identifierCheck(@NotNull HashReplicableEntry<?> entry, int chronicleChannel) {
             channelDataLock.readLock().lock();
             try {
 
@@ -135,7 +136,7 @@ public final class ChannelProvider implements Closeable {
 
         @Override
         public void readExternalEntry(
-                @NotNull ReplicatedChronicleMap.BytesReplicatedContext context, @NotNull Bytes source) {
+                @NotNull Bytes source) {
             channelDataLock.readLock().lock();
             try {
                 final int chronicleId = (int) source.readStopBit();
@@ -143,7 +144,7 @@ public final class ChannelProvider implements Closeable {
                     // this channel is has not currently been created so it updates will be ignored
                     if (channelEntryExternalizables[chronicleId] != null)
                         channelEntryExternalizables[chronicleId]
-                                .readExternalEntry(context, source);
+                                .readExternalEntry(source);
                 } else
                     LOG.info("skipped entry with chronicleId=" + chronicleId + ", ");
             } finally {
@@ -503,7 +504,7 @@ public final class ChannelProvider implements Closeable {
             }
 
             @Override
-            public boolean identifierCheck(@NotNull Bytes entry, int chronicleId) {
+            public boolean identifierCheck(@NotNull HashReplicableEntry<?> entry, int chronicleId) {
                 return true;
             }
 
@@ -515,7 +516,7 @@ public final class ChannelProvider implements Closeable {
 
             @Override
             public void readExternalEntry(
-                    @NotNull ReplicatedChronicleMap.BytesReplicatedContext context, @NotNull Bytes source) {
+                    @NotNull Bytes source) {
                 messageHandler.onMessage(source);
             }
         };

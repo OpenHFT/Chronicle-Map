@@ -286,6 +286,12 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
         throw new UnsupportedOperationException();
     }
 
+    @NotNull
+    @Override
+    public ExternalMapQueryContext<K, V, ?> queryContext(K key) {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public File file() {
         throw new UnsupportedOperationException();

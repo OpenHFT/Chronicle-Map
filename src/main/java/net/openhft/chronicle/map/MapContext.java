@@ -19,6 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.HashContext;
+import net.openhft.chronicle.hash.Value;
 
 /**
  * Context, in which {@link MapEntry MapEntries} are accessed.
@@ -26,15 +27,19 @@ import net.openhft.chronicle.hash.HashContext;
  * @param <K> the key type of accessed {@link ChronicleMap}
  * @param <V> the value type of accessed {@code ChronicleMap}
  */
-public interface MapContext<K, V> extends HashContext<K> {
+public interface MapContext<K, V, R> extends HashContext<K>, MapEntryOperations<K, V, R> {
     /**
      * Returns the accessed {@code ChronicleMap}.
      */
     @Override
-    ChronicleMap<K, V> hash();
+    default ChronicleMap<K, V> hash() {
+        return map();
+    }
 
     /**
      * Synonym to {@link #hash()}.
      */
     ChronicleMap<K, V> map();
+    
+    Value<V, ?> wrapValueAsValue(V value);
 }

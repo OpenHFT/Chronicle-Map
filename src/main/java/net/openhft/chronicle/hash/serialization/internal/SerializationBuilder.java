@@ -373,8 +373,8 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    public MetaProvider<E, ?, MetaBytesInterop<E, ?>> metaInteropProvider() {
-        return (MetaProvider<E, ?, MetaBytesInterop<E, ?>>) metaInteropProvider;
+    public MetaProvider<E, ?, ? extends MetaBytesInterop<E, ?>> metaInteropProvider() {
+        return (MetaProvider<E, ?, ? extends MetaBytesInterop<E, ?>>) metaInteropProvider;
     }
 
     private SerializationBuilder<E> metaInteropProvider(

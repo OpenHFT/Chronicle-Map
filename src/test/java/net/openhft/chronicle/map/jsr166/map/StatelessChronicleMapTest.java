@@ -48,7 +48,7 @@ import static org.junit.Assert.*;
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd.
  */
-
+@Ignore
 public class StatelessChronicleMapTest extends JSR166TestCase {
 
     public static final int SIZE = 1024;
@@ -112,6 +112,12 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         @Override
         public MapKeyContext<K, V> context(K key) {
             return d.context(key);
+        }
+
+        @NotNull
+        @Override
+        public ExternalMapQueryContext<K, V, ?> queryContext(K key) {
+            return d.queryContext(key);
         }
 
         @Override

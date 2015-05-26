@@ -2,13 +2,13 @@
  * Copyright 2015 Higher Frequency Trading
  *
  *  http://www.higherfrequencytrading.com
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,19 +16,10 @@
  *  limitations under the License.
  */
 
-package net.openhft.chronicle.hash.replication;
+package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.HashContext;
+import net.openhft.chronicle.hash.ExternalHashQueryContext;
 
-/**
- * Context of internal replication operation.
- *
- * @param <K> the key type of accessed {@link ChronicleHash}
- */
-public interface ReplicationContext<K> extends HashContext<K> {
-    
-    byte remoteIdentifier();
-    
-    long remoteTimestamp();
+public interface ExternalMapQueryContext<K, V, R>
+        extends MapQueryContext<K, V, R>, ExternalHashQueryContext<K> {
 }

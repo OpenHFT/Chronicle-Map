@@ -30,6 +30,7 @@ import static junit.framework.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
+@Ignore
 public class MapByNameTest {
 
     private ReplicationHubFindByName<CharSequence> findMapByName;

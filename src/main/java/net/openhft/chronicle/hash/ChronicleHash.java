@@ -19,10 +19,14 @@
 package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ExternalMapQueryContext;
+import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.set.ChronicleSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.Serializable;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -30,7 +34,8 @@ import java.util.function.Predicate;
  * This interface defines common {@link ChronicleMap} and {@link ChronicleSet}, related to off-heap
  * memory management and file-mapping. Not usable by itself.
  */
-public interface ChronicleHash<K, C extends KeyContext<K>> extends Closeable {
+public interface ChronicleHash<K, C extends KeyContext<K>, EQC extends ExternalHashQueryContext<K>>
+        extends Closeable {
     /**
      * Returns the file this hash container mapped to, i. e. when it is created by
      * {@link ChronicleHashBuilder#create()} call, or {@code null} if it is purely in-memory,
@@ -44,6 +49,10 @@ public interface ChronicleHash<K, C extends KeyContext<K>> extends Closeable {
 
     long longSize();
 
+    /**
+     * @deprecated use {@link #queryContext} instead
+     */
+    @Deprecated
     C context(K key);
 
     /**
@@ -51,6 +60,9 @@ public interface ChronicleHash<K, C extends KeyContext<K>> extends Closeable {
      */
     Class<K> keyClass();
 
+    @NotNull
+    EQC queryContext(K key);
+    
     /**
      * Checks the given predicate on each entry in this {@code ChronicleHash} until all entries
      * have been processed or the predicate returns {@code false} for some entry, or throws
@@ -79,7 +91,7 @@ public interface ChronicleHash<K, C extends KeyContext<K>> extends Closeable {
      *
      * @param action the action to be performed for each entry
      */
-    void forEachEntry(Consumer<? super C> action);
+    void forEachEntry(Consumer<? super C> action); // TODO add substitution and deprecate this
 
     /**
      * Releases the off-heap memory, used by this hash container and resources, used by replication,

@@ -23,19 +23,15 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class LoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V> {
+class LoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {
 
     static final Logger LOG = LoggerFactory.getLogger(LoggingMapEntryOperations.class);
     
     @Override
-    public boolean replaceValue(@NotNull MapEntry<K, V> entry, Value<V, ?> newValue) {
-        if (MapEntryOperations.shouldModify(entry)) {
-            LOG.info("replace: old key: {}, old value: {}, new value: {}",
-                    entry.key(), entry.value(), newValue);
-            entry.doReplaceValue(newValue);
-            return true;
-        } else {
-            return false;
-        }
+    public Void replaceValue(@NotNull MapEntry<K, V> entry, Value<V, ?> newValue) {
+        LOG.info("replace: old key: {}, old value: {}, new value: {}",
+                entry.key(), entry.value(), newValue);
+        entry.doReplaceValue(newValue);
+        return null;
     }
 }

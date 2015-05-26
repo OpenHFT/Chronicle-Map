@@ -3,10 +3,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.MemoryUnit;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -20,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Rob Austin.
  */
+@Ignore
 public class TcpReplicationLargeEntryTest {
 
     private ChronicleMap<Integer, CharSequence> map1;

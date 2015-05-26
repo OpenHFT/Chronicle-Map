@@ -18,14 +18,21 @@
 
 package net.openhft.chronicle.hash.replication;
 
+import net.openhft.chronicle.hash.AcceptanceDecision;
+
+import static net.openhft.chronicle.hash.AcceptanceDecision.ACCEPT;
+import static net.openhft.chronicle.hash.AcceptanceDecision.DISCARD;
+
 public final class DefaultEventualConsistencyStrategy {
     
-    public static boolean shouldApplyRemoteModification(
-            ReplicatedEntry entry, ReplicationContext context) {
+    public static AcceptanceDecision decideOnRemoteModification(
+            HashReplicableEntry<?> entry, RemoteOperationContext<?> context) {
         long remoteTimestamp = context.remoteTimestamp();
         long originTimestamp = entry.originTimestamp();
-        return remoteTimestamp > originTimestamp || (remoteTimestamp == originTimestamp &&
-                context.remoteIdentifier() <= entry.originIdentifier());
+        boolean shouldAccept = remoteTimestamp > originTimestamp ||
+                (remoteTimestamp == originTimestamp &&
+                        context.remoteIdentifier() <= entry.originIdentifier());
+        return shouldAccept ? ACCEPT : DISCARD;
     }
     
     private DefaultEventualConsistencyStrategy() {}

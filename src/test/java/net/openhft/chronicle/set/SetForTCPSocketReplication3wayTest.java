@@ -21,6 +21,7 @@ package net.openhft.chronicle.set;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -38,7 +39,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-
+@Ignore
 public class SetForTCPSocketReplication3wayTest {
 
     private ChronicleSet<Integer> set1;

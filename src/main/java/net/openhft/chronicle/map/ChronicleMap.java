@@ -19,6 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.ExternalHashQueryContext;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
@@ -33,6 +34,8 @@ import java.io.Serializable;
 import java.lang.Object;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Extension of {@link ConcurrentMap} interface, stores the data off-heap.
@@ -55,7 +58,8 @@ import java.util.concurrent.ConcurrentMap;
  * @param <V> the map value type
  */
 public interface ChronicleMap<K, V>
-        extends ConcurrentMap<K, V>, ChronicleHash<K, MapKeyContext<K, V>> {
+        extends ConcurrentMap<K, V>,
+        ChronicleHash<K, MapKeyContext<K, V>, ExternalMapQueryContext<K, V, ?>> {
 
     /**
      * Returns the value to which the specified key is mapped, or {@code null} if this map contains

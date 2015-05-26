@@ -16,20 +16,24 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.impl.hashlookup.EntryConsumer;
+import net.openhft.chronicle.map.impl.IterationContextInterface;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Queue;
 
 /**
  * Very inefficient (esp. if segments are large), but CORRECT implementation
  */
-abstract class ChronicleMapIterator<K, V, E> implements Iterator<E>, EntryConsumer {
+abstract class ChronicleMapIterator<K, V, E> implements Iterator<E> {
 
     final AbstractChronicleMap<K, V> map;
     private final Thread ownerThread = Thread.currentThread();
     private final Queue<E> entryBuffer = new ArrayDeque<>();
     private int segmentIndex;
-    VanillaContext<K, ?, ?, V, ?, ?> context;
+    IterationContextInterface<K, V> context;
     E returned;
 
     ChronicleMapIterator(AbstractChronicleMap<K, V> map) {
@@ -50,32 +54,20 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E>, EntryConsum
         while (true) {
             if (segmentIndex < 0)
                 return;
-            try (VanillaContext<K, ?, ?, V, ?, ?> c = map.mapContext()) {
+            try (IterationContextInterface<K, V> c = map.iterationContext()) {
                 context = c;
-                c.segmentIndex = segmentIndex;
+                c.initTheSegmentIndex(segmentIndex);
                 segmentIndex--;
                 if (c.size() == 0)
                     continue;
-                c.updateLock().lock();
-                c.initSegment();
-                c.hashLookup.forEach(this);
+                c.forEachRemoving(e -> {
+                    entryBuffer.add(read());
+                    return true;
+                });
                 return;
             } finally {
                 context = null;
             }
-        }
-    }
-
-    @Override
-    public void accept(long hash, long pos) {
-        context.pos = pos;
-        context.initKeyFromPos();
-        try {
-            if (!context.containsKey()) // for replicated map
-                return;
-            entryBuffer.add(read());
-        } finally {
-            context.closeKeySearch();
         }
     }
 
@@ -109,16 +101,16 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E>, EntryConsum
 
     abstract void removeReturned();
 
-    static class OfEntries<K, V> extends ChronicleMapIterator<K, V, Map.Entry<K, V>> {
+    static class OfEntries<K, V> extends ChronicleMapIterator<K, V, Entry<K, V>> {
 
         OfEntries(AbstractChronicleMap<K, V> map) {
             super(map);
         }
 
         @Override
-        Map.Entry<K, V> read() {
-            K key = context.immutableKey();
-            V value = context.getUsing(null);
+        Entry<K, V> read() {
+            K key = context.key().getUsing(null);
+            V value = context.value().getUsing(null);
             return new WriteThroughEntry<>(map, key, value);
         }
 
@@ -136,7 +128,7 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E>, EntryConsum
 
         @Override
         K read() {
-            return context.immutableKey();
+            return context.key().getUsing(null);
         }
 
         @Override

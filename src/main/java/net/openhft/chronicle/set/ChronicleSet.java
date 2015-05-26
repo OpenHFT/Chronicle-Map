@@ -23,5 +23,6 @@ import net.openhft.chronicle.hash.KeyContext;
 
 import java.util.Set;
 
-public interface ChronicleSet<K> extends Set<K>, ChronicleHash<K, KeyContext<K>> {
+public interface ChronicleSet<K>
+        extends Set<K>, ChronicleHash<K, KeyContext<K>, ExternalSetQueryContext<K, ?>> {
 }

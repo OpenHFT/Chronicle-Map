@@ -20,10 +20,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.Closeable;
 import java.io.File;
@@ -38,6 +35,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
+@Ignore
 public class PostChannelCreationTest {
 
     private ChronicleMap<Integer, CharSequence> map1a;

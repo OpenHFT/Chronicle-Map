@@ -19,15 +19,14 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.KeyContext;
-import net.openhft.chronicle.hash.hashing.LongHashFunction;
-import net.openhft.chronicle.hash.impl.ContextFactory;
-import net.openhft.chronicle.hash.impl.HashContext;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
+import net.openhft.chronicle.hash.replication.HashReplicableEntry;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.internal.BytesBytesInterop;
-import net.openhft.chronicle.hash.serialization.internal.DelegatingMetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
+import net.openhft.chronicle.map.impl.*;
+import net.openhft.chronicle.map.replication.MapRemoteOperations;
+import net.openhft.chronicle.map.replication.MapReplicableEntry;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
@@ -85,9 +84,9 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * @param <K> the entries key type
  * @param <V> the entries value type
  */
-class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
-        extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>
+public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
+        V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R>
+        extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI, R>
         implements Replica, Replica.EntryExternalizable, Replica.EntryResolver<K, V> {
     // for file, jdbc and UDP replication
     public static final int RESERVED_MOD_ITER = 8;
@@ -95,7 +94,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     private static final long serialVersionUID = 0L;
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
     private static final long LAST_UPDATED_HEADER_SIZE = 128L * 8L;
-    private final TimeProvider timeProvider;
+    public final TimeProvider timeProvider;
     private final byte localIdentifier;
     transient Set<Closeable> closeables;
     private transient Bytes identifierUpdatedBytes;
@@ -104,6 +103,11 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     private transient AtomicReferenceArray<ModificationIterator> modificationIterators;
     private transient long startOfModificationIterators;
     private boolean bootstrapOnlyLocalEntries;
+    
+    // TODO init in builder
+    public transient MapRemoteOperations<K, V, R> remoteOperations =
+            DefaultSpi.mapRemoteOperations();
+    transient CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext;
 
     public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder,
                                   AbstractReplication replication)
@@ -117,6 +121,30 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
         }
+    }
+
+    @Override
+    void initQueryContext() {
+        queryCxt = new ThreadLocal<
+                CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?>>() {
+            @Override
+            protected CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?>
+            initialValue() {
+                return new CompiledReplicatedMapQueryContext<>(ReplicatedChronicleMap.this);
+            }
+        };
+    }
+
+    @Override
+    void initIterationContext() {
+        iterCxt = new ThreadLocal<
+                CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?>>() {
+            @Override
+            protected CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?>
+            initialValue() {
+                return new CompiledReplicatedMapIterationContext<>(ReplicatedChronicleMap.this);
+            }
+        };
     }
 
     private int assignedModIterBitSetSizeInBytes() {
@@ -241,7 +269,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    void raiseChange(long segmentIndex, long pos) {
+    public void raiseChange(long segmentIndex, long pos) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
@@ -252,7 +280,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    void dropChange(long segmentIndex, long pos) {
+    public void dropChange(long segmentIndex, long pos) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
@@ -263,478 +291,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    public boolean identifierCheck(@NotNull Bytes entry, int chronicleId) {
-        long start = entry.position();
-        try {
-            final long keySize = keySizeMarshaller.readSize(entry);
-            entry.skip(keySize + 8); // we skip 8 for the timestamp
-            final byte identifier = entry.readByte();
-            return identifier == localIdentifier;
-        } finally {
-            entry.position(start);
-        }
-    }
-
-    static class ReplicatedContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-            V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
-            extends VanillaContext<K, KI, MKI, V, VI, MVI> {
-
-        ReplicatedContext() {
-            super();
-        }
-
-        ReplicatedContext(HashContext contextCache, int indexInContextCache) {
-            super(contextCache, indexInContextCache);
-        }
-
-        ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI> rm() {
-            return (ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI>) m();
-        }
-
-        @Override
-        public void totalCheckClosed() {
-            super.totalCheckClosed();
-            assert !replicationStateInit() : "replication state not closed";
-            assert !replicationUpdateInit() : "replication update not closed";
-        }
-
-        /////////////////////////////////////////////////
-        // Replication state
-        long replicationBytesOffset;
-        long timestamp;
-        byte identifier;
-
-        @Override
-        public boolean containsKey0() {
-            return searchStatePresent() && !isDeleted();
-        }
-
-        @Override
-        public void keyFound() {
-            super.keyFound();
-            initReplicationBytesOffset0();
-            timestamp = entry.readLong(replicationBytesOffset);
-            identifier = entry.readByte(replicationBytesOffset + 8L);
-        }
-
-        boolean isDeleted() {
-            return entry.readBoolean(replicationBytesOffset + 9L);
-        }
-
-        void initReplicationBytesOffset0() {
-            replicationBytesOffset = keyOffset0() + keySize0();
-        }
-
-        @Override
-        public void initKeyOffset0() {
-            super.initKeyOffset0();
-            initReplicationBytesOffset0();
-        }
-
-        void closeReplicationState() {
-            if (!replicationStateInit())
-                return;
-            closeReplicationState0();
-        }
-
-        boolean replicationStateInit() {
-            return replicationBytesOffset != 0;
-        }
-
-        void closeReplicationState0() {
-            replicationBytesOffset = 0L;
-            timestamp = 0L;
-            identifier = (byte) 0;
-        }
-
-        @Override
-        public void closeKeySearchDependants() {
-            super.closeKeySearchDependants();
-            closeReplicationState();
-        }
-
-        @Override
-        void initValueSizeOffset0() {
-            valueSizeOffset = replicationBytesOffset + ADDITIONAL_ENTRY_BYTES;
-        }
-
-        /////////////////////////////////////////////////
-        // Replication update
-        long newTimestamp;
-        byte newIdentifier;
-
-        void initReplicationUpdate() {
-            if (replicationUpdateInit())
-                return;
-            checkHashInit();
-            initReplicationUpdate0();
-        }
-
-        boolean replicationUpdateInit() {
-            return newIdentifier != 0;
-        }
-
-        void initReplicationUpdate0() {
-            newTimestamp = rm().timeProvider.currentTime();
-            newIdentifier = rm().identifier();
-        }
-
-        boolean remoteUpdate() {
-            return newIdentifier != rm().identifier();
-        }
-
-        void closeReplicationUpdate() {
-            if (!replicationUpdateInit())
-                return;
-            closeReplicationUpdate0();
-        }
-
-        void closeReplicationUpdate0() {
-            newTimestamp = 0L;
-            newIdentifier = (byte) 0;
-        }
-
-        @Override
-        public void initRemoveDependencies() {
-            super.initRemoveDependencies();
-            initReplicationUpdate();
-        }
-
-        void writeReplicationBytes() {
-            entry.writeLong(replicationBytesOffset, newTimestamp);
-            entry.writeByte(replicationBytesOffset + 8L, newIdentifier);
-        }
-
-        void writeDeleted() {
-            entry.writeBoolean(replicationBytesOffset + 9L, true);
-        }
-
-        void writePresent() {
-            entry.writeBoolean(replicationBytesOffset + 9L, false);
-        }
-
-        @Override
-        long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-            return super.sizeOfEverythingBeforeValue(keySize, valueSize) + ADDITIONAL_ENTRY_BYTES;
-        }
-
-        @Override
-        boolean put0() {
-            try {
-                if (!searchStatePresent()) {
-                    putEntry();
-                    writePresent();
-                } else {
-                    if (!shouldIgnore()) {
-                        boolean deleted = isDeleted();
-                        initValueBytes();
-                        putValue();
-                        if (deleted) {
-                            deleted(deleted() - 1);
-                            writePresent();
-                        }
-                    } else {
-                        return false;
-                    }
-                }
-                return true;
-            } finally {
-                closeReplicationUpdate();
-            }
-        }
-
-        @Override
-        void beforeRelocation() {
-            rm().dropChange(segmentIndex, pos);
-        }
-
-        @Override
-        void initPutDependencies() {
-            super.initPutDependencies();
-            initReplicationUpdate();
-        }
-
-        @Override
-        void writeNewValueAndSwitch() {
-            super.writeNewValueAndSwitch();
-            writeReplicationBytes();
-            updateChange();
-            timestamp = newTimestamp;
-            identifier = newIdentifier;
-        }
-
-        class PseudoMetaBytesInterop implements MetaBytesInterop<Object, Object> {
-
-            @Override
-            public boolean startsWith(Object interop, Bytes bytes, Object o) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public <I2> boolean equivalent(
-                    Object interop, Object o,
-                    MetaBytesInterop<Object, I2> otherMetaInterop, I2 otherInterop, Object other) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public long hash(Object interop, LongHashFunction hashFunction, Object o) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public long size(Object writer, Object o) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public void write(Object writer, Bytes bytes, Object o) {
-                bytes.skip(newValueSize);
-            }
-        }
-
-        final MetaBytesInterop<V, VI> pseudoMetaValueInterop =
-                (MetaBytesInterop<V, VI>) new PseudoMetaBytesInterop();
-
-        @Override
-        public boolean remove0() {
-            if (containsKey()) {
-                if (!shouldIgnore()) {
-                    writeReplicationBytes();
-                    writeDeleted();
-                    updateChange();
-                    deleted(deleted() + 1);
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                if (pos >= 0L) {
-                    if (!shouldIgnore()) {
-                        writeReplicationBytes();
-                        updateChange();
-                    }
-                } else {
-                    newValue = (V) pseudoMetaValueInterop;
-                    metaValueInterop = (MVI) pseudoMetaValueInterop;
-                    newValueSize = m().valueSizeMarshaller.minEncodableSize();
-                    put0();
-                    deleted(deleted() + 1);
-                    writeDeleted();
-                    closeNewValue();
-                }
-                return false;
-            }
-        }
-
-        void updateChange() {
-            if (remoteUpdate()) {
-                rm().dropChange(segmentIndex, pos);
-            } else {
-                rm().raiseChange(segmentIndex, pos);
-            }
-        }
-
-        @Override
-        public void closeRemove() {
-            closeReplicationUpdate();
-        }
-
-        private boolean testTimeStampInSensibleRange() {
-            if (rm().timeProvider == TimeProvider.SYSTEM) {
-                long currentTime = TimeProvider.SYSTEM.currentTime();
-                assert Math.abs(currentTime - timestamp) <= 100000000 :
-                        "unrealistic timestamp: " + timestamp;
-                assert Math.abs(currentTime - newTimestamp) <= 100000000 :
-                        "unrealistic newTimestamp: " + newTimestamp;
-            }
-            return true;
-        }
-
-
-        boolean shouldIgnore() {
-            assert replicationStateInit() : "replication state not init";
-            assert replicationUpdateInit() : "replication update not init";
-            assert testTimeStampInSensibleRange();
-            if (!remoteUpdate()) {
-                newTimestamp = timestamp + 1L;
-                return false;
-            }
-            return timestamp > newTimestamp ||
-                    (timestamp == newTimestamp && identifier > newIdentifier);
-        }
-
-        public void dirtyEntries(final long dirtyFromTimeStamp,
-                                 final ReplicatedChronicleMap.ModificationIterator modIter,
-                                 final boolean bootstrapOnlyLocalEntries) {
-            readLock().lock();
-            try {
-                hashLookup.forEach((hash, pos) -> {
-                    ReplicatedContext.this.pos = pos;
-                    initKeyFromPos();
-                    keyFound();
-                    assert timestamp > 0L;
-                    if (timestamp >= dirtyFromTimeStamp && (!bootstrapOnlyLocalEntries ||
-                            identifier == rm().identifier()))
-                        modIter.raiseChange(segmentIndex, pos);
-                });
-            } finally {
-                readLock().unlock();
-            }
-        }
-    }
-
-    enum ReplicatedContextFactory implements ContextFactory<ReplicatedContext> {
-        INSTANCE;
-
-        @Override
-        public ReplicatedContext createContext(HashContext root, int indexInContextCache) {
-            return new ReplicatedContext(root, indexInContextCache);
-        }
-
-        @Override
-        public ReplicatedContext createRootContext() {
-            return new ReplicatedContext();
-        }
-
-        @Override
-        public Class<ReplicatedContext> contextClass() {
-            return ReplicatedContext.class;
-        }
-    }
-
-    @Override
-    ReplicatedContext<K, KI, MKI, V, VI, MVI> rawContext() {
-        return VanillaContext.get(ReplicatedContextFactory.INSTANCE);
-    }
-
-    @Override
-    VanillaContext rawBytesContext() {
-        return VanillaContext.get(BytesReplicatedContextFactory.INSTANCE);
-    }
-
-    static class BytesReplicatedContext
-            extends ReplicatedContext<Bytes, BytesBytesInterop,
-            DelegatingMetaBytesInterop<Bytes, BytesBytesInterop>,
-            Bytes, BytesBytesInterop,
-            DelegatingMetaBytesInterop<Bytes, BytesBytesInterop>> {
-        BytesReplicatedContext() {
-            super();
-        }
-
-        BytesReplicatedContext(HashContext contextCache, int indexInContextCache) {
-            super(contextCache, indexInContextCache);
-        }
-
-        @Override
-        public void initKeyModel0() {
-            initBytesKeyModel0();
-        }
-
-        @Override
-        public void initKey0(Bytes key) {
-            initBytesKey0(key);
-        }
-
-        @Override
-        void initValueModel0() {
-            initBytesValueModel0();
-        }
-
-        @Override
-        void initNewValue0(Bytes newValue) {
-            initNewBytesValue0(newValue);
-        }
-
-        @Override
-        void closeValue0() {
-            closeBytesValue0();
-        }
-
-        @Override
-        public Bytes get() {
-            return getBytes();
-        }
-
-        @Override
-        public Bytes getUsing(Bytes usingValue) {
-            return getBytesUsing(usingValue);
-        }
-    }
-
-    enum BytesReplicatedContextFactory implements ContextFactory<BytesReplicatedContext> {
-        INSTANCE;
-
-        @Override
-        public BytesReplicatedContext createContext(HashContext root, int indexInContextCache) {
-            return new BytesReplicatedContext(root, indexInContextCache);
-        }
-
-        @Override
-        public BytesReplicatedContext createRootContext() {
-            return new BytesReplicatedContext();
-        }
-
-        @Override
-        public Class<BytesReplicatedContext> contextClass() {
-            return BytesReplicatedContext.class;
-        }
-    }
-
-    @Override
-    VanillaContext<K, KI, MKI, V, VI, MVI> acquireContext(K key) {
-        ReplicatedAcquireContext<K, KI, MKI, V, VI, MVI> c =
-                VanillaContext.get(ReplicatedAcquireContextFactory.INSTANCE);
-        c.initHash(this);
-        c.initKey(key);
-        return c;
-    }
-
-    static class ReplicatedAcquireContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-            V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
-            extends ReplicatedContext<K, KI, MKI, V, VI, MVI> {
-        ReplicatedAcquireContext() {
-            super();
-        }
-
-        ReplicatedAcquireContext(HashContext contextCache, int indexInContextCache) {
-            super(contextCache, indexInContextCache);
-        }
-
-        @Override
-        public boolean put(V newValue) {
-            return acquirePut(newValue);
-        }
-
-        @Override
-        public boolean remove() {
-            return acquireRemove();
-        }
-
-        @Override
-        public void close() {
-            acquireClose();
-        }
-    }
-
-    enum ReplicatedAcquireContextFactory implements ContextFactory<ReplicatedAcquireContext> {
-        INSTANCE;
-
-        @Override
-        public ReplicatedAcquireContext createContext(HashContext root,
-                                            int indexInContextCache) {
-            return new ReplicatedAcquireContext(root, indexInContextCache);
-        }
-
-        @Override
-        public ReplicatedAcquireContext createRootContext() {
-            return new ReplicatedAcquireContext();
-        }
-
-        @Override
-        public Class<ReplicatedAcquireContext> contextClass() {
-            return ReplicatedAcquireContext.class;
-        }
+    public boolean identifierCheck(@NotNull HashReplicableEntry<?> entry, int chronicleId) {
+        return entry.originIdentifier() == localIdentifier;
     }
 
     public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
@@ -842,90 +400,37 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             LOG.debug(message + "value=" + entry.toString().trim() + ")");
         }
     }
+    
+    private CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> q() {
+        //noinspection unchecked
+        return (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?>) queryCxt.get();
+    }
 
+    @Override
+    public CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> mapContext() {
+        CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> q = q().getContext();
+        q.initUsed(true);
+        return q;
+    }
+
+    private CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext() {
+        if (remoteOpContext == null) {
+            remoteOpContext = q().getContext();
+        }
+        return remoteOpContext;
+    }
     /**
      * This method does not set a segment lock, A segment lock should be obtained before calling
      * this method, especially when being used in a multi threaded context.
      */
     @Override
-    public void readExternalEntry(@NotNull BytesReplicatedContext context,
-            @NotNull Bytes source) {
-        // TODO cache contexts per map -- don't init map on each readExternalEntry()
-        context.initHash(this);
-        try {
-            final long keySize = keySizeMarshaller.readSize(source);
-            final long valueSize = valueSizeMarshaller.readSize(source);
-            final long timeStamp = source.readStopBit();
-
-            final byte id = source.readByte();
-            final boolean isDeleted = source.readBoolean();
-
-            final byte remoteIdentifier;
-
-            if (id != 0) {
-                remoteIdentifier = id;
-            } else {
-                throw new IllegalStateException("identifier can't be 0");
-            }
-
-            if (remoteIdentifier == ReplicatedChronicleMap.this.identifier()) {
-                // this may occur when working with UDP, as we may receive our own data
-                return;
-            }
-
-            context.newTimestamp = timeStamp;
-            context.newIdentifier = remoteIdentifier;
-
-            final long keyPosition = source.position();
-            final long keyLimit = keyPosition + keySize;
-            source.limit(keyLimit);
-
-            context.metaKeyInterop = DelegatingMetaBytesInterop.instance();
-            context.keySize = keySize;
-            context.initBytesKey00(source);
-
-            boolean debugEnabled = LOG.isDebugEnabled();
-
-            context.updateLock().lock();
-            if (isDeleted) {
-                if (debugEnabled) {
-                    LOG.debug("READING FROM SOURCE -  into local-id={}, remote={}, remove(key={})",
-                            localIdentifier, remoteIdentifier, source.toString().trim()
-                    );
-                }
-                context.remove();
-                setLastModificationTime(remoteIdentifier, timeStamp);
-                return;
-            }
-
-            String message = null;
-            if (debugEnabled) {
-                message = String.format(
-                        "READING FROM SOURCE -  into local-id=%d, remote-id=%d, put(key=%s,",
-                        localIdentifier, remoteIdentifier, source.toString().trim());
-            }
-
-            final long valuePosition = keyLimit;
-            final long valueLimit = valuePosition + valueSize;
-
-            // compute hash => segment and locate the entry
-            context.containsKey();
-
-            context.metaValueInterop = DelegatingMetaBytesInterop.instance();
-            context.newValueSize = valueSize;
-            source.limit(valueLimit);
-            source.position(valuePosition);
-            context.initNewBytesValue00(source);
-
-            context.initPutDependencies();
-            context.put0();
-            setLastModificationTime(remoteIdentifier, timeStamp);
-
-            if (debugEnabled) {
-                LOG.debug(message + "value=" + source.toString().trim() + ")");
-            }
-        } finally {
-            context.closeHash();
+    public void readExternalEntry(@NotNull Bytes source) {
+        try (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext =
+                     remoteOpContext()) {
+            if (remoteOpContext.usedInit())
+                throw new IllegalStateException();
+            remoteOpContext.initUsed(true);
+            remoteOpContext.initReplicationInput(source);
         }
     }
 
@@ -982,6 +487,17 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
+    private CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> i() {
+        //noinspection unchecked
+        return (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?>) iterCxt.get();
+    }
+
+    public CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> iterationContext() {
+        CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> c = i().getContext();
+        c.initUsed(true);
+        return c;
+    }
+
     /**
      * <p>Once a change occurs to a map, map replication requires that these changes are picked up
      * by another thread, this class provides an iterator like interface to poll for such changes.
@@ -1004,8 +520,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         private final ATSDirectBitSet changesForIteration;
         private final int segmentIndexShift;
         private final long posMask;
-        private final ReplicatedContext<K, KI, MKI, V, VI, MVI> context =
-                (ReplicatedContext<K, KI, MKI, V, VI, MVI>) mapContext();
+        private final CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, ?, ?> context =
+                mapContext();
 
         // records the current position of the cursor in the bitset
         private volatile long position = -1L;
@@ -1081,12 +597,8 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                 this.position = position;
                 int segmentIndex = (int) (position >>> segmentIndexShift);
-                if (context.segmentIndex != segmentIndex) {
-                    context.closeSegmentIndex();
-                    context.segmentIndex = segmentIndex;
-                    context.initLocks();
-                    context.initSegment();
-                }
+                if (context.theSegmentIndexInit() && context.segmentIndex() != segmentIndex)
+                    context.initTheSegmentIndex(segmentIndex);
                 context.updateLock().lock();
                 try {
                     if (changesForUpdates.get(position)) {
@@ -1094,17 +606,19 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         entryCallback.onBeforeEntry();
 
                         final long segmentPos = position & posMask;
-                        context.reuse(segmentPos);
+                        context.initEntry(segmentPos);
 
                         // if the entry should be ignored, we'll move the next entry
-                        if (entryCallback.shouldBeIgnored(context.entry, chronicleId)) {
+                        if (entryCallback.shouldBeIgnored(context.entry(), chronicleId)) {
                             changesForUpdates.clear(position);
                             continue;
                         }
 
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
-                        boolean success = entryCallback.onEntry(context.entry, chronicleId);
+                        context.entryBytes().limit(context.valueOffset() + context.valueSize());
+                        context.entryBytes().position(context.keySizeOffset());
+                        boolean success = entryCallback.onEntry(context.entryBytes(), chronicleId);
                         entryCallback.onAfterEntry();
 
                         if (success)
@@ -1123,18 +637,23 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         @Override
         public void dirtyEntries(long fromTimeStamp) {
-            try (ReplicatedContext<K, KI, MKI, V, VI, MVI> context =
-                         (ReplicatedContext<K, KI, MKI, V, VI, MVI>) mapContext()) {
+            try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> c =
+                         iterationContext()) {
                 // iterate over all the segments and mark bit in the modification iterator
                 // that correspond to entries with an older timestamp
                 for (int i = 0; i < actualSegments; i++) {
-                    context.segmentIndex = i;
-                    context.initSegment();
-                    try {
-                        context.dirtyEntries(fromTimeStamp, this, bootstrapOnlyLocalEntries);
-                    } finally {
-                        context.closeSegmentIndex();
-                    }
+                    final int segmentIndex = i;
+                    c.initTheSegmentIndex(segmentIndex);
+                    c.forEachRemoving(entry -> {
+                        MapReplicableEntry re = (MapReplicableEntry) entry;
+                        assert re.originTimestamp() > 0L;
+                        if (re.originIdentifier() >= fromTimeStamp &&
+                                (!bootstrapOnlyLocalEntries ||
+                                        re.originIdentifier() == localIdentifier)) {
+                            raiseChange(segmentIndex, c.pos());
+                        }
+                        return false;
+                    });
                 }
             }
         }

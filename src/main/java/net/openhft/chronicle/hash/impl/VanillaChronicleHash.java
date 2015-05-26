@@ -17,6 +17,7 @@
 package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.ExternalHashQueryContext;
 import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.impl.hashlookup.HashLookup;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
@@ -44,7 +45,8 @@ import static java.lang.Math.max;
 import static net.openhft.lang.MemoryUnit.*;
 
 public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        C extends KeyContext<K>> implements ChronicleHash<K, C>, Serializable {
+        C extends KeyContext<K>, ECQ extends ExternalHashQueryContext<K>>
+        implements ChronicleHash<K, C, ECQ>, Serializable {
 
     private static final long serialVersionUID = 0L;
 
@@ -62,12 +64,12 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     public final MetaProvider<K, KI, MKI> metaKeyInteropProvider;
 
     public transient Provider<BytesReader<K>> keyReaderProvider;
-    transient Provider<KI> keyInteropProvider;
+    public transient Provider<KI> keyInteropProvider;
 
     /////////////////////////////////////////////////
     // Concurrency (number of segments), memory management and dependent fields
     public final int actualSegments;
-    final HashSplitting hashSplitting;
+    public final HashSplitting hashSplitting;
 
     public final long entriesPerSegment;
 
@@ -79,18 +81,18 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     // Precomputed offsets and sizes for fast Context init
     final int segmentHeaderSize;
 
-    final int segmentHashLookupValueBits;
-    final int segmentHashLookupKeyBits;
-    final int segmentHashLookupEntrySize;
-    final long segmentHashLookupCapacity;
+    public final int segmentHashLookupValueBits;
+    public final int segmentHashLookupKeyBits;
+    public final int segmentHashLookupEntrySize;
+    public final long segmentHashLookupCapacity;
     final long segmentHashLookupInnerSize;
-    final long segmentHashLookupOuterSize;
+    public final long segmentHashLookupOuterSize;
 
-    final long segmentFreeListInnerSize;
-    final long segmentFreeListOuterSize;
+    public final long segmentFreeListInnerSize;
+    public final long segmentFreeListOuterSize;
 
     final long segmentEntrySpaceInnerSize;
-    final int segmentEntrySpaceInnerOffset;
+    public final int segmentEntrySpaceInnerOffset;
     final long segmentEntrySpaceOuterSize;
 
     final long segmentSize;

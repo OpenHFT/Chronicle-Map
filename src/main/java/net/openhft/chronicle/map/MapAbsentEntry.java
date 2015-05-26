@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.HashAbsentEntry;
 import net.openhft.chronicle.hash.Value;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,21 +29,14 @@ import org.jetbrains.annotations.NotNull;
  * @param <K> type of the key in {@code ChronicleMap}
  * @param <V> type of the value in {@code ChronicleMap}
  * 
- * @see MapAbsentEntryOperations
- * @see MapQueryContext#absentEntry() 
+ * @see MapEntryOperations
+ * @see MapQueryContext#absentEntry()
  */
-public interface MapAbsentEntry<K, V> {
+public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
 
-    /**
-     * Returns the context, in which the entry is going to be inserted into the map.
-     */
-    @NotNull MapContext<K, V> context();
-
-    /**
-     * Returns the key is going to be inserted into the {@code ChronicleMap}.
-     */
-    @NotNull Value<K, ?> absentKey();
-
+    @Override
+    @NotNull MapContext<K, V, ?> context();
+    
     /**
      * Inserts the new entry into the map, of {@link #absentKey() the key} and the given value.
      *
@@ -57,7 +51,7 @@ public interface MapAbsentEntry<K, V> {
      * MapMethods#acquireUsing}.
      *
      * <p>This method if the default implementation for {@link
-     * MapAbsentEntryOperations#defaultValue}, which might be customized over the default.
+     * MapEntryOperations#defaultValue}, which might be customized over the default.
      */
     @NotNull Value<V, ?> defaultValue();
 }

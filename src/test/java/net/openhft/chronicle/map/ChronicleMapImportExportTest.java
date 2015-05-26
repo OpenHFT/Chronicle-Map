@@ -6,6 +6,7 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.values.LongValue;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -205,6 +206,7 @@ public class ChronicleMapImportExportTest {
 
 
     @Test
+    @Ignore
     public void testToJsonWithStatelessClient() throws IOException, InterruptedException {
         File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
         file.deleteOnExit();

@@ -24,6 +24,7 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
-
+@Ignore
 public class ChannelReplicationTest {
 
     private ChronicleMap<CharSequence, CharSequence> favoriteComputerServer1;

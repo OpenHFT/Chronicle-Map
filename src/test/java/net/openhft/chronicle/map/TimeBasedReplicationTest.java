@@ -23,6 +23,7 @@ import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -39,6 +40,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
+@Ignore
 public class TimeBasedReplicationTest extends JSR166TestCase {
 
     public static final byte IDENTIFIER = 1;

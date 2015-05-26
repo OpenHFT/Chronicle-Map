@@ -18,31 +18,34 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.AcceptanceDecision;
 import net.openhft.chronicle.hash.Value;
-import net.openhft.chronicle.hash.replication.ReplicatedEntry;
-import net.openhft.chronicle.hash.replication.ReplicationContext;
-import org.jetbrains.annotations.NotNull;
+import net.openhft.chronicle.map.replication.MapRemoteOperations;
+import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
+import net.openhft.chronicle.map.replication.MapReplicableEntry;
 
-public class MaximizingValueMapEntryOperations<K, V extends Comparable<? super V>>
-        implements MapEntryOperations<K, V> {
+import static net.openhft.chronicle.hash.AcceptanceDecision.ACCEPT;
+import static net.openhft.chronicle.hash.AcceptanceDecision.DISCARD;
 
+// TODO verify eventual consistency
+public class MaximizingValueRemoteOperations<K, V extends Comparable<? super V>, R>
+        implements MapRemoteOperations<K, V, R> {
+    
     @Override
-    public boolean replaceValue(@NotNull MapEntry<K, V> entry, Value<V, ?> newValue) {
-        MapContext<K, V> context = entry.context();
-        if (context instanceof ReplicationContext) {
+    public AcceptanceDecision put(MapRemoteQueryContext<K, V, R> q, Value<V, ?> newValue) {
+        MapReplicableEntry<K, V> entry = q.entry();
+        if (entry != null) {
             int compareResult = newValue.get().compareTo(entry.value().get());
-            if (compareResult > 0 || (compareResult == 0 &&
-                    ((ReplicationContext) context).remoteIdentifier() <=
-                            ((ReplicatedEntry) entry).originIdentifier())) {
+            if (compareResult > 0 ||
+                    (compareResult == 0 && q.remoteIdentifier() <= entry.originIdentifier())) {
                 // replace, if the new value is greater
                 entry.doReplaceValue(newValue);
-                return true;
+                return ACCEPT;
             } else {
-                // always fail, if the value came via replication is lesser than the current value.
-                return false;
+                return DISCARD;
             }
         } else {
-            return MapEntryOperations.super.replaceValue(entry, newValue);
+            return MapRemoteOperations.super.put(q, newValue);
         }
     }
 }

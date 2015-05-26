@@ -4,6 +4,7 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -11,6 +12,7 @@ import java.net.InetSocketAddress;
 /**
  * Created by Rob Austin
  */
+@Ignore
 public class TestReplication {
 
 

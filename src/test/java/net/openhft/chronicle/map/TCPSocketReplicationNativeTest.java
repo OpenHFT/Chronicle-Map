@@ -23,6 +23,7 @@ import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.LongValue;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -39,7 +40,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-
+@Ignore
 public class TCPSocketReplicationNativeTest {
 
     private ChronicleMap<Integer, LongValue> map1;

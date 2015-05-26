@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-import com.sun.jdi.connect.spi.ClosedConnectionException;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.RemoteCallTimeoutException;
 import net.openhft.chronicle.hash.function.SerializableFunction;
@@ -546,6 +545,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @Override
     public MapKeyContext<K, V> context(K key) {
+        throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
+    }
+
+    @NotNull
+    @Override
+    public ExternalMapQueryContext<K, V, ?> queryContext(K key) {
         throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
     }
 
@@ -1118,7 +1123,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
                     break;
 
-                } catch (@NotNull java.nio.channels.ClosedChannelException | ClosedConnectionException e) {
+                } catch (@NotNull java.nio.channels.ClosedChannelException /*| ClosedConnectionException*/ e) {
                     checkTimeout(timeoutTime);
                     lazyConnect(timeoutMs, remoteAddress);
                 }

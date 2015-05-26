@@ -25,6 +25,7 @@ public class FilePerKeyMapTest {
      * Testing all the methods of the map with simple tests.
      */
     @Test
+    @Ignore
     public void testMapMethods() {
         String val = map.put("one", "test1");
         assertEquals(val, null);

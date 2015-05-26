@@ -19,8 +19,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.impl.util.CloseablesManager;
+import net.openhft.chronicle.hash.replication.HashReplicableEntry;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
-import net.openhft.chronicle.map.ReplicatedChronicleMap.BytesReplicatedContextFactory;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.thread.NamedThreadFactory;
@@ -76,7 +76,6 @@ abstract class AbstractChannelReplicator implements Closeable {
     private final Throttler throttler;
 
     volatile boolean isClosed = false;
-    ReplicatedChronicleMap.BytesReplicatedContext context;
 
     AbstractChannelReplicator(String name, ThrottlingConfig throttlingConfig)
             throws IOException {
@@ -215,7 +214,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                     @Override
                     public void run() {
                         try {
-                            context = VanillaContext.get(BytesReplicatedContextFactory.INSTANCE);
                             processEvent();
                         } catch (Exception e) {
                             LOG.error("", e);
@@ -480,7 +478,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
 
         @Override
-        public boolean shouldBeIgnored(final Bytes entry, final int chronicleId) {
+        public boolean shouldBeIgnored(final HashReplicableEntry<?> entry, final int chronicleId) {
             return !externalizable.identifierCheck(entry, chronicleId);
         }
 

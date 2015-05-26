@@ -113,7 +113,7 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
             if (out.remaining() != size)
                 return;
 
-            externalizable.readExternalEntry(context, out);
+            externalizable.readExternalEntry(out);
         }
     }
 

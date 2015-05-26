@@ -34,7 +34,7 @@ import java.net.Inet4Address;
  *
  * @author Rob Austin.
  */
-
+@Ignore
 public class UDPSocketReplicationTest {
 
     private ChronicleMap<Integer, CharSequence> map2;

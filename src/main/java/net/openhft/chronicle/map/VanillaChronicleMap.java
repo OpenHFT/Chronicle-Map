@@ -19,12 +19,14 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.KeyContext;
-import net.openhft.chronicle.hash.impl.ContextFactory;
-import net.openhft.chronicle.hash.impl.HashContext;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
-import net.openhft.chronicle.hash.serialization.internal.*;
+import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
+import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
+import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+import net.openhft.chronicle.map.impl.*;
+import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.threadlocal.Provider;
@@ -35,14 +37,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDivisor;
 
-class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
-        extends VanillaChronicleHash<K, KI, MKI, MapKeyContext<K, V>>
+public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
+        V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R>
+        extends VanillaChronicleHash<K, KI, MKI, MapKeyContext<K, V>,
+        ExternalMapQueryContext<K, V, ?>>
         implements AbstractChronicleMap<K, V>  {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
@@ -53,22 +56,22 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     // Value Data model
     final Class<V> vClass;
     final Class nativeValueClass;
-    final SizeMarshaller valueSizeMarshaller;
-    final BytesReader<V> originalValueReader;
-    final VI originalValueInterop;
-    final MVI originalMetaValueInterop;
-    final MetaProvider<V, VI, MVI> metaValueInteropProvider;
+    public final SizeMarshaller valueSizeMarshaller;
+    public final BytesReader<V> originalValueReader;
+    public final VI originalValueInterop;
+    public final MVI originalMetaValueInterop;
+    public final MetaProvider<V, VI, MVI> metaValueInteropProvider;
 
     final DefaultValueProvider<K, V> defaultValueProvider;
 
-    final boolean constantlySizedEntry;
+    public final boolean constantlySizedEntry;
 
-    transient Provider<BytesReader<V>> valueReaderProvider;
-    transient Provider<VI> valueInteropProvider;
+    public transient Provider<BytesReader<V>> valueReaderProvider;
+    public transient Provider<VI> valueInteropProvider;
 
     /////////////////////////////////////////////////
     // Event listener and meta data
-    final int metaDataBytes;
+    public final int metaDataBytes;
 
     /////////////////////////////////////////////////
     // Behavior
@@ -77,11 +80,19 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     /////////////////////////////////////////////////
     // Memory management and dependent fields
-    final Alignment alignment;
-    final int worstAlignment;
-    final boolean couldNotDetermineAlignmentBeforeAllocation;
+    public final Alignment alignment;
+    public final int worstAlignment;
+    public final boolean couldNotDetermineAlignmentBeforeAllocation;
 
-    transient Set<Map.Entry<K, V>> entrySet;
+    transient Set<Entry<K, V>> entrySet;
+    
+    // TODO initialize
+    public transient MapEntryOperations<K, V, R> entryOperations;
+    public transient MapMethods<K, V, R> methods;
+    
+    transient ThreadLocal<?> queryCxt;
+    transient ThreadLocal<?> iterCxt;
+    
 
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder, boolean replicated)
             throws IOException {
@@ -125,7 +136,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         couldNotDetermineAlignmentBeforeAllocation =
                 greatestCommonDivisor((int) chunkSize, alignment) != alignment;
 
+        initTransientsFromBuilder(builder);
         initTransients();
+    }
+    
+    void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
+        this.entryOperations = (MapEntryOperations<K, V, R>) builder.entryOperations;
+        this.methods = (MapMethods<K, V, R>) builder.methods;
     }
 
     @Override
@@ -147,6 +164,26 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 constantValueProvider.initTransients(valueReader);
             }
         }
+        initQueryContext();
+        initIterationContext();
+    }
+
+     void initQueryContext() {
+        queryCxt = new ThreadLocal<CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?>>() {
+            @Override
+            protected CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> initialValue() {
+                return new CompiledMapQueryContext<>(VanillaChronicleMap.this);
+            }
+        };
+    }
+    
+    void initIterationContext() {
+        iterCxt = new ThreadLocal<CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?>>() {
+            @Override
+            protected CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> initialValue() {
+                return new CompiledMapIterationContext<>(VanillaChronicleMap.this);
+            }
+        };
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -154,37 +191,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         ownInitTransients();
     }
 
-    @Override
-    public final void checkValue(Object value) {
+    public final V checkValue(Object value) {
         if (!vClass.isInstance(value)) {
             throw new ClassCastException("Value must be a " + vClass.getName() +
                     " but was a " + value.getClass());
         }
+        return (V) value;
     }
 
     @Override
-    public VanillaContext<K, KI, MKI, V, VI, MVI> mapContext() {
-        VanillaContext<K, KI, MKI, V, VI, MVI> context = rawContext();
-        context.initHash(this);
-        return context;
-    }
-
-    VanillaContext bytesMapContext() {
-        VanillaContext context = rawBytesContext();
-        context.initHash(this);
-        return context;
-    }
-
-    @Override
-    public VanillaContext<K, KI, MKI, V, VI, MVI> context(K key) {
-        VanillaContext<K, KI, MKI, V, VI, MVI> context = mapContext();
-        context.initKey(key);
-        return context;
-    }
-
-    @Override
-    public void putDefaultValue(VanillaContext context) {
-        context.doPut(defaultValue(context));
+    public MapKeyContext<K, V> context(K key) {
+        return queryContext(key).deprecatedMapKeyContext();
     }
 
     @Override
@@ -192,31 +209,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return actualSegments;
     }
 
-
-    VanillaContext<K, KI, MKI, V, VI, MVI> rawContext() {
-        return VanillaContext.get(VanillaContext.VanillaChronicleMapContextFactory.INSTANCE);
-    }
-
-    VanillaContext rawBytesContext() {
-        return HashContext.get(BytesContextFactory.INSTANCE);
-    }
-
-    V defaultValue(KeyContext keyContext) {
+    public V defaultValue(KeyContext keyContext) {
         if (defaultValueProvider != null)
             return defaultValueProvider.get(keyContext);
         throw new IllegalStateException("To call acquire*() methods, " +
                 "you should specify either default value or default value provider " +
                 "during map building");
-    }
-
-    @Override
-    public V prevValueOnPut(MapKeyContext<K, V> context) {
-        return putReturnsNull ? null : AbstractChronicleMap.super.prevValueOnPut(context);
-    }
-
-    @Override
-    public V prevValueOnRemove(MapKeyContext<K, V> context) {
-        return removeReturnsNull ? null : AbstractChronicleMap.super.prevValueOnRemove(context);
     }
 
     @Override
@@ -279,35 +277,28 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     @NotNull
     @Override
     public final MapKeyContext<K, V> acquireContext(K key, V usingValue) {
-        VanillaContext<K, KI, MKI, V, VI, MVI> c = acquireContext(key);
+        QueryContextInterface<K, V, R> q = queryContext(key);
         // TODO optimize to update lock in certain cases
-        c.writeLock().lock();
         try {
-            if (!c.containsKey()) {
-                c.doPut(defaultValue(c));
-            }
-            V value = c.getUsing(usingValue);
-            if (value != usingValue) {
-                throw new IllegalArgumentException("acquireContext MUST reuse the given " +
-                        "value. Given value" + usingValue + " cannot be reused to read " + value);
-            }
-            return c;
+            q.writeLock().lock();
+            acquireUsingBody(q, usingValue);
+            return q.deprecatedMapAcquireContext();
         } catch (Throwable e) {
             try {
-                c.closeHash();
+                q.close();
             } catch (Throwable suppressed) {
                 e.addSuppressed(suppressed);
             }
             throw e;
         }
     }
-
-    VanillaContext<K, KI, MKI, V, VI, MVI> acquireContext(K key) {
-        AcquireContext<K, KI, MKI, V, VI, MVI> c =
-                VanillaContext.get(AcquireContextFactory.INSTANCE);
-        c.initHash(this);
-        c.initKey(key);
-        return c;
+    
+    private static <V> void checkAcquiredUsing(V acquired, V using) {
+        if (acquired != using) {
+            throw new IllegalArgumentException("acquire*() MUST reuse the given " +
+                    "value. Given value " + using + " cannot be reused to read " + acquired);
+        }
+        
     }
 
     @NotNull
@@ -330,137 +321,173 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public String toString() {
         return mapToString();
     }
-
-    static class AcquireContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-            V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
-            extends VanillaContext<K, KI, MKI, V, VI, MVI> {
-        AcquireContext() {
-            super();
-        }
-
-        AcquireContext(HashContext contextCache, int indexInContextCache) {
-            super(contextCache, indexInContextCache);
-        }
-
-        @Override
-        public boolean put(V newValue) {
-            return acquirePut(newValue);
-        }
-
-        @Override
-        public boolean remove() {
-            return acquireRemove();
-        }
-
-        @Override
-        public void close() {
-            acquireClose();
-        }
-    }
-
-    enum AcquireContextFactory implements ContextFactory<AcquireContext> {
-        INSTANCE;
-
-        @Override
-        public AcquireContext createContext(HashContext root, int indexInContextCache) {
-            return new AcquireContext(root, indexInContextCache);
-        }
-
-        @Override
-        public AcquireContext createRootContext() {
-            return new AcquireContext();
-        }
-
-        @Override
-        public Class<AcquireContext> contextClass() {
-            return AcquireContext.class;
-        }
-    }
-
+    
     @Override
     public void clear() {
-        VanillaContext<K, KI, MKI, V, VI, MVI> context = mapContext();
-        for (int i = 0; i < actualSegments; i++) {
-            context.segmentIndex = i;
-            try {
-                context.clear();
-            } finally {
-                context.closeSegmentIndex();
+        try (QueryContextInterface<?, ?, ?> cxt = mapContext()) {
+            for (int i = 0; i < actualSegments; i++) {
+                cxt.initTheSegmentIndex(i);
+                cxt.clear();
             }
         }
     }
 
-    final long readValueSize(Bytes entry) {
+    public final long readValueSize(Bytes entry) {
         long valueSize = valueSizeMarshaller.readSize(entry);
         alignment.alignPositionAddr(entry);
         return valueSize;
     }
+    
+    private CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> q() {
+        return (CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?>) queryCxt.get();
+    }
 
-    static class BytesContext
-            extends VanillaContext<Bytes, BytesBytesInterop,
-            DelegatingMetaBytesInterop<Bytes, BytesBytesInterop>,
-            Bytes, BytesBytesInterop,
-            DelegatingMetaBytesInterop<Bytes, BytesBytesInterop>> {
-        BytesContext() {
-            super();
-        }
+    public QueryContextInterface<K, V, R> mapContext() {
+        CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> q = q().getContext();
+        q.initUsed(true);
+        return q;
+    }
+    
+    private CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> i() {
+        return (CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?>) iterCxt.get();
+    }
 
-        BytesContext(HashContext contextCache, int indexInContextCache) {
-            super(contextCache, indexInContextCache);
-        }
+    @Override
+    public IterationContextInterface<K, V> iterationContext() {
+        CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> c = i().getContext();
+        c.initUsed(true);
+        return c;
+    }
 
-        @Override
-        public void initKeyModel0() {
-            initBytesKeyModel0();
-        }
+    @Override
+    @NotNull
+    public QueryContextInterface<K, V, R> queryContext(Object key) {
+        checkKey(key);
+        QueryContextInterface<K, V, R> q = mapContext();
+        q.inputKeyInstanceValue().initKey((K) key);
+        q.initInputKey(q.inputKeyInstanceValue());
+        return q;
+    }
 
-        @Override
-        public void initKey0(Bytes key) {
-            initBytesKey0(key);
-        }
-
-        @Override
-        void initValueModel0() {
-            initBytesValueModel0();
-        }
-
-        @Override
-        void initNewValue0(Bytes newValue) {
-            initNewBytesValue0(newValue);
-        }
-
-        @Override
-        void closeValue0() {
-            closeBytesValue0();
-        }
-
-        @Override
-        public Bytes get() {
-            return getBytes();
-        }
-
-        @Override
-        public Bytes getUsing(Bytes usingValue) {
-            return getBytesUsing(usingValue);
+    @Override
+    public V get(Object key) {
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            methods.get(q, q.defaultReturnValue());
+            return q.defaultReturnValue().returnValue();
         }
     }
 
-    enum BytesContextFactory implements ContextFactory<BytesContext> {
-        INSTANCE;
-
-        @Override
-        public BytesContext createContext(HashContext root, int indexInContextCache) {
-            return new BytesContext(root, indexInContextCache);
+    @Override
+    public V getUsing(K key, V usingValue) {
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            q.usingReturnValue().initUsingReturnValue(usingValue);
+            methods.get(q, q.usingReturnValue());
+            return q.usingReturnValue().returnValue();
         }
+    }
 
-        @Override
-        public BytesContext createRootContext() {
-            return new BytesContext();
+    @Override
+    public V acquireUsing(@NotNull K key, V usingValue) {
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            V returnValue = acquireUsingBody(q, usingValue);
+            return returnValue;
         }
+    }
 
-        @Override
-        public Class<BytesContext> contextClass() {
-            return BytesContext.class;
+    private V acquireUsingBody(QueryContextInterface<K, V, R> q, V usingValue) {
+        q.usingReturnValue().initUsingReturnValue(usingValue);
+        methods.acquireUsing(q, q.usingReturnValue());
+        V returnValue = q.usingReturnValue().returnValue();
+        checkAcquiredUsing(returnValue, usingValue);
+        return returnValue;
+    }
+
+    @Override
+    public V putIfAbsent(K key, V value) {
+        checkValue(value);
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            q.inputValueInstanceValue().initValue(value);
+            methods.putIfAbsent(q, q.inputValueInstanceValue(), q.defaultReturnValue());
+            return q.defaultReturnValue().returnValue();
+        }
+    }
+
+    @Override
+    public boolean remove(Object key, Object value) {
+        if (value == null)
+            return false; // ConcurrentHashMap compatibility
+        V v = checkValue(value);
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            q.inputValueInstanceValue().initValue(v);
+            return methods.remove(q, q.inputValueInstanceValue());
+        }
+    }
+
+    @Override
+    public boolean replace(K key, V oldValue, V newValue) {
+        checkValue(oldValue);
+        checkValue(newValue);
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            q.inputValueInstanceValue().initValue(oldValue);
+            return methods.replace(q, q.inputValueInstanceValue(), q.wrapValueAsValue(newValue));
+        }
+    }
+
+    @Override
+    public V replace(K key, V value) {
+        checkValue(value);
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            q.inputValueInstanceValue().initValue(value);
+            methods.replace(q, q.inputValueInstanceValue(), q.defaultReturnValue());
+            return q.defaultReturnValue().returnValue();
+        }
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            return methods.containsKey(q);
+        }
+    }
+
+    @Override
+    public V put(K key, V value) {
+        checkValue(value);
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            q.inputValueInstanceValue().initValue(value);
+            InstanceReturnValue<V> returnValue =
+                    putReturnsNull ? NullReturnValue.get() : q.defaultReturnValue();
+            methods.put(q, q.inputValueInstanceValue(), returnValue);
+            return returnValue.returnValue();
+        }
+    }
+
+    @Override
+    public V remove(Object key) {
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            InstanceReturnValue<V> returnValue =
+                    removeReturnsNull ? NullReturnValue.get() : q.defaultReturnValue();
+            methods.remove(q, returnValue);
+            return returnValue.returnValue();
+        }
+    }
+
+    @Override
+    public V merge(K key, V value,
+                   BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            q.inputValueInstanceValue().initValue(value);
+            methods.merge(q, q.inputValueInstanceValue(), remappingFunction,
+                    q.defaultReturnValue());
+            return q.defaultReturnValue().returnValue();
+        }
+    }
+
+    @Override
+    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            methods.compute(q, remappingFunction, q.defaultReturnValue());
+            return q.defaultReturnValue().returnValue();
         }
     }
 }

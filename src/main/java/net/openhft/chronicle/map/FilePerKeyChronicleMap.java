@@ -179,6 +179,12 @@ public class FilePerKeyChronicleMap implements ChronicleMap<String, String> {
         return String.class;
     }
 
+    @NotNull
+    @Override
+    public ExternalMapQueryContext<String, String, ?> queryContext(String key) {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public boolean forEachEntryWhile(Predicate<? super MapKeyContext<String, String>> predicate) {
         throw new UnsupportedOperationException();
