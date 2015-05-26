@@ -103,7 +103,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     private transient Bytes identifierUpdatedBytes;
 
     private transient ATSDirectBitSet modIterSet;
-    private transient AtomicReferenceArray<ModificationIterator> modificationIterators;
+    private final AtomicReferenceArray<ModificationIterator> modificationIterators =
+            new AtomicReferenceArray<ModificationIterator>(127 + RESERVED_MOD_ITER);
+
     private transient long startOfModificationIterators;
     private boolean bootstrapOnlyLocalEntries;
 
@@ -138,8 +140,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     @Override
     void initTransients() {
         super.initTransients();
-        modificationIterators =
-                new AtomicReferenceArray<ModificationIterator>(127 + RESERVED_MOD_ITER);
+
         closeables = new CopyOnWriteArraySet<Closeable>();
     }
 
@@ -213,7 +214,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 BytesBytesInterop.INSTANCE, key, keySize, keyBytesToInstance,
                 getRemoteBytesValueInterops, value, valueBytesToInstance,
                 replaceIfPresent, readValue, false, localIdentifier, currentTime());
-        ;
     }
 
     /**
@@ -371,6 +371,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     bytes, modificationNotifier);
 
             modificationIterators.set(remoteIdentifier, newModificationIterator);
+            System.out.println("Thread=" + Thread.currentThread() + " acquireModificationIterator id=" + remoteIdentifier);
             modIterSet.set(remoteIdentifier);
             return newModificationIterator;
         }
@@ -381,7 +382,17 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                modificationIterators.get((int) next).onPut(pos, segment);
+                ModificationIterator modificationIterator;
+
+                modificationIterator = modificationIterators.get((int) next);
+                if (modificationIterator == null)
+                    continue;
+
+                System.out.println("thread=" + Thread.currentThread() + " onPut() - acquireModificationIterator id=" + next);
+
+                modificationIterator.onPut(pos, segment);
+
+
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -1269,8 +1280,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                         final long entryTimestamp = entry.readLong();
 
-                        if (entryTimestamp >= timeStamp && (!bootstrapOnlyLocalEntries ||
-                                entry.readByte() == ReplicatedChronicleMap.this.identifier()))
+                        if (entryTimestamp >= timeStamp &&
+                                (!bootstrapOnlyLocalEntries || entry.readByte() == ReplicatedChronicleMap.this.identifier()))
                             callback.set(index, pos);
                     }
                 });

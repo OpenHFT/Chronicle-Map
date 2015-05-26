@@ -597,8 +597,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             if (remoteIdentifier == STATELESS_CLIENT) {
                 attached.handShakingComplete = true;
                 attached.hasRemoteHeartbeatInterval = false;
-
-
                 return;
             }
 
@@ -645,7 +643,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             attached.remoteModificationIterator =
                     replica.acquireModificationIterator(remoteIdentifier, attached);
 
-            writer.writeRemoteBootstrapTimestamp(replica.lastModificationTime(remoteIdentifier));
+            long timeStampOfLastMessage = replica.lastModificationTime(remoteIdentifier);
+            writer.writeRemoteBootstrapTimestamp(timeStampOfLastMessage);
 
             writer.writeServerVersion();
 
