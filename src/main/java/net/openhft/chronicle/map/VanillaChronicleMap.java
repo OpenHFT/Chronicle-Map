@@ -324,12 +324,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     
     @Override
     public void clear() {
-        try (QueryContextInterface<?, ?, ?> cxt = mapContext()) {
-            for (int i = 0; i < actualSegments; i++) {
-                cxt.initTheSegmentIndex(i);
-                cxt.clear();
-            }
-        }
+        forEachEntry(KeyContext::remove);
     }
 
     public final long readValueSize(Bytes entry) {
