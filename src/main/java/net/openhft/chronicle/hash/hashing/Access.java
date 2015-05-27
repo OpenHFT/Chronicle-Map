@@ -55,7 +55,9 @@ import static java.nio.ByteOrder.LITTLE_ENDIAN;
  *
  * @param <T> the type of the object to access
  * @see LongHashFunction#hash(Object, Access, long, long)
+ * @deprecated moved to Chronicle-Bytes: {@link net.openhft.chronicle.bytes.Access}
  */
+@Deprecated
 public abstract class Access<T> {
 
     /**

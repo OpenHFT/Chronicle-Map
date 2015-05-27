@@ -49,7 +49,10 @@ import static net.openhft.chronicle.hash.hashing.UnsafeAccess.*;
  * </ul>
  * 
  * @see BytesInterop#hash(LongHashFunction, Object)
+ * @deprecated moved to Chronicle-Algorithms:
+ * {@link net.openhft.chronicle.algo.hashing.LongHashFunction} 
  */
+@Deprecated
 public abstract class LongHashFunction implements Serializable {
     private static final long serialVersionUID = 0L;
 

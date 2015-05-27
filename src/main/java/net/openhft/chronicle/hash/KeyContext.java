@@ -35,6 +35,7 @@ import java.util.ConcurrentModificationException;
  * </ul>
  *
  * @param <K> key type
+ * @deprecated incoherent abstraction. Replaced by {@link HashQueryContext} and {@link HashEntry}
  */
 @Deprecated
 public interface KeyContext<K> extends AutoCloseable, InterProcessReadWriteUpdateLock {

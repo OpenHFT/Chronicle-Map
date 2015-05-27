@@ -1,5 +1,3 @@
-
-
 /*
  * Copyright 2015 Higher Frequency Trading
  *
@@ -25,12 +23,12 @@ import net.openhft.chronicle.hash.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Access to the <i>present</i> {@link ChronicleMap} entry.
+ * The <i>present</i> {@code ChronicleHash} entry context.
  * 
- * @param <K> type of the key in {@code ChronicleMap}
- * @param <V> type of the value in {@code ChronicleMap}
- *            
+ * @param <K> the map key type
+ * @param <V> the map value type
  * @see MapEntryOperations
+ * @see MapQueryContext#entry() 
  */
 public interface MapEntry<K, V> extends HashEntry<K> {
     @Override
@@ -42,10 +40,24 @@ public interface MapEntry<K, V> extends HashEntry<K> {
     @NotNull Value<V, ?> value();
 
     /**
-     * Replaces the entry's value with the new one.
+     * Replaces the entry's value with the given {@code newValue}.
+     * 
+     * <p>This method is the default implementation for {@link MapEntryOperations#replaceValue(
+     * MapEntry, Value)}, which might be customized over the default.
      *
+     * @param newValue the value to be put into the map instead of the {@linkplain #value() current
+     * value}
      * @throws IllegalStateException if some locking/state conditions required to perform replace
      * operation are not met
      */
     void doReplaceValue(Value<V, ?> newValue);
+
+    /**
+     * Removes the entry from the map.
+     * 
+     * <p>This method is the default implementation for {@link MapEntryOperations#remove(MapEntry)},
+     * which might be customized over the default. 
+     */
+    @Override
+    void doRemove();
 }

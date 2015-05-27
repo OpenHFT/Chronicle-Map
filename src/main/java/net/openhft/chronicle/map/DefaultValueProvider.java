@@ -28,7 +28,9 @@ import java.io.Serializable;
  *
  * @param <K> map key class
  * @param <V> map value class
+ * @deprecated specialize {@link MapEntryOperations#defaultValue(MapAbsentEntry)} instead
  */
+@Deprecated
 public interface DefaultValueProvider<K, V> extends Serializable {
     /**
      * Returns a value to be put during {@link ChronicleMap#acquireUsing(Object, Object)} call

@@ -18,6 +18,28 @@
 
 package net.openhft.chronicle.hash;
 
+import net.openhft.chronicle.map.replication.MapRemoteOperations;
+import net.openhft.chronicle.set.replication.SetRemoteOperations;
+
+/**
+ * Decision, if {@link MapRemoteOperations remote modification operation} should be accepted
+ * or discarded.
+ * * 
+ * @see MapRemoteOperations
+ * @see SetRemoteOperations 
+ */
 public enum AcceptanceDecision {
-    ACCEPT, DISCARD
+    /**
+     * Acceptance decision -- the remote modification operation is applied to the local
+     * {@link ChronicleHash} state. This decision should also been returned, when the actual
+     * state modification is not needed (for example, remote {@code remove entry} operation, while
+     * the entry is not present in the ChronicleHash locally), but the operation is generally
+     * considered acceptable.
+     */
+    ACCEPT,
+
+    /**
+     * Discard decision -- the remote modification operation is rejected.
+     */
+    DISCARD
 }

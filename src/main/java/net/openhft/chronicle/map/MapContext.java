@@ -24,12 +24,13 @@ import net.openhft.chronicle.hash.Value;
 /**
  * Context, in which {@link MapEntry MapEntries} are accessed.
  * 
- * @param <K> the key type of accessed {@link ChronicleMap}
- * @param <V> the value type of accessed {@code ChronicleMap}
+ * @param <K> the map key type
+ * @param <V> the map value type
+ * @param <R> the return type of {@link MapEntryOperations} specialized for the queried map          
  */
 public interface MapContext<K, V, R> extends HashContext<K>, MapEntryOperations<K, V, R> {
     /**
-     * Returns the accessed {@code ChronicleMap}.
+     * Returns the accessed {@code ChronicleMap}. Synonym to {@link #map()}.
      */
     @Override
     default ChronicleMap<K, V> hash() {
@@ -37,9 +38,19 @@ public interface MapContext<K, V, R> extends HashContext<K>, MapEntryOperations<
     }
 
     /**
-     * Synonym to {@link #hash()}.
+     * Returns the accessed {@code ChronicleMap}. Synonym to {@link #hash()}.
      */
     ChronicleMap<K, V> map();
-    
+
+    /**
+     * Wraps the given value as a {@code Value}. Useful when you need to pass a value
+     * to some method accepting {@code Value}, for example, {@link MapEntryOperations#replaceValue(
+     * MapEntry, Value)}, without allocating new objects (i. e. garbage) and {@code ThreadLocals}.
+     *
+     * <p>The returned {@code Value} object shouldn't outlive this {@code MapContext}.
+     *
+     * @param value the value object to wrap
+     * @return the value as {@code Value}
+     */
     Value<V, ?> wrapValueAsValue(V value);
 }

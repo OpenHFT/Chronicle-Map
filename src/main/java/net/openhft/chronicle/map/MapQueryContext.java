@@ -19,14 +19,18 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.HashQueryContext;
+import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The context of Map operations with <i>individual keys</i> (most: get(), put(), etc., opposed
- * to bulk operations).
- *  
- * @param <K>
- * @param <V>
+ * The context of {@link ChronicleMap} operations with <i>individual keys</i>
+ * (most: {@code get()}, {@code put()}, etc., opposed to <i>bulk</i> operations). This is the main
+ * context type of {@link MapMethods} and {@link MapRemoteOperations}.
+ * 
+ * @param <K> the map key type
+ * @param <V> the map value type
+ * @param <R> the return type of {@link MapEntryOperations} specialized for the queried map
+ * @see ChronicleMap#queryContext(Object)           
  */
 public interface MapQueryContext<K, V, R> extends HashQueryContext<K>, MapContext<K, V, R> {
 

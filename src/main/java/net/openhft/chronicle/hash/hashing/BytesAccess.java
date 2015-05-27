@@ -20,6 +20,7 @@ import net.openhft.lang.io.Bytes;
 
 import java.nio.ByteOrder;
 
+@Deprecated
 public final class BytesAccess extends Access<Bytes> {
     public static final BytesAccess INSTANCE = new BytesAccess();
     

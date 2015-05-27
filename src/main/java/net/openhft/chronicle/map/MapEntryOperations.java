@@ -22,16 +22,20 @@ import net.openhft.chronicle.hash.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * SPI interface for customizing "low-level" modification operations on {@link ChronicleMap} entry.
+ * SPI interface for customizing "low-level" modification operations on {@link ChronicleMap}
+ * entries.
  *
- * @param <K> type of the key in {@code ChronicleMap}
- * @param <V> type of the value in {@code ChronicleMap}
+ * @param <K> the map key type
+ * @param <V> the map value type
+ * @see ChronicleMapBuilder#entryOperations(MapEntryOperations)           
  */
 public interface MapEntryOperations<K, V, R> {
     
     /**
-     * Removes the given entry from the {@code ChronicleHash}. Returns {@code true} if the remove
-     * was successful, {@code false} if it was discarded for any reason.
+     * Removes the given entry from the map.
+     * 
+     * @implNote default implementation calls {@link MapEntry#doRemove()} on the given entry
+     * and returns {@code null}.
      *
      * @param entry the entry to remove 
      * @throws IllegalStateException if some locking/state conditions required to perform remove

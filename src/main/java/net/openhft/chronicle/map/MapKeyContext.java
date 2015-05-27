@@ -18,6 +18,11 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.KeyContext;
 
+/**
+ * @param <K> the map key type
+ * @param <V> the map value type
+ * @deprecated incoherent abstraction. Replaced by {@link MapQueryContext} and {@link MapEntry}
+ */
 @Deprecated
 public interface MapKeyContext<K, V> extends KeyContext<K> {
 

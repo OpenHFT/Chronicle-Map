@@ -20,13 +20,31 @@ package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
 
+/**
+ * Defines reasonable defaults for {@code Value}'s {@code equals()}, {@code hashCode()} and
+ * {@code toString()}. They should be default implementations in the {@code Value} interface itself,
+ * but Java 8 doesn't allow to override {@code Object}'s methods by default implementations
+ * in interfaces.
+ */
 public abstract class AbstractValue<V, T> implements Value<V, T> {
 
+    /**
+     * Constructor for use by subclasses. 
+     */
+    protected AbstractValue() {}
+
+    /**
+     * Computes value's hash code by applying a hash function to {@code Value}'s <i>bytes</i>
+     * representation.
+     */
     @Override
     public int hashCode() {
         return (int) hash(LongHashFunction.city_1_1());
     }
 
+    /**
+     * Compares {@code Value}s' <i>bytes</i> representations.
+     */
     @Override
     public boolean equals(Object obj) {
         return obj != null &&
@@ -34,6 +52,9 @@ public abstract class AbstractValue<V, T> implements Value<V, T> {
                 Value.bytesEquivalent(this, (Value<?, ?>) obj);
     }
 
+    /**
+     * Delegates to {@code Value}'s <i>object</i> {@code toString()}.
+     */
     @Override
     public String toString() {
         return get().toString();

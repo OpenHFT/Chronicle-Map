@@ -38,20 +38,29 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
     @NotNull MapContext<K, V, ?> context();
     
     /**
-     * Inserts the new entry into the map, of {@link #absentKey() the key} and the given value.
+     * Inserts the new entry into the map, of {@linkplain #absentKey() the key} and the given {@code
+     * value}.
+     * 
+     * <p>This method is the default implementation for {@link MapEntryOperations#insert(
+     * MapAbsentEntry, Value)}, which might be customized over the default. 
      *
+     * @param value the value to insert into the map along with {@link #absentKey() the key}
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
      * operation are not met
+     * @see MapEntryOperations#insert(MapAbsentEntry, Value)
      */
     void doInsert(Value<V, ?> value);
 
     /**
-     * Returns the "nil" value, which should be inserted into the map in this context. This
-     * is primarily used in {@link ChronicleMap#acquireUsing} operation implementation, i. e. {@link
-     * MapMethods#acquireUsing}.
+     * Returns the <i>default</i> (or <i>nil</i>) value, that should be inserted into the map in
+     * this context. This is primarily used in {@link ChronicleMap#acquireUsing} operation
+     * implementation, i. e. {@link MapMethods#acquireUsing}.
      *
      * <p>This method if the default implementation for {@link
      * MapEntryOperations#defaultValue}, which might be customized over the default.
+     * 
+     * @return the default value to be inserted into the map
+     * @see MapEntryOperations#defaultValue(MapAbsentEntry)
      */
     @NotNull Value<V, ?> defaultValue();
 }

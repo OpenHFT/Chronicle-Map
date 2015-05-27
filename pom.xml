@@ -213,13 +213,21 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.2</version>
                 <configuration>
                     <links>
                         <link>http://openhft.github.io/Java-Lang/apidocs/</link>
+                        <link>http://openhft.github.io/Chronicle-Bytes/apidocs/</link>
+                        <link>http://openhft.github.io/Chronicle-Algorithms/apidocs/</link>
                     </links>
                     <excludePackageNames>
-                        net.openhft.chronicle.hash.serialization.internal:net.openhft.xstream:net.openhft.xstream.*:net.openhft.chronicle.hash.impl.*
+                        net.openhft.chronicle.hash.serialization.internal:net.openhft.xstream:net.openhft.xstream.*:net.openhft.chronicle.hash.impl:net.openhft.chronicle.map.impl:net.openhft.chronicle.hash.hashing
                     </excludePackageNames>
+                    <sourceFileExcludes>
+                        <exclude>net/openhft/chronicle/map/VanillaChronicleMap.java</exclude>
+                        <exclude>net/openhft/chronicle/map/ReplicatedChronicleMap.java</exclude>
+                        <exclude>net/openhft/chronicle/map/Replica.java</exclude>
+                    </sourceFileExcludes>
                     <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
             </plugin>

@@ -19,12 +19,36 @@
 package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.AcceptanceDecision;
+import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.map.replication.MapRemoteOperations;
+import net.openhft.chronicle.set.replication.SetRemoteOperations;
 
 import static net.openhft.chronicle.hash.AcceptanceDecision.ACCEPT;
 import static net.openhft.chronicle.hash.AcceptanceDecision.DISCARD;
 
+/**
+ * Specifies the default eventual consistency strategy for {@link ChronicleHashBuilder#replication(
+ * byte) replicated} {@link ChronicleHash}es:
+ * <i>last write wins</i>. If two writes to a single entry occurred simultaneously on different
+ * nodes, the write on the node with lower identifier wins.
+ * 
+ * @see MapRemoteOperations
+ * @see SetRemoteOperations 
+ */
 public final class DefaultEventualConsistencyStrategy {
-    
+
+    /**
+     * Returns the acceptance decision, should be made about the modification operation in the
+     * given {@code context}, aiming to modify the given {@code entry}. This method doesn't do any
+     * changes to {@code entry} nor {@code context} state. {@link MapRemoteOperations} and
+     * {@link SetRemoteOperations} method implementations should guide the result of calling this
+     * method to do something to <i>actually</i> apply the remote operation.
+     *  
+     * @param entry the entry to be modified
+     * @param context the remote operation context
+     * @return if the remote operation should be accepted or discarded
+     */
     public static AcceptanceDecision decideOnRemoteModification(
             HashReplicableEntry<?> entry, RemoteOperationContext<?> context) {
         long remoteTimestamp = context.remoteTimestamp();

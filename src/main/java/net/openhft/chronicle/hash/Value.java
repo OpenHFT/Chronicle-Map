@@ -29,20 +29,33 @@ import org.jetbrains.annotations.Nullable;
  * 
  * <p>Object access: {@link #get()}. 
  * 
- * In most cases, each particular value wraps either some object or some bytes. Object is marshalled
- * to bytes lazily on demand, and bytes are lazily deserialized to object, accordingly. 
+ * <p>In most cases, each particular value wraps either some object or some bytes. Object
+ * is marshalled to bytes lazily on demand, and bytes are lazily deserialized to object,
+ * accordingly. 
  *  
  * @param <V> type of the accessed objects
  * @param <T> type of the handle for bytes access
  */
 public interface Value<V, T> {
-    
+
+    /**
+     * Returns access to the value's bytes.
+     */
     ReadAccess<T> access();
 
+    /**
+     * Returns a handle to access the value's bytes.
+     */
     T handle();
 
+    /**
+     * Returns the offset to the value's bytes.
+     */
     long offset();
 
+    /**
+     * Returns the size of the value's bytes.
+     */
     long size();
 
     default long hash(LongHashFunction f) {

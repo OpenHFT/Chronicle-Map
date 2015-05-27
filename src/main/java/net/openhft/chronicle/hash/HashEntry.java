@@ -18,14 +18,19 @@
 
 package net.openhft.chronicle.hash;
 
+import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.MapEntryOperations;
+import net.openhft.chronicle.set.SetEntry;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Access to the <i>present</i> {@code ChronicleHash} entry.
+ * The <i>present</i> {@code ChronicleHash} entry context.
+ *
+ * <p>This interface is not usable by itself; it merely defines the common base for {@link MapEntry}
+ * and {@link SetEntry}.
  * 
  * @param <K> type of the key in {@code ChronicleHash}
- * @see MapEntryOperations
+ * @see HashQueryContext#entry()
  */
 public interface HashEntry<K> {
     /**
