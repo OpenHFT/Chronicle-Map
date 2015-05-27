@@ -263,25 +263,29 @@ public class BiMapTest {
         verifyBiMapConsistent(map1, map2);
         
         ForkJoinPool pool = new ForkJoinPool(8);
-        pool.submit(() -> {
-            ThreadLocalRandom.current().ints().limit(10_000).parallel().forEach(i -> {
-                int v = Math.abs(i % 10);
-                if ((i & 1) == 0) {
-                    if ((i & 2) == 0) {
-                        map1.putIfAbsent(v, "" + v);
+        try {
+            pool.submit(() -> {
+                ThreadLocalRandom.current().ints().limit(10_000).parallel().forEach(i -> {
+                    int v = Math.abs(i % 10);
+                    if ((i & 1) == 0) {
+                        if ((i & 2) == 0) {
+                            map1.putIfAbsent(v, "" + v);
+                        } else {
+                            map1.remove(v, "" + v);
+                        }
                     } else {
-                        map1.remove(v, "" + v);
+                        if ((i & 2) == 0) {
+                            map2.putIfAbsent("" + v, v);
+                        } else {
+                            map2.remove("" + v, v);
+                        }
                     }
-                } else {
-                    if ((i & 2) == 0) {
-                        map2.putIfAbsent("" + v, v);
-                    } else {
-                        map2.remove("" + v, v);
-                    }
-                }
-            });
-        }).get();
-        verifyBiMapConsistent(map1, map2);
+                });
+            }).get();
+            verifyBiMapConsistent(map1, map2);
+        } finally {
+            pool.shutdownNow();
+        }
     }
     
     private static <K, V> void verifyBiMapConsistent(Map<K, V> m1, Map<V, K> m2) {
