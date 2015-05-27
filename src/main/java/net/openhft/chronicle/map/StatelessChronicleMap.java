@@ -19,10 +19,10 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.core.util.CloseablesManager;
 import net.openhft.chronicle.hash.RemoteCallTimeoutException;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
-import net.openhft.chronicle.hash.impl.util.CloseablesManager;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.internal.ReaderWithSize;
 import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;

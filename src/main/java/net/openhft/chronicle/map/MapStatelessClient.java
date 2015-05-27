@@ -1,6 +1,8 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
+
+import net.openhft.chronicle.network.connection.AbstactStatelessClient;
+import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.wire.CoreFields;
 import net.openhft.chronicle.wire.ParameterizeWireKey;
 import net.openhft.chronicle.wire.ValueIn;
