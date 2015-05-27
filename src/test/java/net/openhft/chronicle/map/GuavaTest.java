@@ -26,26 +26,42 @@ import com.google.common.collect.testing.features.CollectionSize;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import org.junit.Ignore;
+import net.openhft.chronicle.hash.Value;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.collect.testing.MapTestSuiteBuilder.using;
 import static com.google.common.collect.testing.features.MapFeature.*;
 
 public class GuavaTest extends TestCase {
 
     public static Test suite() {
-        TestSuite hhmTests = MapTestSuiteBuilder.using(new HHMTestGenerator())
-                .named("HugeHashMap Guava tests")
-                .withFeatures(GENERAL_PURPOSE)
+        MapTestSuiteBuilder<CharSequence, CharSequence> chmSuite = using(new CHMTestGenerator());
+        configureSuite(chmSuite);
+        TestSuite chmTests = chmSuite.named("Guava tests of Chronicle Map").createTestSuite();
+
+        MapTestSuiteBuilder<CharSequence, CharSequence> backed = using(new BackedUpMapGenerator());
+        configureSuite(backed);
+        TestSuite backedTests = backed
+                .named("Guava tests tests of Chronicle Map, backed with HashMap")
+                .createTestSuite();
+        
+        TestSuite tests = new TestSuite();
+        tests.addTest(chmTests);
+        // TODO
+        //tests.addTest(backedTests);
+        return tests;
+    }
+
+    private static void configureSuite(MapTestSuiteBuilder<CharSequence, CharSequence> suite) {
+        suite.withFeatures(GENERAL_PURPOSE)
                 .withFeatures(CollectionSize.ANY)
                 .withFeatures(CollectionFeature.REMOVE_OPERATIONS)
-                .withFeatures(RESTRICTS_KEYS, RESTRICTS_VALUES)
-                .createTestSuite();
-        TestSuite tests = new TestSuite();
-        tests.addTest(hhmTests);
-        return tests;
+                .withFeatures(RESTRICTS_KEYS, RESTRICTS_VALUES);
     }
 
     static abstract class TestGenerator
@@ -109,10 +125,36 @@ public class GuavaTest extends TestCase {
             return builder.create();
         }
     }
-
-    static class HHMTestGenerator extends CHMTestGenerator {
+    
+    static class BackedUpMapGenerator extends CHMTestGenerator {
+        
         @Override
         Map<CharSequence, CharSequence> newMap() {
+            Map<CharSequence, CharSequence> m = new HashMap<>();
+            builder.entryOperations(new MapEntryOperations<CharSequence, CharSequence, Void>() {
+                @Override
+                public Void remove(@NotNull MapEntry<CharSequence, CharSequence> entry) {
+                    Assert.assertEquals(m, entry.context().map());
+                    m.remove(entry.key().get().toString());
+                    return MapEntryOperations.super.remove(entry);
+                }
+
+                @Override
+                public Void replaceValue(@NotNull MapEntry<CharSequence, CharSequence> entry,
+                                         Value<CharSequence, ?> newValue) {
+                    Assert.assertEquals(m, entry.context().map());
+                    m.put(entry.key().get().toString(), newValue.get().toString());
+                    return MapEntryOperations.super.replaceValue(entry, newValue);
+                }
+
+                @Override
+                public Void insert(@NotNull MapAbsentEntry<CharSequence, CharSequence> absentEntry,
+                                   Value<CharSequence, ?> value) {
+                    Assert.assertEquals(m, absentEntry.context().map());
+                    m.put(absentEntry.absentKey().get().toString(), value.get().toString());
+                    return MapEntryOperations.super.insert(absentEntry, value);
+                }
+            });
             return builder.create();
         }
     }

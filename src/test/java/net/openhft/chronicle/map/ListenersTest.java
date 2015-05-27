@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.map.impl.NullReturnValue;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -8,8 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 public class ListenersTest {
     
@@ -36,7 +36,7 @@ public class ListenersTest {
     }
     
     @Test
-    public void testRemove() {
+    public void testAnyRemove() {
         CountingEntryOperations<Integer, Integer> removeCounting =
                 new CountingEntryOperations<>();
         ChronicleMap<Integer, Integer> map =
@@ -64,7 +64,7 @@ public class ListenersTest {
     }
 
     @Test
-    public void testPut() {
+    public void testAnyPut() {
         CountingEntryOperations<Integer, Integer> putCounting =
                 new CountingEntryOperations<>();
         ChronicleMap<Integer, Integer> map =
@@ -84,5 +84,100 @@ public class ListenersTest {
 
         assertEquals(3, putCounting.replaceValueCount.get());
         assertEquals(2, putCounting.insertCount.get());
+    }
+    
+    @Test
+    public void testContainsKey() {
+        AtomicInteger c = new AtomicInteger();
+        ChronicleMap<Integer, Integer> map =
+                ChronicleMapBuilder.of(Integer.class, Integer.class)
+                        .entries(100)
+                        .mapMethods(new MapMethods<Integer, Integer, Void>() {
+                            @Override
+                            public boolean containsKey(MapQueryContext<Integer, Integer, Void> q) {
+                                if (q.queriedKey().get() == 2)
+                                    return false;
+                                c.incrementAndGet();
+                                return MapMethods.super.containsKey(q);
+                            }
+                        })
+                        .create();
+        
+        assertFalse(map.containsKey(1)); // 1
+        map.put(1, 1);
+        assertTrue(map.containsKey(1)); // 2
+        
+        map.put(2, 2);
+        assertFalse(map.containsKey(2));
+        
+        assertEquals(2, c.get());
+    }
+
+    @Test
+    public void testGet() {
+        AtomicInteger c = new AtomicInteger();
+        ChronicleMap<Integer, Integer> map =
+                ChronicleMapBuilder.of(Integer.class, Integer.class)
+                        .entries(100)
+                        .mapMethods(new MapMethods<Integer, Integer, Void>() {
+                            @Override
+                            public void get(MapQueryContext<Integer, Integer, Void> q,
+                                            ReturnValue<Integer> returnValue) {
+                                if (q.queriedKey().get() == 2) {
+                                    returnValue.returnValue(q.wrapValueAsValue(42));
+                                    return;
+                                }
+                                c.incrementAndGet();
+                                MapMethods.super.get(q, returnValue);
+                            }
+                        })
+                        .create();
+
+        assertNull(map.get(1)); // 1
+        map.put(1, 1);
+        assertEquals(1, map.get(1).intValue()); // 2
+
+        map.put(2, 2);
+        assertEquals(42, map.get(2).intValue());
+
+        assertEquals(2, c.get());
+    }
+
+    @Test
+    public void testPut() {
+        AtomicInteger c = new AtomicInteger();
+        ChronicleMap<Integer, Integer> map =
+                ChronicleMapBuilder.of(Integer.class, Integer.class)
+                        .entries(100)
+                        .mapMethods(new MapMethods<Integer, Integer, Void>() {
+                            @Override
+                            public void put(MapQueryContext<Integer, Integer, Void> q,
+                                            Value<Integer, ?> value,
+                                            ReturnValue<Integer> returnValue) {
+                                if (q.queriedKey().get() == 2) {
+                                    MapMethods.super.put(q, value, NullReturnValue.get());
+                                    return;
+                                }
+                                if (q.queriedKey().get() == 3) {
+                                    MapMethods.super.put(q, q.wrapValueAsValue(value.get() + 1),
+                                            returnValue);
+                                    return;
+                                }
+                                c.incrementAndGet();
+                                MapMethods.super.put(q, value, returnValue);
+                            }
+                        })
+                        .create();
+
+        assertNull(map.put(1, 1)); // 1
+        assertEquals(1, map.put(1, 2).intValue()); // 2
+        
+        assertNull(map.put(2, 1));
+        assertNull(map.put(2, 2));
+        
+        assertNull(map.put(3, 1));
+        assertEquals(2, map.get(3).intValue());
+
+        assertEquals(2, c.get());
     }
 }
