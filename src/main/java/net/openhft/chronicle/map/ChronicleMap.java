@@ -142,6 +142,11 @@ public interface ChronicleMap<K, V>
      */
     V acquireUsing(@NotNull K key, V usingValue);
 
+    /**
+     * @deprecated this method has incoherent, unclear semantics. Use {@link #queryContext(Object)}
+     * instead
+     */
+    @Deprecated
     @NotNull
     MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue);
 

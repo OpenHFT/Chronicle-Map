@@ -16,6 +16,11 @@
 
 package net.openhft.chronicle.hash.locks;
 
+/**
+ * @deprecated never implemented and replaced with strategies in
+ * {@link net.openhft.chronicle.algo.locks} 
+ */
+@Deprecated
 public interface LockingStrategy {
 
     void lock(InterProcessLock lock);

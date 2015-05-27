@@ -1155,7 +1155,9 @@ public final class ChronicleMapBuilder<K, V> implements
      * @param defaultValueProvider the strategy to obtain a default value by the absent key
      * @return this builder object back
      * @see #defaultValue(Object)
+     * @deprecated specialize {@link MapEntryOperations#defaultValue(MapAbsentEntry)} instead
      */
+    @Deprecated
     public ChronicleMapBuilder<K, V> defaultValueProvider(
             @NotNull DefaultValueProvider<K, V> defaultValueProvider) {
         this.defaultValueProvider = defaultValueProvider;
