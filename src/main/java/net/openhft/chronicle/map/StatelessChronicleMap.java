@@ -20,7 +20,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.util.CloseablesManager;
-import net.openhft.chronicle.hash.RemoteCallTimeoutException;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.serialization.BytesReader;
@@ -51,7 +50,6 @@ import java.util.function.Predicate;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.util.Collections.emptyList;
-import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.IS_DEBUG;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTION_ID;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.*;
@@ -239,8 +237,8 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
 
     private void checkTimeout(long timeoutTime) {
-        if (timeoutTime < System.currentTimeMillis() && !IS_DEBUG)
-            throw new RemoteCallTimeoutException();
+//        if (timeoutTime < System.currentTimeMillis() && !IS_DEBUG)
+//            throw new RemoteCallTimeoutException();
     }
 
     private synchronized void lazyConnect(final long timeoutMs,
