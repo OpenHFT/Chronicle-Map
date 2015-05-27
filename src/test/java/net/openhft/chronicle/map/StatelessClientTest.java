@@ -45,6 +45,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Rob Austin.
  */
+@Ignore
 public class StatelessClientTest {
     private static final Logger LOG = LoggerFactory.getLogger(StatelessClientTest.class);
 
