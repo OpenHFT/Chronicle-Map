@@ -242,8 +242,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     }
 
     @Override
-    public Replica.ModificationIterator acquireModificationIterator(
-            byte remoteIdentifier, @NotNull final ModificationNotifier modificationNotifier) {
+    public ModificationIterator acquireModificationIterator(byte remoteIdentifier) {
         ModificationIterator modificationIterator = modificationIterators.get(remoteIdentifier);
         if (modificationIterator != null)
             return modificationIterator;
@@ -259,7 +258,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                     modIterBitSetSizeInBytes());
 
             final ModificationIterator newModificationIterator = new ModificationIterator(
-                    bytes, modificationNotifier);
+                    bytes);
 
             modificationIterators.set(remoteIdentifier, newModificationIterator);
             modIterSet.set(remoteIdentifier);
@@ -271,7 +270,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                modificationIterators.get((int) next).raiseChange(segmentIndex, pos);
+                acquireModificationIterator((byte) next).raiseChange(segmentIndex, pos);
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -282,7 +281,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                modificationIterators.get((int) next).dropChange(segmentIndex, pos);
+                acquireModificationIterator((byte) next).dropChange(segmentIndex, pos);
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -293,7 +292,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                ModificationIterator modificationIterator = modificationIterators.get((int) next);
+                ModificationIterator modificationIterator =
+                        acquireModificationIterator((byte) next);
                 if (modificationIterator.dropChange(segmentIndex, oldPos))
                     modificationIterator.raiseChange(segmentIndex, newPos);
             } catch (Exception e) {
@@ -483,7 +483,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
      * @author Rob Austin.
      */
     class ModificationIterator implements Replica.ModificationIterator {
-        private final ModificationNotifier modificationNotifier;
+        private ModificationNotifier modificationNotifier;
         private final SingleThreadedDirectBitSet changesForUpdates;
         // to getVolatile when reading changes bits, because we iterate when without lock.
         // hardly this is needed on x86, probably on other architectures too.
@@ -495,18 +495,21 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         // records the current position of the cursor in the bitset
         private volatile long position = -1L;
 
-        /**
-         * @param bytes                the back the bitset, used to mark which entries have changed
-         * @param modificationNotifier called when ever there is a change applied
-         */
-        public ModificationIterator(@NotNull final Bytes bytes,
-                                    @NotNull final ModificationNotifier modificationNotifier) {
-            this.modificationNotifier = modificationNotifier;
+        public ModificationIterator(@NotNull final Bytes bytes) {
             long bitsPerSegment = bitsPerSegmentInModIterBitSet();
             segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
             posMask = bitsPerSegment - 1L;
             changesForUpdates = new SingleThreadedDirectBitSet(bytes);
             changesForIteration = new ATSDirectBitSet(bytes);
+        }
+
+        public ModificationIterator(@NotNull final Bytes bytes, ModificationNotifier notifier) {
+            this(bytes);
+            setModificationNotifier(notifier);
+        }
+
+        public void setModificationNotifier(ModificationNotifier modificationNotifier) {
+            this.modificationNotifier = modificationNotifier;
         }
 
         /**

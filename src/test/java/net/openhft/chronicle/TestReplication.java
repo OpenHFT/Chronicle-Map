@@ -67,50 +67,6 @@ public class TestReplication {
 
     private ReplicationHub hubOnServer1;
 
-    @Test
-    public void testAllDataGetsReplicated2() throws InterruptedException, IOException, ExecutionException {
-
-        try
-        // server 1 with  identifier = 1
-        {
-            ChronicleMapBuilder<Short, Short> builder =
-                    ChronicleMapBuilder.of(Short.class, Short.class)
-                            .entries(1000);
-
-            byte identifier = (byte) 1;
-
-            TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8086);
-
-            hubOnServer1 = ReplicationHub.builder()
-                    .tcpTransportAndNetwork(tcpConfig)
-                    .maxNumberOfChannels(SIZE)
-                    .createWithId(identifier);
-
-            for (short channel1 = 3; channel1 < SIZE; channel1++) {
-                ChronicleMap<Short, Short> map = builder.instance()
-                        .replicatedViaChannel(hubOnServer1.createChannel(channel1)).create();
-
-                for (int i = 0; i < 10; i++) {
-                    map.put((short) i, (short) i);
-                }
-
-                maps.put(channel1, map);
-
-                System.out.println("" + channel1);
-
-
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        for (; ; ) {
-            Thread.sleep(1000);
-        }
-
-    }
 
 
 }
