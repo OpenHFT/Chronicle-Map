@@ -28,7 +28,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-map</artifactId>
-    <version>2.1.9</version>
+    <version>2.1.10-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
 
@@ -225,7 +225,7 @@
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</url>
         <connection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</connection>
         <developerConnection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</developerConnection>
-        <tag>chronicle-map-2.1.9</tag>
+        <tag>master</tag>
     </scm>
 
 </project>
