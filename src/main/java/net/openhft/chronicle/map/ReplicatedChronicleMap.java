@@ -1432,7 +1432,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
 
-
         /**
          * used to merge multiple segments and positions into a single index used by the bit map
          *
@@ -1447,12 +1446,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
         public void onPut(long pos, SharedSegment segment) {
             changes.set(combine(segment.getIndex(), pos));
-            modificationNotifier.onChange();
+            if (modificationNotifier != null)
+                modificationNotifier.onChange();
         }
 
         public void onRemove(long pos, SharedSegment segment) {
             changes.set(combine(segment.getIndex(), pos));
-            modificationNotifier.onChange();
+            if (modificationNotifier != null)
+                modificationNotifier.onChange();
         }
 
         /**

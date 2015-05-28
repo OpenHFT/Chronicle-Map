@@ -1,26 +1,20 @@
 package net.openhft.chronicle.map;
 
-import org.junit.Assert;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by khoxsey on 5/22/15.
  */
 public class ReplicateProxyMapUpdatedViaSharedMemoryTest {
 
-    /**
-     * test 2 maps on one server ( one that replicates vai TCP/IP and one that just shares memory )
-     * can connect to a remote map
-     * connect to a remote map
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    @Test
+    @Test(timeout = 10000)
     public void testReplicateProxyMapUpdatedViaSharedMemory() throws IOException, InterruptedException {
 
         ChronicleMap<String, String> server1 = null;
@@ -33,7 +27,8 @@ public class ReplicateProxyMapUpdatedViaSharedMemoryTest {
             server1 = ChronicleMapBuilder.of(String.class, String.class)
                     .replication((byte) 1).createPersistedTo(tempFile);
 
-            TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(7077);
+            TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(7077)
+                    .heartBeatInterval(500, TimeUnit.MILLISECONDS);
             replicationMap = ChronicleMapBuilder.of(String.class, String.class)
                     .replication((byte) 1, serverConfig).createPersistedTo(tempFile);
         }
