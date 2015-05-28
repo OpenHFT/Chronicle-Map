@@ -351,8 +351,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     @Override
-    public Replica.ModificationIterator acquireModificationIterator(
-            byte remoteIdentifier, @NotNull final ModificationNotifier modificationNotifier) {
+    public ModificationIterator acquireModificationIterator(byte remoteIdentifier) {
         ModificationIterator modificationIterator = modificationIterators.get(remoteIdentifier);
         if (modificationIterator != null)
             return modificationIterator;
@@ -368,31 +367,21 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     modIterBitSetSizeInBytes());
 
             final ModificationIterator newModificationIterator = new ModificationIterator(
-                    bytes, modificationNotifier);
+                    bytes);
 
             modificationIterators.set(remoteIdentifier, newModificationIterator);
-            System.out.println("Thread=" + Thread.currentThread() + " acquireModificationIterator id=" + remoteIdentifier);
             modIterSet.set(remoteIdentifier);
             return newModificationIterator;
         }
     }
+
 
     @Override
     void onPut(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                ModificationIterator modificationIterator;
-
-                modificationIterator = modificationIterators.get((int) next);
-                if (modificationIterator == null)
-                    continue;
-
-                System.out.println("thread=" + Thread.currentThread() + " onPut() - acquireModificationIterator id=" + next);
-
-                modificationIterator.onPut(pos, segment);
-
-
+                acquireModificationIterator((byte) next).onPut(pos, segment);
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -409,7 +398,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                modificationIterators.get((int) next).onRemove(pos, segment);
+                acquireModificationIterator((byte) next).onRemove(pos, segment);
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -426,7 +415,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                modificationIterators.get((int) next).onRelocation(pos, segment);
+                acquireModificationIterator((byte) next).onRelocation(pos, segment);
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -1403,7 +1392,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
      * @author Rob Austin.
      */
     class ModificationIterator implements Replica.ModificationIterator {
-        private final ModificationNotifier modificationNotifier;
+
+        private ModificationNotifier modificationNotifier;
         private final ATSDirectBitSet changes;
         private final int segmentIndexShift;
         private final long posMask;
@@ -1423,12 +1413,25 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          */
         public ModificationIterator(@NotNull final Bytes bytes,
                                     @NotNull final ModificationNotifier modificationNotifier) {
-            this.modificationNotifier = modificationNotifier;
+            setModificationNotifier(modificationNotifier);
             long bitsPerSegment = bitsPerSegmentInModIterBitSet();
             segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
             posMask = bitsPerSegment - 1L;
             changes = new ATSDirectBitSet(bytes);
         }
+
+        public void setModificationNotifier(ModificationNotifier modificationNotifier) {
+            this.modificationNotifier = modificationNotifier;
+        }
+
+        public ModificationIterator(@NotNull final Bytes bytes) {
+            long bitsPerSegment = bitsPerSegmentInModIterBitSet();
+            segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
+            posMask = bitsPerSegment - 1L;
+            changes = new ATSDirectBitSet(bytes);
+        }
+
+
 
         /**
          * used to merge multiple segments and positions into a single index used by the bit map

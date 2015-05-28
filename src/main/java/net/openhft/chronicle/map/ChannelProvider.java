@@ -44,7 +44,6 @@ import static java.lang.Math.min;
 import static java.nio.ByteBuffer.wrap;
 import static net.openhft.chronicle.map.Replica.EntryExternalizable;
 import static net.openhft.chronicle.map.Replica.ModificationIterator;
-import static net.openhft.chronicle.map.Replica.ModificationNotifier.NOP;
 
 /**
  * @author Rob Austin.
@@ -153,6 +152,8 @@ final class ChannelProvider implements Closeable {
             }
         }
     };
+
+
     private final byte localIdentifier;
     final Replica asReplica = new Replica() {
         @Override
@@ -162,7 +163,8 @@ final class ChannelProvider implements Closeable {
 
         @Override
         public ModificationIterator acquireModificationIterator(
-                final byte remoteIdentifier, final ModificationNotifier notifier) {
+                final byte remoteIdentifier) {
+
             channelDataLock.writeLock().lock();
             try {
                 final ModificationIterator result = modificationIterator.get(remoteIdentifier);
@@ -170,6 +172,9 @@ final class ChannelProvider implements Closeable {
                     return result;
 
                 final ModificationIterator result0 = new ModificationIterator() {
+
+                    volatile Replica.ModificationNotifier notifier0;
+
                     @Override
                     public boolean hasNext() {
                         channelDataLock.readLock().lock();
@@ -179,7 +184,8 @@ final class ChannelProvider implements Closeable {
                             for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
                                 final ModificationIterator modificationIterator =
                                         chronicleChannelList.get(i).acquireModificationIterator(
-                                                remoteIdentifier, notifier);
+                                                remoteIdentifier);
+
                                 if (modificationIterator.hasNext())
                                     return true;
                             }
@@ -197,7 +203,8 @@ final class ChannelProvider implements Closeable {
                             for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
                                 Replica chronicleChannel = chronicleChannelList.get(i);
                                 final ModificationIterator modificationIterator = chronicleChannel
-                                        .acquireModificationIterator(remoteIdentifier, notifier);
+                                        .acquireModificationIterator(remoteIdentifier);
+
                                 if (modificationIterator
                                         .nextEntry(callback, chronicleChannelIds.get(i)))
                                     return true;
@@ -214,17 +221,29 @@ final class ChannelProvider implements Closeable {
                         try {
                             for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
                                 try {
-                                    chronicleChannelList.get(i)
-                                            .acquireModificationIterator(remoteIdentifier, notifier)
-                                            .dirtyEntries(fromTimeStamp);
+                                    ModificationIterator mi = chronicleChannelList.get(i)
+                                            .acquireModificationIterator(remoteIdentifier
+                                            );
+
+                                    mi.dirtyEntries(fromTimeStamp);
                                 } catch (InterruptedException e) {
                                     throw new RuntimeException(e);
                                 }
-                                notifier.onChange();
+                                notifier0.onChange();
                             }
                         } finally {
                             channelDataLock.readLock().unlock();
                         }
+                    }
+
+                    @Override
+                    public void setModificationNotifier(@NotNull ModificationNotifier modificationNotifier) {
+                        for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
+                            Replica chronicleChannel = chronicleChannelList.get(i);
+                            chronicleChannel.acquireModificationIterator(remoteIdentifier)
+                                    .setModificationNotifier(modificationNotifier);
+                        }
+                        notifier0 = modificationNotifier;
                     }
                 };
 
@@ -340,7 +359,7 @@ final class ChannelProvider implements Closeable {
         // this could be null if one node has a chronicle channel before the other
         if (chronicleChannels[chronicleChannel] != null) {
             try {
-                chronicleChannels[chronicleChannel].acquireModificationIterator(remoteIdentifier, NOP)
+                chronicleChannels[chronicleChannel].acquireModificationIterator(remoteIdentifier)
                         .dirtyEntries(lastModificationTime);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -443,14 +462,16 @@ final class ChannelProvider implements Closeable {
 
             @Override
             public ModificationIterator acquireModificationIterator(
-                    final byte remoteIdentifier, final ModificationNotifier modificationNotifier) {
+                    final byte remoteIdentifier) {
                 final ModificationIterator result = systemModificationIterator.get(remoteIdentifier);
 
                 if (result != null)
                     return result;
 
                 final PayloadProvider iterator = new PayloadProvider() {
+
                     final Queue<Bytes> payloads = new LinkedTransferQueue<Bytes>();
+                    ModificationNotifier modificationNotifier0;
 
                     @Override
                     public boolean hasNext() {
@@ -472,13 +493,18 @@ final class ChannelProvider implements Closeable {
                     }
 
                     @Override
+                    public void setModificationNotifier(@NotNull ModificationNotifier modificationNotifier) {
+                        modificationNotifier0 = modificationNotifier;
+                    }
+
+                    @Override
                     public void addPayload(Bytes bytes) {
                         if (bytes.remaining() == 0)
                             return;
                         payloads.add(bytes);
                         // notifies that a change has been made, this will nudge the OP_WRITE
                         // selector to push this update out over the nio socket
-                        modificationNotifier.onChange();
+                        modificationNotifier0.onChange();
                     }
                 };
 

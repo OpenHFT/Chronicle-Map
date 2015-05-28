@@ -49,8 +49,8 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
         super(replicationConfig, replica.identifier());
 
         Replica.ModificationIterator modificationIterator = replica.acquireModificationIterator(
-                ChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID, this);
-
+                ChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID);
+        modificationIterator.setModificationNotifier(this);
         setReader(new UdpSocketChannelEntryReader(replicationConfig.udpBufferSize(), entryExternalizable));
 
         setWriter(new UdpSocketChannelEntryWriter(replicationConfig.udpBufferSize(),

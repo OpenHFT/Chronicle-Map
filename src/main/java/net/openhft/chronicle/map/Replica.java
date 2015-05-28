@@ -50,15 +50,14 @@ interface Replica extends Closeable {
      * Gets (if it does not exist, creates) an instance of ModificationIterator associated with a
      * remote node, this weak associated is bound using the {@code identifier}.
      *
-     * @param remoteIdentifier     the identifier of the remote node
      * @param modificationNotifier called when ever there is a change applied to the modification
      *                             iterator
+     * @param remoteIdentifier     the identifier of the remote node
      * @return the ModificationIterator dedicated for replication to the remote node with the given
      * identifier
      * @see #identifier()
      */
-    ModificationIterator acquireModificationIterator(byte remoteIdentifier,
-                                                     ModificationNotifier modificationNotifier);
+    ModificationIterator acquireModificationIterator(byte remoteIdentifier);
 
     /**
      * Returns the timestamp of the last change from the specified remote node, already replicated
@@ -76,7 +75,7 @@ interface Replica extends Closeable {
      * notifies when there is a changed to the modification iterator
      */
     interface ModificationNotifier {
-        public static final ModificationNotifier NOP = new ModificationNotifier() {
+        ModificationNotifier NOP = new ModificationNotifier() {
             @Override
             public void onChange() {
             }
@@ -120,6 +119,14 @@ interface Replica extends Closeable {
          * @param fromTimeStamp the timestamp from which all entries should be dirty
          */
         void dirtyEntries(long fromTimeStamp) throws InterruptedException;
+
+        /**
+         * the {@code modificationNotifier} is called when ever there is a change applied to the
+         * modification iterator
+         *
+         * @param modificationNotifier gets notified when a change occurs
+         */
+        void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier);
     }
 
     /**

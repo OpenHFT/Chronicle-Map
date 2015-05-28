@@ -641,7 +641,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                         "remoteIdentifier=" + remoteIdentifier);
 
             attached.remoteModificationIterator =
-                    replica.acquireModificationIterator(remoteIdentifier, attached);
+                    replica.acquireModificationIterator(remoteIdentifier);
+
+            attached.remoteModificationIterator.setModificationNotifier(attached);
 
             long timeStampOfLastMessage = replica.lastModificationTime(remoteIdentifier);
             writer.writeRemoteBootstrapTimestamp(timeStampOfLastMessage);
