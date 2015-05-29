@@ -560,10 +560,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             @NotNull Bytes source) {
 
         final long bootstrapTime = source.readLong();
-       /* assert bootstrapTime > currentTime() - TimeUnit.MINUTES
-                .toMillis(1) && bootstrapTime <= currentTime()
-                : "bootstrapTime=" + bootstrapTime;
-*/
 
         final long keySize = keySizeMarshaller.readSize(source);
         final long valueSize = valueSizeMarshaller.readSize(source);
