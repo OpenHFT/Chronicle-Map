@@ -743,7 +743,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 entryWriter.workCompleted();
 
         } else if (attached.remoteModificationIterator != null)
-            entryWriter.entriesToBuffer(attached.remoteModificationIterator, key);
+            entryWriter.entriesToBuffer(attached.remoteModificationIterator);
 
         try {
             final int len = entryWriter.writeBufferToSocket(socketChannel, approxTime);
@@ -1163,12 +1163,10 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         /**
          * writes all the entries that have changed, to the buffer which will later be written to
          * TCP/IP
+         *  @param modificationIterator a record of which entries have modification
          *
-         * @param modificationIterator a record of which entries have modification
-         * @param selectionKey
          */
-        void entriesToBuffer(@NotNull final Replica.ModificationIterator modificationIterator,
-                             @NotNull final SelectionKey selectionKey) throws InterruptedException {
+        void entriesToBuffer(@NotNull final Replica.ModificationIterator modificationIterator) throws InterruptedException {
 
             int entriesWritten = 0;
             try {
@@ -1278,6 +1276,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      */
     class TcpSocketChannelEntryReader {
         public static final int HEADROOM = 1024;
+        public static final int SIZE_OF_BOOTSTRAP_TIMESTAMP = 8;
         public long lastHeartBeatReceived = System.currentTimeMillis();
         ByteBuffer in;
         ByteBufferBytes out;
@@ -1363,7 +1362,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
                         // if the buffer is too small to read this payload we will have to grow the
                         // size of the buffer
-                        long requiredSize = sizeInBytes + SIZE_OF_SIZE + 1;
+                        long requiredSize = sizeInBytes + SIZE_OF_SIZE + 1 + SIZE_OF_BOOTSTRAP_TIMESTAMP;
                         if (out.capacity() < requiredSize) {
                             attached.entryReader.resizeBuffer(requiredSize + HEADROOM);
                         }
@@ -1419,8 +1418,10 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                                 }
                             }
                         }
-                    } else
+                    } else {
                         externalizable.readExternalEntry(copies, segmentState, out);
+
+                    }
 
                     out.limit(limit);
 

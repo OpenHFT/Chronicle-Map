@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static net.openhft.chronicle.hash.hashing.Hasher.hash;
@@ -97,6 +99,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     private static final long serialVersionUID = 0L;
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
     private static final long LAST_UPDATED_HEADER_SIZE = 128L * 8L;
+    public static final int SIZE_OF_BOOTSTRAP_TIME_STAMP = 8;
     private final TimeProvider timeProvider;
     private final byte localIdentifier;
     transient Set<Closeable> closeables;
@@ -162,7 +165,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 assignedModIterBitSetSizeInBytes();
     }
 
-    void setLastModificationTime(byte identifier, long timestamp) {
+    public void setLastModificationTime(byte identifier, long timestamp) {
         final long offset = identifier * 8L;
 
         // purposely not volatile as this will impact performance,
@@ -464,7 +467,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             // make a byte buffer
             assert result < Integer.MAX_VALUE;
 
-            return (int) result;
+            return (int) result + SIZE_OF_BOOTSTRAP_TIME_STAMP;
         } finally {
             entry.position(start);
         }
@@ -479,9 +482,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     @Override
     public void writeExternalEntry(@NotNull Bytes entry,
                                    @NotNull Bytes destination,
-                                   int chronicleId) {
+                                   int chronicleId,
+                                   long bootstrapTime) {
         final long initialLimit = entry.limit();
-
         final long keySize = keySizeMarshaller.readSize(entry);
 
         final long keyPosition = entry.position();
@@ -504,7 +507,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         final long valuePosition = entry.position();
-
+        destination.writeLong(bootstrapTime);
         keySizeMarshaller.writeSize(destination, keySize);
         valueSizeMarshaller.writeSize(destination, valueSize);
         destination.writeStopBit(timeStamp);
@@ -555,6 +558,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     public void readExternalEntry(
             @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
             @NotNull Bytes source) {
+
+        final long bootstrapTime = source.readLong();
+        assert bootstrapTime > currentTime() - TimeUnit.MINUTES
+                .toMillis(1) && bootstrapTime <= currentTime()
+                : "bootstrapTime=" + bootstrapTime;
+
+
         final long keySize = keySizeMarshaller.readSize(source);
         final long valueSize = valueSizeMarshaller.readSize(source);
         final long timeStamp = source.readStopBit();
@@ -574,6 +584,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             // this may occur when working with UDP, as we may receive our own data
             return;
         }
+
+        setLastModificationTime(remoteIdentifier, bootstrapTime);
 
         final long keyPosition = source.position();
         final long keyLimit = keyPosition + keySize;
@@ -595,7 +607,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
             segment(segmentNum).remoteRemove(copies, segmentState,
                     source, segmentHash, timeStamp, remoteIdentifier);
-            setLastModificationTime(remoteIdentifier, timeStamp);
+
             return;
         }
 
@@ -610,7 +622,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         final long valueLimit = valuePosition + valueSize;
         segment(segmentNum).remotePut(copies, segmentState, source,
                 keySize, valueSize, segmentHash, remoteIdentifier, timeStamp);
-        setLastModificationTime(remoteIdentifier, timeStamp);
 
         if (debugEnabled) {
             source.limit(valueLimit);
@@ -790,6 +801,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             entryCreated(lock);
             return result;
         }
+
 
         /**
          * called from a remote node as part of replication
@@ -1297,6 +1309,23 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
             return new TimestampTrackingEntry(key, value, timestamp);
         }
+
+
+        final MultiStoreBytes timestampBytes = new MultiStoreBytes();
+
+        /**
+         * it is assumed that when calling this code the segment lock is in place
+         *
+         * @param pos the position of in the segment
+         * @return the timestamp of the entry when it was written
+         */
+        public long timeStamp(long pos) {
+            final Bytes entry = reuse(timestampBytes, offsetFromPos(pos));
+            final long keySize = keySizeMarshaller.readSize(entry);
+            entry.skip(keySize);
+            return entry.readLong();
+        }
+
     }
 
     @Override
@@ -1398,6 +1427,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         private final int segmentIndexShift;
         private final long posMask;
 
+        // when a bootstrap is send this is the time stamp that the client will bootstrap up to
+        // if it is set as ZERO then the onPut() will set it to the current time, once the
+        // consumer has cycled through the bit set the timestamp will be set back to zero.
+        private AtomicLong bootStrapTimeStamp = new AtomicLong();
+        private long lastBootStrapTimeStamp = currentTime();
+
         private final EntryModifiableCallback entryModifiableCallback =
                 new EntryModifiableCallback();
 
@@ -1446,12 +1481,31 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
         public void onPut(long pos, SharedSegment segment) {
             changes.set(combine(segment.getIndex(), pos));
+
+            // todo improve this - use the timestamp from the entry its self
+            bootStrapTimeStamp.compareAndSet(0, timestamp(pos, segment));
+
             if (modificationNotifier != null)
                 modificationNotifier.onChange();
         }
 
+        private long timestamp(long pos, SharedSegment segment) {
+
+            long timeStamp = segment.timeStamp(pos);
+
+            assert timeStamp > currentTime() - TimeUnit.SECONDS.toMillis(1) &&
+                    timeStamp <= currentTime() : "timeStamp=" + timeStamp + ", " +
+                    "currentTime=" + currentTime();
+            return timeStamp;
+        }
+
+
         public void onRemove(long pos, SharedSegment segment) {
             changes.set(combine(segment.getIndex(), pos));
+
+            // todo improve this - use the timestamp from the entry its self
+            bootStrapTimeStamp.compareAndSet(0, timestamp(pos, segment));
+
             if (modificationNotifier != null)
                 modificationNotifier.onChange();
         }
@@ -1477,6 +1531,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     (position > 0L && changes.nextSetBit(0L) != NOT_FOUND);
         }
 
+
         /**
          * @param entryCallback call this to get an entry, this class will take care of the locking
          * @return true if an entry was processed
@@ -1493,6 +1548,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         this.position = NOT_FOUND;
                         return false;
                     }
+
+                    bootStrapTimeStamp.set(0);
                     continue;
                 }
 
@@ -1517,7 +1574,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
-                        final boolean success = entryCallback.onEntry(entry, chronicleId);
+                        final boolean success = entryCallback.onEntry(entry,
+                                chronicleId,
+                                bootStrapTimeStamp());
+
                         entryCallback.onAfterEntry();
 
                         if (success)
@@ -1527,7 +1587,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                     }
 
-
                     // if the position was already cleared by another thread
                     // while we were trying to obtain segment lock (for example, in onRelocation()),
                     // go to pick up next (next iteration in while (true) loop)
@@ -1535,6 +1594,18 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     segment.readUnlock();
                 }
             }
+        }
+
+        /**
+         * @return the timestamp  that the remote client should bootstrap from when there has been a
+         * disconnection, this time maybe later than the message time as event are not send in
+         * chronological order from the bit set.
+         */
+        private long bootStrapTimeStamp() {
+            final long timeStamp = bootStrapTimeStamp.get();
+            long result = (timeStamp == 0) ? this.lastBootStrapTimeStamp : timeStamp;
+            this.lastBootStrapTimeStamp = result;
+            return result;
         }
 
         @Override

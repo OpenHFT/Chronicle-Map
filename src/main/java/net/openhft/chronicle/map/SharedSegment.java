@@ -44,4 +44,6 @@ interface SharedSegment<K, V> {
 
     long offsetFromPos(long pos);
 
+    long timeStamp(long pos);
+
 }

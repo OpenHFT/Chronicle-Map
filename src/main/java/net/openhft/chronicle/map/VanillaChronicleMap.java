@@ -1673,6 +1673,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             return entriesOffset + pos * chunkSize;
         }
 
+        @Override
+        public long timeStamp(long pos) {
+            throw new UnsupportedOperationException("timeStamp are only supported by the " +
+                    "replicated map");
+        }
+
+
         final MultiStoreBytes reuse(MultiStoreBytes entry, long offset) {
             entry.setBytesOffset(bytes, offset);
             entry.position(metaDataBytes);

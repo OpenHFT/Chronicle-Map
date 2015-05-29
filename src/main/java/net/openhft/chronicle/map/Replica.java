@@ -50,8 +50,6 @@ interface Replica extends Closeable {
      * Gets (if it does not exist, creates) an instance of ModificationIterator associated with a
      * remote node, this weak associated is bound using the {@code identifier}.
      *
-     * @param modificationNotifier called when ever there is a change applied to the modification
-     *                             iterator
      * @param remoteIdentifier     the identifier of the remote node
      * @return the ModificationIterator dedicated for replication to the remote node with the given
      * identifier
@@ -70,6 +68,9 @@ interface Replica extends Closeable {
      * @see #identifier()
      */
     long lastModificationTime(byte remoteIdentifier);
+
+
+    void setLastModificationTime(byte identifier, long timestamp);
 
     /**
      * notifies when there is a changed to the modification iterator
@@ -156,15 +157,17 @@ interface Replica extends Closeable {
 
         /**
          * The map implements this method to save its contents.
-         *
          * @param entry       the byte location of the entry to be stored
          * @param destination a buffer the entry will be written to, the segment may reject this
          *                    operation and add zeroBytes, if the identifier in the entry did not
          *                    match the maps local
          * @param chronicleId is the channel id used to identify the canonical map or queue
+         * @param bootstrapTime
          */
-        void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination, int
-                chronicleId);
+        void writeExternalEntry(@NotNull Bytes entry,
+                                @NotNull Bytes destination,
+                                int chronicleId,
+                                long bootstrapTime);
 
         /**
          * The map implements this method to restore its contents. This method must read the values
@@ -177,9 +180,10 @@ interface Replica extends Closeable {
          * @param segmentState
          * @param source       bytes to read an entry from
          */
-        void readExternalEntry(
-                @NotNull ThreadLocalCopies copies,
-                @NotNull VanillaChronicleMap.SegmentState segmentState, @NotNull Bytes source);
+        void readExternalEntry(@NotNull ThreadLocalCopies copies,
+                               @NotNull VanillaChronicleMap.SegmentState segmentState,
+                               @NotNull Bytes source);
+
 
 
     }
@@ -223,20 +227,29 @@ interface Replica extends Closeable {
          * @param entry       the entry you will receive, this does not have to be locked, as
          *                    locking is already provided from the caller.
          * @param chronicleId only assigned when clustering
+         * @param bootStrapTimeStamp sent to the client on every update this is the timestamp
+         *                           that the remote client should bootstrap from when there has
+         *                           been a disconnection, this time maybe later than the message
+         *                           time as event are not send in chronological order from the
+         *                           bit set.
+         *
+         *
          * @return {@code false} if this entry should be ignored because the identifier of the
          * source node is not from one of our changes, WARNING even though we check the identifier
          * in the ModificationIterator the entry may have been updated.
          */
-        public abstract boolean onEntry(final Bytes entry, final int chronicleId);
+        public abstract boolean onEntry(@NotNull Bytes entry,
+                                        int chronicleId,
+                                        long bootStrapTimeStamp);
 
         /**
-         * Called just after {@link #onEntry(Bytes, int)}. No-op by default.
+         * Called just after {@link #onEntry(Bytes, int, long)}. No-op by default.
          */
         public void onAfterEntry() {
         }
 
         /**
-         * Called just before {@link #onEntry(Bytes, int)}. No-op by default.
+         * Called just before {@link #onEntry(Bytes, int, long)}. No-op by default.
          */
         public void onBeforeEntry() {
         }
