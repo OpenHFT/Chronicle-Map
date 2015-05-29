@@ -46,7 +46,8 @@ public abstract class ReplicatedInput<K, V, R>
         this.replicatedInputBytes = replicatedInputBytes;
         replicatedInputStore.setBytes(replicatedInputBytes);
     }
-    
+
+    @Stage("ReplicationInput") public long bootstrapTimestamp;
     @Stage("ReplicationInput") public long riKeySize = -1;
     @Stage("ReplicationInput") public long riValueSize;
 
@@ -60,6 +61,7 @@ public abstract class ReplicatedInput<K, V, R>
 
     public void initReplicationInput(Bytes replicatedInputBytes) {
         initReplicatedInputBytes(replicatedInputBytes);
+        bootstrapTimestamp = replicatedInputBytes.readLong();
         riKeySize = mh.m().keySizeMarshaller.readSize(replicatedInputBytes);
         riValueSize = mh.m().valueSizeMarshaller.readSize(replicatedInputBytes);
 
@@ -79,6 +81,8 @@ public abstract class ReplicatedInput<K, V, R>
             return;
         }
 
+        mh.m().setLastModificationTime(riId, bootstrapTimestamp);
+
         q.initInputKey(replicatedInputKeyBytesValue);
 
         boolean debugEnabled = lh.LOG.isDebugEnabled();
@@ -90,7 +94,6 @@ public abstract class ReplicatedInput<K, V, R>
                         mh.m().identifier(), riId, q.inputKey);
             }
             mh.m().remoteOperations.remove(this);
-            mh.m().setLastModificationTime(riId, riTimestamp);
             return;
         }
 
@@ -103,7 +106,7 @@ public abstract class ReplicatedInput<K, V, R>
 
 
         mh.m().remoteOperations.put(this, replicatedInputValueBytesValue);
-        mh.m().setLastModificationTime(riId, riTimestamp);
+
 
         if (debugEnabled) {
             lh.LOG.debug(message + "value=" + replicatedInputValueBytesValue + ")");

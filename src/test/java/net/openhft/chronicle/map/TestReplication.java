@@ -18,11 +18,11 @@ public class TestReplication {
 
 
         TcpTransportAndNetworkConfig tcpConfigServer1 =
-                TcpTransportAndNetworkConfig.of(8082);
+                TcpTransportAndNetworkConfig.of(8092);
 
         TcpTransportAndNetworkConfig tcpConfigServer2 =
-                TcpTransportAndNetworkConfig.of(8083, new InetSocketAddress("localhost",
-                        8082));
+                TcpTransportAndNetworkConfig.of(8093, new InetSocketAddress("localhost",
+                        8092));
 
         final ChronicleMap<Integer, Integer> map2 = ChronicleMapBuilder.of(Integer.class,
                 Integer.class)
@@ -40,7 +40,6 @@ public class TestReplication {
         }
 
         for (int i = 0; i < 10; i++) {
-
             Thread.sleep(100);
             System.out.println(map2.size());
         }

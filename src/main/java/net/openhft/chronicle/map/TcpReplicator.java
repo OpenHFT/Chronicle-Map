@@ -1282,6 +1282,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
      */
     class TcpSocketChannelEntryReader {
         public static final int HEADROOM = 1024;
+        public static final int SIZE_OF_BOOTSTRAP_TIMESTAMP = 8;
         public long lastHeartBeatReceived = System.currentTimeMillis();
         ByteBuffer in;
         ByteBufferBytes out;
@@ -1367,7 +1368,8 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
 
                         // if the buffer is too small to read this payload we will have to grow the
                         // size of the buffer
-                        long requiredSize = sizeInBytes + SIZE_OF_SIZE + 1;
+                        long requiredSize = sizeInBytes + SIZE_OF_SIZE + 1 +
+                                SIZE_OF_BOOTSTRAP_TIMESTAMP;
                         if (out.capacity() < requiredSize) {
                             attached.entryReader.resizeBuffer(requiredSize + HEADROOM);
                         }

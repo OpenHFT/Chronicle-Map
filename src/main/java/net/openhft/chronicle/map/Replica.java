@@ -69,6 +69,8 @@ public interface Replica extends Closeable {
      */
     long lastModificationTime(byte remoteIdentifier);
 
+    void setLastModificationTime(byte identifier, long timestamp);
+
     /**
      * notifies when there is a changed to the modification iterator
      */
@@ -156,8 +158,8 @@ public interface Replica extends Closeable {
          *                    match the maps local
          * @param chronicleId is the channel id used to identify the canonical map or queue
          */
-        void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination, int
-                chronicleId);
+        void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
+                                int chronicleId, long bootstrapTime);
 
         /**
          * The map implements this method to restore its contents. This method must read the values
@@ -188,16 +190,19 @@ public interface Replica extends Closeable {
          * source node is not from one of our changes, WARNING even though we check the identifier
          * in the ModificationIterator the entry may have been updated.
          */
-        public abstract boolean onEntry(final Bytes entry, final int chronicleId);
+        public abstract boolean onEntry(
+                final Bytes entry, final int chronicleId, long bootstrapTime);
 
         /**
-         * Called just after {@link  #onEntry(net.openhft.lang.io.Bytes, int)}. No-op by default.
+         * Called just after {@link  #onEntry(net.openhft.lang.io.Bytes, int, long)}.
+         * No-op by default.
          */
         public void onAfterEntry() {
         }
 
         /**
-         * Called just before {@link #onEntry(net.openhft.lang.io.Bytes, int)}. No-op by default.
+         * Called just before {@link #onEntry(net.openhft.lang.io.Bytes, int, long)}.
+         * No-op by default.
          */
         public void onBeforeEntry() {
         }

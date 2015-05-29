@@ -484,7 +484,6 @@ abstract class AbstractChannelReplicator implements Closeable {
             out = result;
 
             assert out.capacity() == in.capacity();
-
             assert out.capacity() == size;
             assert out.capacity() == in.capacity();
             assert in.limit() == in.capacity();
@@ -498,7 +497,9 @@ abstract class AbstractChannelReplicator implements Closeable {
 
 
         @Override
-        public boolean onEntry(final Bytes entry, final int chronicleId) {
+        public boolean onEntry(@NotNull final Bytes entry,
+                               final int chronicleId,
+                               final long bootstrapTime) {
 
             long startOfEntry = entry.position();
             long pos0 = in.position();
@@ -514,7 +515,7 @@ abstract class AbstractChannelReplicator implements Closeable {
 
                 start = in.position();
 
-                externalizable.writeExternalEntry(entry, in, chronicleId);
+                externalizable.writeExternalEntry(entry, in, chronicleId, bootstrapTime);
 
                 if (in.position() == start) {
                     in.position(pos0);
@@ -558,7 +559,8 @@ abstract class AbstractChannelReplicator implements Closeable {
 
                     in.position(pos0);
                     entry.position(startOfEntry);
-                    return onEntry(entry, chronicleId);
+
+                    return onEntry(entry, chronicleId, bootstrapTime);
                 } else
                     throw e;
 

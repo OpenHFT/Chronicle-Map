@@ -18,7 +18,10 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.*;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
+import net.openhft.chronicle.hash.replication.ReplicationHub;
+import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.hash.replication.UdpTransportConfig;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -111,7 +114,6 @@ public final class ChannelProvider implements Closeable {
 
         /**
          * writes the entry to the chronicle channel provided
-         *
          * @param entry            the byte location of the entry to be stored
          * @param destination      a buffer the entry will be written to, the segment may reject
          *                         this operation and add zeroBytes, if the identifier in the entry
@@ -119,21 +121,21 @@ public final class ChannelProvider implements Closeable {
          * @param chronicleChannel used in cluster into identify the canonical map or queue
          */
         @Override
-        public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
-                                       int chronicleChannel) {
+        public void writeExternalEntry(@NotNull Bytes entry,
+                                       @NotNull Bytes destination,
+                                       int chronicleChannel, long bootstrapTime) {
             channelDataReadLock();
             try {
                 destination.writeStopBit(chronicleChannel);
                 channelEntryExternalizables[chronicleChannel]
-                        .writeExternalEntry(entry, destination, chronicleChannel);
+                        .writeExternalEntry(entry, destination, chronicleChannel, bootstrapTime);
             } finally {
                 channelDataLock.readLock().unlock();
             }
         }
 
         @Override
-        public void readExternalEntry(
-                @NotNull Bytes source) {
+        public void readExternalEntry(@NotNull Bytes source) {
             channelDataReadLock();
             try {
                 final int chronicleId = (int) source.readStopBit();
@@ -258,6 +260,20 @@ public final class ChannelProvider implements Closeable {
                             min(t, channel.lastModificationTime(remoteIdentifier));
                 }
                 return t;
+            } finally {
+                channelDataLock.readLock().unlock();
+            }
+        }
+
+        @Override
+        public void setLastModificationTime(byte identifier, long timestamp) {
+            channelDataReadLock();
+            try {
+                // not including the SystemQueue at index 0
+                for (Replica channel : chronicleChannelMap.values()) {
+                    channel.setLastModificationTime(identifier, timestamp);
+                }
+
             } finally {
                 channelDataLock.readLock().unlock();
             }
@@ -483,7 +499,7 @@ public final class ChannelProvider implements Closeable {
                         final Bytes bytes = payloads.poll();
                         if (bytes == null)
                             return false;
-                        callback.onEntry(bytes, 0);
+                        callback.onEntry(bytes, 0, System.currentTimeMillis());
                         return true;
                     }
 
@@ -520,6 +536,11 @@ public final class ChannelProvider implements Closeable {
             }
 
             @Override
+            public void setLastModificationTime(byte identifier, long timestamp) {
+                // do nothing
+            }
+
+            @Override
             public void close() throws IOException {
                 // do nothing
             }
@@ -537,7 +558,7 @@ public final class ChannelProvider implements Closeable {
 
             @Override
             public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
-                                           int na) {
+                                           int na, long bootstrapTime) {
                 destination.write(entry, entry.position(), entry.remaining());
             }
 

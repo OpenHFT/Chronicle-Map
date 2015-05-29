@@ -21,7 +21,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -56,12 +55,17 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
                 .replication(identifier, tcpConfig).create();
     }
 
+    int portOffset = 0;
+
     @Before
     public void setup() throws IOException {
-        map1 = newTcpSocketShmIntString((byte) 1, 8026, new InetSocketAddress("localhost", 8027),
-                new InetSocketAddress("localhost", 8028));
-        map2 = newTcpSocketShmIntString((byte) 2, 8027, new InetSocketAddress("localhost", 8028));
-        map3 = newTcpSocketShmIntString((byte) 3, 8028);
+        map1 = newTcpSocketShmIntString((byte) 1, portOffset + 8026, new InetSocketAddress
+                        ("localhost", portOffset + 8027),
+                new InetSocketAddress("localhost", portOffset + 8028));
+        map2 = newTcpSocketShmIntString((byte) 2, portOffset + 8027, new InetSocketAddress
+                ("localhost", portOffset + 8028));
+        map3 = newTcpSocketShmIntString((byte) 3, portOffset + 8028);
+        portOffset += 10;
     }
 
     @After
