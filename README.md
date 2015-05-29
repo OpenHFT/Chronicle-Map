@@ -1250,29 +1250,29 @@ ChronicleMap doesn't resize automatically.  It is assumed you will make the virt
 larger than you need and it will handle this reasonably efficiently. With the default settings you
 will run out of space between 1 and 2 million entries.
 
-You should set the .entries(..) and .entrySize(..) to those you require.
+You should set the .entries(..) and .averageValueSize(..) to those you require.
 
 ##### Don't forget to set the EntrySize
 
-If you put() and entry that is much larger than the max entry size set via entrySize(), 
+If you put() and entry that is much larger than the max entry size set via averageValueSize(),
 the code will error. To see how to set the entry size the example below sets the entry size to 10, 
 you should pick a size that is the size in bytes of your entries : 
 
 ```java
 ChronicleMap<Integer, String> map =
              ChronicleMapBuilder.of(Integer.class, String.class)
-                     .entrySize(10).create();
+                     .averageValueSize(10).create();
  
 ```
 
-This example will throw an java.lang.IllegalArgumentException because the entrySize is too small.
+This example will throw an java.lang.IllegalArgumentException because the averageValueSize is too small.
 
 ```java
 @Test
 public void test() throws IOException, InterruptedException {
     ChronicleMap<Integer, String> map =
             ChronicleMapBuilder.of(Integer.class, String.class)
-                    .entrySize(10).create();
+                    .averageValueSize(10).create();
 
     String value =   new String(new char[2000]);
     map.put(1, value);
@@ -1290,7 +1290,7 @@ you will get a *malloc_error_break* :
 public void test() throws IOException, InterruptedException {
     ChronicleMap<Integer, String> map =
             ChronicleMapBuilder.of(Integer.class, String.class)
-                    .entrySize(10).create();
+                    .averageValueSize(10).create();
 
     String value =   new String(new char[20000000]);
     map.put(1, value);
