@@ -181,55 +181,55 @@
                 </excludes>
             </resource>
         </resources>
+        
+        <pluginManagement>
+          <plugins>
+          
+              <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-compiler-plugin</artifactId>
+                  <configuration>
+                      <compilerArgument>-Xlint:deprecation</compilerArgument>
+                      <source>1.8</source>
+                      <target>1.8</target>
+                      <encoding>UTF-8</encoding>
+                  </configuration>
+              </plugin>
 
-        <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <compilerArgument>-Xlint:deprecation</compilerArgument>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-scm-publish-plugin</artifactId>
-                <configuration>
-                    <checkoutDirectory>${project.build.directory}/scmpublish/javadoc
-                    </checkoutDirectory>
-                    <checkinComment>Publishing javadoc for ${project.artifactId}:${project.version}
-                    </checkinComment>
-                    <content>${project.reporting.outputDirectory}</content>
-                    <skipDeletedFiles>true</skipDeletedFiles>
-                    <pubScmUrl>scm:git:git@github.com:OpenHFT/Chronicle-Map</pubScmUrl>
-                    <scmBranch>gh-pages</scmBranch>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <links>
-                        <link>http://openhft.github.io/Java-Lang/apidocs/</link>
-                    </links>
-                    <excludePackageNames>
-                        net.openhft.chronicle.hash.serialization.internal:net.openhft.xstream:net.openhft.xstream.*:net.openhft.chronicle.hash.impl.*
-                    </excludePackageNames>
-                    <additionalparam>-Xdoclint:none</additionalparam>
-                </configuration>
-            </plugin>
-
-            <!-- used to allow getClass().getPackage().getImplementationVersion() -->
+              <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-scm-publish-plugin</artifactId>
+                  <configuration>
+                      <checkoutDirectory>${project.build.directory}/scmpublish/javadoc
+                      </checkoutDirectory>
+                      <checkinComment>Publishing javadoc for ${project.artifactId}:${project.version}
+                      </checkinComment>
+                      <content>${project.reporting.outputDirectory}</content>
+                      <skipDeletedFiles>true</skipDeletedFiles>
+                      <pubScmUrl>scm:git:git@github.com:OpenHFT/Chronicle-Map</pubScmUrl>
+                      <scmBranch>gh-pages</scmBranch>
+                  </configuration>
+              </plugin>
+              
+              <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <configuration>
+                      <links>
+                          <link>http://openhft.github.io/Java-Lang/apidocs/</link>
+                      </links>
+                      <excludePackageNames>
+                          net.openhft.chronicle.hash.serialization.internal:net.openhft.xstream:net.openhft.xstream.*:net.openhft.chronicle.hash.impl.*
+                      </excludePackageNames>
+                      <additionalparam>-Xdoclint:none</additionalparam>
+                  </configuration>
+              </plugin>
+              
+              <!-- used to allow getClass().getPackage().getImplementationVersion() -->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.1</version>
 
                 <configuration>
                     <archive>
@@ -239,8 +239,36 @@
                         </manifest>
                     </archive>
                 </configuration>
-
             </plugin>
+            
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <configuration>
+                    <instructions>                        
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>OpenHFT :: ${project.artifactId}</Bundle-Name>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Import-Package>
+                            com.thoughtworks.xstream;resolution:=optional,
+                            org.jetbrains.annotations;resolution:=optional,
+                            org.intellij.lang.annotations;resolution:=optional,
+                            *
+                        </Import-Package>
+                        <Export-Package>
+                            net.openhft.chronicle.map.*,
+                            net.openhft.chronicle.set.*,
+                            net.openhft.chronicle.hash.*
+                        </Export-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+          
+          </plugins>
+        
+        </pluginManagement>
+
+        <plugins>
             <!--
                 generate maven dependencies versions file that can be used later
                 to install the right bundle in test phase.
@@ -265,24 +293,6 @@
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
-                <configuration>
-                    <instructions>                        
-                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>OpenHFT :: ${project.artifactId}</Bundle-Name>
-                        <Bundle-Version>${project.version}</Bundle-Version>
-                        <Import-Package>
-                            com.thoughtworks.xstream;resolution:=optional,
-                            org.jetbrains.annotations;resolution:=optional,
-                            org.intellij.lang.annotations;resolution:=optional,
-                            *
-                        </Import-Package>
-                        <Export-Package>
-                            net.openhft.chronicle.map.*,
-                            net.openhft.chronicle.set.*,
-                            net.openhft.chronicle.hash.*
-                        </Export-Package>
-                    </instructions>
-                </configuration>
                 <executions>
                     <!--
                       This execution makes sure that the manifest is available
@@ -299,7 +309,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.6</version>
                 <executions>
                     <execution>
                         <goals>
