@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ExternalHashQueryContext;
 import net.openhft.chronicle.hash.KeyContext;
@@ -26,7 +27,6 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
 import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
-import net.openhft.lang.Jvm;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.BytesStore;
 import net.openhft.lang.io.MappedStore;
@@ -193,38 +193,8 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         segmentsOffset = segmentHeadersOffset + segmentHeadersSize;
     }
 
-    public void warnOnWindows() {
-        if (!Jvm.isWindows())
-            return;
-        long offHeapMapSize = sizeInBytes();
-        long oneGb = GIGABYTES.toBytes(1L);
-        double offHeapMapSizeInGb = offHeapMapSize * 1.0 / oneGb;
-        if (offHeapMapSize > GIGABYTES.toBytes(4L)) {
-            System.out.printf(
-                    "WARNING: On Windows, you probably cannot create a ChronicleMap\n" +
-                            "of more than 4 GB. The configured map requires %.2f GB of " +
-                            "off-heap memory.\n",
-                    offHeapMapSizeInGb);
-        }
-        try {
-            long freePhysicalMemory = Jvm.freePhysicalMemoryOnWindowsInBytes();
-            if (offHeapMapSize > freePhysicalMemory * 0.9) {
-                double freePhysicalMemoryInGb = freePhysicalMemory * 1.0 / oneGb;
-                System.out.printf(
-                        "WARNING: On Windows, you probably cannot create a ChronicleMap\n" +
-                                "of more than 90%% of available free memory in the system.\n" +
-                                "The configured map requires %.2f GB of off-heap memory.\n" +
-                                "There is only %.2f GB of free physical memory in the system.\n",
-                        offHeapMapSizeInGb, freePhysicalMemoryInGb);
-
-            }
-        } catch (IOException e) {
-            // ignore -- anyway we just warn the user
-        }
-    }
-
     public final void createMappedStoreAndSegments(File file) throws IOException {
-        warnOnWindows();
+        OS.warnOnWindows(sizeInBytes());
         createMappedStoreAndSegments(new MappedStore(file, FileChannel.MapMode.READ_WRITE,
                 sizeInBytes(), BytesMarshallableSerializer.create()));
     }
