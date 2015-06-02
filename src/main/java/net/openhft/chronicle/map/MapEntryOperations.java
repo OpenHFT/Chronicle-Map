@@ -23,7 +23,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * SPI interface for customizing "low-level" modification operations on {@link ChronicleMap}
- * entries.
+ * entries. All {@code ChronicleMap} modifications operate via and instance of this interface:
+ * <ul>
+ *     <li>Ordinary query operations: {@code map.put()}, {@code map.compute()}. In fact, the</li>
+ * </ul>
  *
  * @param <K> the map key type
  * @param <V> the map value type

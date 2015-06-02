@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.util.CloseablesManager;
+import net.openhft.chronicle.hash.Value;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.serialization.BytesReader;
@@ -549,6 +550,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     @NotNull
     @Override
     public ExternalMapQueryContext<K, V, ?> queryContext(K key) {
+        throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
+    }
+
+    @NotNull
+    @Override
+    public ExternalMapQueryContext<K, V, ?> queryContext(Value<K, ?> key) {
         throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
     }
 

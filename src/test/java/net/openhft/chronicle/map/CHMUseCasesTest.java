@@ -78,9 +78,9 @@ public class CHMUseCasesTest {
                         TypeOfMap.SIMPLE
                 },
 
-//                {
-//                        TypeOfMap.REPLICATED
-//                },
+                {
+                        TypeOfMap.REPLICATED
+                },
 
                 //  it pointless to run these test as the Function and UnaryOperator are not
                 // serializable as inner classes adn the getUsingLock is not supported by the

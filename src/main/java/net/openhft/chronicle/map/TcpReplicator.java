@@ -24,8 +24,11 @@ import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.ReaderWithSize;
 import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
+import net.openhft.chronicle.map.impl.QueryContextInterface;
 import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
@@ -68,7 +71,7 @@ interface Work {
  *
  * @author Rob Austin.
  */
-final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Closeable {
+public final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Closeable {
 
     public static final long TIMESTAMP_FACTOR = 10000;
     private static final int STATELESS_CLIENT = -127;
@@ -106,7 +109,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     StatelessClientParameters<K, V> statelessClientParameters;
 
     static class StatelessClientParameters<K, V> {
-        public StatelessClientParameters(VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map,
+        public StatelessClientParameters(ReplicatedChronicleMap<K, ?, ?, V, ?, ?, ?> map,
                                          SerializationBuilder<K> keySerializationBuilder,
                                          SerializationBuilder<V> valueSerializationBuilder) {
             this.map = map;
@@ -114,7 +117,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             this.valueSerializationBuilder = valueSerializationBuilder;
         }
 
-        VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map;
+        ReplicatedChronicleMap<K, ?, ?, V, ?, ?, ?> map;
         SerializationBuilder<K> keySerializationBuilder;
         SerializationBuilder<V> valueSerializationBuilder;
     }
@@ -1052,7 +1055,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     /**
      * @author Rob Austin.
      */
-    class TcpSocketChannelEntryWriter {
+    public class TcpSocketChannelEntryWriter {
 
 
         @NotNull
@@ -1092,7 +1095,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             in().writeByte(localIdentifier);
         }
 
-        void ensureBufferSize(long size) {
+        public void ensureBufferSize(long size) {
             if (in().remaining() < size) {
                 size += entryCallback.in().position();
                 if (size > Integer.MAX_VALUE)
@@ -1118,7 +1121,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 throw e;
         }
 
-        Bytes in() {
+        public Bytes in() {
             return entryCallback.in();
         }
 
@@ -1229,7 +1232,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
          * localHeartbeatInterval
          */
         private void writeHeartbeatToBuffer() {
-            // denotes the state - 0 for a beat
+            // denotes the state - 0 for a heartbeat
             in().writeByte(HEARTBEAT.ordinal());
 
             // denotes the size in bytes
@@ -1471,7 +1474,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 /**
  * @author Rob Austin.
  */
-class StatelessServerConnector<K, V> {
+class StatelessServerConnector<K, V, R> {
 
     private static final Logger LOG = LoggerFactory.getLogger(StatelessServerConnector.class
             .getName());
@@ -1494,15 +1497,14 @@ class StatelessServerConnector<K, V> {
     private final WriterWithSize<V> valueWriterWithSize;
 
     @NotNull
-    private final VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map;
-    //private final BytesChronicleMap bytesMap;
+    private final ReplicatedChronicleMap<K, ?, ?, V, ?, ?, R> map;
     private final SerializationBuilder<K> keySerializationBuilder;
     private final SerializationBuilder<V> valueSerializationBuilder;
     private final int tcpBufferSize;
 
 
     StatelessServerConnector(
-            @NotNull VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map,
+            @NotNull ReplicatedChronicleMap<K, ?, ?, V, ?, ?, R> map,
             @NotNull final BufferResizer bufferResizer, int tcpBufferSize,
             final SerializationBuilder<K> keySerializationBuilder,
             final SerializationBuilder<V> valueSerializationBuilder) {
@@ -1515,7 +1517,6 @@ class StatelessServerConnector<K, V> {
         valueReaderWithSize = new ReaderWithSize<>(valueSerializationBuilder);
         valueWriterWithSize = new WriterWithSize<>(valueSerializationBuilder, bufferResizer);
         this.map = map;
-        //bytesMap = new BytesChronicleMap(map);
     }
 
     @Nullable
@@ -1699,13 +1700,22 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
+    private CompiledReplicatedMapQueryContext<K, ?, ?, V, ?, ?, R, ?> query(Bytes reader) {
+        CompiledReplicatedMapQueryContext<K, ?, ?, V, ?, ?, R, ?> q = map.mapContext();
+        q.initInputBytes(reader);
+        q.initInputKey(q.inputKeyBytesValue());
+        return q;
+    }
+
     @Nullable
     private Work removeWithValue(Bytes reader,
                                  @NotNull TcpReplicator.TcpSocketChannelEntryWriter writer,
                                  final long sizeLocation, long timestamp, byte id) {
         try {
             writer.ensureBufferSize(1L);
-            //writer.in().writeBoolean(bytesMap.remove(reader, reader));
+            try (CompiledReplicatedMapQueryContext<K, ?, ?, V, ?, ?, R, ?> q = query(reader)) {
+                writer.in().writeBoolean(map.methods.remove(q, q.inputFirstValueBytesValue()));
+            }
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         }
@@ -1719,7 +1729,10 @@ class StatelessServerConnector<K, V> {
                                       final long sizeLocation, long timestamp, byte id) {
         try {
             writer.ensureBufferSize(1L);
-            //writer.in().writeBoolean(bytesMap.replace(reader, reader, reader));
+            try (CompiledReplicatedMapQueryContext<K, ?, ?, V, ?, ?, R, ?> q = query(reader)) {
+                writer.in().writeBoolean(map.methods.replace(q, q.inputFirstValueBytesValue(),
+                        q.inputSecondValueBytesValue()));
+            }
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         }
@@ -1849,7 +1862,10 @@ class StatelessServerConnector<K, V> {
                              @NotNull TcpReplicator.TcpSocketChannelEntryWriter writer,
                              final long sizeLocation) {
         try {
-            //writer.in().writeBoolean(bytesMap.containsKey(reader));
+            writer.ensureBufferSize(1L);
+            try (CompiledReplicatedMapQueryContext<K, ?, ?, V, ?, ?, R, ?> q = query(reader)) {
+                writer.in().writeBoolean(map.methods.containsKey(q));
+            }
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         }
@@ -1901,7 +1917,7 @@ class StatelessServerConnector<K, V> {
                      final long sizeLocation, long timestamp, byte id) {
         //bytesMap.output = writer;
         try {
-          //  bytesMap.put(reader, reader);
+            //bytesMap.put(reader, reader);
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         } finally {
@@ -1914,20 +1930,20 @@ class StatelessServerConnector<K, V> {
     @SuppressWarnings("SameReturnValue")
     @Nullable
     private Work remove(Bytes reader, long timestamp, byte id) {
-        //bytesMap.remove(reader);
+//        bytesMap.remove(reader);
         return null;
     }
 
     @Nullable
     private Work remove(Bytes reader, TcpReplicator.TcpSocketChannelEntryWriter writer,
                         final long sizeLocation, long timestamp, byte id) {
-        //bytesMap.output = writer;
+//        bytesMap.output = writer;
         try {
-          //  bytesMap.remove(reader);
+//            bytesMap.remove(reader);
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         } finally {
-         //   bytesMap.output = null;
+//            bytesMap.output = null;
         }
         writeSizeAndFlags(sizeLocation, false, writer.in());
         return null;
@@ -1939,7 +1955,7 @@ class StatelessServerConnector<K, V> {
                         final long sizeLocation,
                         long timestamp, byte id) {
         try {
-         //   bytesMap.putAll(reader);
+//            bytesMap.putAll(reader);
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         }
@@ -1950,7 +1966,7 @@ class StatelessServerConnector<K, V> {
     @SuppressWarnings("SameReturnValue")
     @Nullable
     private Work putAll(@NotNull Bytes reader, long timestamp, byte id) {
-        //bytesMap.putAll(reader);
+//        bytesMap.putAll(reader);
         return null;
     }
 
@@ -2110,11 +2126,11 @@ class StatelessServerConnector<K, V> {
                              final long sizeLocation, long timestamp, byte id) {
 //        bytesMap.output = writer;
         try {
-  //          bytesMap.putIfAbsent(reader, reader);
+//            bytesMap.putIfAbsent(reader, reader);
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         } finally {
-    //        bytesMap.output = null;
+//            bytesMap.output = null;
         }
         writeSizeAndFlags(sizeLocation, false, writer.in());
         return null;
@@ -2123,13 +2139,13 @@ class StatelessServerConnector<K, V> {
     @Nullable
     private Work replace(Bytes reader, TcpReplicator.TcpSocketChannelEntryWriter writer,
                          final long sizeLocation, long timestamp, byte id) {
-      //  bytesMap.output = writer;
+//        bytesMap.output = writer;
         try {
-        //    bytesMap.replace(reader, reader);
+//            bytesMap.replace(reader, reader);
         } catch (Throwable e) {
             return sendException(writer, sizeLocation, e);
         } finally {
-          //  bytesMap.output = null;
+//            bytesMap.output = null;
         }
         writeSizeAndFlags(sizeLocation, false, writer.in());
         return null;

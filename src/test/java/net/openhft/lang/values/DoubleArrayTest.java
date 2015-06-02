@@ -68,7 +68,6 @@ public class DoubleArrayTest {
     }
 
     @Test
-    @Ignore
     public void addToAMap2() {
         DoubleArray.HACK = false;
         DoubleArray a = new DoubleArray(10);

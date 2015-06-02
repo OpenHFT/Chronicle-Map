@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.ChronicleHashBuilderImpl;
@@ -1359,7 +1360,7 @@ public final class ChronicleMapBuilder<K, V> implements
         try {
             // pushingToMapEventListener();
             VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map = newMap(singleHashReplication, channel);
-            map.warnOnWindows();
+            OS.warnOnWindows(map.sizeInBytes());
             BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
                     map.sizeInBytes(), true);
             map.createMappedStoreAndSegments(bytesStore);
@@ -1472,7 +1473,8 @@ public final class ChronicleMapBuilder<K, V> implements
                 replicators.add(ch);
             }
             for (Replicator replicator : replicators) {
-                Closeable token = replicator.applyTo(this, result, result, map);
+                Closeable token = replicator.applyTo(this, result, result,
+                        (ReplicatedChronicleMap)map);
                 if (replicators.size() == 1 && token.getClass() == UdpReplicator.class) {
                     LOG.warn(Replicators.ONLY_UDP_WARN_MESSAGE);
                 }

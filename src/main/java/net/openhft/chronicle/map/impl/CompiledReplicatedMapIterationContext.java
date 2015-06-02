@@ -47,19 +47,19 @@ import java.util.function.Predicate;
 
 public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>, V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R, T> implements AutoCloseable , HashEntry<K> , InterProcessReadWriteUpdateLock , RemoteOperationContext<K> , MapContext<K, V, R> , MapEntry<K, V> , IterationContextInterface<K, V> , ReplicatedChronicleMapHolder<K, KI, MKI, V, VI, MVI, R> , MapReplicableEntry<K, V> {
     public void close() {
-        CompiledReplicatedMapIterationContext.this.closeReplicationUpdate();
-        CompiledReplicatedMapIterationContext.this.closeHashLookupPos();
-        CompiledReplicatedMapIterationContext.this.wrappedValueInstanceValue.closeValue();
-        CompiledReplicatedMapIterationContext.this.closeAllocatedChunks();
-        CompiledReplicatedMapIterationContext.this.wrappedValueInstanceValue.closeNext();
-        CompiledReplicatedMapIterationContext.this.closeTheSegmentIndex();
-        CompiledReplicatedMapIterationContext.this.closeEntryRemovedOnThisIteration();
         CompiledReplicatedMapIterationContext.this.closeUsed();
+        CompiledReplicatedMapIterationContext.this.closeAllocatedChunks();
+        CompiledReplicatedMapIterationContext.this.closeReplicationUpdate();
+        CompiledReplicatedMapIterationContext.this.wrappedValueInstanceValue.closeValue();
+        CompiledReplicatedMapIterationContext.this.closeEntryRemovedOnThisIteration();
+        CompiledReplicatedMapIterationContext.this.closeTheSegmentIndex();
+        CompiledReplicatedMapIterationContext.this.closeHashLookupPos();
+        CompiledReplicatedMapIterationContext.this.wrappedValueInstanceValue.closeNext();
+        CompiledReplicatedMapIterationContext.this.closeOwnerThreadHolderCheckAccessingFromOwnerThreadDependants();
         CompiledReplicatedMapIterationContext.this.closeReplicatedMapEntryStagesEntryBytesAccessOffsetDependants();
-        CompiledReplicatedMapIterationContext.this.closeMapSegmentIterationCheckEntryNotRemovedOnThisIterationDependants();
         CompiledReplicatedMapIterationContext.this.closeReplicatedChronicleMapHolderImplContextAtIndexInChainDependants();
         CompiledReplicatedMapIterationContext.this.closeValueBytesInteropValueMetaInteropDependants();
-        CompiledReplicatedMapIterationContext.this.closeOwnerThreadHolderCheckAccessingFromOwnerThreadDependants();
+        CompiledReplicatedMapIterationContext.this.closeReplicatedMapSegmentIterationCheckEntryNotRemovedOnThisIterationDependants();
     }
 
     public void incrementModCountGuarded() {
@@ -98,23 +98,24 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         contextChain.add(this);
         indexInContextChain = 0;
         this.m = m;
-        this.owner = Thread.currentThread();
+        this.entryKey = new EntryKeyBytesValue();
+        this.entryBytes = CompiledReplicatedMapIterationContext.this.h().ms.bytes();
+        this.entryBytesAccessor = JavaLangBytesAccessors.uncheckedBytesAccessor(entryBytes);
+        this.entryBytesAccessHandle = ((T)(entryBytesAccessor.handle(entryBytes)));
+        this.entryBytesAccess = ((Access<T>)(entryBytesAccessor.access(entryBytes)));
         this.copies = ThreadLocalCopies.get();
         this.valueInterop = CompiledReplicatedMapIterationContext.this.m().valueInteropProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.m().originalValueInterop);
         this.valueReader = CompiledReplicatedMapIterationContext.this.m().valueReaderProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.m().originalValueReader);
         this.keyInterop = CompiledReplicatedMapIterationContext.this.h().keyInteropProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.h().originalKeyInterop);
         this.keyReader = CompiledReplicatedMapIterationContext.this.h().keyReaderProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.h().originalKeyReader);
-        this.innerReadLock = new ReadLock();
-        this.entryBytes = CompiledReplicatedMapIterationContext.this.h().ms.bytes();
-        this.entryBytesAccessor = JavaLangBytesAccessors.uncheckedBytesAccessor(entryBytes);
-        this.entryBytesAccessHandle = ((T)(entryBytesAccessor.handle(entryBytes)));
-        this.entryBytesAccess = ((Access<T>)(entryBytesAccessor.access(entryBytes)));
-        this.wrappedValueInstanceValue = new WrappedValueInstanceValue();
         this.entryValue = new EntryValueBytesValue();
-        this.innerUpdateLock = new UpdateLock();
         this.deprecatedMapKeyContextOnIteration = new DeprecatedMapKeyContextOnIteration();
-        this.entryKey = new EntryKeyBytesValue();
+        this.owner = Thread.currentThread();
+        this.wrappedValueInstanceValue = new WrappedValueInstanceValue();
         this.innerWriteLock = new WriteLock();
+        this.dummyValue = new DummyValueZeroValue();
+        this.innerReadLock = new ReadLock();
+        this.innerUpdateLock = new UpdateLock();
     }
 
     public CompiledReplicatedMapIterationContext(CompiledReplicatedMapIterationContext c) {
@@ -122,23 +123,24 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         indexInContextChain = contextChain.size();
         contextChain.add(this);
         this.m = ((ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI, R>)(c.m));
-        this.owner = Thread.currentThread();
+        this.entryKey = new EntryKeyBytesValue();
+        this.entryBytes = CompiledReplicatedMapIterationContext.this.h().ms.bytes();
+        this.entryBytesAccessor = JavaLangBytesAccessors.uncheckedBytesAccessor(entryBytes);
+        this.entryBytesAccessHandle = ((T)(entryBytesAccessor.handle(entryBytes)));
+        this.entryBytesAccess = ((Access<T>)(entryBytesAccessor.access(entryBytes)));
         this.copies = ThreadLocalCopies.get();
         this.valueInterop = CompiledReplicatedMapIterationContext.this.m().valueInteropProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.m().originalValueInterop);
         this.valueReader = CompiledReplicatedMapIterationContext.this.m().valueReaderProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.m().originalValueReader);
         this.keyInterop = CompiledReplicatedMapIterationContext.this.h().keyInteropProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.h().originalKeyInterop);
         this.keyReader = CompiledReplicatedMapIterationContext.this.h().keyReaderProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.h().originalKeyReader);
-        this.innerReadLock = new ReadLock();
-        this.entryBytes = CompiledReplicatedMapIterationContext.this.h().ms.bytes();
-        this.entryBytesAccessor = JavaLangBytesAccessors.uncheckedBytesAccessor(entryBytes);
-        this.entryBytesAccessHandle = ((T)(entryBytesAccessor.handle(entryBytes)));
-        this.entryBytesAccess = ((Access<T>)(entryBytesAccessor.access(entryBytes)));
-        this.wrappedValueInstanceValue = new WrappedValueInstanceValue();
         this.entryValue = new EntryValueBytesValue();
-        this.innerUpdateLock = new UpdateLock();
         this.deprecatedMapKeyContextOnIteration = new DeprecatedMapKeyContextOnIteration();
-        this.entryKey = new EntryKeyBytesValue();
+        this.owner = Thread.currentThread();
+        this.wrappedValueInstanceValue = new WrappedValueInstanceValue();
         this.innerWriteLock = new WriteLock();
+        this.dummyValue = new DummyValueZeroValue();
+        this.innerReadLock = new ReadLock();
+        this.innerUpdateLock = new UpdateLock();
     }
 
     public class EntryKeyBytesValue extends AbstractValue<K, T> {
@@ -155,6 +157,12 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         }
 
         @Override
+        public long offset() {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            return CompiledReplicatedMapIterationContext.this.entryBytesAccessOffset(CompiledReplicatedMapIterationContext.this.keyOffset());
+        }
+
+        @Override
         public long size() {
             CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
             return CompiledReplicatedMapIterationContext.this.keySize();
@@ -164,12 +172,6 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
             EntryKeyBytesValue.this.closeEntryKeyBytesValueInnerGetUsingDependants();
         }
 
-        @Override
-        public long offset() {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return CompiledReplicatedMapIterationContext.this.entryBytesAccessOffset(CompiledReplicatedMapIterationContext.this.keyOffset());
-        }
-
         private K innerGetUsing(K usingKey) {
             CompiledReplicatedMapIterationContext.this.entryBytes.position(CompiledReplicatedMapIterationContext.this.keyOffset());
             return CompiledReplicatedMapIterationContext.this.keyReader.read(CompiledReplicatedMapIterationContext.this.entryBytes, size(), usingKey);
@@ -177,12 +179,6 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
 
         public void closeEntryKeyBytesValueInnerGetUsingDependants() {
             EntryKeyBytesValue.this.closeCachedEntryKey();
-        }
-
-        @Override
-        public K getUsing(K usingKey) {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return innerGetUsing(usingKey);
         }
 
         private K cachedEntryKey;
@@ -217,12 +213,81 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
             CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
             return cachedEntryKey();
         }
+
+        @Override
+        public K getUsing(K usingKey) {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            return innerGetUsing(usingKey);
+        }
     }
 
     public class WriteLock implements InterProcessLock {
         @NotNull
         private IllegalMonitorStateException forbiddenUpgrade() {
             return new IllegalMonitorStateException("Cannot upgrade from read to write lock");
+        }
+
+        @Override
+        public void lockInterruptibly() throws InterruptedException {
+            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
+                case UNLOCKED :
+                    CompiledReplicatedMapIterationContext.this.segmentHeader().writeLockInterruptibly(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
+                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                    return ;
+                case READ_LOCKED :
+                    throw forbiddenUpgrade();
+                case UPDATE_LOCKED :
+                    CompiledReplicatedMapIterationContext.this.segmentHeader().upgradeUpdateToWriteLockInterruptibly(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
+                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                case WRITE_LOCKED :
+            }
+        }
+
+        @Override
+        public boolean tryLock(long time, @NotNull
+        TimeUnit unit) throws InterruptedException {
+            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
+                case UNLOCKED :
+                    if (CompiledReplicatedMapIterationContext.this.segmentHeader().tryWriteLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress(), time, unit)) {
+                        CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                case READ_LOCKED :
+                    throw forbiddenUpgrade();
+                case UPDATE_LOCKED :
+                    if (CompiledReplicatedMapIterationContext.this.segmentHeader().tryUpgradeUpdateToWriteLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress(), time, unit)) {
+                        CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                case WRITE_LOCKED :
+                    return true;
+            }
+            throw new AssertionError();
+        }
+
+        @Override
+        public boolean isHeldByCurrentThread() {
+            return CompiledReplicatedMapIterationContext.this.localLockState().write;
+        }
+
+        @Override
+        public void lock() {
+            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
+                case UNLOCKED :
+                    CompiledReplicatedMapIterationContext.this.segmentHeader().writeLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
+                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                    return ;
+                case READ_LOCKED :
+                    throw forbiddenUpgrade();
+                case UPDATE_LOCKED :
+                    CompiledReplicatedMapIterationContext.this.segmentHeader().upgradeUpdateToWriteLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
+                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                case WRITE_LOCKED :
+            }
         }
 
         @Override
@@ -262,122 +327,12 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
             }
             CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
         }
-
-        @Override
-        public boolean isHeldByCurrentThread() {
-            return CompiledReplicatedMapIterationContext.this.localLockState().write;
-        }
-
-        @Override
-        public void lockInterruptibly() throws InterruptedException {
-            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
-                case UNLOCKED :
-                    CompiledReplicatedMapIterationContext.this.segmentHeader().writeLockInterruptibly(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
-                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                    return ;
-                case READ_LOCKED :
-                    throw forbiddenUpgrade();
-                case UPDATE_LOCKED :
-                    CompiledReplicatedMapIterationContext.this.segmentHeader().upgradeUpdateToWriteLockInterruptibly(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
-                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                case WRITE_LOCKED :
-            }
-        }
-
-        @Override
-        public void lock() {
-            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
-                case UNLOCKED :
-                    CompiledReplicatedMapIterationContext.this.segmentHeader().writeLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
-                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                    return ;
-                case READ_LOCKED :
-                    throw forbiddenUpgrade();
-                case UPDATE_LOCKED :
-                    CompiledReplicatedMapIterationContext.this.segmentHeader().upgradeUpdateToWriteLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
-                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                case WRITE_LOCKED :
-            }
-        }
-
-        @Override
-        public boolean tryLock(long time, @NotNull
-        TimeUnit unit) throws InterruptedException {
-            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
-                case UNLOCKED :
-                    if (CompiledReplicatedMapIterationContext.this.segmentHeader().tryWriteLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress(), time, unit)) {
-                        CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                case READ_LOCKED :
-                    throw forbiddenUpgrade();
-                case UPDATE_LOCKED :
-                    if (CompiledReplicatedMapIterationContext.this.segmentHeader().tryUpgradeUpdateToWriteLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress(), time, unit)) {
-                        CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                case WRITE_LOCKED :
-                    return true;
-            }
-            throw new AssertionError();
-        }
     }
 
     public class UpdateLock implements InterProcessLock {
         @NotNull
         private IllegalMonitorStateException forbiddenUpgrade() {
             return new IllegalMonitorStateException("Cannot upgrade from read to update lock");
-        }
-
-        @Override
-        public boolean tryLock() {
-            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
-                case UNLOCKED :
-                    if (CompiledReplicatedMapIterationContext.this.segmentHeader().tryUpdateLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress())) {
-                        CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                case READ_LOCKED :
-                    throw forbiddenUpgrade();
-                case UPDATE_LOCKED :
-                case WRITE_LOCKED :
-                    return true;
-            }
-            throw new AssertionError();
-        }
-
-        @Override
-        public void lock() {
-            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
-                case UNLOCKED :
-                    CompiledReplicatedMapIterationContext.this.segmentHeader().updateLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
-                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
-                    return ;
-                case READ_LOCKED :
-                    throw forbiddenUpgrade();
-                case UPDATE_LOCKED :
-                case WRITE_LOCKED :
-            }
-        }
-
-        @Override
-        public void lockInterruptibly() throws InterruptedException {
-            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
-                case UNLOCKED :
-                    CompiledReplicatedMapIterationContext.this.segmentHeader().updateLockInterruptibly(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
-                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
-                    return ;
-                case READ_LOCKED :
-                    throw forbiddenUpgrade();
-                case UPDATE_LOCKED :
-                case WRITE_LOCKED :
-            }
         }
 
         @Override
@@ -401,8 +356,55 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         }
 
         @Override
+        public void lockInterruptibly() throws InterruptedException {
+            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
+                case UNLOCKED :
+                    CompiledReplicatedMapIterationContext.this.segmentHeader().updateLockInterruptibly(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
+                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
+                    return ;
+                case READ_LOCKED :
+                    throw forbiddenUpgrade();
+                case UPDATE_LOCKED :
+                case WRITE_LOCKED :
+            }
+        }
+
+        @Override
+        public void lock() {
+            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
+                case UNLOCKED :
+                    CompiledReplicatedMapIterationContext.this.segmentHeader().updateLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
+                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
+                    return ;
+                case READ_LOCKED :
+                    throw forbiddenUpgrade();
+                case UPDATE_LOCKED :
+                case WRITE_LOCKED :
+            }
+        }
+
+        @Override
         public boolean isHeldByCurrentThread() {
             return CompiledReplicatedMapIterationContext.this.localLockState().update;
+        }
+
+        @Override
+        public boolean tryLock() {
+            switch (CompiledReplicatedMapIterationContext.this.localLockState()) {
+                case UNLOCKED :
+                    if (CompiledReplicatedMapIterationContext.this.segmentHeader().tryUpdateLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress())) {
+                        CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                case READ_LOCKED :
+                    throw forbiddenUpgrade();
+                case UPDATE_LOCKED :
+                case WRITE_LOCKED :
+                    return true;
+            }
+            throw new AssertionError();
         }
 
         @Override
@@ -423,16 +425,22 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
 
     public class ReadLock implements InterProcessLock {
         @Override
-        public boolean isHeldByCurrentThread() {
-            return CompiledReplicatedMapIterationContext.this.localLockState().read;
+        public boolean tryLock() {
+            if ((CompiledReplicatedMapIterationContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
+                if (CompiledReplicatedMapIterationContext.this.segmentHeader().tryReadLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress())) {
+                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.READ_LOCKED);
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
         }
 
         @Override
-        public void lock() {
-            if ((CompiledReplicatedMapIterationContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
-                CompiledReplicatedMapIterationContext.this.segmentHeader().readLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
-                CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.READ_LOCKED);
-            }
+        public boolean isHeldByCurrentThread() {
+            return CompiledReplicatedMapIterationContext.this.localLockState().read;
         }
 
         @Override
@@ -455,6 +463,22 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         }
 
         @Override
+        public void lockInterruptibly() throws InterruptedException {
+            if ((CompiledReplicatedMapIterationContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
+                CompiledReplicatedMapIterationContext.this.segmentHeader().readLockInterruptibly(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
+                CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.READ_LOCKED);
+            }
+        }
+
+        @Override
+        public void lock() {
+            if ((CompiledReplicatedMapIterationContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
+                CompiledReplicatedMapIterationContext.this.segmentHeader().readLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
+                CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.READ_LOCKED);
+            }
+        }
+
+        @Override
         public boolean tryLock(long time, @NotNull
         TimeUnit unit) throws InterruptedException {
             if ((CompiledReplicatedMapIterationContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
@@ -466,28 +490,6 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
                 }
             } else {
                 return true;
-            }
-        }
-
-        @Override
-        public boolean tryLock() {
-            if ((CompiledReplicatedMapIterationContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
-                if (CompiledReplicatedMapIterationContext.this.segmentHeader().tryReadLock(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress())) {
-                    CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.READ_LOCKED);
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                return true;
-            }
-        }
-
-        @Override
-        public void lockInterruptibly() throws InterruptedException {
-            if ((CompiledReplicatedMapIterationContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
-                CompiledReplicatedMapIterationContext.this.segmentHeader().readLockInterruptibly(CompiledReplicatedMapIterationContext.this.segmentHeaderAddress());
-                CompiledReplicatedMapIterationContext.this.setLocalLockStateGuarded(LocalLockState.READ_LOCKED);
             }
         }
     }
@@ -503,12 +505,6 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         public ReadAccess<T> access() {
             CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
             return CompiledReplicatedMapIterationContext.this.entryBytesAccess;
-        }
-
-        @Override
-        public long offset() {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return CompiledReplicatedMapIterationContext.this.entryBytesAccessOffset(CompiledReplicatedMapIterationContext.this.valueOffset());
         }
 
         @Override
@@ -528,6 +524,12 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
 
         public void closeEntryValueBytesValueInnerGetUsingDependants() {
             EntryValueBytesValue.this.closeCachedEntryValue();
+        }
+
+        @Override
+        public V getUsing(V usingValue) {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            return innerGetUsing(usingValue);
         }
 
         private V cachedEntryValue;
@@ -564,9 +566,9 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         }
 
         @Override
-        public V getUsing(V usingValue) {
+        public long offset() {
             CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return innerGetUsing(usingValue);
+            return CompiledReplicatedMapIterationContext.this.entryBytesAccessOffset(CompiledReplicatedMapIterationContext.this.valueOffset());
         }
     }
 
@@ -630,6 +632,11 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
             WrappedValueInstanceValue.this.closeBuffer();
         }
 
+        @Override
+        public V instance() {
+            return value();
+        }
+
         private boolean marshalled = false;
 
         private DirectBytes buf;
@@ -662,80 +669,18 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         }
 
         @Override
-        public DirectBytes buffer() {
-            return buf();
-        }
-
-        @Override
         public V getUsing(V usingValue) {
             buf().position(0);
             return CompiledReplicatedMapIterationContext.this.valueReader.read(buf(), buf().limit(), usingValue);
         }
 
         @Override
-        public V instance() {
-            return value();
+        public DirectBytes buffer() {
+            return buf();
         }
     }
 
     public class DeprecatedMapKeyContextOnIteration implements MapKeyContext<K, V> {
-        @Override
-        public void close() {
-            throw new UnsupportedOperationException("close() is not supported during iteration");
-        }
-
-        @NotNull
-        @Override
-        public K key() {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return CompiledReplicatedMapIterationContext.this.key().get();
-        }
-
-        @Override
-        public boolean containsKey() {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return true;
-        }
-
-        @Override
-        public boolean valueEqualTo(V value) {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return Value.bytesEquivalent(CompiledReplicatedMapIterationContext.this.entryValue, CompiledReplicatedMapIterationContext.this.context().wrapValueAsValue(value));
-        }
-
-        @Override
-        public V getUsing(V usingValue) {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return CompiledReplicatedMapIterationContext.this.value().getUsing(usingValue);
-        }
-
-        @Override
-        public V get() {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return CompiledReplicatedMapIterationContext.this.value().get();
-        }
-
-        @Override
-        public boolean put(V newValue) {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            CompiledReplicatedMapIterationContext.this.replaceValue(CompiledReplicatedMapIterationContext.this, CompiledReplicatedMapIterationContext.this.context().wrapValueAsValue(newValue));
-            return true;
-        }
-
-        @Override
-        public boolean remove() {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            CompiledReplicatedMapIterationContext.this.remove(CompiledReplicatedMapIterationContext.this);
-            return true;
-        }
-
-        @NotNull
-        @Override
-        public Bytes entry() {
-            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return CompiledReplicatedMapIterationContext.this.entryBytes;
-        }
-
         @NotNull
         private UnsupportedOperationException unsupportedLocks() {
             return new UnsupportedOperationException("Lock operations are not supported (and not needed!) during iteration");
@@ -760,15 +705,72 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         }
 
         @Override
-        public long keyOffset() {
+        public V get() {
             CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-            return CompiledReplicatedMapIterationContext.this.keyOffset();
+            return CompiledReplicatedMapIterationContext.this.value().get();
+        }
+
+        @NotNull
+        @Override
+        public K key() {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            return CompiledReplicatedMapIterationContext.this.key().get();
+        }
+
+        @Override
+        public boolean remove() {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            CompiledReplicatedMapIterationContext.this.remove(CompiledReplicatedMapIterationContext.this);
+            return true;
+        }
+
+        @Override
+        public boolean put(V newValue) {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            CompiledReplicatedMapIterationContext.this.replaceValue(CompiledReplicatedMapIterationContext.this, CompiledReplicatedMapIterationContext.this.context().wrapValueAsValue(newValue));
+            return true;
+        }
+
+        @Override
+        public boolean containsKey() {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            return true;
+        }
+
+        @NotNull
+        @Override
+        public Bytes entry() {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            return CompiledReplicatedMapIterationContext.this.entryBytes;
+        }
+
+        @Override
+        public boolean valueEqualTo(V value) {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            return Value.bytesEquivalent(CompiledReplicatedMapIterationContext.this.entryValue, CompiledReplicatedMapIterationContext.this.context().wrapValueAsValue(value));
+        }
+
+        @Override
+        public V getUsing(V usingValue) {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            return CompiledReplicatedMapIterationContext.this.value().getUsing(usingValue);
+        }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException("close() is not supported during iteration");
         }
 
         @Override
         public long keySize() {
             CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
             return CompiledReplicatedMapIterationContext.this.keySize();
+        }
+
+        @Override
+        public long keyOffset() {
+            CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+            return CompiledReplicatedMapIterationContext.this.keyOffset();
         }
 
         @Override
@@ -781,6 +783,38 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         public long valueOffset() {
             CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
             return CompiledReplicatedMapIterationContext.this.valueOffset();
+        }
+    }
+
+    public class DummyValueZeroValue extends AbstractValue<V, Void> {
+        @Override
+        public Void handle() {
+            return null;
+        }
+
+        @Override
+        public ReadAccess<Void> access() {
+            return ReadAccess.zeros();
+        }
+
+        @Override
+        public V getUsing(V usingInstance) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public V get() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public long size() {
+            return CompiledReplicatedMapIterationContext.this.m().valueSizeMarshaller.minEncodableSize();
+        }
+
+        @Override
+        public long offset() {
+            return 0;
         }
     }
 
@@ -1003,6 +1037,12 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         return this.copies;
     }
 
+    final DummyValueZeroValue dummyValue;
+
+    public DummyValueZeroValue dummyValue() {
+        return this.dummyValue;
+    }
+
     final EntryKeyBytesValue entryKey;
 
     public EntryKeyBytesValue entryKey() {
@@ -1083,10 +1123,74 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         return m();
     }
 
+    public MKI keyMetaInterop(K key) {
+        return CompiledReplicatedMapIterationContext.this.h().metaKeyInteropProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.h().originalMetaKeyInterop, keyInterop, key);
+    }
+
+    public long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
+        if (CompiledReplicatedMapIterationContext.this.m().constantlySizedEntry) {
+            return CompiledReplicatedMapIterationContext.this.m().alignment.alignAddr((sizeOfEverythingBeforeValue + valueSize));
+        } else if (CompiledReplicatedMapIterationContext.this.m().couldNotDetermineAlignmentBeforeAllocation) {
+            return (sizeOfEverythingBeforeValue + (CompiledReplicatedMapIterationContext.this.m().worstAlignment)) + valueSize;
+        } else {
+            return (CompiledReplicatedMapIterationContext.this.m().alignment.alignAddr(sizeOfEverythingBeforeValue)) + valueSize;
+        }
+    }
+
     @NotNull
     @Override
     public MapContext<K, V, ?> context() {
         return CompiledReplicatedMapIterationContext.this;
+    }
+
+    public void checkEntryNotRemovedOnThisIteration() {
+        if (entryRemovedOnThisIterationInit())
+            throw new IllegalStateException("Entry was already removed on this iteration");
+
+    }
+
+    public void closeReplicatedMapSegmentIterationCheckEntryNotRemovedOnThisIterationDependants() {
+        CompiledReplicatedMapIterationContext.this.closeInterationCheckOnEachPublicOperationCheckOnEachPublicOperationDependants();
+    }
+
+    public MVI valueMetaInterop(V value) {
+        return CompiledReplicatedMapIterationContext.this.m().metaValueInteropProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.m().originalMetaValueInterop, valueInterop, value);
+    }
+
+    public void closeValueBytesInteropValueMetaInteropDependants() {
+        CompiledReplicatedMapIterationContext.this.wrappedValueInstanceValue.closeBuffer();
+    }
+
+    public <T>T contextAtIndexInChain(int index) {
+        return ((T)(contextChain.get(index)));
+    }
+
+    public void closeReplicatedChronicleMapHolderImplContextAtIndexInChainDependants() {
+        CompiledReplicatedMapIterationContext.this.closeSegmentStagesTryFindInitLocksOfThisSegmentDependants();
+    }
+
+    public void incrementSegmentEntriesIfNeeded() {
+    }
+
+    private long _MapEntryStages_sizeOfEverythingBeforeValue(long keySize, long valueSize) {
+        return (((CompiledReplicatedMapIterationContext.this.m().metaDataBytes) + (CompiledReplicatedMapIterationContext.this.m().keySizeMarshaller.sizeEncodingSize(keySize))) + keySize) + (CompiledReplicatedMapIterationContext.this.m().valueSizeMarshaller.sizeEncodingSize(valueSize));
+    }
+
+    long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
+        return (_MapEntryStages_sizeOfEverythingBeforeValue(keySize, valueSize)) + (ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES);
+    }
+
+    public final long entrySize(long keySize, long valueSize) {
+        long sizeOfEverythingBeforeValue = sizeOfEverythingBeforeValue(keySize, valueSize);
+        return innerEntrySize(sizeOfEverythingBeforeValue, valueSize);
+    }
+
+    public long entryBytesAccessOffset(long offset) {
+        return entryBytesAccessor.offset(entryBytes, offset);
+    }
+
+    public void closeReplicatedMapEntryStagesEntryBytesAccessOffsetDependants() {
+        CompiledReplicatedMapIterationContext.this.closeEntry();
     }
 
     public void checkAccessingFromOwnerThread() {
@@ -1099,12 +1203,90 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         CompiledReplicatedMapIterationContext.this.closeInterationCheckOnEachPublicOperationCheckOnEachPublicOperationDependants();
     }
 
-    public MVI valueMetaInterop(V value) {
-        return CompiledReplicatedMapIterationContext.this.m().metaValueInteropProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.m().originalMetaValueInterop, valueInterop, value);
+    private void _CheckOnEachPublicOperation_checkOnEachPublicOperation() {
+        CompiledReplicatedMapIterationContext.this.checkAccessingFromOwnerThread();
     }
 
-    public void closeValueBytesInteropValueMetaInteropDependants() {
-        CompiledReplicatedMapIterationContext.this.wrappedValueInstanceValue.closeBuffer();
+    public void checkOnEachPublicOperation() {
+        _CheckOnEachPublicOperation_checkOnEachPublicOperation();
+        CompiledReplicatedMapIterationContext.this.checkEntryNotRemovedOnThisIteration();
+    }
+
+    public void closeInterationCheckOnEachPublicOperationCheckOnEachPublicOperationDependants() {
+        CompiledReplicatedMapIterationContext.this.entryValue.closeEntryValueBytesValueSizeDependants();
+        CompiledReplicatedMapIterationContext.this.entryKey.closeEntryKeyBytesValueSizeDependants();
+    }
+
+    @NotNull
+    @Override
+    public InterProcessLock writeLock() {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        return CompiledReplicatedMapIterationContext.this.innerWriteLock;
+    }
+
+    @Override
+    public Value<V, ?> wrapValueAsValue(V value) {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        WrappedValueInstanceValue wrapped = CompiledReplicatedMapIterationContext.this.wrappedValueInstanceValue;
+        wrapped = wrapped.getUnusedWrappedValueGuarded();
+        wrapped.initValue(value);
+        return wrapped;
+    }
+
+    @Override
+    public R remove(@NotNull
+                    MapEntry<K, V> entry) {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        return CompiledReplicatedMapIterationContext.this.m().entryOperations.remove(entry);
+    }
+
+    @Override
+    public R replaceValue(@NotNull
+                          MapEntry<K, V> entry, Value<V, ?> newValue) {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        return CompiledReplicatedMapIterationContext.this.m().entryOperations.replaceValue(entry, newValue);
+    }
+
+    @Override
+    public Value<V, ?> defaultValue(@NotNull
+                                                               MapAbsentEntry<K, V> absentEntry) {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        return CompiledReplicatedMapIterationContext.this.m().entryOperations.defaultValue(absentEntry);
+    }
+
+    @NotNull
+    @Override
+    public Value<V, ?> value() {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        return CompiledReplicatedMapIterationContext.this.entryValue;
+    }
+
+    @NotNull
+    @Override
+    public InterProcessLock readLock() {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        return CompiledReplicatedMapIterationContext.this.innerReadLock;
+    }
+
+    @NotNull
+    @Override
+    public InterProcessLock updateLock() {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        return CompiledReplicatedMapIterationContext.this.innerUpdateLock;
+    }
+
+    @NotNull
+    @Override
+    public Value<K, ?> key() {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        return CompiledReplicatedMapIterationContext.this.entryKey;
+    }
+
+    @Override
+    public R insert(@NotNull
+                    MapAbsentEntry<K, V> absentEntry, Value<V, ?> value) {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        return CompiledReplicatedMapIterationContext.this.m().entryOperations.insert(absentEntry, value);
     }
 
     private CompiledReplicatedMapIterationContext _Chaining_createChaining() {
@@ -1128,184 +1310,26 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         return ((T)(createChaining()));
     }
 
-    public long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
-        if (CompiledReplicatedMapIterationContext.this.m().constantlySizedEntry) {
-            return CompiledReplicatedMapIterationContext.this.m().alignment.alignAddr((sizeOfEverythingBeforeValue + valueSize));
-        } else if (CompiledReplicatedMapIterationContext.this.m().couldNotDetermineAlignmentBeforeAllocation) {
-            return (sizeOfEverythingBeforeValue + (CompiledReplicatedMapIterationContext.this.m().worstAlignment)) + valueSize;
-        } else {
-            return (CompiledReplicatedMapIterationContext.this.m().alignment.alignAddr(sizeOfEverythingBeforeValue)) + valueSize;
-        }
+    public long hashLookupPos = -1;
+
+    public boolean hashLookupPosInit() {
+        return (this.hashLookupPos) >= 0;
     }
 
-    public void incrementSegmentEntriesIfNeeded() {
+    public void initHashLookupPos(long hashLookupPos) {
+        this.hashLookupPos = hashLookupPos;
     }
 
-    public <T>T contextAtIndexInChain(int index) {
-        return ((T)(contextChain.get(index)));
+    public long hashLookupPos() {
+        assert this.hashLookupPosInit() : "HashLookupPos should be init";
+        return this.hashLookupPos;
     }
 
-    public void closeReplicatedChronicleMapHolderImplContextAtIndexInChainDependants() {
-        CompiledReplicatedMapIterationContext.this.closeSegmentStagesTryFindInitLocksOfThisSegmentDependants();
-    }
-
-    public void checkEntryNotRemovedOnThisIteration() {
-        if (entryRemovedOnThisIterationInit())
-            throw new IllegalStateException("Entry was already removed on this iteration");
-
-    }
-
-    public void closeMapSegmentIterationCheckEntryNotRemovedOnThisIterationDependants() {
-        CompiledReplicatedMapIterationContext.this.closeInterationCheckOnEachPublicOperationCheckOnEachPublicOperationDependants();
-    }
-
-    private void _CheckOnEachPublicOperation_checkOnEachPublicOperation() {
-        CompiledReplicatedMapIterationContext.this.checkAccessingFromOwnerThread();
-    }
-
-    public void checkOnEachPublicOperation() {
-        _CheckOnEachPublicOperation_checkOnEachPublicOperation();
-        CompiledReplicatedMapIterationContext.this.checkEntryNotRemovedOnThisIteration();
-    }
-
-    public void closeInterationCheckOnEachPublicOperationCheckOnEachPublicOperationDependants() {
-        CompiledReplicatedMapIterationContext.this.entryKey.closeEntryKeyBytesValueSizeDependants();
-        CompiledReplicatedMapIterationContext.this.entryValue.closeEntryValueBytesValueSizeDependants();
-    }
-
-    @Override
-    public Value<V, ?> defaultValue(@NotNull
-                                                               MapAbsentEntry<K, V> absentEntry) {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        return CompiledReplicatedMapIterationContext.this.m().entryOperations.defaultValue(absentEntry);
-    }
-
-    @Override
-    public Value<V, ?> wrapValueAsValue(V value) {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        WrappedValueInstanceValue wrapped = CompiledReplicatedMapIterationContext.this.wrappedValueInstanceValue;
-        wrapped = wrapped.getUnusedWrappedValueGuarded();
-        wrapped.initValue(value);
-        return wrapped;
-    }
-
-    @NotNull
-    @Override
-    public InterProcessLock updateLock() {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        return CompiledReplicatedMapIterationContext.this.innerUpdateLock;
-    }
-
-    @NotNull
-    @Override
-    public Value<K, ?> key() {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        return CompiledReplicatedMapIterationContext.this.entryKey;
-    }
-
-    @Override
-    public R replaceValue(@NotNull
-                          MapEntry<K, V> entry, Value<V, ?> newValue) {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        return CompiledReplicatedMapIterationContext.this.m().entryOperations.replaceValue(entry, newValue);
-    }
-
-    @Override
-    public R remove(@NotNull
-                    MapEntry<K, V> entry) {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        return CompiledReplicatedMapIterationContext.this.m().entryOperations.remove(entry);
-    }
-
-    @NotNull
-    @Override
-    public InterProcessLock readLock() {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        return CompiledReplicatedMapIterationContext.this.innerReadLock;
-    }
-
-    @Override
-    public R insert(@NotNull
-                    MapAbsentEntry<K, V> absentEntry, Value<V, ?> value) {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        return CompiledReplicatedMapIterationContext.this.m().entryOperations.insert(absentEntry, value);
-    }
-
-    @NotNull
-    @Override
-    public Value<V, ?> value() {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        return CompiledReplicatedMapIterationContext.this.entryValue;
-    }
-
-    @NotNull
-    @Override
-    public InterProcessLock writeLock() {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        return CompiledReplicatedMapIterationContext.this.innerWriteLock;
-    }
-
-    public boolean entryIsPresent() {
-        return true;
-    }
-
-    public long entryBytesAccessOffset(long offset) {
-        return entryBytesAccessor.offset(entryBytes, offset);
-    }
-
-    public void closeReplicatedMapEntryStagesEntryBytesAccessOffsetDependants() {
-        CompiledReplicatedMapIterationContext.this.closeEntry();
-    }
-
-    private long _MapEntryStages_sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-        return (((CompiledReplicatedMapIterationContext.this.m().metaDataBytes) + (CompiledReplicatedMapIterationContext.this.m().keySizeMarshaller.sizeEncodingSize(keySize))) + keySize) + (CompiledReplicatedMapIterationContext.this.m().valueSizeMarshaller.sizeEncodingSize(valueSize));
-    }
-
-    long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-        return (_MapEntryStages_sizeOfEverythingBeforeValue(keySize, valueSize)) + (ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES);
-    }
-
-    public final long entrySize(long keySize, long valueSize) {
-        long sizeOfEverythingBeforeValue = sizeOfEverythingBeforeValue(keySize, valueSize);
-        return innerEntrySize(sizeOfEverythingBeforeValue, valueSize);
-    }
-
-    public MKI keyMetaInterop(K key) {
-        return CompiledReplicatedMapIterationContext.this.h().metaKeyInteropProvider.get(CompiledReplicatedMapIterationContext.this.copies, CompiledReplicatedMapIterationContext.this.h().originalMetaKeyInterop, keyInterop, key);
-    }
-
-    boolean used;
-
-    public boolean usedInit() {
-        return used;
-    }
-
-    public void initUsed(boolean used) {
-        this.used = used;
-    }
-
-    void closeUsed() {
-        if (!(this.usedInit()))
+    public void closeHashLookupPos() {
+        if (!(this.hashLookupPosInit()))
             return ;
 
-        used = false;
-    }
-
-    public boolean entryRemovedOnThisIteration = false;
-
-    boolean entryRemovedOnThisIterationInit() {
-        return (this.entryRemovedOnThisIteration) != false;
-    }
-
-    private void initEntryRemovedOnThisIteration(boolean entryRemovedOnThisIteration) {
-        this.entryRemovedOnThisIteration = entryRemovedOnThisIteration;
-    }
-
-    public void closeEntryRemovedOnThisIteration() {
-        if (!(this.entryRemovedOnThisIterationInit()))
-            return ;
-
-        this.entryRemovedOnThisIteration = false;
+        this.hashLookupPos = -1;
     }
 
     public int segmentIndex = -1;
@@ -1333,215 +1357,11 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
     }
 
     public void closeTheSegmentIndexDependants() {
-        CompiledReplicatedMapIterationContext.this.closeSegmentHashLookup();
         CompiledReplicatedMapIterationContext.this.closeSegment();
+        CompiledReplicatedMapIterationContext.this.closeSegmentHashLookup();
+        CompiledReplicatedMapIterationContext.this.closeSegHeader();
         CompiledReplicatedMapIterationContext.this.closeReplicationUpdateDropChangeDependants();
         CompiledReplicatedMapIterationContext.this.closeReplicationUpdateUpdateChangeDependants();
-        CompiledReplicatedMapIterationContext.this.closeSegHeader();
-    }
-
-    int hashLookupEntrySize;
-
-    int keyBits;
-
-    long address = -1;
-
-    long capacityMask;
-
-    long capacityMask2;
-
-    long keyMask;
-
-    long valueMask;
-
-    long entryMask;
-
-    public boolean segmentHashLookupInit() {
-        return (this.address) >= 0;
-    }
-
-    public void initSegmentHashLookup() {
-        long hashLookupOffset = CompiledReplicatedMapIterationContext.this.h().segmentOffset(CompiledReplicatedMapIterationContext.this.segmentIndex());
-        innerInitSegmentHashLookup(((CompiledReplicatedMapIterationContext.this.h().ms.address()) + hashLookupOffset), CompiledReplicatedMapIterationContext.this.h().segmentHashLookupCapacity, CompiledReplicatedMapIterationContext.this.h().segmentHashLookupEntrySize, CompiledReplicatedMapIterationContext.this.h().segmentHashLookupKeyBits, CompiledReplicatedMapIterationContext.this.h().segmentHashLookupValueBits);
-    }
-
-    public void initSegmentHashLookup(long address, long capacity, int entrySize, int keyBits, int valueBits) {
-        innerInitSegmentHashLookup(address, capacity, entrySize, keyBits, valueBits);
-    }
-
-    public int hashLookupEntrySize() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.hashLookupEntrySize;
-    }
-
-    public int keyBits() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.keyBits;
-    }
-
-    public long address() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.address;
-    }
-
-    public long capacityMask() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.capacityMask;
-    }
-
-    public long capacityMask2() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.capacityMask2;
-    }
-
-    public long entryMask() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.entryMask;
-    }
-
-    public long keyMask() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.keyMask;
-    }
-
-    public long valueMask() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.valueMask;
-    }
-
-    public void closeSegmentHashLookup() {
-        if (!(this.segmentHashLookupInit()))
-            return ;
-
-        this.address = -1;
-    }
-
-    public long stepBack(long pos) {
-        return (pos -= hashLookupEntrySize()) >= 0 ? pos : capacityMask2();
-    }
-
-    public long step(long pos) {
-        return (pos += hashLookupEntrySize()) <= (capacityMask2()) ? pos : 0L;
-    }
-
-    public long key(long entry) {
-        return entry & (keyMask());
-    }
-
-    public boolean empty(long entry) {
-        return (entry & (entryMask())) == (UNSET_ENTRY);
-    }
-
-    long indexToPos(long index) {
-        return index * (hashLookupEntrySize());
-    }
-
-    public long maskUnsetKey(long key) {
-        return (key &= keyMask()) != (UNSET_KEY) ? key : keyMask();
-    }
-
-    long entry(long key, long value) {
-        return key | (value << (keyBits()));
-    }
-
-    public void writeEntryVolatile(long pos, long prevEntry, long key, long value) {
-        long entry = (prevEntry & (~(entryMask()))) | (entry(key, value));
-        NativeBytes.UNSAFE.putLongVolatile(null, ((address()) + pos), entry);
-    }
-
-    public void writeEntry(long pos, long prevEntry, long key, long value) {
-        long entry = (prevEntry & (~(entryMask()))) | (entry(key, value));
-        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
-    }
-
-    void writeEntry(long pos, long prevEntry, long anotherEntry) {
-        long entry = (prevEntry & (~(entryMask()))) | (anotherEntry & (entryMask()));
-        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
-    }
-
-    public void clearHashLookup() {
-        NativeBytes.UNSAFE.setMemory(address(), ((capacityMask2()) + (hashLookupEntrySize())), ((byte)(0)));
-    }
-
-    public long hlPos(long key) {
-        return indexToPos((key & (capacityMask())));
-    }
-
-    public void checkValueForPut(long value) {
-        assert (value & (~(valueMask()))) == 0L : "Value out of range, was " + value;
-    }
-
-    public long readEntry(long pos) {
-        return NativeBytes.UNSAFE.getLong(((address()) + pos));
-    }
-
-    public void putValueVolatile(long pos, long value) {
-        checkValueForPut(value);
-        long currentEntry = readEntry(pos);
-        writeEntryVolatile(pos, currentEntry, key(currentEntry), value);
-    }
-
-    void clearEntry(long pos, long prevEntry) {
-        long entry = prevEntry & (~(entryMask()));
-        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
-    }
-
-    public long remove(long posToRemove) {
-        long entryToRemove = readEntry(posToRemove);
-        long posToShift = posToRemove;
-        while (true) {
-            posToShift = step(posToShift);
-            long entryToShift = readEntry(posToShift);
-            if (empty(entryToShift))
-                break;
-
-            long insertPos = hlPos(key(entryToShift));
-            boolean cond1 = insertPos <= posToRemove;
-            boolean cond2 = posToRemove <= posToShift;
-            if ((cond1 && cond2) || ((posToShift < insertPos) && (cond1 || cond2))) {
-                writeEntry(posToRemove, entryToRemove, entryToShift);
-                posToRemove = posToShift;
-                entryToRemove = entryToShift;
-            }
-        }
-        clearEntry(posToRemove, entryToRemove);
-        return posToRemove;
-    }
-
-    public long value(long entry) {
-        return (entry >>> (keyBits())) & (valueMask());
-    }
-
-    void forEach(EntryConsumer action) {
-        for (long pos = 0L ; pos <= (capacityMask2()) ; pos += hashLookupEntrySize()) {
-            long entry = readEntry(pos);
-            if (!(empty(entry)))
-                action.accept(key(entry), value(entry));
-
-        }
-    }
-
-    String hashLookupToString() {
-        final StringBuilder sb = new StringBuilder("{");
-        forEach((long key,long value) -> sb.append(key).append('=').append(value).append(','));
-        sb.append('}');
-        return sb.toString();
     }
 
     long entrySpaceOffset = 0;
@@ -1662,19 +1482,11 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
 
     public void closeEntryDependants() {
         CompiledReplicatedMapIterationContext.this.entryKey.closeEntryKeyBytesValueSizeDependants();
+        CompiledReplicatedMapIterationContext.this.closeReplicatedMapEntryStagesKeyEndDependants();
+        CompiledReplicatedMapIterationContext.this.entryKey.closeEntryKeyBytesValueInnerGetUsingDependants();
         CompiledReplicatedMapIterationContext.this.closeReplicationUpdateDropChangeDependants();
         CompiledReplicatedMapIterationContext.this.closeReplicationUpdateUpdateChangeDependants();
-        CompiledReplicatedMapIterationContext.this.closeReplicatedMapEntryStagesKeyEndDependants();
         CompiledReplicatedMapIterationContext.this.closeReplicatedMapEntryStagesEntrySizeDependants();
-        CompiledReplicatedMapIterationContext.this.entryKey.closeEntryKeyBytesValueInnerGetUsingDependants();
-    }
-
-    public void dropChange() {
-        CompiledReplicatedMapIterationContext.this.m().dropChange(CompiledReplicatedMapIterationContext.this.segmentIndex(), CompiledReplicatedMapIterationContext.this.pos());
-    }
-
-    public void closeReplicationUpdateDropChangeDependants() {
-        CompiledReplicatedMapIterationContext.this.closeReplicationUpdateUpdateChangeDependants();
     }
 
     public long keyEnd() {
@@ -1682,21 +1494,9 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
     }
 
     public void closeReplicatedMapEntryStagesKeyEndDependants() {
-        CompiledReplicatedMapIterationContext.this.closeReplicatedMapEntryStagesCountValueSizeOffsetDependants();
         CompiledReplicatedMapIterationContext.this.closeReplicationState();
+        CompiledReplicatedMapIterationContext.this.closeReplicatedMapEntryStagesCountValueSizeOffsetDependants();
         CompiledReplicatedMapIterationContext.this.closeReplicatedMapEntryStagesEntryEndDependants();
-    }
-
-    private long _MapEntryStages_countValueSizeOffset() {
-        return keyEnd();
-    }
-
-    long countValueSizeOffset() {
-        return (_MapEntryStages_countValueSizeOffset()) + (ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES);
-    }
-
-    public void closeReplicatedMapEntryStagesCountValueSizeOffsetDependants() {
-        CompiledReplicatedMapIterationContext.this.closeValue();
     }
 
     long replicationBytesOffset = -1;
@@ -1744,22 +1544,6 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         return timestamp();
     }
 
-    private long entryDeletedOffset() {
-        return (replicationBytesOffset()) + 9L;
-    }
-
-    public boolean entryDeleted() {
-        return entryBytesAccess.readBoolean(entryBytesAccessHandle, entryDeletedOffset());
-    }
-
-    public void writeEntryDeleted() {
-        entryBytesAccess.writeBoolean(entryBytesAccessHandle, entryDeletedOffset(), true);
-    }
-
-    public void writeEntryPresent() {
-        entryBytesAccess.writeBoolean(entryBytesAccessHandle, entryDeletedOffset(), false);
-    }
-
     private long identifierOffset() {
         return (replicationBytesOffset()) + 8L;
     }
@@ -1772,6 +1556,246 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
     public byte originIdentifier() {
         CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
         return identifier();
+    }
+
+    private long entryDeletedOffset() {
+        return (replicationBytesOffset()) + 9L;
+    }
+
+    public void writeEntryPresent() {
+        entryBytesAccess.writeBoolean(entryBytesAccessHandle, entryDeletedOffset(), false);
+    }
+
+    public void writeEntryDeleted() {
+        entryBytesAccess.writeBoolean(entryBytesAccessHandle, entryDeletedOffset(), true);
+    }
+
+    public boolean entryDeleted() {
+        return entryBytesAccess.readBoolean(entryBytesAccessHandle, entryDeletedOffset());
+    }
+
+    private boolean _MapSegmentIteration_entryIsPresent() {
+        return true;
+    }
+
+    public boolean entryIsPresent() {
+        return !(CompiledReplicatedMapIterationContext.this.entryDeleted());
+    }
+
+    private long _MapEntryStages_countValueSizeOffset() {
+        return keyEnd();
+    }
+
+    long countValueSizeOffset() {
+        return (_MapEntryStages_countValueSizeOffset()) + (ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES);
+    }
+
+    public void closeReplicatedMapEntryStagesCountValueSizeOffsetDependants() {
+        CompiledReplicatedMapIterationContext.this.closeValue();
+    }
+
+    int hashLookupEntrySize;
+
+    int keyBits;
+
+    long address = -1;
+
+    long capacityMask;
+
+    long capacityMask2;
+
+    long keyMask;
+
+    long valueMask;
+
+    long entryMask;
+
+    public boolean segmentHashLookupInit() {
+        return (this.address) >= 0;
+    }
+
+    public void initSegmentHashLookup() {
+        long hashLookupOffset = CompiledReplicatedMapIterationContext.this.h().segmentOffset(CompiledReplicatedMapIterationContext.this.segmentIndex());
+        innerInitSegmentHashLookup(((CompiledReplicatedMapIterationContext.this.h().ms.address()) + hashLookupOffset), CompiledReplicatedMapIterationContext.this.h().segmentHashLookupCapacity, CompiledReplicatedMapIterationContext.this.h().segmentHashLookupEntrySize, CompiledReplicatedMapIterationContext.this.h().segmentHashLookupKeyBits, CompiledReplicatedMapIterationContext.this.h().segmentHashLookupValueBits);
+    }
+
+    public void initSegmentHashLookup(long address, long capacity, int entrySize, int keyBits, int valueBits) {
+        innerInitSegmentHashLookup(address, capacity, entrySize, keyBits, valueBits);
+    }
+
+    public int hashLookupEntrySize() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.hashLookupEntrySize;
+    }
+
+    public int keyBits() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.keyBits;
+    }
+
+    public long address() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.address;
+    }
+
+    public long capacityMask() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.capacityMask;
+    }
+
+    public long capacityMask2() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.capacityMask2;
+    }
+
+    public long entryMask() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.entryMask;
+    }
+
+    public long keyMask() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.keyMask;
+    }
+
+    public long valueMask() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.valueMask;
+    }
+
+    public void closeSegmentHashLookup() {
+        if (!(this.segmentHashLookupInit()))
+            return ;
+
+        this.address = -1;
+    }
+
+    public void checkValueForPut(long value) {
+        assert (value & (~(valueMask()))) == 0L : "Value out of range, was " + value;
+    }
+
+    long indexToPos(long index) {
+        return index * (hashLookupEntrySize());
+    }
+
+    public long key(long entry) {
+        return entry & (keyMask());
+    }
+
+    public long value(long entry) {
+        return (entry >>> (keyBits())) & (valueMask());
+    }
+
+    public boolean empty(long entry) {
+        return (entry & (entryMask())) == (UNSET_ENTRY);
+    }
+
+    public long maskUnsetKey(long key) {
+        return (key &= keyMask()) != (UNSET_KEY) ? key : keyMask();
+    }
+
+    long entry(long key, long value) {
+        return key | (value << (keyBits()));
+    }
+
+    public void writeEntry(long pos, long prevEntry, long key, long value) {
+        long entry = (prevEntry & (~(entryMask()))) | (entry(key, value));
+        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
+    }
+
+    public void writeEntryVolatile(long pos, long prevEntry, long key, long value) {
+        long entry = (prevEntry & (~(entryMask()))) | (entry(key, value));
+        NativeBytes.UNSAFE.putLongVolatile(null, ((address()) + pos), entry);
+    }
+
+    void clearEntry(long pos, long prevEntry) {
+        long entry = prevEntry & (~(entryMask()));
+        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
+    }
+
+    void writeEntry(long pos, long prevEntry, long anotherEntry) {
+        long entry = (prevEntry & (~(entryMask()))) | (anotherEntry & (entryMask()));
+        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
+    }
+
+    public long readEntry(long pos) {
+        return NativeBytes.UNSAFE.getLong(((address()) + pos));
+    }
+
+    public void putValueVolatile(long pos, long value) {
+        checkValueForPut(value);
+        long currentEntry = readEntry(pos);
+        writeEntryVolatile(pos, currentEntry, key(currentEntry), value);
+    }
+
+    void forEach(EntryConsumer action) {
+        for (long pos = 0L ; pos <= (capacityMask2()) ; pos += hashLookupEntrySize()) {
+            long entry = readEntry(pos);
+            if (!(empty(entry)))
+                action.accept(key(entry), value(entry));
+
+        }
+    }
+
+    String hashLookupToString() {
+        final StringBuilder sb = new StringBuilder("{");
+        forEach((long key,long value) -> sb.append(key).append('=').append(value).append(','));
+        sb.append('}');
+        return sb.toString();
+    }
+
+    public long step(long pos) {
+        return (pos += hashLookupEntrySize()) <= (capacityMask2()) ? pos : 0L;
+    }
+
+    public void clearHashLookup() {
+        NativeBytes.UNSAFE.setMemory(address(), ((capacityMask2()) + (hashLookupEntrySize())), ((byte)(0)));
+    }
+
+    public long hlPos(long key) {
+        return indexToPos((key & (capacityMask())));
+    }
+
+    public long remove(long posToRemove) {
+        long entryToRemove = readEntry(posToRemove);
+        long posToShift = posToRemove;
+        while (true) {
+            posToShift = step(posToShift);
+            long entryToShift = readEntry(posToShift);
+            if (empty(entryToShift))
+                break;
+
+            long insertPos = hlPos(key(entryToShift));
+            boolean cond1 = insertPos <= posToRemove;
+            boolean cond2 = posToRemove <= posToShift;
+            if ((cond1 && cond2) || ((posToShift < insertPos) && (cond1 || cond2))) {
+                writeEntry(posToRemove, entryToRemove, entryToShift);
+                posToRemove = posToShift;
+                entryToRemove = entryToShift;
+            }
+        }
+        clearEntry(posToRemove, entryToRemove);
+        return posToRemove;
+    }
+
+    public long stepBack(long pos) {
+        return (pos -= hashLookupEntrySize()) >= 0 ? pos : capacityMask2();
     }
 
     long segmentHeaderAddress;
@@ -1815,8 +1839,28 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         CompiledReplicatedMapIterationContext.this.closeLocks();
     }
 
+    public void entries(long size) {
+        segmentHeader().size(segmentHeaderAddress(), size);
+    }
+
+    public long deleted() {
+        return segmentHeader().deleted(segmentHeaderAddress());
+    }
+
     long nextPosToSearchFrom() {
         return segmentHeader().nextPosToSearchFrom(segmentHeaderAddress());
+    }
+
+    public void deleted(long deleted) {
+        segmentHeader().deleted(segmentHeaderAddress(), deleted);
+    }
+
+    public long entries() {
+        return segmentHeader().size(segmentHeaderAddress());
+    }
+
+    public long size() {
+        return (entries()) - (deleted());
     }
 
     boolean tryFindInitLocksOfThisSegment(Object thisContext, int index) {
@@ -1830,75 +1874,6 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
 
     public void closeSegmentStagesTryFindInitLocksOfThisSegmentDependants() {
         CompiledReplicatedMapIterationContext.this.closeLocks();
-    }
-
-    public long entries() {
-        return segmentHeader().size(segmentHeaderAddress());
-    }
-
-    public void deleted(long deleted) {
-        segmentHeader().deleted(segmentHeaderAddress(), deleted);
-    }
-
-    public void entries(long size) {
-        segmentHeader().size(segmentHeaderAddress(), size);
-    }
-
-    public long deleted() {
-        return segmentHeader().deleted(segmentHeaderAddress());
-    }
-
-    public long size() {
-        return (entries()) - (deleted());
-    }
-
-    public void nextPosToSearchFrom(long nextPosToSearchFrom) {
-        segmentHeader().nextPosToSearchFrom(segmentHeaderAddress(), nextPosToSearchFrom);
-    }
-
-    public void updateNextPosToSearchFrom(long allocated, int chunks) {
-        long nextPosToSearchFrom = allocated + chunks;
-        if (nextPosToSearchFrom >= (CompiledReplicatedMapIterationContext.this.h().actualChunksPerSegment))
-            nextPosToSearchFrom = 0L;
-
-        nextPosToSearchFrom(nextPosToSearchFrom);
-    }
-
-    public long alloc(int chunks) {
-        VanillaChronicleHash<?, ?, ?, ?, ?> h = CompiledReplicatedMapIterationContext.this.h();
-        if (chunks > (h.maxChunksPerEntry))
-            throw new IllegalArgumentException((((("Entry is too large: requires " + chunks) + " entry size chucks, ") + (h.maxChunksPerEntry)) + " is maximum."));
-
-        long ret = freeList().setNextNContinuousClearBits(nextPosToSearchFrom(), chunks);
-        if ((ret == (DirectBitSet.NOT_FOUND)) || ((ret + chunks) > (h.actualChunksPerSegment))) {
-            if (((ret != (DirectBitSet.NOT_FOUND)) && ((ret + chunks) > (h.actualChunksPerSegment))) && (ret < (h.actualChunksPerSegment)))
-                freeList().clear(ret, h.actualChunksPerSegment);
-
-            ret = freeList().setNextNContinuousClearBits(0L, chunks);
-            if ((ret == (DirectBitSet.NOT_FOUND)) || ((ret + chunks) > (h.actualChunksPerSegment))) {
-                if (((ret != (DirectBitSet.NOT_FOUND)) && ((ret + chunks) > (h.actualChunksPerSegment))) && (ret < (h.actualChunksPerSegment)))
-                    freeList().clear(ret, h.actualChunksPerSegment);
-
-                if (chunks == 1) {
-                    throw new IllegalStateException("Segment is full, no free entries found");
-                } else {
-                    throw new IllegalStateException((("Segment is full or has no ranges of " + chunks) + " continuous free chunks"));
-                }
-            }
-            updateNextPosToSearchFrom(ret, chunks);
-        } else {
-            if ((chunks == 1) || (freeList().isSet(nextPosToSearchFrom()))) {
-                updateNextPosToSearchFrom(ret, chunks);
-            }
-        }
-        return ret;
-    }
-
-    public void free(long fromPos, int chunks) {
-        freeList().clear(fromPos, (fromPos + chunks));
-        if (fromPos < (nextPosToSearchFrom()))
-            nextPosToSearchFrom(fromPos);
-
     }
 
     int totalReadLockCount;
@@ -1973,75 +1948,13 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         rootContextOnThisSegment = null;
     }
 
-    public void clearSegment() {
-        CompiledReplicatedMapIterationContext.this.innerWriteLock.lock();
-        CompiledReplicatedMapIterationContext.this.clearHashLookup();
-        freeList().clear();
-        nextPosToSearchFrom(0L);
-        entries(0L);
-    }
-
-    public void clear() {
-        clearSegment();
-    }
-
-    public int allocatedChunks = 0;
-
-    public boolean allocatedChunksInit() {
-        return (this.allocatedChunks) != 0;
-    }
-
-    public void initAllocatedChunks(int allocatedChunks) {
-        this.allocatedChunks = allocatedChunks;
-    }
-
-    public int allocatedChunks() {
-        assert this.allocatedChunksInit() : "AllocatedChunks should be init";
-        return this.allocatedChunks;
-    }
-
-    public void closeAllocatedChunks() {
-        if (!(this.allocatedChunksInit()))
-            return ;
-
-        this.allocatedChunks = 0;
-    }
-
-    public void initEntryAndKeyCopying(long entrySize, long bytesToCopy) {
-        initAllocatedChunks(CompiledReplicatedMapIterationContext.this.h().inChunks(entrySize));
-        CompiledReplicatedMapIterationContext.this.initEntryCopying(CompiledReplicatedMapIterationContext.this.alloc(allocatedChunks()), bytesToCopy);
-        incrementSegmentEntriesIfNeeded();
-    }
-
-    public long hashLookupPos = -1;
-
-    public boolean hashLookupPosInit() {
-        return (this.hashLookupPos) >= 0;
-    }
-
-    public void initHashLookupPos(long hashLookupPos) {
-        this.hashLookupPos = hashLookupPos;
-    }
-
-    public long hashLookupPos() {
-        assert this.hashLookupPosInit() : "HashLookupPos should be init";
-        return this.hashLookupPos;
-    }
-
-    public void closeHashLookupPos() {
-        if (!(this.hashLookupPosInit()))
-            return ;
-
-        this.hashLookupPos = -1;
-    }
-
     public boolean forEachRemoving(Predicate<? super MapEntry<K, V>> action) {
         CompiledReplicatedMapIterationContext.this.innerUpdateLock.lock();
-        long size = CompiledReplicatedMapIterationContext.this.size();
-        if (size == 0)
-            return true;
-
         try {
+            long size = CompiledReplicatedMapIterationContext.this.size();
+            if (size == 0)
+                return true;
+
             boolean interrupted = false;
             long startPos = 0L;
             while (!(CompiledReplicatedMapIterationContext.this.empty(CompiledReplicatedMapIterationContext.this.readEntry(startPos)))) {
@@ -2071,6 +1984,92 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
             CompiledReplicatedMapIterationContext.this.innerReadLock.unlock();
             initEntryRemovedOnThisIteration(false);
         }
+    }
+
+    public void nextPosToSearchFrom(long nextPosToSearchFrom) {
+        segmentHeader().nextPosToSearchFrom(segmentHeaderAddress(), nextPosToSearchFrom);
+    }
+
+    public void clearSegment() {
+        CompiledReplicatedMapIterationContext.this.innerWriteLock.lock();
+        CompiledReplicatedMapIterationContext.this.clearHashLookup();
+        freeList().clear();
+        nextPosToSearchFrom(0L);
+        entries(0L);
+    }
+
+    public void clear() {
+        clearSegment();
+    }
+
+    public void updateNextPosToSearchFrom(long allocated, int chunks) {
+        long nextPosToSearchFrom = allocated + chunks;
+        if (nextPosToSearchFrom >= (CompiledReplicatedMapIterationContext.this.h().actualChunksPerSegment))
+            nextPosToSearchFrom = 0L;
+
+        nextPosToSearchFrom(nextPosToSearchFrom);
+    }
+
+    public long alloc(int chunks) {
+        VanillaChronicleHash<?, ?, ?, ?, ?> h = CompiledReplicatedMapIterationContext.this.h();
+        if (chunks > (h.maxChunksPerEntry))
+            throw new IllegalArgumentException((((("Entry is too large: requires " + chunks) + " entry size chucks, ") + (h.maxChunksPerEntry)) + " is maximum."));
+
+        long ret = freeList().setNextNContinuousClearBits(nextPosToSearchFrom(), chunks);
+        if ((ret == (DirectBitSet.NOT_FOUND)) || ((ret + chunks) > (h.actualChunksPerSegment))) {
+            if (((ret != (DirectBitSet.NOT_FOUND)) && ((ret + chunks) > (h.actualChunksPerSegment))) && (ret < (h.actualChunksPerSegment)))
+                freeList().clear(ret, h.actualChunksPerSegment);
+
+            ret = freeList().setNextNContinuousClearBits(0L, chunks);
+            if ((ret == (DirectBitSet.NOT_FOUND)) || ((ret + chunks) > (h.actualChunksPerSegment))) {
+                if (((ret != (DirectBitSet.NOT_FOUND)) && ((ret + chunks) > (h.actualChunksPerSegment))) && (ret < (h.actualChunksPerSegment)))
+                    freeList().clear(ret, h.actualChunksPerSegment);
+
+                if (chunks == 1) {
+                    throw new IllegalStateException("Segment is full, no free entries found");
+                } else {
+                    throw new IllegalStateException((("Segment is full or has no ranges of " + chunks) + " continuous free chunks"));
+                }
+            }
+            updateNextPosToSearchFrom(ret, chunks);
+        } else {
+            if ((chunks == 1) || (freeList().isSet(nextPosToSearchFrom()))) {
+                updateNextPosToSearchFrom(ret, chunks);
+            }
+        }
+        return ret;
+    }
+
+    public void free(long fromPos, int chunks) {
+        freeList().clear(fromPos, (fromPos + chunks));
+        if (fromPos < (nextPosToSearchFrom()))
+            nextPosToSearchFrom(fromPos);
+
+    }
+
+    public void dropChange() {
+        CompiledReplicatedMapIterationContext.this.m().dropChange(CompiledReplicatedMapIterationContext.this.segmentIndex(), CompiledReplicatedMapIterationContext.this.pos());
+    }
+
+    public void closeReplicationUpdateDropChangeDependants() {
+        CompiledReplicatedMapIterationContext.this.closeReplicationUpdateUpdateChangeDependants();
+    }
+
+    public boolean entryRemovedOnThisIteration = false;
+
+    boolean entryRemovedOnThisIterationInit() {
+        return (this.entryRemovedOnThisIteration) != false;
+    }
+
+    protected void initEntryRemovedOnThisIteration(boolean entryRemovedOnThisIteration) {
+        this.entryRemovedOnThisIteration = entryRemovedOnThisIteration;
+    }
+
+    public void closeEntryRemovedOnThisIteration() {
+        if (!(this.entryRemovedOnThisIterationInit()))
+            return ;
+
+        this.entryRemovedOnThisIteration = false;
     }
 
     public long newTimestamp;
@@ -2125,14 +2124,47 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
     }
 
     public void closeReplicationUpdateDependants() {
-        CompiledReplicatedMapIterationContext.this.closeReplicationUpdateRemoteUpdateDependants();
         CompiledReplicatedMapIterationContext.this.closeUpdatedReplicationState();
+        CompiledReplicatedMapIterationContext.this.closeReplicationUpdateRemoteUpdateDependants();
+    }
+
+    @Override
+    public long remoteTimestamp() {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        return newTimestamp();
     }
 
     @Override
     public byte remoteIdentifier() {
         CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
         return newIdentifier();
+    }
+
+    private boolean updatedReplicationState = false;
+
+    public boolean updatedReplicationStateInit() {
+        return (this.updatedReplicationState) != false;
+    }
+
+    public void initUpdatedReplicationState() {
+        initReplicationState(CompiledReplicatedMapIterationContext.this.newTimestamp(), CompiledReplicatedMapIterationContext.this.newIdentifier());
+        updatedReplicationState = true;
+    }
+
+    public void closeUpdatedReplicationState() {
+        if (!(this.updatedReplicationStateInit()))
+            return ;
+
+        this.updatedReplicationState = false;
+    }
+
+    private boolean testTimeStampInSensibleRange() {
+        if ((CompiledReplicatedMapIterationContext.this.m().timeProvider) == (TimeProvider.SYSTEM)) {
+            long currentTime = TimeProvider.SYSTEM.currentTime();
+            assert (Math.abs((currentTime - (timestamp())))) <= 100000000 : "unrealistic timestamp: " + (timestamp());
+            assert (Math.abs((currentTime - (CompiledReplicatedMapIterationContext.this.newTimestamp())))) <= 100000000 : "unrealistic newTimestamp: " + (CompiledReplicatedMapIterationContext.this.newTimestamp());
+        }
+        return true;
     }
 
     public boolean remoteUpdate() {
@@ -2282,12 +2314,52 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         this.entrySizeInChunks = 0;
     }
 
+    public void innerRemoveEntryExceptHashLookupUpdate() {
+        CompiledReplicatedMapIterationContext.this.free(pos(), entrySizeInChunks());
+        CompiledReplicatedMapIterationContext.this.entries(((CompiledReplicatedMapIterationContext.this.entries()) - 1L));
+        CompiledReplicatedMapIterationContext.this.incrementModCountGuarded();
+    }
+
+    public int allocatedChunks = 0;
+
+    public boolean allocatedChunksInit() {
+        return (this.allocatedChunks) != 0;
+    }
+
+    public void initAllocatedChunks(int allocatedChunks) {
+        this.allocatedChunks = allocatedChunks;
+    }
+
+    public int allocatedChunks() {
+        assert this.allocatedChunksInit() : "AllocatedChunks should be init";
+        return this.allocatedChunks;
+    }
+
+    public void closeAllocatedChunks() {
+        if (!(this.allocatedChunksInit()))
+            return ;
+
+        this.allocatedChunks = 0;
+    }
+
     public final void freeExtraAllocatedChunks() {
         if (((!(CompiledReplicatedMapIterationContext.this.m().constantlySizedEntry)) && (CompiledReplicatedMapIterationContext.this.m().couldNotDetermineAlignmentBeforeAllocation)) && ((entrySizeInChunks()) < (CompiledReplicatedMapIterationContext.this.allocatedChunks()))) {
             CompiledReplicatedMapIterationContext.this.free(((pos()) + (entrySizeInChunks())), ((CompiledReplicatedMapIterationContext.this.allocatedChunks()) - (entrySizeInChunks())));
         } else {
             initTheEntrySizeInChunks(CompiledReplicatedMapIterationContext.this.allocatedChunks());
         }
+    }
+
+    public void writeValueAndPutPos(Value<V, ?> value) {
+        initValue(value);
+        freeExtraAllocatedChunks();
+        CompiledReplicatedMapIterationContext.this.putValueVolatile(CompiledReplicatedMapIterationContext.this.hashLookupPos(), pos());
+    }
+
+    public void initEntryAndKeyCopying(long entrySize, long bytesToCopy) {
+        initAllocatedChunks(CompiledReplicatedMapIterationContext.this.h().inChunks(entrySize));
+        CompiledReplicatedMapIterationContext.this.initEntryCopying(CompiledReplicatedMapIterationContext.this.alloc(allocatedChunks()), bytesToCopy);
+        incrementSegmentEntriesIfNeeded();
     }
 
     private void _MapEntryStages_putValueDeletedEntry(Value<V, ?> newValue) {
@@ -2339,12 +2411,6 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         throw new AssertionError("Replicated Map doesn\'t remove entries truly, yet");
     }
 
-    public void writeValueAndPutPos(Value<V, ?> value) {
-        initValue(value);
-        freeExtraAllocatedChunks();
-        CompiledReplicatedMapIterationContext.this.putValueVolatile(CompiledReplicatedMapIterationContext.this.hashLookupPos(), pos());
-    }
-
     private void _MapEntryStages_relocation(Value<V, ?> newValue, long newSizeOfEverythingBeforeValue) {
         CompiledReplicatedMapIterationContext.this.free(pos(), entrySizeInChunks());
         long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
@@ -2355,27 +2421,6 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
     protected void relocation(Value<V, ?> newValue, long newSizeOfEverythingBeforeValue) {
         CompiledReplicatedMapIterationContext.this.dropChange();
         _MapEntryStages_relocation(newValue, newSizeOfEverythingBeforeValue);
-    }
-
-    public void innerRemoveEntryExceptHashLookupUpdate() {
-        CompiledReplicatedMapIterationContext.this.free(pos(), entrySizeInChunks());
-        CompiledReplicatedMapIterationContext.this.entries(((CompiledReplicatedMapIterationContext.this.entries()) - 1L));
-        CompiledReplicatedMapIterationContext.this.incrementModCountGuarded();
-    }
-
-    @Override
-    public void doRemove() {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        initEntryRemovedOnThisIteration(true);
-        CompiledReplicatedMapIterationContext.this.innerWriteLock.lock();
-        try {
-            if ((CompiledReplicatedMapIterationContext.this.remove(CompiledReplicatedMapIterationContext.this.hashLookupPos())) != (CompiledReplicatedMapIterationContext.this.hashLookupPos())) {
-                CompiledReplicatedMapIterationContext.this.setHashLookupPosGuarded(CompiledReplicatedMapIterationContext.this.stepBack(CompiledReplicatedMapIterationContext.this.hashLookupPos()));
-            }
-            CompiledReplicatedMapIterationContext.this.innerRemoveEntryExceptHashLookupUpdate();
-        } finally {
-            CompiledReplicatedMapIterationContext.this.innerWriteLock.unlock();
-        }
     }
 
     public void innerDefaultReplaceValue(Value<V, ?> newValue) {
@@ -2412,8 +2457,38 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
         CompiledReplicatedMapIterationContext.this.putValueVolatile(CompiledReplicatedMapIterationContext.this.hashLookupPos(), pos());
     }
 
+    private void _MapSegmentIteration_doRemove() {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        initEntryRemovedOnThisIteration(true);
+        CompiledReplicatedMapIterationContext.this.innerWriteLock.lock();
+        try {
+            if ((CompiledReplicatedMapIterationContext.this.remove(CompiledReplicatedMapIterationContext.this.hashLookupPos())) != (CompiledReplicatedMapIterationContext.this.hashLookupPos())) {
+                CompiledReplicatedMapIterationContext.this.setHashLookupPosGuarded(CompiledReplicatedMapIterationContext.this.stepBack(CompiledReplicatedMapIterationContext.this.hashLookupPos()));
+            }
+            CompiledReplicatedMapIterationContext.this.innerRemoveEntryExceptHashLookupUpdate();
+        } finally {
+            CompiledReplicatedMapIterationContext.this.innerWriteLock.unlock();
+        }
+    }
+
     @Override
-    public void doReplaceValue(Value<V, ?> newValue) {
+    public void doRemove() {
+        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
+        initEntryRemovedOnThisIteration(true);
+        try {
+            if ((CompiledReplicatedMapIterationContext.this.valueSize()) > (CompiledReplicatedMapIterationContext.this.dummyValue.size()))
+                CompiledReplicatedMapIterationContext.this.innerDefaultReplaceValue(CompiledReplicatedMapIterationContext.this.dummyValue);
+
+            CompiledReplicatedMapIterationContext.this.initUpdatedReplicationState();
+            CompiledReplicatedMapIterationContext.this.writeEntryDeleted();
+            CompiledReplicatedMapIterationContext.this.updateChange();
+            CompiledReplicatedMapIterationContext.this.deleted(((CompiledReplicatedMapIterationContext.this.deleted()) + 1));
+        } finally {
+            CompiledReplicatedMapIterationContext.this.innerWriteLock.unlock();
+        }
+    }
+
+    private void _MapSegmentIteration_doReplaceValue(Value<V, ?> newValue) {
         CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
         try {
             CompiledReplicatedMapIterationContext.this.innerDefaultReplaceValue(newValue);
@@ -2423,35 +2498,24 @@ public class CompiledReplicatedMapIterationContext<K, KI, MKI extends MetaBytesI
     }
 
     @Override
-    public long remoteTimestamp() {
-        CompiledReplicatedMapIterationContext.this.checkOnEachPublicOperation();
-        return newTimestamp();
+    public void doReplaceValue(Value<V, ?> newValue) {
+        _MapSegmentIteration_doReplaceValue(newValue);
     }
 
-    private boolean updatedReplicationState = false;
+    boolean used;
 
-    public boolean updatedReplicationStateInit() {
-        return (this.updatedReplicationState) != false;
+    public boolean usedInit() {
+        return used;
     }
 
-    public void initUpdatedReplicationState() {
-        initReplicationState(CompiledReplicatedMapIterationContext.this.newTimestamp(), CompiledReplicatedMapIterationContext.this.newIdentifier());
-        updatedReplicationState = true;
+    public void initUsed(boolean used) {
+        this.used = used;
     }
 
-    public void closeUpdatedReplicationState() {
-        if (!(this.updatedReplicationStateInit()))
+    void closeUsed() {
+        if (!(this.usedInit()))
             return ;
 
-        this.updatedReplicationState = false;
-    }
-
-    private boolean testTimeStampInSensibleRange() {
-        if ((CompiledReplicatedMapIterationContext.this.m().timeProvider) == (TimeProvider.SYSTEM)) {
-            long currentTime = TimeProvider.SYSTEM.currentTime();
-            assert (Math.abs((currentTime - (timestamp())))) <= 100000000 : "unrealistic timestamp: " + (timestamp());
-            assert (Math.abs((currentTime - (CompiledReplicatedMapIterationContext.this.newTimestamp())))) <= 100000000 : "unrealistic newTimestamp: " + (CompiledReplicatedMapIterationContext.this.newTimestamp());
-        }
-        return true;
+        used = false;
     }
 }

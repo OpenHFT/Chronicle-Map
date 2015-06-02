@@ -72,8 +72,8 @@ public interface Value<V, T> {
                 accessor.offset(source, index));
     }
 
-    default <T2> void writeTo(WriteAccess<T2> access, T2 handle, long offset) {
-        Access.copy(access(), handle(), offset(), access, handle, offset, size());
+    default <T2> void writeTo(WriteAccess<T2> targetAccess, T2 target, long targetOffset) {
+        Access.copy(access(), handle(), offset(), targetAccess, target, targetOffset, size());
     }
 
     default <T2> void writeTo(StreamingDataOutput<?, ?, T2> output) {
@@ -83,8 +83,9 @@ public interface Value<V, T> {
     }
 
     default <S, T2, A extends WriteAccess<T2>> void writeTo(
-            Accessor<S, T2, A> accessor, S source, long index) {
-        writeTo(accessor.access(source), accessor.handle(source), accessor.offset(source, index));
+            Accessor<S, T2, A> targetAccessor, S target, long index) {
+        writeTo(targetAccessor.access(target), targetAccessor.handle(target),
+                targetAccessor.offset(target, index));
     }
 
     /**

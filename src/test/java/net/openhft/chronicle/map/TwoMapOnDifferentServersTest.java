@@ -36,7 +36,6 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Rob Austin.
  */
-@Ignore
 public class TwoMapOnDifferentServersTest {
 
     private ChronicleMap<Integer, CharSequence> map1;

@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Rob Austin.
  */
-@Ignore
 public class TcpReplicationLargeEntryTest {
 
     private ChronicleMap<Integer, CharSequence> map1;

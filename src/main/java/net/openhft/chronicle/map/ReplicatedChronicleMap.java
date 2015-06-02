@@ -87,7 +87,7 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R>
         extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI, R>
-        implements Replica, Replica.EntryExternalizable, Replica.EntryResolver<K, V> {
+        implements Replica, Replica.EntryExternalizable {
     // for file, jdbc and UDP replication
     public static final int RESERVED_MOD_ITER = 8;
     public static final int ADDITIONAL_ENTRY_BYTES = 10;
@@ -108,6 +108,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     public transient MapRemoteOperations<K, V, R> remoteOperations =
             DefaultSpi.mapRemoteOperations();
     transient CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext;
+    transient CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> remoteItContext;
 
     public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder,
                                   AbstractReplication replication)
@@ -291,10 +292,12 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         }
     }
 
+    @Override
     public boolean identifierCheck(@NotNull HashReplicableEntry<?> entry, int chronicleId) {
         return entry.originIdentifier() == localIdentifier;
     }
 
+    @Override
     public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
 
         long start = entry.position();
@@ -413,12 +416,28 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         return q;
     }
 
+    /**
+     * Assumed to be called from a single thread - the replication thread. Not to waste time
+     * for going into replication thread's threadLocal map, cache the context in Map's field
+     */
     private CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext() {
         if (remoteOpContext == null) {
-            remoteOpContext = q().getContext();
+            remoteOpContext = q();
         }
+        assert !remoteOpContext.usedInit();
+        remoteOpContext.initUsed(true);
         return remoteOpContext;
     }
+
+    private CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> remoteItContext() {
+        if (remoteItContext == null) {
+            remoteItContext = i();
+        }
+        assert !remoteItContext.usedInit();
+        remoteItContext.initUsed(true);
+        return remoteItContext;
+    }
+
     /**
      * This method does not set a segment lock, A segment lock should be obtained before calling
      * this method, especially when being used in a multi threaded context.
@@ -426,64 +445,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     @Override
     public void readExternalEntry(@NotNull Bytes source) {
         try (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext =
-                     remoteOpContext()) {
-            if (remoteOpContext.usedInit())
-                throw new IllegalStateException();
-            remoteOpContext.initUsed(true);
+                     mapContext()) {
             remoteOpContext.initReplicationInput(source);
-        }
-    }
-
-    @Override
-    public K key(@NotNull Bytes entry, K usingKey) {
-        final long start = entry.position();
-        try {
-            long keySize = keySizeMarshaller.readSize(entry);
-            ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
-            return keyReaderProvider.get(copies, originalKeyReader).read(entry, keySize);
-        } finally {
-            entry.position(start);
-        }
-    }
-
-    @Override
-    public V value(@NotNull Bytes entry, V usingValue) {
-        final long start = entry.position();
-        try {
-            entry.skip(keySizeMarshaller.readSize(entry));
-
-            //timeStamp
-            entry.readLong();
-
-            final byte identifier = entry.readByte();
-            if (identifier != localIdentifier) {
-                return null;
-            }
-
-            final boolean isDeleted = entry.readBoolean();
-            long valueSize;
-            if (!isDeleted) {
-                valueSize = valueSizeMarshaller.readSize(entry);
-                assert valueSize > 0;
-            } else {
-                return null;
-            }
-            alignment.alignPositionAddr(entry);
-            ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
-            BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
-            return valueReader.read(entry, valueSize, usingValue);
-        } finally {
-            entry.position(start);
-        }
-    }
-
-    @Override
-    public boolean wasRemoved(@NotNull Bytes entry) {
-        final long start = entry.position();
-        try {
-            return entry.readBoolean(keySizeMarshaller.readSize(entry) + 9L);
-        } finally {
-            entry.position(start);
+            remoteOpContext.processReplicatedEvent();
         }
     }
 
@@ -520,8 +484,6 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         private final ATSDirectBitSet changesForIteration;
         private final int segmentIndexShift;
         private final long posMask;
-        private final CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, ?, ?> context =
-                mapContext();
 
         // records the current position of the cursor in the bitset
         private volatile long position = -1L;
@@ -597,10 +559,10 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
                 this.position = position;
                 int segmentIndex = (int) (position >>> segmentIndexShift);
-                if (context.theSegmentIndexInit() && context.segmentIndex() != segmentIndex)
+                try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> context =
+                        iterationContext()) {
                     context.initTheSegmentIndex(segmentIndex);
-                context.updateLock().lock();
-                try {
+                    context.updateLock().lock();
                     if (changesForUpdates.get(position)) {
 
                         entryCallback.onBeforeEntry();
@@ -609,7 +571,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                         context.initEntry(segmentPos);
 
                         // if the entry should be ignored, we'll move the next entry
-                        if (entryCallback.shouldBeIgnored(context.entry(), chronicleId)) {
+                        if (entryCallback.shouldBeIgnored(context, chronicleId)) {
                             changesForUpdates.clear(position);
                             continue;
                         }
@@ -629,8 +591,6 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                     // if the position was already cleared by another thread
                     // while we were trying to obtain segment lock (for example, in onRelocation()),
                     // go to pick up next (next iteration in while (true) loop)
-                } finally {
-                    context.updateLock().unlock();
                 }
             }
         }
@@ -652,7 +612,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                                         re.originIdentifier() == localIdentifier)) {
                             raiseChange(segmentIndex, c.pos());
                         }
-                        return false;
+                        return true;
                     });
                 }
             }

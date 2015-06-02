@@ -36,7 +36,6 @@ import static org.junit.Assert.*;
  *
  * @author Rob Austin.
  */
-@Ignore
 public class TCPSocketReplication3wayTest {
 
     private ChronicleMap<Integer, CharSequence> map1;

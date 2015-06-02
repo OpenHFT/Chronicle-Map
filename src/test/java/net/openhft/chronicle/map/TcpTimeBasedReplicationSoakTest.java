@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Rob Austin.
  */
-@Ignore
 public class TcpTimeBasedReplicationSoakTest {
 
 
@@ -102,7 +101,6 @@ public class TcpTimeBasedReplicationSoakTest {
     }
 
 
-    @Ignore("fails on TC")
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
 
