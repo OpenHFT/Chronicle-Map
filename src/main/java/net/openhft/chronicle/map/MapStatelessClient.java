@@ -39,7 +39,7 @@ public abstract class MapStatelessClient<E extends ParameterizeWireKey> extends 
 
         Function<ValueIn, R> consumerIn = resultType == CharSequence.class && usingValue != null
                 ? f -> {
-            f.text((StringBuilder) usingValue);
+            f.textTo((StringBuilder) usingValue);
             return usingValue;
         }
                 : f -> f.object(resultType);
