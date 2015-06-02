@@ -227,6 +227,7 @@
                         <exclude>net/openhft/chronicle/hash/KeyContext.java</exclude>
                         <exclude>net/openhft/chronicle/map/MapKeyContext.java</exclude>
                         <exclude>net/openhft/chronicle/hash/locks/LockingStrategy.java</exclude>
+                        <exclude>net/openhft/chronicle/map/TcpReplicator.java</exclude>
                     </sourceFileExcludes>
                     <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>

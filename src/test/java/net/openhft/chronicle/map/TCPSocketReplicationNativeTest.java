@@ -40,7 +40,6 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-@Ignore
 public class TCPSocketReplicationNativeTest {
 
     private ChronicleMap<Integer, LongValue> map1;

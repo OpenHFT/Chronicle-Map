@@ -44,7 +44,6 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-@Ignore
 public class TCPSocketReplicationIntValueTest {
 
     static int s_port = 8010;

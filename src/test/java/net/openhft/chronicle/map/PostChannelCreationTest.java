@@ -35,7 +35,6 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-@Ignore
 public class PostChannelCreationTest {
 
     private ChronicleMap<Integer, CharSequence> map1a;

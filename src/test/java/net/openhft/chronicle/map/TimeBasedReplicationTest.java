@@ -40,7 +40,6 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
-@Ignore
 public class TimeBasedReplicationTest extends JSR166TestCase {
 
     public static final byte IDENTIFIER = 1;

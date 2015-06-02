@@ -11,7 +11,6 @@ import java.net.InetSocketAddress;
 /**
  * @author Rob Austin.
  */
-@Ignore
 public class TcpReplicationWithAcquireContextTest {
 
 

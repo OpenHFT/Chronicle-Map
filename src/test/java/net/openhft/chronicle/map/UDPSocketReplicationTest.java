@@ -34,7 +34,6 @@ import java.net.Inet4Address;
  *
  * @author Rob Austin.
  */
-@Ignore
 public class UDPSocketReplicationTest {
 
     private ChronicleMap<Integer, CharSequence> map2;
@@ -78,7 +77,6 @@ public class UDPSocketReplicationTest {
     }
 
     @Test
-    @Ignore
     public void testBufferOverflow() throws IOException, InterruptedException {
 
         for (int i = 0; i < 1024; i++) {

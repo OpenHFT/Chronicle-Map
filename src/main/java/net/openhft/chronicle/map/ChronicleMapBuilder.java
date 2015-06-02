@@ -1473,7 +1473,8 @@ public final class ChronicleMapBuilder<K, V> implements
                 replicators.add(ch);
             }
             for (Replicator replicator : replicators) {
-                Closeable token = replicator.applyTo(this, result, result, map);
+                Closeable token = replicator.applyTo(this, result, result,
+                        (ReplicatedChronicleMap)map);
                 if (replicators.size() == 1 && token.getClass() == UdpReplicator.class) {
                     LOG.warn(Replicators.ONLY_UDP_WARN_MESSAGE);
                 }

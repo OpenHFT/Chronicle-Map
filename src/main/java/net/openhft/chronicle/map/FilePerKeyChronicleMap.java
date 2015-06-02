@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.Value;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.lang.Jvm;
 import org.jetbrains.annotations.NotNull;
@@ -182,6 +183,12 @@ public class FilePerKeyChronicleMap implements ChronicleMap<String, String> {
     @NotNull
     @Override
     public ExternalMapQueryContext<String, String, ?> queryContext(String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public ExternalMapQueryContext<String, String, ?> queryContext(Value<String, ?> key) {
         throw new UnsupportedOperationException();
     }
 

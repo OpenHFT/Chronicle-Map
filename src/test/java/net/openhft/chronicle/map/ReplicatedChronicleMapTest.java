@@ -34,7 +34,6 @@ import static org.junit.Assert.*;
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd. Then modified by the Open HFT team.
  */
-@Ignore
 public class ReplicatedChronicleMapTest extends JSR166TestCase {
     ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)

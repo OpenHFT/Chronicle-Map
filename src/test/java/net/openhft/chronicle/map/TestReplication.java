@@ -12,7 +12,6 @@ import java.net.InetSocketAddress;
 /**
  * Created by Rob Austin
  */
-@Ignore
 public class TestReplication {
 
 

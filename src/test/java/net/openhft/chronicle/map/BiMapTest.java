@@ -151,7 +151,7 @@ public class BiMapTest {
 
         @Override
         public DualLockSuccess remove(@NotNull MapEntry<K, V> entry) {
-            try (ExternalMapQueryContext<V, K, ?> rq = reverse.queryContext(entry.value().get())) {
+            try (ExternalMapQueryContext<V, K, ?> rq = reverse.queryContext(entry.value())) {
                 if (!rq.updateLock().tryLock()) {
                     if (entry.context() instanceof MapQueryContext)
                         return FAIL;
@@ -178,7 +178,7 @@ public class BiMapTest {
         @Override
         public DualLockSuccess insert(@NotNull MapAbsentEntry<K, V> absentEntry,
                                       Value<V, ?> value) {
-            try (ExternalMapQueryContext<V, K, ?> rq = reverse.queryContext(value.get())) {
+            try (ExternalMapQueryContext<V, K, ?> rq = reverse.queryContext(value)) {
                 if (!rq.updateLock().tryLock())
                     return FAIL;
                 MapAbsentEntry<V, K> reverseAbsentEntry = rq.absentEntry();

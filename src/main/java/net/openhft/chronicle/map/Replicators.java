@@ -114,13 +114,13 @@ final class Replicators {
             protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
                                         @NotNull final Replica replica,
                                         @NotNull final Replica.EntryExternalizable entryExternalizable,
-                                        final ChronicleMap chronicleMap) throws IOException {
+                                        final ReplicatedChronicleMap replicatedMap) throws IOException {
 
                 TcpTransportAndNetworkConfig tcpConfig = replication.tcpTransportAndNetwork();
 
                 TcpReplicator.StatelessClientParameters statelessClientParameters =
                         new TcpReplicator.StatelessClientParameters(
-                        (VanillaChronicleMap) chronicleMap,
+                        replicatedMap,
                         builder.keyBuilder,
                         builder.valueBuilder);
 
@@ -139,7 +139,7 @@ final class Replicators {
             protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
                                         @NotNull final Replica map,
                                         @NotNull final Replica.EntryExternalizable entryExternalizable,
-                                        final ChronicleMap chronicleMap)
+                                        final ReplicatedChronicleMap replicatedMap)
                     throws IOException {
                 return new UdpReplicator(map, entryExternalizable, replicationConfig
                 );

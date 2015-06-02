@@ -28,7 +28,7 @@ import static net.openhft.chronicle.bytes.Access.nativeAccess;
 public final class JavaLangBytesAccessors {
 
     public static Accessor.Full<Bytes, ?> uncheckedBytesAccessor(Bytes bytes) {
-        return bytes instanceof NativeBytes ? NativeBytesAccessor.INSTANCE :
+        return bytes instanceof NativeBytes ? GenericBytesAccessor.INSTANCE :
                 GenericBytesAccessor.INSTANCE;
     }
 

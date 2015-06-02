@@ -19,6 +19,7 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.KeyContext;
+import net.openhft.chronicle.hash.Value;
 import net.openhft.chronicle.hash.serialization.internal.DummyValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.jetbrains.annotations.NotNull;
@@ -136,7 +137,14 @@ class SetFromMap<E> extends AbstractSet<E>
     @Override
     public ExternalSetQueryContext<E, ?> queryContext(E key) {
         //TODO
-        return null;
+        throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public ExternalSetQueryContext<E, ?> queryContext(Value<E, ?> key) {
+        //TODO
+        throw new UnsupportedOperationException();
     }
 
     @Override

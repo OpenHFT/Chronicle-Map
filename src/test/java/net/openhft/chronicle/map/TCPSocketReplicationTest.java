@@ -40,7 +40,6 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-@Ignore
 public class TCPSocketReplicationTest {
 
     static int s_port = 12050;
@@ -122,7 +121,6 @@ public class TCPSocketReplicationTest {
         assertTrue(!map1.isEmpty());
     }
 
-    @Ignore("failed on TC")
     @Test
     public void test2() throws IOException, InterruptedException {
 
