@@ -56,7 +56,7 @@ public class ChronicleMapSanityCheckTest {
         ScheduledExecutorService consumerExecutor =
                 Executors.newSingleThreadScheduledExecutor();
 
-        int N = 1000;
+        final int N = 1000;
 
         int producerPeriod = 100;
         TimeUnit producerTimeUnit = TimeUnit.MILLISECONDS;
@@ -73,45 +73,48 @@ public class ChronicleMapSanityCheckTest {
 
             map.clear();
 
-            producerExecutor.scheduleAtFixedRate(() -> {
+            producerExecutor.scheduleAtFixedRate(new Runnable() {
+                @Override
+                public void run() {
+                    Thread.currentThread().setName("Producer " + Thread.currentThread().getId());
+                    Random r = new Random();
 
-                Thread.currentThread().setName("Producer " + Thread.currentThread().getId());
-                Random r = new Random();
-
-                System.out.println("Before PRODUCING size is " + map.size());
-                for (int i = 0; i < N; i++) {
-                    LockSupport.parkNanos(r.nextInt(5));
-                    map.put(String.valueOf(i), DummyValue.DUMMY_VALUE);
+                    System.out.println("Before PRODUCING size is " + map.size());
+                    for (int i = 0; i < N; i++) {
+                        LockSupport.parkNanos(r.nextInt(5));
+                        map.put(String.valueOf(i), DummyValue.DUMMY_VALUE);
+                    }
+                    System.out.println("After PRODUCING size is " + map.size());
                 }
-                System.out.println("After PRODUCING size is " + map.size());
-
             }, 0, producerPeriod, producerTimeUnit);
 
-            consumerExecutor.scheduleAtFixedRate(() -> {
+            consumerExecutor.scheduleAtFixedRate(new Runnable() {
+                @Override
+                public void run() {
+                    Thread.currentThread().setName("Consumer");
+                    Set<String> keys = map.keySet();
 
-                Thread.currentThread().setName("Consumer");
-                Set<String> keys = map.keySet();
+                    Random r = new Random();
 
-                Random r = new Random();
-
-                System.out.println("Before CONSUMING size is " + map.size());
-                System.out.println();
-                for (String key : keys) {
-                    if (r.nextBoolean()) {
-                        map.remove(key);
+                    System.out.println("Before CONSUMING size is " + map.size());
+                    System.out.println();
+                    for (String key : keys) {
+                        if (r.nextBoolean()) {
+                            map.remove(key);
+                        }
                     }
+
+                    System.out.println("After CONSUMING size is " + map.size());
+
                 }
+            }, 0, consumerPeriod,consumerTimeUnit);
 
-                System.out.println("After CONSUMING size is " + map.size());
+                Thread.sleep(totalTestTimeMS);
 
-            }, 0, consumerPeriod, consumerTimeUnit);
+                consumerExecutor.shutdown();
+                producerExecutor.shutdown();
+            }
 
-            Thread.sleep(totalTestTimeMS);
-
-            consumerExecutor.shutdown();
-            producerExecutor.shutdown();
         }
-
-    }
 
 }
