@@ -152,6 +152,13 @@
             <version>1.0</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>zero-allocation-hashing</artifactId>
+            <version>0.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
