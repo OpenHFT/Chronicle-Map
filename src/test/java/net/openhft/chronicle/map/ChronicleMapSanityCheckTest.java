@@ -109,12 +109,21 @@ public class ChronicleMapSanityCheckTest {
                 }
             }, 0, consumerPeriod,consumerTimeUnit);
 
-                Thread.sleep(totalTestTimeMS);
+            Thread.sleep(totalTestTimeMS);
 
-                consumerExecutor.shutdown();
-                producerExecutor.shutdown();
+            consumerExecutor.shutdown();
+            try {
+                consumerExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
-
+            producerExecutor.shutdown();
+            try {
+                producerExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
 
+    }
 }
