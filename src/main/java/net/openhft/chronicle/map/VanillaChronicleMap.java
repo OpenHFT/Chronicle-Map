@@ -1368,8 +1368,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         final SearchState searchState = new SearchState();
 
         private SegmentState(int depth) {
-            if (depth > (1 << 16))
-                throw new IllegalStateException("More than " + (1 << 16) +
+            if (depth > (1 << 10))
+                throw new IllegalStateException("More than " + (1 << 10) +
                         " nested ChronicleMap contexts are not supported. Very probable that you " +
                         "simply forgot to close context somewhere (recommended to use " +
                         "try-with-resources statement). " +
@@ -1383,9 +1383,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 used = true;
                 return this;
             }
-            if (next != null)
-                return next.get();
-            return next = new SegmentState(depth + 1);
+            SegmentState ss;
+            for (ss = this; ss.next != null; ss = ss.next) {
+                if (!ss.used) {
+                    used = true;
+                    return ss;
+                }
+            }
+            return ss.next = new SegmentState(depth + 1);
         }
 
         @Override
