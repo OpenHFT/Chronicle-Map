@@ -315,7 +315,7 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
 
     public SerializationBuilder<E> objectSerializer(ObjectSerializer serializer) {
         if (reader == null || interop == null) {
-            marshaller(new SerializableMarshaller(serializer));
+            marshaller(new SerializableMarshaller(serializer, eClass));
         }
         return this;
     }
@@ -452,15 +452,17 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
         private static final long serialVersionUID = 0L;
 
         private final ObjectSerializer serializer;
+        private final Class expectedClass;
 
-        private SerializableMarshaller(ObjectSerializer serializer) {
+        private SerializableMarshaller(ObjectSerializer serializer, Class expectedClass) {
             this.serializer = serializer;
+            this.expectedClass = expectedClass;
         }
 
         @Override
         public void write(Bytes bytes, Object obj) {
             try {
-                serializer.writeSerializable(bytes, obj, null);
+                serializer.writeSerializable(bytes, obj, expectedClass);
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
