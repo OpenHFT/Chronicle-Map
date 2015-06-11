@@ -7,13 +7,9 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Created by Rob Austin
@@ -50,7 +46,6 @@ public class TestReplication {
 
 
         for (int i = 0; i < 10; i++) {
-
             Thread.sleep(100);
             System.out.println(map2.size());
         }
