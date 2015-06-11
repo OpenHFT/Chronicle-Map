@@ -1326,7 +1326,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         // do nothing
     }
 
-    static final class SegmentState implements StatefulCopyable<SegmentState>, AutoCloseable {
+    public static final class SegmentState implements StatefulCopyable<SegmentState>,
+            AutoCloseable {
         private static final Provider<SegmentState> segmentStateProvider =
                 Provider.of(SegmentState.class);
         private static final SegmentState originalSegmentState = new SegmentState(0);

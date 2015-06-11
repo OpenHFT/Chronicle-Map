@@ -28,10 +28,7 @@ import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.CheckedBytes;
-import net.openhft.lang.io.MultiStoreBytes;
-import net.openhft.lang.io.NativeBytes;
+import net.openhft.lang.io.*;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -50,6 +48,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import static net.openhft.chronicle.hash.hashing.Hasher.hash;
 import static net.openhft.lang.MemoryUnit.*;
 import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
+import static net.openhft.lang.io.NativeBytes.wrap;
 
 /**
  * <h2>A Replicating Multi Master HashMap</h2> <p>Each remote hash map, mirrors its changes over to
@@ -92,7 +91,7 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>
-        implements Replica, Replica.EntryExternalizable, Replica.EntryResolver<K, V> {
+        implements Replica, Replica.EntryExternalizable, Replica.EntryResolver<K, V>, EngineReplicationLangBytes {
     // for file, jdbc and UDP replication
     public static final int RESERVED_MOD_ITER = 8;
     public static final int ADDITIONAL_ENTRY_BYTES = 10;
@@ -348,9 +347,188 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         super.close();
     }
 
+    private ThreadLocal<IByteBufferBytes> buffer = new ThreadLocal<IByteBufferBytes>() {
+        @Override
+        protected IByteBufferBytes initialValue() {
+            return ByteBufferBytes.wrap(ByteBuffer.allocate(1024));
+        }
+    };
+
+    private Bytes threadlocalBuffer(long requiredSize) {
+
+        final IByteBufferBytes bytes = buffer.get();
+        bytes.clear();
+        bytes.buffer().clear();
+
+        if (bytes.buffer().remaining() < requiredSize) {
+
+            if (requiredSize > Integer.MAX_VALUE)
+                throw new IllegalStateException("entry is too large");
+
+            IByteBufferBytes result = ByteBufferBytes.wrap(ByteBuffer.allocate((int) requiredSize));
+            buffer.set(result);
+            return result;
+        }
+
+        return bytes;
+
+    }
+
+    private static class EntryBuffer {
+        NativeBytes key;
+        NativeBytes value;
+
+        NativeBytes getKey() {
+            return key;
+        }
+
+        void setKey(final NativeBytes key) {
+            this.key = key;
+        }
+
+        NativeBytes getValue() {
+            return value;
+        }
+
+        void setValue(final NativeBytes value) {
+            this.value = value;
+        }
+    }
+
+    @Override
+    public void put(final Bytes key, final Bytes value, final byte id, final long timestamp) {
+
+        final ThreadLocalCopies copies = SegmentState.getCopies(null);
+        final SegmentState segmentState = SegmentState.get(copies);
+
+        long keySize = key.remaining();
+        long valueSize = key.remaining();
+
+        final long requiredBufferSize = 8 + keySize + 8 + valueSize + 12;
+        final Bytes source = threadlocalBuffer(requiredBufferSize);
+
+        keySizeMarshaller.writeSize(source, keySize);
+        valueSizeMarshaller.writeSize(source, keySize);
+        source.writeLong(timestamp);
+        source.writeByte(id);
+        source.writeBoolean(false);
+
+        // key.bytes().
+        writeTo(source, key);
+        writeTo(source, value);
+
+        readExternalEntry(copies, segmentState, source);
+    }
+
+    private static void writeTo(Bytes destination, Bytes source) {
+
+        while (destination.remaining() > 0 && source.remaining() > 0) {
+            source.writeByte(source.readByte());
+        }
+
+    }
+
+    @Override
+    public void remove(final Bytes key,
+                       final byte remoteIdentifier,
+                       final long timestamp) {
+
+        final ThreadLocalCopies copies = SegmentState.getCopies(null);
+
+        final SegmentState segmentState = SegmentState.get(copies);
+
+        long keySize = key.remaining();
+        long valueSize = key.remaining();
+
+        final long requiredBufferSize = 8 + keySize + 8 + valueSize + 12;
+        final Bytes source = threadlocalBuffer(requiredBufferSize);
+
+        keySizeMarshaller.writeSize(source, keySize);
+        valueSizeMarshaller.writeSize(source, keySize);
+        source.writeLong(timestamp);
+        source.writeByte(remoteIdentifier);
+        source.writeBoolean(true);
+
+        writeTo(source, key);
+
+        readExternalEntry(copies, segmentState, source);
+    }
+
+ 
+
     @Override
     public byte identifier() {
         return localIdentifier;
+    }
+
+    @Override
+    public EngineModificationIterator acquireEngineModificationIterator(final byte remoteIdentifier) {
+        final ModificationIterator modificationIterator = acquireModificationIterator(remoteIdentifier);
+
+        return new EngineModificationIterator() {
+
+            @Override
+            public boolean hasNext() {
+                return modificationIterator.hasNext();
+            }
+
+            @Override
+            public boolean nextEntry(@NotNull final EngineEntryCallback callback) throws InterruptedException {
+
+                return modificationIterator.nextEntry(new EntryCallback() {
+
+                    @Override
+                    public boolean onEntry(@NotNull final Bytes entry, final int chronicleId, final long bootStrapTimeStamp) {
+
+                        final long keySize = keySizeMarshaller.readSize(entry);
+                        final long keyPosition = entry.position();
+                        entry.skip(keySize);
+
+                        final long timestamp = entry.readLong();
+                        final byte identifier = entry.readByte();
+                        final boolean isDeleted = entry.readBoolean();
+
+                        if (isDeleted)
+                            return callback.onEntry(wrap(keyPosition, keySize), null, timestamp, identifier,
+                                    true,
+                                    bootStrapTimeStamp);
+
+                        long valueSize = valueSizeMarshaller.readSize(entry);
+
+                        alignment.alignPositionAddr(entry);
+                        final long valuePosition = entry.position();
+
+                        return callback.onEntry(wrap(keyPosition, keySize), wrap(valuePosition,
+                                        valueSize),
+                                timestamp,
+                                identifier,
+                                false,
+                                bootStrapTimeStamp);
+                    }
+
+                    @Override
+                    public boolean shouldBeIgnored(final Bytes entry, final int chronicleId) {
+                        return false; // do nothing
+                    }
+                }, 0);
+            }
+
+            @Override
+            public void dirtyEntries(final long fromTimeStamp) throws InterruptedException {
+                modificationIterator.dirtyEntries(fromTimeStamp);
+            }
+
+            @Override
+            public void setModificationNotifier(
+                    @NotNull final EngineReplicationModificationNotifier modificationNotifier) {
+                modificationIterator.setModificationNotifier(toModificationNotifier());
+            }
+
+            private ModificationNotifier toModificationNotifier() {
+                return null;
+            }
+        };
+
     }
 
     @Override
