@@ -20,6 +20,7 @@ package net.openhft.chronicle.map;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -31,7 +32,6 @@ import java.util.Random;
 import java.util.Set;
 
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
-import static net.openhft.chronicle.map.TCPSocketReplication4WayMapTest.newTcpSocketShmIntString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -40,7 +40,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Rob Austin.
  */
-
+@Ignore("TODO https://higherfrequencytrading.atlassian.net/browse/HCOLL-366")
 public class TCPSocketReplicationTest {
 
     static int s_port = 12050;
