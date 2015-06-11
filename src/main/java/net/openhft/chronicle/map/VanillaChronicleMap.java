@@ -2569,8 +2569,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     throw new NoSuchElementException();
                 final Segment segment = segments[segIndex];
                 ThreadLocalCopies copies = SegmentState.getCopies(null);
-                SegmentState segmentState = SegmentState.get(copies);
-                try {
+                try (SegmentState segmentState = SegmentState.get(copies)) {
                     try {
                         segment.readLock(null);
                     } catch (InterruptedException e) {
@@ -2584,7 +2583,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     advance(returnedSeg = segIndex, returnedPos = pos);
                     return returnedEntry = segment.getEntry(segmentState, pos);
                 } finally {
-                    segmentState.close();
                     segment.readUnlock();
                 }
             }
