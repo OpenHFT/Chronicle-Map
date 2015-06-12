@@ -96,6 +96,8 @@ public interface EngineReplicationLangBytes extends Closeable {
 
     void setLastModificationTime(byte identifier, long timestamp);
 
+
+
     /**
      * notifies when there is a changed to the modification iterator
      */
