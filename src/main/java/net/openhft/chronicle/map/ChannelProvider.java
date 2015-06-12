@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.UdpTransportConfig;
@@ -58,9 +59,10 @@ final class ChannelProvider implements Closeable {
         if (channelProvider != null)
             return channelProvider;
         channelProvider = new ChannelProvider(hub);
+
+
+
         TcpTransportAndNetworkConfig tcpConfig = hub.tcpTransportAndNetwork();
-
-
         if (tcpConfig != null) {
 
             final TcpReplicator tcpReplicator = new TcpReplicator(
@@ -159,8 +161,23 @@ final class ChannelProvider implements Closeable {
     private final byte localIdentifier;
     final Replica asReplica = new Replica() {
         @Override
+        public void put(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        @Override
+        public void remove(final Bytes key, final byte remoteIdentifier, final long timestamp) {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        @Override
         public byte identifier() {
             return localIdentifier;
+        }
+
+        @Override
+        public EngineModificationIterator acquireEngineModificationIterator(final byte remoteIdentifier) {
+            throw new UnsupportedOperationException("todo");
         }
 
         @Override
@@ -473,8 +490,23 @@ final class ChannelProvider implements Closeable {
 
         final Replica asReplica = new Replica() {
             @Override
+            public void put(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
+                throw new UnsupportedOperationException("todo");
+            }
+
+            @Override
+            public void remove(final Bytes key, final byte remoteIdentifier, final long timestamp) {
+                throw new UnsupportedOperationException("todo");
+            }
+
+            @Override
             public byte identifier() {
                 throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EngineModificationIterator acquireEngineModificationIterator(final byte remoteIdentifier) {
+                throw new UnsupportedOperationException("todo");
             }
 
             @Override

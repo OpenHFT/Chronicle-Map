@@ -99,7 +99,7 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * @see ChronicleMap
  * @see ChronicleSetBuilder
  */
-public final class ChronicleMapBuilder<K, V> implements Cloneable,
+public class ChronicleMapBuilder<K, V> implements Cloneable,
         ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>,
         MapBuilder<ChronicleMapBuilder<K, V>>, Serializable {
 
@@ -1454,12 +1454,14 @@ public final class ChronicleMapBuilder<K, V> implements Cloneable,
                 throw new AssertionError("Only one non-null replication should be passed");
             }
             ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;
-            List<Replicator> replicators = new ArrayList<>(2);
+            List<Replicator> replicators = new ArrayList<>(3);
             if (singleHashReplication != null) {
                 if (singleHashReplication.tcpTransportAndNetwork() != null)
                     replicators.add(Replicators.tcp(singleHashReplication));
                 if (singleHashReplication.udpTransport() != null)
                     replicators.add(Replicators.udp(singleHashReplication.udpTransport()));
+                if (singleHashReplication.engineReplicator() != null)
+                    replicators.add(Replicators.engineReplicaton(singleHashReplication));
             } else {
                 ReplicationHub hub = channel.hub();
 

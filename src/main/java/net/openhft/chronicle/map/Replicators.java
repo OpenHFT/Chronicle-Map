@@ -19,6 +19,8 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.UdpTransportConfig;
+import net.openhft.chronicle.map.Replica.EntryExternalizable;
+import net.openhft.chronicle.map.TcpReplicator.StatelessClientParameters;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +43,27 @@ final class Replicators {
     private Replicators() {
     }
 
+    static Replicator engineReplicaton(final AbstractReplication replication) {
+        return new Replicator() {
+
+            @Override
+            protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
+                                        @NotNull final Replica replica,
+                                        @NotNull final EntryExternalizable entryExternalizable,
+                                        final ChronicleMap chronicleMap) throws IOException {
+
+                replication.engineReplicator().set(replica);
+
+                return new Closeable() {
+
+                    @Override
+                    public void close() throws IOException {
+                        // do nothing
+                    }
+                };
+            }
+        };
+    }
 
     static class OutBuffer implements BufferResizer {
 
@@ -113,13 +136,13 @@ final class Replicators {
             @Override
             protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
                                         @NotNull final Replica replica,
-                                        @NotNull final Replica.EntryExternalizable entryExternalizable,
+                                        @NotNull final EntryExternalizable entryExternalizable,
                                         final ChronicleMap chronicleMap) throws IOException {
 
                 TcpTransportAndNetworkConfig tcpConfig = replication.tcpTransportAndNetwork();
 
-                TcpReplicator.StatelessClientParameters statelessClientParameters =
-                        new TcpReplicator.StatelessClientParameters(
+                StatelessClientParameters statelessClientParameters =
+                        new StatelessClientParameters(
                         (VanillaChronicleMap) chronicleMap,
                         builder.keyBuilder,
                         builder.valueBuilder);
@@ -139,7 +162,7 @@ final class Replicators {
             @Override
             protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
                                         @NotNull final Replica map,
-                                        @NotNull final Replica.EntryExternalizable entryExternalizable,
+                                        @NotNull final EntryExternalizable entryExternalizable,
                                         final ChronicleMap chronicleMap)
                     throws IOException {
                 return new UdpReplicator(map, entryExternalizable, replicationConfig

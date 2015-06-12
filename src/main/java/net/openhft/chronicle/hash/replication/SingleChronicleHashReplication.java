@@ -18,14 +18,14 @@ package net.openhft.chronicle.hash.replication;
 
 import org.jetbrains.annotations.NotNull;
 
-public final class SingleChronicleHashReplication extends AbstractReplication {
+public class SingleChronicleHashReplication extends AbstractReplication {
 
     @NotNull
     public static Builder builder() {
         return new Builder();
     }
 
-    SingleChronicleHashReplication(byte localIdentifier, Builder builder) {
+    public SingleChronicleHashReplication(byte localIdentifier, Builder builder) {
         super(localIdentifier, builder);
     }
 
@@ -34,7 +34,7 @@ public final class SingleChronicleHashReplication extends AbstractReplication {
         return "SingleChronicleHashReplication{" + super.toString() + "}";
     }
 
-    public static final class Builder
+    public static class Builder
             extends AbstractReplication.Builder<SingleChronicleHashReplication, Builder> {
         private Builder() {}
 

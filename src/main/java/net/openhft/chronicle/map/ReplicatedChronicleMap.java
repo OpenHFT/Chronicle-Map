@@ -26,6 +26,10 @@ import net.openhft.chronicle.hash.serialization.internal.BytesBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.DelegatingMetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
+import net.openhft.chronicle.map.MultiMap.EntryConsumer;
+import net.openhft.chronicle.map.Replica.EntryExternalizable;
+import net.openhft.chronicle.map.Replica.EntryResolver;
+import net.openhft.chronicle.map.ReplicatedChronicleMap.ModificationIterator.EntryModifiableCallback;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.io.*;
@@ -91,7 +95,7 @@ import static net.openhft.lang.io.NativeBytes.wrap;
 final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>
-        implements Replica, Replica.EntryExternalizable, Replica.EntryResolver<K, V>, EngineReplicationLangBytes {
+        implements Replica, EntryExternalizable, EntryResolver<K, V>, EngineReplicationLangBytes {
     // for file, jdbc and UDP replication
     public static final int RESERVED_MOD_ITER = 8;
     public static final int ADDITIONAL_ENTRY_BYTES = 10;
@@ -276,7 +280,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         long hash = metaKeyInterop.hash(keyInterop, key1);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
-        ReplicatedChronicleMap.Segment segment = segment(segmentNum);
+        Segment segment = segment(segmentNum);
         segment.writeLock();
         try {
             return segment.removeWithoutLock(copies, segmentState, metaKeyInterop, keyInterop, key1,
@@ -350,7 +354,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     private ThreadLocal<IByteBufferBytes> buffer = new ThreadLocal<IByteBufferBytes>() {
         @Override
         protected IByteBufferBytes initialValue() {
-            return ByteBufferBytes.wrap(ByteBuffer.allocate(1024));
+            return ByteBufferBytes.wrap(ByteBuffer.allocateDirect(1024));
         }
     };
 
@@ -365,7 +369,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             if (requiredSize > Integer.MAX_VALUE)
                 throw new IllegalStateException("entry is too large");
 
-            IByteBufferBytes result = ByteBufferBytes.wrap(ByteBuffer.allocate((int) requiredSize));
+            IByteBufferBytes result = ByteBufferBytes.wrap(ByteBuffer.allocateDirect((int) requiredSize));
             buffer.set(result);
             return result;
         }
@@ -407,9 +411,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         final long requiredBufferSize = 8 + keySize + 8 + valueSize + 12;
         final Bytes source = threadlocalBuffer(requiredBufferSize);
 
+        source.writeLong(timestamp);
         keySizeMarshaller.writeSize(source, keySize);
         valueSizeMarshaller.writeSize(source, keySize);
-        source.writeLong(timestamp);
+        source.writeStopBit(timestamp);
         source.writeByte(id);
         source.writeBoolean(false);
 
@@ -417,13 +422,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         writeTo(source, key);
         writeTo(source, value);
 
+        source.flip();
         readExternalEntry(copies, segmentState, source);
     }
 
     private static void writeTo(Bytes destination, Bytes source) {
 
         while (destination.remaining() > 0 && source.remaining() > 0) {
-            source.writeByte(source.readByte());
+            destination.writeByte(source.readByte());
         }
 
     }
@@ -498,8 +504,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         alignment.alignPositionAddr(entry);
                         final long valuePosition = entry.position();
 
-                        return callback.onEntry(wrap(keyPosition, keySize), wrap(valuePosition,
-                                        valueSize),
+                        final NativeBytes k = wrap(entry.address() + keyPosition, keySize);
+                        final NativeBytes v = wrap(entry.address() + valuePosition, valueSize);
+
+                        return callback.onEntry(k, v,
                                 timestamp,
                                 identifier,
                                 false,
@@ -1439,14 +1447,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          *                                  node will be published during a bootstrap
          */
         public void dirtyEntries(final long timeStamp,
-                                 final ModificationIterator.EntryModifiableCallback callback,
+                                 final EntryModifiableCallback callback,
                                  final boolean bootstrapOnlyLocalEntries) throws InterruptedException {
             readLock(null);
             ThreadLocalCopies copies = SegmentState.getCopies(null);
             try (SegmentState segmentState = SegmentState.get(copies)) {
                 final int index = Segment.this.getIndex();
                 final MultiStoreBytes tmpBytes = segmentState.tmpBytes;
-                hashLookup().forEach(new MultiMap.EntryConsumer() {
+                hashLookup().forEach(new EntryConsumer() {
                     @Override
                     public void accept(long hash, long pos) {
                         final Bytes entry = reuse(tmpBytes, offsetFromPos(pos));

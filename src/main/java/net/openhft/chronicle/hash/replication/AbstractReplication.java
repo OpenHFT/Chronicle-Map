@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.replication;
 
+import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ public abstract class AbstractReplication implements Serializable {
 
     @Nullable
     private final transient ConnectionListener connectionListener;
+    private final EngineReplicationLangBytesConsumer engineReplicationLangBytesConsumer;
 
     // package-private to forbid subclassing from outside of the package
     AbstractReplication(byte localIdentifier, Builder builder) {
@@ -49,6 +51,7 @@ public abstract class AbstractReplication implements Serializable {
         remoteNodeValidator = builder.remoteNodeValidator;
         bootstrapOnlyLocalEntries = builder.bootstrapOnlyLocalEntries;
         connectionListener = builder.connectionListener;
+        engineReplicationLangBytesConsumer = builder.engineReplicationLangBytesConsumer();
     }
 
     @Override
@@ -67,6 +70,10 @@ public abstract class AbstractReplication implements Serializable {
     @Nullable
     public TcpTransportAndNetworkConfig tcpTransportAndNetwork() {
         return tcpConfig;
+    }
+
+    public EngineReplicationLangBytesConsumer engineReplicator() {
+        return engineReplicationLangBytesConsumer;
     }
 
     @Nullable
@@ -105,9 +112,24 @@ public abstract class AbstractReplication implements Serializable {
 
         private boolean bootstrapOnlyLocalEntries = false;
 
+        private EngineReplicationLangBytesConsumer engineReplicationLangBytesConsumer;
+
         // package-private to forbid subclassing from outside of the package
         Builder() {
         }
+
+        @NotNull
+        public B engineReplication(EngineReplicationLangBytesConsumer
+                                           engineReplicationLangBytesConsumer) {
+            this.engineReplicationLangBytesConsumer = engineReplicationLangBytesConsumer;
+            return (B) this;
+        }
+
+        EngineReplicationLangBytesConsumer engineReplicationLangBytesConsumer() {
+            return engineReplicationLangBytesConsumer;
+        }
+
+
 
         @NotNull
         public B tcpTransportAndNetwork(@Nullable TcpTransportAndNetworkConfig tcpConfig) {
@@ -190,5 +212,6 @@ public abstract class AbstractReplication implements Serializable {
             return ", udpConfig=" + udpConfig +
                     ", remoteNodeValidator=" + remoteNodeValidator;
         }
+
     }
 }
