@@ -351,33 +351,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         super.close();
     }
 
-    private ThreadLocal<IByteBufferBytes> buffer = new ThreadLocal<IByteBufferBytes>() {
-        @Override
-        protected IByteBufferBytes initialValue() {
-            return ByteBufferBytes.wrap(ByteBuffer.allocateDirect(1024));
-        }
-    };
-
-    private Bytes threadlocalBuffer(long requiredSize) {
-
-        final IByteBufferBytes bytes = buffer.get();
-        bytes.clear();
-        bytes.buffer().clear();
-
-        if (bytes.buffer().remaining() < requiredSize) {
-
-            if (requiredSize > Integer.MAX_VALUE)
-                throw new IllegalStateException("entry is too large");
-
-            IByteBufferBytes result = ByteBufferBytes.wrap(ByteBuffer.allocateDirect((int) requiredSize));
-            buffer.set(result);
-            return result;
-        }
-
-        return bytes;
-
-    }
-
     @Override
     public void put(final Bytes key, final Bytes value, final byte id, final long timestamp) {
 
