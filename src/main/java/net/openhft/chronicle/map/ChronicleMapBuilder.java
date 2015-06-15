@@ -1360,7 +1360,9 @@ public final class ChronicleMapBuilder<K, V> implements
         try {
             // pushingToMapEventListener();
             VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map = newMap(singleHashReplication, channel);
-            OS.warnOnWindows(map.sizeInBytes());
+            if(OS.warnOnWindows(map.sizeInBytes())){
+                throw new IllegalStateException("Windows cannot support this configuration");
+            }
             BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
                     map.sizeInBytes(), true);
             map.createMappedStoreAndSegments(bytesStore);

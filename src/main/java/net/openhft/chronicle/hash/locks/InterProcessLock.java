@@ -26,7 +26,7 @@ import java.util.concurrent.locks.Lock;
 /**
  * Abstracts inter-process lock of {@link ChronicleHash} data: segments, entries.
  *
- * <p>This lock is not reentrant, but kind of "saturating": multiple {@link #lock()} calls has
+ * <p>This lock is not reentrant, but kind of "saturating": multiple {@link #lock()} calls have
  * the same effect as a single call. Likewise {@link #unlock()} -- multiple unlocks, or "unlocking"
  * when the lock isn't actually held, has no negative effects.
  *
