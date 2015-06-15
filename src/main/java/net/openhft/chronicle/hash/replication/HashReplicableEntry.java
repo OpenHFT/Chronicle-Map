@@ -20,9 +20,6 @@ package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.HashEntry;
 
-public interface HashReplicableEntry<K> extends HashEntry<K> {
-    
-    byte originIdentifier();
-    
-    long originTimestamp();
+public interface HashReplicableEntry<K> extends HashEntry<K>,ReplicableEntry {
+
 }

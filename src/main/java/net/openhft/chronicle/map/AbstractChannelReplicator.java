@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.util.CloseablesManager;
-import net.openhft.chronicle.hash.replication.HashReplicableEntry;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
@@ -478,7 +478,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
 
         @Override
-        public boolean shouldBeIgnored(final HashReplicableEntry<?> entry, final int chronicleId) {
+        public boolean shouldBeIgnored(final ReplicableEntry entry, final int chronicleId) {
             return !externalizable.identifierCheck(entry, chronicleId);
         }
 

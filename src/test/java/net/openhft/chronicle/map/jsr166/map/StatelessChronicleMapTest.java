@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map.jsr166.map;
 
-import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.*;
@@ -123,7 +123,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
         @NotNull
         @Override
-        public ExternalMapQueryContext<K, V, ?> queryContext(Value<K, ?> key) {
+        public ExternalMapQueryContext<K, V, ?> queryContext(Data<K, ?> key) {
             return d.queryContext(key);
         }
 

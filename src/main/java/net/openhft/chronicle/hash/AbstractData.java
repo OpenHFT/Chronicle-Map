@@ -21,20 +21,20 @@ package net.openhft.chronicle.hash;
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
 
 /**
- * Defines reasonable defaults for {@code Value}'s {@code equals()}, {@code hashCode()} and
- * {@code toString()}. They should be default implementations in the {@code Value} interface itself,
+ * Defines reasonable defaults for {@code Data}'s {@code equals()}, {@code hashCode()} and
+ * {@code toString()}. They should be default implementations in the {@code Data} interface itself,
  * but Java 8 doesn't allow to override {@code Object}'s methods by default implementations
  * in interfaces.
  */
-public abstract class AbstractValue<V, T> implements Value<V, T> {
+public abstract class AbstractData<V, T> implements Data<V, T> {
 
     /**
      * Constructor for use by subclasses. 
      */
-    protected AbstractValue() {}
+    protected AbstractData() {}
 
     /**
-     * Computes value's hash code by applying a hash function to {@code Value}'s <i>bytes</i>
+     * Computes value's hash code by applying a hash function to {@code Data}'s <i>bytes</i>
      * representation.
      */
     @Override
@@ -43,17 +43,17 @@ public abstract class AbstractValue<V, T> implements Value<V, T> {
     }
 
     /**
-     * Compares {@code Value}s' <i>bytes</i> representations.
+     * Compares {@code Data}s' <i>bytes</i> representations.
      */
     @Override
     public boolean equals(Object obj) {
         return obj != null &&
-                obj instanceof Value &&
-                Value.bytesEquivalent(this, (Value<?, ?>) obj);
+                obj instanceof Data &&
+                Data.bytesEquivalent(this, (Data<?, ?>) obj);
     }
 
     /**
-     * Delegates to {@code Value}'s <i>object</i> {@code toString()}.
+     * Delegates to {@code Data}'s <i>object</i> {@code toString()}.
      */
     @Override
     public String toString() {

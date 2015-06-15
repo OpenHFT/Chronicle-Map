@@ -68,6 +68,7 @@ public class DoubleArrayTest {
     }
 
     @Test
+    @Ignore
     public void addToAMap2() {
         DoubleArray.HACK = false;
         DoubleArray a = new DoubleArray(10);
@@ -76,7 +77,8 @@ public class DoubleArrayTest {
         DoubleArray b = new DoubleArray(10);
         b.setData(new double[]{5, 6, 7, 8, 9});
 
-        ChronicleMap<Integer, DoubleArray> proxyMap = ChronicleMapBuilder.of(Integer.class, DoubleArray.class)
+        ChronicleMap<Integer, DoubleArray> proxyMap = ChronicleMapBuilder
+                .of(Integer.class, DoubleArray.class)
                 .averageValueSize(6 * 8)
                 .create();
         proxyMap.put(1, a);

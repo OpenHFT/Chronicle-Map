@@ -18,8 +18,8 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.HashEntry;
-import net.openhft.chronicle.hash.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,20 +37,21 @@ public interface MapEntry<K, V> extends HashEntry<K> {
     /**
      * Returns the entry value.
      */
-    @NotNull Value<V, ?> value();
+    @NotNull
+    Data<V, ?> value();
 
     /**
      * Replaces the entry's value with the given {@code newValue}.
      * 
      * <p>This method is the default implementation for {@link MapEntryOperations#replaceValue(
-     * MapEntry, Value)}, which might be customized over the default.
+     * MapEntry, Data)}, which might be customized over the default.
      *
      * @param newValue the value to be put into the map instead of the {@linkplain #value() current
      * value}
      * @throws IllegalStateException if some locking/state conditions required to perform replace
      * operation are not met
      */
-    void doReplaceValue(Value<V, ?> newValue);
+    void doReplaceValue(Data<V, ?> newValue);
 
     /**
      * Removes the entry from the map.

@@ -25,5 +25,5 @@ public interface HashAbsentEntry<K> {
      * Returns the key is going to be inserted into the {@code ChronicleHash}.
      */
     @NotNull
-    Value<K, ?> absentKey();
+    Data<K, ?> absentKey();
 }

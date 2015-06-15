@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.Data;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -56,7 +56,7 @@ public interface MapEntryOperations<K, V, R> {
      * @throws IllegalStateException if some locking/state conditions required to perform replace
      * operation are not met
      */
-    default R replaceValue(@NotNull MapEntry<K, V> entry, Value<V, ?> newValue) {
+    default R replaceValue(@NotNull MapEntry<K, V> entry, Data<V, ?> newValue) {
         entry.doReplaceValue(newValue);
         return null;
     }
@@ -70,7 +70,7 @@ public interface MapEntryOperations<K, V, R> {
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
      * operation are not met
      */
-    default R insert(@NotNull MapAbsentEntry<K, V> absentEntry, Value<V, ?> value) {
+    default R insert(@NotNull MapAbsentEntry<K, V> absentEntry, Data<V, ?> value) {
         absentEntry.doInsert(value);
         return null;
     }
@@ -82,7 +82,7 @@ public interface MapEntryOperations<K, V, R> {
      *
      * @implNote simply delegates to {@link MapAbsentEntry#defaultValue()}.
      */
-    default Value<V, ?> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
+    default Data<V, ?> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
         return absentEntry.defaultValue();
     }
 }

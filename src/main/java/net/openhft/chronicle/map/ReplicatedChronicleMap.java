@@ -20,9 +20,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
-import net.openhft.chronicle.hash.replication.HashReplicableEntry;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.TimeProvider;
-import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.map.impl.*;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
@@ -31,7 +30,6 @@ import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.Bytes;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -293,7 +291,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     }
 
     @Override
-    public boolean identifierCheck(@NotNull HashReplicableEntry<?> entry, int chronicleId) {
+    public boolean identifierCheck(@NotNull ReplicableEntry entry, int chronicleId) {
         return entry.originIdentifier() == localIdentifier;
     }
 
@@ -337,13 +335,11 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     public void writeExternalEntry(@NotNull Bytes entry,
                                    @NotNull Bytes destination,
                                    int chronicleId) {
-        final long initialLimit = entry.limit();
 
         final long keySize = keySizeMarshaller.readSize(entry);
 
         final long keyPosition = entry.position();
         entry.skip(keySize);
-        final long keyLimit = entry.position();
         final long timeStamp = entry.readLong();
 
         final byte identifier = entry.readByte();
@@ -366,13 +362,14 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         valueSizeMarshaller.writeSize(destination, valueSize);
         destination.writeStopBit(timeStamp);
 
+        if (identifier == 0)
+            throw new IllegalStateException("Identifier can't be 0");
         destination.writeByte(identifier);
         destination.writeBoolean(isDeleted);
 
         // write the key
         entry.position(keyPosition);
-        entry.limit(keyLimit);
-        destination.write(entry, entry.position(), entry.remaining());
+        destination.write(entry, entry.position(), keySize);
 
         boolean debugEnabled = LOG.isDebugEnabled();
         String message = null;
@@ -390,14 +387,12 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         if (isDeleted)
             return;
 
-        entry.limit(initialLimit);
         entry.position(valuePosition);
         // skipping the alignment, as alignment wont work when we send the data over the wire.
         alignment.alignPositionAddr(entry);
 
         // writes the value
-        entry.limit(entry.position() + valueSize);
-        destination.write(entry, entry.position(), entry.remaining());
+        destination.write(entry, entry.position(), valueSize);
 
         if (debugEnabled) {
             LOG.debug(message + "value=" + entry.toString().trim() + ")");
@@ -515,11 +510,13 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         }
 
         void raiseChange(long segmentIndex, long pos) {
+            LOG.debug("raise change: id {}, segment {}, pos {}", localIdentifier, segmentIndex, pos);
             changesForUpdates.set(combine(segmentIndex, pos));
             modificationNotifier.onChange();
         }
 
         void dropChange(long segmentIndex, long pos) {
+            LOG.debug("drop change: id {}, segment {}, pos {}", localIdentifier, segmentIndex, pos);
             changesForUpdates.clear(combine(segmentIndex, pos));
         }
 
@@ -568,7 +565,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                         entryCallback.onBeforeEntry();
 
                         final long segmentPos = position & posMask;
-                        context.initEntry(segmentPos);
+                        context.readExistingEntry(segmentPos);
 
                         // if the entry should be ignored, we'll move the next entry
                         if (entryCallback.shouldBeIgnored(context, chronicleId)) {
@@ -589,7 +586,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                         return success;
                     }
                     // if the position was already cleared by another thread
-                    // while we were trying to obtain segment lock (for example, in onRelocation()),
+                    // while we were trying to obtain segment lock (for example, in relocation()),
                     // go to pick up next (next iteration in while (true) loop)
                 }
             }
@@ -604,7 +601,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 for (int i = 0; i < actualSegments; i++) {
                     final int segmentIndex = i;
                     c.initTheSegmentIndex(segmentIndex);
-                    c.forEachRemoving(entry -> {
+                    c.forEachReplicableEntry(entry -> {
+                        LOG.debug("Bootstrap entry: id {}, key {}, value {}", localIdentifier,
+                                c.key(), c.value());
                         MapReplicableEntry re = (MapReplicableEntry) entry;
                         assert re.originTimestamp() > 0L;
                         if (re.originIdentifier() >= fromTimeStamp &&
@@ -612,7 +611,6 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                                         re.originIdentifier() == localIdentifier)) {
                             raiseChange(segmentIndex, c.pos());
                         }
-                        return true;
                     });
                 }
             }

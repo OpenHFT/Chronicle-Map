@@ -19,8 +19,8 @@
 package net.openhft.chronicle.map.replication;
 
 import net.openhft.chronicle.hash.AcceptanceDecision;
-import net.openhft.chronicle.hash.Value;
-import net.openhft.chronicle.hash.replication.HashReplicableEntry;
+import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.MapAbsentEntry;
 
 import static net.openhft.chronicle.hash.AcceptanceDecision.ACCEPT;
@@ -41,15 +41,17 @@ public interface MapRemoteOperations<K, V, R> {
         } else {
             MapAbsentEntry<K, V> absentEntry = q.absentEntry();
             assert absentEntry != null;
-            if (absentEntry instanceof HashReplicableEntry) {
-                return decideOnRemoteModification((HashReplicableEntry<?>) absentEntry, q);
+            if (absentEntry instanceof ReplicableEntry) {
+                AcceptanceDecision decision =
+                        decideOnRemoteModification((ReplicableEntry) absentEntry, q);
+                return decision;
             } else {
                 return ACCEPT;
             }
         }
     }
     
-    default AcceptanceDecision put(MapRemoteQueryContext<K, V, R> q, Value<V, ?> newValue) {
+    default AcceptanceDecision put(MapRemoteQueryContext<K, V, R> q, Data<V, ?> newValue) {
         MapReplicableEntry<K, V> entry = q.entry();
         if (entry != null) {
             if (decideOnRemoteModification(entry, q) == ACCEPT) {
@@ -61,8 +63,8 @@ public interface MapRemoteOperations<K, V, R> {
         } else {
             MapAbsentEntry<K, V> absentEntry = q.absentEntry();
             assert absentEntry != null;
-            if (!(absentEntry instanceof HashReplicableEntry) ||
-                    decideOnRemoteModification((HashReplicableEntry<?>) absentEntry, q) == ACCEPT) {
+            if (!(absentEntry instanceof ReplicableEntry) ||
+                    decideOnRemoteModification((ReplicableEntry) absentEntry, q) == ACCEPT) {
                 q.insert(absentEntry, newValue);
                 return ACCEPT;
             } else {

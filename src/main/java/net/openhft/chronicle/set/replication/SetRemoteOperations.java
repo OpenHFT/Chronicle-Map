@@ -1,7 +1,7 @@
 package net.openhft.chronicle.set.replication;
 
 import net.openhft.chronicle.hash.AcceptanceDecision;
-import net.openhft.chronicle.hash.replication.HashReplicableEntry;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.set.SetAbsentEntry;
 
 import static net.openhft.chronicle.hash.AcceptanceDecision.ACCEPT;
@@ -22,8 +22,8 @@ public interface SetRemoteOperations<K, R> {
         } else {
             SetAbsentEntry<K> absentEntry = q.absentEntry();
             assert absentEntry != null;
-            if (absentEntry instanceof HashReplicableEntry) {
-                return decideOnRemoteModification((HashReplicableEntry<?>) absentEntry, q);
+            if (absentEntry instanceof ReplicableEntry) {
+                return decideOnRemoteModification((ReplicableEntry) absentEntry, q);
             } else {
                 return ACCEPT;
             }
@@ -41,8 +41,8 @@ public interface SetRemoteOperations<K, R> {
         } else {
             SetAbsentEntry<K> absentEntry = q.absentEntry();
             assert absentEntry != null;
-            if (!(absentEntry instanceof HashReplicableEntry) ||
-                    decideOnRemoteModification((HashReplicableEntry<?>) absentEntry, q) == ACCEPT) {
+            if (!(absentEntry instanceof ReplicableEntry) ||
+                    decideOnRemoteModification((ReplicableEntry) absentEntry, q) == ACCEPT) {
                 q.insert(absentEntry);
                 return ACCEPT;
             } else {

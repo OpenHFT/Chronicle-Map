@@ -1,6 +1,6 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.Data;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -11,7 +11,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 
-import static net.openhft.chronicle.hash.Value.bytesEquivalent;
+import static net.openhft.chronicle.hash.Data.bytesEquivalent;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.FAIL;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.SUCCESS;
 import static org.junit.Assert.assertEquals;
@@ -40,7 +40,7 @@ public class BiMapTest {
         }
 
         @Override
-        public void put(MapQueryContext<K, V, DualLockSuccess> q, Value<V, ?> value,
+        public void put(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> value,
                         ReturnValue<V> returnValue) {
             while (true) {
                 q.updateLock().lock();
@@ -59,7 +59,7 @@ public class BiMapTest {
         }
 
         @Override
-        public void putIfAbsent(MapQueryContext<K, V, DualLockSuccess> q, Value<V, ?> value,
+        public void putIfAbsent(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> value,
                                 ReturnValue<V> returnValue) {
             while (true) {
                 try {
@@ -88,7 +88,7 @@ public class BiMapTest {
         }
 
         @Override
-        public boolean remove(MapQueryContext<K, V, DualLockSuccess> q, Value<V, ?> value) {
+        public boolean remove(MapQueryContext<K, V, DualLockSuccess> q, net.openhft.chronicle.hash.Data<V, ?> value) {
             while (true) {
                 q.updateLock().lock();
                 MapEntry<K, V> entry = q.entry();
@@ -116,14 +116,14 @@ public class BiMapTest {
         }
 
         @Override
-        public void replace(MapQueryContext<K, V, DualLockSuccess> q, Value<V, ?> value,
+        public void replace(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> value,
                             ReturnValue<V> returnValue) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean replace(MapQueryContext<K, V, DualLockSuccess> q, Value<V, ?> oldValue,
-                               Value<V, ?> newValue) {
+        public boolean replace(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> oldValue,
+                               Data<V, ?> newValue) {
             throw new UnsupportedOperationException();
         }
 
@@ -135,7 +135,7 @@ public class BiMapTest {
         }
 
         @Override
-        public void merge(MapQueryContext<K, V, DualLockSuccess> q, Value<V, ?> value,
+        public void merge(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> value,
                           BiFunction<? super V, ? super V, ? extends V> remappingFunction,
                           ReturnValue<V> returnValue) {
             throw new UnsupportedOperationException();
@@ -171,13 +171,13 @@ public class BiMapTest {
         }
 
         @Override
-        public DualLockSuccess replaceValue(@NotNull MapEntry<K, V> entry, Value<V, ?> newValue) {
+        public DualLockSuccess replaceValue(@NotNull MapEntry<K, V> entry, Data<V, ?> newValue) {
             throw new UnsupportedOperationException();
         }
 
         @Override
         public DualLockSuccess insert(@NotNull MapAbsentEntry<K, V> absentEntry,
-                                      Value<V, ?> value) {
+                                      Data<V, ?> value) {
             try (ExternalMapQueryContext<V, K, ?> rq = reverse.queryContext(value)) {
                 if (!rq.updateLock().tryLock())
                     return FAIL;
@@ -187,7 +187,7 @@ public class BiMapTest {
                     reverseAbsentEntry.doInsert(absentEntry.absentKey());
                     return SUCCESS;
                 } else {
-                    Value<K, ?> reverseKey = rq.entry().value();
+                    Data<K, ?> reverseKey = rq.entry().value();
                     if (reverseKey.equals(absentEntry.absentKey())) {
                         // recover
                         absentEntry.doInsert(value);

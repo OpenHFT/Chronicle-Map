@@ -19,15 +19,14 @@
 package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.bytes.ReadAccess;
-import net.openhft.chronicle.hash.AbstractValue;
-import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
 
 import static net.openhft.chronicle.hash.impl.JavaLangBytesAccessors.uncheckedBytesAccessor;
 
-public abstract class CopyingInstanceValue<I, T> extends AbstractValue<I, T> {
+public abstract class CopyingInstanceData<I, T> extends AbstractData<I, T> {
 
     public static DirectBytes getBuffer(DirectBytes b, long capacity) {
         if (b != null) {

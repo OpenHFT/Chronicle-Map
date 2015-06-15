@@ -19,14 +19,11 @@
 package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ExternalMapQueryContext;
-import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.Serializable;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -63,7 +60,7 @@ public interface ChronicleHash<K, C extends KeyContext<K>, EQC extends ExternalH
     @NotNull
     EQC queryContext(K key);
 
-    @NotNull EQC queryContext(Value<K, ?> key);
+    @NotNull EQC queryContext(Data<K, ?> key);
     
     /**
      * Checks the given predicate on each entry in this {@code ChronicleHash} until all entries

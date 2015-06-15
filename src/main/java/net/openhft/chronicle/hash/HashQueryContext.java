@@ -1,11 +1,8 @@
 package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.hash.locks.IllegalInterProcessLockStateException;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.chronicle.hash.locks.InterProcessReadWriteUpdateLock;
 import net.openhft.chronicle.map.MapMethods;
-import net.openhft.chronicle.map.MapQueryContext;
-import net.openhft.chronicle.map.ReturnValue;
 
 /**
  * Context of {@link ChronicleHash} operations with <i>individual keys</i>.
@@ -94,9 +91,9 @@ import net.openhft.chronicle.map.ReturnValue;
 public interface HashQueryContext<K> extends HashContext<K>, InterProcessReadWriteUpdateLock {
 
     /**
-     * Returns the queried key as a {@code Value}.
+     * Returns the queried key as a {@code Data}.
      */
-    Value<K, ?> queriedKey();
+    Data<K, ?> queriedKey();
 
     /**
      * Returns the entry context, if the entry with the queried key is <i>present</i>

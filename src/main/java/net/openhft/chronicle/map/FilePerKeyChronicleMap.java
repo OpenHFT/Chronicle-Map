@@ -1,11 +1,8 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.function.SerializableFunction;
-import net.openhft.lang.Jvm;
 import org.jetbrains.annotations.NotNull;
-import org.xerial.snappy.SnappyInputStream;
-import org.xerial.snappy.SnappyOutputStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Created by daniel on 22/04/15.
@@ -188,7 +183,7 @@ public class FilePerKeyChronicleMap implements ChronicleMap<String, String> {
 
     @NotNull
     @Override
-    public ExternalMapQueryContext<String, String, ?> queryContext(Value<String, ?> key) {
+    public ExternalMapQueryContext<String, String, ?> queryContext(Data<String, ?> key) {
         throw new UnsupportedOperationException();
     }
 

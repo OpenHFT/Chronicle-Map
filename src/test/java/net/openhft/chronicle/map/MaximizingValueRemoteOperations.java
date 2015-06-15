@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.AcceptanceDecision;
-import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
 import net.openhft.chronicle.map.replication.MapReplicableEntry;
@@ -32,7 +32,7 @@ public class MaximizingValueRemoteOperations<K, V extends Comparable<? super V>,
         implements MapRemoteOperations<K, V, R> {
     
     @Override
-    public AcceptanceDecision put(MapRemoteQueryContext<K, V, R> q, Value<V, ?> newValue) {
+    public AcceptanceDecision put(MapRemoteQueryContext<K, V, R> q, Data<V, ?> newValue) {
         MapReplicableEntry<K, V> entry = q.entry();
         if (entry != null) {
             int compareResult = newValue.get().compareTo(entry.value().get());

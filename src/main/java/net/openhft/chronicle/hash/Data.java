@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @param <V> type of the accessed objects
  * @param <T> type of the handle for bytes access
  */
-public interface Value<V, T> {
+public interface Data<V, T> {
 
     /**
      * Returns access to the value's bytes.
@@ -92,7 +92,7 @@ public interface Value<V, T> {
      * Returns "cached" object, generally not eligible for using outside some context, or a block,
      * synchronized with locks, or lambda, etc.
      * 
-     * If the {@code Value} is object wrapper -- this method just returns this object.  
+     * If the {@code Data} is object wrapper -- this method just returns this object.
      */
     V get();
 
@@ -102,7 +102,7 @@ public interface Value<V, T> {
      */
     V getUsing(@Nullable V usingInstance);
 
-    static <T1, T2> boolean bytesEquivalent(Value<?, T1> v1, Value<?, T2> v2) {
+    static <T1, T2> boolean bytesEquivalent(Data<?, T1> v1, Data<?, T2> v2) {
         if (v1.size() != v2.size())
             return false;
         return Access.equivalent(v1.access(), v1.handle(), v1.offset(),

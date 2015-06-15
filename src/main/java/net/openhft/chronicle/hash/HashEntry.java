@@ -19,7 +19,6 @@
 package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.map.MapEntry;
-import net.openhft.chronicle.map.MapEntryOperations;
 import net.openhft.chronicle.set.SetEntry;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +40,8 @@ public interface HashEntry<K> {
     /**
      * Returns the entry key.
      */
-    @NotNull Value<K, ?> key();
+    @NotNull
+    Data<K, ?> key();
 
     /**
      * Removes the entry from the {@code ChronicleHash}.

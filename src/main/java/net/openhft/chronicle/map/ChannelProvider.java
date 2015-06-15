@@ -18,10 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.HashReplicableEntry;
-import net.openhft.chronicle.hash.replication.ReplicationHub;
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.hash.replication.UdpTransportConfig;
+import net.openhft.chronicle.hash.replication.*;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -101,7 +98,7 @@ public final class ChannelProvider implements Closeable {
         }
 
         @Override
-        public boolean identifierCheck(@NotNull HashReplicableEntry<?> entry, int chronicleChannel) {
+        public boolean identifierCheck(@NotNull ReplicableEntry entry, int chronicleChannel) {
             channelDataLock.readLock().lock();
             try {
 
@@ -504,7 +501,7 @@ public final class ChannelProvider implements Closeable {
             }
 
             @Override
-            public boolean identifierCheck(@NotNull HashReplicableEntry<?> entry, int chronicleId) {
+            public boolean identifierCheck(@NotNull ReplicableEntry entry, int chronicleId) {
                 return true;
             }
 

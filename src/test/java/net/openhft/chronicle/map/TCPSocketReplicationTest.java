@@ -137,7 +137,6 @@ public class TCPSocketReplicationTest {
         waitTillEqual(5000);
 
         assertEquals(map1, map2);
-        assertTrue(!map1.isEmpty());
     }
 
     @Test
@@ -185,6 +184,7 @@ public class TCPSocketReplicationTest {
         Map map1UnChanged = new HashMap();
         Map map2UnChanged = new HashMap();
 
+        long startTime = System.currentTimeMillis();
         int numberOfTimesTheSame = 0;
         for (int t = 0; t < timeOutMs + 100; t++) {
             if (map1.equals(map2)) {
@@ -196,13 +196,15 @@ public class TCPSocketReplicationTest {
                     map2UnChanged = new HashMap(map2);
                 }
                 Thread.sleep(1);
-                if (numberOfTimesTheSame == 100) {
+                if (numberOfTimesTheSame == 10) {
                     System.out.println("same");
                     break;
                 }
 
             }
             Thread.sleep(1);
+            if (System.currentTimeMillis() - startTime > timeOutMs)
+                break;
         }
     }
 

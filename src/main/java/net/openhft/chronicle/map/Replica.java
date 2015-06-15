@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.HashReplicableEntry;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 
@@ -144,7 +144,7 @@ public interface Replica extends Closeable {
          * @param chronicleId is the channel id used to identify the canonical map or queue
          * @return the size of the entry
          */
-        boolean identifierCheck(@NotNull HashReplicableEntry<?> entry, int chronicleId);
+        boolean identifierCheck(@NotNull ReplicableEntry entry, int chronicleId);
 
 
         /**
@@ -213,7 +213,7 @@ public interface Replica extends Closeable {
          * @param chronicleId only assigned when clustering
          * @return {@code true} if this entry should be ignored
          */
-        public abstract boolean shouldBeIgnored(final HashReplicableEntry<?> entry, final int chronicleId);
+        public abstract boolean shouldBeIgnored(final ReplicableEntry entry, final int chronicleId);
     }
 
 

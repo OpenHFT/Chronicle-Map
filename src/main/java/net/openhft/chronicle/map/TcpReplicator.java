@@ -697,8 +697,11 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
 
             // now we're finished we can get on with reading the entries
             attached.remoteModificationIterator.dirtyEntries(attached.remoteBootstrapTimestamp);
-            reader.entriesFromBuffer(attached, key);
-            attached.handShakingComplete = true;
+            try {
+                reader.entriesFromBuffer(attached, key);
+            } finally {
+                attached.handShakingComplete = true;
+            }
         }
     }
 

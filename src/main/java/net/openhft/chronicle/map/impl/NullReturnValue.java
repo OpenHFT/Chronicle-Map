@@ -1,6 +1,6 @@
 package net.openhft.chronicle.map.impl;
 
-import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ public final class NullReturnValue implements InstanceReturnValue {
     }
 
     @Override
-    public void returnValue(@NotNull Value value) {
+    public void returnValue(@NotNull Data value) {
         // ignore
     }
 }

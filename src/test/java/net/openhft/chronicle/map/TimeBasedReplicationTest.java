@@ -99,7 +99,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 waitTillEqual(map, map2, 5000);
                 assertEquals(map.size(), 1);
                 // prove that late update to map2 ignored
-                assertEquals(map.get("key-1"), "value-1");
+                assertEquals("value-1", map.get("key-1"));
             }
         }
     }
@@ -218,7 +218,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                 // we'll now flip the time back to the current in order to do the read the result
                 current(timeProvider);
                 waitTillEqual(map, map2, 5000);
-                assertEquals(map.size(), 0);
+                assertEquals("map: " + map + ", map2: " + map2, 0, map.size());
                 // prove that late put was ignored
                 assertEquals(null, map.get("key-1"));
             }
@@ -231,6 +231,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
     private void late(TimeProvider timeProvider) {
         Mockito.when(timeProvider.currentTime())
-                .thenReturn(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5));
+                .thenReturn(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(10));
     }
 }

@@ -141,6 +141,7 @@ public class TcpReplicationSoakTest {
         Map map2UnChanged = new HashMap();
 
         int numberOfTimesTheSame = 0;
+        long startTime = System.currentTimeMillis();
         for (int t = 0; t < timeOutMs + 100; t++) {
             if (map1.equals(map2)) {
                 if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
@@ -151,13 +152,15 @@ public class TcpReplicationSoakTest {
                     map2UnChanged = new HashMap(map2);
                 }
                 Thread.sleep(1);
-                if (numberOfTimesTheSame == 100) {
+                if (numberOfTimesTheSame == 10) {
                     System.out.println("same");
                     break;
                 }
 
             }
             Thread.sleep(1);
+            if (System.currentTimeMillis() - startTime > timeOutMs)
+                break;
         }
     }
 }

@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.HashContext;
-import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.Data;
 
 /**
  * Context, in which {@link MapEntry MapEntries} are accessed.
@@ -43,14 +43,14 @@ public interface MapContext<K, V, R> extends HashContext<K>, MapEntryOperations<
     ChronicleMap<K, V> map();
 
     /**
-     * Wraps the given value as a {@code Value}. Useful when you need to pass a value
-     * to some method accepting {@code Value}, for example, {@link MapEntryOperations#replaceValue(
-     * MapEntry, Value)}, without allocating new objects (i. e. garbage) and {@code ThreadLocals}.
+     * Wraps the given value as a {@code Data}. Useful when you need to pass a value
+     * to some method accepting {@code Data}, for example, {@link MapEntryOperations#replaceValue(
+     * MapEntry, Data)}, without allocating new objects (i. e. garbage) and {@code ThreadLocals}.
      *
-     * <p>The returned {@code Value} object shouldn't outlive this {@code MapContext}.
+     * <p>The returned {@code Data} object shouldn't outlive this {@code MapContext}.
      *
      * @param value the value object to wrap
-     * @return the value as {@code Value}
+     * @return the value as {@code Data}
      */
-    Value<V, ?> wrapValueAsValue(V value);
+    Data<V, ?> wrapValueAsValue(V value);
 }

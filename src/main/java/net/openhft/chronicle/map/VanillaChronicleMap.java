@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.KeyContext;
-import net.openhft.chronicle.hash.Value;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
@@ -367,7 +367,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
 
     @Override
     @NotNull
-    public QueryContextInterface<K, V, R> queryContext(Value<K, ?> key) {
+    public QueryContextInterface<K, V, R> queryContext(Data<K, ?> key) {
         QueryContextInterface<K, V, R> q = mapContext();
         q.initInputKey(key);
         return q;

@@ -18,8 +18,8 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.HashAbsentEntry;
-import net.openhft.chronicle.hash.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,14 +42,14 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
      * value}.
      * 
      * <p>This method is the default implementation for {@link MapEntryOperations#insert(
-     * MapAbsentEntry, Value)}, which might be customized over the default. 
+     * MapAbsentEntry, Data)}, which might be customized over the default.
      *
      * @param value the value to insert into the map along with {@link #absentKey() the key}
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
      * operation are not met
-     * @see MapEntryOperations#insert(MapAbsentEntry, Value)
+     * @see MapEntryOperations#insert(MapAbsentEntry, Data)
      */
-    void doInsert(Value<V, ?> value);
+    void doInsert(Data<V, ?> value);
 
     /**
      * Returns the <i>default</i> (or <i>nil</i>) value, that should be inserted into the map in
@@ -62,5 +62,6 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
      * @return the default value to be inserted into the map
      * @see MapEntryOperations#defaultValue(MapAbsentEntry)
      */
-    @NotNull Value<V, ?> defaultValue();
+    @NotNull
+    Data<V, ?> defaultValue();
 }

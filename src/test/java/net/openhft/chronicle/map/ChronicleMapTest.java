@@ -210,7 +210,6 @@ public class ChronicleMapTest {
         }
     }
 
-    @Ignore("HCOLL-265 Chronicle Maps with Identical byte[] & char[] values are not equal")
     @Test
     public void testEqualsCharArray() throws Exception {
 
@@ -233,7 +232,6 @@ public class ChronicleMapTest {
     }
 
 
-    @Ignore("HCOLL-265 Chronicle Maps with Identical byte[] & char[] values are not equal")
     @Test
     public void testEqualsByteArray() throws Exception {
 

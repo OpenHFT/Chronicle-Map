@@ -50,7 +50,7 @@ public final class DefaultEventualConsistencyStrategy {
      * @return if the remote operation should be accepted or discarded
      */
     public static AcceptanceDecision decideOnRemoteModification(
-            HashReplicableEntry<?> entry, RemoteOperationContext<?> context) {
+            ReplicableEntry entry, RemoteOperationContext<?> context) {
         long remoteTimestamp = context.remoteTimestamp();
         long originTimestamp = entry.originTimestamp();
         boolean shouldAccept = remoteTimestamp > originTimestamp ||

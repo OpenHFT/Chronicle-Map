@@ -80,7 +80,7 @@ public class UDPSocketReplicationTest {
     public void testBufferOverflow() throws IOException, InterruptedException {
 
         for (int i = 0; i < 1024; i++) {
-            Thread.sleep(5000);
+            Thread.sleep(5);
             map2.put(i * 2, "E");
             System.out.println("" + map2);
         }
