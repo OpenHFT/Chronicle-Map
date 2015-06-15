@@ -2,7 +2,6 @@ package net.openhft.chronicle.map.impl;
 
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Access;
-import net.openhft.chronicle.bytes.Accessor;
 import net.openhft.chronicle.bytes.Accessor.Full;
 import net.openhft.chronicle.bytes.ReadAccess;
 import net.openhft.chronicle.hash.*;
@@ -21,7 +20,6 @@ import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.map.TcpReplicator.TcpSocketChannelEntryWriter;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.chronicle.map.impl.ret.UsableReturnValue;
-import net.openhft.chronicle.map.impl.stage.query.MapAbsentEntryHolder;
 import net.openhft.chronicle.map.impl.value.instance.ValueInitableData;
 import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
 import net.openhft.chronicle.map.replication.MapReplicableEntry;
