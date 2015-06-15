@@ -378,52 +378,47 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
     }
 
-    private static class EntryBuffer {
-        NativeBytes key;
-        NativeBytes value;
-
-        NativeBytes getKey() {
-            return key;
-        }
-
-        void setKey(final NativeBytes key) {
-            this.key = key;
-        }
-
-        NativeBytes getValue() {
-            return value;
-        }
-
-        void setValue(final NativeBytes value) {
-            this.value = value;
-        }
-    }
-
     @Override
     public void put(final Bytes key, final Bytes value, final byte id, final long timestamp) {
 
         final ThreadLocalCopies copies = SegmentState.getCopies(null);
         final SegmentState segmentState = SegmentState.get(copies);
 
-        long keySize = key.remaining();
-        long valueSize = key.remaining();
+        final byte remoteIdentifier;
 
-        final long requiredBufferSize = 8 + keySize + 8 + valueSize + 12;
-        final Bytes source = threadlocalBuffer(requiredBufferSize);
+        if (id != 0) {
+            remoteIdentifier = id;
+        } else {
+            throw new IllegalStateException("identifier can't be 0");
+        }
 
-        source.writeLong(timestamp);
-        keySizeMarshaller.writeSize(source, keySize);
-        valueSizeMarshaller.writeSize(source, keySize);
-        source.writeStopBit(timestamp);
-        source.writeByte(id);
-        source.writeBoolean(false);
+        if (remoteIdentifier == this.identifier()) {
+            // this may occur when working with UDP, as we may receive our own data
+            return;
+        }
 
-        // key.bytes().
-        writeTo(source, key);
-        writeTo(source, value);
+        setLastModificationTime(remoteIdentifier, timestamp);
 
-        source.flip();
-        readExternalEntry(copies, segmentState, source);
+        long hash = hash(key);
+
+        int segmentNum = getSegment(hash);
+        long segmentHash = segmentHash(hash);
+
+        boolean debugEnabled = LOG.isDebugEnabled();
+
+        String message = null;
+        if (debugEnabled) {
+            message = String.format(
+                    "READING FROM SOURCE -  into local-id=%d, remote-id=%d, put(key=%s,",
+                    localIdentifier, remoteIdentifier, key.toString().trim());
+        }
+
+        segment(segmentNum).remotePut(copies, segmentState, key, value,
+                segmentHash, remoteIdentifier, timestamp);
+
+        if (debugEnabled) {
+            LOG.debug(message + "value=" + value.toString().trim() + ")");
+        }
     }
 
     private static void writeTo(Bytes destination, Bytes source) {
@@ -438,26 +433,35 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     public void remove(final Bytes key,
                        final byte remoteIdentifier,
                        final long timestamp) {
-
         final ThreadLocalCopies copies = SegmentState.getCopies(null);
-
         final SegmentState segmentState = SegmentState.get(copies);
 
-        long keySize = key.remaining();
-        long valueSize = key.remaining();
+        if (remoteIdentifier == 0)
+            throw new IllegalStateException("identifier can't be 0");
 
-        final long requiredBufferSize = 8 + keySize + 8 + valueSize + 12;
-        final Bytes source = threadlocalBuffer(requiredBufferSize);
 
-        keySizeMarshaller.writeSize(source, keySize);
-        valueSizeMarshaller.writeSize(source, keySize);
-        source.writeLong(timestamp);
-        source.writeByte(remoteIdentifier);
-        source.writeBoolean(true);
+        if (remoteIdentifier == this.identifier()) {
+            // this may occur when working with UDP, as we may receive our own data
+            return;
+        }
 
-        writeTo(source, key);
+        setLastModificationTime(remoteIdentifier, timestamp);
 
-        readExternalEntry(copies, segmentState, source);
+        long hash = hash(key);
+
+        int segmentNum = getSegment(hash);
+        long segmentHash = segmentHash(hash);
+
+        boolean debugEnabled = LOG.isDebugEnabled();
+
+        if (debugEnabled) {
+            LOG.debug("READING FROM SOURCE -  into local-id={}, remote={}, remove(key={})",
+                    localIdentifier, remoteIdentifier, key.toString().trim()
+            );
+        }
+
+        segment(segmentNum).remoteRemove(copies, segmentState,
+                key, segmentHash, timestamp, remoteIdentifier);
     }
 
  
@@ -1030,6 +1034,26 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
                         BytesBytesInterop.INSTANCE, entry, keySize, keyBytesToInstance,
                         getRemoteBytesValueInterops, value, valueBytesToInstance,
+                        hash2, true, readValueToLazyBytes, true, identifier, timestamp,
+                        true);
+            } finally {
+                writeUnlock();
+            }
+        }
+
+        void remotePut(@NotNull ThreadLocalCopies copies,
+                       @NotNull SegmentState segmentState,
+                       @NotNull final Bytes key, @NotNull final Bytes value,
+                       long hash2, final byte identifier, final long timestamp) {
+            ReadValueToBytes readValueToLazyBytes = segmentState.readValueToLazyBytes;
+            readValueToLazyBytes.valueSizeMarshaller(valueSizeMarshaller);
+
+            writeLock();
+            try {
+                putWithoutLock(copies, segmentState,
+                        DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
+                        BytesBytesInterop.INSTANCE, key, key.remaining(), keyBytesToInstance,
+                        GetRemoteSeparateBytesInterops.INSTANCE, value, valueBytesToInstance,
                         hash2, true, readValueToLazyBytes, true, identifier, timestamp,
                         true);
             } finally {

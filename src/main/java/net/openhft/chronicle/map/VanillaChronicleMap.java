@@ -1016,6 +1016,23 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
+    enum GetRemoteSeparateBytesInterops
+            implements GetValueInterops<Bytes, BytesInterop<Bytes>,
+            DelegatingMetaBytesInterop<Bytes, BytesInterop<Bytes>>> {
+        INSTANCE;
+
+        @Override
+        public DelegatingMetaBytesInterop<Bytes, BytesInterop<Bytes>> getMetaValueInterop(
+                @NotNull ThreadLocalCopies copies, BytesInterop<Bytes> valueInterop, Bytes value) {
+            return DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance();
+        }
+
+        @Override
+        public BytesInterop<Bytes> getValueInterop(@NotNull ThreadLocalCopies copies) {
+            return BytesBytesInterop.INSTANCE;
+        }
+    }
+
     @Override
     public final MVI getMetaValueInterop(
             @NotNull ThreadLocalCopies copies, VI valueInterop, V value) {
