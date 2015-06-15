@@ -194,7 +194,8 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     public final void createMappedStoreAndSegments(File file) throws IOException {
-        OS.warnOnWindows(sizeInBytes());
+        // TODO this method had been moved -- not clear where
+        //OS.warnOnWindows(sizeInBytes());
         createMappedStoreAndSegments(new MappedStore(file, FileChannel.MapMode.READ_WRITE,
                 sizeInBytes(), BytesMarshallableSerializer.create()));
     }

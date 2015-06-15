@@ -19,7 +19,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
-import net.openhft.chronicle.core.util.CloseablesManager;
+import net.openhft.chronicle.core.io.CloseablesManager;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;

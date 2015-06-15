@@ -18,7 +18,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.core.util.CloseablesManager;
+import net.openhft.chronicle.core.io.CloseablesManager;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.lang.io.ByteBufferBytes;

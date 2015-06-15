@@ -442,7 +442,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         try (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext =
                      mapContext()) {
             remoteOpContext.initReplicationInput(source);
-            //remoteOpContext.processReplicatedEvent();
+            remoteOpContext.processReplicatedEvent();
         }
     }
 
