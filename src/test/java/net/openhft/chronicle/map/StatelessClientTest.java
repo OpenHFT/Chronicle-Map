@@ -45,7 +45,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Rob Austin.
  */
-@Ignore
+@Ignore("Stateless clients in this form are deprecated and left not working")
 public class StatelessClientTest {
     private static final Logger LOG = LoggerFactory.getLogger(StatelessClientTest.class);
 

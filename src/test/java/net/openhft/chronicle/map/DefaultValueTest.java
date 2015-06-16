@@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
 public class DefaultValueTest {
 
     @Test
-    @Ignore
+    @Ignore("Cannot reuse List instance in acquireUsing()")
     public void test() throws IllegalAccessException, InstantiationException, IOException {
         File file = Builder.getPersistenceFile();
         try {

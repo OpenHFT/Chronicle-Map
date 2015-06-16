@@ -43,7 +43,6 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Rob Austin.
  */
-@Ignore
 public class TCPSocketReplicationBootStrapTest {
 
     private ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?, ?> map1;
@@ -186,11 +185,14 @@ public class TCPSocketReplicationBootStrapTest {
      * @throws InterruptedException
      */
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
+        long startTime = System.currentTimeMillis();
         int t = 0;
         for (; t < timeOutMs; t++) {
             if (map1.equals(map2))
                 break;
             Thread.sleep(1);
+            if (System.currentTimeMillis() - startTime > timeOutMs)
+                break;
         }
     }
 

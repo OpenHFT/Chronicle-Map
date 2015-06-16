@@ -185,7 +185,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 assignedModIterBitSetSizeInBytes();
     }
 
-    void setLastModificationTime(byte identifier, long timestamp) {
+    public void setLastModificationTime(byte identifier, long timestamp) {
         final long offset = identifier * 8L;
 
         // purposely not volatile as this will impact performance,
@@ -598,15 +598,23 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                          iterationContext()) {
                 // iterate over all the segments and mark bit in the modification iterator
                 // that correspond to entries with an older timestamp
+                boolean debugEnabled = LOG.isDebugEnabled();
                 for (int i = 0; i < actualSegments; i++) {
                     final int segmentIndex = i;
                     c.initTheSegmentIndex(segmentIndex);
                     c.forEachReplicableEntry(entry -> {
-                        LOG.debug("Bootstrap entry: id {}, key {}, value {}", localIdentifier,
-                                c.key(), c.value());
+                        if (debugEnabled) {
+                            LOG.debug("Bootstrap entry: id {}, key {}, value {}", localIdentifier,
+                                    c.key(), c.value());
+                        }
                         MapReplicableEntry re = (MapReplicableEntry) entry;
                         assert re.originTimestamp() > 0L;
-                        if (re.originIdentifier() >= fromTimeStamp &&
+                        if (debugEnabled) {
+                            LOG.debug("Bootstrap decision: bs ts: {}, entry ts: {}, entry id: {}, " +
+                                    "local id: {}", fromTimeStamp, re.originTimestamp(),
+                                    re.originIdentifier(), localIdentifier);
+                        }
+                        if (re.originTimestamp() >= fromTimeStamp &&
                                 (!bootstrapOnlyLocalEntries ||
                                         re.originIdentifier() == localIdentifier)) {
                             raiseChange(segmentIndex, c.pos());

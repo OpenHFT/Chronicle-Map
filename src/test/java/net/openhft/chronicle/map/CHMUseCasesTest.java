@@ -1162,7 +1162,6 @@ public class CHMUseCasesTest {
     }
 
 
-    // @Ignore("HCOLL-268 JSON serialisation issue")
     @Test
     public void testByteBufferByteBufferDefaultKeyValueMarshaller() throws ExecutionException,
             InterruptedException, IOException {

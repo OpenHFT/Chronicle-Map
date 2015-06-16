@@ -36,7 +36,6 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
-@Ignore
 public class ChannelReplicationTest {
 
     private ChronicleMap<CharSequence, CharSequence> favoriteComputerServer1;

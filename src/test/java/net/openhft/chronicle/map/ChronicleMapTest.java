@@ -1687,7 +1687,7 @@ public class ChronicleMapTest {
 
 
     @Test
-    @Ignore
+    @Ignore("TODO investigate, debug")
     public void testByteArrayKeySizeBySample() throws IOException {
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877);
 

@@ -20,6 +20,7 @@ package net.openhft.chronicle.map.impl;
 
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Access;
+import net.openhft.chronicle.bytes.Accessor;
 import net.openhft.chronicle.bytes.Accessor.Full;
 import net.openhft.chronicle.bytes.ReadAccess;
 import net.openhft.chronicle.hash.AbstractData;
@@ -53,23 +54,26 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>, V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R, T> implements AutoCloseable , HashEntry<K> , InterProcessReadWriteUpdateLock , ExternalMapQueryContext<K, V, R> , MapAbsentEntry<K, V> , MapContext<K, V, R> , MapEntry<K, V> , QueryContextInterface<K, V, R> , VanillaChronicleMapHolder<K, KI, MKI, V, VI, MVI, R> , MapAbsentEntryHolder<K, V> {
+public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? super KI>, V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R, T> implements AutoCloseable , HashEntry<K> , InterProcessReadWriteUpdateLock , ExternalMapQueryContext<K, V, R> , MapAbsentEntry<K, V> , MapContext<K, V, R> , MapEntry<K, V> , MapAbsentEntryHolder<K, V> , QueryContextInterface<K, V, R> , VanillaChronicleMapHolder<K, KI, MKI, V, VI, MVI, R> {
     public void close() {
-        CompiledMapQueryContext.this.inputKeyInstanceValue.closeKey();
-        CompiledMapQueryContext.this.defaultReturnValue.closeDefaultReturnedValue();
-        CompiledMapQueryContext.this.wrappedValueInstanceValue.closeValue();
-        CompiledMapQueryContext.this.usingReturnValue.closeUsingReturnValue();
-        CompiledMapQueryContext.this.inputValueInstanceValue.closeValue();
-        CompiledMapQueryContext.this.closeInputBytes();
-        CompiledMapQueryContext.this.closeUsed();
+        CompiledMapQueryContext.this.closeKeyOffset();
         CompiledMapQueryContext.this.closeInputKey();
-        CompiledMapQueryContext.this.closeAllocatedChunks();
         CompiledMapQueryContext.this.wrappedValueInstanceValue.closeNext();
+        CompiledMapQueryContext.this.wrappedValueInstanceValue.closeValue();
+        CompiledMapQueryContext.this.closeInputBytes();
+        CompiledMapQueryContext.this.defaultReturnValue.closeDefaultReturnedValue();
+        CompiledMapQueryContext.this.closePos();
+        CompiledMapQueryContext.this.closeKeySize();
+        CompiledMapQueryContext.this.inputValueInstanceValue.closeValue();
+        CompiledMapQueryContext.this.usingReturnValue.closeUsingReturnValue();
+        CompiledMapQueryContext.this.inputKeyInstanceValue.closeKey();
+        CompiledMapQueryContext.this.closeAllocatedChunks();
+        CompiledMapQueryContext.this.closeUsed();
         CompiledMapQueryContext.this.closeVanillaChronicleMapHolderImplContextAtIndexInChainDependants();
-        CompiledMapQueryContext.this.closeKeyBytesInteropKeyMetaInteropDependants();
-        CompiledMapQueryContext.this.closeMapEntryStagesEntryBytesAccessOffsetDependants();
-        CompiledMapQueryContext.this.closeOwnerThreadHolderCheckAccessingFromOwnerThreadDependants();
         CompiledMapQueryContext.this.closeValueBytesInteropValueMetaInteropDependants();
+        CompiledMapQueryContext.this.closeMapEntryStagesEntryBytesAccessOffsetDependants();
+        CompiledMapQueryContext.this.closeKeyBytesInteropKeyMetaInteropDependants();
+        CompiledMapQueryContext.this.closeOwnerThreadHolderCheckAccessingFromOwnerThreadDependants();
     }
 
     public void incrementModCountGuarded() {
@@ -100,18 +104,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         setSearchState(newSearchState);
     }
 
-    public void writeValueGuarded(Data<?, ?> value) {
-        if (!(this.valueInit()))
-            this.initValue();
-
-        writeValue(value);
-    }
-
-    void initKeySizeOffset(long pos) {
-        keySizeOffset = (CompiledMapQueryContext.this.entrySpaceOffset()) + (pos * (CompiledMapQueryContext.this.h().chunkSize));
-        entryBytes.limit(entryBytes.capacity());
-    }
-
     void keyFound() {
         searchState = SearchState.PRESENT;
     }
@@ -121,31 +113,31 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         contextChain.add(this);
         indexInContextChain = 0;
         this.m = m;
-        this.inputKeyInstanceValue = new InputKeyInstanceData();
+        this.deprecatedMapKeyContext = new DeprecatedMapKeyContextOnQuery();
         this.entryKey = new EntryKeyBytesData();
-        this.inputSecondValueBytesValue = new InputSecondValueBytesData();
-        this.entryValue = new EntryValueBytesData();
-        this.innerUpdateLock = new UpdateLock();
-        this.usingReturnValue = new UsingReturnValue();
+        this.inputValueInstanceValue = new InputValueInstanceData();
         this.inputFirstValueBytesValue = new InputFirstValueBytesData();
         this.innerWriteLock = new WriteLock();
-        this.inputValueInstanceValue = new InputValueInstanceData();
-        this.deprecatedMapAcquireContext = new DeprecatedMapAcquireContextOnQuery();
-        this.owner = Thread.currentThread();
-        this.entryBytes = CompiledMapQueryContext.this.h().ms.bytes();
-        this.entryBytesAccessor = JavaLangBytesAccessors.uncheckedBytesAccessor(entryBytes);
-        this.entryBytesAccessHandle = ((T)(entryBytesAccessor.handle(entryBytes)));
-        this.entryBytesAccess = ((Access<T>)(entryBytesAccessor.access(entryBytes)));
-        this.innerReadLock = new ReadLock();
         this.copies = ThreadLocalCopies.get();
         this.valueInterop = CompiledMapQueryContext.this.m().valueInteropProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.m().originalValueInterop);
         this.valueReader = CompiledMapQueryContext.this.m().valueReaderProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.m().originalValueReader);
         this.keyInterop = CompiledMapQueryContext.this.h().keyInteropProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.h().originalKeyInterop);
         this.keyReader = CompiledMapQueryContext.this.h().keyReaderProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.h().originalKeyReader);
+        this.usingReturnValue = new UsingReturnValue();
         this.inputKeyBytesValue = new InputKeyBytesData();
         this.defaultReturnValue = new DefaultReturnValue();
+        this.inputSecondValueBytesValue = new InputSecondValueBytesData();
+        this.innerUpdateLock = new UpdateLock();
+        this.entryBytes = CompiledMapQueryContext.this.h().ms.bytes();
+        this.entryBytesAccessor = JavaLangBytesAccessors.uncheckedBytesAccessor(entryBytes);
+        this.entryBytesAccessHandle = ((T)(entryBytesAccessor.handle(entryBytes)));
+        this.entryBytesAccess = ((Access<T>)(entryBytesAccessor.access(entryBytes)));
+        this.innerReadLock = new ReadLock();
         this.wrappedValueInstanceValue = new WrappedValueInstanceData();
-        this.deprecatedMapKeyContext = new DeprecatedMapKeyContextOnQuery();
+        this.entryValue = new EntryValueBytesData();
+        this.owner = Thread.currentThread();
+        this.inputKeyInstanceValue = new InputKeyInstanceData();
+        this.deprecatedMapAcquireContext = new DeprecatedMapAcquireContextOnQuery();
     }
 
     public CompiledMapQueryContext(CompiledMapQueryContext c) {
@@ -153,31 +145,31 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         indexInContextChain = contextChain.size();
         contextChain.add(this);
         this.m = ((VanillaChronicleMap<K, KI, MKI, V, VI, MVI, R>)(c.m));
-        this.inputKeyInstanceValue = new InputKeyInstanceData();
+        this.deprecatedMapKeyContext = new DeprecatedMapKeyContextOnQuery();
         this.entryKey = new EntryKeyBytesData();
-        this.inputSecondValueBytesValue = new InputSecondValueBytesData();
-        this.entryValue = new EntryValueBytesData();
-        this.innerUpdateLock = new UpdateLock();
-        this.usingReturnValue = new UsingReturnValue();
+        this.inputValueInstanceValue = new InputValueInstanceData();
         this.inputFirstValueBytesValue = new InputFirstValueBytesData();
         this.innerWriteLock = new WriteLock();
-        this.inputValueInstanceValue = new InputValueInstanceData();
-        this.deprecatedMapAcquireContext = new DeprecatedMapAcquireContextOnQuery();
-        this.owner = Thread.currentThread();
-        this.entryBytes = CompiledMapQueryContext.this.h().ms.bytes();
-        this.entryBytesAccessor = JavaLangBytesAccessors.uncheckedBytesAccessor(entryBytes);
-        this.entryBytesAccessHandle = ((T)(entryBytesAccessor.handle(entryBytes)));
-        this.entryBytesAccess = ((Access<T>)(entryBytesAccessor.access(entryBytes)));
-        this.innerReadLock = new ReadLock();
         this.copies = ThreadLocalCopies.get();
         this.valueInterop = CompiledMapQueryContext.this.m().valueInteropProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.m().originalValueInterop);
         this.valueReader = CompiledMapQueryContext.this.m().valueReaderProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.m().originalValueReader);
         this.keyInterop = CompiledMapQueryContext.this.h().keyInteropProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.h().originalKeyInterop);
         this.keyReader = CompiledMapQueryContext.this.h().keyReaderProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.h().originalKeyReader);
+        this.usingReturnValue = new UsingReturnValue();
         this.inputKeyBytesValue = new InputKeyBytesData();
         this.defaultReturnValue = new DefaultReturnValue();
+        this.inputSecondValueBytesValue = new InputSecondValueBytesData();
+        this.innerUpdateLock = new UpdateLock();
+        this.entryBytes = CompiledMapQueryContext.this.h().ms.bytes();
+        this.entryBytesAccessor = JavaLangBytesAccessors.uncheckedBytesAccessor(entryBytes);
+        this.entryBytesAccessHandle = ((T)(entryBytesAccessor.handle(entryBytes)));
+        this.entryBytesAccess = ((Access<T>)(entryBytesAccessor.access(entryBytes)));
+        this.innerReadLock = new ReadLock();
         this.wrappedValueInstanceValue = new WrappedValueInstanceData();
-        this.deprecatedMapKeyContext = new DeprecatedMapKeyContextOnQuery();
+        this.entryValue = new EntryValueBytesData();
+        this.owner = Thread.currentThread();
+        this.inputKeyInstanceValue = new InputKeyInstanceData();
+        this.deprecatedMapAcquireContext = new DeprecatedMapAcquireContextOnQuery();
     }
 
     public class DeprecatedMapAcquireContextOnQuery implements MapKeyContext<K, V> {
@@ -199,10 +191,18 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             return CompiledMapQueryContext.this.readLock();
         }
 
+        @NotNull
         @Override
-        public long valueSize() {
+        public Bytes entry() {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.valueSize();
+            return CompiledMapQueryContext.this.entryBytes;
+        }
+
+        @NotNull
+        @Override
+        public K key() {
+            CompiledMapQueryContext.this.checkOnEachPublicOperation();
+            return CompiledMapQueryContext.this.queriedKey().get();
         }
 
         @Override
@@ -212,9 +212,9 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         }
 
         @Override
-        public long keyOffset() {
+        public boolean valueEqualTo(V value) {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.keyOffset();
+            return Data.bytesEquivalent(CompiledMapQueryContext.this.entryValue, CompiledMapQueryContext.this.wrapValueAsValue(value));
         }
 
         @Override
@@ -226,6 +226,12 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         @Override
         public V getUsing(V usingValue) {
             return containsKey() ? CompiledMapQueryContext.this.value().getUsing(usingValue) : null;
+        }
+
+        @Override
+        public V get() {
+            assert containsKey();
+            return CompiledMapQueryContext.this.usingReturnValue.returnValue();
         }
 
         @Override
@@ -241,11 +247,11 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             return true;
         }
 
-        @NotNull
         @Override
-        public Bytes entry() {
+        public void close() {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.entryBytes;
+            put(CompiledMapQueryContext.this.usingReturnValue.returnValue());
+            CompiledMapQueryContext.this.close();
         }
 
         @Override
@@ -268,29 +274,15 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         }
 
         @Override
-        public boolean valueEqualTo(V value) {
+        public long valueSize() {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return Data.bytesEquivalent(CompiledMapQueryContext.this.entryValue, CompiledMapQueryContext.this.wrapValueAsValue(value));
-        }
-
-        @NotNull
-        @Override
-        public K key() {
-            CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.queriedKey().get();
+            return CompiledMapQueryContext.this.valueSize();
         }
 
         @Override
-        public void close() {
+        public long keyOffset() {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            put(CompiledMapQueryContext.this.usingReturnValue.returnValue());
-            CompiledMapQueryContext.this.close();
-        }
-
-        @Override
-        public V get() {
-            assert containsKey();
-            return CompiledMapQueryContext.this.usingReturnValue.returnValue();
+            return CompiledMapQueryContext.this.keyOffset();
         }
     }
 
@@ -303,14 +295,40 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
         @NotNull
         @Override
+        public InterProcessLock updateLock() {
+            return CompiledMapQueryContext.this.updateLock();
+        }
+
+        @NotNull
+        @Override
         public InterProcessLock readLock() {
             return CompiledMapQueryContext.this.readLock();
         }
 
         @NotNull
         @Override
-        public InterProcessLock updateLock() {
-            return CompiledMapQueryContext.this.updateLock();
+        public Bytes entry() {
+            CompiledMapQueryContext.this.checkOnEachPublicOperation();
+            return CompiledMapQueryContext.this.entryBytes;
+        }
+
+        @NotNull
+        @Override
+        public K key() {
+            CompiledMapQueryContext.this.checkOnEachPublicOperation();
+            return CompiledMapQueryContext.this.queriedKey().get();
+        }
+
+        @Override
+        public void close() {
+            CompiledMapQueryContext.this.checkOnEachPublicOperation();
+            CompiledMapQueryContext.this.close();
+        }
+
+        @Override
+        public long keySize() {
+            CompiledMapQueryContext.this.checkOnEachPublicOperation();
+            return CompiledMapQueryContext.this.keySize();
         }
 
         @Override
@@ -320,16 +338,29 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         }
 
         @Override
-        public long valueOffset() {
+        public boolean put(V newValue) {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.valueOffset();
+            updateLock().lock();
+            MapEntry<K, V> entry = CompiledMapQueryContext.this.entry();
+            if (entry != null) {
+                CompiledMapQueryContext.this.replaceValue(entry, CompiledMapQueryContext.this.wrapValueAsValue(newValue));
+            } else {
+                CompiledMapQueryContext.this.insert(CompiledMapQueryContext.this.absentEntry(), CompiledMapQueryContext.this.wrapValueAsValue(newValue));
+            }
+            return true;
         }
 
-        @NotNull
         @Override
-        public Bytes entry() {
+        public boolean remove() {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.entryBytes;
+            updateLock().lock();
+            MapEntry<K, V> entry = CompiledMapQueryContext.this.entry();
+            if (entry != null) {
+                CompiledMapQueryContext.this.remove(entry);
+                return true;
+            } else {
+                return false;
+            }
         }
 
         @Override
@@ -349,34 +380,15 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         }
 
         @Override
+        public long valueOffset() {
+            CompiledMapQueryContext.this.checkOnEachPublicOperation();
+            return CompiledMapQueryContext.this.valueOffset();
+        }
+
+        @Override
         public long valueSize() {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
             return CompiledMapQueryContext.this.valueSize();
-        }
-
-        @Override
-        public boolean put(V newValue) {
-            CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            updateLock().lock();
-            MapEntry<K, V> entry = CompiledMapQueryContext.this.entry();
-            if (entry != null) {
-                CompiledMapQueryContext.this.replaceValue(entry, CompiledMapQueryContext.this.wrapValueAsValue(newValue));
-            } else {
-                CompiledMapQueryContext.this.insert(CompiledMapQueryContext.this.absentEntry(), CompiledMapQueryContext.this.wrapValueAsValue(newValue));
-            }
-            return true;
-        }
-
-        @Override
-        public void close() {
-            CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            CompiledMapQueryContext.this.close();
-        }
-
-        @Override
-        public long keySize() {
-            CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.keySize();
         }
 
         @Override
@@ -384,33 +396,17 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
             return CompiledMapQueryContext.this.keyOffset();
         }
-
-        @Override
-        public boolean remove() {
-            CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            updateLock().lock();
-            MapEntry<K, V> entry = CompiledMapQueryContext.this.entry();
-            if (entry != null) {
-                CompiledMapQueryContext.this.remove(entry);
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        @NotNull
-        @Override
-        public K key() {
-            CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.queriedKey().get();
-        }
     }
 
     public class EntryKeyBytesData extends AbstractData<K, T> {
         @Override
-        public long offset() {
+        public long size() {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.entryBytesAccessOffset(CompiledMapQueryContext.this.keyOffset());
+            return CompiledMapQueryContext.this.keySize();
+        }
+
+        public void closeEntryKeyBytesDataSizeDependants() {
+            EntryKeyBytesData.this.closeEntryKeyBytesDataInnerGetUsingDependants();
         }
 
         @Override
@@ -420,13 +416,15 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         }
 
         @Override
-        public long size() {
+        public T handle() {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.keySize();
+            return CompiledMapQueryContext.this.entryBytesAccessHandle;
         }
 
-        public void closeEntryKeyBytesDataSizeDependants() {
-            EntryKeyBytesData.this.closeEntryKeyBytesDataInnerGetUsingDependants();
+        @Override
+        public long offset() {
+            CompiledMapQueryContext.this.checkOnEachPublicOperation();
+            return CompiledMapQueryContext.this.entryBytesAccessOffset(CompiledMapQueryContext.this.keyOffset());
         }
 
         private K innerGetUsing(K usingKey) {
@@ -476,21 +474,9 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
             return cachedEntryKey();
         }
-
-        @Override
-        public T handle() {
-            CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.entryBytesAccessHandle;
-        }
     }
 
     public class EntryValueBytesData extends AbstractData<V, T> {
-        @Override
-        public long offset() {
-            CompiledMapQueryContext.this.checkOnEachPublicOperation();
-            return CompiledMapQueryContext.this.entryBytesAccessOffset(CompiledMapQueryContext.this.valueOffset());
-        }
-
         @Override
         public ReadAccess<T> access() {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
@@ -501,6 +487,12 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         public T handle() {
             CompiledMapQueryContext.this.checkOnEachPublicOperation();
             return CompiledMapQueryContext.this.entryBytesAccessHandle;
+        }
+
+        @Override
+        public long offset() {
+            CompiledMapQueryContext.this.checkOnEachPublicOperation();
+            return CompiledMapQueryContext.this.entryBytesAccessOffset(CompiledMapQueryContext.this.valueOffset());
         }
 
         @Override
@@ -564,16 +556,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
     public class InputFirstValueBytesData extends AbstractData<V, T> {
         @Override
-        public ReadAccess<T> access() {
-            return ((ReadAccess<T>)(JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).access(CompiledMapQueryContext.this.inputBytes())));
-        }
-
-        @Override
-        public long offset() {
-            return JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).offset(CompiledMapQueryContext.this.inputBytes(), CompiledMapQueryContext.this.firstInputValueOffset());
-        }
-
-        @Override
         public long size() {
             return CompiledMapQueryContext.this.firstInputValueSize();
         }
@@ -628,14 +610,19 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         public T handle() {
             return ((T)(JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).handle(CompiledMapQueryContext.this.inputBytes())));
         }
-    }
 
-    public class InputKeyBytesData extends AbstractData<K, T> {
+        @Override
+        public long offset() {
+            return JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).offset(CompiledMapQueryContext.this.inputBytes(), CompiledMapQueryContext.this.firstInputValueOffset());
+        }
+
         @Override
         public ReadAccess<T> access() {
             return ((ReadAccess<T>)(JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).access(CompiledMapQueryContext.this.inputBytes())));
         }
+    }
 
+    public class InputKeyBytesData extends AbstractData<K, T> {
         @Override
         public long size() {
             return CompiledMapQueryContext.this.inputKeySize();
@@ -689,17 +676,10 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         }
 
         @Override
-        public T handle() {
-            return ((T)(JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).handle(CompiledMapQueryContext.this.inputBytes())));
-        }
-
-        @Override
         public long offset() {
             return JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).offset(CompiledMapQueryContext.this.inputBytes(), CompiledMapQueryContext.this.inputKeyOffset());
         }
-    }
 
-    public class InputSecondValueBytesData extends AbstractData<V, T> {
         @Override
         public ReadAccess<T> access() {
             return ((ReadAccess<T>)(JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).access(CompiledMapQueryContext.this.inputBytes())));
@@ -709,10 +689,12 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         public T handle() {
             return ((T)(JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).handle(CompiledMapQueryContext.this.inputBytes())));
         }
+    }
 
+    public class InputSecondValueBytesData extends AbstractData<V, T> {
         @Override
-        public long offset() {
-            return JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).offset(CompiledMapQueryContext.this.inputBytes(), CompiledMapQueryContext.this.secondInputValueOffset());
+        public T handle() {
+            return ((T)(JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).handle(CompiledMapQueryContext.this.inputBytes())));
         }
 
         @Override
@@ -722,6 +704,16 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
         public void closeInputSecondValueBytesDataSizeDependants() {
             InputSecondValueBytesData.this.closeInputSecondValueBytesDataGetUsingDependants();
+        }
+
+        @Override
+        public long offset() {
+            return JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).offset(CompiledMapQueryContext.this.inputBytes(), CompiledMapQueryContext.this.secondInputValueOffset());
+        }
+
+        @Override
+        public ReadAccess<T> access() {
+            return ((ReadAccess<T>)(JavaLangBytesAccessors.uncheckedBytesAccessor(CompiledMapQueryContext.this.inputBytes()).access(CompiledMapQueryContext.this.inputBytes())));
         }
 
         @Override
@@ -769,6 +761,23 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
     public class ReadLock implements InterProcessLock {
         @Override
+        public boolean isHeldByCurrentThread() {
+            return CompiledMapQueryContext.this.localLockState().read;
+        }
+
+        @Override
+        public void lock() {
+            if ((CompiledMapQueryContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
+                CompiledMapQueryContext.this.segmentHeader().readLock(CompiledMapQueryContext.this.segmentHeaderAddress());
+                CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.READ_LOCKED);
+            }
+        }
+
+        public void closeReadLockLockDependants() {
+            CompiledMapQueryContext.this.closeHashLookupPos();
+        }
+
+        @Override
         public boolean tryLock(long time, @NotNull
         TimeUnit unit) throws InterruptedException {
             if ((CompiledMapQueryContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
@@ -799,32 +808,7 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             }
             CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UNLOCKED);
             CompiledMapQueryContext.this.closeHashLookupPos();
-            CompiledMapQueryContext.this.closeEntry();
-        }
-
-        @Override
-        public void lockInterruptibly() throws InterruptedException {
-            if ((CompiledMapQueryContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
-                CompiledMapQueryContext.this.segmentHeader().readLockInterruptibly(CompiledMapQueryContext.this.segmentHeaderAddress());
-                CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.READ_LOCKED);
-            }
-        }
-
-        @Override
-        public void lock() {
-            if ((CompiledMapQueryContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
-                CompiledMapQueryContext.this.segmentHeader().readLock(CompiledMapQueryContext.this.segmentHeaderAddress());
-                CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.READ_LOCKED);
-            }
-        }
-
-        public void closeReadLockLockDependants() {
-            CompiledMapQueryContext.this.closeHashLookupPos();
-        }
-
-        @Override
-        public boolean isHeldByCurrentThread() {
-            return CompiledMapQueryContext.this.localLockState().read;
+            CompiledMapQueryContext.this.closePos();
         }
 
         @Override
@@ -840,12 +824,53 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
                 return true;
             }
         }
+
+        @Override
+        public void lockInterruptibly() throws InterruptedException {
+            if ((CompiledMapQueryContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
+                CompiledMapQueryContext.this.segmentHeader().readLockInterruptibly(CompiledMapQueryContext.this.segmentHeaderAddress());
+                CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.READ_LOCKED);
+            }
+        }
     }
 
     public class UpdateLock implements InterProcessLock {
         @NotNull
         private IllegalMonitorStateException forbiddenUpgrade() {
             return new IllegalMonitorStateException("Cannot upgrade from read to update lock");
+        }
+
+        @Override
+        public void lockInterruptibly() throws InterruptedException {
+            switch (CompiledMapQueryContext.this.localLockState()) {
+                case UNLOCKED :
+                    CompiledMapQueryContext.this.segmentHeader().updateLockInterruptibly(CompiledMapQueryContext.this.segmentHeaderAddress());
+                    CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
+                    return ;
+                case READ_LOCKED :
+                    throw forbiddenUpgrade();
+                case UPDATE_LOCKED :
+                case WRITE_LOCKED :
+            }
+        }
+
+        @Override
+        public boolean isHeldByCurrentThread() {
+            return CompiledMapQueryContext.this.localLockState().update;
+        }
+
+        @Override
+        public void lock() {
+            switch (CompiledMapQueryContext.this.localLockState()) {
+                case UNLOCKED :
+                    CompiledMapQueryContext.this.segmentHeader().updateLock(CompiledMapQueryContext.this.segmentHeaderAddress());
+                    CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
+                    return ;
+                case READ_LOCKED :
+                    throw forbiddenUpgrade();
+                case UPDATE_LOCKED :
+                case WRITE_LOCKED :
+            }
         }
 
         @Override
@@ -884,20 +909,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         }
 
         @Override
-        public void lock() {
-            switch (CompiledMapQueryContext.this.localLockState()) {
-                case UNLOCKED :
-                    CompiledMapQueryContext.this.segmentHeader().updateLock(CompiledMapQueryContext.this.segmentHeaderAddress());
-                    CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
-                    return ;
-                case READ_LOCKED :
-                    throw forbiddenUpgrade();
-                case UPDATE_LOCKED :
-                case WRITE_LOCKED :
-            }
-        }
-
-        @Override
         public boolean tryLock() {
             switch (CompiledMapQueryContext.this.localLockState()) {
                 case UNLOCKED :
@@ -915,25 +926,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             }
             throw new AssertionError();
         }
-
-        @Override
-        public boolean isHeldByCurrentThread() {
-            return CompiledMapQueryContext.this.localLockState().update;
-        }
-
-        @Override
-        public void lockInterruptibly() throws InterruptedException {
-            switch (CompiledMapQueryContext.this.localLockState()) {
-                case UNLOCKED :
-                    CompiledMapQueryContext.this.segmentHeader().updateLockInterruptibly(CompiledMapQueryContext.this.segmentHeaderAddress());
-                    CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
-                    return ;
-                case READ_LOCKED :
-                    throw forbiddenUpgrade();
-                case UPDATE_LOCKED :
-                case WRITE_LOCKED :
-            }
-        }
     }
 
     public class WrappedValueInstanceData extends CopyingInstanceData<V, T> {
@@ -950,18 +942,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
                 next = new WrappedValueInstanceData();
 
             return next.getUnusedWrappedValue();
-        }
-
-        private WrappedValueInstanceData next;
-
-        boolean nextInit() {
-            return true;
-        }
-
-        void closeNext() {
-            if (!(this.nextInit()))
-                return ;
-
         }
 
         private V value;
@@ -994,11 +974,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
         public void closeValueDependants() {
             WrappedValueInstanceData.this.closeBuffer();
-        }
-
-        @Override
-        public V instance() {
-            return value();
         }
 
         private boolean marshalled = false;
@@ -1042,72 +1017,29 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             buf().position(0);
             return CompiledMapQueryContext.this.valueReader.read(buf(), buf().limit(), usingValue);
         }
+
+        @Override
+        public V instance() {
+            return value();
+        }
+
+        private WrappedValueInstanceData next;
+
+        boolean nextInit() {
+            return true;
+        }
+
+        void closeNext() {
+            if (!(this.nextInit()))
+                return ;
+
+        }
     }
 
     public class WriteLock implements InterProcessLock {
         @NotNull
         private IllegalMonitorStateException forbiddenUpgrade() {
             return new IllegalMonitorStateException("Cannot upgrade from read to write lock");
-        }
-
-        @Override
-        public void unlock() {
-            switch (CompiledMapQueryContext.this.localLockState()) {
-                case UNLOCKED :
-                case READ_LOCKED :
-                case UPDATE_LOCKED :
-                    return ;
-                case WRITE_LOCKED :
-                    CompiledMapQueryContext.this.segmentHeader().downgradeWriteToUpdateLock(CompiledMapQueryContext.this.segmentHeaderAddress());
-            }
-            CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
-        }
-
-        @Override
-        public boolean isHeldByCurrentThread() {
-            return CompiledMapQueryContext.this.localLockState().write;
-        }
-
-        @Override
-        public boolean tryLock(long time, @NotNull
-        TimeUnit unit) throws InterruptedException {
-            switch (CompiledMapQueryContext.this.localLockState()) {
-                case UNLOCKED :
-                    if (CompiledMapQueryContext.this.segmentHeader().tryWriteLock(CompiledMapQueryContext.this.segmentHeaderAddress(), time, unit)) {
-                        CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                case READ_LOCKED :
-                    throw forbiddenUpgrade();
-                case UPDATE_LOCKED :
-                    if (CompiledMapQueryContext.this.segmentHeader().tryUpgradeUpdateToWriteLock(CompiledMapQueryContext.this.segmentHeaderAddress(), time, unit)) {
-                        CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                case WRITE_LOCKED :
-                    return true;
-            }
-            throw new AssertionError();
-        }
-
-        @Override
-        public void lockInterruptibly() throws InterruptedException {
-            switch (CompiledMapQueryContext.this.localLockState()) {
-                case UNLOCKED :
-                    CompiledMapQueryContext.this.segmentHeader().writeLockInterruptibly(CompiledMapQueryContext.this.segmentHeaderAddress());
-                    CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                    return ;
-                case READ_LOCKED :
-                    throw forbiddenUpgrade();
-                case UPDATE_LOCKED :
-                    CompiledMapQueryContext.this.segmentHeader().upgradeUpdateToWriteLockInterruptibly(CompiledMapQueryContext.this.segmentHeaderAddress());
-                    CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                case WRITE_LOCKED :
-            }
         }
 
         @Override
@@ -1121,6 +1053,27 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
                     throw forbiddenUpgrade();
                 case UPDATE_LOCKED :
                     CompiledMapQueryContext.this.segmentHeader().upgradeUpdateToWriteLock(CompiledMapQueryContext.this.segmentHeaderAddress());
+                    CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                case WRITE_LOCKED :
+            }
+        }
+
+        @Override
+        public boolean isHeldByCurrentThread() {
+            return CompiledMapQueryContext.this.localLockState().write;
+        }
+
+        @Override
+        public void lockInterruptibly() throws InterruptedException {
+            switch (CompiledMapQueryContext.this.localLockState()) {
+                case UNLOCKED :
+                    CompiledMapQueryContext.this.segmentHeader().writeLockInterruptibly(CompiledMapQueryContext.this.segmentHeaderAddress());
+                    CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                    return ;
+                case READ_LOCKED :
+                    throw forbiddenUpgrade();
+                case UPDATE_LOCKED :
+                    CompiledMapQueryContext.this.segmentHeader().upgradeUpdateToWriteLockInterruptibly(CompiledMapQueryContext.this.segmentHeaderAddress());
                     CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
                 case WRITE_LOCKED :
             }
@@ -1150,6 +1103,45 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             }
             throw new AssertionError();
         }
+
+        @Override
+        public boolean tryLock(long time, @NotNull
+        TimeUnit unit) throws InterruptedException {
+            switch (CompiledMapQueryContext.this.localLockState()) {
+                case UNLOCKED :
+                    if (CompiledMapQueryContext.this.segmentHeader().tryWriteLock(CompiledMapQueryContext.this.segmentHeaderAddress(), time, unit)) {
+                        CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                case READ_LOCKED :
+                    throw forbiddenUpgrade();
+                case UPDATE_LOCKED :
+                    if (CompiledMapQueryContext.this.segmentHeader().tryUpgradeUpdateToWriteLock(CompiledMapQueryContext.this.segmentHeaderAddress(), time, unit)) {
+                        CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                case WRITE_LOCKED :
+                    return true;
+            }
+            throw new AssertionError();
+        }
+
+        @Override
+        public void unlock() {
+            switch (CompiledMapQueryContext.this.localLockState()) {
+                case UNLOCKED :
+                case READ_LOCKED :
+                case UPDATE_LOCKED :
+                    return ;
+                case WRITE_LOCKED :
+                    CompiledMapQueryContext.this.segmentHeader().downgradeWriteToUpdateLock(CompiledMapQueryContext.this.segmentHeaderAddress());
+            }
+            CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
+        }
     }
 
     public enum SearchState {
@@ -1169,10 +1161,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
     public void setSearchState(SearchState newSearchState) {
         this.searchState = newSearchState;
-    }
-
-    public void writeValue(Data<?, ?> value) {
-        value.writeTo(entryBytesAccess, entryBytesAccessHandle, entryBytesAccessOffset(valueOffset));
     }
 
     final Thread owner;
@@ -1252,15 +1240,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         this.keyMask = CompiledMapQueryContext.mask(keyBits);
         this.valueMask = CompiledMapQueryContext.mask(valueBits);
         this.entryMask = CompiledMapQueryContext.mask((keyBits + valueBits));
-    }
-
-    private void innerInitValue(Data<?, ?> value) {
-        entryBytes.position(valueSizeOffset);
-        valueSize = value.size();
-        CompiledMapQueryContext.this.m().valueSizeMarshaller.writeSize(entryBytes, valueSize);
-        CompiledMapQueryContext.this.m().alignment.alignPositionAddr(entryBytes);
-        valueOffset = entryBytes.position();
-        writeValue(value);
     }
 
     private void unlinkFromSegmentContextsChain() {
@@ -1352,11 +1331,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             InputKeyInstanceData.this.closeBuffer();
         }
 
-        @Override
-        public K instance() {
-            return key();
-        }
-
         private boolean marshalled = false;
 
         private DirectBytes buffer;
@@ -1393,6 +1367,11 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             buffer().position(0);
             return CompiledMapQueryContext.this.keyReader.read(buffer(), buffer().limit(), usingKey);
         }
+
+        @Override
+        public K instance() {
+            return key();
+        }
     }
 
     public class InputValueInstanceData extends CopyingInstanceData<V, T> implements ValueInitableData<V, T> {
@@ -1423,11 +1402,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
         public void closeValueDependants() {
             InputValueInstanceData.this.closeBuffer();
-        }
-
-        @Override
-        public V instance() {
-            return value();
         }
 
         private boolean marshalled = false;
@@ -1465,6 +1439,11 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         public V getUsing(V usingValue) {
             buffer().position(0);
             return CompiledMapQueryContext.this.valueReader.read(buffer(), buffer().limit(), usingValue);
+        }
+
+        @Override
+        public V instance() {
+            return value();
         }
     }
 
@@ -1627,6 +1606,11 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         return this.copies;
     }
 
+    private void countValueOffset() {
+        CompiledMapQueryContext.this.m().alignment.alignPositionAddr(entryBytes);
+        valueOffset = entryBytes.position();
+    }
+
     final EntryKeyBytesData entryKey;
 
     public EntryKeyBytesData entryKey() {
@@ -1745,23 +1729,8 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         return this.keyReader;
     }
 
-    public long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
-        if (CompiledMapQueryContext.this.m().constantlySizedEntry) {
-            return CompiledMapQueryContext.this.m().alignment.alignAddr((sizeOfEverythingBeforeValue + valueSize));
-        } else if (CompiledMapQueryContext.this.m().couldNotDetermineAlignmentBeforeAllocation) {
-            return (sizeOfEverythingBeforeValue + (CompiledMapQueryContext.this.m().worstAlignment)) + valueSize;
-        } else {
-            return (CompiledMapQueryContext.this.m().alignment.alignAddr(sizeOfEverythingBeforeValue)) + valueSize;
-        }
-    }
-
-    public MVI valueMetaInterop(V value) {
-        return CompiledMapQueryContext.this.m().metaValueInteropProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.m().originalMetaValueInterop, valueInterop, value);
-    }
-
-    public void closeValueBytesInteropValueMetaInteropDependants() {
-        CompiledMapQueryContext.this.inputValueInstanceValue.closeBuffer();
-        CompiledMapQueryContext.this.wrappedValueInstanceValue.closeBuffer();
+    long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
+        return (((CompiledMapQueryContext.this.m().metaDataBytes) + (CompiledMapQueryContext.this.m().keySizeMarshaller.sizeEncodingSize(keySize))) + keySize) + (CompiledMapQueryContext.this.m().valueSizeMarshaller.sizeEncodingSize(valueSize));
     }
 
     public void checkAccessingFromOwnerThread() {
@@ -1774,14 +1743,40 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         CompiledMapQueryContext.this.closeQueryCheckOnEachPublicOperationCheckOnEachPublicOperationDependants();
     }
 
+    public MKI keyMetaInterop(K key) {
+        return CompiledMapQueryContext.this.h().metaKeyInteropProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.h().originalMetaKeyInterop, keyInterop, key);
+    }
+
+    public void closeKeyBytesInteropKeyMetaInteropDependants() {
+        CompiledMapQueryContext.this.inputKeyInstanceValue.closeBuffer();
+    }
+
     public long entryBytesAccessOffset(long offset) {
         return entryBytesAccessor.offset(entryBytes, offset);
     }
 
     public void closeMapEntryStagesEntryBytesAccessOffsetDependants() {
-        CompiledMapQueryContext.this.closeEntry();
-        CompiledMapQueryContext.this.closeValue();
         CompiledMapQueryContext.this.closeMapQueryKeyEqualsDependants();
+    }
+
+    @Override
+    public MapAbsentEntry<K, V> absent() {
+        return CompiledMapQueryContext.this;
+    }
+
+    public long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
+        if (CompiledMapQueryContext.this.m().constantlySizedEntry) {
+            return CompiledMapQueryContext.this.m().alignment.alignAddr((sizeOfEverythingBeforeValue + valueSize));
+        } else if (CompiledMapQueryContext.this.m().couldNotDetermineAlignmentBeforeAllocation) {
+            return (sizeOfEverythingBeforeValue + (CompiledMapQueryContext.this.m().worstAlignment)) + valueSize;
+        } else {
+            return (CompiledMapQueryContext.this.m().alignment.alignAddr(sizeOfEverythingBeforeValue)) + valueSize;
+        }
+    }
+
+    public final long entrySize(long keySize, long valueSize) {
+        long sizeOfEverythingBeforeValue = sizeOfEverythingBeforeValue(keySize, valueSize);
+        return innerEntrySize(sizeOfEverythingBeforeValue, valueSize);
     }
 
     @Override
@@ -1792,15 +1787,6 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
     @Override
     public ChronicleMap<K, V> map() {
         return m();
-    }
-
-    long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-        return (((CompiledMapQueryContext.this.m().metaDataBytes) + (CompiledMapQueryContext.this.m().keySizeMarshaller.sizeEncodingSize(keySize))) + keySize) + (CompiledMapQueryContext.this.m().valueSizeMarshaller.sizeEncodingSize(valueSize));
-    }
-
-    public final long entrySize(long keySize, long valueSize) {
-        long sizeOfEverythingBeforeValue = sizeOfEverythingBeforeValue(keySize, valueSize);
-        return innerEntrySize(sizeOfEverythingBeforeValue, valueSize);
     }
 
     private CompiledMapQueryContext _Chaining_createChaining() {
@@ -1824,17 +1810,13 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         return ((T)(createChaining()));
     }
 
-    public MKI keyMetaInterop(K key) {
-        return CompiledMapQueryContext.this.h().metaKeyInteropProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.h().originalMetaKeyInterop, keyInterop, key);
+    public MVI valueMetaInterop(V value) {
+        return CompiledMapQueryContext.this.m().metaValueInteropProvider.get(CompiledMapQueryContext.this.copies, CompiledMapQueryContext.this.m().originalMetaValueInterop, valueInterop, value);
     }
 
-    public void closeKeyBytesInteropKeyMetaInteropDependants() {
-        CompiledMapQueryContext.this.inputKeyInstanceValue.closeBuffer();
-    }
-
-    @Override
-    public MapAbsentEntry<K, V> absent() {
-        return CompiledMapQueryContext.this;
+    public void closeValueBytesInteropValueMetaInteropDependants() {
+        CompiledMapQueryContext.this.wrappedValueInstanceValue.closeBuffer();
+        CompiledMapQueryContext.this.inputValueInstanceValue.closeBuffer();
     }
 
     public <T>T contextAtIndexInChain(int index) {
@@ -1843,6 +1825,23 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
     public void closeVanillaChronicleMapHolderImplContextAtIndexInChainDependants() {
         CompiledMapQueryContext.this.closeQuerySegmentStagesTryFindInitLocksOfThisSegmentDependants();
+    }
+
+    boolean used;
+
+    public boolean usedInit() {
+        return used;
+    }
+
+    public void initUsed(boolean used) {
+        this.used = used;
+    }
+
+    void closeUsed() {
+        if (!(this.usedInit()))
+            return ;
+
+        used = false;
     }
 
     public int allocatedChunks = 0;
@@ -1865,6 +1864,225 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
             return ;
 
         this.allocatedChunks = 0;
+    }
+
+    public long keySize = -1;
+
+    public boolean keySizeInit() {
+        return (this.keySize) >= 0;
+    }
+
+    public void initKeySize(long keySize) {
+        this.keySize = keySize;
+        this.closeKeySizeDependants();
+    }
+
+    public long keySize() {
+        assert this.keySizeInit() : "KeySize should be init";
+        return this.keySize;
+    }
+
+    public void closeKeySize() {
+        if (!(this.keySizeInit()))
+            return ;
+
+        this.closeKeySizeDependants();
+        this.keySize = -1;
+    }
+
+    public void closeKeySizeDependants() {
+        CompiledMapQueryContext.this.closeMapQueryKeyEqualsDependants();
+        CompiledMapQueryContext.this.closeMapEntryStagesKeyEndDependants();
+        CompiledMapQueryContext.this.entryKey.closeEntryKeyBytesDataSizeDependants();
+    }
+
+    public long pos = -1;
+
+    public boolean posInit() {
+        return (this.pos) >= 0;
+    }
+
+    public void initPos(long pos) {
+        this.pos = pos;
+        this.closePosDependants();
+    }
+
+    public long pos() {
+        assert this.posInit() : "Pos should be init";
+        return this.pos;
+    }
+
+    public void closePos() {
+        if (!(this.posInit()))
+            return ;
+
+        this.closePosDependants();
+        this.pos = -1;
+    }
+
+    public void closePosDependants() {
+        CompiledMapQueryContext.this.closeEntryOffset();
+        CompiledMapQueryContext.this.closeMapQueryDropSearchIfNestedContextsAndPresentHashLookupSlotCheckFailedDependants();
+    }
+
+    public Bytes inputBytes = null;
+
+    public boolean inputBytesInit() {
+        return (this.inputBytes) != null;
+    }
+
+    public void initInputBytes(Bytes inputBytes) {
+        this.inputBytes = inputBytes;
+        this.closeInputBytesDependants();
+    }
+
+    public Bytes inputBytes() {
+        assert this.inputBytesInit() : "InputBytes should be init";
+        return this.inputBytes;
+    }
+
+    public void closeInputBytes() {
+        if (!(this.inputBytesInit()))
+            return ;
+
+        this.closeInputBytesDependants();
+        this.inputBytes = null;
+    }
+
+    public void closeInputBytesDependants() {
+        CompiledMapQueryContext.this.closeInputKeyOffsets();
+        CompiledMapQueryContext.this.closeFirstInputValueOffsets();
+        CompiledMapQueryContext.this.inputFirstValueBytesValue.closeInputFirstValueBytesDataGetUsingDependants();
+        CompiledMapQueryContext.this.closeSecondInputValueOffsets();
+        CompiledMapQueryContext.this.inputKeyBytesValue.closeInputKeyBytesDataGetUsingDependants();
+        CompiledMapQueryContext.this.inputSecondValueBytesValue.closeInputSecondValueBytesDataGetUsingDependants();
+    }
+
+    public long inputKeySize = -1;
+
+    public long inputKeyOffset;
+
+    public boolean inputKeyOffsetsInit() {
+        return (this.inputKeySize) >= 0;
+    }
+
+    private void initInputKeyOffsets() {
+        inputKeySize = CompiledMapQueryContext.this.h().keySizeMarshaller.readSize(inputBytes());
+        inputKeyOffset = inputBytes().position();
+        this.closeInputKeyOffsetsDependants();
+    }
+
+    public long inputKeyOffset() {
+        if (!(this.inputKeyOffsetsInit()))
+            this.initInputKeyOffsets();
+
+        return this.inputKeyOffset;
+    }
+
+    public long inputKeySize() {
+        if (!(this.inputKeyOffsetsInit()))
+            this.initInputKeyOffsets();
+
+        return this.inputKeySize;
+    }
+
+    public void closeInputKeyOffsets() {
+        if (!(this.inputKeyOffsetsInit()))
+            return ;
+
+        this.closeInputKeyOffsetsDependants();
+        this.inputKeySize = -1;
+    }
+
+    public void closeInputKeyOffsetsDependants() {
+        CompiledMapQueryContext.this.inputKeyBytesValue.closeInputKeyBytesDataSizeDependants();
+        CompiledMapQueryContext.this.closeFirstInputValueOffsets();
+        CompiledMapQueryContext.this.inputKeyBytesValue.closeInputKeyBytesDataGetUsingDependants();
+    }
+
+    public long firstInputValueSize = -1;
+
+    public long firstInputValueOffset;
+
+    public boolean firstInputValueOffsetsInit() {
+        return (this.firstInputValueSize) >= 0;
+    }
+
+    private void initFirstInputValueOffsets() {
+        CompiledMapQueryContext.this.inputBytes().position(((CompiledMapQueryContext.this.inputKeyOffset()) + (CompiledMapQueryContext.this.inputKeySize())));
+        firstInputValueSize = CompiledMapQueryContext.this.m().valueSizeMarshaller.readSize(CompiledMapQueryContext.this.inputBytes());
+        firstInputValueOffset = CompiledMapQueryContext.this.inputBytes().position();
+        this.closeFirstInputValueOffsetsDependants();
+    }
+
+    public long firstInputValueOffset() {
+        if (!(this.firstInputValueOffsetsInit()))
+            this.initFirstInputValueOffsets();
+
+        return this.firstInputValueOffset;
+    }
+
+    public long firstInputValueSize() {
+        if (!(this.firstInputValueOffsetsInit()))
+            this.initFirstInputValueOffsets();
+
+        return this.firstInputValueSize;
+    }
+
+    public void closeFirstInputValueOffsets() {
+        if (!(this.firstInputValueOffsetsInit()))
+            return ;
+
+        this.closeFirstInputValueOffsetsDependants();
+        this.firstInputValueSize = -1;
+    }
+
+    public void closeFirstInputValueOffsetsDependants() {
+        CompiledMapQueryContext.this.inputFirstValueBytesValue.closeInputFirstValueBytesDataSizeDependants();
+        CompiledMapQueryContext.this.inputFirstValueBytesValue.closeInputFirstValueBytesDataGetUsingDependants();
+        CompiledMapQueryContext.this.closeSecondInputValueOffsets();
+    }
+
+    public long secondInputValueSize = -1;
+
+    public long secondInputValueOffset;
+
+    public boolean secondInputValueOffsetsInit() {
+        return (this.secondInputValueSize) >= 0;
+    }
+
+    private void initSecondInputValueOffsets() {
+        CompiledMapQueryContext.this.inputBytes().position(((firstInputValueOffset()) + (firstInputValueSize())));
+        secondInputValueSize = CompiledMapQueryContext.this.m().valueSizeMarshaller.readSize(CompiledMapQueryContext.this.inputBytes());
+        secondInputValueOffset = CompiledMapQueryContext.this.inputBytes().position();
+        this.closeSecondInputValueOffsetsDependants();
+    }
+
+    public long secondInputValueOffset() {
+        if (!(this.secondInputValueOffsetsInit()))
+            this.initSecondInputValueOffsets();
+
+        return this.secondInputValueOffset;
+    }
+
+    public long secondInputValueSize() {
+        if (!(this.secondInputValueOffsetsInit()))
+            this.initSecondInputValueOffsets();
+
+        return this.secondInputValueSize;
+    }
+
+    public void closeSecondInputValueOffsets() {
+        if (!(this.secondInputValueOffsetsInit()))
+            return ;
+
+        this.closeSecondInputValueOffsetsDependants();
+        this.secondInputValueSize = -1;
+    }
+
+    public void closeSecondInputValueOffsetsDependants() {
+        CompiledMapQueryContext.this.inputSecondValueBytesValue.closeInputSecondValueBytesDataSizeDependants();
+        CompiledMapQueryContext.this.inputSecondValueBytesValue.closeInputSecondValueBytesDataGetUsingDependants();
     }
 
     public Data<K, ?> inputKey = null;
@@ -1892,8 +2110,8 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
     }
 
     public void closeInputKeyDependants() {
-        CompiledMapQueryContext.this.closeHashOfKey();
         CompiledMapQueryContext.this.closeMapQueryKeyEqualsDependants();
+        CompiledMapQueryContext.this.closeHashOfKey();
     }
 
     public long hashOfKey = 0;
@@ -1959,586 +2177,9 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
     }
 
     public void closeTheSegmentIndexDependants() {
+        CompiledMapQueryContext.this.closeSegHeader();
         CompiledMapQueryContext.this.closeSegmentHashLookup();
         CompiledMapQueryContext.this.closeSegment();
-        CompiledMapQueryContext.this.closeSegHeader();
-    }
-
-    int hashLookupEntrySize;
-
-    int keyBits;
-
-    long address = -1;
-
-    long capacityMask;
-
-    long capacityMask2;
-
-    long keyMask;
-
-    long valueMask;
-
-    long entryMask;
-
-    public boolean segmentHashLookupInit() {
-        return (this.address) >= 0;
-    }
-
-    public void initSegmentHashLookup() {
-        long hashLookupOffset = CompiledMapQueryContext.this.h().segmentOffset(CompiledMapQueryContext.this.segmentIndex());
-        innerInitSegmentHashLookup(((CompiledMapQueryContext.this.h().ms.address()) + hashLookupOffset), CompiledMapQueryContext.this.h().segmentHashLookupCapacity, CompiledMapQueryContext.this.h().segmentHashLookupEntrySize, CompiledMapQueryContext.this.h().segmentHashLookupKeyBits, CompiledMapQueryContext.this.h().segmentHashLookupValueBits);
-        this.closeSegmentHashLookupDependants();
-    }
-
-    public void initSegmentHashLookup(long address, long capacity, int entrySize, int keyBits, int valueBits) {
-        innerInitSegmentHashLookup(address, capacity, entrySize, keyBits, valueBits);
-        this.closeSegmentHashLookupDependants();
-    }
-
-    public int hashLookupEntrySize() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.hashLookupEntrySize;
-    }
-
-    public int keyBits() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.keyBits;
-    }
-
-    public long address() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.address;
-    }
-
-    public long capacityMask() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.capacityMask;
-    }
-
-    public long capacityMask2() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.capacityMask2;
-    }
-
-    public long entryMask() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.entryMask;
-    }
-
-    public long keyMask() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.keyMask;
-    }
-
-    public long valueMask() {
-        if (!(this.segmentHashLookupInit()))
-            this.initSegmentHashLookup();
-
-        return this.valueMask;
-    }
-
-    public void closeSegmentHashLookup() {
-        if (!(this.segmentHashLookupInit()))
-            return ;
-
-        this.closeSegmentHashLookupDependants();
-        this.address = -1;
-    }
-
-    public void closeSegmentHashLookupDependants() {
-        CompiledMapQueryContext.this.closeHashLookupValueDependants();
-        CompiledMapQueryContext.this.closeHashLookupMaskUnsetKeyDependants();
-        CompiledMapQueryContext.this.closeHashLookupIndexToPosDependants();
-        CompiledMapQueryContext.this.closeHashLookupKeyDependants();
-        CompiledMapQueryContext.this.closeHashLookupHlPosDependants();
-        CompiledMapQueryContext.this.closeHashLookupStepBackDependants();
-        CompiledMapQueryContext.this.closeHashLookupEmptyDependants();
-        CompiledMapQueryContext.this.closeHashLookupReadEntryDependants();
-        CompiledMapQueryContext.this.closeHashLookupStepDependants();
-    }
-
-    public long value(long entry) {
-        return (entry >>> (keyBits())) & (valueMask());
-    }
-
-    public void closeHashLookupValueDependants() {
-        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
-        CompiledMapQueryContext.this.closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants();
-    }
-
-    public void clearHashLookup() {
-        NativeBytes.UNSAFE.setMemory(address(), ((capacityMask2()) + (hashLookupEntrySize())), ((byte)(0)));
-    }
-
-    public long maskUnsetKey(long key) {
-        return (key &= keyMask()) != (UNSET_KEY) ? key : keyMask();
-    }
-
-    public void closeHashLookupMaskUnsetKeyDependants() {
-        CompiledMapQueryContext.this.closeSearchKey();
-    }
-
-    public void checkValueForPut(long value) {
-        assert (value & (~(valueMask()))) == 0L : "Value out of range, was " + value;
-    }
-
-    long indexToPos(long index) {
-        return index * (hashLookupEntrySize());
-    }
-
-    public void closeHashLookupIndexToPosDependants() {
-        CompiledMapQueryContext.this.closeHashLookupHlPosDependants();
-    }
-
-    public long key(long entry) {
-        return entry & (keyMask());
-    }
-
-    public void closeHashLookupKeyDependants() {
-        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
-        CompiledMapQueryContext.this.closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants();
-    }
-
-    void writeEntry(long pos, long prevEntry, long anotherEntry) {
-        long entry = (prevEntry & (~(entryMask()))) | (anotherEntry & (entryMask()));
-        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
-    }
-
-    long entry(long key, long value) {
-        return key | (value << (keyBits()));
-    }
-
-    public void writeEntryVolatile(long pos, long prevEntry, long key, long value) {
-        long entry = (prevEntry & (~(entryMask()))) | (entry(key, value));
-        NativeBytes.UNSAFE.putLongVolatile(null, ((address()) + pos), entry);
-    }
-
-    public void writeEntry(long pos, long prevEntry, long key, long value) {
-        long entry = (prevEntry & (~(entryMask()))) | (entry(key, value));
-        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
-    }
-
-    void clearEntry(long pos, long prevEntry) {
-        long entry = prevEntry & (~(entryMask()));
-        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
-    }
-
-    public long hlPos(long key) {
-        return indexToPos((key & (capacityMask())));
-    }
-
-    public void closeHashLookupHlPosDependants() {
-        CompiledMapQueryContext.this.closeSearchKey();
-    }
-
-    long searchKey = UNSET_KEY;
-
-    long searchStartPos;
-
-    public boolean searchKeyInit() {
-        return (this.searchKey) != (UNSET_KEY);
-    }
-
-    void initSearchKey() {
-        searchKey = CompiledMapQueryContext.this.maskUnsetKey(CompiledMapQueryContext.this.h().hashSplitting.segmentHash(CompiledMapQueryContext.this.hashOfKey()));
-        searchStartPos = CompiledMapQueryContext.this.hlPos(searchKey);
-        this.closeSearchKeyDependants();
-    }
-
-    public long searchKey() {
-        if (!(this.searchKeyInit()))
-            this.initSearchKey();
-
-        return this.searchKey;
-    }
-
-    public long searchStartPos() {
-        if (!(this.searchKeyInit()))
-            this.initSearchKey();
-
-        return this.searchStartPos;
-    }
-
-    public void closeSearchKey() {
-        if (!(this.searchKeyInit()))
-            return ;
-
-        this.closeSearchKeyDependants();
-        this.searchKey = UNSET_KEY;
-    }
-
-    public void closeSearchKeyDependants() {
-        CompiledMapQueryContext.this.closeHashLookupPos();
-        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
-        CompiledMapQueryContext.this.closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants();
-    }
-
-    public long stepBack(long pos) {
-        return (pos -= hashLookupEntrySize()) >= 0 ? pos : capacityMask2();
-    }
-
-    public void closeHashLookupStepBackDependants() {
-        CompiledMapQueryContext.this.closeHashLookupSearchFoundDependants();
-    }
-
-    public boolean empty(long entry) {
-        return (entry & (entryMask())) == (UNSET_ENTRY);
-    }
-
-    public void closeHashLookupEmptyDependants() {
-        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
-    }
-
-    public long readEntry(long pos) {
-        return NativeBytes.UNSAFE.getLong(((address()) + pos));
-    }
-
-    public void closeHashLookupReadEntryDependants() {
-        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
-        CompiledMapQueryContext.this.closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants();
-    }
-
-    public void putValueVolatile(long pos, long value) {
-        checkValueForPut(value);
-        long currentEntry = readEntry(pos);
-        writeEntryVolatile(pos, currentEntry, key(currentEntry), value);
-    }
-
-    void forEach(EntryConsumer action) {
-        for (long pos = 0L ; pos <= (capacityMask2()) ; pos += hashLookupEntrySize()) {
-            long entry = readEntry(pos);
-            if (!(empty(entry)))
-                action.accept(key(entry), value(entry));
-
-        }
-    }
-
-    String hashLookupToString() {
-        final StringBuilder sb = new StringBuilder("{");
-        forEach((long key,long value) -> sb.append(key).append('=').append(value).append(','));
-        sb.append('}');
-        return sb.toString();
-    }
-
-    public long step(long pos) {
-        return (pos += hashLookupEntrySize()) <= (capacityMask2()) ? pos : 0L;
-    }
-
-    public void closeHashLookupStepDependants() {
-        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
-    }
-
-    public long remove(long posToRemove) {
-        long entryToRemove = readEntry(posToRemove);
-        long posToShift = posToRemove;
-        while (true) {
-            posToShift = step(posToShift);
-            long entryToShift = readEntry(posToShift);
-            if (empty(entryToShift))
-                break;
-
-            long insertPos = hlPos(key(entryToShift));
-            boolean cond1 = insertPos <= posToRemove;
-            boolean cond2 = posToRemove <= posToShift;
-            if ((cond1 && cond2) || ((posToShift < insertPos) && (cond1 || cond2))) {
-                writeEntry(posToRemove, entryToRemove, entryToShift);
-                posToRemove = posToShift;
-                entryToRemove = entryToShift;
-            }
-        }
-        clearEntry(posToRemove, entryToRemove);
-        return posToRemove;
-    }
-
-    long entrySpaceOffset = 0;
-
-    MultiStoreBytes freeListBytes = new MultiStoreBytes();
-
-    public SingleThreadedDirectBitSet freeList = new SingleThreadedDirectBitSet();
-
-    boolean segmentInit() {
-        return (entrySpaceOffset) > 0;
-    }
-
-    void initSegment() {
-        VanillaChronicleHash<?, ?, ?, ?, ?> h = CompiledMapQueryContext.this.h();
-        long hashLookupOffset = h.segmentOffset(segmentIndex());
-        long freeListOffset = hashLookupOffset + (h.segmentHashLookupOuterSize);
-        freeListBytes.storePositionAndSize(h.ms, freeListOffset, h.segmentFreeListInnerSize);
-        freeList.reuse(freeListBytes);
-        entrySpaceOffset = (freeListOffset + (h.segmentFreeListOuterSize)) + (h.segmentEntrySpaceInnerOffset);
-        this.closeSegmentDependants();
-    }
-
-    public long entrySpaceOffset() {
-        if (!(this.segmentInit()))
-            this.initSegment();
-
-        return this.entrySpaceOffset;
-    }
-
-    public SingleThreadedDirectBitSet freeList() {
-        if (!(this.segmentInit()))
-            this.initSegment();
-
-        return this.freeList;
-    }
-
-    void closeSegment() {
-        if (!(this.segmentInit()))
-            return ;
-
-        this.closeSegmentDependants();
-        entrySpaceOffset = 0;
-    }
-
-    public void closeSegmentDependants() {
-        CompiledMapQueryContext.this.closeEntry();
-    }
-
-    public long pos = -1;
-
-    public long keySizeOffset;
-
-    public long keySize;
-
-    public long keyOffset;
-
-    public boolean entryInit() {
-        return (this.pos) >= 0;
-    }
-
-    public void initEntry(long pos) {
-        initKeySizeOffset(pos);
-        entryBytes.position(keySizeOffset);
-        keySize = CompiledMapQueryContext.this.h().keySizeMarshaller.readSize(entryBytes);
-        keyOffset = entryBytes.position();
-        this.pos = pos;
-        this.closeEntryDependants();
-    }
-
-    public void initEntry(long pos, Data<?, ?> key) {
-        initKeySizeOffset(pos);
-        entryBytes.position(keySizeOffset);
-        keySize = key.size();
-        CompiledMapQueryContext.this.h().keySizeMarshaller.writeSize(entryBytes, keySize);
-        keyOffset = entryBytes.position();
-        key.writeTo(entryBytesAccessor, entryBytes, keyOffset);
-        this.pos = pos;
-        this.closeEntryDependants();
-    }
-
-    public void initEntryCopying(long newPos, long bytesToCopy) {
-        long oldKeySizeOffset = keySizeOffset;
-        initKeySizeOffset(newPos);
-        long oldKeyOffset = keyOffset;
-        keyOffset = (keySizeOffset) + (oldKeyOffset - oldKeySizeOffset);
-        Access.copy(entryBytesAccess, entryBytesAccessHandle, entryBytesAccessOffset(oldKeySizeOffset), entryBytesAccess, entryBytesAccessHandle, entryBytesAccessOffset(keySizeOffset), bytesToCopy);
-        pos = newPos;
-        this.closeEntryDependants();
-    }
-
-    public long keyOffset() {
-        assert this.entryInit() : "Entry should be init";
-        return this.keyOffset;
-    }
-
-    public long keySize() {
-        assert this.entryInit() : "Entry should be init";
-        return this.keySize;
-    }
-
-    public long keySizeOffset() {
-        assert this.entryInit() : "Entry should be init";
-        return this.keySizeOffset;
-    }
-
-    public long pos() {
-        assert this.entryInit() : "Entry should be init";
-        return this.pos;
-    }
-
-    public void closeEntry() {
-        if (!(this.entryInit()))
-            return ;
-
-        this.closeEntryDependants();
-        this.pos = -1;
-    }
-
-    public void closeEntryDependants() {
-        CompiledMapQueryContext.this.closeMapEntryStagesKeyEndDependants();
-        CompiledMapQueryContext.this.closeMapQueryKeyEqualsDependants();
-        CompiledMapQueryContext.this.closeMapQueryDropSearchIfNestedContextsAndPresentHashLookupSlotCheckFailedDependants();
-        CompiledMapQueryContext.this.closeMapEntryStagesEntrySizeDependants();
-        CompiledMapQueryContext.this.entryKey.closeEntryKeyBytesDataSizeDependants();
-        CompiledMapQueryContext.this.entryKey.closeEntryKeyBytesDataInnerGetUsingDependants();
-    }
-
-    public long keyEnd() {
-        return (keyOffset()) + (keySize());
-    }
-
-    public void closeMapEntryStagesKeyEndDependants() {
-        CompiledMapQueryContext.this.closeMapEntryStagesCountValueSizeOffsetDependants();
-        CompiledMapQueryContext.this.closeMapEntryStagesEntryEndDependants();
-    }
-
-    long countValueSizeOffset() {
-        return keyEnd();
-    }
-
-    public void closeMapEntryStagesCountValueSizeOffsetDependants() {
-        CompiledMapQueryContext.this.closeValue();
-    }
-
-    public long valueSizeOffset;
-
-    public long valueSize;
-
-    public long valueOffset = -1;
-
-    boolean valueInit() {
-        return (this.valueOffset) >= 0;
-    }
-
-    void initValue() {
-        valueSizeOffset = countValueSizeOffset();
-        entryBytes.position(valueSizeOffset);
-        valueSize = CompiledMapQueryContext.this.m().readValueSize(entryBytes);
-        CompiledMapQueryContext.this.m().alignment.alignPositionAddr(entryBytes);
-        valueOffset = entryBytes.position();
-        this.closeValueDependants();
-    }
-
-    public void initValue(Data<?, ?> value) {
-        valueSizeOffset = countValueSizeOffset();
-        innerInitValue(value);
-        this.closeValueDependants();
-    }
-
-    public void initValueAgain(Data<?, ?> value) {
-        assert valueInit();
-        innerInitValue(value);
-        this.closeValueDependants();
-    }
-
-    public void initValueWithoutSize(Data<?, ?> value, long oldValueSizeOffset, long oldValueSize, long oldValueOffset) {
-        valueSizeOffset = countValueSizeOffset();
-        assert oldValueSize == (value.size());
-        valueSize = oldValueSize;
-        valueOffset = (valueSizeOffset) + (oldValueOffset - oldValueSizeOffset);
-        writeValue(value);
-        this.closeValueDependants();
-    }
-
-    public long valueOffset() {
-        if (!(this.valueInit()))
-            this.initValue();
-
-        return this.valueOffset;
-    }
-
-    public long valueSize() {
-        if (!(this.valueInit()))
-            this.initValue();
-
-        return this.valueSize;
-    }
-
-    public long valueSizeOffset() {
-        if (!(this.valueInit()))
-            this.initValue();
-
-        return this.valueSizeOffset;
-    }
-
-    public void closeValue() {
-        if (!(this.valueInit()))
-            return ;
-
-        this.closeValueDependants();
-        this.valueOffset = -1;
-    }
-
-    public void closeValueDependants() {
-        CompiledMapQueryContext.this.closeMapEntryStagesEntryEndDependants();
-        CompiledMapQueryContext.this.entryValue.closeEntryValueBytesDataSizeDependants();
-        CompiledMapQueryContext.this.entryValue.closeEntryValueBytesDataInnerGetUsingDependants();
-    }
-
-    private long _HashEntryStages_entryEnd() {
-        return keyEnd();
-    }
-
-    protected long entryEnd() {
-        return (valueOffset()) + (valueSize());
-    }
-
-    public void closeMapEntryStagesEntryEndDependants() {
-        CompiledMapQueryContext.this.closeMapEntryStagesEntrySizeDependants();
-    }
-
-    public long newSizeOfEverythingBeforeValue(Data<V, ?> newValue) {
-        return ((valueSizeOffset()) + (CompiledMapQueryContext.this.m().valueSizeMarshaller.sizeEncodingSize(newValue.size()))) - (keySizeOffset());
-    }
-
-    boolean keyEquals() {
-        return ((inputKey().size()) == (CompiledMapQueryContext.this.keySize())) && (inputKey().equivalent(((ReadAccess)(CompiledMapQueryContext.this.entryBytesAccess)), CompiledMapQueryContext.this.entryBytesAccessHandle, CompiledMapQueryContext.this.entryBytesAccessOffset(CompiledMapQueryContext.this.keyOffset())));
-    }
-
-    public void closeMapQueryKeyEqualsDependants() {
-        CompiledMapQueryContext.this.closeKeySearch();
-    }
-
-    long entrySize() {
-        return (entryEnd()) - (keySizeOffset());
-    }
-
-    public void closeMapEntryStagesEntrySizeDependants() {
-        CompiledMapQueryContext.this.closeTheEntrySizeInChunks();
-    }
-
-    public int entrySizeInChunks = 0;
-
-    public boolean theEntrySizeInChunksInit() {
-        return (this.entrySizeInChunks) != 0;
-    }
-
-    void initTheEntrySizeInChunks() {
-        entrySizeInChunks = CompiledMapQueryContext.this.h().inChunks(entrySize());
-    }
-
-    public void initTheEntrySizeInChunks(int actuallyUsedChunks) {
-        entrySizeInChunks = actuallyUsedChunks;
-    }
-
-    public int entrySizeInChunks() {
-        if (!(this.theEntrySizeInChunksInit()))
-            this.initTheEntrySizeInChunks();
-
-        return this.entrySizeInChunks;
-    }
-
-    public void closeTheEntrySizeInChunks() {
-        if (!(this.theEntrySizeInChunksInit()))
-            return ;
-
-        this.entrySizeInChunks = 0;
     }
 
     long segmentHeaderAddress;
@@ -2583,24 +2224,28 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         CompiledMapQueryContext.this.innerReadLock.closeReadLockLockDependants();
     }
 
+    public void entries(long size) {
+        segmentHeader().size(segmentHeaderAddress(), size);
+    }
+
     long nextPosToSearchFrom() {
         return segmentHeader().nextPosToSearchFrom(segmentHeaderAddress());
     }
 
-    public long deleted() {
-        return segmentHeader().deleted(segmentHeaderAddress());
+    public void nextPosToSearchFrom(long nextPosToSearchFrom) {
+        segmentHeader().nextPosToSearchFrom(segmentHeaderAddress(), nextPosToSearchFrom);
     }
 
-    public void deleted(long deleted) {
-        segmentHeader().deleted(segmentHeaderAddress(), deleted);
+    public void updateNextPosToSearchFrom(long allocated, int chunks) {
+        long nextPosToSearchFrom = allocated + chunks;
+        if (nextPosToSearchFrom >= (CompiledMapQueryContext.this.h().actualChunksPerSegment))
+            nextPosToSearchFrom = 0L;
+
+        nextPosToSearchFrom(nextPosToSearchFrom);
     }
 
     public long entries() {
         return segmentHeader().size(segmentHeaderAddress());
-    }
-
-    public long size() {
-        return (entries()) - (deleted());
     }
 
     boolean tryFindInitLocksOfThisSegment(Object thisContext, int index) {
@@ -2716,6 +2361,456 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         CompiledMapQueryContext.this.closeMapQueryDropSearchIfNestedContextsAndPresentHashLookupSlotCheckFailedDependants();
     }
 
+    public long deleted() {
+        return segmentHeader().deleted(segmentHeaderAddress());
+    }
+
+    public long size() {
+        return (entries()) - (deleted());
+    }
+
+    public void deleted(long deleted) {
+        segmentHeader().deleted(segmentHeaderAddress(), deleted);
+    }
+
+    int hashLookupEntrySize;
+
+    int keyBits;
+
+    long address = -1;
+
+    long capacityMask;
+
+    long capacityMask2;
+
+    long keyMask;
+
+    long valueMask;
+
+    long entryMask;
+
+    public boolean segmentHashLookupInit() {
+        return (this.address) >= 0;
+    }
+
+    public void initSegmentHashLookup() {
+        long hashLookupOffset = CompiledMapQueryContext.this.h().segmentOffset(CompiledMapQueryContext.this.segmentIndex());
+        innerInitSegmentHashLookup(((CompiledMapQueryContext.this.h().ms.address()) + hashLookupOffset), CompiledMapQueryContext.this.h().segmentHashLookupCapacity, CompiledMapQueryContext.this.h().segmentHashLookupEntrySize, CompiledMapQueryContext.this.h().segmentHashLookupKeyBits, CompiledMapQueryContext.this.h().segmentHashLookupValueBits);
+        this.closeSegmentHashLookupDependants();
+    }
+
+    public void initSegmentHashLookup(long address, long capacity, int entrySize, int keyBits, int valueBits) {
+        innerInitSegmentHashLookup(address, capacity, entrySize, keyBits, valueBits);
+        this.closeSegmentHashLookupDependants();
+    }
+
+    public int hashLookupEntrySize() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.hashLookupEntrySize;
+    }
+
+    public int keyBits() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.keyBits;
+    }
+
+    public long address() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.address;
+    }
+
+    public long capacityMask() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.capacityMask;
+    }
+
+    public long capacityMask2() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.capacityMask2;
+    }
+
+    public long entryMask() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.entryMask;
+    }
+
+    public long keyMask() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.keyMask;
+    }
+
+    public long valueMask() {
+        if (!(this.segmentHashLookupInit()))
+            this.initSegmentHashLookup();
+
+        return this.valueMask;
+    }
+
+    public void closeSegmentHashLookup() {
+        if (!(this.segmentHashLookupInit()))
+            return ;
+
+        this.closeSegmentHashLookupDependants();
+        this.address = -1;
+    }
+
+    public void closeSegmentHashLookupDependants() {
+        CompiledMapQueryContext.this.closeHashLookupStepBackDependants();
+        CompiledMapQueryContext.this.closeHashLookupKeyDependants();
+        CompiledMapQueryContext.this.closeHashLookupReadEntryDependants();
+        CompiledMapQueryContext.this.closeHashLookupMaskUnsetKeyDependants();
+        CompiledMapQueryContext.this.closeHashLookupValueDependants();
+        CompiledMapQueryContext.this.closeHashLookupIndexToPosDependants();
+        CompiledMapQueryContext.this.closeHashLookupHlPosDependants();
+        CompiledMapQueryContext.this.closeHashLookupEmptyDependants();
+        CompiledMapQueryContext.this.closeHashLookupStepDependants();
+    }
+
+    public long stepBack(long pos) {
+        return (pos -= hashLookupEntrySize()) >= 0 ? pos : capacityMask2();
+    }
+
+    public void closeHashLookupStepBackDependants() {
+        CompiledMapQueryContext.this.closeHashLookupSearchFoundDependants();
+    }
+
+    void clearEntry(long pos, long prevEntry) {
+        long entry = prevEntry & (~(entryMask()));
+        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
+    }
+
+    public long key(long entry) {
+        return entry & (keyMask());
+    }
+
+    public void closeHashLookupKeyDependants() {
+        CompiledMapQueryContext.this.closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants();
+        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
+    }
+
+    public long readEntry(long pos) {
+        return NativeBytes.UNSAFE.getLong(((address()) + pos));
+    }
+
+    public void closeHashLookupReadEntryDependants() {
+        CompiledMapQueryContext.this.closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants();
+        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
+    }
+
+    public long maskUnsetKey(long key) {
+        return (key &= keyMask()) != (UNSET_KEY) ? key : keyMask();
+    }
+
+    public void closeHashLookupMaskUnsetKeyDependants() {
+        CompiledMapQueryContext.this.closeSearchKey();
+    }
+
+    public void checkValueForPut(long value) {
+        assert (value & (~(valueMask()))) == 0L : "Value out of range, was " + value;
+    }
+
+    public long value(long entry) {
+        return (entry >>> (keyBits())) & (valueMask());
+    }
+
+    public void closeHashLookupValueDependants() {
+        CompiledMapQueryContext.this.closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants();
+        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
+    }
+
+    void writeEntry(long pos, long prevEntry, long anotherEntry) {
+        long entry = (prevEntry & (~(entryMask()))) | (anotherEntry & (entryMask()));
+        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
+    }
+
+    long indexToPos(long index) {
+        return index * (hashLookupEntrySize());
+    }
+
+    public void closeHashLookupIndexToPosDependants() {
+        CompiledMapQueryContext.this.closeHashLookupHlPosDependants();
+    }
+
+    public long hlPos(long key) {
+        return indexToPos((key & (capacityMask())));
+    }
+
+    public void closeHashLookupHlPosDependants() {
+        CompiledMapQueryContext.this.closeSearchKey();
+    }
+
+    public boolean empty(long entry) {
+        return (entry & (entryMask())) == (UNSET_ENTRY);
+    }
+
+    public void closeHashLookupEmptyDependants() {
+        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
+    }
+
+    void forEach(EntryConsumer action) {
+        for (long pos = 0L ; pos <= (capacityMask2()) ; pos += hashLookupEntrySize()) {
+            long entry = readEntry(pos);
+            if (!(empty(entry)))
+                action.accept(key(entry), value(entry));
+
+        }
+    }
+
+    String hashLookupToString() {
+        final StringBuilder sb = new StringBuilder("{");
+        forEach((long key,long value) -> sb.append(key).append('=').append(value).append(','));
+        sb.append('}');
+        return sb.toString();
+    }
+
+    long entry(long key, long value) {
+        return key | (value << (keyBits()));
+    }
+
+    public void writeEntryVolatile(long pos, long prevEntry, long key, long value) {
+        long entry = (prevEntry & (~(entryMask()))) | (entry(key, value));
+        NativeBytes.UNSAFE.putLongVolatile(null, ((address()) + pos), entry);
+    }
+
+    public void putValueVolatile(long pos, long value) {
+        checkValueForPut(value);
+        long currentEntry = readEntry(pos);
+        writeEntryVolatile(pos, currentEntry, key(currentEntry), value);
+    }
+
+    public long step(long pos) {
+        return (pos += hashLookupEntrySize()) <= (capacityMask2()) ? pos : 0L;
+    }
+
+    public void closeHashLookupStepDependants() {
+        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
+    }
+
+    public long remove(long posToRemove) {
+        long entryToRemove = readEntry(posToRemove);
+        long posToShift = posToRemove;
+        while (true) {
+            posToShift = step(posToShift);
+            long entryToShift = readEntry(posToShift);
+            if (empty(entryToShift))
+                break;
+
+            long insertPos = hlPos(key(entryToShift));
+            boolean cond1 = insertPos <= posToRemove;
+            boolean cond2 = posToRemove <= posToShift;
+            if ((cond1 && cond2) || ((posToShift < insertPos) && (cond1 || cond2))) {
+                writeEntry(posToRemove, entryToRemove, entryToShift);
+                posToRemove = posToShift;
+                entryToRemove = entryToShift;
+            }
+        }
+        clearEntry(posToRemove, entryToRemove);
+        return posToRemove;
+    }
+
+    public void writeEntry(long pos, long prevEntry, long key, long value) {
+        long entry = (prevEntry & (~(entryMask()))) | (entry(key, value));
+        NativeBytes.UNSAFE.putLong(((address()) + pos), entry);
+    }
+
+    public void clearHashLookup() {
+        NativeBytes.UNSAFE.setMemory(address(), ((capacityMask2()) + (hashLookupEntrySize())), ((byte)(0)));
+    }
+
+    long entrySpaceOffset = 0;
+
+    MultiStoreBytes freeListBytes = new MultiStoreBytes();
+
+    public SingleThreadedDirectBitSet freeList = new SingleThreadedDirectBitSet();
+
+    boolean segmentInit() {
+        return (entrySpaceOffset) > 0;
+    }
+
+    void initSegment() {
+        VanillaChronicleHash<?, ?, ?, ?, ?> h = CompiledMapQueryContext.this.h();
+        long hashLookupOffset = h.segmentOffset(segmentIndex());
+        long freeListOffset = hashLookupOffset + (h.segmentHashLookupOuterSize);
+        freeListBytes.storePositionAndSize(h.ms, freeListOffset, h.segmentFreeListInnerSize);
+        freeList.reuse(freeListBytes);
+        entrySpaceOffset = (freeListOffset + (h.segmentFreeListOuterSize)) + (h.segmentEntrySpaceInnerOffset);
+        this.closeSegmentDependants();
+    }
+
+    public long entrySpaceOffset() {
+        if (!(this.segmentInit()))
+            this.initSegment();
+
+        return this.entrySpaceOffset;
+    }
+
+    public SingleThreadedDirectBitSet freeList() {
+        if (!(this.segmentInit()))
+            this.initSegment();
+
+        return this.freeList;
+    }
+
+    void closeSegment() {
+        if (!(this.segmentInit()))
+            return ;
+
+        this.closeSegmentDependants();
+        entrySpaceOffset = 0;
+    }
+
+    public void closeSegmentDependants() {
+        CompiledMapQueryContext.this.closeEntryOffset();
+    }
+
+    public long keySizeOffset = -1;
+
+    public boolean entryOffsetInit() {
+        return (this.keySizeOffset) >= 0;
+    }
+
+    public void initEntryOffset() {
+        keySizeOffset = (CompiledMapQueryContext.this.entrySpaceOffset()) + ((pos()) * (CompiledMapQueryContext.this.h().chunkSize));
+        entryBytes.limit(entryBytes.capacity());
+        this.closeEntryOffsetDependants();
+    }
+
+    public long keySizeOffset() {
+        if (!(this.entryOffsetInit()))
+            this.initEntryOffset();
+
+        return this.keySizeOffset;
+    }
+
+    public void closeEntryOffset() {
+        if (!(this.entryOffsetInit()))
+            return ;
+
+        this.closeEntryOffsetDependants();
+        this.keySizeOffset = -1;
+    }
+
+    public void closeEntryOffsetDependants() {
+        CompiledMapQueryContext.this.closeMapEntryStagesReadExistingEntryDependants();
+        CompiledMapQueryContext.this.closeMapEntryStagesEntrySizeDependants();
+    }
+
+    public void readExistingEntry(long pos) {
+        initPos(pos);
+        entryBytes.position(keySizeOffset());
+        initKeySize(CompiledMapQueryContext.this.h().keySizeMarshaller.readSize(entryBytes));
+        initKeyOffset(entryBytes.position());
+    }
+
+    public void closeMapEntryStagesReadExistingEntryDependants() {
+        CompiledMapQueryContext.this.closeKeySearch();
+    }
+
+    public long alloc(int chunks) {
+        VanillaChronicleHash<?, ?, ?, ?, ?> h = CompiledMapQueryContext.this.h();
+        if (chunks > (h.maxChunksPerEntry))
+            throw new IllegalArgumentException((((("Entry is too large: requires " + chunks) + " entry size chucks, ") + (h.maxChunksPerEntry)) + " is maximum."));
+
+        long ret = freeList().setNextNContinuousClearBits(nextPosToSearchFrom(), chunks);
+        if ((ret == (DirectBitSet.NOT_FOUND)) || ((ret + chunks) > (h.actualChunksPerSegment))) {
+            if (((ret != (DirectBitSet.NOT_FOUND)) && ((ret + chunks) > (h.actualChunksPerSegment))) && (ret < (h.actualChunksPerSegment)))
+                freeList().clear(ret, h.actualChunksPerSegment);
+
+            ret = freeList().setNextNContinuousClearBits(0L, chunks);
+            if ((ret == (DirectBitSet.NOT_FOUND)) || ((ret + chunks) > (h.actualChunksPerSegment))) {
+                if (((ret != (DirectBitSet.NOT_FOUND)) && ((ret + chunks) > (h.actualChunksPerSegment))) && (ret < (h.actualChunksPerSegment)))
+                    freeList().clear(ret, h.actualChunksPerSegment);
+
+                if (chunks == 1) {
+                    throw new IllegalStateException("Segment is full, no free entries found");
+                } else {
+                    throw new IllegalStateException((("Segment is full or has no ranges of " + chunks) + " continuous free chunks"));
+                }
+            }
+            updateNextPosToSearchFrom(ret, chunks);
+        } else {
+            if ((chunks == 1) || (freeList().isSet(nextPosToSearchFrom()))) {
+                updateNextPosToSearchFrom(ret, chunks);
+            }
+        }
+        return ret;
+    }
+
+    public void free(long fromPos, int chunks) {
+        freeList().clear(fromPos, (fromPos + chunks));
+        if (fromPos < (nextPosToSearchFrom()))
+            nextPosToSearchFrom(fromPos);
+
+    }
+
+    public void clearSegment() {
+        CompiledMapQueryContext.this.innerWriteLock.lock();
+        CompiledMapQueryContext.this.clearHashLookup();
+        freeList().clear();
+        nextPosToSearchFrom(0L);
+        entries(0L);
+    }
+
+    public void clear() {
+        clearSegment();
+    }
+
+    long searchKey = UNSET_KEY;
+
+    long searchStartPos;
+
+    public boolean searchKeyInit() {
+        return (this.searchKey) != (UNSET_KEY);
+    }
+
+    void initSearchKey() {
+        searchKey = CompiledMapQueryContext.this.maskUnsetKey(CompiledMapQueryContext.this.h().hashSplitting.segmentHash(CompiledMapQueryContext.this.hashOfKey()));
+        searchStartPos = CompiledMapQueryContext.this.hlPos(searchKey);
+        this.closeSearchKeyDependants();
+    }
+
+    public long searchKey() {
+        if (!(this.searchKeyInit()))
+            this.initSearchKey();
+
+        return this.searchKey;
+    }
+
+    public long searchStartPos() {
+        if (!(this.searchKeyInit()))
+            this.initSearchKey();
+
+        return this.searchStartPos;
+    }
+
+    public void closeSearchKey() {
+        if (!(this.searchKeyInit()))
+            return ;
+
+        this.closeSearchKeyDependants();
+        this.searchKey = UNSET_KEY;
+    }
+
+    public void closeSearchKeyDependants() {
+        CompiledMapQueryContext.this.closeHashLookupPos();
+        CompiledMapQueryContext.this.closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants();
+        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
+    }
+
     public long hashLookupPos = -1;
 
     public boolean hashLookupPosInit() {
@@ -2749,24 +2844,17 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
     }
 
     public void closeHashLookupPosDependants() {
-        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
-        CompiledMapQueryContext.this.closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants();
         CompiledMapQueryContext.this.closeHashLookupSearchFoundDependants();
+        CompiledMapQueryContext.this.closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants();
+        CompiledMapQueryContext.this.closeHashLookupSearchNextPosDependants();
     }
 
-    public void putNewVolatile(long value) {
-        CompiledMapQueryContext.this.checkValueForPut(value);
-        long currentEntry = CompiledMapQueryContext.this.readEntry(CompiledMapQueryContext.this.hashLookupPos());
-        CompiledMapQueryContext.this.writeEntryVolatile(CompiledMapQueryContext.this.hashLookupPos(), currentEntry, searchKey(), value);
+    public void found() {
+        CompiledMapQueryContext.this.setHashLookupPosGuarded(CompiledMapQueryContext.this.stepBack(CompiledMapQueryContext.this.hashLookupPos()));
     }
 
-    void put(long value) {
-        CompiledMapQueryContext.this.checkValueForPut(value);
-        CompiledMapQueryContext.this.writeEntry(CompiledMapQueryContext.this.hashLookupPos(), CompiledMapQueryContext.this.readEntry(CompiledMapQueryContext.this.hashLookupPos()), searchKey(), value);
-    }
-
-    public boolean checkSlotIsEmpty() {
-        return CompiledMapQueryContext.this.empty(CompiledMapQueryContext.this.readEntry(CompiledMapQueryContext.this.hashLookupPos()));
+    public void closeHashLookupSearchFoundDependants() {
+        CompiledMapQueryContext.this.closeKeySearch();
     }
 
     public void putVolatile(long value) {
@@ -2778,6 +2866,30 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
     public void remove() {
         CompiledMapQueryContext.this.setHashLookupPosGuarded(CompiledMapQueryContext.this.remove(CompiledMapQueryContext.this.hashLookupPos()));
+    }
+
+    public boolean checkSlotIsEmpty() {
+        return CompiledMapQueryContext.this.empty(CompiledMapQueryContext.this.readEntry(CompiledMapQueryContext.this.hashLookupPos()));
+    }
+
+    void put(long value) {
+        CompiledMapQueryContext.this.checkValueForPut(value);
+        CompiledMapQueryContext.this.writeEntry(CompiledMapQueryContext.this.hashLookupPos(), CompiledMapQueryContext.this.readEntry(CompiledMapQueryContext.this.hashLookupPos()), searchKey(), value);
+    }
+
+    public void putNewVolatile(long value) {
+        CompiledMapQueryContext.this.checkValueForPut(value);
+        long currentEntry = CompiledMapQueryContext.this.readEntry(CompiledMapQueryContext.this.hashLookupPos());
+        CompiledMapQueryContext.this.writeEntryVolatile(CompiledMapQueryContext.this.hashLookupPos(), currentEntry, searchKey(), value);
+    }
+
+    public boolean checkSlotContainsExpectedKeyAndValue(long value) {
+        long entry = CompiledMapQueryContext.this.readEntry(CompiledMapQueryContext.this.hashLookupPos());
+        return ((CompiledMapQueryContext.this.key(entry)) == (searchKey())) && ((CompiledMapQueryContext.this.value(entry)) == value);
+    }
+
+    public void closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants() {
+        CompiledMapQueryContext.this.closeMapQueryDropSearchIfNestedContextsAndPresentHashLookupSlotCheckFailedDependants();
     }
 
     public long nextPos() {
@@ -2804,20 +2916,50 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         CompiledMapQueryContext.this.closeKeySearch();
     }
 
-    public boolean checkSlotContainsExpectedKeyAndValue(long value) {
-        long entry = CompiledMapQueryContext.this.readEntry(CompiledMapQueryContext.this.hashLookupPos());
-        return ((CompiledMapQueryContext.this.key(entry)) == (searchKey())) && ((CompiledMapQueryContext.this.value(entry)) == value);
+    public long keyOffset = -1;
+
+    public boolean keyOffsetInit() {
+        return (this.keyOffset) >= 0;
     }
 
-    public void closeHashLookupSearchCheckSlotContainsExpectedKeyAndValueDependants() {
-        CompiledMapQueryContext.this.closeMapQueryDropSearchIfNestedContextsAndPresentHashLookupSlotCheckFailedDependants();
+    public void initKeyOffset(long keyOffset) {
+        this.keyOffset = keyOffset;
+        this.closeKeyOffsetDependants();
     }
 
-    public void found() {
-        CompiledMapQueryContext.this.setHashLookupPosGuarded(CompiledMapQueryContext.this.stepBack(CompiledMapQueryContext.this.hashLookupPos()));
+    public long keyOffset() {
+        assert this.keyOffsetInit() : "KeyOffset should be init";
+        return this.keyOffset;
     }
 
-    public void closeHashLookupSearchFoundDependants() {
+    public void closeKeyOffset() {
+        if (!(this.keyOffsetInit()))
+            return ;
+
+        this.closeKeyOffsetDependants();
+        this.keyOffset = -1;
+    }
+
+    public void closeKeyOffsetDependants() {
+        CompiledMapQueryContext.this.closeMapQueryKeyEqualsDependants();
+        CompiledMapQueryContext.this.closeMapEntryStagesKeyEndDependants();
+        CompiledMapQueryContext.this.entryKey.closeEntryKeyBytesDataInnerGetUsingDependants();
+    }
+
+    public void writeNewEntry(long pos, Data<?, ?> key) {
+        initPos(pos);
+        initKeySize(key.size());
+        entryBytes.position(keySizeOffset());
+        CompiledMapQueryContext.this.h().keySizeMarshaller.writeSize(entryBytes, keySize());
+        initKeyOffset(entryBytes.position());
+        key.writeTo(entryBytesAccessor, entryBytes, keyOffset());
+    }
+
+    boolean keyEquals() {
+        return ((inputKey().size()) == (CompiledMapQueryContext.this.keySize())) && (inputKey().equivalent(((ReadAccess)(CompiledMapQueryContext.this.entryBytesAccess)), CompiledMapQueryContext.this.entryBytesAccessHandle, CompiledMapQueryContext.this.entryBytesAccessOffset(CompiledMapQueryContext.this.keyOffset())));
+    }
+
+    public void closeMapQueryKeyEqualsDependants() {
         CompiledMapQueryContext.this.closeKeySearch();
     }
 
@@ -2829,7 +2971,7 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
     void initKeySearch() {
         for (long pos ; (pos = CompiledMapQueryContext.this.nextPos()) >= 0L ; ) {
-            CompiledMapQueryContext.this.initEntry(pos);
+            CompiledMapQueryContext.this.readExistingEntry(pos);
             if (!(keyEquals()))
                 continue;
 
@@ -2860,12 +3002,23 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         CompiledMapQueryContext.this.closeMapQueryDropSearchIfNestedContextsAndPresentHashLookupSlotCheckFailedDependants();
     }
 
-    public boolean searchStatePresent() {
-        return (searchState()) == (SearchState.PRESENT);
+    private void _AllocatedChunks_incrementSegmentEntriesIfNeeded() {
     }
 
-    public boolean entryPresent() {
-        return searchStatePresent();
+    public void incrementSegmentEntriesIfNeeded() {
+        if ((CompiledMapQueryContext.this.searchState()) != (SearchState.PRESENT)) {
+            CompiledMapQueryContext.this.entries(((CompiledMapQueryContext.this.entries()) + 1L));
+        }
+    }
+
+    public void initEntryAndKey(long entrySize) {
+        initAllocatedChunks(CompiledMapQueryContext.this.h().inChunks(entrySize));
+        CompiledMapQueryContext.this.writeNewEntry(CompiledMapQueryContext.this.alloc(allocatedChunks()), CompiledMapQueryContext.this.inputKey());
+        incrementSegmentEntriesIfNeeded();
+    }
+
+    public boolean searchStateDeleted() {
+        return (((searchState()) == (SearchState.DELETED)) && (!(CompiledMapQueryContext.this.concurrentSameThreadContexts()))) && (CompiledMapQueryContext.this.innerUpdateLock.isHeldByCurrentThread());
     }
 
     public void dropSearchIfNestedContextsAndPresentHashLookupSlotCheckFailed() {
@@ -2901,6 +3054,20 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
     }
 
     @Override
+    public R insert(@NotNull
+                    MapAbsentEntry<K, V> absentEntry, Data<V, ?> value) {
+        CompiledMapQueryContext.this.checkOnEachPublicOperation();
+        return CompiledMapQueryContext.this.m().entryOperations.insert(absentEntry, value);
+    }
+
+    @Override
+    public R remove(@NotNull
+                    MapEntry<K, V> entry) {
+        CompiledMapQueryContext.this.checkOnEachPublicOperation();
+        return CompiledMapQueryContext.this.m().entryOperations.remove(entry);
+    }
+
+    @Override
     public Data<V, ?> defaultValue(@NotNull
                                                               MapAbsentEntry<K, V> absentEntry) {
         CompiledMapQueryContext.this.checkOnEachPublicOperation();
@@ -2914,59 +3081,13 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         return CompiledMapQueryContext.this.innerWriteLock;
     }
 
-    @NotNull
     @Override
-    public Data<V, ?> defaultValue() {
+    public Data<V, ?> wrapValueAsValue(V value) {
         CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        return CompiledMapQueryContext.this.wrapValueAsValue(CompiledMapQueryContext.this.m().defaultValue(CompiledMapQueryContext.this.deprecatedMapKeyContext));
-    }
-
-    @Override
-    public R insert(@NotNull
-                    MapAbsentEntry<K, V> absentEntry, Data<V, ?> value) {
-        CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        return CompiledMapQueryContext.this.m().entryOperations.insert(absentEntry, value);
-    }
-
-    @Override
-    public R replaceValue(@NotNull
-                          MapEntry<K, V> entry, Data<V, ?> newValue) {
-        CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        return CompiledMapQueryContext.this.m().entryOperations.replaceValue(entry, newValue);
-    }
-
-    @Override
-    public MapEntry<K, V> entry() {
-        CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        return entryPresent() ? this : null;
-    }
-
-    @NotNull
-    @Override
-    public Data<K, ?> key() {
-        CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        return CompiledMapQueryContext.this.entryKey;
-    }
-
-    @Override
-    public R remove(@NotNull
-                    MapEntry<K, V> entry) {
-        CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        return CompiledMapQueryContext.this.m().entryOperations.remove(entry);
-    }
-
-    @NotNull
-    @Override
-    public InterProcessLock readLock() {
-        CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        return CompiledMapQueryContext.this.innerReadLock;
-    }
-
-    @Nullable
-    @Override
-    public MapAbsentEntry<K, V> absentEntry() {
-        CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        return entryPresent() ? null : CompiledMapQueryContext.this.absent();
+        WrappedValueInstanceData wrapped = CompiledMapQueryContext.this.wrappedValueInstanceValue;
+        wrapped = wrapped.getUnusedWrappedValueGuarded();
+        wrapped.initValue(value);
+        return wrapped;
     }
 
     @NotNull
@@ -2983,13 +3104,44 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         return CompiledMapQueryContext.this.entryValue;
     }
 
-    @Override
-    public Data<V, ?> wrapValueAsValue(V value) {
+    public Data<K, ?> queriedKey() {
         CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        WrappedValueInstanceData wrapped = CompiledMapQueryContext.this.wrappedValueInstanceValue;
-        wrapped = wrapped.getUnusedWrappedValueGuarded();
-        wrapped.initValue(value);
-        return wrapped;
+        return inputKey();
+    }
+
+    @NotNull
+    @Override
+    public Data<K, ?> absentKey() {
+        CompiledMapQueryContext.this.checkOnEachPublicOperation();
+        return CompiledMapQueryContext.this.inputKey();
+    }
+
+    @NotNull
+    @Override
+    public Data<K, ?> key() {
+        CompiledMapQueryContext.this.checkOnEachPublicOperation();
+        return CompiledMapQueryContext.this.entryKey;
+    }
+
+    @NotNull
+    @Override
+    public InterProcessLock readLock() {
+        CompiledMapQueryContext.this.checkOnEachPublicOperation();
+        return CompiledMapQueryContext.this.innerReadLock;
+    }
+
+    @Override
+    public R replaceValue(@NotNull
+                          MapEntry<K, V> entry, Data<V, ?> newValue) {
+        CompiledMapQueryContext.this.checkOnEachPublicOperation();
+        return CompiledMapQueryContext.this.m().entryOperations.replaceValue(entry, newValue);
+    }
+
+    @NotNull
+    @Override
+    public Data<V, ?> defaultValue() {
+        CompiledMapQueryContext.this.checkOnEachPublicOperation();
+        return CompiledMapQueryContext.this.wrapValueAsValue(CompiledMapQueryContext.this.m().defaultValue(CompiledMapQueryContext.this.deprecatedMapKeyContext));
     }
 
     @NotNull
@@ -2999,8 +3151,8 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         return this;
     }
 
-    public boolean searchStateDeleted() {
-        return (((searchState()) == (SearchState.DELETED)) && (!(CompiledMapQueryContext.this.concurrentSameThreadContexts()))) && (CompiledMapQueryContext.this.innerUpdateLock.isHeldByCurrentThread());
+    public boolean searchStatePresent() {
+        return (searchState()) == (SearchState.PRESENT);
     }
 
     public boolean searchStateAbsent() {
@@ -3019,40 +3171,216 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
 
     }
 
-    public void entries(long size) {
-        segmentHeader().size(segmentHeaderAddress(), size);
+    public boolean entryPresent() {
+        return searchStatePresent();
     }
 
-    private void _AllocatedChunks_incrementSegmentEntriesIfNeeded() {
+    @Nullable
+    @Override
+    public MapAbsentEntry<K, V> absentEntry() {
+        CompiledMapQueryContext.this.checkOnEachPublicOperation();
+        return entryPresent() ? null : CompiledMapQueryContext.this.absent();
     }
 
-    public void incrementSegmentEntriesIfNeeded() {
-        if ((CompiledMapQueryContext.this.searchState()) != (SearchState.PRESENT)) {
-            CompiledMapQueryContext.this.entries(((CompiledMapQueryContext.this.entries()) + 1L));
+    @Override
+    public MapEntry<K, V> entry() {
+        CompiledMapQueryContext.this.checkOnEachPublicOperation();
+        return entryPresent() ? this : null;
+    }
+
+    public long keyEnd() {
+        return (keyOffset()) + (keySize());
+    }
+
+    public void closeMapEntryStagesKeyEndDependants() {
+        CompiledMapQueryContext.this.closeMapEntryStagesCountValueSizeOffsetDependants();
+        CompiledMapQueryContext.this.closeMapEntryStagesEntryEndDependants();
+    }
+
+    long countValueSizeOffset() {
+        return keyEnd();
+    }
+
+    public void closeMapEntryStagesCountValueSizeOffsetDependants() {
+        CompiledMapQueryContext.this.closeValueSizeOffset();
+    }
+
+    public long valueSizeOffset = -1;
+
+    public boolean valueSizeOffsetInit() {
+        return (this.valueSizeOffset) >= 0;
+    }
+
+    void initValueSizeOffset() {
+        valueSizeOffset = countValueSizeOffset();
+        this.closeValueSizeOffsetDependants();
+    }
+
+    public long valueSizeOffset() {
+        if (!(this.valueSizeOffsetInit()))
+            this.initValueSizeOffset();
+
+        return this.valueSizeOffset;
+    }
+
+    public void closeValueSizeOffset() {
+        if (!(this.valueSizeOffsetInit()))
+            return ;
+
+        this.closeValueSizeOffsetDependants();
+        this.valueSizeOffset = -1;
+    }
+
+    public void closeValueSizeOffsetDependants() {
+        CompiledMapQueryContext.this.closeValSize();
+    }
+
+    public long newSizeOfEverythingBeforeValue(Data<V, ?> newValue) {
+        return ((valueSizeOffset()) + (CompiledMapQueryContext.this.m().valueSizeMarshaller.sizeEncodingSize(newValue.size()))) - (keySizeOffset());
+    }
+
+    public long valueSize = -1;
+
+    public long valueOffset;
+
+    public boolean valSizeInit() {
+        return (this.valueSize) >= 0;
+    }
+
+    void initValSize() {
+        entryBytes.position(valueSizeOffset());
+        valueSize = CompiledMapQueryContext.this.m().readValueSize(entryBytes);
+        countValueOffset();
+        this.closeValSizeDependants();
+    }
+
+    void initValSize(long valueSize) {
+        this.valueSize = valueSize;
+        entryBytes.position(valueSizeOffset());
+        CompiledMapQueryContext.this.m().valueSizeMarshaller.writeSize(entryBytes, valueSize);
+        countValueOffset();
+        this.closeValSizeDependants();
+    }
+
+    void initValSizeEqualToOld(long oldValueSizeOffset, long oldValueSize, long oldValueOffset) {
+        valueSize = oldValueSize;
+        valueOffset = (valueSizeOffset()) + (oldValueOffset - oldValueSizeOffset);
+        this.closeValSizeDependants();
+    }
+
+    public long valueOffset() {
+        if (!(this.valSizeInit()))
+            this.initValSize();
+
+        return this.valueOffset;
+    }
+
+    public long valueSize() {
+        if (!(this.valSizeInit()))
+            this.initValSize();
+
+        return this.valueSize;
+    }
+
+    public void closeValSize() {
+        if (!(this.valSizeInit()))
+            return ;
+
+        this.closeValSizeDependants();
+        this.valueSize = -1;
+    }
+
+    public void closeValSizeDependants() {
+        CompiledMapQueryContext.this.closeMapEntryStagesEntryEndDependants();
+        CompiledMapQueryContext.this.entryValue.closeEntryValueBytesDataSizeDependants();
+        CompiledMapQueryContext.this.entryValue.closeEntryValueBytesDataInnerGetUsingDependants();
+    }
+
+    public void writeValue(Data<?, ?> value) {
+        value.writeTo(entryBytesAccess, entryBytesAccessHandle, entryBytesAccessOffset(valueOffset()));
+    }
+
+    public void initValueWithoutSize(Data<?, ?> value, long oldValueSizeOffset, long oldValueSize, long oldValueOffset) {
+        assert oldValueSize == (value.size());
+        initValSizeEqualToOld(oldValueSizeOffset, oldValueSize, oldValueOffset);
+        writeValue(value);
+    }
+
+    public void initValue(Data<?, ?> value) {
+        entryBytes.position(valueSizeOffset());
+        initValSize(value.size());
+        writeValue(value);
+    }
+
+    private long _HashEntryStages_entryEnd() {
+        return keyEnd();
+    }
+
+    protected long entryEnd() {
+        return (valueOffset()) + (valueSize());
+    }
+
+    public void closeMapEntryStagesEntryEndDependants() {
+        CompiledMapQueryContext.this.closeMapEntryStagesEntrySizeDependants();
+    }
+
+    long entrySize() {
+        return (entryEnd()) - (keySizeOffset());
+    }
+
+    public void closeMapEntryStagesEntrySizeDependants() {
+        CompiledMapQueryContext.this.closeTheEntrySizeInChunks();
+    }
+
+    public int entrySizeInChunks = 0;
+
+    public boolean theEntrySizeInChunksInit() {
+        return (this.entrySizeInChunks) != 0;
+    }
+
+    void initTheEntrySizeInChunks() {
+        entrySizeInChunks = CompiledMapQueryContext.this.h().inChunks(entrySize());
+    }
+
+    public void initTheEntrySizeInChunks(int actuallyUsedChunks) {
+        entrySizeInChunks = actuallyUsedChunks;
+    }
+
+    public int entrySizeInChunks() {
+        if (!(this.theEntrySizeInChunksInit()))
+            this.initTheEntrySizeInChunks();
+
+        return this.entrySizeInChunks;
+    }
+
+    public void closeTheEntrySizeInChunks() {
+        if (!(this.theEntrySizeInChunksInit()))
+            return ;
+
+        this.entrySizeInChunks = 0;
+    }
+
+    public final void freeExtraAllocatedChunks() {
+        if (((!(CompiledMapQueryContext.this.m().constantlySizedEntry)) && (CompiledMapQueryContext.this.m().couldNotDetermineAlignmentBeforeAllocation)) && ((entrySizeInChunks()) < (CompiledMapQueryContext.this.allocatedChunks()))) {
+            CompiledMapQueryContext.this.free(((pos()) + (entrySizeInChunks())), ((CompiledMapQueryContext.this.allocatedChunks()) - (entrySizeInChunks())));
+        } else {
+            initTheEntrySizeInChunks(CompiledMapQueryContext.this.allocatedChunks());
         }
     }
 
-    public void nextPosToSearchFrom(long nextPosToSearchFrom) {
-        segmentHeader().nextPosToSearchFrom(segmentHeaderAddress(), nextPosToSearchFrom);
+    void putEntry(Data<V, ?> value) {
+        assert CompiledMapQueryContext.this.searchStateAbsent();
+        long entrySize = CompiledMapQueryContext.this.entrySize(CompiledMapQueryContext.this.inputKey().size(), value.size());
+        CompiledMapQueryContext.this.initEntryAndKey(entrySize);
+        CompiledMapQueryContext.this.initValue(value);
+        CompiledMapQueryContext.this.freeExtraAllocatedChunks();
+        CompiledMapQueryContext.this.putNewVolatile(CompiledMapQueryContext.this.pos());
     }
 
-    public void clearSegment() {
-        CompiledMapQueryContext.this.innerWriteLock.lock();
-        CompiledMapQueryContext.this.clearHashLookup();
-        freeList().clear();
-        nextPosToSearchFrom(0L);
-        entries(0L);
-    }
-
-    public void clear() {
-        clearSegment();
-    }
-
-    public void free(long fromPos, int chunks) {
-        freeList().clear(fromPos, (fromPos + chunks));
-        if (fromPos < (nextPosToSearchFrom()))
-            nextPosToSearchFrom(fromPos);
-
+    public void writeValueAndPutPos(Data<V, ?> value) {
+        initValue(value);
+        freeExtraAllocatedChunks();
+        CompiledMapQueryContext.this.putValueVolatile(CompiledMapQueryContext.this.hashLookupPos(), pos());
     }
 
     public void innerRemoveEntryExceptHashLookupUpdate() {
@@ -3075,62 +3403,79 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         }
     }
 
-    public final void freeExtraAllocatedChunks() {
-        if (((!(CompiledMapQueryContext.this.m().constantlySizedEntry)) && (CompiledMapQueryContext.this.m().couldNotDetermineAlignmentBeforeAllocation)) && ((entrySizeInChunks()) < (CompiledMapQueryContext.this.allocatedChunks()))) {
-            CompiledMapQueryContext.this.free(((pos()) + (entrySizeInChunks())), ((CompiledMapQueryContext.this.allocatedChunks()) - (entrySizeInChunks())));
-        } else {
-            initTheEntrySizeInChunks(CompiledMapQueryContext.this.allocatedChunks());
-        }
-    }
-
-    public void writeValueAndPutPos(Data<V, ?> value) {
-        initValue(value);
-        freeExtraAllocatedChunks();
-        CompiledMapQueryContext.this.putValueVolatile(CompiledMapQueryContext.this.hashLookupPos(), pos());
-    }
-
-    public void updateNextPosToSearchFrom(long allocated, int chunks) {
-        long nextPosToSearchFrom = allocated + chunks;
-        if (nextPosToSearchFrom >= (CompiledMapQueryContext.this.h().actualChunksPerSegment))
-            nextPosToSearchFrom = 0L;
-
-        nextPosToSearchFrom(nextPosToSearchFrom);
-    }
-
-    public long alloc(int chunks) {
-        VanillaChronicleHash<?, ?, ?, ?, ?> h = CompiledMapQueryContext.this.h();
-        if (chunks > (h.maxChunksPerEntry))
-            throw new IllegalArgumentException((((("Entry is too large: requires " + chunks) + " entry size chucks, ") + (h.maxChunksPerEntry)) + " is maximum."));
-
-        long ret = freeList().setNextNContinuousClearBits(nextPosToSearchFrom(), chunks);
-        if ((ret == (DirectBitSet.NOT_FOUND)) || ((ret + chunks) > (h.actualChunksPerSegment))) {
-            if (((ret != (DirectBitSet.NOT_FOUND)) && ((ret + chunks) > (h.actualChunksPerSegment))) && (ret < (h.actualChunksPerSegment)))
-                freeList().clear(ret, h.actualChunksPerSegment);
-
-            ret = freeList().setNextNContinuousClearBits(0L, chunks);
-            if ((ret == (DirectBitSet.NOT_FOUND)) || ((ret + chunks) > (h.actualChunksPerSegment))) {
-                if (((ret != (DirectBitSet.NOT_FOUND)) && ((ret + chunks) > (h.actualChunksPerSegment))) && (ret < (h.actualChunksPerSegment)))
-                    freeList().clear(ret, h.actualChunksPerSegment);
-
-                if (chunks == 1) {
-                    throw new IllegalStateException("Segment is full, no free entries found");
-                } else {
-                    throw new IllegalStateException((("Segment is full or has no ranges of " + chunks) + " continuous free chunks"));
-                }
-            }
-            updateNextPosToSearchFrom(ret, chunks);
-        } else {
-            if ((chunks == 1) || (freeList().isSet(nextPosToSearchFrom()))) {
-                updateNextPosToSearchFrom(ret, chunks);
-            }
-        }
-        return ret;
+    public void copyExistingEntry(long newPos, long bytesToCopy) {
+        long oldKeySizeOffset = keySizeOffset();
+        long oldKeyOffset = keyOffset();
+        initPos(newPos);
+        initKeyOffset(((keySizeOffset()) + (oldKeyOffset - oldKeySizeOffset)));
+        Access.copy(entryBytesAccess, entryBytesAccessHandle, entryBytesAccessOffset(oldKeySizeOffset), entryBytesAccess, entryBytesAccessHandle, entryBytesAccessOffset(keySizeOffset()), bytesToCopy);
     }
 
     public void initEntryAndKeyCopying(long entrySize, long bytesToCopy) {
         initAllocatedChunks(CompiledMapQueryContext.this.h().inChunks(entrySize));
-        CompiledMapQueryContext.this.initEntryCopying(CompiledMapQueryContext.this.alloc(allocatedChunks()), bytesToCopy);
+        CompiledMapQueryContext.this.copyExistingEntry(CompiledMapQueryContext.this.alloc(allocatedChunks()), bytesToCopy);
         incrementSegmentEntriesIfNeeded();
+    }
+
+    public void putValueDeletedEntry(Data<V, ?> newValue) {
+        assert CompiledMapQueryContext.this.innerUpdateLock.isHeldByCurrentThread();
+        int newSizeInChunks;
+        long entryStartOffset = keySizeOffset();
+        long newSizeOfEverythingBeforeValue = -1;
+        boolean newValueSizeIsDifferent = (newValue.size()) != (valueSize());
+        if (newValueSizeIsDifferent) {
+            newSizeOfEverythingBeforeValue = newSizeOfEverythingBeforeValue(newValue);
+            long newValueOffset = CompiledMapQueryContext.this.m().alignment.alignAddr((entryStartOffset + newSizeOfEverythingBeforeValue));
+            long newEntrySize = (newValueOffset + (newValue.size())) - entryStartOffset;
+            newSizeInChunks = CompiledMapQueryContext.this.m().inChunks(newEntrySize);
+        } else {
+            newSizeInChunks = entrySizeInChunks();
+        }
+        if ((((pos()) + newSizeInChunks) < (CompiledMapQueryContext.this.freeList().size())) && (CompiledMapQueryContext.this.freeList().allClear(pos(), ((pos()) + newSizeInChunks)))) {
+            CompiledMapQueryContext.this.freeList().set(pos(), ((pos()) + newSizeInChunks));
+            CompiledMapQueryContext.this.innerWriteLock.lock();
+            CompiledMapQueryContext.this.incrementSegmentEntriesIfNeeded();
+            if (newValueSizeIsDifferent) {
+                initValue(newValue);
+            } else {
+                writeValue(newValue);
+            }
+        } else {
+            if (newValueSizeIsDifferent) {
+                assert newSizeOfEverythingBeforeValue >= 0;
+            } else {
+                newSizeOfEverythingBeforeValue = newSizeOfEverythingBeforeValue(newValue);
+            }
+            long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
+            if (newValueSizeIsDifferent) {
+                CompiledMapQueryContext.this.initEntryAndKeyCopying(entrySize, ((valueSizeOffset()) - entryStartOffset));
+                initValue(newValue);
+            } else {
+                long oldValueSizeOffset = valueSizeOffset();
+                long oldValueSize = valueSize();
+                long oldValueOffset = valueOffset();
+                CompiledMapQueryContext.this.initEntryAndKeyCopying(entrySize, ((valueOffset()) - entryStartOffset));
+                initValueWithoutSize(newValue, oldValueSizeOffset, oldValueSize, oldValueOffset);
+            }
+            freeExtraAllocatedChunks();
+        }
+        CompiledMapQueryContext.this.putValueVolatile(CompiledMapQueryContext.this.hashLookupPos(), pos());
+    }
+
+    @Override
+    public void doInsert(Data<V, ?> value) {
+        CompiledMapQueryContext.this.putPrefix();
+        if (!(CompiledMapQueryContext.this.searchStatePresent())) {
+            if (CompiledMapQueryContext.this.searchStateDeleted()) {
+                CompiledMapQueryContext.this.putValueDeletedEntry(value);
+            } else {
+                putEntry(value);
+            }
+            CompiledMapQueryContext.this.incrementModCountGuarded();
+            CompiledMapQueryContext.this.setSearchStateGuarded(SearchState.PRESENT);
+        } else {
+            throw new IllegalStateException("Entry is present in the map when doInsert() is called");
+        }
     }
 
     protected void relocation(Data<V, ?> newValue, long newSizeOfEverythingBeforeValue) {
@@ -3167,9 +3512,9 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         }
         CompiledMapQueryContext.this.innerWriteLock.lock();
         if (newValueSizeIsDifferent) {
-            initValueAgain(newValue);
+            initValue(newValue);
         } else {
-            writeValueGuarded(newValue);
+            writeValue(newValue);
         }
         CompiledMapQueryContext.this.putValueVolatile(CompiledMapQueryContext.this.hashLookupPos(), pos());
     }
@@ -3184,270 +3529,5 @@ public class CompiledMapQueryContext<K, KI, MKI extends MetaBytesInterop<K, ? su
         } else {
             throw new IllegalStateException("Entry is absent in the map when doReplaceValue() is called");
         }
-    }
-
-    public void putValueDeletedEntry(Data<V, ?> newValue) {
-        assert CompiledMapQueryContext.this.innerUpdateLock.isHeldByCurrentThread();
-        int newSizeInChunks;
-        long entryStartOffset = keySizeOffset();
-        long newSizeOfEverythingBeforeValue = -1;
-        boolean newValueSizeIsDifferent = (newValue.size()) != (valueSize());
-        if (newValueSizeIsDifferent) {
-            newSizeOfEverythingBeforeValue = newSizeOfEverythingBeforeValue(newValue);
-            long newValueOffset = CompiledMapQueryContext.this.m().alignment.alignAddr((entryStartOffset + newSizeOfEverythingBeforeValue));
-            long newEntrySize = (newValueOffset + (newValue.size())) - entryStartOffset;
-            newSizeInChunks = CompiledMapQueryContext.this.m().inChunks(newEntrySize);
-        } else {
-            newSizeInChunks = entrySizeInChunks();
-        }
-        if ((((pos()) + newSizeInChunks) < (CompiledMapQueryContext.this.freeList().size())) && (CompiledMapQueryContext.this.freeList().allClear(pos(), ((pos()) + newSizeInChunks)))) {
-            CompiledMapQueryContext.this.freeList().set(pos(), ((pos()) + newSizeInChunks));
-            CompiledMapQueryContext.this.innerWriteLock.lock();
-            CompiledMapQueryContext.this.incrementSegmentEntriesIfNeeded();
-            if (newValueSizeIsDifferent) {
-                initValueAgain(newValue);
-            } else {
-                writeValueGuarded(newValue);
-            }
-        } else {
-            if (newValueSizeIsDifferent) {
-                assert newSizeOfEverythingBeforeValue >= 0;
-            } else {
-                newSizeOfEverythingBeforeValue = newSizeOfEverythingBeforeValue(newValue);
-            }
-            long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
-            if (newValueSizeIsDifferent) {
-                CompiledMapQueryContext.this.initEntryAndKeyCopying(entrySize, ((valueSizeOffset()) - entryStartOffset));
-                initValue(newValue);
-            } else {
-                long oldValueSizeOffset = valueSizeOffset();
-                long oldValueSize = valueSize();
-                long oldValueOffset = valueOffset();
-                CompiledMapQueryContext.this.initEntryAndKeyCopying(entrySize, ((valueOffset()) - entryStartOffset));
-                initValueWithoutSize(newValue, oldValueSizeOffset, oldValueSize, oldValueOffset);
-            }
-            freeExtraAllocatedChunks();
-        }
-        CompiledMapQueryContext.this.putValueVolatile(CompiledMapQueryContext.this.hashLookupPos(), pos());
-    }
-
-    public void initEntryAndKey(long entrySize) {
-        initAllocatedChunks(CompiledMapQueryContext.this.h().inChunks(entrySize));
-        CompiledMapQueryContext.this.initEntry(CompiledMapQueryContext.this.alloc(allocatedChunks()), CompiledMapQueryContext.this.inputKey());
-        incrementSegmentEntriesIfNeeded();
-    }
-
-    @NotNull
-    @Override
-    public Data<K, ?> absentKey() {
-        CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        return CompiledMapQueryContext.this.inputKey();
-    }
-
-    public Data<K, ?> queriedKey() {
-        CompiledMapQueryContext.this.checkOnEachPublicOperation();
-        return inputKey();
-    }
-
-    void putEntry(Data<V, ?> value) {
-        assert CompiledMapQueryContext.this.searchStateAbsent();
-        long entrySize = CompiledMapQueryContext.this.entrySize(CompiledMapQueryContext.this.inputKey().size(), value.size());
-        CompiledMapQueryContext.this.initEntryAndKey(entrySize);
-        CompiledMapQueryContext.this.initValue(value);
-        CompiledMapQueryContext.this.freeExtraAllocatedChunks();
-        CompiledMapQueryContext.this.putNewVolatile(CompiledMapQueryContext.this.pos());
-    }
-
-    @Override
-    public void doInsert(Data<V, ?> value) {
-        CompiledMapQueryContext.this.putPrefix();
-        if (!(CompiledMapQueryContext.this.searchStatePresent())) {
-            if (CompiledMapQueryContext.this.searchStateDeleted()) {
-                CompiledMapQueryContext.this.putValueDeletedEntry(value);
-            } else {
-                putEntry(value);
-            }
-            CompiledMapQueryContext.this.incrementModCountGuarded();
-            CompiledMapQueryContext.this.setSearchStateGuarded(SearchState.PRESENT);
-        } else {
-            throw new IllegalStateException("Entry is present in the map when doInsert() is called");
-        }
-    }
-
-    boolean used;
-
-    public boolean usedInit() {
-        return used;
-    }
-
-    public void initUsed(boolean used) {
-        this.used = used;
-    }
-
-    void closeUsed() {
-        if (!(this.usedInit()))
-            return ;
-
-        used = false;
-    }
-
-    public Bytes inputBytes = null;
-
-    public boolean inputBytesInit() {
-        return (this.inputBytes) != null;
-    }
-
-    public void initInputBytes(Bytes inputBytes) {
-        this.inputBytes = inputBytes;
-        this.closeInputBytesDependants();
-    }
-
-    public Bytes inputBytes() {
-        assert this.inputBytesInit() : "InputBytes should be init";
-        return this.inputBytes;
-    }
-
-    public void closeInputBytes() {
-        if (!(this.inputBytesInit()))
-            return ;
-
-        this.closeInputBytesDependants();
-        this.inputBytes = null;
-    }
-
-    public void closeInputBytesDependants() {
-        CompiledMapQueryContext.this.closeInputKeyOffsets();
-        CompiledMapQueryContext.this.inputKeyBytesValue.closeInputKeyBytesDataGetUsingDependants();
-        CompiledMapQueryContext.this.closeFirstInputValueOffsets();
-        CompiledMapQueryContext.this.inputFirstValueBytesValue.closeInputFirstValueBytesDataGetUsingDependants();
-        CompiledMapQueryContext.this.closeSecondInputValueOffsets();
-        CompiledMapQueryContext.this.inputSecondValueBytesValue.closeInputSecondValueBytesDataGetUsingDependants();
-    }
-
-    public long inputKeySize = -1;
-
-    public long inputKeyOffset;
-
-    public boolean inputKeyOffsetsInit() {
-        return (this.inputKeySize) >= 0;
-    }
-
-    private void initInputKeyOffsets() {
-        inputKeySize = CompiledMapQueryContext.this.h().keySizeMarshaller.readSize(inputBytes());
-        inputKeyOffset = inputBytes().position();
-        this.closeInputKeyOffsetsDependants();
-    }
-
-    public long inputKeyOffset() {
-        if (!(this.inputKeyOffsetsInit()))
-            this.initInputKeyOffsets();
-
-        return this.inputKeyOffset;
-    }
-
-    public long inputKeySize() {
-        if (!(this.inputKeyOffsetsInit()))
-            this.initInputKeyOffsets();
-
-        return this.inputKeySize;
-    }
-
-    public void closeInputKeyOffsets() {
-        if (!(this.inputKeyOffsetsInit()))
-            return ;
-
-        this.closeInputKeyOffsetsDependants();
-        this.inputKeySize = -1;
-    }
-
-    public void closeInputKeyOffsetsDependants() {
-        CompiledMapQueryContext.this.inputKeyBytesValue.closeInputKeyBytesDataSizeDependants();
-        CompiledMapQueryContext.this.inputKeyBytesValue.closeInputKeyBytesDataGetUsingDependants();
-        CompiledMapQueryContext.this.closeFirstInputValueOffsets();
-    }
-
-    public long firstInputValueSize = -1;
-
-    public long firstInputValueOffset;
-
-    public boolean firstInputValueOffsetsInit() {
-        return (this.firstInputValueSize) >= 0;
-    }
-
-    private void initFirstInputValueOffsets() {
-        CompiledMapQueryContext.this.inputBytes().position(((CompiledMapQueryContext.this.inputKeyOffset()) + (CompiledMapQueryContext.this.inputKeySize())));
-        firstInputValueSize = CompiledMapQueryContext.this.m().valueSizeMarshaller.readSize(CompiledMapQueryContext.this.inputBytes());
-        firstInputValueOffset = CompiledMapQueryContext.this.inputBytes().position();
-        this.closeFirstInputValueOffsetsDependants();
-    }
-
-    public long firstInputValueOffset() {
-        if (!(this.firstInputValueOffsetsInit()))
-            this.initFirstInputValueOffsets();
-
-        return this.firstInputValueOffset;
-    }
-
-    public long firstInputValueSize() {
-        if (!(this.firstInputValueOffsetsInit()))
-            this.initFirstInputValueOffsets();
-
-        return this.firstInputValueSize;
-    }
-
-    public void closeFirstInputValueOffsets() {
-        if (!(this.firstInputValueOffsetsInit()))
-            return ;
-
-        this.closeFirstInputValueOffsetsDependants();
-        this.firstInputValueSize = -1;
-    }
-
-    public void closeFirstInputValueOffsetsDependants() {
-        CompiledMapQueryContext.this.inputFirstValueBytesValue.closeInputFirstValueBytesDataSizeDependants();
-        CompiledMapQueryContext.this.inputFirstValueBytesValue.closeInputFirstValueBytesDataGetUsingDependants();
-        CompiledMapQueryContext.this.closeSecondInputValueOffsets();
-    }
-
-    public long secondInputValueSize = -1;
-
-    public long secondInputValueOffset;
-
-    public boolean secondInputValueOffsetsInit() {
-        return (this.secondInputValueSize) >= 0;
-    }
-
-    private void initSecondInputValueOffsets() {
-        CompiledMapQueryContext.this.inputBytes().position(((firstInputValueOffset()) + (firstInputValueSize())));
-        secondInputValueSize = CompiledMapQueryContext.this.m().valueSizeMarshaller.readSize(CompiledMapQueryContext.this.inputBytes());
-        secondInputValueOffset = CompiledMapQueryContext.this.inputBytes().position();
-        this.closeSecondInputValueOffsetsDependants();
-    }
-
-    public long secondInputValueOffset() {
-        if (!(this.secondInputValueOffsetsInit()))
-            this.initSecondInputValueOffsets();
-
-        return this.secondInputValueOffset;
-    }
-
-    public long secondInputValueSize() {
-        if (!(this.secondInputValueOffsetsInit()))
-            this.initSecondInputValueOffsets();
-
-        return this.secondInputValueSize;
-    }
-
-    public void closeSecondInputValueOffsets() {
-        if (!(this.secondInputValueOffsetsInit()))
-            return ;
-
-        this.closeSecondInputValueOffsetsDependants();
-        this.secondInputValueSize = -1;
-    }
-
-    public void closeSecondInputValueOffsetsDependants() {
-        CompiledMapQueryContext.this.inputSecondValueBytesValue.closeInputSecondValueBytesDataSizeDependants();
-        CompiledMapQueryContext.this.inputSecondValueBytesValue.closeInputSecondValueBytesDataGetUsingDependants();
     }
 }
