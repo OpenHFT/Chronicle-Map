@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
+import java.io.UncheckedIOException;
 
 public final class CharSequenceReader<S extends CharSequence>
         implements BytesReader<S>, StatefulCopyable<CharSequenceReader<S>> {
@@ -83,9 +84,9 @@ public final class CharSequenceReader<S extends CharSequence>
     public S read(Bytes bytes, long size) {
         sb.setLength(0);
         try {
-            AbstractBytes.readUTF0(bytes, sb, (int) size);
+            ((AbstractBytes) bytes).readUTF0(sb, (int) size);
         } catch (IOException e) {
-            throw new IllegalStateException(e);
+            throw new UncheckedIOException(e);
         }
         return interner.intern(sb);
     }
@@ -105,9 +106,9 @@ public final class CharSequenceReader<S extends CharSequence>
             appendable = sb;
         }
         try {
-            AbstractBytes.readUTF0(bytes, appendable, (int) size);
+            ((AbstractBytes) bytes).readUTF0(appendable, (int) size);
         } catch (IOException e) {
-            throw new IllegalStateException(e);
+            throw new UncheckedIOException(e);
         }
         if (appendable == toReuse)
             return toReuse;
