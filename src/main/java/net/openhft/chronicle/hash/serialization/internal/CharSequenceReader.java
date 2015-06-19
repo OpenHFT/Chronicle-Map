@@ -108,7 +108,7 @@ public final class CharSequenceReader<S extends CharSequence>
         try {
             ((AbstractBytes) bytes).readUTF0(appendable, (int) size);
         } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            throw new IllegalStateException(e);
         }
         if (appendable == toReuse)
             return toReuse;
