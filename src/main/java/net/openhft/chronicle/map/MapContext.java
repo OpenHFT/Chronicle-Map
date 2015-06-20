@@ -22,11 +22,14 @@ import net.openhft.chronicle.hash.HashContext;
 import net.openhft.chronicle.hash.Data;
 
 /**
- * Context, in which {@link MapEntry MapEntries} are accessed.
+ * Context, in which {@link MapEntry MapEntries} are accessed. {@code MapContext} allows to access
+ * {@link MapEntryOperations}, configured for the accessed {@link ChronicleMap} via {@link
+ * ChronicleMapBuilder#entryOperations(MapEntryOperations)}. {@code MapContext} implements {@code
+ * MapEntryOperations} by delegation to the configured {@code entryOperations}.
  * 
  * @param <K> the map key type
  * @param <V> the map value type
- * @param <R> the return type of {@link MapEntryOperations} specialized for the queried map          
+ * @param <R> the return type of {@link MapEntryOperations} specified for the queried map
  */
 public interface MapContext<K, V, R> extends HashContext<K>, MapEntryOperations<K, V, R> {
     /**

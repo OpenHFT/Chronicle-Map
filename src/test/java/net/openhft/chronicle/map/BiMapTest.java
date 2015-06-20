@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 public class BiMapTest {
     
     enum DualLockSuccess {SUCCESS, FAIL}
-    
+
     static class BiMapMethods<K, V> implements MapMethods<K, V, DualLockSuccess> {
         @Override
         public void remove(MapQueryContext<K, V, DualLockSuccess> q, ReturnValue<V> returnValue) {
@@ -88,7 +88,7 @@ public class BiMapTest {
         }
 
         @Override
-        public boolean remove(MapQueryContext<K, V, DualLockSuccess> q, net.openhft.chronicle.hash.Data<V, ?> value) {
+        public boolean remove(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> value) {
             while (true) {
                 q.updateLock().lock();
                 MapEntry<K, V> entry = q.entry();
@@ -141,7 +141,7 @@ public class BiMapTest {
             throw new UnsupportedOperationException();
         }
     }
-    
+
     static class BiMapEntryOperations<K, V> implements MapEntryOperations<K, V, DualLockSuccess> {
         ChronicleMap<V, K> reverse;
 

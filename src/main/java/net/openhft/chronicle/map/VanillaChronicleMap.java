@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDivisor;
 
@@ -491,6 +492,23 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             methods.compute(q, remappingFunction, q.defaultReturnValue());
+            return q.defaultReturnValue().returnValue();
+        }
+    }
+
+    @Override
+    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            methods.computeIfAbsent(q, mappingFunction, q.defaultReturnValue());
+            return q.defaultReturnValue().returnValue();
+        }
+    }
+
+    @Override
+    public V computeIfPresent(K key,
+                              BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            methods.computeIfPresent(q, remappingFunction, q.defaultReturnValue());
             return q.defaultReturnValue().returnValue();
         }
     }

@@ -19,6 +19,8 @@
 package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.MapMethods;
+import net.openhft.chronicle.map.MapQueryContext;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +42,7 @@ public interface ChronicleHash<K, C extends KeyContext<K>, EQC extends ExternalH
      *
      * @return the file this {@link ChronicleMap} or {@link ChronicleSet} is mapped to,
      *         or {@code null} if it is not mapped to any file
-     * @see ChronicleHashBuilder#createPersistedTo(java.io.File)
+     * @see ChronicleHashBuilder#createPersistedTo(File)
      */
     File file();
 
@@ -57,9 +59,33 @@ public interface ChronicleHash<K, C extends KeyContext<K>, EQC extends ExternalH
      */
     Class<K> keyClass();
 
+    /**
+     * Returns the context to perform arbitrary operations with the given key in this map.
+     * Conventionally, try-with-resources block should wrap the returned context: <pre>{@code
+     * try (ExternalHashQueryContext<K> q = hash.queryContext(key)) {
+     *     // ... do something
+     * }}</pre>
+     * See {@link HashQueryContext} and {@link MapMethods} for a lot of inspiration about using this
+     * functionality.
+     *
+     * @param key the queried key
+     * @return the context to perform operations with the key
+     * @see HashQueryContext
+     * @see MapQueryContext
+     * @see ExternalHashQueryContext
+     * @see MapMethods
+     */
     @NotNull
     EQC queryContext(K key);
 
+    /**
+     * Equivalent to {@link #queryContext(Object)}, but accepts {@code Data} instead of key as
+     * an object. Useful, when you already have {@code Data}, calling this method instead of {@link
+     * #queryContext(Object)} might help to avoid unnecessary deserialization.
+     *
+     * @param key the queried key as {@code Data}
+     * @return the context to perform operations with the key
+     */
     @NotNull EQC queryContext(Data<K, ?> key);
     
     /**

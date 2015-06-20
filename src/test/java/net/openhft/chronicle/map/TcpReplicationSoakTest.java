@@ -26,12 +26,11 @@ public class TcpReplicationSoakTest {
 
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
-    private IntValue value;
     static int s_port = 8093;
 
     @Before
     public void setup() throws IOException {
-        value = DataValueClasses.newDirectReference(IntValue.class);
+        IntValue value = DataValueClasses.newDirectReference(IntValue.class);
         ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);

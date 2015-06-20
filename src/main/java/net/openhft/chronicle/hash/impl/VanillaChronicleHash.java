@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ExternalHashQueryContext;
 import net.openhft.chronicle.hash.KeyContext;

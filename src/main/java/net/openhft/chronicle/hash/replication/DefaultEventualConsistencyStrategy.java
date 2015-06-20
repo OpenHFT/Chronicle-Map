@@ -18,14 +18,13 @@
 
 package net.openhft.chronicle.hash.replication;
 
-import net.openhft.chronicle.hash.AcceptanceDecision;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.replication.SetRemoteOperations;
 
-import static net.openhft.chronicle.hash.AcceptanceDecision.ACCEPT;
-import static net.openhft.chronicle.hash.AcceptanceDecision.DISCARD;
+import static net.openhft.chronicle.hash.replication.AcceptanceDecision.ACCEPT;
+import static net.openhft.chronicle.hash.replication.AcceptanceDecision.DISCARD;
 
 /**
  * Specifies the default eventual consistency strategy for {@link ChronicleHashBuilder#replication(

@@ -16,25 +16,21 @@
  *  limitations under the License.
  */
 
-package net.openhft.chronicle.hash;
+package net.openhft.chronicle.hash.replication;
 
+import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.replication.SetRemoteOperations;
 
 /**
  * Decision, if {@link MapRemoteOperations remote modification operation} should be accepted
- * or discarded.
- * * 
- * @see MapRemoteOperations
- * @see SetRemoteOperations 
+ * or discarded. Used in {@link DefaultEventualConsistencyStrategy}.
  */
 public enum AcceptanceDecision {
     /**
      * Acceptance decision -- the remote modification operation is applied to the local
-     * {@link ChronicleHash} state. This decision should also been returned, when the actual
-     * state modification is not needed (for example, remote {@code remove entry} operation, while
-     * the entry is not present in the ChronicleHash locally), but the operation is generally
-     * considered acceptable.
+     * {@link ChronicleHash} state.
      */
     ACCEPT,
 

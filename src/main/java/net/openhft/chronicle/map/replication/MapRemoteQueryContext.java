@@ -18,9 +18,12 @@
 
 package net.openhft.chronicle.map.replication;
 
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.HashRemoteQueryContext;
 import net.openhft.chronicle.hash.replication.RemoteOperationContext;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEntryOperations;
 import net.openhft.chronicle.map.MapQueryContext;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @param <K> the map key type
  * @param <V> the map value type
- * @param <R> the return type of {@link MapEntryOperations} specialized for the queried map
+ * @param <R> the return type of {@link MapEntryOperations} specified for the queried map
  * @see MapRemoteOperations
  */
 public interface MapRemoteQueryContext<K, V, R> extends MapQueryContext<K, V, R>,
@@ -38,4 +41,18 @@ public interface MapRemoteQueryContext<K, V, R> extends MapQueryContext<K, V, R>
     @Nullable
     @Override
     MapReplicableEntry<K, V> entry();
+
+    /**
+     * The value used as a tombstone, for removed entries, to save space. This value has {@linkplain
+     * SizeMarshaller#minEncodableSize() minimum possible size} for {@linkplain
+     * ChronicleMapBuilder#valueSizeMarshaller(SizeMarshaller) the configured value size
+     * marshaller}.
+     *
+     * <p>The returned value doesn't have object form (i. e. it's {@link Data#get()} and {@link
+     * Data#getUsing(Object)} methods throw {@code UnsupportedOperationException}), it has only
+     * bytes form, of all zero bytes.
+     *
+     * @return dummy value of all zeros, of the minimum possible size.
+     */
+    Data<V, ?> dummyZeroValue();
 }

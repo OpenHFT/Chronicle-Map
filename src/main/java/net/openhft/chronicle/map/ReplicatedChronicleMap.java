@@ -102,9 +102,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     private transient long startOfModificationIterators;
     private boolean bootstrapOnlyLocalEntries;
     
-    // TODO init in builder
-    public transient MapRemoteOperations<K, V, R> remoteOperations =
-            DefaultSpi.mapRemoteOperations();
+    public transient MapRemoteOperations<K, V, R> remoteOperations;
     transient CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext;
     transient CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> remoteItContext;
 
@@ -113,6 +111,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             throws IOException {
         super(builder, true);
         this.timeProvider = builder.timeProvider();
+        this.remoteOperations = (MapRemoteOperations<K, V, R>) builder.remoteOperations;
 
         this.localIdentifier = replication.identifier();
         this.bootstrapOnlyLocalEntries = replication.bootstrapOnlyLocalEntries();
@@ -284,6 +283,19 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
                 modificationIterators.get((int) next).dropChange(segmentIndex, pos);
+            } catch (Exception e) {
+                LOG.error("", e);
+            }
+        }
+    }
+
+    public void moveChange(long segmentIndex, long oldPos, long newPos) {
+        for (long next = modIterSet.nextSetBit(0L); next > 0L;
+             next = modIterSet.nextSetBit(next + 1L)) {
+            try {
+                ModificationIterator modificationIterator = modificationIterators.get((int) next);
+                if (modificationIterator.dropChange(segmentIndex, oldPos))
+                    modificationIterator.raiseChange(segmentIndex, newPos);
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -515,9 +527,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             modificationNotifier.onChange();
         }
 
-        void dropChange(long segmentIndex, long pos) {
+        boolean dropChange(long segmentIndex, long pos) {
             LOG.debug("drop change: id {}, segment {}, pos {}", localIdentifier, segmentIndex, pos);
-            changesForUpdates.clear(combine(segmentIndex, pos));
+            return changesForUpdates.clearIfSet(combine(segmentIndex, pos));
         }
 
         /**

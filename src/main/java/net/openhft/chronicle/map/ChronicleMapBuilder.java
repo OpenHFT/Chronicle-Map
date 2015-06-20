@@ -28,6 +28,7 @@ import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
+import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.Maths;
 import net.openhft.lang.io.Bytes;
@@ -168,6 +169,7 @@ public final class ChronicleMapBuilder<K, V> implements
     
     MapMethods<K, V, ?> methods = DefaultSpi.mapMethods();
     MapEntryOperations<K, V, ?> entryOperations = mapEntryOperations();
+    MapRemoteOperations<K, V, ?> remoteOperations = mapRemoteOperations();
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass, SerializationBuilder.Role.KEY);
@@ -1495,8 +1497,8 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     /**
-     * Inject your SPI code around basic {@code ChronicleMap}'s operations with present entries:
-     * removing entries and replacing the entries' value.
+     * Inject your SPI code around basic {@code ChronicleMap}'s operations with entries:
+     * removing entries, replacing the entries' value and inserting the new entry.
      * 
      * This affects behaviour of ordinary map.put(), map.remove(), etc. calls, as well as removes
      * and replacing values <i>during iterations</i>, <i>remote map calls</i> and
@@ -1518,6 +1520,13 @@ public final class ChronicleMapBuilder<K, V> implements
     public ChronicleMapBuilder<K, V> mapMethods(MapMethods<K, V, ?> mapMethods) {
         Objects.requireNonNull(mapMethods);
         this.methods = mapMethods;
+        return this;
+    }
+
+    public ChronicleMapBuilder<K, V> remoteOperations(
+            MapRemoteOperations<K, V, ?> remoteOperations) {
+        Objects.requireNonNull(remoteOperations);
+        this.remoteOperations = remoteOperations;
         return this;
     }
 }
