@@ -108,8 +108,7 @@ public class LongValue$$Native implements LongValue, BytesMarshallable, Byteable
         if (!(o instanceof LongValue)) return false;
         LongValue that = (LongValue) o;
 
-        if (!isEqual(getValue(), that.getValue())) return false;
-        return true;
+        return isEqual(getValue(), that.getValue());
     }
 
     public String toString() {

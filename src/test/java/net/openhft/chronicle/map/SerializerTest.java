@@ -160,9 +160,8 @@ public class SerializerTest {
 
             MyTestClassExternalizable that = (MyTestClassExternalizable) o;
 
-            if (a != that.a) return false;
+            return a == that.a;
 
-            return true;
         }
 
         @Override
@@ -195,9 +194,8 @@ public class SerializerTest {
 
             MyTestClass myTestClass = (MyTestClass) o;
 
-            if (a != myTestClass.a) return false;
+            return a == myTestClass.a;
 
-            return true;
         }
 
         @Override
@@ -227,9 +225,8 @@ public class SerializerTest {
 
             MyTestClassMarshallable that = (MyTestClassMarshallable) o;
 
-            if (a != that.a) return false;
+            return a == that.a;
 
-            return true;
         }
 
         @Override
@@ -269,10 +266,8 @@ public class SerializerTest {
 
             MyTestClassObjectGraph that = (MyTestClassObjectGraph) o;
 
-            if (delegate != null ? !delegate.equals(that.delegate) : that.delegate != null)
-                return false;
+            return !(delegate != null ? !delegate.equals(that.delegate) : that.delegate != null);
 
-            return true;
         }
 
         @Override

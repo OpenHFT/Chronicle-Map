@@ -73,7 +73,7 @@ interface MultiMap {
 
     void forEach(EntryConsumer action);
 
-    static interface EntryConsumer {
+    interface EntryConsumer {
         void accept(long key, long value);
     }
 }

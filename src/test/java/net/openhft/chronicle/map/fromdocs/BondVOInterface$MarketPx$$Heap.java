@@ -116,8 +116,7 @@ public class BondVOInterface$MarketPx$$Heap implements MarketPx, BytesMarshallab
         if(!isEqual(getBidPx(), that.getBidPx())) return false;
         if(!isEqual(getCallPx(), that.getCallPx())) return false;
         if(!isEqual(getMaturityPx(), that.getMaturityPx())) return false;
-        if(!isEqual(getParPx(), that.getParPx())) return false;
-        return true;
+        return isEqual(getParPx(), that.getParPx());
     }
 
     public String toString() {

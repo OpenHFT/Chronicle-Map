@@ -139,7 +139,7 @@ public class BondVOInterface$$Native
         this._bytes = bytes;
         this._offset = offset;
         for (int i = 0; i < 7; i++){
-            ((Byteable) _marketPxIntraDayHistory[i]).bytes(bytes,
+            _marketPxIntraDayHistory[i].bytes(bytes,
                     _offset + MARKETPXINTRADAYHISTORY + (i * 40));
         }
     }
@@ -189,8 +189,7 @@ public class BondVOInterface$$Native
             if(!isEqual(getMarketPxIntraDayHistoryAt(i), that.getMarketPxIntraDayHistoryAt(i)))
                 return false;
         }
-        if(!isEqual(getSymbol(), that.getSymbol())) return false;
-        return true;
+        return isEqual(getSymbol(), that.getSymbol());
     }
 
     public String toString() {

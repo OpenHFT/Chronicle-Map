@@ -134,9 +134,9 @@ public class TcpTimeBasedReplicationSoakTest {
             final ChronicleMap<Integer, CharSequence> map = rnd.nextBoolean() ? map1 : map2;
 
             if (rnd.nextBoolean()) {
-                map.put((int) rnd.nextInt(100), "test" + j);
+                map.put(rnd.nextInt(100), "test" + j);
             } else {
-                map.remove((int) rnd.nextInt(100));
+                map.remove(rnd.nextInt(100));
             }
 
         }

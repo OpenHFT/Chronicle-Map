@@ -160,8 +160,7 @@ public class BondVOInterface$$Heap implements BondVOInterface, BytesMarshallable
         for (int i = 0; i <7; i++) {
             if(!isEqual(getMarketPxIntraDayHistoryAt(i), that.getMarketPxIntraDayHistoryAt(i))) return false;
         }
-        if(!isEqual(getSymbol(), that.getSymbol())) return false;
-        return true;
+        return isEqual(getSymbol(), that.getSymbol());
     }
 
     public String toString() {

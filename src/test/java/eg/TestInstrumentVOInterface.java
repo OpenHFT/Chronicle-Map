@@ -24,38 +24,36 @@ import net.openhft.lang.model.constraints.MaxSize;
 public interface TestInstrumentVOInterface {
 
 
-    public int getSizeOfInstrumentIDArray();
+    int getSizeOfInstrumentIDArray();
 
-    public void setSizeOfInstrumentIDArray(int sizeOfInstrumentIDArray);
-
-
-    public String getSymbol();
-
-    public void setSymbol(@MaxSize(20) String symbol);
+    void setSizeOfInstrumentIDArray(int sizeOfInstrumentIDArray);
 
 
+    String getSymbol();
+
+    void setSymbol(@MaxSize(20) String symbol);
 
 
-    public String getCurrencyCode();
+    String getCurrencyCode();
 
-    public void setCurrencyCode(@MaxSize(4) String currencyCode);
+    void setCurrencyCode(@MaxSize(4) String currencyCode);
 
 
-    public void setInstrumentIDAt(@MaxSize(2) int location, TestInstrumentIDVOInterface instrumentID);
+    void setInstrumentIDAt(@MaxSize(2) int location, TestInstrumentIDVOInterface instrumentID);
 
-    public TestInstrumentIDVOInterface getInstrumentIDAt(int location);
+    TestInstrumentIDVOInterface getInstrumentIDAt(int location);
 
 
     interface TestInstrumentIDVOInterface {
 
 
-        public String getIdSource();
+        String getIdSource();
 
-        public void setIdSource(@MaxSize(6) String idSource);
+        void setIdSource(@MaxSize(6) String idSource);
 
-        public String getSecurityId();
+        String getSecurityId();
 
-        public void setSecurityId(@MaxSize(100) String securityId);
+        void setSecurityId(@MaxSize(100) String securityId);
 
     }
 }

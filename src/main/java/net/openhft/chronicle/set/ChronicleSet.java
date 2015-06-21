@@ -21,5 +21,5 @@ import net.openhft.chronicle.hash.ChronicleHash;
 import java.util.Set;
 
 public interface ChronicleSet<E> extends Set<E>, ChronicleHash {
-    public long longSize();
+    long longSize();
 }

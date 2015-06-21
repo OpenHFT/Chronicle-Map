@@ -610,9 +610,8 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
         AddressAndPort that = (AddressAndPort) o;
 
         if (port != that.port) return false;
-        if (!Arrays.equals(address, that.address)) return false;
+        return Arrays.equals(address, that.address);
 
-        return true;
     }
 
     @Override
@@ -890,9 +889,8 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             ProposedNodes that = (ProposedNodes) o;
 
             if (identifier != that.identifier) return false;
-            if (!addressAndPort.equals(that.addressAndPort)) return false;
+            return addressAndPort.equals(that.addressAndPort);
 
-            return true;
         }
 
         @Override

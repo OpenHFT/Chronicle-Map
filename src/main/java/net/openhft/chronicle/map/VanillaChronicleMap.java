@@ -745,7 +745,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         "instance in the usual way.", e);
 
             try {
-                return (T) aClass.newInstance();
+                return aClass.newInstance();
             } catch (Exception e1) {
                 throw new IllegalStateException("It has not been possible to create a instance " +
                         "of class=" + aClass.getSimpleName() +
@@ -1022,7 +1022,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         @Override
         public DelegatingMetaBytesInterop<Bytes, BytesInterop<Bytes>> getMetaValueInterop(
                 @NotNull ThreadLocalCopies copies, BytesInterop<Bytes> valueInterop, Bytes value) {
-            return DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance();
+            return DelegatingMetaBytesInterop.instance();
         }
 
         @Override

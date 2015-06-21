@@ -114,7 +114,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 5000)
     public void testGet() throws IOException {
         try (ChronicleMap map = map5()) {
-            assertEquals("A", (String) map.get(one));
+            assertEquals("A", map.get(one));
             try (ChronicleMap empty = newStrStrMap(8078)) {
                 assertNull(map.get(notPresent));
             }

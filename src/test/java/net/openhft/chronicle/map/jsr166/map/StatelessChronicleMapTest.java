@@ -386,7 +386,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 10000)
     public void testGet() throws IOException {
         try (ChronicleMap map = map5(s_port++)) {
-            assertEquals("A", (String) map.get(one));
+            assertEquals("A", map.get(one));
             try (ChronicleMap empty = newStrStrMap(8078)) {
                 assertNull(map.get(notPresent));
             }

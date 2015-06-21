@@ -33,7 +33,7 @@ public final class ChronicleHashErrorListeners {
      * We can add some configuration-on-the-first-call in the future.
      */
 
-    private static enum LoggingErrorListener implements ChronicleHashErrorListener {
+    private enum LoggingErrorListener implements ChronicleHashErrorListener {
         INSTANCE;
 
         @Override
@@ -52,7 +52,7 @@ public final class ChronicleHashErrorListeners {
         }
     }
 
-    private static enum ThrowingErrorListener implements ChronicleHashErrorListener {
+    private enum ThrowingErrorListener implements ChronicleHashErrorListener {
         INSTANCE;
 
         @Override

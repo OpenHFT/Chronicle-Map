@@ -102,7 +102,7 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
         if (r1 != null)
             Assert.assertEquals(r1.toString(), r2.toString());
 
-        return (R) r1;
+        return r1;
     }
 
     @Override

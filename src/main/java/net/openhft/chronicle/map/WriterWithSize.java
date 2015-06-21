@@ -113,5 +113,5 @@ interface BufferResizer {
      * @param newCapacity
      * @return the newly resize buffer
      */
-    public Bytes resizeBuffer(int newCapacity);
+    Bytes resizeBuffer(int newCapacity);
 }

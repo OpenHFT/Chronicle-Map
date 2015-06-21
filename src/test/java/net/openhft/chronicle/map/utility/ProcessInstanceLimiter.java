@@ -458,14 +458,14 @@ public class ProcessInstanceLimiter implements Runnable {
      * The Callback interface holds all the calls that can be made by the
      * process instance limiter.
      */
-    public static interface Callback {
+    public interface Callback {
         /**
          * Called when there are already the specified number of processes of
          * the given type running, and this process is one too many.
          *
          * @param processType - the name of the type of process being limited
          */
-        public void tooManyProcessesOfType(String processType);
+        void tooManyProcessesOfType(String processType);
 
         /**
          * Called when there is a lock conflict in the limiter
@@ -474,7 +474,7 @@ public class ProcessInstanceLimiter implements Runnable {
          * @param processType - the name of the type of process being limited
          * @param index       - the slot number held by the other process
          */
-        public void lockConflictDetected(String processType, int index);
+        void lockConflictDetected(String processType, int index);
 
         /**
          * Called when another process has started and successfully acquired a
@@ -484,7 +484,7 @@ public class ProcessInstanceLimiter implements Runnable {
          * @param slot        - the slot number held by the other process
          * @param startTime   - the start timestamp of the other process
          */
-        public void anotherProcessHasStartedOnSlot(String processType, int slot, long startTime);
+        void anotherProcessHasStartedOnSlot(String processType, int slot, long startTime);
 
         /**
          * Called when this process has started and successfully acquired a slot
@@ -493,7 +493,7 @@ public class ProcessInstanceLimiter implements Runnable {
          * @param processType - the name of the type of process being limited
          * @param slot        - the slot number held by this process
          */
-        public void thisProcessOfTypeHasStartedAtSlot(String processType, int slot);
+        void thisProcessOfTypeHasStartedAtSlot(String processType, int slot);
 
         /**
          * Called if the process was started but there was no data defined in
@@ -501,7 +501,7 @@ public class ProcessInstanceLimiter implements Runnable {
          *
          * @param processType - the name of the type of process being limited
          */
-        public void noDefinitionForProcessesOfType(String processType);
+        void noDefinitionForProcessesOfType(String processType);
 
         /**
          * Called when another process somehow managed to steal the slot that
@@ -510,7 +510,7 @@ public class ProcessInstanceLimiter implements Runnable {
          * @param processType - the name of the type of process being limited
          * @param slot        - the slot number held by this process
          */
-        public void anotherProcessHasHijackedThisSlot(String processType, int slot);
+        void anotherProcessHasHijackedThisSlot(String processType, int slot);
     }
 
     /**
@@ -519,7 +519,7 @@ public class ProcessInstanceLimiter implements Runnable {
      *
      * The Timelock field is just for locking the time field
      */
-    public static interface Data {
+    public interface Data {
         void setTimeAt(@MaxSize(50) int index, long time);
 
         long getTimeAt(int index);

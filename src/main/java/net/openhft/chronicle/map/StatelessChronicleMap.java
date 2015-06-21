@@ -98,7 +98,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         }
     };
 
-    static enum EventId {
+    enum EventId {
         HEARTBEAT,
         STATEFUL_UPDATE,
         LONG_SIZE,
@@ -551,7 +551,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
             final long sizeLocation = writeEventAnSkip(GET);
 
-            copies = writeKey((K) key);
+            copies = writeKey(key);
             transactionId = send(sizeLocation, startTime);
         } finally {
             outBytesLock.unlock();
@@ -560,7 +560,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         if (eventReturnsNull(GET))
             return null;
 
-        return (V) readValue(transactionId, startTime, copies, usingValue);
+        return readValue(transactionId, startTime, copies, usingValue);
 
     }
 

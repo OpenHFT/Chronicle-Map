@@ -36,9 +36,9 @@ public class RecursiveRefereneChMapTest {
                 .objectSerializer(JDKObjectSerializer.INSTANCE).create();
         map.put("Test", new StupidCycle());
         map.put("Test2", new StupidCycle2());
-        StupidCycle cycle = (StupidCycle) map.get("Test");
+        StupidCycle cycle = map.get("Test");
         assertSame(cycle, cycle.cycle[0]);
-        StupidCycle cycle2 = (StupidCycle) map.get("Test2");
+        StupidCycle cycle2 = map.get("Test2");
         assertSame(cycle2, cycle2.cycle[0]);
     }
 

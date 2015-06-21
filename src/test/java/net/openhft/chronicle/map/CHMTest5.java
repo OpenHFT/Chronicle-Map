@@ -229,14 +229,14 @@ public class CHMTest5 {
         }
     }
 
-    public static interface CHMTest5Data {
-        public int getMaxNumberOfProcessesAllowed();
+    public interface CHMTest5Data {
+        int getMaxNumberOfProcessesAllowed();
 
-        public void setMaxNumberOfProcessesAllowed(int max);
+        void setMaxNumberOfProcessesAllowed(int max);
 
-        public void setTimeAt(@MaxSize(4) int index, long time);
+        void setTimeAt(@MaxSize(4) int index, long time);
 
-        public long getTimeAt(int index);
+        long getTimeAt(int index);
 
         boolean compareAndSwapMaxNumberOfProcessesAllowed(int expected, int value);
 

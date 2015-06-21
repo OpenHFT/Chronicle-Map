@@ -183,7 +183,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testGet() throws IOException {
         ChronicleMap map = map5();
-        assertEquals("A", (String) map.get(JSR166TestCase.one));
+        assertEquals("A", map.get(JSR166TestCase.one));
         ChronicleMap empty = newShmIntString();
         assertNull(map.get(JSR166TestCase.notPresent));
     }

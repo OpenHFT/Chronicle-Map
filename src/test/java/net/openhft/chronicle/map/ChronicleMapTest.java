@@ -1259,7 +1259,7 @@ public class ChronicleMapTest {
 
     @Test
     public void mapRemoveReflectedInViews() throws IOException {
-        try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3);) {
+        try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
             Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
             Set<Integer> keySet = map.keySet();
             Collection<CharSequence> values = map.values();

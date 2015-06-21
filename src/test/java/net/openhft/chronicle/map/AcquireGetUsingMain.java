@@ -82,7 +82,7 @@ public class AcquireGetUsingMain {
         System.out.println("2 " + data.getTimeAt(1));
     }
 
-    public static interface Data {
+    public interface Data {
         void setTimeAt(@MaxSize(8) int index, long time);
 
         long getTimeAt(int index);

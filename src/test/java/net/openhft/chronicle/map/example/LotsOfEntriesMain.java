@@ -99,7 +99,7 @@ public class LotsOfEntriesMain {
 }
 
 interface MyFloats {
-    public void setValueAt(@MaxSize(6) int index, float f);
+    void setValueAt(@MaxSize(6) int index, float f);
 
-    public float getValueAt(int index);
+    float getValueAt(int index);
 }

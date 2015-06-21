@@ -126,8 +126,7 @@ public class IntValue$$Native implements IntValue, BytesMarshallable, Byteable, 
         if (!(o instanceof IntValue)) return false;
         IntValue that = (IntValue) o;
 
-        if (!isEqual(getValue(), that.getValue())) return false;
-        return true;
+        return isEqual(getValue(), that.getValue());
     }
 
     public String toString() {

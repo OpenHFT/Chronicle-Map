@@ -270,7 +270,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     Object remoteRemove(K key,
                         final byte remoteIdentifier, long timeStamp) {
         checkKey(key);
-        K key1 = (K) key;
+        K key1 = key;
         ThreadLocalCopies copies = SegmentState.getCopies(null);
         SegmentState segmentState = SegmentState.get(copies);
         KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
@@ -284,7 +284,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         segment.writeLock();
         try {
             return segment.removeWithoutLock(copies, segmentState, metaKeyInterop, keyInterop, key1,
-                    keySize, keyIdentity(), this, (V) null, valueIdentity(), segmentHash, this,
+                    keySize, keyIdentity(), this, null, valueIdentity(), segmentHash, this,
                     removeReturnsNull, timeStamp, remoteIdentifier, true, false);
         } finally {
             segment.writeUnlock();

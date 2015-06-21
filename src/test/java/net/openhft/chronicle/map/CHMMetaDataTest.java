@@ -82,7 +82,7 @@ public class CHMMetaDataTest {
 
         @Override
         public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean replicationEvent) {
-            System.out.println("Removed entry with ts of " + entry.readLong(metaDataPos));;
+            System.out.println("Removed entry with ts of " + entry.readLong(metaDataPos));
         }
     }
 }

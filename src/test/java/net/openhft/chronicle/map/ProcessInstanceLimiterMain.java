@@ -127,9 +127,9 @@ public class ProcessInstanceLimiterMain implements Runnable {
     }
 
     public interface Callback {
-        public void tooManyProcessesOfType(String processType);
+        void tooManyProcessesOfType(String processType);
 
-        public void noDefinitionForProcessesOfType(String processType);
+        void noDefinitionForProcessesOfType(String processType);
     }
 
     public static class Data implements Serializable {
