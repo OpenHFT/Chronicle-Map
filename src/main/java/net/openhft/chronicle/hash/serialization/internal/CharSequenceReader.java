@@ -85,7 +85,7 @@ public final class CharSequenceReader<S extends CharSequence>
     public S read(Bytes bytes, long size) {
         sb.setLength(0);
         try {
-            ((AbstractBytes) bytes).readUTF0(sb, (int) size);
+            AbstractBytes.readUTF0(bytes, sb, (int) size);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -107,7 +107,7 @@ public final class CharSequenceReader<S extends CharSequence>
             appendable = sb;
         }
         try {
-            ((AbstractBytes) bytes).readUTF0(appendable, (int) size);
+            AbstractBytes.readUTF0(bytes, appendable, (int) size);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
