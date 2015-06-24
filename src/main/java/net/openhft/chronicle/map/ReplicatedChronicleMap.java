@@ -437,7 +437,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 key, segmentHash, timestamp, remoteIdentifier);
     }
 
- 
 
     @Override
     public byte identifier() {
@@ -506,12 +505,16 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             @Override
             public void setModificationNotifier(
                     @NotNull final EngineReplicationModificationNotifier modificationNotifier) {
-                modificationIterator.setModificationNotifier(toModificationNotifier());
+                modificationIterator.setModificationNotifier(new ModificationNotifier() {
+
+                    @Override
+                    public void onChange() {
+                        modificationNotifier.onChange();
+                    }
+                });
             }
 
-            private ModificationNotifier toModificationNotifier() {
-                return null;
-            }
+
         };
 
     }
@@ -1177,7 +1180,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         /**
          * Used only with replication, its sometimes possible to receive an old ( or stale update )
          * from a remote map. This method is used to determine if we should ignore such updates.
-         *
+         * <p/>
          * <p>We can reject put() and removes() when comparing times stamps with remote systems
          *
          * @param entry      the maps entry
