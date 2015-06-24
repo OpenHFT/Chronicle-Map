@@ -69,7 +69,7 @@ public interface MapMethods<K, V, R> {
      *     q.insert(q.absentEntry(), value);
      * }}</pre>
      */
-    default void put(MapQueryContext<K, V, R> q, Data<V, ?> value, ReturnValue<V> returnValue) {
+    default void put(MapQueryContext<K, V, R> q, Data<V> value, ReturnValue<V> returnValue) {
         // We cannot read the previous value under read lock, because then we will need
         // to release the read lock -> acquire write lock, the value might be updated in
         // between, that will break ConcurrentMap.put() atomicity guarantee. So, we acquire
@@ -108,7 +108,7 @@ public interface MapMethods<K, V, R> {
      * }</pre>
      */
     default void putIfAbsent(MapQueryContext<K, V, R> q,
-                             Data<V, ?> value, ReturnValue<V> returnValue) {
+                             Data<V> value, ReturnValue<V> returnValue) {
         if (tryReturnCurrentValueIfPresent(q, returnValue))
             return;
         // Key is absent
@@ -234,7 +234,7 @@ public interface MapMethods<K, V, R> {
      *
      * @return if the entry was removed
      */
-    default boolean remove(MapQueryContext<K, V, R> q, Data<V, ?> value) {
+    default boolean remove(MapQueryContext<K, V, R> q, Data<V> value) {
         // remove(key, value) should find the entry & remove most of the time,
         // so don't try to check key presence and value equivalence under read lock first,
         // as in putIfAbsent()/acquireUsing(), start with update lock:
@@ -263,7 +263,7 @@ public interface MapMethods<K, V, R> {
      * }}</pre>
      */
     default void replace(MapQueryContext<K, V, R> q,
-                         Data<V, ?> value, ReturnValue<V> returnValue) {
+                         Data<V> value, ReturnValue<V> returnValue) {
         // replace(key, value) should find the key & put the value most of the time,
         // so don't try to check key presence under read lock first,
         // as in putIfAbsent()/acquireUsing(), start with update lock:
@@ -294,7 +294,7 @@ public interface MapMethods<K, V, R> {
      * @return if the entry was replaced
      */
     default boolean replace(MapQueryContext<K, V, R> q,
-                            Data<V, ?> oldValue, Data<V, ?> newValue) {
+                            Data<V> oldValue, Data<V> newValue) {
         // replace(key, old, new) should find the entry & put new value most of the time,
         // so don't try to check key presence and value equivalence under read lock first,
         // as in putIfAbsent()/acquireUsing(), start with update lock:
@@ -337,7 +337,7 @@ public interface MapMethods<K, V, R> {
         V oldValue = entry != null ? entry.value().get() : null;
         V newValue = remappingFunction.apply(q.queriedKey().get(), oldValue);
         if (newValue != null) {
-            Data<V, ?> newValueData = q.wrapValueAsValue(newValue);
+            Data<V> newValueData = q.wrapValueAsValue(newValue);
             if (entry != null) {
                 q.replaceValue(entry, newValueData);
             } else {
@@ -409,11 +409,11 @@ public interface MapMethods<K, V, R> {
      * returnValue.returnValue(entry.value());
      * }</pre>
      */
-    default void merge(MapQueryContext<K, V, R> q, Data<V, ?> value,
+    default void merge(MapQueryContext<K, V, R> q, Data<V> value,
                        BiFunction<? super V, ? super V, ? extends V> remappingFunction,
                        ReturnValue<V> returnValue) {
         q.updateLock().lock();
-        Data<V, ?> newValueData;
+        Data<V> newValueData;
         MapEntry<K, V> entry = q.entry();
         if (entry != null) {
             V oldValue = entry.value().get();

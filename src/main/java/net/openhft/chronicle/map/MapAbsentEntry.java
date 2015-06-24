@@ -49,7 +49,7 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
      * operation are not met
      * @see MapEntryOperations#insert(MapAbsentEntry, Data)
      */
-    void doInsert(Data<V, ?> value);
+    void doInsert(Data<V> value);
 
     /**
      * Returns the <i>default</i> (or <i>nil</i>) value, that should be inserted into the map in
@@ -63,5 +63,5 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
      * @see MapEntryOperations#defaultValue(MapAbsentEntry)
      */
     @NotNull
-    Data<V, ?> defaultValue();
+    Data<V> defaultValue();
 }

@@ -142,7 +142,7 @@ public interface HashQueryContext<K> extends HashContext<K>, InterProcessReadWri
     /**
      * Returns the queried key as a {@code Data}.
      */
-    Data<K, ?> queriedKey();
+    Data<K> queriedKey();
 
     /**
      * Returns the entry context, if the entry with the queried key is <i>present</i>

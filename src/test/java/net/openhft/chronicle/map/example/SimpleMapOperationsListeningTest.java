@@ -31,22 +31,22 @@ public class SimpleMapOperationsListeningTest {
         }
 
         @Override
-        public Void replaceValue(@NotNull MapEntry<K, V> entry, Data<V, ?> newValue) {
+        public Void replaceValue(@NotNull MapEntry<K, V> entry, Data<V> newValue) {
             System.out.println("replace " + entry.key() + ": " + entry.value() + " -> " + newValue);
             entry.doReplaceValue(newValue);
             return null;
         }
 
         @Override
-        public Void insert(@NotNull MapAbsentEntry<K, V> absentEntry, Data<V, ?> value) {
+        public Void insert(@NotNull MapAbsentEntry<K, V> absentEntry, Data<V> value) {
             System.out.println("insert " + absentEntry.absentKey() + " -> " + value);
             absentEntry.doInsert(value);
             return null;
         }
 
         @Override
-        public Data<V, ?> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
-            Data<V, ?> defaultValue = absentEntry.defaultValue();
+        public Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
+            Data<V> defaultValue = absentEntry.defaultValue();
             System.out.println("default " + absentEntry.absentKey() + " -> " + defaultValue);
             return defaultValue;
         }

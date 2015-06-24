@@ -130,7 +130,7 @@ public interface MapEntryOperations<K, V, R> {
      * @throws RuntimeException if value replacement was unconditionally unsuccessful due
      * to any reason
      */
-    default R replaceValue(@NotNull MapEntry<K, V> entry, Data<V, ?> newValue) {
+    default R replaceValue(@NotNull MapEntry<K, V> entry, Data<V> newValue) {
         entry.doReplaceValue(newValue);
         return null;
     }
@@ -146,7 +146,7 @@ public interface MapEntryOperations<K, V, R> {
      * operation are not met
      * @throws RuntimeException if insertion was unconditionally unsuccessful due to any reason
      */
-    default R insert(@NotNull MapAbsentEntry<K, V> absentEntry, Data<V, ?> value) {
+    default R insert(@NotNull MapAbsentEntry<K, V> absentEntry, Data<V> value) {
         absentEntry.doInsert(value);
         return null;
     }
@@ -158,7 +158,7 @@ public interface MapEntryOperations<K, V, R> {
      *
      * @implNote simply delegates to {@link MapAbsentEntry#defaultValue()}.
      */
-    default Data<V, ?> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
+    default Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
         return absentEntry.defaultValue();
     }
 }

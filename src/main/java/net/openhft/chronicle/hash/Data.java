@@ -18,14 +18,18 @@
 
 package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.bytes.*;
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
+import net.openhft.chronicle.bytes.BytesUtil;
+import net.openhft.chronicle.bytes.RandomDataInput;
+import net.openhft.chronicle.bytes.RandomDataOutput;
 import org.jetbrains.annotations.Nullable;
+
+import static net.openhft.chronicle.algo.bytes.Access.checkedRandomDataInputAccess;
 
 /**
  * Dual bytes/object access to keys/values/elements.
  * 
- * <p>Bytes access: {@link #access()} + {@link #handle()} + {@link #offset()} + {@link #size()}.
+ * <p>Bytes access: {@link #bytes()} + {@link #offset()} + {@link #size()}.
  * 
  * <p>Object access: {@link #get()}. 
  * 
@@ -34,19 +38,10 @@ import org.jetbrains.annotations.Nullable;
  * accordingly. 
  *  
  * @param <V> type of the accessed objects
- * @param <T> type of the handle for bytes access
  */
-public interface Data<V, T> {
+public interface Data<V> {
 
-    /**
-     * Returns access to the value's bytes.
-     */
-    ReadAccess<T> access();
-
-    /**
-     * Returns a handle to access the value's bytes.
-     */
-    T handle();
+    RandomDataInput bytes();
 
     /**
      * Returns the offset to the value's bytes.
@@ -59,33 +54,15 @@ public interface Data<V, T> {
     long size();
 
     default long hash(LongHashFunction f) {
-        return f.hash(handle(), access(), offset(), size());
+        return f.hash(bytes(), checkedRandomDataInputAccess(), offset(), size());
     }
 
-    default <T2> boolean equivalent(ReadAccess<T2> access, T2 handle, long offset) {
-        return Access.equivalent(access(), handle(), offset(), access, handle, offset, size());
+    default boolean equivalent(RandomDataInput source, long sourceOffset) {
+        return BytesUtil.bytesEqual(source, sourceOffset, bytes(), offset(), size());
     }
 
-    default <S, T2, A extends ReadAccess<T2>> boolean equivalent(
-            Accessor<S, T2, A> accessor, S source, long index) {
-        return equivalent(accessor.access(source), accessor.handle(source),
-                accessor.offset(source, index));
-    }
-
-    default <T2> void writeTo(WriteAccess<T2> targetAccess, T2 target, long targetOffset) {
-        Access.copy(access(), handle(), offset(), targetAccess, target, targetOffset, size());
-    }
-
-    default <T2> void writeTo(StreamingDataOutput<?, ?, T2> output) {
-        long offset = output.accessPositionOffset();
-        output.skip(size());
-        writeTo(output.access(), output.accessHandle(), offset);
-    }
-
-    default <S, T2, A extends WriteAccess<T2>> void writeTo(
-            Accessor<S, T2, A> targetAccessor, S target, long index) {
-        writeTo(targetAccessor.access(target), targetAccessor.handle(target),
-                targetAccessor.offset(target, index));
+    default  void writeTo(RandomDataOutput target, long targetOffset) {
+        target.write(targetOffset, bytes(), offset(), size());
     }
 
     /**
@@ -102,10 +79,9 @@ public interface Data<V, T> {
      */
     V getUsing(@Nullable V usingInstance);
 
-    static <T1, T2> boolean bytesEquivalent(Data<?, T1> v1, Data<?, T2> v2) {
-        if (v1.size() != v2.size())
+    static boolean bytesEquivalent(Data<?> d1, Data<?> d2) {
+        if (d1.size() != d2.size())
             return false;
-        return Access.equivalent(v1.access(), v1.handle(), v1.offset(),
-                v2.access(), v2.handle(), v2.offset(), v1.size());
+        return BytesUtil.bytesEqual(d1.bytes(), d1.offset(), d2.bytes(), d2.offset(), d1.size());
     }
 }
