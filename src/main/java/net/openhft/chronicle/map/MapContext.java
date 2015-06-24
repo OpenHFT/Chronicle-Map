@@ -55,5 +55,5 @@ public interface MapContext<K, V, R> extends HashContext<K>, MapEntryOperations<
      * @param value the value object to wrap
      * @return the value as {@code Data}
      */
-    Data<V, ?> wrapValueAsValue(V value);
+    Data<V> wrapValueAsValue(V value);
 }

@@ -34,32 +34,21 @@ public class MarkTest {
 
     @Test(timeout = 25000)
     public void inMemoryTest() {
-        test(new SerializableFunction<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>() {
-            @Override
-            public ChronicleMap<Integer, Integer> apply(
-                    ChronicleMapBuilder<Integer, Integer> builder) {
-                return builder.create();
-            }
-        });
+        test(builder -> builder.create());
     }
 
-    @Test(timeout = 25000)
+    @Test
     public void persistedTest() {
         int rnd = new Random().nextInt();
         final File db = Paths.get(System.getProperty("java.io.tmpdir"), "mark" + rnd).toFile();
         if (db.exists())
             db.delete();
         try {
-            test(new SerializableFunction<ChronicleMapBuilder<Integer, Integer>,
-                                ChronicleMap<Integer, Integer>>() {
-                @Override
-                public ChronicleMap<Integer, Integer> apply(
-                        ChronicleMapBuilder<Integer, Integer> builder) {
-                    try {
-                        return builder.createPersistedTo(db);
-                    } catch (IOException e) {
-                        throw new AssertionError(e);
-                    }
+            test(builder -> {
+                try {
+                    return builder.createPersistedTo(db);
+                } catch (IOException e) {
+                    throw new AssertionError(e);
                 }
             });
             System.out.println(MemoryUnit.BYTES.toMegabytes(db.length()) + " MB");

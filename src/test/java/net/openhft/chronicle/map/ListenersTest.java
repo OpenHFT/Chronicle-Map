@@ -23,13 +23,13 @@ public class ListenersTest {
             return MapEntryOperations.super.remove(entry);
         }
         @Override
-        public Void replaceValue(@NotNull MapEntry<K, V> entry, Data<V, ?> newValue) {
+        public Void replaceValue(@NotNull MapEntry<K, V> entry, Data<V> newValue) {
             replaceValueCount.incrementAndGet();
             return MapEntryOperations.super.replaceValue(entry, newValue);
         }
 
         @Override
-        public Void insert(@NotNull MapAbsentEntry<K, V> absentEntry, Data<V, ?> value) {
+        public Void insert(@NotNull MapAbsentEntry<K, V> absentEntry, Data<V> value) {
             insertCount.incrementAndGet();
             return MapEntryOperations.super.insert(absentEntry, value);
         }
@@ -152,7 +152,7 @@ public class ListenersTest {
                         .mapMethods(new MapMethods<Integer, Integer, Void>() {
                             @Override
                             public void put(MapQueryContext<Integer, Integer, Void> q,
-                                            net.openhft.chronicle.hash.Data<Integer, ?> value,
+                                            net.openhft.chronicle.hash.Data<Integer> value,
                                             ReturnValue<Integer> returnValue) {
                                 if (q.queriedKey().get() == 2) {
                                     MapMethods.super.put(q, value, NullReturnValue.get());

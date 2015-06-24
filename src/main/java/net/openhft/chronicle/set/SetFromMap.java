@@ -142,7 +142,7 @@ class SetFromMap<E> extends AbstractSet<E>
 
     @NotNull
     @Override
-    public ExternalSetQueryContext<E, ?> queryContext(Data<E, ?> key) {
+    public ExternalSetQueryContext<E, ?> queryContext(Data<E> key) {
         //TODO
         throw new UnsupportedOperationException();
     }

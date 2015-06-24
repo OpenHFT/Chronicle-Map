@@ -20,7 +20,6 @@ package net.openhft.chronicle.map.replication;
 
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.HashRemoteQueryContext;
-import net.openhft.chronicle.hash.replication.RemoteOperationContext;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -54,5 +53,5 @@ public interface MapRemoteQueryContext<K, V, R> extends MapQueryContext<K, V, R>
      *
      * @return dummy value of all zeros, of the minimum possible size.
      */
-    Data<V, ?> dummyZeroValue();
+    Data<V> dummyZeroValue();
 }
