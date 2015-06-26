@@ -59,8 +59,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         implements ChronicleMap<K, V>, Serializable, ReadValue<V>, InstanceOrBytesToInstance,
         GetValueInterops<V, VI, MVI> {
 
+    static final boolean checkSegmentMultiMapsAndBitSetsConsistencyOnBootstrap = Boolean.getBoolean(
+            "chronicleMap.checkSegmentMultiMapsAndBitSetsConsistencyOnBootstrap");
     private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
-
     private static final long serialVersionUID = 2L;
     final Class<K> kClass;
     final String dataFileVersion;
@@ -93,14 +94,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     // rather than as returning the Object can be expensive for something you probably don't use.
     final boolean putReturnsNull;
     final boolean removeReturnsNull;
+    final Class nativeValueClass;
+    final MultiMapFactory multiMapFactory;
+    final int maxChunksPerEntry;
     private final long lockTimeOutNS;
     private final ChronicleHashErrorListener errorListener;
     private final int segmentHeaderSize;
     private final HashSplitting hashSplitting;
-    final Class nativeValueClass;
-    final MultiMapFactory multiMapFactory;
-    final int maxChunksPerEntry;
-
     transient Provider<BytesReader<K>> keyReaderProvider;
     transient Provider<KI> keyInteropProvider;
     transient Provider<BytesReader<V>> valueReaderProvider;
@@ -110,6 +110,30 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     transient BytesStore ms;
     transient long headerSize;
     transient Set<Map.Entry<K, V>> entrySet;
+    transient InstanceOrBytesToInstance<Bytes, K> keyBytesToInstance =
+            new InstanceOrBytesToInstance<Bytes, K>() {
+                @Override
+                public K toInstance(@NotNull ThreadLocalCopies copies, Bytes keyBytes, long size) {
+                    assertNotNull(copies);
+                    BytesReader<K> keyReader = keyReaderProvider.get(copies, originalKeyReader);
+                    return keyReader.read(keyBytes, size);
+                }
+            };
+    transient InstanceOrBytesToInstance<Bytes, V> valueBytesToInstance =
+            new InstanceOrBytesToInstance<Bytes, V>() {
+                @Override
+                public V toInstance(@NotNull ThreadLocalCopies copies, Bytes valueBytes, long size) {
+                    return readValue(copies, valueBytes, null, size);
+                }
+            };
+    transient InstanceOrBytesToInstance<Bytes, V> outputValueBytesToInstance =
+            new InstanceOrBytesToInstance<Bytes, V>() {
+                @Override
+                public V toInstance(@NotNull ThreadLocalCopies copies, Bytes outputBytes, long size) {
+                    outputBytes.position(outputBytes.position() - size);
+                    return readValue(copies, outputBytes, null, size);
+                }
+            };
 
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
 
@@ -178,6 +202,48 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         initTransients();
     }
 
+    static <T> T newInstance(Class<T> aClass, boolean isKey) {
+        try {
+            return isKey ? DataValueClasses.newInstance(aClass) :
+                    DataValueClasses.newDirectInstance(aClass);
+
+        } catch (Exception e) {
+            if (e.getCause() instanceof IllegalStateException)
+                throw e;
+
+            if (aClass.isInterface())
+                throw new IllegalStateException("It not possible to create a instance from " +
+                        "interface=" + aClass.getSimpleName() + " we recommend you create an " +
+                        "instance in the usual way.", e);
+
+            try {
+                return aClass.newInstance();
+            } catch (Exception e1) {
+                throw new IllegalStateException("It has not been possible to create a instance " +
+                        "of class=" + aClass.getSimpleName() +
+                        ", Note : its more efficient if your chronicle map is configured with " +
+                        "interface key " +
+                        "and value types rather than classes, as this method is able to use " +
+                        "interfaces to generate off heap proxies that point straight at your data. " +
+                        "In this case you have used a class and chronicle is unable to create an " +
+                        "instance of this class has it does not have a default constructor. " +
+                        "If your class is mutable, we " +
+                        "recommend you create and instance of your class=" + aClass.getSimpleName() +
+                        " in the usual way, rather than using this method.", e);
+            }
+        }
+    }
+
+    static void segmentStateNotNullImpliesCopiesNotNull(
+            @Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState) {
+        assert copies != null || segmentState == null; // segmentState != null -> copies != null
+    }
+
+    static void expectedValueNotNullImpliesBooleanResult(
+            @Nullable Object expectedValue, boolean booleanResult) {
+        assert booleanResult || expectedValue == null;
+    }
+
     /**
      * @return the version of Chronicle Map that was used to create the current data file
      */
@@ -191,7 +257,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     public String applicationVersion() {
         return BuildVersion.version();
     }
-
 
     final long segmentHash(long hash) {
         return hashSplitting.segmentHash(hash);
@@ -249,37 +314,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
         return offset;
     }
-
-    void warnOnWindows() {
-        if (!Jvm.isWindows())
-            return;
-        long offHeapMapSize = sizeInBytes();
-        long oneGb = GIGABYTES.toBytes(1L);
-        double offHeapMapSizeInGb = offHeapMapSize * 1.0 / oneGb;
-        if (offHeapMapSize > GIGABYTES.toBytes(4L)) {
-            System.out.printf(
-                    "WARNING: On Windows, you probably cannot create a ChronicleMap\n" +
-                            "of more than 4 GB. The configured map requires %.2f GB of off-heap memory.\n",
-                    offHeapMapSizeInGb);
-        }
-        if (Boolean.getBoolean("win.check"))
-        try {
-            long freePhysicalMemory = Jvm.freePhysicalMemoryOnWindowsInBytes();
-            if (offHeapMapSize > freePhysicalMemory * 0.9) {
-                double freePhysicalMemoryInGb = freePhysicalMemory * 1.0 / oneGb;
-                System.out.printf(
-                        "WARNING: On Windows, you probably cannot create a ChronicleMap\n" +
-                                "of more than 90%% of available free memory in the system.\n" +
-                                "The configured map requires %.2f GB of off-heap memory.\n" +
-                                "There is only %.2f GB of free physical memory in the system.\n",
-                        offHeapMapSizeInGb, freePhysicalMemoryInGb);
-
-            }
-        } catch (IOException e) {
-            // ignore -- anyway we just warn the user
-        }
-    }
-
 
     void warnOnWindows() {
         if (!Jvm.isWindows())
@@ -673,38 +707,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return newInstance(kClass, true);
     }
 
-    static <T> T newInstance(Class<T> aClass, boolean isKey) {
-        try {
-            return isKey ? DataValueClasses.newInstance(aClass) :
-                    DataValueClasses.newDirectInstance(aClass);
-
-        } catch (Exception e) {
-            if (e.getCause() instanceof IllegalStateException)
-                throw e;
-
-            if (aClass.isInterface())
-                throw new IllegalStateException("It not possible to create a instance from " +
-                        "interface=" + aClass.getSimpleName() + " we recommend you create an " +
-                        "instance in the usual way.", e);
-
-            try {
-                return aClass.newInstance();
-            } catch (Exception e1) {
-                throw new IllegalStateException("It has not been possible to create a instance " +
-                        "of class=" + aClass.getSimpleName() +
-                        ", Note : its more efficient if your chronicle map is configured with " +
-                        "interface key " +
-                        "and value types rather than classes, as this method is able to use " +
-                        "interfaces to generate off heap proxies that point straight at your data. " +
-                        "In this case you have used a class and chronicle is unable to create an " +
-                        "instance of this class has it does not have a default constructor. " +
-                        "If your class is mutable, we " +
-                        "recommend you create and instance of your class=" + aClass.getSimpleName() +
-                        " in the usual way, rather than using this method.", e);
-            }
-        }
-    }
-
     @Override
     public Class<K> keyClass() {
         return kClass;
@@ -791,28 +793,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return this;
     }
 
-    transient InstanceOrBytesToInstance<Bytes, K> keyBytesToInstance =
-            new InstanceOrBytesToInstance<Bytes, K>() {
-                @Override
-                public K toInstance(@NotNull ThreadLocalCopies copies, Bytes keyBytes, long size) {
-                    assertNotNull(copies);
-                    BytesReader<K> keyReader = keyReaderProvider.get(copies, originalKeyReader);
-                    return keyReader.read(keyBytes, size);
-                }
-            };
-
     @SuppressWarnings("unchecked")
     final InstanceOrBytesToInstance<V, V> valueIdentity() {
         return this;
     }
-
-    transient InstanceOrBytesToInstance<Bytes, V> valueBytesToInstance =
-            new InstanceOrBytesToInstance<Bytes, V>() {
-                @Override
-                public V toInstance(@NotNull ThreadLocalCopies copies, Bytes valueBytes, long size) {
-                    return readValue(copies, valueBytes, null, size);
-                }
-            };
 
     @Override
     public final boolean containsKey(final Object k) {
@@ -831,15 +815,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             throw new RuntimeException(e);
         }
     }
-
-    transient InstanceOrBytesToInstance<Bytes, V> outputValueBytesToInstance =
-            new InstanceOrBytesToInstance<Bytes, V>() {
-                @Override
-                public V toInstance(@NotNull ThreadLocalCopies copies, Bytes outputBytes, long size) {
-                    outputBytes.position(outputBytes.position() - size);
-                    return readValue(copies, outputBytes, null, size);
-                }
-            };
 
     final boolean containsBytesKey(Bytes key) throws InterruptedException {
         return containsKey(null,
@@ -1286,11 +1261,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
-    static void segmentStateNotNullImpliesCopiesNotNull(
-            @Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState) {
-        assert copies != null || segmentState == null; // segmentState != null -> copies != null
-    }
-
     private static class ReadValueToLazyBytes extends ReadValueToBytes {
         DirectBytes lazyBytes;
 
@@ -1313,11 +1283,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         public Bytes readNull() {
             return null;
         }
-    }
-
-    static void expectedValueNotNullImpliesBooleanResult(
-            @Nullable Object expectedValue, boolean booleanResult) {
-        assert booleanResult || expectedValue == null;
     }
 
     static class GetRemoteBytesValueInterops
@@ -1383,9 +1348,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             bytes.write(value, value.position(), value.remaining());
         }
     }
-
-    static final boolean checkSegmentMultiMapsAndBitSetsConsistencyOnBootstrap = Boolean.getBoolean(
-            "chronicleMap.checkSegmentMultiMapsAndBitSetsConsistencyOnBootstrap");
 
     public static final class SegmentState implements StatefulCopyable<SegmentState>,
             AutoCloseable {
