@@ -1072,7 +1072,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 @Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
-                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value, V oldValue,
                 InstanceOrBytesToInstance<? super VB, V> toValue, long hash2,
                 boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused) {
             return putWithoutLock(copies, segmentState, metaKeyInterop, keyInterop, key, keySize,

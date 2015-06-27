@@ -2121,11 +2121,20 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 copies = SegmentState.getCopies(copies);
                 segmentState = SegmentState.get(copies);
             }
+            // TODO optimise
+            V oldValue = null;
+            if (eventListener != null)
+                try {
+                    oldValue = lookupUsing((K) key, null, false);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
             writeLock();
             try {
                 return putWithoutLock(copies, segmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
-                        getValueInterops, value, toValue,
+                        getValueInterops, value, oldValue, toValue,
                         hash2, replaceIfPresent, readValue, resultUnused);
             } finally {
                 segmentState.close();
@@ -2139,10 +2148,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
-                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value, V oldValue,
                 InstanceOrBytesToInstance<? super VB, V> toValue,
                 long hash2, boolean replaceIfPresent,
                 ReadValue<RV> readValue, boolean resultUnused) {
+
             SearchState searchState = segmentState.searchState;
             hashLookup.startSearch(hash2, searchState);
             MultiStoreBytes entry = segmentState.tmpBytes;
@@ -2180,7 +2190,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         segmentState.valueSizePos, true, false);
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), null, false);
+                        toValue.toInstance(copies, value, valueSize), oldValue, false);
 
             return resultUnused ? null : readValue.readNull();
         }
