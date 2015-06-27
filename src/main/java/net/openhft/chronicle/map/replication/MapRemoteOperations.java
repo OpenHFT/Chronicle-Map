@@ -170,7 +170,7 @@ public interface MapRemoteOperations<K, V, R> {
      * @param q the remote operation context
      * @param newValue the new value to put
      */
-    default void put(MapRemoteQueryContext<K, V, R> q, Data<V> newValue) {
+    default void put(MapRemoteQueryContext<K, V, R> q, Data<V, ?> newValue) {
         MapReplicableEntry<K, V> entry = q.entry();
         if (entry != null) {
             if (decideOnRemoteModification(entry, q) == ACCEPT) {

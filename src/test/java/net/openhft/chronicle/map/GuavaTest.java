@@ -141,7 +141,7 @@ public class GuavaTest extends TestCase {
 
                 @Override
                 public Void replaceValue(@NotNull MapEntry<CharSequence, CharSequence> entry,
-                                         net.openhft.chronicle.hash.Data<CharSequence> newValue) {
+                                         net.openhft.chronicle.hash.Data<CharSequence, ?> newValue) {
                     Assert.assertEquals(m, entry.context().map());
                     m.put(entry.key().get().toString(), newValue.get().toString());
                     return MapEntryOperations.super.replaceValue(entry, newValue);
@@ -149,7 +149,7 @@ public class GuavaTest extends TestCase {
 
                 @Override
                 public Void insert(@NotNull MapAbsentEntry<CharSequence, CharSequence> absentEntry,
-                                   Data<CharSequence> value) {
+                                   Data<CharSequence, ?> value) {
                     Assert.assertEquals(m, absentEntry.context().map());
                     m.put(absentEntry.absentKey().get().toString(), value.get().toString());
                     return MapEntryOperations.super.insert(absentEntry, value);

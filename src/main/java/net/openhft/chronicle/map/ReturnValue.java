@@ -22,5 +22,5 @@ import net.openhft.chronicle.hash.Data;
 import org.jetbrains.annotations.NotNull;
 
 public interface ReturnValue<V> {
-    void returnValue(@NotNull Data<V> value);
+    void returnValue(@NotNull Data<V, ?> value);
 }

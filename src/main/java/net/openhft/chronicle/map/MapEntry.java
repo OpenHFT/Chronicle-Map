@@ -38,7 +38,7 @@ public interface MapEntry<K, V> extends HashEntry<K> {
      * Returns the entry value.
      */
     @NotNull
-    Data<V> value();
+    Data<V, ?> value();
 
     /**
      * Replaces the entry's value with the given {@code newValue}.
@@ -51,7 +51,7 @@ public interface MapEntry<K, V> extends HashEntry<K> {
      * @throws IllegalStateException if some locking/state conditions required to perform replace
      * operation are not met
      */
-    void doReplaceValue(Data<V> newValue);
+    void doReplaceValue(Data<V, ?> newValue);
 
     /**
      * Removes the entry from the map.

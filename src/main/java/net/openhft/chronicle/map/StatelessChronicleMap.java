@@ -555,7 +555,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @NotNull
     @Override
-    public ExternalMapQueryContext<K, V, ?> queryContext(Data<K> key) {
+    public ExternalMapQueryContext<K, V, ?> queryContext(Data<K, ?> key) {
         throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
     }
 

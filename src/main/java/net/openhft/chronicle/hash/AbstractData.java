@@ -26,7 +26,7 @@ import net.openhft.chronicle.algo.hashing.LongHashFunction;
  * but Java 8 doesn't allow to override {@code Object}'s methods by default implementations
  * in interfaces.
  */
-public abstract class AbstractData<V> implements Data<V> {
+public abstract class AbstractData<V, T> implements Data<V, T> {
 
     /**
      * Constructor for use by subclasses. 
@@ -49,7 +49,7 @@ public abstract class AbstractData<V> implements Data<V> {
     public boolean equals(Object obj) {
         return obj != null &&
                 obj instanceof Data &&
-                Data.bytesEquivalent(this, (Data<?>) obj);
+                Data.bytesEquivalent(this, (Data<?, ?>) obj);
     }
 
     /**

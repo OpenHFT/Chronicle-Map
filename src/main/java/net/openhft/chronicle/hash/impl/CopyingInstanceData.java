@@ -18,39 +18,29 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.bytes.RandomDataInput;
+import net.openhft.chronicle.bytes.ReadAccess;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.io.serialization.JDKObjectSerializer;
 
-public abstract class CopyingInstanceData<I> extends AbstractData<I> {
+import static net.openhft.chronicle.hash.impl.JavaLangBytesAccessors.uncheckedBytesAccessor;
 
-    private final JavaLangBytesReusableBytesStore bytesStore =
-            new JavaLangBytesReusableBytesStore();
+public abstract class CopyingInstanceData<I, T> extends AbstractData<I, T> {
 
-    public DirectBytes getBuffer(DirectBytes b, long capacity) {
+    public static DirectBytes getBuffer(DirectBytes b, long capacity) {
         if (b != null) {
             if (b.capacity() >= capacity) {
                 return (DirectBytes) b.clear();
             } else {
                 DirectStore store = (DirectStore) b.store();
                 store.resize(capacity, false);
-                DirectBytes bytes = store.bytes();
-                bytesStore.setBytes(bytes);
-                return bytes;
+                return store.bytes();
             }
         } else {
-            DirectBytes bytes = new DirectStore(JDKObjectSerializer.INSTANCE,
-                    Math.max(1, capacity), true).bytes();
-            bytesStore.setBytes(bytes);
-            return bytes;
+            return new DirectStore(JDKObjectSerializer.INSTANCE, Math.max(1, capacity), true)
+                    .bytes();
         }
-    }
-
-    @Override
-    public RandomDataInput bytes() {
-        return bytesStore;
     }
 
     public abstract I instance();
@@ -58,8 +48,20 @@ public abstract class CopyingInstanceData<I> extends AbstractData<I> {
     public abstract DirectBytes buffer();
 
     @Override
+    public ReadAccess<T> access() {
+        //noinspection unchecked
+        return (ReadAccess<T>) uncheckedBytesAccessor(buffer()).access(buffer());
+    }
+
+    @Override
+    public T handle() {
+        //noinspection unchecked
+        return (T) uncheckedBytesAccessor(buffer()).handle(buffer());
+    }
+
+    @Override
     public long offset() {
-        return 0;
+        return uncheckedBytesAccessor(buffer()).offset(buffer(), 0);
     }
 
     @Override

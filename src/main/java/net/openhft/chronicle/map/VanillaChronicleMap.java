@@ -171,18 +171,18 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     }
 
      void initQueryContext() {
-        queryCxt = new ThreadLocal<CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R>>() {
+        queryCxt = new ThreadLocal<CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?>>() {
             @Override
-            protected CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R> initialValue() {
+            protected CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> initialValue() {
                 return new CompiledMapQueryContext<>(VanillaChronicleMap.this);
             }
         };
     }
     
     void initIterationContext() {
-        iterCxt = new ThreadLocal<CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R>>() {
+        iterCxt = new ThreadLocal<CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?>>() {
             @Override
-            protected CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R> initialValue() {
+            protected CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> initialValue() {
                 return new CompiledMapIterationContext<>(VanillaChronicleMap.this);
             }
         };
@@ -335,23 +335,23 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         return valueSize;
     }
     
-    private CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R> q() {
-        return (CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R>) queryCxt.get();
+    private CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> q() {
+        return (CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?>) queryCxt.get();
     }
 
     public QueryContextInterface<K, V, R> mapContext() {
-        CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R> q = q().getContext();
+        CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> q = q().getContext();
         q.initUsed(true);
         return q;
     }
     
-    private CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R> i() {
-        return (CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R>) iterCxt.get();
+    private CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> i() {
+        return (CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?>) iterCxt.get();
     }
 
     @Override
     public IterationContextInterface<K, V> iterationContext() {
-        CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R> c = i().getContext();
+        CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> c = i().getContext();
         c.initUsed(true);
         return c;
     }
@@ -368,7 +368,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
 
     @Override
     @NotNull
-    public QueryContextInterface<K, V, R> queryContext(Data<K> key) {
+    public QueryContextInterface<K, V, R> queryContext(Data<K, ?> key) {
         QueryContextInterface<K, V, R> q = mapContext();
         q.initInputKey(key);
         return q;

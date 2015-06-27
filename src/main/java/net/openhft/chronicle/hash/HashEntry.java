@@ -41,7 +41,7 @@ public interface HashEntry<K> {
      * Returns the entry key.
      */
     @NotNull
-    Data<K> key();
+    Data<K, ?> key();
 
     /**
      * Removes the entry from the {@code ChronicleHash}.

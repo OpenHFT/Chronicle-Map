@@ -6,6 +6,10 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
 import net.openhft.chronicle.map.replication.MapReplicableEntry;
+import net.openhft.lang.io.ByteBufferBytes;
+import net.openhft.lang.model.Byteable;
+import net.openhft.lang.model.DataValueClasses;
+import net.openhft.lang.values.IntValue;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -14,12 +18,13 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static net.openhft.lang.MemoryUnit.MEGABYTES;
 import static net.openhft.chronicle.map.TcpReplicationSoakCrdtTest.GrowOnlySetValuedMapEntryOperations.growOnlySetValuedMapEntryOperations;
 import static net.openhft.chronicle.map.TcpReplicationSoakCrdtTest.GrowOnlySetValuedMapRemoteOperations.growOnlySetValuedMapRemoteOperations;
-import static net.openhft.lang.MemoryUnit.MEGABYTES;
 import static org.junit.Assert.assertEquals;
 
 public class TcpReplicationSoakCrdtTest {
@@ -58,7 +63,7 @@ public class TcpReplicationSoakCrdtTest {
         private GrowOnlySetValuedMapRemoteOperations() {}
 
         @Override
-        public void put(MapRemoteQueryContext<K, Set<E>, Void> q, Data<Set<E>> newValue) {
+        public void put(MapRemoteQueryContext<K, Set<E>, Void> q, Data<Set<E>, ?> newValue) {
             MapReplicableEntry<K, Set<E>> entry = q.entry();
             if (entry != null) {
                 Set<E> merged = new HashSet<>(entry.value().get());

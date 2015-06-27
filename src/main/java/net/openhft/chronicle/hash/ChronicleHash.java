@@ -86,7 +86,7 @@ public interface ChronicleHash<K, C extends KeyContext<K>, EQC extends ExternalH
      * @param key the queried key as {@code Data}
      * @return the context to perform operations with the key
      */
-    @NotNull EQC queryContext(Data<K> key);
+    @NotNull EQC queryContext(Data<K, ?> key);
     
     /**
      * Checks the given predicate on each entry in this {@code ChronicleHash} until all entries

@@ -294,7 +294,7 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @NotNull
     @Override
-    public ExternalMapQueryContext<K, V, ?> queryContext(net.openhft.chronicle.hash.Data<K> key) {
+    public ExternalMapQueryContext<K, V, ?> queryContext(net.openhft.chronicle.hash.Data<K, ?> key) {
         throw new UnsupportedOperationException();
     }
 

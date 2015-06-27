@@ -35,11 +35,7 @@ public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaByte
             throw new IllegalStateException("We try to figure out size of objects " +
                     "in serialized form, but it exceeds " +
                     MAX_REASONABLE_SERIALIZED_SIZE + " bytes. We assume this is " +
-                    "a error and throw exception at this point. There could be two reasons:\n" +
-                    "1) The given object is not Serializable. Configure ChronicleMapBuilder" +
-                    ".keyMarshallers/valueMarshallers to handle the given objects.\n" +
-                    "2) Your object are very large in serialized form (larger than " +
-                    MAX_REASONABLE_SERIALIZED_SIZE + " bytes). If you really " +
+                    "a error and throw exception at this point. If you really " +
                     "want larger keys/values, use ChronicleMapBuilder." +
                     "keySize(int)/valueSize(int)/entrySize(int) configurations", ex);
         }

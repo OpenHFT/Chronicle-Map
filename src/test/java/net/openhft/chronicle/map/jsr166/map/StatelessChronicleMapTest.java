@@ -123,7 +123,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
         @NotNull
         @Override
-        public ExternalMapQueryContext<K, V, ?> queryContext(Data<K> key) {
+        public ExternalMapQueryContext<K, V, ?> queryContext(Data<K, ?> key) {
             return d.queryContext(key);
         }
 
