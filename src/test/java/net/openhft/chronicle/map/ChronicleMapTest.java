@@ -142,7 +142,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testRemoveWithKey() throws Exception {
+    public void testRemoveWithKey() {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder
@@ -189,7 +189,7 @@ public class ChronicleMapTest {
 
 
     @Test
-    public void testByteArrayPersistenceFileReuse() throws Exception {
+    public void testByteArrayPersistenceFileReuse() throws IOException {
         final File persistenceFile = Builder.getPersistenceFile();
 
         for (int i = 0; i < 3; i++) {
@@ -206,7 +206,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testEqualsCharSequence() throws Exception {
+    public void testEqualsCharSequence() {
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class);
 
@@ -224,7 +224,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testEqualsCharArray() throws Exception {
+    public void testEqualsCharArray() {
 
         char[] value = new char[5];
         Arrays.fill(value, 'X');
@@ -246,7 +246,7 @@ public class ChronicleMapTest {
 
 
     @Test
-    public void testEqualsByteArray() throws Exception {
+    public void testEqualsByteArray() {
 
         byte[] value = new byte[5];
         Arrays.fill(value, (byte) 'X');
@@ -268,7 +268,7 @@ public class ChronicleMapTest {
 
 
     @Test
-    public void testSize() throws Exception {
+    public void testSize() {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
@@ -314,7 +314,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testRemoveWithKeyAndRemoveReturnsNull() throws Exception {
+    public void testRemoveWithKeyAndRemoveReturnsNull() {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
@@ -360,7 +360,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testReplaceWithKey() throws Exception {
+    public void testReplaceWithKey() {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
@@ -424,7 +424,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testReplaceWithKeyAnd2Params() throws Exception {
+    public void testReplaceWithKeyAnd2Params() {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
@@ -466,7 +466,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testRemoveWithKeyAndValue() throws Exception {
+    public void testRemoveWithKeyAndValue() {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
@@ -504,7 +504,7 @@ public class ChronicleMapTest {
 
     @Test
     @Ignore("TODO clarify requrements -- if acquireUsing() should work with null value")
-    public void testAcquireWithNullContainer() throws Exception {
+    public void testAcquireWithNullContainer() {
         try (ChronicleMap<CharSequence, LongValue> map =
                      ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                              .entries(1000)
@@ -547,7 +547,7 @@ public class ChronicleMapTest {
     // 1000M users, updated 16 times, Throughput 1.3 M ops/sec, TODO FIX this
 
     @Test
-    public void testGetWithNullContainer() throws Exception {
+    public void testGetWithNullContainer() {
         try (ChronicleMap<CharSequence, LongValue> map =
                      ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                              .entries(10)
@@ -560,7 +560,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    public void testGetWithoutAcquireFirst() throws Exception {
+    public void testGetWithoutAcquireFirst() {
         try (ChronicleMap<CharSequence, LongValue> map =
                      ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                              .entries(10)
@@ -696,7 +696,7 @@ public class ChronicleMapTest {
 
     @Ignore("Possible candidate for TC JVM crashes")
     @Test
-    public void testAcquireFromMultipleThreads() throws Exception {
+    public void testAcquireFromMultipleThreads() throws InterruptedException {
         int entries = 1000 * 1000;
         try (ChronicleMap<CharSequence, LongValue> map2 = ChronicleMapBuilder.of(CharSequence.class,
                 LongValue.class)

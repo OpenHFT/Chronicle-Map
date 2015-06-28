@@ -22,7 +22,7 @@ import org.junit.Test;
 public class ChronicleSetBuilderTest {
 
     @Test
-    public void test() throws Exception {
+    public void test() {
 
         try (ChronicleSet<Integer> integers = ChronicleSetBuilder.of(Integer.class).create()) {
             for (int i = 0; i < 10; i++) {

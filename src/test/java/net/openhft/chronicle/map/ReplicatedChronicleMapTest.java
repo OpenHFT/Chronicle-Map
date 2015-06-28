@@ -779,7 +779,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     /**
      * A deserialized map equals original
      */
-  /*  @Test public void testSerialization() throws Exception {
+  /*  @Test public void testSerialization()   {
         Map x = map5();
         Map y = serialClone(x);
 

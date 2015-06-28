@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map.jsr166;
 
 import junit.framework.AssertionFailedError;
+import net.openhft.lang.Jvm;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -261,7 +262,7 @@ public class JSR166TestCase {
      * Triggers test case Assert.failure if interrupt status is set in the main thread.
      */
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() throws InterruptedException {
         Throwable t = threadFailure.getAndSet(null);
         if (t != null) {
             if (t instanceof Error)
@@ -269,7 +270,7 @@ public class JSR166TestCase {
             else if (t instanceof RuntimeException)
                 throw (RuntimeException) t;
             else if (t instanceof Exception)
-                throw (Exception) t;
+                throw Jvm.rethrow(t);
             else {
                 AssertionFailedError afe =
                         new AssertionFailedError(t.toString());

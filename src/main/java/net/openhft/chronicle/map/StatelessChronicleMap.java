@@ -1886,7 +1886,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         }
     }
 
-    private void resizeToMessageOutBuffer(long start, @NotNull Exception e) throws Exception {
+    private <T extends Exception> void resizeToMessageOutBuffer(long start, @NotNull T e) throws T {
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
         String message = e.getMessage();

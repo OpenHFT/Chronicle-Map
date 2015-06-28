@@ -34,7 +34,7 @@ import static org.junit.Assert.assertEquals;
 public class SerializerTest {
 
     @Test
-    public void testPrefixStringFunctionSerialization() throws Exception {
+    public void testPrefixStringFunctionSerialization() {
 
         ByteBufferBytes b = new ByteBufferBytes(ByteBuffer.allocate(512));
 
@@ -65,7 +65,7 @@ public class SerializerTest {
 
 
     @Test
-    public void testValueMarshallable() throws Exception {
+    public void testValueMarshallable() {
         testReadWriteValue("Test");
         testReadWriteValue(1);
         testReadWriteValue(1L);
@@ -81,7 +81,7 @@ public class SerializerTest {
     }
 
     @Test
-    public void testKeyMarshallable() throws Exception {
+    public void testKeyMarshallable() {
         testReadWriteKey("Test");
         testReadWriteKey(1);
         testReadWriteKey(1L);
@@ -96,7 +96,7 @@ public class SerializerTest {
         testReadWriteKey(new MyTestClassObjectGraph(3));
     }
 
-    public void testReadWriteValue(Object value) throws Exception {
+    public void testReadWriteValue(Object value) {
 
         Class valueClass = value.getClass();
 
@@ -120,7 +120,7 @@ public class SerializerTest {
         Assert.assertEquals(actual, value);
     }
 
-    public void testReadWriteKey(Object key) throws Exception {
+    public void testReadWriteKey(Object key) {
 
         Class clazz = key.getClass();
 

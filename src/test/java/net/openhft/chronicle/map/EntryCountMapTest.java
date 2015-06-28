@@ -26,10 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static java.lang.Math.log10;
 import static java.lang.Math.round;
@@ -62,7 +59,7 @@ public class EntryCountMapTest {
 
     @Ignore("HCOLL-279 fix net.openhft.chronicle.map.EntryCountMapTest#testVerySmall")
     @Test
-    public void testVerySmall() throws Exception {
+    public void testVerySmall() throws IOException {
         System.out.print("testVerySmall seeds");
         for (int t = 0; t < ecmTests; t++) {
             System.out.print(".");
@@ -112,7 +109,7 @@ public class EntryCountMapTest {
     }
 
     @Test
-    public void testSmall() throws Exception {
+    public void testSmall() throws IOException, ExecutionException, InterruptedException {
         System.out.print("testSmall seeds");
         int procs = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(procs);
@@ -156,7 +153,7 @@ public class EntryCountMapTest {
 
     @Ignore("Long running, large tests test")
     @Test
-    public void testMedium() throws Exception {
+    public void testMedium() throws IOException, ExecutionException, InterruptedException {
         System.out.print("testMedium seeds");
         int procs = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(procs);
@@ -194,7 +191,7 @@ public class EntryCountMapTest {
 
         return es.submit(new Callable<Void>() {
             @Override
-            public Void call() throws Exception {
+            public Void call() {
                 File f = null;
                 try (final ChronicleMap<CharSequence, LongValue> map =
                              getSharedMap(minSize, segments, maxKeySize)) {

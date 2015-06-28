@@ -51,7 +51,7 @@ public class MapCheck {
         if (!b) throw new Error("Failed Assertion");
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
         int numTests = 20;
         int size = 36864; // about midway of HashMap resize interval
 
@@ -360,7 +360,7 @@ public class MapCheck {
         reallyAssert(src.size() == dst.size());
     }
 
-    static void serTest(int size) throws Exception {
+    static void serTest(int size) throws IOException, ClassNotFoundException {
         Map s = newMap();
         if (!(s instanceof Serializable))
             return;

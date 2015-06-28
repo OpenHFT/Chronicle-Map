@@ -180,7 +180,7 @@ public final class DataValueBytesMarshallers {
                         "    }\n" +
                         "\n" +
                         "    @Override\n" +
-                        "    " + simpleName + " getInstance() throws Exception {\n" +
+                        "    " + simpleName + " getInstance()   {\n" +
                         "        return factory.create();\n" +
                         "    }\n" +
                         "}\n";
@@ -530,7 +530,7 @@ public final class DataValueBytesMarshallers {
 
     private static void generateGetInstance(StringBuilder sb, Class cl) {
         sb.append("    ").append(cl.getCanonicalName())
-                .append(" getInstance() throws Exception {\n");
+                .append(" getInstance()   {\n");
         sb.append("        ").append("return new ").append(cl.getName()).append("$$Native();\n");
         sb.append("    ").append("}\n\n");
     }
