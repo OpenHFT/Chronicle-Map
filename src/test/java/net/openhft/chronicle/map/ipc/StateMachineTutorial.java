@@ -33,7 +33,7 @@ public class StateMachineTutorial {
     //
     // *************************************************************************
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         ChronicleMap<Integer, StateMachineData> map = null;
 
         try {

@@ -30,7 +30,7 @@ public class TcpReplicationWithAcquireUsingLockedTest {
 
 
     @Test
-    public void testReplicationWithAcquireUsingLocked() throws Exception {
+    public void testReplicationWithAcquireUsingLocked() throws InterruptedException {
 
 
         TcpTransportAndNetworkConfig config1 = TcpTransportAndNetworkConfig.of(8076);
@@ -85,7 +85,7 @@ public class TcpReplicationWithAcquireUsingLockedTest {
 
 
     @Test
-    public void testReplicationWithEmptyOffHeapObject() throws Exception {
+    public void testReplicationWithEmptyOffHeapObject() throws InterruptedException {
 
 
         TcpTransportAndNetworkConfig config1 = TcpTransportAndNetworkConfig.of(8076);
@@ -138,7 +138,7 @@ public class TcpReplicationWithAcquireUsingLockedTest {
 
 
     @Test
-    public void testReplicationWithOffHeapObject() throws Exception {
+    public void testReplicationWithOffHeapObject() throws InterruptedException {
 
 
         TcpTransportAndNetworkConfig config1 = TcpTransportAndNetworkConfig.of(8076);

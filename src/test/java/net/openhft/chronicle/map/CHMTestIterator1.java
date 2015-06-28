@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 
 public class CHMTestIterator1 {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         AtomicLong alValue = new AtomicLong();
         AtomicLong alKey = new AtomicLong();
         int runs = 3000000;

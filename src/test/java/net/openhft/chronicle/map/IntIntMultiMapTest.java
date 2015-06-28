@@ -41,8 +41,7 @@ public class IntIntMultiMapTest {
     Multimap<Long, Long> referenceMap = HashMultimap.create();
     private Class<? extends MultiMap> c;
 
-    public IntIntMultiMapTest(Class<? extends MultiMap> c)
-            throws Exception {
+    public IntIntMultiMapTest(Class<? extends MultiMap> c) {
         this.c = c;
     }
 

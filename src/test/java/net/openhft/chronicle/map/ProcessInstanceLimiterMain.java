@@ -45,7 +45,7 @@ public class ProcessInstanceLimiterMain implements Runnable {
         t.start();
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException, InterruptedException {
         Callback callback = new Callback() {
             public void tooManyProcessesOfType(String processType) {
                 System.out.println("Too many processes of type " + processType + " have been started, so exiting this process");

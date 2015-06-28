@@ -455,7 +455,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             }
 
             @Override
-            public boolean nextEntry(@NotNull final EngineEntryCallback callback) throws InterruptedException {
+            public boolean nextEntry(@NotNull final EngineEntryCallback callback) {
 
                 return modificationIterator.nextEntry(new EntryCallback() {
 
@@ -1719,7 +1719,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          * @return true if an entry was processed
          */
         @Override
-        public boolean nextEntry(@NotNull final EntryCallback entryCallback, final int chronicleId) throws InterruptedException {
+        public boolean nextEntry(@NotNull final EntryCallback entryCallback, final int chronicleId) {
             long position = this.position;
             while (true) {
                 long oldPosition = position;

@@ -1822,12 +1822,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         @Override
         public final ReadLocked<K, KI, MKI, V, VI, MVI> readLock(
-                @Nullable SegmentState segmentState) throws InterruptedException {
+                @Nullable SegmentState segmentState) {
             while (true) {
 //                final boolean success = segmentHeader.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
-                final boolean success;
+                boolean success = false;
 
-                success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+                try {
+                    success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
 
 /*
                 boolean success = false;
@@ -2825,11 +2829,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 final Segment segment = segments[segIndex];
                 ThreadLocalCopies copies = SegmentState.getCopies(null);
                 try (SegmentState segmentState = SegmentState.get(copies)) {
-                    try {
                         segment.readLock(null);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+
                     if (segment.hashLookup().getPositions().isClear(pos)) {
                         // the pos was removed after the previous advance
                         advance(segIndex, pos);

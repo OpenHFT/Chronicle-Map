@@ -133,7 +133,7 @@ public interface EngineReplicationLangBytes extends Closeable {
          * @return {@code true} if the entry was accepted by the {@code callback.onEntry()} method,
          * {@code false} if the entry was not accepted or was not available
          */
-        boolean nextEntry(@NotNull final EngineEntryCallback callback) throws InterruptedException;
+        boolean nextEntry(@NotNull final EngineEntryCallback callback);
 
         /**
          * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer. It

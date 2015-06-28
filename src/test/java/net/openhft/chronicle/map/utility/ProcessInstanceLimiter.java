@@ -142,7 +142,7 @@ public class ProcessInstanceLimiter implements Runnable {
         t.start();
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException, InterruptedException {
         ProcessInstanceLimiter.limitTo(2);
         Thread.sleep(60L * 1000L);
     }

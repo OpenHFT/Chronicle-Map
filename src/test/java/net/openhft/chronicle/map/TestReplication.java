@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 
 /**
@@ -71,7 +72,7 @@ public class TestReplication {
      * memory with the maps that is doing the update
      */
     @Test
-    public void testReplicationUsingAProxyMapThatsUpdatedViaSharedMemory() throws Exception {
+    public void testReplicationUsingAProxyMapThatsUpdatedViaSharedMemory() throws IOException {
 
         ChronicleMap<String, String> server1 = null;
         ChronicleMap<String, String> server2 = null;

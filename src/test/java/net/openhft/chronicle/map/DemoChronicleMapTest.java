@@ -22,6 +22,7 @@ import net.openhft.lang.values.IntValue;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -29,7 +30,7 @@ import static org.junit.Assert.*;
 public class DemoChronicleMapTest {
 
     @Test
-    public void testMap() throws Exception {
+    public void testMap() throws IOException {
         File file = File.createTempFile("DummyOrders"+System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
@@ -71,7 +72,7 @@ public class DemoChronicleMapTest {
     }
 
     @Test
-    public void testMapLocked() throws Exception {
+    public void testMapLocked() throws IOException {
         File file = File.createTempFile("DummyOrders-"+System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;

@@ -20,6 +20,7 @@ import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 
 import java.io.File;
+import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,7 +31,7 @@ public class CHMTest5 {
     public static final String TEST_KEY = "whatever";
     public static int NUMBER_OF_PROCESSES_ALLOWED = 2;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         //First create (or access if already created) the shared map
         ChronicleMapBuilder<String, CHMTest5Data> builder =
                 ChronicleMapBuilder.of(String.class, CHMTest5Data.class)

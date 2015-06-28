@@ -21,11 +21,12 @@ import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 
 import java.io.File;
+import java.io.IOException;
 
 import static org.junit.Assert.fail;
 
 public class AcquireGetUsingMain {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         File file = new File(System.getProperty("java.io.tmpdir") + "/test1");
         ChronicleMap<String, Data> theSharedMap =
                 ChronicleMapBuilder.of(String.class, Data.class)

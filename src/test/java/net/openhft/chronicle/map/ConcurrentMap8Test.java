@@ -589,7 +589,7 @@ public class ConcurrentMap8Test extends JSR166TestCase {
      * A deserialized serialized set is equal
      *//*
     @Test
-    public void testSerialization() throws Exception {
+    public void testSerialization()   {
         int size = 20;
         Set x = populatedSet(size);
         Set y = serialClone(x);
