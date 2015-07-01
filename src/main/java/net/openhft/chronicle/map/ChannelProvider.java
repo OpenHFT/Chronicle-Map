@@ -87,7 +87,7 @@ public final class ChannelProvider implements Closeable {
     final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
         @Override
         public int sizeOfEntry(@NotNull Bytes entry, int chronicleChannel) {
-            channelDataLock.readLock().lock();
+            channelDataReadLock();
             try {
 
                 return channelEntryExternalizables[chronicleChannel]
@@ -99,7 +99,7 @@ public final class ChannelProvider implements Closeable {
 
         @Override
         public boolean identifierCheck(@NotNull ReplicableEntry entry, int chronicleChannel) {
-            channelDataLock.readLock().lock();
+            channelDataReadLock();
             try {
 
                 return channelEntryExternalizables[chronicleChannel]
@@ -121,7 +121,7 @@ public final class ChannelProvider implements Closeable {
         @Override
         public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
                                        int chronicleChannel) {
-            channelDataLock.readLock().lock();
+            channelDataReadLock();
             try {
                 destination.writeStopBit(chronicleChannel);
                 channelEntryExternalizables[chronicleChannel]
@@ -134,7 +134,7 @@ public final class ChannelProvider implements Closeable {
         @Override
         public void readExternalEntry(
                 @NotNull Bytes source) {
-            channelDataLock.readLock().lock();
+            channelDataReadLock();
             try {
                 final int chronicleId = (int) source.readStopBit();
                 if (chronicleId < chronicleChannels.length) {
@@ -168,7 +168,7 @@ public final class ChannelProvider implements Closeable {
                 final ModificationIterator result0 = new ModificationIterator() {
                     @Override
                     public boolean hasNext() {
-                        channelDataLock.readLock().lock();
+                        channelDataReadLock();
                         try {
                             // old-style iteration to avoid 1) iterator object creation
                             // 2) ConcurrentModificationException
@@ -188,7 +188,7 @@ public final class ChannelProvider implements Closeable {
                     @Override
                     public boolean nextEntry(@NotNull EntryCallback callback,
                                              final int na) {
-                        channelDataLock.readLock().lock();
+                        channelDataReadLock();
                         try {
 
                             for (Map.Entry<Integer, Replica> chronicleChannel : chronicleChannelMap.entrySet()) {
@@ -208,7 +208,7 @@ public final class ChannelProvider implements Closeable {
 
                     @Override
                     public void dirtyEntries(long fromTimeStamp) {
-                        channelDataLock.readLock().lock();
+                        channelDataReadLock();
                         try {
                             for (Replica chronicleChannel : chronicleChannelMap.values()) {
 
@@ -234,7 +234,7 @@ public final class ChannelProvider implements Closeable {
          */
         @Override
         public long lastModificationTime(byte remoteIdentifier) {
-            channelDataLock.readLock().lock();
+            channelDataReadLock();
             try {
                 long t = 0;
                 // not including the SystemQueue at index 0
@@ -253,6 +253,14 @@ public final class ChannelProvider implements Closeable {
             ChannelProvider.this.close();
         }
     };
+
+    private void channelDataReadLock() {
+        try {
+            channelDataLock.readLock().lockInterruptibly();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private final ReplicationHub hub;
 
