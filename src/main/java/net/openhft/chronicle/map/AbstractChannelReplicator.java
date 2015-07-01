@@ -259,14 +259,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         executorService.shutdown();
 
         try {
-            if (!executorService.awaitTermination(5, TimeUnit.MILLISECONDS)) {
-                executorService.shutdownNow();
-                try {
-                    executorService.awaitTermination(10, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    LOG.error("", e);
-                }
-            }
+            executorService.awaitTermination(5, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             executorService.shutdownNow();
             try {
