@@ -308,7 +308,7 @@
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</url>
         <connection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</connection>
         <developerConnection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</developerConnection>
-        <tag>chronicle-map-3.1.2-alpha</tag>
+        <tag>master</tag>
     </scm>
 
 </project>
