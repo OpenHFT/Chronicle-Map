@@ -78,7 +78,7 @@ public class TcpReplicationSoakCrdtTest {
 
     private ChronicleMap<Integer, Set<Integer>> map1;
     private ChronicleMap<Integer, Set<Integer>> map2;
-    static int s_port = 8093;
+    static int s_port = 8095;
 
     @Before
     public void setup() throws IOException {
