@@ -471,7 +471,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         final boolean isDeleted = entry.readBoolean();
 
                         if (isDeleted)
-                            return callback.onEntry(wrap(keyPosition, keySize), null, timestamp, identifier,
+                            return callback.onEntry(wrap(entry.address() + keyPosition, keySize), null, timestamp, identifier,
                                     true,
                                     bootStrapTimeStamp);
 
