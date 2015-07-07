@@ -407,7 +407,7 @@ public final class ChannelProvider implements Closeable {
             if (chronicleChannel == 0)
                 return;
 
-            // send bootstap message
+            // send bootstrap message
 
             for (int i = (int) systemModificationIteratorBitSet.nextSetBit(0); i > 0;
                  i = (int) systemModificationIteratorBitSet.nextSetBit(i + 1)) {
