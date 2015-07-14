@@ -1271,6 +1271,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
                     VanillaChronicleMap<K, ?, ?, V, ?, ?> map =
                             (VanillaChronicleMap<K, ?, ?, V, ?, ?>) m;
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
+                    map.initTransients(this);
                     map.createMappedStoreAndSegments(file);
                     // This is needed to property initialize key and value serialization builders,
                     // which are later used in replication
