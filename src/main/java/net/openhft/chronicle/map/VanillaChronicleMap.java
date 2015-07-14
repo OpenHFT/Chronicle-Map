@@ -88,19 +88,21 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     final int actualSegments;
     final long actualChunksPerSegment;
     final long entriesPerSegment;
-    final MapEventListener<K, V> eventListener;
-    final BytesMapEventListener bytesEventListener;
-    // if set the ReturnsNull fields will cause some functions to return NULL
-    // rather than as returning the Object can be expensive for something you probably don't use.
-    final boolean putReturnsNull;
-    final boolean removeReturnsNull;
     final Class nativeValueClass;
     final MultiMapFactory multiMapFactory;
     final int maxChunksPerEntry;
     private final long lockTimeOutNS;
-    private final ChronicleHashErrorListener errorListener;
     private final int segmentHeaderSize;
     private final HashSplitting hashSplitting;
+
+    transient MapEventListener<K, V> eventListener;
+    transient BytesMapEventListener bytesEventListener;
+    // if set the ReturnsNull fields will cause some functions to return NULL
+    // rather than as returning the Object can be expensive for something you probably don't use.
+    transient boolean putReturnsNull;
+    transient boolean removeReturnsNull;
+    transient ChronicleHashErrorListener errorListener;
+
     transient Provider<BytesReader<K>> keyReaderProvider;
     transient Provider<KI> keyInteropProvider;
     transient Provider<BytesReader<V>> valueReaderProvider;
@@ -184,7 +186,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 greatestCommonDivisor((int) chunkSize, alignment) != alignment;
         this.specialEntrySpaceOffset = builder.specialEntrySpaceOffset(replicated);
 
-        this.errorListener = builder.errorListener();
         this.putReturnsNull = builder.putReturnsNull();
         this.removeReturnsNull = builder.removeReturnsNull();
 
@@ -193,13 +194,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         this.entriesPerSegment = builder.entriesPerSegment(replicated);
         this.multiMapFactory = builder.multiMapFactory(replicated);
         this.metaDataBytes = builder.metaDataBytes();
-        this.eventListener = builder.eventListener();
-        this.bytesEventListener = builder.bytesEventListener();
         this.segmentHeaderSize = builder.segmentHeaderSize(replicated);
         this.maxChunksPerEntry = builder.maxChunksPerEntry();
 
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
-        initTransients();
+        initTransients(builder);
     }
 
     static <T> T newInstance(Class<T> aClass, boolean isKey) {
@@ -266,7 +265,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return hashSplitting.segmentIndex(hash);
     }
 
-    void initTransients() {
+    void initTransients(ChronicleMapBuilder<K, V> builder) {
+        if (builder != null) {
+            this.eventListener = builder.eventListener();
+            this.errorListener = builder.errorListener();
+            this.putReturnsNull = builder.putReturnsNull();
+            this.removeReturnsNull = builder.removeReturnsNull();
+            this.bytesEventListener = builder.bytesEventListener();
+        }
+
         keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
         keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
 
@@ -353,7 +360,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        initTransients();
+        initTransients(null);
     }
 
     /**

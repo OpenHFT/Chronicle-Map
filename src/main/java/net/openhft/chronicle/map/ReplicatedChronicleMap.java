@@ -144,8 +144,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     }
 
     @Override
-    void initTransients() {
-        super.initTransients();
+    void initTransients(ChronicleMapBuilder<K, V> kvChronicleMapBuilder) {
+        super.initTransients(kvChronicleMapBuilder);
 
         closeables = new CopyOnWriteArraySet<Closeable>();
     }
