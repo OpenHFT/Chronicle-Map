@@ -231,6 +231,7 @@
                         <exclude>net/openhft/chronicle/hash/locks/LockingStrategy.java</exclude>
                         <exclude>net/openhft/chronicle/map/TcpReplicator.java</exclude>
                     </sourceFileExcludes>
+                    <failOnError>false</failOnError>
                     <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
             </plugin>
