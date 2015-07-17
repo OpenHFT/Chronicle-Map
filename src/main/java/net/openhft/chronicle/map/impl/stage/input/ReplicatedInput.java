@@ -1,0 +1,112 @@
+package net.openhft.chronicle.map.impl.stage.input;
+
+import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.impl.JavaLangBytesReusableBytesStore;
+import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
+import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
+import net.openhft.chronicle.hash.replication.RemoteOperationContext;
+import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
+import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
+import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputKeyBytesData;
+import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputValueBytesData;
+import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
+import net.openhft.chronicle.map.impl.stage.query.ReplicatedMapQuery;
+import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
+import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
+import net.openhft.lang.io.Bytes;
+import net.openhft.sg.Stage;
+import net.openhft.sg.StageRef;
+import net.openhft.sg.Staged;
+
+
+@Staged
+public abstract class ReplicatedInput<K, V, R>
+        implements RemoteOperationContext<K>, MapRemoteQueryContext<K, V, R> {
+    
+    @StageRef ReplicatedChronicleMapHolder<K, ?, ?, V, ?, ?, R> mh;
+    @StageRef ReplicationUpdate<K> ru;
+    @StageRef LogHolder lh;
+    @StageRef ReplicatedInputKeyBytesData<K> replicatedInputKeyBytesValue;
+    @StageRef ReplicatedInputValueBytesData<V> replicatedInputValueBytesValue;
+    @StageRef ReplicatedMapQuery<K, V, ?> q;
+    @StageRef SegmentStages s;
+    @StageRef ReplicatedMapEntryStages<K, V, ?> e;
+    @StageRef DummyValueZeroData<V> dummyValue;
+
+    @Override
+    public Data<V> dummyZeroValue() {
+        return dummyValue;
+    }
+
+    public Bytes replicatedInputBytes = null;
+    public final JavaLangBytesReusableBytesStore replicatedInputStore =
+            new JavaLangBytesReusableBytesStore();
+
+    public void initReplicatedInputBytes(Bytes replicatedInputBytes) {
+        this.replicatedInputBytes = replicatedInputBytes;
+        replicatedInputStore.setBytes(replicatedInputBytes);
+    }
+    
+    @Stage("ReplicationInput") public long riKeySize = -1;
+    @Stage("ReplicationInput") public long riValueSize;
+
+    @Stage("ReplicationInput") public long riKeyOffset;
+    @Stage("ReplicationInput") public long riValueOffset;
+
+    @Stage("ReplicationInput") public long riTimestamp;
+    @Stage("ReplicationInput") public byte riId;
+    @Stage("ReplicationInput") public boolean isDeleted;
+
+
+    public void initReplicationInput(Bytes replicatedInputBytes) {
+        initReplicatedInputBytes(replicatedInputBytes);
+        riKeySize = mh.m().keySizeMarshaller.readSize(replicatedInputBytes);
+        riValueSize = mh.m().valueSizeMarshaller.readSize(replicatedInputBytes);
+
+        riTimestamp = replicatedInputBytes.readStopBit();
+        riId = replicatedInputBytes.readByte();
+        ru.initReplicationUpdate(riTimestamp, riId);
+
+        isDeleted = replicatedInputBytes.readBoolean();
+
+        riKeyOffset = replicatedInputBytes.position();
+        riValueOffset = riKeyOffset + riKeySize;
+    }
+
+    public void processReplicatedEvent() {
+        if (riId == mh.m().identifier()) {
+            // this may occur when working with UDP, as we may receive our own data
+            return;
+        }
+
+        q.initInputKey(replicatedInputKeyBytesValue);
+
+        boolean debugEnabled = lh.LOG.isDebugEnabled();
+
+        s.innerUpdateLock.lock();
+        if (isDeleted) {
+            if (debugEnabled) {
+                lh.LOG.debug("READING FROM SOURCE -  into local-id={}, remote={}, remove(key={})",
+                        mh.m().identifier(), riId, q.inputKey);
+            }
+            mh.m().remoteOperations.remove(this);
+            mh.m().setLastModificationTime(riId, riTimestamp);
+            return;
+        }
+
+        String message = null;
+        if (debugEnabled) {
+            message = String.format(
+                    "READING FROM SOURCE -  into local-id=%d, remote-id=%d, put(key=%s,",
+                    mh.m().identifier(), riId, q.inputKey);
+        }
+
+
+        mh.m().remoteOperations.put(this, replicatedInputValueBytesValue);
+        mh.m().setLastModificationTime(riId, riTimestamp);
+
+        if (debugEnabled) {
+            lh.LOG.debug(message + "value=" + replicatedInputValueBytesValue + ")");
+        }
+    }
+}

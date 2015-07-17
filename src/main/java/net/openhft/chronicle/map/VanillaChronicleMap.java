@@ -18,8 +18,8 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
@@ -27,6 +27,8 @@ import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
 import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.map.impl.*;
+import net.openhft.chronicle.map.impl.CompiledMapIterationContext;
+import net.openhft.chronicle.map.impl.CompiledMapQueryContext;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.model.DataValueClasses;
@@ -265,11 +267,13 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
                         ", Note : its more efficient if your chronicle map is configured with " +
                         "interface key " +
                         "and value types rather than classes, as this method is able to use " +
-                        "interfaces to generate off heap proxies that point straight at your data. " +
+                        "interfaces to generate off heap proxies that point straight at your " +
+                        "data. " +
                         "In this case you have used a class and chronicle is unable to create an " +
                         "instance of this class has it does not have a default constructor. " +
                         "If your class is mutable, we " +
-                        "recommend you create and instance of your class=" + aClass.getSimpleName() +
+                        "recommend you create and instance of your class=" +
+                        aClass.getSimpleName() +
                         " in the usual way, rather than using this method.", e);
             }
         }

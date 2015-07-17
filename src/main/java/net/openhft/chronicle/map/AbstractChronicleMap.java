@@ -17,9 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.function.SerializableFunction;
-import net.openhft.chronicle.hash.impl.hashlookup.HashLookupIteration;
 import net.openhft.chronicle.hash.impl.util.CharSequences;
-import net.openhft.chronicle.map.impl.CompiledMapIterationContext;
 import net.openhft.chronicle.map.impl.IterationContextInterface;
 import org.jetbrains.annotations.NotNull;
 

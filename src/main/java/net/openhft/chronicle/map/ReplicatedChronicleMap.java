@@ -23,7 +23,8 @@ import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
-import net.openhft.chronicle.map.impl.*;
+import net.openhft.chronicle.map.impl.CompiledReplicatedMapIterationContext;
+import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.map.replication.MapReplicableEntry;
 import net.openhft.lang.Maths;
@@ -522,7 +523,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         }
 
         void raiseChange(long segmentIndex, long pos) {
-            LOG.debug("raise change: id {}, segment {}, pos {}", localIdentifier, segmentIndex, pos);
+            LOG.debug("raise change: id {}, segment {}, pos {}",
+                    localIdentifier, segmentIndex, pos);
             changesForUpdates.set(combine(segmentIndex, pos));
             modificationNotifier.onChange();
         }
@@ -620,10 +622,12 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                                     c.key(), c.value());
                         }
                         MapReplicableEntry re = (MapReplicableEntry) entry;
-                        assert re.originTimestamp() > 0L;
+                        // Bizarrely the next line line cause NPE in JDT compiler
+                        //assert re.originTimestamp() > 0L;
                         if (debugEnabled) {
-                            LOG.debug("Bootstrap decision: bs ts: {}, entry ts: {}, entry id: {}, " +
-                                    "local id: {}", fromTimeStamp, re.originTimestamp(),
+                            LOG.debug("Bootstrap decision: bs ts: {}, entry ts: {}, " +
+                                            "entry id: {}, local id: {}",
+                                    fromTimeStamp, re.originTimestamp(),
                                     re.originIdentifier(), localIdentifier);
                         }
                         if (re.originTimestamp() >= fromTimeStamp &&
