@@ -32,7 +32,8 @@ import static net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder.*;
 public class StatelessClientDuplicateKeyTest {
 
     @Test
-    public void statelessClientDuplicateKeyTest() throws IOException, InterruptedException, ExecutionException {
+    public void statelessClientDuplicateIntegerKeyTest()
+            throws IOException, InterruptedException, ExecutionException {
         ChronicleMap<Integer, Integer> map =
                 ChronicleMapBuilder.of(Integer.class, Integer.class)
                 .replication((byte) 1, TcpTransportAndNetworkConfig.of(8080))
@@ -60,6 +61,54 @@ public class StatelessClientDuplicateKeyTest {
         List<Future<Integer>> futures = runner.invokeAll(items);
         for (Future<Integer> future : futures) {
             Assert.assertEquals((Integer) 1, future.get());
+        }
+    }
+
+    @Test
+    public void statelessClientDuplicateBytesKeyTest()
+            throws IOException, InterruptedException, ExecutionException, TimeoutException {
+        ChronicleMap<byte[], byte[]> map =
+                ChronicleMapBuilder.of(byte[].class, byte[].class)
+                        .averageKeySize(10).averageValueSize(10)
+                        .entries(100)
+                        .actualSegments(4)
+                        .replication((byte) 1, TcpTransportAndNetworkConfig.of(8080))
+                        .create();
+
+        byte[] _42 = {42};
+        map.put(_42, new byte[] {1, 2, 3});
+        map.put(new byte[]{1, 2, 3}, _42);
+        byte[] longKey = "fooBarFooBarFooBarFooBar".getBytes();
+        map.put(longKey, "bar".getBytes());
+
+        final ChronicleMap<byte[], byte[]> client =
+                createClientOf(new InetSocketAddress("localhost", 8080));
+
+        ExecutorService runner = new ThreadPoolExecutor(16, 256, 300L, TimeUnit.SECONDS,
+                new LinkedBlockingDeque<Runnable>());
+
+        class Run implements Callable<byte[]> {
+            final byte[] key;
+
+            Run(byte[] key) {
+                this.key = key;
+            }
+
+            @Override
+            public byte[] call() {
+                return client.get(key);
+            }
+        }
+
+        List<Run> items = new ArrayList<>(1000);
+        for (int i = 0; i < 1000; i++) {
+            byte[] bs = i % 3 == 0 ? _42 : (i % 3 == 1 ? new byte[] {(byte) i} : longKey);
+            items.add(new Run(bs));
+        }
+
+        List<Future<byte[]>> futures = runner.invokeAll(items);
+        for (Future<byte[]> future : futures) {
+            future.get(1, TimeUnit.MILLISECONDS);
         }
     }
 }
