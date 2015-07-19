@@ -72,7 +72,7 @@ public class StatelessClientDuplicateKeyTest {
                         .averageKeySize(10).averageValueSize(10)
                         .entries(100)
                         .actualSegments(4)
-                        .replication((byte) 1, TcpTransportAndNetworkConfig.of(8080))
+                        .replication((byte) 1, TcpTransportAndNetworkConfig.of(8081))
                         .create();
 
         byte[] _42 = {42};
@@ -82,7 +82,7 @@ public class StatelessClientDuplicateKeyTest {
         map.put(longKey, "bar".getBytes());
 
         final ChronicleMap<byte[], byte[]> client =
-                createClientOf(new InetSocketAddress("localhost", 8080));
+                createClientOf(new InetSocketAddress("localhost", 8081));
 
         ExecutorService runner = new ThreadPoolExecutor(16, 256, 300L, TimeUnit.SECONDS,
                 new LinkedBlockingDeque<Runnable>());
