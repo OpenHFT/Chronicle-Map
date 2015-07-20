@@ -44,18 +44,15 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>1.5.10</version>
+                <version>1.5.19</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
-
-
         </dependencies>
 
     </dependencyManagement>
-    <dependencies>
 
+    <dependencies>
 
         <dependency>
             <groupId>net.openhft</groupId>
