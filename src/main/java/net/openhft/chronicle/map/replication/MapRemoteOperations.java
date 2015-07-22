@@ -52,7 +52,7 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
  *         if (entry != null) {
  *             Set&lt;E&gt; merged = new HashSet&lt;&gt;(entry.value().get());
  *             merged.addAll(newValue.get());
- *             q.replaceValue(entry, q.wrapValueAsValue(merged));
+ *             q.replaceValue(entry, q.wrapValueAsData(merged));
  *         } else {
  *             q.insert(q.absentEntry(), newValue);
  *             q.entry().updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());

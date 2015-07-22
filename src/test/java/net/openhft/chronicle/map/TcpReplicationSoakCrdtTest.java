@@ -63,7 +63,7 @@ public class TcpReplicationSoakCrdtTest {
             if (entry != null) {
                 Set<E> merged = new HashSet<>(entry.value().get());
                 merged.addAll(newValue.get());
-                q.replaceValue(entry, q.wrapValueAsValue(merged));
+                q.replaceValue(entry, q.wrapValueAsData(merged));
             } else {
                 q.insert(q.absentEntry(), newValue);
                 q.entry().updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
@@ -185,10 +185,10 @@ public class TcpReplicationSoakCrdtTest {
                         if (entry != null) {
                             Set<Integer> value = entry.value().get();
                             value.add(rnd.nextInt(20));
-                            q.replaceValue(entry, q.wrapValueAsValue(value));
+                            q.replaceValue(entry, q.wrapValueAsData(value));
                         } else {
                             HashSet<Integer> value = new HashSet<>();
-                            q.insert(q.absentEntry(), q.wrapValueAsValue(value));
+                            q.insert(q.absentEntry(), q.wrapValueAsData(value));
                         }
                     }
                 }

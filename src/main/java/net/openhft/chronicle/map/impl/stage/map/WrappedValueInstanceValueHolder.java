@@ -15,7 +15,7 @@ public abstract class WrappedValueInstanceValueHolder<K, V, R> implements MapCon
 
 
     @Override
-    public Data<V> wrapValueAsValue(V value) {
+    public Data<V> wrapValueAsData(V value) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         WrappedValueInstanceData<V, ?, ?> wrapped = this.wrappedValueInstanceValue;
         wrapped = wrapped.getUnusedWrappedValue();

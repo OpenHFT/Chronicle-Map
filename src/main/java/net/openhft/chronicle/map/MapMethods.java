@@ -174,7 +174,7 @@ public interface MapMethods<K, V, R> {
      *     return;
      * }
      * // Key is absent
-     * q.insert(q.absentEntry(), q.wrapValueAsValue(mappingFunction.apply(q.queriedKey().get())));
+     * q.insert(q.absentEntry(), q.wrapValueAsData(mappingFunction.apply(q.queriedKey().get())));
      * returnValue.returnValue(q.entry().value());
      * }</pre>
      */
@@ -184,7 +184,7 @@ public interface MapMethods<K, V, R> {
         if (tryReturnCurrentValueIfPresent(q, returnValue))
             return;
         // Key is absent
-        q.insert(q.absentEntry(), q.wrapValueAsValue(mappingFunction.apply(q.queriedKey().get())));
+        q.insert(q.absentEntry(), q.wrapValueAsData(mappingFunction.apply(q.queriedKey().get())));
         returnValue.returnValue(q.entry().value());
     }
 
@@ -317,7 +317,7 @@ public interface MapMethods<K, V, R> {
      * V oldValue = entry != null ? entry.value().get() : null;
      * V newValue = remappingFunction.apply(q.queriedKey().get(), oldValue);
      * if (newValue != null) {
-     *     Data<V, ?> newValueData = q.wrapValueAsValue(newValue);
+     *     Data<V, ?> newValueData = q.wrapValueAsData(newValue);
      *     if (entry != null) {
      *         q.replaceValue(entry, newValueData);
      *     } else {
@@ -337,7 +337,7 @@ public interface MapMethods<K, V, R> {
         V oldValue = entry != null ? entry.value().get() : null;
         V newValue = remappingFunction.apply(q.queriedKey().get(), oldValue);
         if (newValue != null) {
-            Data<V> newValueData = q.wrapValueAsValue(newValue);
+            Data<V> newValueData = q.wrapValueAsData(newValue);
             if (entry != null) {
                 q.replaceValue(entry, newValueData);
             } else {
@@ -361,7 +361,7 @@ public interface MapMethods<K, V, R> {
      *     V oldValue = entry.value().get();
      *     V newValue = remappingFunction.apply(q.queriedKey().get(), oldValue);
      *     if (newValue != null ) {
-     *         q.replaceValue(entry, q.wrapValueAsValue(newValue));
+     *         q.replaceValue(entry, q.wrapValueAsData(newValue));
      *         returnValue.returnValue(q.entry().value());
      *     } else {
      *         q.remove(entry);
@@ -377,7 +377,7 @@ public interface MapMethods<K, V, R> {
             V oldValue = entry.value().get();
             V newValue = remappingFunction.apply(q.queriedKey().get(), oldValue);
             if (newValue != null ) {
-                q.replaceValue(entry, q.wrapValueAsValue(newValue));
+                q.replaceValue(entry, q.wrapValueAsData(newValue));
                 returnValue.returnValue(q.entry().value());
             } else {
                 q.remove(entry);
@@ -399,7 +399,7 @@ public interface MapMethods<K, V, R> {
      *         q.remove(entry);
      *         return;
      *     }
-     *     newValueData = q.wrapValueAsValue(newValue);
+     *     newValueData = q.wrapValueAsData(newValue);
      *     q.replaceValue(entry, newValueData);
      * } else {
      *     newValueData = value;
@@ -422,7 +422,7 @@ public interface MapMethods<K, V, R> {
                 q.remove(entry);
                 return;
             }
-            newValueData = q.wrapValueAsValue(newValue);
+            newValueData = q.wrapValueAsData(newValue);
             q.replaceValue(entry, newValueData);
         } else {
             newValueData = value;

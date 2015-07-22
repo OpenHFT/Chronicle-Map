@@ -124,7 +124,7 @@ public class ListenersTest {
                             public void get(MapQueryContext<Integer, Integer, Void> q,
                                             ReturnValue<Integer> returnValue) {
                                 if (q.queriedKey().get() == 2) {
-                                    returnValue.returnValue(q.wrapValueAsValue(42));
+                                    returnValue.returnValue(q.wrapValueAsData(42));
                                     return;
                                 }
                                 c.incrementAndGet();
@@ -159,7 +159,7 @@ public class ListenersTest {
                                     return;
                                 }
                                 if (q.queriedKey().get() == 3) {
-                                    MapMethods.super.put(q, q.wrapValueAsValue(value.get() + 1),
+                                    MapMethods.super.put(q, q.wrapValueAsData(value.get() + 1),
                                             returnValue);
                                     return;
                                 }

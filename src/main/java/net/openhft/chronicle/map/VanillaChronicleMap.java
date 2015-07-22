@@ -438,7 +438,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         checkValue(newValue);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             q.inputValueInstanceValue().initValue(oldValue);
-            return methods.replace(q, q.inputValueInstanceValue(), q.wrapValueAsValue(newValue));
+            return methods.replace(q, q.inputValueInstanceValue(), q.wrapValueAsData(newValue));
         }
     }
 

@@ -53,7 +53,7 @@ public class DeprecatedMapAcquireContextOnQuery<K, V> implements MapKeyContext<K
     @Override
     public boolean valueEqualTo(V value) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return Data.bytesEquivalent(e.entryValue, q.wrapValueAsValue(value));
+        return Data.bytesEquivalent(e.entryValue, q.wrapValueAsData(value));
     }
 
     @Override
@@ -73,9 +73,9 @@ public class DeprecatedMapAcquireContextOnQuery<K, V> implements MapKeyContext<K
         updateLock().lock();
         MapEntry<K, V> entry = q.entry();
         if (entry != null) {
-            q.replaceValue(entry, q.wrapValueAsValue(newValue));
+            q.replaceValue(entry, q.wrapValueAsData(newValue));
         } else {
-            q.insert(q.absentEntry(), q.wrapValueAsValue(newValue));
+            q.insert(q.absentEntry(), q.wrapValueAsData(newValue));
         }
         return true;
     }

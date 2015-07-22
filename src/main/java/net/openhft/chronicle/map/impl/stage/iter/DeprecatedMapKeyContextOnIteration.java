@@ -36,7 +36,7 @@ public class DeprecatedMapKeyContextOnIteration<K, V> implements MapKeyContext<K
     @Override
     public boolean valueEqualTo(V value) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return Data.bytesEquivalent(e.entryValue, it.context().wrapValueAsValue(value));
+        return Data.bytesEquivalent(e.entryValue, it.context().wrapValueAsData(value));
     }
 
     @Override
@@ -54,7 +54,7 @@ public class DeprecatedMapKeyContextOnIteration<K, V> implements MapKeyContext<K
     @Override
     public boolean put(V newValue) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        ops.replaceValue(it, it.context().wrapValueAsValue(newValue));
+        ops.replaceValue(it, it.context().wrapValueAsData(newValue));
         return true;
     }
 

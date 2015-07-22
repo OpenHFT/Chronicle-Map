@@ -69,6 +69,6 @@ public class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
     @Override
     public Data<V> defaultValue() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return q.wrapValueAsValue(mh.m().defaultValue(deprecatedMapKeyContext));
+        return q.wrapValueAsData(mh.m().defaultValue(deprecatedMapKeyContext));
     }
 }
