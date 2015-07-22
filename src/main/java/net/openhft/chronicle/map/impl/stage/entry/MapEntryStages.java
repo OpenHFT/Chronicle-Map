@@ -52,7 +52,8 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     @Stage("ValSize") public long valueSize = -1;
     @Stage("ValSize") public long valueOffset;
 
-    @Stage("ValSize") private void countValueOffset() {
+    @Stage("ValSize")
+    private void countValueOffset() {
         mh.m().alignment.alignPositionAddr(entryBytes);
         valueOffset = entryBytes.position();
     }

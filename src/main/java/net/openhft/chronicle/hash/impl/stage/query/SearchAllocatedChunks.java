@@ -39,7 +39,9 @@ public class SearchAllocatedChunks extends AllocatedChunks {
 
     public void initEntryAndKey(long entrySize) {
         initAllocatedChunks(hh.h().inChunks(entrySize));
-        entry.writeNewEntry(s.alloc(allocatedChunks), q.inputKey);
+        // call incrementSegmentEntriesIfNeeded() before entry.writeNewEntry(), because the latter
+        // clears out searchState, and it performs the search again, but in inconsistent state
         incrementSegmentEntriesIfNeeded();
+        entry.writeNewEntry(s.alloc(allocatedChunks), q.inputKey);
     }
 }

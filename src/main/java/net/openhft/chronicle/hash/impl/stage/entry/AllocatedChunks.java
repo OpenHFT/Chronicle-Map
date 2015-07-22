@@ -41,7 +41,10 @@ public class AllocatedChunks {
 
     public void initEntryAndKeyCopying(long entrySize, long bytesToCopy) {
         initAllocatedChunks(hh.h().inChunks(entrySize));
-        entry.copyExistingEntry(s.alloc(allocatedChunks), bytesToCopy);
+        // call incrementSegmentEntriesIfNeeded() before entry.copyExistingEntry(), because
+        // the latter clears out searchState, and it performs the search again, but in inconsistent
+        // state
         incrementSegmentEntriesIfNeeded();
+        entry.copyExistingEntry(s.alloc(allocatedChunks), bytesToCopy);
     }
 }
