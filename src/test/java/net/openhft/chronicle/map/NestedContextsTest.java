@@ -81,6 +81,12 @@ public class NestedContextsTest {
             ChronicleMap<Integer, Set<Integer>> graph, int source, int target) {
         if (source == target)
             throw new IllegalArgumentException("loops are forbidden");
+        // order for consistent lock acquisition => avoid dead lock
+        if (target < source) {
+            int t = source;
+            source = target;
+            target = t;
+        }
 
         try (ExternalMapQueryContext<Integer, Set<Integer>, ?> sc = graph.queryContext(source)) {
             sc.updateLock().lock();
@@ -155,6 +161,13 @@ public class NestedContextsTest {
 
     public static boolean removeEdge(
             ChronicleMap<Integer, Set<Integer>> graph, int source, int target) {
+        // order for consistent lock acquisition => avoid dead lock
+        if (target < source) {
+            int t = source;
+            source = target;
+            target = t;
+        }
+
         try (ExternalMapQueryContext<Integer, Set<Integer>, ?> sc = graph.queryContext(source)) {
             sc.updateLock().lock();
             MapEntry<Integer, Set<Integer>> sEntry = sc.entry();
