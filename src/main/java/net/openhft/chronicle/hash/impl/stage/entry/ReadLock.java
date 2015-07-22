@@ -44,7 +44,9 @@ public class ReadLock implements InterProcessLock {
     @Override
     public void lock() {
         if (s.localLockState == UNLOCKED) {
-            s.segmentHeader.readLock(s.segmentHeaderAddress);
+            if (s.readZero() && s.updateZero() && s.writeZero())
+                s.segmentHeader.readLock(s.segmentHeaderAddress);
+            s.incrementRead();
             s.setLocalLockState(READ_LOCKED);
         }
     }
@@ -52,7 +54,9 @@ public class ReadLock implements InterProcessLock {
     @Override
     public void lockInterruptibly() throws InterruptedException {
         if (s.localLockState == UNLOCKED) {
-            s.segmentHeader.readLockInterruptibly(s.segmentHeaderAddress);
+            if (s.readZero() && s.updateZero() && s.writeZero())
+                s.segmentHeader.readLockInterruptibly(s.segmentHeaderAddress);
+            s.incrementRead();
             s.setLocalLockState(READ_LOCKED);
         }
     }
@@ -60,7 +64,9 @@ public class ReadLock implements InterProcessLock {
     @Override
     public boolean tryLock() {
         if (s.localLockState == UNLOCKED) {
-            if (s.segmentHeader.tryReadLock(s.segmentHeaderAddress)) {
+            if (!s.readZero() || !s.updateZero() || !s.writeZero() ||
+                    s.segmentHeader.tryReadLock(s.segmentHeaderAddress)) {
+                s.incrementRead();
                 s.setLocalLockState(READ_LOCKED);
                 return true;
             } else {
@@ -74,7 +80,9 @@ public class ReadLock implements InterProcessLock {
     @Override
     public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException {
         if (s.localLockState == UNLOCKED) {
-            if (s.segmentHeader.tryReadLock(s.segmentHeaderAddress, time, unit)) {
+            if (!s.readZero() || !s.updateZero() || !s.writeZero() ||
+                    s.segmentHeader.tryReadLock(s.segmentHeaderAddress, time, unit)) {
+                s.incrementRead();
                 s.setLocalLockState(READ_LOCKED);
                 return true;
             } else {
@@ -87,18 +95,7 @@ public class ReadLock implements InterProcessLock {
 
     @Override
     public void unlock() {
-        switch (s.localLockState) {
-            case UNLOCKED:
-                return;
-            case READ_LOCKED:
-                s.segmentHeader.readUnlock(s.segmentHeaderAddress);
-                break;
-            case UPDATE_LOCKED:
-                s.segmentHeader.updateUnlock(s.segmentHeaderAddress);
-                break;
-            case WRITE_LOCKED:
-                s.segmentHeader.writeUnlock(s.segmentHeaderAddress);
-        }
+        s.readUnlockAndDecrementCount();
         s.setLocalLockState(UNLOCKED);
         // TODO what should close here?
         hlp.closeHashLookupPos();

@@ -42,13 +42,27 @@ public class WriteLock implements InterProcessLock {
     public void lock() {
         switch (s.localLockState) {
             case UNLOCKED:
-                s.segmentHeader.writeLock(s.segmentHeaderAddress);
+                if (s.writeZero()) {
+                    if (!s.updateZero()) {
+                        s.segmentHeader.upgradeUpdateToWriteLock(s.segmentHeaderAddress);
+                    } else {
+                        if (!s.readZero())
+                            throw forbiddenWriteLockWhenOuterContextReadLocked();
+                        s.segmentHeader.writeLock(s.segmentHeaderAddress);
+                    }
+                }
+                s.incrementWrite();
                 s.setLocalLockState(WRITE_LOCKED);
                 return;
             case READ_LOCKED:
                 throw forbiddenUpgrade();
             case UPDATE_LOCKED:
-                s.segmentHeader.upgradeUpdateToWriteLock(s.segmentHeaderAddress);
+                if (s.writeZero()) {
+                    assert !s.updateZero();
+                    s.segmentHeader.upgradeUpdateToWriteLock(s.segmentHeaderAddress);
+                }
+                s.decrementUpdate();
+                s.incrementWrite();
                 s.setLocalLockState(WRITE_LOCKED);
             case WRITE_LOCKED:
                 // do nothing
@@ -63,17 +77,42 @@ public class WriteLock implements InterProcessLock {
         return new IllegalMonitorStateException("Cannot upgrade from read to write lock");
     }
 
+    /**
+     * Non-static because after compilation it becomes inner class which forbids static methods
+     */
+    @NotNull
+    private IllegalStateException forbiddenWriteLockWhenOuterContextReadLocked() {
+        return new IllegalStateException("Cannot acquire write lock, because outer context " +
+                "holds read lock. In this case you should acquire update lock in the outer " +
+                "context up front");
+    }
+
     @Override
     public void lockInterruptibly() throws InterruptedException {
         switch (s.localLockState) {
             case UNLOCKED:
-                s.segmentHeader.writeLockInterruptibly(s.segmentHeaderAddress);
+                if (s.writeZero()) {
+                    if (!s.updateZero()) {
+                        s.segmentHeader.upgradeUpdateToWriteLockInterruptibly(
+                                s.segmentHeaderAddress);
+                    } else {
+                        if (!s.readZero())
+                            throw forbiddenWriteLockWhenOuterContextReadLocked();
+                        s.segmentHeader.writeLockInterruptibly(s.segmentHeaderAddress);
+                    }
+                }
+                s.incrementWrite();
                 s.setLocalLockState(WRITE_LOCKED);
                 return;
             case READ_LOCKED:
                 throw forbiddenUpgrade();
             case UPDATE_LOCKED:
-                s.segmentHeader.upgradeUpdateToWriteLockInterruptibly(s.segmentHeaderAddress);
+                if (s.writeZero()) {
+                    assert !s.updateZero();
+                    s.segmentHeader.upgradeUpdateToWriteLockInterruptibly(s.segmentHeaderAddress);
+                }
+                s.decrementUpdate();
+                s.incrementWrite();
                 s.setLocalLockState(WRITE_LOCKED);
             case WRITE_LOCKED:
                 // do nothing
@@ -84,20 +123,49 @@ public class WriteLock implements InterProcessLock {
     public boolean tryLock() {
         switch (s.localLockState) {
             case UNLOCKED:
-                if (s.segmentHeader.tryWriteLock(s.segmentHeaderAddress)) {
+                if (s.writeZero()) {
+                    if (!s.updateZero()) {
+                        if (s.segmentHeader.tryUpgradeUpdateToWriteLock(s.segmentHeaderAddress)) {
+                            s.incrementWrite();
+                            s.setLocalLockState(WRITE_LOCKED);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        if (!s.readZero())
+                            throw forbiddenWriteLockWhenOuterContextReadLocked();
+                        if (s.segmentHeader.tryWriteLock(s.segmentHeaderAddress)) {
+                            s.incrementWrite();
+                            s.setLocalLockState(WRITE_LOCKED);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                } else {
+                    s.incrementWrite();
                     s.setLocalLockState(WRITE_LOCKED);
                     return true;
-                } else {
-                    return false;
                 }
             case READ_LOCKED:
                 throw forbiddenUpgrade();
             case UPDATE_LOCKED:
-                if (s.segmentHeader.tryUpgradeUpdateToWriteLock(s.segmentHeaderAddress)) {
+                if (s.writeZero()) {
+                    assert !s.updateZero();
+                    if (s.segmentHeader.tryUpgradeUpdateToWriteLock(s.segmentHeaderAddress)) {
+                        s.decrementUpdate();
+                        s.incrementWrite();
+                        s.setLocalLockState(WRITE_LOCKED);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    s.decrementUpdate();
+                    s.incrementWrite();
                     s.setLocalLockState(WRITE_LOCKED);
                     return true;
-                } else {
-                    return false;
                 }
             case WRITE_LOCKED:
                 return true;
@@ -109,21 +177,51 @@ public class WriteLock implements InterProcessLock {
     public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException {
         switch (s.localLockState) {
             case UNLOCKED:
-                if (s.segmentHeader.tryWriteLock(s.segmentHeaderAddress, time, unit)) {
+                if (s.writeZero()) {
+                    if (!s.updateZero()) {
+                        if (s.segmentHeader.tryUpgradeUpdateToWriteLock(
+                                s.segmentHeaderAddress, time, unit)) {
+                            s.incrementWrite();
+                            s.setLocalLockState(WRITE_LOCKED);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        if (!s.readZero())
+                            throw forbiddenWriteLockWhenOuterContextReadLocked();
+                        if (s.segmentHeader.tryWriteLock(s.segmentHeaderAddress, time, unit)) {
+                            s.incrementWrite();
+                            s.setLocalLockState(WRITE_LOCKED);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                } else {
+                    s.incrementWrite();
                     s.setLocalLockState(WRITE_LOCKED);
                     return true;
-                } else {
-                    return false;
                 }
             case READ_LOCKED:
                 throw forbiddenUpgrade();
             case UPDATE_LOCKED:
-                if (s.segmentHeader.tryUpgradeUpdateToWriteLock(
-                        s.segmentHeaderAddress, time, unit)) {
+                if (s.writeZero()) {
+                    assert !s.updateZero();
+                    if (s.segmentHeader.tryUpgradeUpdateToWriteLock(
+                            s.segmentHeaderAddress, time, unit)) {
+                        s.decrementUpdate();
+                        s.incrementWrite();
+                        s.setLocalLockState(WRITE_LOCKED);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    s.decrementUpdate();
+                    s.incrementWrite();
                     s.setLocalLockState(WRITE_LOCKED);
                     return true;
-                } else {
-                    return false;
                 }
             case WRITE_LOCKED:
                 return true;
@@ -139,8 +237,14 @@ public class WriteLock implements InterProcessLock {
             case UPDATE_LOCKED:
                 return;
             case WRITE_LOCKED:
-                s.segmentHeader.downgradeWriteToUpdateLock(s.segmentHeaderAddress);
+                int newTotalWriteLockCount = s.decrementWrite();
+                if (newTotalWriteLockCount == 0) {
+                    s.segmentHeader.downgradeWriteToUpdateLock(s.segmentHeaderAddress);
+                } else {
+                    assert newTotalWriteLockCount > 0 : "write underflow";
+                }
         }
+        s.incrementUpdate();
         s.setLocalLockState(UPDATE_LOCKED);
     }
 }

@@ -51,8 +51,12 @@ public abstract class SegmentStages implements InterProcessReadWriteUpdateLock {
         
     }
 
+    // "SegHeader" because stage-generator doesn't support stage names - one is a prefix of another
+    // there is a stage named "Segment"
     @Stage("SegHeader") long segmentHeaderAddress;
     @Stage("SegHeader") SegmentHeader segmentHeader = null;
+
+    abstract boolean segHeaderInit();
 
     private void initSegHeader() {
         segmentHeaderAddress = hh.h().ms.address() + hh.h().segmentHeaderOffset(segmentIndex);
@@ -104,8 +108,7 @@ public abstract class SegmentStages implements InterProcessReadWriteUpdateLock {
 
     @Stage("Locks")
     public void incrementModCount() {
-        contextModCount = rootContextOnThisSegment.latestSameThreadSegmentModCount =
-                rootContextOnThisSegment.latestSameThreadSegmentModCount + 1;
+        contextModCount = ++rootContextOnThisSegment.latestSameThreadSegmentModCount;
     }
 
     // chain
@@ -115,6 +118,51 @@ public abstract class SegmentStages implements InterProcessReadWriteUpdateLock {
     @Stage("Locks") int totalReadLockCount;
     @Stage("Locks") int totalUpdateLockCount;
     @Stage("Locks") int totalWriteLockCount;
+
+    @Stage("Locks")
+    public boolean readZero() {
+        return rootContextOnThisSegment.totalReadLockCount == 0;
+    }
+
+    @Stage("Locks")
+    public boolean updateZero() {
+        return rootContextOnThisSegment.totalUpdateLockCount == 0;
+    }
+
+    @Stage("Locks")
+    public boolean writeZero() {
+        return rootContextOnThisSegment.totalWriteLockCount == 0;
+    }
+
+    @Stage("Locks")
+    public int decrementRead() {
+        return rootContextOnThisSegment.totalReadLockCount -= 1;
+    }
+
+    @Stage("Locks")
+    public int decrementUpdate() {
+        return rootContextOnThisSegment.totalUpdateLockCount -= 1;
+    }
+
+    @Stage("Locks")
+    public int decrementWrite() {
+        return rootContextOnThisSegment.totalWriteLockCount -= 1;
+    }
+
+    @Stage("Locks")
+    public void incrementRead() {
+        rootContextOnThisSegment.totalReadLockCount += 1;
+    }
+
+    @Stage("Locks")
+    public void incrementUpdate() {
+        rootContextOnThisSegment.totalUpdateLockCount += 1;
+    }
+
+    @Stage("Locks")
+    public void incrementWrite() {
+        rootContextOnThisSegment.totalWriteLockCount += 1;
+    }
 
     public abstract boolean locksInit();
 
@@ -131,27 +179,34 @@ public abstract class SegmentStages implements InterProcessReadWriteUpdateLock {
         }
         rootContextOnThisSegment = this;
         concurrentSameThreadContexts = false;
+
         latestSameThreadSegmentModCount = 0;
         contextModCount = 0;
-        nextNode = null;
+
         totalReadLockCount = 0;
         totalUpdateLockCount = 0;
         totalWriteLockCount = 0;
     }
 
+    @Stage("Locks")
     boolean tryFindInitLocksOfThisSegment(Object thisContext, int index) {
         SegmentStages c = chaining.contextAtIndexInChain(index);
-        if (c.segmentHeader != null && c.segmentHeaderAddress == segmentHeaderAddress &&
-                c.rootContextOnThisSegment != null) {
-            //TODO implement nested contexts. Hardest part - bodies of Read/Update/WriteLock classes
-            throw new IllegalStateException("Nested context not implemented yet");
+        if (c.segHeaderInit() &&
+                c.segmentHeaderAddress == segmentHeaderAddress &&
+                c.locksInit()) {
+            SegmentStages root = c.rootContextOnThisSegment;
+            this.rootContextOnThisSegment = root;
+            root.concurrentSameThreadContexts = true;
+            this.concurrentSameThreadContexts = true;
+            this.contextModCount = root.latestSameThreadSegmentModCount;
+            linkToSegmentContextsChain();
+            return true;
         } else {
             return false;
         }
     }
 
     void closeLocks() {
-        // TODO should throw ISE on attempt to close root context when children not closed
         if (rootContextOnThisSegment == this) {
             closeRootLocks();
         } else {
@@ -164,71 +219,87 @@ public abstract class SegmentStages implements InterProcessReadWriteUpdateLock {
     @Stage("Locks")
     private void closeNestedLocks() {
         unlinkFromSegmentContextsChain();
-        
+        readUnlockAndDecrementCount();
+    }
+
+    @Stage("Locks")
+    public void readUnlockAndDecrementCount() {
         switch (localLockState) {
             case UNLOCKED:
-                break;
+                return;
             case READ_LOCKED:
-                int newTotalReadLockCount = this.rootContextOnThisSegment.totalReadLockCount -= 1;
+                int newTotalReadLockCount = decrementRead();
                 if (newTotalReadLockCount == 0) {
-                    if (this.rootContextOnThisSegment.totalUpdateLockCount == 0 &&
-                            this.rootContextOnThisSegment.totalWriteLockCount == 0) {
+                    if (updateZero() && writeZero())
                         segmentHeader.readUnlock(segmentHeaderAddress);
-                    }
-                } else if (newTotalReadLockCount < 0) {
-                    throw new IllegalStateException("read underflow");
+                } else {
+                    assert newTotalReadLockCount > 0 : "read underflow";
                 }
-                break;
+                return;
             case UPDATE_LOCKED:
-                int newTotalUpdateLockCount =
-                        this.rootContextOnThisSegment.totalUpdateLockCount -= 1;
+                int newTotalUpdateLockCount = decrementUpdate();
                 if (newTotalUpdateLockCount == 0) {
-                    if (this.rootContextOnThisSegment.totalWriteLockCount == 0) {
-                        if (this.rootContextOnThisSegment.totalReadLockCount == 0) {
+                    if (writeZero()) {
+                        if (readZero()) {
                             segmentHeader.updateUnlock(segmentHeaderAddress);
                         } else {
                             segmentHeader.downgradeUpdateToReadLock(segmentHeaderAddress);
                         }
                     }
-                } else if (newTotalUpdateLockCount < 0) {
-                    throw new IllegalStateException("update underflow");
+                } else {
+                    assert newTotalUpdateLockCount > 0 : "update underflow";
                 }
-                break;
+                return;
             case WRITE_LOCKED:
-                int newTotalWriteLockCount = this.rootContextOnThisSegment.totalWriteLockCount -= 1;
+                int newTotalWriteLockCount = decrementWrite();
                 if (newTotalWriteLockCount == 0) {
-                    if (this.rootContextOnThisSegment.totalUpdateLockCount > 0) {
+                    if (!updateZero()) {
                         segmentHeader.downgradeWriteToUpdateLock(segmentHeaderAddress);
                     } else {
-                        if (this.rootContextOnThisSegment.totalReadLockCount > 0) {
+                        if (!readZero()) {
                             segmentHeader.downgradeWriteToReadLock(segmentHeaderAddress);
                         } else {
                             segmentHeader.writeUnlock(segmentHeaderAddress);
                         }
                     }
+                } else {
+                    assert newTotalWriteLockCount > 0 : "write underflow";
                 }
-                break;
         }
     }
 
     @Stage("Locks")
+    private void linkToSegmentContextsChain() {
+        SegmentStages innermostContextOnThisSegment = rootContextOnThisSegment;
+        while (innermostContextOnThisSegment.nextNode != null)
+            innermostContextOnThisSegment = innermostContextOnThisSegment.nextNode;
+        innermostContextOnThisSegment.nextNode = this;
+    }
+
+    @Stage("Locks")
     private void unlinkFromSegmentContextsChain() {
-        SegmentStages prevContext = this.rootContextOnThisSegment;
+        SegmentStages prevContext = rootContextOnThisSegment;
         while (true) {
             assert prevContext.nextNode != null;
             if (prevContext.nextNode == this)
                 break;
             prevContext = prevContext.nextNode;
         }
-        assert nextNode == null;
+        // i. e. structured unlocking
+        verifyInnermostContext();
         prevContext.nextNode = null;
     }
 
     @Stage("Locks")
+    private void verifyInnermostContext() {
+        if (nextNode != null)
+            throw new IllegalStateException("Attempt to close contexts not structurally");
+    }
+
+    @Stage("Locks")
     private void closeRootLocks() {
-        assert nextNode == null;
-        
-        
+        verifyInnermostContext();
+
         switch (localLockState) {
             case UNLOCKED:
                 return;

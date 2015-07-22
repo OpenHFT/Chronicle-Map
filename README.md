@@ -1556,8 +1556,8 @@ enough to
  - Backup all changes to ChronicleMap to some durable storage, e. g. SQL database
  - Perform multi-ChronicleMap operations correctly in concurrent environment,
    by acquiring locks on all ChronicleMaps before updating them.
- - <s>Perform multi-key operations on a single ChronicleMap correctly in concurrent environment,
-   by acquiring locks on all keys before updating the entries</s> SOON
+ - Perform multi-key operations on a single ChronicleMap correctly in concurrent environment,
+   by acquiring locks on all keys before updating the entries
  - Define own replication/reconciliation logic for distributed ChronicleMaps
 
 ## Examples
@@ -1917,6 +1917,125 @@ ChronicleMap<Integer, Set<Integer>> map1 = ChronicleMapBuilder
         .create();
 ```
 
+### Undirected graph
+
+Using nested contexts:
+
+```java
+    public static boolean addEdge(
+            ChronicleMap<Integer, Set<Integer>> graph, int source, int target) {
+        if (source == target)
+            throw new IllegalArgumentException("loops are forbidden");
+
+        try (ExternalMapQueryContext<Integer, Set<Integer>, ?> sc = graph.queryContext(source)) {
+            sc.updateLock().lock();
+            try (ExternalMapQueryContext<Integer, Set<Integer>, ?> tc =
+                         graph.queryContext(target)) {
+                tc.updateLock().lock();
+                MapEntry<Integer, Set<Integer>> sEntry = sc.entry();
+                if (sEntry != null) {
+                    MapEntry<Integer, Set<Integer>> tEntry = tc.entry();
+                    if (tEntry != null) {
+                        return addEdgeBothPresent(sc, sEntry, source, tc, tEntry, target);
+                    } else {
+                        addEdgePresentAbsent(sc, sEntry, source, tc, target);
+                        return true;
+                    }
+                } else {
+                    MapEntry<Integer, Set<Integer>> tEntry = tc.entry();
+                    if (tEntry != null) {
+                        addEdgePresentAbsent(tc, tEntry, target, sc, source);
+                    } else {
+                        addEdgeBothAbsent(sc, source, tc, target);
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+
+    private static boolean addEdgeBothPresent(
+            MapQueryContext<Integer, Set<Integer>, ?> sc,
+            @NotNull MapEntry<Integer, Set<Integer>> sEntry, int source,
+            MapQueryContext<Integer, Set<Integer>, ?> tc,
+            @NotNull MapEntry<Integer, Set<Integer>> tEntry, int target) {
+        Set<Integer> sNeighbours = sEntry.value().get();
+        if (sNeighbours.add(target)) {
+            Set<Integer> tNeighbours = tEntry.value().get();
+            boolean added = tNeighbours.add(source);
+            assert added;
+            sEntry.doReplaceValue(sc.wrapValueAsData(sNeighbours));
+            tEntry.doReplaceValue(tc.wrapValueAsData(tNeighbours));
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static void addEdgePresentAbsent(
+            MapQueryContext<Integer, Set<Integer>, ?> sc,
+            @NotNull MapEntry<Integer, Set<Integer>> sEntry, int source,
+            MapQueryContext<Integer, Set<Integer>, ?> tc, int target) {
+        Set<Integer> sNeighbours = sEntry.value().get();
+        boolean added = sNeighbours.add(target);
+        assert added;
+        sEntry.doReplaceValue(sc.wrapValueAsData(sNeighbours));
+
+        addEdgeOneSide(tc, source);
+    }
+
+    private static void addEdgeBothAbsent(MapQueryContext<Integer, Set<Integer>, ?> sc, int source,
+            MapQueryContext<Integer, Set<Integer>, ?> tc, int target) {
+        addEdgeOneSide(sc, target);
+        addEdgeOneSide(tc, source);
+    }
+
+    private static void addEdgeOneSide(MapQueryContext<Integer, Set<Integer>, ?> tc, int source) {
+        Set<Integer> tNeighbours = new HashSet<>();
+        tNeighbours.add(source);
+        MapAbsentEntry<Integer, Set<Integer>> tAbsentEntry = tc.absentEntry();
+        assert tAbsentEntry != null;
+        tAbsentEntry.doInsert(tc.wrapValueAsData(tNeighbours));
+    }
+
+    public static boolean removeEdge(
+            ChronicleMap<Integer, Set<Integer>> graph, int source, int target) {
+        try (ExternalMapQueryContext<Integer, Set<Integer>, ?> sc = graph.queryContext(source)) {
+            sc.updateLock().lock();
+            MapEntry<Integer, Set<Integer>> sEntry = sc.entry();
+            if (sEntry == null)
+                return false;
+            Set<Integer> sNeighbours = sEntry.value().get();
+            if (!sNeighbours.remove(target))
+                return false;
+            try (ExternalMapQueryContext<Integer, Set<Integer>, ?> tc =
+                         graph.queryContext(target)) {
+                tc.updateLock().lock();
+                MapEntry<Integer, Set<Integer>> tEntry = tc.entry();
+                if (tEntry == null)
+                    throw new IllegalStateException("target node should be present in the graph");
+                Set<Integer> tNeighbours = tEntry.value().get();
+                if (!tNeighbours.remove(source))
+                    throw new IllegalStateException("the target node have an edge to the source");
+                sEntry.doReplaceValue(sc.wrapValueAsData(sNeighbours));
+                tEntry.doReplaceValue(tc.wrapValueAsData(tNeighbours));
+                return true;
+            }
+        }
+    }
+```
+
+Usage:
+```java
+ChronicleMap<Integer, Set<Integer>> graph = ChronicleMapBuilder
+        .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
+        .entries(100)
+        .averageValueSize(1000)
+        .create();
+
+addEdge(graph, 1, 2);
+removeEdge(graph, 1, 2);
+```
 
 # Performance Topics
 

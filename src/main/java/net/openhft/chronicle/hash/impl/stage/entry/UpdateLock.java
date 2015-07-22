@@ -42,7 +42,12 @@ public class UpdateLock implements InterProcessLock {
     public void lock() {
         switch (s.localLockState) {
             case UNLOCKED:
-                s.segmentHeader.updateLock(s.segmentHeaderAddress);
+                if (s.updateZero() && s.writeZero()) {
+                    if (!s.readZero())
+                        throw forbiddenUpdateLockWhenOuterContextReadLocked();
+                    s.segmentHeader.updateLock(s.segmentHeaderAddress);
+                }
+                s.incrementUpdate();
                 s.setLocalLockState(UPDATE_LOCKED);
                 return;
             case READ_LOCKED:
@@ -61,11 +66,26 @@ public class UpdateLock implements InterProcessLock {
         return new IllegalMonitorStateException("Cannot upgrade from read to update lock");
     }
 
+    /**
+     * Non-static because after compilation it becomes inner class which forbids static methods
+     */
+    @NotNull
+    private IllegalStateException forbiddenUpdateLockWhenOuterContextReadLocked() {
+        return new IllegalStateException("Cannot acquire update lock, because outer context " +
+                "holds read lock. In this case you should acquire update lock in the outer " +
+                "context up front");
+    }
+
     @Override
     public void lockInterruptibly() throws InterruptedException {
         switch (s.localLockState) {
             case UNLOCKED:
-                s.segmentHeader.updateLockInterruptibly(s.segmentHeaderAddress);
+                if (s.updateZero() && s.writeZero()) {
+                    if (!s.readZero())
+                        throw forbiddenUpdateLockWhenOuterContextReadLocked();
+                    s.segmentHeader.updateLockInterruptibly(s.segmentHeaderAddress);
+                }
+                s.incrementUpdate();
                 s.setLocalLockState(UPDATE_LOCKED);
                 return;
             case READ_LOCKED:
@@ -80,11 +100,20 @@ public class UpdateLock implements InterProcessLock {
     public boolean tryLock() {
         switch (s.localLockState) {
             case UNLOCKED:
-                if (s.segmentHeader.tryUpdateLock(s.segmentHeaderAddress)) {
+                if (s.updateZero() && s.writeZero()) {
+                    if (!s.readZero())
+                        throw forbiddenUpdateLockWhenOuterContextReadLocked();
+                    if (s.segmentHeader.tryUpdateLock(s.segmentHeaderAddress)) {
+                        s.incrementUpdate();
+                        s.setLocalLockState(UPDATE_LOCKED);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    s.incrementUpdate();
                     s.setLocalLockState(UPDATE_LOCKED);
                     return true;
-                } else {
-                    return false;
                 }
             case READ_LOCKED:
                 throw forbiddenUpgrade();
@@ -99,11 +128,20 @@ public class UpdateLock implements InterProcessLock {
     public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException {
         switch (s.localLockState) {
             case UNLOCKED:
-                if (s.segmentHeader.tryUpdateLock(s.segmentHeaderAddress, time, unit)) {
+                if (s.updateZero() && s.writeZero()) {
+                    if (!s.readZero())
+                        throw forbiddenUpdateLockWhenOuterContextReadLocked();
+                    if (s.segmentHeader.tryUpdateLock(s.segmentHeaderAddress, time, unit)) {
+                        s.incrementUpdate();
+                        s.setLocalLockState(UPDATE_LOCKED);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    s.incrementUpdate();
                     s.setLocalLockState(UPDATE_LOCKED);
                     return true;
-                } else {
-                    return false;
                 }
             case READ_LOCKED:
                 throw forbiddenUpgrade();
@@ -121,11 +159,27 @@ public class UpdateLock implements InterProcessLock {
             case READ_LOCKED:
                 return;
             case UPDATE_LOCKED:
-                s.segmentHeader.downgradeUpdateToReadLock(s.segmentHeaderAddress);
+                int newTotalUpdateLockCount = s.decrementUpdate();
+                if (newTotalUpdateLockCount == 0) {
+                    if (s.writeZero())
+                        s.segmentHeader.downgradeUpdateToReadLock(s.segmentHeaderAddress);
+                } else {
+                    assert newTotalUpdateLockCount > 0 : "update underflow";
+                }
                 break;
             case WRITE_LOCKED:
-                s.segmentHeader.downgradeWriteToReadLock(s.segmentHeaderAddress);
+                int newTotalWriteLockCount = s.decrementWrite();
+                if (newTotalWriteLockCount == 0) {
+                    if (!s.updateZero()) {
+                        s.segmentHeader.downgradeWriteToUpdateLock(s.segmentHeaderAddress);
+                    } else {
+                        s.segmentHeader.downgradeWriteToReadLock(s.segmentHeaderAddress);
+                    }
+                } else {
+                    assert newTotalWriteLockCount > 0 : "write underflow";
+                }
         }
+        s.incrementRead();
         s.setLocalLockState(READ_LOCKED);
     }
 }
