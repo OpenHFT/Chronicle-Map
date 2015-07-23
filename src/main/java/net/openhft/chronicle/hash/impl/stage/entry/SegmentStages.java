@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.hash.SegmentLock;
 import net.openhft.chronicle.hash.impl.BigSegmentHeader;
 import net.openhft.chronicle.hash.impl.LocalLockState;
 import net.openhft.chronicle.hash.impl.SegmentHeader;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 
 @Staged
-public abstract class SegmentStages implements InterProcessReadWriteUpdateLock {
+public abstract class SegmentStages implements SegmentLock {
 
     @StageRef Chaining chaining;
     @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
@@ -48,7 +49,6 @@ public abstract class SegmentStages implements InterProcessReadWriteUpdateLock {
     
     public void initTheSegmentIndex(int segmentIndex) {
         this.segmentIndex = segmentIndex;
-        
     }
 
     // "SegHeader" because stage-generator doesn't support stage names - one is a prefix of another

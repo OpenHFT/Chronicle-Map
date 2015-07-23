@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * (like during {@code get()}, {@code put()}, etc., opposed to <i>bulk</i> operations).
  * This is the main context type of {@link MapMethods} and {@link MapRemoteOperations}.
  *
- *
- * 
  * @param <K> the map key type
  * @param <V> the map value type
  * @param <R> the return type of {@link MapEntryOperations} specialized for the queried map

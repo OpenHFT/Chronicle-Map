@@ -37,7 +37,7 @@ public class NestedContextsTest {
     public void nestedContextsTest() throws ExecutionException, InterruptedException {
         ChronicleMap<Integer, Set<Integer>> graph = ChronicleMapBuilder
                 .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
-                .actualSegments(1)
+                .actualSegments(2)
                 .create();
 
         addEdge(graph, 1, 2);
@@ -81,17 +81,22 @@ public class NestedContextsTest {
             ChronicleMap<Integer, Set<Integer>> graph, int source, int target) {
         if (source == target)
             throw new IllegalArgumentException("loops are forbidden");
+        ExternalMapQueryContext<Integer, Set<Integer>, ?> sourceC = graph.queryContext(source);
+        ExternalMapQueryContext<Integer, Set<Integer>, ?> targetC = graph.queryContext(target);
         // order for consistent lock acquisition => avoid dead lock
-        if (target < source) {
-            int t = source;
-            source = target;
-            target = t;
+        if (sourceC.segmentIndex() <= targetC.segmentIndex()) {
+            return innerAddEdge(source, sourceC, target, targetC);
+        } else {
+            return innerAddEdge(target, targetC, source, sourceC);
         }
+    }
 
-        try (ExternalMapQueryContext<Integer, Set<Integer>, ?> sc = graph.queryContext(source)) {
-            sc.updateLock().lock();
-            try (ExternalMapQueryContext<Integer, Set<Integer>, ?> tc =
-                         graph.queryContext(target)) {
+    private static boolean innerAddEdge(
+            int source, ExternalMapQueryContext<Integer, Set<Integer>, ?> sourceContext,
+            int target, ExternalMapQueryContext<Integer, Set<Integer>, ?> targetContext) {
+        try (ExternalMapQueryContext<Integer, Set<Integer>, ?> sc = sourceContext) {
+            try (ExternalMapQueryContext<Integer, Set<Integer>, ?> tc = targetContext) {
+                sc.updateLock().lock();
                 tc.updateLock().lock();
                 MapEntry<Integer, Set<Integer>> sEntry = sc.entry();
                 if (sEntry != null) {
@@ -161,23 +166,29 @@ public class NestedContextsTest {
 
     public static boolean removeEdge(
             ChronicleMap<Integer, Set<Integer>> graph, int source, int target) {
+        ExternalMapQueryContext<Integer, Set<Integer>, ?> sourceC = graph.queryContext(source);
+        ExternalMapQueryContext<Integer, Set<Integer>, ?> targetC = graph.queryContext(target);
         // order for consistent lock acquisition => avoid dead lock
-        if (target < source) {
-            int t = source;
-            source = target;
-            target = t;
+        if (sourceC.segmentIndex() <= targetC.segmentIndex()) {
+            return innerRemoveEdge(source, sourceC, target, targetC);
+        } else {
+            return innerRemoveEdge(target, targetC, source, sourceC);
         }
+    }
 
-        try (ExternalMapQueryContext<Integer, Set<Integer>, ?> sc = graph.queryContext(source)) {
-            sc.updateLock().lock();
-            MapEntry<Integer, Set<Integer>> sEntry = sc.entry();
-            if (sEntry == null)
-                return false;
-            Set<Integer> sNeighbours = sEntry.value().get();
-            if (!sNeighbours.remove(target))
-                return false;
-            try (ExternalMapQueryContext<Integer, Set<Integer>, ?> tc =
-                         graph.queryContext(target)) {
+    private static boolean innerRemoveEdge(
+            int source, ExternalMapQueryContext<Integer, Set<Integer>, ?> sourceContext,
+            int target, ExternalMapQueryContext<Integer, Set<Integer>, ?> targetContext) {
+        try (ExternalMapQueryContext<Integer, Set<Integer>, ?> sc = sourceContext) {
+            try (ExternalMapQueryContext<Integer, Set<Integer>, ?> tc = targetContext) {
+                sc.updateLock().lock();
+                MapEntry<Integer, Set<Integer>> sEntry = sc.entry();
+                if (sEntry == null)
+                    return false;
+                Set<Integer> sNeighbours = sEntry.value().get();
+                if (!sNeighbours.remove(target))
+                    return false;
+
                 tc.updateLock().lock();
                 MapEntry<Integer, Set<Integer>> tEntry = tc.entry();
                 if (tEntry == null)

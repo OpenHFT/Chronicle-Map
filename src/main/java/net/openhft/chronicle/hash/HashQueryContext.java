@@ -7,6 +7,7 @@ import net.openhft.chronicle.map.MapMethods;
 import net.openhft.chronicle.map.MapQueryContext;
 import net.openhft.chronicle.set.SetEntryOperations;
 import net.openhft.chronicle.set.SetQueryContext;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Context of {@link ChronicleHash} operations with <i>individual keys</i>.
@@ -137,7 +138,17 @@ import net.openhft.chronicle.set.SetQueryContext;
  * @param <K> the hash key type
  * @see ChronicleHash#queryContext(Object)
  */
-public interface HashQueryContext<K> extends HashContext<K>, InterProcessReadWriteUpdateLock {
+public interface HashQueryContext<K> extends HashContext<K>, SegmentLock {
+
+    /**
+     * Returns the index of the accessed segment, where the queried key is located (or to which
+     * the key is going to be put).
+     *
+     * <p>This index might also be used as the {@code InterProcessReadWriteUpdateLock} identifier,
+     * because {@code ChronicleHashes} has per-segment locks.
+     */
+    @Override
+    int segmentIndex();
 
     /**
      * Returns the queried key as a {@code Data}.
@@ -160,5 +171,6 @@ public interface HashQueryContext<K> extends HashContext<K>, InterProcessReadWri
      * @implNote Might acquire {@link #readLock} before searching for the key, if the context
      * is not locked yet.
      */
+    @Nullable
     HashAbsentEntry<K> absentEntry();
 }

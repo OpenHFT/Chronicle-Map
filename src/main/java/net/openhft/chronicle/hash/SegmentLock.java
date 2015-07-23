@@ -1,5 +1,7 @@
 /*
- * Copyright 2014 Higher Frequency Trading http://www.higherfrequencytrading.com
+ * Copyright 2015 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +19,19 @@
 package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.hash.locks.InterProcessReadWriteUpdateLock;
-import org.jetbrains.annotations.NotNull;
 
-public interface Segment {
-    long index();
-
-    @NotNull
-    InterProcessReadWriteUpdateLock lock();
+/**
+ * {@link InterProcessReadWriteUpdateLock} of a segment in {@code ChronicleHash}.
+ *
+ * <p>In Chronicle-Map off-heap design, locks (and concurrency) are per-segment.
+ *
+ * @see ChronicleHashBuilder#minSegments(int)
+ * @see ChronicleHashBuilder#actualSegments(int)
+ */
+public interface SegmentLock extends InterProcessReadWriteUpdateLock {
+    
+    /**
+     * Returns the index of the accessed segment.
+     */
+    int segmentIndex();
 }
