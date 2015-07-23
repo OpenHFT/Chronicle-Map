@@ -29,7 +29,7 @@ import net.openhft.chronicle.hash.locks.InterProcessReadWriteUpdateLock;
  * @see ChronicleHashBuilder#actualSegments(int)
  */
 public interface SegmentLock extends InterProcessReadWriteUpdateLock {
-    
+
     /**
      * Returns the index of the accessed segment.
      */
