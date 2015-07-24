@@ -30,9 +30,7 @@ class WriteThroughEntry<K, V> extends AbstractMap.SimpleEntry<K, V> {
 
     @Override
     public V setValue(V value) {
-        try (MapKeyContext<K, V> c = map.context(getKey())) {
-            c.put(value);
-        }
+        map.put(getKey(), value);
         return super.setValue(value);
     }
 }

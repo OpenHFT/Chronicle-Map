@@ -2,6 +2,7 @@ package net.openhft.chronicle.map;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.values.LongValue;
@@ -257,11 +258,10 @@ public class ChronicleMapImportExportTest {
             LongValue value = expected.newValueInstance();
 
             // this will add the entry
-            try (MapKeyContext<?, LongValue> context = expected.acquireContext("one", value)) {
-                assertEquals(0, context.get().getValue());
-                assert value == context.get();
-                LongValue value1 = context.get();
-                value1.addValue(1);
+            try (Closeable c =
+                         expected.acquireContext("one", value)) {
+                assertEquals(0, value.getValue());
+                value.addValue(1);
             }
 
             expected.getAll(file);
@@ -294,14 +294,12 @@ public class ChronicleMapImportExportTest {
             final BondVOInterface value = expected.newValueInstance();
 
             // this will add the entry
-            try (MapKeyContext context = expected.acquireContext("one", value)) {
+            try (Closeable c = expected.acquireContext("one", value)) {
                 value.setCoupon(8.98);
                 BondVOInterface.MarketPx marketPxIntraDayHistoryAt =
                         value.getMarketPxIntraDayHistoryAt(1);
 
                 marketPxIntraDayHistoryAt.setAskPx(12.0);
-
-                assert value == context.get();
             }
 
             expected.getAll(file);

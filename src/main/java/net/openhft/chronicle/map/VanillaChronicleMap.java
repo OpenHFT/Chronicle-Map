@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
@@ -204,11 +205,6 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     }
 
     @Override
-    public MapKeyContext<K, V> context(K key) {
-        return queryContext(key).deprecatedMapKeyContext();
-    }
-
-    @Override
     public int actualSegments() {
         return actualSegments;
     }
@@ -279,16 +275,15 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         }
     }
 
-
     @NotNull
     @Override
-    public final MapKeyContext<K, V> acquireContext(K key, V usingValue) {
+    public final Closeable acquireContext(@NotNull K key, @NotNull V usingValue) {
         QueryContextInterface<K, V, R> q = queryContext(key);
         // TODO optimize to update lock in certain cases
         try {
             q.writeLock().lock();
             acquireUsingBody(q, usingValue);
-            return q.deprecatedMapAcquireContext();
+            return q.acquireHandle();
         } catch (Throwable e) {
             try {
                 q.close();
@@ -298,7 +293,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
             throw e;
         }
     }
-    
+
     private static <V> void checkAcquiredUsing(V acquired, V using) {
         if (acquired != using) {
             throw new IllegalArgumentException("acquire*() MUST reuse the given " +
@@ -348,7 +343,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         q.initUsed(true);
         return q;
     }
-    
+
     private CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R> i() {
         return (CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R>) iterCxt.get();
     }

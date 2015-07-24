@@ -124,11 +124,6 @@ class SetFromMap<E> extends AbstractSet<E>
     }
 
     @Override
-    public KeyContext context(E key) {
-        return m.context(key);
-    }
-
-    @Override
     public Class<E> keyClass() {
         return m.keyClass();
     }

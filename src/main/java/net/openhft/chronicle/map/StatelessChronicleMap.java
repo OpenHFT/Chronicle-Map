@@ -542,11 +542,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return fetchLong(LONG_SIZE);
     }
 
-    @Override
-    public MapKeyContext<K, V> context(K key) {
-        throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
-    }
-
     @NotNull
     @Override
     public ExternalMapQueryContext<K, V, ?> queryContext(K key) {
@@ -598,7 +593,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @NotNull
     @Override
-    public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
+    public net.openhft.chronicle.core.io.Closeable acquireContext(@NotNull K key, @NotNull V usingValue) {
         throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
     }
 

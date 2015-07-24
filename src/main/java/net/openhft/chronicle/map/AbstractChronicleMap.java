@@ -37,22 +37,24 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
     @Override
     default <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function) {
         requireNonNull(function);
-        try (MapKeyContext<K, V> c = context(key)) {
-            return c.containsKey() ? function.apply(c.get()) : null;
+        try (ExternalMapQueryContext<K, V, ?> c = queryContext(key)) {
+            MapEntry<K, V> entry = c.entry();
+            return entry != null ? function.apply(entry.value().get()) : null;
         }
     }
 
     @Override
     default V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
         requireNonNull(unaryOperator);
-        try (MapKeyContext<K, V> c = context(key)) {
+        try (ExternalMapQueryContext<K, V, ?> c = queryContext(key)) {
             // putMapped() should find a value, update & put most of the time,
             // so don't try to check key presence under read lock first,
             // as in putIfAbsent()/acquireUsing(), start with update lock:
             c.updateLock().lock();
-            if (c.containsKey()) {
-                V newValue = unaryOperator.update(c.get());
-                c.put(newValue);
+            MapEntry<K, V> entry = c.entry();
+            if (entry != null) {
+                V newValue = unaryOperator.update(entry.value().get());
+                c.replaceValue(entry, c.wrapValueAsData(newValue));
                 return newValue;
             } else {
                 return null;

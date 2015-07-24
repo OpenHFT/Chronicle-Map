@@ -1,12 +1,13 @@
 package net.openhft.chronicle.map.impl;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.value.instance.KeyInitableData;
 import net.openhft.chronicle.map.ExternalMapQueryContext;
 import net.openhft.chronicle.map.MapKeyContext;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.chronicle.map.impl.ret.UsableReturnValue;
-import net.openhft.chronicle.map.impl.data.instance.ValueInitableData;
+import net.openhft.chronicle.map.impl.data.instance.ValueInitializableData;
 
 public interface QueryContextInterface<K, V, R> extends ExternalMapQueryContext<K, V, R> {
     
@@ -18,11 +19,11 @@ public interface QueryContextInterface<K, V, R> extends ExternalMapQueryContext<
     
     UsableReturnValue<V> usingReturnValue();
     
-    ValueInitableData<V> inputValueInstanceValue();
+    ValueInitializableData<V> inputValueInstanceValue();
     
     MapKeyContext<K, V> deprecatedMapKeyContext();
-    
-    MapKeyContext<K, V> deprecatedMapAcquireContext();
+
+    Closeable acquireHandle();
     
     void initTheSegmentIndex(int segmentIndex);
     

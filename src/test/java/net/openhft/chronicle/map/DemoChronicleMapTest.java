@@ -3,7 +3,6 @@ package net.openhft.chronicle.map;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 import net.openhft.lang.values.IntValue;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -74,7 +73,8 @@ public class DemoChronicleMapTest {
             for (int i = 0; i < maxEntries; i++) {
                 key.setValue(i);
 
-                try (MapKeyContext wc = map.acquireContext(key, value)) {
+                try (net.openhft.chronicle.core.io.Closeable c =
+                             map.acquireContext(key, value)) {
                     value.setSymbol("IBM-" + i);
                     value.addAtomicOrderQty(1000);
                 }

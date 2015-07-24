@@ -49,12 +49,6 @@ public interface ChronicleHash<K, C extends KeyContext<K>, EQC extends ExternalH
     long longSize();
 
     /**
-     * @deprecated use {@link #queryContext} instead
-     */
-    @Deprecated
-    C context(K key);
-
-    /**
      * @return the class of {@code <K>}
      */
     Class<K> keyClass();

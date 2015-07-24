@@ -110,9 +110,10 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
             return d.containsValue(value);
         }
 
+        @NotNull
         @Override
-        public MapKeyContext<K, V> context(K key) {
-            return d.context(key);
+        public net.openhft.chronicle.core.io.Closeable acquireContext(@NotNull K key, @NotNull V usingValue) {
+            return d.acquireContext(key, usingValue);
         }
 
         @NotNull
@@ -178,12 +179,6 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         @Override
         public V acquireUsing(@NotNull K key, V usingValue) {
             return d.acquireUsing(key, usingValue);
-        }
-
-        @NotNull
-        @Override
-        public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
-            throw new UnsupportedOperationException();
         }
 
         @Override

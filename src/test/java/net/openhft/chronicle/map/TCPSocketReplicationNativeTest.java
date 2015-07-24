@@ -23,7 +23,6 @@ import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.LongValue;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -92,7 +91,8 @@ public class TCPSocketReplicationNativeTest {
 
         LongValue value = DataValueClasses.newDirectReference(LongValue.class);
 
-        try (MapKeyContext<Integer, LongValue> c = map1.acquireContext(1, value)) {
+        try (net.openhft.chronicle.core.io.Closeable c =
+                     map1.acquireContext(1, value)) {
             value.setValue(10);
         }
 
@@ -108,11 +108,13 @@ public class TCPSocketReplicationNativeTest {
 
         LongValue value = DataValueClasses.newDirectReference(LongValue.class);
 
-        try (MapKeyContext<Integer, LongValue> c = map1.acquireContext(1, value)) {
+        try (net.openhft.chronicle.core.io.Closeable c =
+                     map1.acquireContext(1, value)) {
             value.setValue(10);
         }
 
-        try (MapKeyContext<Integer, LongValue> c = map1.acquireContext(1, value)) {
+        try (net.openhft.chronicle.core.io.Closeable c =
+                     map1.acquireContext(1, value)) {
             value.setValue(20);
         }
 

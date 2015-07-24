@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -277,12 +278,8 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @NotNull
     @Override
-    public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public MapKeyContext<K, V> context(K key) {
+    public Closeable acquireContext(
+            @NotNull K key, @NotNull V usingValue) {
         throw new UnsupportedOperationException();
     }
 

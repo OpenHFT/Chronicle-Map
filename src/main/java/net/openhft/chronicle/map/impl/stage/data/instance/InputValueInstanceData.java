@@ -20,7 +20,7 @@ package net.openhft.chronicle.map.impl.stage.data.instance;
 
 import net.openhft.chronicle.hash.impl.CopyingInstanceData;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
-import net.openhft.chronicle.map.impl.data.instance.ValueInitableData;
+import net.openhft.chronicle.map.impl.data.instance.ValueInitializableData;
 import net.openhft.chronicle.map.impl.stage.map.ValueBytesInterop;
 import net.openhft.lang.io.DirectBytes;
 import net.openhft.sg.Stage;
@@ -29,7 +29,7 @@ import net.openhft.sg.Staged;
 
 @Staged
 public abstract class InputValueInstanceData<V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
-        extends CopyingInstanceData<V> implements ValueInitableData<V> {
+        extends CopyingInstanceData<V> implements ValueInitializableData<V> {
     
     @StageRef ValueBytesInterop<V, VI, MVI> vi;
     

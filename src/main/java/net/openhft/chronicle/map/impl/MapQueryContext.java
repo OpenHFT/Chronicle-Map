@@ -96,7 +96,7 @@ nested = {
 
         WrappedValueInstanceData.class,
         DeprecatedMapKeyContextOnQuery.class,
-        DeprecatedMapAcquireContextOnQuery.class,
+        AcquireHandle.class,
         DefaultReturnValue.class,
         UsingReturnValue.class,
 })

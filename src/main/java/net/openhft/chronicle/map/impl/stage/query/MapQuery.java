@@ -50,7 +50,7 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
     @StageRef MapEntryStages<K, V> e;
     @StageRef SearchAllocatedChunks allocatedChunks;
     @StageRef public DeprecatedMapKeyContextOnQuery<K, V> deprecatedMapKeyContext;
-    @StageRef public DeprecatedMapAcquireContextOnQuery<K, V> deprecatedMapAcquireContext;
+    @StageRef public AcquireHandle<K, V> acquireHandle;
     
     @StageRef public InputValueInstanceData<V, ?, ?> inputValueInstanceValue;
     

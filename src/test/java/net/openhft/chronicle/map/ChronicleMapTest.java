@@ -20,6 +20,8 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.HashBiMap;
 import com.google.common.primitives.Ints;
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.model.DataValueClasses;
@@ -732,7 +734,8 @@ public class ChronicleMapTest {
                                     map.getUsing(key, value);
 
                                 } else {
-                                    try (MapKeyContext wc = map.acquireContext(key, value)) {
+                                    try (net.openhft.chronicle.core.io.Closeable c =
+                                                 map.acquireContext(key, value)) {
                                         if (value.length() < value0.length() - 1)
                                             value.append(value0);
                                         else if (value.length() > value0.length())
@@ -824,8 +827,8 @@ public class ChronicleMapTest {
                                             map.getUsing(key, value);
 
                                         } else {
-                                            try (MapKeyContext wc = map.acquireContext(key,
-                                                    value)) {
+                                            try (net.openhft.chronicle.core.io.Closeable c =
+                                                         map.acquireContext(key, value)) {
                                                 if (value.length() < value0.length() - 1)
                                                     value.append(value0);
                                                 else if (value.length() > value0.length())
@@ -923,21 +926,27 @@ public class ChronicleMapTest {
                                 long n;
                                 // 75% read
                                 if (rand.nextBoolean() || rand.nextBoolean()) {
-                                    try (MapKeyContext<?, LongValue> c = map.context(sb)) {
-                                        if (c.containsKey()) {
+                                    try (ExternalMapQueryContext<?, LongValue, ?> c =
+                                                 map.queryContext(sb)) {
+                                        MapEntry<?, LongValue> entry = c.entry();
+                                        if (entry != null) {
                                             // Attempt to pass abstraction hierarchies
-                                            n = c.entry().readVolatileLong(c.valueOffset()) + 1;
+                                            Data<LongValue> v = entry.value();
+                                            n = v.bytes().readVolatileLong(v.offset()) + 1;
                                         } else {
                                             n = 1;
                                         }
                                     }
                                 } else {
-                                    try (MapKeyContext<?, LongValue> wc = map.context(sb)) {
-                                        wc.updateLock().lock();
-                                        if (wc.containsKey()) {
-                                            n = wc.entry().addLong(wc.valueOffset(), 1);
+                                    try (ExternalMapQueryContext<CharSequence, LongValue, ?> c =
+                                                 map.queryContext(sb)) {
+                                        c.updateLock().lock();
+                                        MapEntry<?, LongValue> entry = c.entry();
+                                        if (entry != null) {
+                                            Data<LongValue> v = entry.value();
+                                            n = ((BytesStore) v.bytes()).addAndGetLong(v.offset(), 1);
                                         } else {
-                                            wc.put(ONE);
+                                            c.insert(c.absentEntry(), c.wrapValueAsData(ONE));
                                             n = 1;
                                         }
                                     }
@@ -1012,7 +1021,8 @@ public class ChronicleMapTest {
                                  j += independence) {
                                 key.setValue(j * factor);
                                 long n;
-                                try (MapKeyContext wc = map.acquireContext(key, value)) {
+                                try (net.openhft.chronicle.core.io.Closeable c =
+                                             map.acquireContext(key, value)) {
                                     n = value.addValue(1);
                                 }
                                 assert n > 0 && n < 1000 : "Counter corrupted " + n;
@@ -1638,48 +1648,47 @@ public class ChronicleMapTest {
         LongValue value = nativeLongValue();
 
         // this will add the entry
-        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
-            assertEquals(0, context.get().getValue());
-            assert value == context.get();
-            LongValue value1 = context.get();
-            value1.addValue(1);
+        try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("one", value)) {
+            assertEquals(0, value.getValue());
+            value.addValue(1);
         }
 
         // check that the entry was added
-        try (MapKeyContext<?, LongValue> context = map.context("one")) {
-            assertEquals(true, context.containsKey());
-            LongValue v = context.getUsing(value);
+        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
+            MapEntry<CharSequence, LongValue> entry = c.entry();
+            assertNotNull(entry);
+            LongValue v = entry.value().getUsing(value);
             assert v == value;
             assertEquals(1, v.getValue());
         }
 
         // this will remove the entry
-        try (MapKeyContext<?, LongValue> context = map.context("one")) {
-            context.remove();
+        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
+            c.updateLock().lock();
+            c.remove(c.entry());
         }
 
         // check that the entry was removed
-        try (MapKeyContext<?, LongValue> context = map.context("one")) {
-            context.updateLock().lock();
-            assertEquals(false, context.containsKey());
-            assertEquals(null, context.get());
+        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
+            c.updateLock().lock();
+            assertNotNull(c.absentEntry());
         }
 
-        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
-            assert value == context.get();
-            assertEquals(0, context.get().getValue());
+        try (net.openhft.chronicle.core.io.Closeable c =
+                     map.acquireContext("one", value)) {
+            assertEquals(0, value.getValue());
         }
 
-        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
-            assert value == context.get();
-            context.get().addValue(1);
+        try (net.openhft.chronicle.core.io.Closeable c =
+                     map.acquireContext("one", value)) {
+            value.addValue(1);
         }
 
         // check that the entry was removed
-        try (MapKeyContext<?, LongValue> context = map.context("one")) {
-            LongValue v = context.getUsing(value);
+        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
+            LongValue v = c.entry().value().getUsing(value);
             assert value == v;
-            assertEquals(1, context.get().getValue());
+            assertEquals(1, c.entry().value().get().getValue());
         }
 
         map.close();
@@ -1733,7 +1742,7 @@ public class ChronicleMapTest {
 
         try (final ChronicleMap<CharSequence, String> map = builder.create()) {
             // this will add the entry
-            try (MapKeyContext<?, String> context = map.acquireContext("one", "")) {
+            try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("one", "")) {
                 // do nothing
             }
         }
@@ -1751,7 +1760,8 @@ public class ChronicleMapTest {
                 .create()) {
             StringBuilder value = new StringBuilder();
 
-            try (MapKeyContext<?, CharSequence> context = map.acquireContext("one", value)) {
+            try (net.openhft.chronicle.core.io.Closeable c =
+                         map.acquireContext("one", value)) {
                 value.append("Hello World");
             }
 
@@ -1771,56 +1781,58 @@ public class ChronicleMapTest {
 
         LongValue value = DataValueClasses.newDirectReference(LongValue.class);
 
-        try (MapKeyContext<?, LongValue> context = map.context("one")) {
-            assertEquals(false, context.containsKey());
-            assertEquals(null, context.get());
+        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
+            assertNotNull(c.absentEntry());
         }
 
-        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
+        try (net.openhft.chronicle.core.io.Closeable c =
+                     map.acquireContext("one", value)) {
             value.setValue(10);
         }
 
         // this will add the entry
-        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
-            LongValue value1 = context.get();
-            value1.addValue(1);
+        try (net.openhft.chronicle.core.io.Closeable c =
+                     map.acquireContext("one", value)) {
+            value.addValue(1);
         }
 
         // check that the entry was added
-        try (MapKeyContext<?, LongValue> context = map.context("one")) {
-            assertEquals(true, context.containsKey());
-            assertEquals(11, context.get().getValue());
+        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
+            MapEntry<CharSequence, LongValue> entry = c.entry();
+            assertNotNull(entry);
+            assertEquals(11, entry.value().get().getValue());
         }
 
         // this will remove the entry
-        try (MapKeyContext<?, LongValue> context = map.context("one")) {
-            context.remove();
+        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
+            c.updateLock().lock();
+            c.remove(c.entry());
         }
 
         // check that the entry was removed
-        try (MapKeyContext<?, LongValue> context = map.context("one")) {
-            assertEquals(false, context.containsKey());
-            assertEquals(null, context.get());
+        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
+            assertNotNull(c.absentEntry());
         }
 
-        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
-            assertEquals(0, context.get().getValue());
+        try (net.openhft.chronicle.core.io.Closeable c =
+                     map.acquireContext("one", value)) {
+            assertEquals(0, value.getValue());
         }
 
         value.setValue(1);
 
-        try (MapKeyContext<?, LongValue> lockedEntry = map.context("one")) {
-            assertEquals(1, lockedEntry.get().getValue());
+        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
+            assertEquals(1, c.entry().value().get().getValue());
         }
 
-        try (MapKeyContext<?, LongValue> context = map.acquireContext("one", value)) {
-            LongValue value1 = context.get();
-            value1.addValue(1);
+        try (net.openhft.chronicle.core.io.Closeable c =
+                     map.acquireContext("one", value)) {
+            value.addValue(1);
         }
 
         // check that the entry was removed
-        try (MapKeyContext<?, LongValue> context = map.context("one")) {
-            LongValue value1 = context.get();
+        try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
+            LongValue value1 = c.entry().value().get();
             assertEquals(2, value1.getValue());
         }
 

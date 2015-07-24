@@ -3,7 +3,6 @@ package net.openhft.chronicle.map;
 import eg.TestInstrumentVOInterface;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -46,7 +45,7 @@ public class TcpReplicationWithAcquireContextTest {
                 TestInstrumentVOInterface instrumentVOInterface = map1.newValueInstance();
 
 
-                try (MapKeyContext<?, TestInstrumentVOInterface> wc =
+                try (net.openhft.chronicle.core.io.Closeable c =
                              map1.acquireContext("KEY1", instrumentVOInterface)) {
                     instrumentVOInterface.setSymbol("Flyer");
                     instrumentVOInterface.setCurrencyCode("USA");

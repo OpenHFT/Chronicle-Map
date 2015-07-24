@@ -19,7 +19,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.ExternalHashQueryContext;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
@@ -34,8 +33,6 @@ import java.io.Serializable;
 import java.lang.Object;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 /**
  * Extension of {@link ConcurrentMap} interface, stores the data off-heap.
@@ -142,13 +139,8 @@ public interface ChronicleMap<K, V>
      */
     V acquireUsing(@NotNull K key, V usingValue);
 
-    /**
-     * @deprecated this method has incoherent, unclear semantics. Use {@link #queryContext(Object)}
-     * instead
-     */
-    @Deprecated
     @NotNull
-    MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue);
+    net.openhft.chronicle.core.io.Closeable acquireContext(@NotNull K key, @NotNull V usingValue);
 
     /**
      * Apply a mapping to the value returned by a key and return a result. A read lock is assumed.
@@ -208,7 +200,7 @@ public interface ChronicleMap<K, V>
      *
      * {@link ChronicleMap#getUsing(Object, Object) }
      * {@link ChronicleMap#acquireUsing(Object, Object)      }
-     * {@link ChronicleMap#acquireContext(Object, Object)  }
+     * {@link ChronicleMap#acquireContext(Object, Object)}
      *
      * for example like this :
      *
@@ -232,8 +224,8 @@ public interface ChronicleMap<K, V>
      * following methods :
      *
      * {@link ChronicleMap#getUsing(Object, Object) }
-     * {@link ChronicleMap#acquireUsing(Object, Object)      }
-     * {@link ChronicleMap#acquireContext(Object, Object)  }
+     * {@link ChronicleMap#acquireUsing(Object, Object)}
+     * {@link ChronicleMap#acquireContext(Object, Object)}
      *
      * for example like this :
      *

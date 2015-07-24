@@ -1,11 +1,10 @@
 package eg;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.MapKeyContext;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -51,8 +50,7 @@ public class TestNesterInterfaceMarshal {
             TestInstrumentVOInterface intrumentVOInterface = map.newValueInstance();
 
 
-            try (MapKeyContext<?, TestInstrumentVOInterface> wc = map.acquireContext
-                    ("KEY1", intrumentVOInterface)) {
+            try (Closeable c = map.acquireContext("KEY1", intrumentVOInterface)) {
                 intrumentVOInterface.setSymbol("Flyer");
                 intrumentVOInterface.setCurrencyCode("USA");
                 intrumentVOInterface.setSizeOfInstrumentIDArray(2);

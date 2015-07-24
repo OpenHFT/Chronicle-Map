@@ -70,12 +70,20 @@ class ReplicationHubFindByName<K> implements FindByName {
 
         int withChannelId = nextFreeChannel.incrementAndGet();
 
-        try (MapKeyContext<CharSequence, MapInstanceBuilder> c = map.context(config.name)) {
+        try (ExternalMapQueryContext<CharSequence, MapInstanceBuilder, ?> c =
+                     map.queryContext(config.name)) {
             c.updateLock().lock();
             MapInstanceBuilder value =
                     config.replicatedViaChannel(replicationHub.createChannel(withChannelId));
-            boolean added = !c.containsKey();
-            c.put(value);
+            boolean added;
+            MapEntry<CharSequence, MapInstanceBuilder> entry = c.entry();
+            if (entry != null) {
+                c.replaceValue(entry, c.wrapValueAsData(value));
+                added = false;
+            } else {
+                c.insert(c.absentEntry(), c.wrapValueAsData(value));
+                added = true;
+            }
 
             if (added) {
                 // establish the new map based on this channel ID

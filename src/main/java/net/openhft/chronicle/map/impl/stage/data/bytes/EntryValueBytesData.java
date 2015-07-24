@@ -34,7 +34,6 @@ public class EntryValueBytesData<V> extends AbstractData<V> {
     @StageRef MapEntryStages<?, V> entry;
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
 
-
     @Stage("CachedEntryValue") private V cachedEntryValue;
     @Stage("CachedEntryValue") private boolean cachedEntryValueRead = false;
 
