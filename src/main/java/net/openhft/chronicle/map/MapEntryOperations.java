@@ -150,15 +150,4 @@ public interface MapEntryOperations<K, V, R> {
         absentEntry.doInsert(value);
         return null;
     }
-
-    /**
-     * Returns the "nil" value, which should be inserted into the map, in the given
-     * {@code absentEntry} context. This is primarily used in {@link ChronicleMap#acquireUsing}
-     * operation implementation, i. e. {@link MapMethods#acquireUsing}.
-     *
-     * @implNote simply delegates to {@link MapAbsentEntry#defaultValue()}.
-     */
-    default Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
-        return absentEntry.defaultValue();
-    }
 }

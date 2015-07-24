@@ -49,7 +49,6 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
     @StageRef VanillaChronicleMapHolder<K, ?, ?, V, ?, ?, R> mh;
     @StageRef MapEntryStages<K, V> e;
     @StageRef SearchAllocatedChunks allocatedChunks;
-    @StageRef public DeprecatedMapKeyContextOnQuery<K, V> deprecatedMapKeyContext;
     @StageRef public AcquireHandle<K, V> acquireHandle;
     
     @StageRef public InputValueInstanceData<V, ?, ?> inputValueInstanceValue;

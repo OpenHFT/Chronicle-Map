@@ -19,7 +19,6 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.KeyContext;
 
 import java.util.Set;
 

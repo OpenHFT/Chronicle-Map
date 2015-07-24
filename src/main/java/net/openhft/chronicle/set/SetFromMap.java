@@ -19,7 +19,6 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.serialization.internal.DummyValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.jetbrains.annotations.NotNull;

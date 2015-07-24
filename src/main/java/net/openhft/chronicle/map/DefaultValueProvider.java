@@ -18,9 +18,8 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.KeyContext;
-
-import java.io.Serializable;
+import net.openhft.chronicle.hash.Data;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Default value computation strategy, used
@@ -28,16 +27,18 @@ import java.io.Serializable;
  *
  * @param <K> map key class
  * @param <V> map value class
- * @deprecated specialize {@link MapEntryOperations#defaultValue(MapAbsentEntry)} instead
+ * @see ChronicleMapBuilder#defaultValue(Object)
  */
-@Deprecated
-public interface DefaultValueProvider<K, V> extends Serializable {
+public interface DefaultValueProvider<K, V> {
+
     /**
-     * Returns a value to be put during {@link ChronicleMap#acquireUsing(Object, Object)} call
-     * for the specified key, if it is absent in the map.
+     * Returns the "nil" value, which should be inserted into the map, in the given
+     * {@code absentEntry} context. This is primarily used in {@link ChronicleMap#acquireUsing}
+     * operation implementation, i. e. {@link MapMethods#acquireUsing}.
      *
-     * @param keyContext key absent in the map
-     * @return value to be put for the specified key in the map
+     * @implNote simply delegates to {@link MapAbsentEntry#defaultValue()}.
      */
-    V get(KeyContext keyContext);
+    default Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
+        return absentEntry.defaultValue();
+    }
 }

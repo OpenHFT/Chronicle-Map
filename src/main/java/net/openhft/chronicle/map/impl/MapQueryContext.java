@@ -95,7 +95,6 @@ nested = {
         InputSecondValueBytesData.class,
 
         WrappedValueInstanceData.class,
-        DeprecatedMapKeyContextOnQuery.class,
         AcquireHandle.class,
         DefaultReturnValue.class,
         UsingReturnValue.class,

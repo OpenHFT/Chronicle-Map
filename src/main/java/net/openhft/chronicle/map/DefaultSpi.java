@@ -2,7 +2,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 
-final class DefaultSpi implements MapMethods, MapEntryOperations, MapRemoteOperations {
+final class DefaultSpi implements MapMethods, MapEntryOperations, MapRemoteOperations,
+        DefaultValueProvider {
     static final DefaultSpi DEFAULT_SPI = new DefaultSpi();
     static <K, V, R> MapMethods<K, V, R> mapMethods() {
         return DEFAULT_SPI;
@@ -13,6 +14,10 @@ final class DefaultSpi implements MapMethods, MapEntryOperations, MapRemoteOpera
     }
     
     static <K, V, R> MapRemoteOperations<K, V, R> mapRemoteOperations() {
+        return DEFAULT_SPI;
+    }
+
+    static <K, V> DefaultValueProvider<K, V> defaultValueProvider() {
         return DEFAULT_SPI;
     }
 }

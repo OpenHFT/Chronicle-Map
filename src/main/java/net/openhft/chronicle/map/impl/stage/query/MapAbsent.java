@@ -23,7 +23,6 @@ public class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef public SegmentStages s;
     @StageRef VanillaChronicleMapHolder<K, ?, ?, V, ?, ?, ?> mh;
-    @StageRef public DeprecatedMapKeyContextOnQuery<K, V> deprecatedMapKeyContext;
 
     void putEntry(Data<V> value) {
         assert q.searchStateAbsent();
@@ -69,6 +68,12 @@ public class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
     @Override
     public Data<V> defaultValue() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return q.wrapValueAsData(mh.m().defaultValue(deprecatedMapKeyContext));
+        if (mh.m().constantValueProvider == null) {
+            throw new IllegalStateException("to call acquireUsing(), " +
+                    "or defaultValue() on AbsentEntry, you should configure " +
+                    "ChronicleMapBuilder.defaultValue(), or use one of the 'known' value types: " +
+                    "boxed primitives, or so-called data-value-generated interface as a value");
+        }
+        return context().wrapValueAsData(mh.m().constantValueProvider.defaultValue());
     }
 }

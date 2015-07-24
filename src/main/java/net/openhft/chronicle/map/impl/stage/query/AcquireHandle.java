@@ -19,17 +19,11 @@
 package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.core.io.Closeable;
-import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.chronicle.hash.locks.InterProcessLock;
-import net.openhft.chronicle.map.MapEntry;
-import net.openhft.chronicle.map.MapKeyContext;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.chronicle.map.impl.stage.ret.UsingReturnValue;
-import net.openhft.lang.io.Bytes;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
-import org.jetbrains.annotations.NotNull;
 
 @Staged
 public class AcquireHandle<K, V> implements Closeable {

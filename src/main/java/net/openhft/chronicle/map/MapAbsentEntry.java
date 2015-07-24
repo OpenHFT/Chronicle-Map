@@ -57,10 +57,10 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
      * implementation, i. e. {@link MapMethods#acquireUsing}.
      *
      * <p>This method if the default implementation for {@link
-     * MapEntryOperations#defaultValue}, which might be customized over the default.
-     * 
-     * @return the default value to be inserted into the map
-     * @see MapEntryOperations#defaultValue(MapAbsentEntry)
+     * DefaultValueProvider#defaultValue(MapAbsentEntry)},
+     * which might be customized over the default.
+     *
+     * @see DefaultValueProvider#defaultValue(MapAbsentEntry)
      */
     @NotNull
     Data<V> defaultValue();

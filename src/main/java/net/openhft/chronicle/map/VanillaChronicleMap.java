@@ -20,7 +20,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
@@ -67,7 +66,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public final MVI originalMetaValueInterop;
     public final MetaProvider<V, VI, MVI> metaValueInteropProvider;
 
-    final DefaultValueProvider<K, V> defaultValueProvider;
+    public final ConstantValueProvider<V> constantValueProvider;
 
     public final boolean constantlySizedEntry;
 
@@ -91,9 +90,9 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
 
     transient Set<Entry<K, V>> entrySet;
     
-    // TODO initialize
     public transient MapEntryOperations<K, V, R> entryOperations;
     public transient MapMethods<K, V, R> methods;
+    public transient DefaultValueProvider<K, V> defaultValueProvider;
     
     transient ThreadLocal<?> queryCxt;
     transient ThreadLocal<?> iterCxt;
@@ -123,7 +122,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         originalMetaValueInterop = (MVI) valueBuilder.metaInterop();
         metaValueInteropProvider = (MetaProvider) valueBuilder.metaInteropProvider();
 
-        defaultValueProvider = builder.defaultValueProvider();
+        constantValueProvider = builder.constantValueProvider();
 
         constantlySizedEntry = builder.constantlySizedEntries();
 
@@ -148,6 +147,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
         this.entryOperations = (MapEntryOperations<K, V, R>) builder.entryOperations;
         this.methods = (MapMethods<K, V, R>) builder.methods;
+        this.defaultValueProvider = builder.defaultValueProvider;
     }
 
     @Override
@@ -160,15 +160,12 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         valueReaderProvider = Provider.of((Class) originalValueReader.getClass());
         valueInteropProvider = Provider.of((Class) originalValueInterop.getClass());
 
-        if (defaultValueProvider instanceof ConstantValueProvider) {
-            ConstantValueProvider<K, V> constantValueProvider =
-                    (ConstantValueProvider<K, V>) defaultValueProvider;
-            if (constantValueProvider.wasDeserialized()) {
-                ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
-                BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
-                constantValueProvider.initTransients(valueReader);
-            }
+        if (constantValueProvider != null && constantValueProvider.wasDeserialized()) {
+            ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
+            BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
+            constantValueProvider.initTransients(valueReader);
         }
+
         initQueryContext();
         initIterationContext();
     }
@@ -207,14 +204,6 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     @Override
     public int actualSegments() {
         return actualSegments;
-    }
-
-    public V defaultValue(KeyContext keyContext) {
-        if (defaultValueProvider != null)
-            return defaultValueProvider.get(keyContext);
-        throw new IllegalStateException("To call acquire*() methods, " +
-                "you should specify either default value or default value provider " +
-                "during map building");
     }
 
     @Override

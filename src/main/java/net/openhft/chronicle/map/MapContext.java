@@ -31,7 +31,8 @@ import net.openhft.chronicle.hash.Data;
  * @param <V> the map value type
  * @param <R> the return type of {@link MapEntryOperations} specified for the queried map
  */
-public interface MapContext<K, V, R> extends HashContext<K>, MapEntryOperations<K, V, R> {
+public interface MapContext<K, V, R>
+        extends HashContext<K>, MapEntryOperations<K, V, R>, DefaultValueProvider<K, V> {
     /**
      * Returns the accessed {@code ChronicleMap}. Synonym to {@link #map()}.
      */

@@ -18,14 +18,17 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.KeyContext;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
+import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceData;
 import net.openhft.lang.io.ByteBufferBytes;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 
-final class ConstantValueProvider<K, V> implements DefaultValueProvider<K, V> {
+public final class ConstantValueProvider<V> implements Serializable {
     private static final long serialVersionUID = 0L;
 
     private transient V value;
@@ -48,8 +51,7 @@ final class ConstantValueProvider<K, V> implements DefaultValueProvider<K, V> {
         value = reader.read(new ByteBufferBytes(ByteBuffer.wrap(serializedValueBytes)), size);
     }
 
-    @Override
-    public V get(KeyContext keyContext) {
+    public V defaultValue() {
         return value;
     }
 }

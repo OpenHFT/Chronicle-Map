@@ -41,7 +41,10 @@ import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceDa
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.input.MapInputBytesValues;
 import net.openhft.chronicle.map.impl.stage.input.ReplicatedInput;
-import net.openhft.chronicle.map.impl.stage.map.*;
+import net.openhft.chronicle.map.impl.stage.map.MapEntryOperationsDelegation;
+import net.openhft.chronicle.map.impl.stage.map.ReplicatedChronicleMapHolderImpl;
+import net.openhft.chronicle.map.impl.stage.map.ValueBytesInterop;
+import net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceValueHolder;
 import net.openhft.chronicle.map.impl.stage.query.*;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.chronicle.map.impl.stage.ret.BytesReturnValue;
@@ -100,7 +103,6 @@ nested = {
         InputSecondValueBytesData.class,
 
         WrappedValueInstanceData.class,
-        DeprecatedMapKeyContextOnQuery.class,
         AcquireHandle.class,
         DefaultReturnValue.class,
         UsingReturnValue.class,

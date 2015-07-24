@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.ChronicleHashBuilderImpl;
@@ -162,7 +161,8 @@ public final class ChronicleMapBuilder<K, V> implements
     private BytesMarshallerFactory bytesMarshallerFactory;
     private ObjectSerializer objectSerializer;
     private V defaultValue = null;
-    private DefaultValueProvider<K, V> defaultValueProvider = null;
+    private ConstantValueProvider<V> constantValueProvider = null;
+    DefaultValueProvider<K, V> defaultValueProvider = DefaultSpi.defaultValueProvider();
 
     private SingleChronicleHashReplication singleHashReplication = null;
     private InetSocketAddress[] pushToAddresses;
@@ -943,7 +943,6 @@ public final class ChronicleMapBuilder<K, V> implements
                 ", keyBuilder=" + keyBuilder +
                 ", valueBuilder=" + valueBuilder +
                 ", defaultValue=" + defaultValue +
-                ", defaultValueProvider=" + pretty(defaultValueProvider) +
                 '}';
     }
 
@@ -1144,7 +1143,7 @@ public final class ChronicleMapBuilder<K, V> implements
         if (defaultValue == null)
             throw new IllegalArgumentException("default ChronicleMap value couldn't be null");
         this.defaultValue = defaultValue;
-        this.defaultValueProvider = null;
+        this.constantValueProvider = null;
         return this;
     }
 
@@ -1158,22 +1157,20 @@ public final class ChronicleMapBuilder<K, V> implements
      * @param defaultValueProvider the strategy to obtain a default value by the absent key
      * @return this builder object back
      * @see #defaultValue(Object)
-     * @deprecated specialize {@link MapEntryOperations#defaultValue(MapAbsentEntry)} instead
      */
-    @Deprecated
     public ChronicleMapBuilder<K, V> defaultValueProvider(
             @NotNull DefaultValueProvider<K, V> defaultValueProvider) {
+        Objects.requireNonNull(defaultValueProvider);
         this.defaultValueProvider = defaultValueProvider;
-        this.defaultValue = null;
         return this;
     }
 
     /**
      * Non-public because should be called only after {@link #preMapConstruction(boolean)}
      */
-    DefaultValueProvider<K, V> defaultValueProvider() {
-        if (defaultValueProvider != null)
-            return defaultValueProvider;
+    ConstantValueProvider<V> constantValueProvider() {
+        if (constantValueProvider != null)
+            return constantValueProvider;
         V defaultValue = this.defaultValue;
         if (defaultValue == null)
             defaultValue = zeroValue();
@@ -1204,6 +1201,21 @@ public final class ChronicleMapBuilder<K, V> implements
             try {
                 return DataValueClasses.newDirectInstance(valueBuilder.eClass);
             } catch (Exception e) {
+                if (valueBuilder.eClass == Long.class) {
+                    return (V) (Long) 0L;
+                } else if (valueBuilder.eClass == Integer.class) {
+                    return (V) (Integer) 0;
+                } else if (valueBuilder.eClass == Short.class) {
+                    return (V) (Short) (short) 0;
+                } else if (valueBuilder.eClass == Character.class) {
+                    return (V) (Character) (char) 0;
+                } else if (valueBuilder.eClass == Byte.class) {
+                    return (V) (Byte) (byte) 0;
+                } else if (valueBuilder.eClass == Float.class) {
+                    return (V) (Float) 0.0f;
+                } else if (valueBuilder.eClass == Double.class) {
+                    return (V) (Double) 0.0;
+                }
                 return null;
             }
         }

@@ -32,7 +32,7 @@ public abstract class MapEntryOperationsDelegation<K, V, R> implements MapContex
     @Override
     public Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return mh.m().entryOperations.defaultValue(absentEntry);
+        return mh.m().defaultValueProvider.defaultValue(absentEntry);
     }
 
     @Override

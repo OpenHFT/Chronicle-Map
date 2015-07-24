@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest.SimpleLoggingDefaultValueProvider.simpleLoggingDefaultValueProvider;
 import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest.SimpleLoggingMapEntryOperations.simpleLoggingMapEntryOperations;
 
 public class SimpleMapOperationsListeningTest {
@@ -43,6 +44,18 @@ public class SimpleMapOperationsListeningTest {
             absentEntry.doInsert(value);
             return null;
         }
+    }
+
+    static class SimpleLoggingDefaultValueProvider<K, V> implements DefaultValueProvider<K, V> {
+
+        private static final SimpleLoggingDefaultValueProvider INSTANCE =
+                new SimpleLoggingDefaultValueProvider();
+
+        public static <K, V> DefaultValueProvider<K, V> simpleLoggingDefaultValueProvider() {
+            return INSTANCE;
+        }
+
+        private SimpleLoggingDefaultValueProvider() {}
 
         @Override
         public Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
@@ -59,6 +72,7 @@ public class SimpleMapOperationsListeningTest {
                 .of(Integer.class, IntValue.class)
                 .entries(100)
                 .entryOperations(simpleLoggingMapEntryOperations())
+                .defaultValueProvider(simpleLoggingDefaultValueProvider())
                 .create();
 
         IntValue value = DataValueClasses.newDirectInstance(IntValue.class);
