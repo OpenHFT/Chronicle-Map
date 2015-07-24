@@ -31,7 +31,7 @@ public interface VanillaChronicleMapHolder<K, KI, MKI extends MetaBytesInterop<K
     VanillaChronicleMap<K, KI, MKI, V, VI, MVI, R> m();
 
     @Override
-    default VanillaChronicleHash<K, KI, MKI, ?, ?> h() {
+    default VanillaChronicleHash<K, KI, MKI, ?, ?, ?> h() {
         return m();
     }
 

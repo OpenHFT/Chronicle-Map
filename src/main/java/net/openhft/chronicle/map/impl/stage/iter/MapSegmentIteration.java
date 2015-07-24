@@ -30,11 +30,10 @@ import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
 @Staged
-public abstract class MapSegmentIteration<K, V> extends HashSegmentIteration<K, MapEntry<K, V>>
-        implements MapEntry<K, V>, IterationContextInterface<K, V> {
+public abstract class MapSegmentIteration<K, V, R> extends HashSegmentIteration<K, MapEntry<K, V>>
+        implements MapEntry<K, V>, IterationContextInterface<K, V, R> {
     
     @StageRef MapEntryStages<K, V> entry;
-    @StageRef public DeprecatedMapKeyContextOnIteration<K, V> deprecatedMapKeyContextOnIteration;
     @StageRef WrappedValueInstanceValueHolder<K, V, ?> wrappedValueInstanceValueHolder;
 
     @Override

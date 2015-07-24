@@ -360,7 +360,7 @@ public abstract class SegmentStages implements SegmentLock {
     }
 
     void initSegment() {
-        VanillaChronicleHash<?, ?, ?, ?, ?> h = hh.h();
+        VanillaChronicleHash<?, ?, ?, ?, ?, ?> h = hh.h();
         long hashLookupOffset = h.segmentOffset(segmentIndex);
         long freeListOffset = hashLookupOffset + h.segmentHashLookupOuterSize;
         freeListBytes.storePositionAndSize(h.ms, freeListOffset, h.segmentFreeListInnerSize);
@@ -375,7 +375,7 @@ public abstract class SegmentStages implements SegmentLock {
 
     //TODO refactor/optimize
     public long alloc(int chunks) {
-        VanillaChronicleHash<?, ?, ?, ?, ?> h = hh.h();
+        VanillaChronicleHash<?, ?, ?, ?, ?, ?> h = hh.h();
         if (chunks > h.maxChunksPerEntry)
             throw new IllegalArgumentException("Entry is too large: requires " + chunks +
                     " entry size chucks, " + h.maxChunksPerEntry + " is maximum.");

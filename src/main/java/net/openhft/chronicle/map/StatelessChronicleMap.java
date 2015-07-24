@@ -220,13 +220,13 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     @Override
-    public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
+    public boolean forEachEntryWhile(Predicate<? super MapEntry<K, V>> predicate) {
         // TODO implement!
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
+    public void forEachEntry(Consumer<? super MapEntry<K, V>> action) {
         // TODO implement!
         throw new UnsupportedOperationException();
     }
@@ -552,6 +552,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     @Override
     public ExternalMapQueryContext<K, V, ?> queryContext(Data<K> key) {
         throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
+    }
+
+    @Override
+    public MapSegmentContext<K, V, ?> segmentContext(int segmentIndex) {
+        throw new UnsupportedOperationException();
     }
 
     public V get(Object key) {

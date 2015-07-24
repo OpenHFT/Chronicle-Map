@@ -16,9 +16,7 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.ExternalHashQueryContext;
-import net.openhft.chronicle.hash.KeyContext;
+import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.hashlookup.HashLookup;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.serialization.BytesReader;
@@ -44,8 +42,9 @@ import static java.lang.Math.max;
 import static net.openhft.lang.MemoryUnit.*;
 
 public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        C extends KeyContext<K>, ECQ extends ExternalHashQueryContext<K>>
-        implements ChronicleHash<K, C, ECQ>, Serializable {
+        C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
+        ECQ extends ExternalHashQueryContext<K>>
+        implements ChronicleHash<K, C, SC, ECQ>, Serializable {
 
     private static final long serialVersionUID = 0L;
 

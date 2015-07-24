@@ -30,7 +30,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.Object;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -54,9 +53,9 @@ import java.util.concurrent.ConcurrentMap;
  * @param <K> the map key type
  * @param <V> the map value type
  */
-public interface ChronicleMap<K, V>
-        extends ConcurrentMap<K, V>,
-        ChronicleHash<K, MapKeyContext<K, V>, ExternalMapQueryContext<K, V, ?>> {
+public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
+        ChronicleHash<K, MapEntry<K, V>, MapSegmentContext<K, V, ?>,
+                ExternalMapQueryContext<K, V, ?>> {
 
     /**
      * Returns the value to which the specified key is mapped, or {@code null} if this map contains

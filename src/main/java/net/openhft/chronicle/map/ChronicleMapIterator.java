@@ -16,24 +16,22 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.map.impl.IterationContextInterface;
-
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.function.Consumer;
 
 /**
  * Very inefficient (esp. if segments are large), but CORRECT implementation
  */
-abstract class ChronicleMapIterator<K, V, E> implements Iterator<E> {
+abstract class ChronicleMapIterator<K, V, E> implements Iterator<E>, Consumer<MapEntry<K, V>> {
 
     final AbstractChronicleMap<K, V> map;
     private final Thread ownerThread = Thread.currentThread();
     private final Queue<E> entryBuffer = new ArrayDeque<>();
     private int segmentIndex;
-    IterationContextInterface<K, V> context;
     E returned;
 
     ChronicleMapIterator(AbstractChronicleMap<K, V> map) {
@@ -54,24 +52,23 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E> {
         while (true) {
             if (segmentIndex < 0)
                 return;
-            try (IterationContextInterface<K, V> c = map.iterationContext()) {
-                context = c;
-                c.initTheSegmentIndex(segmentIndex);
+
+            try (MapSegmentContext<K, V, ?> c = map.segmentContext(segmentIndex)) {
                 segmentIndex--;
                 if (c.size() == 0)
                     continue;
-                c.forEachRemoving(e -> {
-                    entryBuffer.add(read());
-                    return true;
-                });
+                c.forEachSegmentEntry(this);
                 return;
-            } finally {
-                context = null;
             }
         }
     }
 
-    abstract E read();
+    @Override
+    public void accept(MapEntry<K, V> e) {
+        entryBuffer.add(read(e));
+    }
+
+    abstract E read(MapEntry<K, V> entry);
 
     @Override
     public boolean hasNext() {
@@ -108,9 +105,9 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E> {
         }
 
         @Override
-        Entry<K, V> read() {
-            K key = context.key().getUsing(null);
-            V value = context.value().getUsing(null);
+        Entry<K, V> read(MapEntry<K, V> entry) {
+            K key = entry.key().getUsing(null);
+            V value = entry.value().getUsing(null);
             return new WriteThroughEntry<>(map, key, value);
         }
 
@@ -127,8 +124,8 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E> {
         }
 
         @Override
-        K read() {
-            return context.key().getUsing(null);
+        K read(MapEntry<K, V> entry) {
+            return entry.key().getUsing(null);
         }
 
         @Override

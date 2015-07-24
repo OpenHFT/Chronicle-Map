@@ -27,6 +27,7 @@ import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @Staged
@@ -50,7 +51,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>> implements
         this.entryRemovedOnThisIteration = entryRemovedOnThisIteration;
     }
 
-    public boolean forEachRemoving(Predicate<? super E> action) {
+    public boolean forEachSegmentEntryWhile(Predicate<? super E> action) {
         s.innerUpdateLock.lock();
         try {
             long size = s.size();
@@ -85,6 +86,13 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>> implements
             s.innerReadLock.unlock();
             initEntryRemovedOnThisIteration(false);
         }
+    }
+
+    public void forEachSegmentEntry(Consumer<? super E> action) {
+        forEachSegmentEntryWhile(e -> {
+            action.accept(e);
+            return true;
+        });
     }
     
     public void checkEntryNotRemovedOnThisIteration() {

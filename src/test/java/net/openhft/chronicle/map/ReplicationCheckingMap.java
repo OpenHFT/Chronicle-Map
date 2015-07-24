@@ -257,12 +257,12 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
+    public boolean forEachEntryWhile(Predicate<? super MapEntry<K, V>> predicate) {
         return map1.forEachEntryWhile(predicate);
     }
 
     @Override
-    public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
+    public void forEachEntry(Consumer<? super MapEntry<K, V>> action) {
         map1.forEachEntry(action);
     }
 
@@ -292,6 +292,11 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @NotNull
     @Override
     public ExternalMapQueryContext<K, V, ?> queryContext(net.openhft.chronicle.hash.Data<K> key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public MapSegmentContext<K, V, ?> segmentContext(int segmentIndex) {
         throw new UnsupportedOperationException();
     }
 

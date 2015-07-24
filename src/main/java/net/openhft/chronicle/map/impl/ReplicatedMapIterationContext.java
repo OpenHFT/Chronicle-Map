@@ -27,7 +27,6 @@ import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceData;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
-import net.openhft.chronicle.map.impl.stage.iter.DeprecatedMapKeyContextOnIteration;
 import net.openhft.chronicle.map.impl.stage.iter.IterationCheckOnEachPublicOperation;
 import net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIteration;
 import net.openhft.chronicle.map.impl.stage.map.MapEntryOperationsDelegation;
@@ -69,8 +68,6 @@ import net.openhft.sg.Staged;
         EntryValueBytesData.class,
 
         WrappedValueInstanceData.class,
-
-        DeprecatedMapKeyContextOnIteration.class,
 
         DummyValueZeroData.class,
 })

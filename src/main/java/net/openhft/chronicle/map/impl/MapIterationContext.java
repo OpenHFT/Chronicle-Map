@@ -26,7 +26,6 @@ import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
 import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceData;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
-import net.openhft.chronicle.map.impl.stage.iter.DeprecatedMapKeyContextOnIteration;
 import net.openhft.chronicle.map.impl.stage.iter.IterationCheckOnEachPublicOperation;
 import net.openhft.chronicle.map.impl.stage.iter.MapSegmentIteration;
 import net.openhft.chronicle.map.impl.stage.map.MapEntryOperationsDelegation;
@@ -65,8 +64,6 @@ import net.openhft.sg.Staged;
         EntryValueBytesData.class,
 
         WrappedValueInstanceData.class,
-
-        DeprecatedMapKeyContextOnIteration.class,
 })
 public class MapIterationContext {
 }

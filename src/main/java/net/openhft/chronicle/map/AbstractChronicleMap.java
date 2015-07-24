@@ -80,7 +80,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
 
     @Override
     default boolean containsValue(Object value) {
-        return !forEachEntryWhile(c -> !c.valueEqualTo((V) value));
+        return !forEachEntryWhile(c -> !c.value().equals(c.context().wrapValueAsData((V) value)));
     }
 
     @Override
@@ -90,7 +90,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
 
     @Override
     default void forEach(BiConsumer<? super K, ? super V> action) {
-        forEachEntry(c -> action.accept(c.key(), c.get()));
+        forEachEntry(c -> action.accept(c.key().get(), c.value().get()));
     }
 
     @Override
@@ -147,7 +147,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
 
             @Override
             public void forEach(java.util.function.Consumer<? super V> action) {
-                AbstractChronicleMap.this.forEachEntry(c -> action.accept(c.get()));
+                AbstractChronicleMap.this.forEachEntry(c -> action.accept(c.value().get()));
             }
         };
     }
@@ -181,7 +181,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
 
             @Override
             public void forEach(java.util.function.Consumer<? super K> action) {
-                AbstractChronicleMap.this.forEachEntry(c -> action.accept(c.key()));
+                AbstractChronicleMap.this.forEachEntry(c -> action.accept(c.key().get()));
             }
         };
     }
@@ -198,9 +198,9 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
 
         try {
             return forEachEntryWhile(c -> {
-                K k = c.key();
+                K k = c.key().get();
                 V v = (V) m.get(k instanceof CharSequence ? k.toString() : k);
-                return v != null && c.valueEqualTo(v);
+                return v != null && c.value().equals(c.context().wrapValueAsData(v));
             });
         } catch (ClassCastException unused) {
             return false;
@@ -247,25 +247,21 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
 
 
     @Override
-    default void forEachEntry(final Consumer<? super MapKeyContext<K, V>> action) {
+    default void forEachEntry(final Consumer<? super MapEntry<K, V>> action) {
         forEachEntryWhile(c -> {
             action.accept(c);
             return true;
         });
     }
-    
-    IterationContextInterface<K, V> iterationContext();
 
     @Override
-    default boolean forEachEntryWhile(final Predicate<? super MapKeyContext<K, V>> action) {
+    default boolean forEachEntryWhile(final Predicate<? super MapEntry<K, V>> action) {
         boolean interrupt = false;
-        iteration:
-        try (IterationContextInterface<K, V> c = iterationContext()) {
-            for (int segmentIndex = actualSegments() - 1; segmentIndex >= 0; segmentIndex--) {
-                c.initTheSegmentIndex(segmentIndex);
-                if (!c.forEachRemoving(e -> action.test(c.deprecatedMapKeyContextOnIteration()))) {
+        for (int i = actualSegments() - 1; i >= 0; i--) {
+            try (MapSegmentContext<K, V, ?> c = segmentContext(i)) {
+                if (!c.forEachSegmentEntryWhile(action)) {
                     interrupt = true;
-                    break iteration;
+                    break;
                 }
             }
         }

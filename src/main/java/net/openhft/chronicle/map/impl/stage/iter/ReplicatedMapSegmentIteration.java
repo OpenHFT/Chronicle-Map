@@ -12,8 +12,8 @@ import net.openhft.sg.Staged;
 import java.util.function.Consumer;
 
 @Staged
-public abstract class ReplicatedMapSegmentIteration<K, V> extends MapSegmentIteration<K, V>
-        implements ReplicatedIterationContextInterface<K, V>, ReplicableEntry {
+public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentIteration<K, V, R>
+        implements ReplicatedIterationContextInterface<K, V, R>, ReplicableEntry {
 
     @StageRef ReplicatedMapEntryStages<K, V, ?> e;
     @StageRef ReplicationUpdate<K> ru;

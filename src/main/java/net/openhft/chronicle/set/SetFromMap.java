@@ -143,13 +143,18 @@ class SetFromMap<E> extends AbstractSet<E>
     }
 
     @Override
-    public boolean forEachEntryWhile(Predicate<? super KeyContext<E>> predicate) {
-        return m.forEachEntryWhile(predicate);
+    public SetSegmentContext<E, ?> segmentContext(int segmentIndex) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachEntry(Consumer<? super KeyContext<E>> action) {
-        m.forEachEntry(action);
+    public boolean forEachEntryWhile(Predicate<? super SetEntry<E>> predicate) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachEntry(Consumer<? super SetEntry<E>> action) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

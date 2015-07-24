@@ -33,8 +33,8 @@ import java.util.function.Predicate;
  * This interface defines common {@link ChronicleMap} and {@link ChronicleSet}, related to off-heap
  * memory management and file-mapping. Not usable by itself.
  */
-public interface ChronicleHash<K, C extends KeyContext<K>, EQC extends ExternalHashQueryContext<K>>
-        extends Closeable {
+public interface ChronicleHash<K, C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
+        EQC extends ExternalHashQueryContext<K>> extends Closeable {
     /**
      * Returns the file this hash container mapped to, i. e. when it is created by
      * {@link ChronicleHashBuilder#create()} call, or {@code null} if it is purely in-memory,
@@ -81,6 +81,8 @@ public interface ChronicleHash<K, C extends KeyContext<K>, EQC extends ExternalH
      * @return the context to perform operations with the key
      */
     @NotNull EQC queryContext(Data<K> key);
+
+    SC segmentContext(int segmentIndex);
     
     /**
      * Checks the given predicate on each entry in this {@code ChronicleHash} until all entries

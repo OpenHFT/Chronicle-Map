@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.KeyContext;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.TimeProvider;
@@ -218,7 +217,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
     @Override
     public void clear() {
-        forEachEntry(KeyContext::remove);
+        forEachEntry(c -> c.context().remove(c));
     }
 
     void addCloseable(Closeable closeable) {

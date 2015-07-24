@@ -22,7 +22,7 @@ import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 
 //TODO remove this temporary interface
-public interface ChronicleHashBuilderImpl<K, H extends ChronicleHash<K, ?, ?>,
+public interface ChronicleHashBuilderImpl<K, H extends ChronicleHash<K, ?, ?, ?>,
         B extends ChronicleHashBuilder<K, H, B>> extends ChronicleHashBuilder<K, H, B> {
 
     SerializationBuilder<K> keyBuilder();

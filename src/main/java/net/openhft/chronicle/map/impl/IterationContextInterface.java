@@ -1,21 +1,11 @@
 package net.openhft.chronicle.map.impl;
 
 import net.openhft.chronicle.map.MapEntry;
-import net.openhft.chronicle.map.MapKeyContext;
+import net.openhft.chronicle.map.MapSegmentContext;
 
-import java.util.function.Predicate;
-
-public interface IterationContextInterface<K, V> extends MapEntry<K, V>, AutoCloseable {
+public interface IterationContextInterface<K, V, R> extends MapEntry<K, V>,
+        MapSegmentContext<K, V, R> {
     long pos();
     
     void initTheSegmentIndex(int segmentIndex);
-    
-    MapKeyContext<K, V> deprecatedMapKeyContextOnIteration();
-    
-    boolean forEachRemoving(Predicate<? super MapEntry<K, V>> action);
-
-    @Override
-    void close();
-    
-    long size();
 }

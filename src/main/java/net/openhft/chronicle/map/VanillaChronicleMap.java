@@ -49,7 +49,7 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDiviso
 
 public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R>
-        extends VanillaChronicleHash<K, KI, MKI, MapKeyContext<K, V>,
+        extends VanillaChronicleHash<K, KI, MKI, MapEntry<K, V>, MapSegmentContext<K, V, ?>,
         ExternalMapQueryContext<K, V, ?>>
         implements AbstractChronicleMap<K, V>  {
 
@@ -299,7 +299,6 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
             throw new IllegalArgumentException("acquire*() MUST reuse the given " +
                     "value. Given value " + using + " cannot be reused to read " + acquired);
         }
-        
     }
 
     @NotNull
@@ -325,7 +324,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     
     @Override
     public void clear() {
-        forEachEntry(KeyContext::remove);
+        forEachEntry(c -> c.context().remove(c));
     }
 
     public final long readValueSize(Bytes entry) {
@@ -348,8 +347,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         return (CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R>) iterCxt.get();
     }
 
-    @Override
-    public IterationContextInterface<K, V> iterationContext() {
+    public IterationContextInterface<K, V, ?> iterationContext() {
         CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R> c = i().getContext();
         c.initUsed(true);
         return c;
@@ -371,6 +369,13 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         QueryContextInterface<K, V, R> q = mapContext();
         q.initInputKey(key);
         return q;
+    }
+
+    @Override
+    public MapSegmentContext<K, V, ?> segmentContext(int segmentIndex) {
+        IterationContextInterface<K, V, ?> c = iterationContext();
+        c.initTheSegmentIndex(segmentIndex);
+        return c;
     }
 
     @Override

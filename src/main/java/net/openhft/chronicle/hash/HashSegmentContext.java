@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Higher Frequency Trading
+ * Copyright 2015 Higher Frequency Trading
  *
  * http://www.higherfrequencytrading.com
  *
@@ -16,14 +16,18 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.KeyContext;
+import net.openhft.chronicle.core.io.Closeable;
 
-import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-public interface ChronicleSet<K>
-        extends Set<K>, ChronicleHash<K, SetEntry<K>, SetSegmentContext<K, ?>,
-        ExternalSetQueryContext<K, ?>> {
+public interface HashSegmentContext<K, E extends HashEntry<K>> extends HashContext<K>, Closeable {
+
+    void forEachSegmentEntry(Consumer<? super E> action);
+
+    boolean forEachSegmentEntryWhile(Predicate<? super E> predicate);
+
+    long size();
 }

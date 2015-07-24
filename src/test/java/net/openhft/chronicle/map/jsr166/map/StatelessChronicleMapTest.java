@@ -129,6 +129,11 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
+        public MapSegmentContext<K, V, ?> segmentContext(int segmentIndex) {
+            return d.segmentContext(segmentIndex);
+        }
+
+        @Override
         public V get(Object key) {
             return d.get(key);
         }
@@ -217,12 +222,12 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
-        public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
+        public boolean forEachEntryWhile(Predicate<? super MapEntry<K, V>> predicate) {
             return d.forEachEntryWhile(predicate);
         }
 
         @Override
-        public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
+        public void forEachEntry(Consumer<? super MapEntry<K, V>> action) {
             d.forEachEntry(action);
         }
 

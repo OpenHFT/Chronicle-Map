@@ -36,15 +36,15 @@ public class VanillaChronicleMapConverter<K, V> extends AbstractChronicleMapConv
     @Override
     public void marshal(Object o, final HierarchicalStreamWriter writer, final MarshallingContext
             marshallingContext) {
-        ((ChronicleMap<K, V>) o).forEachEntry(c -> {
+        ((ChronicleMap<K, V>) o).forEachEntry(e -> {
             writer.startNode("entry");
             {
-                final Object key = c.key();
+                final Object key = e.key().get();
                 writer.startNode(key.getClass().getName());
                 marshallingContext.convertAnother(key);
                 writer.endNode();
 
-                Object value = c.get();
+                Object value = e.value().get();
                 writer.startNode(value.getClass().getName());
                 marshallingContext.convertAnother(value);
                 writer.endNode();

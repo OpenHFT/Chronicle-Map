@@ -68,8 +68,8 @@ public class SimpleMapOperationsListeningTest {
         map.acquireUsing(3, value).addAtomicValue(1);
         IntValue value2 = DataValueClasses.newDirectInstance(IntValue.class);
         value2.setValue(5);
-        map.forEachEntry(c -> c.put(value2));
-        map.forEachEntry(c -> c.remove());
+        map.forEachEntry(e -> e.context().replaceValue(e, e.context().wrapValueAsData(value2)));
+        map.forEachEntry(e -> e.context().remove(e));
 
     }
 }
