@@ -2101,9 +2101,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 KB key, long keySize, InstanceOrBytesToInstance<KB, K> toKey,
                 ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
                 MultiStoreBytes entry) {
+            RV v = null;
             long valueSize = readValueSize(entry);
             long valuePos = entry.position();
-            RV v = readValue.readValue(copies, entry, usingValue, valueSize);
+            if (!putReturnsNull)
+                v = readValue.readValue(copies, entry, usingValue, valueSize);
 
             // get callbacks
             if (bytesEventListener != null) {
@@ -2234,7 +2236,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // todo optimize -- prevValue could be read twice
             if (eventListener != null && !entryIsDeleted) {
                 entry.positionAddr(valueAddr);
-                prevValueInstance = readValue(copies, entry, null, prevValueSize);
+                prevValueInstance = null;
+                if (!putReturnsNull)
+                    prevValueInstance = readValue(copies, entry, null, prevValueSize);
             }
 
             // putValue may relocate entry and change offset
