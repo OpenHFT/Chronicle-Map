@@ -33,7 +33,7 @@ import java.util.function.Predicate;
  * This interface defines common {@link ChronicleMap} and {@link ChronicleSet}, related to off-heap
  * memory management and file-mapping. Not usable by itself.
  */
-public interface ChronicleHash<K, C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
+public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
         EQC extends ExternalHashQueryContext<K>> extends Closeable {
     /**
      * Returns the file this hash container mapped to, i. e. when it is created by
@@ -99,7 +99,7 @@ public interface ChronicleHash<K, C extends HashEntry<K>, SC extends HashSegment
      * @return {@code true} if the predicate returned {@code true} for all entries of
      * the {@code ChronicleHash}, {@code false} if it returned {@code false} for the entry
      */
-    boolean forEachEntryWhile(Predicate<? super C> predicate);
+    boolean forEachEntryWhile(Predicate<? super E> predicate);
 
     /**
      * Performs the given action for each entry in this {@code ChronicleHash} until all entries have
@@ -112,7 +112,7 @@ public interface ChronicleHash<K, C extends HashEntry<K>, SC extends HashSegment
      *
      * @param action the action to be performed for each entry
      */
-    void forEachEntry(Consumer<? super C> action); // TODO add substitution and deprecate this
+    void forEachEntry(Consumer<? super E> action);
 
     /**
      * Releases the off-heap memory, used by this hash container and resources, used by replication,
