@@ -528,7 +528,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             LOG.debug("raise change: id {}, segment {}, pos {}",
                     localIdentifier, segmentIndex, pos);
             changesForUpdates.set(combine(segmentIndex, pos));
-            modificationNotifier.onChange();
+            if (modificationNotifier != null)
+                modificationNotifier.onChange();
         }
 
         boolean dropChange(long segmentIndex, long pos) {
