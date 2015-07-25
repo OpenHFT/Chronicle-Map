@@ -423,6 +423,7 @@ public class CHMUseCasesTest {
         }
     }
 
+    @Ignore
     @Test
     public void testByteArrayArrayValue()
             throws ExecutionException, InterruptedException, IOException {

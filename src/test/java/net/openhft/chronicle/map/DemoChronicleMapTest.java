@@ -55,7 +55,6 @@ public class DemoChronicleMapTest {
         file.delete();
     }
 
-    @Ignore
     @Test
     public void testMapLocked() throws Exception {
         File file = File.createTempFile("DummyOrders-"+System.currentTimeMillis(), ".test");

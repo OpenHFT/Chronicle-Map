@@ -163,7 +163,6 @@ public class TCPSocketReplicationIntValueTest {
     }
 
 
-    @Ignore("Problems with making it passing on TC")
     @Test(timeout = 12000)
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         final long start = System.currentTimeMillis();
