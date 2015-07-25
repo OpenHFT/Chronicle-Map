@@ -68,7 +68,7 @@ public class Chaining {
                 return (T) context;
             }
         }
-        int maxNestedContexts = 1 << 16;
+        int maxNestedContexts = 1 << 10;
         if (contextChain.size() > maxNestedContexts) {
             throw new IllegalStateException("More than " + maxNestedContexts +
                     " nested ChronicleHash contexts are not supported. Very probable that " +
