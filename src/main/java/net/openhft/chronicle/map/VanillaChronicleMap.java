@@ -266,7 +266,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
 
     @NotNull
     @Override
-    public final Closeable acquireContext(@NotNull K key, @NotNull V usingValue) {
+    public final Closeable acquireContext(K key, V usingValue) {
         QueryContextInterface<K, V, R> q = queryContext(key);
         // TODO optimize to update lock in certain cases
         try {
@@ -385,7 +385,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     }
 
     @Override
-    public V acquireUsing(@NotNull K key, V usingValue) {
+    public V acquireUsing(K key, V usingValue) {
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             V returnValue = acquireUsingBody(q, usingValue);
             return returnValue;
