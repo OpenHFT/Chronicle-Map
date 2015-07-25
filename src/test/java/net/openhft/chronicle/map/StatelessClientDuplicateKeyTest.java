@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ import java.util.concurrent.*;
 
 import static net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder.*;
 
+@Ignore
 public class StatelessClientDuplicateKeyTest {
 
     @Test

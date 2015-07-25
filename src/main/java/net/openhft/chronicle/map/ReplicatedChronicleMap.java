@@ -537,9 +537,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             LOG.debug("raise change: id {}, segment {}, pos {}",
                     localIdentifier, segmentIndex, pos);
             changesForUpdates.set(combine(segmentIndex, pos));
-            assert timestamp > timeProvider.currentTime() - TimeUnit.SECONDS.toMillis(1) &&
-                    timestamp <= timeProvider.currentTime() : "timeStamp=" + timestamp + ", " +
-                    "currentTime=" + timeProvider.currentTime();
+//            assert timestamp > timeProvider.currentTime() - TimeUnit.SECONDS.toMillis(1) &&
+//                    timestamp <= timeProvider.currentTime() : "timeStamp=" + timestamp + ", " +
+//                    "currentTime=" + timeProvider.currentTime();
             // todo improve this - use the timestamp from the entry its self
             bootStrapTimeStamp.compareAndSet(0, timestamp);
             if (modificationNotifier != null)

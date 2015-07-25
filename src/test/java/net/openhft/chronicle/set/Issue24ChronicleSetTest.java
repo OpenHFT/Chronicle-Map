@@ -32,7 +32,7 @@ import static com.samskivert.util.CollectionUtil.selectRandomSubset;
 
 public class Issue24ChronicleSetTest {
 
-    public static <H extends ChronicleHash,  B extends ChronicleHashBuilder<K, H, B>, K>
+    public static <K, H extends ChronicleHash<K, ?, ?, ?>,  B extends ChronicleHashBuilder<K, H, B>>
     H init(B builder, int entrySize, int averageKeySize, String fileName) {
 
         String tmp = System.getProperty("java.io.tmpdir");
