@@ -1326,54 +1326,37 @@ ChronicleMap doesn't resize automatically.  It is assumed you will make the virt
 larger than you need and it will handle this reasonably efficiently. With the default settings you
 will run out of space between 1 and 2 million entries.
 
-You should set the .entries(..) and .averageValueSize(..) to those you require.
+You should set the `.entries(..)` and key/value size configurations to those you require.
 
-##### Don't forget to set the EntrySize
+##### Don't forget to configure key and value sizes
 
-If you put() and entry that is much larger than the max entry size set via averageValueSize(),
-the code will error. To see how to set the entry size the example below sets the entry size to 10, 
-you should pick a size that is the size in bytes of your entries : 
-
-```java
-ChronicleMap<Integer, String> map =
-             ChronicleMapBuilder.of(Integer.class, String.class)
-                     .averageValueSize(10).create();
- 
-```
-
-This example will throw an java.lang.IllegalArgumentException because the averageValueSize is too small.
+If your key type is not a boxed primitive or so-called "data value generated" interface,
+you should configure the key size in serialized form. If your key size varies,
+you should provide the average number of bytes of keys' serialized form,
+using method `averageKeySize()`:
 
 ```java
-@Test
-public void test() throws IOException, InterruptedException {
-    ChronicleMap<Integer, String> map =
-            ChronicleMapBuilder.of(Integer.class, String.class)
-                    .averageValueSize(10).create();
-
-    String value =   new String(new char[2000]);
-    map.put(1, value);
-
-    Assert.assertEquals(value, map.get(1));
-}
-
+ChronicleMap<String, LongValue> wordFrequencies = ChronicleMapBuilder
+     .of(String.class, LongValue.class)
+     .entries(50000)
+     .averageKeySize(6.5) // think 6.5 is the average number of chars in ASCII text,
+                          // taking the same number of bytes in UTF-8 encoding
+                          // (the default for Chronicle Map)
+     .create();
 ```
 
-If the entry size is dramatically too small ( like in the example below ), 
-you will get a *malloc_error_break* :
+If your key is constantly-sized, use `constantKeySizeBySample()`:
 
 ```java
-@Test
-public void test() throws IOException, InterruptedException {
-    ChronicleMap<Integer, String> map =
-            ChronicleMapBuilder.of(Integer.class, String.class)
-                    .averageValueSize(10).create();
-
-    String value =   new String(new char[20000000]);
-    map.put(1, value);
-
-    Assert.assertEquals(value, map.get(1));
-}
+ChronicleMap<String, LongValue> uuidToSomething = ChronicleMapBuilder
+     .of(String.class, LongValue.class)
+     .entries(50000)
+     .constantKeySizeBySample(UUID.randomUUID().toString())
+     .create();
 ```
+
+The same applies to values, see javadocs to methods `ChronicleMapBuilder.averageValueSize()`
+and `ChronicleMapBuilder.constantValueSizeBySample()`.
 
 # Example : Simple Hello World
 
