@@ -2101,11 +2101,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 KB key, long keySize, InstanceOrBytesToInstance<KB, K> toKey,
                 ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
                 MultiStoreBytes entry) {
-            RV v = null;
             long valueSize = readValueSize(entry);
             long valuePos = entry.position();
-            if (!putReturnsNull)
-                v = readValue.readValue(copies, entry, usingValue, valueSize);
+            RV v = readValue.readValue(copies, entry, usingValue, valueSize);
 
             // get callbacks
             if (bytesEventListener != null) {
