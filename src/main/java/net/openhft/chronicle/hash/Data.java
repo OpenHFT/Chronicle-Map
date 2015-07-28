@@ -67,7 +67,7 @@ public interface Data<V> {
      * Returns "cached" object, generally not eligible for using outside some context, or a block,
      * synchronized with locks, or lambda, etc.
      * 
-     * If the {@code Data} is object wrapper -- this method just returns this object.
+     * <p>If the {@code Data} is object wrapper -- this method just returns this object.
      */
     V get();
 

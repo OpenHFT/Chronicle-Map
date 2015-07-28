@@ -37,13 +37,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * which use a ProcessInstanceLimiter, and checking on startup and regularly
  * after whether it is allowed to run.
  *
- * Typically, you need to specify two things to create an instance of
+ * <p>Typically, you need to specify two things to create an instance of
  * ProcessInstanceLimiter: a path to a file that will hold the shared map; and a
  * callback object (an instance implementing ProcessInstanceLimiter.Callback) to
  * handle the various possible callback messages that the ProcessInstanceLimiter
  * can generate.
  *
- * Once you have a ProcessInstanceLimiter instance, you specify a type of
+ * <p>Once you have a ProcessInstanceLimiter instance, you specify a type of
  * process (any string) which will be limited to up to N processes running at
  * the same time by calling the setMaxNumberOfProcessesOfType() method. Finally
  * you tell the instance you are starting your process of type X by calling
@@ -51,18 +51,18 @@ import java.util.concurrent.ConcurrentHashMap;
  * you may wish for one type of process to define limitations on other types of
  * processes.
  *
- * The are some convenience methods which allow you to quickly specify a limit
+ * <p>The are some convenience methods which allow you to quickly specify a limit
  * without consideration of the above. For example, if during your application
  * startup you call ProcessInstanceLimiter.limitTo(2), then you need not call
  * anything else and you have limited your application to running at most 2 JVM
  * instances of your application. Under the covers, this call is identical to
  * the sequence:
  *
- * ProcessInstanceLimiter limiter = new ProcessInstanceLimiter();
+ * <p>ProcessInstanceLimiter limiter = new ProcessInstanceLimiter();
  * limiter.setMaxNumberOfProcessesOfType(processType,numProcesses);
  * limiter.startingProcessOfType(processType);
  *
- * This:
+ * <p>This:
  * 1. Creates a shared file called ProcessInstanceLimiter_DEFAULT_SHARED_MAP_ in
  * the temp directory to hold an instance of ChronicleMap
  * 2. Creates an instance of ProcessInstanceLimiter.DefaultCallback to handle
@@ -150,7 +150,7 @@ public class ProcessInstanceLimiter implements Runnable {
     /**
      * Convenience method.
      *
-     * Create a ProcessInstanceLimiter instance which is limited to one OS
+     * <p>Create a ProcessInstanceLimiter instance which is limited to one OS
      * process instance of the DEFAULT type. This will enforce that any JVM on
      * the same box which runs the code
      * "ProcessInstanceLimiter.limitToOneProcess()" will only have at most one
@@ -166,7 +166,7 @@ public class ProcessInstanceLimiter implements Runnable {
     /**
      * Convenience method.
      *
-     * Create a ProcessInstanceLimiter instance which is limited to
+     * <p>Create a ProcessInstanceLimiter instance which is limited to
      * "numProcesses" OS process instances of the DEFAULT type. This will
      * enforce that any JVM on the same box which runs the code
      * "ProcessInstanceLimiter.limitTo(numProcesses)" will only have at most
@@ -185,7 +185,7 @@ public class ProcessInstanceLimiter implements Runnable {
     /**
      * Convenience method.
      *
-     * Create a ProcessInstanceLimiter instance which is limited to
+     * <p>Create a ProcessInstanceLimiter instance which is limited to
      * "numProcesses" OS process instances of the "processType" type. This will
      * enforce that any JVM on the same box which runs the code
      * "ProcessInstanceLimiter.limitTo(numProcesses, processType)" will only
@@ -517,7 +517,7 @@ public class ProcessInstanceLimiter implements Runnable {
      * The Data object holds an array of timestamps and a maximum number of
      * processes allowed to be running concurrently
      *
-     * The Timelock field is just for locking the time field
+     * <p>The Timelock field is just for locking the time field
      */
     public static interface Data {
         void setTimeAt(@MaxSize(50) int index, long time);

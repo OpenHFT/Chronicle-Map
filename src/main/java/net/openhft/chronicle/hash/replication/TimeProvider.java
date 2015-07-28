@@ -28,7 +28,7 @@ import java.io.Serializable;
  * {@link System#currentTime()} on every call to replicated {@link ChronicleMap}
  * or {@link ChronicleSet}.
  *
- * Subclasses should be immutable, because {@link ChronicleHashBuilder} doesn't make defensive
+ * <p>Subclasses should be immutable, because {@link ChronicleHashBuilder} doesn't make defensive
  * copies.
  *
  * @author Rob Austin.

@@ -255,11 +255,11 @@ public class JSR166TestCase {
     /**
      * Extra checks that get done for all test cases.
      *
-     * Triggers test case Assert.failure if any thread assertions have Assert.failed,
+     * <p>Triggers test case Assert.failure if any thread assertions have Assert.failed,
      * by rethrowing, in the test harness thread, any exception recorded
      * earlier by threadRecordFailure.
      *
-     * Triggers test case Assert.failure if interrupt status is set in the main thread.
+     * <p>Triggers test case Assert.failure if interrupt status is set in the main thread.
      */
     @After
     public void tearDown() throws InterruptedException {

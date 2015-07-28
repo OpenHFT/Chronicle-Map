@@ -111,7 +111,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * in {@link #getUsing}, {@code usingValue} could safely be {@code null}, in this case a new
      * value instance is created to deserialize the data.
      *
-     * In code, {@code acquireUsing} is specified as :
+     * <p>In code, {@code acquireUsing} is specified as :
      * <pre>{@code
      * V acquireUsing(K key, V usingValue) {
      *     if (!containsKey(key))
@@ -120,7 +120,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * }}</pre>
      *
      *
-     * Where {@code defaultValue(key)} returns either {@linkplain ChronicleMapBuilder#defaultValue(Object)
+     * <p>Where {@code defaultValue(key)} returns either {@linkplain ChronicleMapBuilder#defaultValue(Object)
      * default value} or {@link ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
      * defaultValueProvider.}
      *

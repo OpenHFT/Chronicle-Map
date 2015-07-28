@@ -78,19 +78,19 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * ChronicleMap<Key, Value> map2 = builder.create();}</pre>
  * i. e. created {@code ChronicleMap} instances don't depend on the builder.
  *
- * {@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
+ * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
  * documentation.
  *
- * Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
+ * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
  * ChronicleMapBuilder}", unless specified different, because theoretically someone might provide
  * {@code ChronicleMap} implementations with completely different properties.
  *
- * {@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
+ * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
  * doesn't support resizing. That is why you <i>must</i> configure {@linkplain #entries(long) number
  * of entries} you are going to insert into the created map <i>at most</i>. See {@link
  * #entries(long)} method documentation for more information on this.
  *
- * If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder}, i.
+ * <p>If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder}, i.
  * e. it is not a boxed primitive, data value generated interface, {@link Byteable}, etc. (see the
  * complete list TODO insert the link to the complete list), you <i>must</i> provide the {@code
  * ChronicleHashBuilder} with some information about you keys or values: if they are
@@ -251,7 +251,7 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * {@inheritDoc}
      *
-     * Example: if keys in your map(s) are English words in {@link String} form, average English
+     * <p>Example: if keys in your map(s) are English words in {@link String} form, average English
      * word length is 5.1, configure average key size of 6: <pre>{@code
      * ChronicleMap<String, LongValue> wordFrequencies = ChronicleMapBuilder
      *     .of(String.class, LongValue.class)
@@ -280,7 +280,7 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * {@inheritDoc}
      *
-     * For example, if your keys are Git commit hashes:<pre>{@code
+     * <p>For example, if your keys are Git commit hashes:<pre>{@code
      * Map<byte[], String> gitCommitMessagesByHash =
      *     ChronicleMapBuilder.of(byte[].class, String.class)
      *     .constantKeySizeBySample(new byte[20])
@@ -305,14 +305,14 @@ public final class ChronicleMapBuilder<K, V> implements
      * created by this builder. If value size is always the same, call {@link
      * #constantValueSizeBySample(Object)} method instead of this one.
      *
-     * {@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
+     * <p>{@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
      * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
      * that, however, might result to quite high internal fragmentation, i. e. losses because only
      * integral number of chunks could be allocated for the entry. If you want to avoid this, you
      * should manually configure the actual chunk size in addition to this average value size
      * configuration, which is anyway needed.
      *
-     * If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
+     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and shouldn't be specified by user.
      *
      * @param averageValueSize number of bytes, taken by serialized form of values
@@ -350,10 +350,10 @@ public final class ChronicleMapBuilder<K, V> implements
      * created by this builder. This is done by providing the {@code sampleValue}, all values should
      * take the same number of bytes in serialized form, as this sample object.
      *
-     * If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
+     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and this method shouldn't be called.
      *
-     * If value size varies, method {@link #averageValueSize(double)} should be called instead of
+     * <p>If value size varies, method {@link #averageValueSize(double)} should be called instead of
      * this one.
      *
      * @param sampleValue the sample value
@@ -581,14 +581,14 @@ public final class ChronicleMapBuilder<K, V> implements
      * Configures alignment strategy of address in memory of entries and independently of address in
      * memory of values within entries in ChronicleMaps, created by this builder.
      *
-     * Useful when values of the map are updated intensively, particularly fields with volatile
+     * <p>Useful when values of the map are updated intensively, particularly fields with volatile
      * access, because it doesn't work well if the value crosses cache lines. Also, on some
      * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
      *
-     * If values couldn't reference off-heap memory (i. e. it is not {@link Byteable} or "data
+     * <p>If values couldn't reference off-heap memory (i. e. it is not {@link Byteable} or "data
      * value generated"), alignment configuration makes no sense and forbidden.
      *
-     * Default is {@link Alignment#NO_ALIGNMENT} if values couldn't reference off-heap memory,
+     * <p>Default is {@link Alignment#NO_ALIGNMENT} if values couldn't reference off-heap memory,
      * otherwise chosen heuristically (configure explicitly for being sure and to compare
      * performance in your case).
      *
@@ -1085,7 +1085,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * Configures the marshaller used to serialize actual value sizes to off-heap memory in maps,
      * created by this builder.
      *
-     * Default value size marshaller is so-called "stop bit encoding" marshalling, unless {@link
+     * <p>Default value size marshaller is so-called "stop bit encoding" marshalling, unless {@link
      * #constantValueSizeBySample(Object)} or the builder statically knows the value size is
      * constant -- special constant size marshalling is used by default in these cases.
      *
@@ -1129,7 +1129,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * Specifies the value to be put for each key queried in {@link ChronicleMap#acquireUsing
      * acquireUsing()} method, if the key is absent in the map, created by this builder.
      *
-     * This configuration overrides any previous {@link #defaultValueProvider(
+     * <p>This configuration overrides any previous {@link #defaultValueProvider(
      * DefaultValueProvider)} configuration to this builder.
      *
      * @param defaultValue the default value to be put to the map for absent keys during {@code
@@ -1149,7 +1149,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * Specifies the function to obtain a value for the key during {@link ChronicleMap#acquireUsing
      * acquireUsing()} calls, if the key is absent in the map, created by this builder.
      *
-     * This configuration overrides any previous {@link #defaultValue(Object)} configuration
+     * <p>This configuration overrides any previous {@link #defaultValue(Object)} configuration
      * to this builder.
      *
      * @param defaultValueProvider the strategy to obtain a default value by the absent key
@@ -1510,7 +1510,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * Inject your SPI code around basic {@code ChronicleMap}'s operations with entries:
      * removing entries, replacing the entries' value and inserting the new entry.
      * 
-     * This affects behaviour of ordinary map.put(), map.remove(), etc. calls, as well as removes
+     * <p>This affects behaviour of ordinary map.put(), map.remove(), etc. calls, as well as removes
      * and replacing values <i>during iterations</i>, <i>remote map calls</i> and
      * <i>internal replication operations</i>. 
      */
@@ -1525,7 +1525,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * from {@link ChronicleMap#containsKey} to {@link ChronicleMap#acquireUsing} and
      * {@link ChronicleMap#merge}.
      * 
-     * This affects behaviour of ordinary map calls, as well as <i>remote calls</i>.
+     * <p>This affects behaviour of ordinary map calls, as well as <i>remote calls</i>.
      */
     public ChronicleMapBuilder<K, V> mapMethods(MapMethods<K, V, ?> mapMethods) {
         Objects.requireNonNull(mapMethods);
