@@ -86,7 +86,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
 
     /**
      * Configures the average number of bytes, taken by serialized form of keys, put into hash
-     * containers, created by this builder. If key size is always the same, call {@link
+     * containers, created by this builder. However, in many cases {@link #averageKey(Object)} might
+     * be easier to use and more reliable. If key size is always the same, call {@link
      * #constantKeySizeBySample(Object)} method instead of this one.
      *
      * <p>{@code ChronicleHashBuilder} implementation heuristically chooses
@@ -104,10 +105,42 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @throws IllegalStateException if key size is known statically and shouldn't be configured
      *         by user
      * @throws IllegalArgumentException if the given {@code keySize} is non-positive
+     * @see #averageKey(Object)
      * @see #constantKeySizeBySample(Object)
      * @see #actualChunkSize(int)
      */
     B averageKeySize(double averageKeySize);
+
+    /**
+     * Configures the average number of bytes, taken by serialized form of keys, put into hash
+     * containers, created by this builder, by serializing the given {@code averageKey} using
+     * the configured {@link #keyMarshallers(BytesWriter, BytesReader) keys marshallers}.
+     * In some cases, {@link #averageKeySize(double)} might be easier to use, than constructing the
+     * "average key". If key size is always the same, call {@link #constantKeySizeBySample(
+     * Object)} method instead of this one.
+     *
+     * <p>{@code ChronicleHashBuilder} implementation heuristically chooses
+     * {@linkplain #actualChunkSize(int) the actual chunk size} based on this configuration, that,
+     * however, might result to quite high internal fragmentation, i. e. losses because only
+     * integral number of chunks could be allocated for the entry. If you want to avoid this, you
+     * should manually configure the actual chunk size in addition to this average key size
+     * configuration, which is anyway needed.
+     *
+     * <p>If key is a boxed primitive type or {@link Byteable} subclass, i. e. if key size is known
+     * statically, it is automatically accounted and shouldn't be specified by user.
+     *
+     * <p>Calling this method clears any previous {@link #constantKeySizeBySample(Object)}
+     * configuration.
+     *
+     * @param averageKey the average (by footprint in serialized form) key, is going to be put
+     *                   into the hash containers, created by this builder
+     * @return this builder back
+     * @throws NullPointerException if the given {@code averageKey} is {@code null}
+     * @see #averageKeySize(double)
+     * @see #constantKeySizeBySample(Object)
+     * @see #actualChunkSize(int)
+     */
+    B averageKey(K averageKey);
 
     /**
      * Configures the constant number of bytes, taken by serialized form of keys, put into hash
@@ -119,6 +152,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *
      * <p>If key size varies, method {@link #averageKeySize(double)} should be called instead of
      * this one.
+     *
+     * <p>Calling this method clears any previous {@link #averageKey(Object)} configuration.
      *
      * @param sampleKey the sample key
      * @return this builder back

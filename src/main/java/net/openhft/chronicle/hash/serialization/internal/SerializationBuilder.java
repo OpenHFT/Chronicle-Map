@@ -257,7 +257,7 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
         return this;
     }
 
-    public SerializationBuilder<E> constantSizeBySample(E sampleObject) {
+    public long serializationSize(E sampleObject) {
         Object originalInterop = this.interop;
         Provider interopProvider = Provider.of(originalInterop.getClass());
         ThreadLocalCopies copies = interopProvider.getCopies(null);
@@ -286,7 +286,11 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
             MetaProvider metaInteropProvider = this.metaInteropProvider;
             metaInterop = metaInteropProvider.get(copies, this.metaInterop, interop, sampleObject);
         }
-        long constantSize = metaInterop.size(interop, sampleObject);
+        return metaInterop.size(interop, sampleObject);
+    }
+
+    public SerializationBuilder<E> constantSizeBySample(E sampleObject) {
+        long constantSize = serializationSize(sampleObject);
         if (sizeIsStaticallyKnown) {
             long expectedConstantSize = pseudoReadConstantSize();
             if (constantSize != expectedConstantSize) {

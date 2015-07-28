@@ -1964,10 +1964,14 @@ class GrowOnlySetValuedMapRemoteOperations<K, E>
 
 Usage:
 ```
+HashSet<Integer> averageValue = new HashSet<>();
+for (int i = 0; i < AVERAGE_SET_SIZE; i++) {
+    averageValue.add(i);
+}
 ChronicleMap<Integer, Set<Integer>> map1 = ChronicleMapBuilder
         .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
         .entries(100)
-        .averageValueSize(1000)
+        .averageValue(averageValue)
         .entryOperations(growOnlySetValuedMapEntryOperations())
         .remoteOperations(growOnlySetValuedMapRemoteOperations())
         .replication((byte) 1, /* ... replicated nodes */)
@@ -2110,10 +2114,14 @@ private static boolean innerRemoveEdge(
 
 Usage:
 ```java
+HashSet<Integer> averageValue = new HashSet<>();
+for (int i = 0; i < AVERAGE_CONNECTIVITY; i++) {
+    averageValue.add(i);
+}
 ChronicleMap<Integer, Set<Integer>> graph = ChronicleMapBuilder
         .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
         .entries(100)
-        .averageValueSize(1000)
+        .averageValue(averageValue)
         .create();
 
 addEdge(graph, 1, 2);

@@ -33,8 +33,13 @@ public class NestedContextsTest {
 
     @Test
     public void nestedContextsTest() throws ExecutionException, InterruptedException {
+        HashSet<Integer> averageValue = new HashSet<>();
+        for (int i = 0; i < 5; i++) {
+            averageValue.add(i);
+        }
         ChronicleMap<Integer, Set<Integer>> graph = ChronicleMapBuilder
                 .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
+                .averageValue(averageValue)
                 .actualSegments(2)
                 .create();
 

@@ -100,10 +100,14 @@ public class TcpReplicationSoakCrdtTest {
     public void setup() throws IOException {
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
 
+        HashSet<Integer> averageValue = new HashSet<>();
+        for (int i = 0; i < 10; i++) {
+            averageValue.add(i);
+        }
         ChronicleMapBuilder<Integer, Set<Integer>> builder = ChronicleMapBuilder
                 .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
                 .entries(Builder.SIZE)
-                .averageValueSize(3000) // more than HashSet of 10 Integers on average, serialized
+                .averageValue(averageValue)
                 .entryOperations(growOnlySetValuedMapEntryOperations())
                 .remoteOperations(growOnlySetValuedMapRemoteOperations());
 

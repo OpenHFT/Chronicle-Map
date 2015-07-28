@@ -141,8 +141,10 @@ public final class ChronicleMapBuilder<K, V> implements
     private long entriesPerSegment = -1L;
     private long actualChunksPerSegment = -1L;
     private double averageKeySize = UNDEFINED_DOUBLE_CONFIG;
+    private K averageKey;
     private K sampleKey;
     private double averageValueSize = UNDEFINED_DOUBLE_CONFIG;
+    private V averageValue;
     private V sampleValue;
     private int actualChunkSize = 0;
     private int maxChunksPerEntry = -1;
@@ -265,6 +267,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * @param averageKeySize  the average size of the key
      * @throws IllegalStateException    {@inheritDoc}
      * @throws IllegalArgumentException {@inheritDoc}
+     * @see #averageKey(Object)
      * @see #constantKeySizeBySample(Object)
      * @see #averageValueSize(double)
      * @see #actualChunkSize(int)
@@ -280,6 +283,25 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * {@inheritDoc}
      *
+     * @param averageKey the average (by footprint in serialized form) key, is going to be put
+     *                   into the hash containers, created by this builder
+     * @throws NullPointerException {@inheritDoc}
+     * @see #averageKeySize(double)
+     * @see #constantKeySizeBySample(Object)
+     * @see #averageValue(Object)
+     * @see #actualChunkSize(int)
+     */
+    @Override
+    public ChronicleMapBuilder<K, V> averageKey(K averageKey) {
+        checkSizeIsNotStaticallyKnown(keyBuilder);
+        this.averageKey = averageKey;
+        sampleKey = null;
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
      * <p>For example, if your keys are Git commit hashes:<pre>{@code
      * Map<byte[], String> gitCommitMessagesByHash =
      *     ChronicleMapBuilder.of(byte[].class, String.class)
@@ -287,22 +309,25 @@ public final class ChronicleMapBuilder<K, V> implements
      *     .immutableKeys()
      *     .create();}</pre>
      *
-     * @see ChronicleHashBuilder#averageKeySize(double)
+     * @see #averageKeySize(double)
+     * @see #averageKey(Object)
      * @see #constantValueSizeBySample(Object)
      */
     @Override
     public ChronicleMapBuilder<K, V> constantKeySizeBySample(K sampleKey) {
         this.sampleKey = sampleKey;
+        averageKey = null;
         return this;
     }
 
     private double averageKeySize() {
-        return averageKeyOrValueSize(averageKeySize, keyBuilder);
+        return averageKeyOrValueSize(averageKeySize, keyBuilder, averageKey);
     }
 
     /**
      * Configures the average number of bytes, taken by serialized form of values, put into maps,
-     * created by this builder. If value size is always the same, call {@link
+     * created by this builder. However, in many cases {@link #averageValue(Object)} might be easier
+     * to use and more reliable. If value size is always the same, call {@link
      * #constantValueSizeBySample(Object)} method instead of this one.
      *
      * <p>{@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
@@ -320,14 +345,55 @@ public final class ChronicleMapBuilder<K, V> implements
      * @throws IllegalStateException    if value size is known statically and shouldn't be
      *                                  configured by user
      * @throws IllegalArgumentException if the given {@code averageValueSize} is non-positive
+     * @see #averageValue(Object)
      * @see #constantValueSizeBySample(Object)
-     * @see ChronicleHashBuilder#averageKeySize(double)
+     * @see #averageKeySize(double)
      * @see #actualChunkSize(int)
      */
     public ChronicleMapBuilder<K, V> averageValueSize(double averageValueSize) {
         checkSizeIsNotStaticallyKnown(valueBuilder);
         checkAverageSize(averageValueSize, "value");
         this.averageValueSize = averageValueSize;
+        return this;
+    }
+
+    /**
+     * Configures the average number of bytes, taken by serialized form of values, put into maps,
+     * created by this builder, by serializing the given {@code averageValue} using the configured
+     * {@link #valueMarshallers(BytesWriter, BytesReader) value marshallers}. In some cases, {@link
+     * #averageValueSize(double)} might be easier to use, than constructing the "average value".
+     * If value size is always the same, call {@link #constantValueSizeBySample(Object)} method
+     * instead of this one.
+     *
+     * <p>Example: If you
+     *
+     * <p>{@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
+     * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
+     * that, however, might result to quite high internal fragmentation, i. e. losses because only
+     * integral number of chunks could be allocated for the entry. If you want to avoid this, you
+     * should manually configure the actual chunk size in addition to this average value size
+     * configuration, which is anyway needed.
+     *
+     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
+     * known statically, it is automatically accounted and shouldn't be specified by user.
+     *
+     * <p>Calling this method clears any previous {@link #constantValueSizeBySample(Object)}
+     * configuration.
+     *
+     * @param averageValue the average (by footprint in serialized form) value, is going to be put
+     *                     into the maps, created by this builder
+     * @return this builder back
+     * @throws NullPointerException if the given {@code averageValue} is {@code null}
+     * @see #averageValueSize(double)
+     * @see #constantValueSizeBySample(Object)
+     * @see #averageKey(Object)
+     * @see #actualChunkSize(int)
+     */
+    public ChronicleMapBuilder<K, V> averageValue(V averageValue) {
+        Objects.requireNonNull(averageValue);
+        checkSizeIsNotStaticallyKnown(valueBuilder);
+        this.averageValue = averageValue;
+        sampleValue = null;
         return this;
     }
 
@@ -353,24 +419,33 @@ public final class ChronicleMapBuilder<K, V> implements
      * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and this method shouldn't be called.
      *
-     * <p>If value size varies, method {@link #averageValueSize(double)} should be called instead of
-     * this one.
+     * <p>If value size varies, method {@link #averageValue(Object)} or {@link
+     * #averageValueSize(double)} should be called instead of this one.
+     *
+     * <p>Calling this method clears any previous {@link #averageValue(Object)} configuration.
      *
      * @param sampleValue the sample value
      * @return this builder back
      * @see #averageValueSize(double)
+     * @see #averageValue(Object)
      * @see #constantKeySizeBySample(Object)
      */
     public ChronicleMapBuilder<K, V> constantValueSizeBySample(V sampleValue) {
         this.sampleValue = sampleValue;
+        averageValue = null;
         return this;
     }
 
     double averageValueSize() {
-        return averageKeyOrValueSize(averageValueSize, valueBuilder);
+        return averageKeyOrValueSize(averageValueSize, valueBuilder, averageValue);
     }
 
-    private double averageKeyOrValueSize(double configuredSize, SerializationBuilder builder) {
+    private double averageKeyOrValueSize(
+            double configuredSize, SerializationBuilder builder, Object average) {
+        if (average != null) {
+            builder.maxSize(DEFAULT_KEY_OR_VALUE_SIZE);
+            return builder.serializationSize(average);
+        }
         if (isDefined(configuredSize))
             return configuredSize;
         if (builder.constantSizeMarshaller())
@@ -1267,9 +1342,9 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    ChronicleMap<K, V> createWithFile(File file, SingleChronicleHashReplication singleHashReplication,
-                                      ReplicationChannel channel) throws IOException {
-        // pushingToMapEventListener();
+    ChronicleMap<K, V> createWithFile(
+            File file, SingleChronicleHashReplication singleHashReplication,
+            ReplicationChannel channel) throws IOException {
         for (int i = 0; i < 10; i++) {
             if (file.exists() && file.length() > 0) {
                 try (FileInputStream fis = new FileInputStream(file);

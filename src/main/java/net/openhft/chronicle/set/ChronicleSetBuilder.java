@@ -123,6 +123,12 @@ public final class ChronicleSetBuilder<K>
         return this;
     }
 
+    @Override
+    public ChronicleSetBuilder<K> averageKey(K averageKey) {
+        chronicleMapBuilder.averageKey(averageKey);
+        return this;
+    }
+
     /**
      * {@inheritDoc}
      *
