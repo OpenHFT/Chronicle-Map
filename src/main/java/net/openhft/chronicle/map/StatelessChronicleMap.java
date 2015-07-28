@@ -218,6 +218,16 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     }
 
     @Override
+    public K readKey(Bytes entry, long keyPos) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public V readValue(Bytes entry, long valuePos) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Class<K> keyClass() {
         return kClass;
     }

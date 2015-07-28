@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -243,6 +244,16 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @Override
     public K newKeyInstance() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public K readKey(Bytes entry, long keyPos) {
+        return map1.readKey(entry, keyPos);
+    }
+
+    @Override
+    public V readValue(Bytes entry, long valuePos) {
+        return map1.readValue(entry, valuePos);
     }
 
     @Override

@@ -19,6 +19,7 @@ package net.openhft.chronicle.map.jsr166.map;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
+import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -196,6 +197,16 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         @Override
         public K newKeyInstance() {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public K readKey(Bytes entry, long keyPos) {
+            return d.readKey(entry, keyPos);
+        }
+
+        @Override
+        public V readValue(Bytes entry, long valuePos) {
+            return d.readValue(entry, valuePos);
         }
 
         @Override

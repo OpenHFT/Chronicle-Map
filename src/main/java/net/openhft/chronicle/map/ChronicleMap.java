@@ -294,6 +294,10 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
      */
     K newKeyInstance();
 
+    K readKey(Bytes entry, long keyPos);
+
+    V readValue(Bytes entry, long valuePos);
+
     /**
      * @return the class of {@code <K>}
      */

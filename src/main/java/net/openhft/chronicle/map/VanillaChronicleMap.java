@@ -233,6 +233,33 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
+    @Override
+    public K readKey(Bytes entry, long keyPos) {
+        long initialPos = entry.position();
+        try {
+            entry.position(keyPos);
+            long keySize = keySizeMarshaller.readSize(entry);
+            ThreadLocalCopies copies = keyReaderProvider.getCopies(null);
+            return keyReaderProvider.get(copies, originalKeyReader).read(entry, keySize);
+        } finally {
+            entry.position(initialPos);
+        }
+    }
+
+    @Override
+    public V readValue(Bytes entry, long valuePos) {
+        long initialPos = entry.position();
+        try {
+            entry.position(valuePos);
+            long valueSize = valueSizeMarshaller.readSize(entry);
+            alignment.alignPositionAddr(entry);
+            ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
+            return valueReaderProvider.get(copies, originalValueReader).read(entry, valueSize);
+        } finally {
+            entry.position(initialPos);
+        }
+    }
+
     static void segmentStateNotNullImpliesCopiesNotNull(
             @Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState) {
         assert copies != null || segmentState == null; // segmentState != null -> copies != null

@@ -36,6 +36,9 @@ import java.io.Serializable;
  *     alignment (see {@link ChronicleMapBuilder#entryAndValueAlignment(Alignment)}
  *     ), followed by the serialized value itself.</li>
  * </ul>
+ *
+ * <p>There are helper methods {@link ChronicleMap#readKey(Bytes, long)} and
+ * {@link ChronicleMap#readValue(Bytes, long)} that help to deal with this.
  */
 public abstract class BytesMapEventListener implements Serializable {
     private static final long serialVersionUID = 0L;
