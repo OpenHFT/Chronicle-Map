@@ -29,11 +29,8 @@ import java.net.InetSocketAddress;
  */
 public class TestReplication {
 
-
     @Test
     public void testAllDataGetsReplicated() throws InterruptedException {
-
-
         TcpTransportAndNetworkConfig tcpConfigServer1 =
                 TcpTransportAndNetworkConfig.of(8092);
 
@@ -41,29 +38,27 @@ public class TestReplication {
                 TcpTransportAndNetworkConfig.of(8093, new InetSocketAddress("localhost",
                         8092));
 
-        final ChronicleMap<Integer, Integer> map2 = ChronicleMapBuilder.of(Integer.class,
-                Integer.class)
+        try (ChronicleMap<Integer, Integer> map2 = ChronicleMapBuilder
+                .of(Integer.class, Integer.class)
                 .replication((byte) 2, tcpConfigServer2)
                 .create();
+             ChronicleMap<Integer, Integer> map1 = ChronicleMapBuilder
+                     .of(Integer.class, Integer.class)
+                     .replication((byte) 3, tcpConfigServer1)
+                     .create()) {
 
+            for (int i = 0; i < 70000; i++) {
+                map1.put(i, i);
+            }
 
-        final ChronicleMap<Integer, Integer> map1 = ChronicleMapBuilder.of(Integer.class,
-                Integer.class)
-                .replication((byte) 3, tcpConfigServer1)
-                .create();
+            for (int i = 0; i < 10; i++) {
+                Thread.sleep(100);
+                System.out.println(map2.size());
+            }
 
-        for (int i = 0; i < 70000; i++) {
-            map1.put(i, i);
+            Assert.assertEquals(map1.size(), map2.size());
         }
-
-        for (int i = 0; i < 10; i++) {
-            Thread.sleep(100);
-            System.out.println(map2.size());
-        }
-
-
-        Assert.assertEquals(map1.size(),map2.size());
-
+        System.gc();
     }
 
     /**
@@ -74,6 +69,7 @@ public class TestReplication {
     public void testReplicationUsingAProxyMapThatsUpdatedViaSharedMemory() throws IOException {
 
         ChronicleMap<String, String> server1 = null;
+        ChronicleMap<String, String> forServer1Replication = null;
         ChronicleMap<String, String> server2 = null;
 
         // server 1  - for this test server1 and server 2 are on the same localhost but different
@@ -83,14 +79,12 @@ public class TestReplication {
 
 
             server1 = ChronicleMapBuilder.of(String.class, String.class)
-                    .replication(
-                            (byte) 1).createPersistedTo
-                            (tempFile);
+                    .replication((byte) 1).createPersistedTo(tempFile);
 
             TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8088);
 
             // user for replication only
-            ChronicleMapBuilder.of(String.class, String.class)
+            forServer1Replication = ChronicleMapBuilder.of(String.class, String.class)
                     .replication((byte) 1, serverConfig).createPersistedTo(tempFile);
 
         }
@@ -101,28 +95,29 @@ public class TestReplication {
             TcpTransportAndNetworkConfig server2Config = TcpTransportAndNetworkConfig.of(8090, new
                     InetSocketAddress("localhost", 8088));
 
-            server2 = ChronicleMapBuilder.of(String.class, String
-                    .class).replication((byte) 2, server2Config).create();
+            server2 = ChronicleMapBuilder.of(String.class, String.class)
+                    .replication((byte) 2, server2Config).create();
 
         }
 
-        final String expected = "value";
-        server1.put("key", expected);
+        try (ChronicleMap<String, String> s1 = server1;
+             ChronicleMap<String, String> r = forServer1Replication;
+             ChronicleMap<String, String> s2 = server2) {
+            
+            final String expected = "value";
+            server1.put("key", expected);
 
-        String actual;
+            String actual;
 
 
-        // we have a while loop here as we have to wait a few seconds for the data to replicate
-        do {
-            actual = server2.get("key");
+            // we have a while loop here as we have to wait a few seconds for the data to replicate
+            do {
+                actual = server2.get("key");
+            }
+            while (actual == null);
+
+            Assert.assertEquals(expected, actual);
         }
-        while (actual == null);
-
-        Assert.assertEquals(expected, actual);
-
+        System.gc();
     }
-
-
-    
-
 }
