@@ -103,7 +103,7 @@ public class TestReplication {
         try (ChronicleMap<String, String> s1 = server1;
              ChronicleMap<String, String> r = forServer1Replication;
              ChronicleMap<String, String> s2 = server2) {
-            
+
             final String expected = "value";
             server1.put("key", expected);
 
