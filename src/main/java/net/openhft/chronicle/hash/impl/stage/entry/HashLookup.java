@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.impl.stage.entry;
 
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
-import net.openhft.chronicle.hash.impl.hashlookup.EntryConsumer;
 import net.openhft.lang.Maths;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
@@ -217,6 +216,10 @@ public class HashLookup {
         }
         clearEntry(posToRemove, entryToRemove);
         return posToRemove;
+    }
+
+    interface EntryConsumer {
+        void accept(long key, long value);
     }
 
     String hashLookupToString() {

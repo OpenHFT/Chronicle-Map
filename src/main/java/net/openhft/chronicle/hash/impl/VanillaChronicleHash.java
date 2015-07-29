@@ -16,8 +16,11 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.hash.*;
-import net.openhft.chronicle.hash.impl.hashlookup.HashLookup;
+import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.ExternalHashQueryContext;
+import net.openhft.chronicle.hash.HashEntry;
+import net.openhft.chronicle.hash.HashSegmentContext;
+import net.openhft.chronicle.hash.impl.stage.entry.HashLookup;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;

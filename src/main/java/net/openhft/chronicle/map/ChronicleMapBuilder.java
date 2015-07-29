@@ -19,12 +19,12 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.ChronicleHashBuilderImpl;
-import net.openhft.chronicle.hash.impl.hashlookup.HashLookup;
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+import net.openhft.chronicle.hash.impl.stage.entry.HashLookup;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
+import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.lang.Maths;
@@ -56,8 +56,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.round;
 import static net.openhft.chronicle.hash.impl.util.Objects.builderEquals;
-import static net.openhft.chronicle.map.DefaultSpi.*;
 import static net.openhft.chronicle.map.DefaultSpi.mapEntryOperations;
+import static net.openhft.chronicle.map.DefaultSpi.mapRemoteOperations;
 import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
 
 /**
