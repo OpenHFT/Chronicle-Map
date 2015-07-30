@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
-import net.openhft.chronicle.hash.impl.ChronicleHashBuilderImpl;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookup;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
@@ -54,6 +53,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.lang.Math.ceil;
 import static java.lang.Math.round;
 import static net.openhft.chronicle.hash.impl.util.Objects.builderEquals;
 import static net.openhft.chronicle.map.DefaultSpi.mapEntryOperations;
@@ -103,7 +103,7 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * @see ChronicleSetBuilder
  */
 public final class ChronicleMapBuilder<K, V> implements
-        ChronicleHashBuilderImpl<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>,
+        ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>,
         MapBuilder<ChronicleMapBuilder<K, V>>, Serializable {
 
     static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte) 127;
@@ -131,8 +131,6 @@ public final class ChronicleMapBuilder<K, V> implements
 
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
-
-    private String name;
 
     // used when configuring the number of segments.
     private int minSegments = -1;
@@ -277,6 +275,8 @@ public final class ChronicleMapBuilder<K, V> implements
         checkSizeIsNotStaticallyKnown(keyBuilder);
         checkAverageSize(averageKeySize, "key");
         this.averageKeySize = averageKeySize;
+        averageKey = null;
+        sampleKey = null;
         return this;
     }
 
@@ -296,6 +296,7 @@ public final class ChronicleMapBuilder<K, V> implements
         checkSizeIsNotStaticallyKnown(keyBuilder);
         this.averageKey = averageKey;
         sampleKey = null;
+        averageKeySize = UNDEFINED_DOUBLE_CONFIG;
         return this;
     }
 
@@ -317,11 +318,12 @@ public final class ChronicleMapBuilder<K, V> implements
     public ChronicleMapBuilder<K, V> constantKeySizeBySample(K sampleKey) {
         this.sampleKey = sampleKey;
         averageKey = null;
+        averageKeySize = UNDEFINED_DOUBLE_CONFIG;
         return this;
     }
 
     private double averageKeySize() {
-        return averageKeyOrValueSize(averageKeySize, keyBuilder, averageKey);
+        return averageKeySize = averageKeyOrValueSize(averageKeySize, keyBuilder, averageKey);
     }
 
     /**
@@ -340,6 +342,9 @@ public final class ChronicleMapBuilder<K, V> implements
      * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and shouldn't be specified by user.
      *
+     * <p>Calling this method clears any previous {@link #constantValueSizeBySample(Object)} and
+     * {@link #averageValue(Object)} configurations.
+     *
      * @param averageValueSize number of bytes, taken by serialized form of values
      * @return this builder back
      * @throws IllegalStateException    if value size is known statically and shouldn't be
@@ -354,6 +359,8 @@ public final class ChronicleMapBuilder<K, V> implements
         checkSizeIsNotStaticallyKnown(valueBuilder);
         checkAverageSize(averageValueSize, "value");
         this.averageValueSize = averageValueSize;
+        averageValue = null;
+        sampleValue = null;
         return this;
     }
 
@@ -378,7 +385,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * known statically, it is automatically accounted and shouldn't be specified by user.
      *
      * <p>Calling this method clears any previous {@link #constantValueSizeBySample(Object)}
-     * configuration.
+     * and {@link #averageValueSize(double)} configurations.
      *
      * @param averageValue the average (by footprint in serialized form) value, is going to be put
      *                     into the maps, created by this builder
@@ -394,6 +401,7 @@ public final class ChronicleMapBuilder<K, V> implements
         checkSizeIsNotStaticallyKnown(valueBuilder);
         this.averageValue = averageValue;
         sampleValue = null;
+        averageValueSize = UNDEFINED_DOUBLE_CONFIG;
         return this;
     }
 
@@ -422,7 +430,8 @@ public final class ChronicleMapBuilder<K, V> implements
      * <p>If value size varies, method {@link #averageValue(Object)} or {@link
      * #averageValueSize(double)} should be called instead of this one.
      *
-     * <p>Calling this method clears any previous {@link #averageValue(Object)} configuration.
+     * <p>Calling this method clears any previous {@link #averageValue(Object)} and
+     * {@link #averageValueSize(double)} configurations.
      *
      * @param sampleValue the sample value
      * @return this builder back
@@ -433,23 +442,25 @@ public final class ChronicleMapBuilder<K, V> implements
     public ChronicleMapBuilder<K, V> constantValueSizeBySample(V sampleValue) {
         this.sampleValue = sampleValue;
         averageValue = null;
+        averageValueSize = UNDEFINED_DOUBLE_CONFIG;
         return this;
     }
 
     double averageValueSize() {
-        return averageKeyOrValueSize(averageValueSize, valueBuilder, averageValue);
+        return averageValueSize =
+                averageKeyOrValueSize(averageValueSize, valueBuilder, averageValue);
     }
 
-    private double averageKeyOrValueSize(
-            double configuredSize, SerializationBuilder builder, Object average) {
-        if (average != null) {
-            builder.maxSize(DEFAULT_KEY_OR_VALUE_SIZE);
-            return builder.serializationSize(average);
-        }
+    private <E> double averageKeyOrValueSize(
+            double configuredSize, SerializationBuilder<E> builder, E average) {
         if (isDefined(configuredSize))
             return configuredSize;
         if (builder.constantSizeMarshaller())
             return builder.pseudoReadConstantSize();
+        if (average != null) {
+            builder.maxSize(DEFAULT_KEY_OR_VALUE_SIZE);
+            return builder.serializationSize(average);
+        }
         return DEFAULT_KEY_OR_VALUE_SIZE;
     }
 
@@ -476,7 +487,10 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    @Override
+    /**
+     * @deprecated part of private API, shouldn't be used in the client code
+     */
+    @Deprecated
     public SerializationBuilder<K> keyBuilder() {
         return keyBuilder;
     }
@@ -537,11 +551,12 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     /**
-     * This is needed, if chunkSize = constant entry size is not aligned, for entry alignment to be
-     * always the same, we should _misalign_ the first chunk.
+     * @deprecated part of private API, shouldn't be used in the client code
      */
-    @Override
+    @Deprecated
     public int segmentEntrySpaceInnerOffset(boolean replicated) {
+        // This is needed, if chunkSize = constant entry size is not aligned, for entry alignment
+        // to be always the same, we should _misalign_ the first chunk.
         if (!constantlySizedEntries())
             return 0;
         return (int) (constantValueSize() % valueAlignment().alignment());
@@ -595,7 +610,10 @@ public final class ChronicleMapBuilder<K, V> implements
         return greatestCommonDivisor(b, a % b);
     }
 
-    @Override
+    /**
+     * @deprecated part of private API, shouldn't be used in the client code
+     */
+    @Deprecated
     public long chunkSize(boolean replicated) {
         if (actualChunkSize > 0)
             return actualChunkSize;
@@ -617,6 +635,7 @@ public final class ChronicleMapBuilder<K, V> implements
     double averageChunksPerEntry(boolean replicated) {
         if (constantlySizedEntries())
             return 1.0;
+        @SuppressWarnings("deprecation")
         long chunkSize = chunkSize(replicated);
         // assuming we always has worst internal fragmentation. This affects total segment
         // entry space which is allocated lazily on Linux (main target platform)
@@ -637,15 +656,19 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    @Override
-    public int maxChunksPerEntry() {
-        if (maxChunksPerEntry > 0)
-            return maxChunksPerEntry;
-        if (constantlySizedEntries()) {
+    /**
+     * @deprecated part of private API, shouldn't be used in the client code
+     */
+    @Deprecated
+    public int maxChunksPerEntry(boolean replicated) {
+        if (constantlySizedEntries())
             return 1;
-        } else {
-            return Integer.MAX_VALUE;
-        }
+        @SuppressWarnings("deprecation")
+        long actualChunksPerSegment = actualChunksPerSegment(replicated);
+        int result = (int) Math.min(actualChunksPerSegment, (long) Integer.MAX_VALUE);
+        if (this.maxChunksPerEntry > 0)
+            result = Math.min(this.maxChunksPerEntry, result);
+        return result;
     }
 
     private boolean constantlySizedValues() {
@@ -719,12 +742,16 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    @Override
+    /**
+     * @deprecated part of private API, shouldn't be used in the client code
+     */
+    @Deprecated
     public long entriesPerSegment(boolean replicated) {
         long entriesPerSegment;
         if (this.entriesPerSegment > 0L) {
             entriesPerSegment = this.entriesPerSegment;
         } else {
+            @SuppressWarnings("deprecation")
             int actualSegments = actualSegments(replicated);
             long totalEntries = totalEntriesIfPoorDistribution(actualSegments);
             entriesPerSegment = divideUpper(totalEntries, actualSegments);
@@ -773,7 +800,10 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    @Override
+    /**
+     * @deprecated part of private API, shouldn't be used in the client code
+     */
+    @Deprecated
     public long actualChunksPerSegment(boolean replicated) {
         if (actualChunksPerSegment > 0)
             return actualChunksPerSegment;
@@ -863,7 +893,10 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    @Override
+    /**
+     * @deprecated part of private API, shouldn't be used in the client code
+     */
+    @Deprecated
     public int actualSegments(boolean replicated) {
         if (actualSegments > 0)
             return actualSegments;
@@ -952,8 +985,12 @@ public final class ChronicleMapBuilder<K, V> implements
         return segments <= maxSegments ? segments : -segments;
     }
 
-    @Override
+    /**
+     * @deprecated part of private API, shouldn't be used in the client code
+     */
+    @Deprecated
     public int segmentHeaderSize(boolean replicated) {
+        @SuppressWarnings("deprecation")
         int segments = actualSegments(replicated);
         // reduce false sharing unless we have a lot of segments.
         return segments <= 16 * 1024 ? 64 : 32;
@@ -994,7 +1031,6 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public String toString() {
         return "ChronicleMapBuilder{" +
-                "name=" + name +
                 ", actualSegments=" + pretty(actualSegments) +
                 ", minSegments=" + pretty(minSegments) +
                 ", entriesPerSegment=" + pretty(entriesPerSegment) +
@@ -1507,23 +1543,19 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     void preMapConstruction(boolean replicated) {
-        keyBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
-        valueBuilder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
-
-        double largeKeySize = averageKeySize();
-        if (!constantlySizedKeys())
-            largeKeySize *= figureBufferAllocationFactor();
-        keyBuilder.maxSize(round(largeKeySize));
-        double largeValueSize = averageValueSize();
-        if (!constantlySizedValues())
-            largeValueSize *= figureBufferAllocationFactor();
-        valueBuilder.maxSize(round(largeValueSize));
-
-        if (sampleKey != null)
-            keyBuilder.constantSizeBySample(sampleKey);
-        if (sampleValue != null)
-            valueBuilder.constantSizeBySample(sampleValue);
+        preMapConstruction(replicated, keyBuilder, averageKeySize(), sampleKey);
+        preMapConstruction(replicated, valueBuilder, averageValueSize(), sampleValue);
         stateChecks();
+    }
+
+    private <E> void preMapConstruction(
+            boolean replicated, SerializationBuilder<E> builder, double averageSize, E sample) {
+        builder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
+        if (sample != null) {
+            builder.constantSizeBySample(sample);
+        } else {
+            builder.maxSize(bufferSize(builder, averageSize, replicated));
+        }
     }
 
     private void stateChecks() {
@@ -1574,11 +1606,21 @@ public final class ChronicleMapBuilder<K, V> implements
         return map;
     }
 
-    private int figureBufferAllocationFactor() {
+    private long bufferSize(SerializationBuilder builder, double averageSize, boolean replicated) {
+        if (builder.constantSizeMarshaller())
+            return round(ceil(averageSize));
+
+        int maxChunksPerEntry = maxChunksPerEntry(replicated);
+        // if maxChunksPerEntry is Integer.MAX_VALUE, we, of cause,
+        // are not going to allocate such big buffers
+        int limitedMaxChunksPerEntry = Math.min(64, maxChunksPerEntry);
+        long limitedMaxEntrySize = limitedMaxChunksPerEntry * chunkSize(replicated);
+
         // if expected map size is about 1000, seems rather wasteful to allocate
         // key and value serialization buffers each x64 of expected entry size..
-        return (int) Math.min(Math.max(2L, entries() >> 10),
-                Math.min(64, maxChunksPerEntry()));
+        long limitFactor = Math.max(2L, entries() >> 10);
+
+        return Math.min(round(ceil(limitFactor * averageSize)), limitedMaxEntrySize);
     }
 
     /**

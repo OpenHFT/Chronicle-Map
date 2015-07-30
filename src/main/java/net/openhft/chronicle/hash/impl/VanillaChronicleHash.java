@@ -27,6 +27,7 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
 import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.BytesStore;
 import net.openhft.lang.io.MappedStore;
@@ -107,7 +108,8 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     transient long segmentHeadersOffset;
     transient long segmentsOffset;
     
-    public VanillaChronicleHash(ChronicleHashBuilderImpl<K, ?, ?> builder, boolean replicated) {
+    @SuppressWarnings("deprecation")
+    public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder, boolean replicated) {
         // Version
         dataFileVersion = BuildVersion.version();
 
@@ -126,7 +128,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         entriesPerSegment = builder.entriesPerSegment(replicated);
 
         chunkSize = builder.chunkSize(replicated);
-        maxChunksPerEntry = builder.maxChunksPerEntry();
+        maxChunksPerEntry = builder.maxChunksPerEntry(replicated);
         actualChunksPerSegment = builder.actualChunksPerSegment(replicated);
 
         // Precomputed offsets and sizes for fast Context init

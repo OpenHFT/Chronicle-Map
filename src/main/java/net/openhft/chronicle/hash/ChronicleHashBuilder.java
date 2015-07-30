@@ -100,6 +100,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>If key is a boxed primitive type or {@link Byteable} subclass, i. e. if key size is known
      * statically, it is automatically accounted and shouldn't be specified by user.
      *
+     * <p>Calling this method clears any previous {@link #constantKeySizeBySample(Object)} and
+     * {@link #averageKey(Object)} configurations.
+     *
      * @param averageKeySize the average number of bytes, taken by serialized form of keys
      * @return this builder back
      * @throws IllegalStateException if key size is known statically and shouldn't be configured
@@ -129,8 +132,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>If key is a boxed primitive type or {@link Byteable} subclass, i. e. if key size is known
      * statically, it is automatically accounted and shouldn't be specified by user.
      *
-     * <p>Calling this method clears any previous {@link #constantKeySizeBySample(Object)}
-     * configuration.
+     * <p>Calling this method clears any previous {@link #constantKeySizeBySample(Object)} and
+     * {@link #averageKeySize(double)} configurations.
      *
      * @param averageKey the average (by footprint in serialized form) key, is going to be put
      *                   into the hash containers, created by this builder
@@ -153,7 +156,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>If key size varies, method {@link #averageKeySize(double)} should be called instead of
      * this one.
      *
-     * <p>Calling this method clears any previous {@link #averageKey(Object)} configuration.
+     * <p>Calling this method clears any previous {@link #averageKey(Object)} and
+     * {@link #averageKeySize(double)} configurations.
      *
      * @param sampleKey the sample key
      * @return this builder back
