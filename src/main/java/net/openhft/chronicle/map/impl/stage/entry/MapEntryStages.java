@@ -33,9 +33,10 @@ import org.jetbrains.annotations.NotNull;
 public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         implements MapEntry<K, V> {
 
-    @StageRef VanillaChronicleMapHolder<?, ?, ?, ?, ?, ?, ?> mh;
-    @StageRef AllocatedChunks allocatedChunks;
+    @StageRef public VanillaChronicleMapHolder<?, ?, ?, ?, ?, ?, ?> mh;
+    @StageRef public AllocatedChunks allocatedChunks;
     @StageRef HashLookup hashLookup;
+
 
     long countValueSizeOffset() {
         return keyEnd();
@@ -106,51 +107,8 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
 
     public void putValueDeletedEntry(Data<V> newValue) {
-        assert s.innerUpdateLock.isHeldByCurrentThread();
-
-        int newSizeInChunks;
-        long entryStartOffset = keySizeOffset;
-        long newSizeOfEverythingBeforeValue = -1;
-        boolean newValueSizeIsDifferent = newValue.size() != valueSize;
-        if (newValueSizeIsDifferent) {
-            newSizeOfEverythingBeforeValue = newSizeOfEverythingBeforeValue(newValue);
-            long newValueOffset = mh.m().alignment.alignAddr(
-                    entryStartOffset + newSizeOfEverythingBeforeValue);
-            long newEntrySize = newValueOffset + newValue.size() - entryStartOffset;
-            newSizeInChunks = mh.m().inChunks(newEntrySize);
-        } else {
-            newSizeInChunks = entrySizeInChunks;
-        }
-        if (pos + newSizeInChunks < s.freeList.size() &&
-                s.freeList.allClear(pos, pos + newSizeInChunks)) {
-            s.freeList.set(pos, pos + newSizeInChunks);
-            s.innerWriteLock.lock();
-            allocatedChunks.incrementSegmentEntriesIfNeeded();
-            if (newValueSizeIsDifferent) {
-                initValue(newValue);
-            } else {
-                writeValue(newValue);
-            }
-        } else {
-            if (newValueSizeIsDifferent) {
-                assert newSizeOfEverythingBeforeValue >= 0;
-            } else {
-                newSizeOfEverythingBeforeValue = newSizeOfEverythingBeforeValue(newValue);
-            }
-            long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
-            if (newValueSizeIsDifferent) {
-                allocatedChunks.initEntryAndKeyCopying(entrySize, valueSizeOffset - entryStartOffset);
-                initValue(newValue);
-            } else {
-                long oldValueSizeOffset = valueSizeOffset;
-                long oldValueSize = valueSize;
-                long oldValueOffset = valueOffset;
-                allocatedChunks.initEntryAndKeyCopying(entrySize, valueOffset - entryStartOffset);
-                initValueWithoutSize(newValue, oldValueSizeOffset, oldValueSize, oldValueOffset);
-            }
-            freeExtraAllocatedChunks();
-        }
-        hashLookup.putValueVolatile(hlp.hashLookupPos, pos);
+        throw new AssertionError("putValueDeletedEntry() might be called only from " +
+                "non-Replicated Map query context");
     }
 
     public void writeValueAndPutPos(Data<V> value) {

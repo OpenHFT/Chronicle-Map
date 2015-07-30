@@ -158,9 +158,4 @@ public abstract class ReplicatedMapEntryStages<K, V, T> extends MapEntryStages<K
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
         return super.sizeOfEverythingBeforeValue(keySize, valueSize) + ADDITIONAL_ENTRY_BYTES;
     }
-    
-    @Override
-    public void putValueDeletedEntry(Data<V> newValue) {
-        throw new AssertionError("Replicated Map doesn't remove entries truly, yet");
-    }
 }
