@@ -1560,6 +1560,7 @@ public final class ChronicleMapBuilder<K, V> implements
             SerializationBuilder<E> builder, double configuredAverageSize, E average, E sample) {
         builder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
         if (sample != null) {
+            builder.maxSize(DEFAULT_KEY_OR_VALUE_SIZE);
             builder.constantSizeBySample(sample);
             return builder.maxSize();
         } else {
