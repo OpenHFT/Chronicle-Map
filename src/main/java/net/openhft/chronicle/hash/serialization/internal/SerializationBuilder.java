@@ -244,17 +244,20 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
     }
 
     public SerializationBuilder<E> maxSize(long maxSize) {
+        this.maxSize = maxSize;
         if (copyingInterop == CopyingInterop.FROM_MARSHALLER) {
-            this.maxSize = maxSize;
             metaInteropProvider(CopyingMetaBytesInterop
                     .<E, BytesMarshaller<E>>providerForBytesMarshaller(
                             instancesAreMutable, maxSize));
         } else if (copyingInterop == CopyingInterop.FROM_WRITER) {
-            this.maxSize = maxSize;
             metaInteropProvider(CopyingMetaBytesInterop
                     .<E, BytesWriter<E>>providerForBytesWriter(instancesAreMutable));
         }
         return this;
+    }
+
+    public long maxSize() {
+        return maxSize;
     }
 
     public long serializationSize(E sampleObject) {

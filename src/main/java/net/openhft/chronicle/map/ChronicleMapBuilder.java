@@ -323,7 +323,9 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private double averageKeySize() {
-        return averageKeySize = averageKeyOrValueSize(averageKeySize, keyBuilder, averageKey);
+        if (!isDefined(averageKeySize))
+            throw new AssertionError();
+        return averageKeySize;
     }
 
     /**
@@ -447,8 +449,9 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     double averageValueSize() {
-        return averageValueSize =
-                averageKeyOrValueSize(averageValueSize, valueBuilder, averageValue);
+        if (!isDefined(averageValueSize))
+            throw new AssertionError();
+        return averageValueSize;
     }
 
     private <E> double averageKeyOrValueSize(
@@ -1543,18 +1546,24 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     void preMapConstruction(boolean replicated) {
-        preMapConstruction(replicated, keyBuilder, averageKeySize(), sampleKey);
-        preMapConstruction(replicated, valueBuilder, averageValueSize(), sampleValue);
+        averageKeySize = preMapConstruction(keyBuilder, averageKeySize, averageKey, sampleKey);
+        averageValueSize = preMapConstruction(valueBuilder,
+                averageValueSize, averageValue, sampleValue);
+        if (sampleKey == null)
+            keyBuilder.maxSize(bufferSize(keyBuilder, averageKeySize, replicated));
+        if (sampleValue == null)
+            valueBuilder.maxSize(bufferSize(valueBuilder, averageValueSize, replicated));
         stateChecks();
     }
-
-    private <E> void preMapConstruction(
-            boolean replicated, SerializationBuilder<E> builder, double averageSize, E sample) {
+    
+    private <E> double preMapConstruction(
+            SerializationBuilder<E> builder, double configuredAverageSize, E average, E sample) {
         builder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
         if (sample != null) {
             builder.constantSizeBySample(sample);
+            return builder.maxSize();
         } else {
-            builder.maxSize(bufferSize(builder, averageSize, replicated));
+            return averageKeyOrValueSize(configuredAverageSize, builder, average);
         }
     }
 
@@ -1610,6 +1619,7 @@ public final class ChronicleMapBuilder<K, V> implements
         if (builder.constantSizeMarshaller())
             return round(ceil(averageSize));
 
+        @SuppressWarnings("deprecation")
         int maxChunksPerEntry = maxChunksPerEntry(replicated);
         // if maxChunksPerEntry is Integer.MAX_VALUE, we, of cause,
         // are not going to allocate such big buffers
