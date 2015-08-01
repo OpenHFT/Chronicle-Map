@@ -16,23 +16,22 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.SegmentLock;
-import net.openhft.chronicle.hash.impl.BigSegmentHeader;
-import net.openhft.chronicle.hash.impl.LocalLockState;
-import net.openhft.chronicle.hash.impl.SegmentHeader;
-import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
+import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
+import net.openhft.chronicle.hash.impl.stage.query.HashQuery;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
-import net.openhft.chronicle.hash.locks.InterProcessReadWriteUpdateLock;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.MultiStoreBytes;
 import net.openhft.sg.Stage;
-import net.openhft.sg.Staged;
 import net.openhft.sg.StageRef;
+import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 
@@ -269,8 +268,16 @@ public abstract class SegmentStages implements SegmentLock {
     @Stage("Locks")
     private void linkToSegmentContextsChain() {
         SegmentStages innermostContextOnThisSegment = rootContextOnThisSegment;
-        while (innermostContextOnThisSegment.nextNode != null)
+        while (true) {
+            Data key = ((HashQuery) (Object) innermostContextOnThisSegment).inputKey;
+            if (Objects.equals(key, ((HashQuery) (Object) this).inputKey)) {
+                throw new IllegalStateException("Nested same-thread contexts cannot access " +
+                        "the same key " + key);
+            }
+            if (innermostContextOnThisSegment.nextNode == null)
+                break;
             innermostContextOnThisSegment = innermostContextOnThisSegment.nextNode;
+        }
         innermostContextOnThisSegment.nextNode = this;
     }
 
