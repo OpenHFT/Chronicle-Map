@@ -117,7 +117,6 @@ public class TcpReplicationSoakTest {
     }
 
 
-    @Ignore("Problems with making it passing on TC")
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         try {

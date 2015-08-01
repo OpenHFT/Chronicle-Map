@@ -1555,7 +1555,7 @@ public final class ChronicleMapBuilder<K, V> implements
             valueBuilder.maxSize(bufferSize(valueBuilder, averageValueSize, replicated));
         stateChecks();
     }
-    
+
     private <E> double preMapConstruction(
             SerializationBuilder<E> builder, double configuredAverageSize, E average, E sample) {
         builder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
