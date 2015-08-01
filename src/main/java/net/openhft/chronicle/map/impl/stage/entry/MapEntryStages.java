@@ -188,6 +188,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
 
     protected void relocation(Data<V> newValue, long newSizeOfEverythingBeforeValue) {
+        s.innerWriteLock.lock();
         s.free(pos, entrySizeInChunks);
         long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
         allocatedChunks.initEntryAndKeyCopying(entrySize, valueSizeOffset - keySizeOffset);
