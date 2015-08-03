@@ -21,7 +21,7 @@ import net.openhft.chronicle.hash.SegmentLock;
 import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.chronicle.hash.impl.stage.query.HashQuery;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
@@ -269,8 +269,8 @@ public abstract class SegmentStages implements SegmentLock {
     private void linkToSegmentContextsChain() {
         SegmentStages innermostContextOnThisSegment = rootContextOnThisSegment;
         while (true) {
-            Data key = ((HashQuery) (Object) innermostContextOnThisSegment).inputKey;
-            if (Objects.equals(key, ((HashQuery) (Object) this).inputKey)) {
+            Data key = ((KeySearch) (Object) innermostContextOnThisSegment).inputKey;
+            if (Objects.equals(key, ((KeySearch) (Object) this).inputKey)) {
                 throw new IllegalStateException("Nested same-thread contexts cannot access " +
                         "the same key " + key);
             }
@@ -324,13 +324,9 @@ public abstract class SegmentStages implements SegmentLock {
         localLockState = newState;
     }
 
-    // TODO their isHeldByCurrentThread should be _context_ local
-    // i. e. if outer same-thread context hold the lock, isHeld() should be false, but
-    // lock() op could be shallow
     @StageRef public ReadLock innerReadLock;
     @StageRef public UpdateLock innerUpdateLock;
     @StageRef public WriteLock innerWriteLock;
-
 
     @NotNull
     @Override
@@ -352,14 +348,12 @@ public abstract class SegmentStages implements SegmentLock {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return innerWriteLock;
     }
-
-    
-    @StageRef public HashLookup hashLookup;
     
     @Stage("Segment") MultiStoreBytes freeListBytes = new MultiStoreBytes();
     @Stage("Segment") public SingleThreadedDirectBitSet freeList = new SingleThreadedDirectBitSet();
     @Stage("Segment") long entrySpaceOffset = 0;
-    
+    @Stage("Segment") public long segmentBase;
+
     boolean segmentInit() {
         return entrySpaceOffset > 0;
     }
@@ -367,6 +361,7 @@ public abstract class SegmentStages implements SegmentLock {
     void initSegment() {
         VanillaChronicleHash<?, ?, ?, ?, ?, ?> h = hh.h();
         long hashLookupOffset = h.segmentOffset(segmentIndex);
+        segmentBase = hh.h().ms.address() + hashLookupOffset;
         long freeListOffset = hashLookupOffset + h.segmentHashLookupOuterSize;
         freeListBytes.storePositionAndSize(h.ms, freeListOffset, h.segmentFreeListInnerSize);
         freeList.reuse(freeListBytes);
@@ -432,7 +427,7 @@ public abstract class SegmentStages implements SegmentLock {
 
     public void clearSegment() {
         innerWriteLock.lock();
-        hashLookup.clearHashLookup();
+        hh.h().hashLookup.clearHashLookup(segmentBase);
         freeList.clear();
         nextPosToSearchFrom(0L);
         entries(0L);

@@ -46,7 +46,7 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
         if (entryPresent()) {
             return null;
         } else {
-            if (!searchStatePresent()) {
+            if (!ks.searchStatePresent()) {
                 return absentDelegating;
             } else {
                 assert e.entryDeleted();

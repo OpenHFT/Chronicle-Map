@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 @Staged
 public abstract class HashEntryStages<K> implements HashEntry<K> {
 
-    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
+    @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
     @StageRef public SegmentStages s;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef public HashLookupPos hlp;

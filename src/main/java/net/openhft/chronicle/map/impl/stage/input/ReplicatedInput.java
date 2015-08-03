@@ -20,6 +20,7 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.JavaLangBytesReusableBytesStore;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.replication.RemoteOperationContext;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
@@ -44,6 +45,7 @@ public abstract class ReplicatedInput<K, V, R>
     @StageRef LogHolder lh;
     @StageRef ReplicatedInputKeyBytesData<K> replicatedInputKeyBytesValue;
     @StageRef ReplicatedInputValueBytesData<V> replicatedInputValueBytesValue;
+    @StageRef KeySearch<?> ks;
     @StageRef ReplicatedMapQuery<K, V, ?> q;
     @StageRef SegmentStages s;
     @StageRef ReplicatedMapEntryStages<K, V, ?> e;
@@ -107,7 +109,7 @@ public abstract class ReplicatedInput<K, V, R>
         if (isDeleted) {
             if (debugEnabled) {
                 lh.LOG.debug("READING FROM SOURCE -  into local-id={}, remote={}, remove(key={})",
-                        mh.m().identifier(), riId, q.inputKey);
+                        mh.m().identifier(), riId, ks.inputKey);
             }
             mh.m().remoteOperations.remove(this);
             return;
@@ -117,7 +119,7 @@ public abstract class ReplicatedInput<K, V, R>
         if (debugEnabled) {
             message = String.format(
                     "READING FROM SOURCE -  into local-id=%d, remote-id=%d, put(key=%s,",
-                    mh.m().identifier(), riId, q.inputKey);
+                    mh.m().identifier(), riId, ks.inputKey);
         }
 
 

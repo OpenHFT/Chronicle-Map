@@ -17,8 +17,9 @@
 package net.openhft.chronicle.hash.impl.stage.iter;
 
 import net.openhft.chronicle.hash.HashEntry;
+import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
+import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
-import net.openhft.chronicle.hash.impl.stage.entry.HashLookup;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupPos;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
@@ -33,7 +34,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>> implements
     
     @StageRef public SegmentStages s;
     @StageRef HashEntryStages<K> e;
-    @StageRef protected HashLookup hashLookup;
+    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef protected HashLookupPos hlp;
     
@@ -57,13 +58,14 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>> implements
                 return true;
             boolean interrupted = false;
             long startPos = 0L;
-            while (!hashLookup.empty(hashLookup.readEntry(startPos))) {
+            CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
+            while (!hashLookup.empty(hashLookup.readEntry(s.segmentBase, startPos))) {
                 startPos = hashLookup.step(startPos);
             }
             hlp.initHashLookupPos(startPos);
             do {
                 hlp.setHashLookupPos(hashLookup.step(hlp.hashLookupPos));
-                long entry = hashLookup.readEntry(hlp.hashLookupPos);
+                long entry = hashLookup.readEntry(s.segmentBase, hlp.hashLookupPos);
                 if (!hashLookup.empty(entry)) {
                     e.readExistingEntry(hashLookup.value(entry));
                     if (entryIsPresent()) {
@@ -105,10 +107,10 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>> implements
         s.innerWriteLock.lock();
         try {
             // this condition mean -- some other entry taken place of the removed one
-            if (hashLookup.remove(hlp.hashLookupPos) != hlp.hashLookupPos) {
+            if (hh.h().hashLookup.remove(s.segmentBase, hlp.hashLookupPos) != hlp.hashLookupPos) {
                 // if so, should make step back, to compensate step forward on the next iteration,
                 // to consume the shifted entry
-                hlp.setHashLookupPos(hashLookup.stepBack(hlp.hashLookupPos));
+                hlp.setHashLookupPos(hh.h().hashLookup.stepBack(hlp.hashLookupPos));
             }
             e.innerRemoveEntryExceptHashLookupUpdate();
         } finally {

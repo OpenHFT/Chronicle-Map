@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
-import net.openhft.chronicle.hash.impl.stage.entry.HashLookup;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
@@ -55,6 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.ceil;
 import static java.lang.Math.round;
+import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
 import static net.openhft.chronicle.hash.impl.util.Objects.builderEquals;
 import static net.openhft.chronicle.map.DefaultSpi.mapEntryOperations;
 import static net.openhft.chronicle.map.DefaultSpi.mapRemoteOperations;
@@ -762,15 +762,17 @@ public final class ChronicleMapBuilder<K, V> implements
         if (actualChunksPerSegment > 0)
             return entriesPerSegment;
         double averageChunksPerEntry = averageChunksPerEntry(replicated);
-        if (entriesPerSegment * averageChunksPerEntry > HashLookup.MAX_SEGMENT_CHUNKS)
+        if (entriesPerSegment * averageChunksPerEntry >
+                MAX_SEGMENT_CHUNKS)
             throw new IllegalStateException("Max chunks per segment is " +
-                    HashLookup.MAX_SEGMENT_CHUNKS + " configured entries() and " +
+                    MAX_SEGMENT_CHUNKS +
+                    " configured entries() and " +
                     "actualSegments() so that there should be " + entriesPerSegment +
                     " entries per segment, while average chunks per entry is " +
                     averageChunksPerEntry);
-        if (entriesPerSegment > HashLookup.MAX_SEGMENT_ENTRIES)
+        if (entriesPerSegment > MAX_SEGMENT_ENTRIES)
             throw new IllegalStateException("shouldn't be more than " +
-                    HashLookup.MAX_SEGMENT_ENTRIES + " entries per segment");
+                    MAX_SEGMENT_ENTRIES + " entries per segment");
         return entriesPerSegment;
     }
 
@@ -975,9 +977,9 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private int hashLookupSlotBytes(long entriesPerSegment, boolean replicated) {
-        int valueBits = HashLookup.valueBits(chunksPerSegment(entriesPerSegment, replicated));
-        int keyBits = HashLookup.keyBits(entriesPerSegment, valueBits);
-        return HashLookup.entrySize(keyBits, valueBits);
+        int valueBits = valueBits(chunksPerSegment(entriesPerSegment, replicated));
+        int keyBits = keyBits(entriesPerSegment, valueBits);
+        return entrySize(keyBits, valueBits);
     }
 
     private long trySegments(long entriesPerSegment, int maxSegments, boolean replicated) {

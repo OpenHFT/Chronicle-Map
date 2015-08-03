@@ -19,7 +19,6 @@ package net.openhft.chronicle.map.impl;
 import net.openhft.chronicle.hash.impl.stage.data.bytes.EntryKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.data.bytes.InputKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.data.instance.InputKeyInstanceData;
-import net.openhft.chronicle.hash.impl.stage.entry.HashLookup;
 import net.openhft.chronicle.hash.impl.stage.entry.ReadLock;
 import net.openhft.chronicle.hash.impl.stage.entry.UpdateLock;
 import net.openhft.chronicle.hash.impl.stage.entry.WriteLock;
@@ -28,10 +27,7 @@ import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.OwnerThreadHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
 import net.openhft.chronicle.hash.impl.stage.input.HashInputBytes;
-import net.openhft.chronicle.hash.impl.stage.query.HashLookupSearch;
-import net.openhft.chronicle.hash.impl.stage.query.QueryHashLookupPos;
-import net.openhft.chronicle.hash.impl.stage.query.QuerySegmentStages;
-import net.openhft.chronicle.hash.impl.stage.query.SearchAllocatedChunks;
+import net.openhft.chronicle.hash.impl.stage.query.*;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.*;
 import net.openhft.chronicle.map.impl.stage.data.instance.InputValueInstanceData;
@@ -61,10 +57,9 @@ import net.openhft.sg.Staged;
 
         ReplicatedChronicleMapHolderImpl.class,
 
-        HashLookup.class,
         KeyBytesInterop.class,
         QuerySegmentStages.class,
-
+        KeySearch.class,
         HashLookupSearch.class,
         QueryHashLookupPos.class,
 

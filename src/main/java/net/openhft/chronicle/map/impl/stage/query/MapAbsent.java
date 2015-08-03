@@ -20,6 +20,7 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.query.HashLookupSearch;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapContext;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
@@ -28,11 +29,12 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
-import static net.openhft.chronicle.hash.impl.stage.query.HashQuery.SearchState.PRESENT;
+import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
 public class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
 
+    @StageRef public KeySearch<K> ks;
     @StageRef MapQuery<K, V, ?> q;
     @StageRef MapEntryStages<K, V> e;
     @StageRef public HashLookupSearch hashLookupSearch;
@@ -41,8 +43,8 @@ public class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
     @StageRef VanillaChronicleMapHolder<K, ?, ?, V, ?, ?, ?> mh;
 
     void putEntry(Data<V> value) {
-        assert q.searchStateAbsent();
-        long entrySize = e.entrySize(q.inputKey.size(), value.size());
+        assert ks.searchStateAbsent();
+        long entrySize = e.entrySize(ks.inputKey.size(), value.size());
         q.allocatedChunks.initEntryAndKey(entrySize);
         e.initValue(value);
         e.freeExtraAllocatedChunks();
@@ -60,20 +62,20 @@ public class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
     @Override
     public Data<K> absentKey() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return q.inputKey;
+        return ks.inputKey;
     }
 
     @Override
     public void doInsert(Data<V> value) {
         q.putPrefix();
-        if (!q.searchStatePresent()) {
-            if (q.searchStateDeleted()) {
+        if (!q.entryPresent()) {
+            if (ks.searchStateDeleted()) {
                 e.putValueDeletedEntry(value);
             } else {
                 putEntry(value);
             }
             s.incrementModCount();
-            q.setSearchState(PRESENT);
+            ks.setSearchState(PRESENT);
         } else {
             throw new IllegalStateException(
                     "Entry is present in the map when doInsert() is called");

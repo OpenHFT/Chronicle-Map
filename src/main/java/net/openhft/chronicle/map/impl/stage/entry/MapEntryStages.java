@@ -19,7 +19,8 @@ package net.openhft.chronicle.map.impl.stage.entry;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.AllocatedChunks;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
-import net.openhft.chronicle.hash.impl.stage.entry.HashLookup;
+import net.openhft.chronicle.hash.impl.stage.query.HashLookupSearch;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.VanillaChronicleMap;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
@@ -35,8 +36,6 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
 
     @StageRef public VanillaChronicleMapHolder<?, ?, ?, ?, ?, ?, ?> mh;
     @StageRef public AllocatedChunks allocatedChunks;
-    @StageRef HashLookup hashLookup;
-
 
     long countValueSizeOffset() {
         return keyEnd();
@@ -114,9 +113,9 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     public void writeValueAndPutPos(Data<V> value) {
         initValue(value);
         freeExtraAllocatedChunks();
-        hashLookup.putValueVolatile(hlp.hashLookupPos, pos);
+        hlp.putValueVolatile(pos);
     }
-    
+
     public long newSizeOfEverythingBeforeValue(Data<V> newValue) {
         return valueSizeOffset + mh.m().valueSizeMarshaller.sizeEncodingSize(newValue.size()) -
                 keySizeOffset;
@@ -184,7 +183,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         } else {
             writeValue(newValue);
         }
-        hashLookup.putValueVolatile(hlp.hashLookupPos, pos);
+        hlp.putValueVolatile(pos);
     }
 
     protected void relocation(Data<V> newValue, long newSizeOfEverythingBeforeValue) {

@@ -42,7 +42,6 @@ import net.openhft.sg.Staged;
 
         MapSegmentIteration.class,
 
-        HashLookup.class,
         KeyBytesInterop.class,
         SegmentStages.class,
         HashLookupPos.class,

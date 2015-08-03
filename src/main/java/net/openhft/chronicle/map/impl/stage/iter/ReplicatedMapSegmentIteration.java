@@ -17,6 +17,8 @@
 package net.openhft.chronicle.map.impl.stage.iter;
 
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
+import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.impl.ReplicatedIterationContextInterface;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
@@ -31,6 +33,7 @@ import java.util.function.Consumer;
 public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentIteration<K, V, R>
         implements ReplicatedIterationContextInterface<K, V, R>, ReplicableEntry {
 
+    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
     @StageRef ReplicatedMapEntryStages<K, V, ?> e;
     @StageRef ReplicationUpdate<K> ru;
     @StageRef DummyValueZeroData<V> dummyValue;
@@ -60,13 +63,14 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
             if (entries == 0)
                 return;
             long startPos = 0L;
-            while (!hashLookup.empty(hashLookup.readEntry(startPos))) {
+            CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
+            while (!hashLookup.empty(hashLookup.readEntry(s.segmentBase, startPos))) {
                 startPos = hashLookup.step(startPos);
             }
             hlp.initHashLookupPos(startPos);
             do {
                 hlp.setHashLookupPos(hashLookup.step(hlp.hashLookupPos));
-                long entry = hashLookup.readEntry(hlp.hashLookupPos);
+                long entry = hashLookup.readEntry(s.segmentBase, hlp.hashLookupPos);
                 if (!hashLookup.empty(entry)) {
                     e.readExistingEntry(hashLookup.value(entry));
                     action.accept(this);

@@ -18,6 +18,7 @@ package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.query.HashQuery;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.impl.stage.query.SearchAllocatedChunks;
 import net.openhft.chronicle.map.ExternalMapQueryContext;
 import net.openhft.chronicle.map.MapAbsentEntry;
@@ -37,7 +38,7 @@ import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static net.openhft.chronicle.hash.impl.stage.query.HashQuery.SearchState.PRESENT;
+import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
 public abstract class MapQuery<K, V, R> extends HashQuery<K>
@@ -47,6 +48,7 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
     @StageRef VanillaChronicleMapHolder<K, ?, ?, V, ?, ?, R> mh;
     @StageRef MapEntryStages<K, V> e;
     @StageRef SearchAllocatedChunks allocatedChunks;
+    @StageRef KeySearch<K> ks;
     @StageRef public AcquireHandle<K, V> acquireHandle;
     
     @StageRef public InputValueInstanceData<V, ?, ?> inputValueInstanceValue;
@@ -79,17 +81,17 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
             s.innerUpdateLock.lock();
         boolean searchResultsNotTrusted = underUpdatedLockIsHeld ||
                 s.concurrentSameThreadContexts;
-        if (hlp.hashLookupPosInit() && searchStateAbsent() && searchResultsNotTrusted)
+        if (hlp.hashLookupPosInit() && ks.searchStateAbsent() && searchResultsNotTrusted)
             hlp.closeHashLookupPos();
     }
 
     @Override
     public void doReplaceValue(Data<V> newValue) {
         putPrefix();
-        if (searchStatePresent()) {
+        if (entryPresent()) {
             e.innerDefaultReplaceValue(newValue);
             s.incrementModCount();
-            setSearchState(PRESENT);
+            ks.setSearchState(PRESENT);
         } else {
             throw new IllegalStateException(
                     "Entry is absent in the map when doReplaceValue() is called");

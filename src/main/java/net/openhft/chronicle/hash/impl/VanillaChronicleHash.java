@@ -20,7 +20,6 @@ import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ExternalHashQueryContext;
 import net.openhft.chronicle.hash.HashEntry;
 import net.openhft.chronicle.hash.HashSegmentContext;
-import net.openhft.chronicle.hash.impl.stage.entry.HashLookup;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
@@ -40,9 +39,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.channels.FileChannel;
+import java.util.List;
 
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
+import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.entrySize;
+import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.keyBits;
+import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.valueBits;
 import static net.openhft.lang.MemoryUnit.*;
 
 public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
@@ -107,6 +110,8 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     public transient long headerSize;
     transient long segmentHeadersOffset;
     transient long segmentsOffset;
+
+    public transient CompactOffHeapLinearHashTable hashLookup;
     
     @SuppressWarnings("deprecation")
     public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder, boolean replicated) {
@@ -134,12 +139,11 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         // Precomputed offsets and sizes for fast Context init
         segmentHeaderSize = builder.segmentHeaderSize(replicated);
 
-        segmentHashLookupValueBits = HashLookup.valueBits(actualChunksPerSegment);
-        segmentHashLookupKeyBits =
-                HashLookup.keyBits(entriesPerSegment, segmentHashLookupValueBits);
+        segmentHashLookupValueBits = valueBits(actualChunksPerSegment);
+        segmentHashLookupKeyBits = keyBits(entriesPerSegment, segmentHashLookupValueBits);
         segmentHashLookupEntrySize =
-                HashLookup.entrySize(segmentHashLookupKeyBits, segmentHashLookupValueBits);
-        segmentHashLookupCapacity = HashLookup.capacityFor(entriesPerSegment);
+                entrySize(segmentHashLookupKeyBits, segmentHashLookupValueBits);
+        segmentHashLookupCapacity = CompactOffHeapLinearHashTable.capacityFor(entriesPerSegment);
         segmentHashLookupInnerSize = segmentHashLookupCapacity * segmentHashLookupEntrySize;
         segmentHashLookupOuterSize = CACHE_LINES.align(segmentHashLookupInnerSize, BYTES);
 
@@ -183,6 +187,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     private void ownInitTransients() {
         keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
         keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
+        hashLookup = new CompactOffHeapLinearHashTable(this);
     }
 
     public final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {

@@ -62,7 +62,8 @@ public abstract class QueryMapEntryStages<K, V> extends MapEntryStages<K, V> {
             }
             long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
             if (newValueSizeIsDifferent) {
-                allocatedChunks.initEntryAndKeyCopying(entrySize, valueSizeOffset - entryStartOffset);
+                allocatedChunks.initEntryAndKeyCopying(
+                        entrySize, valueSizeOffset - entryStartOffset);
                 initValue(newValue);
             } else {
                 long oldValueSizeOffset = valueSizeOffset;

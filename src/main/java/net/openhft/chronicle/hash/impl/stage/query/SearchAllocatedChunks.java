@@ -20,16 +20,16 @@ import net.openhft.chronicle.hash.impl.stage.entry.AllocatedChunks;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
-import static net.openhft.chronicle.hash.impl.stage.query.HashQuery.SearchState.PRESENT;
+import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
 public class SearchAllocatedChunks extends AllocatedChunks {
 
-    @StageRef HashQuery q;
+    @StageRef KeySearch<?> ks;
 
     @Override
     public void incrementSegmentEntriesIfNeeded() {
-        if (q.searchState != PRESENT) {
+        if (ks.searchState != PRESENT) {
             // update the size before the store fence
             s.entries(s.entries() + 1L);
         }
@@ -40,6 +40,6 @@ public class SearchAllocatedChunks extends AllocatedChunks {
         // call incrementSegmentEntriesIfNeeded() before entry.writeNewEntry(), because the latter
         // clears out searchState, and it performs the search again, but in inconsistent state
         incrementSegmentEntriesIfNeeded();
-        entry.writeNewEntry(s.alloc(allocatedChunks), q.inputKey);
+        entry.writeNewEntry(s.alloc(allocatedChunks), ks.inputKey);
     }
 }

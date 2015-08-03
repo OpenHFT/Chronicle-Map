@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.impl.stage.query;
 
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
-import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.HashEntry;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
@@ -27,12 +26,11 @@ import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupPos;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
-import static net.openhft.chronicle.hash.impl.stage.query.HashQuery.SearchState.DELETED;
-import static net.openhft.chronicle.hash.impl.stage.query.HashQuery.SearchState.PRESENT;
+import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.DELETED;
+import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
 public abstract class HashQuery<K> implements HashEntry<K> {
@@ -43,6 +41,7 @@ public abstract class HashQuery<K> implements HashEntry<K> {
     @StageRef public HashLookupSearch hashLookupSearch;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef public HashLookupPos hlp;
+    @StageRef public KeySearch ks;
     
     @StageRef public InputKeyInstanceData<K, ?, ?> inputKeyInstanceValue;
     @StageRef public InputKeyBytesData<K> inputKeyBytesValue;
@@ -52,8 +51,8 @@ public abstract class HashQuery<K> implements HashEntry<K> {
             if (s.concurrentSameThreadContexts &&
                     s.rootContextOnThisSegment.latestSameThreadSegmentModCount !=
                             s.contextModCount) {
-                if (keySearchInit()) {
-                    if (searchState == PRESENT) {
+                if (ks.keySearchInit()) {
+                    if (ks.searchState == PRESENT) {
                         if (!hashLookupSearch.checkSlotContainsExpectedKeyAndValue(entry.pos))
                             hlp.closeHashLookupPos();
                     }
@@ -62,90 +61,31 @@ public abstract class HashQuery<K> implements HashEntry<K> {
         }
     }
 
-    public Data<K> inputKey = null;
-    
-    public void initInputKey(Data<K> inputKey) {
-        this.inputKey = inputKey;
-    }
-
     public Data<K> queriedKey() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return inputKey;
+        return ks.inputKey;
     }
     
     public long hashOfKey = 0;
     
     void initHashOfKey() {
-        hashOfKey = inputKey.hash(LongHashFunction.city_1_1());
-    }
-    
-    public enum SearchState {
-        PRESENT,
-        DELETED,
-        ABSENT
-    }
-    
-    @Stage("KeySearch") protected SearchState searchState = null;
-    
-    abstract boolean keySearchInit();
-
-    @Stage("KeySearch")
-    public void setSearchState(SearchState newSearchState) {
-        this.searchState = newSearchState;
-    }
-
-    void initKeySearch() {
-        for (long pos; (pos = hashLookupSearch.nextPos()) >= 0L;) {
-            entry.readExistingEntry(pos);
-            if (!keyEquals())
-                continue;
-            hashLookupSearch.found();
-            keyFound();
-            return;
-        }
-        searchState = SearchState.ABSENT;
-    }
-
-    boolean keyEquals() {
-        return inputKey.size() == entry.keySize &&
-                BytesUtil.bytesEqual(entry.entryBS, entry.keyOffset,
-                        inputKey.bytes(), inputKey.offset(), entry.keySize);
-    }
-    
-    @Stage("KeySearch")
-    void keyFound() {
-        searchState = PRESENT;
-    }
-    
-    abstract void closeKeySearch();
-    
-    public boolean searchStatePresent() {
-        return searchState == PRESENT;
-    }
-    
-    public boolean searchStateDeleted() {
-        return searchState == DELETED && !s.concurrentSameThreadContexts &&
-                s.innerUpdateLock.isHeldByCurrentThread();
-    }
-    
-    public boolean searchStateAbsent() {
-        return !searchStatePresent() && !searchStateDeleted();
+        hashOfKey = ks.inputKey.hash(LongHashFunction.city_1_1());
     }
 
     public boolean entryPresent() {
-        return searchStatePresent();
+        return ks.searchStatePresent();
     }
 
     @Override
     public void doRemove() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         s.innerUpdateLock.lock();
-        if (searchStatePresent()) {
+        if (entryPresent()) {
             // TODO optimize: if shift-deletion is trivial, updateLock.lock()
             s.innerWriteLock.lock();
             hashLookupSearch.remove();
             entry.innerRemoveEntryExceptHashLookupUpdate();
-            setSearchState(DELETED);
+            ks.setSearchState(DELETED);
         } else {
             throw new IllegalStateException("Entry is absent when doRemove() is called");
         }

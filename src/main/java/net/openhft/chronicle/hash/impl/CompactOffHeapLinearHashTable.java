@@ -14,20 +14,15 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash.impl.stage.entry;
+package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.lang.Maths;
-import net.openhft.sg.Stage;
-import net.openhft.sg.StageRef;
-import net.openhft.sg.Staged;
 
 import static net.openhft.lang.MemoryUnit.BITS;
 import static net.openhft.lang.MemoryUnit.BYTES;
 import static net.openhft.lang.io.NativeBytes.UNSAFE;
 
-@Staged
-public class HashLookup {
+public class CompactOffHeapLinearHashTable {
     // to fit 64 bits per slot.
     public static final int MAX_SEGMENT_CHUNKS = 1 << 30;
     public static final int MAX_SEGMENT_ENTRIES = 1 << 29;
@@ -71,25 +66,16 @@ public class HashLookup {
     public static final long UNSET_KEY = 0L;
     public static final long UNSET_ENTRY = 0L;
 
-    @Stage("SegmentHashLookup") long address = -1;
-    @Stage("SegmentHashLookup") long capacityMask;
-    @Stage("SegmentHashLookup") int hashLookupEntrySize;
-    @Stage("SegmentHashLookup") long capacityMask2;
-    @Stage("SegmentHashLookup") int keyBits;
-    @Stage("SegmentHashLookup") long keyMask;
-    @Stage("SegmentHashLookup") long valueMask;
-    @Stage("SegmentHashLookup") long entryMask;
 
-    public void initSegmentHashLookup(
-            long address, long capacity, int entrySize, int keyBits, int valueBits) {
-        innerInitSegmentHashLookup(address, capacity, entrySize, keyBits, valueBits);
-    }
+    private final long capacityMask;
+    private final int hashLookupEntrySize;
+    private final long capacityMask2;
+    private final int keyBits;
+    private final long keyMask;
+    private final long valueMask;
+    private final long entryMask;
 
-    @Stage("SegmentHashLookup")
-    private void innerInitSegmentHashLookup(
-            long address, long capacity, int entrySize, int keyBits, int valueBits) {
-        this.address = address;
-
+    CompactOffHeapLinearHashTable(long capacity, int entrySize, int keyBits, int valueBits) {
         this.capacityMask = capacity - 1L;
 
         this.hashLookupEntrySize = entrySize;
@@ -100,16 +86,10 @@ public class HashLookup {
         this.valueMask = mask(valueBits);
         this.entryMask = mask(keyBits + valueBits);
     }
-    
-    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
-    @StageRef SegmentStages s;
 
-    public void initSegmentHashLookup() {
-        long hashLookupOffset = hh.h().segmentOffset(s.segmentIndex);
-        innerInitSegmentHashLookup(hh.h().ms.address() + hashLookupOffset,
-                hh.h().segmentHashLookupCapacity, hh.h().segmentHashLookupEntrySize,
-                hh.h().segmentHashLookupKeyBits, hh.h().segmentHashLookupValueBits);
-        
+    CompactOffHeapLinearHashTable(VanillaChronicleHash h) {
+        this(h.segmentHashLookupCapacity, h.segmentHashLookupEntrySize, h.segmentHashLookupKeyBits,
+                h.segmentHashLookupValueBits);
     }
 
     long indexToPos(long index) {
@@ -152,49 +132,44 @@ public class HashLookup {
         return (pos -= hashLookupEntrySize) >= 0 ? pos : capacityMask2;
     }
 
-    public long readEntry(long pos) {
-        return UNSAFE.getLong(address + pos);
+    public long readEntry(long addr, long pos) {
+        return UNSAFE.getLong(addr + pos);
     }
 
-    public void writeEntry(long pos, long prevEntry, long key, long value) {
+    public void writeEntryVolatile(long addr, long pos, long prevEntry, long key, long value) {
         long entry = (prevEntry & ~entryMask) | entry(key, value);
-        UNSAFE.putLong(address + pos, entry);
-    }
-
-    public void writeEntryVolatile(long pos, long prevEntry, long key, long value) {
-        long entry = (prevEntry & ~entryMask) | entry(key, value);
-        UNSAFE.putLongVolatile(null, address + pos, entry);
+        UNSAFE.putLongVolatile(null, addr + pos, entry);
     }
     
-    public void putValueVolatile(long pos, long value) {
+    public void putValueVolatile(long addr, long pos, long value) {
         checkValueForPut(value);
-        long currentEntry = readEntry(pos);
-        writeEntryVolatile(pos, currentEntry, key(currentEntry), value);
+        long currentEntry = readEntry(addr, pos);
+        writeEntryVolatile(addr, pos, currentEntry, key(currentEntry), value);
     }
 
-    void writeEntry(long pos, long prevEntry, long anotherEntry) {
+    void writeEntry(long addr, long pos, long prevEntry, long anotherEntry) {
         long entry = (prevEntry & ~entryMask) | (anotherEntry & entryMask);
-        UNSAFE.putLong(address + pos, entry);
+        UNSAFE.putLong(addr + pos, entry);
     }
 
-    void clearEntry(long pos, long prevEntry) {
+    void clearEntry(long addr, long pos, long prevEntry) {
         long entry = (prevEntry & ~entryMask);
-        UNSAFE.putLong(address + pos, entry);
+        UNSAFE.putLong(addr + pos, entry);
     }
 
-    public void clearHashLookup() {
-        UNSAFE.setMemory(address, capacityMask2 + hashLookupEntrySize, (byte) 0);
+    public void clearHashLookup(long addr) {
+        UNSAFE.setMemory(addr, capacityMask2 + hashLookupEntrySize, (byte) 0);
     }
 
     /**
      * Returns "insert" position in terms of consequent putValue()
      */
-    public long remove(long posToRemove) {
-        long entryToRemove = readEntry(posToRemove);
+    public long remove(long addr, long posToRemove) {
+        long entryToRemove = readEntry(addr, posToRemove);
         long posToShift = posToRemove;
         while (true) {
             posToShift = step(posToShift);
-            long entryToShift = readEntry(posToShift);
+            long entryToShift = readEntry(addr, posToShift);
             if (empty(entryToShift))
                 break;
             long insertPos = hlPos(key(entryToShift));
@@ -209,31 +184,12 @@ public class HashLookup {
             if ((cond1 && cond2) ||
                     // chain wrapped around capacity
                     (posToShift < insertPos && (cond1 || cond2))) {
-                writeEntry(posToRemove, entryToRemove, entryToShift);
+                writeEntry(addr, posToRemove, entryToRemove, entryToShift);
                 posToRemove = posToShift;
                 entryToRemove = entryToShift;
             }
         }
-        clearEntry(posToRemove, entryToRemove);
+        clearEntry(addr, posToRemove, entryToRemove);
         return posToRemove;
-    }
-
-    interface EntryConsumer {
-        void accept(long key, long value);
-    }
-
-    String hashLookupToString() {
-        final StringBuilder sb = new StringBuilder("{");
-        forEach((key, value) -> sb.append(key).append('=').append(value).append(','));
-        sb.append('}');
-        return sb.toString();
-    }
-
-    void forEach(EntryConsumer action) {
-        for (long pos = 0L; pos <= capacityMask2; pos += hashLookupEntrySize) {
-            long entry = readEntry(pos);
-            if (!empty(entry))
-                action.accept(key(entry), value(entry));
-        }
     }
 }
