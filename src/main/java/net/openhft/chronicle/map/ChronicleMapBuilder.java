@@ -163,8 +163,7 @@ public final class ChronicleMapBuilder<K, V> implements
     DefaultValueProvider<K, V> defaultValueProvider = DefaultSpi.defaultValueProvider();
 
     private SingleChronicleHashReplication singleHashReplication = null;
-    private InetSocketAddress[] pushToAddresses;
-    
+
     MapMethods<K, V, ?> methods = DefaultSpi.mapMethods();
     MapEntryOperations<K, V, ?> entryOperations = mapEntryOperations();
     MapRemoteOperations<K, V, ?> remoteOperations = mapRemoteOperations();
@@ -227,11 +226,6 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private static String pretty(Object obj) {
         return obj != null ? obj + "" : "not configured";
-    }
-
-    public ChronicleMapBuilder<K, V> pushTo(InetSocketAddress... addresses) {
-        this.pushToAddresses = addresses;
-        return this;
     }
 
     @Override
@@ -1501,33 +1495,6 @@ public final class ChronicleMapBuilder<K, V> implements
             throw new AssertionError(e);
         }
     }
-//
-//    private void pushingToMapEventListener() {
-//        if (pushToAddresses == null || pushToAddresses.length == 0) {
-//            return;
-//        }
-//        try {
-//            Class<?> pmel = Class.forName(
-//                    "com.higherfrequencytrading.chronicle.enterprise.map.PushingMapEventListener");
-//            Constructor<?> constructor = pmel.getConstructor(ChronicleMap[].class);
-//            // create a stateless client for each address
-//            ChronicleMap[] statelessClients = new ChronicleMap[pushToAddresses.length];
-//            ChronicleMapBuilder<K, V> cmb = clone();
-//            cmb.pushTo((InetSocketAddress[]) null);
-//            for (int i = 0; i < pushToAddresses.length; i++) {
-//                statelessClients[i] = ChronicleMapStatelessClientBuilder.of(pushToAddresses[i])
-//                        .create();
-//            }
-//            eventListener =
-//                    (MapEventListener<K, V>) constructor.newInstance((Object) statelessClients);
-//        } catch (ClassNotFoundException e) {
-//            LoggerFactory.getLogger(getClass().getName())
-//                    .warn("Chronicle Enterprise not found in the class path");
-//        } catch (Exception e) {
-//            LoggerFactory.getLogger(getClass().getName())
-//                    .error("PushingMapEventListener failed to load", e);
-//        }
-//    }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> newMap(
             SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel)
