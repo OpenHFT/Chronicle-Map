@@ -228,18 +228,19 @@
                         net.openhft.chronicle.hash.serialization.internal:net.openhft.xstream:net.openhft.xstream.*:net.openhft.chronicle.hash.impl:net.openhft.chronicle.map.impl:net.openhft.chronicle.hash.hashing
                     </excludePackageNames>
                     <sourceFileExcludes>
-                        <exclude>net/openhft/chronicle/map/VanillaChronicleMap.java</exclude>
-                        <exclude>net/openhft/chronicle/map/ReplicatedChronicleMap.java</exclude>
-                        <exclude>net/openhft/chronicle/map/Replica.java</exclude>
-                        <exclude>net/openhft/chronicle/map/ServiceDescriptor.java</exclude>
-                        <exclude>net/openhft/chronicle/hash/Segment.java</exclude>
-                        <exclude>net/openhft/chronicle/map/MapEventListener.java</exclude>
-                        <exclude>net/openhft/chronicle/map/MapEntryCallback.java</exclude>
+                        <exclude>net/openhft/chronicle/hash/ChronicleHashBuilderPrivateAPI.java</exclude>
                         <exclude>net/openhft/chronicle/hash/KeyContext.java</exclude>
-                        <exclude>net/openhft/chronicle/map/MapKeyContext.java</exclude>
+                        <exclude>net/openhft/chronicle/hash/Segment.java</exclude>
                         <exclude>net/openhft/chronicle/hash/locks/LockingStrategy.java</exclude>
-                        <exclude>net/openhft/chronicle/map/TcpReplicator.java</exclude>
                         <exclude>net/openhft/chronicle/map/ConstantValueProvider.java</exclude>
+                        <exclude>net/openhft/chronicle/map/MapEntryCallback.java</exclude>
+                        <exclude>net/openhft/chronicle/map/MapEventListener.java</exclude>
+                        <exclude>net/openhft/chronicle/map/MapKeyContext.java</exclude>
+                        <exclude>net/openhft/chronicle/map/VanillaChronicleMap.java</exclude>
+                        <exclude>net/openhft/chronicle/map/Replica.java</exclude>
+                        <exclude>net/openhft/chronicle/map/ReplicatedChronicleMap.java</exclude>
+                        <exclude>net/openhft/chronicle/map/ServiceDescriptor.java</exclude>
+                        <exclude>net/openhft/chronicle/map/TcpReplicator.java</exclude>
                     </sourceFileExcludes>
                     <failOnError>false</failOnError>
                     <additionalparam>-Xdoclint:none</additionalparam>

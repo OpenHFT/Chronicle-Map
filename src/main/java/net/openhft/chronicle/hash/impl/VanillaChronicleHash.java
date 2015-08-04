@@ -16,10 +16,7 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.ExternalHashQueryContext;
-import net.openhft.chronicle.hash.HashEntry;
-import net.openhft.chronicle.hash.HashSegmentContext;
+import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
@@ -112,14 +109,16 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     transient long segmentsOffset;
 
     public transient CompactOffHeapLinearHashTable hashLookup;
-    
-    @SuppressWarnings("deprecation")
+
     public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder, boolean replicated) {
         // Version
         dataFileVersion = BuildVersion.version();
 
+        @SuppressWarnings("deprecation")
+        ChronicleHashBuilderPrivateAPI<K> privateAPI = builder.privateAPI();
+
         // Data model
-        SerializationBuilder<K> keyBuilder = builder.keyBuilder();
+        SerializationBuilder<K> keyBuilder = privateAPI.keyBuilder();
         kClass = keyBuilder.eClass;
         keySizeMarshaller = keyBuilder.sizeMarshaller();
         originalKeyReader = keyBuilder.reader();
@@ -127,17 +126,17 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         originalMetaKeyInterop = (MKI) keyBuilder.metaInterop();
         metaKeyInteropProvider = (MetaProvider<K, KI, MKI>) keyBuilder.metaInteropProvider();
 
-        actualSegments = builder.actualSegments(replicated);
+        actualSegments = privateAPI.actualSegments(replicated);
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
 
-        entriesPerSegment = builder.entriesPerSegment(replicated);
+        entriesPerSegment = privateAPI.entriesPerSegment(replicated);
 
-        chunkSize = builder.chunkSize(replicated);
-        maxChunksPerEntry = builder.maxChunksPerEntry(replicated);
-        actualChunksPerSegment = builder.actualChunksPerSegment(replicated);
+        chunkSize = privateAPI.chunkSize(replicated);
+        maxChunksPerEntry = privateAPI.maxChunksPerEntry(replicated);
+        actualChunksPerSegment = privateAPI.actualChunksPerSegment(replicated);
 
         // Precomputed offsets and sizes for fast Context init
-        segmentHeaderSize = builder.segmentHeaderSize(replicated);
+        segmentHeaderSize = privateAPI.segmentHeaderSize(replicated);
 
         segmentHashLookupValueBits = valueBits(actualChunksPerSegment);
         segmentHashLookupKeyBits = keyBits(entriesPerSegment, segmentHashLookupValueBits);
@@ -152,7 +151,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         segmentFreeListOuterSize = CACHE_LINES.align(segmentFreeListInnerSize, BYTES);
 
         segmentEntrySpaceInnerSize = chunkSize * actualChunksPerSegment;
-        segmentEntrySpaceInnerOffset = builder.segmentEntrySpaceInnerOffset(replicated);
+        segmentEntrySpaceInnerOffset = privateAPI.segmentEntrySpaceInnerOffset(replicated);
         segmentEntrySpaceOuterSize = CACHE_LINES.align(
                 segmentEntrySpaceInnerOffset + segmentEntrySpaceInnerSize, BYTES);
 

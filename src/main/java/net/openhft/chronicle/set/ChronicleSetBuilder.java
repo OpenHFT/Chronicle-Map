@@ -17,6 +17,7 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
@@ -287,6 +288,15 @@ public final class ChronicleSetBuilder<K>
     public ChronicleSet<K> createPersistedTo(File file) throws IOException {
         ChronicleMap<K, DummyValue> map = chronicleMapBuilder.createPersistedTo(file);
         return new SetFromMap<>(map);
+    }
+
+    /**
+     * @deprecated don't use private API in the client code
+     */
+    @Deprecated
+    @Override
+    public ChronicleHashBuilderPrivateAPI<K> privateAPI() {
+        return chronicleMapBuilder.privateAPI();
     }
 }
 

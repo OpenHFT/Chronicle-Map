@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
@@ -129,6 +130,8 @@ public final class ChronicleMapBuilder<K, V> implements
     private static final boolean strictStateChecks =
             Boolean.getBoolean("chronicle.strictStateChecks");
 
+    private ChronicleMapBuilderPrivateAPI<K> privateAPI = new ChronicleMapBuilderPrivateAPI<>(this);
+
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
 
@@ -196,7 +199,8 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     public static <K, V> ChronicleMapStatelessClientBuilder<K, V> of(
-            @NotNull Class<K> keyClass, @NotNull Class<V> valueClass, InetSocketAddress socketAddress) {
+            @NotNull Class<K> keyClass, @NotNull Class<V> valueClass,
+            InetSocketAddress socketAddress) {
         return ChronicleMapStatelessClientBuilder.of(socketAddress);
     }
 
@@ -236,10 +240,19 @@ public final class ChronicleMapBuilder<K, V> implements
                     (ChronicleMapBuilder<K, V>) super.clone();
             result.keyBuilder = keyBuilder.clone();
             result.valueBuilder = valueBuilder.clone();
+            result.privateAPI = new ChronicleMapBuilderPrivateAPI<>(result);
             return result;
         } catch (CloneNotSupportedException e) {
             throw new AssertionError(e);
         }
+    }
+
+    /**
+     * @deprecated don't use private API in the client code
+     */
+    @Override
+    public ChronicleHashBuilderPrivateAPI<K> privateAPI() {
+        return privateAPI;
     }
 
     /**
@@ -484,11 +497,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    /**
-     * @deprecated part of private API, shouldn't be used in the client code
-     */
-    @Deprecated
-    public SerializationBuilder<K> keyBuilder() {
+    SerializationBuilder<K> keyBuilder() {
         return keyBuilder;
     }
 
@@ -547,11 +556,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return new EntrySizeInfo(size, worstAlignment);
     }
 
-    /**
-     * @deprecated part of private API, shouldn't be used in the client code
-     */
-    @Deprecated
-    public int segmentEntrySpaceInnerOffset(boolean replicated) {
+    int segmentEntrySpaceInnerOffset(boolean replicated) {
         // This is needed, if chunkSize = constant entry size is not aligned, for entry alignment
         // to be always the same, we should _misalign_ the first chunk.
         if (!constantlySizedEntries())
@@ -607,11 +612,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return greatestCommonDivisor(b, a % b);
     }
 
-    /**
-     * @deprecated part of private API, shouldn't be used in the client code
-     */
-    @Deprecated
-    public long chunkSize(boolean replicated) {
+    long chunkSize(boolean replicated) {
         if (actualChunkSize > 0)
             return actualChunkSize;
         double averageEntrySize = entrySizeInfo(replicated).averageEntrySize;
@@ -632,7 +633,6 @@ public final class ChronicleMapBuilder<K, V> implements
     double averageChunksPerEntry(boolean replicated) {
         if (constantlySizedEntries())
             return 1.0;
-        @SuppressWarnings("deprecation")
         long chunkSize = chunkSize(replicated);
         // assuming we always has worst internal fragmentation. This affects total segment
         // entry space which is allocated lazily on Linux (main target platform)
@@ -653,14 +653,9 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    /**
-     * @deprecated part of private API, shouldn't be used in the client code
-     */
-    @Deprecated
-    public int maxChunksPerEntry(boolean replicated) {
+    int maxChunksPerEntry(boolean replicated) {
         if (constantlySizedEntries())
             return 1;
-        @SuppressWarnings("deprecation")
         long actualChunksPerSegment = actualChunksPerSegment(replicated);
         int result = (int) Math.min(actualChunksPerSegment, (long) Integer.MAX_VALUE);
         if (this.maxChunksPerEntry > 0)
@@ -739,16 +734,11 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    /**
-     * @deprecated part of private API, shouldn't be used in the client code
-     */
-    @Deprecated
-    public long entriesPerSegment(boolean replicated) {
+    long entriesPerSegment(boolean replicated) {
         long entriesPerSegment;
         if (this.entriesPerSegment > 0L) {
             entriesPerSegment = this.entriesPerSegment;
         } else {
-            @SuppressWarnings("deprecation")
             int actualSegments = actualSegments(replicated);
             long totalEntries = totalEntriesIfPoorDistribution(actualSegments);
             entriesPerSegment = divideUpper(totalEntries, actualSegments);
@@ -799,11 +789,7 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    /**
-     * @deprecated part of private API, shouldn't be used in the client code
-     */
-    @Deprecated
-    public long actualChunksPerSegment(boolean replicated) {
+    long actualChunksPerSegment(boolean replicated) {
         if (actualChunksPerSegment > 0)
             return actualChunksPerSegment;
         return chunksPerSegment(entriesPerSegment(replicated), replicated);
@@ -850,7 +836,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return (int) Math.min(Maths.nextPower2(entries() / 32, 1), estimateSegmentsBasedOnSize());
     }
 
-    //TODO reivew because this heuristic doesn't seem to perform well
+    //TODO review because this heuristic doesn't seem to perform well
     private int estimateSegmentsBasedOnSize() {
         // the idea is that if values are huge, operations on them (and simply ser/deser)
         // could take long time, so we want more segment to minimize probablity that
@@ -892,11 +878,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    /**
-     * @deprecated part of private API, shouldn't be used in the client code
-     */
-    @Deprecated
-    public int actualSegments(boolean replicated) {
+    int actualSegments(boolean replicated) {
         if (actualSegments > 0)
             return actualSegments;
         if (entriesPerSegment > 0) {
@@ -984,12 +966,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return segments <= maxSegments ? segments : -segments;
     }
 
-    /**
-     * @deprecated part of private API, shouldn't be used in the client code
-     */
-    @Deprecated
-    public int segmentHeaderSize(boolean replicated) {
-        @SuppressWarnings("deprecation")
+    int segmentHeaderSize(boolean replicated) {
         int segments = actualSegments(replicated);
         // reduce false sharing unless we have a lot of segments.
         return segments <= 16 * 1024 ? 64 : 32;
@@ -1589,7 +1566,6 @@ public final class ChronicleMapBuilder<K, V> implements
         if (builder.constantSizeMarshaller())
             return round(ceil(averageSize));
 
-        @SuppressWarnings("deprecation")
         int maxChunksPerEntry = maxChunksPerEntry(replicated);
         // if maxChunksPerEntry is Integer.MAX_VALUE, we, of cause,
         // are not going to allocate such big buffers

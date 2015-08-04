@@ -505,4 +505,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @see ChronicleHashInstanceBuilder#persistedTo(File)
      */
     H createPersistedTo(File file) throws IOException;
+
+    /**
+     * @deprecated don't use private API in the client code
+     */
+    ChronicleHashBuilderPrivateAPI<K> privateAPI();
 }
