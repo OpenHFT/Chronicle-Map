@@ -104,7 +104,7 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  */
 public final class ChronicleMapBuilder<K, V> implements
         ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>,
-        MapBuilder<ChronicleMapBuilder<K, V>>, Serializable {
+        MapBuilder<ChronicleMapBuilder<K, V>> {
 
     static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte) 127;
     private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
