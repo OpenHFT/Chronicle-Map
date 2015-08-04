@@ -17,7 +17,6 @@
 package net.openhft.chronicle.map.impl.stage.data;
 
 import net.openhft.chronicle.bytes.RandomDataInput;
-import net.openhft.chronicle.bytes.ZeroRandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.sg.StageRef;

@@ -42,8 +42,8 @@ public class JavaLangBytesReusableBytesStore
     }
 
     @Override
-    public long address() throws UnsupportedOperationException {
-        return bytes.address();
+    public long address(long offset) throws UnsupportedOperationException {
+        return bytes.address() + offset;
     }
 
     @Override
