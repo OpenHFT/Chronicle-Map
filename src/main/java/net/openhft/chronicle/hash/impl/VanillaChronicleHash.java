@@ -57,6 +57,10 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     public final String dataFileVersion;
 
     /////////////////////////////////////////////////
+    // If the hash was created in the first place, or read from disk
+    public transient boolean created = false;
+
+    /////////////////////////////////////////////////
     // Key Data model
     public final Class<K> kClass;
     public final SizeMarshaller keySizeMarshaller;
@@ -110,9 +114,14 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     public transient CompactOffHeapLinearHashTable hashLookup;
 
-    public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder, boolean replicated) {
+    public VanillaChronicleHash(
+            ChronicleMapBuilder<K, ?> builder, boolean replicated) {
         // Version
         dataFileVersion = BuildVersion.version();
+
+        // Because we are in constructor. If the Hash is not created, deserialization bypasses
+        // the constructor and created = false
+        this.created = true;
 
         @SuppressWarnings("deprecation")
         ChronicleHashBuilderPrivateAPI<K> privateAPI = builder.privateAPI();
@@ -205,6 +214,9 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         //OS.warnOnWindows(sizeInBytes());
         createMappedStoreAndSegments(new MappedStore(file, FileChannel.MapMode.READ_WRITE,
                 sizeInBytes(), BytesMarshallableSerializer.create()));
+        // newly-extended file contents are not guaranteed to be zero
+        if (created)
+            bytes.zeroOut(headerSize, bytes.capacity(), true);
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {

@@ -1358,7 +1358,8 @@ public final class ChronicleMapBuilder<K, V> implements
             File file, SingleChronicleHashReplication singleHashReplication,
             ReplicationChannel channel) throws IOException {
         for (int i = 0; i < 10; i++) {
-            if (file.exists() && file.length() > 0) {
+            long fileLength = file.length();
+            if (fileLength > 0) {
                 try (FileInputStream fis = new FileInputStream(file);
                      ObjectInputStream ois = new ObjectInputStream(fis)) {
                     Object m;
@@ -1379,6 +1380,12 @@ public final class ChronicleMapBuilder<K, V> implements
                             (VanillaChronicleMap<K, ?, ?, V, ?, ?, ?>) m;
                     map.initTransientsFromBuilder(this);
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
+                    long sizeInBytes = map.sizeInBytes();
+                    if (sizeInBytes != fileLength) {
+                        throw new IOException("The file " + file + "the map is serialized from " +
+                                "has unexpected length " + fileLength + ", probably corrupted. " +
+                                "Expected length is " + sizeInBytes);
+                    }
                     map.createMappedStoreAndSegments(file);
                     // This is needed to property initialize key and value serialization builders,
                     // which are later used in replication
@@ -1388,7 +1395,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     return establishReplication(map, singleHashReplication, channel);
                 }
             }
-            if (file.createNewFile() || file.length() == 0) {
+            if (file.createNewFile() || fileLength == 0) {
                 break;
             }
             try {

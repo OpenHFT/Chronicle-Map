@@ -41,11 +41,13 @@ public class ReplicateProxyMapUpdatedViaSharedMemoryTest {
             final File tempFile = File.createTempFile("temp", "chron");
 
             server1 = ChronicleMapBuilder.of(String.class, String.class)
+                    .entries(1)
                     .replication((byte) 1).createPersistedTo(tempFile);
 
             TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(7077)
                     .heartBeatInterval(500, TimeUnit.MILLISECONDS);
             replicationMap = ChronicleMapBuilder.of(String.class, String.class)
+                    .entries(1)
                     .replication((byte) 1, serverConfig).createPersistedTo(tempFile);
         }
 
@@ -54,6 +56,7 @@ public class ReplicateProxyMapUpdatedViaSharedMemoryTest {
                     TcpTransportAndNetworkConfig.of(6161, new InetSocketAddress("localhost", 7077));
 
             server2 = ChronicleMapBuilder.of(String.class, String.class)
+                    .entries(1)
                     .replication((byte) 2, server2Config).create();
         }
 

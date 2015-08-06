@@ -208,10 +208,10 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     public void onHeaderCreated() {
         long offset = super.mapHeaderInnerSize();
 
-        identifierUpdatedBytes = ms.bytes(offset, LAST_UPDATED_HEADER_SIZE).zeroOut();
+        identifierUpdatedBytes = ms.bytes(offset, LAST_UPDATED_HEADER_SIZE);
         offset += LAST_UPDATED_HEADER_SIZE;
 
-        Bytes modDelBytes = ms.bytes(offset, assignedModIterBitSetSizeInBytes()).zeroOut();
+        Bytes modDelBytes = ms.bytes(offset, assignedModIterBitSetSizeInBytes());
         offset += assignedModIterBitSetSizeInBytes();
         startOfModificationIterators = offset;
         modIterSet = new ATSDirectBitSet(modDelBytes);
