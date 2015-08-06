@@ -32,11 +32,11 @@ public class TestReplication {
     @Test
     public void testAllDataGetsReplicated() throws InterruptedException {
         TcpTransportAndNetworkConfig tcpConfigServer1 =
-                TcpTransportAndNetworkConfig.of(8092);
+                TcpTransportAndNetworkConfig.of(8097);
 
         TcpTransportAndNetworkConfig tcpConfigServer2 =
-                TcpTransportAndNetworkConfig.of(8093, new InetSocketAddress("localhost",
-                        8092));
+                TcpTransportAndNetworkConfig.of(8098, new InetSocketAddress("localhost",
+                        8097));
 
         try (ChronicleMap<Integer, Integer> map2 = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
@@ -81,7 +81,7 @@ public class TestReplication {
             server1 = ChronicleMapBuilder.of(String.class, String.class)
                     .replication((byte) 1).createPersistedTo(tempFile);
 
-            TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8088);
+            TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(9000);
 
             // user for replication only
             forServer1Replication = ChronicleMapBuilder.of(String.class, String.class)
@@ -92,8 +92,8 @@ public class TestReplication {
         // server 2- for this test server1 and server 2 are on the same localhost but different
         // ports, to make it easier to run in a unit test
         {
-            TcpTransportAndNetworkConfig server2Config = TcpTransportAndNetworkConfig.of(8090, new
-                    InetSocketAddress("localhost", 8088));
+            TcpTransportAndNetworkConfig server2Config = TcpTransportAndNetworkConfig.of(9001, new
+                    InetSocketAddress("localhost", 9000));
 
             server2 = ChronicleMapBuilder.of(String.class, String.class)
                     .replication((byte) 2, server2Config).create();
