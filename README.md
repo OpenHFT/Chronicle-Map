@@ -2373,7 +2373,7 @@ Every key/value is off heap. There is no cache of objects on heap.
 Is there something in chronicle map which can have part of the map-content still in on-heap memory.
 
 #### Answer
-There are data structures which are on heap to manahe the off heap data. This is typically less than 100 kB.
+There are data structures which are on heap to manage the off heap data. This is typically less than 100 kB.
 
 ---
 
