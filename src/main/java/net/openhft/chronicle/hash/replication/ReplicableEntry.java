@@ -21,13 +21,14 @@ import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.HashAbsentEntry;
 import net.openhft.chronicle.hash.HashEntry;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.replication.SetRemoteOperations;
 
 /**
- * Abstracts an in replicated {@link ChronicleHash}. A {@link HashAbsentEntry} might be a {@code
- * ReplicableEntry} as well as {@link HashEntry}.
+ * Abstracts a replicable entry in the replicated {@link ChronicleHash}. A {@link HashAbsentEntry}
+ * might be a {@code ReplicableEntry} as well as {@link HashEntry}.
  */
 public interface ReplicableEntry {
     /**
@@ -35,7 +36,7 @@ public interface ReplicableEntry {
      * the identifier of the {@code ChronicleHash} node on which this entry was updated last.
      *
      * <p>When the entry is replicated, this identifier comes to remote nodes as {@link
-     * HashRemoteQueryContext#remoteIdentifier()}.
+     * RemoteOperationContext#remoteIdentifier()}.
      *
      * <p>On {@code ChronicleHash} local operations with entries, like {@link ChronicleMap#put(
      * Object, Object)}, this identifier is overwritten to the own {@code ChronicleHash} {@link
@@ -52,7 +53,7 @@ public interface ReplicableEntry {
      * the time of the last.
      *
      * <p>When the entry is replicated, this timestamp comes to remote nodes as {@link
-     * HashRemoteQueryContext#remoteTimestamp()}.
+     * RemoteOperationContext#remoteTimestamp()}.
      *
      * <p>On {@code ChronicleHash} local operations with entries, like {@link ChronicleMap#put(
      * Object, Object)}, this timestamp is overwritten using {@linkplain

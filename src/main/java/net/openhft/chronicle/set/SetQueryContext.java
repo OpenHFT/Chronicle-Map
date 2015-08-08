@@ -25,7 +25,7 @@ import net.openhft.chronicle.set.replication.SetRemoteOperations;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The context of {@link ChronicleSet} operations with <i>individual keys</i>
+ * A context of {@link ChronicleSet} operations with <i>individual keys</i>
  * (most: {@code contains()}, {@code add()}, etc., opposed to <i>bulk</i> operations).
  *
  * @param <K> the set key type

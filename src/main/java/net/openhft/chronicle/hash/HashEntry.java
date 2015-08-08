@@ -21,7 +21,7 @@ import net.openhft.chronicle.set.SetEntry;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The <i>present</i> {@code ChronicleHash} entry context.
+ * A context of a <i>present</i> entry in the {@code ChronicleHash}.
  *
  * <p>This interface is not usable by itself; it merely defines the common base for {@link MapEntry}
  * and {@link SetEntry}.

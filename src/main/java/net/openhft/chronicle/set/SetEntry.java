@@ -19,7 +19,7 @@ package net.openhft.chronicle.set;
 import net.openhft.chronicle.hash.HashEntry;
 
 /**
- * The <i>present</i> {@link ChronicleSet} entry context.
+ * A context of a <i>present</i> entry in the {@link ChronicleSet}.
  *  
  * @param <K> the set key type
  * @see SetEntryOperations

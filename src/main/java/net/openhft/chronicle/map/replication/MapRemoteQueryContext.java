@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map.replication;
 
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.replication.HashRemoteQueryContext;
+import net.openhft.chronicle.hash.replication.RemoteOperationContext;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * @see MapRemoteOperations
  */
 public interface MapRemoteQueryContext<K, V, R> extends MapQueryContext<K, V, R>,
-        HashRemoteQueryContext<K> {
+        RemoteOperationContext<K> {
     @Nullable
     @Override
     MapReplicableEntry<K, V> entry();

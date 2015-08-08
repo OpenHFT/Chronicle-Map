@@ -21,7 +21,7 @@ import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The context of {@link ChronicleMap} operations with <i>individual keys</i>
+ * A context of {@link ChronicleMap} operations with <i>individual keys</i>
  * (like during {@code get()}, {@code put()}, etc., opposed to <i>bulk</i> operations).
  * This is the main context type of {@link MapMethods} and {@link MapRemoteOperations}.
  *

@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.set.replication;
 
-import net.openhft.chronicle.hash.replication.HashRemoteQueryContext;
+import net.openhft.chronicle.hash.replication.RemoteOperationContext;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.set.SetEntryOperations;
 import net.openhft.chronicle.set.SetQueryContext;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @see SetRemoteOperations
  */
 public interface SetRemoteQueryContext<K, R>
-        extends SetQueryContext<K, R>, HashRemoteQueryContext<K> {
+        extends SetQueryContext<K, R>, RemoteOperationContext<K> {
     @Override
     @Nullable
     SetReplicableEntry<K> entry();
