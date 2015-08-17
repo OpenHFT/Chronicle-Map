@@ -1435,7 +1435,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     return result;
                 }
                 // key is not found
-                return readValue.readNull();
+                return expectedValue == null ? readValue.readNull() : Boolean.FALSE;
             } finally {
                 segmentState.close();
                 writeUnlock();

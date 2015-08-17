@@ -2603,7 +2603,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             readValue, toValue, pos, offset, entry, hashLookup);
                 }
                 // key is not found
-                return expectedValue == null ? null : Boolean.FALSE;
+                return expectedValue == null ? readValue.readNull() : Boolean.FALSE;
             } finally {
                 segmentState.close();
                 writeUnlock();
