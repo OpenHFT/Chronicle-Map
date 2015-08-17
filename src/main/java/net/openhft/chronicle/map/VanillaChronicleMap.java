@@ -551,6 +551,27 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     }
 
     @Override
+    public UpdateResult update(K key, V value) {
+        if (key == null || value == null)
+            throw new NullPointerException();
+
+        checkKey(key);
+        checkValue(value);
+        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
+        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
+        copies = metaKeyInteropProvider.getCopies(copies);
+        MKI metaKeyInterop =
+                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
+        long keySize = metaKeyInterop.size(keyInterop, key);
+        long hash = metaKeyInterop.hash(keyInterop, key);
+        int segmentNum = getSegment(hash);
+        long segmentHash = segmentHash(hash);
+        return segments[segmentNum].update(copies, null,
+                metaKeyInterop, keyInterop, key, keySize, keyIdentity(),
+                this, value, valueIdentity(), segmentHash);
+    }
+
+    @Override
     public final V putIfAbsent(K key, V value) {
         if (key == null)
             throw new NullPointerException();
@@ -2142,6 +2163,91 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
 
             return v;
+        }
+
+        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
+                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
+        UpdateResult update(@Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
+                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+                InstanceOrBytesToInstance<KB, K> toKey,
+                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+                InstanceOrBytesToInstance<? super VB, V> toValue,
+                long hash2) {
+            shouldNotBeCalledFromReplicatedChronicleMap("Segment.update");
+            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
+            if (segmentState == null) {
+                copies = SegmentState.getCopies(copies);
+                segmentState = SegmentState.get(copies);
+            }
+
+            writeLock();
+            try {
+                SearchState searchState = segmentState.searchState;
+                hashLookup.startSearch(hash2, searchState);
+                MultiStoreBytes entry = segmentState.tmpBytes;
+                for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
+                    long offset = offsetFromPos(pos);
+                    reuse(entry, offset);
+                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
+                        continue;
+                    // key is found
+                    entry.skip(keySize);
+                    VBI valueInterop = getValueInterops.getValueInterop(copies);
+                    MVBI metaValueInterop = getValueInterops.getMetaValueInterop(
+                            copies, valueInterop, value);
+                    long valueSize = metaValueInterop.size(valueInterop, value);
+
+                    long valueSizePos = entry.position();
+                    long prevValueSize = valueSizeMarshaller.readSize(entry);
+                    long sizeOfEverythingBeforeValue = entry.position();
+                    alignment.alignPositionAddr(entry);
+                    try {
+                        if (prevValueSize == valueSize &&
+                                metaValueInterop.startsWith(valueInterop, entry, value)) {
+                            return UpdateResult.UNCHANGED;
+                        }
+                        long valueAddr = entry.positionAddr();
+                        long entryEndAddr = valueAddr + prevValueSize;
+
+                        // putValue may relocate entry and change offset
+                        putValue(pos, offset, entry, valueSizePos, entryEndAddr, false, segmentState,
+                                metaValueInterop, valueInterop, value, valueSize, hashLookup,
+                                sizeOfEverythingBeforeValue);
+
+                        return UpdateResult.UPDATE;
+                    } finally {
+                        // put callbacks
+                        onPutMaybeRemote(segmentState.pos, false);
+                        if (bytesEventListener != null)
+                            bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, false);
+                        if (eventListener != null) {
+                            eventListener.onPut(toKey.toInstance(copies, key, keySize),
+                                    toValue.toInstance(copies, value, valueSize), null, false);
+                        }
+                    }
+                }
+                // key is not found
+                VBI valueInterop = getValueInterops.getValueInterop(copies);
+                MVBI metaValueInterop =
+                        getValueInterops.getMetaValueInterop(copies, valueInterop, value);
+                long valueSize = metaValueInterop.size(valueInterop, value);
+                putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
+                        metaValueInterop, valueInterop, value, entry, false);
+
+                // put callbacks
+                onPut(this, segmentState.pos);
+                if (bytesEventListener != null)
+                    bytesEventListener.onPut(entry, 0L, metaDataBytes,
+                            segmentState.valueSizePos, true, false);
+                if (eventListener != null)
+                    eventListener.onPut(toKey.toInstance(copies, key, keySize),
+                            toValue.toInstance(copies, value, valueSize), null, false);
+
+                return UpdateResult.INSERT;
+            } finally {
+                segmentState.close();
+                writeUnlock();
+            }
         }
 
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,

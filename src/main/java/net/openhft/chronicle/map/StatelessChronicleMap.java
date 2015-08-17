@@ -621,6 +621,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return fetchObject(PUT_MAPPED, key, unaryOperator);
     }
 
+    @Override
+    public UpdateResult update(K key, V value) {
+        throw new UnsupportedOperationException();
+    }
+
 
     private Bytes resizeBufferOutBuffer(int newCapacity) {
         return resizeBufferOutBuffer(newCapacity, outBytes.position());

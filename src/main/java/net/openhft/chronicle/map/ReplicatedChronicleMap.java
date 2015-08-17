@@ -266,6 +266,24 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 identifier, timeStamp);
     }
 
+    @Override
+    public UpdateResult update(K key, V value) {
+        checkKey(key);
+        checkValue(value);
+        ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
+        KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
+        copies = metaKeyInteropProvider.getCopies(copies);
+        MKI metaKeyInterop =
+                metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
+        long keySize = metaKeyInterop.size(keyInterop, key);
+        long hash = metaKeyInterop.hash(keyInterop, key);
+        int segmentNum = getSegment(hash);
+        long segmentHash = segmentHash(hash);
+        return segment(segmentNum).update(copies, null,
+                metaKeyInterop, keyInterop, key, keySize, keyIdentity(),
+                this, value, valueIdentity(),
+                segmentHash, localIdentifier, currentTime());
+    }
 
     Object remoteRemove(K key,
                         final byte remoteIdentifier, long timeStamp) {
@@ -1059,6 +1077,127 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         getValueInterops, value, toValue,
                         hash2, replaceIfPresent, readValue, resultUnused,
                         identifier, timeStamp, false);
+            } finally {
+                segmentState.close();
+                writeUnlock();
+            }
+        }
+
+        <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
+                RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
+        UpdateResult update(@Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
+               MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+               InstanceOrBytesToInstance<KB, K> toKey,
+               GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+               InstanceOrBytesToInstance<? super VB, V> toValue,
+               long hash2,
+               byte identifier, long timeStamp) {
+            segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
+            if (segmentState == null) {
+                copies = SegmentState.getCopies(copies);
+                segmentState = SegmentState.get(copies);
+            }
+            writeLock();
+            try {
+                MultiMap hashLookup = hashLookup();
+                SearchState searchState = segmentState.searchState;
+                hashLookup.startSearch(hash2, searchState);
+                MultiStoreBytes entry = segmentState.tmpBytes;
+                for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
+                    long offset = offsetFromPos(pos);
+                    reuse(entry, offset);
+                    if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
+                        continue;
+                    // key is found
+                    entry.skip(keySize);
+
+                    final long timeStampPosAddr = entry.positionAddr();
+
+                    if (shouldIgnore(entry, timeStamp, identifier)) {
+                        throw new IllegalStateException();
+                    }
+
+                    boolean isDeleted = entry.readBoolean();
+
+                    entry.positionAddr(timeStampPosAddr);
+                    entry.writeLong(timeStamp);
+                    entry.writeByte(identifier);
+                    // deleted flag
+                    entry.writeBoolean(false);
+
+                    VBI valueInterop = getValueInterops.getValueInterop(copies);
+                    MVBI metaValueInterop = getValueInterops.getMetaValueInterop(
+                            copies, valueInterop, value);
+                    long valueSize = metaValueInterop.size(valueInterop, value);
+
+                    long valueSizePos = entry.position();
+                    long prevValueSize = valueSizeMarshaller.readSize(entry);
+                    long sizeOfEverythingBeforeValue = entry.position();
+                    alignment.alignPositionAddr(entry);
+                    try {
+                        if (!isDeleted && prevValueSize == valueSize &&
+                                metaValueInterop.startsWith(valueInterop, entry, value)) {
+                            return UpdateResult.UNCHANGED;
+                        }
+                        long valueAddr = entry.positionAddr();
+                        long entryEndAddr = valueAddr + prevValueSize;
+
+                        // putValue may relocate entry and change offset
+                        putValue(pos, offset, entry, valueSizePos, entryEndAddr, isDeleted,
+                                segmentState,
+                                metaValueInterop, valueInterop, value, valueSize, hashLookup,
+                                sizeOfEverythingBeforeValue);
+
+                        return isDeleted ? UpdateResult.INSERT : UpdateResult.UPDATE;
+                    } finally {
+                        // put callbacks
+                        onPutMaybeRemote(segmentState.pos, false);
+                        if (bytesEventListener != null)
+                            bytesEventListener.onPut(
+                                    entry, 0L, metaDataBytes, valueSizePos, false, false);
+                        if (eventListener != null) {
+                            eventListener.onPut(toKey.toInstance(copies, key, keySize),
+                                    toValue.toInstance(copies, value, valueSize), null, false);
+                        }
+
+                        // for DRY (reusing replaceValueAndNotifyPut() method),
+                        // size is updated AFTER callbacks are called.
+                        // however this shouldn't be an issue because exclusive segment lock
+                        // is still held
+                        if (isDeleted) {
+                            incrementSize();
+                            // if they are NOT equal, it means the entry was relocated in putValue(),
+                            // hence position is already set
+                            if (pos == segmentState.pos) {
+                                hashLookup.putPosition(segmentState.pos);
+                            } else {
+                                assert hashLookup.getPositions().isSet(segmentState.pos);
+                            }
+                        }
+                    }
+                }
+                // key is not found
+                VBI valueInterop = getValueInterops.getValueInterop(copies);
+                MVBI metaValueInterop =
+                        getValueInterops.getMetaValueInterop(copies, valueInterop, value);
+                long valueSize = metaValueInterop.size(valueInterop, value);
+                putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
+                        metaValueInterop, valueInterop, value, entry, false);
+                entry.position(segmentState.valueSizePos - ADDITIONAL_ENTRY_BYTES);
+                entry.writeLong(timeStamp);
+                entry.writeByte(identifier);
+                entry.writeBoolean(false);
+
+                // put callbacks
+                onPutMaybeRemote(segmentState.pos, false);
+                if (bytesEventListener != null)
+                    bytesEventListener.onPut(entry, 0L, metaDataBytes,
+                            segmentState.valueSizePos, true, false);
+                if (eventListener != null)
+                    eventListener.onPut(toKey.toInstance(copies, key, keySize),
+                            toValue.toInstance(copies, value, valueSize), null, false);
+
+                return UpdateResult.INSERT;
             } finally {
                 segmentState.close();
                 writeUnlock();

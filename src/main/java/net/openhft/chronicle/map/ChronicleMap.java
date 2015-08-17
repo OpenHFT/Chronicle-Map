@@ -207,6 +207,12 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>, ChronicleHash {
     V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator);
 
     /**
+     * A special operation, similar to {@link #replace(Object, Object, Object)
+     * replace(key, value, value)}, but puts the entry even if it was absent in the map.
+     */
+    UpdateResult update(K key, V value);
+
+    /**
      * Exports all the entries to a {@link java.io.File} storing them in JSON format, an attempt is
      * made where possible to use standard java serialisation and keep the data human readable, data
      * serialized using the custom serialises are converted to a binary format which is not human

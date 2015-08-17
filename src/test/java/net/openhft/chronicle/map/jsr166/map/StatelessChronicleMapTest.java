@@ -180,6 +180,11 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
+        public UpdateResult update(K key, V value) {
+            return d.update(key, value);
+        }
+
+        @Override
         public void getAll(File toFile) throws IOException {
             d.getAll(toFile);
         }

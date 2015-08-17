@@ -227,6 +227,11 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public UpdateResult update(K key, V value) {
+        return map1.update(key, value);
+    }
+
+    @Override
     public void getAll(File toFile) {
         throw new UnsupportedOperationException();
     }
