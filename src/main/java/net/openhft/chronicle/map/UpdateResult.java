@@ -21,7 +21,7 @@ package net.openhft.chronicle.map;
  */
 public enum UpdateResult {
     /**
-     * The new entry was put into the Chroncile Map.
+     * The new entry was put into the Chronicle Map.
      */
     INSERT,
 
