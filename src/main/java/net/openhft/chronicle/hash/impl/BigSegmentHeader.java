@@ -363,7 +363,7 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public boolean tryWriteLock(long address) {
-        if (getCountWord(address) == 0 && casCountWord(address, 0, WRITE_LOCKED_COUNT_WORD)) {
+        if (casCountWord(address, 0, WRITE_LOCKED_COUNT_WORD)) {
             writeExclusiveLockHolder(address);
             return true;
         } else {
