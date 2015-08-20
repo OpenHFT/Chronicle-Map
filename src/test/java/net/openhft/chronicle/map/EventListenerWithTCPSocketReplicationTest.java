@@ -54,7 +54,8 @@ public class EventListenerWithTCPSocketReplicationTest {
                 private static final long serialVersionUID = 1L;
 
                 @Override
-                public void onPut(Integer key, CharSequence value, CharSequence replacedValue, boolean replicationEvent) {
+                public void onPut(Integer key, CharSequence value, CharSequence replacedValue,
+                                  boolean replicationEvent, boolean added) {
                     putWasCalled.getAndSet(true);
                     keyRef.set(key);
                     valueRef.set(value);

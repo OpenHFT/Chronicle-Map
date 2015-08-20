@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +80,9 @@ public abstract class MapEventListener<K, V> implements Serializable {
         }
 
         @Override
-        public void onPut(Object key, Object value, Object replacedValue, boolean replicationEvent) {
+        public void onPut(Object key, Object value, Object replacedValue, boolean
+                replicationEvent,
+                          @NotNull boolean updateResult) {
             LOGGER.info("{} put {} => {}", prefix, key, value);
         }
 
@@ -105,26 +108,32 @@ public abstract class MapEventListener<K, V> implements Serializable {
      * This method is called whenever a new value is put for the key in the map during calls of such
      * methods as {@link ChronicleMap#put put}, {@link ChronicleMap#putIfAbsent putIfAbsent}, {@link
      * ChronicleMap#replace(Object, Object, Object) replace}, etc. When a new value is {@linkplain
-     * ChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during
-     * {@link ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method is called
-     * as well.
+     * ChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during {@link
+     * ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method is called as
+     * well.
      *
      * <p>This method is called when put is already happened.
-     *  @param key           the key the given value is put for
-     * @param newValue      the value which is now associated with the given key
-     * @param replacedValue the value which was replaced by {@code newValue}, {@code null} if the
- *                      key was absent in the map before current {@code ChronicleMap}
+     *
+     * @param key              the key the given value is put for
+     * @param newValue         the value which is now associated with the given key
+     * @param replacedValue    the value which was replaced by {@code newValue}, {@code null} if the
+     *                         key was absent in the map before current {@code ChronicleMap}
      * @param replicationEvent
      */
-    public void onPut(K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
+    public void onPut(K key,
+                      V newValue,
+                      @Nullable V replacedValue,
+                      boolean replicationEvent,
+                      boolean added) {
         // do nothing
     }
 
     /**
      * This is called when an entry is removed. Misses, i. e. when {@code map.remove(key)} is
      * called, but key is already absent in the map, are not notified.
-     *  @param key   the key removed from the map
-     * @param value the value which was associated with the given key
+     *
+     * @param key              the key removed from the map
+     * @param value            the value which was associated with the given key
      * @param replicationEvent
      */
     public void onRemove(K key, V value, boolean replicationEvent) {
