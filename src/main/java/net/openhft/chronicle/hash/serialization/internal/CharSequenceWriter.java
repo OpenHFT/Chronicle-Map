@@ -26,15 +26,16 @@ public final class CharSequenceWriter<CS extends CharSequence> implements BytesW
     private static final long serialVersionUID = 0L;
     private static final CharSequenceWriter INSTANCE = new CharSequenceWriter();
 
+    private CharSequenceWriter() {
+    }
+
     public static <CS extends CharSequence> CharSequenceWriter<CS> instance() {
         return INSTANCE;
     }
 
-    private CharSequenceWriter() {}
-
     @Override
     public long size(CS s) {
-        return AbstractBytes.findUTFLength(s, s.length());
+        return AbstractBytes.findUTFLength(s);
     }
 
     @Override
