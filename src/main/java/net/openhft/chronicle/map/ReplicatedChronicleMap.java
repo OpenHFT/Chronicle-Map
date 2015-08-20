@@ -962,7 +962,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     }
                     if (eventListener != null) {
                         V valueInstance = toValue.toInstance(copies, v, valueSize);
-                        eventListener.onPut(keyInstance, valueInstance, null, false);
+                        eventListener.onPut(keyInstance, valueInstance, null, false, true);
                     }
                     entryCreated(lock);
                     return v;
@@ -1086,12 +1086,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
                 RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
         UpdateResult update(@Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
-               MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-               InstanceOrBytesToInstance<KB, K> toKey,
-               GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-               InstanceOrBytesToInstance<? super VB, V> toValue,
-               long hash2,
-               byte identifier, long timeStamp) {
+                            MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+                            InstanceOrBytesToInstance<KB, K> toKey,
+                            GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+                            InstanceOrBytesToInstance<? super VB, V> toValue,
+                            long hash2,
+                            byte identifier, long timeStamp) {
             segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
             if (segmentState == null) {
                 copies = SegmentState.getCopies(copies);
@@ -1157,7 +1157,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                                     entry, 0L, metaDataBytes, valueSizePos, false, false);
                         if (eventListener != null) {
                             eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                                    toValue.toInstance(copies, value, valueSize), null, false);
+                                    toValue.toInstance(copies, value, valueSize), null, false,
+                                    false);
                         }
 
                         // for DRY (reusing replaceValueAndNotifyPut() method),
@@ -1195,7 +1196,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                             segmentState.valueSizePos, true, false);
                 if (eventListener != null)
                     eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                            toValue.toInstance(copies, value, valueSize), null, false);
+                            toValue.toInstance(copies, value, valueSize), null, false, true);
 
                 return UpdateResult.INSERT;
             } finally {
@@ -1311,7 +1312,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         segmentState.valueSizePos, true, remote);
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), null, remote);
+                        toValue.toInstance(copies, value, valueSize), null, remote, true);
 
             return resultUnused ? null : readValue.readNull();
         }
@@ -1319,8 +1320,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         /**
          * Used only with replication, its sometimes possible to receive an old ( or stale update )
          * from a remote map. This method is used to determine if we should ignore such updates.
-         * <p/>
-         * <p>We can reject put() and removes() when comparing times stamps with remote systems
+         * <p/> <p>We can reject put() and removes() when comparing times stamps with remote
+         * systems
          *
          * @param entry      the maps entry
          * @param timestamp  the time the entry was created or updated

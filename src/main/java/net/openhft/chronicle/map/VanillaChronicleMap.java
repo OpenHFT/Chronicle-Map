@@ -2132,7 +2132,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
             if (eventListener != null) {
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, v, valueSize), null, false);
+                        toValue.toInstance(copies, v, valueSize), null, false, true);
             }
 
             return v;
@@ -2168,11 +2168,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
                 RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
         UpdateResult update(@Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState,
-                MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
-                InstanceOrBytesToInstance<KB, K> toKey,
-                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
-                InstanceOrBytesToInstance<? super VB, V> toValue,
-                long hash2) {
+                            MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
+                            InstanceOrBytesToInstance<KB, K> toKey,
+                            GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
+                            InstanceOrBytesToInstance<? super VB, V> toValue,
+                            long hash2) {
             shouldNotBeCalledFromReplicatedChronicleMap("Segment.update");
             segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
             if (segmentState == null) {
@@ -2222,7 +2222,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, false);
                         if (eventListener != null) {
                             eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                                    toValue.toInstance(copies, value, valueSize), null, false);
+                                    toValue.toInstance(copies, value, valueSize), null, false,
+                                    false);
                         }
                     }
                 }
@@ -2241,7 +2242,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             segmentState.valueSizePos, true, false);
                 if (eventListener != null)
                     eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                            toValue.toInstance(copies, value, valueSize), null, false);
+                            toValue.toInstance(copies, value, valueSize), null, false, true);
 
                 return UpdateResult.INSERT;
             } finally {
@@ -2334,7 +2335,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         segmentState.valueSizePos, true, false);
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), oldValue, false);
+                        toValue.toInstance(copies, value, valueSize), oldValue, false, true);
 
             return resultUnused ? null : readValue.readNull();
         }
@@ -2383,7 +2384,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, remote);
             if (eventListener != null) {
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), prevValueInstance, remote);
+                        toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
+                        true);
             }
 
             return resultUnused ? null : prevValue;
@@ -2764,7 +2766,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, newValue, newValueSize),
-                        toValue.toInstance(copies, prevValue, valueSize), false);
+                        toValue.toInstance(copies, prevValue, valueSize), false, true);
 
             return expectedValue == null ? prevValue : Boolean.TRUE;
         }
@@ -2971,7 +2973,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 final Segment segment = segments[segIndex];
                 ThreadLocalCopies copies = SegmentState.getCopies(null);
                 try (SegmentState segmentState = SegmentState.get(copies)) {
-                        segment.readLock(null);
+                    segment.readLock(null);
 
                     if (segment.hashLookup().getPositions().isClear(pos)) {
                         // the pos was removed after the previous advance
