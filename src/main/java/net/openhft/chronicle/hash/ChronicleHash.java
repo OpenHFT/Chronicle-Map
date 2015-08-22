@@ -80,8 +80,22 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      */
     @NotNull EQC queryContext(Data<K> key);
 
+    /**
+     * Returns the context of the segment with the given index. Segments are indexed from 0 to
+     * {@link #segments()}{@code - 1}.
+     *
+     * @see HashSegmentContext
+     */
     SC segmentContext(int segmentIndex);
-    
+
+    /**
+     * Returns the number of segments in this {@code ChronicleHash}.
+     *
+     * @see ChronicleHashBuilder#minSegments(int)
+     * @see ChronicleHashBuilder#actualSegments(int)
+     */
+    int segments();
+
     /**
      * Checks the given predicate on each entry in this {@code ChronicleHash} until all entries
      * have been processed or the predicate returns {@code false} for some entry, or throws
@@ -133,4 +147,11 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      */
     @Override
     void close();
+
+    /**
+     * Tells whether or not this {@code ChronicleHash} (on-heap instance) is open.
+     *
+     * @return {@code true} is {@link #close()} is not yet called
+     */
+    boolean isOpen();
 }

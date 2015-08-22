@@ -92,6 +92,7 @@ public class TCPSocketReplication4WayMapTest {
         map1.put(1, "EXAMPLE-1");
         map2.put(2, "EXAMPLE-1");
         map3.put(3, "EXAMPLE-1");
+        map4.put(3, "EXAMPLE-1");
         map4.remove(3);
 
         // allow time for the recompilation to resolve

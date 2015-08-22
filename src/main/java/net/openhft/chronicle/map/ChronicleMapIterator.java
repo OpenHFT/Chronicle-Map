@@ -36,7 +36,7 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E>, Consumer<Ma
 
     ChronicleMapIterator(AbstractChronicleMap<K, V> map) {
         this.map = map;
-        segmentIndex = map.actualSegments() - 1;
+        segmentIndex = map.segments() - 1;
     }
 
     private void checkSingleThreaded() {

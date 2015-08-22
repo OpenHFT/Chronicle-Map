@@ -17,6 +17,7 @@
 package net.openhft.chronicle.hash.impl.stage.iter;
 
 import net.openhft.chronicle.hash.HashEntry;
+import net.openhft.chronicle.hash.HashSegmentContext;
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
@@ -30,7 +31,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @Staged
-public abstract class HashSegmentIteration<K, E extends HashEntry<K>> implements HashEntry<K> {
+public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
+        implements HashEntry<K>, HashSegmentContext<K, E> {
     
     @StageRef public SegmentStages s;
     @StageRef HashEntryStages<K> e;
@@ -50,6 +52,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>> implements
         this.entryRemovedOnThisIteration = entryRemovedOnThisIteration;
     }
 
+    @Override
     public boolean forEachSegmentEntryWhile(Predicate<? super E> action) {
         s.innerUpdateLock.lock();
         try {
@@ -88,6 +91,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>> implements
         }
     }
 
+    @Override
     public void forEachSegmentEntry(Consumer<? super E> action) {
         forEachSegmentEntryWhile(e -> {
             action.accept(e);
@@ -103,18 +107,22 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>> implements
     @Override
     public void doRemove() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        initEntryRemovedOnThisIteration(true);
         s.innerWriteLock.lock();
         try {
-            // this condition mean -- some other entry taken place of the removed one
-            if (hh.h().hashLookup.remove(s.segmentBase, hlp.hashLookupPos) != hlp.hashLookupPos) {
-                // if so, should make step back, to compensate step forward on the next iteration,
-                // to consume the shifted entry
-                hlp.setHashLookupPos(hh.h().hashLookup.stepBack(hlp.hashLookupPos));
-            }
-            e.innerRemoveEntryExceptHashLookupUpdate();
+            iterationRemove();
         } finally {
             s.innerWriteLock.unlock();
         }
+        initEntryRemovedOnThisIteration(true);
+    }
+
+    public void iterationRemove() {
+        // this condition mean -- some other entry taken place of the removed one
+        if (hh.h().hashLookup.remove(s.segmentBase, hlp.hashLookupPos) != hlp.hashLookupPos) {
+            // if so, should make step back, to compensate step forward on the next iteration,
+            // to consume the shifted entry
+            hlp.setHashLookupPos(hh.h().hashLookup.stepBack(hlp.hashLookupPos));
+        }
+        e.innerRemoveEntryExceptHashLookupUpdate();
     }
 }

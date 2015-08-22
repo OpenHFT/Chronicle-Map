@@ -299,6 +299,11 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public int segments() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public File file() {
         throw new UnsupportedOperationException();
     }
@@ -307,6 +312,11 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     public void close() {
         map1.close();
         map2.close();
+    }
+
+    @Override
+    public boolean isOpen() {
+        throw new UnsupportedOperationException();
     }
 
     @Override

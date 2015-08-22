@@ -86,4 +86,24 @@ public interface ReplicableEntry {
      * Propagate the entry, schedule it to be replicated over to remote Chronicle nodes.
      */
     void raiseChanged();
+
+    /**
+     * Check is the entry is scheduled to be replicated to the remote Chronicle nodes, to which
+     * the connection is currently established.
+     *
+     * @return {@code true} is the entry is "dirty" locally, i. e. should be replicated to remote
+     * Chronicle nodes, {@code false} otherwise
+     */
+    boolean isChanged();
+
+    /**
+     * Completely remove the entry from the Chronicle hash, not just mark is as deleted, what
+     * {@link MapEntry#doRemove()} does for Replicated Chronicle hash. After calling this method
+     * the entry won't be replicated over to remote Chronicle nodes, as if {@link #dropChanged()}
+     * was called, and incoming entry replication event with the key if this entry will be
+     * processed, as the entry have never been present in the Chronicle hash. After calling this
+     * method any subsequent call of any method of {@code ReplicableEntry} class throws {@code
+     * IllegalStateException}.
+     */
+    void doRemoveCompletely();
 }

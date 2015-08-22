@@ -306,6 +306,27 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B timeProvider(TimeProvider timeProvider);
 
     /**
+     * Configures timeout after which entries, marked as removed in the Chronicle Hash, constructed
+     * by this builder, are allowed to be completely removed from the data structure. In replicated
+     * Chronicle nodes, when {@code remove()} on the key is called, the corresponding entry
+     * is not immediately erased from the data structure, to let the distributed system eventually
+     * converge on some value for this key (or converge on the fact, that this key is removed).
+     * Chronicle Hash watch in runtime after the entries, and if one is removed and not updated
+     * in anyway for this {@code removedEntryCleanupTimeout}, Chronicle is allowed to remove this
+     * entry completely from the data structure. This timeout should depend on your distributed
+     * system topology, and typical replication latencies, that should be determined experimentally.
+     *
+     * <p>Default timeout is 1 second.
+     *
+     * @param removedEntryCleanupTimeout timeout, after which stale removed entries could be erased
+     *                                   from Chronicle Hash data structure completely
+     * @param unit time unit, in which the timeout is given
+     * @return this builder back
+     * @throws IllegalArgumentException is the specified timeout is less than 1 millisecond
+     */
+    B removedEntryCleanupTimeout(long removedEntryCleanupTimeout, TimeUnit unit);
+
+    /**
      * Configures a {@link BytesMarshallerFactory} to be used with {@link
      * BytesMarshallableSerializer}, which is a default {@link #objectSerializer ObjectSerializer},
      * to serialize/deserialize data to/from off-heap memory in hash containers, created by this

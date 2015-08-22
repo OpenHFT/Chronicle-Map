@@ -114,6 +114,8 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     public transient CompactOffHeapLinearHashTable hashLookup;
 
+    protected transient boolean closed = false;
+
     public VanillaChronicleHash(
             ChronicleMapBuilder<K, ?> builder, boolean replicated) {
         // Version
@@ -262,13 +264,21 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
+        if (closed)
+            return;
         if (ms == null)
             return;
         bytes.release();
         bytes = null;
         ms.free();
         ms = null;
+        closed = true;
+    }
+
+    @Override
+    public boolean isOpen() {
+        return !closed;
     }
 
     public final void checkKey(Object key) {
@@ -323,5 +333,10 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     public final int size() {
         long size = longSize();
         return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
+    }
+
+    @Override
+    public int segments() {
+        return actualSegments;
     }
 }

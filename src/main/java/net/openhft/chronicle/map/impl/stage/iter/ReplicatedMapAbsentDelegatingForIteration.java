@@ -14,40 +14,50 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.map.impl.stage.query;
+package net.openhft.chronicle.map.impl.stage.iter;
 
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.impl.stage.replication.ReplicableEntryDelegating;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
+import net.openhft.chronicle.map.MapAbsentEntry;
+import net.openhft.chronicle.map.MapContext;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
-import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
-
-import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
+import org.jetbrains.annotations.NotNull;
 
 @Staged
-public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
+public class ReplicatedMapAbsentDelegatingForIteration<K, V>
+        implements MapAbsentEntry<K, V>, ReplicableEntryDelegating {
 
-    @StageRef MapQuery<K, V, ?> q;
+    @StageRef ReplicatedMapSegmentIteration<K, V, ?> delegate;
     @StageRef ReplicatedMapEntryStages<K, V, ?> e;
-    @StageRef ReplicationUpdate<K> ru;
+
+    @NotNull
+    @Override
+    public MapContext<K, V, ?> context() {
+        return delegate.context();
+    }
 
     @Override
     public void doInsert(Data<V> value) {
-        q.putPrefix();
-        if (!q.entryPresent()) {
-            if (!ks.searchStatePresent()) {
-                putEntry(value);
-                ks.setSearchState(PRESENT);
-            } else {
-                e.innerDefaultReplaceValue(value);
-                s.deleted(s.deleted() - 1);
-            }
-            s.incrementModCount();
-            e.writeEntryPresent();
-            ru.updateChange();
-            e.updatedReplicationStateOnAbsentEntry();
-        } else {
-            throw new IllegalStateException("Entry is absent in the map when doInsert() is called");
-        }
+        delegate.doInsert(value);
+    }
+
+    @NotNull
+    @Override
+    public Data<V> defaultValue() {
+        return delegate.defaultValue();
+    }
+
+    @NotNull
+    @Override
+    public Data<K> absentKey() {
+        return delegate.absentKey();
+    }
+
+    @Override
+    public ReplicableEntry d() {
+        return e;
     }
 }

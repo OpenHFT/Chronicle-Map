@@ -22,6 +22,7 @@ import net.openhft.chronicle.set.ChronicleSet;
 
 import java.io.ObjectStreamException;
 import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * TimeProvider was aims to possibly later provide an optimization to
@@ -44,12 +45,35 @@ public abstract class TimeProvider implements Serializable {
 
     public abstract long currentTime();
 
+    /**
+     * {@code timeProvider.scale(System.currentTimeMillis(), TimeUnit.MILLISECONDS)} should
+     * result to {@link #currentTime()}.
+     */
+    public abstract long scale(long time, TimeUnit unit);
+
+    /**
+     * {@code timeProvider.unscale(timeProvider.currentTime(), TimeUnit.NANOSECONDS)} should result
+     * to something close to {@code System.nanoTime()}.
+     */
+    public abstract long unscale(long time, TimeUnit toUnit);
+
     private static class System extends TimeProvider {
         private static final long serialVersionUID = 1L;
         private static final long SCALE = 1000;
 
+        @Override
         public long currentTime() {
             return java.lang.System.currentTimeMillis() * SCALE;
+        }
+
+        @Override
+        public long scale(long time, TimeUnit unit) {
+            return TimeUnit.MILLISECONDS.convert(time, unit) * SCALE;
+        }
+
+        @Override
+        public long unscale(long time, TimeUnit toUnit) {
+            return toUnit.convert(time, TimeUnit.MILLISECONDS) / SCALE;
         }
 
         @Override

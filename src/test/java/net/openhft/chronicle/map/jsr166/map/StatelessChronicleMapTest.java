@@ -83,6 +83,11 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         }
 
         @Override
+        public boolean isOpen() {
+            return d.isOpen();
+        }
+
+        @Override
         public long longSize() {
             return d.longSize();
         }
@@ -128,6 +133,11 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
         @Override
         public MapSegmentContext<K, V, ?> segmentContext(int segmentIndex) {
             return d.segmentContext(segmentIndex);
+        }
+
+        @Override
+        public int segments() {
+            return d.segments();
         }
 
         @Override

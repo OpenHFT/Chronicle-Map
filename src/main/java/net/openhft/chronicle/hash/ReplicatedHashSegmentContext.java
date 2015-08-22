@@ -14,21 +14,17 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash.impl.stage.hash;
+package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
-import net.openhft.sg.StageRef;
-import net.openhft.sg.Staged;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
 
-@Staged
-public abstract class CheckOnEachPublicOperation {
-    
-    @StageRef OwnerThreadHolder holder;
-    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
-    
-    public void checkOnEachPublicOperation() {
-        holder.checkAccessingFromOwnerThread();
-        if (!hh.h().isOpen())
-            throw new IllegalStateException("Access to Chronicle Hash after close()");
-    }
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+public interface ReplicatedHashSegmentContext<K, E extends HashEntry<K>>
+        extends HashSegmentContext<K, E> {
+
+    void forEachSegmentReplicableEntry(Consumer<? super ReplicableEntry> action);
+
+    boolean forEachSegmentReplicableEntryWhile(Predicate<? super ReplicableEntry> predicate);
 }

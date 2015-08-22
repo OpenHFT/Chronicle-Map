@@ -33,10 +33,7 @@ import net.openhft.chronicle.map.impl.stage.data.bytes.InputSecondValueBytesData
 import net.openhft.chronicle.map.impl.stage.data.instance.InputValueInstanceData;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceData;
 import net.openhft.chronicle.map.impl.stage.input.MapInputBytesValues;
-import net.openhft.chronicle.map.impl.stage.map.MapEntryOperationsDelegation;
-import net.openhft.chronicle.map.impl.stage.map.ValueBytesInterop;
-import net.openhft.chronicle.map.impl.stage.map.VanillaChronicleMapHolderImpl;
-import net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceValueHolder;
+import net.openhft.chronicle.map.impl.stage.map.*;
 import net.openhft.chronicle.map.impl.stage.query.*;
 import net.openhft.chronicle.map.impl.stage.ret.DefaultReturnValue;
 import net.openhft.chronicle.map.impl.stage.ret.UsingReturnValue;
@@ -65,6 +62,7 @@ import net.openhft.sg.Staged;
         WrappedValueInstanceValueHolder.class,
         MapQuery.class,
         MapAbsent.class,
+        DefaultValue.class,
         ValueBytesInterop.class,
         MapAbsentHolder.class,
 

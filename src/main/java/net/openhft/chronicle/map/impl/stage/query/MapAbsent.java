@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
-public class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
+public abstract class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
 
     @StageRef public KeySearch<K> ks;
     @StageRef MapQuery<K, V, ?> q;
@@ -80,18 +80,5 @@ public class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
             throw new IllegalStateException(
                     "Entry is present in the map when doInsert() is called");
         }
-    }
-
-    @NotNull
-    @Override
-    public Data<V> defaultValue() {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
-        if (mh.m().constantValueProvider == null) {
-            throw new IllegalStateException("to call acquireUsing(), " +
-                    "or defaultValue() on AbsentEntry, you should configure " +
-                    "ChronicleMapBuilder.defaultValue(), or use one of the 'known' value types: " +
-                    "boxed primitives, or so-called data-value-generated interface as a value");
-        }
-        return context().wrapValueAsData(mh.m().constantValueProvider.defaultValue());
     }
 }

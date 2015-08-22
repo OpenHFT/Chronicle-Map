@@ -145,6 +145,11 @@ class SetFromMap<E> extends AbstractSet<E>
     }
 
     @Override
+    public int segments() {
+        return m.segments();
+    }
+
+    @Override
     public boolean forEachEntryWhile(Predicate<? super SetEntry<E>> predicate) {
         throw new UnsupportedOperationException();
     }
@@ -162,5 +167,10 @@ class SetFromMap<E> extends AbstractSet<E>
     @Override
     public void close() {
         m.close();
+    }
+
+    @Override
+    public boolean isOpen() {
+        return m.isOpen();
     }
 }

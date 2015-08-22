@@ -16,11 +16,13 @@
 
 package net.openhft.chronicle.map;
 
+import com.google.common.collect.Maps;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
+import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.values.IntValue;
 import org.junit.*;
 
@@ -28,10 +30,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,7 +60,9 @@ public class TcpReplicationSoakTest {
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE + Builder.SIZE)
+                    .removedEntryCleanupTimeout(1, TimeUnit.MILLISECONDS)
                     .actualSegments(1)
+                    .averageValue("test" + 1000)
                     .replication(SingleChronicleHashReplication.builder()
                             .tcpTransportAndNetwork(tcpConfig1)
                             .name("map1")
@@ -77,6 +79,8 @@ public class TcpReplicationSoakTest {
 
             map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE + Builder.SIZE)
+                    .removedEntryCleanupTimeout(1, TimeUnit.MILLISECONDS)
+                    .averageValue("test" + 1000)
                     .replication(SingleChronicleHashReplication.builder()
                             .tcpTransportAndNetwork(tcpConfig2)
                             .name("map2")
@@ -147,6 +151,34 @@ public class TcpReplicationSoakTest {
             map2.close();
         }
 
+    }
+
+    @Test
+    public void testFloodReplicatedMapWithDeletedEntries() throws InterruptedException {
+        try {
+            Random r = ThreadLocalRandom.current();
+            NavigableSet<Integer> put = new TreeSet<>();
+            for (int i = 0; i < Builder.SIZE * 10; i++) {
+                if (r.nextBoolean() || put.isEmpty()) {
+                    int key = r.nextInt();
+                    map1.put(key, "test");
+                    put.add(key);
+                } else {
+                    Integer key = put.pollFirst();
+                    map1.remove(key);
+                }
+//                Thread.sleep(0, 1000);
+            }
+            System.out.println("\nwaiting till equal");
+
+            waitTillEqual(15000);
+
+            if (!map1.equals(map2))
+                Assert.assertEquals(Maps.difference(map1, map2).toString(), map1, map2);
+        } finally {
+            map1.close();
+            map2.close();
+        }
     }
 
 

@@ -373,8 +373,7 @@ public abstract class SegmentStages implements SegmentLock {
         entrySpaceOffset = 0;
     }
 
-    //TODO refactor/optimize
-    public long alloc(int chunks) {
+    public long allocReturnCode(int chunks) {
         VanillaChronicleHash<?, ?, ?, ?, ?, ?> h = hh.h();
         if (chunks > h.maxChunksPerEntry)
             throw new IllegalArgumentException("Entry is too large: requires " + chunks +
@@ -382,23 +381,17 @@ public abstract class SegmentStages implements SegmentLock {
         long ret = freeList.setNextNContinuousClearBits(nextPosToSearchFrom(), chunks);
         if (ret == DirectBitSet.NOT_FOUND || ret + chunks > h.actualChunksPerSegment) {
             if (ret != DirectBitSet.NOT_FOUND &&
-                    ret + chunks > h.actualChunksPerSegment && ret < h.actualChunksPerSegment)
+                    ret + chunks > h.actualChunksPerSegment && ret < h.actualChunksPerSegment) {
                 freeList.clear(ret, h.actualChunksPerSegment);
+            }
             ret = freeList.setNextNContinuousClearBits(0L, chunks);
             if (ret == DirectBitSet.NOT_FOUND || ret + chunks > h.actualChunksPerSegment) {
                 if (ret != DirectBitSet.NOT_FOUND &&
                         ret + chunks > h.actualChunksPerSegment &&
-                        ret < h.actualChunksPerSegment)
+                        ret < h.actualChunksPerSegment) {
                     freeList.clear(ret, h.actualChunksPerSegment);
-                if (chunks == 1) {
-                    throw new IllegalStateException(
-                            "Segment is full, no free entries found");
-                } else {
-                    throw new IllegalStateException(
-                            "Segment is full or has no ranges of " + chunks
-                                    + " continuous free chunks"
-                    );
                 }
+                return -1;
             }
             updateNextPosToSearchFrom(ret, chunks);
         } else {
@@ -410,6 +403,23 @@ public abstract class SegmentStages implements SegmentLock {
             }
         }
         return ret;
+    }
+
+    public long alloc(int chunks) {
+        long ret = allocReturnCode(chunks);
+        if (ret >= 0) {
+            return ret;
+        } else {
+            if (chunks == 1) {
+                throw new IllegalStateException(
+                        "Segment is full, no free entries found");
+            } else {
+                throw new IllegalStateException(
+                        "Segment is full or has no ranges of " + chunks
+                                + " continuous free chunks"
+                );
+            }
+        }
     }
 
     public void free(long fromPos, int chunks) {

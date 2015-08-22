@@ -18,18 +18,20 @@ package net.openhft.chronicle.map.impl.stage.entry;
 
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.TimeProvider;
+import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.chronicle.map.replication.MapReplicableEntry;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
+import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.map.ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
 
 @Staged
 public abstract class ReplicatedMapEntryStages<K, V, T> extends MapEntryStages<K, V>
-        implements MapReplicableEntry<K, V> {
+        implements MapReplicableEntry<K, V>, MapAbsentEntry<K, V> {
     
     @StageRef ReplicatedChronicleMapHolder<?, ?, ?, ?, ?, ?, ?> mh;
     @StageRef ReplicationUpdate ru;
@@ -116,6 +118,13 @@ public abstract class ReplicatedMapEntryStages<K, V, T> extends MapEntryStages<K
         ru.raiseChange();
     }
 
+    @Override
+    public boolean isChanged() {
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        s.innerReadLock.lock();
+        return ru.changed();
+    }
+
     public void updatedReplicationStateOnPresentEntry() {
         if (!ru.replicationUpdateInit()) {
             s.innerWriteLock.lock();
@@ -157,5 +166,11 @@ public abstract class ReplicatedMapEntryStages<K, V, T> extends MapEntryStages<K
     @Override
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
         return super.sizeOfEverythingBeforeValue(keySize, valueSize) + ADDITIONAL_ENTRY_BYTES;
+    }
+
+    @NotNull
+    @Override
+    public Data<K> absentKey() {
+        return key();
     }
 }

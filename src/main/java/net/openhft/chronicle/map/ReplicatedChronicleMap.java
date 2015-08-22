@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.ReplicatedHashSegmentContext;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.TimeProvider;
@@ -28,6 +29,7 @@ import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.model.DataValueClasses;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,16 +95,21 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
     private static final long LAST_UPDATED_HEADER_SIZE = 128L * 8L;
     private static final int SIZE_OF_BOOTSTRAP_TIME_STAMP = 8;
+    private static final long GLOBAL_MUTABLE_STATE_SIZE = 64; // a cache line
 
     public final TimeProvider timeProvider;
     private final byte localIdentifier;
     transient Set<Closeable> closeables;
     private transient Bytes identifierUpdatedBytes;
+    transient Bytes globalMutableStateBytes;
+    transient ReplicatedChronicleMapGlobalMutableState globalMutableState;
 
     private transient ATSDirectBitSet modIterSet;
     private transient AtomicReferenceArray<ModificationIterator> modificationIterators;
     private transient long startOfModificationIterators;
     private boolean bootstrapOnlyLocalEntries;
+
+    public long cleanupTimeout;
     
     public transient MapRemoteOperations<K, V, R> remoteOperations;
     transient CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext;
@@ -117,6 +124,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
         this.localIdentifier = replication.identifier();
         this.bootstrapOnlyLocalEntries = replication.bootstrapOnlyLocalEntries();
+
+        cleanupTimeout = timeProvider.scale(builder.cleanupTimeout, builder.cleanupTimeoutUnit);
 
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
@@ -181,7 +190,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
     @Override
     public long mapHeaderInnerSize() {
-        return super.mapHeaderInnerSize() + LAST_UPDATED_HEADER_SIZE +
+        return super.mapHeaderInnerSize() + GLOBAL_MUTABLE_STATE_SIZE + LAST_UPDATED_HEADER_SIZE +
                 (modIterBitSetSizeInBytes() * (128 + RESERVED_MOD_ITER)) +
                 assignedModIterBitSetSizeInBytes();
     }
@@ -208,6 +217,12 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     public void onHeaderCreated() {
         long offset = super.mapHeaderInnerSize();
 
+        globalMutableStateBytes = ms.bytes(offset, GLOBAL_MUTABLE_STATE_SIZE);
+        globalMutableState =
+                DataValueClasses.newDirectReference(ReplicatedChronicleMapGlobalMutableState.class);
+        globalMutableState.bytes(globalMutableStateBytes, 8);
+        offset += GLOBAL_MUTABLE_STATE_SIZE;
+
         identifierUpdatedBytes = ms.bytes(offset, LAST_UPDATED_HEADER_SIZE);
         offset += LAST_UPDATED_HEADER_SIZE;
 
@@ -215,6 +230,18 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         offset += assignedModIterBitSetSizeInBytes();
         startOfModificationIterators = offset;
         modIterSet = new ATSDirectBitSet(modDelBytes);
+    }
+
+    void globalStateLock() {
+        try {
+            globalMutableStateBytes.busyLockLong(0);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    void globalStateUnlock() {
+        globalMutableStateBytes.unlockLong(0);
     }
 
     @Override
@@ -227,7 +254,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
+        if (closed)
+            return;
         for (Closeable closeable : closeables) {
             try {
                 closeable.close();
@@ -302,6 +331,17 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 LOG.error("", e);
             }
         }
+    }
+
+    public boolean isChanged(long segmentIndex, long pos) {
+        for (long next = modIterSet.nextSetBit(0L); next > 0L;
+             next = modIterSet.nextSetBit(next + 1L)) {
+            ModificationIterator modificationIterator =
+                    acquireModificationIterator((byte) next);
+            if (modificationIterator.isChanged(segmentIndex, pos))
+                return true;
+        }
+        return false;
     }
 
     @Override
@@ -551,6 +591,10 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             return changesForUpdates.clearIfSet(combine(segmentIndex, pos));
         }
 
+        boolean isChanged(long segmentIndex, long pos) {
+            return changesForUpdates.isSet(combine(segmentIndex, pos));
+        }
+
         /**
          * you can continue to poll hasNext() until data becomes available. If are are in the middle
          * of processing an entry via {@code nextEntry}, hasNext will return true until the bit is
@@ -648,23 +692,22 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 for (int i = 0; i < actualSegments; i++) {
                     final int segmentIndex = i;
                     c.initTheSegmentIndex(segmentIndex);
-                    c.forEachReplicableEntry(entry -> {
+                    c.forEachSegmentReplicableEntry(e -> {
                         if (debugEnabled) {
                             LOG.debug("Bootstrap entry: id {}, key {}, value {}", localIdentifier,
                                     c.key(), c.value());
                         }
-                        MapReplicableEntry re = (MapReplicableEntry) entry;
                         // Bizarrely the next line line cause NPE in JDT compiler
                         //assert re.originTimestamp() > 0L;
                         if (debugEnabled) {
                             LOG.debug("Bootstrap decision: bs ts: {}, entry ts: {}, " +
                                             "entry id: {}, local id: {}",
-                                    fromTimeStamp, re.originTimestamp(),
-                                    re.originIdentifier(), localIdentifier);
+                                    fromTimeStamp, e.originTimestamp(),
+                                    e.originIdentifier(), localIdentifier);
                         }
-                        if (re.originTimestamp() >= fromTimeStamp &&
+                        if (e.originTimestamp() >= fromTimeStamp &&
                                 (!bootstrapOnlyLocalEntries ||
-                                        re.originIdentifier() == localIdentifier)) {
+                                        e.originIdentifier() == localIdentifier)) {
                             raiseChange(segmentIndex, c.pos(), c.timestamp());
                         }
                     });

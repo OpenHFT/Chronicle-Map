@@ -409,6 +409,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     }
 
+    @Override
+    public boolean isOpen() {
+        return closeables != null;
+    }
+
     /**
      * the transaction id are generated as unique timestamps
      *
@@ -555,6 +560,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @Override
     public MapSegmentContext<K, V, ?> segmentContext(int segmentIndex) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int segments() {
         throw new UnsupportedOperationException();
     }
 

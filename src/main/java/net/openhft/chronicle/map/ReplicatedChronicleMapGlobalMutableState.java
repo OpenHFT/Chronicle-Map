@@ -14,21 +14,17 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash.impl.stage.hash;
+package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
-import net.openhft.sg.StageRef;
-import net.openhft.sg.Staged;
+import net.openhft.lang.model.Byteable;
 
-@Staged
-public abstract class CheckOnEachPublicOperation {
-    
-    @StageRef OwnerThreadHolder holder;
-    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
-    
-    public void checkOnEachPublicOperation() {
-        holder.checkAccessingFromOwnerThread();
-        if (!hh.h().isOpen())
-            throw new IllegalStateException("Access to Chronicle Hash after close()");
-    }
+interface ReplicatedChronicleMapGlobalMutableState extends Byteable {
+
+    int getCurrentCleanupSegmentIndex();
+
+    void setCurrentCleanupSegmentIndex(int currentCleanupSegmentIndex);
+
+    boolean isCurrentlyCleanupIterated();
+
+    void setCurrentlyCleanupIterated(boolean isCurrentlyCleanupIterated);
 }

@@ -80,7 +80,7 @@ public abstract class HashQuery<K> implements HashEntry<K> {
     public void doRemove() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         s.innerUpdateLock.lock();
-        if (entryPresent()) {
+        if (ks.searchStatePresent()) {
             // TODO optimize: if shift-deletion is trivial, updateLock.lock()
             s.innerWriteLock.lock();
             hashLookupSearch.remove();

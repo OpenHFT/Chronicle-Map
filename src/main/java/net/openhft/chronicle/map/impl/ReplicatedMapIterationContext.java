@@ -26,11 +26,11 @@ import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceData;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.iter.IterationCheckOnEachPublicOperation;
+import net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapAbsentDelegatingForIteration;
+import net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapEntryDelegating;
 import net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIteration;
-import net.openhft.chronicle.map.impl.stage.map.MapEntryOperationsDelegation;
-import net.openhft.chronicle.map.impl.stage.map.ReplicatedChronicleMapHolderImpl;
-import net.openhft.chronicle.map.impl.stage.map.ValueBytesInterop;
-import net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceValueHolder;
+import net.openhft.chronicle.map.impl.stage.map.*;
+import net.openhft.chronicle.map.impl.stage.query.ReplicatedMapAbsent;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.sg.Context;
 import net.openhft.sg.Staged;
@@ -56,6 +56,7 @@ import net.openhft.sg.Staged;
         MapEntryOperationsDelegation.class,
 
         ReplicationUpdate.class,
+        DefaultValue.class,
 }, nested = {
         ReadLock.class,
         UpdateLock.class,
@@ -67,6 +68,9 @@ import net.openhft.sg.Staged;
         WrappedValueInstanceData.class,
 
         DummyValueZeroData.class,
+
+        ReplicatedMapAbsentDelegatingForIteration.class,
+        ReplicatedMapEntryDelegating.class
 })
 public class ReplicatedMapIterationContext {
 }

@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
@@ -28,9 +29,11 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.Nullable;
 
+import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.DELETED;
+
 @Staged
 public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
-        implements MapRemoteQueryContext<K, V, R> {
+        implements MapRemoteQueryContext<K, V, R>, ReplicableEntry {
 
     @StageRef ReplicatedMapEntryStages<K, V, ?> e;
     @StageRef ReplicationUpdate ru;
@@ -81,6 +84,14 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
         } else {
             throw new IllegalStateException("Entry is absent in the map when doRemove() is called");
         }
+    }
+
+    @Override
+    public void doRemoveCompletely() {
+        boolean wasDeleted = e.entryDeleted();
+        super.doRemove();
+        if (wasDeleted)
+            s.deleted(s.deleted() - 1L);
     }
 
     @Override

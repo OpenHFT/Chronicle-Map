@@ -37,6 +37,7 @@ import net.openhft.lang.io.serialization.impl.NewInstanceObjectFactory;
 import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
+import net.openhft.lang.thread.NamedThreadFactory;
 import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
@@ -48,8 +49,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -159,6 +163,9 @@ public final class ChronicleMapBuilder<K, V> implements
 
     // replication
     private TimeProvider timeProvider = TimeProvider.SYSTEM;
+    long cleanupTimeout = 1;
+    TimeUnit cleanupTimeoutUnit = TimeUnit.SECONDS;
+
     private BytesMarshallerFactory bytesMarshallerFactory;
     private ObjectSerializer objectSerializer;
     private V defaultValue = null;
@@ -1056,6 +1063,18 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
+    @Override
+    public ChronicleMapBuilder<K, V> removedEntryCleanupTimeout(
+            long removedEntryCleanupTimeout, TimeUnit unit) {
+        if (unit.toMillis(removedEntryCleanupTimeout) < 1) {
+            throw new IllegalArgumentException("timeout should be >= 1 millisecond, " +
+                    removedEntryCleanupTimeout + " " + unit + " is given");
+        }
+        cleanupTimeout = removedEntryCleanupTimeout;
+        cleanupTimeoutUnit = unit;
+        return this;
+    }
+
     TimeProvider timeProvider() {
         return timeProvider;
     }
@@ -1548,10 +1567,12 @@ public final class ChronicleMapBuilder<K, V> implements
             SingleChronicleHashReplication singleHashReplication,
             ReplicationChannel channel) throws IOException {
         if (map instanceof ReplicatedChronicleMap) {
-            if (singleHashReplication != null && channel != null) {
+            if (singleHashReplication != null && channel != null)
                 throw new AssertionError("Only one non-null replication should be passed");
-            }
+
             ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;
+            establishCleanupThread(result);
+
             List<Replicator> replicators = new ArrayList<>(2);
             if (singleHashReplication != null) {
                 if (singleHashReplication.tcpTransportAndNetwork() != null)
@@ -1575,6 +1596,50 @@ public final class ChronicleMapBuilder<K, V> implements
             }
         }
         return map;
+    }
+
+    private void establishCleanupThread(ReplicatedChronicleMap map) {
+        map.globalStateLock();
+        try {
+            if (!map.globalMutableState.isCurrentlyCleanupIterated()) {
+                OldDeletedEntriesCleanup cleanup = new OldDeletedEntriesCleanup(map,
+                        timeProvider.scale(cleanupTimeout, cleanupTimeoutUnit));
+                NamedThreadFactory threadFactory =
+                        new NamedThreadFactory("cleanup thread for map persisted at " + map.file());
+                ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
+                executor.submit(cleanup);
+
+                map.addCloseable(cleanup);
+                // WARNING this relies on the fact that ReplicatedChronicleMap closes in the same
+                // order, i. e. OldDeletedEntriesCleanup instance first
+                map.addCloseable(() -> {
+                    executor.shutdown();
+                    try {
+                        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException e) {
+                        LOG.error("", e);
+                    }
+                });
+                map.addCloseable(() -> {
+                    map.globalStateLock();
+                    try {
+                        map.globalMutableState.setCurrentlyCleanupIterated(false);
+                    } finally {
+                        map.globalStateUnlock();
+                    }
+                });
+
+                map.globalStateLock();
+                try {
+                    if (!map.globalMutableState.isCurrentlyCleanupIterated())
+                        map.globalMutableState.setCurrentlyCleanupIterated(true);
+                } finally {
+                    map.globalStateUnlock();
+                }
+            }
+        } finally {
+            map.globalStateUnlock();
+        }
     }
 
     private long bufferSize(SerializationBuilder builder, double averageSize, boolean replicated) {

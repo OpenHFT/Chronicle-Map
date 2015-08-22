@@ -62,6 +62,10 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
         mh.m().raiseChange(s.segmentIndex, e.pos, e.timestamp());
     }
 
+    public boolean changed() {
+        return mh.m().isChanged(s.segmentIndex, e.pos);
+    }
+
     @Override
     public long remoteTimestamp() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();

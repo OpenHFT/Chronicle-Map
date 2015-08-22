@@ -63,6 +63,16 @@ public class TcpTimeBasedReplicationSoakTest {
                 else
                     return t;
             }
+
+            @Override
+            public long scale(long time, TimeUnit unit) {
+                return TimeUnit.MILLISECONDS.convert(time, unit);
+            }
+
+            @Override
+            public long unscale(long time, TimeUnit toUnit) {
+                return toUnit.convert(time, TimeUnit.MILLISECONDS);
+            }
         };
 
         {

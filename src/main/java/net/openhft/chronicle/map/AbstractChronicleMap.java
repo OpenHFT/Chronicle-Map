@@ -76,8 +76,6 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
         }
     }
 
-    int actualSegments();
-
     @Override
     default boolean containsValue(Object value) {
         return !forEachEntryWhile(c -> !c.value().equals(c.context().wrapValueAsData((V) value)));
@@ -257,7 +255,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
     @Override
     default boolean forEachEntryWhile(final Predicate<? super MapEntry<K, V>> action) {
         boolean interrupt = false;
-        for (int i = actualSegments() - 1; i >= 0; i--) {
+        for (int i = segments() - 1; i >= 0; i--) {
             try (MapSegmentContext<K, V, ?> c = segmentContext(i)) {
                 if (!c.forEachSegmentEntryWhile(action)) {
                     interrupt = true;

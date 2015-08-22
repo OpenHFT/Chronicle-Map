@@ -200,11 +200,6 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     }
 
     @Override
-    public int actualSegments() {
-        return actualSegments;
-    }
-
-    @Override
     public V newValueInstance() {
         if (vClass == CharSequence.class || vClass == StringBuilder.class)
             return (V) new StringBuilder();

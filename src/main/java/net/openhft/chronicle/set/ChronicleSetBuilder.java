@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could
@@ -186,6 +187,13 @@ public final class ChronicleSetBuilder<K>
     @Override
     public ChronicleSetBuilder<K> timeProvider(TimeProvider timeProvider) {
         chronicleMapBuilder.timeProvider(timeProvider);
+        return this;
+    }
+
+    @Override
+    public ChronicleSetBuilder<K> removedEntryCleanupTimeout(
+            long removedEntryCleanupTimeout, TimeUnit unit) {
+        chronicleMapBuilder.removedEntryCleanupTimeout(removedEntryCleanupTimeout, unit);
         return this;
     }
 
