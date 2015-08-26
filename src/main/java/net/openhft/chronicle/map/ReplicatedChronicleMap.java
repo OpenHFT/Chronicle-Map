@@ -1158,7 +1158,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         if (eventListener != null) {
                             eventListener.onPut(toKey.toInstance(copies, key, keySize),
                                     toValue.toInstance(copies, value, valueSize), null, false,
-                                    false);
+                                    isDeleted);
                         }
 
                         // for DRY (reusing replaceValueAndNotifyPut() method),
