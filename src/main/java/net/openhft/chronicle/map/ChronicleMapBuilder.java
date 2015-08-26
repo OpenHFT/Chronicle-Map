@@ -164,6 +164,7 @@ public final class ChronicleMapBuilder<K, V> implements
     // replication
     private TimeProvider timeProvider = TimeProvider.SYSTEM;
     long cleanupTimeout = 1;
+    private boolean cleanupRemovedEntries = true;
     TimeUnit cleanupTimeoutUnit = TimeUnit.SECONDS;
 
     private BytesMarshallerFactory bytesMarshallerFactory;
@@ -1075,6 +1076,12 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
+    @Override
+    public ChronicleMapBuilder<K, V> cleanupRemovedEntries(boolean cleanupRemovedEntries) {
+        this.cleanupRemovedEntries = cleanupRemovedEntries;
+        return this;
+    }
+
     TimeProvider timeProvider() {
         return timeProvider;
     }
@@ -1571,7 +1578,8 @@ public final class ChronicleMapBuilder<K, V> implements
                 throw new AssertionError("Only one non-null replication should be passed");
 
             ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;
-            establishCleanupThread(result);
+            if (cleanupRemovedEntries)
+                establishCleanupThread(result);
 
             List<Replicator> replicators = new ArrayList<>(2);
             if (singleHashReplication != null) {

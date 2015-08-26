@@ -327,6 +327,18 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B removedEntryCleanupTimeout(long removedEntryCleanupTimeout, TimeUnit unit);
 
     /**
+     * Configures if replicated Chronicle Hashes, constructed by this builder, should
+     * completely erase entries, removed some time ago. See {@link #removedEntryCleanupTimeout(
+     * long, TimeUnit)} for more details on this mechanism.
+     *
+     * <p>Default value is {@code true} -- old removed entries are erased with 1 second timeout.
+     *
+     * @param cleanupRemovedEntries if stale removed entries should be purged from Chronicle Hash
+     * @return this builder back
+     */
+    B cleanupRemovedEntries(boolean cleanupRemovedEntries);
+
+    /**
      * Configures a {@link BytesMarshallerFactory} to be used with {@link
      * BytesMarshallableSerializer}, which is a default {@link #objectSerializer ObjectSerializer},
      * to serialize/deserialize data to/from off-heap memory in hash containers, created by this

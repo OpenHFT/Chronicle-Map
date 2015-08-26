@@ -198,6 +198,12 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
+    public ChronicleSetBuilder<K> cleanupRemovedEntries(boolean cleanupRemovedEntries) {
+        chronicleMapBuilder.cleanupRemovedEntries(cleanupRemovedEntries);
+        return this;
+    }
+
+    @Override
     public ChronicleSetBuilder<K> bytesMarshallerFactory(
             BytesMarshallerFactory bytesMarshallerFactory) {
         chronicleMapBuilder.bytesMarshallerFactory(bytesMarshallerFactory);

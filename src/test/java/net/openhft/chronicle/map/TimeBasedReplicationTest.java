@@ -62,12 +62,14 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         try (ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                              .entries(10)
+                             .cleanupRemovedEntries(false)
                              .timeProvider(timeProvider)
                              .replication((byte) 1, TcpTransportAndNetworkConfig.of(8086))
                              .create()) {
             try (ChronicleMap<CharSequence, CharSequence> map2 =
                          ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                                  .entries(10)
+                                 .cleanupRemovedEntries(false)
                                  .timeProvider(timeProvider)
                                  .replication((byte) 2, TcpTransportAndNetworkConfig.of(8087,
                                          new InetSocketAddress("localhost", 8086)))
@@ -109,6 +111,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
         try (ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .entries(10)
+                .cleanupRemovedEntries(false)
                 .timeProvider(timeProvider)
                 .replication((byte) 1)
                 .create()) {
@@ -181,12 +184,14 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         try (ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                              .entries(10)
+                             .cleanupRemovedEntries(false)
                              .timeProvider(timeProvider)
                              .replication((byte) 1, TcpTransportAndNetworkConfig.of(8086))
                              .create()) {
             try (ChronicleMap<CharSequence, CharSequence> map2 =
                          ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                                  .entries(10)
+                                 .cleanupRemovedEntries(false)
                                  .timeProvider(timeProvider)
                                  .replication((byte) 2, TcpTransportAndNetworkConfig.of(8087,
                                          new InetSocketAddress("localhost", 8086)))
