@@ -2266,20 +2266,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 copies = SegmentState.getCopies(copies);
                 segmentState = SegmentState.get(copies);
             }
-            // TODO optimise
-            V oldValue = null;
-            if (eventListener != null)
-                try {
-                    oldValue = lookupUsing((K) key, null, false);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-
             writeLock();
             try {
                 return putWithoutLock(copies, segmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
-                        getValueInterops, value, oldValue, toValue,
+                        getValueInterops, value, toValue,
                         hash2, replaceIfPresent, readValue, resultUnused);
             } finally {
                 segmentState.close();
@@ -2293,7 +2284,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 @NotNull ThreadLocalCopies copies, @NotNull SegmentState segmentState,
                 MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                 InstanceOrBytesToInstance<KB, K> toKey,
-                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value, V oldValue,
+                GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
                 InstanceOrBytesToInstance<? super VB, V> toValue,
                 long hash2, boolean replaceIfPresent,
                 ReadValue<RV> readValue, boolean resultUnused) {
@@ -2335,7 +2326,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         segmentState.valueSizePos, true, false);
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), oldValue, false, true);
+                        toValue.toInstance(copies, value, valueSize), null, false, true);
 
             return resultUnused ? null : readValue.readNull();
         }
