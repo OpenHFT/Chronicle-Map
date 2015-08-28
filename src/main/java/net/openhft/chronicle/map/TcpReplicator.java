@@ -26,9 +26,12 @@ import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.internal.ReaderWithSize;
 import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
+import net.openhft.lang.collection.ATSDirectBitSet;
+import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +47,6 @@ import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -52,6 +54,7 @@ import static net.openhft.chronicle.hash.impl.util.BuildVersion.version;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTION_ID;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
+import static net.openhft.lang.MemoryUnit.*;
 
 interface Work {
 
@@ -861,9 +864,8 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
      */
     private static class KeyInterestUpdater {
 
-        private final AtomicBoolean wasChanged = new AtomicBoolean();
         @NotNull
-        private final BitSet changeOfOpWriteRequired;
+        private final DirectBitSet changeOfOpWriteRequired;
         @NotNull
         private final SelectionKey[] selectionKeys;
         private final int op;
@@ -871,20 +873,18 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
         KeyInterestUpdater(int op, @NotNull final SelectionKey[] selectionKeys) {
             this.op = op;
             this.selectionKeys = selectionKeys;
-            changeOfOpWriteRequired = new BitSet(selectionKeys.length);
+            long bitSetSize = LONGS.align(BYTES.alignAndConvert(selectionKeys.length, BITS), BYTES);
+            changeOfOpWriteRequired = new ATSDirectBitSet(DirectStore.allocate(bitSetSize).bytes());
         }
 
         public void applyUpdates() {
-            if (wasChanged.getAndSet(false)) {
-                for (int i = changeOfOpWriteRequired.nextSetBit(0); i >= 0;
-                     i = changeOfOpWriteRequired.nextSetBit(i + 1)) {
-                    changeOfOpWriteRequired.clear(i);
-                    final SelectionKey key = selectionKeys[i];
-                    try {
-                        key.interestOps(key.interestOps() | op);
-                    } catch (Exception e) {
-                        LOG.debug("", e);
-                    }
+            for (long i = changeOfOpWriteRequired.clearNextSetBit(0L); i >= 0;
+                 i = changeOfOpWriteRequired.clearNextSetBit(i + 1)) {
+                final SelectionKey key = selectionKeys[((int) i)];
+                try {
+                    key.interestOps(key.interestOps() | op);
+                } catch (Exception e) {
+                    LOG.debug("", e);
                 }
             }
         }
@@ -894,8 +894,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
          *                 the constructor {@link KeyInterestUpdater(int, SelectionKey[])}
          */
         public void set(int keyIndex) {
-            changeOfOpWriteRequired.set(keyIndex);
-            wasChanged.lazySet(true);
+            changeOfOpWriteRequired.setIfClear(keyIndex);
         }
     }
 
