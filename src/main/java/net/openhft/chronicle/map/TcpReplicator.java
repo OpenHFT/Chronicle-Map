@@ -21,9 +21,12 @@ import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
 import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.lang.collection.ATSDirectBitSet;
+import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.DirectStore;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +50,7 @@ import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_TRANSACTION_ID;
 import static net.openhft.chronicle.map.BuildVersion.version;
 import static net.openhft.chronicle.map.StatelessChronicleMap.EventId.HEARTBEAT;
+import static net.openhft.lang.MemoryUnit.*;
 
 interface Work {
 
@@ -853,9 +857,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      */
     private static class KeyInterestUpdater {
 
-        private final AtomicBoolean wasChanged = new AtomicBoolean();
         @NotNull
-        private final BitSet changeOfOpWriteRequired;
+        private final DirectBitSet changeOfOpWriteRequired;
         @NotNull
         private final SelectionKey[] selectionKeys;
         private final int op;
@@ -863,20 +866,18 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         KeyInterestUpdater(int op, @NotNull final SelectionKey[] selectionKeys) {
             this.op = op;
             this.selectionKeys = selectionKeys;
-            changeOfOpWriteRequired = new BitSet(selectionKeys.length);
+            long bitSetSize = LONGS.align(BYTES.alignAndConvert(selectionKeys.length, BITS), BYTES);
+            changeOfOpWriteRequired = new ATSDirectBitSet(DirectStore.allocate(bitSetSize).bytes());
         }
 
         public void applyUpdates() {
-            if (wasChanged.getAndSet(false)) {
-                for (int i = changeOfOpWriteRequired.nextSetBit(0); i >= 0;
-                     i = changeOfOpWriteRequired.nextSetBit(i + 1)) {
-                    changeOfOpWriteRequired.clear(i);
-                    final SelectionKey key = selectionKeys[i];
-                    try {
-                        key.interestOps(key.interestOps() | op);
-                    } catch (Exception e) {
-                        LOG.debug("", e);
-                    }
+            for (long i = changeOfOpWriteRequired.clearNextSetBit(0L); i >= 0;
+                 i = changeOfOpWriteRequired.clearNextSetBit(i + 1)) {
+                final SelectionKey key = selectionKeys[((int) i)];
+                try {
+                    key.interestOps(key.interestOps() | op);
+                } catch (Exception e) {
+                    LOG.debug("", e);
                 }
             }
         }
@@ -886,8 +887,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
          *                 the constructor {@link KeyInterestUpdater(int, SelectionKey[])}
          */
         public void set(int keyIndex) {
-            changeOfOpWriteRequired.set(keyIndex);
-            wasChanged.lazySet(true);
+            changeOfOpWriteRequired.setIfClear(keyIndex);
         }
     }
 
