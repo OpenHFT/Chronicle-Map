@@ -108,9 +108,6 @@ public class GuavaTest extends TestCase {
     }
 
     static class HHMTestGenerator extends CHMTestGenerator {
-        @Override
-        Map<CharSequence, CharSequence> newMap() {
-            return builder.create();
-        }
+
     }
 }
