@@ -19,20 +19,19 @@ package net.openhft.chronicle.hash.serialization.internal;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 
-import java.io.ObjectStreamException;
-
 public final class DelegatingMetaBytesInteropProvider<E, I extends BytesInterop<E>>
         implements MetaProvider<E, I, MetaBytesInterop<E, I>> {
     private static final long serialVersionUID = 0L;
     private static final DelegatingMetaBytesInteropProvider INSTANCE =
             new DelegatingMetaBytesInteropProvider();
 
+    private DelegatingMetaBytesInteropProvider() {
+    }
+
     public static <E, I extends BytesInterop<E>>
     MetaProvider<E, I, MetaBytesInterop<E, I>> instance() {
         return INSTANCE;
     }
-
-    private DelegatingMetaBytesInteropProvider() {}
 
     @Override
     public MetaBytesInterop<E, I> get(ThreadLocalCopies copies,
@@ -45,7 +44,7 @@ public final class DelegatingMetaBytesInteropProvider<E, I extends BytesInterop<
         return copies;
     }
 
-    private Object readResolve() throws ObjectStreamException {
+    private Object readResolve() {
         return INSTANCE;
     }
 }

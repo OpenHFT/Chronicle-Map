@@ -95,7 +95,7 @@ class ReplicationHubFindByName<K> implements FindByName {
 
     public <T extends ChronicleHash> T create(
             MapInstanceBuilder<CharSequence, CharSequence> config)
-            throws IOException, TimeoutException, InterruptedException {
+            throws TimeoutException, InterruptedException {
 
         int withChannelId = nextFreeChannel.incrementAndGet();
 

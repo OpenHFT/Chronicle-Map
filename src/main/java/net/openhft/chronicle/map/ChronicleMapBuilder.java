@@ -68,23 +68,23 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * ChronicleMapBuilder<Key, Value> builder = ChronicleMapBuilder
  *     .of(Key.class, Value.class)
  *     .entries(100500);
- *
+ * <p>
  * ChronicleMap<Key, Value> map1 = builder.create();
  * ChronicleMap<Key, Value> map2 = builder.create();}</pre>
  * i. e. created {@code ChronicleMap} instances don't depend on the builder.
- *
+ * <p>
  * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
  * documentation.
- *
+ * <p>
  * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
  * ChronicleMapBuilder}", unless specified different, because theoretically someone might provide
  * {@code ChronicleMap} implementations with completely different properties.
- *
+ * <p>
  * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
  * doesn't support resizing. That is why you <i>must</i> configure {@linkplain #entries(long) number
  * of entries} you are going to insert into the created map <i>at most</i>. See {@link
  * #entries(long)} method documentation for more information on this.
- *
+ * <p>
  * <p>If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder}, i.
  * e. it is not a boxed primitive, data value generated interface, {@link Byteable}, etc. (see the
  * complete list TODO insert the link to the complete list), you <i>must</i> provide the {@code
@@ -115,19 +115,11 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
 
     private static final int XML_SERIALIZATION = 1;
     private static final int BINARY_SERIALIZATION = 2;
-
-    private static boolean isDefined(double config) {
-        return !Double.isNaN(config);
-    }
-
     private static final boolean strictStateChecks =
             Boolean.getBoolean("chronicle.strictStateChecks");
-
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
-
     private String name;
-
     // used when configuring the number of segments.
     private int minSegments = -1;
     private int actualSegments = -1;
@@ -148,7 +140,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     private ChronicleHashErrorListener errorListener = ChronicleHashErrorListeners.logging();
     private boolean putReturnsNull = false;
     private boolean removeReturnsNull = false;
-
     // replication
     private TimeProvider timeProvider = TimeProvider.SYSTEM;
     private BytesMarshallerFactory bytesMarshallerFactory;
@@ -158,10 +149,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     private V defaultValue = null;
     private DefaultValueProvider<K, V> defaultValueProvider = null;
     private PrepareValueBytes<K, V> prepareValueBytes = null;
-
     private SingleChronicleHashReplication singleHashReplication = null;
     private InetSocketAddress[] pushToAddresses;
-
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass, SerializationBuilder.Role.KEY);
         valueBuilder = new SerializationBuilder<>(valueClass, SerializationBuilder.Role.VALUE);
@@ -170,6 +159,10 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
             defaultValue = (V) "";
         if (StringBuilder.class == valueClass)
             defaultValue = (V) EMTRY_STRING_BUILDER;
+    }
+
+    private static boolean isDefined(double config) {
+        return !Double.isNaN(config);
     }
 
     /**
@@ -222,6 +215,95 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return obj != null ? obj + "" : "not configured";
     }
 
+    private static void checkAverageSize(double averageSize, String role) {
+        if (averageSize <= 0 || Double.isNaN(averageSize) ||
+                Double.isInfinite(averageSize)) {
+            throw new IllegalArgumentException("Average " + role + " size must be a positive, " +
+                    "finite number");
+        }
+    }
+
+    private static void checkSizeIsNotStaticallyKnown(SerializationBuilder builder) {
+        if (builder.sizeIsStaticallyKnown)
+            throw new IllegalStateException("Size of type " + builder.eClass +
+                    " is statically known and shouldn't be specified manually");
+    }
+
+    private static double averageSizeEncodingSize(
+            SerializationBuilder builder, double averageSize) {
+        SizeMarshaller sizeMarshaller = builder.sizeMarshaller();
+        if (averageSize == round(averageSize))
+            return sizeMarshaller.sizeEncodingSize(round(averageSize));
+        long lower = (long) averageSize;
+        long upper = lower + 1;
+        int lowerEncodingSize = sizeMarshaller.sizeEncodingSize(lower);
+        int upperEncodingSize = sizeMarshaller.sizeEncodingSize(upper);
+        if (lowerEncodingSize == upperEncodingSize)
+            return lowerEncodingSize;
+        return lower * (upper - averageSize) + upper * (averageSize - lower);
+    }
+
+    static int greatestCommonDivisor(int a, int b) {
+        if (b == 0) return a;
+        return greatestCommonDivisor(b, a % b);
+    }
+
+    private static int maxDefaultChunksPerAverageEntry(boolean replicated) {
+        return replicated ? 4 : 8;
+    }
+
+    private static int estimateSegmentsForEntries(long size) {
+        if (size > 200 << 20)
+            return 256;
+        if (size >= 1 << 20)
+            return 128;
+        if (size >= 128 << 10)
+            return 64;
+        if (size >= 16 << 10)
+            return 32;
+        if (size >= 4 << 10)
+            return 16;
+        if (size >= 1 << 10)
+            return 8;
+        return 1;
+    }
+
+    private static <K, V> boolean trySerializeHeaderViaXStream(
+            VanillaChronicleMap<K, ?, ?, V, ?, ?> map, ObjectOutputStream oos) throws IOException {
+        Class<?> xStreamClass;
+        try {
+            xStreamClass =
+                    Class.forName("net.openhft.xstream.MapHeaderSerializationXStream");
+        } catch (ClassNotFoundException e) {
+            xStreamClass = null;
+        }
+        if (xStreamClass == null) {
+            LOG.info("xStream not found, use binary ChronicleMap header serialization");
+            return false;
+        }
+        try {
+            oos.writeByte(XML_SERIALIZATION);
+            Method toXML = xStreamClass.getMethod("toXML", Object.class, OutputStream.class);
+            toXML.invoke(xStreamClass.newInstance(), map, oos);
+            return true;
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException |
+                InstantiationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static Object deserializeHeaderViaXStream(ObjectInputStream ois) {
+        try {
+            Class<?> xStreamClass =
+                    Class.forName("net.openhft.xstream.MapHeaderSerializationXStream");
+            Method fromXML = xStreamClass.getMethod("fromXML", InputStream.class);
+            return fromXML.invoke(xStreamClass.newInstance(), ois);
+        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
+                IllegalAccessException | InstantiationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
     public ChronicleMapBuilder<K, V> pushTo(InetSocketAddress... addresses) {
         this.pushToAddresses = addresses;
         return this;
@@ -243,7 +325,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
 
     /**
      * {@inheritDoc}
-     *
+     * <p>
      * <p>Example: if keys in your map(s) are English words in {@link String} form, average English
      * word length is 5.1, configure average key size of 6: <pre>{@code
      * ChronicleMap<String, LongValue> wordFrequencies = ChronicleMapBuilder
@@ -272,7 +354,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
 
     /**
      * {@inheritDoc}
-     *
+     * <p>
      * <p>For example, if your keys are Git commit hashes:<pre>{@code
      * Map<byte[], String> gitCommitMessagesByHash =
      *     ChronicleMapBuilder.of(byte[].class, String.class)
@@ -297,14 +379,14 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
      * Configures the average number of bytes, taken by serialized form of values, put into maps,
      * created by this builder. If value size is always the same, call {@link
      * #constantValueSizeBySample(Object)} method instead of this one.
-     *
+     * <p>
      * <p>{@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
      * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
      * that, however, might result to quite high internal fragmentation, i. e. losses because only
      * integral number of chunks could be allocated for the entry. If you want to avoid this, you
      * should manually configure the actual chunk size in addition to this average value size
      * configuration, which is anyway needed.
-     *
+     * <p>
      * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and shouldn't be specified by user.
      *
@@ -324,28 +406,14 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return this;
     }
 
-    private static void checkAverageSize(double averageSize, String role) {
-        if (averageSize <= 0 || Double.isNaN(averageSize) ||
-                Double.isInfinite(averageSize)) {
-            throw new IllegalArgumentException("Average " + role + " size must be a positive, " +
-                    "finite number");
-        }
-    }
-
-    private static void checkSizeIsNotStaticallyKnown(SerializationBuilder builder) {
-        if (builder.sizeIsStaticallyKnown)
-            throw new IllegalStateException("Size of type " + builder.eClass +
-                    " is statically known and shouldn't be specified manually");
-    }
-
     /**
      * Configures the constant number of bytes, taken by serialized form of values, put into maps,
      * created by this builder. This is done by providing the {@code sampleValue}, all values should
      * take the same number of bytes in serialized form, as this sample object.
-     *
+     * <p>
      * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and this method shouldn't be called.
-     *
+     * <p>
      * <p>If value size varies, method {@link #averageValueSize(double)} should be called instead of
      * this one.
      *
@@ -392,16 +460,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
             throw new IllegalArgumentException("Chunk size must be positive");
         this.actualChunkSize = actualChunkSize;
         return this;
-    }
-
-    static class EntrySizeInfo {
-        final double averageEntrySize;
-        final int worstAlignment;
-
-        public EntrySizeInfo(double averageEntrySize, int worstAlignment) {
-            this.averageEntrySize = averageEntrySize;
-            this.worstAlignment = worstAlignment;
-        }
     }
 
     private EntrySizeInfo entrySizeInfo(boolean replicated) {
@@ -467,20 +525,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return keyBuilder.constantSizeMarshaller();
     }
 
-    private static double averageSizeEncodingSize(
-            SerializationBuilder builder, double averageSize) {
-        SizeMarshaller sizeMarshaller = builder.sizeMarshaller();
-        if (averageSize == round(averageSize))
-            return sizeMarshaller.sizeEncodingSize(round(averageSize));
-        long lower = (long) averageSize;
-        long upper = lower + 1;
-        int lowerEncodingSize = sizeMarshaller.sizeEncodingSize(lower);
-        int upperEncodingSize = sizeMarshaller.sizeEncodingSize(upper);
-        if (lowerEncodingSize == upperEncodingSize)
-            return lowerEncodingSize;
-        return lower * (upper - averageSize) + upper * (averageSize - lower);
-    }
-
     private int worstAlignmentAssumingChunkSize(
             long constantSizeBeforeAlignment, int chunkSize) {
         Alignment valueAlignment = valueAlignment();
@@ -500,11 +544,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
 
     int worstAlignment(boolean replicated) {
         return entrySizeInfo(replicated).worstAlignment;
-    }
-
-    static int greatestCommonDivisor(int a, int b) {
-        if (b == 0) return a;
-        return greatestCommonDivisor(b, a % b);
     }
 
     long chunkSize(boolean replicated) {
@@ -535,10 +574,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return (entrySizeInfo(replicated).averageEntrySize + chunkSize - 1) / chunkSize;
     }
 
-    private static int maxDefaultChunksPerAverageEntry(boolean replicated) {
-        return replicated ? 4 : 8;
-    }
-
     @Override
     public ChronicleMapBuilder<K, V> maxChunksPerEntry(int maxChunksPerEntry) {
         if (maxChunksPerEntry < 1)
@@ -565,14 +600,14 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     /**
      * Configures alignment strategy of address in memory of entries and independently of address in
      * memory of values within entries in ChronicleMaps, created by this builder.
-     *
+     * <p>
      * <p>Useful when values of the map are updated intensively, particularly fields with volatile
      * access, because it doesn't work well if the value crosses cache lines. Also, on some
      * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
-     *
+     * <p>
      * <p>If values couldn't reference off-heap memory (i. e. it is not {@link Byteable} or "data
      * value generated"), alignment configuration makes no sense and forbidden.
-     *
+     * <p>
      * <p>Default is {@link Alignment#NO_ALIGNMENT} if values couldn't reference off-heap memory,
      * otherwise chosen heuristically (configure explicitly for being sure and to compare
      * performance in your case).
@@ -739,22 +774,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
                 : averageValueSize >= 1000
                 ? segmentsForEntries * 2
                 : segmentsForEntries;
-    }
-
-    private static int estimateSegmentsForEntries(long size) {
-        if (size > 200 << 20)
-            return 256;
-        if (size >= 1 << 20)
-            return 128;
-        if (size >= 128 << 10)
-            return 64;
-        if (size >= 16 << 10)
-            return 32;
-        if (size >= 4 << 10)
-            return 16;
-        if (size >= 1 << 10)
-            return 8;
-        return 1;
     }
 
     @Override
@@ -1310,42 +1329,6 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         return establishReplication(map, singleHashReplication, channel);
     }
 
-    private static <K, V> boolean trySerializeHeaderViaXStream(
-            VanillaChronicleMap<K, ?, ?, V, ?, ?> map, ObjectOutputStream oos) throws IOException {
-        Class<?> xStreamClass;
-        try {
-            xStreamClass =
-                    Class.forName("net.openhft.xstream.MapHeaderSerializationXStream");
-        } catch (ClassNotFoundException e) {
-            xStreamClass = null;
-        }
-        if (xStreamClass == null) {
-            LOG.info("xStream not found, use binary ChronicleMap header serialization");
-            return false;
-        }
-        try {
-            oos.writeByte(XML_SERIALIZATION);
-            Method toXML = xStreamClass.getMethod("toXML", Object.class, OutputStream.class);
-            toXML.invoke(xStreamClass.newInstance(), map, oos);
-            return true;
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException |
-                InstantiationException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    private static Object deserializeHeaderViaXStream(ObjectInputStream ois) {
-        try {
-            Class<?> xStreamClass =
-                    Class.forName("net.openhft.xstream.MapHeaderSerializationXStream");
-            Method fromXML = xStreamClass.getMethod("fromXML", InputStream.class);
-            return fromXML.invoke(xStreamClass.newInstance(), ois);
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-                IllegalAccessException | InstantiationException e) {
-            throw new AssertionError(e);
-        }
-    }
-
     ChronicleMap<K, V> createWithoutFile(
             SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) {
         try {
@@ -1390,8 +1373,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     private VanillaChronicleMap<K, ?, ?, V, ?, ?> newMap(
-            SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel)
-            throws IOException {
+            SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) {
         boolean replicated = singleHashReplication != null || channel != null;
         preMapConstruction(replicated);
         if (replicated) {
@@ -1484,6 +1466,16 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         // key and value serialization buffers each x64 of expected entry size..
         return (int) Math.min(Math.max(2L, entries() >> 10),
                 Math.min(64, maxChunksPerEntry()));
+    }
+
+    static class EntrySizeInfo {
+        final double averageEntrySize;
+        final int worstAlignment;
+
+        public EntrySizeInfo(double averageEntrySize, int worstAlignment) {
+            this.averageEntrySize = averageEntrySize;
+            this.worstAlignment = worstAlignment;
+        }
     }
 }
 

@@ -46,6 +46,13 @@ import static net.openhft.chronicle.map.DiscoveryNodeBytesMarshallable.ProposedN
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.BOOTSTRAP_BYTES;
 import static net.openhft.chronicle.map.NodeDiscoveryBroadcaster.LOG;
 
+interface NodeDiscoveryEventListener {
+    /**
+     * called when we have received a UDP message, this is called after the message has been parsed
+     */
+    void onRemoteNodeEvent(KnownNodes remoteNode, ConcurrentExpiryMap<AddressAndPort, ProposedNodes> proposedIdentifiersWithHost);
+}
+
 /**
  * @author Rob Austin.
  *
@@ -56,10 +63,6 @@ class NodeDiscovery {
     public static final int DEFAULT_UDP_BROADCAST_PORT = 8129;
     public static final short DEFAULT_TCP_PORT = (short) 8123;
     public static final int SERIALIZED_ENTRY_SIZE = 1024;
-
-    private final AddressAndPort ourAddressAndPort;
-    private final UdpTransportConfig udpConfig;
-
     public static final InetAddress IP_MULIT_CAST_GROUP;
 
     static {
@@ -72,6 +75,8 @@ class NodeDiscovery {
         IP_MULIT_CAST_GROUP = mask;
     }
 
+    private final AddressAndPort ourAddressAndPort;
+    private final UdpTransportConfig udpConfig;
     private final DiscoveryNodeBytesMarshallable discoveryNodeBytesMarshallable;
     private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListenerAtomicReference =
             new AtomicReference<NodeDiscoveryEventListener>();
@@ -98,6 +103,63 @@ class NodeDiscovery {
                 = new NodeDiscoveryBroadcaster(udpConfig, SERIALIZED_ENTRY_SIZE, discoveryNodeBytesMarshallable);
 
         discoveryNodeBytesMarshallable.setModificationNotifier(nodeDiscoveryBroadcaster);
+    }
+
+    private static Collection<InetSocketAddress> toInetSocketCollection(Set<AddressAndPort> source)
+            throws UnknownHostException {
+
+        // make a safe copy
+        final HashSet<AddressAndPort> addressAndPorts = new HashSet<AddressAndPort>(source);
+
+        if (addressAndPorts.isEmpty())
+            return Collections.emptyList();
+
+        ArrayList<InetSocketAddress> addresses =
+                new ArrayList<InetSocketAddress>(addressAndPorts.size());
+
+        for (final AddressAndPort addressAndPort : addressAndPorts) {
+            addresses.add(new InetSocketAddress(InetAddress.getByAddress(addressAndPort.address())
+                    .getHostAddress(), addressAndPort.port()));
+        }
+        return addresses;
+    }
+
+    static byte proposeRandomUnusedIdentifier(final DirectBitSet knownIdentifiers,
+                                              boolean isFirstTime) throws UnknownHostException {
+        byte possible;
+
+        // the first time, rather than choosing a random number, we will choose the last value of the IP
+        // address as our random number, ( or at least something that is based upon it)
+        if (isFirstTime) {
+            byte[] address = InetAddress.getLocalHost().getAddress();
+            int lastAddress = address[address.length - 1];
+            if (lastAddress > 127)
+                lastAddress = lastAddress - 127;
+            if (lastAddress > 127)
+                lastAddress = lastAddress - 127;
+
+            possible = (byte) lastAddress;
+        } else
+            possible = (byte) (Math.random() * 128);
+
+        int count = 0;
+        for (; ; ) {
+            if (knownIdentifiers.setIfClear(possible)) {
+                return possible;
+            }
+
+            count++;
+
+            if (count == 128) {
+                throw new IllegalStateException("The grid is full, its not possible for any more nodes to " +
+                        "going the grid.");
+            }
+
+            if (possible == Byte.MAX_VALUE)
+                possible = 0;
+            else
+                possible++;
+        }
     }
 
     public synchronized ReplicationHubFindByName mapByName() throws
@@ -250,25 +312,6 @@ class NodeDiscovery {
         return new ReplicationHubFindByName(replicationHub);
     }
 
-    private static Collection<InetSocketAddress> toInetSocketCollection(Set<AddressAndPort> source)
-            throws UnknownHostException {
-
-        // make a safe copy
-        final HashSet<AddressAndPort> addressAndPorts = new HashSet<AddressAndPort>(source);
-
-        if (addressAndPorts.isEmpty())
-            return Collections.emptyList();
-
-        ArrayList<InetSocketAddress> addresses =
-                new ArrayList<InetSocketAddress>(addressAndPorts.size());
-
-        for (final AddressAndPort addressAndPort : addressAndPorts) {
-            addresses.add(new InetSocketAddress(InetAddress.getByAddress(addressAndPort.address())
-                    .getHostAddress(), addressAndPort.port()));
-        }
-        return addresses;
-    }
-
     /**
      * bitwise OR's the two bit sets or put another way, merges the source bitset into the
      * destination bitset and returns the destination
@@ -292,44 +335,6 @@ class NodeDiscovery {
         return destination;
     }
 
-    static byte proposeRandomUnusedIdentifier(final DirectBitSet knownIdentifiers,
-                                              boolean isFirstTime) throws UnknownHostException {
-        byte possible;
-
-        // the first time, rather than choosing a random number, we will choose the last value of the IP
-        // address as our random number, ( or at least something that is based upon it)
-        if (isFirstTime) {
-            byte[] address = InetAddress.getLocalHost().getAddress();
-            int lastAddress = address[address.length - 1];
-            if (lastAddress > 127)
-                lastAddress = lastAddress - 127;
-            if (lastAddress > 127)
-                lastAddress = lastAddress - 127;
-
-            possible = (byte) lastAddress;
-        } else
-            possible = (byte) (Math.random() * 128);
-
-        int count = 0;
-        for (; ; ) {
-            if (knownIdentifiers.setIfClear(possible)) {
-                return possible;
-            }
-
-            count++;
-
-            if (count == 128) {
-                throw new IllegalStateException("The grid is full, its not possible for any more nodes to " +
-                        "going the grid.");
-            }
-
-            if (possible == Byte.MAX_VALUE)
-                possible = 0;
-            else
-                possible++;
-        }
-    }
-
 }
 
 /**
@@ -341,24 +346,14 @@ class NodeDiscovery {
 class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
 
     public static final Logger LOG = LoggerFactory.getLogger(NodeDiscoveryBroadcaster.class.getName());
-
-    private static final byte UNUSED = (byte) -1;
-
     static final ByteBufferBytes BOOTSTRAP_BYTES;
+    private static final byte UNUSED = (byte) -1;
 
     static {
         final String BOOTSTRAP = "BOOTSTRAP";
         BOOTSTRAP_BYTES = new ByteBufferBytes(ByteBuffer.allocate(2 + BOOTSTRAP.length()));
         BOOTSTRAP_BYTES.write((short) BOOTSTRAP.length());
         BOOTSTRAP_BYTES.append(BOOTSTRAP);
-    }
-
-    static String toString(DirectBitSet bitSet) {
-        final StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < bitSet.size(); i++) {
-            builder.append(bitSet.get(i) ? '1' : '0');
-        }
-        return builder.toString();
     }
 
     /**
@@ -369,8 +364,7 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
     NodeDiscoveryBroadcaster(
             final UdpTransportConfig replicationConfig,
             final int serializedEntrySize,
-            final BytesMarshallable externalizable)
-            throws IOException {
+            final BytesMarshallable externalizable) throws IOException {
 
         super(replicationConfig, UNUSED);
 
@@ -381,6 +375,14 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
         setWriter(writer);
 
         start();
+    }
+
+    static String toString(DirectBitSet bitSet) {
+        final StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < bitSet.size(); i++) {
+            builder.append(bitSet.get(i) ? '1' : '0');
+        }
+        return builder.toString();
     }
 
     static class UdpSocketChannelEntryReader implements EntryReader {
@@ -411,8 +413,7 @@ class NodeDiscoveryBroadcaster extends UdpChannelReplicator {
          * @throws IOException
          * @throws InterruptedException
          */
-        public void readAll(@NotNull final DatagramChannel socketChannel) throws IOException,
-                InterruptedException {
+        public void readAll(@NotNull final DatagramChannel socketChannel) throws IOException {
 
             out.clear();
             in.clear();
@@ -574,6 +575,8 @@ class KnownNodes implements BytesMarshallable {
 }
 
 class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
+    final static int INADDRSZ = 16;
+    final static int INT16SZ = 2;
     private byte[] address;
     private short port;
 
@@ -583,6 +586,23 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
     }
 
     public AddressAndPort() {
+    }
+
+    static String numericToTextFormat(byte[] src) {
+        if (src.length == 4) {
+            return (src[0] & 0xff) + "." + (src[1] & 0xff) + "." + (src[2] & 0xff) + "." + (src[3] & 0xff);
+        }
+
+        StringBuilder sb = new StringBuilder(39);
+        for (int i = 0; i < (INADDRSZ / INT16SZ); i++) {
+            sb.append(Integer.toHexString(((src[i << 1] << 8) & 0xff00)
+                    | (src[(i << 1) + 1] & 0xff)));
+            if (i < (INADDRSZ / INT16SZ) - 1) {
+                sb.append(":");
+            }
+        }
+
+        return sb.toString();
     }
 
     public byte[] getAddress() {
@@ -600,7 +620,6 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
     public short port() {
         return port;
     }
-
 
     @Override
     public boolean equals(Object o) {
@@ -640,26 +659,6 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
                 '}';
     }
 
-    final static int INADDRSZ = 16;
-    final static int INT16SZ = 2;
-
-    static String numericToTextFormat(byte[] src) {
-        if (src.length == 4) {
-            return (src[0] & 0xff) + "." + (src[1] & 0xff) + "." + (src[2] & 0xff) + "." + (src[3] & 0xff);
-        }
-
-        StringBuilder sb = new StringBuilder(39);
-        for (int i = 0; i < (INADDRSZ / INT16SZ); i++) {
-            sb.append(Integer.toHexString(((src[i << 1] << 8) & 0xff00)
-                    | (src[(i << 1) + 1] & 0xff)));
-            if (i < (INADDRSZ / INT16SZ) - 1) {
-                sb.append(":");
-            }
-        }
-
-        return sb.toString();
-    }
-
     @Override
     public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
         short len = in.readShort();
@@ -683,19 +682,26 @@ class AddressAndPort implements Comparable<AddressAndPort>, BytesMarshallable {
 
 class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
-    private AddressAndPort sourceAddressAndPort = new AddressAndPort();
+    final ConcurrentExpiryMap<AddressAndPort, ProposedNodes> proposedIdentifiersWithHost = new
+            ConcurrentExpiryMap<AddressAndPort, ProposedNodes>(AddressAndPort.class,
+            ProposedNodes.class);
     private final KnownNodes remoteNode;
 
     private final AtomicBoolean bootstrapRequired = new AtomicBoolean();
     private final AtomicReference<NodeDiscoveryEventListener> nodeDiscoveryEventListener;
-
+    Replica.ModificationNotifier modificationNotifier;
+    private AddressAndPort sourceAddressAndPort = new AddressAndPort();
     private ProposedNodes ourProposedIdentifier;
-
-    final ConcurrentExpiryMap<AddressAndPort, ProposedNodes> proposedIdentifiersWithHost = new
-            ConcurrentExpiryMap<AddressAndPort, ProposedNodes>(AddressAndPort.class,
-            ProposedNodes.class);
-
     private AddressAndPort ourAddressAndPort;
+
+    public DiscoveryNodeBytesMarshallable(@NotNull final KnownNodes remoteNode,
+                                          @NotNull final AtomicReference<NodeDiscoveryEventListener>
+                                                  nodeDiscoveryEventListener,
+                                          @NotNull final AddressAndPort ourAddressAndPort) {
+        this.remoteNode = remoteNode;
+        this.nodeDiscoveryEventListener = nodeDiscoveryEventListener;
+        this.ourAddressAndPort = ourAddressAndPort;
+    }
 
     public ProposedNodes getOurProposedIdentifier() {
         return ourProposedIdentifier;
@@ -707,17 +713,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
 
     public void setModificationNotifier(Replica.ModificationNotifier modificationNotifier) {
         this.modificationNotifier = modificationNotifier;
-    }
-
-    Replica.ModificationNotifier modificationNotifier;
-
-    public DiscoveryNodeBytesMarshallable(@NotNull final KnownNodes remoteNode,
-                                          @NotNull final AtomicReference<NodeDiscoveryEventListener>
-                                                  nodeDiscoveryEventListener,
-                                          @NotNull final AddressAndPort ourAddressAndPort) {
-        this.remoteNode = remoteNode;
-        this.nodeDiscoveryEventListener = nodeDiscoveryEventListener;
-        this.ourAddressAndPort = ourAddressAndPort;
     }
 
     public KnownNodes getRemoteNodes() {
@@ -833,6 +828,18 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
             modificationNotifier.onChange();
     }
 
+    /**
+     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the
+     * host:port and perhaps even proposed identifier of the node that sent it.
+     *
+     * @param proposedNodes
+     */
+    public void sendBootStrap(ProposedNodes proposedNodes) {
+        setOurProposedIdentifier(proposedNodes);
+        bootstrapRequired.set(true);
+        onChange();
+    }
+
     static class ProposedNodes implements BytesMarshallable {
 
         private byte identifier;
@@ -842,15 +849,15 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         public ProposedNodes() {
         }
 
-        public byte identifier() {
-            return identifier;
-        }
-
         ProposedNodes(@NotNull final AddressAndPort addressAndPort,
                       byte identifier) {
             this.addressAndPort = addressAndPort;
             this.identifier = identifier;
             this.timestamp = System.currentTimeMillis();
+        }
+
+        public byte identifier() {
+            return identifier;
         }
 
         AddressAndPort addressAndPort() {
@@ -901,25 +908,6 @@ class DiscoveryNodeBytesMarshallable implements BytesMarshallable {
         }
     }
 
-    /**
-     * sends a bootstrap message to the other nodes in the grid, the bootstrap message contains the
-     * host:port and perhaps even proposed identifier of the node that sent it.
-     *
-     * @param proposedNodes
-     */
-    public void sendBootStrap(ProposedNodes proposedNodes) {
-        setOurProposedIdentifier(proposedNodes);
-        bootstrapRequired.set(true);
-        onChange();
-    }
-
-}
-
-interface NodeDiscoveryEventListener {
-    /**
-     * called when we have received a UDP message, this is called after the message has been parsed
-     */
-    void onRemoteNodeEvent(KnownNodes remoteNode, ConcurrentExpiryMap<AddressAndPort, ProposedNodes> proposedIdentifiersWithHost);
 }
 
 class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallable> implements BytesMarshallable {
@@ -928,98 +916,12 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
             ConcurrentHashMap<K, V>();
     private final Class<K> kClass;
     private final Class<V> vClass;
+    // this is used for expiry
+    private final Queue<Map.Entry<K, W<V>>> queue = new ConcurrentLinkedQueue<Map.Entry<K, W<V>>>();
 
     ConcurrentExpiryMap(Class<K> kClass, Class<V> vClass) {
         this.kClass = kClass;
         this.vClass = vClass;
-    }
-
-    @Override
-    public String toString() {
-        return "ConcurrentExpiryMap{" + map + '}';
-    }
-
-    @Override
-    public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
-
-        short size = in.readShort();
-        try {
-            for (int i = 0; i < size; i++) {
-                final K k = kClass.newInstance();
-                k.readMarshallable(in);
-
-                final V v = vClass.newInstance();
-                v.readMarshallable(in);
-
-                map.put(k, v);
-            }
-        } catch (Exception e) {
-            LOG.error("", e);
-        }
-    }
-
-    @Override
-    public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
-        final Map<K, V> safeCopy = new HashMap<K, V>(map);
-        out.writeShort(safeCopy.size());
-        for (Map.Entry<K, V> entry : safeCopy.entrySet()) {
-            entry.getKey().writeMarshallable(out);
-            entry.getValue().writeMarshallable(out);
-        }
-    }
-
-    class W<V> {
-        final long timestamp;
-        final V v;
-
-        W(V v) {
-            this.v = v;
-            this.timestamp = System.currentTimeMillis();
-        }
-    }
-
-    void put(final K k, final V v) {
-        map.put(k, v);
-        final W w = new W(v);
-        queue.add(new Map.Entry<K, W<V>>() {
-            @Override
-            public K getKey() {
-                return k;
-            }
-
-            @Override
-            public W<V> getValue() {
-                return w;
-            }
-
-            @Override
-            public W<V> setValue(W<V> value) {
-                throw new UnsupportedOperationException();
-            }
-        });
-    }
-
-    // this is used for expiry
-    private final Queue<Map.Entry<K, W<V>>> queue = new ConcurrentLinkedQueue<Map.Entry<K, W<V>>>();
-
-    java.util.Collection<V> values() {
-        return map.values();
-    }
-
-    void expireEntries(long timeOlderThan) {
-        for (; ; ) {
-            final Map.Entry<K, W<V>> e = this.queue.peek();
-
-            if (e == null)
-                break;
-
-            if (e.getValue().timestamp < timeOlderThan) {
-                // only remote it if it has not changed
-                map.remove(e.getKey(), e.getValue().v);
-            }
-
-            this.queue.poll();
-        }
     }
 
     public static void main(String... args) {
@@ -1047,11 +949,11 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
     /**
      * private NetworkInterface defaultNetworkInterface() throws SocketException { NetworkInterface
      * networkInterface = null
-     *
+     * <p>
      * for (String suggestedName : new String[]{"en0", "eth0"}) { networkInterface =
      * NetworkInterface.getByName(suggestedName); if (networkInterface != null) break; } return
      * networkInterface; }
-     *
+     * <p>
      * /**
      *
      * @return the default network interface, or
@@ -1090,5 +992,90 @@ class ConcurrentExpiryMap<K extends BytesMarshallable, V extends BytesMarshallab
             throw new IllegalStateException();
 
         return inetAddress;
+    }
+
+    @Override
+    public String toString() {
+        return "ConcurrentExpiryMap{" + map + '}';
+    }
+
+    @Override
+    public void readMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes in) throws IllegalStateException {
+
+        short size = in.readShort();
+        try {
+            for (int i = 0; i < size; i++) {
+                final K k = kClass.newInstance();
+                k.readMarshallable(in);
+
+                final V v = vClass.newInstance();
+                v.readMarshallable(in);
+
+                map.put(k, v);
+            }
+        } catch (Exception e) {
+            LOG.error("", e);
+        }
+    }
+
+    @Override
+    public void writeMarshallable(@net.openhft.lang.model.constraints.NotNull Bytes out) {
+        final Map<K, V> safeCopy = new HashMap<K, V>(map);
+        out.writeShort(safeCopy.size());
+        for (Map.Entry<K, V> entry : safeCopy.entrySet()) {
+            entry.getKey().writeMarshallable(out);
+            entry.getValue().writeMarshallable(out);
+        }
+    }
+
+    void put(final K k, final V v) {
+        map.put(k, v);
+        final W w = new W(v);
+        queue.add(new Map.Entry<K, W<V>>() {
+            @Override
+            public K getKey() {
+                return k;
+            }
+
+            @Override
+            public W<V> getValue() {
+                return w;
+            }
+
+            @Override
+            public W<V> setValue(W<V> value) {
+                throw new UnsupportedOperationException();
+            }
+        });
+    }
+
+    java.util.Collection<V> values() {
+        return map.values();
+    }
+
+    void expireEntries(long timeOlderThan) {
+        for (; ; ) {
+            final Map.Entry<K, W<V>> e = this.queue.peek();
+
+            if (e == null)
+                break;
+
+            if (e.getValue().timestamp < timeOlderThan) {
+                // only remote it if it has not changed
+                map.remove(e.getKey(), e.getValue().v);
+            }
+
+            this.queue.poll();
+        }
+    }
+
+    class W<V> {
+        final long timestamp;
+        final V v;
+
+        W(V v) {
+            this.v = v;
+            this.timestamp = System.currentTimeMillis();
+        }
     }
 }

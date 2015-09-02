@@ -20,7 +20,6 @@ import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 
-import java.io.ObjectStreamException;
 import java.io.Serializable;
 
 /**
@@ -65,7 +64,7 @@ public abstract class TimeProvider implements Serializable {
             return getClass().getSimpleName();
         }
 
-        private Object readResolve() throws ObjectStreamException {
+        private Object readResolve() {
             return SYSTEM;
         }
     }

@@ -99,25 +99,22 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
     // for file, jdbc and UDP replication
     public static final int RESERVED_MOD_ITER = 8;
     public static final int ADDITIONAL_ENTRY_BYTES = 10;
+    public static final int SIZE_OF_BOOTSTRAP_TIME_STAMP = 8;
     private static final long serialVersionUID = 0L;
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
     private static final long LAST_UPDATED_HEADER_SIZE = 128L * 8L;
-    public static final int SIZE_OF_BOOTSTRAP_TIME_STAMP = 8;
     private final TimeProvider timeProvider;
     private final byte localIdentifier;
-    transient Set<Closeable> closeables;
-    private transient Bytes identifierUpdatedBytes;
-
-    private transient ATSDirectBitSet modIterSet;
     private final AtomicReferenceArray<ModificationIterator> modificationIterators =
             new AtomicReferenceArray<ModificationIterator>(127 + RESERVED_MOD_ITER);
-
+    transient Set<Closeable> closeables;
+    private transient Bytes identifierUpdatedBytes;
+    private transient ATSDirectBitSet modIterSet;
     private transient long startOfModificationIterators;
     private boolean bootstrapOnlyLocalEntries;
 
     public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder,
-                                  AbstractReplication replication)
-            throws IOException {
+                                  AbstractReplication replication) {
         super(builder);
         this.timeProvider = builder.timeProvider();
 
@@ -127,6 +124,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
         }
+    }
+
+    private static void writeTo(Bytes destination, Bytes source) {
+
+        while (destination.remaining() > 0 && source.remaining() > 0) {
+            destination.writeByte(source.readByte());
+        }
+
     }
 
     private int assignedModIterBitSetSizeInBytes() {
@@ -310,7 +315,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
     }
 
-
     @Override
     <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
             RV, VB extends RV, VBI, MVBI extends MetaBytesInterop<RV, ? super VBI>>
@@ -412,14 +416,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
     }
 
-    private static void writeTo(Bytes destination, Bytes source) {
-
-        while (destination.remaining() > 0 && source.remaining() > 0) {
-            destination.writeByte(source.readByte());
-        }
-
-    }
-
     @Override
     public void remove(final Bytes key,
                        final byte remoteIdentifier,
@@ -516,7 +512,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             }
 
             @Override
-            public void dirtyEntries(final long fromTimeStamp) throws InterruptedException {
+            public void dirtyEntries(final long fromTimeStamp) {
                 modificationIterator.dirtyEntries(fromTimeStamp);
             }
 
@@ -868,7 +864,15 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
     }
 
+    @Override
+    void shouldNotBeCalledFromReplicatedChronicleMap(String method) {
+        throw new AssertionError(method + "() method should not be called by " +
+                "ReplicatedChronicleMap instance");
+    }
+
     class Segment extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment {
+
+        final MultiStoreBytes timestampBytes = new MultiStoreBytes();
 
         Segment(Bytes segmentHeader, NativeBytes bytes, int index) {
             super(segmentHeader, bytes, index);
@@ -981,7 +985,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             entryCreated(lock);
             return result;
         }
-
 
         /**
          * called from a remote node as part of replication
@@ -1588,7 +1591,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
          */
         public void dirtyEntries(final long timeStamp,
                                  final EntryModifiableCallback callback,
-                                 final boolean bootstrapOnlyLocalEntries) throws InterruptedException {
+                                 final boolean bootstrapOnlyLocalEntries) {
             readLock(null);
             ThreadLocalCopies copies = SegmentState.getCopies(null);
             try (SegmentState segmentState = SegmentState.get(copies)) {
@@ -1632,9 +1635,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             return new TimestampTrackingEntry(key, value, timestamp);
         }
 
-
-        final MultiStoreBytes timestampBytes = new MultiStoreBytes();
-
         /**
          * it is assumed that when calling this code the segment lock is in place
          *
@@ -1648,12 +1648,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             return entry.readLong();
         }
 
-    }
-
-    @Override
-    void shouldNotBeCalledFromReplicatedChronicleMap(String method) {
-        throw new AssertionError(method + "() method should not be called by " +
-                "ReplicatedChronicleMap instance");
     }
 
     class TimestampTrackingEntry extends SimpleEntry<K, V> {
@@ -1744,25 +1738,21 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
      */
     class ModificationIterator implements Replica.ModificationIterator {
 
-        private ModificationNotifier modificationNotifier;
         private final ATSDirectBitSet changes;
         private final int segmentIndexShift;
         private final long posMask;
-
+        private final EntryModifiableCallback entryModifiableCallback =
+                new EntryModifiableCallback();
+        // todo get rid of this
+        private final MultiStoreBytes tmpBytes = new MultiStoreBytes();
+        private ModificationNotifier modificationNotifier;
         // when a bootstrap is send this is the time stamp that the client will bootstrap up to
         // if it is set as ZERO then the onPut() will set it to the current time, once the
         // consumer has cycled through the bit set the timestamp will be set back to zero.
         private AtomicLong bootStrapTimeStamp = new AtomicLong();
         private long lastBootStrapTimeStamp = currentTime();
-
-        private final EntryModifiableCallback entryModifiableCallback =
-                new EntryModifiableCallback();
-
         // records the current position of the cursor in the bitset
         private volatile long position = -1L;
-
-        // todo get rid of this
-        private final MultiStoreBytes tmpBytes = new MultiStoreBytes();
 
         /**
          * @param bytes                the back the bitset, used to mark which entries have changed
@@ -1777,10 +1767,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             changes = new ATSDirectBitSet(bytes);
         }
 
-        public void setModificationNotifier(ModificationNotifier modificationNotifier) {
-            this.modificationNotifier = modificationNotifier;
-        }
-
         public ModificationIterator(@NotNull final Bytes bytes) {
             long bitsPerSegment = bitsPerSegmentInModIterBitSet();
             segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
@@ -1788,6 +1774,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             changes = new ATSDirectBitSet(bytes);
         }
 
+        public void setModificationNotifier(ModificationNotifier modificationNotifier) {
+            this.modificationNotifier = modificationNotifier;
+        }
 
         /**
          * used to merge multiple segments and positions into a single index used by the bit map
@@ -1931,7 +1920,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         @Override
-        public void dirtyEntries(long fromTimeStamp) throws InterruptedException {
+        public void dirtyEntries(long fromTimeStamp) {
             // iterate over all the segments and mark bit in the modification iterator
             // that correspond to entries with an older timestamp
             for (final Segment segment : (Segment[]) segments) {

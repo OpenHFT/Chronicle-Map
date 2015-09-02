@@ -20,8 +20,6 @@ import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.lang.io.AbstractBytes;
 import net.openhft.lang.io.Bytes;
 
-import java.io.ObjectStreamException;
-
 public final class CharSequenceWriter<CS extends CharSequence> implements BytesWriter<CS> {
     private static final long serialVersionUID = 0L;
     private static final CharSequenceWriter INSTANCE = new CharSequenceWriter();
@@ -43,7 +41,7 @@ public final class CharSequenceWriter<CS extends CharSequence> implements BytesW
         AbstractBytes.writeUTF0(bytes, s, s.length());
     }
 
-    private Object readResolve() throws ObjectStreamException {
+    private Object readResolve() {
         return INSTANCE;
     }
 }

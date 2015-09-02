@@ -137,7 +137,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 }
             };
 
-    public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
+    public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) {
 
         SerializationBuilder<K> keyBuilder = builder.keyBuilder;
         kClass = keyBuilder.eClass;
@@ -233,6 +233,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         }
     }
 
+    static void segmentStateNotNullImpliesCopiesNotNull(
+            @Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState) {
+        assert copies != null || segmentState == null; // segmentState != null -> copies != null
+    }
+
+    static void expectedValueNotNullImpliesBooleanResult(
+            @Nullable Object expectedValue, boolean booleanResult) {
+        assert booleanResult || expectedValue == null;
+    }
+
     @Override
     public K readKey(Bytes entry, long keyPos) {
         long initialPos = entry.position();
@@ -258,16 +268,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         } finally {
             entry.position(initialPos);
         }
-    }
-
-    static void segmentStateNotNullImpliesCopiesNotNull(
-            @Nullable ThreadLocalCopies copies, @Nullable SegmentState segmentState) {
-        assert copies != null || segmentState == null; // segmentState != null -> copies != null
-    }
-
-    static void expectedValueNotNullImpliesBooleanResult(
-            @Nullable Object expectedValue, boolean booleanResult) {
-        assert booleanResult || expectedValue == null;
     }
 
     /**
@@ -326,7 +326,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return Segment.class;
     }
 
-    final long createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
+    final long createMappedStoreAndSegments(BytesStore bytesStore) {
 
         this.ms = bytesStore;
         onHeaderCreated();
@@ -614,31 +614,19 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     @SuppressWarnings("unchecked")
     public final V get(Object key) {
         checkKey(key);
-        try {
-            return lookupUsing((K) key, null, false);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        return lookupUsing((K) key, null, false);
     }
 
     @Override
     public final V getUsing(K key, V usingValue) {
         checkKey(key);
-        try {
-            return lookupUsing(key, usingValue, false);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        return lookupUsing(key, usingValue, false);
     }
 
     @Override
     public final V acquireUsing(@NotNull K key, V usingValue) {
         checkKey(key);
-        try {
-            return lookupUsing(key, usingValue, true);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        return lookupUsing(key, usingValue, true);
     }
 
     final void getBytes(Bytes key, TcpReplicator.TcpSocketChannelEntryWriter output) {
@@ -646,18 +634,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         SegmentState segmentState = SegmentState.get(copies);
         ReadValueToOutputBytes readValueToOutputBytes = segmentState.readValueToOutputBytes;
         readValueToOutputBytes.reuse(valueSizeMarshaller, output);
-        try {
-            lookupUsing(copies, segmentState,
-                    DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
-                    BytesBytesInterop.INSTANCE, key, keySizeMarshaller.readSize(key),
-                    keyBytesToInstance, readValueToOutputBytes, null, outputValueBytesToInstance,
-                    false, null);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        lookupUsing(copies, segmentState,
+                DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
+                BytesBytesInterop.INSTANCE, key, keySizeMarshaller.readSize(key),
+                keyBytesToInstance, readValueToOutputBytes, null, outputValueBytesToInstance,
+                false, null);
     }
 
-    private V lookupUsing(K key, V usingValue, boolean create) throws InterruptedException {
+    private V lookupUsing(K key, V usingValue, boolean create) {
         ThreadLocalCopies copies = keyInteropProvider.getCopies(null);
         KI keyInterop = keyInteropProvider.get(copies, originalKeyInterop);
         copies = metaKeyInteropProvider.getCopies(copies);
@@ -673,7 +657,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                    MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                    InstanceOrBytesToInstance<KB, K> toKey,
                    ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
-                   boolean create, final MutableLockedEntry lock) throws InterruptedException {
+                   boolean create, final MutableLockedEntry lock) {
         long hash = metaKeyInterop.hash(keyInterop, key);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
@@ -688,8 +672,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         try (ReadContext<K, V> entry = lookupUsing(key, null,
                 false, false, LockType.READ_LOCK)) {
             return entry.present() ? function.apply(entry.value()) : null;
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -717,8 +699,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 usingSB.append((CharSequence) result);
             }
             return result;
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
 
     }
@@ -733,8 +713,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             V result = unaryOperator.update(entry.value());
             ((MutableLockedEntry) entry).value(result);
             return result;
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -775,25 +753,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     @NotNull
     @Override
     public final WriteContext<K, V> acquireUsingLocked(@NotNull K key, @NotNull V usingValue) {
-        try {
-            return lookupUsing(key, usingValue, true, true, LockType.WRITE_LOCK);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        return lookupUsing(key, usingValue, true, true, LockType.WRITE_LOCK);
     }
 
     @NotNull
     @Override
     public final ReadContext<K, V> getUsingLocked(@NotNull K key, @NotNull V usingValue) {
-        try {
-            return lookupUsing(key, usingValue, true, false, LockType.READ_LOCK);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        return lookupUsing(key, usingValue, true, false, LockType.READ_LOCK);
     }
 
     private <T extends Context> T lookupUsing(
-            K key, V usingValue, boolean mustReuseValue, final boolean create, final LockType lockType) throws InterruptedException {
+            K key, V usingValue, boolean mustReuseValue, final boolean create, final LockType lockType) {
         checkKey(key);
 
         ThreadLocalCopies copies = SegmentState.getCopies(null);
@@ -863,15 +833,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         copies = metaKeyInteropProvider.getCopies(copies);
         MKI metaKeyInterop =
                 metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
-        try {
-            return containsKey(copies, metaKeyInterop, keyInterop, key,
-                    metaKeyInterop.size(keyInterop, key));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        return containsKey(copies, metaKeyInterop, keyInterop, key,
+                metaKeyInterop.size(keyInterop, key));
     }
 
-    final boolean containsBytesKey(Bytes key) throws InterruptedException {
+    final boolean containsBytesKey(Bytes key) {
         return containsKey(null,
                 DelegatingMetaBytesInterop.<Bytes, BytesInterop<Bytes>>instance(),
                 BytesBytesInterop.INSTANCE,
@@ -880,7 +846,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>>
     boolean containsKey(ThreadLocalCopies copies,
-                        MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize) throws InterruptedException {
+                        MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize) {
         long hash = metaKeyInterop.hash(keyInterop, key);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
@@ -1167,7 +1133,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     /**
      * For testing
      */
-    final void checkConsistency() throws InterruptedException {
+    final void checkConsistency() {
         for (Segment segment : segments) {
             segment.checkConsistency();
         }
@@ -2037,7 +2003,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                    MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize,
                    InstanceOrBytesToInstance<KB, K> toKey,
                    ReadValue<RV> readValue, RV usingValue, InstanceOrBytesToInstance<RV, V> toValue,
-                   long hash2, boolean create, MutableLockedEntry lock) throws InterruptedException {
+                   long hash2, boolean create, MutableLockedEntry lock) {
             segmentStateNotNullImpliesCopiesNotNull(copies, segmentState);
             if (segmentState == null) {
                 copies = SegmentState.getCopies(copies);
@@ -2634,7 +2600,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         private <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>>
         boolean containsKey(ThreadLocalCopies copies,
-                            MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize, long hash2) throws InterruptedException {
+                            MKBI metaKeyInterop, KBI keyInterop, KB key, long keySize, long hash2) {
             readLock(null);
             copies = SegmentState.getCopies(copies);
             try (SegmentState segmentState = SegmentState.get(copies)) {
@@ -2877,7 +2843,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         /**
          * Check there is no garbage in freeList.
          */
-        private void checkConsistency() throws InterruptedException {
+        private void checkConsistency() {
             readLock(null);
             try (SegmentState segmentState = SegmentState.get(SegmentState.getCopies(null))) {
                 MultiStoreBytes entry = segmentState.tmpBytes;

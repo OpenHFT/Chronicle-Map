@@ -19,19 +19,18 @@ package net.openhft.chronicle.hash.serialization.internal;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.lang.io.Bytes;
 
-import java.io.ObjectStreamException;
-
 public final class DelegatingMetaBytesInterop<E, I extends BytesInterop<E>>
         implements MetaBytesInterop<E, I> {
     private static final long serialVersionUID = 0L;
     private static final DelegatingMetaBytesInterop INSTANCE = new DelegatingMetaBytesInterop();
 
+    private DelegatingMetaBytesInterop() {
+    }
+
     public static <E, I extends BytesInterop<E>>
     DelegatingMetaBytesInterop<E, I> instance() {
         return INSTANCE;
     }
-
-    private DelegatingMetaBytesInterop() {}
 
     @Override
     public long size(I interop, E e) {
@@ -53,7 +52,7 @@ public final class DelegatingMetaBytesInterop<E, I extends BytesInterop<E>>
         interop.write(bytes, e);
     }
 
-    private Object readResolve() throws ObjectStreamException {
+    private Object readResolve() {
         return INSTANCE;
     }
 }

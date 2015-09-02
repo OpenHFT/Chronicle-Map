@@ -58,13 +58,25 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     private final byte[] connectionByte = new byte[1];
     private final ByteBuffer connectionOutBuffer = ByteBuffer.wrap(connectionByte);
     private final String name;
-
+    private final InetSocketAddress remoteAddress;
+    private final long timeoutMs;
+    private final int tcpBufferSize;
+    private final ReentrantLock inBytesLock = new ReentrantLock(true);
+    private final ReentrantLock outBytesLock = new ReentrantLock();
+    @NotNull
+    private final AtomicLong transactionID = new AtomicLong(0);
+    long largestEntrySoFar = 0;
     private ByteBuffer outBuffer;
     private ByteBufferBytes outBytes;
+    private final BufferResizer outBufferResizer = new BufferResizer() {
+        @Override
+        public Bytes resizeBuffer(int newCapacity) {
+            return resizeBufferOutBuffer(newCapacity);
 
+        }
+    };
     private ByteBuffer inBuffer;
     private ByteBufferBytes inBytes;
-
     @NotNull
     private ReaderWithSize<K> keyReaderWithSize;
     @NotNull
@@ -74,75 +86,19 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     @NotNull
     private WriterWithSize<V> valueWriterWithSize;
     private SocketChannel clientChannel;
-
     @Nullable
     private CloseablesManager closeables;
-    private final InetSocketAddress remoteAddress;
-    private final long timeoutMs;
-    private final int tcpBufferSize;
-
     private Class<K> kClass;
     private Class<V> vClass;
     private boolean putReturnsNull;
     private boolean removeReturnsNull;
-
-
-    private final ReentrantLock inBytesLock = new ReentrantLock(true);
-    private final ReentrantLock outBytesLock = new ReentrantLock();
-
-    private final BufferResizer outBufferResizer = new BufferResizer() {
-        @Override
-        public Bytes resizeBuffer(int newCapacity) {
-            return resizeBufferOutBuffer(newCapacity);
-
-        }
-    };
-
-    enum EventId {
-        HEARTBEAT,
-        STATEFUL_UPDATE,
-        LONG_SIZE,
-        SIZE,
-        IS_EMPTY,
-        CONTAINS_KEY,
-        CONTAINS_VALUE,
-        GET,
-        PUT,
-        PUT_WITHOUT_ACC,
-        REMOVE,
-        REMOVE_WITHOUT_ACC,
-        CLEAR,
-        KEY_SET,
-        VALUES,
-        ENTRY_SET,
-        REPLACE,
-        REPLACE_WITH_OLD_AND_NEW_VALUE,
-        PUT_IF_ABSENT,
-        REMOVE_WITH_VALUE,
-        TO_STRING,
-        APPLICATION_VERSION,
-        PERSISTED_DATA_VERSION,
-        PUT_ALL,
-        PUT_ALL_WITHOUT_ACC,
-        HASH_CODE,
-        MAP_FOR_KEY,
-        PUT_MAPPED,
-        KEY_BUILDER,
-        VALUE_BUILDER
-    }
-
-
     //  used by the enterprise version
     private int identifier;
-
-    @SuppressWarnings("UnusedDeclaration")
-    void identifier(int identifier) {
-        this.identifier = identifier;
-    }
-
-
-    @NotNull
-    private final AtomicLong transactionID = new AtomicLong(0);
+    // this is a transaction id and size that has been read by another thread.
+    private volatile long parkedTransactionId;
+    private volatile int parkedRemainingBytes;
+    private volatile long parkedTransactionTimeStamp;
+    private long limitOfLast = 0;
 
     StatelessChronicleMap(@NotNull final ChronicleMapStatelessClientBuilder config) {
         this.remoteAddress = config.remoteAddress();
@@ -162,6 +118,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         checkVersion();
         loadKeyValueSerializers();
+    }
+
+    @SuppressWarnings("UnusedDeclaration")
+    void identifier(int identifier) {
+        this.identifier = identifier;
     }
 
     private void loadKeyValueSerializers() {
@@ -236,7 +197,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     public Class<V> valueClass() {
         return vClass;
     }
-
 
     private void checkTimeout(long timeoutTime) {
         if (timeoutTime < System.currentTimeMillis())
@@ -437,7 +397,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return fetchObject(vClass, PUT_IF_ABSENT, key, value);
     }
 
-
     @SuppressWarnings("NullableProblems")
     public boolean remove(Object key, Object value) {
 
@@ -447,7 +406,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return value != null && fetchBoolean(REMOVE_WITH_VALUE, (K) key, (V) value);
 
     }
-
 
     @SuppressWarnings("NullableProblems")
     public boolean replace(K key, V oldValue, V newValue) {
@@ -524,7 +482,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     public boolean isEmpty() {
         return fetchBoolean(IS_EMPTY);
     }
-
 
     public boolean containsKey(Object key) {
         return fetchBooleanK(CONTAINS_KEY, (K) key);
@@ -612,7 +569,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return fetchObject(MAP_FOR_KEY, key, function);
     }
 
-
     @Nullable
     @Override
     public V putMapped(@Nullable K key, @NotNull UnaryOperator<V> unaryOperator) {
@@ -625,7 +581,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
     public UpdateResult update(K key, V value) {
         throw new UnsupportedOperationException();
     }
-
 
     private Bytes resizeBufferOutBuffer(int newCapacity) {
         return resizeBufferOutBuffer(newCapacity, outBytes.position());
@@ -672,7 +627,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         outBytes.position(start);
         return outBytes;
     }
-
 
     private void resizeBufferInBuffer(int newCapacity, long start) {
 //        assert !outBytesLock.isHeldByCurrentThread();
@@ -986,7 +940,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return result;
     }
 
-
     private long readLong(long transactionId, long startTime) {
 
         assert !outBytesLock.isHeldByCurrentThread();
@@ -1001,7 +954,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             inBytesLock.unlock();
         }
     }
-
 
     private long writeEvent(@NotNull StatelessChronicleMap.EventId event) {
         assert outBytesLock.isHeldByCurrentThread();
@@ -1037,60 +989,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         assert outBytes.readByte(sizeLocation - 1) == event.ordinal();
         return sizeLocation;
     }
-
-    class Entry implements Map.Entry<K, V> {
-
-        final K key;
-        final V value;
-
-        /**
-         * Creates new entry.
-         */
-        Entry(K k1, V v) {
-            value = v;
-            key = k1;
-        }
-
-        public final K getKey() {
-            return key;
-        }
-
-        public final V getValue() {
-            return value;
-        }
-
-        public final V setValue(V newValue) {
-            V oldValue = value;
-            StatelessChronicleMap.this.put(getKey(), newValue);
-            return oldValue;
-        }
-
-        public final boolean equals(Object o) {
-            if (!(o instanceof Map.Entry))
-                return false;
-            final Map.Entry e = (Map.Entry) o;
-            final Object k1 = getKey();
-            final Object k2 = e.getKey();
-            if (k1 == k2 || (k1 != null && k1.equals(k2))) {
-                Object v1 = getValue();
-                Object v2 = e.getValue();
-                if (v1 == v2 || (v1 != null && v1.equals(v2)))
-                    return true;
-            }
-            return false;
-        }
-
-        public final int hashCode() {
-            return (key == null ? 0 : key.hashCode()) ^
-                    (value == null ? 0 : value.hashCode());
-        }
-
-        @NotNull
-        public final String toString() {
-            return getKey() + "=" + getValue();
-        }
-    }
-
 
     /**
      * sends data to the server via TCP/IP
@@ -1165,13 +1063,7 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         }
     }
 
-    // this is a transaction id and size that has been read by another thread.
-    private volatile long parkedTransactionId;
-    private volatile int parkedRemainingBytes;
-    private volatile long parkedTransactionTimeStamp;
-
-    private Bytes blockingFetchThrowable(long timeoutTime, long transactionId) throws IOException,
-            InterruptedException {
+    private Bytes blockingFetchThrowable(long timeoutTime, long transactionId) throws IOException {
 
 //        assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
@@ -1357,10 +1249,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return inBytes;
     }
 
-
-    long largestEntrySoFar = 0;
-    private long limitOfLast = 0;
-
     private void writeBytesToSocket(long timeoutTime) throws IOException {
 
         assert outBytesLock.isHeldByCurrentThread();
@@ -1411,7 +1299,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         outBytes.clear();
 
     }
-
 
     private void writeSizeAndTransactionIdAt(long locationOfSize, final long transactionId) {
 
@@ -1541,7 +1428,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         }
     }
 
-
     private int readInt(long transactionId, long startTime) {
         assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
@@ -1652,7 +1538,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return readBoolean(transactionId, startTime);
     }
 
-
     @SuppressWarnings("SameParameterValue")
     private boolean fetchBooleanK(@NotNull final EventId eventId, K key) {
         final long startTime = System.currentTimeMillis();
@@ -1670,7 +1555,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         return readBoolean(transactionId, startTime);
     }
-
 
     @SuppressWarnings("SameParameterValue")
     private long fetchLong(@NotNull final EventId eventId) {
@@ -1736,7 +1620,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         }
     }
 
-
     @SuppressWarnings("SameParameterValue")
     @Nullable
     private <O> O fetchObject(final Class<O> tClass, @NotNull final EventId eventId) {
@@ -1761,7 +1644,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         }
     }
 
-
     @SuppressWarnings("SameParameterValue")
     private int fetchInt(@NotNull final EventId eventId) {
         final long startTime = System.currentTimeMillis();
@@ -1778,7 +1660,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         return readInt(transactionId, startTime);
     }
-
 
     @Nullable
     private <R> R fetchObject(Class<R> rClass, @NotNull final EventId eventId, K key, V value) {
@@ -1810,7 +1691,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                     "supported");
     }
 
-
     @Nullable
     private <R> R fetchObject(Class<R> rClass, @NotNull final EventId eventId, K key) {
         final long startTime = System.currentTimeMillis();
@@ -1838,7 +1718,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             throw new UnsupportedOperationException("class of type class=" + rClass + " is not " +
                     "supported");
     }
-
 
     private boolean eventReturnsNull(@NotNull EventId eventId) {
 
@@ -1899,7 +1778,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             throw e;
     }
 
-
     @Nullable
     private <R> R fetchObject(@NotNull final EventId eventId, K key, @NotNull Object object) {
         final long startTime = System.currentTimeMillis();
@@ -1920,6 +1798,92 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         return (R) readObject(transactionId, startTime);
 
+    }
+
+    enum EventId {
+        HEARTBEAT,
+        STATEFUL_UPDATE,
+        LONG_SIZE,
+        SIZE,
+        IS_EMPTY,
+        CONTAINS_KEY,
+        CONTAINS_VALUE,
+        GET,
+        PUT,
+        PUT_WITHOUT_ACC,
+        REMOVE,
+        REMOVE_WITHOUT_ACC,
+        CLEAR,
+        KEY_SET,
+        VALUES,
+        ENTRY_SET,
+        REPLACE,
+        REPLACE_WITH_OLD_AND_NEW_VALUE,
+        PUT_IF_ABSENT,
+        REMOVE_WITH_VALUE,
+        TO_STRING,
+        APPLICATION_VERSION,
+        PERSISTED_DATA_VERSION,
+        PUT_ALL,
+        PUT_ALL_WITHOUT_ACC,
+        HASH_CODE,
+        MAP_FOR_KEY,
+        PUT_MAPPED,
+        KEY_BUILDER,
+        VALUE_BUILDER
+    }
+
+    class Entry implements Map.Entry<K, V> {
+
+        final K key;
+        final V value;
+
+        /**
+         * Creates new entry.
+         */
+        Entry(K k1, V v) {
+            value = v;
+            key = k1;
+        }
+
+        public final K getKey() {
+            return key;
+        }
+
+        public final V getValue() {
+            return value;
+        }
+
+        public final V setValue(V newValue) {
+            V oldValue = value;
+            StatelessChronicleMap.this.put(getKey(), newValue);
+            return oldValue;
+        }
+
+        public final boolean equals(Object o) {
+            if (!(o instanceof Map.Entry))
+                return false;
+            final Map.Entry e = (Map.Entry) o;
+            final Object k1 = getKey();
+            final Object k2 = e.getKey();
+            if (k1 == k2 || (k1 != null && k1.equals(k2))) {
+                Object v1 = getValue();
+                Object v2 = e.getValue();
+                if (v1 == v2 || (v1 != null && v1.equals(v2)))
+                    return true;
+            }
+            return false;
+        }
+
+        public final int hashCode() {
+            return (key == null ? 0 : key.hashCode()) ^
+                    (value == null ? 0 : value.hashCode());
+        }
+
+        @NotNull
+        public final String toString() {
+            return getKey() + "=" + getValue();
+        }
     }
 }
 

@@ -62,9 +62,15 @@ abstract class AbstractChannelReplicator implements Closeable {
     final SelectedSelectionKeySet selectedKeys = new SelectedSelectionKeySet();
 
     final CloseablesManager closeables = new CloseablesManager();
-    final Selector selector = openSelector(closeables);
+    final Selector selector;
     private final ExecutorService executorService;
-
+    private final Queue<Runnable> pendingRegistrations = new ConcurrentLinkedQueue<Runnable>();
+    @Nullable
+    private final Throttler throttler;
+    volatile boolean isClosed = false;
+    ThreadLocalCopies copies;
+    VanillaChronicleMap.SegmentState segmentState;
+    private volatile Thread lastThread;
     private final ExecutorService connectExecutorService = Executors.newCachedThreadPool(
             new NamedThreadFactory("TCP-connect", true) {
                 @Override
@@ -72,20 +78,10 @@ abstract class AbstractChannelReplicator implements Closeable {
                     return lastThread = super.newThread(r);
                 }
             });
-
-    private volatile Thread lastThread;
     private Throwable startedHere;
     private Future<?> future;
-    private final Queue<Runnable> pendingRegistrations = new ConcurrentLinkedQueue<Runnable>();
-    @Nullable
-    private final Throttler throttler;
 
-    volatile boolean isClosed = false;
-    ThreadLocalCopies copies;
-    VanillaChronicleMap.SegmentState segmentState;
-
-    AbstractChannelReplicator(String name, ThrottlingConfig throttlingConfig)
-            throws IOException {
+    AbstractChannelReplicator(String name, ThrottlingConfig throttlingConfig) throws IOException {
         executorService = Executors.newSingleThreadExecutor(
                 new NamedThreadFactory(name, true) {
                     @Override
@@ -94,12 +90,43 @@ abstract class AbstractChannelReplicator implements Closeable {
                     }
                 });
 
+        selector = openSelector(closeables);
         throttler = throttlingConfig.throttling(DAYS) > 0 ?
                 new Throttler(selector,
                         throttlingConfig.bucketInterval(MILLISECONDS),
                         throttlingConfig.throttling(DAYS)) : null;
 
         startedHere = new Throwable("Started here");
+    }
+
+    static SocketChannel openSocketChannel(final CloseablesManager closeables) throws IOException {
+        SocketChannel result = null;
+
+        try {
+            result = SocketChannel.open();
+            result.socket().setTcpNoDelay(true);
+        } finally {
+            if (result != null)
+                try {
+                    closeables.add(result);
+                } catch (IllegalStateException e) {
+                    // already closed
+                }
+        }
+        return result;
+    }
+
+    static ClassLoader getSystemClassLoader() {
+        if (System.getSecurityManager() == null) {
+            return ClassLoader.getSystemClassLoader();
+        } else {
+            return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+                @Override
+                public ClassLoader run() {
+                    return ClassLoader.getSystemClassLoader();
+                }
+            });
+        }
     }
 
     Selector openSelector(final CloseablesManager closeables) throws IOException {
@@ -129,23 +156,6 @@ abstract class AbstractChannelReplicator implements Closeable {
             return openSelector(result, selectedKeys);
         }
 
-        return result;
-    }
-
-    static SocketChannel openSocketChannel(final CloseablesManager closeables) throws IOException {
-        SocketChannel result = null;
-
-        try {
-            result = SocketChannel.open();
-            result.socket().setTcpNoDelay(true);
-        } finally {
-            if (result != null)
-                try {
-                    closeables.add(result);
-                } catch (IllegalStateException e) {
-                    // already closed
-                }
-        }
         return result;
     }
 
@@ -185,24 +195,11 @@ abstract class AbstractChannelReplicator implements Closeable {
         return selector;
     }
 
-    static ClassLoader getSystemClassLoader() {
-        if (System.getSecurityManager() == null) {
-            return ClassLoader.getSystemClassLoader();
-        } else {
-            return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-                @Override
-                public ClassLoader run() {
-                    return ClassLoader.getSystemClassLoader();
-                }
-            });
-        }
-    }
-
     void addPendingRegistration(Runnable registration) {
         pendingRegistrations.add(registration);
     }
 
-    void registerPendingRegistrations() throws ClosedChannelException {
+    void registerPendingRegistrations() {
         for (Runnable runnable = pendingRegistrations.poll(); runnable != null;
              runnable = pendingRegistrations.poll()) {
             try {
@@ -213,7 +210,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
     }
 
-    abstract void processEvent() throws IOException;
+    abstract void processEvent();
 
     final void start() {
         future = executorService.submit(
@@ -315,12 +312,12 @@ abstract class AbstractChannelReplicator implements Closeable {
         closeables.closeQuietly(channel);
     }
 
-    void checkThrottleInterval() throws ClosedChannelException {
+    void checkThrottleInterval() {
         if (throttler != null)
             throttler.checkThrottleInterval();
     }
 
-    void contemplateThrottleWrites(int bytesJustWritten) throws ClosedChannelException {
+    void contemplateThrottleWrites(int bytesJustWritten) {
         if (throttler != null)
             throttler.contemplateThrottleWrites(bytesJustWritten);
     }
@@ -366,7 +363,7 @@ abstract class AbstractChannelReplicator implements Closeable {
          *
          * @throws java.nio.channels.ClosedChannelException
          */
-        public void checkThrottleInterval() throws ClosedChannelException {
+        public void checkThrottleInterval() {
             final long time = System.currentTimeMillis();
 
             if (lastTime + throttleInterval >= time)
@@ -392,8 +389,7 @@ abstract class AbstractChannelReplicator implements Closeable {
          *
          * @throws ClosedChannelException
          */
-        public void contemplateThrottleWrites(int bytesJustWritten)
-                throws ClosedChannelException {
+        public void contemplateThrottleWrites(int bytesJustWritten) {
             bytesWritten += bytesJustWritten;
             if (bytesWritten > maxBytesInInterval) {
                 for (SelectableChannel channel : channels) {

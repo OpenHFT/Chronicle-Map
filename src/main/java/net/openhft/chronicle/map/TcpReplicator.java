@@ -42,7 +42,6 @@ import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -70,12 +69,11 @@ interface Work {
 final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Closeable {
 
     public static final long TIMESTAMP_FACTOR = 10000;
+    public static final long SPIN_LOOP_TIME_IN_NONOSECONDS = TimeUnit.MICROSECONDS.toNanos(500);
     private static final int STATELESS_CLIENT = -127;
     private static final byte NOT_SET = (byte) HEARTBEAT.ordinal();
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
     private static final int BUFFER_SIZE = 0x100000; // 1MB
-
-    public static final long SPIN_LOOP_TIME_IN_NONOSECONDS = TimeUnit.MICROSECONDS.toNanos(500);
     private final SelectionKey[] selectionKeysStore = new SelectionKey[Byte.MAX_VALUE + 1];
     // used to instruct the selector thread to set OP_WRITE on a key correlated by the bit index
     // in the bitset
@@ -84,40 +82,20 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     private final BitSet activeKeys = new BitSet(selectionKeysStore.length);
     private final long heartBeatIntervalMillis;
     private final ConnectionListener connectionListener;
-    private long largestEntrySoFar = 128;
-
     @NotNull
     private final Replica replica;
     private final byte localIdentifier;
-
     @NotNull
     private final Replica.EntryExternalizable externalizable;
     @NotNull
     private final TcpTransportAndNetworkConfig replicationConfig;
-
-
     private final
     @Nullable
     RemoteNodeValidator remoteNodeValidator;
     private final String name;
-
-    private long selectorTimeout;
-
     StatelessClientParameters<K, V> statelessClientParameters;
-
-    static class StatelessClientParameters<K, V> {
-        public StatelessClientParameters(VanillaChronicleMap<K, ?, ?, V, ?, ?> map,
-                                         SerializationBuilder<K> keySerializationBuilder,
-                                         SerializationBuilder<V> valueSerializationBuilder) {
-            this.map = map;
-            this.keySerializationBuilder = keySerializationBuilder;
-            this.valueSerializationBuilder = valueSerializationBuilder;
-        }
-
-        VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
-        SerializationBuilder<K> keySerializationBuilder;
-        SerializationBuilder<V> valueSerializationBuilder;
-    }
+    private long largestEntrySoFar = 128;
+    private long selectorTimeout;
 
     /**
      * @throws IOException on an io error.
@@ -127,8 +105,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                          @NotNull final TcpTransportAndNetworkConfig replicationConfig,
                          @Nullable final RemoteNodeValidator remoteNodeValidator,
                          @Nullable final StatelessClientParameters statelessClientParameters,
-                         @Nullable final ConnectionListener connectionListener)
-            throws IOException {
+                         @Nullable final ConnectionListener connectionListener) throws IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig());
 
@@ -153,7 +130,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     }
 
     @Override
-    void processEvent() throws IOException {
+    void processEvent() {
         try {
             final InetSocketAddress serverInetSocketAddress =
                     new InetSocketAddress(replicationConfig.serverPort());
@@ -520,7 +497,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         throttle(channel);
     }
 
-
     /**
      * check that the version number is valid text,
      *
@@ -586,7 +562,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      */
     private void doHandShaking(@NotNull final SelectionKey key,
                                @NotNull SocketChannel socketChannel)
-            throws IOException, InterruptedException {
+            throws IOException {
         final Attached attached = (Attached) key.attachment();
         final TcpSocketChannelEntryWriter writer = attached.entryWriter;
         final TcpSocketChannelEntryReader reader = attached.entryReader;
@@ -788,7 +764,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      */
 
     private void onRead(@NotNull final SelectionKey key,
-                        final long approxTime) throws IOException, InterruptedException {
+                        final long approxTime) throws IOException {
 
         final SocketChannel socketChannel = (SocketChannel) key.channel();
         final Attached attached = (Attached) key.attachment();
@@ -847,6 +823,20 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 closeables.add(result);
         }
         return result;
+    }
+
+    static class StatelessClientParameters<K, V> {
+        VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
+        SerializationBuilder<K> keySerializationBuilder;
+        SerializationBuilder<V> valueSerializationBuilder;
+
+        public StatelessClientParameters(VanillaChronicleMap<K, ?, ?, V, ?, ?> map,
+                                         SerializationBuilder<K> keySerializationBuilder,
+                                         SerializationBuilder<V> valueSerializationBuilder) {
+            this.map = map;
+            this.keySerializationBuilder = keySerializationBuilder;
+            this.valueSerializationBuilder = valueSerializationBuilder;
+        }
     }
 
     /**
@@ -1080,8 +1070,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         // is  carried out
         @Nullable
         public Work uncompletedWork;
-        private long lastSentTime;
         StatelessServerConnector statelessServer;
+        private long lastSentTime;
 
         private TcpSocketChannelEntryWriter() {
             entryCallback = new EntryCallback(externalizable, replicationConfig.tcpBufferSize());
@@ -1494,14 +1484,13 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
  */
 class StatelessServerConnector<K, V> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StatelessServerConnector.class
-            .getName());
     public static final StatelessChronicleMap.EventId[] VALUES
             = StatelessChronicleMap.EventId.values();
     public static final int SIZE_OF_IS_EXCEPTION = 1;
     public static final int HEADER_SIZE = SIZE_OF_SIZE + SIZE_OF_IS_EXCEPTION +
             SIZE_OF_TRANSACTION_ID;
-
+    private static final Logger LOG = LoggerFactory.getLogger(StatelessServerConnector.class
+            .getName());
     @NotNull
     private final ReaderWithSize<K> keyReaderWithSize;
 

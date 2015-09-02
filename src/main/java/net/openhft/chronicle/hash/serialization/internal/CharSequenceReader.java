@@ -26,35 +26,26 @@ import net.openhft.lang.threadlocal.StatefulCopyable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.ObjectStreamException;
 import java.io.Serializable;
 
 public final class CharSequenceReader<S extends CharSequence>
         implements BytesReader<S>, StatefulCopyable<CharSequenceReader<S>> {
     private static final long serialVersionUID = 0L;
-
-    private enum NoInterningIdentity implements CharSequenceInterner<CharSequence> {
-        INSTANCE;
-
-        @Override
-        public CharSequence intern(CharSequence cs) {
-            return cs;
-        }
-    }
-
-    private enum NoInterningToString implements CharSequenceInterner<String> {
-        INSTANCE;
-        @Override
-        public String intern(CharSequence cs) {
-            return cs.toString();
-        }
-    }
-
     private static final CharSequenceReader<String> STRING_READER =
             new CharSequenceReader<String>(NoInterningToString.INSTANCE, NoInterningToString.INSTANCE);
-
     private static final CharSequenceReader DEFAULT_READER =
             new CharSequenceReader(NoInterningIdentity.INSTANCE, NoInterningIdentity.INSTANCE);
+    private final StringBuilder sb = new StringBuilder(128);
+    @NotNull
+    private final CharSequenceInterner<S> interner;
+    @NotNull
+    private final Serializable identity;
+
+    private CharSequenceReader(@NotNull CharSequenceInterner<S> interner,
+                               @NotNull Serializable identity) {
+        this.interner = interner;
+        this.identity = identity;
+    }
 
     public static CharSequenceReader of() {
         return STRING_READER;
@@ -67,18 +58,6 @@ public final class CharSequenceReader<S extends CharSequence>
     public static <S extends CharSequence, I extends CharSequenceInterner<S> & Serializable>
     CharSequenceReader<S> of(@NotNull I interner, @NotNull Serializable stateIdentity) {
         return new CharSequenceReader<S>(interner, stateIdentity);
-    }
-
-    private final StringBuilder sb = new StringBuilder(128);
-    @NotNull
-    private final CharSequenceInterner<S> interner;
-    @NotNull
-    private final Serializable identity;
-
-    private CharSequenceReader(@NotNull CharSequenceInterner<S> interner,
-                               @NotNull Serializable identity) {
-        this.interner = interner;
-        this.identity = identity;
     }
 
     @Override
@@ -126,11 +105,29 @@ public final class CharSequenceReader<S extends CharSequence>
         return new CharSequenceReader<S>(interner, identity);
     }
 
-    private Object readResolve() throws ObjectStreamException {
+    private Object readResolve() {
         if (interner == NoInterningToString.INSTANCE)
             return STRING_READER;
         if (interner == NoInterningIdentity.INSTANCE)
             return DEFAULT_READER;
         return this;
+    }
+
+    private enum NoInterningIdentity implements CharSequenceInterner<CharSequence> {
+        INSTANCE;
+
+        @Override
+        public CharSequence intern(CharSequence cs) {
+            return cs;
+        }
+    }
+
+    private enum NoInterningToString implements CharSequenceInterner<String> {
+        INSTANCE;
+
+        @Override
+        public String intern(CharSequence cs) {
+            return cs.toString();
+        }
     }
 }

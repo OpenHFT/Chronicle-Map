@@ -30,7 +30,7 @@ interface SharedSegment<K, V> {
     /**
      * if passed segmentState is null, null is returned instead of readLock
      */
-    AutoCloseable readLock(@Nullable VanillaChronicleMap.SegmentState segmentState) throws InterruptedException;
+    AutoCloseable readLock(@Nullable VanillaChronicleMap.SegmentState segmentState);
 
     Map.Entry<K, V> getEntry(@NotNull VanillaChronicleMap.SegmentState segmentState, long pos);
 

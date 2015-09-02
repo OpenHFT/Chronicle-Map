@@ -143,7 +143,7 @@ public interface EngineReplicationLangBytes extends Closeable {
          *
          * @param fromTimeStamp the timestamp from which all entries should be dirty
          */
-        void dirtyEntries(long fromTimeStamp) throws InterruptedException;
+        void dirtyEntries(long fromTimeStamp);
 
         /**
          * the {@code modificationNotifier} is called when ever there is a change applied to the

@@ -50,7 +50,7 @@ final class Replicators {
             protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
                                         @NotNull final Replica replica,
                                         @NotNull final EntryExternalizable entryExternalizable,
-                                        final ChronicleMap chronicleMap) throws IOException {
+                                        final ChronicleMap chronicleMap) {
 
                 replication.engineReplicator().set(replica);
 
@@ -65,6 +65,47 @@ final class Replicators {
         };
     }
 
+    static Replicator tcp(final AbstractReplication replication) {
+        return new Replicator() {
+
+
+            @Override
+            protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
+                                        @NotNull final Replica replica,
+                                        @NotNull final EntryExternalizable entryExternalizable,
+                                        final ChronicleMap chronicleMap) throws IOException {
+
+                TcpTransportAndNetworkConfig tcpConfig = replication.tcpTransportAndNetwork();
+
+                StatelessClientParameters statelessClientParameters =
+                        new StatelessClientParameters(
+                                (VanillaChronicleMap) chronicleMap,
+                                builder.keyBuilder,
+                                builder.valueBuilder);
+
+                return new TcpReplicator(replica, entryExternalizable,
+                        tcpConfig,
+                        replication.remoteNodeValidator(),
+                        statelessClientParameters,
+                        replication.connectionListener());
+            }
+        };
+    }
+
+    static Replicator udp(
+            final UdpTransportConfig replicationConfig) {
+        return new Replicator() {
+            @Override
+            protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
+                                        @NotNull final Replica map,
+                                        @NotNull final EntryExternalizable entryExternalizable,
+                                        final ChronicleMap chronicleMap) throws IOException {
+                return new UdpReplicator(map, entryExternalizable, replicationConfig
+                );
+            }
+        };
+    }
+
     static class OutBuffer implements BufferResizer {
 
         @NotNull
@@ -72,6 +113,11 @@ final class Replicators {
 
         @NotNull
         private ByteBuffer out;
+
+        OutBuffer(final int tcpBufferSize) {
+            out = ByteBuffer.allocateDirect(tcpBufferSize);
+            in = new ByteBufferBytes(out);
+        }
 
         @NotNull
         public ByteBufferBytes in() {
@@ -81,12 +127,6 @@ final class Replicators {
         @NotNull
         public ByteBuffer out() {
             return out;
-        }
-
-
-        OutBuffer(final int tcpBufferSize) {
-            out = ByteBuffer.allocateDirect(tcpBufferSize);
-            in = new ByteBufferBytes(out);
         }
 
         @Override
@@ -127,47 +167,5 @@ final class Replicators {
             return in;
 
         }
-    }
-
-    static Replicator tcp(final AbstractReplication replication) {
-        return new Replicator() {
-
-
-            @Override
-            protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
-                                        @NotNull final Replica replica,
-                                        @NotNull final EntryExternalizable entryExternalizable,
-                                        final ChronicleMap chronicleMap) throws IOException {
-
-                TcpTransportAndNetworkConfig tcpConfig = replication.tcpTransportAndNetwork();
-
-                StatelessClientParameters statelessClientParameters =
-                        new StatelessClientParameters(
-                        (VanillaChronicleMap) chronicleMap,
-                        builder.keyBuilder,
-                        builder.valueBuilder);
-
-                return new TcpReplicator(replica, entryExternalizable,
-                        tcpConfig,
-                        replication.remoteNodeValidator(),
-                        statelessClientParameters,
-                        replication.connectionListener());
-            }
-        };
-    }
-
-    static Replicator udp(
-            final UdpTransportConfig replicationConfig) {
-        return new Replicator() {
-            @Override
-            protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
-                                        @NotNull final Replica map,
-                                        @NotNull final EntryExternalizable entryExternalizable,
-                                        final ChronicleMap chronicleMap)
-                    throws IOException {
-                return new UdpReplicator(map, entryExternalizable, replicationConfig
-                );
-            }
-        };
     }
 }

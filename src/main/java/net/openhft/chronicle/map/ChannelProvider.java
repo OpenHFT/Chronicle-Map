@@ -47,44 +47,17 @@ import static net.openhft.chronicle.map.Replica.ModificationIterator;
  * @author Rob Austin.
  */
 final class ChannelProvider implements Closeable {
-    private static final Logger LOG = LoggerFactory.getLogger(ChannelProvider.class.getName());
-
     static final Map<ReplicationHub, ChannelProvider> implMapping = new IdentityHashMap<>();
-
-    static synchronized ChannelProvider getProvider(ReplicationHub hub) throws IOException {
-        ChannelProvider channelProvider = implMapping.get(hub);
-        if (channelProvider != null)
-            return channelProvider;
-        channelProvider = new ChannelProvider(hub);
-
-
-
-        TcpTransportAndNetworkConfig tcpConfig = hub.tcpTransportAndNetwork();
-        if (tcpConfig != null) {
-
-            final TcpReplicator tcpReplicator = new TcpReplicator(
-                    channelProvider.asReplica,
-                    channelProvider.asEntryExternalizable,
-                    tcpConfig, hub.remoteNodeValidator(), null, hub.connectionListener());
-            channelProvider.add(tcpReplicator);
-        }
-
-        UdpTransportConfig udpConfig = hub.udpTransport();
-        if (udpConfig != null) {
-            final UdpReplicator udpReplicator =
-                    new UdpReplicator(
-                            channelProvider.asReplica,
-                            channelProvider.asEntryExternalizable,
-                            udpConfig);
-            channelProvider.add(udpReplicator);
-            if (tcpConfig == null)
-                LOG.warn(Replicators.ONLY_UDP_WARN_MESSAGE);
-        }
-        implMapping.put(hub, channelProvider);
-        return channelProvider;
-    }
-
+    private static final Logger LOG = LoggerFactory.getLogger(ChannelProvider.class.getName());
     private static final byte BOOTSTRAP_MESSAGE = 'B';
+    private final byte localIdentifier;
+    private final ReplicationHub hub;
+    private final ReadWriteLock channelDataLock = new ReentrantReadWriteLock();
+    // start of channel data
+    private final Replica[] chronicleChannels;
+    private final List<Replica> chronicleChannelList;
+    private final List<Integer> chronicleChannelIds;
+    private final EntryExternalizable[] channelEntryExternalizables;
     final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
         @Override
         public int sizeOfEntry(@NotNull Bytes entry, int chronicleChannel) {
@@ -153,9 +126,16 @@ final class ChannelProvider implements Closeable {
             }
         }
     };
-
-
-    private final byte localIdentifier;
+    private final AtomicReferenceArray<PayloadProvider> systemModificationIterator =
+            new AtomicReferenceArray<PayloadProvider>(128);
+    private final DirectBitSet systemModificationIteratorBitSet =
+            newBitSet(systemModificationIterator.length());
+    private final AtomicReferenceArray<ModificationIterator> modificationIterator =
+            new AtomicReferenceArray<ModificationIterator>(128);
+    private final Set<Closeable> replicators = new CopyOnWriteArraySet<Closeable>();
+    private final SystemQueue systemMessageQueue;
+    // end of channel data
+    private volatile boolean isClosed = false;
     final Replica asReplica = new Replica() {
         @Override
         public void put(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
@@ -236,15 +216,11 @@ final class ChannelProvider implements Closeable {
                         channelDataLock.readLock().lock();
                         try {
                             for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
-                                try {
-                                    ModificationIterator mi = chronicleChannelList.get(i)
-                                            .acquireModificationIterator(remoteIdentifier
-                                            );
+                                ModificationIterator mi = chronicleChannelList.get(i)
+                                        .acquireModificationIterator(remoteIdentifier
+                                        );
 
-                                    mi.dirtyEntries(fromTimeStamp);
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
-                                }
+                                mi.dirtyEntries(fromTimeStamp);
                                 notifier0.onChange();
                             }
                         } finally {
@@ -310,30 +286,6 @@ final class ChannelProvider implements Closeable {
             ChannelProvider.this.close();
         }
     };
-
-    private final ReplicationHub hub;
-
-
-    private final ReadWriteLock channelDataLock = new ReentrantReadWriteLock();
-
-    // start of channel data
-    private final Replica[] chronicleChannels;
-    private final List<Replica> chronicleChannelList;
-    private final List<Integer> chronicleChannelIds;
-    private final EntryExternalizable[] channelEntryExternalizables;
-    private final AtomicReferenceArray<PayloadProvider> systemModificationIterator =
-            new AtomicReferenceArray<PayloadProvider>(128);
-    private final DirectBitSet systemModificationIteratorBitSet =
-            newBitSet(systemModificationIterator.length());
-    private final AtomicReferenceArray<ModificationIterator> modificationIterator =
-            new AtomicReferenceArray<ModificationIterator>(128);
-    // end of channel data
-
-    private final Set<Closeable> replicators = new CopyOnWriteArraySet<Closeable>();
-
-    private volatile boolean isClosed = false;
-    private final SystemQueue systemMessageQueue;
-
     private ChannelProvider(ReplicationHub hub) {
         localIdentifier = hub.identifier();
         this.hub = hub;
@@ -358,6 +310,37 @@ final class ChannelProvider implements Closeable {
         add((short) 0, systemMessageQueue.asReplica, systemMessageQueue.asEntryExternalizable);
     }
 
+    static synchronized ChannelProvider getProvider(ReplicationHub hub) throws IOException {
+        ChannelProvider channelProvider = implMapping.get(hub);
+        if (channelProvider != null)
+            return channelProvider;
+        channelProvider = new ChannelProvider(hub);
+
+
+        TcpTransportAndNetworkConfig tcpConfig = hub.tcpTransportAndNetwork();
+        if (tcpConfig != null) {
+
+            final TcpReplicator tcpReplicator = new TcpReplicator(
+                    channelProvider.asReplica,
+                    channelProvider.asEntryExternalizable,
+                    tcpConfig, hub.remoteNodeValidator(), null, hub.connectionListener());
+            channelProvider.add(tcpReplicator);
+        }
+
+        UdpTransportConfig udpConfig = hub.udpTransport();
+        if (udpConfig != null) {
+            final UdpReplicator udpReplicator =
+                    new UdpReplicator(
+                            channelProvider.asReplica,
+                            channelProvider.asEntryExternalizable,
+                            udpConfig);
+            channelProvider.add(udpReplicator);
+            if (tcpConfig == null)
+                LOG.warn(Replicators.ONLY_UDP_WARN_MESSAGE);
+        }
+        implMapping.put(hub, channelProvider);
+        return channelProvider;
+    }
 
     /**
      * creates a bit set based on a number of bits
@@ -368,6 +351,16 @@ final class ChannelProvider implements Closeable {
     private static DirectBitSet newBitSet(int numberOfBits) {
         final ByteBufferBytes bytes = new ByteBufferBytes(wrap(new byte[(numberOfBits + 7) / 8]));
         return new SingleThreadedDirectBitSet(bytes);
+    }
+
+    private static ByteBufferBytes toBootstrapMessage(int chronicleChannel, final long lastModificationTime, final byte localIdentifier) {
+        final ByteBufferBytes writeBuffer = new ByteBufferBytes(ByteBuffer.allocate(1 + 1 + 2 + 8));
+        writeBuffer.writeByte(BOOTSTRAP_MESSAGE);
+        writeBuffer.writeByte(localIdentifier);
+        writeBuffer.writeUnsignedShort(chronicleChannel);
+        writeBuffer.writeLong(lastModificationTime);
+        writeBuffer.flip();
+        return writeBuffer;
     }
 
     public ChronicleChannel createChannel(int channel) {
@@ -389,23 +382,9 @@ final class ChannelProvider implements Closeable {
 
         // this could be null if one node has a chronicle channel before the other
         if (chronicleChannels[chronicleChannel] != null) {
-            try {
-                chronicleChannels[chronicleChannel].acquireModificationIterator(remoteIdentifier)
-                        .dirtyEntries(lastModificationTime);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            chronicleChannels[chronicleChannel].acquireModificationIterator(remoteIdentifier)
+                    .dirtyEntries(lastModificationTime);
         }
-    }
-
-    private static ByteBufferBytes toBootstrapMessage(int chronicleChannel, final long lastModificationTime, final byte localIdentifier) {
-        final ByteBufferBytes writeBuffer = new ByteBufferBytes(ByteBuffer.allocate(1 + 1 + 2 + 8));
-        writeBuffer.writeByte(BOOTSTRAP_MESSAGE);
-        writeBuffer.writeByte(localIdentifier);
-        writeBuffer.writeUnsignedShort(chronicleChannel);
-        writeBuffer.writeLong(lastModificationTime);
-        writeBuffer.flip();
-        return writeBuffer;
     }
 
     private void add(int chronicleChannel,
@@ -485,6 +464,8 @@ final class ChannelProvider implements Closeable {
      */
     class SystemQueue {
 
+        private final DirectBitSet systemModificationIteratorBitSet;
+        private final AtomicReferenceArray<PayloadProvider> systemModificationIterator;
         final Replica asReplica = new Replica() {
             @Override
             public void put(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
@@ -575,6 +556,7 @@ final class ChannelProvider implements Closeable {
                 // do nothing
             }
         };
+        private final MessageHandler messageHandler;
         final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
             @Override
             public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
@@ -599,9 +581,6 @@ final class ChannelProvider implements Closeable {
                 messageHandler.onMessage(source);
             }
         };
-        private final DirectBitSet systemModificationIteratorBitSet;
-        private final AtomicReferenceArray<PayloadProvider> systemModificationIterator;
-        private final MessageHandler messageHandler;
 
         SystemQueue(DirectBitSet systemModificationIteratorBitSet,
                     AtomicReferenceArray<PayloadProvider> systemModificationIterator,

@@ -35,14 +35,13 @@ import java.nio.channels.DatagramChannel;
  */
 final class UdpReplicator extends UdpChannelReplicator implements Replica.ModificationNotifier, Closeable {
 
+    public static final int UPD_BUFFER_SIZE = 64 * 1204;
     private static final Logger LOG =
             LoggerFactory.getLogger(UdpReplicator.class.getName());
-    public static final int UPD_BUFFER_SIZE = 64 * 1204;
 
     public UdpReplicator(@NotNull final Replica replica,
                          @NotNull final Replica.EntryExternalizable entryExternalizable,
-                         @NotNull final UdpTransportConfig replicationConfig)
-            throws IOException {
+                         @NotNull final UdpTransportConfig replicationConfig) throws IOException {
 
         super(replicationConfig, replica.identifier());
 
@@ -56,63 +55,6 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
                 modificationIterator, this, new Replicators.OutBuffer(UPD_BUFFER_SIZE)));
 
         start();
-    }
-
-    private class UdpSocketChannelEntryReader implements EntryReader {
-
-        private final Replica.EntryExternalizable externalizable;
-        private final ByteBuffer in;
-        private final ByteBufferBytes out;
-
-        /**
-         * @param serializedEntrySize the maximum size of an entry include the meta data
-         * @param externalizable      supports reading and writing serialize entries
-         */
-        UdpSocketChannelEntryReader(final int serializedEntrySize,
-                                    @NotNull final Replica.EntryExternalizable externalizable) {
-            // we make the buffer twice as large just to give ourselves headroom
-            in = ByteBuffer.allocateDirect(serializedEntrySize * 2);
-            this.externalizable = externalizable;
-            out = new ByteBufferBytes(in);
-            out.limit(0);
-            in.clear();
-        }
-
-        /**
-         * reads entries from the socket till it is empty
-         *
-         * @param socketChannel the socketChannel that we will read from
-         * @throws IOException
-         * @throws InterruptedException
-         */
-        public void readAll(@NotNull final DatagramChannel socketChannel) throws IOException,
-                InterruptedException {
-
-            out.clear();
-            in.clear();
-
-            socketChannel.receive(in);
-
-            final int bytesRead = in.position();
-
-            if (bytesRead < SIZE_OF_SIZE + SIZE_OF_SIZE)
-                return;
-
-            out.limit(in.position());
-
-            final int invertedSize = out.readInt();
-            final int size = out.readInt();
-
-            // check the the first 4 bytes are the inverted len followed by the len
-            // we do this to check that this is a valid start of entry, otherwise we throw it away
-            if (~size != invertedSize)
-                return;
-
-            if (out.remaining() != size)
-                return;
-
-            externalizable.readExternalEntry(copies, segmentState, out);
-        }
     }
 
     private static class UdpSocketChannelEntryWriter implements EntryWriter {
@@ -174,6 +116,62 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
             out.limit((int) in.position());
 
             return socketChannel.write(out);
+        }
+    }
+
+    private class UdpSocketChannelEntryReader implements EntryReader {
+
+        private final Replica.EntryExternalizable externalizable;
+        private final ByteBuffer in;
+        private final ByteBufferBytes out;
+
+        /**
+         * @param serializedEntrySize the maximum size of an entry include the meta data
+         * @param externalizable      supports reading and writing serialize entries
+         */
+        UdpSocketChannelEntryReader(final int serializedEntrySize,
+                                    @NotNull final Replica.EntryExternalizable externalizable) {
+            // we make the buffer twice as large just to give ourselves headroom
+            in = ByteBuffer.allocateDirect(serializedEntrySize * 2);
+            this.externalizable = externalizable;
+            out = new ByteBufferBytes(in);
+            out.limit(0);
+            in.clear();
+        }
+
+        /**
+         * reads entries from the socket till it is empty
+         *
+         * @param socketChannel the socketChannel that we will read from
+         * @throws IOException
+         * @throws InterruptedException
+         */
+        public void readAll(@NotNull final DatagramChannel socketChannel) throws IOException {
+
+            out.clear();
+            in.clear();
+
+            socketChannel.receive(in);
+
+            final int bytesRead = in.position();
+
+            if (bytesRead < SIZE_OF_SIZE + SIZE_OF_SIZE)
+                return;
+
+            out.limit(in.position());
+
+            final int invertedSize = out.readInt();
+            final int size = out.readInt();
+
+            // check the the first 4 bytes are the inverted len followed by the len
+            // we do this to check that this is a valid start of entry, otherwise we throw it away
+            if (~size != invertedSize)
+                return;
+
+            if (out.remaining() != size)
+                return;
+
+            externalizable.readExternalEntry(copies, segmentState, out);
         }
     }
 

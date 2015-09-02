@@ -35,6 +35,14 @@ import static java.net.StandardSocketOptions.SO_REUSEADDR;
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 
+interface EntryReader {
+    void readAll(@NotNull final DatagramChannel socketChannel) throws IOException;
+}
+
+interface EntryWriter {
+    int writeAll(@NotNull final DatagramChannel socketChannel) throws InterruptedException, IOException;
+}
+
 /**
  * The UdpReplicator attempts to read the data ( but it does not enforce or grantee delivery ),
  * typically, you should use the UdpReplicator if you have a large number of nodes, and you wish to
@@ -47,17 +55,15 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
             LoggerFactory.getLogger(UdpChannelReplicator.class.getName());
 
     private final byte localIdentifier;
-    private EntryWriter writer;
-    private EntryReader reader;
-
     private final InetAddress address;
     private final int port;
     private final NetworkInterface networkInterface;
     private final ServerConnector serverConnector;
-
+    private final String name;
+    private EntryWriter writer;
+    private EntryReader reader;
     private SelectableChannel writeChannel;
     private volatile boolean shouldEnableOpWrite;
-    private final String name;
 
     /**
      * @param replicationConfig
@@ -65,11 +71,9 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
      * @throws IOException
      */
     UdpChannelReplicator(@NotNull final UdpTransportConfig replicationConfig,
-                         final byte localIdentifier)
-            throws IOException {
+                         final byte localIdentifier) throws IOException {
 
-        super("UdpReplicator-" + localIdentifier, replicationConfig.throttlingConfig()
-        );
+        super("UdpReplicator-" + localIdentifier, replicationConfig.throttlingConfig());
 
         this.localIdentifier = localIdentifier;
 
@@ -100,7 +104,7 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
 
 
     @Override
-    void processEvent() throws IOException {
+    void processEvent() {
         try {
 
             connectClient().register(selector, OP_READ);
@@ -322,13 +326,5 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
         }
     }
 
-}
-
-interface EntryReader {
-    void readAll(@NotNull final DatagramChannel socketChannel) throws IOException, InterruptedException;
-}
-
-interface EntryWriter {
-    int writeAll(@NotNull final DatagramChannel socketChannel) throws InterruptedException, IOException;
 }
 
