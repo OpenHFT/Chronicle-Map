@@ -458,7 +458,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
             // is no-longer required as the remote node will establish the connection its self
             // on startup.
 
-            attached.connector.connect();
+            attached.connector.connectLater();
 
             throw e;
         }
@@ -992,11 +992,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                 socketChannel.socket().setSoLinger(false, 0);
                 socketChannel.socket().setSoTimeout(0);
 
-                try {
-                    socketChannel.connect(details.address());
-                } catch (UnresolvedAddressException e) {
-                    this.connectLater();
-                }
+                socketChannel.connect(details.address());
 
                 // Under experiment, the concoction was found to be more successful if we
                 // paused before registering the OP_CONNECT
@@ -1021,6 +1017,8 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                 selector.wakeup();
                 success = true;
                 return socketChannel;
+            } catch (UnresolvedAddressException e) {
+                // don't propagate this exception
             } finally {
                 if (!success) {
                     try {
@@ -1033,6 +1031,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                     } catch (IOException e) {
                         LOG.error("", e);
                     }
+                    this.connectLater();
                 }
             }
         }
