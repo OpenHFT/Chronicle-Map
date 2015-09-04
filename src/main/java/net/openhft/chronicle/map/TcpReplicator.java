@@ -1017,8 +1017,6 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                 selector.wakeup();
                 success = true;
                 return socketChannel;
-            } catch (UnresolvedAddressException e) {
-                // don't propagate this exception
             } finally {
                 if (!success) {
                     try {
