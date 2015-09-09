@@ -17,8 +17,11 @@
 package net.openhft.chronicle.map.impl.stage.data;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.core.OS;
+
+import java.nio.BufferOverflowException;
 
 public enum ZeroRandomDataInput implements RandomDataInput {
     INSTANCE;
@@ -80,6 +83,18 @@ public enum ZeroRandomDataInput implements RandomDataInput {
 
     @Override
     public Bytes bytesForWrite() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean compareAndSwapInt(long offset, int expected, int value)
+            throws BufferOverflowException, IllegalArgumentException, IORuntimeException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean compareAndSwapLong(long offset, long expected, long value)
+            throws BufferOverflowException, IllegalArgumentException, IORuntimeException {
         throw new UnsupportedOperationException();
     }
 
