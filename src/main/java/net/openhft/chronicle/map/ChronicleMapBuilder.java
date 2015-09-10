@@ -274,7 +274,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
         try {
             xStreamClass =
                     Class.forName("net.openhft.xstream.MapHeaderSerializationXStream");
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | NoClassDefFoundError e) {
             xStreamClass = null;
         }
         if (xStreamClass == null) {
