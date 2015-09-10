@@ -55,6 +55,7 @@ final class ChannelProvider implements Closeable {
     private final ReadWriteLock channelDataLock = new ReentrantReadWriteLock();
     // start of channel data
     private final Replica[] chronicleChannels;
+    private final int[] chronicleChannelPositionsInList;
     private final List<Replica> chronicleChannelList;
     private final List<Integer> chronicleChannelIds;
     private final EntryExternalizable[] channelEntryExternalizables;
@@ -292,8 +293,10 @@ final class ChannelProvider implements Closeable {
 
         chronicleChannels = new Replica[hub.maxNumberOfChannels()];
         channelEntryExternalizables = new EntryExternalizable[hub.maxNumberOfChannels()];
-        chronicleChannelList = new ArrayList<Replica>();
-        chronicleChannelIds = new ArrayList<Integer>();
+        chronicleChannelList = new ArrayList<>();
+        chronicleChannelIds = new ArrayList<>();
+        chronicleChannelPositionsInList = new int[hub.maxNumberOfChannels()];
+        Arrays.fill(chronicleChannelPositionsInList, -1);
         MessageHandler systemMessageHandler = new MessageHandler() {
             @Override
             public void onMessage(Bytes bytes) {
@@ -402,6 +405,7 @@ final class ChannelProvider implements Closeable {
             chronicleChannels[chronicleChannel] = replica;
             chronicleChannelList.add(replica);
             chronicleChannelIds.add(chronicleChannel);
+            chronicleChannelPositionsInList[chronicleChannel] = chronicleChannelList.size() - 1;
             channelEntryExternalizables[chronicleChannel] = entryExternalizable;
 
             if (chronicleChannel == 0)
@@ -615,8 +619,16 @@ final class ChannelProvider implements Closeable {
         public void close() throws IOException {
             channelDataLock.writeLock().lock();
             try {
-                chronicleChannelList.remove(chronicleChannels[chronicleChannel]);
-                chronicleChannelIds.remove((Integer) (int) chronicleChannel);
+                int removedPos = chronicleChannelPositionsInList[chronicleChannel];
+                chronicleChannelPositionsInList[removedPos] = -1;
+                chronicleChannelList.remove(removedPos);
+                chronicleChannelIds.remove(removedPos);
+                for (int i = 0, len = chronicleChannelIds.size(); i < len; i++) {
+                    int channelId = chronicleChannelIds.get(i);
+                    int pos = chronicleChannelPositionsInList[channelId];
+                    if (pos > removedPos)
+                        chronicleChannelPositionsInList[channelId] = pos - 1;
+                }
                 chronicleChannels[chronicleChannel] = null;
                 channelEntryExternalizables[chronicleChannel] = null;
 
