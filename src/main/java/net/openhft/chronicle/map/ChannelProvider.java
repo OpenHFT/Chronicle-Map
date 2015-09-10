@@ -178,9 +178,9 @@ public final class ChannelProvider implements Closeable {
                         try {
                             // old-style iteration to avoid 1) iterator object creation
                             // 2) ConcurrentModificationException
-                            for (Replica chronicleChannel : chronicleChannelMap.values()) {
+                            for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
                                 final ModificationIterator modificationIterator =
-                                        chronicleChannel.acquireModificationIterator(
+                                        chronicleChannelList.get(i).acquireModificationIterator(
                                                 remoteIdentifier);
                                 if (modificationIterator.hasNext())
                                     return true;
@@ -196,13 +196,13 @@ public final class ChannelProvider implements Closeable {
                                              final int na) {
                         channelDataReadLock();
                         try {
-                            for (Map.Entry<Integer, Replica> chronicleChannel : chronicleChannelMap.entrySet()) {
+                            for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
 
                                 final ModificationIterator modificationIterator =
-                                        chronicleChannel.getValue()
+                                        chronicleChannelList.get(i)
                                         .acquireModificationIterator(remoteIdentifier);
                                 if (modificationIterator
-                                        .nextEntry(callback, chronicleChannel.getKey()))
+                                        .nextEntry(callback, chronicleChannelIds.get(i)))
                                     return true;
                             }
                             return false;
@@ -215,9 +215,10 @@ public final class ChannelProvider implements Closeable {
                     public void dirtyEntries(long fromTimeStamp) {
                         channelDataReadLock();
                         try {
-                            for (Replica chronicleChannel : chronicleChannelMap.values()) {
+                            for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
 
-                                chronicleChannel.acquireModificationIterator(remoteIdentifier)
+                                chronicleChannelList.get(i)
+                                        .acquireModificationIterator(remoteIdentifier)
                                         .dirtyEntries(fromTimeStamp);
                                 notifier0.onChange();
                             }
@@ -229,8 +230,9 @@ public final class ChannelProvider implements Closeable {
                     @Override
                     public void setModificationNotifier(
                             @NotNull ModificationNotifier modificationNotifier) {
-                        for (Replica chronicleChannel : chronicleChannelMap.values()) {
-                            chronicleChannel.acquireModificationIterator(remoteIdentifier)
+                        for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
+                            chronicleChannelList.get(i)
+                                    .acquireModificationIterator(remoteIdentifier)
                                     .setModificationNotifier(modificationNotifier);
                         }
                         notifier0 = modificationNotifier;
@@ -253,7 +255,8 @@ public final class ChannelProvider implements Closeable {
             try {
                 long t = 0;
                 // not including the SystemQueue at index 0
-                for (Replica channel : chronicleChannelMap.values()) {
+                for (int i = 1, len = chronicleChannelList.size(); i < len; i++) {
+                    Replica channel = chronicleChannelList.get(i);
                     t = (t == 0) ? channel.lastModificationTime(remoteIdentifier) :
                             min(t, channel.lastModificationTime(remoteIdentifier));
                 }
@@ -268,8 +271,8 @@ public final class ChannelProvider implements Closeable {
             channelDataReadLock();
             try {
                 // not including the SystemQueue at index 0
-                for (Replica channel : chronicleChannelMap.values()) {
-                    channel.setLastModificationTime(identifier, timestamp);
+                for (int i = 1, len = chronicleChannelList.size(); i < len; i++) {
+                    chronicleChannelList.get(i).setLastModificationTime(identifier, timestamp);
                 }
 
             } finally {
@@ -298,11 +301,10 @@ public final class ChannelProvider implements Closeable {
 
     // start of channel data
     private final Replica[] chronicleChannels;
-
-    // todo perhaps replace with a koloboke map
-    private final Map<Integer, Replica> chronicleChannelMap;
-
+    private final int[] chronicleChannelPositionsInList;
+    private final List<Replica> chronicleChannelList;
     private final List<Integer> chronicleChannelIds;
+
     private final EntryExternalizable[] channelEntryExternalizables;
     private final AtomicReferenceArray<PayloadProvider> systemModificationIterator =
             new AtomicReferenceArray<PayloadProvider>(128);
@@ -323,7 +325,8 @@ public final class ChannelProvider implements Closeable {
 
         chronicleChannels = new Replica[hub.maxNumberOfChannels()];
         channelEntryExternalizables = new EntryExternalizable[hub.maxNumberOfChannels()];
-        chronicleChannelMap = new HashMap<>();
+        chronicleChannelPositionsInList = new int[hub.maxNumberOfChannels()];
+        chronicleChannelList = new ArrayList<>();
         chronicleChannelIds = new ArrayList<>();
         MessageHandler systemMessageHandler = new MessageHandler() {
             @Override
@@ -400,8 +403,9 @@ public final class ChannelProvider implements Closeable {
                         " is already in use.");
             }
             chronicleChannels[chronicleChannel] = replica;
-            chronicleChannelMap.put(chronicleChannel, replica);
+            chronicleChannelList.add(replica);
             chronicleChannelIds.add(chronicleChannel);
+            chronicleChannelPositionsInList[chronicleChannel] = chronicleChannelList.size() - 1;
             channelEntryExternalizables[chronicleChannel] = entryExternalizable;
 
             if (chronicleChannel == 0)
@@ -448,10 +452,6 @@ public final class ChannelProvider implements Closeable {
 
     void add(Closeable replicator) {
         replicators.add(replicator);
-    }
-
-    public Map<Integer, Replica> chronicleChannelMap() {
-        return Collections.unmodifiableMap(chronicleChannelMap);
     }
 
     private interface MessageHandler {
@@ -603,12 +603,13 @@ public final class ChannelProvider implements Closeable {
         public void close() throws IOException {
             channelDataLock.writeLock().lock();
             try {
-                chronicleChannelMap.remove(chronicleChannel);
-                chronicleChannelIds.remove((Integer) (int) chronicleChannel);
+                int index = chronicleChannelPositionsInList[chronicleChannel];
+                chronicleChannelList.remove(index);
+                chronicleChannelIds.remove(index);
                 chronicleChannels[chronicleChannel] = null;
                 channelEntryExternalizables[chronicleChannel] = null;
 
-                if (chronicleChannelMap.size() == 1) // i. e. only SystemQueue is left
+                if (chronicleChannelList.size() == 1) // i. e. only SystemQueue is left
                     ChannelProvider.this.close();
             } finally {
                 channelDataLock.writeLock().unlock();
