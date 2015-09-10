@@ -1465,7 +1465,7 @@ public final class ChronicleMapBuilder<K, V> implements
         try {
             xStreamClass =
                     Class.forName("net.openhft.xstream.MapHeaderSerializationXStream");
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | NoClassDefFoundError e) {
             xStreamClass = null;
         }
         if (xStreamClass == null) {
