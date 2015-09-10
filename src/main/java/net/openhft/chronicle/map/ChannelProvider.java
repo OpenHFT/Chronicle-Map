@@ -605,6 +605,8 @@ public final class ChannelProvider implements Closeable {
             channelDataLock.writeLock().lock();
             try {
                 int removedPos = chronicleChannelPositionsInList[chronicleChannel];
+                if (removedPos == -1)
+                    return;
                 chronicleChannelPositionsInList[removedPos] = -1;
                 chronicleChannelList.remove(removedPos);
                 chronicleChannelIds.remove(removedPos);
