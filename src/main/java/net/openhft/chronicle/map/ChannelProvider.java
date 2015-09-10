@@ -326,6 +326,7 @@ public final class ChannelProvider implements Closeable {
         chronicleChannels = new Replica[hub.maxNumberOfChannels()];
         channelEntryExternalizables = new EntryExternalizable[hub.maxNumberOfChannels()];
         chronicleChannelPositionsInList = new int[hub.maxNumberOfChannels()];
+        Arrays.fill(chronicleChannelPositionsInList, -1);
         chronicleChannelList = new ArrayList<>();
         chronicleChannelIds = new ArrayList<>();
         MessageHandler systemMessageHandler = new MessageHandler() {
@@ -603,9 +604,16 @@ public final class ChannelProvider implements Closeable {
         public void close() throws IOException {
             channelDataLock.writeLock().lock();
             try {
-                int index = chronicleChannelPositionsInList[chronicleChannel];
-                chronicleChannelList.remove(index);
-                chronicleChannelIds.remove(index);
+                int removedPos = chronicleChannelPositionsInList[chronicleChannel];
+                chronicleChannelPositionsInList[removedPos] = -1;
+                chronicleChannelList.remove(removedPos);
+                chronicleChannelIds.remove(removedPos);
+                for (int i = 0, len = chronicleChannelIds.size(); i < len; i++) {
+                    int channelId = chronicleChannelIds.get(i);
+                    int pos = chronicleChannelPositionsInList[channelId];
+                    if (pos > removedPos)
+                        chronicleChannelPositionsInList[channelId] = pos - 1;
+                }
                 chronicleChannels[chronicleChannel] = null;
                 channelEntryExternalizables[chronicleChannel] = null;
 
