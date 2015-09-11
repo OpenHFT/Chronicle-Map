@@ -35,9 +35,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class EntryCountMapTest {
+    static final String TMP = System.getProperty("java.io.tmpdir");
+    static final int ecmTests = Integer.getInteger("ecm.tests", 5);
     double score = 0;
     int scoreCount = 0;
-    static final String TMP = System.getProperty("java.io.tmpdir");
 
     static File getPersistenceFile() throws IOException {
         File file = File.createTempFile("ecm-chm-test", ".deleteme");
@@ -55,7 +56,9 @@ public class EntryCountMapTest {
         return mapBuilder.createPersistedTo(getPersistenceFile());
     }
 
-    static final int ecmTests = Integer.getInteger("ecm.tests", 5);
+    private static int moreThanMaxSize(int maxSize) {
+        return maxSize * 14 / 10 + 300;
+    }
 
     @Ignore("HCOLL-279 fix net.openhft.chronicle.map.EntryCountMapTest#testVerySmall")
     @Test
@@ -188,7 +191,6 @@ public class EntryCountMapTest {
         final int maxKeySize = "key:".length() +
                 (int) round(log10(moreThanMaxSize(maxSize) * stride + counter)) + 1;
 
-
         return es.submit(new Callable<Void>() {
             @Override
             public Void call() {
@@ -256,10 +258,6 @@ public class EntryCountMapTest {
                         ", size: " + map.size());
         }
 
-    }
-
-    private static int moreThanMaxSize(int maxSize) {
-        return maxSize * 14 / 10 + 300;
     }
 
     private void dumpMapStats(int segments, int minSize,

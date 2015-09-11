@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map.fromdocs;
 
-
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import net.openhft.lang.model.Byteable;
@@ -33,26 +32,23 @@ public class BondVOInterface$$Native
     private static final int MATURITYDATE = 16;
     private static final int ENTRY = 24;
     private static final int MARKETPXINTRADAYHISTORY = 28;
+    private static final int SYMBOL = 308;
     private final BondVOInterface$MarketPx$$Native _marketPxIntraDayHistory[] =
             new BondVOInterface$MarketPx$$Native[7];
+    private Bytes _bytes;
+    private long _offset;
+
     {
         for (int i = 0; i < 7; i++)
             _marketPxIntraDayHistory[i] = new BondVOInterface$MarketPx$$Native();
     }
-    private static final int SYMBOL = 308;
-
-
-    private Bytes _bytes;
-    private long _offset;
-
-
-
-    public void setCoupon(double $) {
-        _bytes.writeDouble(_offset + COUPON, $);
-    }
 
     public double getCoupon() {
         return _bytes.readDouble(_offset + COUPON);
+    }
+
+    public void setCoupon(double $) {
+        _bytes.writeDouble(_offset + COUPON, $);
     }
 
     public double addAtomicCoupon(double $) {
@@ -61,22 +57,20 @@ public class BondVOInterface$$Native
         return _bytes.compareAndSwapDouble(_offset + COUPON, _1, _2);
     }
 
-    public void setIssueDate(long $) {
-        _bytes.writeLong(_offset + ISSUEDATE, $);
-    }
-
     public long getIssueDate() {
         return _bytes.readLong(_offset + ISSUEDATE);
     }
 
-
-
-    public void setMaturityDate(long $) {
-        _bytes.writeLong(_offset + MATURITYDATE, $);
+    public void setIssueDate(long $) {
+        _bytes.writeLong(_offset + ISSUEDATE, $);
     }
 
     public long getMaturityDate() {
         return _bytes.readLong(_offset + MATURITYDATE);
+    }
+
+    public void setMaturityDate(long $) {
+        _bytes.writeLong(_offset + MATURITYDATE, $);
     }
 
     public long addAtomicMaturityDate(long $) {
@@ -93,14 +87,12 @@ public class BondVOInterface$$Native
         return _marketPxIntraDayHistory[i];
     }
 
-
+    public java.lang.String getSymbol() {
+        return _bytes.readUTFΔ(_offset + SYMBOL);
+    }
 
     public void setSymbol(java.lang.String $) {
         _bytes.writeUTFΔ(_offset + SYMBOL, 20, $);
-    }
-
-    public java.lang.String getSymbol() {
-        return _bytes.readUTFΔ(_offset + SYMBOL);
     }
 
     @Override

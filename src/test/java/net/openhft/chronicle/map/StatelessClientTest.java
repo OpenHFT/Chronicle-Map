@@ -43,31 +43,10 @@ import static org.junit.Assert.assertTrue;
  */
 @Ignore
 public class StatelessClientTest {
-    private static final Logger LOG = LoggerFactory.getLogger(StatelessClientTest.class);
-
     public static final int SIZE = 2500;
+    private static final Logger LOG = LoggerFactory.getLogger(StatelessClientTest.class);
     static int s_port = 9070;
-
-    enum ToString implements Function<Object, String> {
-        INSTANCE;
-
-        @Override
-        public String apply(Object obj) {
-            return obj.toString();
-        }
-    }
-
     Set<Thread> threads;
-
-    @Before
-    public void sampleThreads() {
-        threads = Thread.getAllStackTraces().keySet();
-    }
-
-    @After
-    public void checkThreadsShutdown() {
-        checkThreadsShutdown(threads);
-    }
 
     public static void checkThreadsShutdown(Set<Thread> threads) {
         // give them a change to stop if there were killed.
@@ -103,6 +82,20 @@ public class StatelessClientTest {
         }
     }
 
+    public static <K, V> ChronicleMap<K, V> localClient(int port) throws IOException {
+        return createClientOf(new InetSocketAddress("localhost", port));
+    }
+
+    @Before
+    public void sampleThreads() {
+        threads = Thread.getAllStackTraces().keySet();
+    }
+
+    @After
+    public void checkThreadsShutdown() {
+        checkThreadsShutdown(threads);
+    }
+
     @Test(timeout = 10000)
     public void testMapForKeyWithEntry() throws IOException, InterruptedException {
         int port = s_port++;
@@ -128,10 +121,6 @@ public class StatelessClientTest {
         }
     }
 
-    public static <K, V> ChronicleMap<K, V> localClient(int port) throws IOException {
-        return createClientOf(new InetSocketAddress("localhost", port));
-    }
-
     @Test(timeout = 10000)
     public void testMapForKeyWhenNoEntry() throws IOException, InterruptedException {
         int port = s_port++;
@@ -149,7 +138,6 @@ public class StatelessClientTest {
             }
         }
     }
-
 
     @Test(timeout = 10000)
     public void testBufferOverFlowPutAllAndEntrySet() throws IOException, InterruptedException {
@@ -204,7 +192,6 @@ public class StatelessClientTest {
         }
     }
 
-
     /**
      * test that when the map is full and exception is thrown back to the user
      *
@@ -223,7 +210,6 @@ public class StatelessClientTest {
                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(port))
                 .create()) {
             try (ChronicleMap<Integer, CharSequence> statelessMap = localClient(port)) {
-
 
                 for (int i = 0; i < size; i++) {
                     statelessMap.put(i, "hello");
@@ -331,11 +317,9 @@ public class StatelessClientTest {
                 assertEquals("hello", statelessMap.get("hello"));
                 assertEquals(1, statelessMap.size());
 
-
             }
         }
     }
-
 
     @Test(timeout = 10000)
     public void testIsEmpty() throws IOException, InterruptedException {
@@ -350,11 +334,9 @@ public class StatelessClientTest {
                 assertTrue(statelessMap.isEmpty());
                 assertEquals(0, statelessMap.size());
 
-
             }
         }
     }
-
 
     @Test(timeout = 10000)
     public void testStringKeyMapPutIfAbsentIntoStatelessMap() throws IOException,
@@ -468,7 +450,6 @@ public class StatelessClientTest {
         }
     }
 
-
     @Test(timeout = 10000)
     public void testLargeEntries() throws IOException,
             InterruptedException {
@@ -493,13 +474,11 @@ public class StatelessClientTest {
                 assertEquals(new String(value), statelessMap.get(1));
                 assertEquals(1, statelessMap.size());
 
-
                 assertEquals(null, statelessMap.get(0));
                 assertEquals(1, statelessMap.size());
             }
         }
     }
-
 
     @Test(timeout = 10000)
     public void testGetAndEntryWeDontHave() throws IOException,
@@ -552,7 +531,6 @@ public class StatelessClientTest {
         serverMap2.close();
     }
 
-
     @Test
     public void testThreadSafeness() throws IOException, InterruptedException {
 
@@ -592,7 +570,6 @@ public class StatelessClientTest {
                     });
                 }
 
-
                 for (int i = 0; i < count; i++) {
                     final int j = i;
 
@@ -625,7 +602,6 @@ public class StatelessClientTest {
                         }
                     });
 
-
                 }
 
                 latch.await(25, TimeUnit.SECONDS);
@@ -643,9 +619,7 @@ public class StatelessClientTest {
 
         }
 
-
     }
-
 
     @Test
     public void testPutsStatelessClientWithReplication() throws IOException, InterruptedException {
@@ -659,7 +633,6 @@ public class StatelessClientTest {
 
         long startTime = System.currentTimeMillis();
 
-
         // server
         try (ChronicleMap<Integer, Integer> server = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
@@ -671,7 +644,6 @@ public class StatelessClientTest {
                     .putReturnsNull(true)
                     .replication((byte) 2, TcpTransportAndNetworkConfig.of(8046, new
                             InetSocketAddress("localhost", 8047))).create()) {
-
 
                 // stateless client
                 try (ChronicleMap<Integer, Integer> client = localClient(8046)) {
@@ -694,7 +666,6 @@ public class StatelessClientTest {
                             }
                         });
                     }
-
 
                     for (int i = 0; i < count; i++) {
                         final int j = i;
@@ -728,7 +699,6 @@ public class StatelessClientTest {
                             }
                         });
 
-
                     }
 
                     latch.await(25, TimeUnit.SECONDS);
@@ -747,7 +717,6 @@ public class StatelessClientTest {
         }
 
     }
-
 
     @Test(timeout = 10000)
     public void testCreateWithByteArrayKeyValue() throws IOException, InterruptedException {
@@ -816,8 +785,14 @@ public class StatelessClientTest {
         }
     }
 
+    enum ToString implements Function<Object, String> {
+        INSTANCE;
+
+        @Override
+        public String apply(Object obj) {
+            return obj.toString();
+        }
+    }
+
 }
-
-
-
 

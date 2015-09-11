@@ -39,7 +39,6 @@ public class KeyValueInstanceTest {
         }
     }
 
-
     @Test(expected = IllegalStateException.class)
     public void testNewKeyValueInstanceWithMapType() {
         try (ChronicleMap map = ChronicleMapBuilder
@@ -63,6 +62,30 @@ public class KeyValueInstanceTest {
         }
     }
 
+    @Test
+    public void testNewKeyValueInstanceWithListType() {
+        try (ChronicleMap map = ChronicleMapBuilder
+                .of(HashMap.class, IBean.class)
+                .create()) {
+
+            map.newKeyInstance();
+            Object value = map.newValueInstance();
+
+            assertTrue(value.getClass().getCanonicalName().endsWith("$$Native"));
+
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNewKeyValueInstanceWithByteArray() {
+        try (ChronicleMap map = ChronicleMapBuilder
+                .of(byte[].class, byte[].class)
+                .create()) {
+
+            map.newKeyInstance();
+            map.newValueInstance();
+        }
+    }
 
     interface IBean {
         long getLong();
@@ -76,32 +99,5 @@ public class KeyValueInstanceTest {
         int getInt();
 
         void setInt(int i);
-    }
-
-    @Test
-    public void testNewKeyValueInstanceWithListType() {
-        try (ChronicleMap map = ChronicleMapBuilder
-                .of(HashMap.class, IBean.class)
-                .create()) {
-
-            map.newKeyInstance();
-            Object value = map.newValueInstance();
-
-            assertTrue(value.getClass().getCanonicalName().endsWith("$$Native"));
-
-
-        }
-    }
-
-
-    @Test(expected = IllegalStateException.class)
-    public void testNewKeyValueInstanceWithByteArray() {
-        try (ChronicleMap map = ChronicleMapBuilder
-                .of(byte[].class, byte[].class)
-                .create()) {
-
-            map.newKeyInstance();
-            map.newValueInstance();
-        }
     }
 }

@@ -44,8 +44,6 @@ public class SingleMapChannelTest {
     private ReplicationHub hubA;
     private ReplicationHub hubB;
 
-
-
     @Before
     public void setup() throws IOException {
 

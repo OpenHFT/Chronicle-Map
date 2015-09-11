@@ -32,7 +32,6 @@ import java.util.Map;
  */
 class AbstractChronicleMapConverter<K, V> implements Converter {
 
-
     private final Map<K, V> map;
     private final Class mapClazz;
 
@@ -41,13 +40,56 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
         this.mapClazz = map.getClass();
     }
 
+    private static <E> E deserialize(@NotNull UnmarshallingContext unmarshallingContext,
+                                     @NotNull HierarchicalStreamReader reader) {
+
+        switch (reader.getNodeName()) {
+
+            case "java.util.Collections$EmptySet":
+                return (E) Collections.EMPTY_SET;
+
+            case "java.util.Collections$EmptyList":
+                return (E) Collections.EMPTY_LIST;
+
+            case "java.util.Collections$EmptyMap":
+            case "java.util.Collections.EmptyMap":
+                return (E) Collections.EMPTY_MAP;
+
+        }
+
+        return (E) unmarshallingContext.convertAnother(null, forName(reader.getNodeName()));
+    }
+
+    private static Class forName(String clazz) {
+
+        try {
+            return Class.forName(clazz);
+        } catch (ClassNotFoundException e) {
+
+            boolean isNative = clazz.endsWith("$$Native");
+            boolean isHeap = clazz.endsWith("$$Heap");
+
+            if (!isNative && !isHeap)
+                throw new ConversionException("class=" + clazz, e);
+
+            final String nativeInterface = isNative ? clazz.substring(0, clazz.length() -
+                    "$$Native".length()) : clazz.substring(0, clazz.length() -
+                    "$$Heap".length());
+            try {
+                DataValueClasses.newDirectInstance(Class.forName(clazz));
+                return Class.forName(nativeInterface);
+            } catch (Exception e1) {
+                throw new ConversionException("class=" + clazz, e1);
+            }
+
+        }
+    }
 
     @Override
     public boolean canConvert(Class aClass) {
         //noinspection unchecked
         return mapClazz.isAssignableFrom(aClass);
     }
-
 
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext
@@ -107,51 +149,6 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
         }
         reader.moveUp();
         return null;
-    }
-
-    private static <E> E deserialize(@NotNull UnmarshallingContext unmarshallingContext,
-                                     @NotNull HierarchicalStreamReader reader) {
-
-        switch (reader.getNodeName()) {
-
-            case "java.util.Collections$EmptySet":
-                return (E) Collections.EMPTY_SET;
-
-            case "java.util.Collections$EmptyList":
-                return (E) Collections.EMPTY_LIST;
-
-            case "java.util.Collections$EmptyMap":
-            case "java.util.Collections.EmptyMap":
-                return (E) Collections.EMPTY_MAP;
-
-        }
-
-        return (E) unmarshallingContext.convertAnother(null, forName(reader.getNodeName()));
-    }
-
-    private static Class forName(String clazz) {
-
-        try {
-            return Class.forName(clazz);
-        } catch (ClassNotFoundException e) {
-
-            boolean isNative = clazz.endsWith("$$Native");
-            boolean isHeap = clazz.endsWith("$$Heap");
-
-            if (!isNative && !isHeap)
-                throw new ConversionException("class=" + clazz, e);
-
-            final String nativeInterface = isNative ? clazz.substring(0, clazz.length() -
-                    "$$Native".length()) : clazz.substring(0, clazz.length() -
-                    "$$Heap".length());
-            try {
-                DataValueClasses.newDirectInstance(Class.forName(clazz));
-                return Class.forName(nativeInterface);
-            } catch (Exception e1) {
-                throw new ConversionException("class=" + clazz, e1);
-            }
-
-        }
     }
 
 }

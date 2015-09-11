@@ -37,14 +37,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class TcpReplicationLargeEntryTest {
 
-    private ChronicleMap<Integer, CharSequence> map1;
-    private ChronicleMap<Integer, CharSequence> map2;
-
     static int s_port = 8010;
     int valueSize = (int) MemoryUnit.MEGABYTES.toBytes(1);
-
     char[] valueX = new char[valueSize - 100];
     char[] valueY = new char[valueSize - 100];
+    Set<Thread> threads;
+    private ChronicleMap<Integer, CharSequence> map1;
+    private ChronicleMap<Integer, CharSequence> map2;
 
     @Before
     public void setup() throws IOException {
@@ -59,7 +58,6 @@ public class TcpReplicationLargeEntryTest {
                     endpoint).autoReconnectedUponDroppedConnection(true).name("      map1")
                     .heartBeatInterval(1, TimeUnit.SECONDS)
                     .tcpBufferSize(1024 * 64);
-
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .constantValueSizeBySample(sampleValue)
@@ -88,7 +86,6 @@ public class TcpReplicationLargeEntryTest {
         s_port += 2;
     }
 
-
     @After
     public void tearDown() throws InterruptedException {
 
@@ -103,8 +100,6 @@ public class TcpReplicationLargeEntryTest {
         System.gc();
     }
 
-    Set<Thread> threads;
-
     @Before
     public void sampleThreads() {
         threads = Thread.getAllStackTraces().keySet();
@@ -114,7 +109,6 @@ public class TcpReplicationLargeEntryTest {
     public void checkThreadsShutdown() {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
-
 
     @Test
     public void testLargeValues() throws IOException, InterruptedException {
@@ -133,7 +127,6 @@ public class TcpReplicationLargeEntryTest {
         Assert.assertEquals(yString, map2.get(2));
 
     }
-
 
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
 

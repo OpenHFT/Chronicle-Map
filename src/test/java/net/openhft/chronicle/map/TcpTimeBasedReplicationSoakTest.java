@@ -40,13 +40,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class TcpTimeBasedReplicationSoakTest {
 
-
+    static int s_port = 8010;
+    int t = 0;
+    Set<Thread> threads;
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     private IntValue value;
-    static int s_port = 8010;
     private TimeProvider timeProvider;
-    int t = 0;
 
     @Before
     public void setup() throws IOException {
@@ -72,7 +72,6 @@ public class TcpTimeBasedReplicationSoakTest {
             final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(s_port,
                     endpoint);
 
-
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE)
                     .timeProvider(timeProvider)
@@ -92,7 +91,6 @@ public class TcpTimeBasedReplicationSoakTest {
         s_port += 2;
     }
 
-
     @After
     public void tearDown() throws InterruptedException {
 
@@ -107,8 +105,6 @@ public class TcpTimeBasedReplicationSoakTest {
         System.gc();
     }
 
-    Set<Thread> threads;
-
     @Before
     public void sampleThreads() {
         threads = Thread.getAllStackTraces().keySet();
@@ -118,7 +114,6 @@ public class TcpTimeBasedReplicationSoakTest {
     public void checkThreadsShutdown() {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
-
 
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
@@ -149,7 +144,6 @@ public class TcpTimeBasedReplicationSoakTest {
 
     }
 
-
     private void waitTillUnchanged(final int timeOutMs) throws InterruptedException {
 
         Map map1UnChanged = new HashMap();
@@ -170,7 +164,6 @@ public class TcpTimeBasedReplicationSoakTest {
 
                 break;
             }
-
 
         }
     }

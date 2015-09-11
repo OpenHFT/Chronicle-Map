@@ -68,7 +68,6 @@ final class Replicators {
     static Replicator tcp(final AbstractReplication replication) {
         return new Replicator() {
 
-
             @Override
             protected Closeable applyTo(@NotNull final ChronicleMapBuilder builder,
                                         @NotNull final Replica replica,
@@ -131,7 +130,6 @@ final class Replicators {
 
         @Override
         public Bytes resizeBuffer(int newCapacity) {
-
 
             if (newCapacity < out.capacity())
                 throw new IllegalStateException("it not possible to resize the buffer smaller");

@@ -59,7 +59,6 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
 
     private static class UdpSocketChannelEntryWriter implements EntryWriter {
 
-
         private final EntryCallback entryCallback;
         private final UdpChannelReplicator udpReplicator;
         private final Replicators.OutBuffer outBuffer;

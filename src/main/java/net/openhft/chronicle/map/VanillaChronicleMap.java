@@ -1697,7 +1697,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             super.close();
         }
 
-
         @Override
         public void dontPutOnClose() {
             if (removed)
@@ -1943,7 +1942,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
             long lockTime = System.nanoTime() - startWriteLock;
 
-
             if (lockTime > 1e8 && LOG.isInfoEnabled())
                 LOG.info("Thread took " + lockTime / 1000000 + "ms to release the lock, (Was there a GC?)");
         }
@@ -1958,7 +1956,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             throw new UnsupportedOperationException("timeStamp are only supported by the " +
                     "replicated map");
         }
-
 
         final MultiStoreBytes reuse(MultiStoreBytes entry, long offset) {
             entry.setBytesOffset(bytes, offset);

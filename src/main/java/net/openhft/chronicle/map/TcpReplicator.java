@@ -394,7 +394,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         //  null check (Attached)key.attachment();
         //      connectionListener.onDiconnect( ((SocketChannel)key.channel()).socket().getInetAddress(),         ((Attached)key.attachment()).remoteIdentifier);
 
-
         closeEarlyAndQuietly(key.channel());
     }
 
@@ -533,7 +532,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         final String localVersion = BuildVersion.version();
         final String remoteVersion = attached.serverVersion;
 
-
         if (!remoteVersion.equals(localVersion)) {
             byte remoteIdentifier = attached.remoteIdentifier;
             LOG.warn("DIFFERENT CHRONICLE-MAP VERSIONS : " +
@@ -581,7 +579,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 return;
 
             attached.remoteIdentifier = remoteIdentifier;
-
 
             // todo OZAN : add call to onConnectedListener.
             //connectionListener. onConnected(channel.socket().getInetAddress() ,  attached
@@ -1058,7 +1055,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      */
     class TcpSocketChannelEntryWriter {
 
-
         @NotNull
         private final EntryCallback entryCallback;
         // if uncompletedWork is set ( not null ) , this must be completed before any further work
@@ -1227,7 +1223,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             return len;
         }
 
-
         /**
          * used to send an single zero byte if we have not send any data for up to the
          * localHeartbeatInterval
@@ -1243,7 +1238,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         private void writeRemoteHeartbeatInterval(long localHeartbeatInterval) {
             in().writeLong(localHeartbeatInterval);
         }
-
 
         public boolean doWork() {
             return uncompletedWork != null && uncompletedWork.doWork(in());
@@ -1467,7 +1461,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 return null;
         }
 
-
         public long readRemoteHeartbeatIntervalFromBuffer() {
             return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
         }
@@ -1504,7 +1497,6 @@ class StatelessServerConnector<K, V> {
     private final SerializationBuilder<V> valueSerializationBuilder;
     private final int tcpBufferSize;
 
-
     StatelessServerConnector(
             @NotNull VanillaChronicleMap<K, ?, ?, V, ?, ?> map,
             @NotNull final BufferResizer bufferResizer, int tcpBufferSize,
@@ -1535,7 +1527,6 @@ class StatelessServerConnector<K, V> {
         int headerSize = reader.readInt();
         reader.skip(headerSize);
 
-
         // these methods don't return a result to the client or don't return a result to the
         // client immediately
         switch (event) {
@@ -1559,7 +1550,6 @@ class StatelessServerConnector<K, V> {
         }
 
         final long sizeLocation = reflectTransactionId(writer.in(), transactionId);
-
 
         // these methods return a result
 
@@ -1663,7 +1653,6 @@ class StatelessServerConnector<K, V> {
         writeSizeAndFlags(sizeLocation, false, writer.in());
         return null;
     }
-
 
     @Nullable
     public Work mapForKey(@NotNull ByteBufferBytes reader, @NotNull TcpReplicator.TcpSocketChannelEntryWriter writer,
@@ -1769,10 +1758,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-
     @Nullable
     private Work applicationVersion(@NotNull TcpReplicator.TcpSocketChannelEntryWriter writer, final long sizeLocation) {
-
 
         final long remaining = writer.in().remaining();
         try {
@@ -1788,10 +1775,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-
     @Nullable
     private Work persistedDataVersion(@NotNull TcpReplicator.TcpSocketChannelEntryWriter writer, final long sizeLocation) {
-
 
         final long remaining = writer.in().remaining();
         try {
@@ -2131,7 +2116,6 @@ class StatelessServerConnector<K, V> {
             out.limit(limit);
             out.position(pos);
         }
-
 
     }
 

@@ -41,11 +41,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class TcpReplicationSoakTest {
 
-
+    static int s_port = 8093;
+    Set<Thread> threads;
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     private IntValue value;
-    static int s_port = 8093;
 
     @Before
     public void setup() throws IOException {
@@ -59,7 +59,6 @@ public class TcpReplicationSoakTest {
                     endpoint).autoReconnectedUponDroppedConnection(true).name("      map1")
                     .heartBeatInterval(1, TimeUnit.SECONDS)
                     .tcpBufferSize(1024 * 64);
-
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE + Builder.SIZE)
@@ -86,7 +85,6 @@ public class TcpReplicationSoakTest {
         s_port += 2;
     }
 
-
     @After
     public void tearDown() throws InterruptedException {
 
@@ -101,8 +99,6 @@ public class TcpReplicationSoakTest {
         System.gc();
     }
 
-    Set<Thread> threads;
-
     @Before
     public void sampleThreads() {
         threads = Thread.getAllStackTraces().keySet();
@@ -112,7 +108,6 @@ public class TcpReplicationSoakTest {
     public void checkThreadsShutdown() {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
-
 
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
@@ -145,7 +140,6 @@ public class TcpReplicationSoakTest {
         }
 
     }
-
 
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
 

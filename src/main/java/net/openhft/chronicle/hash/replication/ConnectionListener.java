@@ -29,13 +29,11 @@ public interface ConnectionListener {
      */
     void onConnect(SocketAddress address, byte identifier, boolean isServer);
 
-
     /**
      * @param address the address that we have been disconnected from
      * @param identifier the identifer the address that we have been disconnected from or Byte
      *                   .MIN_VALUE if not known
      */
     void onDisconnect(SocketAddress address, byte identifier);
-
 
 }

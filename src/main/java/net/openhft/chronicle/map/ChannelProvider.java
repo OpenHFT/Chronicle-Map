@@ -319,7 +319,6 @@ final class ChannelProvider implements Closeable {
             return channelProvider;
         channelProvider = new ChannelProvider(hub);
 
-
         TcpTransportAndNetworkConfig tcpConfig = hub.tcpTransportAndNetwork();
         if (tcpConfig != null) {
 

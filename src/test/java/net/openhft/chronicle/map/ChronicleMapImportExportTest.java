@@ -177,7 +177,6 @@ public class ChronicleMapImportExportTest {
         }
     }
 
-
     @Test
     public void testFromHashMap() throws IOException, InterruptedException {
 
@@ -191,12 +190,10 @@ public class ChronicleMapImportExportTest {
         map.put(1, "one");
         map.put(2, "two");
 
-
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
 
         xstream.toXML(map, new FileOutputStream(file));
-
 
         try (ChronicleMap<Integer, String> expected = ChronicleMapBuilder
                 .of(Integer.class, String.class)
@@ -215,10 +212,8 @@ public class ChronicleMapImportExportTest {
             Assert.assertEquals("two", expected.get(2));
         }
 
-
         file.deleteOnExit();
     }
-
 
     @Test
     public void testToJsonWithStatelessClient() throws IOException, InterruptedException {
@@ -238,7 +233,6 @@ public class ChronicleMapImportExportTest {
 
                     actual.putAll(file);
 
-
                     Assert.assertEquals(expected, actual);
 
                     actual.getAll(file2);
@@ -254,7 +248,6 @@ public class ChronicleMapImportExportTest {
         file.delete();
         file2.delete();
     }
-
 
     @Test
     public void testWithLongValue() throws IOException, InterruptedException {
@@ -290,7 +283,6 @@ public class ChronicleMapImportExportTest {
             // file.delete();
         }
     }
-
 
     @Test
     public void testBondVOInterface() throws IOException, InterruptedException {

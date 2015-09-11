@@ -426,7 +426,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         if (remoteIdentifier == 0)
             throw new IllegalStateException("identifier can't be 0");
 
-
         if (remoteIdentifier == this.identifier()) {
             // this may occur when working with UDP, as we may receive our own data
             return;
@@ -450,7 +449,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         segment(segmentNum).remoteRemove(copies, segmentState,
                 key, segmentHash, timestamp, remoteIdentifier);
     }
-
 
     @Override
     public byte identifier() {
@@ -528,7 +526,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 });
             }
 
-
         };
 
     }
@@ -557,7 +554,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             return newModificationIterator;
         }
     }
-
 
     @Override
     void onPut(VanillaChronicleMap<K, KI, MKI, V, VI, MVI>.Segment segment, long pos) {
@@ -617,7 +613,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
     }
 
-
     public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
 
         long start = entry.position();
@@ -653,7 +648,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
     }
-
 
     /**
      * This method does not set a segment lock, A segment lock should be obtained before calling
@@ -1810,7 +1804,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             return timeStamp;
         }
 
-
         public void onRemove(long pos, SharedSegment segment) {
             changes.set(combine(segment.getIndex(), pos));
 
@@ -1841,7 +1834,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             return changes.nextSetBit(position == NOT_FOUND ? 0L : position) != NOT_FOUND ||
                     (position > 0L && changes.nextSetBit(0L) != NOT_FOUND);
         }
-
 
         /**
          * @param entryCallback call this to get an entry, this class will take care of the locking

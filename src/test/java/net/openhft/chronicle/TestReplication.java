@@ -32,10 +32,12 @@ import java.util.Map;
  */
 public class TestReplication {
 
+    public static final int SIZE = 1000;
+    private Map<Short, ChronicleMap<Short, Short>> maps = new HashMap<>();
+    private ReplicationHub hubOnServer1;
 
     @Test
     public void testAllDataGetsReplicated() throws InterruptedException {
-
 
         TcpTransportAndNetworkConfig tcpConfigServer1 =
                 TcpTransportAndNetworkConfig.of(8082);
@@ -49,36 +51,23 @@ public class TestReplication {
                 .replication((byte) 2, tcpConfigServer2)
                 .create();
 
-
         final ChronicleMap<Integer, Integer> map1 = ChronicleMapBuilder.of(Integer.class,
                 Integer.class)
                 .replication((byte) 3, tcpConfigServer1)
                 .create();
 
-
         for (int i = 0; i < 70000; i++) {
             map1.put(i, i);
         }
-
 
         for (int i = 0; i < 10; i++) {
             Thread.sleep(100);
             System.out.println(map2.size());
         }
 
-
         Assert.assertEquals(map1.size(), map2.size());
 
     }
-
-
-    public static final int SIZE = 1000;
-    private Map<Short, ChronicleMap<Short, Short>> maps = new HashMap<>();
-
-
-    private ReplicationHub hubOnServer1;
-
-
 
 }
 

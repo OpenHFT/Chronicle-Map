@@ -27,6 +27,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.BufferOverflowException;
 
+interface BufferResizer {
+
+    /**
+     * @param newCapacity
+     * @return the newly resize buffer
+     */
+    Bytes resizeBuffer(int newCapacity);
+}
+
 final class WriterWithSize<T> {
     private final SizeMarshaller sizeMarshaller;
     private final Object originalWriter;
@@ -73,7 +82,6 @@ final class WriterWithSize<T> {
         return out;
     }
 
-
     public ThreadLocalCopies writeNullable(Bytes out, T t, @Nullable ThreadLocalCopies copies) {
         out.writeBoolean(t == null);
         if (t == null)
@@ -105,13 +113,4 @@ final class WriterWithSize<T> {
             return copies;
         return writeInLoop(out, t, writer, copies);
     }
-}
-
-interface BufferResizer {
-
-    /**
-     * @param newCapacity
-     * @return the newly resize buffer
-     */
-    Bytes resizeBuffer(int newCapacity);
 }

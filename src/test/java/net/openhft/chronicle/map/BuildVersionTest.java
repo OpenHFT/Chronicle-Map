@@ -26,13 +26,11 @@ import java.io.IOException;
  */
 public class BuildVersionTest {
 
-
     @Test
     public void test() throws IOException, InterruptedException {
         // checks that we always get a version
         Assert.assertNotNull(BuildVersion.version());
     }
-
 
     /**
      * check that the map records the version

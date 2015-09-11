@@ -122,7 +122,6 @@ public class TCPSocketReplication4WayMapTest {
     @Test
     public void testBufferOverflowPutIfAbsent() throws IOException, InterruptedException {
 
-
         for (int i = 0; i < 1024; i++) {
             map1.putIfAbsent(i, "EXAMPLE-1");
         }

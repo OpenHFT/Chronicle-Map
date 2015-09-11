@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-
 import net.openhft.lang.MemoryUnit;
 import org.junit.Test;
 
@@ -31,6 +30,24 @@ import static org.junit.Assert.assertTrue;
 public class MarkTest {
 
     static int ENTRIES = 25_000_000;
+
+    private static void test(Function<ChronicleMapBuilder<Integer, Integer>,
+            ChronicleMap<Integer, Integer>> createMap) {
+        long ms = System.currentTimeMillis();
+        try (ChronicleMap<Integer, Integer> map = createMap.apply(ChronicleMapBuilder
+                .of(Integer.class, Integer.class)
+                .entries(ENTRIES)
+                .entriesPerSegment((1 << 17) / 3)
+                .putReturnsNull(true)
+                .removeReturnsNull(true))) {
+
+            Random r = ThreadLocalRandom.current();
+            for (int i = 0; i < ENTRIES; i++) {
+                map.put(r.nextInt(), r.nextInt());
+            }
+        }
+        System.out.println(System.currentTimeMillis() - ms);
+    }
 
     @Test(timeout = 25000)
     public void inMemoryTest() {
@@ -68,23 +85,5 @@ public class MarkTest {
         } finally {
             db.delete();
         }
-    }
-
-    private static void test(Function<ChronicleMapBuilder<Integer, Integer>,
-            ChronicleMap<Integer, Integer>> createMap) {
-        long ms = System.currentTimeMillis();
-        try (ChronicleMap<Integer, Integer> map = createMap.apply(ChronicleMapBuilder
-                .of(Integer.class, Integer.class)
-                .entries(ENTRIES)
-                .entriesPerSegment((1 << 17) / 3)
-                .putReturnsNull(true)
-                .removeReturnsNull(true))) {
-
-            Random r = ThreadLocalRandom.current();
-            for (int i = 0; i < ENTRIES; i++) {
-                map.put(r.nextInt(), r.nextInt());
-            }
-        }
-        System.out.println(System.currentTimeMillis() - ms);
     }
 }

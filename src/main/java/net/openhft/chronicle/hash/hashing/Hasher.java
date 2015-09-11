@@ -27,9 +27,11 @@ public final class Hasher {
     // https://github.com/google/guava/blob/fa95e381e665d8ee9639543b99ed38020c8de5ef
     // /guava/src/com/google/common/hash/Murmur3_128HashFunction.java
 
-
     private static final long C1 = 0x87c37b91114253d5L;
     private static final long C2 = 0x4cf5ad432745937fL;
+
+    private Hasher() {
+    }
 
     /**
      * Returns the hash code for {@code len} continuous bytes of the given {@code input} object,
@@ -134,7 +136,6 @@ public final class Hasher {
         return h1;
     }
 
-
     private static long fmix64(long k) {
         k ^= k >>> 33;
         k *= 0xff51afd7ed558ccdL;
@@ -187,6 +188,4 @@ public final class Hasher {
         long h2 = 0L;
         return finalize(8L, h1, h2);
     }
-
-    private Hasher() {}
 }

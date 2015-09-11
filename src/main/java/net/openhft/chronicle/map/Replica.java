@@ -67,7 +67,6 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
      */
     long lastModificationTime(byte remoteIdentifier);
 
-
     void setLastModificationTime(byte identifier, long timestamp);
 
     /**
@@ -142,7 +141,6 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
          */
         int sizeOfEntry(@NotNull Bytes entry, int chronicleId);
 
-
         /**
          * check that the identifier in the entry is from this node
          *
@@ -151,7 +149,6 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
          * @return the size of the entry
          */
         boolean identifierCheck(@NotNull Bytes entry, int chronicleId);
-
 
         /**
          * The map implements this method to save its contents.
@@ -181,8 +178,6 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
         void readExternalEntry(@NotNull ThreadLocalCopies copies,
                                @NotNull VanillaChronicleMap.SegmentState segmentState,
                                @NotNull Bytes source);
-
-
 
     }
 
@@ -252,7 +247,6 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
         public void onBeforeEntry() {
         }
 
-
         /**
          * its possible that the entry should now be ignored, for example although rare its
          * identifier may have recently been changed by another thread, so its no longer applicable
@@ -265,7 +259,6 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
          */
         public abstract boolean shouldBeIgnored(final Bytes entry, final int chronicleId);
     }
-
 
 }
 

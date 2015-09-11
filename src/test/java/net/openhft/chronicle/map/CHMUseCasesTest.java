@@ -46,40 +46,60 @@ import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static net.openhft.chronicle.map.fromdocs.OpenJDKAndHashMapExamplesTest.parseYYYYMMDD;
 import static org.junit.Assert.*;
 
+enum ToString implements Function<Object, String> {
+    INSTANCE;
+
+    @Override
+    public String apply(Object o) {
+        return String.valueOf(o);
+    }
+
+}
+
+interface IBean {
+    long getLong();
+
+    void setLong(long num);
+
+    double getDouble();
+
+    void setDouble(double d);
+
+    int getInt();
+
+    void setInt(int i);
+
+    void setInnerAt(@MaxSize(7) int index, Inner inner);
+
+    Inner getInnerAt(int index);
+
+    /* nested interface - empowering an Off-Heap hierarchical “TIER of prices”
+    as array[ ] value */
+    interface Inner {
+
+        String getMessage();
+
+        void setMessage(@MaxSize(20) String px);
+
+    }
+}
+
 /**
  * This test enumerates common use cases for keys and values.
  */
 @RunWith(value = Parameterized.class)
 public class CHMUseCasesTest {
 
-
-    enum TypeOfMap {STATELESS, SIMPLE, SIMPLE_PERSISTED, REPLICATED}
-
+    static volatile int i = 0;
     private final TypeOfMap typeOfMap;
 
     Collection<Closeable> closeables = new ArrayList<Closeable>();
+    ChronicleMap map1;
+    ChronicleMap map2;
 
     public CHMUseCasesTest(TypeOfMap typeOfMap) {
         this.typeOfMap = typeOfMap;
     }
-
-    @After
-    public void after() {
-        for (Closeable c : closeables) {
-
-            try {
-                c.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        closeables.clear();
-        map2 = null;
-        map1 = null;
-    }
-
-    ChronicleMap map1;
-    ChronicleMap map2;
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -105,6 +125,36 @@ public class CHMUseCasesTest {
 
     }
 
+    private static void appendMode(ByteBuffer valueA) {
+        valueA.position(valueA.limit());
+        valueA.limit(valueA.capacity());
+    }
+
+    public static <K, V> Map<K, V> mapOf(K k, V v, Object... keysAndValues) {
+        Map<K, V> ret = new LinkedHashMap<>();
+        ret.put(k, v);
+        for (int i = 0; i < keysAndValues.length - 1; i += 2) {
+            Object key = keysAndValues[i];
+            Object value = keysAndValues[i + 1];
+            ret.put((K) key, (V) value);
+        }
+        return ret;
+    }
+
+    @After
+    public void after() {
+        for (Closeable c : closeables) {
+
+            try {
+                c.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        closeables.clear();
+        map2 = null;
+        map1 = null;
+    }
 
     /**
      * * waits until map1 and map2 show the same value
@@ -124,7 +174,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     private void mapChecks() {
         if (typeOfMap == TypeOfMap.REPLICATED) {
 
@@ -142,7 +191,6 @@ public class CHMUseCasesTest {
                 return;
             }
 
-
             // see HCOLL-265 Chronicle Maps with Identical char[] values are not equal1
             if (map1.keyClass() == char[].class ||
                     map1.keyClass() == byte[][].class) {
@@ -150,11 +198,9 @@ public class CHMUseCasesTest {
                 return;
             }
 
-
             if (ByteBuffer.class.isAssignableFrom(map1.valueClass()) ||
                     ByteBuffer.class.isAssignableFrom(map1.keyClass()))
                 return;
-
 
             waitTillEqual(5000);
             assertEquals(map1, map2);
@@ -169,7 +215,6 @@ public class CHMUseCasesTest {
 
         assertEquals(map1.size(), map2.size());
 
-
         for (Object key : map1.keySet()) {
 
             if (map1.valueClass() == byte[].class)
@@ -181,7 +226,6 @@ public class CHMUseCasesTest {
                 byte[][] o1 = (byte[][]) map1.get(key);
                 byte[][] o2 = (byte[][]) map2.get(key);
 
-
                 Assert.assertEquals(o1.length, o2.length);
                 for (int i = 0; i < o1.length; i++) {
                     Assert.assertArrayEquals(o1[i], o2[i]);
@@ -191,7 +235,6 @@ public class CHMUseCasesTest {
 
         }
     }
-
 
     private void checkJsonSerilization() {
         File file = null;
@@ -217,7 +260,6 @@ public class CHMUseCasesTest {
             try (ChronicleMap<Integer, Double> actual = builder.create()) {
                 actual.putAll(file);
 
-
                 if (map1.valueClass() == char[].class ||
                         map1.valueClass() == byte[].class ||
                         map1.valueClass() == byte[][].class) {
@@ -233,8 +275,6 @@ public class CHMUseCasesTest {
             file.delete();
         }
     }
-
-    static volatile int i = 0;
 
     private <X, Y> ChronicleMap<X, Y> newInstance(ChronicleMapBuilder<X, Y> builder) throws
             IOException {
@@ -277,7 +317,6 @@ public class CHMUseCasesTest {
                             .heartBeatInterval(1, TimeUnit.SECONDS)
                             .tcpBufferSize(1024 * 64);
 
-
                     map2 = builder
                             .replication((byte) 1, tcpConfig1)
                             .instance()
@@ -302,9 +341,7 @@ public class CHMUseCasesTest {
 
                 }
 
-
             }
-
 
             case STATELESS: {
                 {
@@ -312,7 +349,6 @@ public class CHMUseCasesTest {
                             .of(8086).name("server")
                             .heartBeatInterval(1, TimeUnit.SECONDS)
                             .tcpBufferSize(1024 * 64);
-
 
                     map2 = builder
                             .replication((byte) 1, tcpConfig1)
@@ -334,37 +370,6 @@ public class CHMUseCasesTest {
             default:
                 throw new IllegalStateException();
         }
-    }
-
-    static class PrefixStringFunction implements Function<String, String> {
-        private final String prefix;
-
-        public PrefixStringFunction(@NotNull String prefix) {
-            this.prefix = prefix;
-        }
-
-        @Override
-        public String apply(String s) {
-            return prefix + s;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return obj instanceof PrefixStringFunction &&
-                    prefix.equals(((PrefixStringFunction) obj).prefix);
-        }
-
-        @Override
-        public String toString() {
-            return prefix;
-        }
-    }
-
-
-
-    interface I1 {
-        String getStrAt( @MaxSize(10) int i);
-        void setStrAt(@MaxSize(10) int i, @MaxSize(10) String str);
     }
 
     @Test
@@ -410,7 +415,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test
     public void testCharArrayValue() throws ExecutionException, InterruptedException, IOException {
 
@@ -429,7 +433,6 @@ public class CHMUseCasesTest {
             mapChecks();
         }
     }
-
 
    @Ignore
     @Test
@@ -502,7 +505,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test
     public void testEntrySpanningSeveralChunks()
             throws ExecutionException, InterruptedException, IOException {
@@ -524,10 +526,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
-
-
-
     @Test
     public void testKeyValueSizeBySample() throws ExecutionException, InterruptedException,
             IOException {
@@ -543,7 +541,6 @@ public class CHMUseCasesTest {
             mapChecks();
         }
     }
-
 
     @Test
     public void testLargeCharSequenceValue()
@@ -568,7 +565,6 @@ public class CHMUseCasesTest {
     public void testStringStringMap() throws ExecutionException, InterruptedException,
             IOException {
 
-
         ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
                 .of(String.class, String.class);
 
@@ -581,23 +577,6 @@ public class CHMUseCasesTest {
             mapChecks();
         }
     }
-
-
-    private static class StringPrefixUnaryOperator implements UnaryOperator<String>, Serializable {
-
-        private String prefix;
-
-        StringPrefixUnaryOperator(final String prefix1) {
-            prefix = prefix1;
-        }
-
-        @Override
-        public String update(String s) {
-            return prefix + s;
-        }
-
-    }
-
 
     @Test
     public void testStringStringMapMutableValue() throws ExecutionException, InterruptedException, IOException {
@@ -644,7 +623,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     /**
      * CharSequence is more efficient when object creation is avoided. The key can only be on heap
      * and variable length serialised.
@@ -654,7 +632,6 @@ public class CHMUseCasesTest {
 
         if (typeOfMap == TypeOfMap.STATELESS)
             return; // Function supported by the STATELESS client
-
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class);
@@ -673,7 +650,6 @@ public class CHMUseCasesTest {
             assertEquals("value-1", value.toString());
             map.remove("key-1");
             assertNull(map.getUsing(key, value));
-
 
             assertEquals("New World", map.getMapped("Hello", new
                     Function<CharSequence, CharSequence>() {
@@ -714,13 +690,11 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test
     public void testAcquireUsingWithCharSequence() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
             return; // getUsingLocked supported by the STATELESS client
-
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class);
@@ -761,7 +735,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test
     public void testGetUsingWithIntValueNoValue() throws IOException {
 
@@ -785,13 +758,11 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test(expected = IllegalStateException.class)
     public void testAcquireUsingWithIntValueNoValue() throws IOException {
 
         if (typeOfMap == TypeOfMap.STATELESS)
             throw new IllegalStateException(); // acquireUsingLocked supported by the STATELESS
-
 
         ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, IntValue.class);
@@ -811,7 +782,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test(expected = IllegalArgumentException.class)
     public void testAcquireUsingImmutableUsing() throws IOException {
 
@@ -822,7 +792,6 @@ public class CHMUseCasesTest {
                 .of(IntValue.class, CharSequence.class);
 
         try (ChronicleMap<IntValue, CharSequence> map = newInstance(builder)) {
-
 
             IntValue using = map.newKeyInstance();
             using.setValue(1);
@@ -848,7 +817,6 @@ public class CHMUseCasesTest {
                 .of(IntValue.class, StringBuilder.class);
 
         try (ChronicleMap<IntValue, StringBuilder> map = newInstance(builder)) {
-
 
             IntValue key = map.newKeyInstance();
             key.setValue(1);
@@ -922,7 +890,6 @@ public class CHMUseCasesTest {
             mapChecks();
         }
     }
-
 
     /**
      * StringValue represents any bean which contains a String Value
@@ -1054,7 +1021,6 @@ public class CHMUseCasesTest {
     @Test
     public void testIntegerIntegerMap() throws ExecutionException, InterruptedException, IOException {
 
-
         if (typeOfMap == TypeOfMap.STATELESS)
             return; // Function supported by the STATELESS client
 
@@ -1073,7 +1039,6 @@ public class CHMUseCasesTest {
             value1 = 11;
             map.put(key1, value1);
             assertEquals(value1, map.get(key1));
-
 
             key2 = 2;
             value2 = 22;
@@ -1122,10 +1087,8 @@ public class CHMUseCasesTest {
     @Test
     public void testLongLongMap() throws ExecutionException, InterruptedException, IOException {
 
-
         if (typeOfMap == TypeOfMap.STATELESS)
             return;
-
 
         ChronicleMapBuilder<Long, Long> builder = ChronicleMapBuilder
                 .of(Long.class, Long.class);
@@ -1176,10 +1139,8 @@ public class CHMUseCasesTest {
     @Test
     public void testDoubleDoubleMap() throws ExecutionException, InterruptedException, IOException {
 
-
         if (typeOfMap == TypeOfMap.STATELESS)
             return;
-
 
         ChronicleMapBuilder<Double, Double> builder = ChronicleMapBuilder
                 .of(Double.class, Double.class);
@@ -1220,13 +1181,11 @@ public class CHMUseCasesTest {
             } catch (Exception todoMoreSpecificException) {
             }
 
-
         }
     }
 
     @Test
     public void testByteArrayByteArrayMap() throws ExecutionException, InterruptedException, IOException {
-
 
         if (typeOfMap == TypeOfMap.STATELESS)
             return;
@@ -1246,7 +1205,6 @@ public class CHMUseCasesTest {
             assertNull(map.get(key2));
 
             map.put(key1, value1);
-
 
             assertTrue(Arrays.equals(new byte[]{11, 11}, map.getMapped(key1, new Function<byte[], byte[]>() {
                 @Override
@@ -1273,10 +1231,8 @@ public class CHMUseCasesTest {
             byte[] a2 = map.get(key1);
             assertTrue(Arrays.equals(new byte[]{12, 10}, a2));
 
-
         }
     }
-
 
     // @Ignore("HCOLL-268 JSON serialisation issue")
     @Test
@@ -1291,7 +1247,6 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
 
-
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
             ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11});
@@ -1301,13 +1256,11 @@ public class CHMUseCasesTest {
             assertBBEquals(value2, map.get(key1));
             assertNull(map.get(key2));
 
-
             map.put(key1, value1);
 
             mapChecks();
         }
     }
-
 
     @Test
     public void testByteBufferByteBufferMap()
@@ -1323,7 +1276,6 @@ public class CHMUseCasesTest {
                 .entries(1000);
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
-
 
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
@@ -1392,11 +1344,9 @@ public class CHMUseCasesTest {
                 valueA.flip();
             }
 
-
             value1.clear();
             value1.putInt(12345);
             value1.flip();
-
 
             try (WriteContext wc = map.acquireUsingLocked(key1, valueB)) {
                 assertBBEquals(value1, valueB);
@@ -1419,11 +1369,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    private static void appendMode(ByteBuffer valueA) {
-        valueA.position(valueA.limit());
-        valueA.limit(valueA.capacity());
-    }
-
     //@Ignore("HCOLL-268 JSON serialisation issue")
     @Test
     public void testByteBufferDirectByteBufferMap() throws ExecutionException, InterruptedException, IOException {
@@ -1437,7 +1382,6 @@ public class CHMUseCasesTest {
                 .entries(1000);
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
-
 
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
@@ -1500,7 +1444,6 @@ public class CHMUseCasesTest {
             IntValue key2 = map.newKeyInstance();
             IntValue value1 = map.newValueInstance();
             IntValue value2 = map.newValueInstance();
-
 
             key1.setValue(1);
             value1.setValue(11);
@@ -1595,7 +1538,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     /**
      * For unsigned int -> unsigned int entries, the key can be on heap or off heap.
      */
@@ -1609,7 +1551,6 @@ public class CHMUseCasesTest {
                 .of(UnsignedIntValue.class, UnsignedIntValue.class);
 
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = newInstance(builder)) {
-
 
             UnsignedIntValue key1 = map.newKeyInstance();
             UnsignedIntValue key2 = map.newKeyInstance();
@@ -1701,7 +1642,6 @@ public class CHMUseCasesTest {
             // this may change due to alignment
             // assertEquals(6, entrySize(map));
 
-
             //     assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             IntValue key1 = map.newKeyInstance();
             IntValue key2 = map.newKeyInstance();
@@ -1782,7 +1722,6 @@ public class CHMUseCasesTest {
     @Test
     public void testIntValueUnsignedShortValueMap() throws IOException {
 
-
         if (typeOfMap == TypeOfMap.STATELESS)
             return;
 
@@ -1790,7 +1729,6 @@ public class CHMUseCasesTest {
                 .of(IntValue.class, UnsignedShortValue.class);
 
         try (ChronicleMap<IntValue, UnsignedShortValue> map = newInstance(builder)) {
-
 
             // this may change due to alignment
             // assertEquals(8, entrySize(map));
@@ -1882,7 +1820,6 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, CharValue> map = newInstance(builder)) {
 
-
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             IntValue key1 = map.newKeyInstance();
             IntValue key2 = map.newKeyInstance();
@@ -1970,7 +1907,6 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, UnsignedByteValue> map = newInstance(builder)) {
 
-
             // TODO should be 5, but shorter fields based on range doesn't seem to be implemented
             // on data value generation level yet
             //assertEquals(8, entrySize(map)); this may change due to alignmented
@@ -1980,7 +1916,6 @@ public class CHMUseCasesTest {
             IntValue key2 = map.newKeyInstance();
             UnsignedByteValue value1 = map.newValueInstance();
             UnsignedByteValue value2 = map.newValueInstance();
-
 
             key1.setValue(1);
             value1.setValue(11);
@@ -2064,14 +1999,12 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, BooleanValue> map = newInstance(builder)) {
 
-
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
             IntValue key1 = map.newKeyInstance();
             IntValue key2 = map.newKeyInstance();
             BooleanValue value1 = map.newValueInstance();
             BooleanValue value2 = map.newValueInstance();
-
 
             key1.setValue(1);
             value1.setValue(true);
@@ -2147,7 +2080,6 @@ public class CHMUseCasesTest {
     @Test
     public void testFloatValueFloatValueMap() throws IOException {
 
-
         if (typeOfMap == TypeOfMap.STATELESS)
             return; // getUsingLocked supported by the STATELESS client
 
@@ -2162,7 +2094,6 @@ public class CHMUseCasesTest {
             FloatValue key2 = map.newKeyInstance();
             FloatValue value1 = map.newValueInstance();
             FloatValue value2 = map.newValueInstance();
-
 
             key1.setValue(1);
             value1.setValue(11);
@@ -2232,7 +2163,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     /**
      * For double values, the key can be on heap or off heap.
      */
@@ -2256,7 +2186,6 @@ public class CHMUseCasesTest {
             DoubleValue key2 = map.newKeyInstance();
             DoubleValue value1 = map.newValueInstance();
             DoubleValue value2 = map.newValueInstance();
-
 
             key1.setValue(1);
             value1.setValue(11);
@@ -2334,7 +2263,6 @@ public class CHMUseCasesTest {
     @Test
     public void testLongValueLongValueMap() throws IOException {
 
-
         if (typeOfMap == TypeOfMap.STATELESS)
             return;
 
@@ -2351,7 +2279,6 @@ public class CHMUseCasesTest {
             LongValue key2 = map.newKeyInstance();
             LongValue value1 = map.newValueInstance();
             LongValue value2 = map.newValueInstance();
-
 
             key1.setValue(1);
             value1.setValue(11);
@@ -2438,7 +2365,6 @@ public class CHMUseCasesTest {
                 .of(String.class, (Class<List<String>>) (Class) List.class)
                 .valueMarshaller(ListMarshaller.of(new StringMarshaller(8)));
 
-
         try (ChronicleMap<String, List<String>> map = newInstance(builder)) {
             map.put("1", Collections.<String>emptyList());
             map.put("2", asList("two-A"));
@@ -2482,7 +2408,6 @@ public class CHMUseCasesTest {
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)
                 .valueMarshaller(SetMarshaller.of(new StringMarshaller(8)));
 
-
         try (ChronicleMap<String, Set<String>> map = newInstance(builder)) {
             map.put("1", Collections.<String>emptySet());
             map.put("2", new LinkedHashSet<String>(asList("one")));
@@ -2515,7 +2440,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test
     public void testMapStringStringValue() throws IOException {
 
@@ -2526,7 +2450,6 @@ public class CHMUseCasesTest {
                 .of(String.class, (Class<Map<String, String>>) (Class) Map.class)
                 .valueMarshaller(MapMarshaller.of(new StringMarshaller(16), new StringMarshaller
                         (16)));
-
 
         try (ChronicleMap<String, Map<String, String>> map = newInstance(builder)) {
             map.put("1", Collections.<String, String>emptyMap());
@@ -2554,10 +2477,8 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test
     public void testMapStringIntegerValue() throws IOException {
-
 
         if (typeOfMap == TypeOfMap.STATELESS)
             return; // getUsingLocked not supported by the STATELESS client
@@ -2606,17 +2527,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    public static <K, V> Map<K, V> mapOf(K k, V v, Object... keysAndValues) {
-        Map<K, V> ret = new LinkedHashMap<>();
-        ret.put(k, v);
-        for (int i = 0; i < keysAndValues.length - 1; i += 2) {
-            Object key = keysAndValues[i];
-            Object value = keysAndValues[i + 1];
-            ret.put((K) key, (V) value);
-        }
-        return ret;
-    }
-
     @Test
     public void testGeneratedDataValue() throws IOException {
 
@@ -2643,44 +2553,52 @@ public class CHMUseCasesTest {
         }
     }
 
+    enum TypeOfMap {STATELESS, SIMPLE, SIMPLE_PERSISTED, REPLICATED}
 
-}
+    interface I1 {
+        String getStrAt(@MaxSize(10) int i);
 
-enum ToString implements Function<Object, String> {
-    INSTANCE;
-
-    @Override
-    public String apply(Object o) {
-        return String.valueOf(o);
+        void setStrAt(@MaxSize(10) int i, @MaxSize(10) String str);
     }
 
-}
+    static class PrefixStringFunction implements Function<String, String> {
+        private final String prefix;
 
-interface IBean {
-    long getLong();
+        public PrefixStringFunction(@NotNull String prefix) {
+            this.prefix = prefix;
+        }
 
-    void setLong(long num);
+        @Override
+        public String apply(String s) {
+            return prefix + s;
+        }
 
-    double getDouble();
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof PrefixStringFunction &&
+                    prefix.equals(((PrefixStringFunction) obj).prefix);
+        }
 
-    void setDouble(double d);
+        @Override
+        public String toString() {
+            return prefix;
+        }
+    }
 
-    int getInt();
+    private static class StringPrefixUnaryOperator implements UnaryOperator<String>, Serializable {
 
-    void setInt(int i);
+        private String prefix;
 
-    void setInnerAt(@MaxSize(7) int index, Inner inner);
+        StringPrefixUnaryOperator(final String prefix1) {
+            prefix = prefix1;
+        }
 
-    Inner getInnerAt(int index);
-
-    /* nested interface - empowering an Off-Heap hierarchical “TIER of prices”
-    as array[ ] value */
-    interface Inner {
-
-        String getMessage();
-
-        void setMessage(@MaxSize(20) String px);
+        @Override
+        public String update(String s) {
+            return prefix + s;
+        }
 
     }
+
 }
 

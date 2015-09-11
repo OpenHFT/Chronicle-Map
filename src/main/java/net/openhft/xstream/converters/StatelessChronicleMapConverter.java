@@ -73,9 +73,7 @@ public class StatelessChronicleMapConverter<K, V> extends AbstractChronicleMapCo
             throw new ConversionException("", e);
         }
 
-
     }
-
 
 }
 

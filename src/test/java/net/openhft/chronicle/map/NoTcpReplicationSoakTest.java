@@ -41,12 +41,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class NoTcpReplicationSoakTest {
 
+    static int s_port = 8010;
+    Set<Thread> threads;
+    AtomicInteger task = new AtomicInteger();
     private ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map1;
     private ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map2;
     private IntValue value;
-    static int s_port = 8010;
     private long time;
-
     TimeProvider timeProvider = new TimeProvider() {
         @Override
         public long currentTimeMillis() {
@@ -54,15 +55,12 @@ public class NoTcpReplicationSoakTest {
         }
     };
 
-
     @Before
     public void setup() throws IOException {
         value = DataValueClasses.newDirectReference(IntValue.class);
         ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
 
-
         {
-
 
             map1 = (ReplicatedChronicleMap) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .replication((byte) 1)
@@ -83,9 +81,7 @@ public class NoTcpReplicationSoakTest {
         }
         s_port += 2;
 
-
     }
-
 
     @After
     public void tearDown() throws InterruptedException {
@@ -101,8 +97,6 @@ public class NoTcpReplicationSoakTest {
         System.gc();
     }
 
-    Set<Thread> threads;
-
     @Before
     public void sampleThreads() {
         threads = Thread.getAllStackTraces().keySet();
@@ -113,8 +107,6 @@ public class NoTcpReplicationSoakTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-    AtomicInteger task = new AtomicInteger();
-
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -124,7 +116,6 @@ public class NoTcpReplicationSoakTest {
                 System.out.print(".");
 
             Random rnd = new Random(j);
-
 
             if (rnd.nextInt(10) < 2)
                 time++;
@@ -215,9 +206,6 @@ public class NoTcpReplicationSoakTest {
             });
         }
     }
-
-
-
 
 }
 

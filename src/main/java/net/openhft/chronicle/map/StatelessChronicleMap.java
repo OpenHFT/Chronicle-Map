@@ -301,7 +301,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             clientChannel = null;
         }
 
-
     }
 
     /**
@@ -505,7 +504,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     @Nullable
     public V getUsing(K key, V usingValue) {
-
 
         final long startTime = System.currentTimeMillis();
         ThreadLocalCopies copies;
@@ -820,7 +818,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             }
         }
 
-
     }
 
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {
@@ -883,7 +880,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         } finally {
             outBytesLock.unlock();
         }
-
 
         if (!putReturnsNull) {
             inBytesLock.lock();
@@ -964,7 +960,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         outBytes.writeByte((byte) event.ordinal());
 
-
         return markSizeLocation();
     }
 
@@ -1038,7 +1033,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
     private Bytes blockingFetchReadOnly(long timeoutTime, final long transactionId) {
 
-
         assert inBytesLock.isHeldByCurrentThread();
         //  assert !outBytesLock.isHeldByCurrentThread();
         try {
@@ -1108,7 +1102,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             NativeBytes.UNSAFE.throwException(throwable);
         }
 
-
         return inBytes;
     }
 
@@ -1167,7 +1160,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 break;
             }
 
-
             // time out the old transaction id
             if (System.currentTimeMillis() - timeoutTime >
                     parkedTransactionTimeStamp) {
@@ -1208,7 +1200,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         inBytesLock.lock();
     }
 
-
     /**
      * reads up to the number of byte in {@code requiredNumberOfBytes}
      *
@@ -1219,7 +1210,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
      */
     @SuppressWarnings("UnusedReturnValue")
     private Bytes receiveBytesFromSocket(int requiredNumberOfBytes, long timeoutTime) throws IOException {
-
 
 //        assert !outBytesLock.isHeldByCurrentThread();
         assert inBytesLock.isHeldByCurrentThread();
@@ -1269,13 +1259,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
         limitOfLast = outBuffer.limit();
 
-
         while (outBuffer.remaining() > 0) {
 
             int len = clientChannel.write(outBuffer);
             if (len == -1)
                 throw new IORuntimeException("Disconnection to server");
-
 
             // if we have queued threads then we don't have to write all the bytes as the other
             // threads will write the remains bytes.
@@ -1305,7 +1293,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         assert !inBytesLock.isHeldByCurrentThread();
 
         assert outBytes.readByte(locationOfSize - 1) >= LONG_SIZE.ordinal();
-
 
         final long size = outBytes.position() - locationOfSize;
         final long pos = outBytes.position();
@@ -1371,7 +1358,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         assert outBytesLock.isHeldByCurrentThread();
         assert !inBytesLock.isHeldByCurrentThread();
         long start = outBytes.position();
-
 
         assert outBytes.position() == start;
         outBytes.limit(outBytes.capacity());
@@ -1489,7 +1475,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             outBytesLock.unlock();
         }
 
-
         return readBoolean(transactionId, startTime);
 
     }
@@ -1505,7 +1490,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         try {
             final long sizeLocation = writeEventAnSkip(eventId);
 
-
             copies = writeKey(key);
             copies = writeValue(value1, copies);
             writeValue(value2, copies);
@@ -1513,7 +1497,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         } finally {
             outBytesLock.unlock();
         }
-
 
         return readBoolean(transactionId, startTime);
 
@@ -1678,7 +1661,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         } finally {
             outBytesLock.unlock();
         }
-
 
         if (eventReturnsNull(eventId))
             return null;
