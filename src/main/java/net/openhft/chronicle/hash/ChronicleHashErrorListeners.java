@@ -32,7 +32,6 @@ public final class ChronicleHashErrorListeners {
      * Factories a more flexible than public static instances.
      * We can add some configuration-on-the-first-call in the future.
      */
-
     private enum LoggingErrorListener implements ChronicleHashErrorListener {
         INSTANCE;
 

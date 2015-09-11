@@ -114,7 +114,6 @@ public class SingleMapChannelTest {
      * @param timeOutMs timeout in milliseconds
      * @throws InterruptedException
      */
-
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
         for (int t = 0; t < timeOutMs; t++) {
             if (map1a.equals(map1b))

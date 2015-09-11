@@ -1810,7 +1810,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         /* Methods with private access modifier considered private to Segment
          * class, although Java allows to access them from outer class anyway.
          */
-
         public final int getIndex() {
             return index;
         }

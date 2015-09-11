@@ -284,7 +284,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
      * @see net.openhft.chronicle.map.StatelessChronicleMap#lazyConnect(long,
      * java.net.InetSocketAddress)
      */
-
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
 
         // ensures that the excising connection are closed

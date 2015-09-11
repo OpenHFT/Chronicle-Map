@@ -276,7 +276,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      *
      * @param approxTime the approximate time in milliseconds
      */
-
     void heartBeatMonitor(long approxTime) {
         for (int i = activeKeys.nextSetBit(0); i >= 0; i = activeKeys.nextSetBit(i + 1)) {
             try {
@@ -762,7 +761,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     /**
      * called when the selector receives a OP_READ message
      */
-
     private void onRead(@NotNull final SelectionKey key,
                         final long approxTime) throws IOException {
 

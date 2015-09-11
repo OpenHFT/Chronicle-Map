@@ -38,12 +38,11 @@ import static org.junit.Assert.assertTrue;
  */
 public class ChannelReplicationTest {
 
+    Set<Thread> threads;
     private ChronicleMap<Integer, CharSequence> map1a;
     private ChronicleMap<Integer, CharSequence> map2a;
-
     private ChronicleMap<Integer, CharSequence> map1b;
     private ChronicleMap<Integer, CharSequence> map2b;
-
     private ReplicationHub hubA;
     private ReplicationHub hubB;
 
@@ -92,8 +91,6 @@ public class ChannelReplicationTest {
         System.gc();
     }
 
-    Set<Thread> threads;
-
     @Before
     public void sampleThreads() {
         threads = Thread.getAllStackTraces().keySet();
@@ -136,7 +133,6 @@ public class ChannelReplicationTest {
      * @param timeOutMs timeout in milliseconds
      * @throws InterruptedException
      */
-
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
         for (int t = 0; t < timeOutMs; t++) {
             if (map1a.equals(map1b) &&
