@@ -356,7 +356,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     @Override
     public MapSegmentContext<K, V, ?> segmentContext(int segmentIndex) {
         IterationContextInterface<K, V, ?> c = iterationContext();
-        c.initTheSegmentIndex(segmentIndex);
+        c.initSegmentIndex(segmentIndex);
         return c;
     }
 

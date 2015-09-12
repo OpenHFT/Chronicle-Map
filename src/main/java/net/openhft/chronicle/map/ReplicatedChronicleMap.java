@@ -635,7 +635,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 int segmentIndex = (int) (position >>> segmentIndexShift);
                 try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> context =
                         iterationContext()) {
-                    context.initTheSegmentIndex(segmentIndex);
+                    context.initSegmentIndex(segmentIndex);
                     context.updateLock().lock();
                     if (changesForUpdates.get(position)) {
 
@@ -691,7 +691,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 boolean debugEnabled = LOG.isDebugEnabled();
                 for (int i = 0; i < actualSegments; i++) {
                     final int segmentIndex = i;
-                    c.initTheSegmentIndex(segmentIndex);
+                    c.initSegmentIndex(segmentIndex);
                     c.forEachSegmentReplicableEntry(e -> {
                         if (debugEnabled) {
                             LOG.debug("Bootstrap entry: id {}, key {}, value {}", localIdentifier,

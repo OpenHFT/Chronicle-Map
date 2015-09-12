@@ -38,9 +38,9 @@ public interface QueryContextInterface<K, V, R> extends ExternalMapQueryContext<
     
     Closeable acquireHandle();
     
-    void initTheSegmentIndex(int segmentIndex);
+    void initSegmentIndex(int segmentIndex);
     
-    boolean theSegmentIndexInit();
+    boolean segmentIndexInit();
     
     void clear();
 }

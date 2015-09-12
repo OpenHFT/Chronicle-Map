@@ -23,5 +23,5 @@ public interface IterationContextInterface<K, V, R> extends MapEntry<K, V>,
         MapSegmentContext<K, V, R> {
     long pos();
     
-    void initTheSegmentIndex(int segmentIndex);
+    void initSegmentIndex(int segmentIndex);
 }

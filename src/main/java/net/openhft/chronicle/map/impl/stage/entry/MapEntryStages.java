@@ -19,8 +19,6 @@ package net.openhft.chronicle.map.impl.stage.entry;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.AllocatedChunks;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
-import net.openhft.chronicle.hash.impl.stage.query.HashLookupSearch;
-import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.VanillaChronicleMap;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
@@ -47,36 +45,36 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         valueSizeOffset = countValueSizeOffset();
     }
 
-    @Stage("ValSize") public long valueSize = -1;
-    @Stage("ValSize") public long valueOffset;
+    @Stage("ValueSize") public long valueSize = -1;
+    @Stage("ValueSize") public long valueOffset;
 
-    @Stage("ValSize")
+    @Stage("ValueSize")
     private void countValueOffset() {
         mh.m().alignment.alignPositionAddr(entryBytes);
         valueOffset = entryBytes.position();
     }
 
-    void initValSize(long valueSize) {
+    void initValueSize(long valueSize) {
         this.valueSize = valueSize;
         entryBytes.position(valueSizeOffset);
         mh.m().valueSizeMarshaller.writeSize(entryBytes, valueSize);
         countValueOffset();
     }
 
-    void initValSize() {
+    void initValueSize() {
         entryBytes.position(valueSizeOffset);
         valueSize = mh.m().readValueSize(entryBytes);
         countValueOffset();
     }
 
-    void initValSizeEqualToOld(long oldValueSizeOffset, long oldValueSize, long oldValueOffset) {
+    void initValueSize_EqualToOld(long oldValueSizeOffset, long oldValueSize, long oldValueOffset) {
         valueSize = oldValueSize;
         valueOffset = valueSizeOffset + (oldValueOffset - oldValueSizeOffset);
     }
     
     public void initValue(Data<?> value) {
         entryBytes.position(valueSizeOffset);
-        initValSize(value.size());
+        initValueSize(value.size());
         writeValue(value);
     }
 
@@ -84,10 +82,10 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         value.writeTo(entryBS, valueOffset);
     }
 
-    public void initValueWithoutSize(
+    public void initValue_WithoutSize(
             Data<?> value, long oldValueSizeOffset, long oldValueSize, long oldValueOffset) {
         assert oldValueSize == value.size();
-        initValSizeEqualToOld(oldValueSizeOffset, oldValueSize, oldValueOffset);
+        initValueSize_EqualToOld(oldValueSizeOffset, oldValueSize, oldValueOffset);
         writeValue(value);
     }
 
@@ -221,7 +219,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
                 entrySizeInChunks < allocatedChunks.allocatedChunks)  {
             s.free(pos + entrySizeInChunks, allocatedChunks.allocatedChunks - entrySizeInChunks);
         } else {
-            initTheEntrySizeInChunks(allocatedChunks.allocatedChunks);
+            initEntrySizeInChunks(allocatedChunks.allocatedChunks);
         }
     }
 }

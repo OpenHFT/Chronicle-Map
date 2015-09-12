@@ -65,6 +65,7 @@ public abstract class ReplicatedInput<K, V, R>
         replicatedInputStore.setBytes(replicatedInputBytes);
     }
 
+    // ri for "replication input"
     @Stage("ReplicationInput") public long bootstrapTimestamp;
     @Stage("ReplicationInput") public long riKeySize = -1;
     @Stage("ReplicationInput") public long riValueSize;

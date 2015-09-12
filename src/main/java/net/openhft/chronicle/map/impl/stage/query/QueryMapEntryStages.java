@@ -70,7 +70,7 @@ public abstract class QueryMapEntryStages<K, V> extends MapEntryStages<K, V> {
                 long oldValueSize = valueSize;
                 long oldValueOffset = valueOffset;
                 allocatedChunks.initEntryAndKeyCopying(entrySize, valueOffset - entryStartOffset);
-                initValueWithoutSize(newValue, oldValueSizeOffset, oldValueSize, oldValueOffset);
+                initValue_WithoutSize(newValue, oldValueSizeOffset, oldValueSize, oldValueOffset);
             }
             freeExtraAllocatedChunks();
         }

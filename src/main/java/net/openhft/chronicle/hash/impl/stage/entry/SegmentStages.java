@@ -42,20 +42,18 @@ public abstract class SegmentStages implements SegmentLock {
     @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
 
-    @Stage("TheSegmentIndex") public int segmentIndex = -1;
+    public int segmentIndex = -1;
     
-    public void initTheSegmentIndex(int segmentIndex) {
+    public void initSegmentIndex(int segmentIndex) {
         this.segmentIndex = segmentIndex;
     }
 
-    // "SegHeader" because stage-generator doesn't support stage names - one is a prefix of another
-    // there is a stage named "Segment"
-    @Stage("SegHeader") long segmentHeaderAddress;
-    @Stage("SegHeader") SegmentHeader segmentHeader = null;
+    @Stage("SegmentHeader") long segmentHeaderAddress;
+    @Stage("SegmentHeader") SegmentHeader segmentHeader = null;
 
-    abstract boolean segHeaderInit();
+    abstract boolean segmentHeaderInit();
 
-    private void initSegHeader() {
+    private void initSegmentHeader() {
         segmentHeaderAddress = hh.h().ms.address() + hh.h().segmentHeaderOffset(segmentIndex);
         segmentHeader = BigSegmentHeader.INSTANCE;
     }
@@ -188,7 +186,7 @@ public abstract class SegmentStages implements SegmentLock {
     @Stage("Locks")
     boolean tryFindInitLocksOfThisSegment(Object thisContext, int index) {
         SegmentStages c = chaining.contextAtIndexInChain(index);
-        if (c.segHeaderInit() &&
+        if (c.segmentHeaderInit() &&
                 c.segmentHeaderAddress == segmentHeaderAddress &&
                 c.locksInit()) {
             SegmentStages root = c.rootContextOnThisSegment;

@@ -25,7 +25,7 @@ public abstract class QuerySegmentStages extends SegmentStages {
 
     @StageRef HashQuery q;
 
-    void initTheSegmentIndex() {
+    void initSegmentIndex() {
         segmentIndex = hh.h().hashSplitting.segmentIndex(q.hashOfKey);
     }
 }

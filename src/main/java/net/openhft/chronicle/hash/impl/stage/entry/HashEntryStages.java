@@ -114,13 +114,13 @@ public abstract class HashEntryStages<K> implements HashEntry<K> {
         return entryKey;
     }
 
-    @Stage("TheEntrySizeInChunks") public int entrySizeInChunks = 0;
+    @Stage("EntrySizeInChunks") public int entrySizeInChunks = 0;
 
-    void initTheEntrySizeInChunks() {
+    void initEntrySizeInChunks() {
         entrySizeInChunks = hh.h().inChunks(entrySize());
     }
 
-    public void initTheEntrySizeInChunks(int actuallyUsedChunks) {
+    public void initEntrySizeInChunks(int actuallyUsedChunks) {
         entrySizeInChunks = actuallyUsedChunks;
     }
     
