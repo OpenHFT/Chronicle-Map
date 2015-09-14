@@ -103,6 +103,20 @@ public class ChronicleMapTest {
         return file;
     }
 
+    private static void printStatus() {
+        if (!new File("/proc/self/status").exists()) return;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("/proc/self/status"));
+            for (String line; (line = br.readLine()) != null; )
+                if (line.startsWith("Vm"))
+                    System.out.print(line.replaceAll("  +", " ") + ", ");
+
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private ChronicleMap<Integer, CharSequence> getViewTestMap(int noOfElements) throws IOException {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -122,20 +136,6 @@ public class ChronicleMapTest {
 
         return map;
 
-    }
-
-    private static void printStatus() {
-        if (!new File("/proc/self/status").exists()) return;
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("/proc/self/status"));
-            for (String line; (line = br.readLine()) != null; )
-                if (line.startsWith("Vm"))
-                    System.out.print(line.replaceAll("  +", " ") + ", ");
-
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
@@ -184,7 +184,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Test
     public void testByteArrayPersistenceFileReuse() throws IOException {
         final File persistenceFile = Builder.getPersistenceFile();
@@ -200,7 +199,6 @@ public class ChronicleMapTest {
         }
 
         persistenceFile.delete();
-
 
     }
 
@@ -244,7 +242,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Ignore("HCOLL-265 Chronicle Maps with Identical byte[] & char[] values are not equal")
     @Test
     public void testEqualsByteArray() {
@@ -266,7 +263,6 @@ public class ChronicleMapTest {
 
         }
     }
-
 
     @Test
     public void testSize() {
@@ -693,7 +689,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Ignore("Possible candidate for TC JVM crashes")
     @Test
     public void testAcquireFromMultipleThreads() throws InterruptedException {
@@ -839,7 +834,6 @@ public class ChronicleMapTest {
                             .actualSegments(segments)
                             .averageKeySize(14)
                             .averageValueSize(value0.length() + 4);
-
 
 //                    File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
 //                    tmpFile.deleteOnExit();
@@ -1083,7 +1077,6 @@ public class ChronicleMapTest {
             }
             printStatus();
 
-
             tmpFile.delete();
         }
         es.shutdown();
@@ -1276,7 +1269,6 @@ public class ChronicleMapTest {
 
     }
 
-
     @Test
     public void mapPutReflectedInViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
@@ -1295,7 +1287,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Test
     public void entrySetRemoveReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
@@ -1310,7 +1301,6 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
         }
     }
-
 
     @Test
     public void keySetRemoveReflectedInMapAndOtherViews() throws IOException {
@@ -1367,7 +1357,6 @@ public class ChronicleMapTest {
             assertValues(values, expectedValues);
         }
     }
-
 
     @Test
     public void keySetIteratorRemoveReflectedInMapAndOtherViews() throws IOException {
@@ -1474,7 +1463,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Test
     public void entrySetRetainAllReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
@@ -1495,7 +1483,6 @@ public class ChronicleMapTest {
 
         }
     }
-
 
     @Test
     public void keySetRetainAllReflectedInMapAndOtherViews() throws IOException {
@@ -1642,7 +1629,6 @@ public class ChronicleMapTest {
                 ++sum;
             }
 
-
             assertEquals(noOfElements, sum);
         }
     }
@@ -1673,7 +1659,6 @@ public class ChronicleMapTest {
         }
 
     }
-
 
     @Test
     public void testEntriesSpanningSeveralChunksPutRemoveReplace() throws IOException, InterruptedException {
@@ -1722,7 +1707,6 @@ public class ChronicleMapTest {
 
     }
 
-
     @Test
     public void equalsTest() throws IOException {
         try (final ChronicleMap<Integer, String> map1 = ChronicleMapBuilder
@@ -1741,42 +1725,7 @@ public class ChronicleMapTest {
             }
         }
 
-
     }
-
-    private static final class IncrementRunnable implements Runnable {
-
-        private final ChronicleMap<CharSequence, LongValue> map;
-
-        private final CharSequence key;
-
-        private final int iterations;
-
-        private final CyclicBarrier barrier;
-
-        private IncrementRunnable(ChronicleMap<CharSequence, LongValue> map, CharSequence key, int iterations, CyclicBarrier barrier) {
-            this.map = map;
-            this.key = key;
-            this.iterations = iterations;
-            this.barrier = barrier;
-        }
-
-        @Override
-        public void run() {
-            try {
-                LongValue value = new LongValue$$Native();
-                barrier.await();
-                for (int i = 0; i < iterations; i++) {
-                    map.acquireUsing(key, value);
-                    value.addAtomicValue(1);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
-
 
     @Test
     public void testPutLongValue() throws IOException {
@@ -1857,12 +1806,10 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Test
     public void testByteArrayKeySizeBySample() throws IOException {
         TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877)
                 .name("serverMap");
-
 
         // this test only appear to fail when we reuse the mapFile
         for (int i = 0; i < 2; i++) {
@@ -1874,13 +1821,11 @@ public class ChronicleMapTest {
 
                 try (ChronicleMap<byte[], byte[][]> map2 = localClient(8877)) {
 
-
                     byte[] key = new byte[14];
                     System.arraycopy("A".getBytes(), 0, key, 0, "A".length());
                     byte[][] value = {new byte[11], new byte[11]};
                     System.arraycopy("A".getBytes(), 0, value[0], 0, "A".length());
                     System.arraycopy("A".getBytes(), 0, value[1], 0, "A".length());
-
 
                     map2.put(key, value);
                     Assert.assertNotNull(map2.get(key));
@@ -1994,6 +1939,38 @@ public class ChronicleMapTest {
         tmpFile.delete();
     }
 
-}
+    private static final class IncrementRunnable implements Runnable {
 
+        private final ChronicleMap<CharSequence, LongValue> map;
+
+        private final CharSequence key;
+
+        private final int iterations;
+
+        private final CyclicBarrier barrier;
+
+        private IncrementRunnable(ChronicleMap<CharSequence, LongValue> map, CharSequence key, int iterations, CyclicBarrier barrier) {
+            this.map = map;
+            this.key = key;
+            this.iterations = iterations;
+            this.barrier = barrier;
+        }
+
+        @Override
+        public void run() {
+            try {
+                LongValue value = new LongValue$$Native();
+                barrier.await();
+                for (int i = 0; i < iterations; i++) {
+                    map.acquireUsing(key, value);
+                    value.addAtomicValue(1);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+}
 

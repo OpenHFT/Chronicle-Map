@@ -109,7 +109,6 @@ public class MapCheck {
             serTest(size);
     }
 
-
     static Map newMap() {
         try {
             return ChronicleMapBuilder.of(Object.class, Object.class).create();

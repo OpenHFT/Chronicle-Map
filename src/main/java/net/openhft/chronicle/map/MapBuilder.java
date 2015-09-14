@@ -49,7 +49,6 @@ public interface MapBuilder<C extends MapBuilder<C>> {
      */
     C putReturnsNull(boolean putReturnsNull);
 
-
     /**
      * Configures if the maps created by this {@code MapBuilder} should return {@code null}
      * instead of the last mapped value on {@link ChronicleMap#remove(Object)

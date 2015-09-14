@@ -256,7 +256,6 @@ abstract class AbstractChannelReplicator implements Closeable {
             LOG.error("", e);
         }
 
-
         try {
             if (future != null)
                 future.cancel(true);
@@ -461,7 +460,6 @@ abstract class AbstractChannelReplicator implements Closeable {
             return out;
         }
 
-
         public Bytes resizeBuffer(int size) {
 
             if (LOG.isDebugEnabled())
@@ -492,7 +490,6 @@ abstract class AbstractChannelReplicator implements Closeable {
         public boolean shouldBeIgnored(final Bytes entry, final int chronicleId) {
             return !externalizable.identifierCheck(entry, chronicleId);
         }
-
 
         @Override
         public boolean onEntry(@NotNull final Bytes entry,
@@ -542,7 +539,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                 in.position(pos0);
                 long remaining = in.remaining();
                 int entrySize = externalizable.sizeOfEntry(entry, chronicleId);
-
 
                 if (entrySize > remaining) {
 
@@ -647,7 +643,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                 // do nothing
             }
         }
-
 
         public void setSuccessfullyConnected() {
             connectionAttempts = 0;

@@ -128,8 +128,6 @@ public abstract class AbstractReplication implements Serializable {
             return engineReplicationLangBytesConsumer;
         }
 
-
-
         @NotNull
         public B tcpTransportAndNetwork(@Nullable TcpTransportAndNetworkConfig tcpConfig) {
             this.tcpConfig = tcpConfig;
@@ -156,13 +154,11 @@ public abstract class AbstractReplication implements Serializable {
             return (B) this;
         }
 
-
         @NotNull
         public B connectionListener(@Nullable ConnectionListener connectionListener) {
             this.connectionListener = connectionListener;
             return (B) this;
         }
-
 
         /**
          * Configures if the node, provided with replication, created by this builder, should
@@ -184,7 +180,6 @@ public abstract class AbstractReplication implements Serializable {
             this.bootstrapOnlyLocalEntries = bootstrapOnlyLocalEntries;
             return (B) this;
         }
-
 
         /**
          * Creates a Replication instance with the given node (server) identifier.

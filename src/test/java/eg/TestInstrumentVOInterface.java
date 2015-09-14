@@ -23,29 +23,23 @@ import net.openhft.lang.model.constraints.MaxSize;
  */
 public interface TestInstrumentVOInterface {
 
-
     int getSizeOfInstrumentIDArray();
 
     void setSizeOfInstrumentIDArray(int sizeOfInstrumentIDArray);
-
 
     String getSymbol();
 
     void setSymbol(@MaxSize(20) String symbol);
 
-
     String getCurrencyCode();
 
     void setCurrencyCode(@MaxSize(4) String currencyCode);
-
 
     void setInstrumentIDAt(@MaxSize(2) int location, TestInstrumentIDVOInterface instrumentID);
 
     TestInstrumentIDVOInterface getInstrumentIDAt(int location);
 
-
     interface TestInstrumentIDVOInterface {
-
 
         String getIdSource();
 

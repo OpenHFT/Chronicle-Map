@@ -51,6 +51,14 @@ import java.util.Arrays;
  */
 public final class ReplicationHub extends AbstractReplication {
 
+    private final ReplicationChannel[] channels;
+
+    private ReplicationHub(byte localIdentifier, Builder builder) {
+        super(localIdentifier, builder);
+
+        channels = new ReplicationChannel[builder.maxNumberOfChannels];
+    }
+
     /**
      * Creates and returns a new {@link ReplicationHub.Builder}.
      *
@@ -61,20 +69,11 @@ public final class ReplicationHub extends AbstractReplication {
         return new Builder();
     }
 
-    private final ReplicationChannel[] channels;
-
-    private ReplicationHub(byte localIdentifier, Builder builder) {
-        super(localIdentifier, builder);
-
-        channels = new ReplicationChannel[builder.maxNumberOfChannels];
-    }
-
     @Override
     public String toString() {
         return "ReplicationHub{" + super.toString() +
                 ", channels=" + Arrays.toString(channels) + '}';
     }
-
 
     /**
      * Returns the maximum number of channels could be {@linkplain #createChannel(int) created} for

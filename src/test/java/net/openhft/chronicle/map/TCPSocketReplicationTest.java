@@ -40,6 +40,7 @@ import static org.junit.Assert.assertTrue;
 public class TCPSocketReplicationTest {
 
     static int s_port = 12050;
+    Set<Thread> threads;
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
 
@@ -70,8 +71,6 @@ public class TCPSocketReplicationTest {
         }
         System.gc();
     }
-
-    Set<Thread> threads;
 
     @Before
     public void sampleThreads() {
@@ -118,7 +117,6 @@ public class TCPSocketReplicationTest {
         assertTrue(!map1.isEmpty());
     }
 
-
     @Test
     public void test2() throws IOException, InterruptedException {
 
@@ -129,7 +127,6 @@ public class TCPSocketReplicationTest {
         map1.remove(1);
 
         map2.put(1, "EXAMPLE-1");
-
 
         // allow time for the recompilation to resolve
         waitTillEqual(5000);
@@ -156,7 +153,6 @@ public class TCPSocketReplicationTest {
         assertEquals(map1, map2);
         assertTrue(map1.isEmpty());
     }
-
 
     @Test
     public void testBufferOverflow() throws IOException, InterruptedException {

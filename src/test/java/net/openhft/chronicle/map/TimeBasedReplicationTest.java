@@ -36,7 +36,6 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
     public static final byte IDENTIFIER = 1;
 
-
     Set<Thread> threads;
 
     @Before

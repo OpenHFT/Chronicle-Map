@@ -42,7 +42,6 @@ public enum DoubleMarshaller implements BytesInterop<Double>, BytesReader<Double
         return 8L;
     }
 
-
     @Override
     public int minSizeEncodingSize() {
         return 0;

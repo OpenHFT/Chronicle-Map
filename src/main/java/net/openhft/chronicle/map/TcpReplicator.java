@@ -276,7 +276,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      *
      * @param approxTime the approximate time in milliseconds
      */
-
     void heartBeatMonitor(long approxTime) {
         for (int i = activeKeys.nextSetBit(0); i >= 0; i = activeKeys.nextSetBit(i + 1)) {
             try {
@@ -390,12 +389,10 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     private void quietClose(@NotNull final SelectionKey key, @NotNull final Exception e) {
         if (LOG.isDebugEnabled())
             LOG.debug("", e);
-
-        //  null check (Attached)key.attachment();
+        
         if (key.channel() != null && key.attachment() != null)
             connectionListener.onDisconnect(((SocketChannel) key.channel()).socket().getInetAddress(),
                     ((Attached) key.attachment()).remoteIdentifier);
-
 
         closeEarlyAndQuietly(key.channel());
     }
@@ -534,7 +531,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
         final String localVersion = BuildVersion.version();
         final String remoteVersion = attached.serverVersion;
-
 
         if (!remoteVersion.equals(localVersion)) {
             byte remoteIdentifier = attached.remoteIdentifier;
@@ -764,7 +760,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     /**
      * called when the selector receives a OP_READ message
      */
-
     private void onRead(@NotNull final SelectionKey key,
                         final long approxTime) throws IOException {
 
@@ -1062,7 +1057,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      */
     class TcpSocketChannelEntryWriter {
 
-
         @NotNull
         private final EntryCallback entryCallback;
         // if uncompletedWork is set ( not null ) , this must be completed before any further work
@@ -1150,8 +1144,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         /**
          * writes all the entries that have changed, to the buffer which will later be written to
          * TCP/IP
+         *  @param modificationIterator a record of which entries have modification
          *
-         * @param modificationIterator a record of which entries have modification
          */
         void entriesToBuffer(@NotNull final Replica.ModificationIterator modificationIterator) throws InterruptedException {
 
@@ -1231,7 +1225,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             return len;
         }
 
-
         /**
          * used to send an single zero byte if we have not send any data for up to the
          * localHeartbeatInterval
@@ -1247,7 +1240,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         private void writeRemoteHeartbeatInterval(long localHeartbeatInterval) {
             in().writeLong(localHeartbeatInterval);
         }
-
 
         public boolean doWork() {
             return uncompletedWork != null && uncompletedWork.doWork(in());
@@ -1471,7 +1463,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 return null;
         }
 
-
         public long readRemoteHeartbeatIntervalFromBuffer() {
             return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
         }
@@ -1508,7 +1499,6 @@ class StatelessServerConnector<K, V> {
     private final SerializationBuilder<V> valueSerializationBuilder;
     private final int tcpBufferSize;
 
-
     StatelessServerConnector(
             @NotNull VanillaChronicleMap<K, ?, ?, V, ?, ?> map,
             @NotNull final BufferResizer bufferResizer, int tcpBufferSize,
@@ -1539,7 +1529,6 @@ class StatelessServerConnector<K, V> {
         int headerSize = reader.readInt();
         reader.skip(headerSize);
 
-
         // these methods don't return a result to the client or don't return a result to the
         // client immediately
         switch (event) {
@@ -1563,7 +1552,6 @@ class StatelessServerConnector<K, V> {
         }
 
         final long sizeLocation = reflectTransactionId(writer.in(), transactionId);
-
 
         // these methods return a result
 
@@ -1667,7 +1655,6 @@ class StatelessServerConnector<K, V> {
         writeSizeAndFlags(sizeLocation, false, writer.in());
         return null;
     }
-
 
     @Nullable
     public Work mapForKey(@NotNull ByteBufferBytes reader, @NotNull TcpReplicator.TcpSocketChannelEntryWriter writer,
@@ -1773,10 +1760,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-
     @Nullable
     private Work applicationVersion(@NotNull TcpReplicator.TcpSocketChannelEntryWriter writer, final long sizeLocation) {
-
 
         final long remaining = writer.in().remaining();
         try {
@@ -1792,10 +1777,8 @@ class StatelessServerConnector<K, V> {
         return null;
     }
 
-
     @Nullable
     private Work persistedDataVersion(@NotNull TcpReplicator.TcpSocketChannelEntryWriter writer, final long sizeLocation) {
-
 
         final long remaining = writer.in().remaining();
         try {
@@ -1820,7 +1803,7 @@ class StatelessServerConnector<K, V> {
 
         writeException(writer, e);
 
-        writeSizeAndFlags(sizeLocation, true, writer.in());
+        writeSizeAndFlags(sizeLocation , true, writer.in());
         return null;
     }
 
@@ -2135,7 +2118,6 @@ class StatelessServerConnector<K, V> {
             out.limit(limit);
             out.position(pos);
         }
-
 
     }
 

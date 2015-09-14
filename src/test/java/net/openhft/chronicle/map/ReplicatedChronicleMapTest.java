@@ -132,7 +132,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertTrue(m.containsKey(new DI(i)));
         }
     }*/
-
     /**
      * TODO :     fix test
      * Elements of classes with erased generic type parameters based
@@ -157,7 +156,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }
 */
-
     /**
      * Elements of non-comparable classes equal to those of classes
      * with erased generic type parameters based on Comparable can be
@@ -176,7 +174,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }
 */
-
     /**
      * get returns the correct element at the given key, or null if not present
      */
@@ -259,7 +256,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
         assertEquals(5, count);
     }*/
-
     /**
      * entrySet.toArray contains all entries
      */
@@ -303,7 +299,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
         assertEquals(5, count);
     }*/
-
     /**
      * entrySet contains all pairs
      */
@@ -528,7 +523,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         } catch (IllegalArgumentException success) {
         }
     }*/
-
     /**
      * TODO : Cannot create with negative concurrency level
      */
@@ -539,7 +533,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         } catch (IllegalArgumentException success) {
         }
     }*/
-
     /**
      * TODO :Cannot create with only negative capacity
      */
@@ -550,7 +543,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         } catch (IllegalArgumentException success) {
         }
     }*/
-
     /**
      * replace(null, x) throws NPE
      */
@@ -588,7 +580,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         } catch (NullPointerException success) {
         }
     }*/
-
     /**
      * todo  : contains(null) throws NPE
      */
@@ -602,7 +593,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }
 */
-
     /**
      * putIfAbsent(x, null) throws NPE
      */
@@ -788,7 +778,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         assertEquals(x, y);
         assertEquals(y, x);
     }*/
-
     /**
      * TODO : SetValue of an EntrySet entry sets value in the map.
      */

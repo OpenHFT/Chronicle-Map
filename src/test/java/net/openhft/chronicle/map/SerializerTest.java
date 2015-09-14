@@ -62,7 +62,6 @@ public class SerializerTest {
 
     }
 
-
     @Test
     public void testValueMarshallable() {
         testReadWriteValue("Test");

@@ -37,13 +37,51 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-
 /**
  * @author Rob Austin.
  */
 public class DataValueConverter implements Converter {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataValueConverter.class);
+
+    private static Object toNativeValueObjects(HierarchicalStreamReader reader,
+                                               final Class aClass,
+                                               UnmarshallingContext context) {
+
+        final Object o = DataValueClasses.newDirectInstance(aClass);
+
+        try {
+
+            final BeanInfo info = Introspector.getBeanInfo(o.getClass());  //  new BeanGenerator
+
+            for (PropertyDescriptor p : info.getPropertyDescriptors()) {
+
+                if (!p.getName().equals("value"))
+                    continue;
+
+                final String value = reader.getValue();
+
+                if (StringValue.class.isAssignableFrom(o.getClass())) {
+                    ((StringValue) o).setValue(value);
+                    return o;
+                }
+
+                final Class<?> propertyType = p.getPropertyType();
+
+                final Object o1 = context.convertAnother(value, propertyType);
+                p.getWriteMethod().invoke(o, o1);
+
+                return o;
+
+            }
+
+        } catch (Exception e) {
+            throw new ConversionException("class=" + aClass.getName(), e);
+        }
+
+        throw new ConversionException("setValue(..) method not found in class=" +
+                aClass.getCanonicalName());
+    }
 
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext context) {
@@ -77,7 +115,6 @@ public class DataValueConverter implements Converter {
 
             throw new ConversionException("class=" + canonicalName);
         }
-
 
         try {
             DataValueModel<?> dataValueModel = DataValueModels.acquireModel(interfaceClass(o.getClass()));
@@ -138,7 +175,6 @@ public class DataValueConverter implements Converter {
                     continue;
                 }
 
-
                 try {
 
                     final Method readMethod = fileModel.getter();
@@ -160,7 +196,6 @@ public class DataValueConverter implements Converter {
                 } catch (Exception e) {
                     LOG.error("class=" + fileModel.name(), e);
                 }
-
 
             }
 
@@ -187,7 +222,6 @@ public class DataValueConverter implements Converter {
 
         return Class.forName(nodeName);
     }
-
 
     @Override
     public Object unmarshal(HierarchicalStreamReader reader,
@@ -287,46 +321,6 @@ public class DataValueConverter implements Converter {
 
             reader.moveUp();
         }
-    }
-
-
-    private static Object toNativeValueObjects(HierarchicalStreamReader reader,
-                                               final Class aClass,
-                                               UnmarshallingContext context) {
-
-        final Object o = DataValueClasses.newDirectInstance(aClass);
-
-        try {
-
-            final BeanInfo info = Introspector.getBeanInfo(o.getClass());  //  new BeanGenerator
-
-            for (PropertyDescriptor p : info.getPropertyDescriptors()) {
-
-                if (!p.getName().equals("value"))
-                    continue;
-
-                final String value = reader.getValue();
-
-                if (StringValue.class.isAssignableFrom(o.getClass())) {
-                    ((StringValue) o).setValue(value);
-                    return o;
-                }
-
-                final Class<?> propertyType = p.getPropertyType();
-
-                final Object o1 = context.convertAnother(value, propertyType);
-                p.getWriteMethod().invoke(o, o1);
-
-                return o;
-
-            }
-
-        } catch (Exception e) {
-            throw new ConversionException("class=" + aClass.getName(), e);
-        }
-
-        throw new ConversionException("setValue(..) method not found in class=" +
-                aClass.getCanonicalName());
     }
 
     @Override

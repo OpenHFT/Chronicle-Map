@@ -48,7 +48,6 @@ class JsonSerializer {
         }
     }
 
-
     static synchronized <K, V> void putAll(File fromFile, Map<K, V> map, List jsonConverters)
             throws IOException {
         final XStream xstream = xStream(map, jsonConverters);
@@ -114,5 +113,4 @@ class JsonSerializer {
         xstream.registerConverter(converter);
     }
 }
-
 

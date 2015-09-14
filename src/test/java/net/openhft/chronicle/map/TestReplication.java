@@ -29,10 +29,8 @@ import java.net.InetSocketAddress;
  */
 public class TestReplication {
 
-
     @Test
     public void testAllDataGetsReplicated() throws InterruptedException {
-
 
         TcpTransportAndNetworkConfig tcpConfigServer1 =
                 TcpTransportAndNetworkConfig.of(8092);
@@ -46,12 +44,10 @@ public class TestReplication {
                 .replication((byte) 2, tcpConfigServer2)
                 .create();
 
-
         final ChronicleMap<Integer, Integer> map1 = ChronicleMapBuilder.of(Integer.class,
                 Integer.class)
                 .replication((byte) 3, tcpConfigServer1)
                 .create();
-
 
         for (int i = 0; i < 70000; i++) {
             map1.put(i, i);
@@ -61,7 +57,6 @@ public class TestReplication {
             Thread.sleep(100);
             System.out.println(map2.size());
         }
-
 
         Assert.assertEquals(map1.size(),map2.size());
 
@@ -81,7 +76,6 @@ public class TestReplication {
         // ports, to make it easier to run in a unit test
         {
             final File tempFile = File.createTempFile("test", "chron");
-
 
             server1 = ChronicleMapBuilder.of(String.class, String.class)
                     .replication(
@@ -112,7 +106,6 @@ public class TestReplication {
 
         String actual;
 
-
         // we have a while loop here as we have to wait a few seconds for the data to replicate
         do {
             actual = server2.get("key");
@@ -124,6 +117,5 @@ public class TestReplication {
     }
 
 
-    
 
 }

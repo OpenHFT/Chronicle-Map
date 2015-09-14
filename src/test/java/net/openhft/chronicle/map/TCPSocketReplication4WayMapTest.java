@@ -38,6 +38,7 @@ import static org.junit.Assert.assertTrue;
 @Ignore
 public class TCPSocketReplication4WayMapTest {
 
+    Set<Thread> threads;
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     private ChronicleMap<Integer, CharSequence> map3;
@@ -74,8 +75,6 @@ public class TCPSocketReplication4WayMapTest {
         }
         System.gc();
     }
-
-    Set<Thread> threads;
 
     @Before
     public void sampleThreads() {
@@ -123,7 +122,6 @@ public class TCPSocketReplication4WayMapTest {
     @Test
     public void testBufferOverflowPutIfAbsent() throws IOException, InterruptedException {
 
-
         for (int i = 0; i < 1024; i++) {
             map1.putIfAbsent(i, "EXAMPLE-1");
         }
@@ -147,7 +145,6 @@ public class TCPSocketReplication4WayMapTest {
      * @param timeOutMs timeout in milliseconds
      * @throws InterruptedException
      */
-
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
         int t = 0;
         for (; t < timeOutMs; t++) {

@@ -28,10 +28,8 @@ import java.net.InetSocketAddress;
  */
 public class TcpReplicationWithAcquireUsingLockedTest {
 
-
     @Test
     public void testReplicationWithAcquireUsingLocked() throws InterruptedException {
-
 
         TcpTransportAndNetworkConfig config1 = TcpTransportAndNetworkConfig.of(8076);
 
@@ -48,7 +46,6 @@ public class TcpReplicationWithAcquireUsingLockedTest {
             TcpTransportAndNetworkConfig config2 =
                     TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076));
 
-
             try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
                          ChronicleMapBuilder.of(CharSequence.class,
                                  TestInstrumentVOInterface.class)
@@ -60,13 +57,11 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 //Store some data into MAP1
                 TestInstrumentVOInterface instrumentVOInterface = map1.newValueInstance();
 
-
                 try (WriteContext<CharSequence, TestInstrumentVOInterface> wc =
                              map1.acquireUsingLocked("KEY1", instrumentVOInterface)) {
                     instrumentVOInterface.setSymbol("Flyer");
                     instrumentVOInterface.setCurrencyCode("USA");
                 }
-
 
                 int t = 0;
                 for (; t < 5000; t++) {
@@ -75,18 +70,14 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                     Thread.sleep(1);
                 }
 
-
                 Assert.assertEquals(map1a, map2a);
             }
         }
 
-
     }
-
 
     @Test
     public void testReplicationWithEmptyOffHeapObject() throws InterruptedException {
-
 
         TcpTransportAndNetworkConfig config1 = TcpTransportAndNetworkConfig.of(8076);
 
@@ -105,7 +96,6 @@ public class TcpReplicationWithAcquireUsingLockedTest {
             TcpTransportAndNetworkConfig config2 = TcpTransportAndNetworkConfig
                     .of(8077, new InetSocketAddress("127.0.0.1", 8076));
 
-
             try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
                          ChronicleMapBuilder.of(CharSequence.class,
                                  TestInstrumentVOInterface.class)
@@ -121,7 +111,6 @@ public class TcpReplicationWithAcquireUsingLockedTest {
 
                 map2a.put("hello", instrumentVOInterface);
 
-
                 int t = 0;
                 for (; t < 5000; t++) {
                     if (map1.equals(map2))
@@ -133,13 +122,10 @@ public class TcpReplicationWithAcquireUsingLockedTest {
             }
         }
 
-
     }
-
 
     @Test
     public void testReplicationWithOffHeapObject() throws InterruptedException {
-
 
         TcpTransportAndNetworkConfig config1 = TcpTransportAndNetworkConfig.of(8076);
 
@@ -158,7 +144,6 @@ public class TcpReplicationWithAcquireUsingLockedTest {
             TcpTransportAndNetworkConfig config2 =
                     TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("127.0.0.1", 8076));
 
-
             try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
                          ChronicleMapBuilder.of(CharSequence.class,
                                  TestInstrumentVOInterface.class)
@@ -175,7 +160,6 @@ public class TcpReplicationWithAcquireUsingLockedTest {
 
                 map2a.put("hello", instrumentVOInterface);
 
-
                 int t = 0;
                 for (; t < 5000; t++) {
                     if (map1.equals(map2))
@@ -186,7 +170,6 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 Assert.assertEquals(map1a, map2a);
             }
         }
-
 
     }
 

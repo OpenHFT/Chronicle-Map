@@ -29,11 +29,9 @@ public interface BondVOInterface {
     long getIssueDate();
 
     void setIssueDate(long issueDate);  /* time in millis */
-
     long getMaturityDate();
 
     void setMaturityDate(long maturityDate);  /* time in millis */
-
     long addAtomicMaturityDate(long toAdd);
 
     boolean compareAndSwapCoupon(double expected, double value);
@@ -57,7 +55,6 @@ public interface BondVOInterface {
      …,
      * index_6 = 4.30pm
      */
-
     MarketPx getMarketPxIntraDayHistoryAt(int tradingDayHour);
 
     /* nested interface - empowering an Off-Heap hierarchical “TIER of prices”

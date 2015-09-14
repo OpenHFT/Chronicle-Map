@@ -102,7 +102,6 @@ class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.
      * binds to the server socket and process data This method will block until interrupted
      */
 
-
     @Override
     void processEvent() {
         try {

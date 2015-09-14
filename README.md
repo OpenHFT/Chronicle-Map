@@ -432,10 +432,8 @@ public interface BondVOInterface {
 
     long getIssueDate();
     void setIssueDate(long issueDate);  /* time in millis */
-
     long getMaturityDate();
     void setMaturityDate(long maturityDate);  /* time in millis */
-
     double getCoupon();
     void setCoupon(double coupon);
 

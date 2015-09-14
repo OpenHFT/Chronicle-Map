@@ -68,7 +68,6 @@ public final class DataValueBytesMarshallers {
         }
     }
 
-
     public static <T> Class acquireReaderClass(Class<T> tClass) {
         DataValueClasses.directClassFor(tClass);
         Class readerClass = readersClassMap.get(tClass);
@@ -191,7 +190,6 @@ public final class DataValueBytesMarshallers {
         sb.append(withCustomFactoryClass);
         return sb.toString();
     }
-
 
     private static String bytesReaderName(Class type, boolean simple) {
         return (simple ? type.getSimpleName() : type.getName()) + "$$BytesReader";

@@ -297,7 +297,6 @@ class NodeDiscovery {
                 .of(ourAddressAndPort.getPort(),
                         toInetSocketCollection(knownHostPorts0));
 */
-
         LOG.info("Using Remote identifier=" + identifier);
         nodeDiscoveryEventListenerAtomicReference.set(null);
 
