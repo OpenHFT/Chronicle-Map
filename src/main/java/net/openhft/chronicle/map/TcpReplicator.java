@@ -21,7 +21,6 @@ import net.openhft.chronicle.hash.replication.ConnectionListener;
 import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.ByteBufferBytes;
@@ -40,7 +39,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.BitSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.channels.SelectionKey.*;
@@ -101,6 +102,10 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
     private long selectorTimeout;
 
 
+    enum State {
+        CONNECTED, DISCONNECTED;
+    }
+
     /**
      * @throws IOException on an io error.
      */
@@ -126,9 +131,32 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
 
         this.externalizable = externalizable;
         this.replicationConfig = replicationConfig;
-        this.connectionListener = connectionListener;
+
         this.remoteNodeValidator = remoteNodeValidator;
         this.name = name;
+
+        this.connectionListener = (connectionListener == null) ? null : new ConnectionListener() {
+
+            private final Map<InetAddress, State> listenerStateMap = new ConcurrentHashMap<>();
+
+            @Override
+            public void onConnect(InetAddress address, byte identifier, boolean isServer) {
+
+                if (listenerStateMap.put(address, State.CONNECTED) == State.CONNECTED)
+                    return;
+
+                connectionListener.onConnect(address, identifier, isServer);
+            }
+
+            @Override
+            public void onDisconnect(InetAddress address, byte identifier) {
+                if (listenerStateMap.put(address, State.DISCONNECTED) == State.DISCONNECTED)
+                    return;
+
+                connectionListener.onDisconnect(address, identifier);
+            }
+        };
+
         start();
     }
 
@@ -317,6 +345,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
             }
         }
     }
+
 
     /**
      * check to see if its time to send a heartbeat, and send one if required
@@ -838,7 +867,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
     /**
      * sets interestOps to "selector keys",The change to interestOps much be on the same thread as
      * the selector. This class, allows via {@link AbstractChannelReplicator
-     * .KeyInterestUpdater#set(int)}  to holds a pending change  in interestOps ( via a bitset ),
+     * .KeyInterestUpdater#set(int)} to holds a pending change  in interestOps ( via a bitset ),
      * this change is processed later on the same thread as the selector
      */
     private static class KeyInterestUpdater {
