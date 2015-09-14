@@ -355,8 +355,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
         final Attached attached = (Attached) key.attachment();
 
-        // we wont attempt to reconnect the server socket
-        if (attached.isServer || !attached.isHandShakingComplete())
+        if (attached.isServer && !attached.isHandShakingComplete())
             return;
 
         final SocketChannel channel = (SocketChannel) key.channel();
@@ -367,6 +366,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 LOG.debug("lost connection, attempting to reconnect. " +
                         "missed heartbeat from identifier=" + attached.remoteIdentifier);
             activeKeys.clear(attached.remoteIdentifier);
+            quietClose(key, null);
+
             closeables.closeQuietly(channel.socket());
 
             // when node discovery is used ( by nodes broadcasting out their host:port over UDP ),
@@ -386,8 +387,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      * @param key the SelectionKey
      * @param e   the Exception that caused the issue
      */
-    private void quietClose(@NotNull final SelectionKey key, @NotNull final Exception e) {
-        if (LOG.isDebugEnabled())
+    private void quietClose(@NotNull final SelectionKey key, @Nullable final Exception e) {
+        if (LOG.isDebugEnabled() && e != null)
             LOG.debug("", e);
 
         if (key.channel() != null && key.attachment() != null && connectionListener != null)
@@ -582,8 +583,10 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
             final SocketChannel channel = (SocketChannel) key.channel();
             if (channel != null && channel.socket() != null && connectionListener != null) {
-                connectionListener.onConnect(channel.socket().getInetAddress(),
-                        attached.remoteIdentifier, attached.isServer);
+                connectionListener.onConnect(
+                        channel.socket().getInetAddress(),
+                        attached.remoteIdentifier,
+                        attached.isServer);
             }
 
             // we use the as iterating the activeKeys via the bitset wont create and Objects
@@ -776,7 +779,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
             int len = attached.entryReader.readSocketToBuffer(socketChannel);
             if (len == -1) {
-                socketChannel.register(selector, 0);
+                socketChannel.register(selector, 0, attached);
                 if (replicationConfig.autoReconnectedUponDroppedConnection()) {
                     AbstractConnector connector = attached.connector;
                     if (connector != null)
