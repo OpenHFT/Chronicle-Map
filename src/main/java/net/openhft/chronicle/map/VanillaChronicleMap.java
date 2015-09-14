@@ -606,8 +606,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
 
-        System.out.println("\n" + "segmentNum=" + segmentNum + ",hash=" + hash);
-
         return segments[segmentNum].put3(copies, segmentState,
                 metaKeyInterop, keyInterop, key, keySize, toKey,
                 getValueInterops, value, toValue,
