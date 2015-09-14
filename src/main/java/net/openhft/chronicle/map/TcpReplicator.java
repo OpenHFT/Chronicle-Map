@@ -41,6 +41,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.channels.SelectionKey.*;
@@ -97,6 +98,12 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     private long largestEntrySoFar = 128;
     private long selectorTimeout;
 
+
+    enum State {
+        CONNECTED, DISCONNECTED;
+    }
+
+
     /**
      * @throws IOException on an io error.
      */
@@ -105,7 +112,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                          @NotNull final TcpTransportAndNetworkConfig replicationConfig,
                          @Nullable final RemoteNodeValidator remoteNodeValidator,
                          @Nullable final StatelessClientParameters statelessClientParameters,
-                         @Nullable final ConnectionListener connectionListener) throws IOException {
+                         @Nullable final ConnectionListener connectionListener0) throws
+            IOException {
 
         super("TcpSocketReplicator-" + replica.identifier(), replicationConfig.throttlingConfig());
 
@@ -123,9 +131,33 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
         this.externalizable = externalizable;
         this.replicationConfig = replicationConfig;
-        this.connectionListener = connectionListener;
+
         this.remoteNodeValidator = remoteNodeValidator;
         this.name = replicationConfig.name();
+
+        this.connectionListener = (connectionListener0 == null) ? null : new ConnectionListener() {
+
+            private final Map<InetAddress, State> listenerStateMap = new ConcurrentHashMap<>();
+
+            @Override
+            public void onConnect(InetAddress address, byte identifier, boolean isServer) {
+
+                if (listenerStateMap.put(address, State.CONNECTED) == State.CONNECTED)
+                    return;
+
+                connectionListener0.onConnect(address, identifier, isServer);
+            }
+
+            @Override
+            public void onDisconnect(InetAddress address, byte identifier) {
+                if (listenerStateMap.put(address, State.DISCONNECTED) == State.DISCONNECTED)
+                    return;
+
+                connectionListener0.onDisconnect(address, identifier);
+            }
+        };
+
+
         start();
     }
 
@@ -313,6 +345,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             }
         }
     }
+
 
     /**
      * check to see if its time to send a heartbeat, and send one if required
@@ -842,7 +875,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     /**
      * sets interestOps to "selector keys",The change to interestOps much be on the same thread as
      * the selector. This class, allows via {@link AbstractChannelReplicator
-     * .KeyInterestUpdater#set(int)}  to holds a pending change  in interestOps ( via a bitset ),
+     * .KeyInterestUpdater#set(int)} to holds a pending change  in interestOps ( via a bitset ),
      * this change is processed later on the same thread as the selector
      */
     private static class KeyInterestUpdater {
