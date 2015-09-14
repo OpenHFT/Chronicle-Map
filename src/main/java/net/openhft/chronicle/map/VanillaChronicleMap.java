@@ -566,6 +566,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         long hash = metaKeyInterop.hash(keyInterop, key);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
+
         return segments[segmentNum].update(copies, null,
                 metaKeyInterop, keyInterop, key, keySize, keyIdentity(),
                 this, value, valueIdentity(), segmentHash);
@@ -604,6 +605,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         long hash = metaKeyInterop.hash(keyInterop, key);
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
+
+        System.out.println("\n" + "segmentNum=" + segmentNum + ",hash=" + hash);
+
         return segments[segmentNum].put3(copies, segmentState,
                 metaKeyInterop, keyInterop, key, keySize, toKey,
                 getValueInterops, value, toValue,
@@ -774,6 +778,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
         long keySize = metaKeyInterop.size(keyInterop, key);
         long hash = metaKeyInterop.hash(keyInterop, key);
+
+
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
 

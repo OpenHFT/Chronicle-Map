@@ -391,9 +391,10 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         if (LOG.isDebugEnabled())
             LOG.debug("", e);
 
-        // todo OZAN :
         //  null check (Attached)key.attachment();
-        //      connectionListener.onDiconnect( ((SocketChannel)key.channel()).socket().getInetAddress(),         ((Attached)key.attachment()).remoteIdentifier);
+        if (key.channel() != null && key.attachment() != null)
+            connectionListener.onDisconnect(((SocketChannel) key.channel()).socket().getInetAddress(),
+                    ((Attached) key.attachment()).remoteIdentifier);
 
 
         closeEarlyAndQuietly(key.channel());
@@ -505,7 +506,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
      */
     boolean isValidVersionNumber(String versionNumber) {
 
-        if (versionNumber.length()<=2)
+        if (versionNumber.length() <= 2)
             return false;
 
         for (char c : versionNumber.toCharArray()) {
@@ -583,10 +584,11 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
             attached.remoteIdentifier = remoteIdentifier;
 
-
-            // todo OZAN : add call to onConnectedListener.
-            //connectionListener. onConnected(channel.socket().getInetAddress() ,  attached
-            //         .remoteIdentifier, attached.isServer );
+            final SocketChannel channel = (SocketChannel) key.channel();
+            if (channel != null && channel.socket() != null) {
+                connectionListener.onConnect(channel.socket().getInetAddress(),
+                        attached.remoteIdentifier, attached.isServer);
+            }
 
             // we use the as iterating the activeKeys via the bitset wont create and Objects
             // but if we use the selector.keys() this will.
@@ -1148,8 +1150,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         /**
          * writes all the entries that have changed, to the buffer which will later be written to
          * TCP/IP
-         *  @param modificationIterator a record of which entries have modification
          *
+         * @param modificationIterator a record of which entries have modification
          */
         void entriesToBuffer(@NotNull final Replica.ModificationIterator modificationIterator) throws InterruptedException {
 
@@ -1818,7 +1820,7 @@ class StatelessServerConnector<K, V> {
 
         writeException(writer, e);
 
-        writeSizeAndFlags(sizeLocation , true, writer.in());
+        writeSizeAndFlags(sizeLocation, true, writer.in());
         return null;
     }
 
