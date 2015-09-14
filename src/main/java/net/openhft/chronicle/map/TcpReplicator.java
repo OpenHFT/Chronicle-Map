@@ -389,8 +389,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     private void quietClose(@NotNull final SelectionKey key, @NotNull final Exception e) {
         if (LOG.isDebugEnabled())
             LOG.debug("", e);
-        
-        if (key.channel() != null && key.attachment() != null)
+
+        if (key.channel() != null && key.attachment() != null && connectionListener != null)
             connectionListener.onDisconnect(((SocketChannel) key.channel()).socket().getInetAddress(),
                     ((Attached) key.attachment()).remoteIdentifier);
 
@@ -581,7 +581,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             attached.remoteIdentifier = remoteIdentifier;
 
             final SocketChannel channel = (SocketChannel) key.channel();
-            if (channel != null && channel.socket() != null) {
+            if (channel != null && channel.socket() != null && connectionListener != null) {
                 connectionListener.onConnect(channel.socket().getInetAddress(),
                         attached.remoteIdentifier, attached.isServer);
             }
@@ -1144,8 +1144,8 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         /**
          * writes all the entries that have changed, to the buffer which will later be written to
          * TCP/IP
-         *  @param modificationIterator a record of which entries have modification
          *
+         * @param modificationIterator a record of which entries have modification
          */
         void entriesToBuffer(@NotNull final Replica.ModificationIterator modificationIterator) throws InterruptedException {
 
@@ -1803,7 +1803,7 @@ class StatelessServerConnector<K, V> {
 
         writeException(writer, e);
 
-        writeSizeAndFlags(sizeLocation , true, writer.in());
+        writeSizeAndFlags(sizeLocation, true, writer.in());
         return null;
     }
 
