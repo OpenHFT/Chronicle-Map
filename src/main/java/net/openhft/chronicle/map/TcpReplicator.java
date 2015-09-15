@@ -388,31 +388,30 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
 
         final Attached attached = (Attached) key.attachment();
 
-        if (!attached.isServer || !attached.isHandShakingComplete())
-            return;
+        if (attached.isServer && attached.isHandShakingComplete()) {
 
-        final SocketChannel channel = (SocketChannel) key.channel();
+            final SocketChannel channel = (SocketChannel) key.channel();
 
-        if (approxTimeOutTime >
-                attached.entryReader.lastHeartBeatReceived + attached.remoteHeartbeatInterval) {
-            if (LOG.isDebugEnabled())
-                LOG.debug("lost connection, attempting to reconnect. " +
-                        "missed heartbeat from identifier=" + attached.remoteIdentifier);
-            activeKeys.clear(attached.remoteIdentifier);
-            quietClose(key, null);
+            if (approxTimeOutTime >
+                    attached.entryReader.lastHeartBeatReceived + attached.remoteHeartbeatInterval) {
+                if (LOG.isDebugEnabled())
+                    LOG.debug("lost connection, attempting to reconnect. " +
+                            "missed heartbeat from identifier=" + attached.remoteIdentifier);
+                activeKeys.clear(attached.remoteIdentifier);
+                quietClose(key, null);
 
-            closeables.closeQuietly(channel.socket());
+                closeables.closeQuietly(channel.socket());
 
-            // when node discovery is used ( by nodes broadcasting out their host:port over UDP ),
-            // when new or restarted nodes are started up. they attempt to find the nodes
-            // on the grid by listening to the host and ports of the other nodes, so these nodes
-            // will establish the connection when they come back up, hence under these
-            // circumstances, polling a dropped node to attempt to reconnect is no-longer
-            // required as the remote node will establish the connection its self on startup.
-            if (replicationConfig.autoReconnectedUponDroppedConnection())
-                attached.connector.connectLater();
+                // when node discovery is used ( by nodes broadcasting out their host:port over UDP ),
+                // when new or restarted nodes are started up. they attempt to find the nodes
+                // on the grid by listening to the host and ports of the other nodes, so these nodes
+                // will establish the connection when they come back up, hence under these
+                // circumstances, polling a dropped node to attempt to reconnect is no-longer
+                // required as the remote node will establish the connection its self on startup.
+                if (replicationConfig.autoReconnectedUponDroppedConnection())
+                    attached.connector.connectLater();
+            }
         }
-
     }
 
     /**
