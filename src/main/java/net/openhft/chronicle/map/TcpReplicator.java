@@ -388,7 +388,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
 
         final Attached attached = (Attached) key.attachment();
 
-        if (attached.isServer && !attached.isHandShakingComplete())
+        if (!attached.isServer || !attached.isHandShakingComplete())
             return;
 
         final SocketChannel channel = (SocketChannel) key.channel();
@@ -412,6 +412,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
             if (replicationConfig.autoReconnectedUponDroppedConnection())
                 attached.connector.connectLater();
         }
+
     }
 
     /**
