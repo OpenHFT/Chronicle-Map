@@ -1831,8 +1831,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         @Override
         public boolean hasNext() {
             final long position = this.position;
-            return changes.nextSetBit(position == NOT_FOUND ? 0L : position) != NOT_FOUND ||
-                    (position > 0L && changes.nextSetBit(0L) != NOT_FOUND);
+            return changes.nextSetBit(position + 1) != NOT_FOUND ||
+                    (position >= 0L && changes.nextSetBit(0L) != NOT_FOUND);
         }
 
         /**
