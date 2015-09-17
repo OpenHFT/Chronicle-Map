@@ -70,10 +70,19 @@ public final class DataValueBytesMarshallers {
 
 
     public static <T> Class acquireReaderClass(Class<T> tClass) {
-        DataValueClasses.directClassFor(tClass);
         Class readerClass = readersClassMap.get(tClass);
         if (readerClass != null)
             return readerClass;
+        synchronized (readersClassMap) {
+            if ((readerClass = readersClassMap.get(tClass)) != null)
+                return readerClass;
+            return compileReaderClass(tClass);
+        }
+    }
+
+    private static <T> Class compileReaderClass(Class<T> tClass) {
+        DataValueClasses.directClassFor(tClass);
+        Class readerClass;
         DataValueModel<T> dvmodel = DataValueModels.acquireModel(tClass);
         for (Class clazz : dvmodel.nestedModels()) {
             // touch them to make sure they are loaded.
@@ -103,6 +112,15 @@ public final class DataValueBytesMarshallers {
         Class writerClass = writerClassMap.get(tClass);
         if (writerClass != null)
             return writerClass;
+        synchronized (writerClassMap) {
+            if ((writerClass = writerClassMap.get(tClass)) != null)
+                return writerClass;
+            return compileWriterClass(tClass);
+        }
+    }
+
+    private static <T> Class compileWriterClass(Class<T> tClass) {
+        Class writerClass;
         DataValueModel<T> dvmodel = DataValueModels.acquireModel(tClass);
         for (Class clazz : dvmodel.nestedModels()) {
             // touch them to make sure they are loaded.
@@ -131,7 +149,16 @@ public final class DataValueBytesMarshallers {
         Class c = readersWithCustomFactoriesClassMap.get(tClass);
         if (c != null)
             return c;
+        synchronized (readersWithCustomFactoriesClassMap) {
+            if ((c = readersWithCustomFactoriesClassMap.get(tClass)) != null)
+                return c;
+            return compileReaderWithCustomFactory(tClass);
+        }
+    }
+
+    private static <T> Class compileReaderWithCustomFactory(Class<T> tClass) {
         acquireReaderClass(tClass);
+        Class c;
         String actual = generateWithCustomFactoryClass(tClass);
         if (dumpCode)
             LoggerFactory.getLogger(DataValueGenerator.class).info(actual);
