@@ -49,7 +49,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -158,6 +157,8 @@ public final class ChronicleMapBuilder<K, V> implements
     private long lockTimeOut = 20000L;
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
     private int metaDataBytes = 0;
+    private double maxBloatFactor = 1.0;
+
     private boolean putReturnsNull = false;
     private boolean removeReturnsNull = false;
 
@@ -915,10 +916,12 @@ public final class ChronicleMapBuilder<K, V> implements
         //
         // The only problem with small segments is that due to probability theory, if there are
         // a lot of segments each of little number of entries, difference between most filled
-        // and least filled segment in the Chronicle Map grows. It is critical, because we don't
-        // support segment resize yet, and are required to allocate unnecessarily many entries per
-        // each segment. To compensate this at least on linux, don't accept segment sizes that
-        // with the given entry sizes, lead to too small total segment sizes in native memory pages,
+        // and least filled segment in the Chronicle Map grows. (Number of entries in a segment is
+        // Poisson-distributed with mean = average number of entries per segment.) It is meaningful,
+        // because segment tiering is exceptional mechanism, only very few segments should be
+        // tiered, if any, normally. So, we are required to allocate unnecessarily many entries per
+        // each segment. To compensate this at least on linux, don't accept segment sizes that with
+        // the given entry sizes, lead to too small total segment sizes in native memory pages,
         // see comment in tryHashLookupSlotSize()
         for (int hashLookupSlotSize = 3; hashLookupSlotSize <= 7; hashLookupSlotSize++) {
             long segments = tryHashLookupSlotSize(hashLookupSlotSize, replicated);
@@ -1018,6 +1021,25 @@ public final class ChronicleMapBuilder<K, V> implements
 
     int metaDataBytes() {
         return metaDataBytes;
+    }
+
+    @Override
+    public ChronicleMapBuilder<K, V> maxBloatFactor(double maxBloatFactor) {
+        if (Double.isNaN(maxBloatFactor) || maxBloatFactor < 1.0 || maxBloatFactor > 1_000.0) {
+            throw new IllegalArgumentException("maxBloatFactor should be in [1.0, 1_000.0] " +
+                    "bounds, " + maxBloatFactor + " given");
+        }
+        this.maxBloatFactor = maxBloatFactor;
+        return this;
+    }
+
+    long maxExtraTiers(boolean replicated) {
+        int actualSegments = actualSegments(replicated);
+        // maxBloatFactor is scale, so we do (- 1.0) to compute _extra_ tiers
+        return ((long) (maxBloatFactor - 1.0) * actualSegments)
+                // but to mitigate slight misconfiguration, and uneven distribution of entries
+                // between segments, add 1.0 x actualSegments
+                + actualSegments;
     }
 
     @Override
@@ -1414,7 +1436,7 @@ public final class ChronicleMapBuilder<K, V> implements
                             (VanillaChronicleMap<K, ?, ?, V, ?, ?, ?>) m;
                     map.initTransientsFromBuilder(this);
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
-                    long sizeInBytes = map.sizeInBytes();
+                    long sizeInBytes = map.sizeInBytesWithoutTiers();
                     if (sizeInBytes != fileLength) {
                         throw new IOException("The file " + file + "the map is serialized from " +
                                 "has unexpected length " + fileLength + ", probably corrupted. " +
@@ -1501,11 +1523,11 @@ public final class ChronicleMapBuilder<K, V> implements
             // pushingToMapEventListener();
             VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map = newMap(singleHashReplication, channel);
             // TODO this method had been moved
-//            if(OS.warnOnWindows(map.sizeInBytes())){
+//            if(OS.warnOnWindows(map.sizeInBytesWithoutTiers())){
 //                throw new IllegalStateException("Windows cannot support this configuration");
 //            }
             BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
-                    map.sizeInBytes(), true);
+                    map.sizeInBytesWithoutTiers(), true);
             map.createMappedStoreAndSegments(bytesStore);
             return establishReplication(map, singleHashReplication, channel);
         } catch (IOException e) {

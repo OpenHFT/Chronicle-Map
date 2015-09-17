@@ -16,18 +16,21 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.ReplicatedHashSegmentContext;
+import net.openhft.chronicle.algo.bitset.BitSetFrame;
+import net.openhft.chronicle.algo.bitset.ConcurrentFlatBitSetFrame;
+import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
+import net.openhft.chronicle.hash.impl.TierData;
+import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
+import net.openhft.chronicle.map.impl.IterationContextInterface;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
-import net.openhft.chronicle.map.replication.MapReplicableEntry;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
-import net.openhft.lang.collection.SingleThreadedDirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.model.DataValueClasses;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +42,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 import static net.openhft.lang.MemoryUnit.*;
 import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 
@@ -115,6 +118,11 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     transient CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext;
     transient CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> remoteItContext;
 
+    transient BitSetFrame mainSegmentsModIterFrameForUpdates;
+    transient BitSetFrame mainSegmentsModIterFrameForIteration;
+    transient BitSetFrame tierBulkModIterFrameForUpdates;
+    transient BitSetFrame tierBulkModIterFrameForIteration;
+
     public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder,
                                   AbstractReplication replication)
             throws IOException {
@@ -170,6 +178,16 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         modificationIterators =
                 new AtomicReferenceArray<>(127 + RESERVED_MOD_ITER);
         closeables = new CopyOnWriteArraySet<>();
+        long mainSegmentsBitSetSize = BYTES.toBits(modIterBitSetSizeInBytes());
+        mainSegmentsModIterFrameForUpdates =
+                new SingleThreadedFlatBitSetFrame(mainSegmentsBitSetSize);
+        mainSegmentsModIterFrameForIteration =
+                new ConcurrentFlatBitSetFrame(mainSegmentsBitSetSize);
+
+        long tierBulkBitSetSize =
+                BYTES.toBits(tierBulkModIterBitSetSizeInBytes(numberOfTiersInBulk));
+        tierBulkModIterFrameForUpdates = new SingleThreadedFlatBitSetFrame(tierBulkBitSetSize);
+        tierBulkModIterFrameForIteration = new ConcurrentFlatBitSetFrame(tierBulkBitSetSize);
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -179,6 +197,16 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
     long modIterBitSetSizeInBytes() {
         long bytes = BITS.toBytes(bitsPerSegmentInModIterBitSet() * actualSegments);
+        return CACHE_LINES.align(bytes, BYTES);
+    }
+
+    @Override
+    protected long computeTierBulkInnerOffsetToTiers(long numberOfTiersInBulk) {
+        return tierBulkModIterBitSetSizeInBytes(numberOfTiersInBulk) * (128 + RESERVED_MOD_ITER);
+    }
+
+    private long tierBulkModIterBitSetSizeInBytes(long numberOfTiersInBulk) {
+        long bytes = BITS.toBytes(bitsPerSegmentInModIterBitSet() * numberOfTiersInBulk);
         return CACHE_LINES.align(bytes, BYTES);
     }
 
@@ -244,11 +272,6 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         globalMutableStateBytes.unlockLong(0);
     }
 
-    @Override
-    public void clear() {
-        forEachEntry(c -> c.context().remove(c));
-    }
-
     void addCloseable(Closeable closeable) {
         closeables.add(closeable);
     }
@@ -284,61 +307,56 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             if (modificationIterator != null)
                 return modificationIterator;
 
-            final Bytes bytes = ms.bytes(startOfModificationIterators +
-                            (modIterBitSetSizeInBytes() * remoteIdentifier),
-                    modIterBitSetSizeInBytes());
-
-            final ModificationIterator newModificationIterator = new ModificationIterator(
-                    bytes);
-
-            modificationIterators.set(remoteIdentifier, newModificationIterator);
+            final ModificationIterator modIter = new ModificationIterator(remoteIdentifier);
+            modificationIterators.set(remoteIdentifier, modIter);
             modIterSet.set(remoteIdentifier);
-            return newModificationIterator;
+            return modIter;
         }
     }
 
-    public void raiseChange(long segmentIndex, long pos, long timestamp) {
+    public void raiseChange(long tierIndex, long pos, long timestamp) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                acquireModificationIterator((byte) next).raiseChange(segmentIndex, pos, timestamp);
+                acquireModificationIterator((byte) next).raiseChange(tierIndex, pos, timestamp);
             } catch (Exception e) {
                 LOG.error("", e);
             }
         }
     }
 
-    public void dropChange(long segmentIndex, long pos) {
+    public void dropChange(long tierIndex, long pos) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
-                acquireModificationIterator((byte) next).dropChange(segmentIndex, pos);
+                acquireModificationIterator((byte) next).dropChange(tierIndex, pos);
             } catch (Exception e) {
                 LOG.error("", e);
             }
         }
     }
 
-    public void moveChange(long segmentIndex, long oldPos, long newPos, long timestamp) {
+    public void moveChange(long oldTierIndex, long oldPos, long newTierIndex, long newPos,
+                           long timestamp) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             try {
                 ModificationIterator modificationIterator =
                         acquireModificationIterator((byte) next);
-                if (modificationIterator.dropChange(segmentIndex, oldPos))
-                    modificationIterator.raiseChange(segmentIndex, newPos, timestamp);
+                if (modificationIterator.dropChange(oldTierIndex, oldPos))
+                    modificationIterator.raiseChange(newTierIndex, newPos, timestamp);
             } catch (Exception e) {
                 LOG.error("", e);
             }
         }
     }
 
-    public boolean isChanged(long segmentIndex, long pos) {
+    public boolean isChanged(long tierIndex, long pos) {
         for (long next = modIterSet.nextSetBit(0L); next > 0L;
              next = modIterSet.nextSetBit(next + 1L)) {
             ModificationIterator modificationIterator =
                     acquireModificationIterator((byte) next);
-            if (modificationIterator.isChanged(segmentIndex, pos))
+            if (modificationIterator.isChanged(tierIndex, pos))
                 return true;
         }
         return false;
@@ -527,13 +545,12 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
      */
     class ModificationIterator implements Replica.ModificationIterator {
         private ModificationNotifier modificationNotifier;
-        private final SingleThreadedDirectBitSet changesForUpdates;
-        // to getVolatile when reading changes bits, because we iterate when without lock.
-        // hardly this is needed on x86, probably on other architectures too.
-        // Anyway getVolatile is cheap.
-        private final ATSDirectBitSet changesForIteration;
+
+        private final long mainSegmentsChangesBitSetAddr;
         private final int segmentIndexShift;
         private final long posMask;
+
+        private final long offsetToBitSetWithinATierBulk;
 
         // when a bootstrap is send this is the time stamp that the client will bootstrap up to
         // if it is set as ZERO then the onPut() will set it to the current time, once the
@@ -542,18 +559,26 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         private long lastBootStrapTimeStamp = timeProvider.currentTime();
 
         // records the current position of the cursor in the bitset
-        private volatile long position = -1L;
+        // TODO volatile?
+        private volatile long position = NOT_FOUND;
 
-        public ModificationIterator(@NotNull final Bytes bytes) {
+        // -1 for main segments area, 0-N is tier bulk id
+        private int iterationMainSegmentsAreaOrTierBulk = -1;
+        private long tierBulkBitSetAddr = 0L;
+
+        public ModificationIterator(int identifier) {
             long bitsPerSegment = bitsPerSegmentInModIterBitSet();
             segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
             posMask = bitsPerSegment - 1L;
-            changesForUpdates = new SingleThreadedDirectBitSet(bytes);
-            changesForIteration = new ATSDirectBitSet(bytes);
+            mainSegmentsChangesBitSetAddr = ms.address() + startOfModificationIterators +
+                    identifier * modIterBitSetSizeInBytes();
+            nativeAccess().zeroOut(null, mainSegmentsChangesBitSetAddr, modIterBitSetSizeInBytes());
+            offsetToBitSetWithinATierBulk =
+                    identifier * tierBulkModIterBitSetSizeInBytes(numberOfTiersInBulk);
         }
 
-        public ModificationIterator(@NotNull final Bytes bytes, ModificationNotifier notifier) {
-            this(bytes);
+        public ModificationIterator(int identifier, ModificationNotifier notifier) {
+            this(identifier);
             setModificationNotifier(notifier);
         }
 
@@ -564,19 +589,34 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         /**
          * used to merge multiple segments and positions into a single index used by the bit map
          *
-         * @param segmentIndex the index of the maps segment
-         * @param pos          the position within this {@code segmentIndex}
-         * @return and index the has combined the {@code segmentIndex}  and  {@code pos} into a
+         * @param tierIndex the index of the maps segment
+         * @param pos          the position within this {@code tierIndex}
+         * @return and index the has combined the {@code tierIndex}  and  {@code pos} into a
          * single value
          */
-        private long combine(long segmentIndex, long pos) {
-            return (segmentIndex << segmentIndexShift) | pos;
+        private long combine(long tierIndex, long pos) {
+            tierIndex -= 1;
+            if (tierIndex < actualSegments)
+                return (tierIndex << segmentIndexShift) | pos;
+            return combineExtraTier(tierIndex, pos);
         }
 
-        void raiseChange(long segmentIndex, long pos, long timestamp) {
-            LOG.debug("raise change: id {}, segment {}, pos {}",
-                    localIdentifier, segmentIndex, pos);
-            changesForUpdates.set(combine(segmentIndex, pos));
+        private long combineExtraTier(long tierIndex, long pos) {
+            long extraTierIndex = tierIndex - actualSegments;
+            long tierOffsetWithinBulk = extraTierIndex & ((1L << log2NumberOfTiersInBulk) - 1);
+            return (tierOffsetWithinBulk << segmentIndexShift) | pos;
+        }
+
+        void raiseChange(long tierIndex, long pos, long timestamp) {
+            LOG.debug("raise change: id {}, tierIndex {}, pos {}",
+                    localIdentifier, tierIndex, pos);
+            long bitIndex = combine(tierIndex, pos);
+            if (tierIndex <= actualSegments) {
+                mainSegmentsModIterFrameForUpdates.set(nativeAccess(), null,
+                        mainSegmentsChangesBitSetAddr, bitIndex);
+            } else {
+                raiseExtraTierChange(tierIndex, bitIndex);
+            }
 //            assert timestamp > timeProvider.currentTime() - TimeUnit.SECONDS.toMillis(1) &&
 //                    timestamp <= timeProvider.currentTime() : "timeStamp=" + timestamp + ", " +
 //                    "currentTime=" + timeProvider.currentTime();
@@ -586,13 +626,53 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 modificationNotifier.onChange();
         }
 
-        boolean dropChange(long segmentIndex, long pos) {
-            LOG.debug("drop change: id {}, segment {}, pos {}", localIdentifier, segmentIndex, pos);
-            return changesForUpdates.clearIfSet(combine(segmentIndex, pos));
+        private void raiseExtraTierChange(long tierIndex, long bitIndex) {
+            tierIndex = tierIndex - actualSegments - 1;
+            long bulkIndex = tierIndex >> log2NumberOfTiersInBulk;
+            TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
+            long bitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
+                    offsetToBitSetWithinATierBulk;
+            tierBulkModIterFrameForUpdates.set(nativeAccess(), null, bitSetAddr, bitIndex);
         }
 
-        boolean isChanged(long segmentIndex, long pos) {
-            return changesForUpdates.isSet(combine(segmentIndex, pos));
+        boolean dropChange(long tierIndex, long pos) {
+            LOG.debug("drop change: id {}, tierIndex {}, pos {}", localIdentifier, tierIndex, pos);
+            long bitIndex = combine(tierIndex, pos);
+            if (tierIndex <= actualSegments) {
+                return mainSegmentsModIterFrameForUpdates.clearIfSet(nativeAccess(), null,
+                        mainSegmentsChangesBitSetAddr, bitIndex);
+            } else {
+                return dropExtraTierChange(tierIndex, bitIndex);
+            }
+        }
+
+        private boolean dropExtraTierChange(long tierIndex, long bitIndex) {
+            tierIndex = tierIndex - actualSegments - 1;
+            long bulkIndex = tierIndex >> log2NumberOfTiersInBulk;
+            TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
+            long bitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
+                    offsetToBitSetWithinATierBulk;
+            return tierBulkModIterFrameForUpdates.clearIfSet(nativeAccess(), null,
+                    bitSetAddr, bitIndex);
+        }
+
+        boolean isChanged(long tierIndex, long pos) {
+            long bitIndex = combine(tierIndex, pos);
+            if (tierIndex <= actualSegments) {
+                return mainSegmentsModIterFrameForUpdates.isSet(nativeAccess(), null,
+                        mainSegmentsChangesBitSetAddr, bitIndex);
+            } else {
+                return isChangedExtraTier(tierIndex, bitIndex);
+            }
+        }
+
+        private boolean isChangedExtraTier(long tierIndex, long bitIndex) {
+            tierIndex = tierIndex - actualSegments - 1;
+            long bulkIndex = tierIndex >> log2NumberOfTiersInBulk;
+            TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
+            long bitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
+                    offsetToBitSetWithinATierBulk;
+            return tierBulkModIterFrameForUpdates.isSet(nativeAccess(), null, bitSetAddr, bitIndex);
         }
 
         /**
@@ -604,10 +684,47 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
          */
         @Override
         public boolean hasNext() {
-            final long position = this.position;
-            return changesForIteration.nextSetBit(position == NOT_FOUND ? 0L : position)
-                    != NOT_FOUND ||
-                    (position > 0L && changesForIteration.nextSetBit(0L) != NOT_FOUND);
+            return nextPosition() >= 0;
+        }
+
+        private long nextPosition() {
+            long nextPos;
+            long position = this.position;
+            boolean allBitSetsScannedFromTheStart = false;
+            // at most 2 iterations
+            while (!allBitSetsScannedFromTheStart) {
+                if (iterationMainSegmentsAreaOrTierBulk == -1) {
+                    allBitSetsScannedFromTheStart = position < 0;
+                    if ((nextPos = mainSegmentsModIterFrameForIteration.nextSetBit(nativeAccess(),
+                            null, mainSegmentsChangesBitSetAddr, position + 1)) != NOT_FOUND) {
+                        return nextPos;
+                    } else {
+                        this.position = position = NOT_FOUND;
+                        // go to the first bulk
+                        iterationMainSegmentsAreaOrTierBulk = 0;
+                    }
+                }
+                // for each allocated tier bulk
+                while (iterationMainSegmentsAreaOrTierBulk < extraAllocatedTierBulkCount()) {
+                    if (true)
+                        throw new AssertionError("shouldn't be here yet");
+                    VanillaChronicleHash.TierBulkData tierBulkData =
+                            tierBulkOffsets.get(iterationMainSegmentsAreaOrTierBulk);
+                    tierBulkBitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
+                            offsetToBitSetWithinATierBulk;
+                    if ((nextPos = tierBulkModIterFrameForIteration.nextSetBit(nativeAccess(), null,
+                            tierBulkBitSetAddr, position + 1)) != NOT_FOUND) {
+                        return nextPos;
+                    }
+                    // go to the next bulk
+                    iterationMainSegmentsAreaOrTierBulk++;
+                    this.position = position = NOT_FOUND;
+                }
+                this.iterationMainSegmentsAreaOrTierBulk = -1;
+                this.position = position = NOT_FOUND;
+                bootStrapTimeStamp.set(0);
+            }
+            return NOT_FOUND;
         }
 
         /**
@@ -616,28 +733,36 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
          */
         @Override
         public boolean nextEntry(@NotNull EntryCallback entryCallback, int chronicleId) {
-            long position = this.position;
             while (true) {
-                long oldPosition = position;
-                position = changesForIteration.nextSetBit(oldPosition + 1L);
+                long position = nextPosition();
 
                 if (position == NOT_FOUND) {
-                    if (oldPosition == NOT_FOUND) {
-                        this.position = NOT_FOUND;
-                        return false;
-                    }
-
-                    bootStrapTimeStamp.set(0);
-                    continue;
+                    this.position = NOT_FOUND;
+                    return false;
                 }
 
                 this.position = position;
-                int segmentIndex = (int) (position >>> segmentIndexShift);
+                int tierIndexMinusOne = (int) (position >>> segmentIndexShift);
+
                 try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> context =
                         iterationContext()) {
-                    context.initSegmentIndex(segmentIndex);
+                    if (iterationMainSegmentsAreaOrTierBulk < 0) {
+                        // if main area
+                        context.initSegmentIndex(tierIndexMinusOne);
+                    } else {
+                        long tierBaseAddr = tierIndexToBaseAddr(tierIndexMinusOne + 1);
+                        long tierDataAddr = tierBaseAddr + segmentHashLookupOuterSize;
+                        context.initSegmentIndex(TierData.segmentIndex(tierDataAddr));
+                        int tier = TierData.tier(tierDataAddr);
+                        long tierIndex = actualSegments +
+                                (iterationMainSegmentsAreaOrTierBulk << log2NumberOfTiersInBulk) +
+                                tierIndexMinusOne + 1;
+                        context.initSegmentTier(tier, tierIndex, tierBaseAddr);
+                    }
+
                     context.updateLock().lock();
-                    if (changesForUpdates.get(position)) {
+
+                    if (changesForUpdatesGet(position)) {
 
                         entryCallback.onBeforeEntry();
 
@@ -646,20 +771,20 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
                         // if the entry should be ignored, we'll move the next entry
                         if (entryCallback.shouldBeIgnored(context, chronicleId)) {
-                            changesForUpdates.clear(position);
+                            changesForUpdatesClear(position);
                             continue;
                         }
 
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
-                        context.entryBytes().limit(context.valueOffset() + context.valueSize());
-                        context.entryBytes().position(context.keySizeOffset());
+                        context.segmentBytes().limit(context.valueOffset() + context.valueSize());
+                        context.segmentBytes().position(context.keySizeOffset());
                         boolean success = entryCallback.onEntry(
-                                context.entryBytes(), chronicleId, bootStrapTimeStamp());
+                                context.segmentBytes(), chronicleId, bootStrapTimeStamp());
                         entryCallback.onAfterEntry();
 
                         if (success)
-                            changesForUpdates.clear(position);
+                            changesForUpdatesClear(position);
 
                         return success;
                     }
@@ -667,6 +792,26 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                     // while we were trying to obtain segment lock (for example, in relocation()),
                     // go to pick up next (next iteration in while (true) loop)
                 }
+            }
+        }
+
+        private boolean changesForUpdatesGet(long position) {
+            if (iterationMainSegmentsAreaOrTierBulk < 0) {
+                return mainSegmentsModIterFrameForUpdates.get(nativeAccess(), null,
+                        mainSegmentsChangesBitSetAddr, position);
+            } else {
+                return tierBulkModIterFrameForUpdates.get(nativeAccess(), null,
+                        tierBulkBitSetAddr, position);
+            }
+        }
+
+        private void changesForUpdatesClear(long position) {
+            if (iterationMainSegmentsAreaOrTierBulk < 0) {
+                mainSegmentsModIterFrameForUpdates.clear(nativeAccess(), null,
+                        mainSegmentsChangesBitSetAddr, position);
+            } else {
+                tierBulkModIterFrameForUpdates.clear(nativeAccess(), null,
+                        tierBulkBitSetAddr, position);
             }
         }
 
@@ -689,8 +834,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 // iterate over all the segments and mark bit in the modification iterator
                 // that correspond to entries with an older timestamp
                 boolean debugEnabled = LOG.isDebugEnabled();
-                for (int i = 0; i < actualSegments; i++) {
-                    final int segmentIndex = i;
+                for (int segmentIndex = 0; segmentIndex < actualSegments; segmentIndex++) {
                     c.initSegmentIndex(segmentIndex);
                     c.forEachSegmentReplicableEntry(e -> {
                         if (debugEnabled) {
@@ -708,7 +852,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                         if (e.originTimestamp() >= fromTimeStamp &&
                                 (!bootstrapOnlyLocalEntries ||
                                         e.originIdentifier() == localIdentifier)) {
-                            raiseChange(segmentIndex, c.pos(), c.timestamp());
+                            raiseChange(c.tierIndex(), c.pos(), c.timestamp());
                         }
                     });
                 }

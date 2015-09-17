@@ -92,6 +92,7 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
             e.innerDefaultReplaceValue(newValue);
             s.incrementModCount();
             ks.setSearchState(PRESENT);
+            initPresenceOfEntry(EntryPresence.PRESENT);
         } else {
             throw new IllegalStateException(
                     "Entry is absent in the map when doReplaceValue() is called");

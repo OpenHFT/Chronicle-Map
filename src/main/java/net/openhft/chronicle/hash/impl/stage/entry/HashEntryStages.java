@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.hash.Data;
@@ -29,6 +30,9 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
+import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
+import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
+
 
 @Staged
 public abstract class HashEntryStages<K> implements HashEntry<K> {
@@ -37,10 +41,6 @@ public abstract class HashEntryStages<K> implements HashEntry<K> {
     @StageRef public SegmentStages s;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef public HashLookupPos hlp;
-    
-    public final Bytes entryBytes = hh.h().ms.bytes();
-    public final BytesStore entryBS =
-            new NativeBytesStore<>(entryBytes.address(), entryBytes.capacity(), null, false);
 
     public long pos = -1;
 
@@ -54,7 +54,7 @@ public abstract class HashEntryStages<K> implements HashEntry<K> {
 
     public void initEntryOffset() {
         keySizeOffset = s.entrySpaceOffset + pos * hh.h().chunkSize;
-        entryBytes.limit(entryBytes.capacity());
+        s.segmentBytes.limit(s.segmentBytes.capacity());
     }
 
     public long keySize = -1;
@@ -71,26 +71,32 @@ public abstract class HashEntryStages<K> implements HashEntry<K> {
 
     public void readExistingEntry(long pos) {
         initPos(pos);
-        entryBytes.position(keySizeOffset);
-        initKeySize(hh.h().keySizeMarshaller.readSize(entryBytes));
-        initKeyOffset(entryBytes.position());
+        s.segmentBytes.position(keySizeOffset);
+        initKeySize(hh.h().keySizeMarshaller.readSize(s.segmentBytes));
+        initKeyOffset(s.segmentBytes.position());
     }
 
     public void writeNewEntry(long pos, Data<?> key) {
         initPos(pos);
         initKeySize(key.size());
-        entryBytes.position(keySizeOffset);
-        hh.h().keySizeMarshaller.writeSize(entryBytes, keySize);
-        initKeyOffset(entryBytes.position());
-        key.writeTo(entryBS, keyOffset);
+        s.segmentBytes.position(keySizeOffset);
+        hh.h().keySizeMarshaller.writeSize(s.segmentBytes, keySize);
+        initKeyOffset(s.segmentBytes.position());
+        key.writeTo(s.segmentBS, keyOffset);
     }
 
-    public void copyExistingEntry(long newPos, long bytesToCopy) {
-        long oldKeySizeOffset = keySizeOffset;
-        long oldKeyOffset = keyOffset;
+    public void copyExistingEntry(
+            long newPos, long bytesToCopy, long oldKeyAddr, long oldKeySizeAddr) {
         initPos(newPos);
-        initKeyOffset(keySizeOffset + (oldKeyOffset - oldKeySizeOffset));
-        entryBS.write(keySizeOffset, entryBS, oldKeySizeOffset, bytesToCopy);
+        initKeyOffset(keySizeOffset + (oldKeyAddr - oldKeySizeAddr));
+        // Calling Access.copy() which is probably slower because not of abstractions,
+        // because there is no BytesStore.write(off, addr, len) method. Alternative is
+        // to make a final BytesStore rawMemoryStore = new PointerBytesStore().set(0, Long.MAX_V)
+        // and here: s.segmentBS.write(keySizeOffset, rawMemoryStore, keySizeAddr, bytesToCopy)
+        Access.copy(
+                nativeAccess(), null, oldKeySizeAddr,
+                checkedBytesStoreAccess(), s.segmentBS, keySizeOffset,
+                bytesToCopy);
     }
 
     public long keyEnd() {

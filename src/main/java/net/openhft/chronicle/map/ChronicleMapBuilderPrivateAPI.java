@@ -66,4 +66,9 @@ class ChronicleMapBuilderPrivateAPI<K> implements ChronicleHashBuilderPrivateAPI
     public int actualSegments(boolean replicated) {
         return b.actualSegments(replicated);
     }
+
+    @Override
+    public long maxExtraTiers(boolean replicated) {
+        return b.maxExtraTiers(replicated);
+    }
 }

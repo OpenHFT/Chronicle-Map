@@ -14,13 +14,15 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash.impl.stage.query;
+package net.openhft.chronicle.hash.impl.stage.entry;
 
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupPos;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
+import net.openhft.chronicle.hash.impl.stage.query.HashQuery;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -31,26 +33,24 @@ import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.UNSE
 public abstract class HashLookupSearch {
     
     @StageRef SegmentStages s;
-    @StageRef HashEntryStages<?> e;
-    @StageRef HashQuery op;
-    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
+    @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
     @StageRef HashLookupPos hlp;
     @StageRef KeySearch<?> ks;
     
     @Stage("SearchKey") long searchKey = UNSET_KEY;
-    @Stage("SearchKey") long searchStartPos;
+    @Stage("SearchKey") public long searchStartPos;
 
-    private CompactOffHeapLinearHashTable hl() {
+    public CompactOffHeapLinearHashTable hl() {
         return hh.h().hashLookup;
     }
-    
-    void initSearchKey() {
-        searchKey = hl().maskUnsetKey(hh.h().hashSplitting.segmentHash(op.hashOfKey));
+
+    public void initSearchKey(long searchKey) {
+        this.searchKey = searchKey;
         searchStartPos = hl().hlPos(searchKey);
     }
 
     private long addr() {
-        return s.segmentBase;
+        return s.segmentBaseAddr;
     }
 
     public long nextPos() {
@@ -83,6 +83,10 @@ public abstract class HashLookupSearch {
     }
 
     public void putNewVolatile(long value) {
+        // correctness check + make putNewVolatile() dependant on keySearch, this, in turn,
+        // is needed for hlp.hashLookupPos re-initialization after nextTier()
+        assert !ks.searchStatePresent();
+
         hl().checkValueForPut(value);
         long currentEntry = hl().readEntry(addr(), hlp.hashLookupPos);
         hl().writeEntryVolatile(addr(), hlp.hashLookupPos, currentEntry, searchKey, value);

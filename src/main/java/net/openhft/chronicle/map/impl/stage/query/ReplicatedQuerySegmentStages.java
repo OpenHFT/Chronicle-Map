@@ -45,25 +45,20 @@ public abstract class ReplicatedQuerySegmentStages extends QuerySegmentStages {
 
     @Override
     public long alloc(int chunks) {
-        long ret = allocReturnCode(chunks);
-        if (ret >= 0) {
-            return ret;
-        } else {
-            ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map = mh.m();
-            MapSegmentContext<?, ?, ?> sc = map.segmentContext(segmentIndex);
-            ((ReplicatedHashSegmentContext<?, ?>) sc).forEachSegmentReplicableEntry(cleanupAction);
-            ret = allocReturnCode(chunks);
+        while (true) {
+            long ret = allocReturnCode(chunks);
             if (ret >= 0) {
                 return ret;
             } else {
-                if (chunks == 1) {
-                    throw new IllegalStateException(
-                            "Segment is full, no free entries found");
+                ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map = mh.m();
+                MapSegmentContext<?, ?, ?> sc = map.segmentContext(segmentIndex);
+                ((ReplicatedHashSegmentContext<?, ?>) sc)
+                        .forEachSegmentReplicableEntry(cleanupAction);
+                ret = allocReturnCode(chunks);
+                if (ret >= 0) {
+                    return ret;
                 } else {
-                    throw new IllegalStateException(
-                            "Segment is full or has no ranges of " + chunks
-                                    + " continuous free chunks"
-                    );
+                    nextTier();
                 }
             }
         }

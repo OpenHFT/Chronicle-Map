@@ -37,12 +37,21 @@ public class AllocatedChunks {
         // don't increment
     }
 
-    public void initEntryAndKeyCopying(long entrySize, long bytesToCopy) {
+    /**
+     * @return {@code true} is tier has changed
+     */
+    public boolean initEntryAndKeyCopying(long entrySize, long bytesToCopy) {
         initAllocatedChunks(hh.h().inChunks(entrySize));
         // call incrementSegmentEntriesIfNeeded() before entry.copyExistingEntry(), because
         // the latter clears out searchState, and it performs the search again, but in inconsistent
         // state
         incrementSegmentEntriesIfNeeded();
-        entry.copyExistingEntry(s.alloc(allocatedChunks), bytesToCopy);
+        long oldSegmentTierBaseAddr = s.segmentBaseAddr;
+        long oldKeySizeAddr = oldSegmentTierBaseAddr + entry.keySizeOffset;
+        long oldKeyAddr = oldSegmentTierBaseAddr + entry.keyOffset;
+        int tierBeforeAllocation = s.segmentTier;
+        long pos = s.alloc(allocatedChunks);
+        entry.copyExistingEntry(pos, bytesToCopy, oldKeyAddr, oldKeySizeAddr);
+        return s.segmentTier > tierBeforeAllocation;
     }
 }

@@ -230,23 +230,68 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B maxChunksPerEntry(int maxChunksPerEntry);
 
     /**
-     * Configures the maximum number of entries, that could be inserted into the hash containers,
-     * created by this builder. If you try to insert more data, {@link IllegalStateException}
-     * <i>might</i> be thrown, because currently {@link ChronicleMap} and {@link ChronicleSet}
-     * don't support resizing.
+     * Configures the target number of entries, that is going be inserted into the hash containers,
+     * created by this builder. If {@link #maxBloatFactor(double)} is configured to {code 1.0}
+     * (and this is by default), this number of entries is also the maximum. If you try to insert
+     * more entries, than the configured {@code maxBloatFactor}, multiplied by the given number of
+     * {@code entries}, {@link IllegalStateException} <i>might</i> be thrown.
      *
-     * <p><b>You shouldn't put additional margin over the actual maximum number of entries.</b>
+     * <p>This configuration should represent the expected maximum number of entries in a stable
+     * state, {@link #maxBloatFactor(double) maxBloatFactor} - the maximum bloat up coefficient,
+     * during exceptional bursts.
+     *
+     * <p>To be more precise - try to configure the {@code entries} so, that the created hash
+     * container is going to serve about 99% requests being less or equal than this number
+     * of entries in size.
+     *
+     * <p><b>You shouldn't put additional margin over the actual target number of entries.</b>
      * This bad practice was popularized by {@link HashMap#HashMap(int)} and {@link
      * HashSet#HashSet(int)} constructors, which accept <i>capacity</i>, that should be multiplied
      * by <i>load factor</i> to obtain the actual maximum expected number of entries.
      * {@code ChronicleMap} and {@code ChronicleSet} don't have a notion of load factor.
      *
-     * <p>Default maximum entries is 2^20 (~ 1 million).
+     * <p>The default target number of entries is 2^20 (~ 1 million).
      *
-     * @param entries maximum size of the maps or sets, created by this builder
+     * @param entries the target size of the maps or sets, created by this builder
      * @return this builder back
+     * @throws IllegalArgumentException if the given {@code entries} number is non-positive
+     * @see #maxBloatFactor(double)
      */
     B entries(long entries);
+
+    /**
+     * Configures the maximum number of times, the hash containers, created by this builder,
+     * are allowed to grow in size beyond the configured {@linkplain #entries(long) target number
+     * of entries}.
+     *
+     * <p>{@link #entries(long)} should represent the expected maximum number of entries in a stable
+     * state, {@code maxBloatFactor} - the maximum bloat up coefficient, during exceptional bursts.
+     *
+     * <p>This configuration should be used for self-checking. Even if you configure impossibly
+     * large {@code maxBloatFactor}, the created {@code ChronicleHash}, of cause, will be still
+     * operational, and even won't allocate any extra resources before they are actually needed.
+     * But when the {@code ChronicleHash} grows beyond the configured {@link #entries(long)}, it
+     * could start to serve requests progressively slower. If you insert new entries into
+     * {@code ChronicleHash} infinitely, due to a bug in your business logic code, or the
+     * ChronicleHash configuration, and if you configure the ChronicleHash to grow infinitely, you
+     * will have a terribly slow and fat, but operational application, instead of a fail with
+     * {@code IllegalStateException}, which will quickly show you, that there is a bug in you
+     * application.
+     *
+     * <p>The default maximum bloat factor factor is {@code 1.0} - i. e. "no bloat is expected".
+     *
+     * <p>It is strongly advised not to configure {@code maxBloatFactor} to more than {@code 10.0},
+     * almost certainly, you either should configure {@code ChronicleHash}es completely differently,
+     * or this data structure doesn't fit you case.
+     *
+     * @param maxBloatFactor the maximum number ot times, the created hash container is supposed
+     *                       to bloat up beyond the {@link #entries(long)}
+     * @return this builder back
+     * @throws IllegalArgumentException if the given {@code maxBloatFactor} is NaN, lesser than 1.0
+     * or greater than 1000.0 (one thousand)
+     * @see #entries(long)
+     */
+    B maxBloatFactor(double maxBloatFactor);
 
     /**
      * Configures the actual maximum number entries, that could be inserted into any single segment

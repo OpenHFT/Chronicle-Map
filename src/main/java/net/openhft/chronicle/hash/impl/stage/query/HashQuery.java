@@ -24,8 +24,10 @@ import net.openhft.chronicle.hash.impl.stage.data.bytes.InputKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.data.instance.InputKeyInstanceData;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupPos;
+import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
+import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
@@ -72,8 +74,48 @@ public abstract class HashQuery<K> implements HashEntry<K> {
         hashOfKey = ks.inputKey.hash(LongHashFunction.city_1_1());
     }
 
+    public enum EntryPresence {PRESENT, ABSENT}
+
+    @Stage("PresenceOfEntry") private EntryPresence entryPresence = null;
+
+    private void initPresenceOfEntry() {
+        if (ks.searchStatePresent() || tieredEntryPresent()) {
+            entryPresence = EntryPresence.PRESENT;
+        } else {
+            entryPresence = EntryPresence.ABSENT;
+        }
+    }
+
+    public void initPresenceOfEntry(EntryPresence entryPresence) {
+        this.entryPresence = entryPresence;
+    }
+
+    private boolean tieredEntryPresent() {
+        int firstTier = s.segmentTier;
+        long firstTierBaseAddr = s.segmentBaseAddr;
+        while (true) {
+            if (s.hasNextTier()) {
+                s.nextTier();
+            } else {
+                if (s.segmentTier != 0)
+                    s.initSegmentTier(); // loop to the root tier
+            }
+            if (s.segmentBaseAddr == firstTierBaseAddr)
+                break;
+            if (ks.searchStatePresent())
+                return true;
+        }
+        // not found
+        if (firstTier != 0) {
+            // key is absent; probably are going to allocate a new entry;
+            // start trying from the root tier
+            s.initSegmentTier();
+        }
+        return false;
+    }
+
     public boolean entryPresent() {
-        return ks.searchStatePresent();
+        return entryPresence == EntryPresence.PRESENT;
     }
 
     @Override
@@ -86,6 +128,7 @@ public abstract class HashQuery<K> implements HashEntry<K> {
             hashLookupSearch.remove();
             entry.innerRemoveEntryExceptHashLookupUpdate();
             ks.setSearchState(DELETED);
+            initPresenceOfEntry(EntryPresence.ABSENT);
         } else {
             throw new IllegalStateException("Entry is absent when doRemove() is called");
         }

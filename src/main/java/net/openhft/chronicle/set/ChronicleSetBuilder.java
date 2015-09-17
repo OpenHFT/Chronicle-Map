@@ -166,6 +166,12 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
+    public ChronicleSetBuilder<K> maxBloatFactor(double maxBloatFactor) {
+        chronicleMapBuilder.maxBloatFactor(maxBloatFactor);
+        return this;
+    }
+
+    @Override
     public String toString() {
         return " ChronicleSetBuilder{" +
                 "chronicleMapBuilder=" + chronicleMapBuilder +

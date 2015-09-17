@@ -17,6 +17,7 @@
 package net.openhft.chronicle.hash.impl.stage.query;
 
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupPos;
+import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -28,6 +29,10 @@ public abstract class QueryHashLookupPos extends HashLookupPos {
     @StageRef HashLookupSearch hashLookupSearch;
     
     public void initHashLookupPos() {
+        // validation + make hashLookupPos a dependant of segmentTier. This is needed, because
+        // after tier change should re-perform hashLookupSearch, starting from the searchStartPos
+        int segmentTier = s.segmentTier;
+        assert segmentTier >= 0 : "segment tier " + segmentTier;
         s.innerReadLock.lock();
         this.hashLookupPos = hashLookupSearch.searchStartPos;
     }

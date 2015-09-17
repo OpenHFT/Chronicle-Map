@@ -19,6 +19,7 @@ package net.openhft.chronicle.hash.impl.stage.query;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
+import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
@@ -35,6 +36,8 @@ public abstract class KeySearch<K> {
     @StageRef public HashEntryStages<K> entry;
 
     public Data<K> inputKey = null;
+
+    abstract boolean inputKeyInit();
 
     public void initInputKey(Data<K> inputKey) {
         this.inputKey = inputKey;
@@ -55,21 +58,27 @@ public abstract class KeySearch<K> {
         this.searchState = newSearchState;
     }
 
-    void initKeySearch() {
+    public void initKeySearch() {
         for (long pos; (pos = hashLookupSearch.nextPos()) >= 0L;) {
-            entry.readExistingEntry(pos);
-            if (!keyEquals())
-                continue;
-            hashLookupSearch.found();
-            keyFound();
-            return;
+            // otherwise we are inside iteration relocation.
+            // During iteration, key search occurs when doReplaceValue() exhausts space in
+            // the current segment, and insertion into the tiered segment requires to locate
+            // an empty slot in the hashLookup.
+            if (inputKeyInit()) {
+                entry.readExistingEntry(pos);
+                if (!keyEquals())
+                    continue;
+                hashLookupSearch.found();
+                keyFound();
+                return;
+            }
         }
         searchState = SearchState.ABSENT;
     }
 
     boolean keyEquals() {
         return inputKey.size() == entry.keySize &&
-                BytesUtil.bytesEqual(entry.entryBS, entry.keyOffset,
+                BytesUtil.bytesEqual(s.segmentBS, entry.keyOffset,
                         inputKey.bytes(), inputKey.offset(), entry.keySize);
     }
 

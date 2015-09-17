@@ -73,13 +73,13 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
             boolean interrupted = false;
             long startPos = 0L;
             CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
-            while (!hashLookup.empty(hashLookup.readEntry(s.segmentBase, startPos))) {
+            while (!hashLookup.empty(hashLookup.readEntry(s.segmentBaseAddr, startPos))) {
                 startPos = hashLookup.step(startPos);
             }
             hlp.initHashLookupPos(startPos);
             do {
                 hlp.setHashLookupPos(hashLookup.step(hlp.hashLookupPos));
-                long entry = hashLookup.readEntry(s.segmentBase, hlp.hashLookupPos);
+                long entry = hashLookup.readEntry(s.segmentBaseAddr, hlp.hashLookupPos);
                 if (!hashLookup.empty(entry)) {
                     e.readExistingEntry(hashLookup.value(entry));
                     ReplicableEntry e = !this.e.entryDeleted() ? entryDelegating :

@@ -18,6 +18,7 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -52,7 +53,7 @@ public class Issue24ChronicleSetTest {
         return init(ChronicleSetBuilder.of(entryClass), entrySize, averageKeySize, fileName);
     }
 
-    @Test
+    @Test(timeout = 1000 * 60)
     public void issue24ChronicleSetTest() {
         ChronicleSet<String> set = initSet(String.class, 1_000_000, 30, "stringSet.dat");
         ExecutorService executor = Executors.newFixedThreadPool(5);

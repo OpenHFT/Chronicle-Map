@@ -14,27 +14,18 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash;
+package net.openhft.chronicle.hash.impl.stage.query;
 
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
+import net.openhft.sg.StageRef;
+import net.openhft.sg.Staged;
 
-public interface ChronicleHashBuilderPrivateAPI<K> {
+@Staged
+public abstract class QueryHashLookupSearch extends HashLookupSearch {
 
-    SerializationBuilder<K> keyBuilder();
+    @StageRef HashQuery op;
 
-    int segmentEntrySpaceInnerOffset(boolean replicated);
-
-    long chunkSize(boolean replicated);
-
-    int maxChunksPerEntry(boolean replicated);
-
-    long entriesPerSegment(boolean replicated);
-
-    long actualChunksPerSegment(boolean replicated);
-
-    int segmentHeaderSize(boolean replicated);
-
-    int actualSegments(boolean replicated);
-
-    long maxExtraTiers(boolean replicated);
+    void initSearchKey() {
+        initSearchKey(hl().maskUnsetKey(hh.h().hashSplitting.segmentHash(op.hashOfKey)));
+    }
 }

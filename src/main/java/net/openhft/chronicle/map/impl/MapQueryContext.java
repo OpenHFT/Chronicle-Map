@@ -51,7 +51,7 @@ import net.openhft.sg.Staged;
         KeyBytesInterop.class,
         QuerySegmentStages.class,
         KeySearch.class,
-        HashLookupSearch.class,
+        QueryHashLookupSearch.class,
         QueryHashLookupPos.class,
 
         QueryCheckOnEachPublicOperation.class,

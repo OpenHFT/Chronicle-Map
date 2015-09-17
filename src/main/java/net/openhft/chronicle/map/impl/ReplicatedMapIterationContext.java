@@ -21,6 +21,8 @@ import net.openhft.chronicle.hash.impl.stage.entry.*;
 import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
 import net.openhft.chronicle.hash.impl.stage.hash.OwnerThreadHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
+import net.openhft.chronicle.hash.impl.stage.iter.IterationSegmentStages;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceData;
@@ -30,7 +32,6 @@ import net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapAbsentDelegatingFo
 import net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapEntryDelegating;
 import net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIteration;
 import net.openhft.chronicle.map.impl.stage.map.*;
-import net.openhft.chronicle.map.impl.stage.query.ReplicatedMapAbsent;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.sg.Context;
 import net.openhft.sg.Staged;
@@ -45,10 +46,12 @@ import net.openhft.sg.Staged;
         ReplicatedMapSegmentIteration.class,
 
         KeyBytesInterop.class,
-        SegmentStages.class,
+        IterationSegmentStages.class,
         HashLookupPos.class,
         IterationCheckOnEachPublicOperation.class,
         AllocatedChunks.class,
+        KeySearch.class,
+        HashLookupSearch.class,
 
         WrappedValueInstanceValueHolder.class,
         ReplicatedMapEntryStages.class,

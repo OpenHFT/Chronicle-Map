@@ -34,7 +34,7 @@ import java.util.function.Predicate;
 public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         implements HashEntry<K>, HashSegmentContext<K, E> {
     
-    @StageRef public SegmentStages s;
+    @StageRef public IterationSegmentStages s;
     @StageRef HashEntryStages<K> e;
     @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
@@ -52,6 +52,20 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         this.entryRemovedOnThisIteration = entryRemovedOnThisIteration;
     }
 
+    public long hashLookupEntry = 0;
+
+    public void initHashLookupEntry(long entry) {
+        hashLookupEntry = entry;
+    }
+
+    abstract void closeHashLookupEntry();
+
+    private void goToLastTier() {
+        while (s.hasNextTier()) {
+            s.nextTier();
+        }
+    }
+
     @Override
     public boolean forEachSegmentEntryWhile(Predicate<? super E> action) {
         s.innerUpdateLock.lock();
@@ -59,20 +73,46 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
             long size = s.size();
             if (size == 0)
                 return true;
-            boolean interrupted = false;
-            long startPos = 0L;
-            CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
-            while (!hashLookup.empty(hashLookup.readEntry(s.segmentBase, startPos))) {
-                startPos = hashLookup.step(startPos);
+            goToLastTier();
+            while (true) {
+                int currentTier = s.segmentTier;
+                long currentTierBaseAddr = s.segmentBaseAddr;
+                size = forEachTierWhile(action, size, currentTier, currentTierBaseAddr);
+                if (size < 0) // interrupted
+                    return false;
+                if (size == 0)
+                    return true;
+                if (currentTier == 0)
+                    throw new IllegalStateException("We iterated all tiers without interruption, " +
+                            "but according to size counter there should be " + size + " more " +
+                            "entries. Size diverged?");
+                s.prevTier();
             }
-            hlp.initHashLookupPos(startPos);
-            do {
-                hlp.setHashLookupPos(hashLookup.step(hlp.hashLookupPos));
-                long entry = hashLookup.readEntry(s.segmentBase, hlp.hashLookupPos);
-                if (!hashLookup.empty(entry)) {
-                    e.readExistingEntry(hashLookup.value(entry));
-                    if (entryIsPresent()) {
-                        initEntryRemovedOnThisIteration(false);
+        } finally {
+            closeHashLookupEntry();
+            s.innerReadLock.unlock();
+            initEntryRemovedOnThisIteration(false);
+        }
+    }
+
+    private long forEachTierWhile(
+            Predicate<? super E> action, long size, int currentTier, long currentTierBaseAddr) {
+        boolean interrupted = false;
+        long startPos = 0L;
+        CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
+        while (!hashLookup.empty(hashLookup.readEntry(s.segmentBaseAddr, startPos))) {
+            startPos = hashLookup.step(startPos);
+        }
+        hlp.initHashLookupPos(startPos);
+        do {
+            hlp.setHashLookupPos(hashLookup.step(hlp.hashLookupPos));
+            long entry = hashLookup.readEntry(s.segmentBaseAddr, hlp.hashLookupPos);
+            initHashLookupEntry(entry);
+            if (!hashLookup.empty(entry)) {
+                e.readExistingEntry(hashLookup.value(entry));
+                if (entryIsPresent()) {
+                    initEntryRemovedOnThisIteration(false);
+                    try {
                         if (!action.test((E) this)) {
                             interrupted = true;
                             break;
@@ -80,15 +120,16 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
                             if (--size == 0)
                                 break;
                         }
-                        
+                    } finally {
+                        // if doReplaceValue() -> relocation() -> alloc() -> nextTier()
+                        // was called, restore the tier we were iterating over
+                        if (s.segmentTier != currentTier)
+                            s.initSegmentTier_WithBaseAddr(currentTier, currentTierBaseAddr);
                     }
                 }
-            } while (hlp.hashLookupPos != startPos);
-            return !interrupted;
-        } finally {
-            s.innerReadLock.unlock();
-            initEntryRemovedOnThisIteration(false);
-        }
+            }
+        } while (hlp.hashLookupPos != startPos);
+        return interrupted ? ~size : size;
     }
 
     @Override
@@ -118,7 +159,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
 
     public void iterationRemove() {
         // this condition mean -- some other entry taken place of the removed one
-        if (hh.h().hashLookup.remove(s.segmentBase, hlp.hashLookupPos) != hlp.hashLookupPos) {
+        if (hh.h().hashLookup.remove(s.segmentBaseAddr, hlp.hashLookupPos) != hlp.hashLookupPos) {
             // if so, should make step back, to compensate step forward on the next iteration,
             // to consume the shifted entry
             hlp.setHashLookupPos(hh.h().hashLookup.stepBack(hlp.hashLookupPos));

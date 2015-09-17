@@ -27,7 +27,10 @@ import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.OwnerThreadHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
 import net.openhft.chronicle.hash.impl.stage.input.HashInputBytes;
-import net.openhft.chronicle.hash.impl.stage.query.*;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
+import net.openhft.chronicle.hash.impl.stage.query.QueryHashLookupPos;
+import net.openhft.chronicle.hash.impl.stage.query.QueryHashLookupSearch;
+import net.openhft.chronicle.hash.impl.stage.query.SearchAllocatedChunks;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.*;
 import net.openhft.chronicle.map.impl.stage.data.instance.InputValueInstanceData;
@@ -57,7 +60,7 @@ import net.openhft.sg.Staged;
         KeyBytesInterop.class,
         ReplicatedQuerySegmentStages.class,
         KeySearch.class,
-        HashLookupSearch.class,
+        QueryHashLookupSearch.class,
         QueryHashLookupPos.class,
 
         QueryCheckOnEachPublicOperation.class,

@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.impl.stage.query.HashQuery.EntryPresence;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.sg.StageRef;
@@ -38,6 +39,7 @@ public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
             if (!ks.searchStatePresent()) {
                 putEntry(value);
                 ks.setSearchState(PRESENT);
+                q.initPresenceOfEntry(EntryPresence.PRESENT);
             } else {
                 e.innerDefaultReplaceValue(value);
                 s.deleted(s.deleted() - 1);

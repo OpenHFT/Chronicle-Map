@@ -66,6 +66,10 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public void size(long address, long size) {
+        if (size >= (1L << 32)) {
+            throw new IllegalStateException("segment size overflow: up to " + UNSIGNED_INT_MASK +
+                    " supported, " + size + " given");
+        }
         UNSAFE.putInt(address + SIZE_OFFSET, (int) size);
     }
 
@@ -76,6 +80,10 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public void deleted(long address, long deleted) {
+        if (deleted >= (1L << 32)) {
+            throw new IllegalStateException("segment deleted entries count overflow: up to " +
+                    UNSIGNED_INT_MASK + " supported, " + deleted + " given");
+        }
         UNSAFE.putInt(address + DELETED_OFFSET, (int) deleted);
     }
 

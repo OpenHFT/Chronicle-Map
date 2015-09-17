@@ -18,6 +18,7 @@ package net.openhft.chronicle.map.impl.stage.data.bytes;
 
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
+import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.chronicle.map.impl.stage.map.ValueBytesInterop;
@@ -29,6 +30,7 @@ import net.openhft.sg.Staged;
 public class EntryValueBytesData<V> extends AbstractData<V> {
     
     @StageRef ValueBytesInterop<V, ?, ?> vi;
+    @StageRef SegmentStages s;
     @StageRef MapEntryStages<?, V> entry;
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
 
@@ -43,7 +45,7 @@ public class EntryValueBytesData<V> extends AbstractData<V> {
     @Override
     public RandomDataInput bytes() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return entry.entryBS;
+        return s.segmentBS;
     }
 
     @Override
@@ -71,7 +73,7 @@ public class EntryValueBytesData<V> extends AbstractData<V> {
     }
 
     private V innerGetUsing(V usingValue) {
-        entry.entryBytes.position(entry.valueOffset);
-        return vi.valueReader.read(entry.entryBytes, size(), usingValue);
+        s.segmentBytes.position(entry.valueOffset);
+        return vi.valueReader.read(s.segmentBytes, size(), usingValue);
     }
 }

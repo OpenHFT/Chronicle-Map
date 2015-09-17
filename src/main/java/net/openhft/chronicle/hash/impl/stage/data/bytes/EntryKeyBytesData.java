@@ -19,6 +19,7 @@ package net.openhft.chronicle.hash.impl.stage.data.bytes;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
+import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
 import net.openhft.sg.Stage;
@@ -29,6 +30,7 @@ import net.openhft.sg.Staged;
 public class EntryKeyBytesData<K> extends AbstractData<K> {
     
     @StageRef KeyBytesInterop<K, ?, ?> ki;
+    @StageRef SegmentStages s;
     @StageRef HashEntryStages<K> entry;
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
 
@@ -44,7 +46,7 @@ public class EntryKeyBytesData<K> extends AbstractData<K> {
     @Override
     public RandomDataInput bytes() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return entry.entryBS;
+        return s.segmentBS;
     }
 
     @Override
@@ -72,7 +74,7 @@ public class EntryKeyBytesData<K> extends AbstractData<K> {
     }
     
     private K innerGetUsing(K usingKey) {
-        entry.entryBytes.position(entry.keyOffset);
-        return ki.keyReader.read(entry.entryBytes, size(), usingKey);
+        s.segmentBytes.position(entry.keyOffset);
+        return ki.keyReader.read(s.segmentBytes, size(), usingKey);
     }
 }

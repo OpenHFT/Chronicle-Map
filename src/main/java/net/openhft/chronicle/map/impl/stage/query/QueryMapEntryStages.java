@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.impl.stage.query.HashLookupSearch;
+import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -44,9 +44,9 @@ public abstract class QueryMapEntryStages<K, V> extends MapEntryStages<K, V> {
         } else {
             newSizeInChunks = entrySizeInChunks;
         }
-        if (pos + newSizeInChunks < s.freeList.size() &&
-                s.freeList.allClear(pos, pos + newSizeInChunks)) {
-            s.freeList.set(pos, pos + newSizeInChunks);
+        if (pos + newSizeInChunks < s.freeList.logicalSize() &&
+                s.freeList.isRangeClear(pos, pos + newSizeInChunks)) {
+            s.freeList.setRange(pos, pos + newSizeInChunks);
             s.innerWriteLock.lock();
             allocatedChunks.incrementSegmentEntriesIfNeeded();
             if (newValueSizeIsDifferent) {

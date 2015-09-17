@@ -46,6 +46,6 @@ public abstract class HashLookupPos {
     public void putValueVolatile(long newValue) {
         CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
         hashLookup.checkValueForPut(newValue);
-        hashLookup.putValueVolatile(s.segmentBase, hashLookupPos, newValue);
+        hashLookup.putValueVolatile(s.segmentBaseAddr, hashLookupPos, newValue);
     }
 }

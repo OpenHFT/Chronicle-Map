@@ -16,6 +16,10 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.algo.bitset.ReusableBitSet;
+import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
+import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.SegmentLock;
 import net.openhft.chronicle.hash.impl.*;
@@ -23,9 +27,9 @@ import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
+import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.lang.collection.DirectBitSet;
-import net.openhft.lang.collection.SingleThreadedDirectBitSet;
-import net.openhft.lang.io.MultiStoreBytes;
+import net.openhft.lang.io.Bytes;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -33,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+import static net.openhft.chronicle.algo.MemoryUnit.BITS;
+import static net.openhft.chronicle.algo.MemoryUnit.LONGS;
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 
 @Staged
@@ -54,7 +60,7 @@ public abstract class SegmentStages implements SegmentLock {
     abstract boolean segmentHeaderInit();
 
     private void initSegmentHeader() {
-        segmentHeaderAddress = hh.h().ms.address() + hh.h().segmentHeaderOffset(segmentIndex);
+        segmentHeaderAddress = hh.h().segmentHeaderAddress(segmentIndex);
         segmentHeader = BigSegmentHeader.INSTANCE;
     }
 
@@ -67,11 +73,19 @@ public abstract class SegmentStages implements SegmentLock {
     }
 
     long nextPosToSearchFrom() {
-        return segmentHeader.nextPosToSearchFrom(segmentHeaderAddress);
+        if (segmentTier == 0) {
+            return segmentHeader.nextPosToSearchFrom(segmentHeaderAddress);
+        } else {
+            return nextPosToSearchFromTiered();
+        }
     }
 
     public void nextPosToSearchFrom(long nextPosToSearchFrom) {
-        segmentHeader.nextPosToSearchFrom(segmentHeaderAddress, nextPosToSearchFrom);
+        if (segmentTier == 0) {
+            segmentHeader.nextPosToSearchFrom(segmentHeaderAddress, nextPosToSearchFrom);
+        } else {
+            nextPosToSearchFromTiered(nextPosToSearchFrom);
+        }
     }
 
     public long deleted() {
@@ -346,11 +360,91 @@ public abstract class SegmentStages implements SegmentLock {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return innerWriteLock;
     }
+
+    @Stage("SegmentTier") public int segmentTier = -1;
+    @Stage("SegmentTier") public long tierIndex;
+    @Stage("SegmentTier") public long segmentBaseAddr;
+
+    public void initSegmentTier() {
+        tierIndex = segmentIndex + 1; // tiers are 1-counted
+        segmentBaseAddr = hh.h().segmentBaseAddr(segmentIndex);
+        // assign the field of stage on which init() checks last, because flushed in segmentIndex()
+        // initialization
+        // TODO this is dangerous... review other stages and compilation mechanism
+        segmentTier = 0;
+    }
+
+    private void initSegmentTier(int tier, long tierIndex) {
+        segmentTier = tier;
+        this.tierIndex = tierIndex;
+        assert tierIndex > 0;
+        this.segmentBaseAddr = hh.h().tierIndexToBaseAddr(tierIndex);
+    }
+
+    public void initSegmentTier(int tier, long tierIndex, long tierBaseAddr) {
+        segmentTier = tier;
+        this.tierIndex = tierIndex;
+        this.segmentBaseAddr = tierBaseAddr;
+    }
+
+    public long tierDataOffset() {
+        return segmentBaseAddr + hh.h().segmentHashLookupOuterSize;
+    }
+
+    public long nextTierIndex() {
+        return TierData.nextTierIndex(tierDataOffset());
+    }
+
+    public void nextTierIndex(long nextTierIndex) {
+        TierData.nextTierIndex(tierDataOffset(), nextTierIndex);
+    }
+
+    public long nextPosToSearchFromTiered() {
+        return TierData.nextPosToSearchFromTiered(tierDataOffset());
+    }
+
+    public void nextPosToSearchFromTiered(long nextPosToSearchFrom) {
+        TierData.nextPosToSearchFromTiered(tierDataOffset(), nextPosToSearchFrom);
+    }
+
+    public long prevTierIndex() {
+        return TierData.prevTierIndex(tierDataOffset());
+    }
+
+    public void prevTierIndex(long prevTierIndex) {
+        TierData.prevTierIndex(tierDataOffset(), prevTierIndex);
+    }
+
+    public void nextTier() {
+        VanillaChronicleHash<?, ?, ? extends MetaBytesInterop<?, ?>, ?, ?, ?> h = hh.h();
+        long nextTierIndex = nextTierIndex();
+        if (nextTierIndex == 0) {
+            nextTierIndex = h.allocateTier(segmentIndex, segmentTier + 1);
+            nextTierIndex(nextTierIndex);
+            long currentTierBase = segmentBaseAddr;
+            initSegmentTier(segmentTier + 1, nextTierIndex);
+            prevTierIndex(currentTierBase);
+        } else {
+            initSegmentTier(segmentTier + 1, nextTierIndex);
+        }
+    }
+
+    public boolean hasNextTier() {
+        return nextTierIndex() != 0;
+    }
+
+    public void prevTier() {
+        if (segmentTier == 0)
+            throw new IllegalStateException("first tier doesn't have previous");
+        initSegmentTier(segmentTier - 1, prevTierIndex());
+    }
     
-    @Stage("Segment") MultiStoreBytes freeListBytes = new MultiStoreBytes();
-    @Stage("Segment") public SingleThreadedDirectBitSet freeList = new SingleThreadedDirectBitSet();
+    @Stage("Segment") public final PublicMultiStoreBytes segmentBytes = new PublicMultiStoreBytes();
+    @Stage("Segment") public final PointerBytesStore segmentBS = new PointerBytesStore();
+    @Stage("Segment") public final ReusableBitSet freeList = new ReusableBitSet(
+            new SingleThreadedFlatBitSetFrame(LONGS.align(hh.h().actualChunksPerSegment, BITS)),
+            Access.nativeAccess(), null, 0);
     @Stage("Segment") long entrySpaceOffset = 0;
-    @Stage("Segment") public long segmentBase;
 
     boolean segmentInit() {
         return entrySpaceOffset > 0;
@@ -358,11 +452,17 @@ public abstract class SegmentStages implements SegmentLock {
 
     void initSegment() {
         VanillaChronicleHash<?, ?, ?, ?, ?, ?> h = hh.h();
-        long hashLookupOffset = h.segmentOffset(segmentIndex);
-        segmentBase = hh.h().ms.address() + hashLookupOffset;
-        long freeListOffset = hashLookupOffset + h.segmentHashLookupOuterSize;
-        freeListBytes.storePositionAndSize(h.ms, freeListOffset, h.segmentFreeListInnerSize);
-        freeList.reuse(freeListBytes);
+
+        PublicMultiStoreBytes segmentBytes = this.segmentBytes;
+        segmentBytes.setBytesOffset(h.tierBytes(tierIndex), h.bytesOffset(tierIndex));
+
+        long segmentBase = this.segmentBaseAddr;
+        segmentBS.set(segmentBase, h.segmentSize);
+
+        // 64 is a cache line with tier data
+        long freeListOffset = h.segmentHashLookupOuterSize + 64;
+        freeList.setOffset(segmentBase + freeListOffset);
+
         entrySpaceOffset = freeListOffset + h.segmentFreeListOuterSize +
                 h.segmentEntrySpaceInnerOffset;
     }
@@ -373,21 +473,22 @@ public abstract class SegmentStages implements SegmentLock {
 
     public long allocReturnCode(int chunks) {
         VanillaChronicleHash<?, ?, ?, ?, ?, ?> h = hh.h();
-        if (chunks > h.maxChunksPerEntry)
+        if (chunks > h.maxChunksPerEntry) {
             throw new IllegalArgumentException("Entry is too large: requires " + chunks +
                     " entry size chucks, " + h.maxChunksPerEntry + " is maximum.");
+        }
         long ret = freeList.setNextNContinuousClearBits(nextPosToSearchFrom(), chunks);
         if (ret == DirectBitSet.NOT_FOUND || ret + chunks > h.actualChunksPerSegment) {
             if (ret != DirectBitSet.NOT_FOUND &&
                     ret + chunks > h.actualChunksPerSegment && ret < h.actualChunksPerSegment) {
-                freeList.clear(ret, h.actualChunksPerSegment);
+                freeList.clearRange(ret, h.actualChunksPerSegment);
             }
             ret = freeList.setNextNContinuousClearBits(0L, chunks);
             if (ret == DirectBitSet.NOT_FOUND || ret + chunks > h.actualChunksPerSegment) {
                 if (ret != DirectBitSet.NOT_FOUND &&
                         ret + chunks > h.actualChunksPerSegment &&
                         ret < h.actualChunksPerSegment) {
-                    freeList.clear(ret, h.actualChunksPerSegment);
+                    freeList.clearRange(ret, h.actualChunksPerSegment);
                 }
                 return -1;
             }
@@ -404,24 +505,18 @@ public abstract class SegmentStages implements SegmentLock {
     }
 
     public long alloc(int chunks) {
-        long ret = allocReturnCode(chunks);
-        if (ret >= 0) {
-            return ret;
-        } else {
-            if (chunks == 1) {
-                throw new IllegalStateException(
-                        "Segment is full, no free entries found");
+        while (true) {
+            long ret = allocReturnCode(chunks);
+            if (ret >= 0) {
+                return ret;
             } else {
-                throw new IllegalStateException(
-                        "Segment is full or has no ranges of " + chunks
-                                + " continuous free chunks"
-                );
+                nextTier();
             }
         }
     }
 
     public void free(long fromPos, int chunks) {
-        freeList.clear(fromPos, fromPos + chunks);
+        freeList.clearRange(fromPos, fromPos + chunks);
         if (fromPos < nextPosToSearchFrom())
             nextPosToSearchFrom(fromPos);
     }
@@ -431,17 +526,5 @@ public abstract class SegmentStages implements SegmentLock {
         if (nextPosToSearchFrom >= hh.h().actualChunksPerSegment)
             nextPosToSearchFrom = 0L;
         nextPosToSearchFrom(nextPosToSearchFrom);
-    }
-
-    public void clearSegment() {
-        innerWriteLock.lock();
-        hh.h().hashLookup.clearHashLookup(segmentBase);
-        freeList.clear();
-        nextPosToSearchFrom(0L);
-        entries(0L);
-    }
-    
-    public void clear() {
-        clearSegment();
     }
 }

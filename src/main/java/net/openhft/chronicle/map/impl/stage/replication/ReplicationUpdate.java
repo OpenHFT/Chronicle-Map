@@ -45,11 +45,11 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
     }
     
     public void dropChange() {
-        mh.m().dropChange(s.segmentIndex, e.pos);
+        mh.m().dropChange(s.tierIndex, e.pos);
     }
 
-    public void moveChange(long oldPos, long newPos) {
-        mh.m().moveChange(s.segmentIndex, oldPos, newPos, e.timestamp());
+    public void moveChange(long oldTierIndex, long oldPos, long newPos) {
+        mh.m().moveChange(oldTierIndex, oldPos, s.tierIndex, newPos, e.timestamp());
     }
     
     public void updateChange() {
@@ -59,11 +59,11 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
     }
 
     public void raiseChange() {
-        mh.m().raiseChange(s.segmentIndex, e.pos, e.timestamp());
+        mh.m().raiseChange(s.tierIndex, e.pos, e.timestamp());
     }
 
     public boolean changed() {
-        return mh.m().isChanged(s.segmentIndex, e.pos);
+        return mh.m().isChanged(s.tierIndex, e.pos);
     }
 
     @Override

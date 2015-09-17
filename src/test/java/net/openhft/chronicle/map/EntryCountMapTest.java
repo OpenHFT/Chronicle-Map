@@ -108,7 +108,7 @@ public class EntryCountMapTest {
         System.out.printf(" Score: %.2f%n", scoreCount / score);
     }
 
-    @Test
+    @Test(timeout = 1000 * 60)
     public void testSmall() throws IOException, ExecutionException, InterruptedException {
         System.out.print("testSmall seeds");
         int procs = Runtime.getRuntime().availableProcessors();

@@ -19,7 +19,8 @@ package net.openhft.chronicle.map.impl.stage.query;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.chronicle.hash.impl.stage.query.HashLookupSearch;
+import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
+import net.openhft.chronicle.hash.impl.stage.query.HashQuery.EntryPresence;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapContext;
@@ -76,6 +77,7 @@ public abstract class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
             }
             s.incrementModCount();
             ks.setSearchState(PRESENT);
+            q.initPresenceOfEntry(EntryPresence.PRESENT);
         } else {
             throw new IllegalStateException(
                     "Entry is present in the map when doInsert() is called");

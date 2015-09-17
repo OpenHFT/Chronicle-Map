@@ -17,8 +17,10 @@
 package net.openhft.chronicle.map.impl.stage.entry;
 
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.stage.entry.AllocatedChunks;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.VanillaChronicleMap;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
@@ -34,6 +36,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
 
     @StageRef public VanillaChronicleMapHolder<?, ?, ?, ?, ?, ?, ?> mh;
     @StageRef public AllocatedChunks allocatedChunks;
+    @StageRef KeySearch<?> ks;
 
     long countValueSizeOffset() {
         return keyEnd();
@@ -50,20 +53,20 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
 
     @Stage("ValueSize")
     private void countValueOffset() {
-        mh.m().alignment.alignPositionAddr(entryBytes);
-        valueOffset = entryBytes.position();
+        mh.m().alignment.alignPositionAddr(s.segmentBytes);
+        valueOffset = s.segmentBytes.position();
     }
 
     void initValueSize(long valueSize) {
         this.valueSize = valueSize;
-        entryBytes.position(valueSizeOffset);
-        mh.m().valueSizeMarshaller.writeSize(entryBytes, valueSize);
+        s.segmentBytes.position(valueSizeOffset);
+        mh.m().valueSizeMarshaller.writeSize(s.segmentBytes, valueSize);
         countValueOffset();
     }
 
     void initValueSize() {
-        entryBytes.position(valueSizeOffset);
-        valueSize = mh.m().readValueSize(entryBytes);
+        s.segmentBytes.position(valueSizeOffset);
+        valueSize = mh.m().readValueSize(s.segmentBytes);
         countValueOffset();
     }
 
@@ -73,13 +76,13 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
     
     public void initValue(Data<?> value) {
-        entryBytes.position(valueSizeOffset);
+        s.segmentBytes.position(valueSizeOffset);
         initValueSize(value.size());
         writeValue(value);
     }
 
     public void writeValue(Data<?> value) {
-        value.writeTo(entryBS, valueOffset);
+        value.writeTo(s.segmentBS, valueOffset);
     }
 
     public void initValue_WithoutSize(
@@ -138,15 +141,15 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
                             "entry takes " + newSizeInChunks + " chunks, " +
                             m.maxChunksPerEntry + " is maximum.");
                 }
-                if (s.freeList.allClear(pos + entrySizeInChunks, pos + newSizeInChunks)) {
-                    s.freeList.set(pos + entrySizeInChunks, pos + newSizeInChunks);
+                if (s.freeList.isRangeClear(pos + entrySizeInChunks, pos + newSizeInChunks)) {
+                    s.freeList.setRange(pos + entrySizeInChunks, pos + newSizeInChunks);
                     break newValueDoesNotFit;
                 }
                 relocation(newValue, newSizeOfEverythingBeforeValue);
                 return;
             } else if (newSizeInChunks < entrySizeInChunks) {
                 // Freeing extra chunks
-                s.freeList.clear(pos + newSizeInChunks, pos + entrySizeInChunks);
+                s.freeList.clearRange(pos + newSizeInChunks, pos + entrySizeInChunks);
                 // Do NOT reset nextPosToSearchFrom, because if value
                 // once was larger it could easily became larger again,
                 // But if these chunks will be taken by that time,
@@ -188,8 +191,30 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         s.innerWriteLock.lock();
         s.free(pos, entrySizeInChunks);
         long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
-        allocatedChunks.initEntryAndKeyCopying(entrySize, valueSizeOffset - keySizeOffset);
-        writeValueAndPutPos(newValue);
+        // need to copy, because in initEntryAndKeyCopying(), in alloc(), nextTier() called ->
+        // hashLookupPos cleared, as a dependant
+        long oldHashLookupPos = hlp.hashLookupPos;
+        long oldHashLookupAddr = s.segmentBaseAddr;
+
+        boolean tierHasChanged =
+                allocatedChunks.initEntryAndKeyCopying(entrySize, valueSizeOffset - keySizeOffset);
+
+        if (tierHasChanged) {
+            // implicitly inits key search, locating hashLookupPos on the empty slot
+            assert ks.searchStateAbsent();
+        }
+
+        initValue(newValue);
+
+        freeExtraAllocatedChunks();
+
+        CompactOffHeapLinearHashTable hl = hh.h().hashLookup;
+        long oldEntry = hl.readEntry(oldHashLookupAddr, oldHashLookupPos);
+        hl.checkValueForPut(pos);
+        hl.writeEntryVolatile(s.segmentBaseAddr, hlp.hashLookupPos,
+                oldEntry, hl.key(oldEntry), pos);
+        if (tierHasChanged)
+            hl.remove(oldHashLookupAddr, oldHashLookupPos);
     }
 
     public final long entrySize(long keySize, long valueSize) {

@@ -43,9 +43,9 @@ public abstract class ReplicatedMapEntryStages<K, V, T> extends MapEntryStages<K
     }
 
     void updateReplicationState(long timestamp, byte identifier) {
-        entryBytes.position(replicationBytesOffset);
-        entryBytes.writeLong(timestamp);
-        entryBytes.writeByte(identifier);
+        s.segmentBytes.position(replicationBytesOffset);
+        s.segmentBytes.writeLong(timestamp);
+        s.segmentBytes.writeByte(identifier);
     }
 
     private long timestampOffset() {
@@ -53,7 +53,7 @@ public abstract class ReplicatedMapEntryStages<K, V, T> extends MapEntryStages<K
     }
 
     public long timestamp() {
-        return entryBS.readLong(replicationBytesOffset);
+        return s.segmentBS.readLong(replicationBytesOffset);
     }
 
     private long identifierOffset() {
@@ -61,7 +61,7 @@ public abstract class ReplicatedMapEntryStages<K, V, T> extends MapEntryStages<K
     }
 
     byte identifier() {
-        return entryBS.readByte(identifierOffset());
+        return s.segmentBS.readByte(identifierOffset());
     }
 
     private long entryDeletedOffset() {
@@ -69,15 +69,15 @@ public abstract class ReplicatedMapEntryStages<K, V, T> extends MapEntryStages<K
     }
 
     public boolean entryDeleted() {
-        return entryBS.readBoolean(entryDeletedOffset());
+        return s.segmentBS.readBoolean(entryDeletedOffset());
     }
 
     public void writeEntryPresent() {
-        entryBS.writeBoolean(entryDeletedOffset(), false);
+        s.segmentBS.writeBoolean(entryDeletedOffset(), false);
     }
 
     public void writeEntryDeleted() {
-        entryBS.writeBoolean(entryDeletedOffset(), true);
+        s.segmentBS.writeBoolean(entryDeletedOffset(), true);
     }
 
     @Override
@@ -148,8 +148,9 @@ public abstract class ReplicatedMapEntryStages<K, V, T> extends MapEntryStages<K
     @Override
     protected void relocation(Data<V> newValue, long newSizeOfEverythingBeforeValue) {
         long oldPos = pos;
+        long oldTierIndex = s.tierIndex;
         super.relocation(newValue, newSizeOfEverythingBeforeValue);
-        ru.moveChange(oldPos, pos);
+        ru.moveChange(oldTierIndex, oldPos, pos);
     }
 
     private boolean testTimeStampInSensibleRange() {
