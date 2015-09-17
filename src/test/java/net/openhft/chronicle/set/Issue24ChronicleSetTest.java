@@ -39,6 +39,9 @@ public class Issue24ChronicleSetTest {
         String tmp = System.getProperty("java.io.tmpdir");
         String pathname = tmp + "/" + fileName;
         File file = new File(pathname);
+        if (file.exists())
+            file.delete();
+        file.deleteOnExit();
         try {
             H result = builder.entries(entrySize)
                     .averageKeySize(averageKeySize).createPersistedTo(file);
@@ -53,7 +56,7 @@ public class Issue24ChronicleSetTest {
         return init(ChronicleSetBuilder.of(entryClass), entrySize, averageKeySize, fileName);
     }
 
-    @Test(timeout = 1000 * 60)
+    @Test
     public void issue24ChronicleSetTest() {
         ChronicleSet<String> set = initSet(String.class, 1_000_000, 30, "stringSet.dat");
         ExecutorService executor = Executors.newFixedThreadPool(5);

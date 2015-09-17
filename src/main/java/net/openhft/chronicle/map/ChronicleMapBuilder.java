@@ -1436,13 +1436,13 @@ public final class ChronicleMapBuilder<K, V> implements
                             (VanillaChronicleMap<K, ?, ?, V, ?, ?, ?>) m;
                     map.initTransientsFromBuilder(this);
                     map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
-                    long sizeInBytes = map.sizeInBytesWithoutTiers();
-                    if (sizeInBytes != fileLength) {
+                    map.createMappedStoreAndSegments(file);
+                    long expectedFileLength = map.expectedFileSize();
+                    if (expectedFileLength != fileLength) {
                         throw new IOException("The file " + file + "the map is serialized from " +
                                 "has unexpected length " + fileLength + ", probably corrupted. " +
-                                "Expected length is " + sizeInBytes);
+                                "Expected length is " + expectedFileLength);
                     }
-                    map.createMappedStoreAndSegments(file);
                     // This is needed to property initialize key and value serialization builders,
                     // which are later used in replication
                     // TODO don't use SerializationBuilders in replication, extract marshallers

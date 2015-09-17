@@ -706,8 +706,6 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 }
                 // for each allocated tier bulk
                 while (iterationMainSegmentsAreaOrTierBulk < extraAllocatedTierBulkCount()) {
-                    if (true)
-                        throw new AssertionError("shouldn't be here yet");
                     VanillaChronicleHash.TierBulkData tierBulkData =
                             tierBulkOffsets.get(iterationMainSegmentsAreaOrTierBulk);
                     tierBulkBitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
