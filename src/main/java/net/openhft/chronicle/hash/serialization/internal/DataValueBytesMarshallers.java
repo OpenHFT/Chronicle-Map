@@ -70,14 +70,8 @@ public final class DataValueBytesMarshallers {
 
 
     public static <T> Class acquireReaderClass(Class<T> tClass) {
-        Class readerClass = readersClassMap.get(tClass);
-        if (readerClass != null)
-            return readerClass;
-        synchronized (readersClassMap) {
-            if ((readerClass = readersClassMap.get(tClass)) != null)
-                return readerClass;
-            return compileReaderClass(tClass);
-        }
+        return readersClassMap.computeIfAbsent(tClass,
+                DataValueBytesMarshallers::compileReaderClass);
     }
 
     private static <T> Class compileReaderClass(Class<T> tClass) {
@@ -103,20 +97,13 @@ public final class DataValueBytesMarshallers {
                 throw new AssertionError(e);
             }
         }
-        readersClassMap.put(tClass, readerClass);
         acquireReaderWithCustomFactory(tClass);
         return readerClass;
     }
 
     public static <T> Class acquireWriterClass(Class<T> tClass) {
-        Class writerClass = writerClassMap.get(tClass);
-        if (writerClass != null)
-            return writerClass;
-        synchronized (writerClassMap) {
-            if ((writerClass = writerClassMap.get(tClass)) != null)
-                return writerClass;
-            return compileWriterClass(tClass);
-        }
+        return writerClassMap.computeIfAbsent(tClass,
+                DataValueBytesMarshallers::compileWriterClass);
     }
 
     private static <T> Class compileWriterClass(Class<T> tClass) {
@@ -141,19 +128,12 @@ public final class DataValueBytesMarshallers {
                 throw new AssertionError(e);
             }
         }
-        writerClassMap.put(tClass, writerClass);
         return writerClass;
     }
 
     public static <T> Class acquireReaderWithCustomFactory(Class<T> tClass) {
-        Class c = readersWithCustomFactoriesClassMap.get(tClass);
-        if (c != null)
-            return c;
-        synchronized (readersWithCustomFactoriesClassMap) {
-            if ((c = readersWithCustomFactoriesClassMap.get(tClass)) != null)
-                return c;
-            return compileReaderWithCustomFactory(tClass);
-        }
+        return readersWithCustomFactoriesClassMap.computeIfAbsent(tClass,
+                DataValueBytesMarshallers::compileReaderWithCustomFactory);
     }
 
     private static <T> Class compileReaderWithCustomFactory(Class<T> tClass) {
@@ -174,7 +154,6 @@ public final class DataValueBytesMarshallers {
                 throw new AssertionError(e);
             }
         }
-        readersWithCustomFactoriesClassMap.put(tClass, c);
         return c;
     }
 
