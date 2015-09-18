@@ -158,6 +158,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
     private int metaDataBytes = 0;
     private double maxBloatFactor = 1.0;
+    private boolean allowSegmentTiering = true;
 
     private boolean putReturnsNull = false;
     private boolean removeReturnsNull = false;
@@ -1033,7 +1034,15 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
+    @Override
+    public ChronicleMapBuilder<K, V> allowSegmentTiering(boolean allowSegmentTiering) {
+        this.allowSegmentTiering = allowSegmentTiering;
+        return this;
+    }
+
     long maxExtraTiers(boolean replicated) {
+        if (!allowSegmentTiering)
+            return 0;
         int actualSegments = actualSegments(replicated);
         // maxBloatFactor is scale, so we do (- 1.0) to compute _extra_ tiers
         return ((long) (maxBloatFactor - 1.0) * actualSegments)

@@ -172,6 +172,12 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
+    public ChronicleSetBuilder<K> allowSegmentTiering(boolean allowSegmentTiering) {
+        chronicleMapBuilder.allowSegmentTiering(allowSegmentTiering);
+        return this;
+    }
+
+    @Override
     public String toString() {
         return " ChronicleSetBuilder{" +
                 "chronicleMapBuilder=" + chronicleMapBuilder +

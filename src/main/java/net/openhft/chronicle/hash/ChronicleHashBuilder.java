@@ -294,6 +294,25 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B maxBloatFactor(double maxBloatFactor);
 
     /**
+     * In addition to {@link #maxBloatFactor(double) maxBloatFactor(1.0)}, that <i>does not</i>
+     * guarantee that segments won't tier (due to bad hash distribution or natural variance),
+     * configuring {@code allowSegmentTiering(false)} makes Chronicle Hashes, created by this
+     * builder, to throw {@code IllegalStateException} immediately when some segment overflows.
+     *
+     * <p>Useful exactly for testing hash distribution and variance of segment filling.
+     *
+     * <p>Default is {@code true}, segments are allowed to tier.
+     *
+     * <p>When configured to {@code false}, {@link #maxBloatFactor(double)} configuration becomes
+     * irrelevant, because effectively no bloat is allowed.
+     *
+     * @param allowSegmentTiering if {@code true}, when a segment overflows a next tier
+     *                             is allocated to accommodate new entries
+     * @return this builder back
+     */
+    B allowSegmentTiering(boolean allowSegmentTiering);
+
+    /**
      * Configures the actual maximum number entries, that could be inserted into any single segment
      * of the hash containers, created by this builder. Configuring both the actual number of
      * entries per segment and {@linkplain #actualSegments(int) actual segments} replaces a single

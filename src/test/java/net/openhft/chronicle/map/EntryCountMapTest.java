@@ -49,6 +49,7 @@ public class EntryCountMapTest {
             long entries, int segments, int keySize) throws IOException {
         ChronicleMapBuilder<CharSequence, LongValue> mapBuilder =
                 ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+                        .allowSegmentTiering(false)
                         .entries(entries)
                         .actualSegments(segments)
                         .averageKeySize(keySize);
