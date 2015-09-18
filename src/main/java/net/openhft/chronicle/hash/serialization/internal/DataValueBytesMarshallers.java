@@ -131,13 +131,12 @@ public final class DataValueBytesMarshallers {
         return writerClass;
     }
 
-    public static <T> Class acquireReaderWithCustomFactory(Class<T> tClass) {
+    private static <T> Class acquireReaderWithCustomFactory(Class<T> tClass) {
         return readersWithCustomFactoriesClassMap.computeIfAbsent(tClass,
                 DataValueBytesMarshallers::compileReaderWithCustomFactory);
     }
 
     private static <T> Class compileReaderWithCustomFactory(Class<T> tClass) {
-        acquireReaderClass(tClass);
         Class c;
         String actual = generateWithCustomFactoryClass(tClass);
         if (dumpCode)
