@@ -131,7 +131,7 @@ public class PoissonDistribution {
         while (lower + precision < upper) {
             double m = (lower + upper) / 2;
             double pm = checkedCumulativeProbability(m, x);
-            if (pm >= p) {
+            if (pm < p) {
                 upper = m;
             } else {
                 lower = m;
