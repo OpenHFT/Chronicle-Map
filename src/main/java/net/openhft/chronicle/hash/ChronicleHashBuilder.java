@@ -54,8 +54,8 @@ import java.util.concurrent.TimeUnit;
  *
  * <p><a name="low-level-config"></a>There are some "low-level" configurations in this builder,
  * that require deep understanding of the Chronicle implementation design to be properly used.
- * Know what you do. These configurations are picked up strictly as-is, without extra round-ups,
- * adjustments, etc.
+ * Know what you do. These configurations are applied as-is, without extra round-ups, adjustments,
+ * etc.
  *
  * @param <K> the type of keys in hash containers, created by this builder
  * @param <H> the container type, created by this builder, i. e. {@link ChronicleMap} or {@link
@@ -201,8 +201,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *     .create();}</pre>
      *
      * <p>This is a <a href="#low-level-config">low-level configuration</a>. The configured number
-     * of bytes is strictly used as-is, without anything like round-up to the multiple of 8 or
-     * 16, or any other adjustment.
+     * of bytes is used as-is, without anything like round-up to the multiple of 8 or 16, or any
+     * other adjustment.
      *
      * @param actualChunkSize the "chunk size" in bytes
      * @return this builder back
@@ -311,6 +311,35 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @return this builder back
      */
     B allowSegmentTiering(boolean allowSegmentTiering);
+
+    /**
+     * Configures probabilistic fraction of segments, which shouldn't become tiered, if Chronicle
+     * Hash size is {@link #entries(long)}, assuming hash code distribution of the keys, inserted
+     * into configured Chronicle Hash, is good.
+     *
+     * <p>The last caveat means that the configured percentile and affects segment size relying on
+     * Poisson distribution law, if inserted entries (keys) fall into all segments randomly. If
+     * e. g. the keys, inserted into the Chronicle Hash, are purposely selected to collide by
+     * a certain range of hash code bits, so that they all fall into the same segment (a DOS
+     * attacker might do this), this segment is obviously going to be tiered.
+     *
+     * <p>This configuration affects the actual number of segments, if {@link #entries(long)} and
+     * {@link #entriesPerSegment(long)} or {@link #actualChunksPerSegment(long)} are configured. It
+     * affects the actual number of entries/chunks per segment, if {@link #entries(long)} and
+     * {@link #actualSegments(int)} are configured. If all 4 configurations, mentioned in this
+     * paragraph, are specified, {@code nonTieredSegmentsPercentile} is irrelevant.
+     *
+     * <p>Default value is 0.99999, i. e. if hash code distribution of the keys is good, only one
+     * segment of 100K is tiered on average. If your segment size is small and you want to improve
+     * memory footprint of Chronicle Hash (probably compromising latency percentiles), you might
+     * want to configure more "relaxed" value, e. g. 0.99.
+     *
+     * @param nonTieredSegmentsPercentile Fraction of segments which shouldn't be tiered
+     * @return this builder back
+     * @throws IllegalArgumentException if {@code nonTieredSegmentsPercentile} is out of (0.5, 1.0)
+     * range (both bounds are excluded)
+     */
+    B nonTieredSegmentsPercentile(double nonTieredSegmentsPercentile);
 
     /**
      * Configures the actual maximum number entries, that could be inserted into any single segment

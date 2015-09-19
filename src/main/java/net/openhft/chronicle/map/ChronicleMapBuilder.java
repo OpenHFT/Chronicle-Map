@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
+import net.openhft.chronicle.hash.impl.util.math.PoissonDistribution;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesWriter;
@@ -159,6 +160,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private int metaDataBytes = 0;
     private double maxBloatFactor = 1.0;
     private boolean allowSegmentTiering = true;
+    private double nonTieredSegmentsPercentile = 0.99999;
 
     private boolean putReturnsNull = false;
     private boolean removeReturnsNull = false;
@@ -221,13 +223,15 @@ public final class ChronicleMapBuilder<K, V> implements
         return roundUp;
     }
 
-    private static void checkSegments(int segments) {
-        if (segments <= 0 || segments > MAX_SEGMENTS)
+    private static void checkSegments(long segments) {
+        if (segments <= 0) {
             throw new IllegalArgumentException("segments should be positive, " +
                     segments + " given");
-        if (segments > MAX_SEGMENTS)
+        }
+        if (segments > MAX_SEGMENTS) {
             throw new IllegalArgumentException("Max segments is " + MAX_SEGMENTS + ", " +
                     segments + " given");
+        }
     }
 
     private static long divideUpper(long dividend, long divisor) {
@@ -750,8 +754,9 @@ public final class ChronicleMapBuilder<K, V> implements
             entriesPerSegment = this.entriesPerSegment;
         } else {
             int actualSegments = actualSegments(replicated);
-            long totalEntries = totalEntriesIfPoorDistribution(actualSegments);
-            entriesPerSegment = divideUpper(totalEntries, actualSegments);
+            double averageEntriesPerSegment = entries() * 1.0 / actualSegments;
+            entriesPerSegment = PoissonDistribution.inverseCumulativeProbability(
+                    averageEntriesPerSegment, nonTieredSegmentsPercentile);
         }
         if (actualChunksPerSegment > 0)
             return entriesPerSegment;
@@ -807,28 +812,6 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private long chunksPerSegment(long entriesPerSegment, boolean replicated) {
         return round(entriesPerSegment * averageChunksPerEntry(replicated));
-    }
-
-    private long totalEntriesIfPoorDistribution(long segments) {
-        if (segments == 1)
-            return entries();
-        long entries = entries();
-        // check if the number of entries is small compared with the number of segments.
-        long s3 = Math.min(8, segments) * Math.min(32, segments) * Math.min(128, segments);
-        if (entries * 4 <= s3)
-            entries *= 1.8;
-        else if (entries <= s3)
-            entries *= 1.45;
-        else if (entries <= s3 * 4)
-            entries *= 1.33;
-        else if (entries <= s3 * 8)
-            entries *= 1.22;
-        else if (entries <= s3 * 16)
-            entries *= 1.15;
-        else
-            entries *= 1.1;
-        return Math.min(segments * entries(),
-                entries + 4 * segments + 8);
     }
 
     @Override
@@ -892,16 +875,7 @@ public final class ChronicleMapBuilder<K, V> implements
         if (actualSegments > 0)
             return actualSegments;
         if (entriesPerSegment > 0) {
-            long segments = 1;
-            for (int i = 0; i < 3; i++) { // try to converge
-                long totalEntries = totalEntriesIfPoorDistribution((int) segments);
-                segments = divideUpper(totalEntries, entriesPerSegment);
-                if (segments > MAX_SEGMENTS)
-                    throw new IllegalStateException();
-            }
-            if (minSegments > 0)
-                segments = Math.max(minSegments, segments);
-            return (int) segments;
+            return (int) segmentsGivenEntriesPerSegmentFixed(entriesPerSegment, replicated);
         }
         // iteratively try to fit 3..8 bytes per hash lookup slot. Trying to apply small slot
         // sizes (=> segment sizes, because slot size depends on segment size) not only because
@@ -971,11 +945,21 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private long trySegments(long entriesPerSegment, int maxSegments, boolean replicated) {
-        long firstSegmentsApproximation = Math.max(minSegments(), entries() / entriesPerSegment);
-        long adjustedEntries = totalEntriesIfPoorDistribution(firstSegmentsApproximation);
-        long segments = divideUpper(adjustedEntries, entriesPerSegment);
+        long segments = segmentsGivenEntriesPerSegmentFixed(entriesPerSegment, replicated);
         segments = Maths.nextPower2(Math.max(segments, minSegments()), 1L);
         return segments <= maxSegments ? segments : -segments;
+    }
+
+    private long segmentsGivenEntriesPerSegmentFixed(long entriesPerSegment, boolean replicated) {
+        double precision = 1.0 / averageChunksPerEntry(replicated);
+        double entriesPerSegmentShouldBe =
+                PoissonDistribution.meanByCumulativeProbabilityAndValue(
+                        nonTieredSegmentsPercentile, entriesPerSegment, precision);
+        long segments = ((long) (entries() / entriesPerSegmentShouldBe)) + 1;
+        checkSegments(segments);
+        if (minSegments > 0)
+            segments = Math.max(minSegments, segments);
+        return segments;
     }
 
     int segmentHeaderSize(boolean replicated) {
@@ -1037,6 +1021,18 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMapBuilder<K, V> allowSegmentTiering(boolean allowSegmentTiering) {
         this.allowSegmentTiering = allowSegmentTiering;
+        return this;
+    }
+
+    @Override
+    public ChronicleMapBuilder<K, V> nonTieredSegmentsPercentile(
+            double nonTieredSegmentsPercentile) {
+        if (Double.isNaN(nonTieredSegmentsPercentile) ||
+                0.5 <= nonTieredSegmentsPercentile || nonTieredSegmentsPercentile >= 1.0) {
+            throw new IllegalArgumentException("nonTieredSegmentsPercentile should be in (0.5, " +
+                    "1.0) range, " + nonTieredSegmentsPercentile + " is given");
+        }
+        this.nonTieredSegmentsPercentile = nonTieredSegmentsPercentile;
         return this;
     }
 

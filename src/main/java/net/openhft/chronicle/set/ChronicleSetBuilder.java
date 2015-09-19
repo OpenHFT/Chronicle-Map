@@ -178,6 +178,12 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
+    public ChronicleSetBuilder<K> nonTieredSegmentsPercentile(double nonTieredSegmentsPercentile) {
+        chronicleMapBuilder.nonTieredSegmentsPercentile(nonTieredSegmentsPercentile);
+        return this;
+    }
+
+    @Override
     public String toString() {
         return " ChronicleSetBuilder{" +
                 "chronicleMapBuilder=" + chronicleMapBuilder +
