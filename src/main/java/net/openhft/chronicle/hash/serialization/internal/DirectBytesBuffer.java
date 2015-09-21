@@ -17,9 +17,7 @@
 package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesWriter;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.DirectBytes;
-import net.openhft.lang.io.DirectStore;
+import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.BytesMarshallableSerializer;
 import net.openhft.lang.io.serialization.BytesMarshaller;
 import net.openhft.lang.io.serialization.ObjectSerializer;
@@ -91,13 +89,15 @@ class DirectBytesBuffer
             super(DirectBytesBuffer.this);
         }
 
-        void init(M writer, E e, boolean mutable, long maxSize) {
+        void init(M writer, E e, boolean mutable, long maxSize, boolean checked) {
             if (mutable || writer != this.writer || e != cur) {
                 this.writer = writer;
                 cur = e;
                 while (true) {
                     try {
                         Bytes buffer = this.buffer.obtain(maxSize, true);
+                        if (checked)
+                            buffer = new BoundsCheckingDirectBytes(buffer, null);
                         writer.write(buffer, e);
                         buffer.flip();
                         long size = this.size = buffer.remaining();
@@ -122,12 +122,14 @@ class DirectBytesBuffer
             super(DirectBytesBuffer.this);
         }
 
-        void init(W writer, E e, boolean mutable) {
+        void init(W writer, E e, boolean mutable, boolean checked) {
             if (mutable || writer != this.writer || e != cur) {
                 this.writer = writer;
                 cur = e;
                 long size = writer.size(e);
                 Bytes buffer = this.buffer.obtain(size, true);
+                if (checked)
+                    buffer = new BoundsCheckingDirectBytes(buffer, null);
                 writer.write(buffer, e);
                 buffer.flip();
                 this.size = size;

@@ -35,8 +35,9 @@ public final class DelegatingMetaBytesInteropProvider<E, I extends BytesInterop<
     private DelegatingMetaBytesInteropProvider() {}
 
     @Override
-    public MetaBytesInterop<E, I> get(ThreadLocalCopies copies,
-                                      MetaBytesInterop<E, I> originalMetaWriter, I writer, E e) {
+    public MetaBytesInterop<E, I> get(
+            ThreadLocalCopies copies, MetaBytesInterop<E, I> originalMetaWriter, I writer, E e,
+            boolean checked) {
         return originalMetaWriter;
     }
 

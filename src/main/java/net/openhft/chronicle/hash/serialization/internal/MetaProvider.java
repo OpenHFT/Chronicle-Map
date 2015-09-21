@@ -22,7 +22,7 @@ import java.io.Serializable;
 
 public interface MetaProvider<E, W, MW extends MetaBytesWriter<E, ? super W>> extends Serializable {
 
-    MW get(ThreadLocalCopies copies, MW originalMetaWriter, W writer, E e);
+    MW get(ThreadLocalCopies copies, MW originalMetaWriter, W writer, E e, boolean checked);
 
     ThreadLocalCopies getCopies(ThreadLocalCopies copies);
 }

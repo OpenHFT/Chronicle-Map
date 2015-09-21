@@ -278,7 +278,7 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
                 MetaProvider metaInteropProvider = this.metaInteropProvider;
                 try {
                     metaInterop = metaInteropProvider.get(
-                            copies, this.metaInterop, interop, sampleObject);
+                            copies, this.metaInterop, interop, sampleObject, true);
                     break findSufficientSerializationSize;
                 } catch (Exception e) {
                     CopyingMetaBytesInterop.checkMaxSizeStillReasonable(maxSize, e);
@@ -287,7 +287,8 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
             }
         } else {
             MetaProvider metaInteropProvider = this.metaInteropProvider;
-            metaInterop = metaInteropProvider.get(copies, this.metaInterop, interop, sampleObject);
+            metaInterop = metaInteropProvider.get(
+                    copies, this.metaInterop, interop, sampleObject, true);
         }
         return metaInterop.size(interop, sampleObject);
     }

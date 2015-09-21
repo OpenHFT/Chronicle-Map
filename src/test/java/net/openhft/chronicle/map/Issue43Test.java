@@ -22,6 +22,10 @@ import org.junit.Test;
 
 public class Issue43Test {
 
+    public static void main(String[] args) {
+        new Issue43Test().testIssue43();
+    }
+
     @Test
     public void testIssue43() {
         try {

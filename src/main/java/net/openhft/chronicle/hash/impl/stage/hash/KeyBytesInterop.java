@@ -34,6 +34,6 @@ public class KeyBytesInterop<K, KI, MKI extends MetaBytesInterop<K, ? super KI>>
     
     public MKI keyMetaInterop(K key) {
         return hh.h().metaKeyInteropProvider.get(
-                ch.copies, hh.h().originalMetaKeyInterop, keyInterop, key);
+                ch.copies, hh.h().originalMetaKeyInterop, keyInterop, key, false);
     }
 }

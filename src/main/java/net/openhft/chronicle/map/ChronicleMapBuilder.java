@@ -1329,7 +1329,7 @@ public final class ChronicleMapBuilder<K, V> implements
         MetaProvider metaWriterProvider = valueBuilder.metaInteropProvider();
         copies = metaWriterProvider.getCopies(copies);
         MetaBytesWriter metaValueWriter = metaWriterProvider.get(copies,
-                valueBuilder.metaInterop(), valueWriter, defaultValue);
+                valueBuilder.metaInterop(), valueWriter, defaultValue, true);
         return new ConstantValueProvider<>(defaultValue, metaValueWriter, valueWriter);
     }
 

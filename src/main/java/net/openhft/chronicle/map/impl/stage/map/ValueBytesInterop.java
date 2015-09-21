@@ -35,6 +35,6 @@ public class ValueBytesInterop<V, VI, MVI extends MetaBytesInterop<V, ? super VI
     
     public MVI valueMetaInterop(V value) {
         return mh.m().metaValueInteropProvider.get(
-                ch.copies, mh.m().originalMetaValueInterop, valueInterop, value);
+                ch.copies, mh.m().originalMetaValueInterop, valueInterop, value, false);
     }
 }

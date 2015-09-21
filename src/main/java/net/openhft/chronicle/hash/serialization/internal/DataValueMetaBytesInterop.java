@@ -17,6 +17,7 @@
 package net.openhft.chronicle.hash.serialization.internal;
 
 import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.lang.io.BoundsCheckingDirectBytes;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.model.*;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
@@ -40,8 +41,10 @@ public abstract class DataValueMetaBytesInterop<E>
         return e.equals(other);
     }
 
-    void init(BytesWriter<E> writer, E e, long size) {
+    void init(BytesWriter<E> writer, E e, long size, boolean checked) {
         Bytes buffer = this.buffer.obtain(size, true);
+        if (checked)
+            buffer = new BoundsCheckingDirectBytes(buffer, null);
         writer.write(buffer, e);
         buffer.flip();
         assert buffer.remaining() == size;
@@ -87,13 +90,13 @@ public abstract class DataValueMetaBytesInterop<E>
         @Override
         public MetaBytesInterop<E, BytesWriter<E>> get(
                 ThreadLocalCopies copies, MetaBytesInterop<E, BytesWriter<E>> originalMetaWriter,
-                BytesWriter<E> writer, E e) {
+                BytesWriter<E> writer, E e, boolean checked) {
             if (e instanceof Byteable)
                 return metaByteableInterop;
             DirectBytesBuffer.ForDataValueWriter forDataValueWriter =
                     provider.get(copies, ((DataValueMetaBytesInterop)originalMetaWriter).buffer)
                             .forDataValueWriter;
-            forDataValueWriter.init(writer, e, size);
+            forDataValueWriter.init(writer, e, size, checked);
             return forDataValueWriter;
         }
     }

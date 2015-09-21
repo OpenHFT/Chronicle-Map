@@ -55,7 +55,8 @@ final class WriterWithSize<T> {
         copies = writerProvider.getCopies(copies);
         Object writer = writerProvider.get(copies, originalWriter);
         copies = metaWriterProvider.getCopies(copies);
-        MetaBytesWriter metaWriter = metaWriterProvider.get(copies, originalMetaWriter, writer, t);
+        MetaBytesWriter metaWriter = metaWriterProvider.get(
+                copies, originalMetaWriter, writer, t, false);
         long size = metaWriter.size(writer, t);
         if (bufferResizer != null)
             out = resizeIfRequired(out, size);
@@ -90,7 +91,8 @@ final class WriterWithSize<T> {
     public ThreadLocalCopies writeInLoop(Bytes out, T t, Object writer,
                                          @Nullable ThreadLocalCopies copies) {
         copies = metaWriterProvider.getCopies(copies);
-        MetaBytesWriter metaWriter = metaWriterProvider.get(copies, originalMetaWriter, writer, t);
+        MetaBytesWriter metaWriter = metaWriterProvider.get(
+                copies, originalMetaWriter, writer, t, false);
         long size = metaWriter.size(writer, t);
         if (bufferResizer != null)
             out = resizeIfRequired(out, size);

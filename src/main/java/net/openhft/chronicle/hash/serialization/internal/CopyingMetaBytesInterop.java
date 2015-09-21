@@ -92,10 +92,10 @@ public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaByte
         @Override
         public CopyingMetaBytesInterop<E, M> get(
                 ThreadLocalCopies copies,
-                CopyingMetaBytesInterop<E, M> originalMetaWriter, M writer, E e) {
+                CopyingMetaBytesInterop<E, M> originalMetaWriter, M writer, E e, boolean checked) {
             DirectBytesBuffer.ForBytesMarshaller forBytesMarshaller =
                     provider.get(copies, originalMetaWriter.buffer()).forBytesMarshaller;
-            forBytesMarshaller.init(writer, e, mutable, maxSize);
+            forBytesMarshaller.init(writer, e, mutable, maxSize, checked);
             return forBytesMarshaller;
         }
     }
@@ -115,11 +115,12 @@ public abstract class CopyingMetaBytesInterop<E, W> extends BasicCopyingMetaByte
         }
 
         @Override
-        public CopyingMetaBytesInterop<E, W> get(ThreadLocalCopies copies,
-                CopyingMetaBytesInterop<E, W> originalMetaWriter, W writer, E e) {
+        public CopyingMetaBytesInterop<E, W> get(
+                ThreadLocalCopies copies, CopyingMetaBytesInterop<E, W> originalMetaWriter,
+                W writer, E e, boolean checked) {
             DirectBytesBuffer.ForBytesWriter forBytesWriter =
                     provider.get(copies, originalMetaWriter.buffer()).forBytesWriter;
-            forBytesWriter.init(writer, e, mutable);
+            forBytesWriter.init(writer, e, mutable, checked);
             return forBytesWriter;
         }
     }
