@@ -1,4 +1,4 @@
-# Purposes of Chronicle Map Specification
+# Rational behind Chronicle Map Specification
 
  - To provide the ability to write a small, drastically simplified Chronicle Map implementation in Java
  for a specific use-case. It could hard-code many aspects which the reference implementation has
