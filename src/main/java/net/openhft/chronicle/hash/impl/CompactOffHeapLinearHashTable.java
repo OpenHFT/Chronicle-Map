@@ -16,13 +16,13 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.lang.Maths;
+
+import net.openhft.chronicle.core.Maths;
 
 import static net.openhft.lang.MemoryUnit.BITS;
 import static net.openhft.lang.MemoryUnit.BYTES;
-import static net.openhft.lang.io.NativeBytes.UNSAFE;
 
-public class CompactOffHeapLinearHashTable {
+public abstract class CompactOffHeapLinearHashTable {
     // to fit 64 bits per slot.
     public static final int MAX_SEGMENT_CHUNKS = 1 << 30;
     public static final int MAX_SEGMENT_ENTRIES = 1 << 29;
@@ -45,7 +45,12 @@ public class CompactOffHeapLinearHashTable {
     }
 
     public static int entrySize(int keyBits, int valueBits) {
-        return (int) BYTES.alignAndConvert((long) (keyBits + valueBits), BITS);
+        int entrySize = (int) BYTES.alignAndConvert((long) (keyBits + valueBits), BITS);
+        if (entrySize <= 4)
+            return 4;
+        if (entrySize <= 8)
+            return 8;
+        return entrySize;
     }
 
     public static long capacityFor(long entriesPerSegment) {
@@ -68,23 +73,19 @@ public class CompactOffHeapLinearHashTable {
 
 
     private final long capacityMask;
-    private final int hashLookupEntrySize;
-    private final long capacityMask2;
+    final long capacityMask2;
     private final int keyBits;
     private final long keyMask;
     private final long valueMask;
-    private final long entryMask;
 
     CompactOffHeapLinearHashTable(long capacity, int entrySize, int keyBits, int valueBits) {
         this.capacityMask = capacity - 1L;
 
-        this.hashLookupEntrySize = entrySize;
         this.capacityMask2 = capacityMask * entrySize;
 
         this.keyBits = keyBits;
         this.keyMask = mask(keyBits);
         this.valueMask = mask(valueBits);
-        this.entryMask = mask(keyBits + valueBits);
     }
 
     CompactOffHeapLinearHashTable(VanillaChronicleHash h) {
@@ -92,9 +93,7 @@ public class CompactOffHeapLinearHashTable {
                 h.segmentHashLookupValueBits);
     }
 
-    long indexToPos(long index) {
-        return index * hashLookupEntrySize;
-    }
+    abstract long indexToPos(long index);
 
     public long maskUnsetKey(long key) {
         return (key &= keyMask) != UNSET_KEY ? key : keyMask;
@@ -105,7 +104,7 @@ public class CompactOffHeapLinearHashTable {
     }
 
     public boolean empty(long entry) {
-        return (entry & entryMask) == UNSET_ENTRY;
+        return entry == UNSET_ENTRY;
     }
 
     public long key(long entry) {
@@ -124,22 +123,14 @@ public class CompactOffHeapLinearHashTable {
         return indexToPos(key & capacityMask);
     }
 
-    public long step(long pos) {
-        return (pos += hashLookupEntrySize) <= capacityMask2 ? pos : 0L;
-    }
+    public abstract long step(long pos);
 
-    public long stepBack(long pos) {
-        return (pos -= hashLookupEntrySize) >= 0 ? pos : capacityMask2;
-    }
+    public abstract long stepBack(long pos);
 
-    public long readEntry(long addr, long pos) {
-        return UNSAFE.getLong(addr + pos);
-    }
+    public abstract long readEntry(long addr, long pos);
 
-    public void writeEntryVolatile(long addr, long pos, long prevEntry, long key, long value) {
-        long entry = (prevEntry & ~entryMask) | entry(key, value);
-        UNSAFE.putLongVolatile(null, addr + pos, entry);
-    }
+    public abstract void writeEntryVolatile(
+            long addr, long pos, long prevEntry, long key, long value);
     
     public void putValueVolatile(long addr, long pos, long value) {
         checkValueForPut(value);
@@ -147,19 +138,9 @@ public class CompactOffHeapLinearHashTable {
         writeEntryVolatile(addr, pos, currentEntry, key(currentEntry), value);
     }
 
-    void writeEntry(long addr, long pos, long prevEntry, long anotherEntry) {
-        long entry = (prevEntry & ~entryMask) | (anotherEntry & entryMask);
-        UNSAFE.putLong(addr + pos, entry);
-    }
+    abstract void writeEntry(long addr, long pos, long prevEntry, long anotherEntry);
 
-    void clearEntry(long addr, long pos, long prevEntry) {
-        long entry = (prevEntry & ~entryMask);
-        UNSAFE.putLong(addr + pos, entry);
-    }
-
-    public void clearHashLookup(long addr) {
-        UNSAFE.setMemory(addr, capacityMask2 + hashLookupEntrySize, (byte) 0);
-    }
+    abstract void clearEntry(long addr, long pos, long prevEntry);
 
     /**
      * Returns "insert" position in terms of consequent putValue()

@@ -877,8 +877,8 @@ public final class ChronicleMapBuilder<K, V> implements
         if (entriesPerSegment > 0) {
             return (int) segmentsGivenEntriesPerSegmentFixed(entriesPerSegment, replicated);
         }
-        // iteratively try to fit 3..8 bytes per hash lookup slot. Trying to apply small slot
-        // sizes (=> segment sizes, because slot size depends on segment size) not only because
+        // Try to fit 4 bytes per hash lookup slot, then 8. Trying to apply small slot
+        // size (=> segment size, because slot size depends on segment size) not only because
         // they take less memory per entry (if entries are of KBs or MBs, it doesn't matter), but
         // also because if segment size is small, slot and free list are likely to lie on a single
         // memory page, reducing number of memory pages to update, if Chronicle Map is persisted.
@@ -898,11 +898,9 @@ public final class ChronicleMapBuilder<K, V> implements
         // each segment. To compensate this at least on linux, don't accept segment sizes that with
         // the given entry sizes, lead to too small total segment sizes in native memory pages,
         // see comment in tryHashLookupSlotSize()
-        for (int hashLookupSlotSize = 3; hashLookupSlotSize <= 7; hashLookupSlotSize++) {
-            long segments = tryHashLookupSlotSize(hashLookupSlotSize, replicated);
-            if (segments > 0)
-                return (int) segments;
-        }
+        long segments = tryHashLookupSlotSize(4, replicated);
+        if (segments > 0)
+            return (int) segments;
         long maxEntriesPerSegment = findMaxEntriesPerSegmentToFitHashLookupSlotSize(8, replicated);
         long maxSegments = trySegments(maxEntriesPerSegment, MAX_SEGMENTS, replicated);
         if (maxSegments > 0L)

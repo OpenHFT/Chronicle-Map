@@ -255,7 +255,14 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     private void ownInitTransients() {
         keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
         keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
-        hashLookup = new CompactOffHeapLinearHashTable(this);
+        if (segmentHashLookupEntrySize == 4) {
+            hashLookup = new IntCompactOffHeapLinearHashTable(this);
+        } else if (segmentHashLookupEntrySize == 8) {
+            hashLookup = new LongCompactOffHeapLinearHashTable(this);
+        } else {
+            throw new AssertionError("hash lookup slot size could be 4 or 8, " +
+                    segmentHashLookupEntrySize + " observed");
+        }
     }
 
     public final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
