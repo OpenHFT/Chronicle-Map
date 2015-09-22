@@ -556,6 +556,17 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B immutableKeys();
 
     /**
+     * Specifies whether on the current combination of platform, OS and Jvm aligned 8-byte reads
+     * and writes are atomic or not. By default, Chronicle tries to determine this itself, but
+     * if it fails it pessimistically assumes that 64-bit memory operations are <i>not</i> atomic.
+     *
+     * @param aligned64BitMemoryOperationsAtomic {@code true} if aligned 8-byte memory operations
+     * are atomic
+     * @return this builder back
+     */
+    B aligned64BitMemoryOperationsAtomic(boolean aligned64BitMemoryOperationsAtomic);
+
+    /**
      * Configures replication of the hash containers, created by this builder. See <a
      * href="https://github.com/OpenHFT/Chronicle-Map#tcp--udp-replication"> the section about
      * replication in ChronicleMap manual</a> for more information.

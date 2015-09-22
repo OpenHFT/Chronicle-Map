@@ -71,4 +71,9 @@ class ChronicleMapBuilderPrivateAPI<K> implements ChronicleHashBuilderPrivateAPI
     public long maxExtraTiers(boolean replicated) {
         return b.maxExtraTiers(replicated);
     }
+
+    @Override
+    public boolean aligned64BitMemoryOperationsAtomic() {
+        return b.aligned64BitMemoryOperationsAtomic();
+    }
 }

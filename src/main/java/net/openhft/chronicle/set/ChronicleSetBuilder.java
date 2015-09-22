@@ -287,6 +287,12 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
+    public ChronicleSetBuilder<K> aligned64BitMemoryOperationsAtomic(
+            boolean aligned64BitMemoryOperationsAtomic) {
+        return null;
+    }
+
+    @Override
     public ChronicleSetBuilder<K> replication(SingleChronicleHashReplication replication) {
         chronicleMapBuilder.replication(replication);
         return this;

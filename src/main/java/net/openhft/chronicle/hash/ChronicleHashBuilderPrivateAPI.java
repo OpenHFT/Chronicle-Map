@@ -37,4 +37,6 @@ public interface ChronicleHashBuilderPrivateAPI<K> {
     int actualSegments(boolean replicated);
 
     long maxExtraTiers(boolean replicated);
+
+    boolean aligned64BitMemoryOperationsAtomic();
 }

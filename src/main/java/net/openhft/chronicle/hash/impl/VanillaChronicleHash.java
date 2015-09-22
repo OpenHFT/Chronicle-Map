@@ -187,6 +187,10 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         segmentHashLookupKeyBits = keyBits(entriesPerSegment, segmentHashLookupValueBits);
         segmentHashLookupEntrySize =
                 entrySize(segmentHashLookupKeyBits, segmentHashLookupValueBits);
+        if (!privateAPI.aligned64BitMemoryOperationsAtomic() && segmentHashLookupEntrySize > 4) {
+            throw new IllegalStateException("aligned64BitMemoryOperationsAtomic() == false, " +
+                    "but hash lookup slot is " + segmentHashLookupEntrySize);
+        }
         segmentHashLookupCapacity = CompactOffHeapLinearHashTable.capacityFor(entriesPerSegment);
         segmentHashLookupInnerSize = segmentHashLookupCapacity * segmentHashLookupEntrySize;
         segmentHashLookupOuterSize = CACHE_LINES.align(segmentHashLookupInnerSize, BYTES);

@@ -16,9 +16,11 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
+import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.util.math.PoissonDistribution;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
@@ -161,6 +163,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private double maxBloatFactor = 1.0;
     private boolean allowSegmentTiering = true;
     private double nonTieredSegmentsPercentile = 0.99999;
+    private boolean aligned64BitMemoryOperationsAtomic = OS.is64Bit() ? true : false;
 
     private boolean putReturnsNull = false;
     private boolean removeReturnsNull = false;
@@ -758,17 +761,18 @@ public final class ChronicleMapBuilder<K, V> implements
             entriesPerSegment = PoissonDistribution.inverseCumulativeProbability(
                     averageEntriesPerSegment, nonTieredSegmentsPercentile);
         }
-        if (actualChunksPerSegment > 0)
-            return entriesPerSegment;
-        double averageChunksPerEntry = averageChunksPerEntry(replicated);
-        if (entriesPerSegment * averageChunksPerEntry >
-                MAX_SEGMENT_CHUNKS)
-            throw new IllegalStateException("Max chunks per segment is " +
-                    MAX_SEGMENT_CHUNKS +
-                    " configured entries() and " +
-                    "actualSegments() so that there should be " + entriesPerSegment +
-                    " entries per segment, while average chunks per entry is " +
-                    averageChunksPerEntry);
+        boolean actualChunksDefined = actualChunksPerSegment > 0;
+        if (!actualChunksDefined) {
+            double averageChunksPerEntry = averageChunksPerEntry(replicated);
+            if (entriesPerSegment * averageChunksPerEntry >
+                    MAX_SEGMENT_CHUNKS)
+                throw new IllegalStateException("Max chunks per segment is " +
+                        MAX_SEGMENT_CHUNKS +
+                        " configured entries() and " +
+                        "actualSegments() so that there should be " + entriesPerSegment +
+                        " entries per segment, while average chunks per entry is " +
+                        averageChunksPerEntry);
+        }
         if (entriesPerSegment > MAX_SEGMENT_ENTRIES)
             throw new IllegalStateException("shouldn't be more than " +
                     MAX_SEGMENT_ENTRIES + " entries per segment");
@@ -901,7 +905,9 @@ public final class ChronicleMapBuilder<K, V> implements
         long segments = tryHashLookupSlotSize(4, replicated);
         if (segments > 0)
             return (int) segments;
-        long maxEntriesPerSegment = findMaxEntriesPerSegmentToFitHashLookupSlotSize(8, replicated);
+        int maxHashLookupEntrySize = aligned64BitMemoryOperationsAtomic() ? 8 : 4;
+        long maxEntriesPerSegment =
+                findMaxEntriesPerSegmentToFitHashLookupSlotSize(maxHashLookupEntrySize, replicated);
         long maxSegments = trySegments(maxEntriesPerSegment, MAX_SEGMENTS, replicated);
         if (maxSegments > 0L)
             return (int) maxSegments;
@@ -1185,6 +1191,17 @@ public final class ChronicleMapBuilder<K, V> implements
     public ChronicleMapBuilder<K, V> immutableKeys() {
         keyBuilder.instancesAreMutable(false);
         return this;
+    }
+
+    @Override
+    public ChronicleMapBuilder<K, V> aligned64BitMemoryOperationsAtomic(
+            boolean aligned64BitMemoryOperationsAtomic) {
+        this.aligned64BitMemoryOperationsAtomic = aligned64BitMemoryOperationsAtomic;
+        return this;
+    }
+
+    boolean aligned64BitMemoryOperationsAtomic() {
+        return aligned64BitMemoryOperationsAtomic;
     }
 
     /**
