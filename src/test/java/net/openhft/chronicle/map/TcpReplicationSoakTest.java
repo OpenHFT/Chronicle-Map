@@ -22,7 +22,6 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
 import net.openhft.lang.values.IntValue;
 import org.junit.*;
 
@@ -117,7 +116,7 @@ public class TcpReplicationSoakTest {
 
     @After
     public void checkThreadsShutdown() {
-        StatelessClientTest.checkThreadsShutdown(threads);
+        ChannelReplicationTest.checkThreadsShutdown(threads);
     }
 
 

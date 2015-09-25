@@ -22,7 +22,6 @@ import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -88,7 +87,7 @@ public class TCPSocketReplicationIntValueTest {
 
     @After
     public void checkThreadsShutdown() {
-        StatelessClientTest.checkThreadsShutdown(threads);
+        ChannelReplicationTest.checkThreadsShutdown(threads);
     }
 
     @Test

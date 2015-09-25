@@ -23,6 +23,7 @@ import org.junit.*;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -43,6 +44,40 @@ public class ChannelReplicationTest {
 
     private ReplicationHub hubA;
     private ReplicationHub hubB;
+
+    public static void checkThreadsShutdown(Set<Thread> threads) {
+        // give them a change to stop if there were killed.
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Map<Thread, StackTraceElement[]> threadMap = Thread.getAllStackTraces();
+        threadMap.keySet().removeAll(threads);
+        if (!threadMap.isEmpty()) {
+            System.out.println("### threads still running after the test ###");
+            for (Map.Entry<Thread, StackTraceElement[]> entry : threadMap.entrySet()) {
+                System.out.println(entry.getKey());
+                for (StackTraceElement ste : entry.getValue()) {
+                    System.out.println("\t" + ste);
+                }
+            }
+            try {
+                for (Thread thread : threadMap.keySet()) {
+                    if (thread.isAlive()) {
+                        System.out.println("Waiting for " + thread);
+                        thread.join(1000);
+                        if (thread.isAlive()) {
+                            System.out.println("Forcing " + thread + " to die");
+                            thread.stop();
+                        }
+                    }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     @Before
     public void setup() throws IOException {
@@ -98,7 +133,7 @@ public class ChannelReplicationTest {
 
     @After
     public void checkThreadsShutdown() {
-        StatelessClientTest.checkThreadsShutdown(threads);
+        checkThreadsShutdown(threads);
     }
 
     @Test

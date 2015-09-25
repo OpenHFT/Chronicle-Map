@@ -118,16 +118,9 @@ final class Replicators {
 
                 TcpTransportAndNetworkConfig tcpConfig = replication.tcpTransportAndNetwork();
 
-                TcpReplicator.StatelessClientParameters statelessClientParameters =
-                        new TcpReplicator.StatelessClientParameters(
-                        replicatedMap,
-                        builder.keyBuilder,
-                        builder.valueBuilder);
-
                 return new TcpReplicator(replica, entryExternalizable,
                         tcpConfig,
                         replication.remoteNodeValidator(),
-                        statelessClientParameters,
                         replication.name(),
                         replication.connectionListener());
             }

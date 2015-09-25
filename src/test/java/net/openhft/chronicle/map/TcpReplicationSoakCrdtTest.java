@@ -169,7 +169,7 @@ public class TcpReplicationSoakCrdtTest {
 
     @After
     public void checkThreadsShutdown() {
-        StatelessClientTest.checkThreadsShutdown(threads);
+        ChannelReplicationTest.checkThreadsShutdown(threads);
     }
 
 

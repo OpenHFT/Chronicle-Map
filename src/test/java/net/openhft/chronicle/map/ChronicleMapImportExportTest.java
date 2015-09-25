@@ -19,11 +19,9 @@ package net.openhft.chronicle.map;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.chronicle.core.io.Closeable;
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.lang.values.LongValue;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -32,7 +30,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -220,44 +217,6 @@ public class ChronicleMapImportExportTest {
 
         file.deleteOnExit();
     }
-
-
-    @Test
-    @Ignore
-    public void testToJsonWithStatelessClient() throws IOException, InterruptedException {
-        File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
-        file.deleteOnExit();
-        File file2 = new File(TMP + "/chronicle-map-" + System.nanoTime() + "-2.json");
-        file.deleteOnExit();
-        try (ChronicleMap<CharSequence, CharSequence> expected =
-                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class).create()) {
-            try (ChronicleMap<CharSequence, CharSequence> serverMap = ChronicleMapBuilder
-                    .of(CharSequence.class, CharSequence.class)
-                    .replication((byte) 2, TcpTransportAndNetworkConfig.of(8056)).create()) {
-                try (ChronicleMap<CharSequence, CharSequence> actual = localClient(8056)) {
-
-                    expected.put("hello", "world");
-                    expected.getAll(file);
-
-                    actual.putAll(file);
-
-
-                    Assert.assertEquals(expected, actual);
-
-                    actual.getAll(file2);
-                    actual.clear();
-                    actual.putAll(file2);
-
-                    Assert.assertEquals(expected, actual);
-
-                }
-            }
-        }
-
-        file.delete();
-        file2.delete();
-    }
-
 
     @Test
     public void testWithLongValue() throws IOException, InterruptedException {

@@ -20,7 +20,6 @@ import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.xstream.converters.ByteBufferConverter;
 import net.openhft.xstream.converters.DataValueConverter;
-import net.openhft.xstream.converters.StatelessChronicleMapConverter;
 import net.openhft.xstream.converters.VanillaChronicleMapConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +35,7 @@ import java.util.zip.GZIPOutputStream;
  */
 class JsonSerializer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StatelessChronicleMap.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JsonSerializer.class);
 
     static synchronized <K, V> void getAll(File toFile, Map<K, V> map, List jsonConverters) throws IOException {
         final XStream xstream = xStream(map, jsonConverters);
@@ -106,12 +105,7 @@ class JsonSerializer {
     }
 
     private static <K, V> void registerChronicleMapConverter(Map<K, V> map, XStream xstream) {
-
-        Converter converter = map instanceof StatelessChronicleMap ?
-                new StatelessChronicleMapConverter<K, V>(map) :
-                new VanillaChronicleMapConverter<K, V>(map);
-
-        xstream.registerConverter(converter);
+        xstream.registerConverter(new VanillaChronicleMapConverter<>(map));
     }
 }
 

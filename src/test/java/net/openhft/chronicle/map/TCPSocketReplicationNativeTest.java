@@ -81,7 +81,7 @@ public class TCPSocketReplicationNativeTest {
 
     @After
     public void checkThreadsShutdown() {
-        StatelessClientTest.checkThreadsShutdown(threads);
+        ChannelReplicationTest.checkThreadsShutdown(threads);
     }
 
     @Test

@@ -21,7 +21,6 @@ import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -51,7 +50,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
     @After
     public void checkThreadsShutdown() {
-        StatelessClientTest.checkThreadsShutdown(threads);
+        ChannelReplicationTest.checkThreadsShutdown(threads);
     }
 
     public void testIgnoreLateAction(BiConsumer<ChronicleMap<CharSequence, CharSequence>,

@@ -19,7 +19,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.serialization.internal.DummyValue;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -72,7 +71,7 @@ public class TCPSocketReplication3VoidValueTest {
 
     @After
     public void checkThreadsShutdown() {
-        StatelessClientTest.checkThreadsShutdown(threads);
+        ChannelReplicationTest.checkThreadsShutdown(threads);
     }
 
     @Test

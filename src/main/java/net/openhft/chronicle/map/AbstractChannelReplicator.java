@@ -55,6 +55,8 @@ abstract class AbstractChannelReplicator implements Closeable {
     static final int SIZE_OF_SIZE = 4;
     public static final int SIZE_OF_TRANSACTION_ID = 8;
 
+    static final byte STATEFUL_UPDATE = 1;
+
     private static final Logger LOG = LoggerFactory.getLogger(AbstractChannelReplicator.class);
 
     // currently this is not safe to use as it wont work with the stateless client
@@ -503,8 +505,8 @@ abstract class AbstractChannelReplicator implements Closeable {
             long pos0 = in.position();
             long start = 0;
             try {
-                // used to denote that this is not a stateless map event
-                in.writeByte(StatelessChronicleMap.EventId.STATEFUL_UPDATE.ordinal());
+                // used to denote that this is not a heartbeat
+                in.writeByte(STATEFUL_UPDATE);
 
                 long sizeLocation = in.position();
 

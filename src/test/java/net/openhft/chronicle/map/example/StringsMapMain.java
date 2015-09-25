@@ -31,7 +31,6 @@ public class StringsMapMain {
     static final int port = Integer.getInteger("port", 8998);
     static final int entries = Integer.getInteger("entries", 100000);
     static final int runs = Integer.getInteger("runs", 5);
-    static final boolean stateless = Boolean.getBoolean("stateless");
 
     public static void startServer() throws IOException {
         File file = File.createTempFile("testServersMapMain", ".deleteme");
@@ -52,23 +51,16 @@ public class StringsMapMain {
 
     public static void startRemoteClient(String hostname) throws IOException {
         final ChronicleMap<CharSequence, CharSequence> map;
-        if (stateless) {
-            map = ChronicleMapBuilder
-                    .of(CharSequence.class, CharSequence.class, new InetSocketAddress(hostname, port))
-                    .putReturnsNull(true)
-                    .create();
-        } else {
-            File file = File.createTempFile("testServersMapMain", ".deleteme");
-            file.deleteOnExit();
-            TcpTransportAndNetworkConfig tcpConfig =
-                    TcpTransportAndNetworkConfig.of(port, new InetSocketAddress(hostname, port));
+        File file = File.createTempFile("testServersMapMain", ".deleteme");
+        file.deleteOnExit();
+        TcpTransportAndNetworkConfig tcpConfig =
+                TcpTransportAndNetworkConfig.of(port, new InetSocketAddress(hostname, port));
 
-            map = ChronicleMapBuilder
-                    .of(CharSequence.class, CharSequence.class)
-                    .putReturnsNull(true)
-                    .replication((byte) 1, tcpConfig)
-                    .createPersistedTo(file);
-        }
+        map = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
+                .putReturnsNull(true)
+                .replication((byte) 1, tcpConfig)
+                .createPersistedTo(file);
         StringBuilder key = new StringBuilder();
         StringBuilder value = new StringBuilder();
         StringBuilder value2 = new StringBuilder();
@@ -83,12 +75,7 @@ public class StringsMapMain {
                 long t1 = System.nanoTime();
                 map.put(key, value);
                 long t2 = System.nanoTime();
-                if (stateless) {
-                    value.setLength(0);
-                    value.append(map.get(key));
-                } else {
-                    map.getUsing(key, value);
-                }
+                map.getUsing(key, value);
                 long t3 = System.nanoTime();
                 puts += t2 - t1;
                 gets += t3 - t2;

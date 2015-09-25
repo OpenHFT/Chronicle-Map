@@ -46,7 +46,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
-import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static net.openhft.chronicle.map.fromdocs.OpenJDKAndHashMapExamplesTest.parseYYYYMMDD;
 import static org.junit.Assert.*;
 
@@ -57,7 +56,7 @@ import static org.junit.Assert.*;
 public class CHMUseCasesTest {
 
 
-    enum TypeOfMap {STATELESS, SIMPLE, SIMPLE_PERSISTED, REPLICATED}
+    enum TypeOfMap {SIMPLE, SIMPLE_PERSISTED, REPLICATED}
 
     private final TypeOfMap typeOfMap;
 
@@ -96,12 +95,6 @@ public class CHMUseCasesTest {
                         TypeOfMap.REPLICATED
                 },
 
-                //  it pointless to run these test as the Function and UnaryOperator are not
-                // serializable as inner classes adn the getUsingLock is not supported by the
-                // stateless client
-//                {
-//                        TypeOfMap.STATELESS
-//                },
                 {
                         TypeOfMap.SIMPLE_PERSISTED
                 }
@@ -312,34 +305,6 @@ public class CHMUseCasesTest {
 
             }
 
-
-            case STATELESS: {
-                {
-                    final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig
-                            .of(8086)
-                            .heartBeatInterval(1, TimeUnit.SECONDS)
-                            .tcpBufferSize(1024 * 64);
-
-
-                    map2 = builder
-                            .replication(SingleChronicleHashReplication.builder()
-                                    .tcpTransportAndNetwork(tcpConfig1).name("server")
-                                    .createWithId((byte) 1))
-                            .instance()
-                            .name("server")
-                            .create();
-                    closeables.add(map2);
-
-                }
-                {
-                    map1 = localClient(8086);
-
-                    closeables.add(map1);
-                    return map1;
-
-                }
-            }
-
             default:
                 throw new IllegalStateException();
         }
@@ -467,9 +432,6 @@ public class CHMUseCasesTest {
 
     @Test
     public void bondExample() throws IOException, InterruptedException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // acquireContext not supported by the STATELESS client
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(String.class, BondVOInterface.class)
                 .averageKeySize(10);
@@ -665,9 +627,6 @@ public class CHMUseCasesTest {
     public void testCharSequenceCharSequenceMap()
             throws ExecutionException, InterruptedException, IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // Function supported by the STATELESS client
-
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class);
@@ -731,9 +690,6 @@ public class CHMUseCasesTest {
     @Test
     public void testAcquireUsingWithCharSequence() throws IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
-
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class);
@@ -755,9 +711,6 @@ public class CHMUseCasesTest {
     @Test
     public void testGetUsingWithIntValueNoValue() throws IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
-
         ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, IntValue.class);
 
@@ -774,9 +727,6 @@ public class CHMUseCasesTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testAcquireUsingImmutableUsing() throws IOException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            throw new IllegalArgumentException(); // acquireContext supported by the STATELESS
 
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class);
@@ -800,9 +750,6 @@ public class CHMUseCasesTest {
     @Test
     public void testAcquireUsingWithIntValueKeyStringBuilderValue() throws IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // acquireContext supported by the STATELESS client
-
         ChronicleMapBuilder<IntValue, StringBuilder> builder = ChronicleMapBuilder
                 .of(IntValue.class, StringBuilder.class);
 
@@ -825,9 +772,6 @@ public class CHMUseCasesTest {
 
     @Test
     public void testAcquireUsingWithIntValueKey() throws IOException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class);
@@ -857,10 +801,6 @@ public class CHMUseCasesTest {
 
     @Test
     public void testAcquireUsingWithByteBufferBytesValue() throws IOException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return;
-
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class);
 
@@ -888,9 +828,6 @@ public class CHMUseCasesTest {
      */
     @Test
     public void testStringValueStringValueMap() throws IOException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<StringValue, StringValue> builder = ChronicleMapBuilder
                 .of(StringValue.class, StringValue.class);
@@ -1028,10 +965,6 @@ public class CHMUseCasesTest {
     public void testIntegerIntegerMap()
             throws ExecutionException, InterruptedException, IOException {
 
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // Function supported by the STATELESS client
-
         ChronicleMapBuilder<Integer, Integer> builder = ChronicleMapBuilder
                 .of(Integer.class, Integer.class);
 
@@ -1097,10 +1030,6 @@ public class CHMUseCasesTest {
     public void testLongLongMap() throws ExecutionException, InterruptedException, IOException {
 
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return;
-
-
         ChronicleMapBuilder<Long, Long> builder = ChronicleMapBuilder
                 .of(Long.class, Long.class);
 
@@ -1151,10 +1080,6 @@ public class CHMUseCasesTest {
     public void testDoubleDoubleMap() throws ExecutionException, InterruptedException, IOException {
 
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return;
-
-
         ChronicleMapBuilder<Double, Double> builder = ChronicleMapBuilder
                 .of(Double.class, Double.class);
 
@@ -1201,10 +1126,6 @@ public class CHMUseCasesTest {
     @Test
     public void testByteArrayByteArrayMap()
             throws ExecutionException, InterruptedException, IOException {
-
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return;
 
         ChronicleMapBuilder<byte[], byte[]> builder = ChronicleMapBuilder
                 .of(byte[].class, byte[].class).averageKeySize(4).averageValueSize(4)
@@ -1288,9 +1209,6 @@ public class CHMUseCasesTest {
     @Test
     public void testByteBufferByteBufferMap()
             throws ExecutionException, InterruptedException, IOException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
@@ -1412,9 +1330,6 @@ public class CHMUseCasesTest {
     public void testByteBufferDirectByteBufferMap()
             throws ExecutionException, InterruptedException, IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; //  not supported by the STATELESS client
-
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
                 .averageKeySize(5).averageValueSize(5)
@@ -1466,8 +1381,6 @@ public class CHMUseCasesTest {
 
     @Test
     public void testIntValueIntValueMap() throws IOException {
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, IntValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, IntValue.class);
@@ -1598,9 +1511,6 @@ public class CHMUseCasesTest {
     @Test
     public void testUnsignedIntValueUnsignedIntValueMap() throws IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
-
         ChronicleMapBuilder<UnsignedIntValue, UnsignedIntValue> builder = ChronicleMapBuilder
                 .of(UnsignedIntValue.class, UnsignedIntValue.class);
 
@@ -1709,9 +1619,6 @@ public class CHMUseCasesTest {
     @Test
     public void testIntValueShortValueMap() throws IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
-
         ChronicleMapBuilder<IntValue, ShortValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, ShortValue.class);
 
@@ -1818,10 +1725,6 @@ public class CHMUseCasesTest {
     @Test
     public void testIntValueUnsignedShortValueMap() throws IOException {
 
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return;
-
         ChronicleMapBuilder<IntValue, UnsignedShortValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedShortValue.class);
 
@@ -1926,9 +1829,6 @@ public class CHMUseCasesTest {
     @Test
     public void testIntValueCharValueMap() throws IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
-
         ChronicleMapBuilder<IntValue, CharValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharValue.class);
 
@@ -2027,9 +1927,6 @@ public class CHMUseCasesTest {
      */
     @Test
     public void testIntValueUnsignedByteMap() throws IOException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<IntValue, UnsignedByteValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedByteValue.class);
@@ -2137,9 +2034,6 @@ public class CHMUseCasesTest {
     @Test
     public void testIntValueBooleanValueMap() throws IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
-
         ChronicleMapBuilder<IntValue, BooleanValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, BooleanValue.class);
 
@@ -2243,10 +2137,6 @@ public class CHMUseCasesTest {
     @Test
     public void testFloatValueFloatValueMap() throws IOException {
 
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
-
         ChronicleMapBuilder<FloatValue, FloatValue> builder = ChronicleMapBuilder
                 .of(FloatValue.class, FloatValue.class);
 
@@ -2349,9 +2239,6 @@ public class CHMUseCasesTest {
      */
     @Test
     public void testDoubleValueDoubleValueMap() throws IOException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<DoubleValue, DoubleValue> builder = ChronicleMapBuilder
                 .of(DoubleValue.class, DoubleValue.class);
@@ -2458,10 +2345,6 @@ public class CHMUseCasesTest {
      */
     @Test
     public void testLongValueLongValueMap() throws IOException {
-
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return;
 
         ChronicleMapBuilder<LongValue, LongValue> builder = ChronicleMapBuilder
                 .of(LongValue.class, LongValue.class);
@@ -2571,9 +2454,6 @@ public class CHMUseCasesTest {
     @Test
     public void testListValue() throws IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
-
         ChronicleMapBuilder<String, List<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<List<String>>) (Class) List.class)
                 .valueMarshaller(ListMarshaller.of(new StringMarshaller(8)));
@@ -2619,9 +2499,6 @@ public class CHMUseCasesTest {
 
     @Test
     public void testSetValue() throws IOException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
 
         ChronicleMapBuilder<String, Set<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)
@@ -2669,9 +2546,6 @@ public class CHMUseCasesTest {
     @Test
     public void testMapStringStringValue() throws IOException {
 
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context supported by the STATELESS client
-
         ChronicleMapBuilder<String, Map<String, String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, String>>) (Class) Map.class)
                 .valueMarshaller(MapMarshaller.of(new StringMarshaller(16), new StringMarshaller
@@ -2711,10 +2585,6 @@ public class CHMUseCasesTest {
 
     @Test
     public void testMapStringIntegerValue() throws IOException {
-
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // context not supported by the STATELESS client
 
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
@@ -2778,9 +2648,6 @@ public class CHMUseCasesTest {
 
     @Test
     public void testGeneratedDataValue() throws IOException {
-
-        if (typeOfMap == TypeOfMap.STATELESS)
-            return; // acquireContext not supported by the STATELESS client
 
         ChronicleMapBuilder<String, IBean> builder = ChronicleMapBuilder
                 .of(String.class, IBean.class).averageKeySize(5).entries(1000);

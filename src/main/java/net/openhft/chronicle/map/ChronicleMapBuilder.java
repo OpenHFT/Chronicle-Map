@@ -51,9 +51,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -110,8 +108,7 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * @see ChronicleSetBuilder
  */
 public final class ChronicleMapBuilder<K, V> implements
-        ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>>,
-        MapBuilder<ChronicleMapBuilder<K, V>> {
+        ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>> {
 
     static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte) 127;
     private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
@@ -211,12 +208,6 @@ public final class ChronicleMapBuilder<K, V> implements
     public static <K, V> ChronicleMapBuilder<K, V> of(
             @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
         return new ChronicleMapBuilder<>(keyClass, valueClass);
-    }
-
-    public static <K, V> ChronicleMapStatelessClientBuilder<K, V> of(
-            @NotNull Class<K> keyClass, @NotNull Class<V> valueClass,
-            InetSocketAddress socketAddress) {
-        return ChronicleMapStatelessClientBuilder.of(socketAddress);
     }
 
     private static long roundUpMapHeaderSize(long headerSize) {
@@ -980,7 +971,26 @@ public final class ChronicleMapBuilder<K, V> implements
         return segments <= 16 * 1024 ? 64 : 32;
     }
 
-    @Override
+    /**
+     * Configures if the maps created by this {@code ChronicleMapBuilder} should return {@code null}
+     * instead of previous mapped values on {@link ChronicleMap#put(Object, Object)
+     * ChornicleMap.put(key, value)} calls.
+     *
+     * <p>{@link Map#put(Object, Object) Map.put()} returns the previous value, functionality
+     * which is rarely used but fairly cheap for simple in-process, on-heap implementations like
+     * {@link HashMap}. But an off-heap collection has to create a new object and deserialize
+     * the data from off-heap memory. A collection hiding remote queries over the network should
+     * send the value back in addition to that. It's expensive for something you probably don't use.
+     *
+     * <p>By default, of cause, {@code ChronicleMap} conforms the general {@code Map} contract and
+     * returns the previous mapped value on {@code put()} calls.
+     *
+     * @param putReturnsNull {@code true} if you want {@link ChronicleMap#put(Object, Object)
+     *                       ChronicleMap.put()} to not return the value that was replaced but
+     *                       instead return {@code null}
+     * @return this builder back
+     * @see #removeReturnsNull(boolean)
+     */
     public ChronicleMapBuilder<K, V> putReturnsNull(boolean putReturnsNull) {
         this.putReturnsNull = putReturnsNull;
         return this;
@@ -990,7 +1000,26 @@ public final class ChronicleMapBuilder<K, V> implements
         return putReturnsNull;
     }
 
-    @Override
+    /**
+     * Configures if the maps created by this {@code ChronicleMapBuilder} should return {@code null}
+     * instead of the last mapped value on {@link ChronicleMap#remove(Object)
+     * ChronicleMap.remove(key)} calls.
+     *
+     * <p>{@link Map#remove(Object) Map.remove()} returns the previous value, functionality which is
+     * rarely used but fairly cheap for simple in-process, on-heap implementations like {@link
+     * HashMap}. But an off-heap collection has to create a new object and deserialize the data
+     * from off-heap memory. A collection hiding remote queries over the network should send
+     * the value back in addition to that. It's expensive for something you probably don't use.
+     *
+     * <p>By default, of cause, {@code ChronicleMap} conforms the general {@code Map} contract and
+     * returns the mapped value on {@code remove()} calls.
+     *
+     * @param removeReturnsNull {@code true} if you want {@link ChronicleMap#remove(Object)
+     *                          ChronicleMap.remove()} to not return the value of the removed entry
+     *                          but instead return {@code null}
+     * @return this builder back
+     * @see #putReturnsNull(boolean)
+     */
     public ChronicleMapBuilder<K, V> removeReturnsNull(boolean removeReturnsNull) {
         this.removeReturnsNull = removeReturnsNull;
         return this;
@@ -1465,8 +1494,6 @@ public final class ChronicleMapBuilder<K, V> implements
                     }
                     // This is needed to property initialize key and value serialization builders,
                     // which are later used in replication
-                    // TODO don't use SerializationBuilders in replication, extract marshallers
-                    // needed to transmit to stateless clients directly from map instance
                     preMapConstruction(singleHashReplication != null || channel != null);
                     return establishReplication(map, singleHashReplication, channel);
                 }

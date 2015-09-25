@@ -230,13 +230,9 @@
                     </excludePackageNames>
                     <sourceFileExcludes>
                         <exclude>net/openhft/chronicle/hash/ChronicleHashBuilderPrivateAPI.java</exclude>
-                        <exclude>net/openhft/chronicle/hash/KeyContext.java</exclude>
                         <exclude>net/openhft/chronicle/hash/Segment.java</exclude>
                         <exclude>net/openhft/chronicle/hash/locks/LockingStrategy.java</exclude>
                         <exclude>net/openhft/chronicle/map/ConstantValueProvider.java</exclude>
-                        <exclude>net/openhft/chronicle/map/MapEntryCallback.java</exclude>
-                        <exclude>net/openhft/chronicle/map/MapEventListener.java</exclude>
-                        <exclude>net/openhft/chronicle/map/MapKeyContext.java</exclude>
                         <exclude>net/openhft/chronicle/map/VanillaChronicleMap.java</exclude>
                         <exclude>net/openhft/chronicle/map/Replica.java</exclude>
                         <exclude>net/openhft/chronicle/map/ReplicatedChronicleMap.java</exclude>

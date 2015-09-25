@@ -88,7 +88,7 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
 
     @After
     public void checkThreadsShutdown() {
-        StatelessClientTest.checkThreadsShutdown(threads);
+        ChannelReplicationTest.checkThreadsShutdown(threads);
     }
 
     @Test

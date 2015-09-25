@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -81,7 +80,7 @@ public class TCPSocketReplicationTest {
 
     @After
     public void checkThreadsShutdown() {
-        StatelessClientTest.checkThreadsShutdown(threads);
+        ChannelReplicationTest.checkThreadsShutdown(threads);
     }
 
     @Test

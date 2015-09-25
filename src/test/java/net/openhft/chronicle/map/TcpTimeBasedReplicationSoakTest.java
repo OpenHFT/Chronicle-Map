@@ -123,7 +123,7 @@ public class TcpTimeBasedReplicationSoakTest {
 
     @After
     public void checkThreadsShutdown() {
-        StatelessClientTest.checkThreadsShutdown(threads);
+        ChannelReplicationTest.checkThreadsShutdown(threads);
     }
 
 

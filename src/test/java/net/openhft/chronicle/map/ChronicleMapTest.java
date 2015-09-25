@@ -20,14 +20,11 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.primitives.Ints;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.DataValueGenerator;
 import net.openhft.lang.values.IntValue;
 import net.openhft.lang.values.LongValue;
 import net.openhft.lang.values.LongValue$$Native;
-import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -40,7 +37,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.map.Alignment.*;
-import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static org.junit.Assert.*;
 
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
@@ -1812,43 +1808,6 @@ public class ChronicleMapTest {
             }
 
         }
-    }
-
-
-    @Test
-    @Ignore("TODO investigate, debug")
-    public void testByteArrayKeySizeBySample() throws IOException {
-        TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(8877);
-
-
-        // this test only appear to fail when we reuse the mapFile
-        for (int i = 0; i < 2; i++) {
-
-            try (ChronicleMap server = ChronicleMapBuilder.of(byte[].class, byte[][].class)
-                    .replication(SingleChronicleHashReplication.builder()
-                            .tcpTransportAndNetwork(serverConfig)
-                            .name("serverMap")
-                            .createWithId((byte) 1))
-                    .constantKeySizeBySample(new byte[14])
-                    .create()) {
-
-                try (ChronicleMap<byte[], byte[][]> map2 = localClient(8877)) {
-
-
-                    byte[] key = new byte[14];
-                    System.arraycopy("A".getBytes(), 0, key, 0, "A".length());
-                    byte[][] value = {new byte[11], new byte[11]};
-                    System.arraycopy("A".getBytes(), 0, value[0], 0, "A".length());
-                    System.arraycopy("A".getBytes(), 0, value[1], 0, "A".length());
-
-
-                    map2.put(key, value);
-                    Assert.assertNotNull(map2.get(key));
-                }
-            }
-
-        }
-
     }
 
     @Test(expected = IllegalArgumentException.class)

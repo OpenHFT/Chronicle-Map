@@ -92,8 +92,6 @@ class SetFromMap<E> extends AbstractSet<E>
         return o == this || s.equals(o);
     }
 
-    // TODO optimize in case of stateless clients -- because bulk ops are optimized on maps
-    // but on key set they delegate to individual element queries => individual remote calls
     public boolean containsAll(Collection<?> c) {
         return s.containsAll(c);
     }
