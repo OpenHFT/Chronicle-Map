@@ -78,6 +78,7 @@ public abstract class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
             s.incrementModCount();
             ks.setSearchState(PRESENT);
             q.initPresenceOfEntry(EntryPresence.PRESENT);
+            e.checksumStrategy.computeAndStoreChecksum();
         } else {
             throw new IllegalStateException(
                     "Entry is present in the map when doInsert() is called");

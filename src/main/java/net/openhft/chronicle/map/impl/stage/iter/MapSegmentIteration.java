@@ -39,6 +39,7 @@ public abstract class MapSegmentIteration<K, V, R> extends HashSegmentIteration<
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         try {
             entry.innerDefaultReplaceValue(newValue);
+            entry.checksumStrategy.computeAndStoreChecksum();
         } finally {
             s.innerWriteLock.unlock();
         }

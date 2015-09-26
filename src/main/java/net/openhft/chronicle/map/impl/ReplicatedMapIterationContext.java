@@ -21,6 +21,7 @@ import net.openhft.chronicle.hash.impl.stage.entry.*;
 import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
 import net.openhft.chronicle.hash.impl.stage.hash.OwnerThreadHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
+import net.openhft.chronicle.hash.impl.stage.iter.IterationKeyHashCode;
 import net.openhft.chronicle.hash.impl.stage.iter.IterationSegmentStages;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
@@ -47,6 +48,7 @@ import net.openhft.sg.Staged;
 
         KeyBytesInterop.class,
         IterationSegmentStages.class,
+        IterationKeyHashCode.class,
         HashLookupPos.class,
         IterationCheckOnEachPublicOperation.class,
         AllocatedChunks.class,
@@ -73,7 +75,9 @@ import net.openhft.sg.Staged;
         DummyValueZeroData.class,
 
         ReplicatedMapAbsentDelegatingForIteration.class,
-        ReplicatedMapEntryDelegating.class
+        ReplicatedMapEntryDelegating.class,
+
+        HashKeyCrc32PayloadChecksumStrategy.class,
 })
 public class ReplicatedMapIterationContext {
 }

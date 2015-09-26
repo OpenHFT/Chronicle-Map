@@ -294,6 +294,12 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
+    public ChronicleSetBuilder<K> checksumEntries(boolean checksumEntries) {
+        chronicleMapBuilder.checksumEntries(checksumEntries);
+        return this;
+    }
+
+    @Override
     public ChronicleSetBuilder<K> replication(SingleChronicleHashReplication replication) {
         chronicleMapBuilder.replication(replication);
         return this;

@@ -112,6 +112,8 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     protected final long numberOfTiersInBulk;
     protected final int log2NumberOfTiersInBulk;
 
+    public final boolean checksumEntries;
+
     /////////////////////////////////////////////////
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
     protected transient BytesStore ms;
@@ -210,6 +212,8 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         log2NumberOfTiersInBulk = Maths.intLog2(numberOfTiersInBulk);
         tierBulkInnerOffsetToTiers = computeTierBulkInnerOffsetToTiers(numberOfTiersInBulk);
         tierBulkSizeInBytes = computeTierBulkBytesSize();
+
+        checksumEntries = privateAPI.checksumEntries();
     }
 
     private long segmentSize() {

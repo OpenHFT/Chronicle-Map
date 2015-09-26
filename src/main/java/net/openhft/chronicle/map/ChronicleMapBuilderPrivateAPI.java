@@ -76,4 +76,9 @@ class ChronicleMapBuilderPrivateAPI<K> implements ChronicleHashBuilderPrivateAPI
     public boolean aligned64BitMemoryOperationsAtomic() {
         return b.aligned64BitMemoryOperationsAtomic();
     }
+
+    @Override
+    public boolean checksumEntries() {
+        return b.checksumEntries();
+    }
 }

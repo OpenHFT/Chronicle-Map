@@ -14,31 +14,33 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash;
+package net.openhft.chronicle.hash.impl.stage.entry;
 
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+public enum NoChecksumStrategy implements ChecksumStrategy {
+    INSTANCE;
 
-public interface ChronicleHashBuilderPrivateAPI<K> {
+    @Override
+    public void computeAndStoreChecksum() {
+        // no-op
+    }
 
-    SerializationBuilder<K> keyBuilder();
+    @Override
+    public void updateChecksum() {
+        throw new UnsupportedOperationException("Checksum is not stored in this Chronicle Hash");
+    }
 
-    int segmentEntrySpaceInnerOffset();
+    @Override
+    public boolean innerCheckSum() {
+        return true;
+    }
 
-    long chunkSize();
+    @Override
+    public boolean checkSum() {
+        throw new UnsupportedOperationException("Checksum is not stored in this Chronicle Hash");
+    }
 
-    int maxChunksPerEntry();
-
-    long entriesPerSegment();
-
-    long actualChunksPerSegment();
-
-    int segmentHeaderSize();
-
-    int actualSegments();
-
-    long maxExtraTiers();
-
-    boolean aligned64BitMemoryOperationsAtomic();
-
-    boolean checksumEntries();
+    @Override
+    public long extraEntryBytes() {
+        return 0; // no extra bytes to store checksum
+    }
 }

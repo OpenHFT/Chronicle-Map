@@ -20,6 +20,7 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
+import net.openhft.chronicle.hash.impl.stage.entry.ChecksumStrategy;
 import net.openhft.chronicle.hash.impl.util.math.PoissonDistribution;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
@@ -162,7 +163,10 @@ public final class ChronicleMapBuilder<K, V> implements
     private double maxBloatFactor = 1.0;
     private boolean allowSegmentTiering = true;
     private double nonTieredSegmentsPercentile = 0.99999;
-    private boolean aligned64BitMemoryOperationsAtomic = OS.is64Bit() ? true : false;
+    private boolean aligned64BitMemoryOperationsAtomic = OS.is64Bit();
+
+    enum ChecksumEntries {YES, NO, IF_PERSISTED}
+    private ChecksumEntries checksumEntries = ChecksumEntries.IF_PERSISTED;
 
     private boolean putReturnsNull = false;
     private boolean removeReturnsNull = false;
@@ -534,6 +538,8 @@ public final class ChronicleMapBuilder<K, V> implements
         size += keySize;
         if (replicated)
             size += ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
+        if (checksumEntries())
+            size += ChecksumStrategy.CHECKSUM_STORED_BYTES;
         double valueSize = averageValueSize();
         size += averageSizeEncodingSize(valueBuilder, valueSize);
         Alignment alignment = valueAlignment();
@@ -1238,6 +1244,21 @@ public final class ChronicleMapBuilder<K, V> implements
             boolean aligned64BitMemoryOperationsAtomic) {
         this.aligned64BitMemoryOperationsAtomic = aligned64BitMemoryOperationsAtomic;
         return this;
+    }
+
+    @Override
+    public ChronicleMapBuilder<K, V> checksumEntries(boolean checksumEntries) {
+        this.checksumEntries = checksumEntries ? ChecksumEntries.YES : ChecksumEntries.NO;
+        return this;
+    }
+
+    boolean checksumEntries() {
+        switch (checksumEntries) {
+            case NO: return false;
+            case YES: return true;
+            case IF_PERSISTED: return persisted;
+            default: throw new AssertionError();
+        }
     }
 
     boolean aligned64BitMemoryOperationsAtomic() {

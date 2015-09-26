@@ -14,31 +14,17 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash;
+package net.openhft.chronicle.hash.impl.stage.entry;
 
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+import net.openhft.chronicle.hash.ChecksumEntry;
 
-public interface ChronicleHashBuilderPrivateAPI<K> {
+public interface ChecksumStrategy extends ChecksumEntry {
 
-    SerializationBuilder<K> keyBuilder();
+    int CHECKSUM_STORED_BYTES = 4;
 
-    int segmentEntrySpaceInnerOffset();
+    void computeAndStoreChecksum();
 
-    long chunkSize();
+    boolean innerCheckSum();
 
-    int maxChunksPerEntry();
-
-    long entriesPerSegment();
-
-    long actualChunksPerSegment();
-
-    int segmentHeaderSize();
-
-    int actualSegments();
-
-    long maxExtraTiers();
-
-    boolean aligned64BitMemoryOperationsAtomic();
-
-    boolean checksumEntries();
+    long extraEntryBytes();
 }

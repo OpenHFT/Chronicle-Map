@@ -17,14 +17,12 @@
 package net.openhft.chronicle.hash.impl.stage.entry;
 
 import net.openhft.chronicle.algo.bytes.Access;
-import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.NativeBytesStore;
+import net.openhft.chronicle.hash.ChecksumEntry;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.HashEntry;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.data.bytes.EntryKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.lang.io.Bytes;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -35,7 +33,7 @@ import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 
 
 @Staged
-public abstract class HashEntryStages<K> implements HashEntry<K> {
+public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry {
 
     @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
     @StageRef public SegmentStages s;
@@ -107,8 +105,22 @@ public abstract class HashEntryStages<K> implements HashEntry<K> {
         return keyEnd();
     }
 
+    @StageRef HashKeyCrc32PayloadChecksumStrategy hashKeyCrc32PayloadChecksumStrategy;
+    public final ChecksumStrategy checksumStrategy = hh.h().checksumEntries ?
+            hashKeyCrc32PayloadChecksumStrategy : NoChecksumStrategy.INSTANCE;
+
+    @Override
+    public void updateChecksum() {
+        checksumStrategy.updateChecksum();
+    }
+
+    @Override
+    public boolean checkSum() {
+        return checksumStrategy.checkSum();
+    }
+
     long entrySize() {
-        return entryEnd() - keySizeOffset;
+        return checksumStrategy.extraEntryBytes() + entryEnd() - keySizeOffset;
     }
 
     @StageRef EntryKeyBytesData<K> entryKey;

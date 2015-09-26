@@ -19,10 +19,7 @@ package net.openhft.chronicle.map.impl;
 import net.openhft.chronicle.hash.impl.stage.data.bytes.EntryKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.data.bytes.InputKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.data.instance.InputKeyInstanceData;
-import net.openhft.chronicle.hash.impl.stage.entry.InputKeyHashCode;
-import net.openhft.chronicle.hash.impl.stage.entry.ReadLock;
-import net.openhft.chronicle.hash.impl.stage.entry.UpdateLock;
-import net.openhft.chronicle.hash.impl.stage.entry.WriteLock;
+import net.openhft.chronicle.hash.impl.stage.entry.*;
 import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
 import net.openhft.chronicle.hash.impl.stage.hash.OwnerThreadHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
@@ -90,6 +87,8 @@ nested = {
         AcquireHandle.class,
         DefaultReturnValue.class,
         UsingReturnValue.class,
+
+        HashKeyCrc32PayloadChecksumStrategy.class,
 })
 public class MapQueryContext {
 }

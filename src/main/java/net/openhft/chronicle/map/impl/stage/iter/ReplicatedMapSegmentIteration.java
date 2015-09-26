@@ -57,6 +57,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
             entry.innerDefaultReplaceValue(newValue);
             ru.updateChange();
             e.updatedReplicationStateOnPresentEntry();
+            e.checksumStrategy.computeAndStoreChecksum();
         } finally {
             s.innerWriteLock.unlock();
         }
@@ -118,6 +119,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
             e.updatedReplicationStateOnPresentEntry();
             e.writeEntryDeleted();
             ru.updateChange();
+            e.checksumStrategy.computeAndStoreChecksum();
             s.deleted(s.deleted() + 1);
         } finally {
             s.innerWriteLock.unlock();
@@ -144,6 +146,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
                 e.writeEntryPresent();
                 ru.updateChange();
                 e.updatedReplicationStateOnPresentEntry();
+                e.checksumStrategy.computeAndStoreChecksum();
             } finally {
                 s.innerWriteLock.unlock();
             }

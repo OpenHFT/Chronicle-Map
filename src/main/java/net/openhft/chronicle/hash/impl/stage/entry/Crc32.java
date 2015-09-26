@@ -14,31 +14,29 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash;
+package net.openhft.chronicle.hash.impl.stage.entry;
 
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+public interface Crc32 {
 
-public interface ChronicleHashBuilderPrivateAPI<K> {
+    int crc32(long addr, long len);
 
-    SerializationBuilder<K> keyBuilder();
+    enum Crc32Impl {
+        ;
 
-    int segmentEntrySpaceInnerOffset();
+        static Crc32 crc32;
+        static {
+            try {
+                crc32 = NativeCrc32.INSTANCE;
+            } catch (Throwable e) {
+                // ignore
+            } finally {
+                if (crc32 == null)
+                    crc32 = FallbackJavaCrc32.INSTANCE;
+            }
+        }
+    }
 
-    long chunkSize();
-
-    int maxChunksPerEntry();
-
-    long entriesPerSegment();
-
-    long actualChunksPerSegment();
-
-    int segmentHeaderSize();
-
-    int actualSegments();
-
-    long maxExtraTiers();
-
-    boolean aligned64BitMemoryOperationsAtomic();
-
-    boolean checksumEntries();
+    static int compute(long addr, long len) {
+        return Crc32Impl.crc32.crc32(addr, len);
+    }
 }

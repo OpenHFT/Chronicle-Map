@@ -66,6 +66,7 @@ public class MarkTest {
                 .of(Integer.class, Integer.class)
                 .entries(ENTRIES)
                 .entriesPerSegment((1 << 15) / 3)
+                .checksumEntries(false)
                 .putReturnsNull(true)
                 .removeReturnsNull(true))) {
 

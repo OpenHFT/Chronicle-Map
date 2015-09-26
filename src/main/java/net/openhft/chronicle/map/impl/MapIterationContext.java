@@ -21,6 +21,7 @@ import net.openhft.chronicle.hash.impl.stage.entry.*;
 import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
 import net.openhft.chronicle.hash.impl.stage.hash.OwnerThreadHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
+import net.openhft.chronicle.hash.impl.stage.iter.IterationKeyHashCode;
 import net.openhft.chronicle.hash.impl.stage.iter.IterationSegmentStages;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
@@ -46,6 +47,7 @@ import net.openhft.sg.Staged;
 
         KeyBytesInterop.class,
         IterationSegmentStages.class,
+        IterationKeyHashCode.class,
         HashLookupPos.class,
         IterationCheckOnEachPublicOperation.class,
         AllocatedChunks.class,
@@ -65,6 +67,8 @@ import net.openhft.sg.Staged;
         EntryValueBytesData.class,
 
         WrappedValueInstanceData.class,
+
+        HashKeyCrc32PayloadChecksumStrategy.class,
 })
 public class MapIterationContext {
 }

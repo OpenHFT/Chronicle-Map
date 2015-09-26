@@ -48,6 +48,7 @@ public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
             e.writeEntryPresent();
             ru.updateChange();
             e.updatedReplicationStateOnAbsentEntry();
+            e.checksumStrategy.computeAndStoreChecksum();
         } else {
             throw new IllegalStateException("Entry is absent in the map when doInsert() is called");
         }

@@ -567,6 +567,20 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B aligned64BitMemoryOperationsAtomic(boolean aligned64BitMemoryOperationsAtomic);
 
     /**
+     * Configures whether hash containers, created by this builder, should compute and store entry
+     * checksums. It could be used to detect data corruption during recovery after crashes.
+     *
+     * <p>By default, {@linkplain #createPersistedTo(File) persisted} hash containers, created by
+     * {@code ChronicleMapBuilder} <i>do</i> compute and store entry checksums, but hash containers,
+     * created in the process memory via {@link #create()} - don't.
+     *
+     * @param checksumEntries if entry checksums should be computed and stored
+     * @return this builder back
+     * @see ChecksumEntry
+     */
+    B checksumEntries(boolean checksumEntries);
+
+    /**
      * Configures replication of the hash containers, created by this builder. See <a
      * href="https://github.com/OpenHFT/Chronicle-Map#tcp--udp-replication"> the section about
      * replication in ChronicleMap manual</a> for more information.
