@@ -27,7 +27,6 @@ import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
-import net.openhft.chronicle.map.impl.IterationContextInterface;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
@@ -126,7 +125,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder,
                                   AbstractReplication replication)
             throws IOException {
-        super(builder, true);
+        super(builder);
         this.timeProvider = builder.timeProvider();
         this.remoteOperations = (MapRemoteOperations<K, V, R>) builder.remoteOperations;
 

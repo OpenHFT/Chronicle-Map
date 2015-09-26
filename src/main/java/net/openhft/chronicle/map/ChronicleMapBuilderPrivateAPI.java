@@ -33,43 +33,43 @@ class ChronicleMapBuilderPrivateAPI<K> implements ChronicleHashBuilderPrivateAPI
     }
 
     @Override
-    public int segmentEntrySpaceInnerOffset(boolean replicated) {
-        return b.segmentEntrySpaceInnerOffset(replicated);
+    public int segmentEntrySpaceInnerOffset() {
+        return b.segmentEntrySpaceInnerOffset();
     }
 
     @Override
-    public long chunkSize(boolean replicated) {
-        return b.chunkSize(replicated);
+    public long chunkSize() {
+        return b.chunkSize();
     }
 
     @Override
-    public int maxChunksPerEntry(boolean replicated) {
-        return b.maxChunksPerEntry(replicated);
+    public int maxChunksPerEntry() {
+        return b.maxChunksPerEntry();
     }
 
     @Override
-    public long entriesPerSegment(boolean replicated) {
-        return b.entriesPerSegment(replicated);
+    public long entriesPerSegment() {
+        return b.entriesPerSegment();
     }
 
     @Override
-    public long actualChunksPerSegment(boolean replicated) {
-        return b.actualChunksPerSegment(replicated);
+    public long actualChunksPerSegment() {
+        return b.actualChunksPerSegment();
     }
 
     @Override
-    public int segmentHeaderSize(boolean replicated) {
-        return b.segmentHeaderSize(replicated);
+    public int segmentHeaderSize() {
+        return b.segmentHeaderSize();
     }
 
     @Override
-    public int actualSegments(boolean replicated) {
-        return b.actualSegments(replicated);
+    public int actualSegments() {
+        return b.actualSegments();
     }
 
     @Override
-    public long maxExtraTiers(boolean replicated) {
-        return b.maxExtraTiers(replicated);
+    public long maxExtraTiers() {
+        return b.maxExtraTiers();
     }
 
     @Override

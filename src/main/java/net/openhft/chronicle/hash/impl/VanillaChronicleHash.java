@@ -150,8 +150,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     protected transient boolean closed = false;
 
-    public VanillaChronicleHash(
-            ChronicleMapBuilder<K, ?> builder, boolean replicated) {
+    public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder) {
         // Version
         dataFileVersion = BuildVersion.version();
 
@@ -171,17 +170,17 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         originalMetaKeyInterop = (MKI) keyBuilder.metaInterop();
         metaKeyInteropProvider = (MetaProvider<K, KI, MKI>) keyBuilder.metaInteropProvider();
 
-        actualSegments = privateAPI.actualSegments(replicated);
+        actualSegments = privateAPI.actualSegments();
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
 
-        entriesPerSegment = privateAPI.entriesPerSegment(replicated);
+        entriesPerSegment = privateAPI.entriesPerSegment();
 
-        chunkSize = privateAPI.chunkSize(replicated);
-        maxChunksPerEntry = privateAPI.maxChunksPerEntry(replicated);
-        actualChunksPerSegment = privateAPI.actualChunksPerSegment(replicated);
+        chunkSize = privateAPI.chunkSize();
+        maxChunksPerEntry = privateAPI.maxChunksPerEntry();
+        actualChunksPerSegment = privateAPI.actualChunksPerSegment();
 
         // Precomputed offsets and sizes for fast Context init
-        segmentHeaderSize = privateAPI.segmentHeaderSize(replicated);
+        segmentHeaderSize = privateAPI.segmentHeaderSize();
 
         segmentHashLookupValueBits = valueBits(actualChunksPerSegment);
         segmentHashLookupKeyBits = keyBits(entriesPerSegment, segmentHashLookupValueBits);
@@ -200,13 +199,13 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         segmentFreeListOuterSize = CACHE_LINES.align(segmentFreeListInnerSize, BYTES);
 
         segmentEntrySpaceInnerSize = chunkSize * actualChunksPerSegment;
-        segmentEntrySpaceInnerOffset = privateAPI.segmentEntrySpaceInnerOffset(replicated);
+        segmentEntrySpaceInnerOffset = privateAPI.segmentEntrySpaceInnerOffset();
         segmentEntrySpaceOuterSize = CACHE_LINES.align(
                 segmentEntrySpaceInnerOffset + segmentEntrySpaceInnerSize, BYTES);
 
         segmentSize = segmentSize();
 
-        maxExtraTiers = privateAPI.maxExtraTiers(replicated);
+        maxExtraTiers = privateAPI.maxExtraTiers();
         numberOfTiersInBulk = computeNumberOfTiersInBulk();
         log2NumberOfTiersInBulk = Maths.intLog2(numberOfTiersInBulk);
         tierBulkInnerOffsetToTiers = computeTierBulkInnerOffsetToTiers(numberOfTiersInBulk);

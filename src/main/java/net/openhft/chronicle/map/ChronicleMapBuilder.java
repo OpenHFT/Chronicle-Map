@@ -20,7 +20,6 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
-import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.util.math.PoissonDistribution;
 import net.openhft.chronicle.hash.replication.*;
 import net.openhft.chronicle.hash.serialization.*;
@@ -50,7 +49,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -133,7 +131,11 @@ public final class ChronicleMapBuilder<K, V> implements
     private static final boolean strictStateChecks =
             Boolean.getBoolean("chronicle.strictStateChecks");
 
+    // not final because of cloning
     private ChronicleMapBuilderPrivateAPI<K> privateAPI = new ChronicleMapBuilderPrivateAPI<>(this);
+
+    //////////////////////////////
+    // Configuration fields
 
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
@@ -182,6 +184,12 @@ public final class ChronicleMapBuilder<K, V> implements
     MapMethods<K, V, ?> methods = DefaultSpi.mapMethods();
     MapEntryOperations<K, V, ?> entryOperations = mapEntryOperations();
     MapRemoteOperations<K, V, ?> remoteOperations = mapRemoteOperations();
+
+    //////////////////////////////
+    // Instance fields
+
+    private boolean replicated;
+    private boolean persisted;
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass, SerializationBuilder.Role.KEY);
@@ -519,7 +527,7 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    private EntrySizeInfo entrySizeInfo(boolean replicated) {
+    private EntrySizeInfo entrySizeInfo() {
         double size = metaDataBytes;
         double keySize = averageKeySize();
         size += averageSizeEncodingSize(keyBuilder, keySize);
@@ -564,7 +572,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return new EntrySizeInfo(size, worstAlignment);
     }
 
-    int segmentEntrySpaceInnerOffset(boolean replicated) {
+    int segmentEntrySpaceInnerOffset() {
         // This is needed, if chunkSize = constant entry size is not aligned, for entry alignment
         // to be always the same, we should _misalign_ the first chunk.
         if (!constantlySizedEntries())
@@ -611,8 +619,8 @@ public final class ChronicleMapBuilder<K, V> implements
         return (int) worstAlignment;
     }
 
-    int worstAlignment(boolean replicated) {
-        return entrySizeInfo(replicated).worstAlignment;
+    int worstAlignment() {
+        return entrySizeInfo().worstAlignment;
     }
 
     static int greatestCommonDivisor(int a, int b) {
@@ -620,10 +628,10 @@ public final class ChronicleMapBuilder<K, V> implements
         return greatestCommonDivisor(b, a % b);
     }
 
-    long chunkSize(boolean replicated) {
+    long chunkSize() {
         if (actualChunkSize > 0)
             return actualChunkSize;
-        double averageEntrySize = entrySizeInfo(replicated).averageEntrySize;
+        double averageEntrySize = entrySizeInfo().averageEntrySize;
         if (constantlySizedEntries())
             return round(averageEntrySize);
         int maxChunkSize = 1 << 30;
@@ -638,17 +646,20 @@ public final class ChronicleMapBuilder<K, V> implements
         return constantlySizedKeys() && constantlySizedValues();
     }
 
-    double averageChunksPerEntry(boolean replicated) {
+    double averageChunksPerEntry() {
         if (constantlySizedEntries())
             return 1.0;
-        long chunkSize = chunkSize(replicated);
+        long chunkSize = chunkSize();
         // assuming we always has worst internal fragmentation. This affects total segment
         // entry space which is allocated lazily on Linux (main target platform)
         // so we can afford this
-        return (entrySizeInfo(replicated).averageEntrySize + chunkSize - 1) / chunkSize;
+        return (entrySizeInfo().averageEntrySize + chunkSize - 1) / chunkSize;
     }
 
     private static int maxDefaultChunksPerAverageEntry(boolean replicated) {
+        // When replicated, having 8 chunks (=> 8 bits in bitsets) per entry seems more wasteful
+        // because when replicated we have bit sets per each remote node, not only allocation
+        // bit set as when non-replicated
         return replicated ? 4 : 8;
     }
 
@@ -661,10 +672,10 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    int maxChunksPerEntry(boolean replicated) {
+    int maxChunksPerEntry() {
         if (constantlySizedEntries())
             return 1;
-        long actualChunksPerSegment = actualChunksPerSegment(replicated);
+        long actualChunksPerSegment = actualChunksPerSegment();
         int result = (int) Math.min(actualChunksPerSegment, (long) Integer.MAX_VALUE);
         if (this.maxChunksPerEntry > 0)
             result = Math.min(this.maxChunksPerEntry, result);
@@ -742,19 +753,19 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    long entriesPerSegment(boolean replicated) {
+    long entriesPerSegment() {
         long entriesPerSegment;
         if (this.entriesPerSegment > 0L) {
             entriesPerSegment = this.entriesPerSegment;
         } else {
-            int actualSegments = actualSegments(replicated);
+            int actualSegments = actualSegments();
             double averageEntriesPerSegment = entries() * 1.0 / actualSegments;
             entriesPerSegment = PoissonDistribution.inverseCumulativeProbability(
                     averageEntriesPerSegment, nonTieredSegmentsPercentile);
         }
         boolean actualChunksDefined = actualChunksPerSegment > 0;
         if (!actualChunksDefined) {
-            double averageChunksPerEntry = averageChunksPerEntry(replicated);
+            double averageChunksPerEntry = averageChunksPerEntry();
             if (entriesPerSegment * averageChunksPerEntry >
                     MAX_SEGMENT_CHUNKS)
                 throw new IllegalStateException("Max chunks per segment is " +
@@ -799,14 +810,14 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    long actualChunksPerSegment(boolean replicated) {
+    long actualChunksPerSegment() {
         if (actualChunksPerSegment > 0)
             return actualChunksPerSegment;
-        return chunksPerSegment(entriesPerSegment(replicated), replicated);
+        return chunksPerSegment(entriesPerSegment());
     }
 
-    private long chunksPerSegment(long entriesPerSegment, boolean replicated) {
-        return round(entriesPerSegment * averageChunksPerEntry(replicated));
+    private long chunksPerSegment(long entriesPerSegment) {
+        return round(entriesPerSegment * averageChunksPerEntry());
     }
 
     @Override
@@ -866,11 +877,11 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    int actualSegments(boolean replicated) {
+    int actualSegments() {
         if (actualSegments > 0)
             return actualSegments;
         if (entriesPerSegment > 0) {
-            return (int) segmentsGivenEntriesPerSegmentFixed(entriesPerSegment, replicated);
+            return (int) segmentsGivenEntriesPerSegmentFixed(entriesPerSegment);
         }
         // Try to fit 4 bytes per hash lookup slot, then 8. Trying to apply small slot
         // size (=> segment size, because slot size depends on segment size) not only because
@@ -893,60 +904,60 @@ public final class ChronicleMapBuilder<K, V> implements
         // each segment. To compensate this at least on linux, don't accept segment sizes that with
         // the given entry sizes, lead to too small total segment sizes in native memory pages,
         // see comment in tryHashLookupSlotSize()
-        long segments = tryHashLookupSlotSize(4, replicated);
+        long segments = tryHashLookupSlotSize(4);
         if (segments > 0)
             return (int) segments;
         int maxHashLookupEntrySize = aligned64BitMemoryOperationsAtomic() ? 8 : 4;
         long maxEntriesPerSegment =
-                findMaxEntriesPerSegmentToFitHashLookupSlotSize(maxHashLookupEntrySize, replicated);
-        long maxSegments = trySegments(maxEntriesPerSegment, MAX_SEGMENTS, replicated);
+                findMaxEntriesPerSegmentToFitHashLookupSlotSize(maxHashLookupEntrySize);
+        long maxSegments = trySegments(maxEntriesPerSegment, MAX_SEGMENTS);
         if (maxSegments > 0L)
             return (int) maxSegments;
         throw new IllegalStateException("Max segments is " + MAX_SEGMENTS + ", configured so much" +
                 " entries (" + entries() + ") or average chunks per entry is too high (" +
-                averageChunksPerEntry(replicated) + ") that builder automatically decided to use " +
+                averageChunksPerEntry() + ") that builder automatically decided to use " +
                 (-maxSegments) + " segments");
     }
 
-    private long tryHashLookupSlotSize(int hashLookupSlotSize, boolean replicated) {
+    private long tryHashLookupSlotSize(int hashLookupSlotSize) {
         long entriesPerSegment = findMaxEntriesPerSegmentToFitHashLookupSlotSize(
-                hashLookupSlotSize, replicated);
-        long entrySpaceSize = round(entriesPerSegment * entrySizeInfo(replicated).averageEntrySize);
+                hashLookupSlotSize);
+        long entrySpaceSize = round(entriesPerSegment * entrySizeInfo().averageEntrySize);
         // Not to lose too much on linux because of "poor distribution" entry over-allocation.
         // This condition should likely filter cases when we target very small hash lookup
         // size + entry size is small.
         // * 5 => segment will lose not more than 20% of memory, 10% on average
         if (entrySpaceSize < RUNTIME_PAGE_SIZE * 5L)
             return -1;
-        return trySegments(entriesPerSegment, MAX_SEGMENTS, replicated);
+        return trySegments(entriesPerSegment, MAX_SEGMENTS);
     }
 
     private long findMaxEntriesPerSegmentToFitHashLookupSlotSize(
-            int targetHashLookupSlotSize, boolean replicated) {
+            int targetHashLookupSlotSize) {
         long entriesPerSegment = 1L << 62;
         long step = entriesPerSegment / 2L;
         while (step > 0L) {
-            if (hashLookupSlotBytes(entriesPerSegment, replicated) > targetHashLookupSlotSize)
+            if (hashLookupSlotBytes(entriesPerSegment) > targetHashLookupSlotSize)
                 entriesPerSegment -= step;
             step /= 2L;
         }
         return entriesPerSegment - 1L;
     }
 
-    private int hashLookupSlotBytes(long entriesPerSegment, boolean replicated) {
-        int valueBits = valueBits(chunksPerSegment(entriesPerSegment, replicated));
+    private int hashLookupSlotBytes(long entriesPerSegment) {
+        int valueBits = valueBits(chunksPerSegment(entriesPerSegment));
         int keyBits = keyBits(entriesPerSegment, valueBits);
         return entrySize(keyBits, valueBits);
     }
 
-    private long trySegments(long entriesPerSegment, int maxSegments, boolean replicated) {
-        long segments = segmentsGivenEntriesPerSegmentFixed(entriesPerSegment, replicated);
+    private long trySegments(long entriesPerSegment, int maxSegments) {
+        long segments = segmentsGivenEntriesPerSegmentFixed(entriesPerSegment);
         segments = Maths.nextPower2(Math.max(segments, minSegments()), 1L);
         return segments <= maxSegments ? segments : -segments;
     }
 
-    private long segmentsGivenEntriesPerSegmentFixed(long entriesPerSegment, boolean replicated) {
-        double precision = 1.0 / averageChunksPerEntry(replicated);
+    private long segmentsGivenEntriesPerSegmentFixed(long entriesPerSegment) {
+        double precision = 1.0 / averageChunksPerEntry();
         double entriesPerSegmentShouldBe =
                 PoissonDistribution.meanByCumulativeProbabilityAndValue(
                         nonTieredSegmentsPercentile, entriesPerSegment, precision);
@@ -957,8 +968,8 @@ public final class ChronicleMapBuilder<K, V> implements
         return segments;
     }
 
-    int segmentHeaderSize(boolean replicated) {
-        int segments = actualSegments(replicated);
+    int segmentHeaderSize() {
+        int segments = actualSegments();
 
         long pageSize = 4096;
         if (segments * (64 * 3) < (2 * pageSize)) // i. e. <= 42 segments
@@ -1069,10 +1080,10 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    long maxExtraTiers(boolean replicated) {
+    long maxExtraTiers() {
         if (!allowSegmentTiering)
             return 0;
-        int actualSegments = actualSegments(replicated);
+        int actualSegments = actualSegments();
         // maxBloatFactor is scale, so we do (- 1.0) to compute _extra_ tiers
         return ((long) (maxBloatFactor - 1.0) * actualSegments)
                 // but to mitigate slight misconfiguration, and uneven distribution of entries
@@ -1356,7 +1367,7 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     /**
-     * Non-public because should be called only after {@link #preMapConstruction(boolean)}
+     * Non-public because should be called only after {@link #preMapConstruction()}
      */
     ConstantValueProvider<V> constantValueProvider() {
         if (constantValueProvider != null)
@@ -1462,6 +1473,9 @@ public final class ChronicleMapBuilder<K, V> implements
     ChronicleMap<K, V> createWithFile(
             File file, SingleChronicleHashReplication singleHashReplication,
             ReplicationChannel channel) throws IOException {
+        replicated = singleHashReplication != null || channel != null;
+        persisted = true;
+
         for (int i = 0; i < 10; i++) {
             long fileLength = file.length();
             if (fileLength > 0) {
@@ -1494,7 +1508,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     }
                     // This is needed to property initialize key and value serialization builders,
                     // which are later used in replication
-                    preMapConstruction(singleHashReplication != null || channel != null);
+                    preMapConstruction();
                     return establishReplication(map, singleHashReplication, channel);
                 }
             }
@@ -1566,6 +1580,9 @@ public final class ChronicleMapBuilder<K, V> implements
 
     ChronicleMap<K, V> createWithoutFile(
             SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) {
+        replicated = singleHashReplication != null || channel != null;
+        persisted = false;
+
         try {
             // pushingToMapEventListener();
             VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map = newMap(singleHashReplication, channel);
@@ -1586,8 +1603,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> newMap(
             SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel)
             throws IOException {
-        boolean replicated = singleHashReplication != null || channel != null;
-        preMapConstruction(replicated);
+        preMapConstruction();
         if (replicated) {
             AbstractReplication replication;
             if (singleHashReplication != null) {
@@ -1597,18 +1613,18 @@ public final class ChronicleMapBuilder<K, V> implements
             }
             return new ReplicatedChronicleMap<>(this, replication);
         } else {
-            return new VanillaChronicleMap<>(this, false);
+            return new VanillaChronicleMap<>(this);
         }
     }
 
-    void preMapConstruction(boolean replicated) {
+    void preMapConstruction() {
         averageKeySize = preMapConstruction(keyBuilder, averageKeySize, averageKey, sampleKey);
         averageValueSize = preMapConstruction(valueBuilder,
                 averageValueSize, averageValue, sampleValue);
         if (sampleKey == null)
-            keyBuilder.maxSize(bufferSize(keyBuilder, averageKeySize, replicated));
+            keyBuilder.maxSize(bufferSize(keyBuilder, averageKeySize));
         if (sampleValue == null)
-            valueBuilder.maxSize(bufferSize(valueBuilder, averageValueSize, replicated));
+            valueBuilder.maxSize(bufferSize(valueBuilder, averageValueSize));
         stateChecks();
     }
 
@@ -1719,15 +1735,15 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    private long bufferSize(SerializationBuilder builder, double averageSize, boolean replicated) {
+    private long bufferSize(SerializationBuilder builder, double averageSize) {
         if (builder.constantSizeMarshaller())
             return round(ceil(averageSize));
 
-        int maxChunksPerEntry = maxChunksPerEntry(replicated);
+        int maxChunksPerEntry = maxChunksPerEntry();
         // if maxChunksPerEntry is Integer.MAX_VALUE, we, of cause,
         // are not going to allocate such big buffers
         int limitedMaxChunksPerEntry = Math.min(64, maxChunksPerEntry);
-        long limitedMaxEntrySize = limitedMaxChunksPerEntry * chunkSize(replicated);
+        long limitedMaxEntrySize = limitedMaxChunksPerEntry * chunkSize();
 
         // if expected map size is about 1000, seems rather wasteful to allocate
         // key and value serialization buffers each x64 of expected entry size..

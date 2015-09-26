@@ -96,9 +96,8 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     transient ThreadLocal<?> iterCxt;
     
 
-    public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder, boolean replicated)
-            throws IOException {
-        super(builder, replicated);
+    public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
+        super(builder);
         SerializationBuilder<V> valueBuilder = builder.valueBuilder;
         vClass = valueBuilder.eClass;
         if (vClass.getName().endsWith("$$Native")) {
@@ -133,7 +132,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
 
         // Concurrency (number of segments), memory management and dependent fields
         alignment = builder.valueAlignment();
-        worstAlignment = builder.worstAlignment(replicated);
+        worstAlignment = builder.worstAlignment();
         int alignment = this.alignment.alignment();
         couldNotDetermineAlignmentBeforeAllocation =
                 greatestCommonDivisor((int) chunkSize, alignment) != alignment;

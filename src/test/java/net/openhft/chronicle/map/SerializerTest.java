@@ -106,7 +106,7 @@ public class SerializerTest {
         ChronicleMapBuilder builder =
                 ChronicleMapBuilder.of(Integer.class, valueClass);
 
-        builder.preMapConstruction(false);
+        builder.preMapConstruction();
 
         WriterWithSize valueWriterWithSize = new WriterWithSize(builder.valueBuilder,null);
         ReaderWithSize valueReaderWithSize = new ReaderWithSize(builder.valueBuilder);
@@ -129,7 +129,7 @@ public class SerializerTest {
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(clazz, Integer.class);
 
-        builder.preMapConstruction(false);
+        builder.preMapConstruction();
         {
             WriterWithSize keyWriterWithSize = new WriterWithSize(builder.keyBuilder, null);
             ReaderWithSize keyReaderWithSize = new ReaderWithSize(builder.keyBuilder);

@@ -22,21 +22,21 @@ public interface ChronicleHashBuilderPrivateAPI<K> {
 
     SerializationBuilder<K> keyBuilder();
 
-    int segmentEntrySpaceInnerOffset(boolean replicated);
+    int segmentEntrySpaceInnerOffset();
 
-    long chunkSize(boolean replicated);
+    long chunkSize();
 
-    int maxChunksPerEntry(boolean replicated);
+    int maxChunksPerEntry();
 
-    long entriesPerSegment(boolean replicated);
+    long entriesPerSegment();
 
-    long actualChunksPerSegment(boolean replicated);
+    long actualChunksPerSegment();
 
-    int segmentHeaderSize(boolean replicated);
+    int segmentHeaderSize();
 
-    int actualSegments(boolean replicated);
+    int actualSegments();
 
-    long maxExtraTiers(boolean replicated);
+    long maxExtraTiers();
 
     boolean aligned64BitMemoryOperationsAtomic();
 }
