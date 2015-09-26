@@ -19,6 +19,7 @@ package net.openhft.chronicle.map.impl;
 import net.openhft.chronicle.hash.impl.stage.data.bytes.EntryKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.data.bytes.InputKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.data.instance.InputKeyInstanceData;
+import net.openhft.chronicle.hash.impl.stage.entry.InputKeyHashCode;
 import net.openhft.chronicle.hash.impl.stage.entry.ReadLock;
 import net.openhft.chronicle.hash.impl.stage.entry.UpdateLock;
 import net.openhft.chronicle.hash.impl.stage.entry.WriteLock;
@@ -51,6 +52,7 @@ import net.openhft.sg.Staged;
         KeyBytesInterop.class,
         QuerySegmentStages.class,
         KeySearch.class,
+        InputKeyHashCode.class,
         QueryHashLookupSearch.class,
         QueryHashLookupPos.class,
 

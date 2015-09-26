@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl.stage.query;
 
-import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.HashEntry;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
@@ -66,12 +65,6 @@ public abstract class HashQuery<K> implements HashEntry<K> {
     public Data<K> queriedKey() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return ks.inputKey;
-    }
-    
-    public long hashOfKey = 0;
-    
-    void initHashOfKey() {
-        hashOfKey = ks.inputKey.hash(LongHashFunction.city_1_1());
     }
 
     public enum EntryPresence {PRESENT, ABSENT}

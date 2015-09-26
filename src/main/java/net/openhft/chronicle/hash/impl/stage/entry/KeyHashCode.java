@@ -14,19 +14,9 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash.impl.stage.query;
+package net.openhft.chronicle.hash.impl.stage.entry;
 
-import net.openhft.chronicle.hash.impl.stage.entry.KeyHashCode;
-import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
-import net.openhft.sg.StageRef;
-import net.openhft.sg.Staged;
+public interface KeyHashCode {
 
-@Staged
-public abstract class QuerySegmentStages extends SegmentStages {
-
-    @StageRef KeyHashCode h;
-
-    void initSegmentIndex() {
-        segmentIndex = hh.h().hashSplitting.segmentIndex(h.keyHashCode());
-    }
+    long keyHashCode();
 }

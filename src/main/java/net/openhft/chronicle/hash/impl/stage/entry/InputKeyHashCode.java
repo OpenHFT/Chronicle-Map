@@ -14,19 +14,26 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash.impl.stage.query;
+package net.openhft.chronicle.hash.impl.stage.entry;
 
-import net.openhft.chronicle.hash.impl.stage.entry.KeyHashCode;
-import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
+import net.openhft.chronicle.algo.hashing.LongHashFunction;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
 @Staged
-public abstract class QuerySegmentStages extends SegmentStages {
+public class InputKeyHashCode implements KeyHashCode {
 
-    @StageRef KeyHashCode h;
+    @StageRef public KeySearch ks;
 
-    void initSegmentIndex() {
-        segmentIndex = hh.h().hashSplitting.segmentIndex(h.keyHashCode());
+    public long keyHash = 0;
+
+    void initKeyHash() {
+        keyHash = ks.inputKey.hash(LongHashFunction.city_1_1());
+    }
+
+    @Override
+    public long keyHashCode() {
+        return keyHash;
     }
 }
