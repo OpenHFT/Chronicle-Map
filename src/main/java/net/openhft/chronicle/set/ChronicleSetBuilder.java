@@ -289,7 +289,8 @@ public final class ChronicleSetBuilder<K>
     @Override
     public ChronicleSetBuilder<K> aligned64BitMemoryOperationsAtomic(
             boolean aligned64BitMemoryOperationsAtomic) {
-        return null;
+        chronicleMapBuilder.aligned64BitMemoryOperationsAtomic(aligned64BitMemoryOperationsAtomic);
+        return this;
     }
 
     @Override
