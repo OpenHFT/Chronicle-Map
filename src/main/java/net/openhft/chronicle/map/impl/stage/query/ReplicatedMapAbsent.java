@@ -29,7 +29,7 @@ import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.
 public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
 
     @StageRef MapQuery<K, V, ?> q;
-    @StageRef ReplicatedMapEntryStages<K, V, ?> e;
+    @StageRef ReplicatedMapEntryStages<K, V> e;
     @StageRef ReplicationUpdate<K> ru;
 
     @Override

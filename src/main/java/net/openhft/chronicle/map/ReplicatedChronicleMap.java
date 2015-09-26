@@ -115,8 +115,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     public long cleanupTimeout;
     
     public transient MapRemoteOperations<K, V, R> remoteOperations;
-    transient CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext;
-    transient CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> remoteItContext;
+    transient CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> remoteOpContext;
+    transient CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> remoteItContext;
 
     transient BitSetFrame mainSegmentsModIterFrameForUpdates;
     transient BitSetFrame mainSegmentsModIterFrameForIteration;
@@ -143,9 +143,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     @Override
     void initQueryContext() {
         queryCxt = new ThreadLocal<
-                CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?>>() {
+                CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R>>() {
             @Override
-            protected CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?>
+            protected CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R>
             initialValue() {
                 return new CompiledReplicatedMapQueryContext<>(ReplicatedChronicleMap.this);
             }
@@ -155,9 +155,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     @Override
     void initIterationContext() {
         iterCxt = new ThreadLocal<
-                CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?>>() {
+                CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R>>() {
             @Override
-            protected CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?>
+            protected CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R>
             initialValue() {
                 return new CompiledReplicatedMapIterationContext<>(ReplicatedChronicleMap.this);
             }
@@ -472,14 +472,14 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         }
     }
     
-    private CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> q() {
+    private CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> q() {
         //noinspection unchecked
-        return (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?>) queryCxt.get();
+        return (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R>) queryCxt.get();
     }
 
     @Override
-    public CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> mapContext() {
-        CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> q = q().getContext();
+    public CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> mapContext() {
+        CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> q = q().getContext();
         q.initUsed(true);
         return q;
     }
@@ -488,7 +488,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
      * Assumed to be called from a single thread - the replication thread. Not to waste time
      * for going into replication thread's threadLocal map, cache the context in Map's field
      */
-    private CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext() {
+    private CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> remoteOpContext() {
         if (remoteOpContext == null) {
             remoteOpContext = q();
         }
@@ -497,7 +497,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         return remoteOpContext;
     }
 
-    private CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> remoteItContext() {
+    private CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> remoteItContext() {
         if (remoteItContext == null) {
             remoteItContext = i();
         }
@@ -512,20 +512,20 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
      */
     @Override
     public void readExternalEntry(@NotNull Bytes source) {
-        try (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R, ?> remoteOpContext =
+        try (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> remoteOpContext =
                      mapContext()) {
             remoteOpContext.initReplicationInput(source);
             remoteOpContext.processReplicatedEvent();
         }
     }
 
-    private CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> i() {
+    private CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> i() {
         //noinspection unchecked
-        return (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?>) iterCxt.get();
+        return (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R>) iterCxt.get();
     }
 
-    public CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> iterationContext() {
-        CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> c = i().getContext();
+    public CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> iterationContext() {
+        CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> c = i().getContext();
         c.initUsed(true);
         return c;
     }
@@ -742,7 +742,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 this.position = position;
                 int tierIndexMinusOne = (int) (position >>> segmentIndexShift);
 
-                try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> context =
+                try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> context =
                         iterationContext()) {
                     if (iterationMainSegmentsAreaOrTierBulk < 0) {
                         // if main area
@@ -827,7 +827,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
         @Override
         public void dirtyEntries(long fromTimeStamp) {
-            try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R, ?> c =
+            try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> c =
                          iterationContext()) {
                 // iterate over all the segments and mark bit in the modification iterator
                 // that correspond to entries with an older timestamp

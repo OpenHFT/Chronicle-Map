@@ -39,7 +39,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
         ReplicatedHashSegmentContext<K, MapEntry<K, V>>, MapAbsentEntry<K, V> {
 
     @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
-    @StageRef ReplicatedMapEntryStages<K, V, ?> e;
+    @StageRef ReplicatedMapEntryStages<K, V> e;
     @StageRef ReplicationUpdate<K> ru;
     @StageRef DummyValueZeroData<V> dummyValue;
     @StageRef ReplicatedMapAbsentDelegatingForIteration<K, V> absentEntryDelegating;

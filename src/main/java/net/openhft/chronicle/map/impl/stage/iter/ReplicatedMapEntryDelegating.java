@@ -31,7 +31,7 @@ public class  ReplicatedMapEntryDelegating<K, V>
         implements MapEntry<K, V>, ReplicableEntryDelegating {
 
     @StageRef ReplicatedMapSegmentIteration<K, V, ?> delegate;
-    @StageRef ReplicatedMapEntryStages<K, V, ?> e;
+    @StageRef ReplicatedMapEntryStages<K, V> e;
 
     @NotNull
     @Override

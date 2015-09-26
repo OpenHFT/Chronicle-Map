@@ -48,7 +48,7 @@ public abstract class ReplicatedInput<K, V, R>
     @StageRef KeySearch<?> ks;
     @StageRef ReplicatedMapQuery<K, V, ?> q;
     @StageRef SegmentStages s;
-    @StageRef ReplicatedMapEntryStages<K, V, ?> e;
+    @StageRef ReplicatedMapEntryStages<K, V> e;
     @StageRef DummyValueZeroData<V> dummyValue;
 
     @Override

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import static net.openhft.chronicle.map.ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
 
 @Staged
-public abstract class ReplicatedMapEntryStages<K, V, T> extends MapEntryStages<K, V>
+public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V>
         implements MapReplicableEntry<K, V>, MapAbsentEntry<K, V> {
     
     @StageRef ReplicatedChronicleMapHolder<?, ?, ?, ?, ?, ?, ?> mh;

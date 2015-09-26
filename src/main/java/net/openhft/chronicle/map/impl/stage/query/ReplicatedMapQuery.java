@@ -29,13 +29,11 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.Nullable;
 
-import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.DELETED;
-
 @Staged
 public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
         implements MapRemoteQueryContext<K, V, R>, ReplicableEntry {
 
-    @StageRef ReplicatedMapEntryStages<K, V, ?> e;
+    @StageRef ReplicatedMapEntryStages<K, V> e;
     @StageRef ReplicationUpdate ru;
 
     @StageRef BytesReturnValue<V> bytesReturnValue;
