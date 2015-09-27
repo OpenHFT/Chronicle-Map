@@ -82,7 +82,6 @@ public class SimpleMapOperationsListeningTest {
     }
 
     @Test
-    @Ignore("Example test, run manually to see the output")
     public void simpleLoggingTest() {
         ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
                 .of(Integer.class, IntValue.class)

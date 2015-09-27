@@ -499,7 +499,6 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore("TODO clarify requrements -- if acquireUsing() should work with null value")
     public void testAcquireWithNullContainer() {
         try (ChronicleMap<CharSequence, LongValue> map =
                      ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
@@ -690,7 +689,6 @@ public class ChronicleMapTest {
     }
 
 
-    @Ignore("Possible candidate for TC JVM crashes")
     @Test
     public void testAcquireFromMultipleThreads() throws InterruptedException {
         int entries = 1000 * 1000;

@@ -225,11 +225,6 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
-        return map1.putMapped(key, unaryOperator);
-    }
-
-    @Override
     public void getAll(File toFile) {
         throw new UnsupportedOperationException();
     }

@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.impl.util.CharSequences;
-import net.openhft.chronicle.map.impl.IterationContextInterface;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -40,25 +39,6 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
         try (ExternalMapQueryContext<K, V, ?> c = queryContext(key)) {
             MapEntry<K, V> entry = c.entry();
             return entry != null ? function.apply(entry.value().get()) : null;
-        }
-    }
-
-    @Override
-    default V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
-        requireNonNull(unaryOperator);
-        try (ExternalMapQueryContext<K, V, ?> c = queryContext(key)) {
-            // putMapped() should find a value, update & put most of the time,
-            // so don't try to check key presence under read lock first,
-            // as in putIfAbsent()/acquireUsing(), start with update lock:
-            c.updateLock().lock();
-            MapEntry<K, V> entry = c.entry();
-            if (entry != null) {
-                V newValue = unaryOperator.update(entry.value().get());
-                c.replaceValue(entry, c.wrapValueAsData(newValue));
-                return newValue;
-            } else {
-                return null;
-            }
         }
     }
 

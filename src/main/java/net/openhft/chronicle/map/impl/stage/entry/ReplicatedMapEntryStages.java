@@ -172,6 +172,7 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
     @NotNull
     @Override
     public Data<K> absentKey() {
-        return key();
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        return ks.inputKey;
     }
 }

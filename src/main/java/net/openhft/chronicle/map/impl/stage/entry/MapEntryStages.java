@@ -36,7 +36,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
 
     @StageRef public VanillaChronicleMapHolder<?, ?, ?, ?, ?, ?, ?> mh;
     @StageRef public AllocatedChunks allocatedChunks;
-    @StageRef KeySearch<?> ks;
+    @StageRef KeySearch<K> ks;
 
     long countValueSizeOffset() {
         return keyEnd();

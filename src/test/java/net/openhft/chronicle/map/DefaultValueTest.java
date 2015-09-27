@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -30,7 +29,6 @@ import static org.junit.Assert.assertEquals;
 public class DefaultValueTest {
 
     @Test
-    @Ignore("Cannot reuse List instance in acquireUsing()")
     public void test() throws IllegalAccessException, InstantiationException, IOException {
         File file = Builder.getPersistenceFile();
         try {

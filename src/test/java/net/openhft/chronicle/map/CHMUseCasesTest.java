@@ -44,6 +44,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 import static java.util.Arrays.asList;
 import static net.openhft.chronicle.map.fromdocs.OpenJDKAndHashMapExamplesTest.parseYYYYMMDD;
@@ -404,29 +405,23 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Ignore
     @Test
     public void testByteArrayArrayValue()
             throws ExecutionException, InterruptedException, IOException {
 
-        for (int i = 0; i < 10000; i++) {
-            int valueSize = 10;
+        ChronicleMapBuilder<byte[], byte[][]> builder = ChronicleMapBuilder
+                .of(byte[].class, byte[][].class)
+                .averageKey("Key".getBytes())
+                .averageValue(new byte[][]{"value1".getBytes(), "value2".getBytes()});
 
-            char[] expected = new char[valueSize];
-            Arrays.fill(expected, 'X');
+        try (ChronicleMap<byte[], byte[][]> map = newInstance(builder)) {
+            byte[] bytes1 = "value1".getBytes();
+            byte[] bytes2 = "value2".getBytes();
+            byte[][] value = {bytes1, bytes2};
+            map.put("Key".getBytes(), value);
 
-            ChronicleMapBuilder<byte[], byte[][]> builder = ChronicleMapBuilder
-                    .of(byte[].class, byte[][].class);
-
-            try (ChronicleMap<byte[], byte[][]> map = newInstance(builder)) {
-                byte[] bytes1 = "value1".getBytes();
-                byte[] bytes2 = "value2".getBytes();
-                byte[][] value = {bytes1, bytes2};
-                map.put("Key".getBytes(), value);
-
-                assertEquals(value, map.get("Key".getBytes()));
-                mapChecks();
-            }
+            assertEquals(value, map.get("Key".getBytes()));
+            mapChecks();
         }
     }
 
@@ -556,7 +551,8 @@ public class CHMUseCasesTest {
     }
 
 
-    private static class StringPrefixUnaryOperator implements UnaryOperator<String>, Serializable {
+    private static class StringPrefixUnaryOperator
+            implements BiFunction<String, String, String>, Serializable {
 
         private String prefix;
 
@@ -565,10 +561,9 @@ public class CHMUseCasesTest {
         }
 
         @Override
-        public String update(String s) {
-            return prefix + s;
+        public String apply(String k, String v) {
+            return prefix + v;
         }
-
     }
 
 
@@ -580,7 +575,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<String, String> map = newInstance(builder)) {
             map.put("Hello", "World");
-            map.putMapped("Hello", new StringPrefixUnaryOperator("New "));
+            map.computeIfPresent("Hello", new StringPrefixUnaryOperator("New "));
             mapChecks();
         }
     }
@@ -622,7 +617,9 @@ public class CHMUseCasesTest {
      * CharSequence is more efficient when object creation is avoided.
      * * The key can only be on heap and variable length serialised.
      */
-    @Ignore("TODO HCOLL-306")
+    @Ignore("This test fails because assumes StringBuilder is fed to lambdas, but actually " +
+            "because interned in CharSequenceReader. Defer fixing this until Chronicle Map " +
+            "serialization framework is moved from Lang Bytes to Chronicle Bytes")
     @Test
     public void testCharSequenceCharSequenceMap()
             throws ExecutionException, InterruptedException, IOException {
@@ -647,40 +644,21 @@ public class CHMUseCasesTest {
             assertNull(map.getUsing(key, value));
 
 
-            assertEquals("New World", map.getMapped("Hello", new
-                    SerializableFunction<CharSequence, CharSequence>() {
-                        @Override
-                        public CharSequence apply(CharSequence s) {
-                            return "New " + s;
-                        }
-                    }));
-            assertEquals(null, map.getMapped("No key", new
-                    SerializableFunction<CharSequence, CharSequence>() {
-                        @Override
-                        public CharSequence apply(CharSequence s) {
-                            return "New " + s;
-                        }
-                    }));
+            assertEquals("New World", map.getMapped("Hello", s -> "New " + s));
+            assertEquals(null, map.getMapped("No key",
+                    (SerializableFunction<CharSequence, CharSequence>) s -> "New " + s));
 
-            assertEquals("New World !!", map.putMapped("Hello", new
-                    UnaryOperator<CharSequence>() {
-                        @Override
-                        public CharSequence update(CharSequence s) {
-                            ((StringBuilder) s).append(" !!");
-                            return "New " + s;
-                        }
-                    }));
+            assertEquals("New World !!", map.computeIfPresent("Hello", (k, s) -> {
+                ((StringBuilder) s).append(" !!");
+                return "New " + s;
+            }));
 
             assertEquals("New World !!", map.get("Hello").toString());
 
-            assertEquals("New !!", map.putMapped("no-key", new
-                    UnaryOperator<CharSequence>() {
-                        @Override
-                        public CharSequence update(CharSequence s) {
-                            ((StringBuilder) s).append("!!");
-                            return "New " + s;
-                        }
-                    }));
+            assertEquals("New !!", map.computeIfPresent("no-key", (k, s) -> {
+                ((StringBuilder) s).append("!!");
+                return "New " + s;
+            }));
 
             mapChecks();
         }
@@ -1013,12 +991,7 @@ public class CHMUseCasesTest {
             mapChecks();
 
             try {
-                map.putMapped(1, new UnaryOperator<Integer>() {
-                    @Override
-                    public Integer update(Integer s) {
-                        return s + 1;
-                    }
-                });
+                map.computeIfPresent(1, (k, s) -> s + 1);
             } catch (Exception todoMoreSpecificException) {
             }
             mapChecks();
@@ -1053,22 +1026,12 @@ public class CHMUseCasesTest {
                     return 10 * s;
                 }
             }));
-            assertEquals(null, map.getMapped(-1L, new SerializableFunction<Long, Long>() {
-                @Override
-                public Long apply(Long s) {
-                    return 10 * s;
-                }
-            }));
+            assertEquals(null, map.getMapped(-1L, (SerializableFunction<Long, Long>) s -> 10 * s));
 
             mapChecks();
 
             try {
-                map.putMapped(1L, new UnaryOperator<Long>() {
-                    @Override
-                    public Long update(Long s) {
-                        return s + 1;
-                    }
-                });
+                map.computeIfPresent(1L, (k, s) -> s + 1);
             } catch (Exception todoMoreSpecificException) {
             }
 
@@ -1101,20 +1064,10 @@ public class CHMUseCasesTest {
                     return 10 * s;
                 }
             }));
-            assertEquals(null, map.getMapped(-1.0, new SerializableFunction<Double, Double>() {
-                @Override
-                public Double apply(Double s) {
-                    return 10 * s;
-                }
-            }));
+            assertEquals(null, map.getMapped(-1.0, (SerializableFunction<Double, Double>) s -> 10 * s));
 
             try {
-                map.putMapped(1.0, new UnaryOperator<Double>() {
-                    @Override
-                    public Double update(Double s) {
-                        return s + 1;
-                    }
-                });
+                map.computeIfPresent(1.0, (k, s) -> s + 1);
 
             } catch (Exception todoMoreSpecificException) {
             }
@@ -1159,13 +1112,10 @@ public class CHMUseCasesTest {
             }));
 
             assertTrue(Arrays.equals(new byte[]{12, 10},
-                    map.putMapped(key1, new UnaryOperator<byte[]>() {
-                        @Override
-                        public byte[] update(byte[] s) {
-                            s[0]++;
-                            s[1]--;
-                            return Arrays.copyOf(s, 2);
-                        }
+                    map.computeIfPresent(key1, (k, s) -> {
+                        s[0]++;
+                        s[1]--;
+                        return Arrays.copyOf(s, 2);
                     })));
 
             byte[] a2 = map.get(key1);
@@ -1243,13 +1193,10 @@ public class CHMUseCasesTest {
             assertEquals(null, map.getMapped(key2, function));
             mapChecks();
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
-                    map.putMapped(key1, new UnaryOperator<ByteBuffer>() {
-                        @Override
-                        public ByteBuffer update(ByteBuffer s) {
-                            s.put(0, (byte) (s.get(0) + 1));
-                            s.put(1, (byte) (s.get(1) - 1));
-                            return function.apply(s);
-                        }
+                    map.computeIfPresent(key1, (k, s) -> {
+                        s.put(0, (byte) (s.get(0) + 1));
+                        s.put(1, (byte) (s.get(1) - 1));
+                        return function.apply(s);
                     }));
 
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.get(key1));
@@ -1362,7 +1309,7 @@ public class CHMUseCasesTest {
             assertEquals(null, map.getMapped(key2, function));
             mapChecks();
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
-                    map.putMapped(key1, s -> {
+                    map.computeIfPresent(key1, (k, s) -> {
                         s.put(0, (byte) (s.get(0) + 1));
                         s.put(1, (byte) (s.get(1) - 1));
                         return function.apply(s);
@@ -1480,31 +1427,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Test
-    @Ignore("HCOLL-241 Generated code creates a field too large ie. it ignores the @Range")
-    public void testUnsignedIntValueUnsignedIntValueMapEntrySize() throws IOException {
-
-        // TODO once this is working, merge the next test.
-        ChronicleMapBuilder<UnsignedIntValue, UnsignedIntValue> builder = ChronicleMapBuilder
-                .of(UnsignedIntValue.class, UnsignedIntValue.class);
-
-        try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = newInstance(builder)) {
-
-            // this may change due to alignment
-            //assertEquals(8, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
-            UnsignedIntValue key1 = map.newKeyInstance();
-            UnsignedIntValue value1 = map.newValueInstance();
-
-            key1.setValue(1);
-            value1.setValue(11);
-            map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
-            mapChecks();
-        }
-    }
-
-
     /**
      * For unsigned int -> unsigned int entries, the key can be on heap or off heap.
      */
@@ -1516,10 +1438,18 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = newInstance(builder)) {
 
-
+            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             UnsignedIntValue key1 = map.newKeyInstance();
-            UnsignedIntValue key2 = map.newKeyInstance();
             UnsignedIntValue value1 = map.newValueInstance();
+
+            key1.setValue(1);
+            value1.setValue(11);
+            map.put(key1, value1);
+            assertEquals(value1, map.get(key1));
+
+            key1 = map.newKeyInstance();
+            UnsignedIntValue key2 = map.newKeyInstance();
+            value1 = map.newValueInstance();
             UnsignedIntValue value2 = map.newValueInstance();
 
             key1.setValue(1);

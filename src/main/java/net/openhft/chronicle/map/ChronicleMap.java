@@ -100,10 +100,10 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
     /**
      * Acquire a value for a key, creating if absent.
      *
-     * <p>If the specified key is absent in the map, {@linkplain ChronicleMapBuilder#defaultValue(Object)
-     * default value} is taken or {@linkplain ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
-     * default value provider} is called. Then this object is put to this map for the specified
-     * key.
+     * <p>If the specified key is absent in the map, {@linkplain ChronicleMapBuilder#defaultValue(
+     * Object) default value} is taken or {@linkplain ChronicleMapBuilder#defaultValueProvider(
+     * DefaultValueProvider) default value provider} is called. Then this object is put to this map
+     * for the specified key.
      *
      * <p>Then, either if the key was initially absent in the map or already present, the value is
      * deserialized just as during {@link #getUsing(Object, Object) getUsing(key, usingValue)} call,
@@ -140,24 +140,23 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
     net.openhft.chronicle.core.io.Closeable acquireContext(@NotNull K key, @NotNull V usingValue);
 
     /**
-     * Apply a mapping to the value returned by a key and return a result. A read lock is assumed.
+     * Returns the result of application of the given function to the value to which the given key
+     * is mapped. If there is no mapping for the key, {@code null} is returned from {@code
+     * getMapped()} call without application of the given function. This method is primarily useful
+     * when accessing {@code ChronicleMap} implementation which delegates it's requests to some
+     * remote node (server) and pulls the result through serialization/deserialization path, and
+     * probably network. In this case, when you actually need only a part of the map value's state
+     * (e. g. a single field) it's cheaper to extract it on the server side and transmit lesser
+     * bytes.
      *
-     * @param key      to apply the mapping to
-     * @param function to calculate a result
-     * @param <R>      return type.
-     * @return the result of the function, or null if there is no entry for the key.
+     * @param key      the key whose associated value is to be queried
+     * @param function a function to transform the value to the actually needed result,
+     *                 which should be smaller than the map value
+     * @param <R>      the result type
+     * @return the result of applying the function to the mapped value, or {@code null} if there
+     * is no mapping for the key
      */
     <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function);
-
-    /**
-     * Apply a unaryOperator to the value for a key and return a result. A write lock is assumed.
-     * <p> If there is no entry for this key null will be returned
-     *
-     * @param key           to apply the mapping to
-     * @param unaryOperator to alter the value and calculate a result
-     * @return the result of the function.
-     */
-    V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator);
 
     /**
      * Exports all the entries to a {@link File} storing them in JSON format, an attempt is

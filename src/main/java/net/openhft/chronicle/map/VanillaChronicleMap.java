@@ -263,7 +263,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         // TODO optimize to update lock in certain cases
         try {
             q.writeLock().lock();
-            acquireUsingBody(q, usingValue);
+            checkAcquiredUsing(acquireUsingBody(q, usingValue), usingValue);
             return q.acquireHandle();
         } catch (Throwable e) {
             try {
@@ -379,17 +379,14 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     @Override
     public V acquireUsing(K key, V usingValue) {
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
-            V returnValue = acquireUsingBody(q, usingValue);
-            return returnValue;
+            return acquireUsingBody(q, usingValue);
         }
     }
 
     private V acquireUsingBody(QueryContextInterface<K, V, R> q, V usingValue) {
         q.usingReturnValue().initUsingReturnValue(usingValue);
         methods.acquireUsing(q, q.usingReturnValue());
-        V returnValue = q.usingReturnValue().returnValue();
-        checkAcquiredUsing(returnValue, usingValue);
-        return returnValue;
+        return q.usingReturnValue().returnValue();
     }
 
     @Override

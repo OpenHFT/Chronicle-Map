@@ -16,10 +16,14 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.map.replication.MapRemoteOperations;
+import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
+import net.openhft.chronicle.map.replication.MapReplicableEntry;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -35,7 +39,6 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Rob Austin.
  */
-@Ignore("event listening API yet determined")
 public class EventListenerWithTCPSocketReplicationTest {
 
     ChronicleMap<Integer, CharSequence> map1;
@@ -50,24 +53,64 @@ public class EventListenerWithTCPSocketReplicationTest {
     final AtomicBoolean wasRemoved = new AtomicBoolean(false);
     final AtomicReference<CharSequence> valueRemoved = new AtomicReference<CharSequence>();
 
-//    final MapEventListener<Integer, CharSequence> eventListener = new
-//            MapEventListener<Integer, CharSequence>() {
-//                private static final long serialVersionUID = 1L;
-//
-//                @Override
-//                public void onPut(MapPutEvent<Integer, CharSequence> event) {
-//                    putWasCalled.getAndSet(true);
-//                    keyRef.set(key);
-//                    valueRef.set(value);
-//                    replacedValueRef.set(replacedValue);
-//                }
-//
-//                @Override
-//                public void onRemove(MapEvent<Integer, CharSequence> event) {
-//                    wasRemoved.set(true);
-//                    valueRemoved.set(value);
-//                }
-//            };
+    final MapEntryOperations<Integer, CharSequence, Void> entryOperations = new
+            MapEntryOperations<Integer, CharSequence, Void>() {
+
+                @Override
+                public Void remove(@NotNull MapEntry<Integer, CharSequence> entry) {
+                    wasRemoved.set(true);
+                    valueRemoved.set(entry.value().get());
+                    entry.doRemove();
+                    return null;
+                }
+
+                @Override
+                public Void replaceValue(@NotNull MapEntry<Integer, CharSequence> entry,
+                                         Data<CharSequence> newValue) {
+                    putWasCalled.getAndSet(true);
+                    keyRef.set(entry.key().get());
+                    valueRef.set(newValue.get());
+                    replacedValueRef.set(entry.value().get());
+                    entry.doReplaceValue(newValue);
+                    return null;
+                }
+
+                @Override
+                public Void insert(@NotNull MapAbsentEntry<Integer, CharSequence> absentEntry,
+                                   Data<CharSequence> value) {
+                    putWasCalled.getAndSet(true);
+                    keyRef.set(absentEntry.absentKey().get());
+                    valueRef.set(value.get());
+                    replacedValueRef.set(null);
+                    absentEntry.doInsert(value);
+                    return null;
+                }
+            };
+
+    final MapRemoteOperations<Integer, CharSequence, Void> remoteOperations =
+            new MapRemoteOperations<Integer, CharSequence, Void>() {
+        @Override
+        public void remove(MapRemoteQueryContext<Integer, CharSequence, Void> q) {
+            MapReplicableEntry<Integer, CharSequence> entry = q.entry();
+            if (entry != null) {
+                wasRemoved.set(true);
+                valueRemoved.set(entry.value().get());
+            }
+            MapRemoteOperations.super.remove(q);
+        }
+
+        @Override
+        public void put(MapRemoteQueryContext<Integer, CharSequence, Void> q,
+                        Data<CharSequence> newValue) {
+            MapReplicableEntry<Integer, CharSequence> entry = q.entry();
+            CharSequence oldValue = entry != null ? entry.value().get() : null;
+            putWasCalled.getAndSet(true);
+            keyRef.set(q.queriedKey().get());
+            valueRef.set(newValue.get());
+            replacedValueRef.set(oldValue);
+            MapRemoteOperations.super.put(q, newValue);
+        }
+    };
 
     @After
     public void tearDown() throws InterruptedException {
@@ -222,8 +265,9 @@ public class EventListenerWithTCPSocketReplicationTest {
                 .autoReconnectedUponDroppedConnection(true);
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000L)
-                .replication((byte) 1, tcpConfig);
-//                .eventListener(eventListener);
+                .replication((byte) 1, tcpConfig)
+                .entryOperations(entryOperations)
+                .remoteOperations(remoteOperations);
     }
 
     private void waitTillReplicated(final int timeOutMs) throws InterruptedException {
@@ -252,7 +296,8 @@ public class EventListenerWithTCPSocketReplicationTest {
     }
 
     private ChronicleMapBuilder<Integer, CharSequence> serverBuilder() {
-        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8076, new InetSocketAddress("localhost", 8077))
+        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
+                .of(8076, new InetSocketAddress("localhost", 8077))
                 .autoReconnectedUponDroppedConnection(true);
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .entries(20000L)
