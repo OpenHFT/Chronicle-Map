@@ -318,18 +318,25 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     private void linkToSegmentContextsChain() {
         LocksInterface innermostContextOnThisSegment = rootContextOnThisSegment;
         while (true) {
-            if (innermostContextOnThisSegment instanceof KeySearch) {
-                Data key = ((KeySearch) innermostContextOnThisSegment).inputKey;
-                if (Objects.equals(key, ((KeySearch) (Object) this).inputKey)) {
-                    throw new IllegalStateException("Nested same-thread contexts cannot access " +
-                            "the same key " + key);
-                }
-            }
+            checkNestedContextsQueryDifferentKeys(innermostContextOnThisSegment);
+
             if (innermostContextOnThisSegment.nextNode() == null)
                 break;
             innermostContextOnThisSegment = innermostContextOnThisSegment.nextNode();
         }
         innermostContextOnThisSegment.setNextNode(this);
+    }
+
+    public void checkNestedContextsQueryDifferentKeys(
+            LocksInterface innermostContextOnThisSegment) {
+        // TODO Spoon doesn't replace RHS instanceof occurances
+        if (innermostContextOnThisSegment.getClass() == this.getClass()) {
+            Data key = ((KeySearch) innermostContextOnThisSegment).inputKey;
+            if (Objects.equals(key, ((KeySearch) (Object) this).inputKey)) {
+                throw new IllegalStateException("Nested same-thread contexts cannot access " +
+                        "the same key " + key);
+            }
+        }
     }
 
     @Stage("Locks")

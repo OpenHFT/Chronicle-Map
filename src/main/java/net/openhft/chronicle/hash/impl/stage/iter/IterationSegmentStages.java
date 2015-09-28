@@ -17,6 +17,7 @@
 package net.openhft.chronicle.hash.impl.stage.iter;
 
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
+import net.openhft.chronicle.hash.impl.stage.entry.LocksInterface;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
@@ -47,5 +48,11 @@ public abstract class IterationSegmentStages extends SegmentStages {
     public void initSegmentTier_WithBaseAddr(int tier, long tierBaseAddr) {
         segmentTier = tier;
         segmentBaseAddr = tierBaseAddr;
+    }
+
+    @Override
+    public void checkNestedContextsQueryDifferentKeys(
+            LocksInterface innermostContextOnThisSegment) {
+        // this check is relevant only for query contexts
     }
 }

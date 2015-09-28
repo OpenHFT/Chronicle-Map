@@ -101,7 +101,7 @@ public class TCPSocketReplication3VoidValueTest {
         map2.put(5, DUMMY_VALUE);
 
         // allow time for the recompilation to resolve
-        assertTrue(waitTillEqual(5000));
+        waitTillEqual(5000);
 
         assertEquals(map3, map3);
         assertTrue(!map1.isEmpty());
