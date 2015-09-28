@@ -25,11 +25,11 @@ import net.openhft.chronicle.hash.SegmentLock;
 import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
+import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.lang.collection.DirectBitSet;
-import net.openhft.lang.io.Bytes;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -42,7 +42,7 @@ import static net.openhft.chronicle.algo.MemoryUnit.LONGS;
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 
 @Staged
-public abstract class SegmentStages implements SegmentLock {
+public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @StageRef Chaining chaining;
     @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
@@ -54,10 +54,10 @@ public abstract class SegmentStages implements SegmentLock {
         this.segmentIndex = segmentIndex;
     }
 
+    public abstract boolean segmentIndexInit();
+
     @Stage("SegmentHeader") long segmentHeaderAddress;
     @Stage("SegmentHeader") SegmentHeader segmentHeader = null;
-
-    abstract boolean segmentHeaderInit();
 
     private void initSegmentHeader() {
         segmentHeaderAddress = hh.h().segmentHeaderAddress(segmentIndex);
@@ -101,7 +101,7 @@ public abstract class SegmentStages implements SegmentLock {
     }
 
 
-    @Stage("Locks") public SegmentStages rootContextOnThisSegment = null;
+    @Stage("Locks") public LocksInterface rootContextOnThisSegment = null;
     /**
      * See the ChMap Ops spec, considerations of nested same-thread concurrent contexts.
      * Once context enters the segment, and observes concurrent same-thread context,
@@ -112,16 +112,35 @@ public abstract class SegmentStages implements SegmentLock {
      */
     @Stage("Locks") public boolean concurrentSameThreadContexts;
 
+    @Override
+    @Stage("Locks")
+    public void setConcurrentSameThreadContexts(boolean concurrentSameThreadContexts) {
+        this.concurrentSameThreadContexts = concurrentSameThreadContexts;
+    }
+
     @Stage("Locks") public int latestSameThreadSegmentModCount;
+
+    @Override
+    @Stage("Locks")
+    public int changeAndGetLatestSameThreadSegmentModCount(int change) {
+        return this.latestSameThreadSegmentModCount += change;
+    }
+
     @Stage("Locks") public int contextModCount;
 
     @Stage("Locks")
     public void incrementModCount() {
-        contextModCount = ++rootContextOnThisSegment.latestSameThreadSegmentModCount;
+        contextModCount = rootContextOnThisSegment.changeAndGetLatestSameThreadSegmentModCount(1);
     }
 
     // chain
-    @Stage("Locks") SegmentStages nextNode;
+    @Stage("Locks") LocksInterface nextNode;
+
+    @Override
+    @Stage("Locks")
+    public void setNextNode(LocksInterface nextNode) {
+        this.nextNode = nextNode;
+    }
 
     @Stage("Locks") LocalLockState localLockState;
     @Stage("Locks") int totalReadLockCount;
@@ -130,47 +149,65 @@ public abstract class SegmentStages implements SegmentLock {
 
     @Stage("Locks")
     public boolean readZero() {
-        return rootContextOnThisSegment.totalReadLockCount == 0;
+        return rootContextOnThisSegment.totalReadLockCount() == 0;
+    }
+
+    @Override
+    @Stage("Locks")
+    public int changeAndGetTotalReadLockCount(int change) {
+        return totalReadLockCount += change;
     }
 
     @Stage("Locks")
     public boolean updateZero() {
-        return rootContextOnThisSegment.totalUpdateLockCount == 0;
+        return rootContextOnThisSegment.totalUpdateLockCount() == 0;
+    }
+
+    @Override
+    @Stage("Locks")
+    public int changeAndGetTotalUpdateLockCount(int change) {
+        return totalUpdateLockCount += change;
     }
 
     @Stage("Locks")
     public boolean writeZero() {
-        return rootContextOnThisSegment.totalWriteLockCount == 0;
+        return rootContextOnThisSegment.totalWriteLockCount() == 0;
+    }
+
+    @Override
+    @Stage("Locks")
+    public int changeAndGetTotalWriteLockCount(int change) {
+        return totalWriteLockCount += change;
     }
 
     @Stage("Locks")
     public int decrementRead() {
-        return rootContextOnThisSegment.totalReadLockCount -= 1;
+        return rootContextOnThisSegment.changeAndGetTotalReadLockCount(-1);
     }
 
     @Stage("Locks")
     public int decrementUpdate() {
-        return rootContextOnThisSegment.totalUpdateLockCount -= 1;
+        return rootContextOnThisSegment.changeAndGetTotalUpdateLockCount(-1);
     }
 
     @Stage("Locks")
     public int decrementWrite() {
-        return rootContextOnThisSegment.totalWriteLockCount -= 1;
+        return rootContextOnThisSegment.changeAndGetTotalWriteLockCount(-1);
     }
 
     @Stage("Locks")
     public void incrementRead() {
-        rootContextOnThisSegment.totalReadLockCount += 1;
+        rootContextOnThisSegment.changeAndGetTotalReadLockCount(1);
     }
 
     @Stage("Locks")
     public void incrementUpdate() {
-        rootContextOnThisSegment.totalUpdateLockCount += 1;
+        rootContextOnThisSegment.changeAndGetTotalUpdateLockCount(1);
     }
 
     @Stage("Locks")
     public void incrementWrite() {
-        rootContextOnThisSegment.totalWriteLockCount += 1;
+        rootContextOnThisSegment.changeAndGetTotalWriteLockCount(1);
     }
 
     public abstract boolean locksInit();
@@ -179,11 +216,11 @@ public abstract class SegmentStages implements SegmentLock {
         localLockState = UNLOCKED;
         int indexOfThisContext = chaining.indexInContextChain;
         for (int i = indexOfThisContext - 1; i >= 0; i--) {
-            if (tryFindInitLocksOfThisSegment(this, i))
+            if (tryFindInitLocksOfThisSegment(i))
                 return;
         }
         for (int i = indexOfThisContext + 1, size = chaining.contextChain.size(); i < size; i++) {
-            if (tryFindInitLocksOfThisSegment(this, i))
+            if (tryFindInitLocksOfThisSegment(i))
                 return;
         }
         rootContextOnThisSegment = this;
@@ -198,16 +235,16 @@ public abstract class SegmentStages implements SegmentLock {
     }
 
     @Stage("Locks")
-    boolean tryFindInitLocksOfThisSegment(Object thisContext, int index) {
-        SegmentStages c = chaining.contextAtIndexInChain(index);
+    boolean tryFindInitLocksOfThisSegment(int index) {
+        LocksInterface c = chaining.contextAtIndexInChain(index);
         if (c.segmentHeaderInit() &&
-                c.segmentHeaderAddress == segmentHeaderAddress &&
+                c.segmentHeaderAddress() == segmentHeaderAddress &&
                 c.locksInit()) {
-            SegmentStages root = c.rootContextOnThisSegment;
+            LocksInterface root = c.rootContextOnThisSegment();
             this.rootContextOnThisSegment = root;
-            root.concurrentSameThreadContexts = true;
+            root.setConcurrentSameThreadContexts(true);
             this.concurrentSameThreadContexts = true;
-            this.contextModCount = root.latestSameThreadSegmentModCount;
+            this.contextModCount = root.latestSameThreadSegmentModCount();
             linkToSegmentContextsChain();
             return true;
         } else {
@@ -279,32 +316,34 @@ public abstract class SegmentStages implements SegmentLock {
 
     @Stage("Locks")
     private void linkToSegmentContextsChain() {
-        SegmentStages innermostContextOnThisSegment = rootContextOnThisSegment;
+        LocksInterface innermostContextOnThisSegment = rootContextOnThisSegment;
         while (true) {
-            Data key = ((KeySearch) (Object) innermostContextOnThisSegment).inputKey;
-            if (Objects.equals(key, ((KeySearch) (Object) this).inputKey)) {
-                throw new IllegalStateException("Nested same-thread contexts cannot access " +
-                        "the same key " + key);
+            if (innermostContextOnThisSegment instanceof KeySearch) {
+                Data key = ((KeySearch) innermostContextOnThisSegment).inputKey;
+                if (Objects.equals(key, ((KeySearch) (Object) this).inputKey)) {
+                    throw new IllegalStateException("Nested same-thread contexts cannot access " +
+                            "the same key " + key);
+                }
             }
-            if (innermostContextOnThisSegment.nextNode == null)
+            if (innermostContextOnThisSegment.nextNode() == null)
                 break;
-            innermostContextOnThisSegment = innermostContextOnThisSegment.nextNode;
+            innermostContextOnThisSegment = innermostContextOnThisSegment.nextNode();
         }
-        innermostContextOnThisSegment.nextNode = this;
+        innermostContextOnThisSegment.setNextNode(this);
     }
 
     @Stage("Locks")
     private void unlinkFromSegmentContextsChain() {
-        SegmentStages prevContext = rootContextOnThisSegment;
+        LocksInterface prevContext = rootContextOnThisSegment;
         while (true) {
-            assert prevContext.nextNode != null;
-            if (prevContext.nextNode == this)
+            assert prevContext.nextNode() != null;
+            if (prevContext.nextNode() == this)
                 break;
-            prevContext = prevContext.nextNode;
+            prevContext = prevContext.nextNode();
         }
         // i. e. structured unlocking
         verifyInnermostContext();
-        prevContext.nextNode = null;
+        prevContext.setNextNode(null);
     }
 
     @Stage("Locks")
@@ -334,6 +373,46 @@ public abstract class SegmentStages implements SegmentLock {
     @Stage("Locks")
     public void setLocalLockState(LocalLockState newState) {
         localLockState = newState;
+    }
+
+    @Stage("Locks")
+    public String debugContextsAndLocks() {
+        String message = "";
+        message += "Contexts locked on this segment:\n";
+
+        for (LocksInterface cxt = rootContextOnThisSegment; cxt != null; cxt = cxt.nextNode()) {
+            message += cxt.debugLocksState() + "\n";
+        }
+        message += "Current thread contexts:\n";
+        for (int i = 0, size = chaining.contextChain.size(); i < size; i++) {
+            LocksInterface cxt = chaining.contextAtIndexInChain(i);
+            message += cxt.debugLocksState() + "\n";
+        }
+        return message;
+    }
+
+    @Override
+    public String debugLocksState() {
+        String s = this + ": ";
+        if (!chaining.usedInit()) {
+            s += "unused";
+            return s;
+        }
+        s += "used, ";
+        if (!segmentIndexInit()) {
+            s += "segment uninitialized";
+            return s;
+        }
+        s += "segment " + segmentIndex() + ", ";
+        if (!locksInit()) {
+            s += "locks uninitialized";
+            return s;
+        }
+        s += "local state: " + localLockState + ", ";
+        s += "read lock count: " + rootContextOnThisSegment.totalReadLockCount() + ", ";
+        s += "update lock count: " + rootContextOnThisSegment.totalUpdateLockCount() + ", ";
+        s += "write lock count: " + rootContextOnThisSegment.totalWriteLockCount();
+        return s;
     }
 
     @StageRef public ReadLock innerReadLock;
@@ -421,9 +500,9 @@ public abstract class SegmentStages implements SegmentLock {
         if (nextTierIndex == 0) {
             nextTierIndex = h.allocateTier(segmentIndex, segmentTier + 1);
             nextTierIndex(nextTierIndex);
-            long currentTierBase = segmentBaseAddr;
+            long currentTierIndex = tierIndex;
             initSegmentTier(segmentTier + 1, nextTierIndex);
-            prevTierIndex(currentTierBase);
+            prevTierIndex(currentTierIndex);
         } else {
             initSegmentTier(segmentTier + 1, nextTierIndex);
         }
@@ -456,12 +535,12 @@ public abstract class SegmentStages implements SegmentLock {
         PublicMultiStoreBytes segmentBytes = this.segmentBytes;
         segmentBytes.setBytesOffset(h.tierBytes(tierIndex), h.bytesOffset(tierIndex));
 
-        long segmentBase = this.segmentBaseAddr;
-        segmentBS.set(segmentBase, h.segmentSize);
+        long segmentBaseAddr = this.segmentBaseAddr;
+        segmentBS.set(segmentBaseAddr, h.segmentSize);
 
         // 64 is a cache line with tier data
         long freeListOffset = h.segmentHashLookupOuterSize + 64;
-        freeList.setOffset(segmentBase + freeListOffset);
+        freeList.setOffset(segmentBaseAddr + freeListOffset);
 
         entrySpaceOffset = freeListOffset + h.segmentFreeListOuterSize +
                 h.segmentEntrySpaceInnerOffset;

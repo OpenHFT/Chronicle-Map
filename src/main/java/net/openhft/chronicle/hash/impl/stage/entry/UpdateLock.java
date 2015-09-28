@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
@@ -29,6 +30,7 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UPDATE_LOCKED;
 @Staged
 public class UpdateLock implements InterProcessLock {
 
+    @StageRef LogHolder logHolder;
     @StageRef SegmentStages s;
     
     @Override
@@ -43,7 +45,12 @@ public class UpdateLock implements InterProcessLock {
                 if (s.updateZero() && s.writeZero()) {
                     if (!s.readZero())
                         throw forbiddenUpdateLockWhenOuterContextReadLocked();
-                    s.segmentHeader.updateLock(s.segmentHeaderAddress);
+                    try {
+                        s.segmentHeader.updateLock(s.segmentHeaderAddress);
+                    } catch (RuntimeException e) {
+                        logHolder.LOG.error(s.debugContextsAndLocks());
+                        throw e;
+                    }
                 }
                 s.incrementUpdate();
                 s.setLocalLockState(UPDATE_LOCKED);

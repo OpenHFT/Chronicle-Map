@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.hash.*;
@@ -39,6 +41,7 @@ import java.io.Serializable;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
@@ -452,6 +455,18 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         return actualSegments;
     }
 
+    /**
+     * Tier data lock doesn't yet need read-write levels and waits;
+     * VanillaReadWriteWithWaitsLockingStrategy is just the simplest locking strategy available
+     */
+    static final LockingStrategy tierDataLockingStrategy =
+            VanillaReadWriteWithWaitsLockingStrategy.instance();
+    static final TryAcquireOperation<LockingStrategy> tierDataLockTryAcquireOperation =
+            TryAcquireOperations.lock();
+    static final
+    AcquisitionStrategy<LockingStrategy, RuntimeException> tierDataLockAcquisitionStrategy =
+            AcquisitionStrategies.spinLoopOrFail(2, TimeUnit.SECONDS);
+
     private static final long TIER_DATA_LOCK_OFFSET = 0L;
     private static final long EXTRA_ALLOCATED_TIER_BULK_COUNT_OFFSET = TIER_DATA_LOCK_OFFSET + 8L;
     private static final long FIRST_FREE_TIER_INDEX_OFFSET =
@@ -463,13 +478,14 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     private void tierDataLock() {
-        // TODO this is quick access to locking functionality, eligible only because lock word
-        // in the segment header has offset = 0
-        BigSegmentHeader.INSTANCE.writeLock(tierDataAddress() + TIER_DATA_LOCK_OFFSET);
+        tierDataLockAcquisitionStrategy.acquire(
+                tierDataLockTryAcquireOperation, tierDataLockingStrategy, Access.nativeAccess(),
+                null, tierDataAddress() + TIER_DATA_LOCK_OFFSET);
     }
 
     private void tierDataUnlock() {
-        BigSegmentHeader.INSTANCE.writeUnlock(tierDataAddress() + TIER_DATA_LOCK_OFFSET);
+        tierDataLockingStrategy.unlock(Access.nativeAccess(), null,
+                tierDataAddress() + TIER_DATA_LOCK_OFFSET);
     }
 
     protected long extraAllocatedTierBulkCount() {
@@ -543,9 +559,11 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     private void linkFreeTiersList(long alreadyAllocatedBulks) {
-        long alreadyAllocatedTiers = alreadyAllocatedBulks * numberOfTiersInBulk;
-        for (long tierIndex = alreadyAllocatedTiers;
-             tierIndex < alreadyAllocatedTiers + numberOfTiersInBulk - 1; tierIndex++) {
+        long firstTierIndex = actualSegments + 1 +
+                alreadyAllocatedBulks * numberOfTiersInBulk;
+        firstFreeTierIndex(firstTierIndex);
+        for (long tierIndex = firstTierIndex;
+             tierIndex < firstTierIndex + numberOfTiersInBulk - 1; tierIndex++) {
             long tierBaseAddr = tierIndexToBaseAddr(tierIndex);
             long tierDataAddr = tierBaseAddr + segmentHashLookupOuterSize;
             TierData.nextTierIndex(tierDataAddr, tierIndex + 1);
@@ -572,7 +590,12 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         tierIndex -= 1;
         if (tierIndex < actualSegments)
             return msBytesOffset(tierIndex);
-        return tierBulkData(tierIndex).offset;
+        long extraTierIndex = tierIndex - actualSegments;
+        long bulkIndex = extraTierIndex >> log2NumberOfTiersInBulk;
+        if (bulkIndex >= tierBulkOffsets.size())
+            mapTiers(bulkIndex);
+        return tierBulkOffsets.get((int) bulkIndex).offset + tierBulkInnerOffsetToTiers +
+                (extraTierIndex & (numberOfTiersInBulk - 1)) * segmentSize;
     }
 
     private TierBulkData tierBulkData(long tierIndex) {

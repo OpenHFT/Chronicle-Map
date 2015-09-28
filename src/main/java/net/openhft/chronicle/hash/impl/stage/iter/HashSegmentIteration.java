@@ -54,6 +54,8 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
 
     public long hashLookupEntry = 0;
 
+    public abstract boolean hashLookupEntryInit();
+
     public void initHashLookupEntry(long entry) {
         hashLookupEntry = entry;
     }

@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map.impl.stage.map;
 
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
+import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ReplicatedChronicleMap;
@@ -38,14 +39,10 @@ public class ReplicatedChronicleMapHolderImpl<
         this.m = m;
     }
 
-    public ReplicatedChronicleMapHolderImpl(ReplicatedChronicleMapHolderImpl c) {
+    public ReplicatedChronicleMapHolderImpl(
+            ChainingInterface c, ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI, R> m) {
         super(c);
-        this.m = (ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI, R>) c.m;
-    }
-
-    @Override
-    public Chaining createChaining() {
-        return new ReplicatedChronicleMapHolderImpl(this);
+        this.m = m;
     }
 
     @Override

@@ -50,7 +50,7 @@ public abstract class HashQuery<K> implements HashEntry<K> {
     public void dropSearchIfNestedContextsAndPresentHashLookupSlotCheckFailed() {
         if (s.locksInit()) {
             if (s.concurrentSameThreadContexts &&
-                    s.rootContextOnThisSegment.latestSameThreadSegmentModCount !=
+                    s.rootContextOnThisSegment.latestSameThreadSegmentModCount() !=
                             s.contextModCount) {
                 if (ks.keySearchInit()) {
                     if (ks.searchState == PRESENT) {

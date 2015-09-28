@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
+import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
@@ -92,9 +93,8 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public transient MapMethods<K, V, R> methods;
     public transient DefaultValueProvider<K, V> defaultValueProvider;
     
-    transient ThreadLocal<?> queryCxt;
-    transient ThreadLocal<?> iterCxt;
-    
+    transient ThreadLocal<ChainingInterface> cxt = new ThreadLocal<>();
+
 
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
         super(builder);
@@ -162,27 +162,6 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
             BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
             constantValueProvider.initTransients(valueReader);
         }
-
-        initQueryContext();
-        initIterationContext();
-    }
-
-     void initQueryContext() {
-        queryCxt = new ThreadLocal<CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R>>() {
-            @Override
-            protected CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R> initialValue() {
-                return new CompiledMapQueryContext<>(VanillaChronicleMap.this);
-            }
-        };
-    }
-    
-    void initIterationContext() {
-        iterCxt = new ThreadLocal<CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R>>() {
-            @Override
-            protected CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R> initialValue() {
-                return new CompiledMapIterationContext<>(VanillaChronicleMap.this);
-            }
-        };
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -314,22 +293,38 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         return valueSize;
     }
     
-    private CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R> q() {
-        return (CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R>) queryCxt.get();
+    private ChainingInterface q() {
+        ChainingInterface queryContext;
+        queryContext = cxt.get();
+        if (queryContext == null) {
+            queryContext = new CompiledMapQueryContext<>(VanillaChronicleMap.this);
+            cxt.set(queryContext);
+        }
+        return queryContext;
     }
 
     public QueryContextInterface<K, V, R> mapContext() {
-        CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R> q = q().getContext();
+        CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R> q =
+                q().getContext(CompiledMapQueryContext.class,
+                        ci -> new CompiledMapQueryContext<>(ci, VanillaChronicleMap.this));
         q.initUsed(true);
         return q;
     }
 
-    private CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R> i() {
-        return (CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R>) iterCxt.get();
+    private ChainingInterface i() {
+        ChainingInterface iterContext;
+        iterContext = cxt.get();
+        if (iterContext == null) {
+            iterContext = new CompiledMapIterationContext<>(VanillaChronicleMap.this);
+            cxt.set(iterContext);
+        }
+        return iterContext;
     }
 
     public IterationContextInterface<K, V, ?> iterationContext() {
-        CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R> c = i().getContext();
+        CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R> c =
+                i().getContext(CompiledMapIterationContext.class,
+                        ci -> new CompiledMapIterationContext<>(ci, VanillaChronicleMap.this));
         c.initUsed(true);
         return c;
     }

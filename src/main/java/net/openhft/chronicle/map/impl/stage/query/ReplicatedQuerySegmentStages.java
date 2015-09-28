@@ -51,9 +51,10 @@ public abstract class ReplicatedQuerySegmentStages extends QuerySegmentStages {
                 return ret;
             } else {
                 ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map = mh.m();
-                MapSegmentContext<?, ?, ?> sc = map.segmentContext(segmentIndex);
-                ((ReplicatedHashSegmentContext<?, ?>) sc)
-                        .forEachSegmentReplicableEntry(cleanupAction);
+                try (MapSegmentContext<?, ?, ?> sc = map.segmentContext(segmentIndex)) {
+                    ((ReplicatedHashSegmentContext<?, ?>) sc)
+                            .forEachSegmentReplicableEntry(cleanupAction);
+                }
                 ret = allocReturnCode(chunks);
                 if (ret >= 0) {
                     return ret;

@@ -21,6 +21,7 @@ import net.openhft.chronicle.algo.bitset.ConcurrentFlatBitSetFrame;
 import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
 import net.openhft.chronicle.hash.impl.TierData;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
+import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.TimeProvider;
@@ -137,30 +138,6 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
         }
-    }
-
-    @Override
-    void initQueryContext() {
-        queryCxt = new ThreadLocal<
-                CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R>>() {
-            @Override
-            protected CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R>
-            initialValue() {
-                return new CompiledReplicatedMapQueryContext<>(ReplicatedChronicleMap.this);
-            }
-        };
-    }
-
-    @Override
-    void initIterationContext() {
-        iterCxt = new ThreadLocal<
-                CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R>>() {
-            @Override
-            protected CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R>
-            initialValue() {
-                return new CompiledReplicatedMapIterationContext<>(ReplicatedChronicleMap.this);
-            }
-        };
     }
 
     private int assignedModIterBitSetSizeInBytes() {
@@ -471,14 +448,22 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         }
     }
     
-    private CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> q() {
-        //noinspection unchecked
-        return (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R>) queryCxt.get();
+    private ChainingInterface q() {
+        ChainingInterface queryContext;
+        queryContext = cxt.get();
+        if (queryContext == null) {
+            queryContext = new CompiledReplicatedMapQueryContext<>(ReplicatedChronicleMap.this);
+            cxt.set(queryContext);
+        }
+        return queryContext;
     }
 
     @Override
     public CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> mapContext() {
-        CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> q = q().getContext();
+        CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> q =
+                q().getContext(CompiledReplicatedMapQueryContext.class,
+                        ci -> new CompiledReplicatedMapQueryContext<>(ci,
+                                ReplicatedChronicleMap.this));
         q.initUsed(true);
         return q;
     }
@@ -489,7 +474,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
      */
     private CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> remoteOpContext() {
         if (remoteOpContext == null) {
-            remoteOpContext = q();
+            remoteOpContext = (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R>) q();
         }
         assert !remoteOpContext.usedInit();
         remoteOpContext.initUsed(true);
@@ -498,7 +483,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
     private CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> remoteItContext() {
         if (remoteItContext == null) {
-            remoteItContext = i();
+            remoteItContext =
+                    (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R>) i();
         }
         assert !remoteItContext.usedInit();
         remoteItContext.initUsed(true);
@@ -518,13 +504,21 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         }
     }
 
-    private CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> i() {
-        //noinspection unchecked
-        return (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R>) iterCxt.get();
+    private ChainingInterface i() {
+        ChainingInterface iterContext;
+        iterContext = cxt.get();
+        if (iterContext == null) {
+            iterContext = new CompiledReplicatedMapIterationContext<>(ReplicatedChronicleMap.this);
+            cxt.set(iterContext);
+        }
+        return iterContext;
     }
 
     public CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> iterationContext() {
-        CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> c = i().getContext();
+        CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> c =
+                i().getContext(CompiledReplicatedMapIterationContext.class,
+                        ci -> new CompiledReplicatedMapIterationContext<>(ci,
+                                ReplicatedChronicleMap.this));
         c.initUsed(true);
         return c;
     }

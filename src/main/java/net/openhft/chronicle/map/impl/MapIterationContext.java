@@ -19,6 +19,7 @@ package net.openhft.chronicle.map.impl;
 import net.openhft.chronicle.hash.impl.stage.data.bytes.EntryKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.entry.*;
 import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
+import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.OwnerThreadHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
 import net.openhft.chronicle.hash.impl.stage.iter.IterationKeyHashCode;
@@ -42,6 +43,8 @@ import net.openhft.sg.Staged;
         OwnerThreadHolder.class,
         ThreadLocalCopiesHolder.class,
         VanillaChronicleMapHolderImpl.class,
+
+        LogHolder.class,
 
         MapSegmentIteration.class,
 

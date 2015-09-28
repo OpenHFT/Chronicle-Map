@@ -20,11 +20,12 @@ import net.openhft.sg.Staged;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 @Staged
-public class Chaining {
+public class Chaining implements ChainingInterface {
 
-    public final List<Chaining> contextChain;
+    public final List<ChainingInterface> contextChain;
     public final int indexInContextChain;
     
     public Chaining() {
@@ -33,10 +34,15 @@ public class Chaining {
         indexInContextChain = 0;
     }
     
-    public Chaining(Chaining root) {
-        contextChain = root.contextChain;
+    public Chaining(ChainingInterface root) {
+        contextChain = root.getContextChain();
         indexInContextChain = contextChain.size();
         contextChain.add(this);
+    }
+
+    @Override
+    public List<ChainingInterface> getContextChain() {
+        return contextChain;
     }
 
     public <T> T contextAtIndexInChain(int index) {
@@ -46,7 +52,8 @@ public class Chaining {
 
     
     boolean used;
-    
+
+    @Override
     public boolean usedInit() {
         return used;
     }
@@ -59,9 +66,11 @@ public class Chaining {
         used = false;
     }
 
-    public <T> T getContext() {
-        for (Chaining context : contextChain) {
-            if (!context.usedInit()) {
+    @Override
+    public <T> T getContext(
+            Class<? extends T> contextClass, Function<ChainingInterface, T> createChaining) {
+        for (ChainingInterface context : contextChain) {
+            if (context.getClass() == contextClass && !context.usedInit()) {
                 //noinspection unchecked
                 return (T) context;
             }
@@ -76,10 +85,6 @@ public class Chaining {
                     "stack trace on https://github.com/OpenHFT/Chronicle-Map/issues");
         }
         //noinspection unchecked
-        return (T) createChaining();
-    }
-    
-    public Chaining createChaining() {
-        return new Chaining(this);
+        return (T) createChaining.apply(this);
     }
 }

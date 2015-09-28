@@ -40,7 +40,8 @@ public abstract class IterationSegmentStages extends SegmentStages {
     @Override
     public void nextTier() {
         super.nextTier();
-        hls.initSearchKey(hh.h().hashLookup.key(it.hashLookupEntry));
+        if (it.hashLookupEntryInit())
+            hls.initSearchKey(hh.h().hashLookup.key(it.hashLookupEntry));
     }
 
     public void initSegmentTier_WithBaseAddr(int tier, long tierBaseAddr) {
