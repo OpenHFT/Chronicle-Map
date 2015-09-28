@@ -93,7 +93,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public transient MapMethods<K, V, R> methods;
     public transient DefaultValueProvider<K, V> defaultValueProvider;
     
-    transient ThreadLocal<ChainingInterface> cxt = new ThreadLocal<>();
+    transient ThreadLocal<ChainingInterface> cxt;
 
 
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
@@ -162,6 +162,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
             BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
             constantValueProvider.initTransients(valueReader);
         }
+        cxt = new ThreadLocal<>();
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
