@@ -79,7 +79,7 @@ Click here to get the [Latest Version Number](http://search.maven.org/#search%7C
 
 ### Overview
 Chronicle Map implements the interface `java.util.concurrent.ConcurrentMap`, however unlike the standard
-jdk implementations, ChronicleMap is both persistent and able to share your entries accross processes:
+jdk implementations, ChronicleMap is both persistent and able to share your entries across processes:
 
 ![](http://chronicle.software/wp-content/uploads/2014/07/Chronicle-Map-diagram_04.jpg)
 
