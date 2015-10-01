@@ -77,15 +77,15 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public final int metaDataBytes;
 
     /////////////////////////////////////////////////
-    // Behavior
-    final boolean putReturnsNull;
-    final boolean removeReturnsNull;
-
-    /////////////////////////////////////////////////
     // Memory management and dependent fields
     public final Alignment alignment;
     public final int worstAlignment;
     public final boolean couldNotDetermineAlignmentBeforeAllocation;
+
+    /////////////////////////////////////////////////
+    // Behavior
+    transient boolean putReturnsNull;
+    transient boolean removeReturnsNull;
 
     transient Set<Entry<K, V>> entrySet;
     
@@ -94,7 +94,6 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public transient DefaultValueProvider<K, V> defaultValueProvider;
     
     transient ThreadLocal<ChainingInterface> cxt;
-
 
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
         super(builder);
@@ -126,10 +125,6 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         // Event listener and meta data
         metaDataBytes = builder.metaDataBytes();
 
-        // Behavior
-        putReturnsNull = builder.putReturnsNull();
-        removeReturnsNull = builder.removeReturnsNull();
-
         // Concurrency (number of segments), memory management and dependent fields
         alignment = builder.valueAlignment();
         worstAlignment = builder.worstAlignment();
@@ -142,6 +137,9 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     }
     
     void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
+        putReturnsNull = builder.putReturnsNull();
+        removeReturnsNull = builder.removeReturnsNull();
+
         this.entryOperations = (MapEntryOperations<K, V, R>) builder.entryOperations;
         this.methods = (MapMethods<K, V, R>) builder.methods;
         this.defaultValueProvider = builder.defaultValueProvider;
