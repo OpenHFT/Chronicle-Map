@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.hash.replication;
 
-import java.net.SocketAddress;
+import java.net.InetAddress;
 
 public interface ConnectionListener {
 
@@ -27,15 +27,14 @@ public interface ConnectionListener {
      *                   we made the connection to a remote host then {@code isServer} is {@code
      *                   false}
      */
-    void onConnect(SocketAddress address, byte identifier, boolean isServer);
+    void onConnect(InetAddress address, byte identifier, boolean isServer);
 
 
     /**
      * @param address the address that we have been disconnected from
      * @param identifier the identifer the address that we have been disconnected from or Byte
-     *                   .MIN_VALUE if not known
      */
-    void onDisconnect(SocketAddress address, byte identifier);
+    void onDisconnect(InetAddress address, byte identifier);
 
 
 }
