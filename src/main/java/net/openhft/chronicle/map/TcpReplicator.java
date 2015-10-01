@@ -394,8 +394,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
         if (LOG.isDebugEnabled())
             LOG.debug("", e);
 
-        //  null check (Attached)key.attachment();
-        if (key.channel() != null && key.attachment() != null)
+        if (key.channel() != null && key.attachment() != null && connectionListener != null)
             connectionListener.onDisconnect(((SocketChannel) key.channel()).socket().getInetAddress(),
                     ((Attached) key.attachment()).remoteIdentifier);
 
@@ -589,7 +588,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
             attached.remoteIdentifier = remoteIdentifier;
 
             final SocketChannel channel = (SocketChannel) key.channel();
-            if (channel != null && channel.socket() != null) {
+            if (channel != null && channel.socket() != null && connectionListener != null) {
                 connectionListener.onConnect(channel.socket().getInetAddress(),
                         attached.remoteIdentifier, attached.isServer);
             }
