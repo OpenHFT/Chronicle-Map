@@ -130,7 +130,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * Releases the off-heap memory, used by this hash container and resources, used by replication,
      * if any. However, if hash container (hence off-heap memory, used by it) is mapped to the file
      * and there are other instances mapping the same data on the server across JVMs, the memory
-     * won't be actually freed on operation system level. I. e. this method call doesn't affect
+     * won't be actually freed on operating system level. I. e. this method call doesn't affect
      * other {@link ChronicleMap} or {@link ChronicleSet} instances mapping the same data.
      *
      * <p>If you won't call this method, memory would be held at least until next garbage

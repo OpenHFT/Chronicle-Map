@@ -3,7 +3,7 @@
  - Chronicle Map is an in-memory, highly concurrent key-value store. Generally keys and values are
  arbitrary sequences of bytes.
  - Chronicle Map optionally persists to a *single file* via the memory-mapping facility, present in
- Windows and POSIX-compatible operation systems (`mmap`). The file shouldn't necessarily materialize
+ Windows and POSIX-compatible operating systems (`mmap`). The file shouldn't necessarily materialize
  on disk. It's OK for Chronicle Map if the file resides a memory-mounted FS. The whole Chronicle Map
  state is contained in the file contents i. e. it is possible to move, copy or send the file to
  another machine, access it and observe exactly the same Chronicle Map state. Chronicle Map doesn't
@@ -46,9 +46,9 @@ The two above points are true for CPUs with x86 and x86_64 architectures.
 
 #### Memory-mapping
 
- - The memory-mapping implementation shouldn't corrupt the mapped file, even if operation system
+ - The memory-mapping implementation shouldn't corrupt the mapped file, even if operating system
  execution was interrupted in any way (black out, virtual machine crash, etc.) It means Chronicle
- Map expects some memory might be "stale", i. e. the bits written shortly before operation system
+ Map expects some memory might be "stale", i. e. the bits written shortly before operating system
  failure might not be persisted, but it doesn't expect to read the bit values that have never been
  written to the memory.
  - Writes to disk should be at least 4 or 8 bytes atomic, i. e. either aligned 4- or 8-byte blocks
@@ -80,11 +80,11 @@ If the above assumptions are met, Chronicle Map aims to satisfy the following gu
  Map could be observed. Reading corrupted or half written values by some keys, or observing some
  keys which were never stored during the iteration is disallowed.
 
-If Chronicle Map is persisted to a file and the operation system fails to flush all dirty memory to
+If Chronicle Map is persisted to a file and the operating system fails to flush all dirty memory to
 disk due to a power-off or any other failure, when the file is mapped to memory and accessed again,
 it might be needed to perform a special recovery procedure on the store first, which identifies and
-purges corrupted entries from the Chronicle Map. Therefore, some entries updated shortly before the
-failure could be lost.
+purges corrupted entries from the Chronicle Map. Therefore, *some entries updated shortly before the
+failure could be lost.*
 
 ## Goals
 
