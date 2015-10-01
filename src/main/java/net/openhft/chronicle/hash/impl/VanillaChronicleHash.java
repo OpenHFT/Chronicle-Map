@@ -259,10 +259,10 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     public void initTransients() {
-        ownInitTransients();
+        initOwnTransients();
     }
 
-    private void ownInitTransients() {
+    private void initOwnTransients() {
         keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
         keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
         if (segmentHashLookupEntrySize == 4) {
@@ -321,7 +321,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        ownInitTransients();
+        initOwnTransients();
     }
 
     public void onHeaderCreated() {

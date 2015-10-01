@@ -147,10 +147,10 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     @Override
     public void initTransients() {
         super.initTransients();
-        ownInitTransients();
+        initOwnTransients();
     }
 
-    private void ownInitTransients() {
+    private void initOwnTransients() {
         modificationIterators =
                 new AtomicReferenceArray<>(127 + RESERVED_MOD_ITER);
         closeables = new CopyOnWriteArraySet<>();
@@ -168,7 +168,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        ownInitTransients();
+        initOwnTransients();
     }
 
     long modIterBitSetSizeInBytes() {

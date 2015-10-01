@@ -150,10 +150,10 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     @Override
     public void initTransients() {
         super.initTransients();
-        ownInitTransients();
+        initOwnTransients();
     }
 
-    private void ownInitTransients() {
+    private void initOwnTransients() {
         valueReaderProvider = Provider.of((Class) originalValueReader.getClass());
         valueInteropProvider = Provider.of((Class) originalValueInterop.getClass());
 
@@ -167,7 +167,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        ownInitTransients();
+        initOwnTransients();
     }
 
     public final V checkValue(Object value) {
