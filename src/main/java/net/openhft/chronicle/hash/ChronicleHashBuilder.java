@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash;
 
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
@@ -405,7 +406,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * is not immediately erased from the data structure, to let the distributed system eventually
      * converge on some value for this key (or converge on the fact, that this key is removed).
      * Chronicle Hash watch in runtime after the entries, and if one is removed and not updated
-     * in anyway for this {@code removedEntryCleanupTimeout}, Chronicle is allowed to remove this
+     * in any way for this {@code removedEntryCleanupTimeout}, Chronicle is allowed to remove this
      * entry completely from the data structure. This timeout should depend on your distributed
      * system topology, and typical replication latencies, that should be determined experimentally.
      *
@@ -416,6 +417,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @param unit time unit, in which the timeout is given
      * @return this builder back
      * @throws IllegalArgumentException is the specified timeout is less than 1 millisecond
+     * @see #cleanupRemovedEntries(boolean)
+     * @see ReplicableEntry#doRemoveCompletely()
      */
     B removedEntryCleanupTimeout(long removedEntryCleanupTimeout, TimeUnit unit);
 
@@ -428,6 +431,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *
      * @param cleanupRemovedEntries if stale removed entries should be purged from Chronicle Hash
      * @return this builder back
+     * @see #removedEntryCleanupTimeout(long, TimeUnit)
+     * @see ReplicableEntry#doRemoveCompletely()
      */
     B cleanupRemovedEntries(boolean cleanupRemovedEntries);
 

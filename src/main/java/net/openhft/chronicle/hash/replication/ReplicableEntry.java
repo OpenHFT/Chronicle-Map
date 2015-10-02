@@ -26,9 +26,11 @@ import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.replication.SetRemoteOperations;
 
+import java.util.concurrent.TimeUnit;
+
 /**
- * Abstracts a replicable entry in the replicated {@link ChronicleHash}. A {@link HashAbsentEntry}
- * might be a {@code ReplicableEntry} as well as {@link HashEntry}.
+ * Abstracts a replicable entry in the replicated {@link ChronicleHash}. Both {@link HashEntry} and
+ * {@link HashAbsentEntry} could implement {@code ReplicableEntry} interface.
  */
 public interface ReplicableEntry {
     /**
@@ -104,6 +106,9 @@ public interface ReplicableEntry {
      * processed, as the entry have never been present in the Chronicle hash. After calling this
      * method any subsequent call of any method of {@code ReplicableEntry} class throws {@code
      * IllegalStateException}.
+     *
+     * @see ChronicleHashBuilder#cleanupRemovedEntries(boolean)
+     * @see ChronicleHashBuilder#removedEntryCleanupTimeout(long, TimeUnit)
      */
     void doRemoveCompletely();
 }
