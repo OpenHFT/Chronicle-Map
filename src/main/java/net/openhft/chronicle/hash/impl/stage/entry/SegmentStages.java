@@ -25,7 +25,6 @@ import net.openhft.chronicle.hash.SegmentLock;
 import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
@@ -40,6 +39,7 @@ import java.util.Objects;
 import static net.openhft.chronicle.algo.MemoryUnit.BITS;
 import static net.openhft.chronicle.algo.MemoryUnit.LONGS;
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
+import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.TIER_COUNTERS_AREA_SIZE;
 
 @Staged
 public abstract class SegmentStages implements SegmentLock, LocksInterface {
@@ -473,32 +473,32 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         this.segmentBaseAddr = tierBaseAddr;
     }
 
-    public long tierDataOffset() {
+    public long tierCountersAreaAddr() {
         return segmentBaseAddr + hh.h().segmentHashLookupOuterSize;
     }
 
     public long nextTierIndex() {
-        return TierData.nextTierIndex(tierDataOffset());
+        return TierCountersArea.nextTierIndex(tierCountersAreaAddr());
     }
 
     public void nextTierIndex(long nextTierIndex) {
-        TierData.nextTierIndex(tierDataOffset(), nextTierIndex);
+        TierCountersArea.nextTierIndex(tierCountersAreaAddr(), nextTierIndex);
     }
 
     public long nextPosToSearchFromTiered() {
-        return TierData.nextPosToSearchFromTiered(tierDataOffset());
+        return TierCountersArea.nextPosToSearchFromTiered(tierCountersAreaAddr());
     }
 
     public void nextPosToSearchFromTiered(long nextPosToSearchFrom) {
-        TierData.nextPosToSearchFromTiered(tierDataOffset(), nextPosToSearchFrom);
+        TierCountersArea.nextPosToSearchFromTiered(tierCountersAreaAddr(), nextPosToSearchFrom);
     }
 
     public long prevTierIndex() {
-        return TierData.prevTierIndex(tierDataOffset());
+        return TierCountersArea.prevTierIndex(tierCountersAreaAddr());
     }
 
     public void prevTierIndex(long prevTierIndex) {
-        TierData.prevTierIndex(tierDataOffset(), prevTierIndex);
+        TierCountersArea.prevTierIndex(tierCountersAreaAddr(), prevTierIndex);
     }
 
     public void nextTier() {
@@ -540,13 +540,12 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         VanillaChronicleHash<?, ?, ?, ?, ?, ?> h = hh.h();
 
         PublicMultiStoreBytes segmentBytes = this.segmentBytes;
-        segmentBytes.setBytesOffset(h.tierBytes(tierIndex), h.bytesOffset(tierIndex));
+        segmentBytes.setBytesOffset(h.tierBytes(tierIndex), h.tierBytesOffset(tierIndex));
 
         long segmentBaseAddr = this.segmentBaseAddr;
         segmentBS.set(segmentBaseAddr, h.segmentSize);
 
-        // 64 is a cache line with tier data
-        long freeListOffset = h.segmentHashLookupOuterSize + 64;
+        long freeListOffset = h.segmentHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE;
         freeList.setOffset(segmentBaseAddr + freeListOffset);
 
         entrySpaceOffset = freeListOffset + h.segmentFreeListOuterSize +

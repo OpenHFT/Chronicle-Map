@@ -58,6 +58,8 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     private static final long serialVersionUID = 0L;
 
+    public static final long TIER_COUNTERS_AREA_SIZE = 64;
+
     /////////////////////////////////////////////////
     // Version
     public final String dataFileVersion;
@@ -220,7 +222,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     private long segmentSize() {
-        long ss = segmentHashLookupOuterSize + 64 /* Tier cache line */ +
+        long ss = segmentHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE +
                 segmentFreeListOuterSize + segmentEntrySpaceOuterSize;
         if ((ss & 63L) != 0)
             throw new AssertionError();
@@ -295,13 +297,35 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
                 // file.length() > sizeInBytesWithoutTiers() means there are some tiered segments
                 Math.max(sizeInBytesWithoutTiers(), file.length()),
                 BytesMarshallableSerializer.create()));
-        // newly-extended file contents are not guaranteed to be zero
+
         if (created) {
-            // TODO zero out only hash lookup tables and bit sets, not entry data areas
-            bytes.zeroOut(headerSize, bytes.capacity(), true);
-            // zero out tier data
-            bytes.zeroOut(headerSize, headerSize + 64, true);
+            zeroOutNewlyMappedChronicleMapBytes();
         }
+    }
+
+    /**
+     * newly-extended file contents are not guaranteed to be zero
+     */
+    private void zeroOutNewlyMappedChronicleMapBytes() {
+        zeroOutGlobalMutableState();
+        zeroOutFirstSegmentTiers();
+    }
+
+    private void zeroOutGlobalMutableState() {
+        bytes.zeroOut(headerSize, headerSize + 64, true);
+    }
+
+    private void zeroOutFirstSegmentTiers() {
+        for (int segmentIndex = 0; segmentIndex < segments(); segmentIndex++) {
+            long segmentOffset = msBytesSegmentOffset(segmentIndex);
+            zeroOutNewlyMappedTier(bytes, segmentOffset);
+        }
+    }
+
+    private void zeroOutNewlyMappedTier(Bytes bytes, long segmentOffset) {
+        // Zero out hash lookup, tier data and free list bit set. Leave entry space.
+        long zeroOutEnd = segmentOffset + segmentSize - segmentEntrySpaceOuterSize;
+        bytes.zeroOut(segmentOffset, zeroOutEnd, true);
     }
 
     private void initTierBulks(long byteStoreSize) {
@@ -416,10 +440,10 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     public final long segmentBaseAddr(int segmentIndex) {
-        return ms.address() + msBytesOffset(segmentIndex);
+        return ms.address() + msBytesSegmentOffset(segmentIndex);
     }
 
-    private long msBytesOffset(long segmentIndex) {
+    private long msBytesSegmentOffset(long segmentIndex) {
         return segmentsOffset + segmentIndex * segmentSize;
     }
 
@@ -456,36 +480,41 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     /**
-     * Tier data lock doesn't yet need read-write levels and waits;
-     * VanillaReadWriteWithWaitsLockingStrategy is just the simplest locking strategy available
+     * Global mutable state lock doesn't yet need read-write levels and waits;
+     * Used the same locking strategy as in segment locks
+     * (VanillaReadWriteUpdateWithWaitsLockingStrategy) in order to simplify Chronicle Map
+     * specification (having only one kind of locks to specify and implement).
      */
-    static final LockingStrategy tierDataLockingStrategy =
-            VanillaReadWriteWithWaitsLockingStrategy.instance();
-    static final TryAcquireOperation<LockingStrategy> tierDataLockTryAcquireOperation =
+    static final LockingStrategy globalMutableStateLockingStrategy =
+            VanillaReadWriteUpdateWithWaitsLockingStrategy.instance();
+    static final TryAcquireOperation<LockingStrategy> globalMutableStateLockTryAcquireOperation =
             TryAcquireOperations.lock();
     static final
-    AcquisitionStrategy<LockingStrategy, RuntimeException> tierDataLockAcquisitionStrategy =
+    AcquisitionStrategy<LockingStrategy, RuntimeException>
+            globalMutableStateLockAcquisitionStrategy =
             AcquisitionStrategies.spinLoopOrFail(2, TimeUnit.SECONDS);
 
-    private static final long TIER_DATA_LOCK_OFFSET = 0L;
-    private static final long EXTRA_ALLOCATED_TIER_BULK_COUNT_OFFSET = TIER_DATA_LOCK_OFFSET + 8L;
+    private static final long GLOBAL_MUTABLE_STATE_LOCK_OFFSET = 0L;
+    private static final long EXTRA_ALLOCATED_TIER_BULK_COUNT_OFFSET =
+            GLOBAL_MUTABLE_STATE_LOCK_OFFSET + 8L;
     private static final long FIRST_FREE_TIER_INDEX_OFFSET =
             EXTRA_ALLOCATED_TIER_BULK_COUNT_OFFSET + 8L;
     private static final long TIERS_IN_USE_OFFSET = FIRST_FREE_TIER_INDEX_OFFSET + 8L;
 
-    private long tierDataAddress() {
+    private long globalMutableStateAddress() {
         return bytes.address() + headerSize;
     }
 
-    private void tierDataLock() {
-        tierDataLockAcquisitionStrategy.acquire(
-                tierDataLockTryAcquireOperation, tierDataLockingStrategy, Access.nativeAccess(),
-                null, tierDataAddress() + TIER_DATA_LOCK_OFFSET);
+    private void globalMutableStateLock() {
+        globalMutableStateLockAcquisitionStrategy.acquire(
+                globalMutableStateLockTryAcquireOperation, globalMutableStateLockingStrategy,
+                Access.nativeAccess(), null,
+                globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
     }
 
-    private void tierDataUnlock() {
-        tierDataLockingStrategy.unlock(Access.nativeAccess(), null,
-                tierDataAddress() + TIER_DATA_LOCK_OFFSET);
+    private void globalMutableStateUnlock() {
+        globalMutableStateLockingStrategy.unlock(Access.nativeAccess(), null,
+                globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
     }
 
     protected long extraAllocatedTierBulkCount() {
@@ -514,7 +543,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     public long allocateTier(int forSegmentIndex, int tier) {
-        tierDataLock();
+        globalMutableStateLock();
         try {
             long tiersInUse = tiersInUse();
             if (tiersInUse == maxExtraTiers) {
@@ -532,14 +561,19 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
                 long firstFreeTierIndex = firstFreeTierIndex();
                 if (firstFreeTierIndex > 0) {
                     tiersInUse(tiersInUse + 1);
-                    long tierBaseAddr = tierIndexToBaseAddr(firstFreeTierIndex);
-                    long tierDataAddr = tierBaseAddr + segmentHashLookupOuterSize;
-                    long nextFreeTierIndex = TierData.nextTierIndex(tierDataAddr);
+                    Bytes allocatedTierBytes = tierBytes(firstFreeTierIndex);
+                    long allocatedTierOffset = tierBytesOffset(firstFreeTierIndex);
+                    long tierBaseAddr = allocatedTierBytes.address() + allocatedTierOffset;
+                    long tierCountersAreaAddr = tierBaseAddr + segmentHashLookupOuterSize;
+                    long nextFreeTierIndex = TierCountersArea.nextTierIndex(tierCountersAreaAddr);
+                    // after reading previously stored nextFreeTierIndex (next linked list entry),
+                    // zero out the whole tier
+                    zeroOutNewlyMappedTier(allocatedTierBytes, allocatedTierOffset);
                     // now, when this tier will be a part of the map, the next tier designates
                     // the next tier in the data structure, should be 0
-                    TierData.nextTierIndex(tierDataAddr, 0);
-                    TierData.segmentIndex(tierDataAddr, forSegmentIndex);
-                    TierData.tier(tierDataAddr, tier);
+                    TierCountersArea.nextTierIndex(tierCountersAreaAddr, 0);
+                    TierCountersArea.segmentIndex(tierCountersAreaAddr, forSegmentIndex);
+                    TierCountersArea.tier(tierCountersAreaAddr, tier);
                     firstFreeTierIndex(nextFreeTierIndex);
                     return firstFreeTierIndex;
                 } else {
@@ -547,7 +581,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
                 }
             }
         } finally {
-            tierDataUnlock();
+            globalMutableStateUnlock();
         }
     }
 
@@ -555,18 +589,21 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         long alreadyAllocatedBulks = extraAllocatedTierBulkCount();
         mapTiers(alreadyAllocatedBulks);
         extraAllocatedTierBulkCount(alreadyAllocatedBulks + 1);
-        linkFreeTiersList(alreadyAllocatedBulks);
+        linkNewlyAllocatedTiersIntoFreeTiersList(alreadyAllocatedBulks);
     }
 
-    private void linkFreeTiersList(long alreadyAllocatedBulks) {
+    private void linkNewlyAllocatedTiersIntoFreeTiersList(long alreadyAllocatedBulks) {
         long firstTierIndex = actualSegments + 1 +
                 alreadyAllocatedBulks * numberOfTiersInBulk;
         firstFreeTierIndex(firstTierIndex);
+        Bytes bytes = tierBytes(firstTierIndex);
         for (long tierIndex = firstTierIndex;
              tierIndex < firstTierIndex + numberOfTiersInBulk - 1; tierIndex++) {
-            long tierBaseAddr = tierIndexToBaseAddr(tierIndex);
-            long tierDataAddr = tierBaseAddr + segmentHashLookupOuterSize;
-            TierData.nextTierIndex(tierDataAddr, tierIndex + 1);
+            long tierOffset = tierBytesOffset(tierIndex);
+            long tierCountersAreaOffset = tierOffset + segmentHashLookupOuterSize;
+            // zero out tier counters area, because newly mapped memory could be dirty
+            bytes.zeroOut(tierCountersAreaOffset, tierCountersAreaOffset + TIER_COUNTERS_AREA_SIZE);
+            TierCountersArea.nextTierIndex(bytes.address() + tierCountersAreaOffset, tierIndex + 1);
         }
     }
 
@@ -586,10 +623,10 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         return tierBulkData(tierIndex).langBytes;
     }
 
-    public long bytesOffset(long tierIndex) {
+    public long tierBytesOffset(long tierIndex) {
         tierIndex -= 1;
         if (tierIndex < actualSegments)
-            return msBytesOffset(tierIndex);
+            return msBytesSegmentOffset(tierIndex);
         long extraTierIndex = tierIndex - actualSegments;
         long bulkIndex = extraTierIndex >> log2NumberOfTiersInBulk;
         if (bulkIndex >= tierBulkOffsets.size())

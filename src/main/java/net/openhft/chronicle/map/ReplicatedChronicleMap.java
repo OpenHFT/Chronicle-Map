@@ -19,7 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.algo.bitset.BitSetFrame;
 import net.openhft.chronicle.algo.bitset.ConcurrentFlatBitSetFrame;
 import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
-import net.openhft.chronicle.hash.impl.TierData;
+import net.openhft.chronicle.hash.impl.TierCountersArea;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
@@ -591,14 +591,14 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
          * single value
          */
         private long combine(long tierIndex, long pos) {
-            tierIndex -= 1;
-            if (tierIndex < actualSegments)
-                return (tierIndex << segmentIndexShift) | pos;
-            return combineExtraTier(tierIndex, pos);
+            long tierIndexMinusOne = tierIndex - 1;
+            if (tierIndexMinusOne < actualSegments)
+                return (tierIndexMinusOne << segmentIndexShift) | pos;
+            return combineExtraTier(tierIndexMinusOne, pos);
         }
 
-        private long combineExtraTier(long tierIndex, long pos) {
-            long extraTierIndex = tierIndex - actualSegments;
+        private long combineExtraTier(long tierIndexMinusOne, long pos) {
+            long extraTierIndex = tierIndexMinusOne - actualSegments;
             long tierOffsetWithinBulk = extraTierIndex & ((1L << log2NumberOfTiersInBulk) - 1);
             return (tierOffsetWithinBulk << segmentIndexShift) | pos;
         }
@@ -745,9 +745,10 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                         context.initSegmentIndex(tierIndexMinusOne);
                     } else {
                         long tierBaseAddr = tierIndexToBaseAddr(tierIndexMinusOne + 1);
-                        long tierDataAddr = tierBaseAddr + segmentHashLookupOuterSize;
-                        context.initSegmentIndex(TierData.segmentIndex(tierDataAddr));
-                        int tier = TierData.tier(tierDataAddr);
+                        long tierCountersAreaAddr = tierBaseAddr + segmentHashLookupOuterSize;
+                        context.initSegmentIndex(
+                                TierCountersArea.segmentIndex(tierCountersAreaAddr));
+                        int tier = TierCountersArea.tier(tierCountersAreaAddr);
                         long tierIndex = actualSegments +
                                 (iterationMainSegmentsAreaOrTierBulk << log2NumberOfTiersInBulk) +
                                 tierIndexMinusOne + 1;

@@ -18,7 +18,13 @@ package net.openhft.chronicle.hash.impl;
 
 import static net.openhft.lang.io.NativeBytes.UNSAFE;
 
-public enum TierData {
+/**
+ * The reason why this is not a data value generated class, and offsets are allocated by
+ * hand -- this functionality is accessed concurrently from many threads, and data value generated
+ * classes are stateful - so need to keep an instance in thread local that seems to be overall more
+ * pain than gain.
+ */
+public enum TierCountersArea {
     ;
 
     public static final long NEXT_TIER_INDEX_OFFSET = 0L;
