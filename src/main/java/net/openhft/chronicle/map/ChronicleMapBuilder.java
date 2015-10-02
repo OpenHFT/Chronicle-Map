@@ -112,6 +112,14 @@ public final class ChronicleMapBuilder<K, V> implements
     static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte) 127;
     private static final int DEFAULT_KEY_OR_VALUE_SIZE = 120;
     private static final long DEFAULT_ENTRIES = 1 << 20;
+    /**
+     * If want to increase this number, note {@link OldDeletedEntriesCleanup} uses array to store
+     * all segment indexes -- so it could be current JVM max array size, not Integer.MAX_VALUE
+     * (which is an obvious limitation, as many APIs and internals use int type for representing
+     * segment index).
+     *
+     * Anyway, unlikely anyone ever need more than 1 billion segments.
+     */
     private static final int MAX_SEGMENTS = (1 << 30);
     private static final Logger LOG =
             LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
