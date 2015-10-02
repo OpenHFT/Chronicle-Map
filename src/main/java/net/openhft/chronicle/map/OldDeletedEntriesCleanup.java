@@ -23,17 +23,18 @@ import net.openhft.chronicle.hash.replication.TimeProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<ReplicableEntry> {
     private static final Logger LOG = LoggerFactory.getLogger(OldDeletedEntriesCleanup.class);
 
-    private static final int PRIME_1 = 1_000_003, PRIME_2 = 999_983;
-
     private final ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map;
     private final long timeout;
-    private final int step;
+    private final int[] segmentsPermutation;
+    private final int[] inverseSegmentsPermutation;
     private volatile boolean shutdown;
     private long prevSegment0ScanStart = -1;
     private long removedCompletely;
@@ -41,8 +42,8 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
     public OldDeletedEntriesCleanup(ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map, long timeout) {
         this.map = map;
         this.timeout = timeout;
-        // step primality guarantees perfect segment permutation
-        step = map.segments() != PRIME_1 ? PRIME_1 : PRIME_2;
+        segmentsPermutation = randomPermutation(map.segments());
+        inverseSegmentsPermutation = inversePermutation(segmentsPermutation);
     }
 
     @Override
@@ -81,7 +82,7 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
                 removedCompletely = 0;
                 if (((ReplicatedHashSegmentContext<?, ?>) context)
                         .forEachSegmentReplicableEntryWhile(this)) {
-                    segmentIndex = (segmentIndex + step) % map.segments();
+                    segmentIndex = nextSegmentIndex(segmentIndex);
                     map.globalMutableState.setCurrentCleanupSegmentIndex(segmentIndex);
                 }
             }
@@ -107,5 +108,40 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
     @Override
     public void close() {
         shutdown = true;
+    }
+
+    private int nextSegmentIndex(int segmentIndex) {
+        int permutationIndex = inverseSegmentsPermutation[segmentIndex];
+        int nextPermutationIndex = (permutationIndex + 1) % map.segments();
+        return segmentsPermutation[nextPermutationIndex];
+    }
+
+    private static int[] randomPermutation(int n) {
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) {
+            a[i] = i;
+        }
+        shuffle(a);
+        return a;
+    }
+
+    // Implementing Fisher–Yates shuffle
+    private static void shuffle(int[] a) {
+        Random rnd = ThreadLocalRandom.current();
+        for (int i = a.length - 1; i > 0; i--) {
+            int index = rnd.nextInt(i + 1);
+            int e = a[index];
+            a[index] = a[i];
+            a[i] = e;
+        }
+    }
+
+    private static int[] inversePermutation(int[] permutation) {
+        int n = permutation.length;
+        int[] inverse = new int[n];
+        for (int i = 0; i < n; i++) {
+            inverse[permutation[i]] = i;
+        }
+        return inverse;
     }
 }
