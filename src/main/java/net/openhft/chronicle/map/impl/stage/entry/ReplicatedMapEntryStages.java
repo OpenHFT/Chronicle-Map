@@ -153,17 +153,6 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
         ru.moveChange(oldTierIndex, oldPos, pos);
     }
 
-    private boolean testTimeStampInSensibleRange() {
-        if (mh.m().timeProvider == TimeProvider.SYSTEM) {
-            long currentTime = TimeProvider.SYSTEM.currentTime();
-            assert Math.abs(currentTime - timestamp()) <= 100000000 :
-                    "unrealistic timestamp: " + timestamp();
-            assert Math.abs(currentTime - ru.innerRemoteTimestamp) <= 100000000 :
-                    "unrealistic innerRemoteTimestamp: " + ru.innerRemoteTimestamp;
-        }
-        return true;
-    }
-
     @Override
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
         return super.sizeOfEverythingBeforeValue(keySize, valueSize) + ADDITIONAL_ENTRY_BYTES;

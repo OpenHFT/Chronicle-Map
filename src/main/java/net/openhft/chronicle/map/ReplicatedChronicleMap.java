@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -113,6 +114,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     private boolean bootstrapOnlyLocalEntries;
 
     public long cleanupTimeout;
+    public TimeUnit cleanupTimeoutUnit;
     
     public transient MapRemoteOperations<K, V, R> remoteOperations;
     transient CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> remoteOpContext;
@@ -133,7 +135,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         this.localIdentifier = replication.identifier();
         this.bootstrapOnlyLocalEntries = replication.bootstrapOnlyLocalEntries();
 
-        cleanupTimeout = timeProvider.scale(builder.cleanupTimeout, builder.cleanupTimeoutUnit);
+        cleanupTimeout = builder.cleanupTimeout;
+        cleanupTimeoutUnit = builder.cleanupTimeoutUnit;
 
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");

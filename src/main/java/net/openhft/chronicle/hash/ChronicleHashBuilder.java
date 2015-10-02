@@ -391,7 +391,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * Configures a time provider, used by hash containers, created by this builder, for needs of
      * replication consensus protocol (conflicting data updates resolution).
      *
-     * <p>Default time provider is {@link TimeProvider#SYSTEM}.
+     * <p>Default time provider uses system time ({@link System#currentTimeMillis()}) in
+     * <i>microsecond</i> precision.
      *
      * @param timeProvider a new time provider for replication needs
      * @return this builder back

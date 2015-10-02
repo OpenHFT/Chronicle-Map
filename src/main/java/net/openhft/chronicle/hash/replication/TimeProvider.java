@@ -16,84 +16,55 @@
 
 package net.openhft.chronicle.hash.replication;
 
+import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.set.ChronicleSet;
 
-import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 /**
- * TimeProvider was aims to possibly later provide an optimization to
- * {@link System#currentTime()} on every call to replicated {@link ChronicleMap}
- * or {@link ChronicleSet}.
+ * TimeProvider abstracts time measurement for {@link ChronicleHash} replication needs. {@code
+ * TimeProvider} is specified to be used in a replicated {@code ChronicleHash} via {@link
+ * ChronicleHashBuilder#timeProvider(TimeProvider)} method. The simplest (including default)
+ * providers rely on system time ({@link System#currentTimeMillis()}), but more complex ones could
+ * use some atomic counters, or different sources of time.
+ *
+ * <p>Possible reasons to implement a custom time provider:
+ * <ul>
+ *     <li>To synchronize time between replicated nodes, when precision of the system time is
+ *     not sufficient (it could diverge on remote servers).</li>
+ *     <li>Optimization, if {@code System.currentTimeMillis()} is considered too slow</li>
+ *     <li>If time machinery in replicated {@code ChronicleHash} system is completely hijacked,
+ *     and used to store some {@code long} value with non-time meaning (see {@link
+ *     ReplicableEntry#originTimestamp()}, {@link ReplicableEntry#updateOrigin(byte, long)},
+ *     {@link RemoteOperationContext#remoteTimestamp()}).</li>
+ * </ul>
  *
  * <p>Subclasses should be immutable, because {@link ChronicleHashBuilder} doesn't make defensive
  * copies.
  *
- * @author Rob Austin.
  * @see ChronicleHashBuilder#timeProvider(TimeProvider)
  */
 public abstract class TimeProvider implements Serializable {
     private static final long serialVersionUID = 0L;
 
     /**
-     * Delegates {@link #currentTime()} to {@link System#currentTime()}.
+     * Returns the current time in this provider's context.
      */
-    public static final TimeProvider SYSTEM = new System();
-
     public abstract long currentTime();
 
     /**
-     * {@code timeProvider.scale(System.currentTimeMillis(), TimeUnit.MILLISECONDS)} should
-     * result to {@link #currentTime()}.
+     * Returns system time interval (i. e. wall time interval) between two time values, taken using
+     * this {@code TimeProvider}'s {@link #currentTime()} method, with the highest possible
+     * precision, in the given time units.
+     *
+     * @param earlierTime {@link #currentTime()} result, taken at some moment in the past (earlier)
+     * @param laterTime {@link #currentTime()} result, taken at some moment in the past, but later
+     * than {@code earlierTime} was taken
+     * @param systemTimeIntervalUnit the time units to return system time interval in
+     * @return wall time interval between the specified moments in the given time unit
      */
-    public abstract long scale(long time, TimeUnit unit);
-
-    /**
-     * {@code timeProvider.unscale(timeProvider.currentTime(), TimeUnit.NANOSECONDS)} should result
-     * to something close to {@code System.nanoTime()}.
-     */
-    public abstract long unscale(long time, TimeUnit toUnit);
-
-    private static class System extends TimeProvider {
-        private static final long serialVersionUID = 1L;
-        private static final long SCALE = 1000;
-
-        @Override
-        public long currentTime() {
-            return java.lang.System.currentTimeMillis() * SCALE;
-        }
-
-        @Override
-        public long scale(long time, TimeUnit unit) {
-            return TimeUnit.MILLISECONDS.convert(time, unit) * SCALE;
-        }
-
-        @Override
-        public long unscale(long time, TimeUnit toUnit) {
-            return toUnit.convert(time, TimeUnit.MILLISECONDS) / SCALE;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return o != null && o.getClass() == getClass();
-        }
-
-        @Override
-        public int hashCode() {
-            return getClass().hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return getClass().getSimpleName();
-        }
-
-        private Object readResolve() throws ObjectStreamException {
-            return SYSTEM;
-        }
-    }
+    public abstract long systemTimeIntervalBetween(
+            long earlierTime, long laterTime, TimeUnit systemTimeIntervalUnit);
 
 }

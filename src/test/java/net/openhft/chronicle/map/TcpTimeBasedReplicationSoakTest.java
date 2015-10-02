@@ -52,26 +52,31 @@ public class TcpTimeBasedReplicationSoakTest {
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
         timeProvider = new TimeProvider() {
-
+            List<Long> moments = new ArrayList<>();
             Random rnd = new Random(4);
+
+            {
+                moments.add(System.currentTimeMillis());
+            }
 
             @Override
             public long currentTime() {
 
-                if (rnd.nextBoolean())
+                if (rnd.nextBoolean()) {
+                    moments.add(System.currentTimeMillis());
                     return t++;
-                else
+                } else {
                     return t;
+                }
             }
 
             @Override
-            public long scale(long time, TimeUnit unit) {
-                return TimeUnit.MILLISECONDS.convert(time, unit);
-            }
-
-            @Override
-            public long unscale(long time, TimeUnit toUnit) {
-                return toUnit.convert(time, TimeUnit.MILLISECONDS);
+            public long systemTimeIntervalBetween(
+                    long earlierTime, long laterTime, TimeUnit systemTimeIntervalUnit) {
+                long earlierMillis = moments.get((int) earlierTime);
+                long laterMillis = moments.get((int) laterTime);
+                long intervalMillis = laterMillis - earlierMillis;
+                return systemTimeIntervalUnit.convert(intervalMillis, TimeUnit.MILLISECONDS);
             }
         };
 

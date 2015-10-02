@@ -180,7 +180,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private boolean removeReturnsNull = false;
 
     // replication
-    private TimeProvider timeProvider = TimeProvider.SYSTEM;
+    private TimeProvider timeProvider = MicrosecondPrecisionSystemTimeProvider.instance();
     long cleanupTimeout = 1;
     private boolean cleanupRemovedEntries = true;
     TimeUnit cleanupTimeoutUnit = TimeUnit.SECONDS;
@@ -1724,8 +1724,7 @@ public final class ChronicleMapBuilder<K, V> implements
         map.globalStateLock();
         try {
             if (!map.globalMutableState.isCurrentlyCleanupIterated()) {
-                OldDeletedEntriesCleanup cleanup = new OldDeletedEntriesCleanup(map,
-                        timeProvider.scale(cleanupTimeout, cleanupTimeoutUnit));
+                OldDeletedEntriesCleanup cleanup = new OldDeletedEntriesCleanup(map);
                 NamedThreadFactory threadFactory =
                         new NamedThreadFactory("cleanup thread for map persisted at " + map.file());
                 ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);

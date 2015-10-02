@@ -32,16 +32,14 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
     private static final Logger LOG = LoggerFactory.getLogger(OldDeletedEntriesCleanup.class);
 
     private final ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map;
-    private final long timeout;
     private final int[] segmentsPermutation;
     private final int[] inverseSegmentsPermutation;
     private volatile boolean shutdown;
     private long prevSegment0ScanStart = -1;
     private long removedCompletely;
 
-    public OldDeletedEntriesCleanup(ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map, long timeout) {
+    public OldDeletedEntriesCleanup(ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map) {
         this.map = map;
-        this.timeout = timeout;
         segmentsPermutation = randomPermutation(map.segments());
         inverseSegmentsPermutation = inversePermutation(segmentsPermutation);
     }
@@ -53,11 +51,13 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
             TimeProvider timeProvider = map.timeProvider;
             if (segmentIndex == 0 && prevSegment0ScanStart >= 0) {
                 long currentTime = timeProvider.currentTime();
-                long mapScanTime = currentTime - prevSegment0ScanStart;
-                LOG.debug("Old deleted entries scan time: {}", mapScanTime);
-                if (mapScanTime < timeout) {
-                    long timeToSleep =
-                            timeProvider.unscale(timeout - mapScanTime, TimeUnit.MILLISECONDS);
+                TimeUnit cleanupTimeoutUnit = map.cleanupTimeoutUnit;
+                long mapScanTime = timeProvider.systemTimeIntervalBetween(
+                        prevSegment0ScanStart, currentTime, cleanupTimeoutUnit);
+                LOG.debug("Old deleted entries scan time: {} {}", mapScanTime, cleanupTimeoutUnit);
+                long cleanupTimeout = map.cleanupTimeout;
+                if (mapScanTime < cleanupTimeout) {
+                    long timeToSleep = cleanupTimeoutUnit.toMillis(cleanupTimeout - mapScanTime);
                     if (timeToSleep > 0) {
                         try {
                             Thread.sleep(timeToSleep);
@@ -66,8 +66,7 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
 
                         }
                     } else {
-                        timeToSleep = timeProvider.unscale(timeout - mapScanTime,
-                                TimeUnit.NANOSECONDS);
+                        timeToSleep = cleanupTimeoutUnit.toNanos(cleanupTimeout - mapScanTime);
                         try {
                             Thread.sleep(0, (int) timeToSleep);
                         } catch (InterruptedException e) {
@@ -96,8 +95,9 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
         if (shutdown)
             return false;
         if (e instanceof MapAbsentEntry) {
-            long deleteTimeout = map.timeProvider.currentTime() - e.originTimestamp();
-            if (deleteTimeout > timeout && !e.isChanged()) {
+            long deleteTimeout = map.timeProvider.systemTimeIntervalBetween(
+                    e.originTimestamp(), map.timeProvider.currentTime(), map.cleanupTimeoutUnit);
+            if (deleteTimeout > map.cleanupTimeout && !e.isChanged()) {
                 e.doRemoveCompletely();
                 removedCompletely++;
             }
