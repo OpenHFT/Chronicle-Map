@@ -411,7 +411,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * entry completely from the data structure. This timeout should depend on your distributed
      * system topology, and typical replication latencies, that should be determined experimentally.
      *
-     * <p>Default timeout is 1 second.
+     * <p>Default timeout is 1 minute.
      *
      * @param removedEntryCleanupTimeout timeout, after which stale removed entries could be erased
      *                                   from Chronicle Hash data structure completely
