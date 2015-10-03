@@ -16,16 +16,17 @@
 
 package net.openhft.chronicle.map;
 
-import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
-import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.model.Byteable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.values.IntValue;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -35,10 +36,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author Rob Austin.
- */
-public class TcpReplicationSoakTest {
+public class OldDeletedEntriesCleanupTest {
 
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
@@ -51,12 +49,6 @@ public class TcpReplicationSoakTest {
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
 
-        ChronicleMapBuilder<Integer, CharSequence> builder = ChronicleMapBuilder
-                .of(Integer.class, CharSequence.class)
-                .entries(Builder.SIZE + Builder.SIZE)
-                .actualSegments(1)
-                .averageValue("test" + 1000);
-
         {
             final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(s_port,
                     endpoint).autoReconnectedUponDroppedConnection(true)
@@ -64,12 +56,16 @@ public class TcpReplicationSoakTest {
                     .tcpBufferSize(1024 * 64);
 
 
-            map1 = builder
-                    .instance()
-                    .replicated(SingleChronicleHashReplication.builder()
+            map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .entries(Builder.SIZE + Builder.SIZE)
+                    .removedEntryCleanupTimeout(1, TimeUnit.MILLISECONDS)
+                    .actualSegments(1)
+                    .averageValue("test" + 1000)
+                    .replication(SingleChronicleHashReplication.builder()
                             .tcpTransportAndNetwork(tcpConfig1)
                             .name("map1")
                             .createWithId((byte) 1))
+                    .instance()
                     .name("map1")
                     .create();
         }
@@ -79,14 +75,18 @@ public class TcpReplicationSoakTest {
                     .heartBeatInterval(1, TimeUnit.SECONDS)
                     .tcpBufferSize(1024 * 64);
 
-            map2 = builder
-                    .instance()
-                    .replicated(SingleChronicleHashReplication.builder()
+            map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .entries(Builder.SIZE + Builder.SIZE)
+                    .removedEntryCleanupTimeout(1, TimeUnit.MILLISECONDS)
+                    .averageValue("test" + 1000)
+                    .replication(SingleChronicleHashReplication.builder()
                             .tcpTransportAndNetwork(tcpConfig2)
                             .name("map2")
                             .createWithId((byte) 2))
+                    .instance()
                     .name("map2")
                     .create();
+
         }
         s_port += 2;
     }
@@ -120,64 +120,32 @@ public class TcpReplicationSoakTest {
 
 
     @Test
-    public void testSoakTestWithRandomData() throws IOException, InterruptedException {
+    public void testFloodReplicatedMapWithDeletedEntries() throws InterruptedException {
         try {
-            System.out.print("SoakTesting ");
-            for (int j = 1; j < 2 * Builder.SIZE; j++) {
-                if (j % 1000 == 0)
-                    System.out.print(".");
-                Random rnd = new Random(j);
-                for (int i = 1; i < 10; i++) {
-                    final int select = rnd.nextInt(2);
-                    final ChronicleMap<Integer, CharSequence> map = select > 0 ? map1 : map2;
-
-                    if (rnd.nextBoolean()) {
-                        map.put(rnd.nextInt(Builder.SIZE), "test" + j);
-                    } else {
-                        map.remove(rnd.nextInt(Builder.SIZE));
-                    }
+            Random r = ThreadLocalRandom.current();
+            NavigableSet<Integer> put = new TreeSet<>();
+            for (int i = 0; i < Builder.SIZE * 10; i++) {
+                if (r.nextBoolean() || put.isEmpty()) {
+                    int key = r.nextInt();
+                    map1.put(key, "test");
+                    put.add(key);
+                } else {
+                    Integer key = put.pollFirst();
+                    map1.remove(key);
                 }
+//                Thread.sleep(0, 1000);
             }
-
             System.out.println("\nwaiting till equal");
 
             waitTillEqual(15000);
 
-            if (map1.equals(map2)) {
-                System.out.println("same");
-                return;
-            }
-            MapDifference<Integer, CharSequence> difference = Maps.difference(map1, map2);
-            Map<Integer, CharSequence> onlyOnMap1 = difference.entriesOnlyOnLeft();
-            System.out.println("only on map1:");
-            for (Integer k : onlyOnMap1.keySet()) {
-                printState(map1, k);
-            }
-            Map<Integer, CharSequence> onlyOnMap2 = difference.entriesOnlyOnRight();
-            System.out.println("only on map2:");
-            for (Integer k : onlyOnMap2.keySet()) {
-                printState(map2, k);
-            }
-            if (!map1.equals(map2)) {
-                Assert.assertEquals(difference.toString(), map1, map2);
-            }
+            if (!map1.equals(map2))
+                Assert.assertEquals(Maps.difference(map1, map2).toString(), map1, map2);
         } finally {
             map1.close();
             map2.close();
         }
-
     }
-
-    private void printState(ChronicleMap<Integer, CharSequence> m, Integer k) {
-        try (ExternalMapQueryContext<Integer, CharSequence, ?> q = m.queryContext(k)) {
-            MapEntry<Integer, CharSequence> entry = q.entry();
-            ReplicableEntry re = (ReplicableEntry) entry;
-            System.out.println(k + "=" + entry.value() + ", isChanged=" +
-                    re.isChanged() + " oTs: " + re.originTimestamp() +
-                    " oId: " + re.originIdentifier());
-        }
-    }
-
 
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
 
@@ -208,4 +176,3 @@ public class TcpReplicationSoakTest {
         }
     }
 }
-
