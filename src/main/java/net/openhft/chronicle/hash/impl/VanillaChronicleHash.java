@@ -543,6 +543,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     public long allocateTier(int forSegmentIndex, int tier) {
+        LOG.debug("Allocate tier for segment # {}, tier {}", forSegmentIndex, tier);
         globalMutableStateLock();
         try {
             long tiersInUse = tiersInUse();
