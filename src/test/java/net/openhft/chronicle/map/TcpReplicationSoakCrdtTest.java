@@ -16,7 +16,10 @@
 
 package net.openhft.chronicle.map;
 
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
@@ -24,6 +27,7 @@ import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
 import net.openhft.chronicle.map.replication.MapReplicableEntry;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,6 +37,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.google.common.collect.Maps.difference;
 import static net.openhft.chronicle.map.TcpReplicationSoakCrdtTest.GrowOnlySetValuedMapEntryOperations.growOnlySetValuedMapEntryOperations;
 import static net.openhft.chronicle.map.TcpReplicationSoakCrdtTest.GrowOnlySetValuedMapRemoteOperations.growOnlySetValuedMapRemoteOperations;
 import static net.openhft.lang.MemoryUnit.MEGABYTES;
@@ -118,11 +123,11 @@ public class TcpReplicationSoakCrdtTest {
                     .tcpBufferSize((int) MEGABYTES.toBytes(64));
 
             map1 = builder
-                    .replication(SingleChronicleHashReplication.builder()
+                    .instance()
+                    .replicated(SingleChronicleHashReplication.builder()
                             .tcpTransportAndNetwork(tcpConfig1)
                             .name("map1")
                             .createWithId((byte) 1))
-                    .instance()
                     .name("map1")
                     .create();
         }
@@ -133,11 +138,11 @@ public class TcpReplicationSoakCrdtTest {
                     .tcpBufferSize((int) MEGABYTES.toBytes(64));
 
             map2 = builder
-                    .replication(SingleChronicleHashReplication.builder()
+                    .instance()
+                    .replicated(SingleChronicleHashReplication.builder()
                             .tcpTransportAndNetwork(tcpConfig2)
                             .name("map2")
                             .createWithId((byte) 2))
-                    .instance()
                     .name("map2")
                     .create();
 
@@ -218,13 +223,45 @@ public class TcpReplicationSoakCrdtTest {
 
             waitTillEqual(15000);
 
-            // not map1.equals(map2), the reason is described above
-            assertEquals(map1.entrySet(), map2.entrySet());
+            MapDifference<Integer, Set<Integer>> difference = difference(map1, map2);
+            if (difference.areEqual()) {
+                System.out.println("same");
+                return;
+            }
+
+            Map<Integer, Set<Integer>> onlyOnMap1 = difference.entriesOnlyOnLeft();
+            System.out.println("only on map1:");
+            for (Integer k : onlyOnMap1.keySet()) {
+                printState(map1, k);
+            }
+            Map<Integer, Set<Integer>> onlyOnMap2 = difference.entriesOnlyOnRight();
+            System.out.println("only on map2:");
+            for (Integer k : onlyOnMap2.keySet()) {
+                printState(map2, k);
+            }
+            Set<Integer> entryDifferingKeys = difference.entriesDiffering().keySet();
+            System.out.println("value difference:");
+            for (Integer k : entryDifferingKeys) {
+                printState(map1, k);
+                printState(map2, k);
+            }
+            throw new AssertionError(difference);
         } finally {
             map1.close();
             map2.close();
         }
 
+    }
+
+
+    private void printState(ChronicleMap<Integer, Set<Integer>> m, Integer k) {
+        try (ExternalMapQueryContext<Integer, Set<Integer>, ?> q = m.queryContext(k)) {
+            MapEntry<Integer, Set<Integer>> entry = q.entry();
+            ReplicableEntry re = (ReplicableEntry) entry;
+            System.out.println(k + "=" + entry.value() + ", isChanged=" +
+                    re.isChanged() + " oTs: " + re.originTimestamp() +
+                    " oId: " + re.originIdentifier());
+        }
     }
 
 
@@ -237,8 +274,9 @@ public class TcpReplicationSoakCrdtTest {
         long startTime = System.currentTimeMillis();
         for (int t = 0; t < timeOutMs + 100; t++) {
             // not map1.equals(map2), the reason is described above
-            if (map1.entrySet().equals(map2.entrySet())) {
-                if (map1.equals(map1UnChanged) && map2.equals(map2UnChanged)) {
+            if (difference(map1, map2).areEqual()) {
+                if (difference(map1, map1UnChanged).areEqual() &&
+                        difference(map2, map2UnChanged).areEqual()) {
                     numberOfTimesTheSame++;
                 } else {
                     numberOfTimesTheSame = 0;

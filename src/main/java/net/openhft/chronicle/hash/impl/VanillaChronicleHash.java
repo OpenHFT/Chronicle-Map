@@ -610,10 +610,10 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     public long tierIndexToBaseAddr(long tierIndex) {
         // tiers are 1-counted, to allow tierIndex = 0 to be un-initialized in off-heap memory,
         // convert into 0-based form
-        tierIndex -= 1;
-        if (tierIndex < actualSegments)
-            return segmentBaseAddr((int) tierIndex);
-        return extraTierIndexToBaseAddress(tierIndex);
+        long tierIndexMinusOne = tierIndex - 1;
+        if (tierIndexMinusOne < actualSegments)
+            return segmentBaseAddr((int) tierIndexMinusOne);
+        return extraTierIndexToBaseAddr(tierIndexMinusOne);
     }
 
     public Bytes tierBytes(long tierIndex) {
@@ -643,15 +643,19 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         return tierBulkOffsets.get((int) bulkIndex);
     }
 
-    private long extraTierIndexToBaseAddress(long tierIndex) {
-        long extraTierIndex = tierIndex - actualSegments;
+    private long extraTierIndexToBaseAddr(long tierIndexMinusOne) {
+        long extraTierIndex = tierIndexMinusOne - actualSegments;
         long bulkIndex = extraTierIndex >> log2NumberOfTiersInBulk;
         if (bulkIndex >= tierBulkOffsets.size())
             mapTiers(bulkIndex);
         TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
+        long tierIndexOffsetWithinBulk = extraTierIndex & (numberOfTiersInBulk - 1);
+        return tierAddr(tierBulkData, tierIndexOffsetWithinBulk);
+    }
+
+    protected long tierAddr(TierBulkData tierBulkData, long tierIndexOffsetWithinBulk) {
         return tierBulkData.langBytes.address() + tierBulkData.offset +
-                tierBulkInnerOffsetToTiers +
-                (extraTierIndex & (numberOfTiersInBulk - 1)) * segmentSize;
+                tierBulkInnerOffsetToTiers + tierIndexOffsetWithinBulk * segmentSize;
     }
 
     private void mapTiers(long upToBulkIndex) {

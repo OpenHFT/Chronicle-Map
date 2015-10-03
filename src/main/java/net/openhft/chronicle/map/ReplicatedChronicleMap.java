@@ -599,8 +599,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
         private long combineExtraTier(long tierIndexMinusOne, long pos) {
             long extraTierIndex = tierIndexMinusOne - actualSegments;
-            long tierOffsetWithinBulk = extraTierIndex & ((1L << log2NumberOfTiersInBulk) - 1);
-            return (tierOffsetWithinBulk << segmentIndexShift) | pos;
+            long tierIndexOffsetWithinBulk = extraTierIndex & (numberOfTiersInBulk - 1);
+            return (tierIndexOffsetWithinBulk << segmentIndexShift) | pos;
         }
 
         void raiseChange(long tierIndex, long pos, long timestamp) {
@@ -736,22 +736,29 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 }
 
                 this.position = position;
-                int tierIndexMinusOne = (int) (position >>> segmentIndexShift);
+                int segmentIndexOrTierIndexOffsetWithinBulk =
+                        (int) (position >>> segmentIndexShift);
 
                 try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> context =
                         iterationContext()) {
                     if (iterationMainSegmentsAreaOrTierBulk < 0) {
                         // if main area
-                        context.initSegmentIndex(tierIndexMinusOne);
+                        // segmentIndexOrTierIndexOffsetWithinBulk is segment index
+                        context.initSegmentIndex(segmentIndexOrTierIndexOffsetWithinBulk);
                     } else {
-                        long tierBaseAddr = tierIndexToBaseAddr(tierIndexMinusOne + 1);
+                        // extra tiers
+                        // segmentIndexOrTierIndexOffsetWithinBulk is tier index offset within bulk
+                        TierBulkData tierBulkData =
+                                tierBulkOffsets.get(iterationMainSegmentsAreaOrTierBulk);
+                        long tierBaseAddr = tierAddr(tierBulkData,
+                                segmentIndexOrTierIndexOffsetWithinBulk);
                         long tierCountersAreaAddr = tierBaseAddr + segmentHashLookupOuterSize;
                         context.initSegmentIndex(
                                 TierCountersArea.segmentIndex(tierCountersAreaAddr));
                         int tier = TierCountersArea.tier(tierCountersAreaAddr);
                         long tierIndex = actualSegments +
                                 (iterationMainSegmentsAreaOrTierBulk << log2NumberOfTiersInBulk) +
-                                tierIndexMinusOne + 1;
+                                segmentIndexOrTierIndexOffsetWithinBulk + 1;
                         context.initSegmentTier(tier, tierIndex, tierBaseAddr);
                     }
 

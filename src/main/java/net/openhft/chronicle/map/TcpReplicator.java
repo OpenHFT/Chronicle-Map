@@ -1369,8 +1369,10 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                         }
 
                         // means this is heartbeat
-                        if (state == NOT_SET)
+                        if (state == NOT_SET) {
+                            entriesRead--;
                             continue;
+                        }
                     }
 
                     if (out.remaining() < sizeInBytes) {
