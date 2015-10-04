@@ -18,6 +18,7 @@ package eg;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.map.Builder;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;
@@ -83,13 +84,7 @@ public class TestNesterInterfaceMarshal {
                 //  Assert.assertNotNull(replicatedMap);
             }
 
-
-            int t = 0;
-            for (; t < 5000; t++) {
-                if (map.equals(replicatedMap))
-                    break;
-                Thread.sleep(1);
-            }
+            Builder.waitTillEqual(map, replicatedMap, 5000);
 
             Assert.assertEquals(map, replicatedMap);
             Assert.assertTrue(!replicatedMap.isEmpty());

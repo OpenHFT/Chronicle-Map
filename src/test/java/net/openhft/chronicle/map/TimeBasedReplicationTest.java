@@ -55,7 +55,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
     public void testIgnoreLateAction(BiConsumer<ChronicleMap<CharSequence, CharSequence>,
             ChronicleMap<CharSequence, CharSequence>> action)
-            throws IOException {
+            throws IOException, InterruptedException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
         try (ChronicleMap<CharSequence, CharSequence> map =
@@ -97,7 +97,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     }
 
     @Test
-    public void testIgnoreALatePut() throws IOException {
+    public void testIgnoreALatePut() throws IOException, InterruptedException {
         testIgnoreLateAction((m1, m2) -> {
             m2.put("key-1", "value-2");
             assertEquals("value-2", m2.get("key-1"));
@@ -137,7 +137,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     }
 
     @Test
-    public void testIgnoreALateReplace() throws IOException {
+    public void testIgnoreALateReplace() throws IOException, InterruptedException {
         testIgnoreLateAction((m1, m2) -> {
             // in order to be able to call replace() "locally"
             m2.put("key-1", "dummy");
@@ -147,7 +147,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     }
 
     @Test
-    public void testIgnoreALateReplaceWithValue() throws IOException {
+    public void testIgnoreALateReplaceWithValue() throws IOException, InterruptedException {
         testIgnoreLateAction((m1, m2) -> {
             // in order to be able to call replace() "locally"
             m2.put("key-1", "dummy");
@@ -157,7 +157,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     }
 
     @Test
-    public void testIgnoreALateRemoveWithValue() throws IOException {
+    public void testIgnoreALateRemoveWithValue() throws IOException, InterruptedException {
         testIgnoreLateAction((m1, m2) -> {
             // in order to be able to call remove() "locally"
             m2.put("key-1", "dummy");
@@ -167,7 +167,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     }
 
     @Test
-    public void testIgnoreALateRemove() throws IOException {
+    public void testIgnoreALateRemove() throws IOException, InterruptedException {
         testIgnoreLateAction((m1, m2) -> {
             // in order to be able to call remove() "locally"
             m2.put("key-1", "dummy");
@@ -177,7 +177,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
     }
 
     @Test
-    public void testRemoveFollowedByLatePut() throws IOException {
+    public void testRemoveFollowedByLatePut() throws IOException, InterruptedException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
         try (ChronicleMap<CharSequence, CharSequence> map =

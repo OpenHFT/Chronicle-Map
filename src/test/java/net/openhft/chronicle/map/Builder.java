@@ -25,8 +25,11 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static com.google.common.collect.Maps.difference;
 
 /**
  * @author Rob Austin.
@@ -59,15 +62,23 @@ public class Builder {
         return file;
     }
 
-    public static void waitTillEqual(Map map1, Map map2, int timeOut) {
-        for (int t = 0; t < timeOut; t++) {
-            if (map1.equals(map2))
-                break;
-            try {
+    public static void waitTillEqual(Map map1, Map map2, int timeOutMs) throws InterruptedException {
+        int numberOfTimesTheSame = 0;
+        long startTime = System.currentTimeMillis();
+        for (int t = 0; t < timeOutMs + 100; t++) {
+            // not map1.equals(map2), the reason is described above
+            if (map1.equals(map2)) {
+                numberOfTimesTheSame++;
                 Thread.sleep(1);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                if (numberOfTimesTheSame == 10) {
+                    System.out.println("same");
+                    break;
+                }
+
             }
+            Thread.sleep(1);
+            if (System.currentTimeMillis() - startTime > timeOutMs)
+                break;
         }
     }
 

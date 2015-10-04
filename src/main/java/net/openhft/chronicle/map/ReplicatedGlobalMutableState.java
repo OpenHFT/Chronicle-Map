@@ -16,15 +16,11 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.model.Byteable;
+import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 
-interface ReplicatedChronicleMapGlobalMutableState extends Byteable {
+interface ReplicatedGlobalMutableState extends VanillaGlobalMutableState {
 
     int getCurrentCleanupSegmentIndex();
 
     void setCurrentCleanupSegmentIndex(int currentCleanupSegmentIndex);
-
-    boolean isCurrentlyCleanupIterated();
-
-    void setCurrentlyCleanupIterated(boolean isCurrentlyCleanupIterated);
 }

@@ -30,6 +30,7 @@ import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.lang.io.*;
 import net.openhft.lang.io.serialization.BytesMarshallableSerializer;
+import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.threadlocal.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +67,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     /////////////////////////////////////////////////
     // If the hash was created in the first place, or read from disk
-    public transient boolean created = false;
+    public transient boolean createdOrInMemory = false;
 
     /////////////////////////////////////////////////
     // Key Data model
@@ -122,7 +123,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     /////////////////////////////////////////////////
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
     protected transient BytesStore ms;
-    transient Bytes bytes;
+    protected transient Bytes bytes;
 
     public static class TierBulkData {
         public BytesStore langBytesStore;
@@ -157,13 +158,15 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     protected transient boolean closed = false;
 
+    private transient VanillaGlobalMutableState globalMutableState;
+
     public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder) {
         // Version
         dataFileVersion = BuildVersion.version();
 
-        // Because we are in constructor. If the Hash is not created, deserialization bypasses
-        // the constructor and created = false
-        this.created = true;
+        // Because we are in constructor. If the Hash loaded from persistence file, deserialization
+        // bypasses the constructor and createdOrInMemory = false
+        this.createdOrInMemory = true;
 
         @SuppressWarnings("deprecation")
         ChronicleHashBuilderPrivateAPI<K> privateAPI = builder.privateAPI();
@@ -221,6 +224,14 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         checksumEntries = privateAPI.checksumEntries();
     }
 
+    protected VanillaGlobalMutableState createGlobalMutableState() {
+        return DataValueClasses.newDirectReference(VanillaGlobalMutableState.class);
+    }
+
+    protected VanillaGlobalMutableState globalMutableState() {
+        return globalMutableState;
+    }
+
     private long segmentSize() {
         long ss = segmentHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE +
                 segmentFreeListOuterSize + segmentEntrySpaceOuterSize;
@@ -265,6 +276,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     private void initOwnTransients() {
+        globalMutableState = createGlobalMutableState();
         keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
         keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
         if (segmentHashLookupEntrySize == 4) {
@@ -280,12 +292,16 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     public final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
         this.ms = bytesStore;
         bytes = ms.bytes();
+        globalMutableState.bytes(bytes, headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET);
 
         onHeaderCreated();
 
         segmentHeadersOffset = mapHeaderOuterSize();
         long segmentHeadersSize = actualSegments * segmentHeaderSize;
         segmentsOffset = segmentHeadersOffset + segmentHeadersSize;
+
+        if (createdOrInMemory)
+            zeroOutNewlyMappedChronicleMapBytes();
 
         initTierBulks(bytesStore.size());
     }
@@ -297,22 +313,28 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
                 // file.length() > sizeInBytesWithoutTiers() means there are some tiered segments
                 Math.max(sizeInBytesWithoutTiers(), file.length()),
                 BytesMarshallableSerializer.create()));
-
-        if (created) {
-            zeroOutNewlyMappedChronicleMapBytes();
-        }
     }
 
     /**
      * newly-extended file contents are not guaranteed to be zero
      */
-    private void zeroOutNewlyMappedChronicleMapBytes() {
+    protected void zeroOutNewlyMappedChronicleMapBytes() {
         zeroOutGlobalMutableState();
+        zeroOutSegmentHeaders();
         zeroOutFirstSegmentTiers();
     }
 
     private void zeroOutGlobalMutableState() {
-        bytes.zeroOut(headerSize, headerSize + 64, true);
+        long end = headerSize + globalMutableStateTotalUsedSize();
+        bytes.zeroOut(headerSize, end, true);
+    }
+
+    protected long globalMutableStateTotalUsedSize() {
+        return GLOBAL_MUTABLE_STATE_VALUE_OFFSET + globalMutableState().maxSize();
+    }
+
+    private void zeroOutSegmentHeaders() {
+        bytes.zeroOut(segmentHeadersOffset, segmentsOffset, true);
     }
 
     private void zeroOutFirstSegmentTiers() {
@@ -332,6 +354,8 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         tierBulkOffsets = new ArrayList<>();
         long tierBulkOffset = roundUpRuntimePageSize(sizeInBytesWithoutTiers());
         if (byteStoreSize >= tierBulkOffset + tierBulkSizeInBytes) {
+            assert !createdOrInMemory : "Chronicle Map is allocated in-memory or created " +
+                    "persisted without extra tier bulks";
             TierBulkData firstTierBulkData = new TierBulkData(ms, tierBulkOffset);
             tierBulkOffsets.add(firstTierBulkData);
             while (true) {
@@ -377,7 +401,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     public long mapHeaderInnerSize() {
-        return headerSize + 64; /* tier data cache line */
+        return headerSize + globalMutableStateTotalUsedSize();
     }
 
     @Override
@@ -391,11 +415,11 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     public final long expectedFileSize() {
         long sizeInBytesWithoutTiers = sizeInBytesWithoutTiers();
-        long extraAllocatedTierBulkCount = extraAllocatedTierBulkCount();
-        if (extraAllocatedTierBulkCount == 0)
+        long allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
+        if (allocatedExtraTierBulks == 0)
             return sizeInBytesWithoutTiers;
         return roundUpRuntimePageSize(sizeInBytesWithoutTiers) +
-                extraAllocatedTierBulkCount * tierBulkSizeInBytes;
+                allocatedExtraTierBulks * tierBulkSizeInBytes;
     }
 
     @Override
@@ -495,58 +519,29 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
             AcquisitionStrategies.spinLoopOrFail(2, TimeUnit.SECONDS);
 
     private static final long GLOBAL_MUTABLE_STATE_LOCK_OFFSET = 0L;
-    private static final long EXTRA_ALLOCATED_TIER_BULK_COUNT_OFFSET =
-            GLOBAL_MUTABLE_STATE_LOCK_OFFSET + 8L;
-    private static final long FIRST_FREE_TIER_INDEX_OFFSET =
-            EXTRA_ALLOCATED_TIER_BULK_COUNT_OFFSET + 8L;
-    private static final long TIERS_IN_USE_OFFSET = FIRST_FREE_TIER_INDEX_OFFSET + 8L;
+    private static final long GLOBAL_MUTABLE_STATE_VALUE_OFFSET = 8L;
 
     private long globalMutableStateAddress() {
         return bytes.address() + headerSize;
     }
 
-    private void globalMutableStateLock() {
+    public void globalMutableStateLock() {
         globalMutableStateLockAcquisitionStrategy.acquire(
                 globalMutableStateLockTryAcquireOperation, globalMutableStateLockingStrategy,
                 Access.nativeAccess(), null,
                 globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
     }
 
-    private void globalMutableStateUnlock() {
+    public void globalMutableStateUnlock() {
         globalMutableStateLockingStrategy.unlock(Access.nativeAccess(), null,
                 globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
-    }
-
-    protected long extraAllocatedTierBulkCount() {
-        return bytes.readLong(headerSize + EXTRA_ALLOCATED_TIER_BULK_COUNT_OFFSET);
-    }
-
-    private void extraAllocatedTierBulkCount(long extraAllocatedTierBulkCount) {
-        bytes.writeLong(headerSize + EXTRA_ALLOCATED_TIER_BULK_COUNT_OFFSET,
-                extraAllocatedTierBulkCount);
-    }
-
-    private long firstFreeTierIndex() {
-        return bytes.readLong(headerSize + FIRST_FREE_TIER_INDEX_OFFSET);
-    }
-
-    private void firstFreeTierIndex(long firstFreeTierIndex) {
-        bytes.writeLong(headerSize + FIRST_FREE_TIER_INDEX_OFFSET, firstFreeTierIndex);
-    }
-
-    private long tiersInUse() {
-        return bytes.readLong(headerSize + TIERS_IN_USE_OFFSET);
-    }
-
-    private void tiersInUse(long tiersInUse) {
-        bytes.writeLong(headerSize + TIERS_IN_USE_OFFSET, tiersInUse);
     }
 
     public long allocateTier(int forSegmentIndex, int tier) {
         LOG.debug("Allocate tier for segment # {}, tier {}", forSegmentIndex, tier);
         globalMutableStateLock();
         try {
-            long tiersInUse = tiersInUse();
+            long tiersInUse = globalMutableState.getExtraTiersInUse();
             if (tiersInUse == maxExtraTiers) {
                 throw new IllegalStateException("Attempt to allocate " + (maxExtraTiers + 1) +
                         "th extra segment tier, " + maxExtraTiers + " is maximum.\n" +
@@ -559,23 +554,20 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
                         "bad. This might be a DOS attack");
             }
             while (true) {
-                long firstFreeTierIndex = firstFreeTierIndex();
+                long firstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
                 if (firstFreeTierIndex > 0) {
-                    tiersInUse(tiersInUse + 1);
+                    globalMutableState.setExtraTiersInUse(tiersInUse + 1);
                     Bytes allocatedTierBytes = tierBytes(firstFreeTierIndex);
                     long allocatedTierOffset = tierBytesOffset(firstFreeTierIndex);
                     long tierBaseAddr = allocatedTierBytes.address() + allocatedTierOffset;
                     long tierCountersAreaAddr = tierBaseAddr + segmentHashLookupOuterSize;
                     long nextFreeTierIndex = TierCountersArea.nextTierIndex(tierCountersAreaAddr);
-                    // after reading previously stored nextFreeTierIndex (next linked list entry),
-                    // zero out the whole tier
-                    zeroOutNewlyMappedTier(allocatedTierBytes, allocatedTierOffset);
                     // now, when this tier will be a part of the map, the next tier designates
                     // the next tier in the data structure, should be 0
                     TierCountersArea.nextTierIndex(tierCountersAreaAddr, 0);
                     TierCountersArea.segmentIndex(tierCountersAreaAddr, forSegmentIndex);
                     TierCountersArea.tier(tierCountersAreaAddr, tier);
-                    firstFreeTierIndex(nextFreeTierIndex);
+                    globalMutableState.setFirstFreeTierIndex(nextFreeTierIndex);
                     return firstFreeTierIndex;
                 } else {
                     allocateTierBulk();
@@ -587,25 +579,31 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     private void allocateTierBulk() {
-        long alreadyAllocatedBulks = extraAllocatedTierBulkCount();
+        long alreadyAllocatedBulks = globalMutableState.getAllocatedExtraTierBulks();
         mapTiers(alreadyAllocatedBulks);
-        extraAllocatedTierBulkCount(alreadyAllocatedBulks + 1);
-        linkNewlyAllocatedTiersIntoFreeTiersList(alreadyAllocatedBulks);
-    }
 
-    private void linkNewlyAllocatedTiersIntoFreeTiersList(long alreadyAllocatedBulks) {
-        long firstTierIndex = actualSegments + 1 +
-                alreadyAllocatedBulks * numberOfTiersInBulk;
-        firstFreeTierIndex(firstTierIndex);
+        long firstTierIndex = actualSegments + 1 + alreadyAllocatedBulks * numberOfTiersInBulk;
         Bytes bytes = tierBytes(firstTierIndex);
+        long firstTierOffset = tierBytesOffset(firstTierIndex);
+        if (tierBulkInnerOffsetToTiers > 0) {
+            // These bytes are bit sets in Replicated version
+            bytes.zeroOut(firstTierOffset - tierBulkInnerOffsetToTiers, firstTierOffset, true);
+        }
+
+        // Link newly allocated tiers into free tiers list
         for (long tierIndex = firstTierIndex;
              tierIndex < firstTierIndex + numberOfTiersInBulk - 1; tierIndex++) {
             long tierOffset = tierBytesOffset(tierIndex);
+            zeroOutNewlyMappedTier(bytes, tierOffset);
             long tierCountersAreaOffset = tierOffset + segmentHashLookupOuterSize;
-            // zero out tier counters area, because newly mapped memory could be dirty
-            bytes.zeroOut(tierCountersAreaOffset, tierCountersAreaOffset + TIER_COUNTERS_AREA_SIZE);
             TierCountersArea.nextTierIndex(bytes.address() + tierCountersAreaOffset, tierIndex + 1);
         }
+
+        // TODO HCOLL-397 insert msync here!
+
+        // after we are sure the new bulk is initialized, update the global mutable state
+        globalMutableState.setAllocatedExtraTierBulks(alreadyAllocatedBulks + 1);
+        globalMutableState.setFirstFreeTierIndex(firstTierIndex);
     }
 
     public long tierIndexToBaseAddr(long tierIndex) {
@@ -687,7 +685,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         int firstBulkToMap = tierBulkOffsets.size();
         long bulksToMap = upToBulkIndex + 1 - firstBulkToMap;
         long mapSize = bulksToMap * tierBulkSizeInBytes;
-        DirectStore extraStore = new DirectStore(ms.objectSerializer(), mapSize, true);
+        DirectStore extraStore = new DirectStore(ms.objectSerializer(), mapSize, false);
         appendTierBulkData(upToBulkIndex, firstBulkToMap, extraStore);
     }
 

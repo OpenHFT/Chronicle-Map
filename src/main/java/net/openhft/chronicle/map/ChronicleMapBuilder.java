@@ -1626,7 +1626,7 @@ public final class ChronicleMapBuilder<K, V> implements
 //                throw new IllegalStateException("Windows cannot support this configuration");
 //            }
             BytesStore bytesStore = new DirectStore(JDKObjectSerializer.INSTANCE,
-                    map.sizeInBytesWithoutTiers(), true);
+                    map.sizeInBytesWithoutTiers(), false);
             map.createMappedStoreAndSegments(bytesStore);
             return establishReplication(map, singleHashReplication, channel);
         } catch (IOException e) {
@@ -1727,46 +1727,24 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private void establishCleanupThread(ReplicatedChronicleMap map) {
-        map.globalStateLock();
-        try {
-            if (!map.globalMutableState.isCurrentlyCleanupIterated()) {
-                OldDeletedEntriesCleanup cleanup = new OldDeletedEntriesCleanup(map);
-                NamedThreadFactory threadFactory =
-                        new NamedThreadFactory("cleanup thread for map persisted at " + map.file());
-                ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
-                executor.submit(cleanup);
+        OldDeletedEntriesCleanup cleanup = new OldDeletedEntriesCleanup(map);
+        NamedThreadFactory threadFactory =
+                new NamedThreadFactory("cleanup thread for map persisted at " + map.file());
+        ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
+        executor.submit(cleanup);
 
-                map.addCloseable(cleanup);
-                // WARNING this relies on the fact that ReplicatedChronicleMap closes in the same
-                // order, i. e. OldDeletedEntriesCleanup instance first
-                map.addCloseable(() -> {
-                    executor.shutdown();
-                    try {
-                        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-                    } catch (InterruptedException e) {
-                        LOG.error("", e);
-                    }
-                });
-                map.addCloseable(() -> {
-                    map.globalStateLock();
-                    try {
-                        map.globalMutableState.setCurrentlyCleanupIterated(false);
-                    } finally {
-                        map.globalStateUnlock();
-                    }
-                });
-
-                map.globalStateLock();
-                try {
-                    if (!map.globalMutableState.isCurrentlyCleanupIterated())
-                        map.globalMutableState.setCurrentlyCleanupIterated(true);
-                } finally {
-                    map.globalStateUnlock();
-                }
+        map.addCloseable(cleanup);
+        // WARNING this relies on the fact that ReplicatedChronicleMap closes closeables in the same
+        // order as they are added, i. e. OldDeletedEntriesCleanup instance close()d before the
+        // following closeable
+        map.addCloseable(() -> {
+            executor.shutdown();
+            try {
+                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                LOG.error("", e);
             }
-        } finally {
-            map.globalStateUnlock();
-        }
+        });
     }
 
     private long bufferSize(SerializationBuilder builder, double averageSize) {

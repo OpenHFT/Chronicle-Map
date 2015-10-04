@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.algo.bitset.BitSetFrame;
 import net.openhft.chronicle.algo.bitset.ConcurrentFlatBitSetFrame;
 import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
+import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 import net.openhft.chronicle.hash.impl.TierCountersArea;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
@@ -99,14 +100,11 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
     private static final long LAST_UPDATED_HEADER_SIZE = 128L * 8L;
     private static final int SIZE_OF_BOOTSTRAP_TIME_STAMP = 8;
-    private static final long GLOBAL_MUTABLE_STATE_SIZE = 64; // a cache line
 
     public final TimeProvider timeProvider;
     private final byte localIdentifier;
     transient Set<Closeable> closeables;
     private transient Bytes identifierUpdatedBytes;
-    transient Bytes globalMutableStateBytes;
-    transient ReplicatedChronicleMapGlobalMutableState globalMutableState;
 
     private transient ATSDirectBitSet modIterSet;
     private transient AtomicReferenceArray<ModificationIterator> modificationIterators;
@@ -141,6 +139,16 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
         }
+    }
+
+    @Override
+    protected VanillaGlobalMutableState createGlobalMutableState() {
+        return DataValueClasses.newDirectReference(ReplicatedGlobalMutableState.class);
+    }
+
+    @Override
+    protected ReplicatedGlobalMutableState globalMutableState() {
+        return (ReplicatedGlobalMutableState) super.globalMutableState();
     }
 
     private int assignedModIterBitSetSizeInBytes() {
@@ -197,9 +205,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
     @Override
     public long mapHeaderInnerSize() {
-        return super.mapHeaderInnerSize() + GLOBAL_MUTABLE_STATE_SIZE + LAST_UPDATED_HEADER_SIZE +
-                (modIterBitSetSizeInBytes() * (128 + RESERVED_MOD_ITER)) +
-                assignedModIterBitSetSizeInBytes();
+        return super.mapHeaderInnerSize() + LAST_UPDATED_HEADER_SIZE +
+                assignedModIterBitSetSizeInBytes() +
+                (modIterBitSetSizeInBytes() * (128 + RESERVED_MOD_ITER));
     }
 
     public void setLastModificationTime(byte identifier, long timestamp) {
@@ -224,12 +232,6 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     public void onHeaderCreated() {
         long offset = super.mapHeaderInnerSize();
 
-        globalMutableStateBytes = ms.bytes(offset, GLOBAL_MUTABLE_STATE_SIZE);
-        globalMutableState =
-                DataValueClasses.newDirectReference(ReplicatedChronicleMapGlobalMutableState.class);
-        globalMutableState.bytes(globalMutableStateBytes, 8);
-        offset += GLOBAL_MUTABLE_STATE_SIZE;
-
         identifierUpdatedBytes = ms.bytes(offset, LAST_UPDATED_HEADER_SIZE);
         offset += LAST_UPDATED_HEADER_SIZE;
 
@@ -239,16 +241,10 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         modIterSet = new ATSDirectBitSet(modDelBytes);
     }
 
-    void globalStateLock() {
-        try {
-            globalMutableStateBytes.busyLockLong(0);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    void globalStateUnlock() {
-        globalMutableStateBytes.unlockLong(0);
+    @Override
+    protected void zeroOutNewlyMappedChronicleMapBytes() {
+        super.zeroOutNewlyMappedChronicleMapBytes();
+        bytes.zeroOut(super.mapHeaderInnerSize(), this.mapHeaderInnerSize(), true);
     }
 
     void addCloseable(Closeable closeable) {
@@ -701,7 +697,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                     }
                 }
                 // for each allocated tier bulk
-                while (iterationMainSegmentsAreaOrTierBulk < extraAllocatedTierBulkCount()) {
+                while (iterationMainSegmentsAreaOrTierBulk <
+                        globalMutableState().getAllocatedExtraTierBulks()) {
                     VanillaChronicleHash.TierBulkData tierBulkData =
                             tierBulkOffsets.get(iterationMainSegmentsAreaOrTierBulk);
                     tierBulkBitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +

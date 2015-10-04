@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
 public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<ReplicableEntry> {
@@ -35,6 +36,7 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
     private final int[] segmentsPermutation;
     private final int[] inverseSegmentsPermutation;
     private volatile boolean shutdown;
+    private volatile Thread runnerThread;
     private long prevSegment0ScanStart = -1;
     private long removedCompletely;
 
@@ -46,10 +48,28 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
 
     @Override
     public void run() {
+        runnerThread = Thread.currentThread();
         while (!shutdown) {
-            int segmentIndex = map.globalMutableState.getCurrentCleanupSegmentIndex();
+            int segmentIndex = map.globalMutableState().getCurrentCleanupSegmentIndex();
+            int nextSegmentIndex;
             TimeProvider timeProvider = map.timeProvider;
-            if (segmentIndex == 0 && prevSegment0ScanStart >= 0) {
+            try (MapSegmentContext<?, ?, ?> context = map.segmentContext(segmentIndex)) {
+                if (segmentIndex == 0)
+                    prevSegment0ScanStart = timeProvider.currentTime();
+                removedCompletely = 0;
+                if (((ReplicatedHashSegmentContext<?, ?>) context)
+                        .forEachSegmentReplicableEntryWhile(this)) {
+                    LOG.debug("Removed {} old deleted entries in the segment {}",
+                            removedCompletely, segmentIndex);
+                    nextSegmentIndex = nextSegmentIndex(segmentIndex);
+                    map.globalMutableState().setCurrentCleanupSegmentIndex(nextSegmentIndex);
+                } else {
+                    // forEachWhile returned false => interrupted => shutdown = true
+                    assert shutdown;
+                    return;
+                }
+            }
+            if (nextSegmentIndex == 0) {
                 long currentTime = timeProvider.currentTime();
                 TimeUnit cleanupTimeoutUnit = map.cleanupTimeoutUnit;
                 long mapScanTime = timeProvider.systemTimeIntervalBetween(
@@ -59,34 +79,12 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
                 if (mapScanTime < cleanupTimeout) {
                     long timeToSleep = cleanupTimeoutUnit.toMillis(cleanupTimeout - mapScanTime);
                     if (timeToSleep > 0) {
-                        try {
-                            Thread.sleep(timeToSleep);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-
-                        }
+                        sleepMillis(timeToSleep);
                     } else {
-                        timeToSleep = cleanupTimeoutUnit.toNanos(cleanupTimeout - mapScanTime);
-                        try {
-                            Thread.sleep(0, (int) timeToSleep);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
+                        sleepNanos(cleanupTimeoutUnit.toNanos(cleanupTimeout - mapScanTime));
                     }
                 }
             }
-            try (MapSegmentContext<?, ?, ?> context = map.segmentContext(segmentIndex)) {
-                if (segmentIndex == 0)
-                    prevSegment0ScanStart = timeProvider.currentTime();
-                removedCompletely = 0;
-                if (((ReplicatedHashSegmentContext<?, ?>) context)
-                        .forEachSegmentReplicableEntryWhile(this)) {
-                    segmentIndex = nextSegmentIndex(segmentIndex);
-                    map.globalMutableState.setCurrentCleanupSegmentIndex(segmentIndex);
-                }
-            }
-            LOG.debug("Removed {} old deleted entries in the segment {}",
-                    removedCompletely, segmentIndex);
         }
     }
 
@@ -105,9 +103,26 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
         return true;
     }
 
+    private void sleepMillis(long millis) {
+        long deadline = System.currentTimeMillis() + millis;
+        while (System.currentTimeMillis() < deadline && !shutdown)
+            LockSupport.parkUntil(this, deadline);
+    }
+
+    private void sleepNanos(long nanos) {
+        long deadline = System.nanoTime() + nanos;
+        while (System.nanoTime() < deadline && !shutdown)
+            LockSupport.parkNanos(this, deadline);
+    }
+
     @Override
     public void close() {
         shutdown = true;
+        if (runnerThread != null &&
+                // this means blocked in sleepMillis() or sleepNanos()
+                LockSupport.getBlocker(runnerThread) == this) {
+            runnerThread.interrupt(); // unblock
+        }
     }
 
     private int nextSegmentIndex(int segmentIndex) {

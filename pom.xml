@@ -230,6 +230,7 @@
                     </excludePackageNames>
                     <sourceFileExcludes>
                         <exclude>net/openhft/chronicle/hash/ChronicleHashBuilderPrivateAPI.java</exclude>
+                        <exclude>net/openhft/chronicle/hash/VanillaGlobalMutableState.java</exclude>
                         <exclude>net/openhft/chronicle/hash/Segment.java</exclude>
                         <exclude>net/openhft/chronicle/map/ConstantValueProvider.java</exclude>
                         <exclude>net/openhft/chronicle/map/VanillaChronicleMap.java</exclude>
