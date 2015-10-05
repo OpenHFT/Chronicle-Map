@@ -20,6 +20,7 @@ import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Maths;
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.serialization.BytesReader;
@@ -256,15 +257,14 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         // TODO review heuristics
         int tiersInBulk = actualSegments / 8;
         tiersInBulk = Maths.nextPower2(tiersInBulk, 1);
-        while (segmentSize * tiersInBulk < UNSAFE.pageSize()) {
+        while (segmentSize * tiersInBulk < OS.mapAlignment()) {
             tiersInBulk *= 2;
         }
         return tiersInBulk;
     }
 
     private long computeTierBulkBytesSize() {
-        return roundUpRuntimePageSize(tierBulkInnerOffsetToTiers +
-                numberOfTiersInBulk * segmentSize);
+        return OS.mapAlign(tierBulkInnerOffsetToTiers + numberOfTiersInBulk * segmentSize);
     }
 
     protected long computeTierBulkInnerOffsetToTiers(long numberOfTiersInBulk) {
@@ -352,7 +352,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     private void initTierBulks(long byteStoreSize) {
         tierBulkOffsets = new ArrayList<>();
-        long tierBulkOffset = roundUpRuntimePageSize(sizeInBytesWithoutTiers());
+        long tierBulkOffset = OS.mapAlign(sizeInBytesWithoutTiers());
         if (byteStoreSize >= tierBulkOffset + tierBulkSizeInBytes) {
             assert !createdOrInMemory : "Chronicle Map is allocated in-memory or created " +
                     "persisted without extra tier bulks";
@@ -418,8 +418,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         long allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
         if (allocatedExtraTierBulks == 0)
             return sizeInBytesWithoutTiers;
-        return roundUpRuntimePageSize(sizeInBytesWithoutTiers) +
-                allocatedExtraTierBulks * tierBulkSizeInBytes;
+        return OS.mapAlign(sizeInBytesWithoutTiers) + allocatedExtraTierBulks * tierBulkSizeInBytes;
     }
 
     @Override
@@ -674,7 +673,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         int firstBulkToMap = tierBulkOffsets.size();
         long bulksToMap = upToBulkIndex + 1 - firstBulkToMap;
         long mapSize = bulksToMap * tierBulkSizeInBytes;
-        long mapStart = roundUpRuntimePageSize(sizeInBytesWithoutTiers()) +
+        long mapStart = OS.mapAlign(sizeInBytesWithoutTiers()) +
                 firstBulkToMap * tierBulkSizeInBytes;
         MappedStore extraStore = new MappedStore(file(), FileChannel.MapMode.READ_WRITE,
                 mapStart, mapSize, ms.objectSerializer());
