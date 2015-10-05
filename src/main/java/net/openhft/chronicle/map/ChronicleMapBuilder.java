@@ -236,13 +236,6 @@ public final class ChronicleMapBuilder<K, V> implements
         return new ChronicleMapBuilder<>(keyClass, valueClass);
     }
 
-    private static long roundUpMapHeaderSize(long headerSize) {
-        long roundUp = (headerSize + 127L) & ~127L;
-        if (roundUp - headerSize < 64)
-            roundUp += 128;
-        return roundUp;
-    }
-
     private static void checkSegments(long segments) {
         if (segments <= 0) {
             throw new IllegalArgumentException("segments should be positive, " +
@@ -1533,18 +1526,22 @@ public final class ChronicleMapBuilder<K, V> implements
                     VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map =
                             (VanillaChronicleMap<K, ?, ?, V, ?, ?, ?>) m;
                     map.initTransientsFromBuilder(this);
-                    map.headerSize = roundUpMapHeaderSize(fis.getChannel().position());
+                    map.initBeforeMapping(fis.getChannel());
                     map.createMappedStoreAndSegments(file);
                     long expectedFileLength = map.expectedFileSize();
                     if (expectedFileLength != fileLength) {
-                        throw new IOException("The file " + file + "the map is serialized from " +
+                        throw new IOException("The file " + file + " the map is serialized from " +
                                 "has unexpected length " + fileLength + ", probably corrupted. " +
                                 "Expected length is " + expectedFileLength);
                     }
                     // This is needed to property initialize key and value serialization builders,
                     // which are later used in replication
                     preMapConstruction();
-                    return establishReplication(map, singleHashReplication, channel);
+                    establishReplication(map, singleHashReplication, channel);
+                    fis.getChannel().force(true);
+                    // TODO according to Self Boostrapping Data spec, should write "init complete"
+                    // byte *after* the above force instruction, see HCOLL-396
+                    return map;
                 }
             }
             if (file.createNewFile() || fileLength == 0) {
@@ -1569,7 +1566,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 oos.writeObject(map);
             }
             oos.flush();
-            map.headerSize = roundUpMapHeaderSize(fos.getChannel().position());
+            map.initBeforeMapping(fos.getChannel());
             map.createMappedStoreAndSegments(file);
         }
 

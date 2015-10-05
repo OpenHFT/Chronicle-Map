@@ -40,7 +40,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -61,6 +64,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     private static final long serialVersionUID = 0L;
 
     public static final long TIER_COUNTERS_AREA_SIZE = 64;
+    public static final long RESERVED_GLOBAL_MUTABLE_STATE_BYTES = 1024;
 
     /////////////////////////////////////////////////
     // Version
@@ -289,6 +293,26 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         }
     }
 
+    public final void initBeforeMapping(FileChannel ch) throws IOException {
+        headerSize = roundUpMapHeaderSize(ch.position());
+        if (!createdOrInMemory) {
+            // This block is for reading segmentHeadersOffset before main mapping
+            // After the mapping globalMutableState value's bytes are reassigned
+            ch.position(headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET);
+            ByteBuffer globalMutableStateBuffer = ByteBuffer.allocate(globalMutableState.maxSize());
+            ch.read(globalMutableStateBuffer);
+            globalMutableStateBuffer.flip();
+            globalMutableState.bytes(new ByteBufferBytes(globalMutableStateBuffer), 0);
+        }
+    }
+
+    private static long roundUpMapHeaderSize(long headerSize) {
+        long roundUp = (headerSize + 127L) & ~127L;
+        if (roundUp - headerSize < 64)
+            roundUp += 128;
+        return roundUp;
+    }
+
     public final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
         this.ms = bytesStore;
         bytes = ms.bytes();
@@ -296,12 +320,16 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
         onHeaderCreated();
 
-        segmentHeadersOffset = mapHeaderOuterSize();
+        segmentHeadersOffset = segmentHeadersOffset();
+
         long segmentHeadersSize = actualSegments * segmentHeaderSize;
         segmentsOffset = segmentHeadersOffset + segmentHeadersSize;
 
-        if (createdOrInMemory)
+        if (createdOrInMemory) {
             zeroOutNewlyMappedChronicleMapBytes();
+            // write the segment headers offset after zeroing out
+            globalMutableState.setSegmentHeadersOffset(segmentHeadersOffset);
+        }
 
         initTierBulks(bytesStore.size());
     }
@@ -389,15 +417,15 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         return BuildVersion.version();
     }
 
-    private long mapHeaderOuterSize() {
-        // Align segment headers on page boundary to minimize number of pages that
-        // segment headers span
-        return roundUpRuntimePageSize(mapHeaderInnerSize());
-    }
-
-    private static long roundUpRuntimePageSize(long size) {
-        long pageMask = UNSAFE.pageSize() - 1;
-        return (size + pageMask) & ~pageMask;
+    private long segmentHeadersOffset() {
+        if (createdOrInMemory) {
+            // Align segment headers on page boundary to minimize number of pages that
+            // segment headers span
+            long reserved = RESERVED_GLOBAL_MUTABLE_STATE_BYTES - globalMutableStateTotalUsedSize();
+            return OS.pageAlign(mapHeaderInnerSize() + reserved);
+        } else {
+            return globalMutableState.getSegmentHeadersOffset();
+        }
     }
 
     public long mapHeaderInnerSize() {
@@ -410,7 +438,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     public final long sizeInBytesWithoutTiers() {
-        return mapHeaderOuterSize() + actualSegments * (segmentHeaderSize + segmentSize);
+        return segmentHeadersOffset() + actualSegments * (segmentHeaderSize + segmentSize);
     }
 
     public final long expectedFileSize() {

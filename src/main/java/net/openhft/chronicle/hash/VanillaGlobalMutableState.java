@@ -35,4 +35,7 @@ public interface VanillaGlobalMutableState extends Byteable {
 
     long getExtraTiersInUse();
     void setExtraTiersInUse(long extraTiersInUse);
+
+    long getSegmentHeadersOffset();
+    void setSegmentHeadersOffset(long segmentHeadersOffset);
 }
