@@ -443,7 +443,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     public final long expectedFileSize() {
         long sizeInBytesWithoutTiers = sizeInBytesWithoutTiers();
-        long allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
+        int allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
         if (allocatedExtraTierBulks == 0)
             return sizeInBytesWithoutTiers;
         return OS.mapAlign(sizeInBytesWithoutTiers) + allocatedExtraTierBulks * tierBulkSizeInBytes;
@@ -606,10 +606,12 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     private void allocateTierBulk() {
-        long alreadyAllocatedBulks = globalMutableState.getAllocatedExtraTierBulks();
-        mapTiers(alreadyAllocatedBulks);
+        int allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
+        mapTiers(allocatedExtraTierBulks);
 
-        long firstTierIndex = actualSegments + 1 + alreadyAllocatedBulks * numberOfTiersInBulk;
+        // integer overflow aware
+        long firstTierIndex = actualSegments + 1L +
+                ((long) allocatedExtraTierBulks) * numberOfTiersInBulk;
         Bytes bytes = tierBytes(firstTierIndex);
         long firstTierOffset = tierBytesOffset(firstTierIndex);
         if (tierBulkInnerOffsetToTiers > 0) {
@@ -629,7 +631,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         // TODO HCOLL-397 insert msync here!
 
         // after we are sure the new bulk is initialized, update the global mutable state
-        globalMutableState.setAllocatedExtraTierBulks(alreadyAllocatedBulks + 1);
+        globalMutableState.setAllocatedExtraTierBulks(allocatedExtraTierBulks + 1);
         globalMutableState.setFirstFreeTierIndex(firstTierIndex);
     }
 
@@ -643,35 +645,35 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     public Bytes tierBytes(long tierIndex) {
-        tierIndex -= 1;
-        if (tierIndex < actualSegments)
+        long tierIndexMinusOne = tierIndex - 1;
+        if (tierIndexMinusOne < actualSegments)
             return bytes;
-        return tierBulkData(tierIndex).langBytes;
+        return tierBulkData(tierIndexMinusOne).langBytes;
     }
 
     public long tierBytesOffset(long tierIndex) {
-        tierIndex -= 1;
-        if (tierIndex < actualSegments)
-            return msBytesSegmentOffset(tierIndex);
-        long extraTierIndex = tierIndex - actualSegments;
-        long bulkIndex = extraTierIndex >> log2NumberOfTiersInBulk;
+        long tierIndexMinusOne = tierIndex - 1;
+        if (tierIndexMinusOne < actualSegments)
+            return msBytesSegmentOffset(tierIndexMinusOne);
+        long extraTierIndex = tierIndexMinusOne - actualSegments;
+        int bulkIndex = (int) (extraTierIndex >> log2NumberOfTiersInBulk);
         if (bulkIndex >= tierBulkOffsets.size())
             mapTiers(bulkIndex);
-        return tierBulkOffsets.get((int) bulkIndex).offset + tierBulkInnerOffsetToTiers +
+        return tierBulkOffsets.get(bulkIndex).offset + tierBulkInnerOffsetToTiers +
                 (extraTierIndex & (numberOfTiersInBulk - 1)) * segmentSize;
     }
 
-    private TierBulkData tierBulkData(long tierIndex) {
-        long extraTierIndex = tierIndex - actualSegments;
-        long bulkIndex = extraTierIndex >> log2NumberOfTiersInBulk;
+    private TierBulkData tierBulkData(long tierIndexMinusOne) {
+        long extraTierIndex = tierIndexMinusOne - actualSegments;
+        int bulkIndex = (int) (extraTierIndex >> log2NumberOfTiersInBulk);
         if (bulkIndex >= tierBulkOffsets.size())
             mapTiers(bulkIndex);
-        return tierBulkOffsets.get((int) bulkIndex);
+        return tierBulkOffsets.get(bulkIndex);
     }
 
     private long extraTierIndexToBaseAddr(long tierIndexMinusOne) {
         long extraTierIndex = tierIndexMinusOne - actualSegments;
-        long bulkIndex = extraTierIndex >> log2NumberOfTiersInBulk;
+        int bulkIndex = (int) (extraTierIndex >> log2NumberOfTiersInBulk);
         if (bulkIndex >= tierBulkOffsets.size())
             mapTiers(bulkIndex);
         TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
@@ -684,7 +686,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
                 tierBulkInnerOffsetToTiers + tierIndexOffsetWithinBulk * segmentSize;
     }
 
-    private void mapTiers(long upToBulkIndex) {
+    private void mapTiers(int upToBulkIndex) {
         if (ms instanceof MappedStore) {
             try {
                 mapTiersMapped(upToBulkIndex);
@@ -697,9 +699,9 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         }
     }
 
-    private void mapTiersMapped(long upToBulkIndex) throws IOException {
+    private void mapTiersMapped(int upToBulkIndex) throws IOException {
         int firstBulkToMap = tierBulkOffsets.size();
-        long bulksToMap = upToBulkIndex + 1 - firstBulkToMap;
+        int bulksToMap = upToBulkIndex + 1 - firstBulkToMap;
         long mapSize = bulksToMap * tierBulkSizeInBytes;
         long mapStart = OS.mapAlign(sizeInBytesWithoutTiers()) +
                 firstBulkToMap * tierBulkSizeInBytes;
@@ -708,19 +710,19 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         appendTierBulkData(upToBulkIndex, firstBulkToMap, extraStore);
     }
 
-    private void allocateTiers(long upToBulkIndex) {
+    private void allocateTiers(int upToBulkIndex) {
         int firstBulkToMap = tierBulkOffsets.size();
-        long bulksToMap = upToBulkIndex + 1 - firstBulkToMap;
+        int bulksToMap = upToBulkIndex + 1 - firstBulkToMap;
         long mapSize = bulksToMap * tierBulkSizeInBytes;
         DirectStore extraStore = new DirectStore(ms.objectSerializer(), mapSize, false);
         appendTierBulkData(upToBulkIndex, firstBulkToMap, extraStore);
     }
 
-    private void appendTierBulkData(long upToBulkIndex, int firstBulkToMap, BytesStore extraStore) {
+    private void appendTierBulkData(int upToBulkIndex, int firstBulkToMap, BytesStore extraStore) {
         long offset = 0;
         TierBulkData firstMappedTierBulkData = new TierBulkData(extraStore, offset);
         tierBulkOffsets.add(firstMappedTierBulkData);
-        for (long i = firstBulkToMap + 1; i <= upToBulkIndex; i++) {
+        for (int i = firstBulkToMap + 1; i <= upToBulkIndex; i++) {
             tierBulkOffsets.add(new TierBulkData(firstMappedTierBulkData,
                     offset += tierBulkSizeInBytes));
         }

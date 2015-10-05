@@ -25,12 +25,10 @@ import net.openhft.lang.model.Byteable;
  */
 public interface VanillaGlobalMutableState extends Byteable {
 
-    long getAllocatedExtraTierBulks();
-
-    void setAllocatedExtraTierBulks(long allocatedExtraTierBulks);
+    int getAllocatedExtraTierBulks();
+    void setAllocatedExtraTierBulks(int allocatedExtraTierBulks);
 
     long getFirstFreeTierIndex();
-
     void setFirstFreeTierIndex(long firstFreeTierIndex);
 
     long getExtraTiersInUse();
