@@ -303,11 +303,8 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     }
 
     public QueryContextInterface<K, V, R> mapContext() {
-        CompiledMapQueryContext<K, KI, MKI, V, VI, MVI, R> q =
-                q().getContext(CompiledMapQueryContext.class,
-                        ci -> new CompiledMapQueryContext<>(ci, VanillaChronicleMap.this));
-        q.initUsed(true);
-        return q;
+        return q().getContext(CompiledMapQueryContext.class,
+                ci -> new CompiledMapQueryContext<>(ci, this));
     }
 
     private ChainingInterface i() {
@@ -321,11 +318,8 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     }
 
     public IterationContextInterface<K, V, ?> iterationContext() {
-        CompiledMapIterationContext<K, KI, MKI, V, VI, MVI, R> c =
-                i().getContext(CompiledMapIterationContext.class,
-                        ci -> new CompiledMapIterationContext<>(ci, VanillaChronicleMap.this));
-        c.initUsed(true);
-        return c;
+        return i().getContext(CompiledMapIterationContext.class,
+                ci -> new CompiledMapIterationContext<>(ci, this));
     }
 
     @Override

@@ -459,12 +459,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
     @Override
     public CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> mapContext() {
-        CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> q =
-                q().getContext(CompiledReplicatedMapQueryContext.class,
-                        ci -> new CompiledReplicatedMapQueryContext<>(ci,
-                                ReplicatedChronicleMap.this));
-        q.initUsed(true);
-        return q;
+        return q().getContext(CompiledReplicatedMapQueryContext.class,
+                ci -> new CompiledReplicatedMapQueryContext<>(ci, this));
     }
 
     /**
@@ -514,12 +510,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     }
 
     public CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> iterationContext() {
-        CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> c =
-                i().getContext(CompiledReplicatedMapIterationContext.class,
-                        ci -> new CompiledReplicatedMapIterationContext<>(ci,
-                                ReplicatedChronicleMap.this));
-        c.initUsed(true);
-        return c;
+        return i().getContext(CompiledReplicatedMapIterationContext.class,
+                ci -> new CompiledReplicatedMapIterationContext<>(ci, this));
     }
 
     /**

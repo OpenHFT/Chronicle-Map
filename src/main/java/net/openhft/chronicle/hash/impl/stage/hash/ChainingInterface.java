@@ -23,8 +23,10 @@ public interface ChainingInterface {
 
     List<ChainingInterface> getContextChain();
 
+    void initUsed(boolean used);
+
     boolean usedInit();
 
-    <T> T getContext(
+    <T extends ChainingInterface> T getContext(
             Class<? extends T> contextClass, Function<ChainingInterface, T> createChaining);
 }

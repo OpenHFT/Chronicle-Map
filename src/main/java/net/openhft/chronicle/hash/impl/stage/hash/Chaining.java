@@ -57,7 +57,8 @@ public class Chaining implements ChainingInterface {
     public boolean usedInit() {
         return used;
     }
-    
+
+    @Override
     public void initUsed(boolean used) {
         this.used = used;
     }
@@ -67,10 +68,11 @@ public class Chaining implements ChainingInterface {
     }
 
     @Override
-    public <T> T getContext(
+    public <T extends ChainingInterface> T getContext(
             Class<? extends T> contextClass, Function<ChainingInterface, T> createChaining) {
         for (ChainingInterface context : contextChain) {
             if (context.getClass() == contextClass && !context.usedInit()) {
+                context.initUsed(true);
                 //noinspection unchecked
                 return (T) context;
             }
@@ -85,6 +87,8 @@ public class Chaining implements ChainingInterface {
                     "stack trace on https://github.com/OpenHFT/Chronicle-Map/issues");
         }
         //noinspection unchecked
-        return (T) createChaining.apply(this);
+        T context = createChaining.apply(this);
+        context.initUsed(true);
+        return context;
     }
 }
