@@ -44,8 +44,8 @@ public class SearchAllocatedChunks extends AllocatedChunks {
         // clears out searchState, and it performs the search again, but in inconsistent state
         incrementSegmentEntriesIfNeeded();
         int tierBeforeAllocation = s.segmentTier;
-        long pos = s.alloc(allocatedChunks);
+        long pos = alloc.alloc(allocatedChunks);
         entry.writeNewEntry(pos, ks.inputKey);
-        return s.segmentTier > tierBeforeAllocation;
+        return s.segmentTier != tierBeforeAllocation;
     }
 }

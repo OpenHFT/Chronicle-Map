@@ -70,6 +70,8 @@ import net.openhft.sg.Staged;
 
         HashInputBytes.class,
         MapInputBytesValues.class,
+
+        QueryAlloc.class,
 },
 nested = {
         ReadLock.class,

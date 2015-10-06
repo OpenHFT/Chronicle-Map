@@ -62,12 +62,6 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
 
     abstract void closeHashLookupEntry();
 
-    private void goToLastTier() {
-        while (s.hasNextTier()) {
-            s.nextTier();
-        }
-    }
-
     @Override
     public boolean forEachSegmentEntryWhile(Predicate<? super E> action) {
         s.innerUpdateLock.lock();
@@ -75,7 +69,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
             long size = s.size();
             if (size == 0)
                 return true;
-            goToLastTier();
+            s.goToLastTier();
             while (true) {
                 int currentTier = s.segmentTier;
                 long currentTierBaseAddr = s.segmentBaseAddr;

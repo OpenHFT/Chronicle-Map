@@ -22,6 +22,7 @@ import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
 import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.OwnerThreadHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
+import net.openhft.chronicle.hash.impl.stage.iter.IterationAlloc;
 import net.openhft.chronicle.hash.impl.stage.iter.IterationKeyHashCode;
 import net.openhft.chronicle.hash.impl.stage.iter.IterationSegmentStages;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
@@ -61,6 +62,8 @@ import net.openhft.sg.Staged;
         MapEntryStages.class,
         ValueBytesInterop.class,
         MapEntryOperationsDelegation.class,
+
+        IterationAlloc.class,
 }, nested = {
         ReadLock.class,
         UpdateLock.class,

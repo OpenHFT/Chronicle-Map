@@ -26,6 +26,7 @@ public class AllocatedChunks {
     @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
     @StageRef public SegmentStages s;
     @StageRef public HashEntryStages<?> entry;
+    @StageRef public Alloc alloc;
 
     public int allocatedChunks = 0;
     
@@ -50,8 +51,8 @@ public class AllocatedChunks {
         long oldKeySizeAddr = oldSegmentTierBaseAddr + entry.keySizeOffset;
         long oldKeyAddr = oldSegmentTierBaseAddr + entry.keyOffset;
         int tierBeforeAllocation = s.segmentTier;
-        long pos = s.alloc(allocatedChunks);
+        long pos = alloc.alloc(allocatedChunks);
         entry.copyExistingEntry(pos, bytesToCopy, oldKeyAddr, oldKeySizeAddr);
-        return s.segmentTier > tierBeforeAllocation;
+        return s.segmentTier != tierBeforeAllocation;
     }
 }

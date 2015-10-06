@@ -524,6 +524,18 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
             throw new IllegalStateException("first tier doesn't have previous");
         initSegmentTier(segmentTier - 1, prevTierIndex());
     }
+
+    public void goToLastTier() {
+        while (hasNextTier()) {
+            nextTier();
+        }
+    }
+
+    public void goToFirstTier() {
+        while (segmentTier != 0) {
+            prevTier();
+        }
+    }
     
     @Stage("Segment") public final PublicMultiStoreBytes segmentBytes = new PublicMultiStoreBytes();
     @Stage("Segment") public final PointerBytesStore segmentBS = new PointerBytesStore();
@@ -587,17 +599,6 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
             }
         }
         return ret;
-    }
-
-    public long alloc(int chunks) {
-        while (true) {
-            long ret = allocReturnCode(chunks);
-            if (ret >= 0) {
-                return ret;
-            } else {
-                nextTier();
-            }
-        }
     }
 
     public void free(long fromPos, int chunks) {
