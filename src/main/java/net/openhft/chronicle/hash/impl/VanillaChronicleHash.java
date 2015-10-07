@@ -354,7 +354,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     private void zeroOutGlobalMutableState() {
         long end = headerSize + globalMutableStateTotalUsedSize();
-        bytes.zeroOut(headerSize, end, true);
+        bytes.zeroOut(headerSize, end);
     }
 
     protected long globalMutableStateTotalUsedSize() {
@@ -362,7 +362,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     }
 
     private void zeroOutSegmentHeaders() {
-        bytes.zeroOut(segmentHeadersOffset, segmentsOffset, true);
+        bytes.zeroOut(segmentHeadersOffset, segmentsOffset);
     }
 
     private void zeroOutFirstSegmentTiers() {
@@ -375,7 +375,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     private void zeroOutNewlyMappedTier(Bytes bytes, long segmentOffset) {
         // Zero out hash lookup, tier data and free list bit set. Leave entry space.
         long zeroOutEnd = segmentOffset + segmentSize - segmentEntrySpaceOuterSize;
-        bytes.zeroOut(segmentOffset, zeroOutEnd, true);
+        bytes.zeroOut(segmentOffset, zeroOutEnd);
     }
 
     private void initTierBulks(long byteStoreSize) {
@@ -616,7 +616,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         long firstTierOffset = tierBytesOffset(firstTierIndex);
         if (tierBulkInnerOffsetToTiers > 0) {
             // These bytes are bit sets in Replicated version
-            bytes.zeroOut(firstTierOffset - tierBulkInnerOffsetToTiers, firstTierOffset, true);
+            bytes.zeroOut(firstTierOffset - tierBulkInnerOffsetToTiers, firstTierOffset);
         }
 
         // Link newly allocated tiers into free tiers list
