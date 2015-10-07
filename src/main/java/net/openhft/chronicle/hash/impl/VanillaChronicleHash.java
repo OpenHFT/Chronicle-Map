@@ -620,12 +620,15 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         }
 
         // Link newly allocated tiers into free tiers list
-        for (long tierIndex = firstTierIndex;
-             tierIndex < firstTierIndex + numberOfTiersInBulk - 1; tierIndex++) {
+        long lastTierIndex = firstTierIndex + numberOfTiersInBulk - 1;
+        for (long tierIndex = firstTierIndex; tierIndex <= lastTierIndex; tierIndex++) {
             long tierOffset = tierBytesOffset(tierIndex);
             zeroOutNewlyMappedTier(bytes, tierOffset);
             long tierCountersAreaOffset = tierOffset + segmentHashLookupOuterSize;
-            TierCountersArea.nextTierIndex(bytes.address() + tierCountersAreaOffset, tierIndex + 1);
+            if (tierIndex < lastTierIndex) {
+                TierCountersArea.nextTierIndex(bytes.address() + tierCountersAreaOffset,
+                        tierIndex + 1);
+            }
         }
 
         // TODO HCOLL-397 insert msync here!
@@ -676,7 +679,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         int bulkIndex = (int) (extraTierIndex >> log2NumberOfTiersInBulk);
         if (bulkIndex >= tierBulkOffsets.size())
             mapTiers(bulkIndex);
-        TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
+        TierBulkData tierBulkData = tierBulkOffsets.get(bulkIndex);
         long tierIndexOffsetWithinBulk = extraTierIndex & (numberOfTiersInBulk - 1);
         return tierAddr(tierBulkData, tierIndexOffsetWithinBulk);
     }
