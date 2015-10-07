@@ -184,7 +184,6 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         } else {
             writeValue(newValue);
         }
-        hlp.putValueVolatile(pos);
     }
 
     protected void relocation(Data<V> newValue, long newSizeOfEverythingBeforeValue) {
