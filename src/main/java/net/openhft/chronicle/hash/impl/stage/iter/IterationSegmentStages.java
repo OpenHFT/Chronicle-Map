@@ -45,8 +45,9 @@ public abstract class IterationSegmentStages extends SegmentStages {
             hls.initSearchKey(hh.h().hashLookup.key(it.hashLookupEntry));
     }
 
-    public void initSegmentTier_WithBaseAddr(int tier, long tierBaseAddr) {
+    public void initSegmentTier_WithBaseAddr(int tier, long tierBaseAddr, long tierIndex) {
         segmentTier = tier;
+        this.tierIndex = tierIndex;
         segmentBaseAddr = tierBaseAddr;
     }
 

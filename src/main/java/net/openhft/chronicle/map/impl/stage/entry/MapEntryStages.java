@@ -201,7 +201,8 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
 
         if (tierHasChanged) {
             // implicitly inits key search, locating hashLookupPos on the empty slot
-            assert ks.searchStateAbsent();
+            if (!ks.searchStateAbsent())
+                throw new AssertionError();
         }
 
         initValue(newValue);

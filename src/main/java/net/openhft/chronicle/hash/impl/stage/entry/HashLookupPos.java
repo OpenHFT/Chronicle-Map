@@ -25,9 +25,19 @@ import net.openhft.sg.Staged;
 @Staged
 public abstract class HashLookupPos {
 
+    @StageRef HashLookupSearch hls;
+
     public long hashLookupPos = -1;
 
     public abstract boolean hashLookupPosInit();
+
+    public void initHashLookupPos() {
+        // validation + make hashLookupPos a dependant of segmentTier. This is needed, because
+        // after tier change should re-perform hashLookupSearch, starting from the searchStartPos
+        assert s.segmentTier >= 0;
+        s.innerReadLock.lock();
+        this.hashLookupPos = hls.searchStartPos;
+    }
 
     public void initHashLookupPos(long hashLookupPos) {
         this.hashLookupPos = hashLookupPos;

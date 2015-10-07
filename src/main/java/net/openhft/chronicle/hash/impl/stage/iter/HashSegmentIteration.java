@@ -22,7 +22,6 @@ import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupPos;
-import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -73,7 +72,9 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
             while (true) {
                 int currentTier = s.segmentTier;
                 long currentTierBaseAddr = s.segmentBaseAddr;
-                size = forEachTierWhile(action, size, currentTier, currentTierBaseAddr);
+                long currentTierIndex = s.tierIndex;
+                size = forEachTierWhile(action, size,
+                        currentTier, currentTierBaseAddr, currentTierIndex);
                 if (size < 0) // interrupted
                     return false;
                 if (size == 0)
@@ -92,17 +93,24 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     }
 
     private long forEachTierWhile(
-            Predicate<? super E> action, long size, int currentTier, long currentTierBaseAddr) {
+            Predicate<? super E> action, long size,
+            int currentTier, long currentTierBaseAddr, long tierIndex) {
         boolean interrupted = false;
         long startPos = 0L;
         CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
-        while (!hashLookup.empty(hashLookup.readEntry(s.segmentBaseAddr, startPos))) {
+        while (!hashLookup.empty(hashLookup.readEntry(currentTierBaseAddr, startPos))) {
             startPos = hashLookup.step(startPos);
         }
         hlp.initHashLookupPos(startPos);
+        long currentHashLookupPos;
         do {
-            hlp.setHashLookupPos(hashLookup.step(hlp.hashLookupPos));
-            long entry = hashLookup.readEntry(s.segmentBaseAddr, hlp.hashLookupPos);
+            // Step from hlp.hashLookupPos, not currentHashLookupPos (with additional initialization
+            // of this local variable to startPos outside the loop), because if e.remove() is
+            // called in the `action`, hlp.hashLookupPos is stepped back in doRemove(), and
+            // currentHashLookupPos become invalid
+            currentHashLookupPos = hashLookup.step(hlp.hashLookupPos);
+            hlp.setHashLookupPos(currentHashLookupPos);
+            long entry = hashLookup.readEntry(currentTierBaseAddr, currentHashLookupPos);
             initHashLookupEntry(entry);
             if (!hashLookup.empty(entry)) {
                 e.readExistingEntry(hashLookup.value(entry));
@@ -119,12 +127,20 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
                     } finally {
                         // if doReplaceValue() -> relocation() -> alloc() -> nextTier()
                         // was called, restore the tier we were iterating over
-                        if (s.segmentTier != currentTier)
-                            s.initSegmentTier_WithBaseAddr(currentTier, currentTierBaseAddr);
+                        if (s.segmentTier != currentTier) {
+                            s.initSegmentTier_WithBaseAddr(
+                                    currentTier, currentTierBaseAddr, tierIndex);
+                            // To cover shift deleted slot, at the next step forward.
+                            // hash lookup entry is relocated to the next chained tier, and the
+                            // slot in _current_ tier's hash lookup is shift deleted, see
+                            // relocation()
+                            currentHashLookupPos = hashLookup.stepBack(currentHashLookupPos);
+                            hlp.initHashLookupPos(currentHashLookupPos);
+                        }
                     }
                 }
             }
-        } while (hlp.hashLookupPos != startPos);
+        } while (currentHashLookupPos != startPos);
         return interrupted ? ~size : size;
     }
 

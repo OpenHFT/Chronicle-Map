@@ -54,7 +54,7 @@ import net.openhft.sg.Staged;
         KeySearch.class,
         InputKeyHashCode.class,
         QueryHashLookupSearch.class,
-        QueryHashLookupPos.class,
+        HashLookupPos.class,
 
         QueryCheckOnEachPublicOperation.class,
         SearchAllocatedChunks.class,
