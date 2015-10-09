@@ -451,7 +451,12 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             if (!channel.finishConnect()) {
                 return;
             }
-        } catch (SocketException e) {
+
+            channel.configureBlocking(false);
+            channel.socket().setTcpNoDelay(true);
+            channel.socket().setSoTimeout(0);
+            channel.socket().setSoLinger(false, 0);
+        } catch (IOException e) {
             quietClose(key, e);
 
             // when node discovery is used ( by nodes broadcasting out their host:port over UDP ),
@@ -472,11 +477,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         if (LOG.isDebugEnabled())
             LOG.debug("successfully connected to {}, local-id={}",
                     channel.socket().getInetAddress(), localIdentifier);
-
-        channel.configureBlocking(false);
-        channel.socket().setTcpNoDelay(true);
-        channel.socket().setSoTimeout(0);
-        channel.socket().setSoLinger(false, 0);
 
         attached.entryReader = new TcpSocketChannelEntryReader();
         attached.entryWriter = new TcpSocketChannelEntryWriter();
@@ -1028,6 +1028,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                         } catch (ClosedChannelException e) {
                             if (socketChannel.isOpen())
                                 LOG.error("", e);
+                            onFail(socketChannel);
                         }
                     }
                 });
@@ -1037,18 +1038,23 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 return socketChannel;
             } finally {
                 if (!success) {
-                    try {
-                        try {
-                            socketChannel.socket().close();
-                        } catch (Exception e) {
-                            LOG.error("", e);
-                        }
-                        socketChannel.close();
-                    } catch (IOException e) {
-                        LOG.error("", e);
-                    }
-                    this.connectLater();
+                    onFail(socketChannel);
                 }
+            }
+        }
+
+        private void onFail(SocketChannel socketChannel) {
+            try {
+                try {
+                    socketChannel.socket().close();
+                } catch (Exception e) {
+                    LOG.error("", e);
+                }
+                socketChannel.close();
+            } catch (IOException e) {
+                LOG.error("", e);
+            } finally {
+                this.connectLater();
             }
         }
     }
