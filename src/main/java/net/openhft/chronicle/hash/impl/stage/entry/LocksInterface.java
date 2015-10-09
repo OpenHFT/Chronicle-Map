@@ -24,9 +24,9 @@ public interface LocksInterface {
 
     boolean locksInit();
 
-    LocksInterface rootContextOnThisSegment();
+    LocksInterface rootContextLockedOnThisSegment();
 
-    void setConcurrentSameThreadContexts(boolean concurrentSameThreadContexts);
+    void setNestedContextsLockedOnSameSegment(boolean nestedContextsLockedOnSameSegment);
 
     int latestSameThreadSegmentModCount();
 

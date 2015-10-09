@@ -80,7 +80,7 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
         if (underUpdatedLockIsHeld)
             s.innerUpdateLock.lock();
         boolean searchResultsNotTrusted = underUpdatedLockIsHeld ||
-                s.concurrentSameThreadContexts;
+                s.nestedContextsLockedOnSameSegment;
         if (hlp.hashLookupPosInit() && ks.searchStateAbsent() && searchResultsNotTrusted)
             hlp.closeHashLookupPos();
     }

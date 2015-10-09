@@ -94,7 +94,7 @@ public abstract class KeySearch<K> {
     }
 
     public boolean searchStateDeleted() {
-        return searchState == DELETED && !s.concurrentSameThreadContexts &&
+        return searchState == DELETED && !s.nestedContextsLockedOnSameSegment &&
                 s.innerUpdateLock.isHeldByCurrentThread();
     }
 

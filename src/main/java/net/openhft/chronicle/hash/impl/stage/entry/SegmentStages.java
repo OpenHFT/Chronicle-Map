@@ -102,21 +102,21 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
 
-    @Stage("Locks") public LocksInterface rootContextOnThisSegment = null;
+    @Stage("Locks") public LocksInterface rootContextLockedOnThisSegment = null;
     /**
      * See the ChMap Ops spec, considerations of nested same-thread concurrent contexts.
      * Once context enters the segment, and observes concurrent same-thread context,
-     * it sets concurrentSameThreadContexts = true for itself and that concurrent context.
+     * it sets nestedContextsLockedOnSameSegment = true for itself and that concurrent context.
      * This flag is not dropped on exit of one of these contexts, because between calls of
      * this context, nested one could be initialized, does some changes that break our thread-local
      * assumptions _and exit_, that is why on exit concurrent context should remain "dirty".
      */
-    @Stage("Locks") public boolean concurrentSameThreadContexts;
+    @Stage("Locks") public boolean nestedContextsLockedOnSameSegment;
 
     @Override
     @Stage("Locks")
-    public void setConcurrentSameThreadContexts(boolean concurrentSameThreadContexts) {
-        this.concurrentSameThreadContexts = concurrentSameThreadContexts;
+    public void setNestedContextsLockedOnSameSegment(boolean nestedContextsLockedOnSameSegment) {
+        this.nestedContextsLockedOnSameSegment = nestedContextsLockedOnSameSegment;
     }
 
     @Stage("Locks") public int latestSameThreadSegmentModCount;
@@ -131,7 +131,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Locks")
     public void incrementModCount() {
-        contextModCount = rootContextOnThisSegment.changeAndGetLatestSameThreadSegmentModCount(1);
+        contextModCount =
+                rootContextLockedOnThisSegment.changeAndGetLatestSameThreadSegmentModCount(1);
     }
 
     // chain
@@ -150,7 +151,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Locks")
     public boolean readZero() {
-        return rootContextOnThisSegment.totalReadLockCount() == 0;
+        return rootContextLockedOnThisSegment.totalReadLockCount() == 0;
     }
 
     @Override
@@ -161,7 +162,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Locks")
     public boolean updateZero() {
-        return rootContextOnThisSegment.totalUpdateLockCount() == 0;
+        return rootContextLockedOnThisSegment.totalUpdateLockCount() == 0;
     }
 
     @Override
@@ -172,7 +173,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Locks")
     public boolean writeZero() {
-        return rootContextOnThisSegment.totalWriteLockCount() == 0;
+        return rootContextLockedOnThisSegment.totalWriteLockCount() == 0;
     }
 
     @Override
@@ -183,32 +184,32 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Locks")
     public int decrementRead() {
-        return rootContextOnThisSegment.changeAndGetTotalReadLockCount(-1);
+        return rootContextLockedOnThisSegment.changeAndGetTotalReadLockCount(-1);
     }
 
     @Stage("Locks")
     public int decrementUpdate() {
-        return rootContextOnThisSegment.changeAndGetTotalUpdateLockCount(-1);
+        return rootContextLockedOnThisSegment.changeAndGetTotalUpdateLockCount(-1);
     }
 
     @Stage("Locks")
     public int decrementWrite() {
-        return rootContextOnThisSegment.changeAndGetTotalWriteLockCount(-1);
+        return rootContextLockedOnThisSegment.changeAndGetTotalWriteLockCount(-1);
     }
 
     @Stage("Locks")
     public void incrementRead() {
-        rootContextOnThisSegment.changeAndGetTotalReadLockCount(1);
+        rootContextLockedOnThisSegment.changeAndGetTotalReadLockCount(1);
     }
 
     @Stage("Locks")
     public void incrementUpdate() {
-        rootContextOnThisSegment.changeAndGetTotalUpdateLockCount(1);
+        rootContextLockedOnThisSegment.changeAndGetTotalUpdateLockCount(1);
     }
 
     @Stage("Locks")
     public void incrementWrite() {
-        rootContextOnThisSegment.changeAndGetTotalWriteLockCount(1);
+        rootContextLockedOnThisSegment.changeAndGetTotalWriteLockCount(1);
     }
 
     public abstract boolean locksInit();
@@ -224,8 +225,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
             if (tryFindInitLocksOfThisSegment(i))
                 return;
         }
-        rootContextOnThisSegment = this;
-        concurrentSameThreadContexts = false;
+        rootContextLockedOnThisSegment = this;
+        nestedContextsLockedOnSameSegment = false;
 
         latestSameThreadSegmentModCount = 0;
         contextModCount = 0;
@@ -241,10 +242,10 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         if (c.segmentHeaderInit() &&
                 c.segmentHeaderAddress() == segmentHeaderAddress &&
                 c.locksInit()) {
-            LocksInterface root = c.rootContextOnThisSegment();
-            this.rootContextOnThisSegment = root;
-            root.setConcurrentSameThreadContexts(true);
-            this.concurrentSameThreadContexts = true;
+            LocksInterface root = c.rootContextLockedOnThisSegment();
+            this.rootContextLockedOnThisSegment = root;
+            root.setNestedContextsLockedOnSameSegment(true);
+            this.nestedContextsLockedOnSameSegment = true;
             this.contextModCount = root.latestSameThreadSegmentModCount();
             linkToSegmentContextsChain();
             return true;
@@ -254,14 +255,14 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
     void closeLocks() {
-        if (rootContextOnThisSegment == this) {
+        if (rootContextLockedOnThisSegment == this) {
             closeRootLocks();
         } else {
             closeNestedLocks();
         }
         deregisterIterationContextLockedInThisThread();
         localLockState = null;
-        rootContextOnThisSegment = null;
+        rootContextLockedOnThisSegment = null;
     }
 
     @Stage("Locks")
@@ -318,7 +319,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Locks")
     private void linkToSegmentContextsChain() {
-        LocksInterface innermostContextOnThisSegment = rootContextOnThisSegment;
+        LocksInterface innermostContextOnThisSegment = rootContextLockedOnThisSegment;
         while (true) {
             checkNestedContextsQueryDifferentKeys(innermostContextOnThisSegment);
 
@@ -343,7 +344,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Locks")
     private void unlinkFromSegmentContextsChain() {
-        LocksInterface prevContext = rootContextOnThisSegment;
+        LocksInterface prevContext = rootContextLockedOnThisSegment;
         while (true) {
             assert prevContext.nextNode() != null;
             if (prevContext.nextNode() == this)
@@ -416,7 +417,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         String message = "";
         message += "Contexts locked on this segment:\n";
 
-        for (LocksInterface cxt = rootContextOnThisSegment; cxt != null; cxt = cxt.nextNode()) {
+        for (LocksInterface cxt = rootContextLockedOnThisSegment; cxt != null;
+             cxt = cxt.nextNode()) {
             message += cxt.debugLocksState() + "\n";
         }
         message += "Current thread contexts:\n";
@@ -445,9 +447,9 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
             return s;
         }
         s += "local state: " + localLockState + ", ";
-        s += "read lock count: " + rootContextOnThisSegment.totalReadLockCount() + ", ";
-        s += "update lock count: " + rootContextOnThisSegment.totalUpdateLockCount() + ", ";
-        s += "write lock count: " + rootContextOnThisSegment.totalWriteLockCount();
+        s += "read lock count: " + rootContextLockedOnThisSegment.totalReadLockCount() + ", ";
+        s += "update lock count: " + rootContextLockedOnThisSegment.totalUpdateLockCount() + ", ";
+        s += "write lock count: " + rootContextLockedOnThisSegment.totalWriteLockCount();
         return s;
     }
 
