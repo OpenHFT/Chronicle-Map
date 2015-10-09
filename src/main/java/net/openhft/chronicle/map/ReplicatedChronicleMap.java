@@ -550,19 +550,19 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         private int iterationMainSegmentsAreaOrTierBulk = -1;
         private long tierBulkBitSetAddr = 0L;
 
-        public ModificationIterator(int identifier) {
+        public ModificationIterator(int remoteIdentifier) {
             long bitsPerSegment = bitsPerSegmentInModIterBitSet();
             segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
             posMask = bitsPerSegment - 1L;
             mainSegmentsChangesBitSetAddr = ms.address() + startOfModificationIterators +
-                    identifier * modIterBitSetSizeInBytes();
+                    remoteIdentifier * modIterBitSetSizeInBytes();
             nativeAccess().zeroOut(null, mainSegmentsChangesBitSetAddr, modIterBitSetSizeInBytes());
             offsetToBitSetWithinATierBulk =
-                    identifier * tierBulkModIterBitSetSizeInBytes(numberOfTiersInBulk);
+                    remoteIdentifier * tierBulkModIterBitSetSizeInBytes(numberOfTiersInBulk);
         }
 
-        public ModificationIterator(int identifier, ModificationNotifier notifier) {
-            this(identifier);
+        public ModificationIterator(int remoteIdentifier, ModificationNotifier notifier) {
+            this(remoteIdentifier);
             setModificationNotifier(notifier);
         }
 

@@ -452,7 +452,13 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
             if (!channel.finishConnect()) {
                 return;
             }
-        } catch (SocketException e) {
+
+            channel.configureBlocking(false);
+            channel.socket().setTcpNoDelay(true);
+            channel.socket().setSoTimeout(0);
+            channel.socket().setSoLinger(false, 0);
+
+        } catch (IOException e) {
             quietClose(key, e);
 
             // when node discovery is used ( by nodes broadcasting out their host:port over UDP ),
@@ -473,11 +479,6 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
         if (LOG.isDebugEnabled())
             LOG.debug("successfully connected to {}, local-id={}",
                     channel.socket().getInetAddress(), localIdentifier);
-
-        channel.configureBlocking(false);
-        channel.socket().setTcpNoDelay(true);
-        channel.socket().setSoTimeout(0);
-        channel.socket().setSoLinger(false, 0);
 
         attached.entryReader = new TcpSocketChannelEntryReader();
         attached.entryWriter = new TcpSocketChannelEntryWriter();
@@ -820,6 +821,8 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
             if (len == -1) {
                 socketChannel.register(selector, 0, attached);
                 if (replicationConfig.autoReconnectedUponDroppedConnection()) {
+                    // TODO why != null check here, absent everywhere else? on connectLater() calls?
+                    // TODO shouldn't check attached.isServer, same as in catch (IOE) clause below?
                     AbstractConnector connector = attached.connector;
                     if (connector != null)
                         connector.connectLater();
@@ -1018,6 +1021,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                         } catch (ClosedChannelException e) {
                             if (socketChannel.isOpen())
                                 LOG.error("", e);
+                            onFail(socketChannel);
                         }
                     }
                 });
@@ -1027,18 +1031,23 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                 return socketChannel;
             } finally {
                 if (!success) {
-                    try {
-                        try {
-                            socketChannel.socket().close();
-                        } catch (Exception e) {
-                            LOG.error("", e);
-                        }
-                        socketChannel.close();
-                    } catch (IOException e) {
-                        LOG.error("", e);
-                    }
-                    this.connectLater();
+                    onFail(socketChannel);
                 }
+            }
+        }
+
+        private void onFail(SocketChannel socketChannel) {
+            try {
+                try {
+                    socketChannel.socket().close();
+                } catch (Exception e) {
+                    LOG.error("", e);
+                }
+                socketChannel.close();
+            } catch (IOException e) {
+                LOG.error("", e);
+            } finally {
+                this.connectLater();
             }
         }
     }
