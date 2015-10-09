@@ -59,7 +59,7 @@ public interface Data<V> {
         return BytesUtil.bytesEqual(source, sourceOffset, bytes(), offset(), size());
     }
 
-    default  void writeTo(RandomDataOutput target, long targetOffset) {
+    default void writeTo(RandomDataOutput target, long targetOffset) {
         target.write(targetOffset, bytes(), offset(), size());
     }
 

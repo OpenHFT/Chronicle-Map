@@ -14,14 +14,8 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.map.impl;
+package net.openhft.chronicle.hash.impl.stage.hash;
 
-import net.openhft.chronicle.map.MapEntry;
-import net.openhft.chronicle.map.MapSegmentContext;
-
-public interface IterationContextInterface<K, V, R> extends MapEntry<K, V>,
-        MapSegmentContext<K, V, R> {
-    long pos();
-    
-    void initSegmentIndex(int segmentIndex);
+public class ThreadLocalState {
+    public boolean iterationContextLockedInThisThread;
 }

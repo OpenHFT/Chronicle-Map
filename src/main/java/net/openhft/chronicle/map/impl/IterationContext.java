@@ -14,19 +14,13 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash.impl.stage.hash;
+package net.openhft.chronicle.map.impl;
 
-import java.util.List;
-import java.util.function.Function;
+import net.openhft.chronicle.map.MapEntry;
+import net.openhft.chronicle.map.MapSegmentContext;
 
-public abstract class ChainingInterface extends ThreadLocalState {
-
-    public abstract List<ChainingInterface> getContextChain();
-
-    public abstract void initUsed(boolean used);
-
-    public abstract boolean usedInit();
-
-    public abstract <T extends ChainingInterface> T getContext(
-            Class<? extends T> contextClass, Function<ChainingInterface, T> createChaining);
+public interface IterationContext<K, V, R> extends MapEntry<K, V>, MapSegmentContext<K, V, R> {
+    long pos();
+    
+    void initSegmentIndex(int segmentIndex);
 }

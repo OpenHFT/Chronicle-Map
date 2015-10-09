@@ -317,7 +317,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         return iterContext;
     }
 
-    public IterationContextInterface<K, V, ?> iterationContext() {
+    public IterationContext<K, V, ?> iterationContext() {
         return i().getContext(CompiledMapIterationContext.class,
                 ci -> new CompiledMapIterationContext<>(ci, this));
     }
@@ -342,7 +342,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
 
     @Override
     public MapSegmentContext<K, V, ?> segmentContext(int segmentIndex) {
-        IterationContextInterface<K, V, ?> c = iterationContext();
+        IterationContext<K, V, ?> c = iterationContext();
         c.initSegmentIndex(segmentIndex);
         return c;
     }

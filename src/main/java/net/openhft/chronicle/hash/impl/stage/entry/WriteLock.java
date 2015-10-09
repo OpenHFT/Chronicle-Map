@@ -40,6 +40,7 @@ public class WriteLock implements InterProcessLock {
     public void lock() {
         switch (s.localLockState) {
             case UNLOCKED:
+                s.checkIterationContextNotLockedInThisThread();
                 if (s.writeZero()) {
                     if (!s.updateZero()) {
                         s.segmentHeader.upgradeUpdateToWriteLock(s.segmentHeaderAddress);
@@ -89,6 +90,7 @@ public class WriteLock implements InterProcessLock {
     public void lockInterruptibly() throws InterruptedException {
         switch (s.localLockState) {
             case UNLOCKED:
+                s.checkIterationContextNotLockedInThisThread();
                 if (s.writeZero()) {
                     if (!s.updateZero()) {
                         s.segmentHeader.upgradeUpdateToWriteLockInterruptibly(
@@ -121,6 +123,7 @@ public class WriteLock implements InterProcessLock {
     public boolean tryLock() {
         switch (s.localLockState) {
             case UNLOCKED:
+                s.checkIterationContextNotLockedInThisThread();
                 if (s.writeZero()) {
                     if (!s.updateZero()) {
                         if (s.segmentHeader.tryUpgradeUpdateToWriteLock(s.segmentHeaderAddress)) {
@@ -175,6 +178,7 @@ public class WriteLock implements InterProcessLock {
     public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException {
         switch (s.localLockState) {
             case UNLOCKED:
+                s.checkIterationContextNotLockedInThisThread();
                 if (s.writeZero()) {
                     if (!s.updateZero()) {
                         if (s.segmentHeader.tryUpgradeUpdateToWriteLock(

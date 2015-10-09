@@ -42,6 +42,7 @@ public class UpdateLock implements InterProcessLock {
     public void lock() {
         switch (s.localLockState) {
             case UNLOCKED:
+                s.checkIterationContextNotLockedInThisThread();
                 if (s.updateZero() && s.writeZero()) {
                     if (!s.readZero())
                         throw forbiddenUpdateLockWhenOuterContextReadLocked();
@@ -85,6 +86,7 @@ public class UpdateLock implements InterProcessLock {
     public void lockInterruptibly() throws InterruptedException {
         switch (s.localLockState) {
             case UNLOCKED:
+                s.checkIterationContextNotLockedInThisThread();
                 if (s.updateZero() && s.writeZero()) {
                     if (!s.readZero())
                         throw forbiddenUpdateLockWhenOuterContextReadLocked();
@@ -105,6 +107,7 @@ public class UpdateLock implements InterProcessLock {
     public boolean tryLock() {
         switch (s.localLockState) {
             case UNLOCKED:
+                s.checkIterationContextNotLockedInThisThread();
                 if (s.updateZero() && s.writeZero()) {
                     if (!s.readZero())
                         throw forbiddenUpdateLockWhenOuterContextReadLocked();
@@ -133,6 +136,7 @@ public class UpdateLock implements InterProcessLock {
     public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException {
         switch (s.localLockState) {
             case UNLOCKED:
+                s.checkIterationContextNotLockedInThisThread();
                 if (s.updateZero() && s.writeZero()) {
                     if (!s.readZero())
                         throw forbiddenUpdateLockWhenOuterContextReadLocked();

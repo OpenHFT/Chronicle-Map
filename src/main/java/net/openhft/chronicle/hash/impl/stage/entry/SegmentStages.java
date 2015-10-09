@@ -28,6 +28,7 @@ import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
+import net.openhft.chronicle.map.impl.IterationContext;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
@@ -258,6 +259,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         } else {
             closeNestedLocks();
         }
+        deregisterIterationContextLockedInThisThread();
         localLockState = null;
         rootContextOnThisSegment = null;
     }
@@ -379,7 +381,34 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Locks")
     public void setLocalLockState(LocalLockState newState) {
+        boolean isLocked = localLockState != UNLOCKED && localLockState != null;
+        boolean goingToLock = newState != UNLOCKED && newState != null;
+        if (isLocked) {
+            if (!goingToLock)
+                deregisterIterationContextLockedInThisThread();
+        } else if (goingToLock) {
+            registerIterationContextLockedInThisThread();
+        }
         localLockState = newState;
+    }
+
+    public void checkIterationContextNotLockedInThisThread() {
+        if (chaining.rootContextInThisThread.iterationContextLockedInThisThread) {
+            throw new IllegalStateException("Update or Write locking is forbidden in the context" +
+                    "of locked iteration context");
+        }
+    }
+
+    private void registerIterationContextLockedInThisThread() {
+        if (this instanceof IterationContext) {
+            chaining.rootContextInThisThread.iterationContextLockedInThisThread = true;
+        }
+    }
+
+    private void deregisterIterationContextLockedInThisThread() {
+        if (this instanceof IterationContext) {
+            chaining.rootContextInThisThread.iterationContextLockedInThisThread = false;
+        }
     }
 
     @Stage("Locks")

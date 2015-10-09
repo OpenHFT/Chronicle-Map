@@ -16,8 +16,7 @@
 
 package net.openhft.chronicle.map.impl;
 
-public interface ReplicatedIterationContextInterface<K, V, R>
-        extends IterationContextInterface<K, V, R> {
+public interface ReplicatedIterationContext<K, V, R> extends IterationContext<K, V, R> {
 
     void readExistingEntry(long pos);
 }

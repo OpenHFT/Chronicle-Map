@@ -23,21 +23,24 @@ import java.util.List;
 import java.util.function.Function;
 
 @Staged
-public class Chaining implements ChainingInterface {
+public class Chaining extends ChainingInterface {
 
     public final List<ChainingInterface> contextChain;
     public final int indexInContextChain;
-    
+    public final ChainingInterface rootContextInThisThread;
+
     public Chaining() {
         contextChain = new ArrayList<>();
         contextChain.add(this);
         indexInContextChain = 0;
+        rootContextInThisThread = this;
     }
     
-    public Chaining(ChainingInterface root) {
-        contextChain = root.getContextChain();
+    public Chaining(ChainingInterface rootContextInThisThread) {
+        contextChain = rootContextInThisThread.getContextChain();
         indexInContextChain = contextChain.size();
         contextChain.add(this);
+        this.rootContextInThisThread = rootContextInThisThread;
     }
 
     @Override

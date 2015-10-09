@@ -23,7 +23,7 @@ import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapEntry;
-import net.openhft.chronicle.map.impl.ReplicatedIterationContextInterface;
+import net.openhft.chronicle.map.impl.ReplicatedIterationContext;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
@@ -35,7 +35,7 @@ import java.util.function.Predicate;
 
 @Staged
 public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentIteration<K, V, R>
-        implements ReplicatedIterationContextInterface<K, V, R>, ReplicableEntry,
+        implements ReplicatedIterationContext<K, V, R>, ReplicableEntry,
         ReplicatedHashSegmentContext<K, MapEntry<K, V>>, MapAbsentEntry<K, V> {
 
     @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;

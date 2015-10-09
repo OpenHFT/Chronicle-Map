@@ -20,7 +20,7 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.iter.HashSegmentIteration;
 import net.openhft.chronicle.map.MapContext;
 import net.openhft.chronicle.map.MapEntry;
-import net.openhft.chronicle.map.impl.IterationContextInterface;
+import net.openhft.chronicle.map.impl.IterationContext;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceValueHolder;
 import net.openhft.sg.StageRef;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 @Staged
 public abstract class MapSegmentIteration<K, V, R> extends HashSegmentIteration<K, MapEntry<K, V>>
-        implements MapEntry<K, V>, IterationContextInterface<K, V, R> {
+        implements MapEntry<K, V>, IterationContext<K, V, R> {
     
     @StageRef MapEntryStages<K, V> entry;
     @StageRef WrappedValueInstanceValueHolder<K, V, ?> wrappedValueInstanceValueHolder;
