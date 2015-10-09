@@ -38,26 +38,27 @@ import org.jetbrains.annotations.NotNull;
  * implementation (i. e. a map that preserves the uniqueness of its values as well as that of
  * its keys), that includes two {@code ChronicleMaps}, the {@code MapEntryOperations}' methods return
  * type could be used to indicate if we were successful to lock both maps before performing
- * the update: <pre>{@code
+ * the update: <pre><code>
  * enum DualLockSuccess {SUCCESS, FAIL}
  *
- * class BiMapEntryOperations<K, V> implements MapEntryOperations<K, V, DualLockSuccess> {
- *     ChronicleMap<V, K> reverse;
+ * class{@code BiMapEntryOperations<K, V>}
+ *         implements{@code MapEntryOperations<K, V, DualLockSuccess>} {
+ *    {@code ChronicleMap<V, K>} reverse;
  *
- *     public void setReverse(ChronicleMap<V, K> reverse) {
+ *     public void{@code setReverse(ChronicleMap<V, K>} reverse) {
  *         this.reverse = reverse;
  *     }
  *
- *     @Override
- *     public DualLockSuccess remove(@NotNull MapEntry<K, V> entry) {
- *         try (ExternalMapQueryContext<V, K, ?> rq = reverse.queryContext(entry.value())) {
+ *    {@literal @}Override
+ *     public DualLockSuccess{@literal remove(@}NotNull{@code MapEntry<K, V>} entry) {
+ *         try{@code (ExternalMapQueryContext<V, K, ?>} rq = reverse.queryContext(entry.value())) {
  *             if (!rq.updateLock().tryLock()) {
  *                 if (entry.context() instanceof MapQueryContext)
  *                     return FAIL;
  *                 throw new IllegalStateException("Concurrent modifications to reverse map " +
  *                         "during remove during iteration");
  *             }
- *             MapEntry<V, K> reverseEntry = rq.entry();
+ *            {@code MapEntry<V, K>} reverseEntry = rq.entry();
  *             if (reverseEntry != null) {
  *                 entry.doRemove();
  *                 reverseEntry.doRemove();
@@ -72,13 +73,14 @@ import org.jetbrains.annotations.NotNull;
  *     // ... other methods
  * }
  *
- * class BiMapMethods<K, V> implements MapMethods<K, V, DualLockSuccess> {
- *     @Override
- *     public void remove(MapQueryContext<K, V, DualLockSuccess> q, ReturnValue<V> returnValue) {
+ * class{@code BiMapMethods<K, V>} implements{@code MapMethods<K, V, DualLockSuccess>} {
+ *    {@literal @}Override
+ *     public void{@code remove(MapQueryContext<K, V, DualLockSuccess>} q,
+ *            {@code ReturnValue<V>} returnValue) {
  *         while (true) {
  *             q.updateLock().lock();
  *             try {
- *                 MapEntry<K, V> entry = q.entry();
+ *                {@code MapEntry<K, V>} entry = q.entry();
  *                 if (entry != null) {
  *                     returnValue.returnValue(entry.value());
  *                     if (q.remove(entry) == SUCCESS)
@@ -91,7 +93,7 @@ import org.jetbrains.annotations.NotNull;
  *     }
  *
  *     // ... other methods
- * }}</pre>
+ * }</code></pre>
  *
  * @param <K> the map key type
  * @param <V> the map value type
