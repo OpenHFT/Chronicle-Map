@@ -1527,13 +1527,13 @@ public final class ChronicleMapBuilder<K, V> implements
                             (VanillaChronicleMap<K, ?, ?, V, ?, ?, ?>) m;
                     map.initTransientsFromBuilder(this);
                     map.initBeforeMapping(fis.getChannel());
-                    map.createMappedStoreAndSegments(file);
                     long expectedFileLength = map.expectedFileSize();
                     if (expectedFileLength != fileLength) {
                         throw new IOException("The file " + file + " the map is serialized from " +
                                 "has unexpected length " + fileLength + ", probably corrupted. " +
                                 "Expected length is " + expectedFileLength);
                     }
+                    map.createMappedStoreAndSegments(file);
                     // This is needed to property initialize key and value serialization builders,
                     // which are later used in replication
                     preMapConstruction();

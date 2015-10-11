@@ -42,8 +42,6 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.OpenOption;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +50,6 @@ import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
 import static net.openhft.lang.MemoryUnit.*;
-import static net.openhft.lang.io.NativeBytes.UNSAFE;
 
 public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
@@ -120,8 +117,8 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     final long maxExtraTiers;
     final long tierBulkSizeInBytes;
     final long tierBulkInnerOffsetToTiers;
-    protected final long numberOfTiersInBulk;
-    protected final int log2NumberOfTiersInBulk;
+    protected final long tiersInBulk;
+    protected final int log2TiersInBulk;
 
     public final boolean checksumEntries;
 
@@ -131,11 +128,10 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     protected transient Bytes bytes;
 
     public static class TierBulkData {
-        public BytesStore langBytesStore;
-        public Bytes langBytes;
-        public net.openhft.chronicle.bytes.BytesStore chBytesBytesStore;
-
-        public long offset;
+        public final BytesStore langBytesStore;
+        public final Bytes langBytes;
+        public final net.openhft.chronicle.bytes.BytesStore chBytesBytesStore;
+        public final long offset;
 
         public TierBulkData(BytesStore langBytesStore, long offset) {
             this.langBytesStore = langBytesStore;
@@ -221,10 +217,10 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         segmentSize = segmentSize();
 
         maxExtraTiers = privateAPI.maxExtraTiers();
-        numberOfTiersInBulk = computeNumberOfTiersInBulk();
-        log2NumberOfTiersInBulk = Maths.intLog2(numberOfTiersInBulk);
-        tierBulkInnerOffsetToTiers = computeTierBulkInnerOffsetToTiers(numberOfTiersInBulk);
-        tierBulkSizeInBytes = computeTierBulkBytesSize();
+        tiersInBulk = computeNumberOfTiersInBulk();
+        log2TiersInBulk = Maths.intLog2(tiersInBulk);
+        tierBulkInnerOffsetToTiers = computeTierBulkInnerOffsetToTiers(tiersInBulk);
+        tierBulkSizeInBytes = computeTierBulkBytesSize(tiersInBulk);
 
         checksumEntries = privateAPI.checksumEntries();
     }
@@ -261,17 +257,17 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         // TODO review heuristics
         int tiersInBulk = actualSegments / 8;
         tiersInBulk = Maths.nextPower2(tiersInBulk, 1);
-        while (segmentSize * tiersInBulk < OS.mapAlignment()) {
+        while (segmentSize * tiersInBulk < OS.pageSize()) {
             tiersInBulk *= 2;
         }
         return tiersInBulk;
     }
 
-    private long computeTierBulkBytesSize() {
-        return OS.mapAlign(tierBulkInnerOffsetToTiers + numberOfTiersInBulk * segmentSize);
+    private long computeTierBulkBytesSize(long tiersInBulk) {
+        return computeTierBulkInnerOffsetToTiers(tiersInBulk) + tiersInBulk * segmentSize;
     }
 
-    protected long computeTierBulkInnerOffsetToTiers(long numberOfTiersInBulk) {
+    protected long computeTierBulkInnerOffsetToTiers(long tiersInBulk) {
         return 0L;
     }
 
@@ -281,6 +277,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     private void initOwnTransients() {
         globalMutableState = createGlobalMutableState();
+        tierBulkOffsets = new ArrayList<>();
         keyReaderProvider = Provider.of((Class) originalKeyReader.getClass());
         keyInteropProvider = Provider.of((Class) originalKeyInterop.getClass());
         if (segmentHashLookupEntrySize == 4) {
@@ -329,18 +326,24 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
             zeroOutNewlyMappedChronicleMapBytes();
             // write the segment headers offset after zeroing out
             globalMutableState.setSegmentHeadersOffset(segmentHeadersOffset);
+        } else {
+            if (globalMutableState.getAllocatedExtraTierBulks() > 0) {
+                appendBulkData(0, globalMutableState.getAllocatedExtraTierBulks() - 1,
+                        ms, sizeInBytesWithoutTiers());
+            }
         }
-
-        initTierBulks(bytesStore.size());
     }
 
     public final void createMappedStoreAndSegments(File file) throws IOException {
         // TODO this method had been moved -- not clear where
         //OS.warnOnWindows(sizeInBytesWithoutTiers());
+        long mapSize = createdOrInMemory ? sizeInBytesWithoutTiers() : expectedFileSize();
         createMappedStoreAndSegments(new MappedStore(file, FileChannel.MapMode.READ_WRITE,
-                // file.length() > sizeInBytesWithoutTiers() means there are some tiered segments
-                Math.max(sizeInBytesWithoutTiers(), file.length()),
-                BytesMarshallableSerializer.create()));
+                mapSize, BytesMarshallableSerializer.create()));
+    }
+
+    private boolean persisted() {
+        return ms instanceof MappedStore;
     }
 
     /**
@@ -376,23 +379,6 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         // Zero out hash lookup, tier data and free list bit set. Leave entry space.
         long zeroOutEnd = segmentOffset + segmentSize - segmentEntrySpaceOuterSize;
         bytes.zeroOut(segmentOffset, zeroOutEnd);
-    }
-
-    private void initTierBulks(long byteStoreSize) {
-        tierBulkOffsets = new ArrayList<>();
-        long tierBulkOffset = OS.mapAlign(sizeInBytesWithoutTiers());
-        if (byteStoreSize >= tierBulkOffset + tierBulkSizeInBytes) {
-            assert !createdOrInMemory : "Chronicle Map is allocated in-memory or created " +
-                    "persisted without extra tier bulks";
-            TierBulkData firstTierBulkData = new TierBulkData(ms, tierBulkOffset);
-            tierBulkOffsets.add(firstTierBulkData);
-            while (true) {
-                tierBulkOffset += tierBulkSizeInBytes;
-                if (byteStoreSize < tierBulkOffset + tierBulkSizeInBytes)
-                    break;
-                tierBulkOffsets.add(new TierBulkData(firstTierBulkData, tierBulkOffset));
-            }
-        }
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -444,9 +430,7 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
     public final long expectedFileSize() {
         long sizeInBytesWithoutTiers = sizeInBytesWithoutTiers();
         int allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
-        if (allocatedExtraTierBulks == 0)
-            return sizeInBytesWithoutTiers;
-        return OS.mapAlign(sizeInBytesWithoutTiers) + allocatedExtraTierBulks * tierBulkSizeInBytes;
+        return sizeInBytesWithoutTiers + allocatedExtraTierBulks * tierBulkSizeInBytes;
     }
 
     @Override
@@ -607,11 +591,10 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
 
     private void allocateTierBulk() {
         int allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
-        mapTiers(allocatedExtraTierBulks);
+        mapTierBulks(allocatedExtraTierBulks);
 
         // integer overflow aware
-        long firstTierIndex = actualSegments + 1L +
-                ((long) allocatedExtraTierBulks) * numberOfTiersInBulk;
+        long firstTierIndex = actualSegments + 1L + ((long) allocatedExtraTierBulks) * tiersInBulk;
         Bytes bytes = tierBytes(firstTierIndex);
         long firstTierOffset = tierBytesOffset(firstTierIndex);
         if (tierBulkInnerOffsetToTiers > 0) {
@@ -620,12 +603,12 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         }
 
         // Link newly allocated tiers into free tiers list
-        long lastTierIndex = firstTierIndex + numberOfTiersInBulk - 1;
+        long lastTierIndex = firstTierIndex + tiersInBulk - 1;
         for (long tierIndex = firstTierIndex; tierIndex <= lastTierIndex; tierIndex++) {
             long tierOffset = tierBytesOffset(tierIndex);
             zeroOutNewlyMappedTier(bytes, tierOffset);
-            long tierCountersAreaOffset = tierOffset + segmentHashLookupOuterSize;
             if (tierIndex < lastTierIndex) {
+                long tierCountersAreaOffset = tierOffset + segmentHashLookupOuterSize;
                 TierCountersArea.nextTierIndex(bytes.address() + tierCountersAreaOffset,
                         tierIndex + 1);
             }
@@ -659,28 +642,28 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
         if (tierIndexMinusOne < actualSegments)
             return msBytesSegmentOffset(tierIndexMinusOne);
         long extraTierIndex = tierIndexMinusOne - actualSegments;
-        int bulkIndex = (int) (extraTierIndex >> log2NumberOfTiersInBulk);
+        int bulkIndex = (int) (extraTierIndex >> log2TiersInBulk);
         if (bulkIndex >= tierBulkOffsets.size())
-            mapTiers(bulkIndex);
+            mapTierBulks(bulkIndex);
         return tierBulkOffsets.get(bulkIndex).offset + tierBulkInnerOffsetToTiers +
-                (extraTierIndex & (numberOfTiersInBulk - 1)) * segmentSize;
+                (extraTierIndex & (tiersInBulk - 1)) * segmentSize;
     }
 
     private TierBulkData tierBulkData(long tierIndexMinusOne) {
         long extraTierIndex = tierIndexMinusOne - actualSegments;
-        int bulkIndex = (int) (extraTierIndex >> log2NumberOfTiersInBulk);
+        int bulkIndex = (int) (extraTierIndex >> log2TiersInBulk);
         if (bulkIndex >= tierBulkOffsets.size())
-            mapTiers(bulkIndex);
+            mapTierBulks(bulkIndex);
         return tierBulkOffsets.get(bulkIndex);
     }
 
     private long extraTierIndexToBaseAddr(long tierIndexMinusOne) {
         long extraTierIndex = tierIndexMinusOne - actualSegments;
-        int bulkIndex = (int) (extraTierIndex >> log2NumberOfTiersInBulk);
+        int bulkIndex = (int) (extraTierIndex >> log2TiersInBulk);
         if (bulkIndex >= tierBulkOffsets.size())
-            mapTiers(bulkIndex);
+            mapTierBulks(bulkIndex);
         TierBulkData tierBulkData = tierBulkOffsets.get(bulkIndex);
-        long tierIndexOffsetWithinBulk = extraTierIndex & (numberOfTiersInBulk - 1);
+        long tierIndexOffsetWithinBulk = extraTierIndex & (tiersInBulk - 1);
         return tierAddr(tierBulkData, tierIndexOffsetWithinBulk);
     }
 
@@ -689,45 +672,62 @@ public abstract class VanillaChronicleHash<K, KI, MKI extends MetaBytesInterop<K
                 tierBulkInnerOffsetToTiers + tierIndexOffsetWithinBulk * segmentSize;
     }
 
-    private void mapTiers(int upToBulkIndex) {
-        if (ms instanceof MappedStore) {
+    private void mapTierBulks(int upToBulkIndex) {
+        if (persisted()) {
             try {
-                mapTiersMapped(upToBulkIndex);
+                mapTierBulksMapped(upToBulkIndex);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         } else {
             // in-memory ChMap
-            allocateTiers(upToBulkIndex);
+            allocateTierBulks(upToBulkIndex);
         }
     }
 
-    private void mapTiersMapped(int upToBulkIndex) throws IOException {
-        int firstBulkToMap = tierBulkOffsets.size();
-        int bulksToMap = upToBulkIndex + 1 - firstBulkToMap;
+    private void mapTierBulksMapped(int upToBulkIndex) throws IOException {
+        int firstBulkToMapIndex = tierBulkOffsets.size();
+        int bulksToMap = upToBulkIndex + 1 - firstBulkToMapIndex;
         long mapSize = bulksToMap * tierBulkSizeInBytes;
-        long mapStart = OS.mapAlign(sizeInBytesWithoutTiers()) +
-                firstBulkToMap * tierBulkSizeInBytes;
+        long mappingOffsetInFile, firstBulkToMapOffsetWithinMapping;
+        long firstBulkToMapOffset = bulkOffset(firstBulkToMapIndex);
+        if (OS.mapAlign(firstBulkToMapOffset) == firstBulkToMapOffset) {
+            mappingOffsetInFile = firstBulkToMapOffset;
+            firstBulkToMapOffsetWithinMapping = 0;
+        } else {
+            // If the bulk was allocated on OS with 4K mapping granularity (linux) and we
+            // are mapping it in OS with 64K mapping granularity (windows), we might need to
+            // start the mapping earlier than the first tier to map actually starts
+            mappingOffsetInFile = OS.mapAlign(firstBulkToMapOffset) - OS.mapAlignment();
+            firstBulkToMapOffsetWithinMapping = firstBulkToMapOffset - mappingOffsetInFile;
+            // Now might need to have bigger mapSize
+            mapSize += firstBulkToMapOffsetWithinMapping;
+        }
         MappedStore extraStore = new MappedStore(file(), FileChannel.MapMode.READ_WRITE,
-                mapStart, mapSize, ms.objectSerializer());
-        appendTierBulkData(upToBulkIndex, firstBulkToMap, extraStore);
+                mappingOffsetInFile, mapSize, ms.objectSerializer());
+        appendBulkData(firstBulkToMapIndex, upToBulkIndex, extraStore,
+                firstBulkToMapOffsetWithinMapping);
     }
 
-    private void allocateTiers(int upToBulkIndex) {
-        int firstBulkToMap = tierBulkOffsets.size();
-        int bulksToMap = upToBulkIndex + 1 - firstBulkToMap;
+    private long bulkOffset(int bulkIndex) {
+        return sizeInBytesWithoutTiers() + bulkIndex * tierBulkSizeInBytes;
+    }
+
+    private void allocateTierBulks(int upToBulkIndex) {
+        int firstBulkToMapIndex = tierBulkOffsets.size();
+        int bulksToMap = upToBulkIndex + 1 - firstBulkToMapIndex;
         long mapSize = bulksToMap * tierBulkSizeInBytes;
         DirectStore extraStore = new DirectStore(ms.objectSerializer(), mapSize, false);
-        appendTierBulkData(upToBulkIndex, firstBulkToMap, extraStore);
+        appendBulkData(firstBulkToMapIndex, upToBulkIndex, extraStore, 0);
     }
 
-    private void appendTierBulkData(int upToBulkIndex, int firstBulkToMap, BytesStore extraStore) {
-        long offset = 0;
-        TierBulkData firstMappedTierBulkData = new TierBulkData(extraStore, offset);
-        tierBulkOffsets.add(firstMappedTierBulkData);
-        for (int i = firstBulkToMap + 1; i <= upToBulkIndex; i++) {
-            tierBulkOffsets.add(new TierBulkData(firstMappedTierBulkData,
-                    offset += tierBulkSizeInBytes));
+    private void appendBulkData(int firstBulkToMapIndex, int upToBulkIndex, BytesStore extraStore,
+                                long offsetWithinMapping) {
+        TierBulkData firstMappedBulkData = new TierBulkData(extraStore, offsetWithinMapping);
+        tierBulkOffsets.add(firstMappedBulkData);
+        for (int bulkIndex = firstBulkToMapIndex + 1; bulkIndex <= upToBulkIndex; bulkIndex++) {
+            tierBulkOffsets.add(new TierBulkData(firstMappedBulkData,
+                    offsetWithinMapping += tierBulkSizeInBytes));
         }
     }
 }

@@ -172,7 +172,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 new ConcurrentFlatBitSetFrame(mainSegmentsBitSetSize);
 
         long tierBulkBitSetSize =
-                BYTES.toBits(tierBulkModIterBitSetSizeInBytes(numberOfTiersInBulk));
+                BYTES.toBits(tierBulkModIterBitSetSizeInBytes(tiersInBulk));
         tierBulkModIterFrameForUpdates = new SingleThreadedFlatBitSetFrame(tierBulkBitSetSize);
         tierBulkModIterFrameForIteration = new ConcurrentFlatBitSetFrame(tierBulkBitSetSize);
     }
@@ -188,8 +188,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     }
 
     @Override
-    protected long computeTierBulkInnerOffsetToTiers(long numberOfTiersInBulk) {
-        return tierBulkModIterBitSetSizeInBytes(numberOfTiersInBulk) * (128 + RESERVED_MOD_ITER);
+    protected long computeTierBulkInnerOffsetToTiers(long tiersInBulk) {
+        return super.computeTierBulkInnerOffsetToTiers(tiersInBulk) +
+                tierBulkModIterBitSetSizeInBytes(tiersInBulk) * (128 + RESERVED_MOD_ITER);
     }
 
     private long tierBulkModIterBitSetSizeInBytes(long numberOfTiersInBulk) {
@@ -558,7 +559,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                     remoteIdentifier * modIterBitSetSizeInBytes();
             nativeAccess().zeroOut(null, mainSegmentsChangesBitSetAddr, modIterBitSetSizeInBytes());
             offsetToBitSetWithinATierBulk =
-                    remoteIdentifier * tierBulkModIterBitSetSizeInBytes(numberOfTiersInBulk);
+                    remoteIdentifier * tierBulkModIterBitSetSizeInBytes(tiersInBulk);
         }
 
         public ModificationIterator(int remoteIdentifier, ModificationNotifier notifier) {
@@ -587,7 +588,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
         private long combineExtraTier(long tierIndexMinusOne, long pos) {
             long extraTierIndex = tierIndexMinusOne - actualSegments;
-            long tierIndexOffsetWithinBulk = extraTierIndex & (numberOfTiersInBulk - 1);
+            long tierIndexOffsetWithinBulk = extraTierIndex & (tiersInBulk - 1);
             return (tierIndexOffsetWithinBulk << segmentIndexShift) | pos;
         }
 
@@ -612,7 +613,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
         private void raiseExtraTierChange(long tierIndex, long bitIndex) {
             tierIndex = tierIndex - actualSegments - 1;
-            long bulkIndex = tierIndex >> log2NumberOfTiersInBulk;
+            long bulkIndex = tierIndex >> log2TiersInBulk;
             TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
             long bitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
                     offsetToBitSetWithinATierBulk;
@@ -632,7 +633,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
         private boolean dropExtraTierChange(long tierIndex, long bitIndex) {
             tierIndex = tierIndex - actualSegments - 1;
-            long bulkIndex = tierIndex >> log2NumberOfTiersInBulk;
+            long bulkIndex = tierIndex >> log2TiersInBulk;
             TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
             long bitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
                     offsetToBitSetWithinATierBulk;
@@ -651,8 +652,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         }
 
         private boolean isChangedExtraTier(long tierIndex, long bitIndex) {
-            tierIndex = tierIndex - actualSegments - 1;
-            long bulkIndex = tierIndex >> log2NumberOfTiersInBulk;
+            long extraTierIndex = tierIndex - actualSegments - 1;
+            long bulkIndex = extraTierIndex >> log2TiersInBulk;
             TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
             long bitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
                     offsetToBitSetWithinATierBulk;
@@ -746,7 +747,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                                 TierCountersArea.segmentIndex(tierCountersAreaAddr));
                         int tier = TierCountersArea.tier(tierCountersAreaAddr);
                         long tierIndex = actualSegments +
-                                (iterationMainSegmentsAreaOrTierBulk << log2NumberOfTiersInBulk) +
+                                (iterationMainSegmentsAreaOrTierBulk << log2TiersInBulk) +
                                 segmentIndexOrTierIndexOffsetWithinBulk + 1;
                         context.initSegmentTier(tier, tierIndex, tierBaseAddr);
                     }
