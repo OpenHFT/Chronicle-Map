@@ -1579,10 +1579,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             }
         }
 
-        /**
-         * @param bootstrapOnlyLocalEntries if true - only entries that have been create from this
-         *                                  node will be published during a bootstrap
-         */
+
         public void dirtyEntries(final long timeStamp,
                                  final EntryModifiableCallback callback,
                                  final boolean bootstrapOnlyLocalEntries) {
@@ -1868,12 +1865,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         final long segmentPos = position & posMask;
                         final Bytes entry =
                                 segment.reuse(tmpBytes, segment.offsetFromPos(segmentPos));
-
-                        // if the entry should be ignored, we'll move the next entry
-                        if (entryCallback.shouldBeIgnored(entry, chronicleId)) {
-                            changes.clear(position);
-                            continue;
-                        }
 
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
