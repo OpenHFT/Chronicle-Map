@@ -20,7 +20,7 @@
     <parent>
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
-        <version>1.1.2</version>
+        <version>1.1.9-SNAPSHOT</version>
         <relativePath />
     </parent>
 
@@ -38,7 +38,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
                 <type>pom</type>
-                <version>3.4.18</version>
+                <version>3.4.24-SNAPSHOT</version>
                 <scope>import</scope>
             </dependency>
 
@@ -46,7 +46,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
                 <type>pom</type>
-                <version>1.8.13</version>
+                <version>1.8.16-SNAPSHOT</version>
                 <scope>import</scope>
             </dependency>
 
@@ -318,6 +318,22 @@
 
         </plugins>
     </build>
+
+    <repositories>
+        <repository>
+            <id>Snapshot Repository</id>
+            <name>Snapshot Repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+        </repository>
+    </repositories>
 
     <scm>
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</url>
