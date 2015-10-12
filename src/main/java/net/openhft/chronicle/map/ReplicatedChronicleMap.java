@@ -778,11 +778,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                         final long segmentPos = position & posMask;
                         context.readExistingEntry(segmentPos);
 
-                        // if the entry should be ignored, we'll move the next entry
-                        if (entryCallback.shouldBeIgnored(context, chronicleId)) {
-                            changesForUpdatesClear(position);
-                            continue;
-                        }
 
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
