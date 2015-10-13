@@ -607,7 +607,7 @@ public final class ChannelProvider implements Closeable {
                 int removedPos = chronicleChannelPositionsInList[chronicleChannel];
                 if (removedPos == -1)
                     return;
-                chronicleChannelPositionsInList[removedPos] = -1;
+                chronicleChannelPositionsInList[chronicleChannel] = -1;
                 chronicleChannelList.remove(removedPos);
                 chronicleChannelIds.remove(removedPos);
                 for (int i = 0, len = chronicleChannelIds.size(); i < len; i++) {
