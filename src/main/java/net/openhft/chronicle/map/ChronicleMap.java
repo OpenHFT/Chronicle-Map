@@ -56,6 +56,19 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
                 ExternalMapQueryContext<K, V, ?>> {
 
     /**
+     * Delegates to {@link ChronicleMapBuilder#of(Class, Class)} for convenience.
+     *
+     * @param keyClass class of the key type of the Chronicle Map to create
+     * @param valueClass class of the value type of the Chronicle Map to create
+     * @param <K> the key type of the Chronicle Map to create
+     * @param <V> the value type of the Chronicle Map to create
+     * @return a new {@code ChronicleMapBuilder} for the given key and value classes
+     */
+    static <K, V> ChronicleMapBuilder<K, V> of(Class<K> keyClass, Class<V> valueClass) {
+        return ChronicleMapBuilder.of(keyClass, valueClass);
+    }
+
+    /**
      * Returns the value to which the specified key is mapped, or {@code null} if this map contains
      * no mapping for the key.
      *
