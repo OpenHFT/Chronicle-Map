@@ -71,7 +71,7 @@ public class TCPSocketReplicationAfterNodeFailureTest {
             byte identifier = (byte) 1;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8021)
+                    .of(8121)
                     .name("peter") // naming the config helps with debugging
                     .heartBeatInterval(1, TimeUnit.SECONDS);
 
@@ -106,7 +106,7 @@ public class TCPSocketReplicationAfterNodeFailureTest {
             byte identifier = (byte) 2;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8022, new InetSocketAddress("localhost", 8021))
+                    .of(8122, new InetSocketAddress("localhost", 8121))
                     .name("rob").
                             heartBeatInterval(1, TimeUnit.SECONDS);
 
@@ -145,9 +145,9 @@ public class TCPSocketReplicationAfterNodeFailureTest {
             byte identifier = (byte) 3;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8023,
-                            new InetSocketAddress("localhost", 8021),
-                            new InetSocketAddress("localhost", 8022)) // this wont be available but just added for completeness
+                    .of(8123,
+                            new InetSocketAddress("localhost", 8121),
+                            new InetSocketAddress("localhost", 8122)) // this wont be available but just added for completeness
                     .name("ozan").
                             heartBeatInterval(1, TimeUnit.SECONDS);
 
@@ -173,6 +173,7 @@ public class TCPSocketReplicationAfterNodeFailureTest {
 
         favoriteComputerServer1.close();
         favoriteComputerServer3.close();
+
     }
 
 
