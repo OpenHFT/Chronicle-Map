@@ -38,7 +38,7 @@ import static org.junit.Assert.assertEquals;
  * @author Ozan Ozen.
  */
 
-public class TCPSocketReplicationAfterNodeFailure {
+public class TCPSocketReplicationAfterNodeFailureTest {
 
     Set<Thread> threads;
 
@@ -54,7 +54,7 @@ public class TCPSocketReplicationAfterNodeFailure {
 
 
     @Test
-    public void TCPSocketReplicationAfterNodeFailure()
+    public void testTCPSocketReplicationAfterNodeFailure()
             throws IOException, InterruptedException {
 
         ChronicleMap<CharSequence, CharSequence> favoriteComputerServer1, favoriteComputerServer2, favoriteComputerServer3;
