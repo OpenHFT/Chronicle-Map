@@ -37,6 +37,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .replication((byte) 1)
                 .entries(1000)
+                .averageValueSize(20)
                 .create();
     }
 
@@ -44,6 +45,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .replication((byte) 1)
                 .entries(1000)
+                .averageKeySize(20)
+                .averageValueSize(20)
                 .create();
     }
 

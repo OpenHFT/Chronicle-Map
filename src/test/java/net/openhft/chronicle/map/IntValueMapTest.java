@@ -36,6 +36,7 @@ public class IntValueMapTest {
 
         try (final ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class)
+                .averageValue("test")
                 .entries(20000).create()) {
             IntValue$$Native value = new IntValue$$Native();
             value.bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);

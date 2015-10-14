@@ -37,6 +37,7 @@ public class DefaultValueTest {
             defaultValue.add(42);
             try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
+                    .averageKey("a").averageValue(Arrays.asList(1, 2))
                     .defaultValue(defaultValue).createPersistedTo(file)) {
                 ArrayList<Integer> using = new ArrayList<Integer>();
                 assertEquals(defaultValue, map.acquireUsing("a", using));
@@ -49,6 +50,7 @@ public class DefaultValueTest {
             ArrayList<Integer> using = new ArrayList<Integer>();
             try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
+                    .averageKey("a").averageValue(Arrays.asList(1, 2))
                     .createPersistedTo(file)) {
                 assertEquals(defaultValue, map.acquireUsing("c", using));
             }

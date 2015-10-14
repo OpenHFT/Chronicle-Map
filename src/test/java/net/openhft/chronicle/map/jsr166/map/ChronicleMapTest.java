@@ -45,6 +45,7 @@ public class ChronicleMapTest extends JSR166TestCase {
 
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int size) throws IOException {
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .averageKeySize(20).averageValueSize(20)
                 .entries(size).create();
     }
 

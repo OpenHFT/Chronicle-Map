@@ -52,6 +52,7 @@ public class ChannelReplicationTest {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                            .averageKeySize(5).averageValueSize(5)
                             .entries(1000);
 
             byte identifier = (byte) 1;
@@ -85,7 +86,7 @@ public class ChannelReplicationTest {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                            .entries(1000);
+                            .averageKeySize(5).averageValueSize(5).entries(1000);
 
             byte identifier = (byte) 2;
 
@@ -146,6 +147,7 @@ public class ChannelReplicationTest {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                            .averageKeySize(5).averageValueSize(5)
                             .entries(1000);
 
             byte identifier = (byte) 1;
@@ -179,6 +181,7 @@ public class ChannelReplicationTest {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> builder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                            .averageKeySize(5).averageValueSize(5)
                             .entries(1000);
 
             byte identifier = (byte) 6;
@@ -203,6 +206,7 @@ public class ChannelReplicationTest {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                            .averageKeySize(5).averageValueSize(5)
                             .entries(1000);
 
             byte identifier = (byte) 3;
@@ -260,6 +264,7 @@ public class ChannelReplicationTest {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                            .averageKeySize(5).averageValueSize(5)
                             .entries(1000);
 
             byte identifier = (byte) 1;
@@ -294,6 +299,7 @@ public class ChannelReplicationTest {
         {
             ChronicleMapBuilder<CharSequence, CharSequence> smallStringToStringMapBuilder =
                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                            .averageKeySize(5).averageValueSize(5)
                             .entries(1000);
 
             byte identifier = (byte) 2;

@@ -56,6 +56,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.lang.Double.isNaN;
 import static java.lang.Math.ceil;
 import static java.lang.Math.round;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
@@ -134,11 +135,8 @@ public final class ChronicleMapBuilder<K, V> implements
     static final long RUNTIME_PAGE_SIZE = (long) NativeBytes.UNSAFE.pageSize();
 
     private static boolean isDefined(double config) {
-        return !Double.isNaN(config);
+        return !isNaN(config);
     }
-
-    private static final boolean strictStateChecks =
-            Boolean.getBoolean("chronicle.strictStateChecks");
 
     // not final because of cloning
     private ChronicleMapBuilderPrivateAPI<K> privateAPI = new ChronicleMapBuilderPrivateAPI<>(this);
@@ -443,7 +441,7 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private static void checkAverageSize(double averageSize, String role) {
-        if (averageSize <= 0 || Double.isNaN(averageSize) ||
+        if (averageSize <= 0 || isNaN(averageSize) ||
                 Double.isInfinite(averageSize)) {
             throw new IllegalArgumentException("Average " + role + " size must be a positive, " +
                     "finite number");
@@ -499,7 +497,7 @@ public final class ChronicleMapBuilder<K, V> implements
             builder.maxSize(DEFAULT_KEY_OR_VALUE_SIZE);
             return builder.serializationSize(average);
         }
-        return DEFAULT_KEY_OR_VALUE_SIZE;
+        return Double.NaN;
     }
 
     /**
@@ -606,8 +604,8 @@ public final class ChronicleMapBuilder<K, V> implements
         return valueBuilder.pseudoReadConstantSize();
     }
 
-    private boolean constantlySizedKeys() {
-        return keyBuilder.constantSizeMarshaller();
+    boolean constantlySizedKeys() {
+        return keyBuilder.constantSizeMarshaller() || sampleKey != null;
     }
 
     private static double averageSizeEncodingSize(
@@ -714,8 +712,8 @@ public final class ChronicleMapBuilder<K, V> implements
         return result;
     }
 
-    private boolean constantlySizedValues() {
-        return valueBuilder.constantSizeMarshaller();
+    boolean constantlySizedValues() {
+        return valueBuilder.constantSizeMarshaller() || sampleValue != null;
     }
 
     /**
@@ -826,7 +824,7 @@ public final class ChronicleMapBuilder<K, V> implements
         if (actualChunksPerSegment > 0) {
             if (entriesPerSegment <= 0 || (actualChunkSize <= 0 && !constantlySizedEntries()) ||
                     actualSegments <= 0)
-                throw new IllegalStateException("Actual chunks per entry could be configured " +
+                throw new IllegalStateException("Actual chunks per segment could be configured " +
                         "only if other three low level configs are manual: " +
                         "entriesPerSegment(), actualSegments() and actualChunkSize(), unless " +
                         "both keys and value sizes are constant");
@@ -1086,7 +1084,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
     @Override
     public ChronicleMapBuilder<K, V> maxBloatFactor(double maxBloatFactor) {
-        if (Double.isNaN(maxBloatFactor) || maxBloatFactor < 1.0 || maxBloatFactor > 1_000.0) {
+        if (isNaN(maxBloatFactor) || maxBloatFactor < 1.0 || maxBloatFactor > 1_000.0) {
             throw new IllegalArgumentException("maxBloatFactor should be in [1.0, 1_000.0] " +
                     "bounds, " + maxBloatFactor + " given");
         }
@@ -1103,7 +1101,7 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMapBuilder<K, V> nonTieredSegmentsPercentile(
             double nonTieredSegmentsPercentile) {
-        if (Double.isNaN(nonTieredSegmentsPercentile) ||
+        if (isNaN(nonTieredSegmentsPercentile) ||
                 0.5 <= nonTieredSegmentsPercentile || nonTieredSegmentsPercentile >= 1.0) {
             throw new IllegalArgumentException("nonTieredSegmentsPercentile should be in (0.5, " +
                     "1.0) range, " + nonTieredSegmentsPercentile + " is given");
@@ -1669,40 +1667,56 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     void preMapConstruction() {
-        averageKeySize = preMapConstruction(keyBuilder, averageKeySize, averageKey, sampleKey);
-        averageValueSize = preMapConstruction(valueBuilder,
-                averageValueSize, averageValue, sampleValue);
+        averageKeySize = preMapConstruction(
+                keyBuilder, averageKeySize, averageKey, sampleKey, "Key");
+        averageValueSize = preMapConstruction(
+                valueBuilder, averageValueSize, averageValue, sampleValue, "Value");
         if (sampleKey == null)
-            keyBuilder.maxSize(bufferSize(keyBuilder, averageKeySize));
+            keyBuilder.maxSize(bufferSize(keyBuilder, averageSizeIfDefined(averageKeySize)));
         if (sampleValue == null)
-            valueBuilder.maxSize(bufferSize(valueBuilder, averageValueSize));
+            valueBuilder.maxSize(bufferSize(valueBuilder, averageSizeIfDefined(averageValueSize)));
         stateChecks();
     }
 
+    private double averageSizeIfDefined(double averageKeyOrValueSize) {
+        if (isDefined(averageKeyOrValueSize))
+            return averageKeyOrValueSize;
+        assert actualChunksPerSegment > 0 && entriesPerSegment > 0 : "average key or value size " +
+                "could be not defined here, only if allLowLevelConfigurationsAreManual() " +
+                "returns true in preMapConstruction()";
+        return actualChunksPerSegment * 1.0 / entriesPerSegment * actualChunkSize;
+    }
+
     private <E> double preMapConstruction(
-            SerializationBuilder<E> builder, double configuredAverageSize, E average, E sample) {
+            SerializationBuilder<E> builder, double configuredAverageSize, E average, E sample,
+            String dim) {
         builder.objectSerializer(acquireObjectSerializer(JDKObjectSerializer.INSTANCE));
         if (sample != null) {
             builder.maxSize(DEFAULT_KEY_OR_VALUE_SIZE);
             builder.constantSizeBySample(sample);
             return builder.maxSize();
         } else {
-            return averageKeyOrValueSize(configuredAverageSize, builder, average);
+            double result = averageKeyOrValueSize(configuredAverageSize, builder, average);
+            if (!isNaN(result) || allLowLevelConfigurationsAreManual()) {
+                return result;
+            } else {
+                throw new IllegalStateException(dim + " size in serialized form must " +
+                        "be configured in ChronicleMap, at least approximately.\nUse builder" +
+                        ".average" + dim + "()/.constant" + dim + "SizeBySample()/" +
+                        ".average" + dim + "Size() methods to configure the size");
+            }
         }
     }
 
     private void stateChecks() {
-        if (strictStateChecks) {
-            if (entries < 0)
-                throw new IllegalStateException("Entries must be specified");
-            if (!constantlySizedKeys() && !isDefined(averageKeySize))
-                throw new IllegalStateException("No info about key size");
-            if (!constantlySizedValues() && !isDefined(averageValueSize))
-                throw new IllegalStateException("No info about value size");
-        }
         checkAlignmentOnlyIfValuesPossiblyReferenceOffHeap();
         checkActualChunksPerSegmentIsConfiguredOnlyIfOtherLowLevelConfigsAreManual();
         checkActualChunksPerSegmentGreaterOrEqualToEntries();
+    }
+
+    private boolean allLowLevelConfigurationsAreManual() {
+        return actualSegments > 0 && entriesPerSegment > 0 && actualChunksPerSegment > 0
+                && actualChunkSize > 0;
     }
 
     private ChronicleMap<K, V> establishReplication(

@@ -68,6 +68,7 @@ public class ChronicleMapSanityCheckTest {
 
         try (ChronicleMap<String, DummyValue> map =
                      ChronicleMapBuilder.of(String.class, DummyValue.class)
+                             .averageKey("" + N).averageValue(DummyValue.DUMMY_VALUE)
                              .entries(N)
                              .createPersistedTo(file)) {
 

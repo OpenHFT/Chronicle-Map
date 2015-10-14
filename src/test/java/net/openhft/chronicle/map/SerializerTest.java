@@ -105,6 +105,8 @@ public class SerializerTest {
 
         ChronicleMapBuilder builder =
                 ChronicleMapBuilder.of(Integer.class, valueClass);
+        if (!builder.constantlySizedValues())
+            builder.averageValueSize(1000);
 
         builder.preMapConstruction();
 
@@ -128,6 +130,9 @@ public class SerializerTest {
         ByteBufferBytes in = out.slice();
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(clazz, Integer.class);
+
+        if (!builder.constantlySizedKeys())
+            builder.averageKeySize(1000);
 
         builder.preMapConstruction();
         {

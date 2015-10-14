@@ -100,6 +100,7 @@ public class ComplexSerializationTest {
                 .of(String.class, A.class)
                 .valueMarshaller(AMarshaller.INSTANCE)
                 .entries(5)
+                .averageKeySize(4)
                 .averageValueSize(1000)
                 .create()) {
             A obj_A = new A();

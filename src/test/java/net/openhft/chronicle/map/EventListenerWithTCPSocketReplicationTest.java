@@ -264,6 +264,7 @@ public class EventListenerWithTCPSocketReplicationTest {
         TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig.of(8077)
                 .autoReconnectedUponDroppedConnection(true);
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .averageValueSize(100)
                 .entries(20000L)
                 .replication((byte) 1, tcpConfig)
                 .entryOperations(entryOperations)
@@ -300,6 +301,7 @@ public class EventListenerWithTCPSocketReplicationTest {
                 .of(8076, new InetSocketAddress("localhost", 8077))
                 .autoReconnectedUponDroppedConnection(true);
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .averageValueSize(100)
                 .entries(20000L)
                 .replication((byte) 2, tcpConfig);
     }

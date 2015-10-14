@@ -46,6 +46,7 @@ public class TwoMapOnDifferentServersTest {
                         .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
 
         map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .averageValue("EXAMPLE-2")
                 .entries(20000)
                 .replication((byte) 1, tcpConfig).create();
 
@@ -53,6 +54,7 @@ public class TwoMapOnDifferentServersTest {
                 .heartBeatInterval(1, SECONDS).autoReconnectedUponDroppedConnection(true);
 
         map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .averageValue("EXAMPLE-2")
                 .entries(20000)
                 .replication((byte) 2, config2).create();
     }

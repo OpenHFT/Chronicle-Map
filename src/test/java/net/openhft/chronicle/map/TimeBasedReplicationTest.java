@@ -58,21 +58,18 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
             throws IOException, InterruptedException {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
-        try (ChronicleMap<CharSequence, CharSequence> map =
-                     ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                             .entries(10)
-                             .cleanupRemovedEntries(false)
-                             .timeProvider(timeProvider)
-                             .replication((byte) 1, TcpTransportAndNetworkConfig.of(8086))
-                             .create()) {
-            try (ChronicleMap<CharSequence, CharSequence> map2 =
-                         ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                                 .entries(10)
-                                 .cleanupRemovedEntries(false)
-                                 .timeProvider(timeProvider)
-                                 .replication((byte) 2, TcpTransportAndNetworkConfig.of(8087,
-                                         new InetSocketAddress("localhost", 8086)))
-                                 .create()) {
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
+                .averageKey("key-1")
+                .averageValue("value-1")
+                .entries(10)
+                .cleanupRemovedEntries(false)
+                .timeProvider(timeProvider);
+        try (ChronicleMap<CharSequence, CharSequence> map = builder
+                .replication((byte) 1, TcpTransportAndNetworkConfig.of(8086)).create()) {
+            try (ChronicleMap<CharSequence, CharSequence> map2 = builder
+                    .replication((byte) 2, TcpTransportAndNetworkConfig
+                            .of(8087, new InetSocketAddress("localhost", 8086))).create()) {
                 current(timeProvider);
 
                 // we do a put at the current time
@@ -109,6 +106,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
 
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
         try (ChronicleMap map = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .averageKey("key-1").averageValue("value-1")
                 .entries(10)
                 .cleanupRemovedEntries(false)
                 .timeProvider(timeProvider)
@@ -182,6 +180,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
         final TimeProvider timeProvider = Mockito.mock(TimeProvider.class);
         try (ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                             .averageKey("key-1").averageValue("value-1")
                              .entries(10)
                              .cleanupRemovedEntries(false)
                              .timeProvider(timeProvider)
@@ -189,6 +188,7 @@ public class TimeBasedReplicationTest extends JSR166TestCase {
                              .create()) {
             try (ChronicleMap<CharSequence, CharSequence> map2 =
                          ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                                 .averageKey("key-1").averageValue("value-1")
                                  .entries(10)
                                  .cleanupRemovedEntries(false)
                                  .timeProvider(timeProvider)

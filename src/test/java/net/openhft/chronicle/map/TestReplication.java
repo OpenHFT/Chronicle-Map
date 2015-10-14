@@ -79,12 +79,14 @@ public class TestReplication {
 
 
             server1 = ChronicleMapBuilder.of(String.class, String.class)
+                    .averageKey("key").averageValue("value")
                     .replication((byte) 1).createPersistedTo(tempFile);
 
             TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(9000);
 
             // user for replication only
             forServer1Replication = ChronicleMapBuilder.of(String.class, String.class)
+                    .averageKey("key").averageValue("value")
                     .replication((byte) 1, serverConfig).createPersistedTo(tempFile);
 
         }
@@ -96,6 +98,7 @@ public class TestReplication {
                     InetSocketAddress("localhost", 9000));
 
             server2 = ChronicleMapBuilder.of(String.class, String.class)
+                    .averageKey("key").averageValue("value")
                     .replication((byte) 2, server2Config).create();
 
         }

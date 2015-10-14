@@ -210,8 +210,10 @@ public class CHMUseCasesTest {
                     .entriesPerSegment(vanillaMap.entriesPerSegment)
                     .actualSegments(vanillaMap.actualSegments)
                     .actualChunksPerSegment(vanillaMap.actualChunksPerSegment);
-            if (!vanillaMap.constantlySizedEntry)
+            if (!vanillaMap.constantlySizedEntry) {
                 builder.actualChunkSize((int) vanillaMap.chunkSize);
+                builder.worstAlignment(vanillaMap.worstAlignment);
+            }
             try (ChronicleMap<Integer, Double> actual = builder.create()) {
                 actual.putAll(file);
 
@@ -236,6 +238,10 @@ public class CHMUseCasesTest {
 
     private <X, Y> ChronicleMap<X, Y> newInstance(ChronicleMapBuilder<X, Y> builder) throws
             IOException {
+        if (!builder.constantlySizedKeys())
+            builder.averageKeySize(20);
+        if (!builder.constantlySizedValues())
+            builder.averageValueSize(20);
         switch (typeOfMap) {
 
             case SIMPLE:

@@ -44,6 +44,7 @@ public class UDPSocketReplicationTest {
                 .of(Inet4Address.getByName("255.255.255.255"), udpPort);
 
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .averageValue("E")
                 .entries(1000)
                 .replication(SingleChronicleHashReplication.builder().udpTransport(udpConfig)
                                 .createWithId((byte) identifier))

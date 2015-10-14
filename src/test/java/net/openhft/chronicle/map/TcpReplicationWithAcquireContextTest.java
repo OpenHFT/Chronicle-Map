@@ -38,8 +38,9 @@ public class TcpReplicationWithAcquireContextTest {
         ChronicleMap<CharSequence, TestInstrumentVOInterface> map2a = null;
         ChronicleMap<CharSequence, TestInstrumentVOInterface> map1a = null;
 
-        try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map1 = ChronicleMapBuilder.of
-                (CharSequence.class, TestInstrumentVOInterface.class)
+        try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map1 = ChronicleMap
+                .of(CharSequence.class, TestInstrumentVOInterface.class)
+                .averageKey("hello")
                 .replication((byte) 1, config1)
                 .create()) {
 
@@ -50,8 +51,8 @@ public class TcpReplicationWithAcquireContextTest {
 
 
             try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
-                         ChronicleMapBuilder.of(CharSequence.class,
-                                 TestInstrumentVOInterface.class)
+                         ChronicleMap.of(CharSequence.class, TestInstrumentVOInterface.class)
+                                 .averageKey("hello")
                                  .replication((byte) 2, config2)
                                  .create()) {
 

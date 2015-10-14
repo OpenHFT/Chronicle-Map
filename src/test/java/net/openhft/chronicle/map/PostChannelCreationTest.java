@@ -69,10 +69,12 @@ public class PostChannelCreationTest {
 
             // this is how you add maps after the custer is created
             map1a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .averageValue("EXAMPLE-1")
                     .entries(1000)
                     .instance().replicatedViaChannel(hubA.createChannel((short) 1)).create();
 
             map2a = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .averageValue("EXAMPLE-1")
                     .entries(1000)
                     .instance().replicatedViaChannel(hubA.createChannel((short) 2)).create();
         }
@@ -87,10 +89,12 @@ public class PostChannelCreationTest {
 
             // this is how you add maps after the custer is created
             map1b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .averageValue("EXAMPLE-1")
                     .entries(1000)
                     .instance().replicatedViaChannel(hubB.createChannel((short) 1)).create();
 
             map2b = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    .averageValue("EXAMPLE-1")
                     .entries(1000)
                     .instance().replicatedViaChannel(hubB.createChannel((short) 2)).create();
         }

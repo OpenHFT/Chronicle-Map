@@ -29,6 +29,7 @@ public class ChronicleMapEqualsTest {
         ChronicleMap<CharSequence, CharSequence> map =
                 ChronicleMapBuilder
                         .of(CharSequence.class, CharSequence.class)
+                        .averageKey("a").averageValue("b")
                         .entries(100)
                         .create();
 

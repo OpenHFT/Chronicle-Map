@@ -45,6 +45,7 @@ public class Issue37Test {
 
         File file1 = Builder.getPersistenceFile();
         ChronicleMap<String, String> map1 = ChronicleMapBuilder.of(String.class, String.class)
+                .averageKeySize(10).averageValueSize(10)
                 .instance()
                 .replicatedViaChannel(replicationHub.createChannel(2))
                 .persistedTo(file1)
@@ -52,6 +53,7 @@ public class Issue37Test {
 
         File file2 = Builder.getPersistenceFile();
         ChronicleMap<String, String> map2 = ChronicleMapBuilder.of(String.class, String.class)
+                .averageKeySize(10).averageValueSize(10)
                 .instance()
                 .replicatedViaChannel(replicationHub.createChannel(3))
                 .persistedTo(file2)

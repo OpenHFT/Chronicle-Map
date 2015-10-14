@@ -189,6 +189,7 @@ public class StringEncodingExamplesTest {
     private void testCustomKeyMarshaller(BytesMarshaller<CharSequence> marshaller)
             throws IOException {
         try (ChronicleSet<CharSequence> chineseWordSet = ChronicleSetBuilder.of(CharSequence.class)
+                .averageKeySize(10)
                 .keyMarshaller(marshaller)
                 .actualSegments(1)
                 .entriesPerSegment(1000)

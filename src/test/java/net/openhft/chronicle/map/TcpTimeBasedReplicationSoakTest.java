@@ -80,26 +80,22 @@ public class TcpTimeBasedReplicationSoakTest {
             }
         };
 
+        ChronicleMapBuilder<Integer, CharSequence> builder = ChronicleMapBuilder
+                .of(Integer.class, CharSequence.class)
+                .averageValue("test-1000000")
+                .entries(Builder.SIZE)
+                .timeProvider(timeProvider);
         {
-            final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(s_port,
-                    endpoint);
+            TcpTransportAndNetworkConfig tcpConfig1 =
+                    TcpTransportAndNetworkConfig.of(s_port, endpoint);
 
-
-            map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(Builder.SIZE)
-                    .timeProvider(timeProvider)
-                    .replication((byte) 1, tcpConfig1)
-                    .create();
+            map1 = builder.replication((byte) 1, tcpConfig1).create();
         }
         {
-            final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of(s_port + 1);
+            final TcpTransportAndNetworkConfig tcpConfig2 =
+                    TcpTransportAndNetworkConfig.of(s_port + 1);
 
-            map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                    .entries(Builder.SIZE)
-                    .timeProvider(timeProvider)
-                    .replication((byte) 2, tcpConfig2)
-                    .create();
-
+            map2 = builder.replication((byte) 2, tcpConfig2).create();
         }
         s_port += 2;
     }

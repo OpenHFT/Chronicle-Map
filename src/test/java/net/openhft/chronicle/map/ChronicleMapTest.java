@@ -143,6 +143,7 @@ public class ChronicleMapTest {
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder
                              .of(CharSequence.class, CharSequence.class)
+                             .averageKey("key1").averageValue("one")
                              .minSegments(2).create()) {
 
             assertFalse(map.containsKey("key3"));
@@ -189,8 +190,10 @@ public class ChronicleMapTest {
         final File persistenceFile = Builder.getPersistenceFile();
 
         for (int i = 0; i < 3; i++) {
-            try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[]
-                    .class).createPersistedTo(persistenceFile)) {
+            try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
+                    .of(byte[].class, byte[].class)
+                    .averageKey("hello".getBytes()).averageValue("world".getBytes())
+                    .createPersistedTo(persistenceFile)) {
 
                 byte[] o = map.get("hello".getBytes());
                 System.out.println(o == null ? "null" : new String(o));
@@ -204,7 +207,9 @@ public class ChronicleMapTest {
     @Test
     public void testEqualsCharSequence() {
 
-        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class);
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
+                .of(CharSequence.class, CharSequence.class)
+                .averageKey("hello").averageValue("world");
 
         try (final ChronicleMap<CharSequence, CharSequence> map1 = builder.create()) {
 
@@ -225,7 +230,9 @@ public class ChronicleMapTest {
         char[] value = new char[5];
         Arrays.fill(value, 'X');
 
-        ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder.of(CharSequence.class, char[].class);
+        ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
+                .of(CharSequence.class, char[].class)
+                .averageKey("hello").averageValue(value);
 
         try (final ChronicleMap<CharSequence, char[]> map1 = builder.create()) {
 
@@ -247,7 +254,9 @@ public class ChronicleMapTest {
         byte[] value = new byte[5];
         Arrays.fill(value, (byte) 'X');
 
-        ChronicleMapBuilder<CharSequence, byte[]> builder = ChronicleMapBuilder.of(CharSequence.class, byte[].class);
+        ChronicleMapBuilder<CharSequence, byte[]> builder = ChronicleMapBuilder
+                .of(CharSequence.class, byte[].class)
+                .averageKey("hello").averageValue(value);
 
         try (final ChronicleMap<CharSequence, byte[]> map1 = builder.create()) {
 
@@ -268,6 +277,7 @@ public class ChronicleMapTest {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                             .averageKey("key-1024").averageValue("value")
                              .minSegments(1024)
                              .removeReturnsNull(true).create()) {
 
@@ -288,8 +298,9 @@ public class ChronicleMapTest {
     public void testRemoveInteger() throws IOException {
 
         int count = 300;
-        try (final ChronicleMap<Object, Object> map = ChronicleMapBuilder.of(Object.class, Object
-                .class)
+        try (final ChronicleMap<Object, Object> map = ChronicleMapBuilder
+                .of(Object.class, Object.class)
+                .averageKey(1).averageValue(1)
                 .entries(count)
                 .minSegments(2).create()) {
 
@@ -314,6 +325,7 @@ public class ChronicleMapTest {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                             .averageKey("key1").averageValue("one")
                              .minSegments(2)
                              .removeReturnsNull(true).create()) {
 
@@ -360,6 +372,7 @@ public class ChronicleMapTest {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                             .averageKey("key1").averageValue("one")
                              .minSegments(2).create()) {
 
             map.put("key1", "one");
@@ -424,6 +437,7 @@ public class ChronicleMapTest {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                             .averageKey("key1").averageValue("one")
                              .minSegments(2).create()) {
 
             map.put("key1", "one");
@@ -466,6 +480,7 @@ public class ChronicleMapTest {
 
         try (final ChronicleMap<CharSequence, CharSequence> map =
                      ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                             .averageKey("key1").averageValue("one")
                              .minSegments(2).create()) {
 
             map.put("key1", "one");
@@ -502,6 +517,7 @@ public class ChronicleMapTest {
     public void testAcquireWithNullContainer() {
         try (ChronicleMap<CharSequence, LongValue> map =
                      ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+                             .averageKey("key")
                              .entries(1000)
                              .entryAndValueAlignment(OF_4_BYTES)
                              .create()) {
@@ -545,6 +561,7 @@ public class ChronicleMapTest {
     public void testGetWithNullContainer() {
         try (ChronicleMap<CharSequence, LongValue> map =
                      ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+                             .averageKey("key")
                              .entries(10)
                              .entryAndValueAlignment(OF_4_BYTES)
                              .create()) {
@@ -558,6 +575,7 @@ public class ChronicleMapTest {
     public void testGetWithoutAcquireFirst() {
         try (ChronicleMap<CharSequence, LongValue> map =
                      ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
+                             .averageKey("key")
                              .entries(10)
                              .entryAndValueAlignment(OF_4_BYTES)
                              .create()) {
@@ -1674,14 +1692,15 @@ public class ChronicleMapTest {
 
     @Test
     public void equalsTest() throws IOException {
-        try (final ChronicleMap<Integer, String> map1 = ChronicleMapBuilder
-                .of(Integer.class, String.class).create()) {
+        try (final ChronicleMap<Integer, String> map1 = ChronicleMap.of(Integer.class, String.class)
+                .averageValue("one").create()) {
 
             map1.put(1, "one");
             map1.put(2, "two");
 
             try (final ChronicleMap<Integer, String> map2 = ChronicleMapBuilder
-                    .of(Integer.class, String.class).create()) {
+                    .of(Integer.class, String.class)
+                    .averageValue("one").create()) {
 
                 map2.put(1, "one");
                 map2.put(2, "two");
@@ -1813,6 +1832,7 @@ public class ChronicleMapTest {
 
         ChronicleMapBuilder<CharSequence, String> builder = ChronicleMapBuilder
                 .of(CharSequence.class, String.class)
+                .averageKey("one").averageValue("")
                 .entries(1000)
                 .defaultValue("");
 

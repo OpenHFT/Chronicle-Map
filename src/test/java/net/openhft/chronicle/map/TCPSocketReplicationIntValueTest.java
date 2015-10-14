@@ -53,10 +53,12 @@ public class TCPSocketReplicationIntValueTest {
         value = DataValueClasses.newDirectReference(IntValue.class);
         ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
         map1Builder = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
-                (byte) 1, s_port, new InetSocketAddress("localhost", s_port + 1));
+                (byte) 1, s_port, new InetSocketAddress("localhost", s_port + 1))
+                .averageValue("EXAMPLE-1");
         map1 = map1Builder.create();
         map2 = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 (byte) 2, s_port + 1)
+                .averageValue("EXAMPLE-1")
                 .entries(Builder.SIZE)
                 .create();
         s_port += 2;

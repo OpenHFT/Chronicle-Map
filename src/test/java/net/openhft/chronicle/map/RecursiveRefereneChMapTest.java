@@ -32,6 +32,7 @@ public class RecursiveRefereneChMapTest {
         File file = new File(TMP + "/test." + System.nanoTime() + ".tmp");
         file.deleteOnExit();
         Map<String, StupidCycle> map = ChronicleMapBuilder.of(String.class, StupidCycle.class)
+                .averageKey("Test").averageValue(new StupidCycle())
                 .entries(64)
                 .objectSerializer(JDKObjectSerializer.INSTANCE).create();
         map.put("Test", new StupidCycle());

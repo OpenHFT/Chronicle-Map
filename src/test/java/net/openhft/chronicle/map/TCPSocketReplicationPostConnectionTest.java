@@ -92,7 +92,8 @@ public class TCPSocketReplicationPostConnectionTest {
 
         ChronicleMapBuilder<Integer, CharSequence> map2aBuilder =
                 newTcpSocketShmBuilder(Integer.class, CharSequence.class,
-                        (byte) 2, port + 1, new InetSocketAddress("localhost", port));
+                        (byte) 2, port + 1, new InetSocketAddress("localhost", port))
+                        .averageValue("EXAMPLE-1");
         try (final ChronicleMap<Integer, CharSequence> map2a =
                 map2aBuilder.createPersistedTo(Builder.getPersistenceFile())) {
             map1 = TCPSocketReplication4WayMapTest.newTcpSocketShmIntString((byte) 1, port);
