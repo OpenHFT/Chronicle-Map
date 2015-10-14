@@ -412,10 +412,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         final long timeStamp = entry.readLong();
 
         final byte identifier = entry.readByte();
-        if (identifier != identifier()) {
-            // although unlikely, this may occur if the entry has been updated
-            return;
-        }
 
         final boolean isDeleted = entry.readBoolean();
         long valueSize;

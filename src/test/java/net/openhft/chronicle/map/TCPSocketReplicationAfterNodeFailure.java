@@ -105,7 +105,8 @@ public class TCPSocketReplicationAfterNodeFailure {
             byte identifier = (byte) 2;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8022, new InetSocketAddress("localhost", 8021)).heartBeatInterval(1, TimeUnit.SECONDS);
+                    .of(8022, new InetSocketAddress("localhost", 8021))
+                    .heartBeatInterval(1, TimeUnit.SECONDS);
 
             hubOnServer2 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -142,7 +143,10 @@ public class TCPSocketReplicationAfterNodeFailure {
             byte identifier = (byte) 3;
 
             TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                    .of(8023, new InetSocketAddress("localhost", 8021)).heartBeatInterval(1, TimeUnit.SECONDS);
+                    .of(8023,
+                            new InetSocketAddress("localhost", 8021),
+                            new InetSocketAddress("localhost", 8022)) // this wont be available but just added for completeness
+                    .heartBeatInterval(1, TimeUnit.SECONDS);
 
             hubOnServer3 = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -165,6 +169,7 @@ public class TCPSocketReplicationAfterNodeFailure {
         assertEquals(3, favoriteComputerServer1.size());
 
         favoriteComputerServer1.close();
+        favoriteComputerServer3.close();
     }
 
 
