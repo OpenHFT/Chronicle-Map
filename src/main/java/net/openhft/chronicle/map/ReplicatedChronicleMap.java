@@ -667,10 +667,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         final long timeStamp = entry.readLong();
 
         final byte identifier = entry.readByte();
-        if (identifier != localIdentifier) {
-            // although unlikely, this may occur if the entry has been updated
-            return;
-        }
+
 
         final boolean isDeleted = entry.readBoolean();
         long valueSize;
