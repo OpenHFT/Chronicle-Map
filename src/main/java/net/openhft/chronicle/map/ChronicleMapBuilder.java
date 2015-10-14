@@ -162,6 +162,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private V averageValue;
     private V sampleValue;
     private int actualChunkSize = 0;
+    private int worstAlignment = -1;
     private int maxChunksPerEntry = -1;
     private Alignment alignment = null;
     private long entries = -1L;
@@ -551,8 +552,7 @@ public final class ChronicleMapBuilder<K, V> implements
         size += averageSizeEncodingSize(valueBuilder, valueSize);
         Alignment alignment = valueAlignment();
         int worstAlignment;
-        if (alignment != Alignment.NO_ALIGNMENT &&
-                constantlySizedKeys() && valueBuilder.constantSizeEncodingSizeMarshaller()) {
+        if (worstAlignmentComputationRequiresValueSize(alignment)) {
             long constantSizeBeforeAlignment = round(size);
             if (constantlySizedValues()) {
                 // see segmentEntrySpaceInnerOffset()
@@ -578,11 +578,20 @@ public final class ChronicleMapBuilder<K, V> implements
             }
         } else {
             // assume worst case, we always lose most possible bytes for alignment
-            worstAlignment = alignment.alignment() - 1;
+            worstAlignment = worstAlignmentWithoutValueSize(alignment);
         }
         size += worstAlignment;
         size += valueSize;
         return new EntrySizeInfo(size, worstAlignment);
+    }
+
+    private boolean worstAlignmentComputationRequiresValueSize(Alignment alignment) {
+        return alignment != Alignment.NO_ALIGNMENT &&
+                constantlySizedKeys() && valueBuilder.constantSizeEncodingSizeMarshaller();
+    }
+
+    private int worstAlignmentWithoutValueSize(Alignment alignment) {
+        return alignment.alignment() - 1;
     }
 
     int segmentEntrySpaceInnerOffset() {
@@ -633,7 +642,17 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     int worstAlignment() {
-        return entrySizeInfo().worstAlignment;
+        if (worstAlignment >= 0)
+            return worstAlignment;
+        Alignment alignment = valueAlignment();
+        if (!worstAlignmentComputationRequiresValueSize(alignment))
+            return worstAlignment = worstAlignmentWithoutValueSize(alignment);
+        return worstAlignment = entrySizeInfo().worstAlignment;
+    }
+
+    void worstAlignment(int worstAlignment) {
+        assert worstAlignment >= 0;
+        this.worstAlignment = worstAlignment;
     }
 
     static int greatestCommonDivisor(int a, int b) {
