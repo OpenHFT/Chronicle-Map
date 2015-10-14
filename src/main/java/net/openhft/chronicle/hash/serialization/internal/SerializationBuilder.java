@@ -59,7 +59,7 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
     }
 
     private static final List<Class> knownJDKImmutableClasses = Arrays.<Class>asList(
-            String.class, Byte.class, Short.class, Character.class, Integer.class,
+            String.class, Boolean.class, Byte.class, Short.class, Character.class, Integer.class,
             Float.class, Long.class, Double.class, BigDecimal.class, BigInteger.class, URL.class
     );
 
@@ -137,6 +137,10 @@ public final class SerializationBuilder<E> implements Cloneable, Serializable {
         } else if (eClass == StringBuilder.class) {
             reader((BytesReader<E>) CharSequenceReader.ofStringBuilder());
             writer((BytesWriter<E>) CharSequenceWriter.instance());
+        } else if (eClass == Boolean.class) {
+            sizeMarshaller(BooleanMarshaller.INSTANCE);
+            reader((BytesReader<E>) BooleanMarshaller.INSTANCE);
+            interop((BytesInterop<E>) BooleanMarshaller.INSTANCE);
         } else if (eClass == Long.class) {
             sizeMarshaller(LongMarshaller.INSTANCE);
             reader((BytesReader<E>) LongMarshaller.INSTANCE);
