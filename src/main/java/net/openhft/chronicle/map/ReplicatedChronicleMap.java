@@ -128,7 +128,6 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             throws IOException {
         super(builder);
         this.timeProvider = builder.timeProvider();
-        this.remoteOperations = (MapRemoteOperations<K, V, R>) builder.remoteOperations;
 
         this.localIdentifier = replication.identifier();
         this.bootstrapOnlyLocalEntries = replication.bootstrapOnlyLocalEntries();
@@ -175,6 +174,12 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 BYTES.toBits(tierBulkModIterBitSetSizeInBytes(tiersInBulk));
         tierBulkModIterFrameForUpdates = new SingleThreadedFlatBitSetFrame(tierBulkBitSetSize);
         tierBulkModIterFrameForIteration = new ConcurrentFlatBitSetFrame(tierBulkBitSetSize);
+    }
+
+    @Override
+    void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
+        super.initTransientsFromBuilder(builder);
+        this.remoteOperations = (MapRemoteOperations<K, V, R>) builder.remoteOperations;
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {

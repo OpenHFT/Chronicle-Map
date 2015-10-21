@@ -1633,7 +1633,6 @@ public final class ChronicleMapBuilder<K, V> implements
         persisted = false;
 
         try {
-            // pushingToMapEventListener();
             VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map = newMap(singleHashReplication, channel);
             // TODO this method had been moved
 //            if(OS.warnOnWindows(map.sizeInBytesWithoutTiers())){
@@ -1737,12 +1736,17 @@ public final class ChronicleMapBuilder<K, V> implements
                     replicators.add(Replicators.tcp(singleHashReplication));
                 if (singleHashReplication.udpTransport() != null)
                     replicators.add(Replicators.udp(singleHashReplication.udpTransport()));
-            } else {
+            } else if (channel != null) {
                 ReplicationHub hub = channel.hub();
 
                 ChannelProvider provider = ChannelProvider.getProvider(hub);
                 ChannelProvider.ChronicleChannel ch = provider.createChannel(channel.channelId());
                 replicators.add(ch);
+            } else {
+                assert persisted && !((ReplicatedChronicleMap) map).createdOrInMemory :
+                        "No Replicators for replicated ChronicleMap could be only on " +
+                                "deserialization/access of existing replicated ChronicleMap, " +
+                                "when replication in not needed in this JVM/run";
             }
             for (Replicator replicator : replicators) {
                 Closeable token = replicator.applyTo(this, result, result,
