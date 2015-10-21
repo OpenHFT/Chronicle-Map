@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.RandomDataInput;
+import net.openhft.chronicle.core.OS;
 import net.openhft.lang.io.Bytes;
 
 import java.nio.ByteBuffer;
@@ -141,6 +142,34 @@ public class JavaLangBytesReusableBytesStore
     @Override
     public JavaLangBytesReusableBytesStore writeDouble(long offset, double d) {
         bytes.writeDouble(offset, d);
+        return this;
+    }
+
+    @Override
+    public JavaLangBytesReusableBytesStore writeVolatileByte(long offset, byte i8) {
+        OS.memory().storeFence();
+        bytes.writeByte(offset, i8);
+        return this;
+    }
+
+    @Override
+    public JavaLangBytesReusableBytesStore writeVolatileShort(long offset, short i16) {
+        OS.memory().storeFence();
+        bytes.writeShort(offset, i16);
+        return this;
+    }
+
+    @Override
+    public JavaLangBytesReusableBytesStore writeVolatileInt(long offset, int i32) {
+        OS.memory().storeFence();
+        bytes.writeInt(offset, i32);
+        return this;
+    }
+
+    @Override
+    public JavaLangBytesReusableBytesStore writeVolatileLong(long offset, long i64) {
+        OS.memory().storeFence();
+        bytes.writeLong(offset, i64);
         return this;
     }
 
