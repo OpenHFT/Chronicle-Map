@@ -1443,12 +1443,14 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
                     replicators.add(Replicators.udp(singleHashReplication.udpTransport()));
                 if (singleHashReplication.engineReplicator() != null)
                     replicators.add(Replicators.engineReplicaton(singleHashReplication));
-            } else {
+            } else if (channel != null) {
                 ReplicationHub hub = channel.hub();
 
                 ChannelProvider provider = ChannelProvider.getProvider(hub);
                 ChannelProvider.ChronicleChannel ch = provider.createChannel(channel.channelId());
                 replicators.add(ch);
+            } else {
+                // Replicated Chronicle Map is deserialized without configuring replicators
             }
             for (Replicator replicator : replicators) {
                 Closeable token = replicator.applyTo(this, result, result, map);
