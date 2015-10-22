@@ -166,7 +166,6 @@ public final class ChronicleMapBuilder<K, V> implements
     private long entries = -1L;
     private long lockTimeOut = 20000L;
     private TimeUnit lockTimeOutUnit = TimeUnit.MILLISECONDS;
-    private int metaDataBytes = 0;
     private double maxBloatFactor = 1.0;
     private boolean allowSegmentTiering = true;
     private double nonTieredSegmentsPercentile = 0.99999;
@@ -538,7 +537,7 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private EntrySizeInfo entrySizeInfo() {
-        double size = metaDataBytes;
+        double size = 0;
         double keySize = averageKeySize();
         size += averageSizeEncodingSize(keyBuilder, keySize);
         size += keySize;
@@ -1070,18 +1069,6 @@ public final class ChronicleMapBuilder<K, V> implements
         return removeReturnsNull;
     }
 
-    // hidden for initial release.
-    ChronicleMapBuilder<K, V> metaDataBytes(int metaDataBytes) {
-        if (metaDataBytes < 0 || metaDataBytes > 255)
-            throw new IllegalArgumentException("MetaDataBytes must be [0..255] was " + metaDataBytes);
-        this.metaDataBytes = metaDataBytes;
-        return this;
-    }
-
-    int metaDataBytes() {
-        return metaDataBytes;
-    }
-
     @Override
     public ChronicleMapBuilder<K, V> maxBloatFactor(double maxBloatFactor) {
         if (isNaN(maxBloatFactor) || maxBloatFactor < 1.0 || maxBloatFactor > 1_000.0) {
@@ -1136,7 +1123,6 @@ public final class ChronicleMapBuilder<K, V> implements
                 ", valueAlignment=" + valueAlignment() +
                 ", entries=" + entries() +
                 ", lockTimeOut=" + lockTimeOut + " " + lockTimeOutUnit +
-                ", metaDataBytes=" + metaDataBytes() +
                 ", putReturnsNull=" + putReturnsNull() +
                 ", removeReturnsNull=" + removeReturnsNull() +
                 ", timeProvider=" + timeProvider() +

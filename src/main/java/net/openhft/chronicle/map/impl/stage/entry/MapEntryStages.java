@@ -233,8 +233,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
 
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-        return mh.m().metaDataBytes +
-                mh.m().keySizeMarshaller.sizeEncodingSize(keySize) + keySize +
+        return mh.m().keySizeMarshaller.sizeEncodingSize(keySize) + keySize +
                 mh.m().valueSizeMarshaller.sizeEncodingSize(valueSize);
     }
 

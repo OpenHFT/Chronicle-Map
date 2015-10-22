@@ -73,10 +73,6 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public transient Provider<VI> valueInteropProvider;
 
     /////////////////////////////////////////////////
-    // Event listener and meta data
-    public final int metaDataBytes;
-
-    /////////////////////////////////////////////////
     // Memory management and dependent fields
     public final Alignment alignment;
     public final int worstAlignment;
@@ -121,9 +117,6 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         constantValueProvider = builder.constantValueProvider();
 
         constantlySizedEntry = builder.constantlySizedEntries();
-
-        // Event listener and meta data
-        metaDataBytes = builder.metaDataBytes();
 
         // Concurrency (number of segments), memory management and dependent fields
         alignment = builder.valueAlignment();
