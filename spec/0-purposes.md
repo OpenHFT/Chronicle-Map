@@ -15,7 +15,7 @@
  specification, it is considered as an implementation bug.
 
  - To provide the ability for Chronicle Map adopters, database developers and researchers to study
- Chronicle Map design and possibly draw thier own conclusions about it's behaviour, guarantees and
+ Chronicle Map design and possibly draw their own conclusions about it's behaviour, guarantees and
  efficiency. The reference implementation is quite complex so it's hard to understand how it
  works by just reading the code, especially for people who don't know
  Java.
