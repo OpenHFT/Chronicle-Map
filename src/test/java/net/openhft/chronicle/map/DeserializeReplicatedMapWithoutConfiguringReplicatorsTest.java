@@ -48,6 +48,19 @@ public class DeserializeReplicatedMapWithoutConfiguringReplicatorsTest {
                 .entries(100)
 //                .replication((byte) 1)
                 .createPersistedTo(file1)) {
+            assertEquals((Integer) 1, map1.get(1));
+            try {
+                map1.put(2, 2);
+                throw new AssertionError("replicated map update when id is not configured " +
+                        "should throw IllegalStateException");
+            } catch (IllegalStateException expected) {
+            }
+        }
+
+        try (ChronicleMap<Integer, Integer> map1 = ChronicleMap.of(Integer.class, Integer.class)
+                .entries(100)
+                .replication((byte) 1)
+                .createPersistedTo(file1)) {
             map1.put(2, 2);
         }
 
@@ -65,7 +78,7 @@ public class DeserializeReplicatedMapWithoutConfiguringReplicatorsTest {
 
         try (ChronicleMap<Integer, Integer> map2 = ChronicleMap.of(Integer.class, Integer.class)
                 .entries(100)
-//                .replication((byte) 2)
+                .replication((byte) 2)
                 .createPersistedTo(file2)) {
             map2.put(2, 0);
             map2.remove(2);

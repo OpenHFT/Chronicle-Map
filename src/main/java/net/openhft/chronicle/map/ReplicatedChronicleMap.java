@@ -101,18 +101,21 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     private static final long LAST_UPDATED_HEADER_SIZE = 128L * 8L;
     private static final int SIZE_OF_BOOTSTRAP_TIME_STAMP = 8;
 
-    public final TimeProvider timeProvider;
-    private final byte localIdentifier;
+    public transient TimeProvider timeProvider;
+    /**
+     * Default value is 0, that corresponds to "unset" identifier value (valid ids are positive)
+     */
+    private transient byte localIdentifier;
     transient Set<Closeable> closeables;
     private transient Bytes identifierUpdatedBytes;
 
     private transient ATSDirectBitSet modIterSet;
     private transient AtomicReferenceArray<ModificationIterator> modificationIterators;
     private transient long startOfModificationIterators;
-    private boolean bootstrapOnlyLocalEntries;
+    private transient boolean bootstrapOnlyLocalEntries;
 
-    public long cleanupTimeout;
-    public TimeUnit cleanupTimeoutUnit;
+    public transient long cleanupTimeout;
+    public transient TimeUnit cleanupTimeoutUnit;
     
     public transient MapRemoteOperations<K, V, R> remoteOperations;
     transient CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> remoteOpContext;
@@ -127,17 +130,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                                   AbstractReplication replication)
             throws IOException {
         super(builder);
-        this.timeProvider = builder.timeProvider();
-
-        this.localIdentifier = replication.identifier();
-        this.bootstrapOnlyLocalEntries = replication.bootstrapOnlyLocalEntries();
-
-        cleanupTimeout = builder.cleanupTimeout;
-        cleanupTimeoutUnit = builder.cleanupTimeoutUnit;
-
-        if (localIdentifier == -1) {
-            throw new IllegalStateException("localIdentifier should not be -1");
-        }
+        initTransientsFromReplication(replication);
     }
 
     @Override
@@ -180,6 +173,16 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
         super.initTransientsFromBuilder(builder);
         this.remoteOperations = (MapRemoteOperations<K, V, R>) builder.remoteOperations;
+        this.timeProvider = builder.timeProvider();
+        cleanupTimeout = builder.cleanupTimeout;
+        cleanupTimeoutUnit = builder.cleanupTimeoutUnit;
+    }
+
+    void initTransientsFromReplication(AbstractReplication replication) {
+        this.localIdentifier = replication.identifier();
+        this.bootstrapOnlyLocalEntries = replication.bootstrapOnlyLocalEntries();
+        if (localIdentifier == -1)
+            throw new IllegalStateException("localIdentifier should not be -1");
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -273,7 +276,23 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
     @Override
     public byte identifier() {
-        return localIdentifier;
+        byte id = localIdentifier;
+        if (id == 0) {
+            throw new IllegalStateException("Replication identifier is not set for this\n" +
+                    "replicated Chronicle Map. This should only be possible if persisted\n" +
+                    "replicated Chronicle Map access from another process/JVM run/after\n" +
+                    "a transfer from another machine, and replication identifier is not\n" +
+                    "specified when access is configured, e. g. ChronicleMap.of(...)" +
+                    ".createPersistedTo(existingFile).\n" +
+                    "In this case, replicated Chronicle Map \"doesn't know\" it's identifier,\n" +
+                    "and is able to perform simple _read_ operations like map.get(), which\n" +
+                    "doesn't access the identifier. To perform updates, insertions, replication\n" +
+                    "tasks, you should configure the current node identifier,\n" +
+                    "by `replication(identifier)` method call in ChronicleMapBuilder\n" +
+                    "configuration chain.");
+        }
+        assert id > 0;
+        return id;
     }
 
     @Override
@@ -345,7 +364,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
     @Override
     public boolean identifierCheck(@NotNull ReplicableEntry entry, int chronicleId) {
-        return entry.originIdentifier() == localIdentifier;
+        return entry.originIdentifier() == identifier();
     }
 
     @Override
@@ -358,7 +377,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             entry.skip(keySize + 8); // we skip 8 for the timestamp
 
             final byte identifier = entry.readByte();
-            if (identifier != localIdentifier) {
+            if (identifier != identifier()) {
                 // although unlikely, this may occur if the entry has been updated
                 return 0;
             }
@@ -397,7 +416,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         final long timeStamp = entry.readLong();
 
         final byte identifier = entry.readByte();
-        if (identifier != localIdentifier) {
+        if (identifier != identifier()) {
             // although unlikely, this may occur if the entry has been updated
             return;
         }
@@ -430,11 +449,11 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         if (debugEnabled) {
             if (isDeleted) {
                 LOG.debug("WRITING ENTRY TO DEST -  into local-id={}, remove(key={})",
-                        localIdentifier, entry.toString().trim());
+                        identifier(), entry.toString().trim());
             } else {
                 message = String.format(
                         "WRITING ENTRY TO DEST  -  into local-id=%d, put(key=%s,",
-                        localIdentifier, entry.toString().trim());
+                        identifier(), entry.toString().trim());
             }
         }
 

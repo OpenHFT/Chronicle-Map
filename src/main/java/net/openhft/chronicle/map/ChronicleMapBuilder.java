@@ -1529,6 +1529,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     VanillaChronicleMap<K, ?, ?, V, ?, ?, ?> map =
                             (VanillaChronicleMap<K, ?, ?, V, ?, ?, ?>) m;
                     map.initTransientsFromBuilder(this);
+                    initTransientsFromReplication(map, singleHashReplication, channel);
                     map.initBeforeMapping(fis.getChannel());
                     long expectedFileLength = map.expectedFileSize();
                     if (expectedFileLength != fileLength) {
@@ -1574,6 +1575,23 @@ public final class ChronicleMapBuilder<K, V> implements
         }
 
         return establishReplication(map, singleHashReplication, channel);
+    }
+
+    private static void initTransientsFromReplication(
+            VanillaChronicleMap<?, ?, ?, ?, ?, ?, ?> map,
+            SingleChronicleHashReplication singleHashReplication, ReplicationChannel channel) {
+        if (map instanceof ReplicatedChronicleMap) {
+            AbstractReplication replication;
+            if (singleHashReplication != null) {
+                replication = singleHashReplication;
+            } else if (channel != null) {
+                replication = channel.hub();
+            } else {
+                replication = null;
+            }
+            if (replication != null)
+                ((ReplicatedChronicleMap) map).initTransientsFromReplication(replication);
+        }
     }
 
     private static <K, V> boolean trySerializeHeaderViaXStream(
