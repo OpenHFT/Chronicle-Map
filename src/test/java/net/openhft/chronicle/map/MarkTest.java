@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.lang.MemoryUnit;
 import org.junit.Test;
 
@@ -25,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertTrue;
 
@@ -34,7 +34,7 @@ public class MarkTest {
 
     @Test(timeout = 25000)
     public void inMemoryTest() {
-        test(builder -> builder.create());
+        test(ChronicleMapBuilder::create);
     }
 
     @Test
@@ -59,8 +59,9 @@ public class MarkTest {
         }
     }
 
-    private static void test(SerializableFunction<ChronicleMapBuilder<Integer, Integer>,
-                ChronicleMap<Integer, Integer>> createMap) {
+    private static void test(
+            Function<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>
+                    createMap) {
         long ms = System.currentTimeMillis();
         try (ChronicleMap<Integer, Integer> map = createMap.apply(ChronicleMapBuilder
                 .of(Integer.class, Integer.class)

@@ -16,8 +16,8 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshaller;

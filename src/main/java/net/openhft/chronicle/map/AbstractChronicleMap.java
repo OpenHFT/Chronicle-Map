@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.function.SerializableFunction;
+import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.hash.impl.util.CharSequences;
 import org.jetbrains.annotations.NotNull;
 

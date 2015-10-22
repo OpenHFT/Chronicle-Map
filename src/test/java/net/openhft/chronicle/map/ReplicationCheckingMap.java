@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.io.Closeable;
-import net.openhft.chronicle.hash.function.SerializableFunction;
+import net.openhft.chronicle.core.util.SerializableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 

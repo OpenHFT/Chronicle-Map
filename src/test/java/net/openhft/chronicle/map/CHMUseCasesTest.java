@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.primitives.Chars;
-import net.openhft.chronicle.hash.function.SerializableFunction;
+import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
