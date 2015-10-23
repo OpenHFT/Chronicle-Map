@@ -2344,16 +2344,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (bytesEventListener != null)
                 bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, remote);
             if (eventListener != null) {
-
-                try {
-                    eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                            toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
-                            entryIsDeleted);
-                } catch (NullPointerException e) {
-                    eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                            toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
-                            entryIsDeleted);
-                }
+                eventListener.onPut(toKey.toInstance(copies, key, keySize),
+                        toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
+                        entryIsDeleted);
             }
 
             return resultUnused ? null : prevValue;
