@@ -387,11 +387,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             throw new IllegalStateException("identifier can't be 0");
         }
 
-        if (remoteIdentifier == this.identifier()) {
-            // this may occur when working with UDP, as we may receive our own data
-            return;
-        }
-
         setLastModificationTime(remoteIdentifier, timestamp);
 
         long hash = hash(key);
