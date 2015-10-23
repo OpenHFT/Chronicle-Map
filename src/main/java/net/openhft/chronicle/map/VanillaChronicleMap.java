@@ -112,30 +112,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     transient BytesStore ms;
     transient long headerSize;
     transient Set<Map.Entry<K, V>> entrySet;
-    transient InstanceOrBytesToInstance<Bytes, K> keyBytesToInstance =
-            new InstanceOrBytesToInstance<Bytes, K>() {
-                @Override
-                public K toInstance(@NotNull ThreadLocalCopies copies, Bytes keyBytes, long size) {
-                    assertNotNull(copies);
-                    BytesReader<K> keyReader = keyReaderProvider.get(copies, originalKeyReader);
-                    return keyReader.read(keyBytes, size);
-                }
-            };
-    transient InstanceOrBytesToInstance<Bytes, V> valueBytesToInstance =
-            new InstanceOrBytesToInstance<Bytes, V>() {
-                @Override
-                public V toInstance(@NotNull ThreadLocalCopies copies, Bytes valueBytes, long size) {
-                    return readValue(copies, valueBytes, null, size);
-                }
-            };
-    transient InstanceOrBytesToInstance<Bytes, V> outputValueBytesToInstance =
-            new InstanceOrBytesToInstance<Bytes, V>() {
-                @Override
-                public V toInstance(@NotNull ThreadLocalCopies copies, Bytes outputBytes, long size) {
-                    outputBytes.position(outputBytes.position() - size);
-                    return readValue(copies, outputBytes, null, size);
-                }
-            };
+    transient InstanceOrBytesToInstance<Bytes, K> keyBytesToInstance;
+    transient InstanceOrBytesToInstance<Bytes, V> valueBytesToInstance;
+    transient InstanceOrBytesToInstance<Bytes, V> outputValueBytesToInstance;
 
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) {
 
@@ -320,7 +299,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         @SuppressWarnings("unchecked")
         Segment[] ss = (Segment[]) Array.newInstance(segmentType(), actualSegments);
         this.segments = ss;
-
 
         keyBytesToInstance =
                 new InstanceOrBytesToInstance<Bytes, K>() {
@@ -2366,9 +2344,16 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (bytesEventListener != null)
                 bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, remote);
             if (eventListener != null) {
-                eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
-                        entryIsDeleted);
+
+                try {
+                    eventListener.onPut(toKey.toInstance(copies, key, keySize),
+                            toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
+                            entryIsDeleted);
+                } catch (NullPointerException e) {
+                    eventListener.onPut(toKey.toInstance(copies, key, keySize),
+                            toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
+                            entryIsDeleted);
+                }
             }
 
             return resultUnused ? null : prevValue;
