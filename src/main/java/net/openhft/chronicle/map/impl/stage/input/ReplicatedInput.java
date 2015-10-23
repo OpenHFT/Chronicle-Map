@@ -91,10 +91,6 @@ public abstract class ReplicatedInput<K, V, R>
     }
 
     public void processReplicatedEvent() {
-        if (riId == mh.m().identifier()) {
-            // this may occur when working with UDP, as we may receive our own data
-            return;
-        }
 
         mh.m().setLastModificationTime(riId, bootstrapTimestamp);
 
