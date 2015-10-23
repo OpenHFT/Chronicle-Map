@@ -320,6 +320,32 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         @SuppressWarnings("unchecked")
         Segment[] ss = (Segment[]) Array.newInstance(segmentType(), actualSegments);
         this.segments = ss;
+
+
+        keyBytesToInstance =
+                new InstanceOrBytesToInstance<Bytes, K>() {
+                    @Override
+                    public K toInstance(@NotNull ThreadLocalCopies copies, Bytes keyBytes, long size) {
+                        assertNotNull(copies);
+                        BytesReader<K> keyReader = keyReaderProvider.get(copies, originalKeyReader);
+                        return keyReader.read(keyBytes, size);
+                    }
+                };
+        valueBytesToInstance =
+                new InstanceOrBytesToInstance<Bytes, V>() {
+                    @Override
+                    public V toInstance(@NotNull ThreadLocalCopies copies, Bytes valueBytes, long size) {
+                        return readValue(copies, valueBytes, null, size);
+                    }
+                };
+        outputValueBytesToInstance =
+                new InstanceOrBytesToInstance<Bytes, V>() {
+                    @Override
+                    public V toInstance(@NotNull ThreadLocalCopies copies, Bytes outputBytes, long size) {
+                        outputBytes.position(outputBytes.position() - size);
+                        return readValue(copies, outputBytes, null, size);
+                    }
+                };
     }
 
     Class segmentType() {
