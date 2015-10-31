@@ -20,13 +20,13 @@
     <parent>
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
-        <version>1.1.9-SNAPSHOT</version>
+        <version>1.1.10</version>
         <relativePath />
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-map</artifactId>
-    <version>3.2.0-beta-SNAPSHOT</version>
+    <version>3.1.5-alpha-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
@@ -38,7 +38,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
                 <type>pom</type>
-                <version>3.4.24-SNAPSHOT</version>
+                <version>3.4.24</version>
                 <scope>import</scope>
             </dependency>
 
@@ -46,7 +46,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
                 <type>pom</type>
-                <version>1.8.17-SNAPSHOT</version>
+                <version>1.9.7</version>
                 <scope>import</scope>
             </dependency>
 
