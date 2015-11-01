@@ -35,22 +35,26 @@ public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
     @Override
     public void doInsert(Data<V> value) {
         q.putPrefix();
+        // TODO relax locks only after spec completion and analysis
+        s.innerUpdateLock.lock();
         if (!q.entryPresent()) {
             if (!ks.searchStatePresent()) {
                 putEntry(value);
+                e.updatedReplicationStateOnAbsentEntry();
                 ks.setSearchState(PRESENT);
                 q.initPresenceOfEntry(EntryPresence.PRESENT);
             } else {
                 e.innerDefaultReplaceValue(value);
+                e.updatedReplicationStateOnPresentEntry();
                 s.deleted(s.deleted() - 1);
             }
             s.incrementModCount();
             e.writeEntryPresent();
             ru.updateChange();
-            e.updatedReplicationStateOnAbsentEntry();
             e.checksumStrategy.computeAndStoreChecksum();
         } else {
-            throw new IllegalStateException("Entry is absent in the map when doInsert() is called");
+            throw new IllegalStateException(
+                    "Entry is present in the map when doInsert() is called");
         }
     }
 }
