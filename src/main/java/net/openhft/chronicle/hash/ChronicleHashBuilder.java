@@ -194,7 +194,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * efficient manner, for example as {@code long[]} arrays. Typical number of connections is
      * 100-300, maximum is 3000. In this case chunk size of
      * 30 * (8 bytes for each id) = 240 bytes would be a good choice: <pre>{@code
-     * Map<Long, long[]> socialGraph = ChronicleMapOnHeapUpdatableBuilder
+     * Map<Long, long[]> socialGraph = ChronicleMapBuilder
      *     .of(Long.class, long[].class)
      *     .entries(1_000_000_000L)
      *     .averageValueSize(150 * 8) // 150 is average adjacency list size
@@ -232,7 +232,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
 
     /**
      * Configures the target number of entries, that is going be inserted into the hash containers,
-     * created by this builder. If {@link #maxBloatFactor(double)} is configured to {code 1.0}
+     * created by this builder. If {@link #maxBloatFactor(double)} is configured to {@code 1.0}
      * (and this is by default), this number of entries is also the maximum. If you try to insert
      * more entries, than the configured {@code maxBloatFactor}, multiplied by the given number of
      * {@code entries}, {@link IllegalStateException} <i>might</i> be thrown.
