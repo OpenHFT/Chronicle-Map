@@ -90,23 +90,21 @@ class DirectBytesBuffer
         }
 
         void init(M writer, E e, boolean mutable, long maxSize) {
-            if (mutable || writer != this.writer || e != cur) {
-                this.writer = writer;
-                cur = e;
-                while (true) {
-                    try {
-                        Bytes buffer = this.buffer.obtain(maxSize, true);
-                        writer.write(buffer, e);
-                        buffer.flip();
-                        long size = this.size = buffer.remaining();
-                        this.buffer.buffer.position(0L);
-                        this.buffer.buffer.limit(size);
-                        hash = 0L;
-                        return;
-                    } catch (Exception ex) {
-                        checkMaxSizeStillReasonable(maxSize, ex);
-                        maxSize *= 2L;
-                    }
+            this.writer = writer;
+            cur = e;
+            while (true) {
+                try {
+                    Bytes buffer = this.buffer.obtain(maxSize, true);
+                    writer.write(buffer, e);
+                    buffer.flip();
+                    long size = this.size = buffer.remaining();
+                    this.buffer.buffer.position(0L);
+                    this.buffer.buffer.limit(size);
+                    hash = 0L;
+                    return;
+                } catch (Exception ex) {
+                    checkMaxSizeStillReasonable(maxSize, ex);
+                    maxSize *= 2L;
                 }
             }
         }
@@ -121,17 +119,15 @@ class DirectBytesBuffer
         }
 
         void init(W writer, E e, boolean mutable) {
-            if (mutable || writer != this.writer || e != cur) {
-                this.writer = writer;
-                cur = e;
-                long size = writer.size(e);
-                Bytes buffer = this.buffer.obtain(size, true);
-                writer.write(buffer, e);
-                buffer.flip();
-                this.size = size;
-                assert size == buffer.remaining();
-                hash = 0L;
-            }
+            this.writer = writer;
+            cur = e;
+            long size = writer.size(e);
+            Bytes buffer = this.buffer.obtain(size, true);
+            writer.write(buffer, e);
+            buffer.flip();
+            this.size = size;
+            assert size == buffer.remaining();
+            hash = 0L;
         }
     }
 
