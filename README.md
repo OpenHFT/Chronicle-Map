@@ -1,6 +1,5 @@
-![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
-
 # Chronicle Map
+![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
 
 <h4>Documentation: <a href="#chronicle-map-3-tutorial">Tutorial</a>,
 <a href="http://www.javadoc.io/doc/net.openhft/chronicle-map/">Javadoc</a></h4>
