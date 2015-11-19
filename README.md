@@ -1,3 +1,5 @@
+![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
+
 # Chronicle Map
 
 <h4>Documentation: <a href="#chronicle-map-3-tutorial">Tutorial</a>,
