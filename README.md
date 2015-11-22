@@ -1,10 +1,11 @@
 # Chronicle Map
-![Chronicle Map](http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png)
+<img align="right" src="http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png">
 
 <h4>Documentation: <a href="#chronicle-map-3-tutorial">Tutorial</a>,
 <a href="http://www.javadoc.io/doc/net.openhft/chronicle-map/">Javadoc</a></h4>
 
-<h4>Community support: <a href="https://groups.google.com/forum/#!forum/java-chronicle">Chronicle
+<h4>Community support: <a href="https://github.com/OpenHFT/Chronicle-Map/issues">Issues</a>,
+<a href="https://groups.google.com/forum/#!forum/java-chronicle">Chronicle
 mailing list</a>, <a href="http://stackoverflow.com/tags/chronicle">Stackoverflow</a>,
 <a href="https://plus.google.com/communities/111431452027706917722">Chronicle User's group</a></h4>
 
@@ -252,6 +253,7 @@ directory.
 
 ---
 
+<a name="number-of-entries-configuration"></a>
 **You *must* configure `.entries(entries)` -- the supposed `ChronicleMap` size.** Try to configure
 the `entries` so that the created Chronicle Map is going to serve about 99% requests being less or
 equal than this number of entries in size.
@@ -388,7 +390,8 @@ for (long id : orderIds) {
 
 Use `ChronicleMap#getUsing(K key, V using)` to reuse the value object. It works if:
 
- - The value type is `CharSequence`, pass `StringBuilder` as the `using` argument. For example:
+ - The value type is `CharSequence`, pass `StringBuilder` as the `using` argument.
+ For example:
  ```java
  ChronicleMap<LongValue, CharSequence> names = ...
  StringBuilder name = new StringBuilder();
@@ -438,8 +441,8 @@ cachedRange = cityPostalCodes.getUsing(city, cachedRange);
 In this example, `cachedRange` is `null` initially, on the first `getUsing()` call the heap value
 is allocated, and saved in a `cachedRange` field for later reuse.
 
-*If the value type is a value interface, **don't** use flyweight implementation as `getUsing()`
-argument.* This is dangerous, because on reusing flyweight points to the `ChronicleMap` memory
+<i>If the value type is a value interface, <b>don't</b> use flyweight implementation as `getUsing()`
+argument.</i> This is dangerous, because on reusing flyweight points to the `ChronicleMap` memory
 directly, but the access is not synchronized. At least you could read inconsistent value state,
 at most - corrupt the `ChronicleMap` memory.
 
