@@ -16,16 +16,16 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.model.constraints.MaxSize;
-import net.openhft.lang.values.IntValue;
+import net.openhft.chronicle.core.values.IntValue;
+import net.openhft.chronicle.values.MaxUtf8Length;
+import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import static net.openhft.lang.model.DataValueClasses.newDirectReference;
+import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.Assert.*;
 
 public class DemoChronicleMapTest {
@@ -41,10 +41,10 @@ public class DemoChronicleMapTest {
                 .removeReturnsNull(true)
                 .entries(maxEntries)
                 .createPersistedTo(file)) {
-            IntValue key = DataValueClasses.newDirectInstance(IntValue.class);
+            IntValue key = Values.newHeapInstance(IntValue.class);
 
-            DemoOrderVOInterface value = newDirectReference(DemoOrderVOInterface.class);
-            DemoOrderVOInterface value2 = newDirectReference(DemoOrderVOInterface.class);
+            DemoOrderVOInterface value = newNativeReference(DemoOrderVOInterface.class);
+            DemoOrderVOInterface value2 = newNativeReference(DemoOrderVOInterface.class);
 
             // Initially populate the map
             for (int i = 0; i < maxEntries; i++) {
@@ -56,7 +56,7 @@ public class DemoChronicleMapTest {
                 value.addAtomicOrderQty(1000);
 
                 map.getUsing(key, value2);
-                assertEquals("IBM-" + i, value.getSymbol());
+                assertEquals("IBM-" + i, value.getSymbol().toString());
                 assertEquals(1000, value.getOrderQty(), 0.0);
             }
 
@@ -83,10 +83,10 @@ public class DemoChronicleMapTest {
                 .removeReturnsNull(true)
                 .entries(maxEntries)
                 .createPersistedTo(file)) {
-            IntValue key = DataValueClasses.newDirectInstance(IntValue.class);
+            IntValue key = Values.newHeapInstance(IntValue.class);
 
-            DemoOrderVOInterface value = newDirectReference(DemoOrderVOInterface.class);
-            DemoOrderVOInterface value2 = newDirectReference(DemoOrderVOInterface.class);
+            DemoOrderVOInterface value = newNativeReference(DemoOrderVOInterface.class);
+            DemoOrderVOInterface value2 = newNativeReference(DemoOrderVOInterface.class);
 
             // Initially populate the map
             for (int i = 0; i < maxEntries; i++) {
@@ -122,7 +122,7 @@ interface DemoOrderVOInterface {
     public CharSequence getSymbol();
 //    public StringBuilder getUsingSymbol(StringBuilder sb);
 
-    public void setSymbol(@MaxSize(20) CharSequence symbol);
+    public void setSymbol(@MaxUtf8Length(20) CharSequence symbol);
 
     public double addAtomicOrderQty(double toAdd);
 

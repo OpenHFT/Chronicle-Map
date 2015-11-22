@@ -18,7 +18,6 @@ package eg;
 
 import net.openhft.affinity.AffinitySupport;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.lang.io.Bytes;
 
 import java.io.*;
 import java.util.Map;
@@ -208,17 +207,15 @@ class BigDataStuff implements Externalizable {
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        Bytes b = (Bytes) out;
-        b.writeStopBit(x);
-        b.writeUTFΔ(y);
+        out.writeLong(x);
+        out.writeUTF(y.toString());
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException {
-        Bytes b = (Bytes) in;
-        this.x = b.readStopBit();
+        this.x = in.readLong();
         if (this.y == null)
             this.y = new StringBuilder();
-        b.readUTFΔ(this.y);
+        y.append(in.readUTF());
     }
 }

@@ -18,35 +18,30 @@ package net.openhft.chronicle.map.impl.stage.map;
 
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ReplicatedChronicleMap;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
 import net.openhft.sg.Staged;
 
 @Staged
-public class ReplicatedChronicleMapHolderImpl<
-        K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R
-        >
-        extends Chaining
-        implements ReplicatedChronicleMapHolder<K, KI, MKI, V, VI, MVI, R> {
+public class ReplicatedChronicleMapHolderImpl<K, V, R> extends Chaining
+        implements ReplicatedChronicleMapHolder<K, V, R> {
 
-    private final ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI, R> m;
+    private final ReplicatedChronicleMap<K, V, R> m;
 
-    public ReplicatedChronicleMapHolderImpl(ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI, R> m) {
+    public ReplicatedChronicleMapHolderImpl(ReplicatedChronicleMap<K, V, R> m) {
         super();
         this.m = m;
     }
 
     public ReplicatedChronicleMapHolderImpl(
-            ChainingInterface c, ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI, R> m) {
+            ChainingInterface c, ReplicatedChronicleMap<K, V, R> m) {
         super(c);
         this.m = m;
     }
 
     @Override
-    public ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI, R> m() {
+    public ReplicatedChronicleMap<K, V, R> m() {
         return m;
     }
 

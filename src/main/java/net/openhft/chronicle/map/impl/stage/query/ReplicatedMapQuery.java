@@ -22,7 +22,6 @@ import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
-import net.openhft.chronicle.map.impl.stage.ret.BytesReturnValue;
 import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
 import net.openhft.chronicle.map.replication.MapReplicableEntry;
 import net.openhft.sg.StageRef;
@@ -35,8 +34,6 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
 
     @StageRef ReplicatedMapEntryStages<K, V> e;
     @StageRef ReplicationUpdate ru;
-
-    @StageRef BytesReturnValue<V> bytesReturnValue;
 
     @StageRef ReplicatedMapAbsentDelegating<K, V> absentDelegating;
 

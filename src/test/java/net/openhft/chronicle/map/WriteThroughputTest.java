@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.serialization.impl.SnappyStringMarshaller;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -64,7 +63,7 @@ public class WriteThroughputTest {
                 .of(CharSequence.class, CharSequence.class)
                 .entries(count * 3 / 2)
                 .averageValueSize(size / 4)
-                .valueMarshaller(SnappyStringMarshaller.INSTANCE)
+//                .valueReaderAndDataAccess(, SnappyStringMarshaller.INSTANCE, )
                 .putReturnsNull(true)
                 .createPersistedTo(file2)) {
 
@@ -72,6 +71,7 @@ public class WriteThroughputTest {
             doTest(count, size, map);
         }
     }
+
     @Ignore("TODO")
     @Test
     public void bandwidthTestZ() throws IOException {

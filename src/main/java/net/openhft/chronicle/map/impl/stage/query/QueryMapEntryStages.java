@@ -18,9 +18,12 @@ package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
+import net.openhft.chronicle.map.VanillaChronicleMap;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
+
+import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
 
 @Staged
 public abstract class QueryMapEntryStages<K, V> extends MapEntryStages<K, V> {
@@ -37,8 +40,8 @@ public abstract class QueryMapEntryStages<K, V> extends MapEntryStages<K, V> {
         boolean newValueSizeIsDifferent = newValue.size() != valueSize;
         if (newValueSizeIsDifferent) {
             newSizeOfEverythingBeforeValue = newSizeOfEverythingBeforeValue(newValue);
-            long newValueOffset = mh.m().alignment.alignAddr(
-                    entryStartOffset + newSizeOfEverythingBeforeValue);
+            long newValueOffset =
+                    alignAddr(entryStartOffset + newSizeOfEverythingBeforeValue, mh.m().alignment);
             long newEntrySize = newValueOffset + newValue.size() - entryStartOffset;
             newSizeInChunks = mh.m().inChunks(newEntrySize);
         } else {

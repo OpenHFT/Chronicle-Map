@@ -18,35 +18,30 @@ package net.openhft.chronicle.map.impl.stage.map;
 
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.VanillaChronicleMap;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.sg.Staged;
 
 @Staged
-public class VanillaChronicleMapHolderImpl<
-        K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R
-        >
-        extends Chaining
-        implements VanillaChronicleMapHolder<K, KI, MKI, V, VI, MVI, R> {
+public class VanillaChronicleMapHolderImpl<K, V, R> extends Chaining
+        implements VanillaChronicleMapHolder<K, V, R> {
     
-    private final VanillaChronicleMap<K, KI, MKI, V, VI, MVI, R> m;
+    private final VanillaChronicleMap<K, V, R> m;
 
-    public VanillaChronicleMapHolderImpl(VanillaChronicleMap<K, KI, MKI, V, VI, MVI, R> m) {
+    public VanillaChronicleMapHolderImpl(VanillaChronicleMap<K, V, R> m) {
         super();
         this.m = m;
     }
     
     public VanillaChronicleMapHolderImpl(
-            ChainingInterface c, VanillaChronicleMap<K, KI, MKI, V, VI, MVI, R> m) {
+            ChainingInterface c, VanillaChronicleMap<K, V, R> m) {
         super(c);
         this.m = m;
     }
 
     @Override
-    public VanillaChronicleMap<K, KI, MKI, V, VI, MVI, R> m() {
+    public VanillaChronicleMap<K, V, R> m() {
         return m;
     }
 

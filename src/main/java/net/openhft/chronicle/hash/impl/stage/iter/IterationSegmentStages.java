@@ -17,9 +17,9 @@
 package net.openhft.chronicle.hash.impl.stage.iter;
 
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
+import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.entry.LocksInterface;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
-import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -27,7 +27,7 @@ import net.openhft.sg.Staged;
 @Staged
 public abstract class IterationSegmentStages extends SegmentStages {
 
-    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
+    @StageRef VanillaChronicleHashHolder<?> hh;
     @StageRef HashSegmentIteration it;
     @StageRef HashLookupSearch hls;
 

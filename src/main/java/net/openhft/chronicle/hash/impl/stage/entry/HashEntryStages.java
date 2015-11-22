@@ -17,6 +17,7 @@
 package net.openhft.chronicle.hash.impl.stage.entry;
 
 import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.ChecksumEntry;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.HashEntry;
@@ -35,7 +36,7 @@ import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 @Staged
 public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry {
 
-    @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
+    @StageRef public VanillaChronicleHashHolder<?> hh;
     @StageRef public SegmentStages s;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef public HashLookupPos hlp;
@@ -52,7 +53,6 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
 
     public void initEntryOffset() {
         keySizeOffset = s.entrySpaceOffset + pos * hh.h().chunkSize;
-        s.segmentBytes.limit(s.segmentBytes.capacity());
     }
 
     public long keySize = -1;
@@ -69,17 +69,19 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
 
     public void readExistingEntry(long pos) {
         initPos(pos);
-        s.segmentBytes.position(keySizeOffset);
-        initKeySize(hh.h().keySizeMarshaller.readSize(s.segmentBytes));
-        initKeyOffset(s.segmentBytes.position());
+        Bytes segmentBytes = s.segmentBytesForRead();
+        segmentBytes.readPosition(keySizeOffset);
+        initKeySize(hh.h().keySizeMarshaller.readSize(segmentBytes));
+        initKeyOffset(segmentBytes.readPosition());
     }
 
     public void writeNewEntry(long pos, Data<?> key) {
         initPos(pos);
         initKeySize(key.size());
-        s.segmentBytes.position(keySizeOffset);
-        hh.h().keySizeMarshaller.writeSize(s.segmentBytes, keySize);
-        initKeyOffset(s.segmentBytes.position());
+        Bytes segmentBytes = s.segmentBytesForWrite();
+        segmentBytes.writePosition(keySizeOffset);
+        hh.h().keySizeMarshaller.writeSize(segmentBytes, keySize);
+        initKeyOffset(segmentBytes.writePosition());
         key.writeTo(s.segmentBS, keyOffset);
     }
 

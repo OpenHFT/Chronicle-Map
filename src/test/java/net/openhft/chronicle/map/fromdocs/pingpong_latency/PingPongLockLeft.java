@@ -16,13 +16,21 @@
 
 package net.openhft.chronicle.map.fromdocs.pingpong_latency;
 
+import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.algo.locks.AcquisitionStrategies;
+import net.openhft.chronicle.algo.locks.ReadWriteLockingStrategy;
+import net.openhft.chronicle.algo.locks.TryAcquireOperations;
+import net.openhft.chronicle.algo.locks.VanillaReadWriteWithWaitsLockingStrategy;
+import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
-import static net.openhft.lang.model.DataValueClasses.newDirectReference;
+import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
+import static net.openhft.chronicle.values.Values.newNativeReference;
 
 public class PingPongLockLeft {
     public static void main(String... ignored) throws IOException, InterruptedException {
@@ -32,10 +40,10 @@ public class PingPongLockLeft {
     }
 
     static void playPingPong(ChronicleMap<String, BondVOInterface> chm, double _coupon, double _coupon2, boolean setFirst, final String desc) throws InterruptedException {
-        BondVOInterface bond1 = newDirectReference(BondVOInterface.class);
-        BondVOInterface bond2 = newDirectReference(BondVOInterface.class);
-        BondVOInterface bond3 = newDirectReference(BondVOInterface.class);
-        BondVOInterface bond4 = newDirectReference(BondVOInterface.class);
+        BondVOInterface bond1 = newNativeReference(BondVOInterface.class);
+        BondVOInterface bond2 = newNativeReference(BondVOInterface.class);
+        BondVOInterface bond3 = newNativeReference(BondVOInterface.class);
+        BondVOInterface bond4 = newNativeReference(BondVOInterface.class);
 
         chm.acquireUsing("369604101", bond1);
         chm.acquireUsing("369604102", bond2);
@@ -67,9 +75,14 @@ public class PingPongLockLeft {
         }
     }
 
-    private static void toggleCoupon(BondVOInterface bond, double _coupon, double _coupon2) throws InterruptedException {
+    private static void toggleCoupon(BondVOInterface bond, double _coupon, double _coupon2)
+            throws InterruptedException {
         for (int i = 0; ; i++) {
-            bond.busyLockEntry();
+            AcquisitionStrategies.<ReadWriteLockingStrategy>spinLoopOrFail(5, TimeUnit.SECONDS)
+                    .acquire(TryAcquireOperations.writeLock(),
+                            VanillaReadWriteWithWaitsLockingStrategy.instance(),
+                            checkedBytesStoreAccess(),
+                            ((Byteable) bond).bytesStore(), ((Byteable) bond).offset());
             try {
                 if (bond.getCoupon() == _coupon) {
                     bond.setCoupon(_coupon2);
@@ -78,7 +91,9 @@ public class PingPongLockLeft {
                 if (i > 1000)
                     Thread.yield();
             } finally {
-                bond.unlockEntry();
+                VanillaReadWriteWithWaitsLockingStrategy.instance()
+                        .writeUnlock(checkedBytesStoreAccess(),
+                                ((Byteable) bond).bytesStore(), ((Byteable) bond).offset());
             }
         }
     }

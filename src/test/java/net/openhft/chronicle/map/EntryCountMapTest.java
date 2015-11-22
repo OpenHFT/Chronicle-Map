@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.values.LongValue;
+import net.openhft.chronicle.core.values.LongValue;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -30,7 +30,7 @@ import java.util.concurrent.*;
 
 import static java.lang.Math.log10;
 import static java.lang.Math.round;
-import static net.openhft.lang.model.DataValueClasses.newDirectReference;
+import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -225,7 +225,7 @@ public class EntryCountMapTest {
 
     void testEntriesMaxSize0(int segments, int minSize, int maxSize, int counter, int stride,
                              ChronicleMap<CharSequence, LongValue> map) {
-        LongValue longValue = newDirectReference(LongValue.class);
+        LongValue longValue = newNativeReference(LongValue.class);
         try {
             for (int j = 0; j < moreThanMaxSize(maxSize); j++) {
                 String key = "key:" + counter;

@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 
 public interface ChronicleHashBuilderPrivateAPI<K> {
 

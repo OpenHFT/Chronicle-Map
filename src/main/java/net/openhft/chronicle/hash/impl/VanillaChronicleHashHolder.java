@@ -16,8 +16,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
-
-public interface VanillaChronicleHashHolder<K, KI, MKI extends MetaBytesInterop<K, ? super KI>> {
-    VanillaChronicleHash<K, KI, MKI, ?, ?, ?> h();
+public interface VanillaChronicleHashHolder<K> {
+    VanillaChronicleHash<K, ?, ?, ?> h();
 }

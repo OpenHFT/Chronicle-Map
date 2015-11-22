@@ -21,18 +21,16 @@ import com.google.common.collect.Maps;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.model.Byteable;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.values.IntValue;
+import net.openhft.chronicle.set.Builder;
 import org.junit.*;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,8 +44,6 @@ public class TcpReplicationSoakTest {
 
     @Before
     public void setup() throws IOException {
-        IntValue value = DataValueClasses.newDirectReference(IntValue.class);
-        ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
 
@@ -118,7 +114,7 @@ public class TcpReplicationSoakTest {
         ChannelReplicationTest.checkThreadsShutdown(threads);
     }
 
-
+    @Ignore
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         try {

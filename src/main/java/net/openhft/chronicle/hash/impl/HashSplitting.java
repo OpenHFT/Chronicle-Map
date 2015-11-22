@@ -18,14 +18,14 @@ package net.openhft.chronicle.hash.impl;
 
 import java.io.Serializable;
 
-import static net.openhft.lang.Maths.isPowerOf2;
+import static net.openhft.chronicle.core.Maths.isPowerOf2;
 
 public interface HashSplitting extends Serializable {
 
     int segmentIndex(long hash);
     long segmentHash(long hash);
 
-    static class Splitting {
+    class Splitting {
         static HashSplitting forSegments(int segments) {
             assert segments > 0;
             if (segments == 1)
@@ -50,7 +50,7 @@ public interface HashSplitting extends Serializable {
         }
     }
 
-    static class ForPowerOf2Segments implements HashSplitting {
+    class ForPowerOf2Segments implements HashSplitting {
         private static final long serialVersionUID = 0L;
 
         private final int mask;
@@ -73,7 +73,7 @@ public interface HashSplitting extends Serializable {
     }
 
     //TODO optimize?
-    static class ForNonPowerOf2Segments implements HashSplitting {
+    class ForNonPowerOf2Segments implements HashSplitting {
         private static final long serialVersionUID = 0L;
 
         private static final int MASK = Integer.MAX_VALUE;

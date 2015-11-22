@@ -17,17 +17,22 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.primitives.Chars;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.core.util.SerializableFunction;
+import net.openhft.chronicle.core.values.*;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.hash.serialization.DataAccess;
+import net.openhft.chronicle.hash.serialization.ListMarshaller;
+import net.openhft.chronicle.hash.serialization.MapMarshaller;
+import net.openhft.chronicle.hash.serialization.SetMarshaller;
+import net.openhft.chronicle.hash.serialization.impl.*;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.BytesMarshallable;
-import net.openhft.lang.io.serialization.impl.*;
-import net.openhft.lang.model.constraints.MaxSize;
-import net.openhft.lang.model.constraints.NotNull;
-import net.openhft.lang.values.*;
+import net.openhft.chronicle.values.Array;
+import net.openhft.chronicle.values.MaxUtf8Length;
+import net.openhft.chronicle.values.Range;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -344,8 +349,9 @@ public class CHMUseCasesTest {
 
 
     interface I1 {
-        String getStrAt( @MaxSize(10) int i);
-        void setStrAt(@MaxSize(10) int i, @MaxSize(10) String str);
+        @Array(length = 10)
+        String getStrAt(int i);
+        void setStrAt(int i, @MaxUtf8Length(10) String str);
     }
 
     @Test
@@ -623,9 +629,6 @@ public class CHMUseCasesTest {
      * CharSequence is more efficient when object creation is avoided.
      * * The key can only be on heap and variable length serialised.
      */
-    @Ignore("This test fails because assumes StringBuilder is fed to lambdas, but actually " +
-            "because interned in CharSequenceReader. Defer fixing this until Chronicle Map " +
-            "serialization framework is moved from Lang Bytes to Chronicle Bytes")
     @Test
     public void testCharSequenceCharSequenceMap()
             throws ExecutionException, InterruptedException, IOException {
@@ -661,9 +664,9 @@ public class CHMUseCasesTest {
 
             assertEquals("New World !!", map.get("Hello").toString());
 
-            assertEquals("New !!", map.computeIfPresent("no-key", (k, s) -> {
-                ((StringBuilder) s).append("!!");
-                return "New " + s;
+            assertEquals("New !!", map.compute("no-key", (k, s) -> {
+                assertNull(s);
+                return "New !!";
             }));
 
             mapChecks();
@@ -783,29 +786,11 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Test
-    public void testAcquireUsingWithByteBufferBytesValue() throws IOException {
-        ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
-                .of(IntValue.class, CharSequence.class);
-
-        try (ChronicleMap<IntValue, CharSequence> map = newInstance(builder)) {
-
-            IntValue key = map.newKeyInstance();
-            key.setValue(1);
-
-            ByteBufferBytes value = new ByteBufferBytes(ByteBuffer.allocate(10));
-            value.limit(0);
-
-            try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext(key, value)) {
-                assertTrue(key instanceof IntValue);
-                assertTrue(value instanceof CharSequence);
-            }
-
-            assertTrue(map.get(key).length() == 0);
-            mapChecks();
-        }
+    interface StringValue {
+        CharSequence getValue();
+        void getUsingValue(StringBuilder using);
+        void setValue(@net.openhft.chronicle.values.NotNull @MaxUtf8Length(64) CharSequence value);
     }
-
 
     /**
      * StringValue represents any bean which contains a String Value
@@ -901,7 +886,7 @@ public class CHMUseCasesTest {
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
                 assertEquals("123", value2.getValue());
-                value2.setValue(value2.getValue() + '4');
+                value2.setValue(value2.getValue().toString() + '4');
                 assertEquals("1234", value2.getValue());
             }
 
@@ -929,7 +914,7 @@ public class CHMUseCasesTest {
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
                 assertEquals("123", value1.getValue());
-                value1.setValue(value1.getValue() + '4');
+                value1.setValue(value1.getValue().toString() + '4');
                 assertEquals("1234", value1.getValue());
             }
 
@@ -1433,6 +1418,12 @@ public class CHMUseCasesTest {
         }
     }
 
+    interface UnsignedIntValue {
+        long getValue();
+        void setValue(@Range(min = 0, max = (1L << 32) - 1) long value);
+        long addValue(long addition);
+    }
+
     /**
      * For unsigned int -> unsigned int entries, the key can be on heap or off heap.
      */
@@ -1655,6 +1646,12 @@ public class CHMUseCasesTest {
         }
     }
 
+    interface UnsignedShortValue {
+        int getValue();
+        void setValue(@Range(min = 0, max = Character.MAX_VALUE) int value);
+        int addValue(int addition);
+    }
+
     /**
      * For int -> unsigned short values, the key can be on heap or off heap.
      */
@@ -1856,6 +1853,12 @@ public class CHMUseCasesTest {
                 assertEquals('[', entry.value().get().getValue());
             }
         }
+    }
+
+    interface UnsignedByteValue {
+        int getValue();
+        void setValue(@Range(min = 0, max = 255) int value);
+        int addValue(int addition);
     }
 
     /**
@@ -2197,7 +2200,8 @@ public class CHMUseCasesTest {
             assertEquals(null, map.get(key1));
 
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            DoubleValue v2 = map.get(key1);
+            assertEquals(value1, v2);
 
             key2.setValue(2);
             value2.setValue(22);
@@ -2390,9 +2394,11 @@ public class CHMUseCasesTest {
     @Test
     public void testListValue() throws IOException {
 
+        ListMarshaller<String> valueMarshaller = new ListMarshaller<>(
+                new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
         ChronicleMapBuilder<String, List<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<List<String>>) (Class) List.class)
-                .valueMarshaller(ListMarshaller.of(new StringMarshaller(8)));
+                .valueMarshaller(valueMarshaller);
 
 
         try (ChronicleMap<String, List<String>> map = newInstance(builder)) {
@@ -2435,20 +2441,21 @@ public class CHMUseCasesTest {
 
     @Test
     public void testSetValue() throws IOException {
-
+        SetMarshaller<String> valueMarshaller = new SetMarshaller<>(
+                new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
         ChronicleMapBuilder<String, Set<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)
-                .valueMarshaller(SetMarshaller.of(new StringMarshaller(8)));
+                .valueMarshaller(valueMarshaller);
 
 
         try (ChronicleMap<String, Set<String>> map = newInstance(builder)) {
             map.put("1", Collections.<String>emptySet());
-            map.put("2", new LinkedHashSet<String>(asList("one")));
+            map.put("2", new LinkedHashSet<>(asList("one")));
 
             Set<String> list1 = new LinkedHashSet<>();
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("1", list1)) {
                 list1.add("two");
-                assertEquals(new LinkedHashSet<String>(asList("two")), list1);
+                assertEquals(new LinkedHashSet<>(asList("two")), list1);
             }
             Set<String> list2 = new LinkedHashSet<>();
             try (ExternalMapQueryContext<String, Set<String>, ?> c = map.queryContext("1")) {
@@ -2482,10 +2489,11 @@ public class CHMUseCasesTest {
     @Test
     public void testMapStringStringValue() throws IOException {
 
+        MapMarshaller<String, String> valueMarshaller = new MapMarshaller<>(new StringBytesReader(), CharSequenceBytesWriter.INSTANCE,
+                new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
         ChronicleMapBuilder<String, Map<String, String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, String>>) (Class) Map.class)
-                .valueMarshaller(MapMarshaller.of(new StringMarshaller(16), new StringMarshaller
-                        (16)));
+                .valueMarshaller(valueMarshaller);
 
 
         try (ChronicleMap<String, Map<String, String>> map = newInstance(builder)) {
@@ -2522,10 +2530,12 @@ public class CHMUseCasesTest {
     @Test
     public void testMapStringIntegerValue() throws IOException {
 
+        MapMarshaller<String, Integer> valueMarshaller = new MapMarshaller<>(
+                new StringBytesReader(), CharSequenceBytesWriter.INSTANCE,
+                IntegerMarshaller.INSTANCE, IntegerMarshaller.INSTANCE);
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
-                .valueMarshaller(MapMarshaller.of(new StringMarshaller(16), new
-                        GenericEnumMarshaller<Integer>(Integer.class, 16)));
+                .valueMarshaller(valueMarshaller);
 
         try (ChronicleMap<String, Map<String, Integer>> map = newInstance(builder)) {
             map.put("1", Collections.<String, Integer>emptyMap());
@@ -2628,9 +2638,16 @@ public class CHMUseCasesTest {
 
     @Test
     public void testBytesMarshallable2() throws IOException {
+        BytesMarshallableReader<Data> dataReader = new BytesMarshallableReader<Data>(Data.class) {
+            @Override
+            protected Data createInstance() {
+                return new Data();
+            }
+        };
         ChronicleMapBuilder<Data, Data> builder = ChronicleMapBuilder
                 .of(Data.class, Data.class)
-                .keyMarshaller(new BytesMarshallableMarshaller<>(Data.class))
+                .keyReaderAndDataAccess(dataReader, new DataDataAccess())
+                .valueReaderAndDataAccess(dataReader, new DataDataAccess())
                 .actualChunkSize(64)
                 .entries(1000);
         try (ChronicleMap<Data, Data> map = newInstance(builder)) {
@@ -2647,10 +2664,26 @@ public class CHMUseCasesTest {
             }
         }
     }
+
+    private static class DataDataAccess extends BytesMarshallableDataAccess<Data> {
+        public DataDataAccess() {
+            super(Data.class);
+        }
+
+        @Override
+        protected Data createInstance() {
+            return new Data();
+        }
+
+        @Override
+        public DataAccess<Data> copy() {
+            return new DataDataAccess();
+        }
+    }
 }
 
 interface IData extends BytesMarshallable {
-    void setText(@MaxSize String text);
+    void setText(@MaxUtf8Length(64) String text);
 
     void setNumber(int number);
 
@@ -2730,7 +2763,8 @@ interface IBean {
 
     void setInt(int i);
 
-    void setInnerAt(@MaxSize(7) int index, Inner inner);
+    @Array(length = 7)
+    void setInnerAt(int index, Inner inner);
 
     Inner getInnerAt(int index);
 
@@ -2740,7 +2774,7 @@ interface IBean {
 
         String getMessage();
 
-        void setMessage(@MaxSize(20) String px);
+        void setMessage(@MaxUtf8Length(20) String px);
 
     }
 }

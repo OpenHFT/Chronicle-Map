@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 @Staged
 public abstract class UsingReturnValue<V> implements UsableReturnValue<V> {
     
-    private V usingReturnValue = (V) USING_RETURN_VALUE_UNINT;
+    private V usingReturnValue = (V) USING_RETURN_VALUE_UNINIT;
     
     @Override
     public void initUsingReturnValue(V usingReturnValue) {

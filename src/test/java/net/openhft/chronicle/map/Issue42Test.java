@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.Jvm;
+import net.openhft.chronicle.core.OS;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,7 +27,7 @@ public class Issue42Test {
     @Test
     public void crashJVMWindowsTest() throws IOException {
 
-        if (!Jvm.isWindows())
+        if (!OS.isWindows())
             return;
 
         try (final ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder

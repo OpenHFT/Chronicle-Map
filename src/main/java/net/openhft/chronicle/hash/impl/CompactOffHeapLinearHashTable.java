@@ -19,8 +19,8 @@ package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.core.Maths;
 
-import static net.openhft.lang.MemoryUnit.BITS;
-import static net.openhft.lang.MemoryUnit.BYTES;
+import static net.openhft.chronicle.algo.MemoryUnit.BITS;
+import static net.openhft.chronicle.algo.MemoryUnit.BYTES;
 
 public abstract class CompactOffHeapLinearHashTable {
     // to fit 64 bits per slot.

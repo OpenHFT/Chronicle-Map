@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.MemoryUnit;
+import net.openhft.chronicle.algo.MemoryUnit;
 import org.junit.Test;
 
 import java.io.File;

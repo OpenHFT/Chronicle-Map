@@ -16,10 +16,13 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.algo.bitset.BitSetFrame;
 import net.openhft.chronicle.algo.bitset.ReusableBitSet;
 import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
 import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.PointerBytesStore;
+import net.openhft.chronicle.bytes.VanillaBytes;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.SegmentLock;
 import net.openhft.chronicle.hash.impl.*;
@@ -27,9 +30,7 @@ import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.map.impl.IterationContext;
-import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -46,7 +47,7 @@ import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.TIER_COUNTERS
 public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @StageRef Chaining chaining;
-    @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
+    @StageRef public VanillaChronicleHashHolder<?> hh;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
 
     public int segmentIndex = -1;
@@ -533,7 +534,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
     public void nextTier() {
-        VanillaChronicleHash<?, ?, ? extends MetaBytesInterop<?, ?>, ?, ?, ?> h = hh.h();
+        VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         long nextTierIndex = nextTierIndex();
         if (nextTierIndex == 0) {
             nextTierIndex = h.allocateTier(segmentIndex, segmentTier + 1);
@@ -568,8 +569,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         }
     }
     
-    @Stage("Segment") public final PublicMultiStoreBytes segmentBytes = new PublicMultiStoreBytes();
     @Stage("Segment") public final PointerBytesStore segmentBS = new PointerBytesStore();
+    @Stage("Segment") public final Bytes segmentBytes = new VanillaBytes(segmentBS);
     @Stage("Segment") public final ReusableBitSet freeList = new ReusableBitSet(
             new SingleThreadedFlatBitSetFrame(LONGS.align(hh.h().actualChunksPerSegment, BITS)),
             Access.nativeAccess(), null, 0);
@@ -580,13 +581,11 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
     void initSegment() {
-        VanillaChronicleHash<?, ?, ?, ?, ?, ?> h = hh.h();
-
-        PublicMultiStoreBytes segmentBytes = this.segmentBytes;
-        segmentBytes.setBytesOffset(h.tierBytes(tierIndex), h.tierBytesOffset(tierIndex));
+        VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
 
         long segmentBaseAddr = this.segmentBaseAddr;
         segmentBS.set(segmentBaseAddr, h.segmentSize);
+        segmentBytes.clear();
 
         long freeListOffset = h.segmentHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE;
         freeList.setOffset(segmentBaseAddr + freeListOffset);
@@ -594,26 +593,38 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         entrySpaceOffset = freeListOffset + h.segmentFreeListOuterSize +
                 h.segmentEntrySpaceInnerOffset;
     }
+
+    @Stage("Segment")
+    public Bytes segmentBytesForRead() {
+        segmentBytes.readLimit(segmentBytes.capacity());
+        return segmentBytes;
+    }
+
+    @Stage("Segment")
+    public Bytes segmentBytesForWrite() {
+        segmentBytes.readPosition(0);
+        return segmentBytes;
+    }
     
     void closeSegment() {
         entrySpaceOffset = 0;
     }
 
     public long allocReturnCode(int chunks) {
-        VanillaChronicleHash<?, ?, ?, ?, ?, ?> h = hh.h();
+        VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         if (chunks > h.maxChunksPerEntry) {
             throw new IllegalArgumentException("Entry is too large: requires " + chunks +
                     " chucks, " + h.maxChunksPerEntry + " is maximum.");
         }
         long ret = freeList.setNextNContinuousClearBits(nextPosToSearchFrom(), chunks);
-        if (ret == DirectBitSet.NOT_FOUND || ret + chunks > h.actualChunksPerSegment) {
-            if (ret != DirectBitSet.NOT_FOUND &&
+        if (ret == BitSetFrame.NOT_FOUND || ret + chunks > h.actualChunksPerSegment) {
+            if (ret != BitSetFrame.NOT_FOUND &&
                     ret + chunks > h.actualChunksPerSegment && ret < h.actualChunksPerSegment) {
                 freeList.clearRange(ret, h.actualChunksPerSegment);
             }
             ret = freeList.setNextNContinuousClearBits(0L, chunks);
-            if (ret == DirectBitSet.NOT_FOUND || ret + chunks > h.actualChunksPerSegment) {
-                if (ret != DirectBitSet.NOT_FOUND &&
+            if (ret == BitSetFrame.NOT_FOUND || ret + chunks > h.actualChunksPerSegment) {
+                if (ret != BitSetFrame.NOT_FOUND &&
                         ret + chunks > h.actualChunksPerSegment &&
                         ret < h.actualChunksPerSegment) {
                     freeList.clearRange(ret, h.actualChunksPerSegment);

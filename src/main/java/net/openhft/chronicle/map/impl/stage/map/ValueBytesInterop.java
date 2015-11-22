@@ -16,25 +16,18 @@
 
 package net.openhft.chronicle.map.impl.stage.map;
 
-import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
-import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
+import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
+
 @Staged
-public class ValueBytesInterop<V, VI, MVI extends MetaBytesInterop<V, ? super VI>> {
-    @StageRef VanillaChronicleMapHolder<?, ?, ?, V, VI, MVI, ?> mh;
-    @StageRef ThreadLocalCopiesHolder ch;
-    
-    public final BytesReader<V> valueReader =
-            mh.m().valueReaderProvider.get(ch.copies, mh.m().originalValueReader);
-    public final VI valueInterop =
-            mh.m().valueInteropProvider.get(ch.copies, mh.m().originalValueInterop);
-    
-    public MVI valueMetaInterop(V value) {
-        return mh.m().metaValueInteropProvider.get(
-                ch.copies, mh.m().originalMetaValueInterop, valueInterop, value, false);
-    }
+public class ValueBytesInterop<V> {
+
+    @StageRef VanillaChronicleMapHolder<?, V, ?> mh;
+
+    public final SizedReader<V> valueReader = copyIfNeeded(mh.m().originalValueReader);
+
 }

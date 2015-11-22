@@ -32,7 +32,7 @@ import java.util.function.Predicate;
 public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<ReplicableEntry> {
     private static final Logger LOG = LoggerFactory.getLogger(OldDeletedEntriesCleanup.class);
 
-    private final ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map;
+    private final ReplicatedChronicleMap<?, ?, ?> map;
     private final int[] segmentsPermutation;
     private final int[] inverseSegmentsPermutation;
     private volatile boolean shutdown;
@@ -40,7 +40,7 @@ public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<
     private long prevSegment0ScanStart = -1;
     private long removedCompletely;
 
-    public OldDeletedEntriesCleanup(ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map) {
+    public OldDeletedEntriesCleanup(ReplicatedChronicleMap<?, ?, ?> map) {
         this.map = map;
         segmentsPermutation = randomPermutation(map.segments());
         inverseSegmentsPermutation = inversePermutation(segmentsPermutation);

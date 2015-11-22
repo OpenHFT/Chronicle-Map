@@ -16,9 +16,9 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
-import net.openhft.chronicle.hash.locks.InterProcessLock;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;

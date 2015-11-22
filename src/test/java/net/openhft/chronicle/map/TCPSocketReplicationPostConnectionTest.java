@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.set.Builder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +26,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Set;
 
-import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
+import static net.openhft.chronicle.set.Builder.newTcpSocketShmBuilder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

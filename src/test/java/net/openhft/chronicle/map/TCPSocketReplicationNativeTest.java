@@ -16,9 +16,9 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.values.LongValue;
+import net.openhft.chronicle.values.Values;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -87,7 +87,7 @@ public class TCPSocketReplicationNativeTest {
     @Test
     public void test() throws IOException, InterruptedException {
 
-        LongValue value = DataValueClasses.newDirectReference(LongValue.class);
+        LongValue value = Values.newNativeReference(LongValue.class);
 
         try (net.openhft.chronicle.core.io.Closeable c =
                      map1.acquireContext(1, value)) {
@@ -104,7 +104,7 @@ public class TCPSocketReplicationNativeTest {
     @Test
     public void test2Puts() throws IOException, InterruptedException {
 
-        LongValue value = DataValueClasses.newDirectReference(LongValue.class);
+        LongValue value = Values.newNativeReference(LongValue.class);
 
         try (net.openhft.chronicle.core.io.Closeable c =
                      map1.acquireContext(1, value)) {

@@ -17,23 +17,16 @@
 package net.openhft.chronicle.hash.impl.stage.hash;
 
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
-import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
+import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
-@Staged
-public class KeyBytesInterop<K, KI, MKI extends MetaBytesInterop<K, ? super KI>> {
-    @StageRef
-    VanillaChronicleHashHolder<K, KI, MKI> hh;
-    @StageRef ThreadLocalCopiesHolder ch;
+import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 
-    public final BytesReader<K> keyReader =
-            hh.h().keyReaderProvider.get(ch.copies, hh.h().originalKeyReader);
-    public final KI keyInterop = hh.h().keyInteropProvider.get(ch.copies, hh.h().originalKeyInterop);
-    
-    public MKI keyMetaInterop(K key) {
-        return hh.h().metaKeyInteropProvider.get(
-                ch.copies, hh.h().originalMetaKeyInterop, keyInterop, key, false);
-    }
+@Staged
+public class KeyBytesInterop<K> {
+
+    @StageRef VanillaChronicleHashHolder<K> hh;
+
+    public final SizedReader<K> keyReader = copyIfNeeded(hh.h().originalKeyReader);
 }

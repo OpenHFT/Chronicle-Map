@@ -16,11 +16,11 @@
 
 package net.openhft.chronicle.map.impl.stage.data.bytes;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.map.impl.stage.input.ReplicatedInput;
 import net.openhft.chronicle.map.impl.stage.map.ValueBytesInterop;
-import net.openhft.lang.io.Bytes;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -29,7 +29,7 @@ import net.openhft.sg.Staged;
 @Staged
 public class ReplicatedInputValueBytesData<V> extends AbstractData<V> {
     @StageRef ReplicatedInput<?, V, ?> in;
-    @StageRef ValueBytesInterop<V, ?, ?> ki;
+    @StageRef ValueBytesInterop<V> vi;
     
     @Stage("CachedBytesReplicatedInputValue") private V cachedBytesReplicatedInputValue;
     @Stage("CachedBytesReplicatedInputValue") private boolean cachedBytesReplicatedInputValueRead =
@@ -42,7 +42,7 @@ public class ReplicatedInputValueBytesData<V> extends AbstractData<V> {
 
     @Override
     public RandomDataInput bytes() {
-        return in.replicatedInputStore;
+        return in.replicatedInputBytes;
     }
 
     @Override
@@ -61,9 +61,9 @@ public class ReplicatedInputValueBytesData<V> extends AbstractData<V> {
     }
 
     @Override
-    public V getUsing(V usingValue) {
+    public V getUsing(V using) {
         Bytes inputBytes = in.replicatedInputBytes;
-        inputBytes.position(in.riValueOffset);
-        return ki.valueReader.read(inputBytes, size(), usingValue);
+        inputBytes.readPosition(in.riValueOffset);
+        return vi.valueReader.read(inputBytes, size(), using);
     }
 }

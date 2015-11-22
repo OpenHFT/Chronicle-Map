@@ -16,12 +16,11 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.BytesMarshaller;
-import net.openhft.lang.model.Byteable;
+import net.openhft.chronicle.hash.serialization.SizedReader;
+import net.openhft.chronicle.hash.serialization.SizedWriter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -72,9 +71,10 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * Returns the value to which the specified key is mapped, or {@code null} if this map contains
      * no mapping for the key.
      *
-     * <p>If the value class allows reusing, particularly if it is a {@link Byteable} subclass,
-     * consider {@link #getUsing(Object, Object)} method instead of this to reduce garbage
-     * creation.
+     * <p>If the value class allows reusing, consider {@link #getUsing(Object, Object)} method
+     * instead of this to reduce garbage creation. Read <a
+     * href="https://github.com/OpenHFT/Chronicle-Map#single-key-queries">the section about usage
+     * patterns in the Chronicle Map 3 Tutorial</a> for more.
      *
      * @param key the key whose associated value is to be returned
      * @return the value to which the specified key is mapped after this method call, or {@code
@@ -89,11 +89,9 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * object, if possible, or returns {@code null}, if this map contains no mapping for the key.
      *
      * <p>If the specified key is present in the map, the value data is read to the provided {@code
-     * value} object via value marshaller's {@link BytesMarshaller#read(Bytes, Object) read(Bytes,
-     * value)} or value reader's {@link BytesReader#read(Bytes, long, Object) read(Bytes, size,
-     * value)} method, depending on what deserialization strategy is configured on the builder,
-     * using which this map was constructed. If the value deserializer is able to reuse the given
-     * {@code value} object, calling this method instead of {@link #get(Object)} could help to
+     * value} object via value reader's {@link SizedReader#read(net.openhft.chronicle.bytes.Bytes, long, Object)
+     * read(StreamingDataInput, size, value)} method. If the value deserializer is able to reuse the
+     * given {@code value} object, calling this method instead of {@link #get(Object)} could help to
      * reduce garbage creation.
      *
      * <p>The provided {@code value} object is allowed to be {@code null}, in this case {@code
@@ -106,17 +104,16 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * no mapping for the key
      * @see #get(Object)
      * @see #acquireUsing(Object, Object)
-     * @see ChronicleMapBuilder#valueMarshaller(BytesMarshaller)
+     * @see ChronicleMapBuilder#valueMarshallers(SizedReader, SizedWriter)
      */
     V getUsing(K key, V usingValue);
 
     /**
      * Acquire a value for a key, creating if absent.
      *
-     * <p>If the specified key is absent in the map, {@linkplain ChronicleMapBuilder#defaultValue(
-     * Object) default value} is taken or {@linkplain ChronicleMapBuilder#defaultValueProvider(
-     * DefaultValueProvider) default value provider} is called. Then this object is put to this map
-     * for the specified key.
+     * <p>If the specified key is absent in the map, {@linkplain
+     * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider) default value provider} is
+     * called. Then this object is put to this map for the specified key.
      *
      * <p>Then, either if the key was initially absent in the map or already present, the value is
      * deserialized just as during {@link #getUsing(Object, Object) getUsing(key, usingValue)} call,
@@ -133,9 +130,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * }}</pre>
      *
      *
-     * <p>Where {@code defaultValue(key)} returns either {@linkplain ChronicleMapBuilder#defaultValue(Object)
-     * default value} or {@link ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
-     * defaultValueProvider.}
+     * <p>Where {@code defaultValue(key)} returns {@link
+     * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider) defaultValueProvider}.
      *
      * <p>If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link
      * ChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of what

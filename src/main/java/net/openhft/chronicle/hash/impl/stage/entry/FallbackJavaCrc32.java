@@ -17,7 +17,7 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
-import static net.openhft.lang.io.NativeBytes.UNSAFE;
+import net.openhft.chronicle.core.OS;
 
 /**
  * Copied from
@@ -102,7 +102,7 @@ public enum FallbackJavaCrc32 implements Crc32 {
     public int crc32(long addr, long len) {
         int crc = 0xffffffff;
         for (long limit = addr + len; addr < limit; addr++) {
-            int value = UNSAFE.getByte(addr) & 0xff;
+            int value = OS.memory().readByte(addr) & 0xff;
             crc = (crc << 8) ^ crc32Table[(((crc >> 24) ^ value) & 0xff)];
         }
         return ~crc;

@@ -16,9 +16,11 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.BytesMarshaller;
-import net.openhft.lang.model.constraints.Nullable;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.BytesWriter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,12 +59,12 @@ public class Issue58 {
         try (
                 ChronicleMap<String, UUID> map = ChronicleMap.of(String.class, UUID.class)
                         .averageKeySize(2)
-                        .valueMarshaller(UuidMarshaller.INSTANCE)
+                        .valueMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
                         .constantValueSizeBySample(UUID.randomUUID())
                         .entries(data.size())
                         .createPersistedTo(mapFile);
                 ChronicleMap<UUID, String> reverseMap = ChronicleMap.of(UUID.class, String.class)
-                        .keyMarshaller(UuidMarshaller.INSTANCE)
+                        .keyMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
                         .averageValueSize(2)
                         .constantKeySizeBySample(UUID.randomUUID())
                         .entries(data.size())
@@ -81,12 +83,12 @@ public class Issue58 {
         try (
                 ChronicleMap<String, UUID> map = ChronicleMap.of(String.class, UUID.class)
                         .averageKeySize(2)
-                        .valueMarshaller(UuidMarshaller.INSTANCE)
+                        .valueMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
                         .constantValueSizeBySample(UUID.randomUUID())
                         .entries(data.size())
                         .createPersistedTo(mapFile);
                 ChronicleMap<UUID, String> reverseMap = ChronicleMap.of(UUID.class, String.class)
-                        .keyMarshaller(UuidMarshaller.INSTANCE)
+                        .keyMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
                         .constantKeySizeBySample(UUID.randomUUID())
                         .averageValueSize(2)
                         .entries(data.size())
@@ -103,12 +105,12 @@ public class Issue58 {
         try (
                 ChronicleMap<String, UUID> map = ChronicleMap.of(String.class, UUID.class)
                         .averageKeySize(2)
-                        .valueMarshaller(UuidMarshaller.INSTANCE)
+                        .valueMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
                         .constantValueSizeBySample(UUID.randomUUID())
                         .entries(data.size())
                         .createPersistedTo(mapFile);
                 ChronicleMap<UUID, String> reverseMap = ChronicleMap.of(UUID.class, String.class)
-                        .keyMarshaller(UuidMarshaller.INSTANCE)
+                        .keyMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
                         .constantKeySizeBySample(UUID.randomUUID())
                         .averageValueSize(2)
                         .entries(data.size())
@@ -126,23 +128,18 @@ public class Issue58 {
     }
 
 
-    enum UuidMarshaller implements BytesMarshaller<UUID> {
+    enum UuidMarshaller implements BytesReader<UUID>, BytesWriter<UUID> {
         INSTANCE;
 
         @Override
-        public void write(Bytes bytes, UUID uuid) {
+        public void write(Bytes bytes, @NotNull UUID uuid) {
             bytes.writeLong(uuid.getMostSignificantBits());
             bytes.writeLong(uuid.getLeastSignificantBits());
         }
 
         @Override
-        public UUID read(Bytes bytes) {
+        public UUID read(Bytes bytes, @Nullable UUID using) {
             return new UUID(bytes.readLong(), bytes.readLong());
-        }
-
-        @Override
-        public UUID read(Bytes bytes, @Nullable UUID uuid) {
-            return read(bytes);
         }
     }
 }

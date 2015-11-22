@@ -16,12 +16,21 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.model.constraints.MaxSize;
+import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.algo.locks.AcquisitionStrategies;
+import net.openhft.chronicle.algo.locks.ReadWriteLockingStrategy;
+import net.openhft.chronicle.algo.locks.TryAcquireOperations;
+import net.openhft.chronicle.algo.locks.VanillaReadWriteWithWaitsLockingStrategy;
+import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.values.Array;
+import net.openhft.chronicle.values.Group;
+import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
+import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -47,7 +56,7 @@ public class CHMTest5 {
                 builder.createPersistedTo(new File(chmPath));
 
         //Now get the shared data object, auto-creating if it's not there
-        CHMTest5Data data = DataValueClasses.newDirectReference(CHMTest5Data.class);
+        CHMTest5Data data = Values.newNativeReference(CHMTest5Data.class);
         theSharedMap.acquireUsing(TEST_KEY, data);
         //if this was newly created, we need to set the max allowed
         //Note, the object is pointing at shared memory and writes
@@ -230,27 +239,37 @@ public class CHMTest5 {
         }
     }
 
-    public static interface CHMTest5Data {
-        public int getMaxNumberOfProcessesAllowed();
+    public interface CHMTest5Data {
 
-        public void setMaxNumberOfProcessesAllowed(int max);
+        @Group(0)
+        long getEntryLockState();
+        void setEntryLockState(long entryLockState);
 
-        public void setTimeAt(@MaxSize(4) int index, long time);
-
-        public long getTimeAt(int index);
-
+        @Group(1)
+        int getMaxNumberOfProcessesAllowed();
+        void setMaxNumberOfProcessesAllowed(int max);
         boolean compareAndSwapMaxNumberOfProcessesAllowed(int expected, int value);
 
-        @Deprecated()
-        void busyLockEntry() throws InterruptedException, IllegalStateException;
+        @Group(1)
+        @Array(length = 4)
+        void setTimeAt(int index, long time);
+        long getTimeAt(int index);
 
         @Deprecated()
-        boolean tryLockNanosEntry(long nanos);
+        default boolean tryLockNanosEntry(long nanos) {
+            return AcquisitionStrategies
+                    .<ReadWriteLockingStrategy>spinLoop(nanos, TimeUnit.NANOSECONDS).acquire(
+                    TryAcquireOperations.writeLock(),
+                    VanillaReadWriteWithWaitsLockingStrategy.instance(),
+                    checkedBytesStoreAccess(), ((Byteable) this).bytesStore(),
+                    ((Byteable) this).offset());
+        }
 
         @Deprecated()
-        boolean tryLockEntry();
-
-        @Deprecated()
-        void unlockEntry() throws IllegalMonitorStateException;
+        default void unlockEntry() throws IllegalMonitorStateException {
+            VanillaReadWriteWithWaitsLockingStrategy.instance()
+                    .writeUnlock(checkedBytesStoreAccess(),
+                            ((Byteable) this).bytesStore(), ((Byteable) this).offset());
+        }
     }
 }

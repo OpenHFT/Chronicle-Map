@@ -16,9 +16,9 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.model.Byteable;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.model.constraints.MaxSize;
+import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.values.Array;
+import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +31,7 @@ public class AcquireGetUsingMain {
         ChronicleMap<String, Data> theSharedMap =
                 ChronicleMapBuilder.of(String.class, Data.class)
                         .createPersistedTo(file);
-        Data data = DataValueClasses.newDirectReference(Data.class);
+        Data data = Values.newNativeReference(Data.class);
         String processType = "testkey";
         if (theSharedMap.getUsing(processType, data) == null) {
             System.out.println("Key " + processType + " does not exist, " + data);
@@ -41,7 +41,7 @@ public class AcquireGetUsingMain {
 
         // you can't have off heap objects, but you can an on heap object which proxy references off heap data.
         // this reference is not usable until it references something concrete.
-        Data data2 = DataValueClasses.newDirectReference(Data.class);
+        Data data2 = Values.newNativeReference(Data.class);
         String processType2 = "testkey2";
         if (theSharedMap.getUsing(processType2, data2) == null) {
             // should be unset given we don't set it.
@@ -68,14 +68,14 @@ public class AcquireGetUsingMain {
         Data data3 = theSharedMap.acquireUsing(processType, data);
         assert data3 == data;
 
-        System.out.println("getting " + ((Byteable) data).bytes());
+        System.out.println("getting " + ((Byteable) data).bytesStore());
         data.setMaxNumberOfProcessesAllowed(3);
         data.setTimeAt(0, 100);
         data.setTimeAt(1, 111);
         data.setTimeAt(2, 222);
 
         // an on heap object exists when created as it doesn't use indirection to where the data is actually held.
-        Data data4 = DataValueClasses.newInstance(Data.class);
+        Data data4 = Values.newHeapInstance(Data.class);
 
         // put is not needed as we created something already.
         // theSharedMap.put(processType, data);
@@ -84,7 +84,8 @@ public class AcquireGetUsingMain {
     }
 
     public static interface Data {
-        void setTimeAt(@MaxSize(8) int index, long time);
+        @Array(length = 8)
+        void setTimeAt(int index, long time);
 
         long getTimeAt(int index);
 

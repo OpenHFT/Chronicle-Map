@@ -16,9 +16,9 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.algo.bitset.BitSetFrame;
-import net.openhft.chronicle.algo.bitset.ConcurrentFlatBitSetFrame;
-import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
+import net.openhft.chronicle.algo.bitset.*;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 import net.openhft.chronicle.hash.impl.TierCountersArea;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
@@ -26,14 +26,10 @@ import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.TimeProvider;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
-import net.openhft.lang.Maths;
-import net.openhft.lang.collection.ATSDirectBitSet;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.model.DataValueClasses;
+import net.openhft.chronicle.values.Values;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,9 +43,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+import static net.openhft.chronicle.algo.MemoryUnit.*;
+import static net.openhft.chronicle.algo.bitset.BitSetFrame.NOT_FOUND;
+import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
 import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
-import static net.openhft.lang.MemoryUnit.*;
-import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
 
 /**
  * <h2>A Replicating Multi Master HashMap</h2> <p>Each remote hash map, mirrors its changes over to
@@ -89,9 +86,7 @@ import static net.openhft.lang.collection.DirectBitSet.NOT_FOUND;
  * @param <K> the entries key type
  * @param <V> the entries value type
  */
-public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R>
-        extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI, R>
+public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R>
         implements Replica, Replica.EntryExternalizable {
     // for file, jdbc and UDP replication
     public static final int RESERVED_MOD_ITER = 8;
@@ -107,9 +102,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
      */
     private transient byte localIdentifier;
     transient Set<Closeable> closeables;
-    private transient Bytes identifierUpdatedBytes;
+    private transient long identifierUpdatedBytesOffset;
 
-    private transient ATSDirectBitSet modIterSet;
+    private transient BitSet modIterSet;
     private transient AtomicReferenceArray<ModificationIterator> modificationIterators;
     private transient long startOfModificationIterators;
     private transient boolean bootstrapOnlyLocalEntries;
@@ -118,8 +113,8 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     public transient TimeUnit cleanupTimeoutUnit;
     
     public transient MapRemoteOperations<K, V, R> remoteOperations;
-    transient CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> remoteOpContext;
-    transient CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> remoteItContext;
+    transient CompiledReplicatedMapQueryContext<K, V, R> remoteOpContext;
+    transient CompiledReplicatedMapIterationContext<K, V, R> remoteItContext;
 
     transient BitSetFrame mainSegmentsModIterFrameForUpdates;
     transient BitSetFrame mainSegmentsModIterFrameForIteration;
@@ -135,7 +130,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
     @Override
     protected VanillaGlobalMutableState createGlobalMutableState() {
-        return DataValueClasses.newDirectReference(ReplicatedGlobalMutableState.class);
+        return Values.newNativeReference(ReplicatedGlobalMutableState.class);
     }
 
     @Override
@@ -220,12 +215,12 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     }
 
     public void setLastModificationTime(byte identifier, long timestamp) {
-        final long offset = identifier * 8L;
+        final long offset = identifierUpdatedBytesOffset + identifier * 8L;
 
         // purposely not volatile as this will impact performance,
         // and the worst that will happen is we'll end up loading more data on a bootstrap
-        if (identifierUpdatedBytes.readLong(offset) < timestamp)
-            identifierUpdatedBytes.writeLong(offset, timestamp);
+        if (bs.readLong(offset) < timestamp)
+            bs.writeLong(offset, timestamp);
     }
 
     @Override
@@ -234,26 +229,27 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
         // purposely not volatile as this will impact performance,
         // and the worst that will happen is we'll end up loading more data on a bootstrap
-        return identifierUpdatedBytes.readLong(remoteIdentifier * 8L);
+        return bs.readLong(identifierUpdatedBytesOffset + remoteIdentifier * 8L);
     }
 
     @Override
     public void onHeaderCreated() {
         long offset = super.mapHeaderInnerSize();
 
-        identifierUpdatedBytes = ms.bytes(offset, LAST_UPDATED_HEADER_SIZE);
+        identifierUpdatedBytesOffset = offset;
         offset += LAST_UPDATED_HEADER_SIZE;
 
-        Bytes modDelBytes = ms.bytes(offset, assignedModIterBitSetSizeInBytes());
+        ConcurrentFlatBitSetFrame modIterBitSetFrame =
+                new ConcurrentFlatBitSetFrame(BYTES.toBits(assignedModIterBitSetSizeInBytes()));
+        modIterSet = new ReusableBitSet(modIterBitSetFrame, checkedBytesStoreAccess(), bs, offset);
         offset += assignedModIterBitSetSizeInBytes();
         startOfModificationIterators = offset;
-        modIterSet = new ATSDirectBitSet(modDelBytes);
     }
 
     @Override
     protected void zeroOutNewlyMappedChronicleMapBytes() {
         super.zeroOutNewlyMappedChronicleMapBytes();
-        bytes.zeroOut(super.mapHeaderInnerSize(), this.mapHeaderInnerSize(), true);
+        bs.zeroOut(super.mapHeaderInnerSize(), this.mapHeaderInnerSize());
     }
 
     void addCloseable(Closeable closeable) {
@@ -370,11 +366,11 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     @Override
     public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
 
-        long start = entry.position();
+        long start = entry.readPosition();
         try {
             final long keySize = keySizeMarshaller.readSize(entry);
 
-            entry.skip(keySize + 8); // we skip 8 for the timestamp
+            entry.readSkip(keySize + 8); // we skip 8 for the timestamp
 
             final byte identifier = entry.readByte();
             if (identifier != identifier()) {
@@ -382,11 +378,13 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 return 0;
             }
 
-            entry.skip(1); // is Deleted
+            entry.readSkip(1); // is Deleted
             long valueSize = valueSizeMarshaller.readSize(entry);
 
-            alignment.alignPositionAddr(entry);
-            long result = (entry.position() + valueSize - start);
+            long currentPosition = entry.readPosition();
+            long currentAddr = entry.address(currentPosition);
+            long skip = alignAddr(currentAddr, alignment) - currentAddr;
+            long result = currentPosition + skip + valueSize - start;
 
             // entries can be larger than Integer.MAX_VALUE as we are restricted to the size we can
             // make a byte buffer
@@ -394,7 +392,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
             return (int) result + SIZE_OF_BOOTSTRAP_TIME_STAMP;
         } finally {
-            entry.position(start);
+            entry.readPosition(start);
         }
     }
 
@@ -404,15 +402,13 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
      * this method, especially when being used in a multi threaded context.
      */
     @Override
-    public void writeExternalEntry(@NotNull Bytes entry,
-                                   @NotNull Bytes destination,
-                                   int chronicleId,
-                                   long bootstrapTime) {
+    public void writeExternalEntry(
+            @NotNull Bytes entry, @NotNull Bytes destination, int chronicleId, long bootstrapTime) {
 
         final long keySize = keySizeMarshaller.readSize(entry);
 
-        final long keyPosition = entry.position();
-        entry.skip(keySize);
+        final long keyPosition = entry.readPosition();
+        entry.readSkip(keySize);
         final long timeStamp = entry.readLong();
 
         final byte identifier = entry.readByte();
@@ -426,10 +422,10 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         if (!isDeleted) {
             valueSize = valueSizeMarshaller.readSize(entry);
         } else {
-            valueSize = valueSizeMarshaller.minEncodableSize();
+            valueSize = Math.max(0, valueSizeMarshaller.minStorableSize());
         }
 
-        final long valuePosition = entry.position();
+        final long valuePosition = entry.readPosition();
         destination.writeLong(bootstrapTime);
         keySizeMarshaller.writeSize(destination, keySize);
         valueSizeMarshaller.writeSize(destination, valueSize);
@@ -441,8 +437,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         destination.writeBoolean(isDeleted);
 
         // write the key
-        entry.position(keyPosition);
-        destination.write(entry, entry.position(), keySize);
+        destination.write(entry, keyPosition, keySize);
 
         boolean debugEnabled = LOG.isDebugEnabled();
         String message = null;
@@ -460,12 +455,11 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         if (isDeleted)
             return;
 
-        entry.position(valuePosition);
         // skipping the alignment, as alignment wont work when we send the data over the wire.
-        alignment.alignPositionAddr(entry);
-
+        long valueAddr = entry.address(valuePosition);
+        long skip = alignAddr(valueAddr, alignment) - valueAddr;
         // writes the value
-        destination.write(entry, entry.position(), valueSize);
+        destination.write(entry, valuePosition + skip, valueSize);
 
         if (debugEnabled) {
             LOG.debug(message + "value=" + entry.toString().trim() + ")");
@@ -483,7 +477,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
     }
 
     @Override
-    public CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> mapContext() {
+    public CompiledReplicatedMapQueryContext<K, V, R> mapContext() {
         return q().getContext(CompiledReplicatedMapQueryContext.class,
                 ci -> new CompiledReplicatedMapQueryContext<>(ci, this));
     }
@@ -492,19 +486,18 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
      * Assumed to be called from a single thread - the replication thread. Not to waste time
      * for going into replication thread's threadLocal map, cache the context in Map's field
      */
-    private CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> remoteOpContext() {
+    private CompiledReplicatedMapQueryContext<K, V, R> remoteOpContext() {
         if (remoteOpContext == null) {
-            remoteOpContext = (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R>) q();
+            remoteOpContext = (CompiledReplicatedMapQueryContext<K, V, R>) q();
         }
         assert !remoteOpContext.usedInit();
         remoteOpContext.initUsed(true);
         return remoteOpContext;
     }
 
-    private CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> remoteItContext() {
+    private CompiledReplicatedMapIterationContext<K, V, R> remoteItContext() {
         if (remoteItContext == null) {
-            remoteItContext =
-                    (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R>) i();
+            remoteItContext = (CompiledReplicatedMapIterationContext<K, V, R>) i();
         }
         assert !remoteItContext.usedInit();
         remoteItContext.initUsed(true);
@@ -517,8 +510,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
      */
     @Override
     public void readExternalEntry(@NotNull Bytes source) {
-        try (CompiledReplicatedMapQueryContext<K, KI, MKI, V, VI, MVI, R> remoteOpContext =
-                     mapContext()) {
+        try (CompiledReplicatedMapQueryContext<K, V, R> remoteOpContext = mapContext()) {
             remoteOpContext.initReplicationInput(source);
             remoteOpContext.processReplicatedEvent();
         }
@@ -534,7 +526,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         return iterContext;
     }
 
-    public CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> iterationContext() {
+    public CompiledReplicatedMapIterationContext<K, V, R> iterationContext() {
         return i().getContext(CompiledReplicatedMapIterationContext.class,
                 ci -> new CompiledReplicatedMapIterationContext<>(ci, this));
     }
@@ -579,7 +571,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             long bitsPerSegment = bitsPerSegmentInModIterBitSet();
             segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
             posMask = bitsPerSegment - 1L;
-            mainSegmentsChangesBitSetAddr = ms.address() + startOfModificationIterators +
+            mainSegmentsChangesBitSetAddr = bsAddress() + startOfModificationIterators +
                     remoteIdentifier * modIterBitSetSizeInBytes();
             nativeAccess().zeroOut(null, mainSegmentsChangesBitSetAddr, modIterBitSetSizeInBytes());
             offsetToBitSetWithinATierBulk =
@@ -591,7 +583,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             setModificationNotifier(notifier);
         }
 
-        public void setModificationNotifier(ModificationNotifier modificationNotifier) {
+        public void setModificationNotifier(@NotNull ModificationNotifier modificationNotifier) {
             this.modificationNotifier = modificationNotifier;
         }
 
@@ -639,8 +631,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             tierIndex = tierIndex - actualSegments - 1;
             long bulkIndex = tierIndex >> log2TiersInBulk;
             TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
-            long bitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
-                    offsetToBitSetWithinATierBulk;
+            long bitSetAddr = bitSetAddr(tierBulkData);
             tierBulkModIterFrameForUpdates.set(nativeAccess(), null, bitSetAddr, bitIndex);
         }
 
@@ -659,10 +650,14 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             tierIndex = tierIndex - actualSegments - 1;
             long bulkIndex = tierIndex >> log2TiersInBulk;
             TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
-            long bitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
-                    offsetToBitSetWithinATierBulk;
+            long bitSetAddr = bitSetAddr(tierBulkData);
             return tierBulkModIterFrameForUpdates.clearIfSet(nativeAccess(), null,
                     bitSetAddr, bitIndex);
+        }
+
+        private long bitSetAddr(TierBulkData tierBulkData) {
+            return tierBulkData.bytesStore.address(tierBulkData.offset) +
+                    offsetToBitSetWithinATierBulk;
         }
 
         boolean isChanged(long tierIndex, long pos) {
@@ -679,8 +674,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             long extraTierIndex = tierIndex - actualSegments - 1;
             long bulkIndex = extraTierIndex >> log2TiersInBulk;
             TierBulkData tierBulkData = tierBulkOffsets.get((int) bulkIndex);
-            long bitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
-                    offsetToBitSetWithinATierBulk;
+            long bitSetAddr = bitSetAddr(tierBulkData);
             return tierBulkModIterFrameForUpdates.isSet(nativeAccess(), null, bitSetAddr, bitIndex);
         }
 
@@ -718,8 +712,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                         globalMutableState().getAllocatedExtraTierBulks()) {
                     VanillaChronicleHash.TierBulkData tierBulkData =
                             tierBulkOffsets.get(iterationMainSegmentsAreaOrTierBulk);
-                    tierBulkBitSetAddr = tierBulkData.langBytes.address() + tierBulkData.offset +
-                            offsetToBitSetWithinATierBulk;
+                    tierBulkBitSetAddr = bitSetAddr(tierBulkData);
                     if ((nextPos = tierBulkModIterFrameForIteration.nextSetBit(nativeAccess(), null,
                             tierBulkBitSetAddr, position + 1)) != NOT_FOUND) {
                         return nextPos;
@@ -753,7 +746,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
                 int segmentIndexOrTierIndexOffsetWithinBulk =
                         (int) (position >>> segmentIndexShift);
 
-                try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> context =
+                try (CompiledReplicatedMapIterationContext<K, V, R> context =
                         iterationContext()) {
                     if (iterationMainSegmentsAreaOrTierBulk < 0) {
                         // if main area
@@ -793,8 +786,9 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
-                        context.segmentBytes().limit(context.valueOffset() + context.valueSize());
-                        context.segmentBytes().position(context.keySizeOffset());
+                        context.segmentBytes()
+                                .readLimit(context.valueOffset() + context.valueSize());
+                        context.segmentBytes().readPosition(context.keySizeOffset());
                         boolean success = entryCallback.onEntry(
                                 context.segmentBytes(), chronicleId, bootStrapTimeStamp());
                         entryCallback.onAfterEntry();
@@ -845,8 +839,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
         @Override
         public void dirtyEntries(long fromTimeStamp) {
-            try (CompiledReplicatedMapIterationContext<K, KI, MKI, V, VI, MVI, R> c =
-                         iterationContext()) {
+            try (CompiledReplicatedMapIterationContext<K, V, R> c = iterationContext()) {
                 // iterate over all the segments and mark bit in the modification iterator
                 // that correspond to entries with an older timestamp
                 boolean debugEnabled = LOG.isDebugEnabled();

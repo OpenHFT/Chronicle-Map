@@ -16,8 +16,8 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.replication.UdpTransportConfig;
-import net.openhft.lang.io.ByteBufferBytes;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +52,7 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
         setReader(new UdpSocketChannelEntryReader(replicationConfig.udpBufferSize(), entryExternalizable));
 
         setWriter(new UdpSocketChannelEntryWriter(replicationConfig.udpBufferSize(),
-                entryExternalizable,
-                modificationIterator, this, new Replicators.OutBuffer(UPD_BUFFER_SIZE)));
+                entryExternalizable, modificationIterator, this, UPD_BUFFER_SIZE));
 
         start();
     }
@@ -61,8 +60,8 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
     private class UdpSocketChannelEntryReader implements EntryReader {
 
         private final Replica.EntryExternalizable externalizable;
-        private final ByteBuffer in;
-        private final ByteBufferBytes out;
+        private final ByteBuffer socketIn;
+        private final Bytes entryOut;
 
         /**
          * @param serializedEntrySize the maximum size of an entry include the meta data
@@ -71,11 +70,11 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
         UdpSocketChannelEntryReader(final int serializedEntrySize,
                                     @NotNull final Replica.EntryExternalizable externalizable) {
             // we make the buffer twice as large just to give ourselves headroom
-            in = ByteBuffer.allocateDirect(serializedEntrySize * 2);
+            socketIn = ByteBuffer.allocateDirect(serializedEntrySize * 2);
             this.externalizable = externalizable;
-            out = new ByteBufferBytes(in);
-            out.limit(0);
-            in.clear();
+            entryOut = Bytes.wrapForRead(socketIn.slice());
+            entryOut.readLimit(0);
+            socketIn.clear();
         }
 
         /**
@@ -88,30 +87,30 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
         public void readAll(@NotNull final DatagramChannel socketChannel) throws IOException,
                 InterruptedException {
 
-            out.clear();
-            in.clear();
+            entryOut.clear();
+            socketIn.clear();
 
-            socketChannel.receive(in);
+            socketChannel.receive(socketIn);
 
-            final int bytesRead = in.position();
+            final int bytesRead = socketIn.position();
 
             if (bytesRead < SIZE_OF_SIZE + SIZE_OF_SIZE)
                 return;
 
-            out.limit(in.position());
+            entryOut.readLimit(socketIn.position());
 
-            final int invertedSize = out.readInt();
-            final int size = out.readInt();
+            final int invertedSize = entryOut.readInt();
+            final int size = entryOut.readInt();
 
             // check the the first 4 bytes are the inverted len followed by the len
             // we do this to check that this is a valid start of entry, otherwise we throw it away
             if (~size != invertedSize)
                 return;
 
-            if (out.remaining() != size)
+            if (entryOut.readRemaining() != size)
                 return;
 
-            externalizable.readExternalEntry(out);
+            externalizable.readExternalEntry(entryOut);
         }
     }
 
@@ -120,16 +119,16 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
 
         private final EntryCallback entryCallback;
         private final UdpChannelReplicator udpReplicator;
-        private final Replicators.OutBuffer outBuffer;
+        private final Bytes<ByteBuffer> entryIn;
         private Replica.ModificationIterator modificationIterator;
 
         UdpSocketChannelEntryWriter(final int updBufferSize,
                                     @NotNull final Replica.EntryExternalizable externalizable,
                                     @NotNull final Replica.ModificationIterator modificationIterator,
-                                    UdpChannelReplicator udpReplicator, Replicators.OutBuffer outBuffer) {
+                                    UdpChannelReplicator udpReplicator, int udpBufferSize) {
             this.udpReplicator = udpReplicator;
 
-            this.outBuffer = outBuffer;
+            this.entryIn = Bytes.elasticByteBuffer(udpBufferSize);
             // we make the buffer twice as large just to give ourselves headroom
 
             entryCallback = new EntryCallback(externalizable, updBufferSize);
@@ -155,12 +154,12 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
         public int writeAll(@NotNull final DatagramChannel socketChannel)
                 throws InterruptedException, IOException {
 
-            final ByteBufferBytes in = outBuffer.in();
-            final ByteBuffer out = outBuffer.out();
+            final Bytes in = entryIn;
+            final ByteBuffer out = entryIn.underlyingObject();
 
             out.clear();
             in.clear();
-            in.skip(SIZE_OF_SIZE);
+            in.writeSkip(SIZE_OF_SIZE);
 
             final boolean wasDataRead = modificationIterator.nextEntry(entryCallback, 0);
 
@@ -170,8 +169,8 @@ final class UdpReplicator extends UdpChannelReplicator implements Replica.Modifi
             }
 
             // we'll write the size inverted at the start
-            in.writeShort(0, ~(in.readUnsignedShort(SIZE_OF_SIZE)));
-            out.limit((int) in.position());
+            in.writeShort(0, (short) ~(in.readUnsignedShort(SIZE_OF_SIZE)));
+            out.limit((int) in.writePosition());
 
             return socketChannel.write(out);
         }

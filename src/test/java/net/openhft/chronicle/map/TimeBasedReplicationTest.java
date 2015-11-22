@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import static net.openhft.chronicle.map.Builder.waitTillEqual;
+import static net.openhft.chronicle.set.Builder.waitTillEqual;
 import static org.junit.Assert.assertEquals;
 
 /**

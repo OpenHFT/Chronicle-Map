@@ -177,7 +177,15 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
         try {
             return forEachEntryWhile(c -> {
                 K k = c.key().get();
-                V v = (V) m.get(k instanceof CharSequence ? k.toString() : k);
+                V v = (V) m.get(k);
+                if (v instanceof CharSequence) {
+                    return CharSequences.equivalent(
+                            (CharSequence) v, (CharSequence) c.value().get());
+                } else if (v instanceof Set) {
+                    return v.equals(c.value().get());
+                } else if (v instanceof Map) {
+                    return v.equals(c.value().get());
+                }
                 return v != null && c.value().equals(c.context().wrapValueAsData(v));
             });
         } catch (ClassCastException unused) {
@@ -195,7 +203,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
 
     // TODO quick and dirty. Think about how generic guava/koloboke equivalence interface could be
     // used. See also BytesInterop.equivalent() and hash().
-    public static int hashCode(Object obj) {
+    static int hashCode(Object obj) {
         if (!(obj instanceof CharSequence)) {
             return obj.hashCode();
         } else {

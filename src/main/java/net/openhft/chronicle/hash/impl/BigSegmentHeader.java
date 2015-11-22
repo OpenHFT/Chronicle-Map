@@ -16,17 +16,18 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.locks.IllegalInterProcessLockStateException;
 
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static java.nio.ByteOrder.nativeOrder;
-import static net.openhft.lang.io.AbstractBytes.UNSIGNED_INT_MASK;
-import static net.openhft.lang.io.NativeBytes.UNSAFE;
 
 public final class BigSegmentHeader implements SegmentHeader {
     public static final BigSegmentHeader INSTANCE = new BigSegmentHeader();
+
+    private static final long UNSIGNED_INT_MASK = 0xFFFFFFFFL;
 
     static final long LOCK_OFFSET = 0L; // 64-bit
     static final long COUNT_WORD_OFFSET = LOCK_OFFSET;
@@ -61,7 +62,7 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public long size(long address) {
-        return UNSAFE.getInt(address + SIZE_OFFSET) & UNSIGNED_INT_MASK;
+        return OS.memory().readInt(address + SIZE_OFFSET) & UNSIGNED_INT_MASK;
     }
 
     @Override
@@ -70,12 +71,12 @@ public final class BigSegmentHeader implements SegmentHeader {
             throw new IllegalStateException("segment size overflow: up to " + UNSIGNED_INT_MASK +
                     " supported, " + size + " given");
         }
-        UNSAFE.putInt(address + SIZE_OFFSET, (int) size);
+        OS.memory().writeInt(address + SIZE_OFFSET, (int) size);
     }
 
     @Override
     public long deleted(long address) {
-        return UNSAFE.getInt(address + DELETED_OFFSET) & UNSIGNED_INT_MASK;
+        return OS.memory().readInt(address + DELETED_OFFSET) & UNSIGNED_INT_MASK;
     }
 
     @Override
@@ -84,25 +85,25 @@ public final class BigSegmentHeader implements SegmentHeader {
             throw new IllegalStateException("segment deleted entries count overflow: up to " +
                     UNSIGNED_INT_MASK + " supported, " + deleted + " given");
         }
-        UNSAFE.putInt(address + DELETED_OFFSET, (int) deleted);
+        OS.memory().writeInt(address + DELETED_OFFSET, (int) deleted);
     }
 
     @Override
     public long nextPosToSearchFrom(long address) {
-        return UNSAFE.getInt(address + NEXT_POS_TO_SEARCH_FROM_OFFSET) & UNSIGNED_INT_MASK;
+        return OS.memory().readInt(address + NEXT_POS_TO_SEARCH_FROM_OFFSET) & UNSIGNED_INT_MASK;
     }
 
     @Override
     public void nextPosToSearchFrom(long address, long nextPosToSearchFrom) {
-        UNSAFE.putInt(address + NEXT_POS_TO_SEARCH_FROM_OFFSET, (int) nextPosToSearchFrom);
+        OS.memory().writeInt(address + NEXT_POS_TO_SEARCH_FROM_OFFSET, (int) nextPosToSearchFrom);
     }
 
     private static long getLockWord(long address) {
-        return UNSAFE.getLongVolatile(null, address + LOCK_OFFSET);
+        return OS.memory().readVolatileLong(null, address + LOCK_OFFSET);
     }
 
     private static boolean casLockWord(long address, long expected, long x) {
-        return UNSAFE.compareAndSwapLong(null, address + LOCK_OFFSET, expected, x);
+        return OS.memory().compareAndSwapLong(null, address + LOCK_OFFSET, expected, x);
     }
 
     private static int countWord(long lockWord) {
@@ -119,15 +120,15 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     private static int getCountWord(long address) {
-        return UNSAFE.getIntVolatile(null, address + COUNT_WORD_OFFSET);
+        return OS.memory().readVolatileInt(null, address + COUNT_WORD_OFFSET);
     }
 
     private static boolean casCountWord(long address, int expected, int x) {
-        return UNSAFE.compareAndSwapInt(null, address + COUNT_WORD_OFFSET, expected, x);
+        return OS.memory().compareAndSwapInt(null, address + COUNT_WORD_OFFSET, expected, x);
     }
 
     private static void putCountWord(long address, int countWord) {
-        UNSAFE.putOrderedInt(null, address + COUNT_WORD_OFFSET, countWord);
+        OS.memory().writeOrderedInt(null, address + COUNT_WORD_OFFSET, countWord);
     }
 
     private static boolean writeLocked(int countWord) {
@@ -165,11 +166,11 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     private static int getWaitWord(long address) {
-        return UNSAFE.getIntVolatile(null, address + WAIT_WORD_OFFSET);
+        return OS.memory().readVolatileInt(null, address + WAIT_WORD_OFFSET);
     }
 
     private static boolean casWaitWord(long address, int expected, int x) {
-        return UNSAFE.compareAndSwapInt(null, address + WAIT_WORD_OFFSET, expected, x);
+        return OS.memory().compareAndSwapInt(null, address + WAIT_WORD_OFFSET, expected, x);
     }
 
     private static void checkWaitWordForIncrement(int waitWord) {
@@ -187,19 +188,19 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     private static void writeExclusiveLockHolder(long address) {
-        UNSAFE.putLong(address + EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET,
+        OS.memory().writeLong(address + EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET,
                 Thread.currentThread().getId());
     }
 
     private static void clearExclusiveLockHolder(long address) {
-        UNSAFE.putLong(address + EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET, 0L);
+        OS.memory().writeLong(address + EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET, 0L);
     }
 
     /**
      * For debugging and monitoring
      */
     static Thread exclusiveLockHolder(long address) {
-        long holderId = UNSAFE.getLong(address + EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET);
+        long holderId = OS.memory().readLong(address + EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET);
         if (holderId == 0L)
             return null;
         Thread[] threads = new Thread[Thread.activeCount()];

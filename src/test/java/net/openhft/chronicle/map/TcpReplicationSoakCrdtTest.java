@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
+import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
@@ -25,9 +25,9 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
 import net.openhft.chronicle.map.replication.MapReplicableEntry;
+import net.openhft.chronicle.set.Builder;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,9 +38,9 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.collect.Maps.difference;
+import static net.openhft.chronicle.algo.MemoryUnit.MEGABYTES;
 import static net.openhft.chronicle.map.TcpReplicationSoakCrdtTest.GrowOnlySetValuedMapEntryOperations.growOnlySetValuedMapEntryOperations;
 import static net.openhft.chronicle.map.TcpReplicationSoakCrdtTest.GrowOnlySetValuedMapRemoteOperations.growOnlySetValuedMapRemoteOperations;
-import static net.openhft.lang.MemoryUnit.MEGABYTES;
 import static org.junit.Assert.assertEquals;
 
 public class TcpReplicationSoakCrdtTest {

@@ -19,8 +19,8 @@ package net.openhft.chronicle.map;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
-import net.openhft.lang.values.LongValue;
 import org.junit.Assert;
 import org.junit.Test;
 

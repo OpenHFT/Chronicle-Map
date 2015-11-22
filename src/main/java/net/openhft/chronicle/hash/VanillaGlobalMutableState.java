@@ -16,7 +16,8 @@
 
 package net.openhft.chronicle.hash;
 
-import net.openhft.lang.model.Byteable;
+import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.values.Group;
 
 /**
  * <h1>This interface is a private API, don't use in client code</h1>
@@ -25,15 +26,19 @@ import net.openhft.lang.model.Byteable;
  */
 public interface VanillaGlobalMutableState extends Byteable {
 
+    @Group(1)
     int getAllocatedExtraTierBulks();
     void setAllocatedExtraTierBulks(int allocatedExtraTierBulks);
 
+    @Group(2)
     long getFirstFreeTierIndex();
     void setFirstFreeTierIndex(long firstFreeTierIndex);
 
+    @Group(3)
     long getExtraTiersInUse();
     void setExtraTiersInUse(long extraTiersInUse);
 
+    @Group(4)
     long getSegmentHeadersOffset();
     void setSegmentHeadersOffset(long segmentHeadersOffset);
 }

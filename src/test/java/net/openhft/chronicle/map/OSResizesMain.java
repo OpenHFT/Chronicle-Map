@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.Jvm;
+import net.openhft.chronicle.core.OS;
 
 import java.io.*;
 import java.util.Arrays;
@@ -49,7 +49,7 @@ public class OSResizesMain {
                 Double.parseDouble(run("head", "-1", "/proc/meminfo").split("\\s+")[1]) / 1e6,
                 file.length() / 1e9,
                 run("du", "-h", file.getAbsolutePath()).split("\\s")[0],
-                run("grep", "over-sized", "/proc/" + Jvm.getProcessId() + "/maps").split("\\s")[0]);
+                run("grep", "over-sized", "/proc/" + OS.getProcessId() + "/maps").split("\\s")[0]);
         // show up in top.
         long time = System.currentTimeMillis();
         while (time + 30000 > System.currentTimeMillis())

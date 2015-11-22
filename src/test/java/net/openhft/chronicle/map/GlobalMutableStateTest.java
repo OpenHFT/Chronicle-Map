@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
-import net.openhft.lang.model.DataValueClasses;
+import net.openhft.chronicle.values.Values;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +42,7 @@ public class GlobalMutableStateTest {
 
     @Test
     public void globalMutableStateTest() {
-        DataValueClasses.newDirectReference(ReplicatedGlobalMutableState.class);
-        DataValueClasses.newDirectReference(VanillaGlobalMutableState.class);
+        Values.newNativeReference(ReplicatedGlobalMutableState.class);
+        Values.newNativeReference(VanillaGlobalMutableState.class);
     }
 }

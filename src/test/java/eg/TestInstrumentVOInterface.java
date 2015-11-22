@@ -16,7 +16,8 @@
 
 package eg;
 
-import net.openhft.lang.model.constraints.MaxSize;
+import net.openhft.chronicle.values.Array;
+import net.openhft.chronicle.values.MaxUtf8Length;
 
 /**
  * Created by Vanitha on 12/5/2014.
@@ -24,38 +25,38 @@ import net.openhft.lang.model.constraints.MaxSize;
 public interface TestInstrumentVOInterface {
 
 
-    public int getSizeOfInstrumentIDArray();
+    int getSizeOfInstrumentIDArray();
+    void setSizeOfInstrumentIDArray(int sizeOfInstrumentIDArray);
 
-    public void setSizeOfInstrumentIDArray(int sizeOfInstrumentIDArray);
 
+    String getSymbol();
 
-    public String getSymbol();
-
-    public void setSymbol(@MaxSize(20) String symbol);
-
+    void setSymbol(@MaxUtf8Length(20) String symbol);
 
 
 
-    public String getCurrencyCode();
 
-    public void setCurrencyCode(@MaxSize(4) String currencyCode);
+    String getCurrencyCode();
+
+    void setCurrencyCode(@MaxUtf8Length(4) String currencyCode);
 
 
-    public void setInstrumentIDAt(@MaxSize(2) int location, TestInstrumentIDVOInterface instrumentID);
+    @Array(length = 2)
+    void setInstrumentIDAt(int location, TestInstrumentIDVOInterface instrumentID);
 
-    public TestInstrumentIDVOInterface getInstrumentIDAt(int location);
+    TestInstrumentIDVOInterface getInstrumentIDAt(int location);
 
 
     interface TestInstrumentIDVOInterface {
 
 
-        public String getIdSource();
+        String getIdSource();
 
-        public void setIdSource(@MaxSize(6) String idSource);
+        void setIdSource(@MaxUtf8Length(6) String idSource);
 
-        public String getSecurityId();
+        String getSecurityId();
 
-        public void setSecurityId(@MaxSize(100) String securityId);
+        void setSecurityId(@MaxUtf8Length(100) String securityId);
 
     }
 }

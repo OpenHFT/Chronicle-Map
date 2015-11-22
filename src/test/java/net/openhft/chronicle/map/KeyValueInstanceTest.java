@@ -21,6 +21,7 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static net.openhft.chronicle.values.ValueModel.$$HEAP;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -89,7 +90,7 @@ public class KeyValueInstanceTest {
             map.newKeyInstance();
             Object value = map.newValueInstance();
 
-            assertTrue(value.getClass().getCanonicalName().endsWith("$$Native"));
+            assertTrue(value.getClass().getCanonicalName().endsWith($$HEAP));
 
 
         }

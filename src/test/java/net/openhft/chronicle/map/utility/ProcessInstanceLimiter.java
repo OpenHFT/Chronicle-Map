@@ -17,10 +17,14 @@
 package net.openhft.chronicle.map.utility;
 
 import net.openhft.affinity.AffinitySupport;
+import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.algo.locks.*;
+import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.model.constraints.MaxSize;
+import net.openhft.chronicle.values.Array;
+import net.openhft.chronicle.values.Group;
+import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +33,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
+import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
 
 /**
  * ProcessInstanceLimiter limits the number of JVM processes of a particular
@@ -384,7 +391,7 @@ public class ProcessInstanceLimiter implements Runnable {
         if (maxNumberOfProcessesAllowed <= 0) {
             throw new IllegalArgumentException("maxNumberOfProcessesAllowed must be a positive number, not " + maxNumberOfProcessesAllowed);
         }
-        Data data = DataValueClasses.newDirectReference(Data.class);
+        Data data = Values.newNativeReference(Data.class);
         this.timedata.put(processType, data);
         this.theSharedMap.acquireUsing(processType, data);
         if (data.getMaxNumberOfProcessesAllowed() != maxNumberOfProcessesAllowed) {
@@ -400,7 +407,7 @@ public class ProcessInstanceLimiter implements Runnable {
             }
         }
         String name = processType + '#';
-        data = DataValueClasses.newDirectReference(Data.class);
+        data = Values.newNativeReference(Data.class);
         this.starttimedata.put(processType, data);
         this.processTypeToStartTimeType.put(processType, name);
         this.theSharedMap.acquireUsing(name, data);
@@ -441,12 +448,20 @@ public class ProcessInstanceLimiter implements Runnable {
     }
 
     private boolean lock(Data data, int microsecondsToTry) {
-        return data.tryLockNanosTimelock(1000L * microsecondsToTry);
+        return AcquisitionStrategies
+                .<ReadWriteLockingStrategy>spinLoop(microsecondsToTry, TimeUnit.MICROSECONDS)
+                .acquire(TryAcquireOperations.writeLock(),
+                        VanillaReadWriteWithWaitsLockingStrategy.instance(),
+                        checkedBytesStoreAccess(),
+                        ((Byteable) data).bytesStore(),
+                        ((Byteable) data).offset());
     }
 
     private void unlock(Data data) {
         try {
-            data.unlockTimelock();
+        VanillaReadWriteWithWaitsLockingStrategy.instance()
+                .writeUnlock(checkedBytesStoreAccess(),
+                        ((Byteable) data).bytesStore(), ((Byteable) data).offset());
         } catch (IllegalMonitorStateException e) {
             //odd, but we'll be unlocked either way
             System.out.println("Unexpected state: " + e);
@@ -458,14 +473,14 @@ public class ProcessInstanceLimiter implements Runnable {
      * The Callback interface holds all the calls that can be made by the
      * process instance limiter.
      */
-    public static interface Callback {
+    public interface Callback {
         /**
          * Called when there are already the specified number of processes of
          * the given type running, and this process is one too many.
          *
          * @param processType - the name of the type of process being limited
          */
-        public void tooManyProcessesOfType(String processType);
+        void tooManyProcessesOfType(String processType);
 
         /**
          * Called when there is a lock conflict in the limiter
@@ -474,7 +489,7 @@ public class ProcessInstanceLimiter implements Runnable {
          * @param processType - the name of the type of process being limited
          * @param index       - the slot number held by the other process
          */
-        public void lockConflictDetected(String processType, int index);
+        void lockConflictDetected(String processType, int index);
 
         /**
          * Called when another process has started and successfully acquired a
@@ -484,7 +499,7 @@ public class ProcessInstanceLimiter implements Runnable {
          * @param slot        - the slot number held by the other process
          * @param startTime   - the start timestamp of the other process
          */
-        public void anotherProcessHasStartedOnSlot(String processType, int slot, long startTime);
+        void anotherProcessHasStartedOnSlot(String processType, int slot, long startTime);
 
         /**
          * Called when this process has started and successfully acquired a slot
@@ -493,7 +508,7 @@ public class ProcessInstanceLimiter implements Runnable {
          * @param processType - the name of the type of process being limited
          * @param slot        - the slot number held by this process
          */
-        public void thisProcessOfTypeHasStartedAtSlot(String processType, int slot);
+        void thisProcessOfTypeHasStartedAtSlot(String processType, int slot);
 
         /**
          * Called if the process was started but there was no data defined in
@@ -501,7 +516,7 @@ public class ProcessInstanceLimiter implements Runnable {
          *
          * @param processType - the name of the type of process being limited
          */
-        public void noDefinitionForProcessesOfType(String processType);
+        void noDefinitionForProcessesOfType(String processType);
 
         /**
          * Called when another process somehow managed to steal the slot that
@@ -510,7 +525,7 @@ public class ProcessInstanceLimiter implements Runnable {
          * @param processType - the name of the type of process being limited
          * @param slot        - the slot number held by this process
          */
-        public void anotherProcessHasHijackedThisSlot(String processType, int slot);
+        void anotherProcessHasHijackedThisSlot(String processType, int slot);
     }
 
     /**
@@ -519,25 +534,23 @@ public class ProcessInstanceLimiter implements Runnable {
      *
      * <p>The Timelock field is just for locking the time field
      */
-    public static interface Data {
-        void setTimeAt(@MaxSize(50) int index, long time);
+    public interface Data {
 
+        /** Ensure lock goes first in flyweight layout, to apply external locking
+         */
+        @Group(0)
+        long getTimeLock();
+        void setTimeLock(long timeLock);
+
+        @Group(1)
+        @Array(length = 50)
+        void setTimeAt(int index, long time);
         long getTimeAt(int index);
 
+        @Group(1)
         int getMaxNumberOfProcessesAllowed();
-
         void setMaxNumberOfProcessesAllowed(int num);
-
         boolean compareAndSwapMaxNumberOfProcessesAllowed(int expected, int value);
-
-        boolean tryLockNanosTimelock(long nanos);
-
-        void unlockTimelock() throws IllegalMonitorStateException;
-
-        //void resetlockTimelock() throws IllegalMonitorStateException;
-        int getTimelock();
-
-        void setTimelock(int num);
     }
 
     /**

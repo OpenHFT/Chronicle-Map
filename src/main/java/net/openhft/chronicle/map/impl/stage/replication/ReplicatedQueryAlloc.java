@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 @Staged
 public class ReplicatedQueryAlloc extends QueryAlloc {
 
-    @StageRef ReplicatedChronicleMapHolder<?, ?, ?, ?, ?, ?, ?> mh;
+    @StageRef ReplicatedChronicleMapHolder<?, ?, ?> mh;
     @StageRef SegmentStages s;
 
     final CleanupAction cleanupAction = new CleanupAction();
@@ -41,7 +41,7 @@ public class ReplicatedQueryAlloc extends QueryAlloc {
      * Returns {@code true} if at least one old deleted entry was removed.
      */
     public boolean forcedOldDeletedEntriesCleanup() {
-        ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map = mh.m();
+        ReplicatedChronicleMap<?, ?, ?> map = mh.m();
         try (MapSegmentContext<?, ?, ?> sc = map.segmentContext(s.segmentIndex)) {
             cleanupAction.removedCompletely = 0;
             ((ReplicatedHashSegmentContext<?, ?>) sc)
@@ -55,7 +55,7 @@ public class ReplicatedQueryAlloc extends QueryAlloc {
 
         @Override
         public void accept(ReplicableEntry e) {
-            ReplicatedChronicleMap<?, ?, ?, ?, ?, ?, ?> map = mh.m();
+            ReplicatedChronicleMap<?, ?, ?> map = mh.m();
             if (e instanceof MapAbsentEntry) {
                 long deleteTimeout = map.timeProvider.currentTime() - e.originTimestamp();
                 map.timeProvider.systemTimeIntervalBetween(e.originTimestamp(),

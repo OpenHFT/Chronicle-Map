@@ -17,14 +17,13 @@
 package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.query.HashQuery.EntryPresence;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapContext;
-import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -41,7 +40,6 @@ public abstract class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
     @StageRef public HashLookupSearch hashLookupSearch;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef public SegmentStages s;
-    @StageRef VanillaChronicleMapHolder<K, ?, ?, V, ?, ?, ?> mh;
 
     void putEntry(Data<V> value) {
         assert ks.searchStateAbsent();

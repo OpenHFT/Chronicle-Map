@@ -16,12 +16,11 @@
 
 package net.openhft.chronicle.map.example;
 
+import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.*;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.values.IntValue;
+import net.openhft.chronicle.values.Values;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest.SimpleLoggingDefaultValueProvider.simpleLoggingDefaultValueProvider;
@@ -90,12 +89,12 @@ public class SimpleMapOperationsListeningTest {
                 .defaultValueProvider(simpleLoggingDefaultValueProvider())
                 .create();
 
-        IntValue value = DataValueClasses.newDirectInstance(IntValue.class);
+        IntValue value = Values.newHeapInstance(IntValue.class);
         value.setValue(2);
         map.put(1, value);
         map.remove(1);
-        map.acquireUsing(3, value).addAtomicValue(1);
-        IntValue value2 = DataValueClasses.newDirectInstance(IntValue.class);
+        map.acquireUsing(3, Values.newNativeReference(IntValue.class)).addAtomicValue(1);
+        IntValue value2 = Values.newHeapInstance(IntValue.class);
         value2.setValue(5);
         map.forEachEntry(e -> e.context().replaceValue(e, e.context().wrapValueAsData(value2)));
         map.forEachEntry(e -> e.context().remove(e));

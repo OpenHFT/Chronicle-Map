@@ -19,12 +19,10 @@ package net.openhft.chronicle.map;
 import com.google.common.collect.HashBiMap;
 import com.google.common.primitives.Ints;
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.hash.Data;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.model.DataValueGenerator;
-import net.openhft.lang.values.IntValue;
-import net.openhft.lang.values.LongValue;
-import net.openhft.lang.values.LongValue$$Native;
+import net.openhft.chronicle.core.values.IntValue;
+import net.openhft.chronicle.core.values.LongValue;
+import net.openhft.chronicle.set.Builder;
+import net.openhft.chronicle.values.Values;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -36,7 +34,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.openhft.chronicle.map.Alignment.*;
 import static org.junit.Assert.*;
 
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
@@ -87,12 +84,11 @@ public class ChronicleMapTest {
     }
 
     public static LongValue nativeLongValue() {
-        return new LongValue$$Native();
+        return Values.newNativeReference(LongValue.class);
     }
 
     public static IntValue nativeIntValue() {
-        return DataValueClasses.newDirectReference(IntValue.class);
-//        return new LongValue$$Native();
+        return Values.newNativeReference(IntValue.class);
     }
 
     static File getPersistenceFile() {
@@ -519,9 +515,9 @@ public class ChronicleMapTest {
                      ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                              .averageKey("key")
                              .entries(1000)
-                             .entryAndValueAlignment(OF_4_BYTES)
+                             .entryAndValueOffsetAlignment(4)
                              .create()) {
-            map.acquireUsing("key", new LongValue$$Native());
+            map.acquireUsing("key", Values.newNativeReference(LongValue.class));
             assertEquals(0, map.acquireUsing("key", null).getValue());
         }
     }
@@ -563,9 +559,9 @@ public class ChronicleMapTest {
                      ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                              .averageKey("key")
                              .entries(10)
-                             .entryAndValueAlignment(OF_4_BYTES)
+                             .entryAndValueOffsetAlignment(4)
                              .create()) {
-            map.acquireUsing("key", new LongValue$$Native());
+            map.acquireUsing("key", Values.newNativeReference(LongValue.class));
             assertEquals(0, map.getUsing("key", null).getValue());
 
         }
@@ -577,9 +573,9 @@ public class ChronicleMapTest {
                      ChronicleMapBuilder.of(CharSequence.class, LongValue.class)
                              .averageKey("key")
                              .entries(10)
-                             .entryAndValueAlignment(OF_4_BYTES)
+                             .entryAndValueOffsetAlignment(4)
                              .create()) {
-            assertNull(map.getUsing("key", DataValueClasses.newDirectReference(LongValue.class)));
+            assertNull(map.getUsing("key", Values.newNativeReference(LongValue.class)));
 
         }
     }
@@ -605,11 +601,11 @@ public class ChronicleMapTest {
                 .entries((long) entries)
                 .minSegments(1)
                 .averageKeySize(10)
-                .entryAndValueAlignment(OF_4_BYTES)
+                .entryAndValueOffsetAlignment(4)
                 .create()) {
-            LongValue value4 = new LongValue$$Native();
-            LongValue value22 = new LongValue$$Native();
-            LongValue value32 = new LongValue$$Native();
+            LongValue value4 = Values.newNativeReference(LongValue.class);
+            LongValue value22 = Values.newNativeReference(LongValue.class);
+            LongValue value32 = Values.newNativeReference(LongValue.class);
 
             for (int j2 = 1; j2 <= 3; j2++) {
                 for (int i2 = 0; i2 < entries; i2++) {
@@ -639,11 +635,11 @@ public class ChronicleMapTest {
                     .entries((long) entries)
                     .minSegments(1)
                     .averageKeySize(10)
-                    .entryAndValueAlignment(NO_ALIGNMENT)
+                    .entryAndValueOffsetAlignment(1)
                     .create()) {
-                LongValue value1 = new LongValue$$Native();
-                LongValue value21 = new LongValue$$Native();
-                LongValue value31 = new LongValue$$Native();
+                LongValue value1 = Values.newNativeReference(LongValue.class);
+                LongValue value21 = Values.newNativeReference(LongValue.class);
+                LongValue value31 = Values.newNativeReference(LongValue.class);
 
                 for (int j1 = 1; j1 <= 3; j1++) {
                     for (int i1 = 0; i1 < entries; i1++) {
@@ -673,11 +669,11 @@ public class ChronicleMapTest {
                     .entries((long) entries)
                     .minSegments(1)
                     .averageKeySize(10)
-                    .entryAndValueAlignment(OF_8_BYTES)
+                    .entryAndValueOffsetAlignment(8)
                     .create()) {
-                LongValue value = new LongValue$$Native();
-                LongValue value2 = new LongValue$$Native();
-                LongValue value3 = new LongValue$$Native();
+                LongValue value = Values.newNativeReference(LongValue.class);
+                LongValue value2 = Values.newNativeReference(LongValue.class);
+                LongValue value3 = Values.newNativeReference(LongValue.class);
 
                 for (int j = 1; j <= 3; j++) {
                     for (int i = 0; i < entries; i++) {
@@ -715,11 +711,11 @@ public class ChronicleMapTest {
                 .entries((long) entries)
                 .minSegments(128)
                 .averageKeySize(10)
-                .entryAndValueAlignment(NO_ALIGNMENT)
+                .entryAndValueOffsetAlignment(1)
                 .create()) {
 
             CharSequence key2 = getUserCharSequence(0);
-            map2.acquireUsing(key2, new LongValue$$Native());
+            map2.acquireUsing(key2, Values.newNativeReference(LongValue.class));
 
             int iterations2 = 10000;
             int noOfThreads2 = 10;
@@ -735,18 +731,18 @@ public class ChronicleMapTest {
             }
 
             assertEquals(noOfThreads2 * iterations2,
-                    map2.acquireUsing(key2, new LongValue$$Native()).getValue());
+                    map2.acquireUsing(key2, Values.newNativeReference(LongValue.class)).getValue());
 
             try (ChronicleMap<CharSequence, LongValue> map1 = ChronicleMapBuilder.of(CharSequence
                     .class, LongValue.class)
                     .entries((long) entries)
                     .minSegments(128)
                     .averageKeySize(10)
-                    .entryAndValueAlignment(OF_4_BYTES)
+                    .entryAndValueOffsetAlignment(4)
                     .create()) {
 
                 CharSequence key1 = getUserCharSequence(0);
-                map1.acquireUsing(key1, new LongValue$$Native());
+                map1.acquireUsing(key1, Values.newNativeReference(LongValue.class));
 
                 int iterations1 = 10000;
                 int noOfThreads1 = 10;
@@ -762,18 +758,18 @@ public class ChronicleMapTest {
                 }
 
                 assertEquals(noOfThreads1 * iterations1,
-                        map1.acquireUsing(key1, new LongValue$$Native()).getValue());
+                        map1.acquireUsing(key1, Values.newNativeReference(LongValue.class)).getValue());
 
                 try (ChronicleMap<CharSequence, LongValue> map = ChronicleMapBuilder.of(CharSequence
                         .class, LongValue.class)
                         .entries((long) entries)
                         .minSegments(128)
                         .averageKeySize(10)
-                        .entryAndValueAlignment(OF_8_BYTES)
+                        .entryAndValueOffsetAlignment(8)
                         .create()) {
 
                     CharSequence key = getUserCharSequence(0);
-                    map.acquireUsing(key, new LongValue$$Native());
+                    map.acquireUsing(key, Values.newNativeReference(LongValue.class));
 
                     int iterations = 10000;
                     int noOfThreads = 10;
@@ -789,20 +785,12 @@ public class ChronicleMapTest {
                     }
 
                     assertEquals(noOfThreads * iterations,
-                            map.acquireUsing(key, new LongValue$$Native()).getValue());
+                            map.acquireUsing(key, Values.newNativeReference(LongValue.class)).getValue());
 
                 }
             }
         }
 
-    }
-
-    @Test
-    public void testIntValue() {
-        DataValueGenerator dvg = new DataValueGenerator();
-        dvg.setDumpCode(true);
-        dvg.acquireNativeClass(IntValue.class);
-        dvg.acquireNativeClass(LongValue.class);
     }
 
     @Test
@@ -1001,7 +989,7 @@ public class ChronicleMapTest {
     }
 
 
-    static final LongValue ONE = DataValueClasses.newInstance(LongValue.class);
+    static final LongValue ONE = Values.newHeapInstance(LongValue.class);
 
     static {
         ONE.setValue(1);
@@ -1023,7 +1011,7 @@ public class ChronicleMapTest {
             ChronicleMapBuilder<CharSequence, LongValue> builder = ChronicleMapBuilder
                     .of(CharSequence.class, LongValue.class)
                     .entries(entries)
-                    .entryAndValueAlignment(OF_8_BYTES)
+                    .entryAndValueOffsetAlignment(8)
                     .actualSegments(256)
                     .averageKeySize(13);
 
@@ -1038,7 +1026,7 @@ public class ChronicleMapTest {
 
                 for (int j = 0; j < count; j++) {
                     long start = System.currentTimeMillis();
-                    List<Future> futures = new ArrayList<Future>();
+                    List<Future> futures = new ArrayList<>();
                     for (int i = 0; i < threads; i++) {
                         final int t = i;
                         futures.add(es.submit(new Runnable() {
@@ -1064,7 +1052,8 @@ public class ChronicleMapTest {
                                             MapEntry<?, LongValue> entry = c.entry();
                                             if (entry != null) {
                                                 // Attempt to pass abstraction hierarchies
-                                                Data<LongValue> v = entry.value();
+                                                net.openhft.chronicle.hash.Data<LongValue> v =
+                                                        entry.value();
                                                 n = v.bytes().readVolatileLong(v.offset()) + 1;
                                             } else {
                                                 n = 1;
@@ -1076,7 +1065,7 @@ public class ChronicleMapTest {
                                             c.updateLock().lock();
                                             MapEntry<?, LongValue> entry = c.entry();
                                             if (entry != null) {
-                                                Data<LongValue> v = entry.value();
+                                                net.openhft.chronicle.hash.Data<LongValue> v = entry.value();
                                                 n = ((BytesStore) v.bytes()).addAndGetLong(
                                                         v.offset(), 1);
                                             } else {
@@ -1137,7 +1126,7 @@ public class ChronicleMapTest {
                         futures.add(es.submit(new Runnable() {
                             @Override
                             public void run() {
-                                LongValue key = DataValueClasses.newDirectInstance(LongValue.class);
+                                LongValue key = Values.newHeapInstance(LongValue.class);
                                 LongValue value = nativeLongValue();
                                 long next = 50 * 1000 * 1000;
                                 // use a factor to give up to 10 digit numbers.
@@ -1733,7 +1722,7 @@ public class ChronicleMapTest {
         @Override
         public void run() {
             try {
-                LongValue value = new LongValue$$Native();
+                LongValue value = Values.newNativeReference(LongValue.class);
                 barrier.await();
                 for (int i = 0; i < iterations; i++) {
                     map.acquireUsing(key, value);
@@ -1833,8 +1822,7 @@ public class ChronicleMapTest {
         ChronicleMapBuilder<CharSequence, String> builder = ChronicleMapBuilder
                 .of(CharSequence.class, String.class)
                 .averageKey("one").averageValue("")
-                .entries(1000)
-                .defaultValue("");
+                .entries(1000);
 
         try (final ChronicleMap<CharSequence, String> map = builder.create()) {
             // this will add the entry
@@ -1852,7 +1840,6 @@ public class ChronicleMapTest {
                 .entries(1000)
                 .averageKeySize("one".length())
                 .averageValueSize("Hello World".length())
-                .defaultValue("")
                 .create()) {
             StringBuilder value = new StringBuilder();
 
@@ -1874,7 +1861,7 @@ public class ChronicleMapTest {
                 .entries(1000)
                 .averageKeySize("one".length()).createPersistedTo(tmpFile)) {
 
-            LongValue value = DataValueClasses.newDirectReference(LongValue.class);
+            LongValue value = Values.newNativeReference(LongValue.class);
 
             try (ExternalMapQueryContext<CharSequence, LongValue, ?> c = map.queryContext("one")) {
                 assertNotNull(c.absentEntry());

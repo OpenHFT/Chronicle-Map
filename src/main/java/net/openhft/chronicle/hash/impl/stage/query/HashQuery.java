@@ -19,13 +19,12 @@ package net.openhft.chronicle.hash.impl.stage.query;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.HashEntry;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
-import net.openhft.chronicle.hash.impl.stage.data.bytes.InputKeyBytesData;
-import net.openhft.chronicle.hash.impl.stage.data.instance.InputKeyInstanceData;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupPos;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
+import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -36,16 +35,35 @@ import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.
 @Staged
 public abstract class HashQuery<K> implements HashEntry<K> {
 
-    @StageRef public VanillaChronicleHashHolder<K, ?, ?> hh;
+    @StageRef public VanillaChronicleHashHolder<K> hh;
     @StageRef public SegmentStages s;
     @StageRef public HashEntryStages<K> entry;
     @StageRef public HashLookupSearch hashLookupSearch;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef public HashLookupPos hlp;
-    @StageRef public KeySearch ks;
-    
-    @StageRef public InputKeyInstanceData<K, ?, ?> inputKeyInstanceValue;
-    @StageRef public InputKeyBytesData<K> inputKeyBytesValue;
+    @StageRef public KeySearch<K> ks;
+
+    final DataAccess<K> innerInputKeyDataAccess = hh.h().originalKeyDataAccess.copy();
+
+    /**
+     * This stage exists for hooking {@link #innerInputKeyDataAccess} usage, to trigger {@link
+     * DataAccess#uninit()} on context exit
+     */
+    @Stage("InputKeyDataAccess") private boolean inputKeyDataAccessInitialized = false;
+
+    void initInputKeyDataAccess() {
+        inputKeyDataAccessInitialized = true;
+    }
+
+    void closeInputKeyDataAccess() {
+        innerInputKeyDataAccess.uninit();
+        inputKeyDataAccessInitialized = false;
+    }
+
+    public DataAccess<K> inputKeyDataAccess() {
+        initInputKeyDataAccess();
+        return innerInputKeyDataAccess;
+    }
     
     public void dropSearchIfNestedContextsAndPresentHashLookupSlotCheckFailed() {
         if (s.locksInit()) {

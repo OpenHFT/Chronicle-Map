@@ -21,11 +21,15 @@ import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.model.constraints.NotNull;
+import net.openhft.chronicle.values.ValueModel;
+import net.openhft.chronicle.values.Values;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
+
+import static net.openhft.chronicle.values.ValueModel.$$HEAP;
+import static net.openhft.chronicle.values.ValueModel.$$NATIVE;
 
 /**
  * @author Rob Austin.
@@ -135,17 +139,17 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             return Class.forName(clazz);
         } catch (ClassNotFoundException e) {
 
-            boolean isNative = clazz.endsWith("$$Native");
-            boolean isHeap = clazz.endsWith("$$Heap");
+            boolean isNative = clazz.endsWith($$NATIVE);
+            boolean isHeap = clazz.endsWith($$HEAP);
 
             if (!isNative && !isHeap)
                 throw new ConversionException("class=" + clazz, e);
 
-            final String nativeInterface = isNative ? clazz.substring(0, clazz.length() -
-                    "$$Native".length()) : clazz.substring(0, clazz.length() -
-                    "$$Heap".length());
+            final String nativeInterface = isNative ?
+                    clazz.substring(0, clazz.length() - $$NATIVE.length()) :
+                    clazz.substring(0, clazz.length() - $$HEAP.length());
             try {
-                DataValueClasses.newDirectInstance(Class.forName(clazz));
+                Values.newNativeReference(Class.forName(clazz));
                 return Class.forName(nativeInterface);
             } catch (Exception e1) {
                 throw new ConversionException("class=" + clazz, e1);

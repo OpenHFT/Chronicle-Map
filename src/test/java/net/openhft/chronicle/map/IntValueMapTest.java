@@ -16,13 +16,13 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.values.IntValue;
-import net.openhft.lang.values.IntValue$$Native;
+import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.bytes.NativeBytesStore;
+import net.openhft.chronicle.core.values.IntValue;
+import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 
@@ -38,8 +38,8 @@ public class IntValueMapTest {
                 .of(IntValue.class, CharSequence.class)
                 .averageValue("test")
                 .entries(20000).create()) {
-            IntValue$$Native value = new IntValue$$Native();
-            value.bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
+            IntValue value = Values.newNativeReference(IntValue.class);
+            ((Byteable) value).bytesStore(NativeBytesStore.nativeStoreWithFixedCapacity(4), 0, 4);
 
             value.setValue(1);
             final String expected = "test";

@@ -16,8 +16,6 @@
 
 package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.algo.hashing.LongHashFunction;
-
 /**
  * Defines reasonable defaults for {@code Data}'s {@code equals()}, {@code hashCode()} and
  * {@code toString()}. They should be default implementations in the {@code Data} interface itself,
@@ -37,7 +35,7 @@ public abstract class AbstractData<V> implements Data<V> {
      */
     @Override
     public int hashCode() {
-        return (int) hash(LongHashFunction.city_1_1());
+        return dataHashCode();
     }
 
     /**
@@ -45,9 +43,7 @@ public abstract class AbstractData<V> implements Data<V> {
      */
     @Override
     public boolean equals(Object obj) {
-        return obj != null &&
-                obj instanceof Data &&
-                Data.bytesEquivalent(this, (Data<?>) obj);
+        return dataEquals(obj);
     }
 
     /**

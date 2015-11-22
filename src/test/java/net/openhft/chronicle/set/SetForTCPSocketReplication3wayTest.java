@@ -19,7 +19,6 @@ package net.openhft.chronicle.set;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -28,7 +27,7 @@ import java.net.InetSocketAddress;
 
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.chronicle.map.Builder.getPersistenceFile;
+import static net.openhft.chronicle.set.Builder.getPersistenceFile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

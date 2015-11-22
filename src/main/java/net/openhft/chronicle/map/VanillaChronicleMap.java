@@ -16,26 +16,21 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
-import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
-import net.openhft.chronicle.hash.serialization.internal.MetaProvider;
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+import net.openhft.chronicle.hash.serialization.SizedReader;
+import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.map.impl.*;
 import net.openhft.chronicle.map.impl.CompiledMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledMapQueryContext;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.threadlocal.Provider;
-import net.openhft.lang.threadlocal.ThreadLocalCopies;
+import net.openhft.chronicle.values.Values;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -44,37 +39,28 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDivisor;
+import static net.openhft.chronicle.values.ValueModel.$$NATIVE;
 
-public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R>
-        extends VanillaChronicleHash<K, KI, MKI, MapEntry<K, V>, MapSegmentContext<K, V, ?>,
+public class VanillaChronicleMap<K, V, R>
+        extends VanillaChronicleHash<K, MapEntry<K, V>, MapSegmentContext<K, V, ?>,
         ExternalMapQueryContext<K, V, ?>>
-        implements AbstractChronicleMap<K, V>  {
+        implements AbstractChronicleMap<K, V> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleMap.class);
-
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 4L;
 
     /////////////////////////////////////////////////
     // Value Data model
     final Class<V> vClass;
     final Class nativeValueClass;
     public final SizeMarshaller valueSizeMarshaller;
-    public final BytesReader<V> originalValueReader;
-    public final VI originalValueInterop;
-    public final MVI originalMetaValueInterop;
-    public final MetaProvider<V, VI, MVI> metaValueInteropProvider;
-
-    public final ConstantValueProvider<V> constantValueProvider;
+    public final SizedReader<V> originalValueReader;
+    public final DataAccess<V> originalValueDataAccess;
 
     public final boolean constantlySizedEntry;
 
-    public transient Provider<BytesReader<V>> valueReaderProvider;
-    public transient Provider<VI> valueInteropProvider;
-
     /////////////////////////////////////////////////
     // Memory management and dependent fields
-    public final Alignment alignment;
+    public final int alignment;
     public final int worstAlignment;
     public final boolean couldNotDetermineAlignmentBeforeAllocation;
 
@@ -94,13 +80,13 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
         super(builder);
         SerializationBuilder<V> valueBuilder = builder.valueBuilder;
-        vClass = valueBuilder.eClass;
-        if (vClass.getName().endsWith("$$Native")) {
+        vClass = valueBuilder.tClass;
+        if (vClass.getName().endsWith($$NATIVE)) {
             nativeValueClass = vClass;
         } else if (vClass.isInterface()) {
             Class nativeValueClass = null;
             try {
-                nativeValueClass = DataValueClasses.directClassFor(vClass);
+                nativeValueClass = Values.nativeClassFor(vClass);
             } catch (Exception e) {
                 // fall through
             }
@@ -110,18 +96,13 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         }
         valueSizeMarshaller = valueBuilder.sizeMarshaller();
         originalValueReader = valueBuilder.reader();
-        originalValueInterop = (VI) valueBuilder.interop();
-        originalMetaValueInterop = (MVI) valueBuilder.metaInterop();
-        metaValueInteropProvider = (MetaProvider) valueBuilder.metaInteropProvider();
-
-        constantValueProvider = builder.constantValueProvider();
+        originalValueDataAccess = valueBuilder.dataAccess();
 
         constantlySizedEntry = builder.constantlySizedEntries();
 
         // Concurrency (number of segments), memory management and dependent fields
         alignment = builder.valueAlignment();
         worstAlignment = builder.worstAlignment();
-        int alignment = this.alignment.alignment();
         couldNotDetermineAlignmentBeforeAllocation =
                 greatestCommonDivisor((int) chunkSize, alignment) != alignment;
 
@@ -145,14 +126,6 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     }
 
     private void initOwnTransients() {
-        valueReaderProvider = Provider.of((Class) originalValueReader.getClass());
-        valueInteropProvider = Provider.of((Class) originalValueInterop.getClass());
-
-        if (constantValueProvider != null && constantValueProvider.wasDeserialized()) {
-            ThreadLocalCopies copies = valueReaderProvider.getCopies(null);
-            BytesReader<V> valueReader = valueReaderProvider.get(copies, originalValueReader);
-            constantValueProvider.initTransients(valueReader);
-        }
         cxt = new ThreadLocal<>();
     }
 
@@ -195,8 +168,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         try {
             // TODO optimize -- save heap class / direct class in transient fields and call
             // newInstance() on them directly
-            return isKey ? DataValueClasses.newInstance(aClass) :
-                    DataValueClasses.newDirectInstance(aClass);
+            return Values.newHeapInstance(aClass);
 
         } catch (Exception e) {
             if (e.getCause() instanceof IllegalStateException)
@@ -281,10 +253,21 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
 
     public final long readValueSize(Bytes entry) {
         long valueSize = valueSizeMarshaller.readSize(entry);
-        alignment.alignPositionAddr(entry);
+        alignReadPosition(entry);
         return valueSize;
     }
-    
+
+    void alignReadPosition(Bytes entry) {
+        long positionAddr = entry.address(entry.readPosition());
+        long skip = alignAddr(positionAddr, alignment) - positionAddr;
+        if (skip > 0)
+            entry.readSkip(skip);
+    }
+
+    public static long alignAddr(long addr, int alignment) {
+        return (addr + alignment - 1) & ~(alignment - 1);
+    }
+
     private ChainingInterface q() {
         ChainingInterface queryContext;
         queryContext = cxt.get();
@@ -320,8 +303,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public QueryContextInterface<K, V, R> queryContext(Object key) {
         checkKey(key);
         QueryContextInterface<K, V, R> q = mapContext();
-        q.inputKeyInstanceValue().initKey((K) key);
-        q.initInputKey(q.inputKeyInstanceValue());
+        q.initInputKey(q.inputKeyDataAccess().getData((K) key));
         return q;
     }
 
@@ -374,8 +356,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public V putIfAbsent(K key, V value) {
         checkValue(value);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
-            q.inputValueInstanceValue().initValue(value);
-            methods.putIfAbsent(q, q.inputValueInstanceValue(), q.defaultReturnValue());
+            methods.putIfAbsent(q, q.inputValueDataAccess().getData(value), q.defaultReturnValue());
             return q.defaultReturnValue().returnValue();
         }
     }
@@ -386,8 +367,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
             return false; // ConcurrentHashMap compatibility
         V v = checkValue(value);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
-            q.inputValueInstanceValue().initValue(v);
-            return methods.remove(q, q.inputValueInstanceValue());
+            return methods.remove(q, q.inputValueDataAccess().getData(v));
         }
     }
 
@@ -396,8 +376,8 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
         checkValue(oldValue);
         checkValue(newValue);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
-            q.inputValueInstanceValue().initValue(oldValue);
-            return methods.replace(q, q.inputValueInstanceValue(), q.wrapValueAsData(newValue));
+            return methods.replace(
+                    q, q.inputValueDataAccess().getData(oldValue), q.wrapValueAsData(newValue));
         }
     }
 
@@ -405,8 +385,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public V replace(K key, V value) {
         checkValue(value);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
-            q.inputValueInstanceValue().initValue(value);
-            methods.replace(q, q.inputValueInstanceValue(), q.defaultReturnValue());
+            methods.replace(q, q.inputValueDataAccess().getData(value), q.defaultReturnValue());
             return q.defaultReturnValue().returnValue();
         }
     }
@@ -422,10 +401,10 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public V put(K key, V value) {
         checkValue(value);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
-            q.inputValueInstanceValue().initValue(value);
+            Data<V> valueData = q.inputValueDataAccess().getData(value);
             InstanceReturnValue<V> returnValue =
                     putReturnsNull ? NullReturnValue.get() : q.defaultReturnValue();
-            methods.put(q, q.inputValueInstanceValue(), returnValue);
+            methods.put(q, valueData, returnValue);
             return returnValue.returnValue();
         }
     }
@@ -444,8 +423,7 @@ public class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super 
     public V merge(K key, V value,
                    BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
-            q.inputValueInstanceValue().initValue(value);
-            methods.merge(q, q.inputValueInstanceValue(), remappingFunction,
+            methods.merge(q, q.inputValueDataAccess().getData(value), remappingFunction,
                     q.defaultReturnValue());
             return q.defaultReturnValue().returnValue();
         }

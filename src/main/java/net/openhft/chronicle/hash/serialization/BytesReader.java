@@ -16,91 +16,36 @@
 
 package net.openhft.chronicle.hash.serialization;
 
-import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.lang.io.Bytes;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.ReadBytesMarshallable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
 /**
- * Deserializer (object from {@link Bytes}, mirroring the {@link BytesWriter}, i. e. assuming the
- * length of the serialized form isn't written in the beginning of the serialized form itself,
- * but managed by {@link ChronicleHash} implementation and passed to the reading methods.
+ * External version on {@link ReadBytesMarshallable}, could be used as lambda.
  *
- * <p>Implementation example:<pre><code>
- * class LongPair { long first, second; }
- * 
- * enum LongPairArrayReader implements BytesReader&lt;LongPair[]&gt; {
- *     INSTANCE;
- *
- *     &#064;Override
- *     public LongPair[] read(Bytes bytes, long size) {
- *         return read(bytes, size, null);
- *     }
- *
- *     &#064;Override
- *     public LongPair[] read(Bytes bytes, long size, LongPair[] toReuse) {
- *         if (size &gt; Integer.MAX_VALUE * 16L)
- *             throw new IllegalStateException("LongPair[] size couldn't be " + (size / 16L));
- *         int resLen = (int) (size / 16L);
- *         LongPair[] res;
- *         if (toReuse != null) {
- *             if (toReuse.length == resLen) {
- *                 res = toReuse;
- *             } else {
- *                 res = Arrays.copyOf(toReuse, resLen);
- *             }
- *         } else {
- *             res = new LongPair[resLen];
- *         }
- *         for (int i = 0; i &lt; resLen; i++) {
- *             LongPair pair = res[i];
- *             if (pair == null)
- *                 res[i] = pair = new LongPair();
- *             pair.first = bytes.readLong();
- *             pair.second = bytes.readLong();
- *         }
- *         return res;
- *     }
- * }</code></pre>
- *
- * @param <E> the type of the object demarshalled
+ * @param <T> type of objects deserialized
  * @see BytesWriter
  */
-public interface BytesReader<E> extends Serializable {
+@FunctionalInterface
+public interface BytesReader<T> extends Serializable {
 
     /**
-     * Reads and returns the object from {@code [position(), position() + size]} bytes of the given
-     * {@link Bytes}.
+     * Reads and returns the object from {@link Bytes#readPosition()} (i. e. the current position)
+     * in the given {@code in}. Should attempt to reuse the given {@code using} object, i. e. to
+     * read the deserialized data into the given object. If it is possible, this object then
+     * returned from this method back. If it is impossible for any reason, a new object should be
+     * created and returned. The given {@code using} object could be {@code null}, in this case this
+     * method, of cause, should create a new object.
      *
-     * <p>Implementation of this method should increment the {@code bytes}' position by the given
-     * size, i. e. "consume" the bytes of the deserialized object. It must not alter the
-     * {@code bytes}' {@link Bytes#limit() limit} and contents.
+     * <p>This method should increment the position in the given {@code Bytes}, i. e. consume the
+     * read bytes. {@code in} bytes shouldn't be written.
      *
-     * @param bytes the {@code Bytes} to read the object from
-     * @param size the size of the serialized form of the returned object
-     * @return the object read from the bytes
-     * @see BytesWriter#write(Bytes, Object)
-     * @see #read(Bytes, long, Object)
-     */
-    @NotNull
-    E read(@NotNull Bytes bytes, long size);
-
-    /**
-     * Similar to {@link #read(Bytes, long)}, but should attempt to reuse the given object, i. e.
-     * to read the deserialized data into the given instance. If it is possible, this objects than
-     * returned from this method. If it isn't possible for any reason, a new object should be
-     * created and returned, just like in {@link #read(Bytes, long)} method. The given object could
-     * be {@code null}, in this case this method should behave exactly the same as
-     * {@link #read(Bytes, long)} method does.
-     *
-     * @param bytes the {@code Bytes} to read the object from
-     * @param size the size of the serialized form of the returned object
-     * @param toReuse the object to read the deserialized data into
+     * @param in the {@code Bytes} to read the object from
+     * @param using the object to read the deserialized data into, could be {@code null}
      * @return the object read from the bytes, either reused or newly created
-     * @see #read(Bytes, long)
      */
     @NotNull
-    E read(@NotNull Bytes bytes, long size, @Nullable E toReuse);
+    T read(Bytes in, T using);
 }

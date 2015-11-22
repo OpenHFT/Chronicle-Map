@@ -24,7 +24,7 @@ import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static net.openhft.lang.model.DataValueClasses.newDirectReference;
+import static net.openhft.chronicle.values.Values.newNativeReference;
 
 /* on an i7-4500 laptop.
 
@@ -50,10 +50,10 @@ public class PingPongCASLeft {
 
     static void playPingPong(ChronicleMap<String, BondVOInterface> chm, double _coupon,
                              double _coupon2, boolean setFirst, final String desc) {
-        BondVOInterface bond1 = newDirectReference(BondVOInterface.class);
-        BondVOInterface bond2 = newDirectReference(BondVOInterface.class);
-        BondVOInterface bond3 = newDirectReference(BondVOInterface.class);
-        BondVOInterface bond4 = newDirectReference(BondVOInterface.class);
+        BondVOInterface bond1 = newNativeReference(BondVOInterface.class);
+        BondVOInterface bond2 = newNativeReference(BondVOInterface.class);
+        BondVOInterface bond3 = newNativeReference(BondVOInterface.class);
+        BondVOInterface bond4 = newNativeReference(BondVOInterface.class);
 
         chm.acquireUsing("369604101", bond1);
         chm.acquireUsing("369604102", bond2);

@@ -16,9 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.DirectBytes;
-import net.openhft.lang.io.DirectStore;
-import net.openhft.lang.io.serialization.impl.SnappyStringMarshaller;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -45,7 +42,7 @@ public class LargeEntriesTest {
         file.deleteOnExit();
         try (final ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
-                .valueMarshaller(SnappyStringMarshaller.INSTANCE)
+//                .valueReaderAndDataAccess(, SnappyStringMarshaller.INSTANCE, )
                 .actualSegments(1) // to force an error.
                 .entries(ENTRIES)
                 .averageKeySize(10)
@@ -85,16 +82,16 @@ public class LargeEntriesTest {
     }
 
     private void warmUpCompression(int entrySize) {
-        String value = generateValue(entrySize);
-        DirectBytes bytes = DirectStore.allocate(entrySize / 6).bytes();
-        for (int i = 0; i < 5; i++) {
-            // warmup to compression.
-            bytes.clear();
-            SnappyStringMarshaller.INSTANCE.write(bytes, value);
-            bytes.flip();
-            SnappyStringMarshaller.INSTANCE.read(bytes);
-        }
-        bytes.release();
+//        String value = generateValue(entrySize);
+//        DirectBytes bytes = DirectStore.allocate(entrySize / 6).bytes();
+//        for (int i = 0; i < 5; i++) {
+//            // warmup to compression.
+//            bytes.clear();
+//            SnappyStringMarshaller.INSTANCE.write(bytes, value);
+//            bytes.flip();
+//            SnappyStringMarshaller.INSTANCE.read(bytes);
+//        }
+//        bytes.release();
     }
 
     @Test
@@ -113,7 +110,7 @@ public class LargeEntriesTest {
         file.deleteOnExit();
         final ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
-                .valueMarshaller(SnappyStringMarshaller.INSTANCE)
+//                .valueReaderAndDataAccess(, SnappyStringMarshaller.INSTANCE, )
                 .entries(ENTRIES)
                 .averageKeySize(10)
                 .averageValueSize(ENTRY_SIZE)

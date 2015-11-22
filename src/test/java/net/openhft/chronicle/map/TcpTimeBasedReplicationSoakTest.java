@@ -16,19 +16,19 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.model.Byteable;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.values.IntValue;
-import org.junit.*;
+import net.openhft.chronicle.set.Builder;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -40,15 +40,12 @@ public class TcpTimeBasedReplicationSoakTest {
 
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
-    private IntValue value;
     static int s_port = 8010;
     private TimeProvider timeProvider;
     int t = 0;
 
     @Before
     public void setup() throws IOException {
-        value = DataValueClasses.newDirectReference(IntValue.class);
-        ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
         timeProvider = new TimeProvider() {

@@ -22,17 +22,9 @@ import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
-import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.BytesWriter;
-import net.openhft.chronicle.hash.serialization.SizeMarshaller;
-import net.openhft.chronicle.hash.serialization.internal.DummyValue;
-import net.openhft.chronicle.hash.serialization.internal.DummyValueMarshaller;
+import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.lang.io.serialization.BytesMarshaller;
-import net.openhft.lang.io.serialization.BytesMarshallerFactory;
-import net.openhft.lang.io.serialization.ObjectFactory;
-import net.openhft.lang.io.serialization.ObjectSerializer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -57,8 +49,9 @@ public final class ChronicleSetBuilder<K>
 
     ChronicleSetBuilder(Class<K> keyClass) {
         chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
-                .valueMarshallers(DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE)
-                .valueSizeMarshaller(DummyValueMarshaller.INSTANCE);
+                .valueReaderAndDataAccess(
+                        DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE)
+                .valueSizeMarshaller(SizeMarshaller.constant(0));
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
@@ -222,67 +215,43 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
-    public ChronicleSetBuilder<K> bytesMarshallerFactory(
-            BytesMarshallerFactory bytesMarshallerFactory) {
-        chronicleMapBuilder.bytesMarshallerFactory(bytesMarshallerFactory);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p> Example: <pre>{@code Set<Key> set = ChronicleSetBuilder.of(Key.class)
-     *     .entries(1_000_000)
-     *     .keySize(100)
-     *     // this class hasn't implemented yet, just for example
-     *     .objectSerializer(new KryoObjectSerializer())
-     *     .create();}</pre>
-     */
-    @Override
-    public ChronicleSetBuilder<K> objectSerializer(ObjectSerializer objectSerializer) {
-        chronicleMapBuilder.objectSerializer(objectSerializer);
-        return this;
-    }
-
-    @Override
-    public ChronicleSetBuilder<K> keyMarshaller(@NotNull BytesMarshaller<? super K> keyMarshaller) {
-        chronicleMapBuilder.keyMarshaller(keyMarshaller);
+    public ChronicleSetBuilder<K> keyReaderAndDataAccess(
+            SizedReader<K> keyReader, @NotNull DataAccess<K> keyDataAccess) {
+        chronicleMapBuilder.keyReaderAndDataAccess(keyReader, keyDataAccess);
         return this;
     }
 
     @Override
     public ChronicleSetBuilder<K> keyMarshallers(
-            @NotNull BytesWriter<? super K> keyWriter, @NotNull BytesReader<K> keyReader) {
-        chronicleMapBuilder.keyMarshallers(keyWriter, keyReader);
+            @NotNull BytesReader<K> keyReader, @NotNull BytesWriter<? super K> keyWriter) {
+        chronicleMapBuilder.keyMarshallers(keyReader, keyWriter);
+        return this;
+    }
+
+    @Override
+    public <M extends BytesReader<K> & BytesWriter<? super K>>
+    ChronicleSetBuilder<K> keyMarshaller(@NotNull M marshaller) {
+        chronicleMapBuilder.keyMarshaller(marshaller);
+        return this;
+    }
+
+    @Override
+    public ChronicleSetBuilder<K> keyMarshallers(
+            @NotNull SizedReader<K> keyReader, @NotNull SizedWriter<? super K> keyWriter) {
+        chronicleMapBuilder.keyMarshallers(keyReader, keyWriter);
+        return this;
+    }
+
+    @Override
+    public <M extends SizedReader<K> & SizedWriter<? super K>>
+    ChronicleSetBuilder<K> keyMarshaller(@NotNull M sizedMarshaller) {
+        chronicleMapBuilder.keyMarshaller(sizedMarshaller);
         return this;
     }
 
     @Override
     public ChronicleSetBuilder<K> keySizeMarshaller(@NotNull SizeMarshaller keySizeMarshaller) {
         chronicleMapBuilder.keySizeMarshaller(keySizeMarshaller);
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Actually this is just a convenience method supporting key marshaller configurations, made
-     * initially during {@link #of(Class)} call. Because if you {@linkplain
-     * #keyMarshaller(BytesMarshaller) configure} own custom key marshaller, this method doesn't
-     * take any effect on the maps constructed by this builder.
-     *
-     * @see #of(Class)
-     */
-    @Override
-    public ChronicleSetBuilder<K> keyDeserializationFactory(
-            @NotNull ObjectFactory<? extends K> keyDeserializationFactory) {
-        chronicleMapBuilder.keyDeserializationFactory(keyDeserializationFactory);
-        return this;
-    }
-
-    @Override
-    public ChronicleSetBuilder<K> immutableKeys() {
-        chronicleMapBuilder.immutableKeys();
         return this;
     }
 

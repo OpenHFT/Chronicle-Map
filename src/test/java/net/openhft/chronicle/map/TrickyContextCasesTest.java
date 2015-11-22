@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.values.IntValue;
-import net.openhft.lang.model.DataValueClasses;
+import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -34,7 +34,7 @@ public class TrickyContextCasesTest {
                 .of(Integer.class, IntValue.class)
                 .entries(1).create();
 
-        IntValue v = DataValueClasses.newInstance(IntValue.class);
+        IntValue v =  Values.newHeapInstance(IntValue.class);
         v.setValue(2);
         map.put(1, v);
         try (ExternalMapQueryContext<Integer, IntValue, ?> q = map.queryContext(1)) {

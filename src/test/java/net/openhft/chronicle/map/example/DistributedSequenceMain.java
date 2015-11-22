@@ -16,10 +16,10 @@
 
 package net.openhft.chronicle.map.example;
 
+import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.values.LongValue;
+import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class DistributedSequenceMain {
                              .createPersistedTo(file)) {
             // throughput test.
             for (int t = 0; t < 5; t++) {
-                LongValue value = DataValueClasses.newDirectReference(LongValue.class);
+                LongValue value = Values.newNativeReference(LongValue.class);
                 map.acquireUsing("sequence-" + t, value);
 
                 long start = System.nanoTime();
@@ -49,7 +49,7 @@ public class DistributedSequenceMain {
             }
 
             // latency test.
-            LongValue value = DataValueClasses.newDirectReference(LongValue.class);
+            LongValue value = Values.newNativeReference(LongValue.class);
             map.acquireUsing("sequence-X", value);
 
             int runs = 1000000000, count = 0, wcount = 0;

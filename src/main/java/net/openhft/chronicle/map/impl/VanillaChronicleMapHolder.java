@@ -18,18 +18,15 @@ package net.openhft.chronicle.map.impl;
 
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.VanillaChronicleMap;
 
-public interface VanillaChronicleMapHolder<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R>
-        extends VanillaChronicleHashHolder<K, KI, MKI> {
+public interface VanillaChronicleMapHolder<K, V, R> extends VanillaChronicleHashHolder<K> {
     
-    VanillaChronicleMap<K, KI, MKI, V, VI, MVI, R> m();
+    VanillaChronicleMap<K, V, R> m();
 
     @Override
-    default VanillaChronicleHash<K, KI, MKI, ?, ?, ?> h() {
+    default VanillaChronicleHash<K, ?, ?, ?> h() {
         return m();
     }
 

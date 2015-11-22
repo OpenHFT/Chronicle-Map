@@ -16,8 +16,10 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.BytesMarshaller;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.set.Builder;
 import org.junit.Test;
 
 public class Issue43Test {
@@ -50,7 +52,8 @@ public class Issue43Test {
         }
     }
 
-    private static class ArrayMarshaller implements BytesMarshaller<ValueWrapper> {
+    private static class ArrayMarshaller
+            implements BytesReader<ValueWrapper>, BytesWriter<ValueWrapper> {
 
         @Override
         public void write(Bytes bytes, ValueWrapper vw) {
@@ -62,14 +65,8 @@ public class Issue43Test {
         }
 
         @Override
-        public ValueWrapper read(Bytes bytes) {
+        public ValueWrapper read(Bytes in, ValueWrapper using) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
-
-        @Override
-        public ValueWrapper read(Bytes arg0, ValueWrapper arg1) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
     }
 }

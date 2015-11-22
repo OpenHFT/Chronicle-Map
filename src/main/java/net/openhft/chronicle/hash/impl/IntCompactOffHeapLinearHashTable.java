@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import static net.openhft.lang.io.NativeBytes.UNSAFE;
+import net.openhft.chronicle.core.OS;
 
 public final class IntCompactOffHeapLinearHashTable extends CompactOffHeapLinearHashTable {
 
@@ -43,21 +43,21 @@ public final class IntCompactOffHeapLinearHashTable extends CompactOffHeapLinear
 
     @Override
     public long readEntry(long addr, long pos) {
-        return UNSAFE.getInt(addr + pos);
+        return OS.memory().readInt(addr + pos);
     }
 
     @Override
     public void writeEntryVolatile(long addr, long pos, long prevEntry, long key, long value) {
-        UNSAFE.putIntVolatile(null, addr + pos, (int) entry(key, value));
+        OS.memory().writeVolatileInt(null, addr + pos, (int) entry(key, value));
     }
 
     @Override
     void writeEntry(long addr, long pos, long prevEntry, long anotherEntry) {
-        UNSAFE.putInt(addr + pos, (int) anotherEntry);
+        OS.memory().writeInt(addr + pos, (int) anotherEntry);
     }
 
     @Override
     void clearEntry(long addr, long pos, long prevEntry) {
-        UNSAFE.putInt(addr + pos, 0);
+        OS.memory().writeInt(addr + pos, 0);
     }
 }

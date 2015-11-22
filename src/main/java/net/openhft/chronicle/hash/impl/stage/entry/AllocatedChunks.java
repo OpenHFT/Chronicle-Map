@@ -23,7 +23,7 @@ import net.openhft.sg.Staged;
 @Staged
 public class AllocatedChunks {
 
-    @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
+    @StageRef public VanillaChronicleHashHolder<?> hh;
     @StageRef public SegmentStages s;
     @StageRef public HashEntryStages<?> entry;
     @StageRef public Alloc alloc;

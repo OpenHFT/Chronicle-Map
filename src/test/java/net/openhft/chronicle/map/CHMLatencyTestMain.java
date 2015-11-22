@@ -17,8 +17,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.affinity.AffinityLock;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.values.LongValue;
+import net.openhft.chronicle.core.values.LongValue;
+import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,8 +79,8 @@ public class CHMLatencyTestMain {
                 .createPersistedTo(file);
 
         // add keys
-        LongValue key = DataValueClasses.newInstance(LongValue.class);
-        LongValue value = DataValueClasses.newDirectReference(LongValue.class);
+        LongValue key = Values.newHeapInstance(LongValue.class);
+        LongValue value = Values.newNativeReference(LongValue.class);
         for (long i = 0; i < KEYS; i++) {
             key.setValue(i);
             countersMap.acquireUsing(key, value);
@@ -88,7 +88,7 @@ public class CHMLatencyTestMain {
         }
         System.out.println("Keys created");
 //        Monitor monitor = new Monitor();
-        LongValue value2 = DataValueClasses.newDirectReference(LongValue.class);
+        LongValue value2 = Values.newNativeReference(LongValue.class);
         for (int t = 0; t < 5; t++) {
             for (int rate : new int[]{2 * 1000 * 1000, 1000 * 1000, 500 * 1000/*, 250 * 1000, 100 * 1000, 50 * 1000*/}) {
                 Histogram times = new Histogram();

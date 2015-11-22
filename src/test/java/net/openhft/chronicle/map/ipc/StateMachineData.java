@@ -16,21 +16,21 @@
 
 package net.openhft.chronicle.map.ipc;
 
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.model.Byteable;
+import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.bytes.BytesStore;
 
 /**
  *
  */
 public class StateMachineData implements Byteable {
-    private Bytes bytes;
+    private BytesStore bs;
     private long offset;
 
     /**
      * c-tor
      */
     public StateMachineData() {
-        this.bytes = null;
+        this.bs = null;
         this.offset = -1;
     }
 
@@ -58,18 +58,18 @@ public class StateMachineData implements Byteable {
      * @param to
      */
     public boolean setState(StateMachineState from, StateMachineState to) {
-        if (this.bytes == null) throw new NullPointerException("Byteable is not set to off heap");
+        if (this.bs == null) throw new NullPointerException("Byteable is not set to off heap");
 
-        return this.bytes.compareAndSwapInt(this.offset, from.value(), to.value());
+        return this.bs.compareAndSwapInt(this.offset, from.value(), to.value());
     }
 
     /**
      * @return
      */
     public StateMachineState getState() {
-        if (this.bytes == null) throw new NullPointerException("Byteable is not set to off heap");
+        if (this.bs == null) throw new NullPointerException("Byteable is not set to off heap");
 
-        int value = this.bytes.readVolatileInt(this.offset);
+        int value = this.bs.readVolatileInt(this.offset);
         return StateMachineState.fromValue(value);
     }
 
@@ -77,9 +77,9 @@ public class StateMachineData implements Byteable {
      * @param state
      */
     public void setState(StateMachineState state) {
-        if (this.bytes == null) throw new NullPointerException("Byteable is not set to off heap");
+        if (this.bs == null) throw new NullPointerException("Byteable is not set to off heap");
 
-        this.bytes.writeInt(this.offset, state.value());
+        this.bs.writeInt(this.offset, state.value());
     }
 
     /**
@@ -90,7 +90,7 @@ public class StateMachineData implements Byteable {
      * @param to
      */
     public void waitForState(StateMachineState from, StateMachineState to) {
-        if (this.bytes == null) throw new NullPointerException("Byteable is not set to off heap");
+        if (this.bs == null) throw new NullPointerException("Byteable is not set to off heap");
 
         // spin
         for (int i = 0; !setState(from, to); i++) {
@@ -108,8 +108,8 @@ public class StateMachineData implements Byteable {
      * @return
      */
     public int getStateData() {
-        if (this.bytes != null) {
-            return this.bytes.readVolatileInt(this.offset + 4);
+        if (this.bs != null) {
+            return this.bs.readVolatileInt(this.offset + 4);
         }
 
         return -1;
@@ -119,8 +119,8 @@ public class StateMachineData implements Byteable {
      * @param data
      */
     public void setStateData(int data) {
-        if (this.bytes != null) {
-            this.bytes.writeInt(this.offset + 4, data);
+        if (this.bs != null) {
+            this.bs.writeInt(this.offset + 4, data);
         }
     }
 
@@ -128,8 +128,8 @@ public class StateMachineData implements Byteable {
      * @return
      */
     public int incStateData() {
-        if (this.bytes != null) {
-            return this.bytes.addInt(this.offset + 4, 1);
+        if (this.bs != null) {
+            return this.bs.addAndGetInt(this.offset + 4, 1);
         }
 
         return -1;
@@ -139,7 +139,7 @@ public class StateMachineData implements Byteable {
      * @return
      */
     public boolean done() {
-        if (this.bytes != null) {
+        if (this.bs != null) {
             return getStateData() > 100;
         }
 
@@ -151,14 +151,16 @@ public class StateMachineData implements Byteable {
     // *************************************************************************
 
     @Override
-    public void bytes(Bytes bytes, long offset) {
-        this.bytes = bytes;
+    public void bytesStore(BytesStore bytes, long offset, long size) {
+        if (size != 16)
+            throw new IllegalArgumentException();
+        this.bs = bytes;
         this.offset = offset;
     }
 
     @Override
-    public Bytes bytes() {
-        return this.bytes;
+    public BytesStore bytesStore() {
+        return this.bs;
     }
 
     @Override
@@ -167,7 +169,7 @@ public class StateMachineData implements Byteable {
     }
 
     @Override
-    public int maxSize() {
+    public long maxSize() {
         return 16;
     }
 }

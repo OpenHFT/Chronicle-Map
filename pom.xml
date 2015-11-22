@@ -46,7 +46,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
                 <type>pom</type>
-                <version>1.9.7</version>
+                <version>1.10.3-SNAPSHOT</version>
                 <scope>import</scope>
             </dependency>
 
@@ -67,7 +67,12 @@
 
         <dependency>
             <groupId>net.openhft</groupId>
-            <artifactId>lang</artifactId>
+            <artifactId>chronicle-values</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-threads</artifactId>
         </dependency>
 
         <dependency>
@@ -147,7 +152,7 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>stage-compiler</artifactId>
-            <version>1.4</version>
+            <version>1.5</version>
             <scope>provided</scope>
         </dependency>
 

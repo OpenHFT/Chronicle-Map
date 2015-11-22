@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
-import net.openhft.chronicle.hash.serialization.internal.SerializationBuilder;
+import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 
 class ChronicleMapBuilderPrivateAPI<K> implements ChronicleHashBuilderPrivateAPI<K> {
 

@@ -29,7 +29,7 @@ import net.openhft.sg.Staged;
 public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> {
     @StageRef SegmentStages s;
     @StageRef ReplicatedMapEntryStages<K, ?> e;
-    @StageRef ReplicatedChronicleMapHolder<?, ?, ?, ?, ?, ?, ?> mh;
+    @StageRef ReplicatedChronicleMapHolder<?, ?, ?> mh;
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
 
     @Stage("ReplicationUpdate") public long innerRemoteTimestamp;

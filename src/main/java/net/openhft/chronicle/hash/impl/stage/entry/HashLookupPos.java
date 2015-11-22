@@ -50,7 +50,7 @@ public abstract class HashLookupPos {
     
     public abstract void closeHashLookupPos();
 
-    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
+    @StageRef VanillaChronicleHashHolder<?> hh;
     @StageRef SegmentStages s;
 
     public void putValueVolatile(long newValue) {

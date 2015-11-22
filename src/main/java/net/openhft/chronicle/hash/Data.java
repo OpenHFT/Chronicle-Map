@@ -75,11 +75,30 @@ public interface Data<V> {
      * Reads the object from the value's bytes, trying to reuse the given object
      * (might be {@code null}).
      */
-    V getUsing(@Nullable V usingInstance);
+    V getUsing(@Nullable V using);
 
     static boolean bytesEquivalent(Data<?> d1, Data<?> d2) {
         if (d1.size() != d2.size())
             return false;
         return BytesUtil.bytesEqual(d1.bytes(), d1.offset(), d2.bytes(), d2.offset(), d1.size());
+    }
+
+    /**
+     * {@code Data} implementations should override {@link Object#hashCode()} with delegation to
+     * this method. Computes value's hash code by applying a hash function to {@code Data}'s
+     * <i>bytes</i> representation.
+     */
+    default int dataHashCode() {
+        return (int) hash(LongHashFunction.city_1_1());
+    }
+
+    /**
+     * {@code Data} implementations should override {@link Object#equals(Object)} with delegation to
+     * this method. Compares {@code Data}s' <i>bytes</i> representations.
+     */
+    default boolean dataEquals(Object obj) {
+        return obj != null &&
+                obj instanceof Data &&
+                Data.bytesEquivalent(this, (Data<?>) obj);
     }
 }

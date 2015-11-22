@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 
-import net.openhft.lang.values.StringValue;
+import net.openhft.chronicle.values.MaxUtf8Length;
 
 public class LataTest {
 
@@ -66,5 +66,10 @@ public class LataTest {
                     + (endTime - startTime));
         }
         map.close();
+    }
+
+    interface StringValue {
+        CharSequence getValue();
+        void setValue(@MaxUtf8Length(64) CharSequence value);
     }
 }

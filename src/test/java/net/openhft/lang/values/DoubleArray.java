@@ -16,10 +16,10 @@
 
 package net.openhft.lang.values;
 
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.DirectStore;
-import net.openhft.lang.model.Byteable;
-import net.openhft.lang.model.Copyable;
+import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.NativeBytesStore;
+import net.openhft.chronicle.values.Copyable;
 
 /**
  * Created by peter.lawrey on 23/04/2015.
@@ -30,7 +30,7 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray> {
     private static int LENGTH = CAPACITY + 4; // assume a 32-bit size.
     private static int BASE = LENGTH + 4;
 
-    private Bytes bytes;
+    private BytesStore bs;
     private long offset;
 
     // creates an empty DoubleArray
@@ -38,21 +38,21 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray> {
     }
 
     public DoubleArray(int capacity) {
-        bytes = DirectStore.allocate(BASE + capacity * 8L).bytes();
-        bytes.writeInt(CAPACITY, capacity);
+        bs = NativeBytesStore.nativeStoreWithFixedCapacity(BASE + capacity * 8L);
+        bs.writeInt(CAPACITY, capacity);
         offset = 0;
     }
 
 
     @Override
-    public void bytes(Bytes bytes, long offset) {
-        this.bytes = bytes;
+    public void bytesStore(BytesStore bytes, long offset, long maxSize) {
+        this.bs = bytes;
         this.offset = offset;
     }
 
     @Override
-    public Bytes bytes() {
-        return bytes;
+    public BytesStore bytesStore() {
+        return bs;
     }
 
     @Override
@@ -61,53 +61,53 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray> {
     }
 
     @Override
-    public int maxSize() {
+    public long maxSize() {
         return BASE + length() * 8;
     }
 
     public int length() {
-        return HACK && bytes == null ? 6 * 8 : bytes.readInt(LENGTH + offset);
+        return HACK && bs == null ? 6 * 8 : bs.readInt(LENGTH + offset);
     }
 
     public int capacity() {
-        return bytes.readInt(CAPACITY + offset);
+        return bs.readInt(CAPACITY + offset);
     }
 
     public double getDataAt(int index) {
         if (index < 0 || index >= length()) throw new ArrayIndexOutOfBoundsException();
-        return bytes.readDouble(BASE + offset + index * 8L);
+        return bs.readDouble(BASE + offset + index * 8L);
     }
 
     public void setDataAt(int index, double d) {
         if (index < 0 || index >= capacity()) throw new ArrayIndexOutOfBoundsException();
         if (length() <= index)
             setLength(index + 1);
-        bytes.writeDouble(BASE + offset + index * 8L, d);
+        bs.writeDouble(BASE + offset + index * 8L, d);
     }
 
     public void setLength(int length) {
         if (length < 0 || length >= capacity()) throw new IllegalArgumentException();
-        bytes.writeInt(LENGTH + offset, length);
+        bs.writeInt(LENGTH + offset, length);
     }
 
     public void addData(double d) {
         int index = length();
         if (index >= capacity()) throw new IllegalStateException();
-        bytes.writeInt(LENGTH + offset, index + 1);
-        bytes.writeDouble(BASE + offset + index * 8L, d);
+        bs.writeInt(LENGTH + offset, index + 1);
+        bs.writeDouble(BASE + offset + index * 8L, d);
     }
 
     public void setData(double[] doubles) {
         if (doubles.length > capacity()) throw new IllegalArgumentException();
-        bytes.writeInt(LENGTH + offset, doubles.length);
+        bs.writeInt(LENGTH + offset, doubles.length);
         for (int index = 0; index < doubles.length; index++)
-            bytes.writeDouble(BASE + offset + index * 8L, doubles[index]);
+            bs.writeDouble(BASE + offset + index * 8L, doubles[index]);
     }
 
     public int getDataUsing(double[] doubles) {
         int length = Math.min(length(), doubles.length);
         for (int index = 0; index < length; index++)
-            doubles[index] = bytes.readDouble(BASE + offset + index * 8L);
+            doubles[index] = bs.readDouble(BASE + offset + index * 8L);
         return length;
     }
 

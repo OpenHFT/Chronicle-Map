@@ -20,6 +20,7 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.query.HashQuery;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.impl.stage.query.SearchAllocatedChunks;
+import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.map.ExternalMapQueryContext;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapContext;
@@ -27,12 +28,10 @@ import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.impl.MapAbsentEntryHolder;
 import net.openhft.chronicle.map.impl.QueryContextInterface;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
-import net.openhft.chronicle.map.impl.stage.data.bytes.InputFirstValueBytesData;
-import net.openhft.chronicle.map.impl.stage.data.bytes.InputSecondValueBytesData;
-import net.openhft.chronicle.map.impl.stage.data.instance.InputValueInstanceData;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.chronicle.map.impl.stage.ret.DefaultReturnValue;
 import net.openhft.chronicle.map.impl.stage.ret.UsingReturnValue;
+import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
@@ -45,21 +44,36 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
         implements MapEntry<K, V>, ExternalMapQueryContext<K, V, R>,
         QueryContextInterface<K, V, R> {
 
-    @StageRef VanillaChronicleMapHolder<K, ?, ?, V, ?, ?, R> mh;
+    @StageRef VanillaChronicleMapHolder<K, V, R> mh;
     @StageRef MapEntryStages<K, V> e;
     @StageRef SearchAllocatedChunks allocatedChunks;
     @StageRef KeySearch<K> ks;
     @StageRef public AcquireHandle<K, V> acquireHandle;
     
-    @StageRef public InputValueInstanceData<V, ?, ?> inputValueInstanceValue;
-    
-    @StageRef public InputFirstValueBytesData<V> inputFirstValueBytesValue;
-    @StageRef public InputSecondValueBytesData<V> inputSecondValueBytesValue;
-    
     @StageRef public DefaultReturnValue<V> defaultReturnValue;
     @StageRef public UsingReturnValue<V> usingReturnValue;
 
     @StageRef public MapAbsentEntryHolder<K, V> absent;
+
+    final DataAccess<V> innerInputValueDataAccess = mh.m().originalValueDataAccess.copy();
+
+    /** Same as {@link #inputKeyDataAccessInitialized} */
+    @Stage("InputValueDataAccess") private boolean inputValueDataAccessInitialized = false;
+
+    void initInputValueDataAccess() {
+        inputValueDataAccessInitialized = true;
+    }
+
+    void closeInputValueDataAccess() {
+        innerInputValueDataAccess.uninit();
+        inputValueDataAccessInitialized = false;
+    }
+
+    @Override
+    public DataAccess<V> inputValueDataAccess() {
+        initInputValueDataAccess();
+        return innerInputValueDataAccess;
+    }
 
     @Override
     public MapEntry<K, V> entry() {

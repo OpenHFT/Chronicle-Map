@@ -16,9 +16,9 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.lang.MemoryUnit;
 import org.junit.*;
 
 import java.io.Closeable;

@@ -16,8 +16,8 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
-import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -192,14 +192,14 @@ public interface Replica extends Closeable {
                 final Bytes entry, final int chronicleId, long bootstrapTime);
 
         /**
-         * Called just after {@link  #onEntry(net.openhft.lang.io.Bytes, int, long)}.
+         * Called just after {@link  #onEntry(Bytes, int, long)}.
          * No-op by default.
          */
         public void onAfterEntry() {
         }
 
         /**
-         * Called just before {@link #onEntry(net.openhft.lang.io.Bytes, int, long)}.
+         * Called just before {@link #onEntry(Bytes, int, long)}.
          * No-op by default.
          */
         public void onBeforeEntry() {

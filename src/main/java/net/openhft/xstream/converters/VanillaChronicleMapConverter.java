@@ -18,7 +18,7 @@ package net.openhft.xstream.converters;
 import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.lang.model.constraints.NotNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 

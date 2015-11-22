@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * @param <K> map key class
  * @param <V> map value class
- * @see ChronicleMapBuilder#defaultValue(Object)
  */
+@FunctionalInterface
 public interface DefaultValueProvider<K, V> {
 
     /**
@@ -34,9 +34,7 @@ public interface DefaultValueProvider<K, V> {
      * {@code absentEntry} context. This is primarily used in {@link ChronicleMap#acquireUsing}
      * operation implementation, i. e. {@link MapMethods#acquireUsing}.
      *
-     * @implNote simply delegates to {@link MapAbsentEntry#defaultValue()}.
+     * The default implementation simply delegates to {@link MapAbsentEntry#defaultValue()}.
      */
-    default Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
-        return absentEntry.defaultValue();
-    }
+    Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry);
 }

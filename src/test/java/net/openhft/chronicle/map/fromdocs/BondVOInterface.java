@@ -16,40 +16,39 @@
 
 package net.openhft.chronicle.map.fromdocs;
 
-import net.openhft.lang.model.constraints.MaxSize;
+import net.openhft.chronicle.values.Array;
+import net.openhft.chronicle.values.Group;
+import net.openhft.chronicle.values.MaxUtf8Length;
 
 public interface BondVOInterface {
-    /* add support for entry based locking */
-    @Deprecated()
-    void busyLockEntry() throws InterruptedException;
 
-    @Deprecated()
-    void unlockEntry();
+    @Group(0)
+    long getEntryLockState();
+    void setEntryLockState(long entryLockState);
 
+    @Group(1)
     long getIssueDate();
-
     void setIssueDate(long issueDate);  /* time in millis */
 
+    @Group(1)
     long getMaturityDate();
-
     void setMaturityDate(long maturityDate);  /* time in millis */
-
     long addAtomicMaturityDate(long toAdd);
 
+    @Group(1)
     boolean compareAndSwapCoupon(double expected, double value);
-
     double getCoupon();
-
     void setCoupon(double coupon);
-
     double addAtomicCoupon(double toAdd);
 
+    @Group(1)
     String getSymbol();
-
-    void setSymbol(@MaxSize(20) String symbol);
+    void setSymbol(@MaxUtf8Length(20) String symbol);
 
     // OpenHFT Off-Heap array[ ] processing notice ‘At’ suffix
-    void setMarketPxIntraDayHistoryAt(@MaxSize(7) int tradingDayHour, MarketPx mPx);
+    @Group(1)
+    @Array(length = 7)
+    void setMarketPxIntraDayHistoryAt(int tradingDayHour, MarketPx mPx);
 
     /* 7 Hours in the Trading Day:
      * index_0 = 9.30am,

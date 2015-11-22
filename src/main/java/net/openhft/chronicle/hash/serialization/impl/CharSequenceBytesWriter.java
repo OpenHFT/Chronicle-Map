@@ -1,0 +1,40 @@
+/*
+ *      Copyright (C) 2015  higherfrequencytrading.com
+ *
+ *      This program is free software: you can redistribute it and/or modify
+ *      it under the terms of the GNU Lesser General Public License as published by
+ *      the Free Software Foundation, either version 3 of the License.
+ *
+ *      This program is distributed in the hope that it will be useful,
+ *      but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *      GNU Lesser General Public License for more details.
+ *
+ *      You should have received a copy of the GNU Lesser General Public License
+ *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package net.openhft.chronicle.hash.serialization.impl;
+
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.ListMarshaller;
+import net.openhft.chronicle.hash.serialization.SetMarshaller;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * {@link BytesWriter} implementation for {@link CharSequence}, for the primary ChronicleMap's
+ * key or value type {@link CharSequenceSizedWriter} + {@link StringSizedReader} are more
+ * effective (because don't store the size twice), so this writer is useful in conjunction with
+ * {@link ListMarshaller} or {@link SetMarshaller}.
+ *
+ * @see CharSequenceBytesWriter
+ */
+public enum CharSequenceBytesWriter implements BytesWriter<CharSequence> {
+    INSTANCE;
+
+    @Override
+    public void write(Bytes out, @NotNull CharSequence toWrite) {
+        out.writeUtf8(toWrite);
+    }
+}

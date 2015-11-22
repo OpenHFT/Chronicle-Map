@@ -30,8 +30,8 @@ package net.openhft.chronicle.map;/*
  * limitations under the License.
  */
 
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.BytesMarshallable;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesMarshallable;
 import org.jetbrains.annotations.NotNull;
 
 enum BuySell {
@@ -55,10 +55,10 @@ public class SampleValues implements BytesMarshallable {
 
     @Override
     public void readMarshallable(@NotNull Bytes in) throws IllegalStateException {
-        aa = in.readEnum(String.class);
-        bb = in.readEnum(String.class);
-        cc = in.readEnum(BuySell.class);
-        dd = in.readEnum(BuySell.class);
+        aa = in.readUtf8();
+        bb = in.readUtf8();
+        cc = (BuySell) in.readEnum(BuySell.class);
+        dd = (BuySell) in.readEnum(BuySell.class);
         ee = in.readInt();
         ff = in.readInt();
         gg = in.readDouble();
@@ -69,8 +69,8 @@ public class SampleValues implements BytesMarshallable {
 
     @Override
     public void writeMarshallable(@NotNull Bytes out) {
-        out.writeUTFΔ(aa);
-        out.writeUTFΔ(bb);
+        out.writeUtf8(aa);
+        out.writeUtf8(bb);
         out.writeEnum(cc);
         out.writeEnum(dd);
         out.writeInt(ee);

@@ -16,6 +16,12 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.*;
+import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.serialization.ListMarshaller;
+import net.openhft.chronicle.hash.serialization.impl.IntegerMarshaller;
+import net.openhft.chronicle.set.Builder;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
@@ -35,10 +41,15 @@ public class DefaultValueTest {
 
             ArrayList<Integer> defaultValue = new ArrayList<Integer>();
             defaultValue.add(42);
+            ListMarshaller<Integer> valueMarshaller =
+                    new ListMarshaller<>(IntegerMarshaller.INSTANCE, IntegerMarshaller.INSTANCE);
             try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
+                    .valueMarshaller(valueMarshaller)
                     .averageKey("a").averageValue(Arrays.asList(1, 2))
-                    .defaultValue(defaultValue).createPersistedTo(file)) {
+                    .defaultValueProvider(absentEntry ->
+                            absentEntry.context().wrapValueAsData(defaultValue))
+                    .createPersistedTo(file)) {
                 ArrayList<Integer> using = new ArrayList<Integer>();
                 assertEquals(defaultValue, map.acquireUsing("a", using));
                 assertEquals(1, map.size());
@@ -51,6 +62,8 @@ public class DefaultValueTest {
             try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
                     .averageKey("a").averageValue(Arrays.asList(1, 2))
+                    .defaultValueProvider(absentEntry ->
+                            absentEntry.context().wrapValueAsData(defaultValue))
                     .createPersistedTo(file)) {
                 assertEquals(defaultValue, map.acquireUsing("c", using));
             }

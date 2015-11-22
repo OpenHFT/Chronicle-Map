@@ -17,12 +17,13 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.collect.Maps;
+import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.model.Byteable;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.values.IntValue;
+import net.openhft.chronicle.set.Builder;
+import net.openhft.chronicle.values.Values;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,8 +45,8 @@ public class OldDeletedEntriesCleanupTest {
 
     @Before
     public void setup() throws IOException {
-        IntValue value = DataValueClasses.newDirectReference(IntValue.class);
-        ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
+        IntValue value = Values.newNativeReference(IntValue.class);
+        ((Byteable) value).bytesStore(BytesStore.wrap(ByteBuffer.allocateDirect(4)), 0, 4);
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
 

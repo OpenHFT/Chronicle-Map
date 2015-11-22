@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.ImmutableMap;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.set.Builder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

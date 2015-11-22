@@ -16,7 +16,9 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
+import org.jetbrains.annotations.NotNull;
 
 final class DefaultSpi implements MapMethods, MapEntryOperations, MapRemoteOperations,
         DefaultValueProvider {
@@ -35,5 +37,10 @@ final class DefaultSpi implements MapMethods, MapEntryOperations, MapRemoteOpera
 
     static <K, V> DefaultValueProvider<K, V> defaultValueProvider() {
         return DEFAULT_SPI;
+    }
+
+    @Override
+    public Data defaultValue(@NotNull MapAbsentEntry absentEntry) {
+        return absentEntry.defaultValue();
     }
 }

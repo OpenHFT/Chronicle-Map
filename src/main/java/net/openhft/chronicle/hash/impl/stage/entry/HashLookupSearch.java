@@ -18,10 +18,6 @@ package net.openhft.chronicle.hash.impl.stage.entry;
 
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
-import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
-import net.openhft.chronicle.hash.impl.stage.entry.HashLookupPos;
-import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
-import net.openhft.chronicle.hash.impl.stage.query.HashQuery;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
@@ -33,7 +29,7 @@ import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.UNSE
 public abstract class HashLookupSearch {
     
     @StageRef SegmentStages s;
-    @StageRef public VanillaChronicleHashHolder<?, ?, ?> hh;
+    @StageRef public VanillaChronicleHashHolder<?> hh;
     @StageRef HashLookupPos hlp;
     @StageRef KeySearch<?> ks;
     

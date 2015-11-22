@@ -17,21 +17,14 @@
 package net.openhft.chronicle.map.impl;
 
 import net.openhft.chronicle.hash.impl.stage.data.bytes.EntryKeyBytesData;
-import net.openhft.chronicle.hash.impl.stage.data.bytes.InputKeyBytesData;
-import net.openhft.chronicle.hash.impl.stage.data.instance.InputKeyInstanceData;
 import net.openhft.chronicle.hash.impl.stage.entry.*;
 import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
 import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.OwnerThreadHolder;
-import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalCopiesHolder;
-import net.openhft.chronicle.hash.impl.stage.input.HashInputBytes;
 import net.openhft.chronicle.hash.impl.stage.query.*;
+import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
-import net.openhft.chronicle.map.impl.stage.data.bytes.InputFirstValueBytesData;
-import net.openhft.chronicle.map.impl.stage.data.bytes.InputSecondValueBytesData;
-import net.openhft.chronicle.map.impl.stage.data.instance.InputValueInstanceData;
-import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceData;
-import net.openhft.chronicle.map.impl.stage.input.MapInputBytesValues;
+import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceDataHolder;
 import net.openhft.chronicle.map.impl.stage.map.*;
 import net.openhft.chronicle.map.impl.stage.query.*;
 import net.openhft.chronicle.map.impl.stage.ret.DefaultReturnValue;
@@ -43,7 +36,6 @@ import net.openhft.sg.Staged;
 @Context(topLevel = {
         CompilationAnchor.class,
         OwnerThreadHolder.class,
-        ThreadLocalCopiesHolder.class,
 
         LogHolder.class,
 
@@ -68,9 +60,6 @@ import net.openhft.sg.Staged;
         ValueBytesInterop.class,
         MapAbsentHolder.class,
 
-        HashInputBytes.class,
-        MapInputBytesValues.class,
-
         QueryAlloc.class,
 },
 nested = {
@@ -81,19 +70,14 @@ nested = {
         EntryKeyBytesData.class,
         EntryValueBytesData.class,
 
-        InputKeyInstanceData.class,
-        InputValueInstanceData.class,
-
-        InputKeyBytesData.class,
-        InputFirstValueBytesData.class,
-        InputSecondValueBytesData.class,
-
-        WrappedValueInstanceData.class,
+        WrappedValueInstanceDataHolder.class,
         AcquireHandle.class,
         DefaultReturnValue.class,
         UsingReturnValue.class,
 
         HashKeyCrc32PayloadChecksumStrategy.class,
+
+        DummyValueZeroData.class,
 })
 public class MapQueryContext {
 }

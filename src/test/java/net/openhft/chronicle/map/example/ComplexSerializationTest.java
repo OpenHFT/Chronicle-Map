@@ -16,11 +16,14 @@
 
 package net.openhft.chronicle.map.example;
 
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesMarshallable;
+import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.BytesMarshallable;
-import net.openhft.lang.io.serialization.BytesMarshaller;
+import net.openhft.chronicle.map.Issue43Test;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -33,64 +36,62 @@ public class ComplexSerializationTest {
         List<B> list_;
     }
 
-    enum AMarshaller implements BytesMarshaller<A> {
+    enum AMarshaller implements BytesReader<A>, BytesWriter<A> {
         INSTANCE;
 
         @Override
-        public void write(Bytes out, A a) {
-            out.writeUTF(a.str_);
-            if (a.list_ != null) {
-                int size = a.list_.size();
+        public void write(Bytes out, @NotNull A toWrite) {
+            out.writeUtf8(toWrite.str_);
+            if (toWrite.list_ != null) {
+                int size = toWrite.list_.size();
                 out.writeStopBit(size);
                 for (int i = 0; i < size; i++) {
-                    a.list_.get(i).writeMarshallable(out);
+                    toWrite.list_.get(i).writeMarshallable(out);
                 }
             } else {
                 out.writeStopBit(-1);
             }
         }
 
+        @NotNull
         @Override
-        public A read(Bytes in) {
-            return read(in, null);
-        }
-
-        @Override
-        public A read(Bytes in, A a) {
-            if (a == null)
-                a = new A();
-            a.str_ = in.readUTF();
+        public A read(Bytes in, A using) {
+            if (using == null)
+                using = new A();
+            using.str_ = in.readUtf8();
             int size = (int) in.readStopBit();
             if (size >= 0) {
-                if (a.list_ == null) {
-                    a.list_ = new ArrayList<>(size);
+                if (using.list_ == null) {
+                    using.list_ = new ArrayList<>(size);
                 } else {
-                    a.list_.clear();
-                    if (a.list_ instanceof ArrayList)
-                        ((ArrayList) a.list_).ensureCapacity(size);
+                    using.list_.clear();
+                    if (using.list_ instanceof ArrayList)
+                        ((ArrayList) using.list_).ensureCapacity(size);
                 }
                 for (int i = 0; i < size; i++) {
                     B b = new B();
                     b.readMarshallable(in);
-                    a.list_.add(b);
+                    using.list_.add(b);
                 }
             } else {
                 assert size == -1;
-                a.list_ = null;
+                using.list_ = null;
             }
-            return a;
+            return using;
         }
     }
 
     static class B implements BytesMarshallable {
         String str_;
 
-        @Override public void readMarshallable(Bytes in) throws IllegalStateException {
-            str_ = in.readUTF();
+        @Override
+        public void readMarshallable(Bytes in) {
+            str_ = in.readUtf8();
         }
 
-        @Override public void writeMarshallable(Bytes out) {
-            out.writeUTF(str_);
+        @Override
+        public void writeMarshallable(Bytes out) {
+            out.writeUtf8(str_);
         }
     }
 

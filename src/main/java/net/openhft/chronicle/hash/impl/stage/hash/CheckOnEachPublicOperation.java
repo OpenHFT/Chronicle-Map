@@ -24,7 +24,7 @@ import net.openhft.sg.Staged;
 public abstract class CheckOnEachPublicOperation {
     
     @StageRef OwnerThreadHolder holder;
-    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
+    @StageRef VanillaChronicleHashHolder<?> hh;
     
     public void checkOnEachPublicOperation() {
         holder.checkAccessingFromOwnerThread();

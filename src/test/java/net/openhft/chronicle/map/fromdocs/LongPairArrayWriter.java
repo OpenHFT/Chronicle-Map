@@ -16,23 +16,23 @@
 
 package net.openhft.chronicle.map.fromdocs;
 
-import net.openhft.chronicle.hash.serialization.BytesWriter;
-import net.openhft.lang.io.Bytes;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.hash.serialization.SizedWriter;
 import org.jetbrains.annotations.NotNull;
 
-enum LongPairArrayWriter implements BytesWriter<LongPair[]> {
+enum LongPairArrayWriter implements SizedWriter<LongPair[]> {
     INSTANCE;
 
     @Override
-    public long size(@NotNull LongPair[] longPairs) {
-        return longPairs.length * 16L;
+    public long size(@NotNull LongPair[] toWrite) {
+        return toWrite.length * 16L;
     }
 
     @Override
-    public void write(@NotNull Bytes bytes, @NotNull LongPair[] longPairs) {
-        for (LongPair pair : longPairs) {
-            bytes.writeLong(pair.first);
-            bytes.writeLong(pair.second);
+    public void write(@NotNull Bytes out, long size, @NotNull LongPair[] toWrite) {
+        for (LongPair pair : toWrite) {
+            out.writeLong(pair.first);
+            out.writeLong(pair.second);
         }
     }
 }

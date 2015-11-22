@@ -17,7 +17,6 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.serialization.internal.DummyValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static net.openhft.chronicle.hash.serialization.internal.DummyValue.DUMMY_VALUE;
+import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;
 
 class SetFromMap<E> extends AbstractSet<E>
         implements ChronicleSet<E>, Serializable {

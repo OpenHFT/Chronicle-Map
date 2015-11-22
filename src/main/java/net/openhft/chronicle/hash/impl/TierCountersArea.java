@@ -16,7 +16,8 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import static net.openhft.lang.io.NativeBytes.UNSAFE;
+import net.openhft.chronicle.core.Memory;
+import net.openhft.chronicle.core.OS;
 
 /**
  * The reason why this is not a data value generated class, and offsets are allocated by
@@ -27,6 +28,7 @@ import static net.openhft.lang.io.NativeBytes.UNSAFE;
 public enum TierCountersArea {
     ;
 
+    private static Memory memory = OS.memory();
     public static final long NEXT_TIER_INDEX_OFFSET = 0L;
     public static final long PREV_TIER_INDEX_OFFSET = NEXT_TIER_INDEX_OFFSET + 8L;
     public static final long NEXT_POS_TO_SEARCH_FROM_TIERED_OFFSET = PREV_TIER_INDEX_OFFSET + 8L;
@@ -34,43 +36,43 @@ public enum TierCountersArea {
     public static final long TIER_OFFSET = SEGMENT_INDEX_OFFSET + 4L;
 
     public static long nextTierIndex(long address) {
-        return UNSAFE.getLong(address + NEXT_TIER_INDEX_OFFSET);
+        return memory.readLong(address + NEXT_TIER_INDEX_OFFSET);
     }
 
     public static void nextTierIndex(long address, long nextTierIndex) {
-        UNSAFE.putLong(address + NEXT_TIER_INDEX_OFFSET, nextTierIndex);
+        memory.writeLong(address + NEXT_TIER_INDEX_OFFSET, nextTierIndex);
     }
 
     public static long nextPosToSearchFromTiered(long address) {
-        return UNSAFE.getLong(address + NEXT_POS_TO_SEARCH_FROM_TIERED_OFFSET);
+        return memory.readLong(address + NEXT_POS_TO_SEARCH_FROM_TIERED_OFFSET);
     }
 
     public static void nextPosToSearchFromTiered(long address, long nextPosToSearchFrom) {
-        UNSAFE.putLong(address + NEXT_POS_TO_SEARCH_FROM_TIERED_OFFSET,
+        memory.writeLong(address + NEXT_POS_TO_SEARCH_FROM_TIERED_OFFSET,
                 nextPosToSearchFrom);
     }
 
     public static long prevTierIndex(long address) {
-        return UNSAFE.getLong(address + PREV_TIER_INDEX_OFFSET);
+        return memory.readLong(address + PREV_TIER_INDEX_OFFSET);
     }
 
     public static void prevTierIndex(long address, long prevTierIndex) {
-        UNSAFE.putLong(address + PREV_TIER_INDEX_OFFSET, prevTierIndex);
+        memory.writeLong(address + PREV_TIER_INDEX_OFFSET, prevTierIndex);
     }
 
     public static int segmentIndex(long address) {
-        return UNSAFE.getInt(address + SEGMENT_INDEX_OFFSET);
+        return memory.readInt(address + SEGMENT_INDEX_OFFSET);
     }
 
     public static void segmentIndex(long address, int segmentIndex) {
-        UNSAFE.putInt(address + SEGMENT_INDEX_OFFSET, segmentIndex);
+        memory.writeInt(address + SEGMENT_INDEX_OFFSET, segmentIndex);
     }
 
     public static int tier(long address) {
-        return UNSAFE.getInt(address + TIER_OFFSET);
+        return memory.readInt(address + TIER_OFFSET);
     }
 
     public static void tier(long address, int tier) {
-        UNSAFE.putInt(address + TIER_OFFSET, tier);
+        memory.writeInt(address + TIER_OFFSET, tier);
     }
 }

@@ -53,7 +53,6 @@ public class Chaining extends ChainingInterface {
         return (T) contextChain.get(index);
     }
 
-    
     boolean used;
 
     @Override

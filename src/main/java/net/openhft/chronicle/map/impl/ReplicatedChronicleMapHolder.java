@@ -16,13 +16,10 @@
 
 package net.openhft.chronicle.map.impl;
 
-import net.openhft.chronicle.hash.serialization.internal.MetaBytesInterop;
 import net.openhft.chronicle.map.ReplicatedChronicleMap;
 
-public interface ReplicatedChronicleMapHolder<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
-        V, VI, MVI extends MetaBytesInterop<V, ? super VI>, R>
-        extends VanillaChronicleMapHolder<K, KI, MKI, V, VI, MVI, R> {
+public interface ReplicatedChronicleMapHolder<K, V, R> extends VanillaChronicleMapHolder<K, V, R> {
 
     @Override
-    ReplicatedChronicleMap<K, KI, MKI, V, VI, MVI, R> m();
+    ReplicatedChronicleMap<K, V, R> m();
 }

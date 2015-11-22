@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash;
 
+import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
@@ -25,21 +26,12 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.*;
-import net.openhft.lang.io.serialization.impl.AllocateInstanceObjectFactory;
-import net.openhft.lang.io.serialization.impl.NewInstanceObjectFactory;
-import net.openhft.lang.io.serialization.impl.VanillaBytesMarshallerFactory;
-import net.openhft.lang.model.Byteable;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -98,8 +90,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * should manually configure the actual chunk size in addition to this average key size
      * configuration, which is anyway needed.
      *
-     * <p>If key is a boxed primitive type or {@link Byteable} subclass, i. e. if key size is known
-     * statically, it is automatically accounted and shouldn't be specified by user.
+     * <p>If key is a boxed primitive type, a value interface or {@link Byteable} subclass, i. e. if
+     * key size is known statically, it is automatically accounted and shouldn't be specified by
+     * user.
      *
      * <p>Calling this method clears any previous {@link #constantKeySizeBySample(Object)} and
      * {@link #averageKey(Object)} configurations.
@@ -118,7 +111,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     /**
      * Configures the average number of bytes, taken by serialized form of keys, put into hash
      * containers, created by this builder, by serializing the given {@code averageKey} using
-     * the configured {@link #keyMarshallers(BytesWriter, BytesReader) keys marshallers}.
+     * the configured {@link #keyMarshallers(SizedReader, SizedWriter) keys marshallers}.
      * In some cases, {@link #averageKeySize(double)} might be easier to use, than constructing the
      * "average key". If key size is always the same, call {@link #constantKeySizeBySample(
      * Object)} method instead of this one.
@@ -438,73 +431,50 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B cleanupRemovedEntries(boolean cleanupRemovedEntries);
 
     /**
-     * Configures a {@link BytesMarshallerFactory} to be used with {@link
-     * BytesMarshallableSerializer}, which is a default {@link #objectSerializer ObjectSerializer},
-     * to serialize/deserialize data to/from off-heap memory in hash containers, created by this
-     * builder.
+     * Configures the {@code DataAccess} and {@code SizedReader} used to serialize and deserialize
+     * keys to and from off-heap memory in hash containers, created by this builder.
      *
-     * <p>Default {@code BytesMarshallerFactory} is an instance of {@link
-     * VanillaBytesMarshallerFactory}. This is a convenience configuration method, it has no effect
-     * on the resulting hash containers, if {@linkplain #keyMarshaller(BytesMarshaller) custom data
-     * marshallers} are configured, data types extends one of specific serialization interfaces,
-     * recognized by this builder (e. g. {@code Externalizable} or {@code BytesMarshallable}), or
-     * {@code ObjectSerializer} is configured.
-     *
-     * @param bytesMarshallerFactory the marshaller factory to be used with the default {@code
-     *                               ObjectSerializer}, i. e. {@code BytesMarshallableSerializer}
+     * @param keyReader the new bytes &rarr; key object reader strategy
+     * @param keyDataAccess the new strategy of accessing the keys' bytes for writing
      * @return this builder back
-     * @see #objectSerializer(ObjectSerializer)
+     * @see #keyMarshallers(SizedReader, SizedWriter)
      */
-    B bytesMarshallerFactory(BytesMarshallerFactory bytesMarshallerFactory);
-
-    /**
-     * Configures the serializer used to serialize/deserialize data to/from off-heap memory, when
-     * specified class doesn't implement a specific serialization interface like {@link
-     * Externalizable} or {@link BytesMarshallable} (for example, if data is loosely typed and just
-     * {@code Object} is specified as the data class), or nullable data, and if custom marshaller is
-     * not {@linkplain #keyMarshaller(BytesMarshaller) configured}, in hash containers, created by
-     * this builder. Please read {@link ObjectSerializer} docs for more info and available options.
-     *
-     * <p>Default serializer is {@link BytesMarshallableSerializer}, configured with the specified
-     * or default {@link #bytesMarshallerFactory(BytesMarshallerFactory) BytesMarshallerFactory}.
-     *
-     * @param objectSerializer the serializer used to serialize loosely typed or nullable data if
-     *                         custom marshaller is not configured
-     * @return this builder back
-     * @see #bytesMarshallerFactory(BytesMarshallerFactory)
-     * @see #keyMarshaller(BytesMarshaller)
-     */
-    B objectSerializer(ObjectSerializer objectSerializer);
-
-    /**
-     * Configures the {@code BytesMarshaller} used to serialize/deserialize keys to/from off-heap
-     * memory in hash containers, created by this builder. See <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the
-     * section about serialization in ChronicleMap manual</a> for more information.
-     *
-     * @param keyMarshaller the marshaller used to serialize keys
-     * @return this builder back
-     * @see #keyMarshallers(BytesWriter, BytesReader)
-     * @see #objectSerializer(ObjectSerializer)
-     */
-    B keyMarshaller(@NotNull BytesMarshaller<? super K> keyMarshaller);
+    B keyReaderAndDataAccess(SizedReader<K> keyReader, @NotNull DataAccess<K> keyDataAccess);
 
     /**
      * Configures the marshallers, used to serialize/deserialize keys to/from off-heap memory in
-     * hash containers, created by this builder. See <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the
-     * section about serialization in ChronicleMap manual</a> for more information.
+     * hash containers, created by this builder.
      *
-     * <p>Configuring marshalling this way results to a little bit more compact in-memory layout of
-     * the map, comparing to a single interface configuration: {@link #keyMarshaller(BytesMarshaller)}.
-     *
-     * <p>Passing {@link BytesInterop} (which is a subinterface of {@link BytesWriter}) as the first
-     * argument is supported, and even more advantageous from performance perspective.
-     *
-     * @param keyWriter the new key object &rarr; {@link Bytes} writer (interop) strategy
-     * @param keyReader the new {@link Bytes} &rarr; key object reader strategy
+     * @param keyReader the new bytes &rarr; key object reader strategy
+     * @param keyWriter the new key object &rarr; bytes writer strategy
      * @return this builder back
-     * @see #keyMarshaller(BytesMarshaller)
+     * @see #keyReaderAndDataAccess(SizedReader, DataAccess)
      */
-    B keyMarshallers(@NotNull BytesWriter<? super K> keyWriter, @NotNull BytesReader<K> keyReader);
+    B keyMarshallers(@NotNull BytesReader<K> keyReader, @NotNull BytesWriter<? super K> keyWriter);
+
+    /**
+     * Shortcut for {@link #keyMarshallers(BytesReader, BytesWriter)
+     * keyMarshallers(marshaller, marshaller)}.
+     */
+    <M extends BytesReader<K> & BytesWriter<? super K>> B keyMarshaller(@NotNull M marshaller);
+
+    /**
+     * Configures the marshallers, used to serialize/deserialize keys to/from off-heap memory in
+     * hash containers, created by this builder.
+     *
+     * @param keyReader the new bytes &rarr; key object reader strategy
+     * @param keyWriter the new key object &rarr; bytes writer strategy
+     * @return this builder back
+     * @see #keyReaderAndDataAccess(SizedReader, DataAccess)
+     */
+    B keyMarshallers(@NotNull SizedReader<K> keyReader, @NotNull SizedWriter<? super K> keyWriter);
+
+    /**
+     * Shortcut for {@link #keyMarshallers(SizedReader, SizedWriter)
+     * keyMarshallers(sizedMarshaller, sizedMarshaller)}.
+     * @param sizedMarshaller
+     */
+    <M extends SizedReader<K> & SizedWriter<? super K>> B keyMarshaller(@NotNull M sizedMarshaller);
 
     /**
      * Configures the marshaller used to serialize actual key sizes to off-heap memory in hash
@@ -515,51 +485,14 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * type is always constant and {@code ChronicleHashBuilder} implementation knows about it, this
      * configuration takes no effect, because a special {@link SizeMarshaller} implementation, which
      * doesn't actually do any marshalling, and just returns the known constant size on {@link
-     * SizeMarshaller#readSize(Bytes)} calls, is used instead of any {@code SizeMarshaller}
-     * configured using this method.
+     * SizeMarshaller#readSize(net.openhft.chronicle.bytes.Bytes)} calls, is used instead of any {@code
+     * SizeMarshaller} configured using this method.
      *
      * @param keySizeMarshaller the new marshaller, used to serialize actual key sizes to off-heap
      *                          memory
      * @return this builder back
      */
     B keySizeMarshaller(@NotNull SizeMarshaller keySizeMarshaller);
-
-    /**
-     * Configures factory which is used to create a new key instance, if key class is either {@link
-     * Byteable}, {@link BytesMarshallable} or {@link Externalizable} subclass, or key type is
-     * eligible for data value generation, or {@linkplain #keyMarshallers(BytesWriter, BytesReader)
-     * configured custom key reader} implements {@link DeserializationFactoryConfigurableBytesReader
-     * }, in maps, created by this builder.
-     *
-     * <p>Default key deserialization factory is {@link NewInstanceObjectFactory}, which creates a
-     * new key instance using {@link Class#newInstance()} default constructor. You could provide an
-     * {@link AllocateInstanceObjectFactory}, which uses {@code Unsafe.allocateInstance(Class)} (you
-     * might want to do this for better performance or if you don't want to initialize fields), or a
-     * factory which calls a key class constructor with some arguments, or a factory which
-     * internally delegates to instance pool or {@link ThreadLocal}, to reduce allocations.
-     *
-     * @param keyDeserializationFactory the key factory used to produce instances to deserialize
-     *                                  data in
-     * @return this builder back
-     * @throws IllegalStateException if it is not possible to apply deserialization factory to
-     *                               key deserializers, currently configured for this builder
-     */
-    B keyDeserializationFactory(@NotNull ObjectFactory<? extends K> keyDeserializationFactory);
-
-    /**
-     * Specifies that key objects, queried with the hash containers, created by this builder, are
-     * inherently immutable. Keys in {@link ChronicleMap} or {@link ChronicleSet} are not required
-     * to be immutable, as in ordinary {@link Map} or {@link Set} implementations, because they are
-     * serialized off-heap. However, {@code ChronicleMap} and {@code ChronicleSet} implementations
-     * can benefit from the knowledge that keys are not mutated between queries.
-     *
-     * <p>By default, {@code ChronicleHashBuilder}s detects immutability automatically only for very
-     * few standard JDK types (for example, for {@link String}), it is not recommended to rely on
-     * {@code ChronicleHashBuilder} to be smart enough about this.
-     *
-     * @return this builder back
-     */
-    B immutableKeys();
 
     /**
      * Specifies whether on the current combination of platform, OS and Jvm aligned 8-byte reads

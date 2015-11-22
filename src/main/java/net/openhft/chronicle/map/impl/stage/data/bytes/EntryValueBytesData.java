@@ -16,10 +16,13 @@
 
 package net.openhft.chronicle.map.impl.stage.data.bytes;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
+import net.openhft.chronicle.hash.impl.util.CharSequences;
+import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.chronicle.map.impl.stage.map.ValueBytesInterop;
 import net.openhft.sg.Stage;
@@ -28,18 +31,28 @@ import net.openhft.sg.Staged;
 
 @Staged
 public class EntryValueBytesData<V> extends AbstractData<V> {
-    
-    @StageRef ValueBytesInterop<V, ?, ?> vi;
+
+    @StageRef VanillaChronicleMapHolder<?, V, ?> mh;
+    @StageRef ValueBytesInterop<V> vi;
     @StageRef SegmentStages s;
     @StageRef MapEntryStages<?, V> entry;
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
 
-    @Stage("CachedEntryValue") private V cachedEntryValue;
+    @Stage("CachedEntryValue") private V cachedEntryValue =
+            mh.m().valueClass() == CharSequence.class ? (V) new StringBuilder() : null;
     @Stage("CachedEntryValue") private boolean cachedEntryValueRead = false;
 
     private void initCachedEntryValue() {
         cachedEntryValue = innerGetUsing(cachedEntryValue);
         cachedEntryValueRead = true;
+    }
+
+    public boolean cachedEntryValueInit() {
+        return cachedEntryValueRead;
+    }
+
+    public void closeCachedEntryValue() {
+        cachedEntryValueRead = false;
     }
 
     @Override
@@ -67,13 +80,14 @@ public class EntryValueBytesData<V> extends AbstractData<V> {
     }
 
     @Override
-    public V getUsing(V usingValue) {
+    public V getUsing(V using) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return innerGetUsing(usingValue);
+        return innerGetUsing(using);
     }
 
     private V innerGetUsing(V usingValue) {
-        s.segmentBytes.position(entry.valueOffset);
-        return vi.valueReader.read(s.segmentBytes, size(), usingValue);
+        Bytes segmentBytes = s.segmentBytesForRead();
+        segmentBytes.readPosition(entry.valueOffset);
+        return vi.valueReader.read(segmentBytes, size(), usingValue);
     }
 }

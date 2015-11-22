@@ -30,9 +30,7 @@ public enum NativeCrc32 implements Crc32 {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             updateByteBuffer = lookup.findStatic(CRC32.class, "updateByteBuffer",
                     MethodType.methodType(int.class, long.class, int.class, int.class));
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+        } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }

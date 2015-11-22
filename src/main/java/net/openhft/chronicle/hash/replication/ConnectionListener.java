@@ -21,7 +21,7 @@ import java.net.InetAddress;
 public interface ConnectionListener {
 
     /**
-     * @param address    the address that we are connceted to
+     * @param address    the address that we are connected to
      * @param identifier the remote identifier that we are not connected to.
      * @param isServer   if this host accepted the connection {@code isServer} is {@code true}, if
      *                   we made the connection to a remote host then {@code isServer} is {@code

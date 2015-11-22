@@ -16,22 +16,22 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.CompactBytesMarshaller;
+import net.openhft.chronicle.hash.serialization.BytesReader;
+import net.openhft.chronicle.hash.serialization.BytesWriter;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
-import java.nio.ByteBuffer;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 /**
  * Created by peter on 24/10/14.
  */
-public enum DeflatorStringMarshaller implements CompactBytesMarshaller<CharSequence> {
+public enum DeflatorStringMarshaller
+        implements BytesReader<CharSequence>, BytesWriter<CharSequence> {
     INSTANCE;
 
     private static final StringFactory STRING_FACTORY = getStringFactory();
@@ -54,27 +54,22 @@ public enum DeflatorStringMarshaller implements CompactBytesMarshaller<CharSeque
     }
 
     @Override
-    public byte code() {
-        return '_';
-    }
-
-    @Override
-    public void write(Bytes bytes, CharSequence s) {
+    public void write(Bytes out, CharSequence s) {
         if (s == null) {
-            bytes.writeStopBit(NULL_LENGTH);
+            out.writeStopBit(NULL_LENGTH);
             return;
         } else if (s.length() == 0) {
-            bytes.writeStopBit(0);
+            out.writeStopBit(0);
             return;
         }
         // write the total length.
         int length = s.length();
-        bytes.writeStopBit(length);
+        out.writeStopBit(length);
 
-        long position = bytes.position();
-        bytes.writeInt(0);
+        long position = out.writePosition();
+        out.writeInt(0);
         DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(
-                new DeflaterOutputStream(bytes.outputStream())));
+                new DeflaterOutputStream(out.outputStream())));
         try {
             for (int i = 0; i < s.length(); i++) {
                 dos.write(s.charAt(i));
@@ -83,16 +78,11 @@ public enum DeflatorStringMarshaller implements CompactBytesMarshaller<CharSeque
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
-        bytes.writeInt(position, (int) (bytes.position() - position - 4));
+        out.writeInt(position, (int) (out.writePosition() - position - 4));
     }
 
     @Override
-    public String read(Bytes bytes) {
-        return read(bytes, null);
-    }
-
-    @Override
-    public String read(Bytes bytes, @Nullable CharSequence ignored) {
+    public CharSequence read(Bytes bytes, @Nullable CharSequence ignored) {
         long size = bytes.readStopBit();
         if (size == NULL_LENGTH)
             return null;
@@ -103,9 +93,9 @@ public enum DeflatorStringMarshaller implements CompactBytesMarshaller<CharSeque
 
         char[] chars = new char[(int) size];
         int length = bytes.readInt();
-        long limit = bytes.limit();
+        long limit = bytes.readLimit();
         try {
-            bytes.limit(bytes.position() + length);
+            bytes.readLimit(bytes.readPosition() + length);
             DataInputStream dis = new DataInputStream(new BufferedInputStream(
                     new InflaterInputStream(bytes.inputStream())));
             for (int i = 0; i < size; i++)
@@ -114,8 +104,8 @@ public enum DeflatorStringMarshaller implements CompactBytesMarshaller<CharSeque
         } catch (IOException e) {
             throw new IORuntimeException(e);
         } finally {
-            bytes.position(bytes.limit());
-            bytes.limit(limit);
+            bytes.readPosition(bytes.readLimit());
+            bytes.readLimit(limit);
         }
         try {
             return STRING_FACTORY.fromChars(chars);

@@ -16,12 +16,11 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.io.CloseablesManager;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.thread.NamedThreadFactory;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -70,8 +69,9 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     private final ExecutorService connectExecutorService = Executors.newCachedThreadPool(
             new NamedThreadFactory("TCP-connect", true) {
+                @NotNull
                 @Override
-                public Thread newThread(@net.openhft.lang.model.constraints.NotNull Runnable r) {
+                public Thread newThread(@NotNull Runnable r) {
                     return lastThread = super.newThread(r);
                 }
             });
@@ -79,7 +79,7 @@ abstract class AbstractChannelReplicator implements Closeable {
     private volatile Thread lastThread;
     private Throwable startedHere;
     private Future<?> future;
-    private final Queue<Runnable> pendingRegistrations = new ConcurrentLinkedQueue<Runnable>();
+    private final Queue<Runnable> pendingRegistrations = new ConcurrentLinkedQueue<>();
     @Nullable
     private final Throttler throttler;
 
@@ -89,8 +89,9 @@ abstract class AbstractChannelReplicator implements Closeable {
             throws IOException {
         executorService = Executors.newSingleThreadExecutor(
                 new NamedThreadFactory(name, true) {
+                    @NotNull
                     @Override
-                    public Thread newThread(@net.openhft.lang.model.constraints.NotNull Runnable r) {
+                    public Thread newThread(@NotNull Runnable r) {
                         return lastThread = super.newThread(r);
                     }
                 });
@@ -434,60 +435,27 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
     }
 
-    static class EntryCallback extends Replica.EntryCallback implements BufferResizer {
+    static class EntryCallback extends Replica.EntryCallback {
 
         private final Replica.EntryExternalizable externalizable;
 
-        @NotNull
-        private ByteBufferBytes in;
-
-        @NotNull
-        private ByteBuffer out;
+        /** For writing entries for replication from Ch Map memory */
+        private Bytes<ByteBuffer> entryIn;
 
         EntryCallback(@NotNull final Replica.EntryExternalizable externalizable,
                       final int tcpBufferSize) {
             this.externalizable = externalizable;
-            out = ByteBuffer.allocateDirect(tcpBufferSize);
-            in = new ByteBufferBytes(out);
+            entryIn = Bytes.elasticByteBuffer(tcpBufferSize);
         }
 
         @NotNull
-        public ByteBufferBytes in() {
-            return in;
+        public Bytes entryIn() {
+            return entryIn;
         }
 
         @NotNull
-        public ByteBuffer out() {
-            return out;
-        }
-
-
-        @Override
-        public Bytes resizeBuffer(int size) {
-
-            if (LOG.isDebugEnabled())
-                LOG.debug("resizing buffer to size=" + size);
-
-            if (size < out.capacity())
-                throw new IllegalStateException("it not possible to resize the buffer smaller");
-
-            assert size < Integer.MAX_VALUE;
-
-            final ByteBuffer result = ByteBuffer.allocate(size).order(ByteOrder.nativeOrder());
-            final long bytesPosition = in.position();
-
-            in = new ByteBufferBytes(result);
-
-            out.position(0);
-            out.limit((int) bytesPosition);
-            in.write(out);
-            out = result;
-
-            assert out.capacity() == in.capacity();
-            assert out.capacity() == size;
-            assert out.capacity() == in.capacity();
-            assert in.limit() == in.capacity();
-            return in;
+        public ByteBuffer socketOut() {
+            return entryIn.underlyingObject();
         }
 
         @Override
@@ -495,76 +463,41 @@ abstract class AbstractChannelReplicator implements Closeable {
             return !externalizable.identifierCheck(entry, chronicleId);
         }
 
-
         @Override
-        public boolean onEntry(@NotNull final Bytes entry,
-                               final int chronicleId,
-                               final long bootstrapTime) {
+        public boolean onEntry(
+                @NotNull final Bytes entry, final int chronicleId, final long bootstrapTime) {
 
-            long startOfEntry = entry.position();
-            long pos0 = in.position();
-            long start = 0;
-            try {
-                // used to denote that this is not a heartbeat
-                in.writeByte(STATEFUL_UPDATE);
+            long pos0 = entryIn.writePosition();
+            // used to denote that this is not a heartbeat
+            entryIn.writeByte(STATEFUL_UPDATE);
 
-                long sizeLocation = in.position();
+            long sizeLocation = entryIn.writePosition();
 
-                // this is where we will store the size of the entry
-                in.skip(SIZE_OF_SIZE);
+            // this is where we will store the size of the entry
+            entryIn.writeSkip(SIZE_OF_SIZE);
 
-                start = in.position();
+            long start = entryIn.writePosition();
 
-                externalizable.writeExternalEntry(entry, in, chronicleId, bootstrapTime);
+            externalizable.writeExternalEntry(entry, entryIn, chronicleId, bootstrapTime);
 
-                if (in.position() == start) {
-                    in.position(pos0);
-                    return false;
-                }
-
-                // write the length of the entry, just before the start, so when we read it back
-                // we read the length of the entry first and hence know how many preceding writer to read
-                final long bytesWritten = (int) (in.position() - start);
-
-                if (bytesWritten > Integer.MAX_VALUE)
-                    throw new IllegalStateException("entry too large, " +
-                            "entries are limited to a size of " + Integer.MAX_VALUE);
-
-                if (LOG.isDebugEnabled())
-                    LOG.debug("sending entry of entrySize=" + (int) bytesWritten);
-
-                in.writeInt(sizeLocation, (int) bytesWritten);
-
-            } catch (IllegalArgumentException e) {
-
-                // reset the entries position
-                entry.position(startOfEntry);
-
-                // reset the in-buffers position
-                in.position(pos0);
-                long remaining = in.remaining();
-                int entrySize = externalizable.sizeOfEntry(entry, chronicleId);
-
-
-                if (entrySize > remaining) {
-
-                    long newSize = start + entrySize;
-
-                    // This can occur when we pack a number of entries into the buffer and the
-                    // last entry is very large.
-                    if (newSize > Integer.MAX_VALUE)
-                        return false;
-
-                    resizeBuffer((int) newSize);
-
-                    in.position(pos0);
-                    entry.position(startOfEntry);
-
-                    return onEntry(entry, chronicleId, bootstrapTime);
-                } else
-                    throw e;
-
+            if (entryIn.writePosition() == start) {
+                entryIn.writePosition(pos0);
+                return false;
             }
+
+            // write the length of the entry, just before the start, so when we read it back
+            // we read the length of the entry first and hence know how many preceding writer
+            // to read
+            final long bytesWritten = (int) (entryIn.writePosition() - start);
+
+            if (bytesWritten > Integer.MAX_VALUE)
+                throw new IllegalStateException("entry size " + bytesWritten + " too large, " +
+                        "entries are limited to a size of " + Integer.MAX_VALUE);
+
+            if (LOG.isDebugEnabled())
+                LOG.debug("sending entry of entrySize=" + (int) bytesWritten);
+
+            entryIn.writeInt(sizeLocation, (int) bytesWritten);
             return true;
         }
     }

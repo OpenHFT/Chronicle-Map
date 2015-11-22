@@ -17,11 +17,6 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.HashQueryContext;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.MapEntryOperations;
-import net.openhft.chronicle.map.MapMethods;
-import net.openhft.chronicle.map.replication.MapRemoteOperations;
-import net.openhft.chronicle.set.replication.SetRemoteOperations;
 import org.jetbrains.annotations.Nullable;
 
 /**

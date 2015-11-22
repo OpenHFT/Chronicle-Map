@@ -16,6 +16,9 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.serialization.DataAccess;
+import net.openhft.chronicle.hash.serialization.impl.ExternalizableDataAccess;
+import net.openhft.chronicle.hash.serialization.impl.ExternalizableReader;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,7 +34,6 @@ public class ConstantSizeBySampleTest {
     public void testConstantKeys() throws IOException {
         ChronicleMap<byte[], Long> map = ChronicleMapBuilder.of(byte[].class, Long.class)
                 .constantKeySizeBySample(new byte[8])
-                .immutableKeys()
                 .entries(100)
                 .create();
 
@@ -87,6 +89,13 @@ public class ConstantSizeBySampleTest {
     public void testUnexpectedlyLongConstantExternalizableValues() throws IOException {
         try (  ChronicleMap<Long, ExternalizableData> map =
                 ChronicleMapBuilder.of(Long.class, ExternalizableData.class)
+                        .valueReaderAndDataAccess(new ExternalizableReader<ExternalizableData>(
+                                ExternalizableData.class) {
+                            @Override
+                            protected ExternalizableData createInstance() {
+                                return new ExternalizableData();
+                            }
+                        }, new ExternalizableDataDataAccess())
                         .constantValueSizeBySample(new ExternalizableData())
                         .entries(100)
                         .actualSegments(1)
@@ -121,6 +130,23 @@ public class ConstantSizeBySampleTest {
             value.data[42] = 1;
             map.put(1L, value);
             Assert.assertEquals(map.get(1L), value);
+        }
+    }
+
+    private static class ExternalizableDataDataAccess
+            extends ExternalizableDataAccess<ExternalizableData> {
+        public ExternalizableDataDataAccess() {
+            super(ExternalizableData.class);
+        }
+
+        @Override
+        protected ExternalizableData createInstance() {
+            return new ExternalizableData();
+        }
+
+        @Override
+        public DataAccess<ExternalizableData> copy() {
+            return new ExternalizableDataDataAccess();
         }
     }
 }

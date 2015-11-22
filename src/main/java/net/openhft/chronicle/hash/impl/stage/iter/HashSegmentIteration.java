@@ -35,7 +35,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     
     @StageRef public IterationSegmentStages s;
     @StageRef HashEntryStages<K> e;
-    @StageRef VanillaChronicleHashHolder<?, ?, ?> hh;
+    @StageRef VanillaChronicleHashHolder<?> hh;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef protected HashLookupPos hlp;
     

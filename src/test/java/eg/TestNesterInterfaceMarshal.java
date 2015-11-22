@@ -18,7 +18,7 @@ package eg;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.map.Builder;
+import net.openhft.chronicle.set.Builder;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;

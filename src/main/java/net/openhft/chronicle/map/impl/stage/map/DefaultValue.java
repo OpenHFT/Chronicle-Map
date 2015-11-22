@@ -20,6 +20,7 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
+import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
@@ -28,18 +29,13 @@ import org.jetbrains.annotations.NotNull;
 public abstract class DefaultValue<K, V> implements MapAbsentEntry<K, V> {
 
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef VanillaChronicleMapHolder<K, ?, ?, V, ?, ?, ?> mh;
+    @StageRef VanillaChronicleMapHolder<K, V, ?> mh;
+    @StageRef DummyValueZeroData<V> zeroValueData;
 
     @NotNull
     @Override
     public Data<V> defaultValue() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        if (mh.m().constantValueProvider == null) {
-            throw new IllegalStateException("to call acquireUsing(), " +
-                    "or defaultValue() on AbsentEntry, you should configure " +
-                    "ChronicleMapBuilder.defaultValue(), or use one of the 'known' value types: " +
-                    "boxed primitives, or so-called data-value-generated interface as a value");
-        }
-        return context().wrapValueAsData(mh.m().constantValueProvider.defaultValue());
+        return zeroValueData;
     }
 }

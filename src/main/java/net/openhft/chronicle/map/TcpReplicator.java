@@ -16,16 +16,15 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.algo.bitset.ConcurrentFlatBitSetFrame;
+import net.openhft.chronicle.algo.bitset.ReusableBitSet;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.replication.ConnectionListener;
 import net.openhft.chronicle.hash.replication.RemoteNodeValidator;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.ThrottlingConfig;
-import net.openhft.lang.collection.ATSDirectBitSet;
-import net.openhft.lang.collection.DirectBitSet;
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.DirectStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -37,7 +36,9 @@ import java.net.*;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.CharBuffer;
 import java.nio.channels.*;
+import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.Set;
@@ -46,8 +47,9 @@ import java.util.concurrent.TimeUnit;
 
 import static java.nio.channels.SelectionKey.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static net.openhft.chronicle.algo.MemoryUnit.*;
+import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
 import static net.openhft.chronicle.hash.impl.util.BuildVersion.version;
-import static net.openhft.lang.MemoryUnit.*;
 
 interface Work {
 
@@ -564,7 +566,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
         return true;
     }
 
-    private void checkVersions(final Attached<K, V> attached) {
+    private void checkVersions(final Attached attached) {
 
         final String localVersion = BuildVersion.version();
         final String remoteVersion = attached.serverVersion;
@@ -876,7 +878,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
     private static class KeyInterestUpdater {
 
         @NotNull
-        private final DirectBitSet changeOfOpWriteRequired;
+        private final net.openhft.chronicle.algo.bitset.BitSet changeOfOpWriteRequired;
         @NotNull
         private final SelectionKey[] selectionKeys;
         private final int op;
@@ -884,8 +886,11 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
         KeyInterestUpdater(int op, @NotNull final SelectionKey[] selectionKeys) {
             this.op = op;
             this.selectionKeys = selectionKeys;
-            long bitSetSize = LONGS.align(BYTES.alignAndConvert(selectionKeys.length, BITS), BYTES);
-            changeOfOpWriteRequired = new ATSDirectBitSet(DirectStore.allocate(bitSetSize).bytes());
+            int bitSetSizeInBytes =
+                    (int) LONGS.align(BYTES.alignAndConvert(selectionKeys.length, BITS), BYTES);
+            ConcurrentFlatBitSetFrame frame = new ConcurrentFlatBitSetFrame(selectionKeys.length);
+            changeOfOpWriteRequired = new ReusableBitSet(frame, checkedBytesStoreAccess(),
+                    BytesStore.wrap(new byte[bitSetSizeInBytes]), 0);
         }
 
         public void applyUpdates() {
@@ -1055,7 +1060,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
     /**
      * Attached to the NIO selection key via methods such as {@link SelectionKey#attach(Object)}
      */
-    class Attached<K, V> implements Replica.ModificationNotifier {
+    class Attached implements Replica.ModificationNotifier {
 
         public TcpSocketChannelEntryReader entryReader;
         public TcpSocketChannelEntryWriter entryWriter;
@@ -1092,7 +1097,6 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
      */
     public class TcpSocketChannelEntryWriter {
 
-
         @NotNull
         private final EntryCallback entryCallback;
         // if uncompletedWork is set ( not null ) , this must be completed before any further work
@@ -1119,41 +1123,15 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
          * @param localIdentifier the current nodes identifier
          */
         void identifierToBuffer(final byte localIdentifier) {
-            in().writeByte(localIdentifier);
+            entryIn().writeByte(localIdentifier);
         }
 
-        public void ensureBufferSize(long size) {
-            if (in().remaining() < size) {
-                size += entryCallback.in().position();
-                if (size > Integer.MAX_VALUE)
-                    throw new UnsupportedOperationException();
-                entryCallback.resizeBuffer((int) size);
-            }
+        public Bytes entryIn() {
+            return entryCallback.entryIn();
         }
 
-        void resizeToMessage(@NotNull IllegalStateException e) {
-
-            String message = e.getMessage();
-            if (message.startsWith("java.io.IOException: Not enough available space for writing ")) {
-                String substring = message.substring("java.io.IOException: Not enough available space for writing ".length(), message.length());
-                int i = substring.indexOf(' ');
-                if (i != -1) {
-                    int size = Integer.parseInt(substring.substring(0, i));
-
-                    long requiresExtra = size - in().remaining();
-                    ensureBufferSize((int) (in().capacity() + requiresExtra));
-                } else
-                    throw e;
-            } else
-                throw e;
-        }
-
-        public Bytes in() {
-            return entryCallback.in();
-        }
-
-        private ByteBuffer out() {
-            return entryCallback.out();
+        private ByteBuffer socketOut() {
+            return entryCallback.socketOut();
         }
 
         /**
@@ -1162,11 +1140,15 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
          * @param timeStampOfLastMessage the last timestamp we received a message from that node
          */
         void writeRemoteBootstrapTimestamp(final long timeStampOfLastMessage) {
-            in().writeLong(timeStampOfLastMessage);
+            entryIn().writeLong(timeStampOfLastMessage);
         }
 
         void writeServerVersion() {
-            in().write(String.format("%1$" + 64 + "s", version()).toCharArray());
+            String version = String.format("%1$" + 64 + "s", version());
+            ByteBuffer codedVersion = StandardCharsets.US_ASCII.encode(version);
+            if (codedVersion.remaining() != 64)
+                throw new AssertionError();
+            entryIn().write(codedVersion);
         }
 
         /**
@@ -1181,7 +1163,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
             try {
                 for (; ; entriesWritten++) {
 
-                    long start = in().position();
+                    long start = entryIn().writePosition();
 
                     boolean success = modificationIterator.nextEntry(entryCallback, 0);
 
@@ -1192,15 +1174,15 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                     if (!success)
                         return;
 
-                    long entrySize = in().position() - start;
+                    long entrySize = entryIn().writePosition() - start;
 
                     if (entrySize > largestEntrySoFar)
                         largestEntrySoFar = entrySize;
 
                     // we've filled up the buffer lets give another channel a chance to send
                     // some data
-                    if (in().remaining() <= largestEntrySoFar || in().position() >
-                            replicationConfig.tcpBufferSize())
+                    if (entryIn().writeRemaining() <= largestEntrySoFar ||
+                            entryIn().writePosition() > replicationConfig.tcpBufferSize())
                         return;
 
                     // if we have space in the buffer to write more data and we just wrote data
@@ -1222,35 +1204,34 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
         private int writeBufferToSocket(@NotNull final SocketChannel socketChannel,
                                         final long approxTime) throws IOException {
 
-            final Bytes in = in();
-            final ByteBuffer out = out();
+            final Bytes in = entryIn();
+            final ByteBuffer out = socketOut();
 
-            if (in.position() == 0)
+            int bytesToWrite = (int) in.readRemaining();
+            if (bytesToWrite == 0)
                 return 0;
 
             // if we still have some unwritten writer from last time
             lastSentTime = approxTime;
-            assert in.position() <= Integer.MAX_VALUE;
-            int size = (int) in.position();
 
-            out.limit(size);
+            out.position(0);
+            out.limit(bytesToWrite);
 
-            final int len = socketChannel.write(out);
+            final int bytesWritten = socketChannel.write(out);
 
             if (LOG.isDebugEnabled())
-                LOG.debug("bytes-written=" + len);
+                LOG.debug("bytes-written=" + bytesWritten);
 
-            if (len == size) {
+            if (bytesWritten == bytesToWrite) {
                 out.clear();
                 in.clear();
             } else {
                 out.compact();
-                in.position(out.position());
-                in.limit(in.capacity());
+                in.writePosition(out.position());
                 out.clear();
             }
 
-            return len;
+            return bytesWritten;
         }
 
 
@@ -1260,23 +1241,22 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
          */
         private void writeHeartbeatToBuffer() {
             // denotes the state - 0 for a heartbeat
-            in().writeByte(HEARTBEAT);
+            entryIn().writeByte(HEARTBEAT);
 
             // denotes the size in bytes
-            in().writeInt(0);
+            entryIn().writeInt(0);
         }
 
         private void writeRemoteHeartbeatInterval(long localHeartbeatInterval) {
-            in().writeLong(localHeartbeatInterval);
+            entryIn().writeLong(localHeartbeatInterval);
         }
 
-
         public boolean doWork() {
-            return uncompletedWork != null && uncompletedWork.doWork(in());
+            return uncompletedWork != null && uncompletedWork.doWork(entryIn());
         }
 
         public boolean hasBytesToWrite() {
-            return in().position() > 0;
+            return entryIn().readRemaining() > 0;
         }
     }
 
@@ -1287,46 +1267,43 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
         public static final int HEADROOM = 1024;
         public static final int SIZE_OF_BOOTSTRAP_TIMESTAMP = 8;
         public long lastHeartBeatReceived = System.currentTimeMillis();
-        ByteBuffer in;
-        ByteBufferBytes out;
+        ByteBuffer socketIn;
+        Bytes entryOut;
         private long sizeInBytes;
         private byte state;
 
         private TcpSocketChannelEntryReader() {
-            in = ByteBuffer.allocateDirect(replicationConfig.tcpBufferSize());
-            out = new ByteBufferBytes(in.slice());
-            out.limit(0);
-            in.clear();
+            socketIn = ByteBuffer.allocateDirect(replicationConfig.tcpBufferSize());
+            // TODO why here (and in UDP) bytes created through slice?
+            entryOut = Bytes.wrapForRead(socketIn.slice());
+            entryOut.readLimit(0);
+            socketIn.clear();
         }
 
         void resizeBuffer(long size) {
             assert size < Integer.MAX_VALUE;
 
-            if (size < in.capacity())
+            if (size < socketIn.capacity())
                 throw new IllegalStateException("it not possible to resize the buffer smaller");
 
             final ByteBuffer buffer = ByteBuffer.allocateDirect((int) size)
                     .order(ByteOrder.nativeOrder());
 
-            final int inPosition = in.position();
+            final int inPosition = socketIn.position();
 
-            long outPosition = out.position();
-            long outLimit = out.limit();
+            long outPosition = entryOut.readPosition();
+            long outLimit = entryOut.readLimit();
 
-            out = new ByteBufferBytes(buffer.slice());
+            entryOut = Bytes.wrapForRead(buffer.slice());
 
-            // TODO why copy byte by byte?!
-            in.position(0);
-            for (int i = 0; i < inPosition; i++) {
-                buffer.put(in.get());
-            }
+            socketIn.flip();
+            buffer.put(socketIn);
+            buffer.clear();
+            buffer.position(inPosition);
+            socketIn = buffer;
 
-            in = buffer;
-            in.limit(in.capacity());
-            in.position(inPosition);
-
-            out.limit(outLimit);
-            out.position(outPosition);
+            entryOut.readLimit(outLimit);
+            entryOut.readPosition(outPosition);
         }
 
         /**
@@ -1340,32 +1317,28 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                 throws IOException {
 
             compactBuffer();
-            final int len = socketChannel.read(in);
-            out.limit(in.position());
-            return len;
+            final int bytesRead = socketChannel.read(socketIn);
+            entryOut.readLimit(socketIn.position());
+            return bytesRead;
         }
 
         /**
          * reads entries from the buffer till empty
-         *
-         * @param attached
-         * @param key
-         * @throws InterruptedException
          */
         void entriesFromBuffer(@NotNull Attached attached, @NotNull SelectionKey key) {
             int entriesRead = 0;
             try {
                 for (; ; entriesRead++) {
-                    out.limit(in.position());
+                    entryOut.readLimit(socketIn.position());
 
                     // its set to MIN_VALUE when it should be read again
                     if (state == NOT_SET) {
-                        if (out.remaining() < SIZE_OF_SIZE + 1)
+                        if (entryOut.readRemaining() < SIZE_OF_SIZE + 1)
                             return;
 
                         // state is used for heartbeat
-                        state = out.readByte();
-                        sizeInBytes = out.readInt();
+                        state = entryOut.readByte();
+                        sizeInBytes = entryOut.readInt();
 
                         assert sizeInBytes >= 0;
 
@@ -1373,7 +1346,7 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                         // size of the buffer
                         long requiredSize = sizeInBytes + SIZE_OF_SIZE + 1 +
                                 SIZE_OF_BOOTSTRAP_TIMESTAMP;
-                        if (out.capacity() < requiredSize) {
+                        if (entryOut.capacity() < requiredSize) {
                             attached.entryReader.resizeBuffer(requiredSize + HEADROOM);
                         }
 
@@ -1384,21 +1357,21 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
                         }
                     }
 
-                    if (out.remaining() < sizeInBytes) {
+                    if (entryOut.readRemaining() < sizeInBytes) {
                         return;
                     }
 
-                    final long nextEntryPos = out.position() + sizeInBytes;
+                    final long nextEntryPos = entryOut.readPosition() + sizeInBytes;
                     assert nextEntryPos > 0;
-                    final long limit = out.limit();
-                    out.limit(nextEntryPos);
+                    final long limit = entryOut.readLimit();
+                    entryOut.readLimit(nextEntryPos);
 
-                    externalizable.readExternalEntry(out);
+                    externalizable.readExternalEntry(entryOut);
 
-                    out.limit(limit);
+                    entryOut.readLimit(limit);
 
                     // skip onto the next entry
-                    out.position(nextEntryPos);
+                    entryOut.readPosition(nextEntryPos);
 
                     state = NOT_SET;
                     sizeInBytes = 0;
@@ -1410,36 +1383,36 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
         }
 
         /**
-         * compacts the buffer and updates the {@code in} and {@code out} accordingly
+         * compacts the buffer and updates the {@code socketIn} and {@code entryOut} accordingly
          */
         private void compactBuffer() {
             // the maxEntrySizeBytes used here may not be the maximum size of the entry in its
             // serialized form however, its only use as an indication that the buffer is becoming
             // full and should be compacted the buffer can be compacted at any time
-            if (in.position() == 0 || in.remaining() > largestEntrySoFar)
+            if (socketIn.position() == 0 || socketIn.remaining() > largestEntrySoFar)
                 return;
 
-            in.limit(in.position());
-            assert out.position() < Integer.MAX_VALUE;
-            in.position((int) out.position());
+            socketIn.limit(socketIn.position());
+            assert entryOut.readPosition() < Integer.MAX_VALUE;
+            socketIn.position((int) entryOut.readPosition());
 
-            in.compact();
-            out.position(0);
+            socketIn.compact();
+            entryOut.readPosition(0);
         }
 
         /**
          * @return the identifier or -1 if unsuccessful
          */
         byte identifierFromBuffer() {
-            return (out.remaining() >= 1) ? out.readByte() : Byte.MIN_VALUE;
+            return (entryOut.readRemaining() >= 1) ? entryOut.readByte() : Byte.MIN_VALUE;
         }
 
         /**
          * @return the timestamp or -1 if unsuccessful
          */
         long remoteBootstrapTimestamp() {
-            if (out.remaining() >= 8)
-                return out.readLong();
+            if (entryOut.readRemaining() >= 8)
+                return entryOut.readLong();
             else
                 return Long.MIN_VALUE;
         }
@@ -1448,17 +1421,20 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
          * @return the timestamp or -1 if unsuccessful
          */
         String readRemoteServerVersion() {
-            if (out.remaining() >= 64) {
-                char[] chars = new char[64];
-                out.readFully(chars, 0, chars.length);
-                return new String(chars).trim();
+            if (entryOut.readRemaining() >= 64) {
+                ByteBuffer bytes = ByteBuffer.allocate(64);
+                entryOut.read(bytes);
+                if (bytes.flip().remaining() != 64)
+                    throw new AssertionError();
+                CharBuffer version = StandardCharsets.US_ASCII.decode(bytes);
+                return version.toString().trim();
             } else
                 return null;
         }
 
 
         public long readRemoteHeartbeatIntervalFromBuffer() {
-            return (out.remaining() >= 8) ? out.readLong() : Long.MIN_VALUE;
+            return (entryOut.readRemaining() >= 8) ? entryOut.readLong() : Long.MIN_VALUE;
         }
     }
 }

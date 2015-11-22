@@ -16,12 +16,12 @@
 
 package eg;
 
+import net.openhft.chronicle.core.values.ByteValue;
+import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.model.constraints.MaxSize;
-import net.openhft.lang.values.ByteValue;
-import net.openhft.lang.values.LongValue;
+import net.openhft.chronicle.values.Array;
+import net.openhft.chronicle.values.Values;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -32,7 +32,8 @@ public class OffHeapByteArrayExampleTest {
     public static final char EXPECTED = 'b';
 
     interface ByteArray {
-        void setByteValueAt(@MaxSize(7) int index, ByteValue value);
+        @Array(length = 7)
+        void setByteValueAt(int index, ByteValue value);
 
         ByteValue getByteValueAt(int index);
     }
@@ -57,7 +58,7 @@ public class OffHeapByteArrayExampleTest {
     public void test() {
 
         // this objects will be reused
-        ByteValue byteValue = DataValueClasses.newDirectInstance(ByteValue.class);
+        ByteValue byteValue = Values.newHeapInstance(ByteValue.class);
         ByteArray value = chm.newValueInstance();
         LongValue key = chm.newKeyInstance();
 

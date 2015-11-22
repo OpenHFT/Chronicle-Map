@@ -16,8 +16,8 @@
 
 package net.openhft.chronicle.map.impl.stage.input;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.impl.JavaLangBytesReusableBytesStore;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
@@ -30,7 +30,6 @@ import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.query.ReplicatedMapQuery;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
-import net.openhft.lang.io.Bytes;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -40,7 +39,7 @@ import net.openhft.sg.Staged;
 public abstract class ReplicatedInput<K, V, R>
         implements RemoteOperationContext<K>, MapRemoteQueryContext<K, V, R> {
     
-    @StageRef ReplicatedChronicleMapHolder<K, ?, ?, V, ?, ?, R> mh;
+    @StageRef ReplicatedChronicleMapHolder<K, V, R> mh;
     @StageRef ReplicationUpdate<K> ru;
     @StageRef LogHolder lh;
     @StageRef ReplicatedInputKeyBytesData<K> replicatedInputKeyBytesValue;
@@ -57,12 +56,9 @@ public abstract class ReplicatedInput<K, V, R>
     }
 
     public Bytes replicatedInputBytes = null;
-    public final JavaLangBytesReusableBytesStore replicatedInputStore =
-            new JavaLangBytesReusableBytesStore();
 
     public void initReplicatedInputBytes(Bytes replicatedInputBytes) {
         this.replicatedInputBytes = replicatedInputBytes;
-        replicatedInputStore.setBytes(replicatedInputBytes);
     }
 
     // ri for "replication input"
@@ -90,7 +86,7 @@ public abstract class ReplicatedInput<K, V, R>
 
         isDeleted = replicatedInputBytes.readBoolean();
 
-        riKeyOffset = replicatedInputBytes.position();
+        riKeyOffset = replicatedInputBytes.readPosition();
         riValueOffset = riKeyOffset + riKeySize;
     }
 

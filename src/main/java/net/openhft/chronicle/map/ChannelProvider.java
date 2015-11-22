@@ -16,21 +16,23 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.algo.bitset.BitSet;
+import net.openhft.chronicle.algo.bitset.ReusableBitSet;
+import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
+import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.HeapBytesStore;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.UdpTransportConfig;
-import net.openhft.lang.collection.DirectBitSet;
-import net.openhft.lang.collection.SingleThreadedDirectBitSet;
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedTransferQueue;
@@ -78,7 +80,7 @@ public final class ChannelProvider implements Closeable {
                             udpConfig);
             channelProvider.add(udpReplicator);
             if (tcpConfig == null)
-                LOG.warn(Replicators.ONLY_UDP_WARN_MESSAGE);
+                LOG.warn(Replicator.ONLY_UDP_WARN_MESSAGE);
         }
         implMapping.put(hub, channelProvider);
         return channelProvider;
@@ -308,7 +310,7 @@ public final class ChannelProvider implements Closeable {
     private final EntryExternalizable[] channelEntryExternalizables;
     private final AtomicReferenceArray<PayloadProvider> systemModificationIterator =
             new AtomicReferenceArray<PayloadProvider>(128);
-    private final DirectBitSet systemModificationIteratorBitSet =
+    private final BitSet systemModificationIteratorBitSet =
             newBitSet(systemModificationIterator.length());
     private final AtomicReferenceArray<ModificationIterator> modificationIterator =
             new AtomicReferenceArray<ModificationIterator>(128);
@@ -352,9 +354,10 @@ public final class ChannelProvider implements Closeable {
      * @param numberOfBits the number of bits the bit set should include
      * @return a new DirectBitSet backed by a byteBuffer
      */
-    private static DirectBitSet newBitSet(int numberOfBits) {
-        final ByteBufferBytes bytes = new ByteBufferBytes(wrap(new byte[(numberOfBits + 7) / 8]));
-        return new SingleThreadedDirectBitSet(bytes);
+    private static BitSet newBitSet(int numberOfBits) {
+        HeapBytesStore<byte[]> bs = BytesStore.wrap(new byte[(numberOfBits + 7) / 8]);
+        SingleThreadedFlatBitSetFrame frame = new SingleThreadedFlatBitSetFrame(numberOfBits);
+        return new ReusableBitSet(frame, Access.checkedBytesStoreAccess(), bs, 0);
     }
 
     public ChronicleChannel createChannel(int channel) {
@@ -381,13 +384,13 @@ public final class ChannelProvider implements Closeable {
         }
     }
 
-    private static ByteBufferBytes toBootstrapMessage(int chronicleChannel, final long lastModificationTime, final byte localIdentifier) {
-        final ByteBufferBytes writeBuffer = new ByteBufferBytes(ByteBuffer.allocate(1 + 1 + 2 + 8));
+    private static Bytes toBootstrapMessage(
+            int chronicleChannel, final long lastModificationTime, final byte localIdentifier) {
+        final Bytes writeBuffer = Bytes.wrapForWrite(new byte[1 + 1 + 2 + 8]);
         writeBuffer.writeByte(BOOTSTRAP_MESSAGE);
         writeBuffer.writeByte(localIdentifier);
         writeBuffer.writeUnsignedShort(chronicleChannel);
         writeBuffer.writeLong(lastModificationTime);
-        writeBuffer.flip();
         return writeBuffer;
     }
 
@@ -418,7 +421,7 @@ public final class ChannelProvider implements Closeable {
                  i = (int) systemModificationIteratorBitSet.nextSetBit(i + 1)) {
                 byte remoteIdentifier = (byte) i;
                 final long lastModificationTime = replica.lastModificationTime(remoteIdentifier);
-                final ByteBufferBytes message =
+                final Bytes message =
                         toBootstrapMessage(chronicleChannel, lastModificationTime, localIdentifier);
                 systemModificationIterator.get(remoteIdentifier).addPayload(message);
 
@@ -485,7 +488,7 @@ public final class ChannelProvider implements Closeable {
 
                 final PayloadProvider iterator = new PayloadProvider() {
 
-                    final Queue<Bytes> payloads = new LinkedTransferQueue<Bytes>();
+                    final Queue<Bytes> payloads = new LinkedTransferQueue<>();
                     ModificationNotifier modificationNotifier0;
 
                     @Override
@@ -514,7 +517,7 @@ public final class ChannelProvider implements Closeable {
 
                     @Override
                     public void addPayload(Bytes bytes) {
-                        if (bytes.remaining() == 0)
+                        if (bytes.readRemaining() == 0)
                             return;
                         payloads.add(bytes);
                         // notifies that a change has been made, this will nudge the OP_WRITE
@@ -547,7 +550,7 @@ public final class ChannelProvider implements Closeable {
         final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
             @Override
             public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
-                return (int) entry.remaining();
+                return (int) entry.readRemaining();
             }
 
             @Override
@@ -558,7 +561,7 @@ public final class ChannelProvider implements Closeable {
             @Override
             public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
                                            int na, long bootstrapTime) {
-                destination.write(entry, entry.position(), entry.remaining());
+                destination.write(entry, entry.readPosition(), entry.readRemaining());
             }
 
             @Override
@@ -567,11 +570,11 @@ public final class ChannelProvider implements Closeable {
                 messageHandler.onMessage(source);
             }
         };
-        private final DirectBitSet systemModificationIteratorBitSet;
+        private final BitSet systemModificationIteratorBitSet;
         private final AtomicReferenceArray<PayloadProvider> systemModificationIterator;
         private final MessageHandler messageHandler;
 
-        SystemQueue(DirectBitSet systemModificationIteratorBitSet,
+        SystemQueue(BitSet systemModificationIteratorBitSet,
                     AtomicReferenceArray<PayloadProvider> systemModificationIterator,
                     MessageHandler messageHandler) {
             this.systemModificationIteratorBitSet = systemModificationIteratorBitSet;
@@ -580,7 +583,7 @@ public final class ChannelProvider implements Closeable {
         }
     }
 
-    public class ChronicleChannel extends Replicator implements Closeable {
+    public class ChronicleChannel implements Replicator, Closeable {
 
         private final int chronicleChannel;
 
@@ -593,9 +596,9 @@ public final class ChannelProvider implements Closeable {
         }
 
         @Override
-        protected Closeable applyTo(ChronicleMapBuilder builder,
-                                    Replica map, EntryExternalizable entryExternalizable,
-                                    final ReplicatedChronicleMap replicatedMap) {
+        public Closeable applyTo(ChronicleMapBuilder builder,
+                                 Replica map, EntryExternalizable entryExternalizable,
+                                 final ReplicatedChronicleMap replicatedMap) {
             add(chronicleChannel, map, entryExternalizable);
             return this;
         }

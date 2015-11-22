@@ -18,7 +18,7 @@ package net.openhft.chronicle.map.example;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.lang.model.constraints.MaxSize;
+import net.openhft.chronicle.values.Array;
 
 import java.io.File;
 import java.io.IOException;
@@ -99,7 +99,8 @@ public class LotsOfEntriesMain {
 }
 
 interface MyFloats {
-    public void setValueAt(@MaxSize(6) int index, float f);
+    @Array(length = 6)
+    public void setValueAt(int index, float f);
 
     public float getValueAt(int index);
 }

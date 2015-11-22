@@ -16,15 +16,32 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.replication.AbstractReplication;
+import net.openhft.chronicle.hash.replication.UdpTransportConfig;
+
 import java.io.Closeable;
 import java.io.IOException;
 
-abstract class Replicator {
+interface Replicator {
 
-    /**
-     * A constructor for use in subclasses.
-     */
-    protected Replicator() {
+    String ONLY_UDP_WARN_MESSAGE =
+            "MISSING TCP REPLICATION : The UdpReplicator only attempts to read data " +
+                    "(it does not enforce or guarantee delivery), you should use" +
+                    "the UdpReplicator if you have a large number of nodes, and you wish" +
+                    "to receive the data before it becomes available on TCP/IP. Since data" +
+                    "delivery is not guaranteed, it is recommended that you only use" +
+                    "the UDP Replicator in conjunction with a TCP Replicator";
+
+    static Replicator tcp(final AbstractReplication replication) {
+        return (builder, replica, entryExternalizable, replicatedMap) ->
+                new TcpReplicator(replica, entryExternalizable,
+                        replication.tcpTransportAndNetwork(), replication.remoteNodeValidator(),
+                        replication.name(), replication.connectionListener());
+    }
+
+    static Replicator udp(final UdpTransportConfig replicationConfig) {
+        return (builder, map, entryExternalizable, replicatedMap) ->
+                new UdpReplicator(map, entryExternalizable, replicationConfig);
     }
 
     /**
@@ -32,14 +49,12 @@ abstract class Replicator {
      * associated with the replication.  <p>This method isn't intended to be called from the client
      * code.
      *
-     * @param chronicleMap        to wrap.
      * @param builder             the builder from which the map was constructed. The replicator may
      *                            obtain some map configurations, not accessible via the map
      *                            instance.
      * @param map                 a replicated map instance. Provides basic tools for replication
      *                            implementation.
      * @param entryExternalizable the callback for ser/deser implementation in the replicator
-     * @param replicatedMap
      * @return a {@code Closeable} token to control replication resources. It should be closed on
      * closing the replicated map.
      * @throws java.io.IOException   if an io error occurred during the replicator setup
@@ -48,7 +63,8 @@ abstract class Replicator {
      *                               already been applied to a map (or the specified number of
      *                               maps)
      */
-    protected abstract Closeable applyTo(ChronicleMapBuilder builder,
-                                         Replica map, Replica.EntryExternalizable entryExternalizable,
-                                         final ReplicatedChronicleMap replicatedMap) throws IOException;
+     Closeable applyTo(
+             ChronicleMapBuilder builder, Replica map,
+             Replica.EntryExternalizable entryExternalizable, ReplicatedChronicleMap replicatedMap)
+             throws IOException;
 }

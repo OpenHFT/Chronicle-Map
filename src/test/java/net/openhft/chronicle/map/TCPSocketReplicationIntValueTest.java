@@ -16,10 +16,9 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.lang.io.ByteBufferBytes;
-import net.openhft.lang.model.Byteable;
-import net.openhft.lang.model.DataValueClasses;
-import net.openhft.lang.values.IntValue;
+import net.openhft.chronicle.core.values.IntValue;
+import net.openhft.chronicle.set.Builder;
+import net.openhft.chronicle.values.Values;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,11 +26,10 @@ import org.junit.Test;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.Set;
 
-import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
+import static net.openhft.chronicle.set.Builder.newTcpSocketShmBuilder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -50,8 +48,7 @@ public class TCPSocketReplicationIntValueTest {
 
     @Before
     public void setup() throws IOException {
-        value = DataValueClasses.newDirectReference(IntValue.class);
-        ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
+        value = Values.newHeapInstance(IntValue.class);
         map1Builder = newTcpSocketShmBuilder(IntValue.class, CharSequence.class,
                 (byte) 1, s_port, new InetSocketAddress("localhost", s_port + 1))
                 .averageValue("EXAMPLE-1");

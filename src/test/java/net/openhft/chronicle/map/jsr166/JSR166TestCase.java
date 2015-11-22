@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map.jsr166;
 
 import junit.framework.AssertionFailedError;
-import net.openhft.lang.Jvm;
+import net.openhft.chronicle.core.Jvm;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

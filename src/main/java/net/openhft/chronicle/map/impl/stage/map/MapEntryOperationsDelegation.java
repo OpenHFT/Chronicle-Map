@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class MapEntryOperationsDelegation<K, V, R> implements MapContext<K, V, R> {
 
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef VanillaChronicleMapHolder<K, ?, ?, V, ?, ?, R> mh;
+    @StageRef VanillaChronicleMapHolder<K, V, R> mh;
 
 
     @Override

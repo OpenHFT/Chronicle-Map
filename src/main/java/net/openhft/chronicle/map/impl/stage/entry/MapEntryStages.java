@@ -16,6 +16,9 @@
 
 package net.openhft.chronicle.map.impl.stage.entry;
 
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.NativeBytesStore;
+import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.stage.entry.AllocatedChunks;
@@ -30,11 +33,13 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
+import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
+
 @Staged
 public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         implements MapEntry<K, V> {
 
-    @StageRef public VanillaChronicleMapHolder<?, ?, ?, ?, ?, ?, ?> mh;
+    @StageRef public VanillaChronicleMapHolder<?, ?, ?> mh;
     @StageRef public AllocatedChunks allocatedChunks;
     @StageRef KeySearch<K> ks;
 
@@ -51,23 +56,29 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     @Stage("ValueSize") public long valueSize = -1;
     @Stage("ValueSize") public long valueOffset;
 
-    @Stage("ValueSize")
-    private void countValueOffset() {
-        mh.m().alignment.alignPositionAddr(s.segmentBytes);
-        valueOffset = s.segmentBytes.position();
-    }
-
     void initValueSize(long valueSize) {
         this.valueSize = valueSize;
-        s.segmentBytes.position(valueSizeOffset);
-        mh.m().valueSizeMarshaller.writeSize(s.segmentBytes, valueSize);
-        countValueOffset();
+        Bytes segmentBytes = s.segmentBytesForWrite();
+        segmentBytes.writePosition(valueSizeOffset);
+        mh.m().valueSizeMarshaller.writeSize(segmentBytes, valueSize);
+        long currentPosition = segmentBytes.writePosition();
+        long currentAddr = segmentBytes.address(currentPosition);
+        long skip = alignAddr(currentAddr, mh.m().alignment) - currentAddr;
+        if (skip > 0)
+            segmentBytes.writeSkip(skip);
+        valueOffset = segmentBytes.writePosition();
     }
 
     void initValueSize() {
-        s.segmentBytes.position(valueSizeOffset);
-        valueSize = mh.m().readValueSize(s.segmentBytes);
-        countValueOffset();
+        Bytes segmentBytes = s.segmentBytesForRead();
+        segmentBytes.readPosition(valueSizeOffset);
+        valueSize = mh.m().readValueSize(segmentBytes);
+        long currentPosition = segmentBytes.readPosition();
+        long currentAddr = segmentBytes.address(currentPosition);
+        long skip = alignAddr(currentAddr, mh.m().alignment) - currentAddr;
+        if (skip > 0)
+            segmentBytes.readSkip(skip);
+        valueOffset = segmentBytes.readPosition();
     }
 
     void initValueSize_EqualToOld(long oldValueSizeOffset, long oldValueSize, long oldValueOffset) {
@@ -76,12 +87,24 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
     
     public void initValue(Data<?> value) {
-        s.segmentBytes.position(valueSizeOffset);
         initValueSize(value.size());
         writeValue(value);
     }
 
     public void writeValue(Data<?> value) {
+        // In acquireContext(), replaceValue() is called for
+        // 1) executing custom replaceValue() logic, if defined, from configured MapEntryOperations
+        // 2) Update replication status (bits, timestamp)
+        // 3) update entry checksum
+        // but the actual entry replacement is not needed, if the value object is a flyweight over
+        // the off-heap bytes. This condition avoids in-place data copy.
+        // TODO would be nice to reduce scope of this check, i. e. check only when it could be
+        // true, and avoid when it surely false (fresh value put, relocating put etc.)
+        RandomDataInput valueBytes = value.bytes();
+        if (valueBytes instanceof NativeBytesStore &&
+                valueBytes.address(value.offset()) == s.segmentBS.address(valueOffset)) {
+            return;
+        }
         value.writeTo(s.segmentBS, valueOffset);
     }
 
@@ -118,7 +141,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
 
     public long newSizeOfEverythingBeforeValue(Data<V> newValue) {
-        return valueSizeOffset + mh.m().valueSizeMarshaller.sizeEncodingSize(newValue.size()) -
+        return valueSizeOffset + mh.m().valueSizeMarshaller.storingLength(newValue.size()) -
                 keySizeOffset;
     }
     
@@ -129,9 +152,9 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         if (newValueSizeIsDifferent) {
             long newSizeOfEverythingBeforeValue = newSizeOfEverythingBeforeValue(newValue);
             long entryStartOffset = keySizeOffset;
-            VanillaChronicleMap<?, ?, ?, ?, ?, ?, ?> m = mh.m();
-            long newValueOffset = m.alignment.alignAddr(
-                    entryStartOffset + newSizeOfEverythingBeforeValue);
+            VanillaChronicleMap<?, ?, ?> m = mh.m();
+            long newValueOffset =
+                    alignAddr(entryStartOffset + newSizeOfEverythingBeforeValue, mh.m().alignment);
             long newEntrySize = newValueOffset + newValue.size() - entryStartOffset;
             int newSizeInChunks = m.inChunks(newEntrySize);
             newValueDoesNotFit:
@@ -224,17 +247,17 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
 
     public long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
         if (mh.m().constantlySizedEntry) {
-            return mh.m().alignment.alignAddr(sizeOfEverythingBeforeValue + valueSize);
+            return alignAddr(sizeOfEverythingBeforeValue + valueSize, mh.m().alignment);
         } else if (mh.m().couldNotDetermineAlignmentBeforeAllocation) {
             return sizeOfEverythingBeforeValue + mh.m().worstAlignment + valueSize;
         } else {
-            return mh.m().alignment.alignAddr(sizeOfEverythingBeforeValue) + valueSize;
+            return alignAddr(sizeOfEverythingBeforeValue, mh.m().alignment) + valueSize;
         }
     }
 
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-        return mh.m().keySizeMarshaller.sizeEncodingSize(keySize) + keySize +
-                mh.m().valueSizeMarshaller.sizeEncodingSize(valueSize);
+        return mh.m().keySizeMarshaller.storingLength(keySize) + keySize +
+                mh.m().valueSizeMarshaller.storingLength(valueSize);
     }
 
     public final void freeExtraAllocatedChunks() {
