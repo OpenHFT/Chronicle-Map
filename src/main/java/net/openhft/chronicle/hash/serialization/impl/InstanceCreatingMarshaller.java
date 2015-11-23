@@ -21,6 +21,7 @@ import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 
 /**
@@ -29,7 +30,7 @@ import java.lang.reflect.Constructor;
  *
  * @param <T> the type of objects deserialized
  */
-public abstract class InstanceCreatingMarshaller<T> {
+public abstract class InstanceCreatingMarshaller<T> implements Serializable {
 
     /**
      * The class of objects deserialized.

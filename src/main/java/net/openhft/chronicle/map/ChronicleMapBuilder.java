@@ -36,8 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,7 +45,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.lang.Double.isNaN;
 import static java.lang.Math.round;
 import static net.openhft.chronicle.bytes.NativeBytesStore.lazyNativeBytesStoreWithFixedCapacity;
-import static net.openhft.chronicle.core.Maths.*;
+import static net.openhft.chronicle.core.Maths.isPowerOf2;
+import static net.openhft.chronicle.core.Maths.nextPower2;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
 import static net.openhft.chronicle.hash.impl.util.Objects.builderEquals;
 import static net.openhft.chronicle.map.DefaultSpi.mapEntryOperations;
@@ -117,9 +116,6 @@ public final class ChronicleMapBuilder<K, V> implements
             LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
 
     private static final double UNDEFINED_DOUBLE_CONFIG = Double.NaN;
-
-    private static final int XML_SERIALIZATION = 1;
-    private static final int BINARY_SERIALIZATION = 2;
 
     private static boolean isDefined(double config) {
         return !isNaN(config);
@@ -1369,18 +1365,10 @@ public final class ChronicleMapBuilder<K, V> implements
                 try (FileInputStream fis = new FileInputStream(file);
                      ObjectInputStream ois = new ObjectInputStream(fis)) {
                     Object m;
-                    byte serialization = ois.readByte();
-                    if (serialization == XML_SERIALIZATION) {
-                        m = deserializeHeaderViaXStream(ois);
-                    } else if (serialization == BINARY_SERIALIZATION) {
-                        try {
-                            m = ois.readObject();
-                        } catch (ClassNotFoundException e) {
-                            throw new AssertionError(e);
-                        }
-                    } else {
-                        throw new IOException("Unknown map header serialization type: " +
-                                serialization);
+                    try {
+                        m = ois.readObject();
+                    } catch (ClassNotFoundException e) {
+                        throw new AssertionError(e);
                     }
                     @SuppressWarnings("unchecked")
                     VanillaChronicleMap<K, V, ?> map = (VanillaChronicleMap<K, V, ?>) m;
@@ -1421,10 +1409,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
         try (FileOutputStream fos = new FileOutputStream(file);
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            if (!trySerializeHeaderViaXStream(map, oos)) {
-                oos.writeByte(BINARY_SERIALIZATION);
-                oos.writeObject(map);
-            }
+            oos.writeObject(map);
             oos.flush();
             map.initBeforeMapping(fos.getChannel());
             map.createMappedStoreAndSegments(file);
@@ -1447,43 +1432,6 @@ public final class ChronicleMapBuilder<K, V> implements
             }
             if (replication != null)
                 ((ReplicatedChronicleMap) map).initTransientsFromReplication(replication);
-        }
-    }
-
-    private static <K, V> boolean trySerializeHeaderViaXStream(
-            VanillaChronicleMap<K, V, ?> map, ObjectOutputStream oos)
-            throws IOException {
-        Class<?> xStreamClass;
-        try {
-            xStreamClass =
-                    Class.forName("net.openhft.xstream.MapHeaderSerializationXStream");
-        } catch (ClassNotFoundException | NoClassDefFoundError e) {
-            xStreamClass = null;
-        }
-        if (xStreamClass == null) {
-            LOG.info("xStream not found, use binary ChronicleMap header serialization");
-            return false;
-        }
-        try {
-            oos.writeByte(XML_SERIALIZATION);
-            Method toXML = xStreamClass.getMethod("toXML", Object.class, OutputStream.class);
-            toXML.invoke(xStreamClass.newInstance(), map, oos);
-            return true;
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException |
-                InstantiationException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    private static Object deserializeHeaderViaXStream(ObjectInputStream ois) {
-        try {
-            Class<?> xStreamClass =
-                    Class.forName("net.openhft.xstream.MapHeaderSerializationXStream");
-            Method fromXML = xStreamClass.getMethod("fromXML", InputStream.class);
-            return fromXML.invoke(xStreamClass.newInstance(), ois);
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-                IllegalAccessException | InstantiationException e) {
-            throw new AssertionError(e);
         }
     }
 
