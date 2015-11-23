@@ -18,10 +18,7 @@ package net.openhft.chronicle.map;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
-import net.openhft.xstream.converters.ByteBufferConverter;
-import net.openhft.xstream.converters.StringBuilderConverter;
-import net.openhft.xstream.converters.ValueConverter;
-import net.openhft.xstream.converters.VanillaChronicleMapConverter;
+import net.openhft.xstream.converters.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +68,7 @@ class JsonSerializer {
             xstream.registerConverter(new ByteBufferConverter());
             xstream.registerConverter(new ValueConverter());
             xstream.registerConverter(new StringBuilderConverter());
+            xstream.registerConverter(new CharSequenceConverter());
 
             for (Object c : jsonConverters) {
                 if (c instanceof Converter) {
