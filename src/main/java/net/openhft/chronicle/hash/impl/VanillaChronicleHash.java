@@ -19,6 +19,7 @@ package net.openhft.chronicle.hash.impl;
 import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.OS;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -697,9 +699,22 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
+    /**
+     * @see net.openhft.chronicle.bytes.MappedFile#acquireByteStore(long, MappedBytesStoreFactory)
+     */
     private static NativeBytesStore map(
             RandomAccessFile raf, long mapSize, long mappingOffsetInFile) throws IOException {
-        long address = OS.map(raf.getChannel(), READ_WRITE, mappingOffsetInFile, mapSize);
+        long minFileSize = mappingOffsetInFile + mapSize;
+        FileChannel fileChannel = raf.getChannel();
+        if (fileChannel.size() < minFileSize) {
+            // handle a possible race condition between processes.
+            try (FileLock lock = fileChannel.lock()) {
+                if (fileChannel.size() < minFileSize) {
+                    raf.setLength(minFileSize);
+                }
+            }
+        }
+        long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
         OS.Unmapper unmapper = new OS.Unmapper(address, mapSize, DUMMY_REFERENCE_COUNTED);
         return new NativeBytesStore(address, mapSize, unmapper, false);
     }
