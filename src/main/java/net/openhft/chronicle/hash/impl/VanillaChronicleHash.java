@@ -362,7 +362,7 @@ public abstract class VanillaChronicleHash<K,
 
     private void zeroOutFirstSegmentTiers() {
         for (int segmentIndex = 0; segmentIndex < segments(); segmentIndex++) {
-            long segmentOffset = msBytesSegmentOffset(segmentIndex);
+            long segmentOffset = segmentOffset(segmentIndex);
             zeroOutNewlyMappedTier(bs, segmentOffset);
         }
     }
@@ -459,10 +459,10 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public final long segmentBaseAddr(int segmentIndex) {
-        return bsAddress() + msBytesSegmentOffset(segmentIndex);
+        return bsAddress() + segmentOffset(segmentIndex);
     }
 
-    private long msBytesSegmentOffset(long segmentIndex) {
+    private long segmentOffset(long segmentIndex) {
         return segmentsOffset + segmentIndex * segmentSize;
     }
 
@@ -624,7 +624,7 @@ public abstract class VanillaChronicleHash<K,
     public long tierBytesOffset(long tierIndex) {
         long tierIndexMinusOne = tierIndex - 1;
         if (tierIndexMinusOne < actualSegments)
-            return msBytesSegmentOffset(tierIndexMinusOne);
+            return segmentOffset(tierIndexMinusOne);
         long extraTierIndex = tierIndexMinusOne - actualSegments;
         int bulkIndex = (int) (extraTierIndex >> log2TiersInBulk);
         if (bulkIndex >= tierBulkOffsets.size())
