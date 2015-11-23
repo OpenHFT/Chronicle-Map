@@ -32,6 +32,7 @@ public class StringSizedReader implements SizedReader<String>, StatefulCopyable<
     private transient StringBuilder sb;
 
     public StringSizedReader() {
+        initTransients();
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
