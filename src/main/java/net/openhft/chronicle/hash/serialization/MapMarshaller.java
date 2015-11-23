@@ -20,6 +20,8 @@ import net.openhft.chronicle.bytes.Bytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -49,12 +51,15 @@ public class MapMarshaller<K, V>
         implements BytesReader<Map<K, V>>, BytesWriter<Map<K, V>>,
         StatefulCopyable<MapMarshaller<K, V>> {
 
+    // Config fields
     private final BytesReader<K> keyReader;
     private final BytesWriter<? super K> keyWriter;
     private final BytesReader<V> valueReader;
     private final BytesWriter<? super V> valueWriter;
-    private final transient Deque<K> orderedKeys = new ArrayDeque<>();
-    private final transient Deque<V> orderedValues = new ArrayDeque<>();
+
+    // Cache fields
+    private transient Deque<K> orderedKeys;
+    private transient Deque<V> orderedValues;
 
     public MapMarshaller(
             BytesReader<K> keyReader, BytesWriter<? super K> keyWriter,
@@ -63,6 +68,17 @@ public class MapMarshaller<K, V>
         this.keyWriter = keyWriter;
         this.valueReader = valueReader;
         this.valueWriter = valueWriter;
+        initTransients();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        initTransients();
+    }
+
+    private void initTransients() {
+        orderedKeys = new ArrayDeque<>();
+        orderedValues = new ArrayDeque<>();
     }
 
     @NotNull

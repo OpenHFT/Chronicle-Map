@@ -20,6 +20,8 @@ import net.openhft.chronicle.bytes.Bytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.*;
 
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
@@ -56,13 +58,26 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
 public class SetMarshaller<T>
         implements BytesReader<Set<T>>, BytesWriter<Set<T>>, StatefulCopyable<SetMarshaller<T>> {
 
+    // Config fields
     private final BytesReader<T> elementReader;
     private final BytesWriter<? super T> elementWriter;
-    private final transient Deque<T> orderedElements = new ArrayDeque<>();
+
+    /** Cache field */
+    private transient Deque<T> orderedElements;
 
     public SetMarshaller(BytesReader<T> elementReader, BytesWriter<? super T> elementWriter) {
         this.elementReader = elementReader;
         this.elementWriter = elementWriter;
+        initTransients();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        initTransients();
+    }
+
+    private void initTransients() {
+        orderedElements = new ArrayDeque<>();
     }
 
     @NotNull

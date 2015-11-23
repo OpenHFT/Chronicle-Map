@@ -23,10 +23,27 @@ import net.openhft.chronicle.hash.serialization.StatefulCopyable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
 public class CharSequenceSizedReader
         implements SizedReader<CharSequence>, StatefulCopyable<CharSequenceSizedReader> {
 
-    private final transient StringBuilder sb = new StringBuilder();
+    /** Cache field */
+    private transient StringBuilder sb;
+
+    public CharSequenceSizedReader() {
+        initTransients();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        initTransients();
+    }
+
+    private void initTransients() {
+        sb = new StringBuilder();
+    }
 
     @NotNull
     @Override

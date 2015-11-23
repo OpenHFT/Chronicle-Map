@@ -25,21 +25,39 @@ import net.openhft.chronicle.hash.serialization.SizedReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 
 public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T>
         implements DataAccess<T>, Data<T> {
 
+    // Config fields
     private final SizedReader<T> reader;
     private final BytesWriter<? super T> writer;
+
+    /** Cache field */
+    private transient Bytes bytes;
+
+    /** State field */
     private transient T instance;
-    private final transient Bytes bytes = Bytes.allocateElasticDirect(1);
 
     public ExternalBytesMarshallableDataAccess(
             Class<T> tClass, SizedReader<T> reader, BytesWriter<? super T> writer) {
         super(tClass);
         this.writer = writer;
         this.reader = reader;
+        initTransients();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        initTransients();
+    }
+
+    private void initTransients() {
+        bytes = Bytes.allocateElasticDirect(1);
     }
 
     @Override

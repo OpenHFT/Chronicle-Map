@@ -28,6 +28,7 @@ import java.io.ObjectOutputStream;
 
 public class ExternalizableDataAccess<T extends Externalizable> extends SerializableDataAccess<T> {
 
+    /** Config field */
     protected final Class<T> tClass;
 
     public ExternalizableDataAccess(Class<T> tClass) {

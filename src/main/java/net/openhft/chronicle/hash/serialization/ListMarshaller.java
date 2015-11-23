@@ -57,6 +57,7 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
 public class ListMarshaller<T>
         implements BytesReader<List<T>>, BytesWriter<List<T>>, StatefulCopyable<ListMarshaller<T>> {
 
+    // Config fields
     private final BytesReader<T> elementReader;
     private final BytesWriter<? super T> elementWriter;
 

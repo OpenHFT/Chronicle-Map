@@ -23,6 +23,7 @@ import net.openhft.chronicle.hash.serialization.SizedWriter;
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 
 public class NotReusingSizedMarshallableDataAccess<T> extends SizedMarshallableDataAccess<T> {
+
     public NotReusingSizedMarshallableDataAccess(
             Class<T> tClass, SizedReader<T> sizedReader, SizedWriter<? super T> sizedWriter) {
         super(tClass, sizedReader, sizedWriter);

@@ -20,6 +20,8 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 
 public final class ConstantSizeMarshaller implements SizeMarshaller {
+
+    /** Config field */
     private final long constantSize;
 
     public ConstantSizeMarshaller(long constantSize) {

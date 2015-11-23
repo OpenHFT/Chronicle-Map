@@ -33,15 +33,25 @@ import static net.openhft.chronicle.bytes.NativeBytesStore.nativeStoreWithFixedC
 
 public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T> {
 
+    /** The interface of values serialized. */
     protected final Class<T> valueType;
-    private transient Byteable nativeInstance;
-    private transient Copyable nativeInstanceAsCopyable;
+
+    // Cache fields
     protected transient Class<? extends T> nativeClass;
     protected transient Class<? extends T> heapClass;
+    private transient Byteable nativeInstance;
+    private transient Copyable nativeInstanceAsCopyable;
+
+    /** State field */
     private transient Byteable instance;
 
     public ValueDataAccess(Class<T> valueType) {
         this.valueType = valueType;
+        initTransients();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
         initTransients();
     }
 
@@ -52,11 +62,6 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
         heapClass = Values.heapClassFor(valueType);
         nativeInstance.bytesStore(nativeStoreWithFixedCapacity(nativeInstance.maxSize()),
                 0, nativeInstance.maxSize());
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initTransients();
     }
 
     protected T createInstance() {

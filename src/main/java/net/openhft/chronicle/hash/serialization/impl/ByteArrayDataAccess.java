@@ -24,10 +24,29 @@ import net.openhft.chronicle.hash.serialization.DataAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
 public class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAccess<byte[]> {
 
+    /** Cache field */
+    private transient HeapBytesStore<byte[]> bs;
+
+    /** State field */
     private transient byte[] array;
-    private final transient HeapBytesStore<byte[]> bs = HeapBytesStore.uninitialized();
+
+    public ByteArrayDataAccess() {
+        initTransients();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        initTransients();
+    }
+
+    private void initTransients() {
+        bs = HeapBytesStore.uninitialized();
+    }
 
     @Override
     public RandomDataInput bytes() {

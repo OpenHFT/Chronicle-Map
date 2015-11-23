@@ -24,14 +24,30 @@ import net.openhft.chronicle.hash.serialization.DataAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
 public class BytesMarshallableDataAccess<T extends BytesMarshallable>
         extends InstanceCreatingMarshaller<T> implements DataAccess<T>, Data<T> {
 
-    transient T instance;
-    final transient Bytes bytes = Bytes.allocateElasticDirect(1);
+    /** Cache field */
+    private transient Bytes bytes;
+
+    /** State field */
+    private transient T instance;
 
     public BytesMarshallableDataAccess(Class<T> tClass) {
         super(tClass);
+        initTransients();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        initTransients();
+    }
+
+    private void initTransients() {
+        bytes = Bytes.allocateElasticDirect(1);
     }
 
     @Override

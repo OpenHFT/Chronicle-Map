@@ -24,16 +24,36 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.nio.ch.DirectBuffer;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 
 public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
         implements DataAccess<ByteBuffer> {
 
+    // Cache fields
+    private transient HeapBytesStore heapBytesStore;
+    private transient NativeBytesStore nativeBytesStore;
+    private transient VanillaBytes<Void> bytes;
+
+    // State fields
     private transient ByteBuffer bb;
-    private final transient HeapBytesStore heapBytesStore = HeapBytesStore.uninitialized();
-    private final transient NativeBytesStore nativeBytesStore = NativeBytesStore.uninitialized();
-    final transient VanillaBytes<Void> bytes = VanillaBytes.vanillaBytes();
     private transient BytesStore bytesStore;
+
+    public ByteBufferDataAccess() {
+        initTransients();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        initTransients();
+    }
+
+    private void initTransients() {
+        heapBytesStore = HeapBytesStore.uninitialized();
+        nativeBytesStore = NativeBytesStore.uninitialized();
+        bytes = VanillaBytes.vanillaBytes();
+    }
 
     @Override
     public RandomDataInput bytes() {

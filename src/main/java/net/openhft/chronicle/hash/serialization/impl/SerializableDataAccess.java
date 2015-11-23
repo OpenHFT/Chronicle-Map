@@ -29,10 +29,28 @@ import java.io.*;
 public class SerializableDataAccess<T extends Serializable> extends AbstractData<T>
         implements DataAccess<T> {
 
+    // Cache fields
+    transient Bytes bytes;
+    transient OutputStream out;
+    transient InputStream in;
+
+    /** State field */
     transient T instance;
-    final transient Bytes bytes = Bytes.allocateElasticDirect(1);
-    final transient OutputStream out = bytes.outputStream();
-    final transient InputStream in = bytes.inputStream();
+
+    public SerializableDataAccess() {
+        initTransients();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        initTransients();
+    }
+
+    private void initTransients() {
+        bytes = Bytes.allocateElasticDirect(1);
+        out = bytes.outputStream();
+        in = bytes.inputStream();
+    }
 
     @Override
     public RandomDataInput bytes() {

@@ -32,9 +32,12 @@ import java.io.ObjectInputStream;
 public class ValueReader<T>
         implements SizedReader<T>, BytesReader<T>, StatefulCopyable<ValueReader<T>> {
 
+    /** The interface of values deserialized. */
     protected final Class<T> valueType;
+
+    // Cache fields
     protected transient Class<? extends T> heapClass;
-    private transient Class<? extends T> nativeClass;
+    protected transient Class<? extends T> nativeClass;
     private transient Byteable nativeReference;
 
     public ValueReader(Class<T> valueType) {
@@ -42,15 +45,15 @@ public class ValueReader<T>
         initTransients();
     }
 
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        initTransients();
+    }
+
     private void initTransients() {
         heapClass = Values.heapClassFor(valueType);
         nativeClass = Values.nativeClassFor(valueType);
         nativeReference = (Byteable) Values.newNativeReference(valueType);
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initTransients();
     }
 
     protected T createInstance() {
