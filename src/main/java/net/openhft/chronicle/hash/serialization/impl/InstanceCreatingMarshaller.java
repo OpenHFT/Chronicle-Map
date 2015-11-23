@@ -63,10 +63,11 @@ public abstract class InstanceCreatingMarshaller<T> implements Serializable {
                     tClass + " by default, delegates to \n" +
                     this.getClass().getName() + " which assumes the type has a public no-arg\n" +
                     "constructor. If this is not true, you should either extend the marshaller,\n" +
-                    "overriding createInstance() and copy() (if defined), or write and\n" +
-                    "configure your own marshaller for " + tClass + " type from scratch, and\n" +
-                    "configure for the Chronicle Map via keyMarshaller[s]() or\n" +
-                    "valueMarshaller[s]() methods", e);
+                    "overriding createInstance() and copy() (if defined), and the extending\n" +
+                    "class shouldn't be inner, because such classes couldn't be Serializable\n" +
+                    "that is a requirement for marshaller classes, or write and configure your\n" +
+                    "own marshaller for " + tClass + " type from scratch, and configure for the\n" +
+                    "Chronicle Map via keyMarshaller[s]() or valueMarshaller[s]() methods", e);
         }
     }
 }

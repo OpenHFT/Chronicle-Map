@@ -89,13 +89,8 @@ public class ConstantSizeBySampleTest {
     public void testUnexpectedlyLongConstantExternalizableValues() throws IOException {
         try (  ChronicleMap<Long, ExternalizableData> map =
                 ChronicleMapBuilder.of(Long.class, ExternalizableData.class)
-                        .valueReaderAndDataAccess(new ExternalizableReader<ExternalizableData>(
-                                ExternalizableData.class) {
-                            @Override
-                            protected ExternalizableData createInstance() {
-                                return new ExternalizableData();
-                            }
-                        }, new ExternalizableDataDataAccess())
+                        .valueReaderAndDataAccess(new ExternalizableDataReader(),
+                                new ExternalizableDataDataAccess())
                         .constantValueSizeBySample(new ExternalizableData())
                         .entries(100)
                         .actualSegments(1)
@@ -134,7 +129,7 @@ public class ConstantSizeBySampleTest {
     }
 
     private static class ExternalizableDataDataAccess
-            extends ExternalizableDataAccess<ExternalizableData> {
+            extends ExternalizableDataAccess<ExternalizableData> implements Serializable {
         public ExternalizableDataDataAccess() {
             super(ExternalizableData.class);
         }
@@ -147,6 +142,17 @@ public class ConstantSizeBySampleTest {
         @Override
         public DataAccess<ExternalizableData> copy() {
             return new ExternalizableDataDataAccess();
+        }
+    }
+
+    private static class ExternalizableDataReader extends ExternalizableReader<ExternalizableData> {
+        public ExternalizableDataReader() {
+            super(ExternalizableData.class);
+        }
+
+        @Override
+        protected ExternalizableData createInstance() {
+            return new ExternalizableData();
         }
     }
 }

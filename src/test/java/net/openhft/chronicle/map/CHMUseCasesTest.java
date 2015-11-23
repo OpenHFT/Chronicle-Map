@@ -2638,16 +2638,10 @@ public class CHMUseCasesTest {
 
     @Test
     public void testBytesMarshallable2() throws IOException {
-        BytesMarshallableReader<Data> dataReader = new BytesMarshallableReader<Data>(Data.class) {
-            @Override
-            protected Data createInstance() {
-                return new Data();
-            }
-        };
         ChronicleMapBuilder<Data, Data> builder = ChronicleMapBuilder
                 .of(Data.class, Data.class)
-                .keyReaderAndDataAccess(dataReader, new DataDataAccess())
-                .valueReaderAndDataAccess(dataReader, new DataDataAccess())
+                .keyReaderAndDataAccess(new DataReader(), new DataDataAccess())
+                .valueReaderAndDataAccess(new DataReader(), new DataDataAccess())
                 .actualChunkSize(64)
                 .entries(1000);
         try (ChronicleMap<Data, Data> map = newInstance(builder)) {
@@ -2678,6 +2672,17 @@ public class CHMUseCasesTest {
         @Override
         public DataAccess<Data> copy() {
             return new DataDataAccess();
+        }
+    }
+
+    private static class DataReader extends BytesMarshallableReader<Data> {
+        public DataReader() {
+            super(Data.class);
+        }
+
+        @Override
+        protected Data createInstance() {
+            return new Data();
         }
     }
 }
