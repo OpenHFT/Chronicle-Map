@@ -40,8 +40,9 @@ public class DefaultValueTest {
             defaultValue.add(42);
             ListMarshaller<Integer> valueMarshaller =
                     new ListMarshaller<>(IntegerMarshaller.INSTANCE, IntegerMarshaller.INSTANCE);
-            try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
+            try (ChronicleMap<String, List<Integer>> map = ChronicleMap
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
+                    .entries(1)
                     .valueMarshaller(valueMarshaller)
                     .averageKey("a").averageValue(Arrays.asList(1, 2))
                     .defaultValueProvider(absentEntry ->
@@ -56,9 +57,8 @@ public class DefaultValueTest {
             }
 
             ArrayList<Integer> using = new ArrayList<Integer>();
-            try (ChronicleMap<String, List<Integer>> map = ChronicleMapBuilder
+            try (ChronicleMap<String, List<Integer>> map = ChronicleMap
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
-                    .averageKey("a").averageValue(Arrays.asList(1, 2))
                     .defaultValueProvider(absentEntry ->
                             absentEntry.context().wrapValueAsData(defaultValue))
                     .createPersistedTo(file)) {

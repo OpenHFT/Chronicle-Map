@@ -38,12 +38,12 @@ public class TestReplication {
                 TcpTransportAndNetworkConfig.of(8098, new InetSocketAddress("localhost",
                         8097));
 
-        try (ChronicleMap<Integer, Integer> map2 = ChronicleMapBuilder
-                .of(Integer.class, Integer.class)
+        try (ChronicleMap<Integer, Integer> map2 = ChronicleMap.of(Integer.class, Integer.class)
+                .entries(70000)
                 .replication((byte) 2, tcpConfigServer2)
                 .create();
-             ChronicleMap<Integer, Integer> map1 = ChronicleMapBuilder
-                     .of(Integer.class, Integer.class)
+             ChronicleMap<Integer, Integer> map1 = ChronicleMap.of(Integer.class, Integer.class)
+                     .entries(70000)
                      .replication((byte) 3, tcpConfigServer1)
                      .create()) {
 
@@ -78,15 +78,15 @@ public class TestReplication {
             final File tempFile = File.createTempFile("test", "chron");
 
 
-            server1 = ChronicleMapBuilder.of(String.class, String.class)
+            server1 = ChronicleMap.of(String.class, String.class)
+                    .entries(1)
                     .averageKey("key").averageValue("value")
                     .replication((byte) 1).createPersistedTo(tempFile);
 
             TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(9000);
 
             // user for replication only
-            forServer1Replication = ChronicleMapBuilder.of(String.class, String.class)
-                    .averageKey("key").averageValue("value")
+            forServer1Replication = ChronicleMap.of(String.class, String.class)
                     .replication((byte) 1, serverConfig).createPersistedTo(tempFile);
 
         }
@@ -98,6 +98,7 @@ public class TestReplication {
                     InetSocketAddress("localhost", 9000));
 
             server2 = ChronicleMapBuilder.of(String.class, String.class)
+                    .entries(1)
                     .averageKey("key").averageValue("value")
                     .replication((byte) 2, server2Config).create();
 

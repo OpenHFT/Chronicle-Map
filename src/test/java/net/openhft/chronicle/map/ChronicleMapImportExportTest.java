@@ -129,16 +129,14 @@ public class ChronicleMapImportExportTest {
         File file = new File(TMP + "/chronicle-map-" + System.nanoTime() + ".json");
         file.deleteOnExit();
 
-        try (ChronicleMap<Integer, Double> expected = ChronicleMapBuilder.of(Integer.class, Double
-                .class)
-                .create()) {
+        try (ChronicleMap<Integer, Double> expected = ChronicleMap.of(Integer.class, Double.class)
+                .entries(1).create()) {
             expected.put(1, 1.0);
 
             expected.getAll(file);
 
-            try (ChronicleMap<Integer, Double> actual = ChronicleMapBuilder.of(Integer.class, Double
-                    .class)
-                    .create()) {
+            try (ChronicleMap<Integer, Double> actual = ChronicleMap.of(Integer.class, Double.class)
+                    .entries(1).create()) {
                 actual.putAll(file);
 
                 Assert.assertEquals(expected, actual);

@@ -49,6 +49,7 @@ public class TCPSocketReplication3wayPutReturnsNullTest {
                 .autoReconnectedUponDroppedConnection(true);
 
         return (T) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                .entries(10)
                 .averageValue("EXAMPLE-1")
                 .putReturnsNull(true)
                 .replication(identifier, tcpConfig).create();

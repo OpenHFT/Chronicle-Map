@@ -40,6 +40,7 @@ public class TcpReplicationWithAcquireContextTest {
 
         try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map1 = ChronicleMap
                 .of(CharSequence.class, TestInstrumentVOInterface.class)
+                .entries(1)
                 .averageKey("hello")
                 .replication((byte) 1, config1)
                 .create()) {
@@ -52,6 +53,7 @@ public class TcpReplicationWithAcquireContextTest {
 
             try (ChronicleMap<CharSequence, TestInstrumentVOInterface> map2 =
                          ChronicleMap.of(CharSequence.class, TestInstrumentVOInterface.class)
+                                 .entries(1)
                                  .averageKey("hello")
                                  .replication((byte) 2, config2)
                                  .create()) {

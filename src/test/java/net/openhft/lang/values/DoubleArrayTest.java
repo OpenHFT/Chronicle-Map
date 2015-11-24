@@ -73,7 +73,9 @@ public class DoubleArrayTest {
         DoubleArray b = new DoubleArray(10);
         b.setData(new double[]{5, 6, 7, 8, 9});
 
-        ChronicleMap<Integer, DoubleArray> proxyMap = ChronicleMapBuilder.of(Integer.class, DoubleArray.class)
+        ChronicleMap<Integer, DoubleArray> proxyMap = ChronicleMap
+                .of(Integer.class, DoubleArray.class)
+                .entries(2)
                 .create();
         proxyMap.put(1, a);
         proxyMap.put(2, b);

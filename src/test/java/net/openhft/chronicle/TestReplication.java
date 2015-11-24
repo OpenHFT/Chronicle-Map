@@ -47,12 +47,14 @@ public class TestReplication {
         final ChronicleMap<Integer, Integer> map2 = ChronicleMapBuilder.of(Integer.class,
                 Integer.class)
                 .replication((byte) 2, tcpConfigServer2)
+                .entries(70000)
                 .create();
 
 
         final ChronicleMap<Integer, Integer> map1 = ChronicleMapBuilder.of(Integer.class,
                 Integer.class)
                 .replication((byte) 3, tcpConfigServer1)
+                .entries(70000)
                 .create();
 
 

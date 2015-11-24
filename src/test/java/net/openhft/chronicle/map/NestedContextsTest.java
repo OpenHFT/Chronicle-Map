@@ -37,8 +37,9 @@ public class NestedContextsTest {
         for (int i = 0; i < 5; i++) {
             averageValue.add(i);
         }
-        ChronicleMap<Integer, Set<Integer>> graph = ChronicleMapBuilder
+        ChronicleMap<Integer, Set<Integer>> graph = ChronicleMap
                 .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
+                .entries(10)
                 .averageValue(averageValue)
                 .actualSegments(2)
                 .create();

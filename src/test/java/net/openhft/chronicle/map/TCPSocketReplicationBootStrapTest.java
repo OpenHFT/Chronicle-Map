@@ -98,9 +98,10 @@ public class TCPSocketReplicationBootStrapTest {
                 .heartBeatInterval(1L, TimeUnit.SECONDS)
                 .autoReconnectedUponDroppedConnection(true);
 
-        map1 = (ReplicatedChronicleMap<Integer, CharSequence, ?>)
-                ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .averageValueSize(100)
+        map1 = (ReplicatedChronicleMap<Integer, CharSequence, ?>) ChronicleMap
+                .of(Integer.class, CharSequence.class)
+                .entries(10)
+                .averageValueSize(100)
                 .replication(SingleChronicleHashReplication.builder()
                         .tcpTransportAndNetwork(map1Config)
                         .name("map1")
@@ -115,6 +116,7 @@ public class TCPSocketReplicationBootStrapTest {
         final ReplicatedChronicleMap<Integer, CharSequence, ?> map2a =
                 (ReplicatedChronicleMap<Integer, CharSequence, ?>)
                         ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                                .entries(10)
                                 .averageValueSize(100)
                                 .replication(SingleChronicleHashReplication.builder()
                                         .tcpTransportAndNetwork(map2Config)
@@ -137,7 +139,7 @@ public class TCPSocketReplicationBootStrapTest {
         {
             // restart map 2 but does not connect it to map1
             final ChronicleMap<Integer, CharSequence> map2b = ChronicleMap
-                    .of(Integer.class, CharSequence.class).averageValueSize(100)
+                    .of(Integer.class, CharSequence.class)
                     .replication((byte) 2).createPersistedTo(persistenceFile);
             // add data into it
             map2b.put(11, "ADDED WHEN DISCONNECTED TO MAP1");
@@ -148,7 +150,6 @@ public class TCPSocketReplicationBootStrapTest {
         TcpTransportAndNetworkConfig tcpConfigNewMap2 = TcpTransportAndNetworkConfig.of(8067)
                 .heartBeatInterval(1L, TimeUnit.SECONDS);
         map2 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .averageValueSize(100)
                 .replication(SingleChronicleHashReplication.builder()
                         .tcpTransportAndNetwork(tcpConfigNewMap2)
                         .name("newMap2")

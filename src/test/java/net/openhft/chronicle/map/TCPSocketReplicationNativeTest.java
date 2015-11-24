@@ -49,14 +49,14 @@ public class TCPSocketReplicationNativeTest {
         TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig.of(8076, endpoint)
                 .heartBeatInterval(1L, TimeUnit.SECONDS).autoReconnectedUponDroppedConnection(true);
 
-        map1 = ChronicleMapBuilder.of(Integer.class, LongValue.class)
-                .replication((byte) 1, tcpConfig1).create();
+        map1 = ChronicleMap.of(Integer.class, LongValue.class)
+                .entries(10).replication((byte) 1, tcpConfig1).create();
 
         TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of(8077)
                 .heartBeatInterval(1L, TimeUnit.SECONDS).autoReconnectedUponDroppedConnection(true);
 
-        map2 = ChronicleMapBuilder.of(Integer.class, LongValue.class)
-                .replication((byte) 2, tcpConfig2).create();
+        map2 = ChronicleMap.of(Integer.class, LongValue.class)
+                .entries(10).replication((byte) 2, tcpConfig2).create();
     }
 
     @After

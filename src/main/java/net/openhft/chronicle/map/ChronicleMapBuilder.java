@@ -98,7 +98,6 @@ public final class ChronicleMapBuilder<K, V> implements
         ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>> {
 
     static final byte UDP_REPLICATION_MODIFICATION_ITERATOR_ID = (byte) 127;
-    private static final long DEFAULT_ENTRIES = 1 << 20;
 
     private static final int UNDEFINED_ALIGNMENT_CONFIG = -1;
     private static final int NO_ALIGNMENT = 1;
@@ -731,8 +730,12 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     long entries() {
-        if (entries < 0)
-            return DEFAULT_ENTRIES;
+        if (entries < 0) {
+            throw new IllegalStateException("If in-memory Chronicle Map is created or persisted\n" +
+                    "to a file for the first time (i. e. not accessing existing file),\n" +
+                    "ChronicleMapBuilder.entries() must be configured.\n" +
+                    "See Chronicle Map 3 tutorial and javadocs for more information");
+        }
         return entries;
     }
 

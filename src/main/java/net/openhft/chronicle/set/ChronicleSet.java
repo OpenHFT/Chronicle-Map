@@ -23,4 +23,8 @@ import java.util.Set;
 public interface ChronicleSet<K>
         extends Set<K>, ChronicleHash<K, SetEntry<K>, SetSegmentContext<K, ?>,
         ExternalSetQueryContext<K, ?>> {
+
+    static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
+        return ChronicleSetBuilder.of(keyClass);
+    }
 }

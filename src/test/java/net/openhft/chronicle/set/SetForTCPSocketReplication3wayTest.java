@@ -46,7 +46,8 @@ public class SetForTCPSocketReplication3wayTest {
             final byte identifier,
             final int serverPort,
             final InetSocketAddress... endpoints) throws IOException {
-        return (T) ChronicleSetBuilder.of(Integer.class)
+        return (T) ChronicleSet.of(Integer.class)
+                .entries(10)
                 .replication(identifier, TcpTransportAndNetworkConfig.of(serverPort, asList(endpoints))
                         .heartBeatInterval(1L, SECONDS).autoReconnectedUponDroppedConnection(true))
                 .createPersistedTo(getPersistenceFile());

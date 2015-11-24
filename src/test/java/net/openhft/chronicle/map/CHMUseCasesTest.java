@@ -407,7 +407,8 @@ public class CHMUseCasesTest {
         Arrays.fill(expected, 'X');
 
         ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
-                .of(CharSequence.class, char[].class);
+                .of(CharSequence.class, char[].class)
+                .entries(1);
 
         try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
             map.put("Key", expected);
@@ -423,6 +424,7 @@ public class CHMUseCasesTest {
 
         ChronicleMapBuilder<byte[], byte[][]> builder = ChronicleMapBuilder
                 .of(byte[].class, byte[][].class)
+                .entries(1)
                 .averageKey("Key".getBytes())
                 .averageValue(new byte[][]{"value1".getBytes(), "value2".getBytes()});
 
@@ -441,6 +443,7 @@ public class CHMUseCasesTest {
     public void bondExample() throws IOException, InterruptedException {
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(String.class, BondVOInterface.class)
+                .entries(1)
                 .averageKeySize(10);
 
         try (ChronicleMap<String, BondVOInterface> chm = newInstance(builder)) {
@@ -495,6 +498,7 @@ public class CHMUseCasesTest {
 
         ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
                 .of(CharSequence.class, char[].class)
+                .entries(100)
                 .averageKeySize(10)
                 .averageValueSize(10);
 
@@ -550,7 +554,8 @@ public class CHMUseCasesTest {
 
 
         ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
-                .of(String.class, String.class);
+                .of(String.class, String.class)
+                .entries(1);
 
         try (ChronicleMap<String, String> map = newInstance(builder)) {
             map.put("Hello", "World");
@@ -583,7 +588,8 @@ public class CHMUseCasesTest {
     public void testStringStringMapMutableValue() throws ExecutionException, InterruptedException, IOException {
 
         ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
-                .of(String.class, String.class);
+                .of(String.class, String.class)
+                .entries(1);
 
         try (ChronicleMap<String, String> map = newInstance(builder)) {
             map.put("Hello", "World");
@@ -596,7 +602,8 @@ public class CHMUseCasesTest {
     public void testCharSequenceMixingKeyTypes() throws ExecutionException, InterruptedException, IOException {
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class);
+                .of(CharSequence.class, CharSequence.class)
+                .entries(1);
 
         try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
 
@@ -612,7 +619,8 @@ public class CHMUseCasesTest {
     public void testCharSequenceMixingValueTypes() throws ExecutionException, InterruptedException, IOException {
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class);
+                .of(CharSequence.class, CharSequence.class)
+                .entries(2);
 
         try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
             map.put("Hello", "World");
@@ -635,7 +643,8 @@ public class CHMUseCasesTest {
 
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class);
+                .of(CharSequence.class, CharSequence.class)
+                .entries(10);
 
         try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
             map.put("Hello", "World");
@@ -679,7 +688,8 @@ public class CHMUseCasesTest {
 
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
-                .of(CharSequence.class, CharSequence.class);
+                .of(CharSequence.class, CharSequence.class)
+                .entries(1);
 
         try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
 
@@ -699,7 +709,8 @@ public class CHMUseCasesTest {
     public void testGetUsingWithIntValueNoValue() throws IOException {
 
         ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
-                .of(CharSequence.class, IntValue.class);
+                .of(CharSequence.class, IntValue.class)
+                .entries(1);
 
         try (ChronicleMap<CharSequence, IntValue> map = newInstance(builder)) {
 
@@ -716,7 +727,8 @@ public class CHMUseCasesTest {
     public void testAcquireUsingImmutableUsing() throws IOException {
 
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
-                .of(IntValue.class, CharSequence.class);
+                .of(IntValue.class, CharSequence.class)
+                .entries(1);
 
         try (ChronicleMap<IntValue, CharSequence> map = newInstance(builder)) {
 
@@ -738,7 +750,8 @@ public class CHMUseCasesTest {
     public void testAcquireUsingWithIntValueKeyStringBuilderValue() throws IOException {
 
         ChronicleMapBuilder<IntValue, StringBuilder> builder = ChronicleMapBuilder
-                .of(IntValue.class, StringBuilder.class);
+                .of(IntValue.class, StringBuilder.class)
+                .entries(1);
 
         try (ChronicleMap<IntValue, StringBuilder> map = newInstance(builder)) {
 
@@ -761,7 +774,8 @@ public class CHMUseCasesTest {
     public void testAcquireUsingWithIntValueKey() throws IOException {
 
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
-                .of(IntValue.class, CharSequence.class);
+                .of(IntValue.class, CharSequence.class)
+                .entries(3);
 
         try (ChronicleMap<IntValue, CharSequence> map = newInstance(builder)) {
 
@@ -799,7 +813,8 @@ public class CHMUseCasesTest {
     public void testStringValueStringValueMap() throws IOException {
 
         ChronicleMapBuilder<StringValue, StringValue> builder = ChronicleMapBuilder
-                .of(StringValue.class, StringValue.class);
+                .of(StringValue.class, StringValue.class)
+                .entries(10);
 
         try (ChronicleMap<StringValue, StringValue> map = newInstance(builder)) {
             StringValue key1 = map.newKeyInstance();
@@ -935,7 +950,8 @@ public class CHMUseCasesTest {
             throws ExecutionException, InterruptedException, IOException {
 
         ChronicleMapBuilder<Integer, Integer> builder = ChronicleMapBuilder
-                .of(Integer.class, Integer.class);
+                .of(Integer.class, Integer.class)
+                .entries(10);
 
         try (ChronicleMap<Integer, Integer> map = newInstance(builder)) {
 
@@ -995,7 +1011,8 @@ public class CHMUseCasesTest {
 
 
         ChronicleMapBuilder<Long, Long> builder = ChronicleMapBuilder
-                .of(Long.class, Long.class);
+                .of(Long.class, Long.class)
+                .entries(10);
 
         try (ChronicleMap<Long, Long> map = newInstance(builder)) {
 //            assertEquals(16, entrySize(map));
@@ -1035,7 +1052,8 @@ public class CHMUseCasesTest {
 
 
         ChronicleMapBuilder<Double, Double> builder = ChronicleMapBuilder
-                .of(Double.class, Double.class);
+                .of(Double.class, Double.class)
+                .entries(10);
 
         try (ChronicleMap<Double, Double> map = newInstance(builder)) {
 
@@ -1321,7 +1339,8 @@ public class CHMUseCasesTest {
     public void testIntValueIntValueMap() throws IOException {
 
         ChronicleMapBuilder<IntValue, IntValue> builder = ChronicleMapBuilder
-                .of(IntValue.class, IntValue.class);
+                .of(IntValue.class, IntValue.class)
+                .entries(10);
 
         try (ChronicleMap<IntValue, IntValue> map = newInstance(builder)) {
             // this may change due to alignment
@@ -1431,7 +1450,8 @@ public class CHMUseCasesTest {
     public void testUnsignedIntValueUnsignedIntValueMap() throws IOException {
 
         ChronicleMapBuilder<UnsignedIntValue, UnsignedIntValue> builder = ChronicleMapBuilder
-                .of(UnsignedIntValue.class, UnsignedIntValue.class);
+                .of(UnsignedIntValue.class, UnsignedIntValue.class)
+                .entries(10);
 
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = newInstance(builder)) {
 
@@ -1547,7 +1567,8 @@ public class CHMUseCasesTest {
     public void testIntValueShortValueMap() throws IOException {
 
         ChronicleMapBuilder<IntValue, ShortValue> builder = ChronicleMapBuilder
-                .of(IntValue.class, ShortValue.class);
+                .of(IntValue.class, ShortValue.class)
+                .entries(10);
 
         try (ChronicleMap<IntValue, ShortValue> map = newInstance(builder)) {
 
@@ -1659,7 +1680,8 @@ public class CHMUseCasesTest {
     public void testIntValueUnsignedShortValueMap() throws IOException {
 
         ChronicleMapBuilder<IntValue, UnsignedShortValue> builder = ChronicleMapBuilder
-                .of(IntValue.class, UnsignedShortValue.class);
+                .of(IntValue.class, UnsignedShortValue.class)
+                .entries(10);
 
         try (ChronicleMap<IntValue, UnsignedShortValue> map = newInstance(builder)) {
 
@@ -1763,7 +1785,8 @@ public class CHMUseCasesTest {
     public void testIntValueCharValueMap() throws IOException {
 
         ChronicleMapBuilder<IntValue, CharValue> builder = ChronicleMapBuilder
-                .of(IntValue.class, CharValue.class);
+                .of(IntValue.class, CharValue.class)
+                .entries(10);
 
         try (ChronicleMap<IntValue, CharValue> map = newInstance(builder)) {
 
@@ -1868,7 +1891,8 @@ public class CHMUseCasesTest {
     public void testIntValueUnsignedByteMap() throws IOException {
 
         ChronicleMapBuilder<IntValue, UnsignedByteValue> builder = ChronicleMapBuilder
-                .of(IntValue.class, UnsignedByteValue.class);
+                .of(IntValue.class, UnsignedByteValue.class)
+                .entries(10);
 
         try (ChronicleMap<IntValue, UnsignedByteValue> map = newInstance(builder)) {
 
@@ -1974,7 +1998,8 @@ public class CHMUseCasesTest {
     public void testIntValueBooleanValueMap() throws IOException {
 
         ChronicleMapBuilder<IntValue, BooleanValue> builder = ChronicleMapBuilder
-                .of(IntValue.class, BooleanValue.class);
+                .of(IntValue.class, BooleanValue.class)
+                .entries(10);
 
         try (ChronicleMap<IntValue, BooleanValue> map = newInstance(builder)) {
 
@@ -2077,7 +2102,8 @@ public class CHMUseCasesTest {
     public void testFloatValueFloatValueMap() throws IOException {
 
         ChronicleMapBuilder<FloatValue, FloatValue> builder = ChronicleMapBuilder
-                .of(FloatValue.class, FloatValue.class);
+                .of(FloatValue.class, FloatValue.class)
+                .entries(10);
 
         try (ChronicleMap<FloatValue, FloatValue> map = newInstance(builder)) {
 
@@ -2180,7 +2206,8 @@ public class CHMUseCasesTest {
     public void testDoubleValueDoubleValueMap() throws IOException {
 
         ChronicleMapBuilder<DoubleValue, DoubleValue> builder = ChronicleMapBuilder
-                .of(DoubleValue.class, DoubleValue.class);
+                .of(DoubleValue.class, DoubleValue.class)
+                .entries(10);
 
         try (ChronicleMap<DoubleValue, DoubleValue> map = newInstance(builder)) {
 
@@ -2287,7 +2314,8 @@ public class CHMUseCasesTest {
     public void testLongValueLongValueMap() throws IOException {
 
         ChronicleMapBuilder<LongValue, LongValue> builder = ChronicleMapBuilder
-                .of(LongValue.class, LongValue.class);
+                .of(LongValue.class, LongValue.class)
+                .entries(10);
 
         try (ChronicleMap<LongValue, LongValue> map = newInstance(builder)) {
 
@@ -2384,13 +2412,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    /**
-     * For beans, the key can be on heap or off heap as long as the bean is not variable length.
-     */
-    @Test
-    public void testBeanBeanMap() {
-    }
-
     @Test
     public void testListValue() throws IOException {
 
@@ -2398,6 +2419,7 @@ public class CHMUseCasesTest {
                 new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
         ChronicleMapBuilder<String, List<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<List<String>>) (Class) List.class)
+                .entries(2)
                 .valueMarshaller(valueMarshaller);
 
 
@@ -2445,6 +2467,7 @@ public class CHMUseCasesTest {
                 new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
         ChronicleMapBuilder<String, Set<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)
+                .entries(10)
                 .valueMarshaller(valueMarshaller);
 
 
@@ -2493,6 +2516,7 @@ public class CHMUseCasesTest {
                 new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
         ChronicleMapBuilder<String, Map<String, String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, String>>) (Class) Map.class)
+                .entries(2)
                 .valueMarshaller(valueMarshaller);
 
 
@@ -2535,6 +2559,7 @@ public class CHMUseCasesTest {
                 IntegerMarshaller.INSTANCE, IntegerMarshaller.INSTANCE);
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
+                .entries(10)
                 .valueMarshaller(valueMarshaller);
 
         try (ChronicleMap<String, Map<String, Integer>> map = newInstance(builder)) {
@@ -2571,7 +2596,8 @@ public class CHMUseCasesTest {
     @Test
     public void testMapStringIntegerValueWithoutListMarshallers() throws IOException {
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
-                .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class);
+                .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
+                .entries(2);
         try (ChronicleMap<String, Map<String, Integer>> map = newInstance(builder)) {
             map.put("1", Collections.<String, Integer>emptyMap());
             map.put("2", mapOf("two", 2));

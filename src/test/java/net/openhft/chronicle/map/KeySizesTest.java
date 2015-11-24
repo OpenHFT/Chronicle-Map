@@ -32,7 +32,7 @@ public class KeySizesTest {
     public void testDifferentKeySizes() throws IOException {
 
         Map<String, String> map = ChronicleMap.of(String.class, String.class)
-                .averageKeySize(100).averageValueSize(100).create();
+                .entries(100).averageKeySize(100).averageValueSize(100).create();
 
         String k = "";
         for (int i = 0; i < 100; i++) {

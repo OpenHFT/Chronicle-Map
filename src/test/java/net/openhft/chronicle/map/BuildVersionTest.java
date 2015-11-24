@@ -44,9 +44,8 @@ public class BuildVersionTest {
     @Test
     public void testVersion() throws IOException, InterruptedException {
 
-        try (ChronicleMap<Integer, Double> expected = ChronicleMapBuilder.of(Integer.class, Double
-                .class)
-                .create()) {
+        try (ChronicleMap<Integer, Double> expected = ChronicleMap.of(Integer.class, Double.class)
+                .entries(1).create()) {
             expected.put(1, 1.0);
 
             String version = ((VanillaChronicleMap) expected).persistedDataVersion();

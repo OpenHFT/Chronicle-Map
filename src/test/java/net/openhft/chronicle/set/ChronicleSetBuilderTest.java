@@ -24,7 +24,7 @@ public class ChronicleSetBuilderTest {
     @Test
     public void test() {
 
-        try (ChronicleSet<Integer> integers = ChronicleSetBuilder.of(Integer.class).create()) {
+        try (ChronicleSet<Integer> integers = ChronicleSet.of(Integer.class).entries(10).create()) {
             for (int i = 0; i < 10; i++) {
                 integers.add(i);
             }

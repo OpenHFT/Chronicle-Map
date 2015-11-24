@@ -54,8 +54,8 @@ public class KeyValueInstanceTest {
 
     @Test
     public void testNewKeyValueInstanceWithHahMapType() {
-        try (ChronicleMap map = ChronicleMapBuilder
-                .of(HashMap.class, HashMap.class)
+        try (ChronicleMap map = ChronicleMap.of(HashMap.class, HashMap.class)
+                .entries(1)
                 .averageKey(new HashMap()).averageValue(new HashMap())
                 .create()) {
 
@@ -82,8 +82,8 @@ public class KeyValueInstanceTest {
 
     @Test
     public void testNewKeyValueInstanceWithListType() {
-        try (ChronicleMap map = ChronicleMapBuilder
-                .of(HashMap.class, IBean.class)
+        try (ChronicleMap map = ChronicleMap.of(HashMap.class, IBean.class)
+                .entries(1)
                 .averageKey(new HashMap())
                 .create()) {
 
