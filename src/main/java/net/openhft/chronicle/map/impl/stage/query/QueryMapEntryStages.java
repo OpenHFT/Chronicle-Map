@@ -42,7 +42,7 @@ public abstract class QueryMapEntryStages<K, V> extends MapEntryStages<K, V> {
             newSizeOfEverythingBeforeValue = newSizeOfEverythingBeforeValue(newValue);
             long newValueOffset =
                     alignAddr(entryStartOffset + newSizeOfEverythingBeforeValue, mh.m().alignment);
-            long newEntrySize = newValueOffset + newValue.size() - entryStartOffset;
+            long newEntrySize = newEntrySize(newValue, entryStartOffset, newValueOffset);
             newSizeInChunks = mh.m().inChunks(newEntrySize);
         } else {
             newSizeInChunks = entrySizeInChunks;

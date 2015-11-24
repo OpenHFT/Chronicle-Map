@@ -155,7 +155,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
             VanillaChronicleMap<?, ?, ?> m = mh.m();
             long newValueOffset =
                     alignAddr(entryStartOffset + newSizeOfEverythingBeforeValue, mh.m().alignment);
-            long newEntrySize = newValueOffset + newValue.size() - entryStartOffset;
+            long newEntrySize = newEntrySize(newValue, entryStartOffset, newValueOffset);
             int newSizeInChunks = m.inChunks(newEntrySize);
             newValueDoesNotFit:
             if (newSizeInChunks > entrySizeInChunks) {
@@ -209,8 +209,15 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         }
     }
 
+    public long newEntrySize(Data<V> newValue, long entryStartOffset, long newValueOffset) {
+        return checksumStrategy.extraEntryBytes() +
+                newValueOffset + newValue.size() - entryStartOffset;
+    }
+
     protected void relocation(Data<V> newValue, long newSizeOfEverythingBeforeValue) {
         s.innerWriteLock.lock();
+        // TODO free bits only after another range is allocated, to ensure they doesn't overlap,
+        // because overlapping copy is dangerous, platform dependent
         s.free(pos, entrySizeInChunks);
         long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
         // need to copy, because in initEntryAndKeyCopying(), in alloc(), nextTier() called ->
@@ -246,13 +253,17 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
 
     public long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
+        long sizeWithoutChecksum;
         if (mh.m().constantlySizedEntry) {
-            return alignAddr(sizeOfEverythingBeforeValue + valueSize, mh.m().alignment);
+            sizeWithoutChecksum =
+                    alignAddr(sizeOfEverythingBeforeValue + valueSize, mh.m().alignment);
         } else if (mh.m().couldNotDetermineAlignmentBeforeAllocation) {
-            return sizeOfEverythingBeforeValue + mh.m().worstAlignment + valueSize;
+            sizeWithoutChecksum = sizeOfEverythingBeforeValue + mh.m().worstAlignment + valueSize;
         } else {
-            return alignAddr(sizeOfEverythingBeforeValue, mh.m().alignment) + valueSize;
+            sizeWithoutChecksum =
+                    alignAddr(sizeOfEverythingBeforeValue, mh.m().alignment) + valueSize;
         }
+        return sizeWithoutChecksum + checksumStrategy.extraEntryBytes();
     }
 
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
