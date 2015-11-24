@@ -272,7 +272,8 @@ public final class ChronicleMapBuilder<K, V> implements
      */
     @Override
     public ChronicleMapBuilder<K, V> averageKeySize(double averageKeySize) {
-        checkSizeIsNotStaticallyKnown(keyBuilder);
+        if (keyBuilder.sizeIsStaticallyKnown)
+            return this;
         checkAverageSize(averageKeySize, "key");
         this.averageKeySize = averageKeySize;
         averageKey = null;
@@ -293,7 +294,9 @@ public final class ChronicleMapBuilder<K, V> implements
      */
     @Override
     public ChronicleMapBuilder<K, V> averageKey(K averageKey) {
-        checkSizeIsNotStaticallyKnown(keyBuilder);
+        Objects.requireNonNull(averageKey);
+        if (keyBuilder.sizeIsStaticallyKnown)
+            return this;
         this.averageKey = averageKey;
         sampleKey = null;
         averageKeySize = UNDEFINED_DOUBLE_CONFIG;
@@ -357,7 +360,8 @@ public final class ChronicleMapBuilder<K, V> implements
      * @see #actualChunkSize(int)
      */
     public ChronicleMapBuilder<K, V> averageValueSize(double averageValueSize) {
-        checkSizeIsNotStaticallyKnown(valueBuilder);
+        if (valueBuilder.sizeIsStaticallyKnown)
+            return this;
         checkAverageSize(averageValueSize, "value");
         this.averageValueSize = averageValueSize;
         averageValue = null;
@@ -399,7 +403,8 @@ public final class ChronicleMapBuilder<K, V> implements
      */
     public ChronicleMapBuilder<K, V> averageValue(V averageValue) {
         Objects.requireNonNull(averageValue);
-        checkSizeIsNotStaticallyKnown(valueBuilder);
+        if (valueBuilder.sizeIsStaticallyKnown)
+            return this;
         this.averageValue = averageValue;
         sampleValue = null;
         averageValueSize = UNDEFINED_DOUBLE_CONFIG;
@@ -412,12 +417,6 @@ public final class ChronicleMapBuilder<K, V> implements
             throw new IllegalArgumentException("Average " + role + " size must be a positive, " +
                     "finite number");
         }
-    }
-
-    private static void checkSizeIsNotStaticallyKnown(SerializationBuilder builder) {
-        if (builder.sizeIsStaticallyKnown)
-            throw new IllegalStateException("Size of type " + builder.tClass +
-                    " is statically known and shouldn't be specified manually");
     }
 
     /**
@@ -1382,9 +1381,6 @@ public final class ChronicleMapBuilder<K, V> implements
                                 "Expected length is " + expectedFileLength);
                     }
                     map.createMappedStoreAndSegments(file);
-                    // This is needed to property initialize key and value serialization builders,
-                    // which are later used in replication
-                    preMapConstruction();
                     establishReplication(map, singleHashReplication, channel);
                     fis.getChannel().force(true);
                     // TODO according to Self Boostrapping Data spec, should write "init complete"

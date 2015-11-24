@@ -48,7 +48,6 @@ public class ReplicateProxyMapUpdatedViaSharedMemoryTest {
             TcpTransportAndNetworkConfig serverConfig = TcpTransportAndNetworkConfig.of(7077)
                     .heartBeatInterval(500, TimeUnit.MILLISECONDS);
             replicationMap = ChronicleMapBuilder.of(String.class, String.class)
-                    .averageKey("key").averageValue("value")
                     .entries(1)
                     .replication((byte) 1, serverConfig).createPersistedTo(tempFile);
         }

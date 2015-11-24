@@ -181,7 +181,7 @@ public final class SerializationBuilder<T> implements Cloneable, Serializable {
 
     public long constantSizeBySample(T sampleObject) {
         long constantSize = serializationSize(sampleObject);
-        if (sizeIsStaticallyKnown) {
+        if (constantSizeMarshaller()) {
             long expectedConstantSize = constantSize();
             if (constantSize != expectedConstantSize) {
                 throw new IllegalStateException("Although configuring constant size by sample " +
