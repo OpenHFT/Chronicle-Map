@@ -143,18 +143,6 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     @Override
-    public V newValueInstance() {
-        if (vClass == CharSequence.class || vClass == StringBuilder.class)
-            return (V) new StringBuilder();
-        return newInstance(vClass, false);
-    }
-
-    @Override
-    public K newKeyInstance() {
-        return newInstance(kClass, true);
-    }
-
-    @Override
     public Class<K> keyClass() {
         return kClass;
     }

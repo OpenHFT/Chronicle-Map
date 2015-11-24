@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 
 import net.openhft.chronicle.values.MaxUtf8Length;
+import net.openhft.chronicle.values.Values;
 
 public class LataTest {
 
@@ -42,11 +43,11 @@ public class LataTest {
         ChronicleMap<StringValue, IData> map = builder.create();
         StringValue[] keys = new StringValue[300];
         for (int i = 0; i < keys.length; i++) {
-            keys[i] = map.newKeyInstance();
+            keys[i] = Values.newHeapInstance(StringValue.class);
             keys[i].setValue("" + i);
         }
-        IData value = map.newValueInstance();
-        IData dataValue = map.newValueInstance();
+        IData value = Values.newHeapInstance(IData.class);
+        IData dataValue = Values.newHeapInstance(IData.class);
         for (int index = 0; index < run; index++) {
             currentRun++;
             startTime = System.nanoTime();

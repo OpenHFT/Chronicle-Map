@@ -19,6 +19,7 @@ package net.openhft.chronicle.map.fromdocs;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.ExternalMapQueryContext;
+import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 
 import java.io.File;
@@ -57,7 +58,7 @@ public class OpenJDKAndHashMapExamplesTest {
                 .entries(1000)
                 .createPersistedTo(file);
 
-        BondVOInterface bondVO = chm.newValueInstance();
+        BondVOInterface bondVO = Values.newNativeReference(BondVOInterface.class);
         try (net.openhft.chronicle.core.io.Closeable c =
                      chm.acquireContext("369604103", bondVO)) {
             bondVO.setIssueDate(parseYYYYMMDD("20130915"));
@@ -95,7 +96,7 @@ public class OpenJDKAndHashMapExamplesTest {
             }
         }
 
-        BondVOInterface bond = chm.newValueInstance();
+        BondVOInterface bond = Values.newNativeReference(BondVOInterface.class);
         // lookup the key and give me a reference I can update in a thread safe way.
         try (net.openhft.chronicle.core.io.Closeable c =
                      chm.acquireContext("369604103", bond)) {

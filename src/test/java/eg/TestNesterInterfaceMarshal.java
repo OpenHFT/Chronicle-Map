@@ -21,6 +21,7 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.set.Builder;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.values.Values;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -64,7 +65,8 @@ public class TestNesterInterfaceMarshal {
                                 .entries(5000L).averageKeySize(10)
                                 .replication((byte) 2, tcpTransportAndNetworkConfig1).create()) {
             //Store some data into MAP1
-            TestInstrumentVOInterface intrumentVOInterface = map.newValueInstance();
+            TestInstrumentVOInterface intrumentVOInterface =
+                    Values.newNativeReference(TestInstrumentVOInterface.class);
 
 
             try (Closeable c = map.acquireContext("KEY1", intrumentVOInterface)) {

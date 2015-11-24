@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import eg.TestInstrumentVOInterface;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.values.Values;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -61,7 +62,8 @@ public class TcpReplicationWithAcquireContextTest {
                 map2a = map2;
 
                 //Store some data into MAP1
-                TestInstrumentVOInterface instrumentVOInterface = map1.newValueInstance();
+                TestInstrumentVOInterface instrumentVOInterface =
+                        Values.newNativeReference(TestInstrumentVOInterface.class);
 
 
                 try (net.openhft.chronicle.core.io.Closeable c =
@@ -120,7 +122,8 @@ public class TcpReplicationWithAcquireContextTest {
                 map2a = map2;
 
                 //Store some data into MAP1
-                TestInstrumentVOInterface instrumentVOInterface = map1.newValueInstance();
+                TestInstrumentVOInterface instrumentVOInterface =
+                        Values.newHeapInstance(TestInstrumentVOInterface.class);
 
                 map2a.put("hello", instrumentVOInterface);
 
@@ -173,7 +176,8 @@ public class TcpReplicationWithAcquireContextTest {
                 map2a = map2;
 
                 //Store some data into MAP1
-                TestInstrumentVOInterface instrumentVOInterface = map1.newValueInstance();
+                TestInstrumentVOInterface instrumentVOInterface =
+                        Values.newHeapInstance(TestInstrumentVOInterface.class);
                 instrumentVOInterface.setSymbol("Flyer");
 
                 map2a.put("hello", instrumentVOInterface);

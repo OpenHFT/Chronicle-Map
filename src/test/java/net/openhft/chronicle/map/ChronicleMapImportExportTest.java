@@ -21,6 +21,7 @@ import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
+import net.openhft.chronicle.values.Values;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -228,7 +229,7 @@ public class ChronicleMapImportExportTest {
                 .averageKeySize("one".length())
                 .entries(1000);
         try (ChronicleMap<CharSequence, LongValue> expected = builder.create()) {
-            LongValue value = expected.newValueInstance();
+            LongValue value = Values.newNativeReference(LongValue.class);
 
             // this will add the entry
             try (Closeable c =
@@ -264,7 +265,7 @@ public class ChronicleMapImportExportTest {
         try (ChronicleMap<CharSequence, BondVOInterface> expected =
                      builder.create()) {
 
-            final BondVOInterface value = expected.newValueInstance();
+            final BondVOInterface value = Values.newNativeReference(BondVOInterface.class);
 
             // this will add the entry
             try (Closeable c = expected.acquireContext("one", value)) {

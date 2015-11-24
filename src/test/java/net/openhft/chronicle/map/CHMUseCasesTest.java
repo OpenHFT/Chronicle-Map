@@ -32,6 +32,8 @@ import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Range;
+import net.openhft.chronicle.values.Values;
+import net.openhft.lang.values.DoubleArray;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
@@ -365,14 +367,14 @@ public class CHMUseCasesTest {
         try (ChronicleMap<CharSequence, I1> map = newInstance(builder)) {
 
             {
-                final I1 i1 = map.newValueInstance();
+                final I1 i1 = Values.newHeapInstance(I1.class);
                 i1.setStrAt(1, "Hello");
                 i1.setStrAt(2, "World");
                 map.put("Key1", i1);
             }
 
             {
-                final I1 i1 = map.newValueInstance();
+                final I1 i1 = Values.newHeapInstance(I1.class);
                 i1.setStrAt(1, "Hello2");
                 i1.setStrAt(2, "World2");
                 map.put("Key2", i1);
@@ -447,7 +449,7 @@ public class CHMUseCasesTest {
                 .averageKeySize(10);
 
         try (ChronicleMap<String, BondVOInterface> chm = newInstance(builder)) {
-            BondVOInterface bondVO = chm.newValueInstance();
+            BondVOInterface bondVO = Values.newNativeReference(BondVOInterface.class);
             try (net.openhft.chronicle.core.io.Closeable c =
                          chm.acquireContext("369604103", bondVO)) {
                 bondVO.setIssueDate(parseYYYYMMDD("20130915"));
@@ -693,7 +695,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
 
-            CharSequence using = map.newValueInstance();
+            CharSequence using = new StringBuilder();
 
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("1", using)) {
                 assertTrue(using instanceof StringBuilder);
@@ -733,7 +735,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<IntValue, CharSequence> map = newInstance(builder)) {
 
 
-            IntValue using = map.newKeyInstance();
+            IntValue using = Values.newHeapInstance(IntValue.class);
             using.setValue(1);
 
             try (Closeable c = map.acquireContext(using, "")) {
@@ -756,10 +758,10 @@ public class CHMUseCasesTest {
         try (ChronicleMap<IntValue, StringBuilder> map = newInstance(builder)) {
 
 
-            IntValue key = map.newKeyInstance();
+            IntValue key = Values.newHeapInstance(IntValue.class);
             key.setValue(1);
 
-            StringBuilder using = map.newValueInstance();
+            StringBuilder using = new StringBuilder();
 
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext(key, using)) {
                 using.append("Hello");
@@ -779,10 +781,10 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, CharSequence> map = newInstance(builder)) {
 
-            IntValue key = map.newKeyInstance();
+            IntValue key = Values.newHeapInstance(IntValue.class);
             key.setValue(1);
 
-            CharSequence using = map.newValueInstance();
+            CharSequence using = new StringBuilder();
 
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext(key, using)) {
                 key.setValue(3);
@@ -817,10 +819,10 @@ public class CHMUseCasesTest {
                 .entries(10);
 
         try (ChronicleMap<StringValue, StringValue> map = newInstance(builder)) {
-            StringValue key1 = map.newKeyInstance();
-            StringValue key2 = map.newKeyInstance();
-            StringValue value1 = map.newValueInstance();
-            StringValue value2 = map.newValueInstance();
+            StringValue key1 = Values.newHeapInstance(StringValue.class);
+            StringValue key2 = Values.newHeapInstance(StringValue.class);
+            StringValue value1 = Values.newHeapInstance(StringValue.class);
+            StringValue value2 = Values.newHeapInstance(StringValue.class);
 
             key1.setValue(new StringBuilder("1"));
             value1.setValue("11");
@@ -1346,10 +1348,10 @@ public class CHMUseCasesTest {
             // this may change due to alignment
 //            assertEquals(8, entrySize(map));
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
-            IntValue key1 = map.newKeyInstance();
-            IntValue key2 = map.newKeyInstance();
-            IntValue value1 = map.newValueInstance();
-            IntValue value2 = map.newValueInstance();
+            IntValue key1 = Values.newHeapInstance(IntValue.class);
+            IntValue key2 = Values.newHeapInstance(IntValue.class);
+            IntValue value1 = Values.newHeapInstance(IntValue.class);
+            IntValue value2 = Values.newHeapInstance(IntValue.class);
 
 
             key1.setValue(1);
@@ -1456,18 +1458,18 @@ public class CHMUseCasesTest {
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = newInstance(builder)) {
 
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
-            UnsignedIntValue key1 = map.newKeyInstance();
-            UnsignedIntValue value1 = map.newValueInstance();
+            UnsignedIntValue key1 = Values.newHeapInstance(UnsignedIntValue.class);
+            UnsignedIntValue value1 = Values.newHeapInstance(UnsignedIntValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
             assertEquals(value1, map.get(key1));
 
-            key1 = map.newKeyInstance();
-            UnsignedIntValue key2 = map.newKeyInstance();
-            value1 = map.newValueInstance();
-            UnsignedIntValue value2 = map.newValueInstance();
+            key1 = Values.newHeapInstance(UnsignedIntValue.class);
+            UnsignedIntValue key2 = Values.newHeapInstance(UnsignedIntValue.class);
+            value1 = Values.newHeapInstance(UnsignedIntValue.class);
+            UnsignedIntValue value2 = Values.newHeapInstance(UnsignedIntValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
@@ -1577,10 +1579,10 @@ public class CHMUseCasesTest {
 
 
             //     assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
-            IntValue key1 = map.newKeyInstance();
-            IntValue key2 = map.newKeyInstance();
-            ShortValue value1 = map.newValueInstance();
-            ShortValue value2 = map.newValueInstance();
+            IntValue key1 = Values.newHeapInstance(IntValue.class);
+            IntValue key2 = Values.newHeapInstance(IntValue.class);
+            ShortValue value1 = Values.newHeapInstance(ShortValue.class);
+            ShortValue value2 = Values.newHeapInstance(ShortValue.class);
 
             key1.setValue(1);
             value1.setValue((short) 11);
@@ -1689,10 +1691,10 @@ public class CHMUseCasesTest {
             // this may change due to alignment
             // assertEquals(8, entrySize(map));
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
-            IntValue key1 = map.newKeyInstance();
-            IntValue key2 = map.newKeyInstance();
-            UnsignedShortValue value1 = map.newValueInstance();
-            UnsignedShortValue value2 = map.newValueInstance();
+            IntValue key1 = Values.newHeapInstance(IntValue.class);
+            IntValue key2 = Values.newHeapInstance(IntValue.class);
+            UnsignedShortValue value1 = Values.newHeapInstance(UnsignedShortValue.class);
+            UnsignedShortValue value2 = Values.newHeapInstance(UnsignedShortValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
@@ -1792,10 +1794,10 @@ public class CHMUseCasesTest {
 
 
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
-            IntValue key1 = map.newKeyInstance();
-            IntValue key2 = map.newKeyInstance();
-            CharValue value1 = map.newValueInstance();
-            CharValue value2 = map.newValueInstance();
+            IntValue key1 = Values.newHeapInstance(IntValue.class);
+            IntValue key2 = Values.newHeapInstance(IntValue.class);
+            CharValue value1 = Values.newHeapInstance(CharValue.class);
+            CharValue value2 = Values.newHeapInstance(CharValue.class);
 
             key1.setValue(1);
             value1.setValue((char) 11);
@@ -1902,10 +1904,10 @@ public class CHMUseCasesTest {
             //assertEquals(8, entrySize(map)); this may change due to alignmented
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
-            IntValue key1 = map.newKeyInstance();
-            IntValue key2 = map.newKeyInstance();
-            UnsignedByteValue value1 = map.newValueInstance();
-            UnsignedByteValue value2 = map.newValueInstance();
+            IntValue key1 = Values.newHeapInstance(IntValue.class);
+            IntValue key2 = Values.newHeapInstance(IntValue.class);
+            UnsignedByteValue value1 = Values.newHeapInstance(UnsignedByteValue.class);
+            UnsignedByteValue value2 = Values.newHeapInstance(UnsignedByteValue.class);
 
 
             key1.setValue(1);
@@ -2006,10 +2008,10 @@ public class CHMUseCasesTest {
 
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
-            IntValue key1 = map.newKeyInstance();
-            IntValue key2 = map.newKeyInstance();
-            BooleanValue value1 = map.newValueInstance();
-            BooleanValue value2 = map.newValueInstance();
+            IntValue key1 = Values.newHeapInstance(IntValue.class);
+            IntValue key2 = Values.newHeapInstance(IntValue.class);
+            BooleanValue value1 = Values.newHeapInstance(BooleanValue.class);
+            BooleanValue value2 = Values.newHeapInstance(BooleanValue.class);
 
 
             key1.setValue(1);
@@ -2109,10 +2111,10 @@ public class CHMUseCasesTest {
 
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
-            FloatValue key1 = map.newKeyInstance();
-            FloatValue key2 = map.newKeyInstance();
-            FloatValue value1 = map.newValueInstance();
-            FloatValue value2 = map.newValueInstance();
+            FloatValue key1 = Values.newHeapInstance(FloatValue.class);
+            FloatValue key2 = Values.newHeapInstance(FloatValue.class);
+            FloatValue value1 = Values.newHeapInstance(FloatValue.class);
+            FloatValue value2 = Values.newHeapInstance(FloatValue.class);
 
 
             key1.setValue(1);
@@ -2216,10 +2218,10 @@ public class CHMUseCasesTest {
 
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
-            DoubleValue key1 = map.newKeyInstance();
-            DoubleValue key2 = map.newKeyInstance();
-            DoubleValue value1 = map.newValueInstance();
-            DoubleValue value2 = map.newValueInstance();
+            DoubleValue key1 = Values.newHeapInstance(DoubleValue.class);
+            DoubleValue key2 = Values.newHeapInstance(DoubleValue.class);
+            DoubleValue value1 = Values.newHeapInstance(DoubleValue.class);
+            DoubleValue value2 = Values.newHeapInstance(DoubleValue.class);
 
 
             key1.setValue(1);
@@ -2323,10 +2325,10 @@ public class CHMUseCasesTest {
             // assertEquals(16, entrySize(map));
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
-            LongValue key1 = map.newKeyInstance();
-            LongValue key2 = map.newKeyInstance();
-            LongValue value1 = map.newValueInstance();
-            LongValue value2 = map.newValueInstance();
+            LongValue key1 = Values.newHeapInstance(LongValue.class);
+            LongValue key2 = Values.newHeapInstance(LongValue.class);
+            LongValue value1 = Values.newHeapInstance(LongValue.class);
+            LongValue value2 = Values.newHeapInstance(LongValue.class);
 
 
             key1.setValue(1);
@@ -2625,7 +2627,7 @@ public class CHMUseCasesTest {
                 .of(String.class, IBean.class).averageKeySize(5).entries(1000);
         try (ChronicleMap<String, IBean> map = newInstance(builder)) {
 
-            IBean iBean = map.newValueInstance();
+            IBean iBean = Values.newNativeReference(IBean.class);
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("1", iBean)) {
                 iBean.setDouble(1.2);
                 iBean.setLong(2);
@@ -2644,13 +2646,11 @@ public class CHMUseCasesTest {
     public void testBytesMarshallable() throws IOException {
         ChronicleMapBuilder<IData, IData> builder = ChronicleMapBuilder
                 .of(IData.class, IData.class)
-                        // TODO if the keyMarshaller is set, the map.newKeyInstance() blows up.
-//                .keyMarshaller(new BytesMarshallableMarshaller<>(IData.class))
                 .entries(1000);
         try (ChronicleMap<IData, IData> map = newInstance(builder)) {
             for (int i = 0; i < 100; i++) {
-                IData key = map.newKeyInstance();
-                IData value = map.newValueInstance();
+                IData key = Values.newHeapInstance(IData.class);
+                IData value = Values.newHeapInstance(IData.class);
                 key.setText("key-" + i);
                 key.setNumber(i);
                 value.setNumber(i);
@@ -2672,8 +2672,8 @@ public class CHMUseCasesTest {
                 .entries(1000);
         try (ChronicleMap<Data, Data> map = newInstance(builder)) {
             for (int i = 0; i < 100; i++) {
-                Data key = map.newKeyInstance();
-                Data value = map.newValueInstance();
+                Data key = new Data();
+                Data value = new Data();
                 key.setText("key-" + i);
                 key.setNumber(i);
                 value.setNumber(i);

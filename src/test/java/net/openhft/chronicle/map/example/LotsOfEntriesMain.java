@@ -19,6 +19,7 @@ package net.openhft.chronicle.map.example;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Array;
+import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,7 +65,7 @@ public class LotsOfEntriesMain {
                 public void run() {
                     Random rand = new Random(startI);
                     StringBuilder sb = new StringBuilder();
-                    MyFloats mf = map.newValueInstance();
+                    MyFloats mf = Values.newHeapInstance(MyFloats.class);
                     if (add)
                         for (int i = 0; i < 6; i++)
                             mf.setValueAt(i, i);

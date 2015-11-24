@@ -59,8 +59,8 @@ public class OffHeapByteArrayExampleTest {
 
         // this objects will be reused
         ByteValue byteValue = Values.newHeapInstance(ByteValue.class);
-        ByteArray value = chm.newValueInstance();
-        LongValue key = chm.newKeyInstance();
+        ByteArray value = Values.newHeapInstance(ByteArray.class);
+        LongValue key = Values.newHeapInstance(LongValue.class);
 
 
         key.setValue(1);

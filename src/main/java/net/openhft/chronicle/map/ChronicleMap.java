@@ -200,58 +200,6 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
     void putAll(File fromFile) throws IOException;
 
     /**
-     * Creates an empty value instance, which can be used with the
-     * following methods :
-     *
-     * {@link ChronicleMap#getUsing(Object, Object) }
-     * {@link ChronicleMap#acquireUsing(Object, Object)      }
-     * {@link ChronicleMap#acquireContext(Object, Object)}
-     *
-     * for example like this :
-     *
-     *  <pre>{@code
-     * V value = map.newValueInstance();
-     * try (ReadMapContext rc = map.getUsingLocked(key, value)) {
-     *  // add your logic here
-     * } // the read lock is released here
-     * }</pre>
-     *
-     *
-     * @return a new empty instance based on the Value type
-     * @see ChronicleMap#getUsing(Object, Object)
-     * @see ChronicleMap#acquireUsing(Object, Object)
-     * @see ChronicleMap#acquireContext(Object, Object)
-     */
-    V newValueInstance();
-
-    /**
-     * Creates an empty value instance, which can be used with the
-     * following methods :
-     *
-     * {@link ChronicleMap#getUsing(Object, Object) }
-     * {@link ChronicleMap#acquireUsing(Object, Object)}
-     * {@link ChronicleMap#acquireContext(Object, Object)}
-     *
-     * for example like this :
-     *
-     *  <pre>{@code
-     * K key = map.newKeyInstance();
-     * key.setMyStringField("some key");
-     *
-     * try (ReadMapContext rc = map.getUsingLocked(key, value)) {
-     *  // add your logic here
-     * } // the read lock is released here
-     * }</pre>
-     *
-     *
-     * @return a new empty instance based on the Key type
-     * @see ChronicleMap#getUsing(Object, Object)
-     * @see ChronicleMap#acquireUsing(Object, Object)
-     * @see ChronicleMap#acquireContext(Object, Object)
-     */
-    K newKeyInstance();
-
-    /**
      * @return the class of {@code <V>}
      */
     Class<V> valueClass();
