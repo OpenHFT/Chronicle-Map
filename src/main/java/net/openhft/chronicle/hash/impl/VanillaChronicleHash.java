@@ -431,8 +431,7 @@ public abstract class VanillaChronicleHash<K,
         // TODO this method had been moved -- not clear where
         //OS.warnOnWindows(sizeInBytesWithoutTiers());
         this.file = file;
-        long mapSize = createdOrInMemory ? pageAlign(sizeInBytesWithoutTiers()) :
-                expectedFileSize();
+        long mapSize = expectedFileSize();
         createMappedStoreAndSegments(map(raf, mapSize, 0));
     }
 
@@ -514,7 +513,8 @@ public abstract class VanillaChronicleHash<K,
 
     public final long expectedFileSize() {
         long sizeInBytesWithoutTiers = sizeInBytesWithoutTiers();
-        int allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
+        int allocatedExtraTierBulks = !createdOrInMemory ?
+                globalMutableState.getAllocatedExtraTierBulks() : 0;
         return pageAlign(sizeInBytesWithoutTiers + allocatedExtraTierBulks * tierBulkSizeInBytes);
     }
 
