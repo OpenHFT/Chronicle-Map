@@ -32,9 +32,9 @@ public abstract class HashLookupPos {
     public abstract boolean hashLookupPosInit();
 
     public void initHashLookupPos() {
-        // validation + make hashLookupPos a dependant of segmentTier. This is needed, because
-        // after tier change should re-perform hashLookupSearch, starting from the searchStartPos
-        assert s.segmentTier >= 0;
+        // validation + make hashLookupPos a dependant of tier. This is needed, because after
+        // tier change should re-perform hashLookupSearch, starting from the searchStartPos
+        assert s.tier >= 0;
         s.innerReadLock.lock();
         this.hashLookupPos = hls.searchStartPos;
     }
@@ -56,6 +56,6 @@ public abstract class HashLookupPos {
     public void putValueVolatile(long newValue) {
         CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
         hashLookup.checkValueForPut(newValue);
-        hashLookup.putValueVolatile(s.segmentBaseAddr, hashLookupPos, newValue);
+        hashLookup.putValueVolatile(s.tierBaseAddr, hashLookupPos, newValue);
     }
 }

@@ -102,16 +102,16 @@ public abstract class HashQuery<K> implements HashEntry<K> {
     }
 
     private boolean tieredEntryPresent() {
-        int firstTier = s.segmentTier;
-        long firstTierBaseAddr = s.segmentBaseAddr;
+        int firstTier = s.tier;
+        long firstTierBaseAddr = s.tierBaseAddr;
         while (true) {
             if (s.hasNextTier()) {
                 s.nextTier();
             } else {
-                if (s.segmentTier != 0)
+                if (s.tier != 0)
                     s.initSegmentTier(); // loop to the root tier
             }
-            if (s.segmentBaseAddr == firstTierBaseAddr)
+            if (s.tierBaseAddr == firstTierBaseAddr)
                 break;
             if (ks.searchStatePresent())
                 return true;

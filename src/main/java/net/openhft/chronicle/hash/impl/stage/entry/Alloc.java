@@ -19,10 +19,14 @@ package net.openhft.chronicle.hash.impl.stage.entry;
 public interface Alloc {
 
     /**
-     * Allocates a position in a segment tier.
+     * Allocates a block of specified number of chunks in a segment tier, optionally clears the
+     * previous allocation.
      *
      * @param chunks chunks to allocate
-     * @return the position, if allocation is successful, or -1
+     * @param prevPos the previous position to clear, -1 if not needed
+     * @param prevChunks the size of the previous allocation to clear, 0 if not needed
+     * @return the new allocation position
+     * @throws RuntimeException if fails to allocate a block
      */
-    long alloc(int chunks);
+    long alloc(int chunks, long prevPos, int prevChunks);
 }

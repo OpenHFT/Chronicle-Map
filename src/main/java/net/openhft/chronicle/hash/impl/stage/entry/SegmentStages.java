@@ -75,7 +75,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
     long nextPosToSearchFrom() {
-        if (segmentTier == 0) {
+        if (tier == 0) {
             return segmentHeader.nextPosToSearchFrom(segmentHeaderAddress);
         } else {
             return nextPosToSearchFromTiered();
@@ -83,7 +83,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
     public void nextPosToSearchFrom(long nextPosToSearchFrom) {
-        if (segmentTier == 0) {
+        if (tier == 0) {
             segmentHeader.nextPosToSearchFrom(segmentHeaderAddress, nextPosToSearchFrom);
         } else {
             nextPosToSearchFromTiered(nextPosToSearchFrom);
@@ -479,34 +479,34 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         return innerWriteLock;
     }
 
-    @Stage("SegmentTier") public int segmentTier = -1;
+    @Stage("SegmentTier") public int tier = -1;
     @Stage("SegmentTier") public long tierIndex;
-    @Stage("SegmentTier") public long segmentBaseAddr;
+    @Stage("SegmentTier") public long tierBaseAddr;
 
     public void initSegmentTier() {
         tierIndex = segmentIndex + 1; // tiers are 1-counted
-        segmentBaseAddr = hh.h().segmentBaseAddr(segmentIndex);
+        tierBaseAddr = hh.h().segmentBaseAddr(segmentIndex);
         // assign the field of stage on which init() checks last, because flushed in segmentIndex()
         // initialization
         // TODO this is dangerous... review other stages and compilation mechanism
-        segmentTier = 0;
+        tier = 0;
     }
 
     private void initSegmentTier(int tier, long tierIndex) {
-        segmentTier = tier;
+        this.tier = tier;
         this.tierIndex = tierIndex;
         assert tierIndex > 0;
-        this.segmentBaseAddr = hh.h().tierIndexToBaseAddr(tierIndex);
+        this.tierBaseAddr = hh.h().tierIndexToBaseAddr(tierIndex);
     }
 
     public void initSegmentTier(int tier, long tierIndex, long tierBaseAddr) {
-        segmentTier = tier;
+        this.tier = tier;
         this.tierIndex = tierIndex;
-        this.segmentBaseAddr = tierBaseAddr;
+        this.tierBaseAddr = tierBaseAddr;
     }
 
     public long tierCountersAreaAddr() {
-        return segmentBaseAddr + hh.h().tierHashLookupOuterSize;
+        return tierBaseAddr + hh.h().tierHashLookupOuterSize;
     }
 
     public long nextTierIndex() {
@@ -537,13 +537,13 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         long nextTierIndex = nextTierIndex();
         if (nextTierIndex == 0) {
-            nextTierIndex = h.allocateTier(segmentIndex, segmentTier + 1);
+            nextTierIndex = h.allocateTier(segmentIndex, tier + 1);
             nextTierIndex(nextTierIndex);
             long currentTierIndex = tierIndex;
-            initSegmentTier(segmentTier + 1, nextTierIndex);
+            initSegmentTier(tier + 1, nextTierIndex);
             prevTierIndex(currentTierIndex);
         } else {
-            initSegmentTier(segmentTier + 1, nextTierIndex);
+            initSegmentTier(tier + 1, nextTierIndex);
         }
     }
 
@@ -552,9 +552,9 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
     public void prevTier() {
-        if (segmentTier == 0)
+        if (tier == 0)
             throw new IllegalStateException("first tier doesn't have previous");
-        initSegmentTier(segmentTier - 1, prevTierIndex());
+        initSegmentTier(tier - 1, prevTierIndex());
     }
 
     public void goToLastTier() {
@@ -564,7 +564,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
     public void goToFirstTier() {
-        while (segmentTier != 0) {
+        while (tier != 0) {
             prevTier();
         }
     }
@@ -583,7 +583,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     void initSegment() {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
 
-        long segmentBaseAddr = this.segmentBaseAddr;
+        long segmentBaseAddr = this.tierBaseAddr;
         segmentBS.set(segmentBaseAddr, h.tierSize);
         segmentBytes.clear();
 

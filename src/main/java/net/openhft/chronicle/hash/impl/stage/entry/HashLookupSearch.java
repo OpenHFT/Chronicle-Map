@@ -46,7 +46,7 @@ public abstract class HashLookupSearch {
     }
 
     private long addr() {
-        return s.segmentBaseAddr;
+        return s.tierBaseAddr;
     }
 
     public long nextPos() {

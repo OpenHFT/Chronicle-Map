@@ -44,7 +44,7 @@ public class HashKeyCrc32PayloadChecksumStrategy implements ChecksumStrategy {
 
         long checksum;
         if (len > 0) {
-            long addr = s.segmentBaseAddr + keyEnd;
+            long addr = s.tierBaseAddr + keyEnd;
             int payloadCrc = Crc32.compute(addr, len);
             checksum = hash8To16Bytes(e.keySize, keyHashCode, payloadCrc);
         } else {

@@ -70,8 +70,8 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
                 return true;
             s.goToLastTier();
             while (true) {
-                int currentTier = s.segmentTier;
-                long currentTierBaseAddr = s.segmentBaseAddr;
+                int currentTier = s.tier;
+                long currentTierBaseAddr = s.tierBaseAddr;
                 long currentTierIndex = s.tierIndex;
                 size = forEachTierWhile(action, size,
                         currentTier, currentTierBaseAddr, currentTierIndex);
@@ -127,7 +127,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
                     } finally {
                         // if doReplaceValue() -> relocation() -> alloc() -> nextTier()
                         // was called, restore the tier we were iterating over
-                        if (s.segmentTier != currentTier) {
+                        if (s.tier != currentTier) {
                             s.initSegmentTier_WithBaseAddr(
                                     currentTier, currentTierBaseAddr, tierIndex);
                             // To cover shift deleted slot, at the next step forward.
@@ -171,7 +171,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
 
     public void iterationRemove() {
         // this condition mean -- some other entry taken place of the removed one
-        if (hh.h().hashLookup.remove(s.segmentBaseAddr, hlp.hashLookupPos) != hlp.hashLookupPos) {
+        if (hh.h().hashLookup.remove(s.tierBaseAddr, hlp.hashLookupPos) != hlp.hashLookupPos) {
             // if so, should make step back, to compensate step forward on the next iteration,
             // to consume the shifted entry
             hlp.setHashLookupPos(hh.h().hashLookup.stepBack(hlp.hashLookupPos));

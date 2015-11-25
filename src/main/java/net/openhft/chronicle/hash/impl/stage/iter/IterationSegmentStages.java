@@ -46,9 +46,9 @@ public abstract class IterationSegmentStages extends SegmentStages {
     }
 
     public void initSegmentTier_WithBaseAddr(int tier, long tierBaseAddr, long tierIndex) {
-        segmentTier = tier;
+        this.tier = tier;
         this.tierIndex = tierIndex;
-        segmentBaseAddr = tierBaseAddr;
+        this.tierBaseAddr = tierBaseAddr;
     }
 
     @Override

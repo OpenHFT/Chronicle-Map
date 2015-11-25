@@ -216,17 +216,14 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
 
     protected void relocation(Data<V> newValue, long newSizeOfEverythingBeforeValue) {
         s.innerWriteLock.lock();
-        // TODO free bits only after another range is allocated, to ensure they doesn't overlap,
-        // because overlapping copy is dangerous, platform dependent
-        s.free(pos, entrySizeInChunks);
         long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
         // need to copy, because in initEntryAndKeyCopying(), in alloc(), nextTier() called ->
         // hashLookupPos cleared, as a dependant
         long oldHashLookupPos = hlp.hashLookupPos;
-        long oldHashLookupAddr = s.segmentBaseAddr;
+        long oldHashLookupAddr = s.tierBaseAddr;
 
-        boolean tierHasChanged =
-                allocatedChunks.initEntryAndKeyCopying(entrySize, valueSizeOffset - keySizeOffset);
+        boolean tierHasChanged = allocatedChunks.initEntryAndKeyCopying(
+                entrySize, valueSizeOffset - keySizeOffset, pos, entrySizeInChunks);
 
         if (tierHasChanged) {
             // implicitly inits key search, locating hashLookupPos on the empty slot
@@ -241,7 +238,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         CompactOffHeapLinearHashTable hl = hh.h().hashLookup;
         long oldEntry = hl.readEntry(oldHashLookupAddr, oldHashLookupPos);
         hl.checkValueForPut(pos);
-        hl.writeEntryVolatile(s.segmentBaseAddr, hlp.hashLookupPos,
+        hl.writeEntryVolatile(s.tierBaseAddr, hlp.hashLookupPos,
                 oldEntry, hl.key(oldEntry), pos);
         if (tierHasChanged)
             hl.remove(oldHashLookupAddr, oldHashLookupPos);
