@@ -39,7 +39,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDivisor;
-import static net.openhft.chronicle.values.ValueModel.$$NATIVE;
 
 public class VanillaChronicleMap<K, V, R>
         extends VanillaChronicleHash<K, MapEntry<K, V>, MapSegmentContext<K, V, ?>,
@@ -51,7 +50,6 @@ public class VanillaChronicleMap<K, V, R>
     /////////////////////////////////////////////////
     // Value Data model
     final Class<V> vClass;
-    final Class nativeValueClass;
     public final SizeMarshaller valueSizeMarshaller;
     public final SizedReader<V> originalValueReader;
     public final DataAccess<V> originalValueDataAccess;
@@ -81,19 +79,6 @@ public class VanillaChronicleMap<K, V, R>
         super(builder);
         SerializationBuilder<V> valueBuilder = builder.valueBuilder;
         vClass = valueBuilder.tClass;
-        if (vClass.getName().endsWith($$NATIVE)) {
-            nativeValueClass = vClass;
-        } else if (vClass.isInterface()) {
-            Class nativeValueClass = null;
-            try {
-                nativeValueClass = Values.nativeClassFor(vClass);
-            } catch (Exception e) {
-                // fall through
-            }
-            this.nativeValueClass = nativeValueClass;
-        } else {
-            nativeValueClass = null;
-        }
         valueSizeMarshaller = valueBuilder.sizeMarshaller();
         originalValueReader = valueBuilder.reader();
         originalValueDataAccess = valueBuilder.dataAccess();
