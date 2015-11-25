@@ -16,11 +16,18 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 
 import static net.openhft.chronicle.core.Maths.isPowerOf2;
 
-public interface HashSplitting extends Serializable {
+public interface HashSplitting extends Serializable, Marshallable {
 
     int segmentIndex(long hash);
     long segmentHash(long hash);
@@ -36,7 +43,7 @@ public interface HashSplitting extends Serializable {
         }
     }
 
-    enum ForSingleSegment implements HashSplitting {
+    enum ForSingleSegment implements HashSplitting, EnumMarshallable<ForSingleSegment> {
         INSTANCE;
 
         @Override
@@ -48,13 +55,18 @@ public interface HashSplitting extends Serializable {
         public long segmentHash(long hash) {
             return hash;
         }
+
+        @Override
+        public ForSingleSegment readResolve() {
+            return INSTANCE;
+        }
     }
 
     class ForPowerOf2Segments implements HashSplitting {
         private static final long serialVersionUID = 0L;
 
-        private final int mask;
-        private final int bits;
+        private int mask;
+        private int bits;
 
         ForPowerOf2Segments(int segments) {
             mask = segments - 1;
@@ -70,6 +82,18 @@ public interface HashSplitting extends Serializable {
         public long segmentHash(long hash) {
             return hash >>> bits;
         }
+
+        @Override
+        public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
+            mask = wire.read(() -> "mask").int32();
+            bits = wire.read(() -> "bits").int32();
+        }
+
+        @Override
+        public void writeMarshallable(@NotNull WireOut wire) {
+            wire.write(() -> "mask").int32(mask);
+            wire.write(() -> "bits").int32(bits);
+        }
     }
 
     //TODO optimize?
@@ -79,7 +103,7 @@ public interface HashSplitting extends Serializable {
         private static final int MASK = Integer.MAX_VALUE;
         private static final int BITS = 31;
 
-        private final int segments;
+        private int segments;
 
         public ForNonPowerOf2Segments(int segments) {
             this.segments = segments;
@@ -93,6 +117,16 @@ public interface HashSplitting extends Serializable {
         @Override
         public long segmentHash(long hash) {
             return hash >>> BITS;
+        }
+
+        @Override
+        public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
+            segments = wire.read(() -> "segments").int32();
+        }
+
+        @Override
+        public void writeMarshallable(@NotNull WireOut wire) {
+            wire.write(() -> "segments").int32(segments);
         }
     }
 }

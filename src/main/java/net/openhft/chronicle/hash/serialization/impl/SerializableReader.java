@@ -17,8 +17,11 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizedReader;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,5 +46,15 @@ public class SerializableReader<T extends Serializable>
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        // no fields to read
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        // no fields to write
     }
 }

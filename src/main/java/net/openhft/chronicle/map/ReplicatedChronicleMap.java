@@ -759,7 +759,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                                 tierBulkOffsets.get(iterationMainSegmentsAreaOrTierBulk);
                         long tierBaseAddr = tierAddr(tierBulkData,
                                 segmentIndexOrTierIndexOffsetWithinBulk);
-                        long tierCountersAreaAddr = tierBaseAddr + segmentHashLookupOuterSize;
+                        long tierCountersAreaAddr = tierBaseAddr + tierHashLookupOuterSize;
                         context.initSegmentIndex(
                                 TierCountersArea.segmentIndex(tierCountersAreaAddr));
                         int tier = TierCountersArea.tier(tierCountersAreaAddr);

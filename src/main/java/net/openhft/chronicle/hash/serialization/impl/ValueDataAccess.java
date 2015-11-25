@@ -17,12 +17,15 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.values.Copyable;
 import net.openhft.chronicle.values.Values;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +36,12 @@ import static net.openhft.chronicle.bytes.NativeBytesStore.nativeStoreWithFixedC
 
 public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T> {
 
-    /** The interface of values serialized. */
-    protected final Class<T> valueType;
+    /** Config field */
+    private Class<T> valueType;
 
     // Cache fields
-    protected transient Class<? extends T> nativeClass;
-    protected transient Class<? extends T> heapClass;
+    private transient Class<? extends T> nativeClass;
+    private transient Class<? extends T> heapClass;
     private transient Byteable nativeInstance;
     private transient Copyable nativeInstanceAsCopyable;
 
@@ -48,6 +51,19 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
     public ValueDataAccess(Class<T> valueType) {
         this.valueType = valueType;
         initTransients();
+    }
+
+    /** Returns the interface of values serialized. */
+    protected Class<T> valueType() {
+        return valueType;
+    }
+
+    protected Class<? extends T> nativeClass() {
+        return nativeClass;
+    }
+
+    protected Class<? extends T> heapClass() {
+        return heapClass;
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -119,5 +135,16 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
     @Override
     public DataAccess<T> copy() {
         return new ValueDataAccess<>(valueType);
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        valueType = wireIn.read(() -> "valueType").typeLiteral();
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        wireOut.write(() -> "valueType").typeLiteral(valueType);
     }
 }

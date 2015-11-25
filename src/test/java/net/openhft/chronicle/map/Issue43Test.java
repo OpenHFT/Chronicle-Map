@@ -19,7 +19,9 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import net.openhft.chronicle.set.Builder;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 public class Issue43Test {
@@ -34,7 +36,7 @@ public class Issue43Test {
             ChronicleMap<Long, ValueWrapper> map = ChronicleMapBuilder
                     .of(Long.class, ValueWrapper.class)
                     .entries(512)
-                    .valueMarshaller(new ArrayMarshaller())
+                    .valueMarshaller(ArrayMarshaller.INSTANCE)
                     .constantValueSizeBySample(new ValueWrapper(new double[128]))
                     .createPersistedTo(Builder.getPersistenceFile());
             System.out.println("Created the monkey map ValueWrapper 128");
@@ -52,11 +54,12 @@ public class Issue43Test {
         }
     }
 
-    private static class ArrayMarshaller
-            implements BytesReader<ValueWrapper>, BytesWriter<ValueWrapper> {
+    private enum ArrayMarshaller implements BytesReader<ValueWrapper>, BytesWriter<ValueWrapper>,
+            EnumMarshallable<ArrayMarshaller> {
+        INSTANCE;
 
         @Override
-        public void write(Bytes bytes, ValueWrapper vw) {
+        public void write(Bytes bytes, @NotNull ValueWrapper vw) {
             bytes.writeInt(vw.values.length);
 
             for (int i = 0; i < vw.values.length; i ++) {
@@ -67,6 +70,11 @@ public class Issue43Test {
         @Override
         public ValueWrapper read(Bytes in, ValueWrapper using) {
             throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public ArrayMarshaller readResolve() {
+            return INSTANCE;
         }
     }
 }

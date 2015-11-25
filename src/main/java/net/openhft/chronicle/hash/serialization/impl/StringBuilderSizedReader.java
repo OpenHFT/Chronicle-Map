@@ -22,7 +22,8 @@ import net.openhft.chronicle.hash.serialization.SizedReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public enum StringBuilderSizedReader implements SizedReader<StringBuilder> {
+public enum StringBuilderSizedReader
+        implements SizedReader<StringBuilder>, EnumMarshallable<StringBuilderSizedReader> {
     INSTANCE;
 
     @NotNull
@@ -39,5 +40,10 @@ public enum StringBuilderSizedReader implements SizedReader<StringBuilder> {
         }
         BytesUtil.parseUtf8(in, using, csLen);
         return using;
+    }
+
+    @Override
+    public StringBuilderSizedReader readResolve() {
+        return INSTANCE;
     }
 }

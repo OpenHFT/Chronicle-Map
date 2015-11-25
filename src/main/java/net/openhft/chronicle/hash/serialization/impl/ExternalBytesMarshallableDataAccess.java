@@ -17,11 +17,14 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizedReader;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +37,8 @@ public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMars
         implements DataAccess<T>, Data<T> {
 
     // Config fields
-    private final SizedReader<T> reader;
-    private final BytesWriter<? super T> writer;
+    private SizedReader<T> reader;
+    private BytesWriter<? super T> writer;
 
     /** Cache field */
     private transient Bytes bytes;
@@ -120,6 +123,21 @@ public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMars
     @Override
     public DataAccess<T> copy() {
         return new ExternalBytesMarshallableDataAccess<>(
-                tClass, copyIfNeeded(reader), copyIfNeeded(writer));
+                tClass(), copyIfNeeded(reader), copyIfNeeded(writer));
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        super.readMarshallable(wireIn);
+        reader = wireIn.read(() -> "reader").typedMarshallable();
+        writer = wireIn.read(() -> "writer").typedMarshallable();
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        super.writeMarshallable(wireOut);
+        wireOut.write(() -> "reader").typedMarshallable(reader);
+        wireOut.write(() -> "writer").typedMarshallable(writer);
     }
 }

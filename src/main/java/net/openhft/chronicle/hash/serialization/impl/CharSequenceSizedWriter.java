@@ -21,7 +21,8 @@ import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.hash.serialization.SizedWriter;
 import org.jetbrains.annotations.NotNull;
 
-public enum CharSequenceSizedWriter implements SizedWriter<CharSequence> {
+public enum CharSequenceSizedWriter
+        implements SizedWriter<CharSequence>, EnumMarshallable<CharSequenceSizedWriter> {
     INSTANCE;
 
     @Override
@@ -32,5 +33,10 @@ public enum CharSequenceSizedWriter implements SizedWriter<CharSequence> {
     @Override
     public void write(@NotNull Bytes out, long size, @NotNull CharSequence toWrite) {
         BytesUtil.appendUtf8(out, toWrite);
+    }
+
+    @Override
+    public CharSequenceSizedWriter readResolve() {
+        return INSTANCE;
     }
 }

@@ -20,10 +20,12 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizedReader;
+import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-enum DummyValueMarshaller implements DataAccess<DummyValue>, SizedReader<DummyValue> {
+enum DummyValueMarshaller implements DataAccess<DummyValue>, SizedReader<DummyValue>,
+        EnumMarshallable<DummyValueMarshaller> {
     INSTANCE;
 
     @Override
@@ -45,6 +47,11 @@ enum DummyValueMarshaller implements DataAccess<DummyValue>, SizedReader<DummyVa
     @Override
     public DummyValue read(@NotNull Bytes in, long size, @Nullable DummyValue using) {
         return DummyValue.DUMMY_VALUE;
+    }
+
+    @Override
+    public DummyValueMarshaller readResolve() {
+        return INSTANCE;
     }
 }
 

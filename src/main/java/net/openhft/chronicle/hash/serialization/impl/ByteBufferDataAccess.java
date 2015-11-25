@@ -20,6 +20,8 @@ import net.openhft.chronicle.bytes.*;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.nio.ch.DirectBuffer;
@@ -115,5 +117,16 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     @Override
     public DataAccess<ByteBuffer> copy() {
         return new ByteBufferDataAccess();
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        // no fields to read
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        // no fields to write
     }
 }

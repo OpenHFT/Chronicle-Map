@@ -16,8 +16,11 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +32,14 @@ import java.io.ObjectOutputStream;
 public class ExternalizableDataAccess<T extends Externalizable> extends SerializableDataAccess<T> {
 
     /** Config field */
-    protected final Class<T> tClass;
+    private Class<T> tClass;
 
     public ExternalizableDataAccess(Class<T> tClass) {
         this.tClass = tClass;
+    }
+
+    protected Class<T> tClass() {
+        return tClass;
     }
 
     protected T createInstance() {
@@ -73,5 +80,16 @@ public class ExternalizableDataAccess<T extends Externalizable> extends Serializ
     @Override
     public DataAccess<T> copy() {
         return new ExternalizableDataAccess<>(tClass);
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        tClass = wireIn.read(() -> "tClass").typeLiteral();
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        wireOut.write(() -> "tClass").typeLiteral(tClass);
     }
 }

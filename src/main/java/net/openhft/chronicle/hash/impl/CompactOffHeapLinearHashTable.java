@@ -89,8 +89,8 @@ public abstract class CompactOffHeapLinearHashTable {
     }
 
     CompactOffHeapLinearHashTable(VanillaChronicleHash h) {
-        this(h.segmentHashLookupCapacity, h.segmentHashLookupEntrySize, h.segmentHashLookupKeyBits,
-                h.segmentHashLookupValueBits);
+        this(h.tierHashLookupCapacity, h.tierHashLookupEntrySize, h.tierHashLookupKeyBits,
+                h.tierHashLookupValueBits);
     }
 
     abstract long indexToPos(long index);

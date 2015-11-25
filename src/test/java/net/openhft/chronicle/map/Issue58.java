@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,7 +129,8 @@ public class Issue58 {
     }
 
 
-    enum UuidMarshaller implements BytesReader<UUID>, BytesWriter<UUID> {
+    enum UuidMarshaller
+            implements BytesReader<UUID>, BytesWriter<UUID>, EnumMarshallable<UuidMarshaller> {
         INSTANCE;
 
         @Override
@@ -137,9 +139,15 @@ public class Issue58 {
             bytes.writeLong(uuid.getLeastSignificantBits());
         }
 
+        @NotNull
         @Override
         public UUID read(Bytes bytes, @Nullable UUID using) {
             return new UUID(bytes.readLong(), bytes.readLong());
+        }
+
+        @Override
+        public UuidMarshaller readResolve() {
+            return INSTANCE;
         }
     }
 }

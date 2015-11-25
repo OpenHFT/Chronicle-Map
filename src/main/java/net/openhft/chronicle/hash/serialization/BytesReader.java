@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.ReadBytesMarshallable;
+import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -28,8 +29,7 @@ import java.io.Serializable;
  * @param <T> type of objects deserialized
  * @see BytesWriter
  */
-@FunctionalInterface
-public interface BytesReader<T> extends Serializable {
+public interface BytesReader<T> extends Serializable, Marshallable {
 
     /**
      * Reads and returns the object from {@link Bytes#readPosition()} (i. e. the current position)

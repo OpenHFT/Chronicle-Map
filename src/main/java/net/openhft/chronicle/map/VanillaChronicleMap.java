@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
@@ -30,6 +31,8 @@ import net.openhft.chronicle.map.impl.CompiledMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledMapQueryContext;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.chronicle.values.Values;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -49,18 +52,19 @@ public class VanillaChronicleMap<K, V, R>
 
     /////////////////////////////////////////////////
     // Value Data model
-    final Class<V> vClass;
-    public final SizeMarshaller valueSizeMarshaller;
-    public final SizedReader<V> originalValueReader;
-    public final DataAccess<V> originalValueDataAccess;
+    Class<V> valueClass;
+    public SizeMarshaller valueSizeMarshaller;
+    public SizedReader<V> valueReader;
+    public DataAccess<V> valueDataAccess;
 
-    public final boolean constantlySizedEntry;
+    public boolean constantlySizedEntry;
 
     /////////////////////////////////////////////////
     // Memory management and dependent fields
-    public final int alignment;
-    public final int worstAlignment;
-    public final boolean couldNotDetermineAlignmentBeforeAllocation;
+    public int alignment;
+    public int worstAlignment;
+
+    public transient boolean couldNotDetermineAlignmentBeforeAllocation;
 
     /////////////////////////////////////////////////
     // Behavior
@@ -78,23 +82,51 @@ public class VanillaChronicleMap<K, V, R>
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
         super(builder);
         SerializationBuilder<V> valueBuilder = builder.valueBuilder;
-        vClass = valueBuilder.tClass;
+        valueClass = valueBuilder.tClass;
         valueSizeMarshaller = valueBuilder.sizeMarshaller();
-        originalValueReader = valueBuilder.reader();
-        originalValueDataAccess = valueBuilder.dataAccess();
+        valueReader = valueBuilder.reader();
+        valueDataAccess = valueBuilder.dataAccess();
 
         constantlySizedEntry = builder.constantlySizedEntries();
 
         // Concurrency (number of segments), memory management and dependent fields
         alignment = builder.valueAlignment();
         worstAlignment = builder.worstAlignment();
-        couldNotDetermineAlignmentBeforeAllocation =
-                greatestCommonDivisor((int) chunkSize, alignment) != alignment;
 
         initTransientsFromBuilder(builder);
         initTransients();
     }
-    
+
+    @Override
+    protected void readMarshallableFields(@NotNull WireIn wireIn) throws IORuntimeException {
+        super.readMarshallableFields(wireIn);
+
+        valueClass = wireIn.read(() -> "valueClass").typeLiteral();
+        valueSizeMarshaller = wireIn.read(() -> "valueSizeMarshaller").typedMarshallable();
+        valueReader = wireIn.read(() -> "valueReader").typedMarshallable();
+        valueDataAccess = wireIn.read(() -> "valueDataAccess").typedMarshallable();
+
+        constantlySizedEntry = wireIn.read(() -> "constantlySizedEntry").bool();
+
+        alignment = wireIn.read(() -> "alignment").int32();
+        worstAlignment = wireIn.read(() -> "worstAlignment").int32();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        super.writeMarshallable(wireOut);
+
+        wireOut.write(() -> "valueClass").typeLiteral(valueClass);
+        wireOut.write(() -> "valueSizeMarshaller").typedMarshallable(valueSizeMarshaller);
+        wireOut.write(() -> "valueReader").typedMarshallable(valueReader);
+        wireOut.write(() -> "valueDataAccess").typedMarshallable(valueDataAccess);
+
+        wireOut.write(() -> "constantlySizedEntry").bool(constantlySizedEntry);
+
+        wireOut.write(() -> "alignment").int32(alignment);
+        wireOut.write(() -> "worstAlignment").int32(worstAlignment);
+    }
+
     void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
         putReturnsNull = builder.putReturnsNull();
         removeReturnsNull = builder.removeReturnsNull();
@@ -111,6 +143,8 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     private void initOwnTransients() {
+        couldNotDetermineAlignmentBeforeAllocation =
+                greatestCommonDivisor((int) chunkSize, alignment) != alignment;
         cxt = new ThreadLocal<>();
     }
 
@@ -120,8 +154,8 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     public final V checkValue(Object value) {
-        if (!vClass.isInstance(value)) {
-            throw new ClassCastException("Value must be a " + vClass.getName() +
+        if (!valueClass.isInstance(value)) {
+            throw new ClassCastException("Value must be a " + valueClass.getName() +
                     " but was a " + value.getClass());
         }
         return (V) value;
@@ -129,12 +163,12 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public Class<K> keyClass() {
-        return kClass;
+        return keyClass;
     }
 
     @Override
     public Class<V> valueClass() {
-        return vClass;
+        return valueClass;
     }
 
     static <T> T newInstance(Class<T> aClass, boolean isKey) {

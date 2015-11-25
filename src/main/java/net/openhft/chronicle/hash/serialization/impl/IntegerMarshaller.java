@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public enum IntegerMarshaller
         implements SizedReader<Integer>, BytesReader<Integer>,
-        SizedWriter<Integer>, BytesWriter<Integer> {
+        SizedWriter<Integer>, BytesWriter<Integer>, EnumMarshallable<IntegerMarshaller> {
     INSTANCE;
 
     @NotNull
@@ -54,5 +54,10 @@ public enum IntegerMarshaller
     @Override
     public void write(Bytes out, @NotNull Integer toWrite) {
         out.writeInt(toWrite);
+    }
+
+    @Override
+    public IntegerMarshaller readResolve() {
+        return INSTANCE;
     }
 }

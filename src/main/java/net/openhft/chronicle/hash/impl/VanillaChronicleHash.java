@@ -19,6 +19,7 @@ package net.openhft.chronicle.hash.impl;
 import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Maths;
@@ -31,6 +32,10 @@ import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +59,7 @@ import static net.openhft.chronicle.hash.impl.DummyReferenceCounted.DUMMY_REFERE
 public abstract class VanillaChronicleHash<K,
         C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
         ECQ extends ExternalHashQueryContext<K>>
-        implements ChronicleHash<K, C, SC, ECQ>, Serializable {
+        implements ChronicleHash<K, C, SC, ECQ>, Serializable, Marshallable {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleHash.class);
 
@@ -65,7 +70,7 @@ public abstract class VanillaChronicleHash<K,
 
     /////////////////////////////////////////////////
     // Version
-    public final String dataFileVersion;
+    private String dataFileVersion;
 
     /////////////////////////////////////////////////
     // If the hash was created in the first place, or read from disk
@@ -73,51 +78,51 @@ public abstract class VanillaChronicleHash<K,
 
     /////////////////////////////////////////////////
     // Key Data model
-    public final Class<K> kClass;
-    public final SizeMarshaller keySizeMarshaller;
-    public final SizedReader<K> originalKeyReader;
-    public final DataAccess<K> originalKeyDataAccess;
+    public Class<K> keyClass;
+    public SizeMarshaller keySizeMarshaller;
+    public SizedReader<K> keyReader;
+    public DataAccess<K> keyDataAccess;
 
     /////////////////////////////////////////////////
     // Checksum entries
-    public final boolean checksumEntries;
+    public boolean checksumEntries;
 
     /////////////////////////////////////////////////
     // Concurrency (number of segments), memory management and dependent fields
-    public final int actualSegments;
-    public final HashSplitting hashSplitting;
+    public int actualSegments;
+    public HashSplitting hashSplitting;
 
-    public final long entriesPerSegment;
+    public long entriesPerSegment;
 
-    public final long chunkSize;
-    public final int maxChunksPerEntry;
-    public final long actualChunksPerSegment;
+    public long chunkSize;
+    public int maxChunksPerEntry;
+    public long actualChunksPerSegment;
 
     /////////////////////////////////////////////////
     // Precomputed offsets and sizes for fast Context init
-    final int segmentHeaderSize;
+    int segmentHeaderSize;
 
-    public final int segmentHashLookupValueBits;
-    public final int segmentHashLookupKeyBits;
-    public final int segmentHashLookupEntrySize;
-    public final long segmentHashLookupCapacity;
-    final long segmentHashLookupInnerSize;
-    public final long segmentHashLookupOuterSize;
+    public int tierHashLookupValueBits;
+    public int tierHashLookupKeyBits;
+    public int tierHashLookupEntrySize;
+    public long tierHashLookupCapacity;
+    long tierHashLookupInnerSize;
+    public long tierHashLookupOuterSize;
 
-    public final long segmentFreeListInnerSize;
-    public final long segmentFreeListOuterSize;
+    public long tierFreeListInnerSize;
+    public long tierFreeListOuterSize;
 
-    final long segmentEntrySpaceInnerSize;
-    public final int segmentEntrySpaceInnerOffset;
-    final long segmentEntrySpaceOuterSize;
+    long tierEntrySpaceInnerSize;
+    public int tierEntrySpaceInnerOffset;
+    long tierEntrySpaceOuterSize;
 
-    public final long segmentSize;
+    public long tierSize;
 
-    final long maxExtraTiers;
-    final long tierBulkSizeInBytes;
-    final long tierBulkInnerOffsetToTiers;
-    protected final long tiersInBulk;
-    protected final int log2TiersInBulk;
+    long maxExtraTiers;
+    long tierBulkSizeInBytes;
+    long tierBulkInnerOffsetToTiers;
+    protected long tiersInBulk;
+    protected int log2TiersInBulk;
 
     /////////////////////////////////////////////////
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
@@ -164,10 +169,10 @@ public abstract class VanillaChronicleHash<K,
 
         // Data model
         SerializationBuilder<K> keyBuilder = privateAPI.keyBuilder();
-        kClass = keyBuilder.tClass;
+        keyClass = keyBuilder.tClass;
         keySizeMarshaller = keyBuilder.sizeMarshaller();
-        originalKeyReader = keyBuilder.reader();
-        originalKeyDataAccess = keyBuilder.dataAccess();
+        keyReader = keyBuilder.reader();
+        keyDataAccess = keyBuilder.dataAccess();
 
         actualSegments = privateAPI.actualSegments();
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
@@ -181,28 +186,28 @@ public abstract class VanillaChronicleHash<K,
         // Precomputed offsets and sizes for fast Context init
         segmentHeaderSize = privateAPI.segmentHeaderSize();
 
-        segmentHashLookupValueBits = valueBits(actualChunksPerSegment);
-        segmentHashLookupKeyBits = keyBits(entriesPerSegment, segmentHashLookupValueBits);
-        segmentHashLookupEntrySize =
-                entrySize(segmentHashLookupKeyBits, segmentHashLookupValueBits);
-        if (!privateAPI.aligned64BitMemoryOperationsAtomic() && segmentHashLookupEntrySize > 4) {
+        tierHashLookupValueBits = valueBits(actualChunksPerSegment);
+        tierHashLookupKeyBits = keyBits(entriesPerSegment, tierHashLookupValueBits);
+        tierHashLookupEntrySize =
+                entrySize(tierHashLookupKeyBits, tierHashLookupValueBits);
+        if (!privateAPI.aligned64BitMemoryOperationsAtomic() && tierHashLookupEntrySize > 4) {
             throw new IllegalStateException("aligned64BitMemoryOperationsAtomic() == false, " +
-                    "but hash lookup slot is " + segmentHashLookupEntrySize);
+                    "but hash lookup slot is " + tierHashLookupEntrySize);
         }
-        segmentHashLookupCapacity = CompactOffHeapLinearHashTable.capacityFor(entriesPerSegment);
-        segmentHashLookupInnerSize = segmentHashLookupCapacity * segmentHashLookupEntrySize;
-        segmentHashLookupOuterSize = CACHE_LINES.align(segmentHashLookupInnerSize, BYTES);
+        tierHashLookupCapacity = CompactOffHeapLinearHashTable.capacityFor(entriesPerSegment);
+        tierHashLookupInnerSize = tierHashLookupCapacity * tierHashLookupEntrySize;
+        tierHashLookupOuterSize = CACHE_LINES.align(tierHashLookupInnerSize, BYTES);
 
-        segmentFreeListInnerSize = LONGS.align(
+        tierFreeListInnerSize = LONGS.align(
                 BYTES.alignAndConvert(actualChunksPerSegment, BITS), BYTES);
-        segmentFreeListOuterSize = CACHE_LINES.align(segmentFreeListInnerSize, BYTES);
+        tierFreeListOuterSize = CACHE_LINES.align(tierFreeListInnerSize, BYTES);
 
-        segmentEntrySpaceInnerSize = chunkSize * actualChunksPerSegment;
-        segmentEntrySpaceInnerOffset = privateAPI.segmentEntrySpaceInnerOffset();
-        segmentEntrySpaceOuterSize = CACHE_LINES.align(
-                segmentEntrySpaceInnerOffset + segmentEntrySpaceInnerSize, BYTES);
+        tierEntrySpaceInnerSize = chunkSize * actualChunksPerSegment;
+        tierEntrySpaceInnerOffset = privateAPI.segmentEntrySpaceInnerOffset();
+        tierEntrySpaceOuterSize = CACHE_LINES.align(
+                tierEntrySpaceInnerOffset + tierEntrySpaceInnerSize, BYTES);
 
-        segmentSize = segmentSize();
+        tierSize = segmentSize();
 
         maxExtraTiers = privateAPI.maxExtraTiers();
         tiersInBulk = computeNumberOfTiersInBulk();
@@ -211,6 +216,101 @@ public abstract class VanillaChronicleHash<K,
         tierBulkSizeInBytes = computeTierBulkBytesSize(tiersInBulk);
 
         checksumEntries = privateAPI.checksumEntries();
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
+        readMarshallableFields(wire);
+        initTransients();
+    }
+
+    protected void readMarshallableFields(@NotNull WireIn wireIn) throws IORuntimeException {
+        dataFileVersion = wireIn.read(() -> "dataFileVersion").text();
+
+        keyClass = wireIn.read(() -> "keyClass").typeLiteral();
+        keySizeMarshaller = wireIn.read(() -> "keySizeMarshaller").typedMarshallable();
+        keyReader = wireIn.read(() -> "keyReader").typedMarshallable();
+        keyDataAccess = wireIn.read(() -> "keyDataAccess").typedMarshallable();
+
+        checksumEntries = wireIn.read(() -> "checksumEntries").bool();
+
+        actualSegments = wireIn.read(() -> "actualSegments").int32();
+        hashSplitting = wireIn.read(() -> "hashSplitting").typedMarshallable();
+
+        entriesPerSegment = wireIn.read(() -> "entriesPerSegment").int64();
+
+        chunkSize = wireIn.read(() -> "chunkSize").int64();
+        maxChunksPerEntry = wireIn.read(() -> "maxChunksPerEntry").int32();
+        actualChunksPerSegment = wireIn.read(() -> "actualChunksPerSegment").int64();
+
+        segmentHeaderSize = wireIn.read(() -> "segmentHeaderSize").int32();
+
+        tierHashLookupValueBits = wireIn.read(() -> "tierHashLookupValueBits").int32();
+        tierHashLookupKeyBits = wireIn.read(() -> "tierHashLookupKeyBits").int32();
+        tierHashLookupEntrySize = wireIn.read(() -> "tierHashLookupEntrySize").int32();
+        tierHashLookupCapacity = wireIn.read(() -> "tierHashLookupCapacity").int64();
+        tierHashLookupInnerSize = wireIn.read(() -> "tierHashLookupInnerSize").int64();
+        tierHashLookupOuterSize = wireIn.read(() -> "tierHashLookupOuterSize").int64();
+
+        tierFreeListInnerSize = wireIn.read(() -> "tierFreeListInnerSize").int64();
+        tierFreeListOuterSize = wireIn.read(() -> "tierFreeListOuterSize").int64();
+
+        tierEntrySpaceInnerSize = wireIn.read(() -> "tierEntrySpaceInnerSize").int64();
+        tierEntrySpaceInnerOffset = wireIn.read(() -> "tierEntrySpaceInnerOffset").int32();
+        tierEntrySpaceOuterSize = wireIn.read(() -> "tierEntrySpaceOuterSize").int64();
+
+        tierSize = wireIn.read(() -> "tierSize").int64();
+
+        maxExtraTiers = wireIn.read(() -> "maxExtraTiers").int64();
+        tierBulkSizeInBytes = wireIn.read(() -> "tierBulkSizeInBytes").int64();
+        tierBulkInnerOffsetToTiers = wireIn.read(() -> "tierBulkInnerOffsetToTiers").int64();
+        tiersInBulk = wireIn.read(() -> "tiersInBulk").int64();
+        log2TiersInBulk = wireIn.read(() -> "log2TiersInBulk").int32();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        wireOut.write(() -> "dataFileVersion").text(dataFileVersion);
+
+        wireOut.write(() -> "keyClass").typeLiteral(keyClass);
+        wireOut.write(() -> "keySizeMarshaller").typedMarshallable(keySizeMarshaller);
+        wireOut.write(() -> "keyReader").typedMarshallable(keyReader);
+        wireOut.write(() -> "keyDataAccess").typedMarshallable(keyDataAccess);
+
+        wireOut.write(() -> "checksumEntries").bool(checksumEntries);
+
+        wireOut.write(() -> "actualSegments").int32(actualSegments);
+        wireOut.write(() -> "hashSplitting").typedMarshallable(hashSplitting);
+
+        wireOut.write(() -> "entriesPerSegment").int64(entriesPerSegment);
+
+        wireOut.write(() -> "chunkSize").int64(chunkSize);
+        wireOut.write(() -> "maxChunksPerEntry").int32(maxChunksPerEntry);
+        wireOut.write(() -> "actualChunksPerSegment").int64(actualChunksPerSegment);
+
+        wireOut.write(() -> "segmentHeaderSize").int32(segmentHeaderSize);
+
+        wireOut.write(() -> "tierHashLookupValueBits").int32(tierHashLookupValueBits);
+        wireOut.write(() -> "tierHashLookupKeyBits").int32(tierHashLookupKeyBits);
+        wireOut.write(() -> "tierHashLookupEntrySize").int32(tierHashLookupEntrySize);
+        wireOut.write(() -> "tierHashLookupCapacity").int64(tierHashLookupCapacity);
+        wireOut.write(() -> "tierHashLookupInnerSize").int64(tierHashLookupInnerSize);
+        wireOut.write(() -> "tierHashLookupOuterSize").int64(tierHashLookupOuterSize);
+
+        wireOut.write(() -> "tierFreeListInnerSize").int64(tierFreeListInnerSize);
+        wireOut.write(() -> "tierFreeListOuterSize").int64(tierFreeListOuterSize);
+
+        wireOut.write(() -> "tierEntrySpaceInnerSize").int64(tierEntrySpaceInnerSize);
+        wireOut.write(() -> "tierEntrySpaceInnerOffset").int32(tierEntrySpaceInnerOffset);
+        wireOut.write(() -> "tierEntrySpaceOuterSize").int64(tierEntrySpaceOuterSize);
+
+        wireOut.write(() -> "tierSize").int64(tierSize);
+
+        wireOut.write(() -> "maxExtraTiers").int64(maxExtraTiers);
+        wireOut.write(() -> "tierBulkSizeInBytes").int64(tierBulkSizeInBytes);
+        wireOut.write(() -> "tierBulkInnerOffsetToTiers").int64(tierBulkInnerOffsetToTiers);
+        wireOut.write(() -> "tiersInBulk").int64(tiersInBulk);
+        wireOut.write(() -> "log2TiersInBulk").int32(log2TiersInBulk);
     }
 
     protected VanillaGlobalMutableState createGlobalMutableState() {
@@ -222,8 +322,8 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private long segmentSize() {
-        long ss = segmentHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE +
-                segmentFreeListOuterSize + segmentEntrySpaceOuterSize;
+        long ss = tierHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE +
+                tierFreeListOuterSize + tierEntrySpaceOuterSize;
         if ((ss & 63L) != 0)
             throw new AssertionError();
         return breakL1CacheAssociativityContention(ss);
@@ -245,14 +345,14 @@ public abstract class VanillaChronicleHash<K,
         // TODO review heuristics
         int tiersInBulk = actualSegments / 8;
         tiersInBulk = Maths.nextPower2(tiersInBulk, 1);
-        while (segmentSize * tiersInBulk < OS.pageSize()) {
+        while (tierSize * tiersInBulk < OS.pageSize()) {
             tiersInBulk *= 2;
         }
         return tiersInBulk;
     }
 
     private long computeTierBulkBytesSize(long tiersInBulk) {
-        return computeTierBulkInnerOffsetToTiers(tiersInBulk) + tiersInBulk * segmentSize;
+        return computeTierBulkInnerOffsetToTiers(tiersInBulk) + tiersInBulk * tierSize;
     }
 
     protected long computeTierBulkInnerOffsetToTiers(long tiersInBulk) {
@@ -266,13 +366,13 @@ public abstract class VanillaChronicleHash<K,
     private void initOwnTransients() {
         globalMutableState = createGlobalMutableState();
         tierBulkOffsets = new ArrayList<>();
-        if (segmentHashLookupEntrySize == 4) {
+        if (tierHashLookupEntrySize == 4) {
             hashLookup = new IntCompactOffHeapLinearHashTable(this);
-        } else if (segmentHashLookupEntrySize == 8) {
+        } else if (tierHashLookupEntrySize == 8) {
             hashLookup = new LongCompactOffHeapLinearHashTable(this);
         } else {
             throw new AssertionError("hash lookup slot size could be 4 or 8, " +
-                    segmentHashLookupEntrySize + " observed");
+                    tierHashLookupEntrySize + " observed");
         }
     }
 
@@ -326,15 +426,14 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    public final void createMappedStoreAndSegments(File file) throws IOException {
+    public final void createMappedStoreAndSegments(File file, RandomAccessFile raf)
+            throws IOException {
         // TODO this method had been moved -- not clear where
         //OS.warnOnWindows(sizeInBytesWithoutTiers());
         this.file = file;
         long mapSize = createdOrInMemory ? pageAlign(sizeInBytesWithoutTiers()) :
                 expectedFileSize();
-        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
-            createMappedStoreAndSegments(map(raf, mapSize, 0));
-        }
+        createMappedStoreAndSegments(map(raf, mapSize, 0));
     }
 
     private boolean persisted() {
@@ -371,7 +470,7 @@ public abstract class VanillaChronicleHash<K,
 
     private void zeroOutNewlyMappedTier(BytesStore bytesStore, long segmentOffset) {
         // Zero out hash lookup, tier data and free list bit set. Leave entry space.
-        bytesStore.zeroOut(segmentOffset, segmentOffset + segmentSize - segmentEntrySpaceOuterSize);
+        bytesStore.zeroOut(segmentOffset, segmentOffset + tierSize - tierEntrySpaceOuterSize);
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -410,7 +509,7 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public final long sizeInBytesWithoutTiers() {
-        return segmentHeadersOffset() + actualSegments * (segmentHeaderSize + segmentSize);
+        return segmentHeadersOffset() + actualSegments * (segmentHeaderSize + tierSize);
     }
 
     public final long expectedFileSize() {
@@ -434,9 +533,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public final void checkKey(Object key) {
-        if (!kClass.isInstance(key)) {
+        if (!keyClass.isInstance(key)) {
             // key.getClass will cause NPE exactly as needed
-            throw new ClassCastException("Key must be a " + kClass.getName() +
+            throw new ClassCastException("Key must be a " + keyClass.getName() +
                     " but was a " + key.getClass());
         }
     }
@@ -465,7 +564,7 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private long segmentOffset(long segmentIndex) {
-        return segmentsOffset + segmentIndex * segmentSize;
+        return segmentsOffset + segmentIndex * tierSize;
     }
 
     public final int inChunks(long sizeInBytes) {
@@ -557,7 +656,7 @@ public abstract class VanillaChronicleHash<K,
                     BytesStore allocatedTierBytes = tierBytesStore(firstFreeTierIndex);
                     long allocatedTierOffset = tierBytesOffset(firstFreeTierIndex);
                     long tierBaseAddr = allocatedTierBytes.address(0) + allocatedTierOffset;
-                    long tierCountersAreaAddr = tierBaseAddr + segmentHashLookupOuterSize;
+                    long tierCountersAreaAddr = tierBaseAddr + tierHashLookupOuterSize;
                     long nextFreeTierIndex = TierCountersArea.nextTierIndex(tierCountersAreaAddr);
                     // now, when this tier will be a part of the map, the next tier designates
                     // the next tier in the data structure, should be 0
@@ -594,7 +693,7 @@ public abstract class VanillaChronicleHash<K,
             long tierOffset = tierBytesOffset(tierIndex);
             zeroOutNewlyMappedTier(tierBytesStore, tierOffset);
             if (tierIndex < lastTierIndex) {
-                long tierCountersAreaOffset = tierOffset + segmentHashLookupOuterSize;
+                long tierCountersAreaOffset = tierOffset + tierHashLookupOuterSize;
                 TierCountersArea.nextTierIndex(tierBytesStore.address(0) + tierCountersAreaOffset,
                         tierIndex + 1);
             }
@@ -632,7 +731,7 @@ public abstract class VanillaChronicleHash<K,
         if (bulkIndex >= tierBulkOffsets.size())
             mapTierBulks(bulkIndex);
         return tierBulkOffsets.get(bulkIndex).offset + tierBulkInnerOffsetToTiers +
-                (extraTierIndex & (tiersInBulk - 1)) * segmentSize;
+                (extraTierIndex & (tiersInBulk - 1)) * tierSize;
     }
 
     private TierBulkData tierBulkData(long tierIndexMinusOne) {
@@ -655,7 +754,7 @@ public abstract class VanillaChronicleHash<K,
 
     protected long tierAddr(TierBulkData tierBulkData, long tierIndexOffsetWithinBulk) {
         return tierBulkData.bytesStore.address(0) + tierBulkData.offset +
-                tierBulkInnerOffsetToTiers + tierIndexOffsetWithinBulk * segmentSize;
+                tierBulkInnerOffsetToTiers + tierIndexOffsetWithinBulk * tierSize;
     }
 
     private void mapTierBulks(int upToBulkIndex) {

@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.WriteBytesMarshallable;
+import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -28,8 +29,7 @@ import java.io.Serializable;
  * @param <T> the type of objects serialized
  * @see BytesReader
  */
-@FunctionalInterface
-public interface BytesWriter<T> extends Serializable {
+public interface BytesWriter<T> extends Serializable, Marshallable {
 
     /**
      * Serializes the given object to the given {@code out}.

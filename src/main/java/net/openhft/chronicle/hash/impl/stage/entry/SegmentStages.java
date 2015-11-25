@@ -506,7 +506,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
     public long tierCountersAreaAddr() {
-        return segmentBaseAddr + hh.h().segmentHashLookupOuterSize;
+        return segmentBaseAddr + hh.h().tierHashLookupOuterSize;
     }
 
     public long nextTierIndex() {
@@ -584,14 +584,14 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
 
         long segmentBaseAddr = this.segmentBaseAddr;
-        segmentBS.set(segmentBaseAddr, h.segmentSize);
+        segmentBS.set(segmentBaseAddr, h.tierSize);
         segmentBytes.clear();
 
-        long freeListOffset = h.segmentHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE;
+        long freeListOffset = h.tierHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE;
         freeList.setOffset(segmentBaseAddr + freeListOffset);
 
-        entrySpaceOffset = freeListOffset + h.segmentFreeListOuterSize +
-                h.segmentEntrySpaceInnerOffset;
+        entrySpaceOffset = freeListOffset + h.tierFreeListOuterSize +
+                h.tierEntrySpaceInnerOffset;
     }
 
     @Stage("Segment")

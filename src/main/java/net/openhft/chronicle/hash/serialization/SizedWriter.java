@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -31,7 +32,8 @@ import java.io.Serializable;
  * <p>Implementation example: <pre><code>
  * class LongPair { long first, second; }
  *
- * enum LongPairArrayWriter implements{@code SizedWriter<LongPair[]>} {
+ * enum LongPairArrayWriter
+ *         implements{@code SizedWriter<LongPair[]>, EnumMarshallable<LongPairArrayWriter>} {
  *     INSTANCE;
  *
  *    {@literal @}Override
@@ -47,12 +49,17 @@ import java.io.Serializable;
  *             out.writeLong(pair.second);
  *         }
  *     }
+ *
+ *    {@literal @}Override
+ *     public LongPairArrayWriter readResolve() {
+ *         return INSTANCE;
+ *     }
  * }</code></pre>
  *
  * @param <T> the type of the object marshalled
  * @see SizedReader
  */
-public interface SizedWriter<T> extends Serializable {
+public interface SizedWriter<T> extends Serializable, Marshallable {
 
     /**
      * Returns the length (in bytes) of the serialized form of the given object. Serialization form

@@ -43,7 +43,7 @@ public abstract class HashQuery<K> implements HashEntry<K> {
     @StageRef public HashLookupPos hlp;
     @StageRef public KeySearch<K> ks;
 
-    final DataAccess<K> innerInputKeyDataAccess = hh.h().originalKeyDataAccess.copy();
+    final DataAccess<K> innerInputKeyDataAccess = hh.h().keyDataAccess.copy();
 
     /**
      * This stage exists for hooking {@link #innerInputKeyDataAccess} usage, to trigger {@link

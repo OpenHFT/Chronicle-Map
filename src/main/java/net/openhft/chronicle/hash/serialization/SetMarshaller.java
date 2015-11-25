@@ -17,6 +17,9 @@
 package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +62,8 @@ public class SetMarshaller<T>
         implements BytesReader<Set<T>>, BytesWriter<Set<T>>, StatefulCopyable<SetMarshaller<T>> {
 
     // Config fields
-    private final BytesReader<T> elementReader;
-    private final BytesWriter<? super T> elementWriter;
+    private BytesReader<T> elementReader;
+    private BytesWriter<? super T> elementWriter;
 
     /** Cache field */
     private transient Deque<T> orderedElements;
@@ -109,5 +112,18 @@ public class SetMarshaller<T>
     @Override
     public SetMarshaller<T> copy() {
         return new SetMarshaller<>(copyIfNeeded(elementReader), copyIfNeeded(elementWriter));
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        elementReader = wireIn.read(() -> "elementReader").typedMarshallable();
+        elementWriter = wireIn.read(() -> "elementWriter").typedMarshallable();
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        wireOut.write(() -> "elementReader").typedMarshallable(elementReader);
+        wireOut.write(() -> "elementWriter").typedMarshallable(elementWriter);
     }
 }

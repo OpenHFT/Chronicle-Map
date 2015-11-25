@@ -20,9 +20,9 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.Issue43Test;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -36,7 +36,7 @@ public class ComplexSerializationTest {
         List<B> list_;
     }
 
-    enum AMarshaller implements BytesReader<A>, BytesWriter<A> {
+    enum AMarshaller implements BytesReader<A>, BytesWriter<A>, EnumMarshallable<AMarshaller> {
         INSTANCE;
 
         @Override
@@ -78,6 +78,11 @@ public class ComplexSerializationTest {
                 using.list_ = null;
             }
             return using;
+        }
+
+        @Override
+        public AMarshaller readResolve() {
+            return INSTANCE;
         }
     }
 

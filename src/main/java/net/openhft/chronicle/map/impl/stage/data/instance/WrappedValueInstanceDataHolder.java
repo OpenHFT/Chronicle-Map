@@ -28,7 +28,7 @@ public class WrappedValueInstanceDataHolder<V> {
     
     @StageRef VanillaChronicleMapHolder<?, V, ?> mh;
 
-    private final DataAccess<V> wrappedValueDataAccess = mh.m().originalValueDataAccess.copy();
+    private final DataAccess<V> wrappedValueDataAccess = mh.m().valueDataAccess.copy();
     
     private WrappedValueInstanceDataHolder<V> next;
     

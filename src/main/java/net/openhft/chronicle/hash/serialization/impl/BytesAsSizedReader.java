@@ -17,9 +17,12 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.StatefulCopyable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +30,7 @@ public class BytesAsSizedReader<T>
         implements SizedReader<T>, StatefulCopyable<BytesAsSizedReader<T>> {
 
     /** Config field */
-    private final BytesReader<T> reader;
+    private BytesReader<T> reader;
 
     public BytesAsSizedReader(BytesReader<T> reader) {
         this.reader = reader;
@@ -46,5 +49,15 @@ public class BytesAsSizedReader<T>
         } else {
             return this;
         }
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        reader = wireIn.read(() -> "reader").typedMarshallable();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        wireOut.write(() -> "reader").typedMarshallable(reader);
     }
 }

@@ -17,6 +17,9 @@
 package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,10 +55,10 @@ public class MapMarshaller<K, V>
         StatefulCopyable<MapMarshaller<K, V>> {
 
     // Config fields
-    private final BytesReader<K> keyReader;
-    private final BytesWriter<? super K> keyWriter;
-    private final BytesReader<V> valueReader;
-    private final BytesWriter<? super V> valueWriter;
+    private BytesReader<K> keyReader;
+    private BytesWriter<? super K> keyWriter;
+    private BytesReader<V> valueReader;
+    private BytesWriter<? super V> valueWriter;
 
     // Cache fields
     private transient Deque<K> orderedKeys;
@@ -119,5 +122,22 @@ public class MapMarshaller<K, V>
     public MapMarshaller<K, V> copy() {
         return new MapMarshaller<>(copyIfNeeded(keyReader), copyIfNeeded(keyWriter),
                 copyIfNeeded(valueReader), copyIfNeeded(valueWriter));
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        keyReader = wireIn.read(() -> "keyReader").typedMarshallable();
+        keyWriter = wireIn.read(() -> "keyWriter").typedMarshallable();
+        valueReader = wireIn.read(() -> "valueReader").typedMarshallable();
+        valueWriter = wireIn.read(() -> "valueWriter").typedMarshallable();
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        wireOut.write(() -> "keyReader").typedMarshallable(keyReader);
+        wireOut.write(() -> "keyWriter").typedMarshallable(keyWriter);
+        wireOut.write(() -> "valueReader").typedMarshallable(valueReader);
+        wireOut.write(() -> "valueWriter").typedMarshallable(valueWriter);
     }
 }

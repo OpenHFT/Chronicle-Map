@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,8 @@ import java.io.Serializable;
  * <p>Implementation example:<pre><code>
  * class LongPair { long first, second; }
  * 
- * enum LongPairArrayReader implements{@code SizedReader<LongPair[]>} {
+ * enum LongPairArrayReader
+ *         implements{@code SizedReader<LongPair[]>, EnumMarshallable<LongPairArrayReader>} {
  *     INSTANCE;
  *
  *    {@literal @}Override
@@ -60,13 +62,17 @@ import java.io.Serializable;
  *         }
  *         return res;
  *     }
+ *
+ *    {@literal @}Override
+ *     public LongPairArrayReader readResolve() {
+ *         return INSTANCE;
+ *     }
  * }</code></pre>
  *
  * @param <T> the type of the object deserialized
  * @see SizedWriter
  */
-@FunctionalInterface
-public interface SizedReader<T> extends Serializable {
+public interface SizedReader<T> extends Serializable, Marshallable {
 
     /**
      * Reads and returns the object from {@link Bytes#readPosition()} (i. e. the current position)

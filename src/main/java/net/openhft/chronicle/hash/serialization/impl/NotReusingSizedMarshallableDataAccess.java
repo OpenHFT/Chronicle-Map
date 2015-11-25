@@ -37,6 +37,6 @@ public class NotReusingSizedMarshallableDataAccess<T> extends SizedMarshallableD
     @Override
     public DataAccess<T> copy() {
         return new NotReusingSizedMarshallableDataAccess<>(
-                tClass, copyIfNeeded(sizedReader), copyIfNeeded(sizedWriter));
+                tClass(), copyIfNeeded(sizedReader()), copyIfNeeded(sizedWriter()));
     }
 }

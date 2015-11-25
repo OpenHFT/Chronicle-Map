@@ -23,7 +23,8 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-public enum StopBitSizeMarshaller implements SizeMarshaller {
+public enum StopBitSizeMarshaller
+        implements SizeMarshaller, EnumMarshallable<StopBitSizeMarshaller> {
     INSTANCE;
 
     private static final long MIN_ENCODABLE_SIZE = Long.MIN_VALUE;
@@ -74,5 +75,10 @@ public enum StopBitSizeMarshaller implements SizeMarshaller {
     @Override
     public long readSize(Bytes in) {
         return BytesUtil.readStopBit(in);
+    }
+
+    @Override
+    public StopBitSizeMarshaller readResolve() {
+        return INSTANCE;
     }
 }

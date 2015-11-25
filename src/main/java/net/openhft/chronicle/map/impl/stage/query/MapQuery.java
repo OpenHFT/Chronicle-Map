@@ -55,7 +55,7 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
 
     @StageRef public MapAbsentEntryHolder<K, V> absent;
 
-    final DataAccess<V> innerInputValueDataAccess = mh.m().originalValueDataAccess.copy();
+    final DataAccess<V> innerInputValueDataAccess = mh.m().valueDataAccess.copy();
 
     /** Same as {@link #inputKeyDataAccessInitialized} */
     @Stage("InputValueDataAccess") private boolean inputValueDataAccessInitialized = false;

@@ -28,5 +28,5 @@ public class KeyBytesInterop<K> {
 
     @StageRef VanillaChronicleHashHolder<K> hh;
 
-    public final SizedReader<K> keyReader = copyIfNeeded(hh.h().originalKeyReader);
+    public final SizedReader<K> keyReader = copyIfNeeded(hh.h().keyReader);
 }

@@ -17,10 +17,13 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +49,7 @@ public class SerializableDataAccess<T extends Serializable> extends AbstractData
         initTransients();
     }
 
-    private void initTransients() {
+    void initTransients() {
         bytes = Bytes.allocateElasticDirect(1);
         out = bytes.outputStream();
         in = bytes.inputStream();
@@ -106,5 +109,16 @@ public class SerializableDataAccess<T extends Serializable> extends AbstractData
     @Override
     public DataAccess<T> copy() {
         return new SerializableDataAccess<>();
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        // no fields to read
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        // no fields to write
     }
 }

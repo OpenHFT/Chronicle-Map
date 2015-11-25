@@ -17,11 +17,14 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.SizedWriter;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +37,8 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
         implements DataAccess<T>, Data<T> {
 
     // Config fields
-    final SizedReader<T> sizedReader;
-    final SizedWriter<? super T> sizedWriter;
+    private SizedReader<T> sizedReader;
+    private SizedWriter<? super T> sizedWriter;
 
     /** Cache field */
     private transient Bytes bytes;
@@ -49,6 +52,14 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
         this.sizedWriter = sizedWriter;
         this.sizedReader = sizedReader;
         initTransients();
+    }
+
+    SizedReader<T> sizedReader() {
+        return sizedReader;
+    }
+
+    SizedWriter<? super T> sizedWriter() {
+        return sizedWriter;
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -120,6 +131,21 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
     @Override
     public DataAccess<T> copy() {
         return new SizedMarshallableDataAccess<>(
-                tClass, copyIfNeeded(sizedReader), copyIfNeeded(sizedWriter));
+                tClass(), copyIfNeeded(sizedReader), copyIfNeeded(sizedWriter));
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        super.readMarshallable(wireIn);
+        sizedReader = wireIn.read(() -> "sizedReader").typedMarshallable();
+        sizedWriter = wireIn.read(() -> "sizedWriter").typedMarshallable();
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        super.writeMarshallable(wireOut);
+        wireOut.write(() -> "sizedReader").typedMarshallable(sizedReader);
+        wireOut.write(() -> "sizedWriter").typedMarshallable(sizedWriter);
     }
 }

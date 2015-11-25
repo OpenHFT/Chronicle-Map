@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public enum LongMarshaller
         implements SizedReader<Long>, BytesReader<Long>,
-        SizedWriter<Long>, BytesWriter<Long> {
+        SizedWriter<Long>, BytesWriter<Long>, EnumMarshallable<LongMarshaller> {
     INSTANCE;
 
     @Override
@@ -54,5 +54,10 @@ public enum LongMarshaller
     @Override
     public void write(Bytes out, @NotNull Long toWrite) {
         out.writeLong(toWrite);
+    }
+
+    @Override
+    public LongMarshaller readResolve() {
+        return INSTANCE;
     }
 }

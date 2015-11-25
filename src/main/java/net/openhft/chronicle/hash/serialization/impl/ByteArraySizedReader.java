@@ -21,7 +21,8 @@ import net.openhft.chronicle.hash.serialization.SizedReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public enum ByteArraySizedReader implements SizedReader<byte[]> {
+public enum ByteArraySizedReader
+        implements SizedReader<byte[]>, EnumMarshallable<ByteArraySizedReader> {
     INSTANCE;
 
     @NotNull
@@ -39,5 +40,10 @@ public enum ByteArraySizedReader implements SizedReader<byte[]> {
             throw new IllegalArgumentException("byte[] size should be non-negative int, " +
                     size + " given. Memory corruption?");
         return (int) size;
+    }
+
+    @Override
+    public ByteArraySizedReader readResolve() {
+        return INSTANCE;
     }
 }

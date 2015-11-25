@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public enum DoubleMarshaller
         implements SizedReader<Double>, BytesReader<Double>,
-        SizedWriter<Double>, BytesWriter<Double> {
+        SizedWriter<Double>, BytesWriter<Double>, EnumMarshallable<DoubleMarshaller> {
     INSTANCE;
 
     @NotNull
@@ -54,5 +54,10 @@ public enum DoubleMarshaller
     @Override
     public void write(Bytes out, @NotNull Double toWrite) {
         out.writeDouble(toWrite);
+    }
+
+    @Override
+    public DoubleMarshaller readResolve() {
+        return INSTANCE;
     }
 }

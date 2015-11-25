@@ -28,6 +28,6 @@ public class ValueBytesInterop<V> {
 
     @StageRef VanillaChronicleMapHolder<?, V, ?> mh;
 
-    public final SizedReader<V> valueReader = copyIfNeeded(mh.m().originalValueReader);
+    public final SizedReader<V> valueReader = copyIfNeeded(mh.m().valueReader);
 
 }

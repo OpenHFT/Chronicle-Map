@@ -20,6 +20,8 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
+import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -30,8 +32,8 @@ import java.util.zip.InflaterInputStream;
 /**
  * Created by peter on 24/10/14.
  */
-public enum DeflatorStringMarshaller
-        implements BytesReader<CharSequence>, BytesWriter<CharSequence> {
+public enum DeflatorStringMarshaller implements BytesReader<CharSequence>,
+        BytesWriter<CharSequence>, EnumMarshallable<DeflatorStringMarshaller> {
     INSTANCE;
 
     private static final StringFactory STRING_FACTORY = getStringFactory();
@@ -54,7 +56,7 @@ public enum DeflatorStringMarshaller
     }
 
     @Override
-    public void write(Bytes out, CharSequence s) {
+    public void write(Bytes out, @NotNull CharSequence s) {
         if (s == null) {
             out.writeStopBit(NULL_LENGTH);
             return;
@@ -112,6 +114,11 @@ public enum DeflatorStringMarshaller
         } catch (Exception e) {
             throw new AssertionError(e);
         }
+    }
+
+    @Override
+    public DeflatorStringMarshaller readResolve() {
+        return INSTANCE;
     }
 
     private static abstract class StringFactory {

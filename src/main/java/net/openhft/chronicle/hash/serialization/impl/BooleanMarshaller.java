@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public enum BooleanMarshaller
         implements SizedReader<Boolean>, BytesReader<Boolean>,
-        SizedWriter<Boolean>, BytesWriter<Boolean> {
+        SizedWriter<Boolean>, BytesWriter<Boolean>, EnumMarshallable<BooleanMarshaller> {
     INSTANCE;
 
     @Override
@@ -54,5 +54,10 @@ public enum BooleanMarshaller
     @Override
     public void write(Bytes out, @NotNull Boolean toWrite) {
         out.writeByte((byte) (toWrite ? 'Y' : 0));
+    }
+
+    @Override
+    public BooleanMarshaller readResolve() {
+        return INSTANCE;
     }
 }

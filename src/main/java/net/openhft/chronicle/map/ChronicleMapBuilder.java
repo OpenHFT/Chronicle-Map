@@ -16,7 +16,9 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
@@ -31,11 +33,15 @@ import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.ValueModel;
+import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -119,6 +125,8 @@ public final class ChronicleMapBuilder<K, V> implements
     private static boolean isDefined(double config) {
         return !isNaN(config);
     }
+
+    private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
 
     // not final because of cloning
     private ChronicleMapBuilderPrivateAPI<K> privateAPI = new ChronicleMapBuilderPrivateAPI<>(this);
@@ -515,7 +523,7 @@ public final class ChronicleMapBuilder<K, V> implements
         if (worstAlignmentComputationRequiresValueSize(alignment)) {
             long constantSizeBeforeAlignment = round(size);
             if (constantlySizedValues()) {
-                // see segmentEntrySpaceInnerOffset()
+                // see tierEntrySpaceInnerOffset()
                 long totalDataSize = constantSizeBeforeAlignment + constantValueSize();
                 worstAlignment = (int) (alignAddr(totalDataSize, alignment) - totalDataSize);
             } else {
@@ -1364,28 +1372,29 @@ public final class ChronicleMapBuilder<K, V> implements
         for (int i = 0; i < 10; i++) {
             long fileLength = file.length();
             if (fileLength > 0) {
-                try (FileInputStream fis = new FileInputStream(file);
-                     ObjectInputStream ois = new ObjectInputStream(fis)) {
-                    Object m;
-                    try {
-                        m = ois.readObject();
-                    } catch (ClassNotFoundException e) {
-                        throw new AssertionError(e);
-                    }
-                    @SuppressWarnings("unchecked")
-                    VanillaChronicleMap<K, V, ?> map = (VanillaChronicleMap<K, V, ?>) m;
+                try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+                    FileChannel fileChannel = raf.getChannel();
+                    ByteBuffer headerBuffer = ByteBuffer.allocate(MAX_BOOTSTRAPPING_HEADER_SIZE);
+                    fileChannel.read(headerBuffer);
+                    headerBuffer.flip();
+                    Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
+                    headerBytes.readLimit(headerBuffer.limit());
+                    Wire wire = new TextWire(headerBytes);
+                    VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
                     map.initTransientsFromBuilder(this);
                     initTransientsFromReplication(map, singleHashReplication, channel);
-                    map.initBeforeMapping(fis.getChannel());
+
+                    fileChannel.position(headerBytes.readPosition());
+                    map.initBeforeMapping(fileChannel);
                     long expectedFileLength = map.expectedFileSize();
                     if (expectedFileLength != fileLength) {
                         throw new IOException("The file " + file + " the map is serialized from " +
                                 "has unexpected length " + fileLength + ", probably corrupted. " +
                                 "Expected length is " + expectedFileLength);
                     }
-                    map.createMappedStoreAndSegments(file);
+                    map.createMappedStoreAndSegments(file, raf);
                     establishReplication(map, singleHashReplication, channel);
-                    fis.getChannel().force(true);
+                    fileChannel.force(true);
                     // TODO according to Self Boostrapping Data spec, should write "init complete"
                     // byte *after* the above force instruction, see HCOLL-396
                     return map;
@@ -1406,12 +1415,17 @@ public final class ChronicleMapBuilder<K, V> implements
 
         VanillaChronicleMap<K, V, ?> map = newMap(singleHashReplication, channel);
 
-        try (FileOutputStream fos = new FileOutputStream(file);
-             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(map);
-            oos.flush();
-            map.initBeforeMapping(fos.getChannel());
-            map.createMappedStoreAndSegments(file);
+        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+            FileChannel fileChannel = raf.getChannel();
+            ByteBuffer headerBuffer = ByteBuffer.allocate(MAX_BOOTSTRAPPING_HEADER_SIZE);
+            Bytes<ByteBuffer> headerBytes = Bytes.wrapForWrite(headerBuffer);
+            Wire wire = new TextWire(headerBytes);
+            wire.getValueOut().typedMarshallable(map);
+
+            headerBuffer.limit((int) headerBytes.writePosition());
+            fileChannel.write(headerBuffer);
+            map.initBeforeMapping(fileChannel);
+            map.createMappedStoreAndSegments(file, raf);
         }
 
         return establishReplication(map, singleHashReplication, channel);

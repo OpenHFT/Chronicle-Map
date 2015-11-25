@@ -30,11 +30,17 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see CharSequenceBytesWriter
  */
-public enum CharSequenceBytesWriter implements BytesWriter<CharSequence> {
+public enum CharSequenceBytesWriter
+        implements BytesWriter<CharSequence>, EnumMarshallable<CharSequenceBytesWriter> {
     INSTANCE;
 
     @Override
     public void write(Bytes out, @NotNull CharSequence toWrite) {
         out.writeUtf8(toWrite);
+    }
+
+    @Override
+    public CharSequenceBytesWriter readResolve() {
+        return INSTANCE;
     }
 }

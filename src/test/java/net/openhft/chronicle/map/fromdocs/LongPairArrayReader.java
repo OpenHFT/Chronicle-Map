@@ -18,11 +18,12 @@ package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.serialization.SizedReader;
+import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-enum LongPairArrayReader implements SizedReader<LongPair[]> {
+enum LongPairArrayReader implements SizedReader<LongPair[]>, EnumMarshallable<LongPairArrayReader> {
     INSTANCE;
 
     @NotNull
@@ -49,5 +50,10 @@ enum LongPairArrayReader implements SizedReader<LongPair[]> {
             pair.second = in.readLong();
         }
         return res;
+    }
+
+    @Override
+    public LongPairArrayReader readResolve() {
+        return INSTANCE;
     }
 }

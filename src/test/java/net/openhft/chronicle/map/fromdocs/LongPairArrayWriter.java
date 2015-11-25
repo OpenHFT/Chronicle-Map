@@ -18,9 +18,10 @@ package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.serialization.SizedWriter;
+import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import org.jetbrains.annotations.NotNull;
 
-enum LongPairArrayWriter implements SizedWriter<LongPair[]> {
+enum LongPairArrayWriter implements SizedWriter<LongPair[]>, EnumMarshallable<LongPairArrayWriter> {
     INSTANCE;
 
     @Override
@@ -34,5 +35,10 @@ enum LongPairArrayWriter implements SizedWriter<LongPair[]> {
             out.writeLong(pair.first);
             out.writeLong(pair.second);
         }
+    }
+
+    @Override
+    public LongPairArrayWriter readResolve() {
+        return INSTANCE;
     }
 }

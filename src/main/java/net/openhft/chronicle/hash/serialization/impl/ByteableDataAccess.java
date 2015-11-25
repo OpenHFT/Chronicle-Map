@@ -17,9 +17,12 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,6 +92,6 @@ public class ByteableDataAccess<T extends Byteable> extends InstanceCreatingMars
 
     @Override
     public DataAccess<T> copy() {
-        return new ByteableDataAccess<>(tClass);
+        return new ByteableDataAccess<>(tClass());
     }
 }

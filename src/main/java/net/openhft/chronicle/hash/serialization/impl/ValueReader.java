@@ -18,11 +18,14 @@ package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.StatefulCopyable;
 import net.openhft.chronicle.values.Copyable;
 import net.openhft.chronicle.values.Values;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,17 +35,30 @@ import java.io.ObjectInputStream;
 public class ValueReader<T>
         implements SizedReader<T>, BytesReader<T>, StatefulCopyable<ValueReader<T>> {
 
-    /** The interface of values deserialized. */
-    protected final Class<T> valueType;
+    /** Config field */
+    private Class<T> valueType;
 
     // Cache fields
-    protected transient Class<? extends T> heapClass;
-    protected transient Class<? extends T> nativeClass;
+    private transient Class<? extends T> nativeClass;
+    private transient Class<? extends T> heapClass;
     private transient Byteable nativeReference;
 
     public ValueReader(Class<T> valueType) {
         this.valueType = valueType;
         initTransients();
+    }
+
+    /** Returns the interface of values deserialized. */
+    protected Class<T> valueType() {
+        return valueType;
+    }
+
+    protected Class<? extends T> nativeClass() {
+        return nativeClass;
+    }
+
+    protected Class<? extends T> heapClass() {
+        return heapClass;
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -51,8 +67,8 @@ public class ValueReader<T>
     }
 
     private void initTransients() {
-        heapClass = Values.heapClassFor(valueType);
         nativeClass = Values.nativeClassFor(valueType);
+        heapClass = Values.heapClassFor(valueType);
         nativeReference = (Byteable) Values.newNativeReference(valueType);
     }
 
@@ -91,5 +107,16 @@ public class ValueReader<T>
     @Override
     public ValueReader<T> copy() {
         return new ValueReader<>(valueType);
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        valueType = wireIn.read(() -> "valueType").typeLiteral();
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        wireOut.write(() -> "valueType").typeLiteral(valueType);
     }
 }

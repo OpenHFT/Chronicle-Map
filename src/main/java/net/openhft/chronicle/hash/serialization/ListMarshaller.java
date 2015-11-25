@@ -17,6 +17,9 @@
 package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,8 +61,8 @@ public class ListMarshaller<T>
         implements BytesReader<List<T>>, BytesWriter<List<T>>, StatefulCopyable<ListMarshaller<T>> {
 
     // Config fields
-    private final BytesReader<T> elementReader;
-    private final BytesWriter<? super T> elementWriter;
+    private BytesReader<T> elementReader;
+    private BytesWriter<? super T> elementWriter;
 
     public ListMarshaller(BytesReader<T> elementReader, BytesWriter<? super T> elementWriter) {
         this.elementReader = elementReader;
@@ -103,5 +106,17 @@ public class ListMarshaller<T>
         } else {
             return this;
         }
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        elementReader = wireIn.read(() -> "elementReader").typedMarshallable();
+        elementWriter = wireIn.read(() -> "elementWriter").typedMarshallable();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        wireOut.write(() -> "elementReader").typedMarshallable(elementReader);
+        wireOut.write(() -> "elementWriter").typedMarshallable(elementWriter);
     }
 }
