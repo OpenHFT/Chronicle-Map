@@ -376,15 +376,20 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    public final void initBeforeMapping(FileChannel ch) throws IOException {
-        headerSize = roundUpMapHeaderSize(ch.position());
+    public final void initBeforeMapping(FileChannel ch, long headerSize) throws IOException {
+        this.headerSize = roundUpMapHeaderSize(headerSize);
         if (!createdOrInMemory) {
             // This block is for reading segmentHeadersOffset before main mapping
             // After the mapping globalMutableState value's bytes are reassigned
-            ch.position(headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET);
             ByteBuffer globalMutableStateBuffer =
                     ByteBuffer.allocate((int) globalMutableState.maxSize());
-            ch.read(globalMutableStateBuffer);
+            while (globalMutableStateBuffer.remaining() > 0) {
+                if (ch.read(globalMutableStateBuffer,
+                        this.headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET +
+                                globalMutableStateBuffer.position()) == -1) {
+                    throw new RuntimeException();
+                }
+            }
             globalMutableStateBuffer.flip();
             globalMutableState.bytesStore(BytesStore.wrap(globalMutableStateBuffer), 0,
                     globalMutableState.maxSize());
@@ -814,7 +819,7 @@ public abstract class VanillaChronicleHash<K,
         FileChannel fileChannel = raf.getChannel();
         if (fileChannel.size() < minFileSize) {
             // handle a possible race condition between processes.
-            try (FileLock lock = fileChannel.lock()) {
+            try (FileLock ignored = fileChannel.lock()) {
                 if (fileChannel.size() < minFileSize) {
                     raf.setLength(minFileSize);
                 }

@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -1375,7 +1376,11 @@ public final class ChronicleMapBuilder<K, V> implements
                 try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
                     FileChannel fileChannel = raf.getChannel();
                     ByteBuffer headerBuffer = ByteBuffer.allocate(MAX_BOOTSTRAPPING_HEADER_SIZE);
-                    fileChannel.read(headerBuffer);
+                    while (headerBuffer.remaining() > 0 &&
+                            headerBuffer.position() < fileChannel.size()) {
+                        if (fileChannel.read(headerBuffer, headerBuffer.position()) == -1)
+                            break;
+                    }
                     headerBuffer.flip();
                     Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
                     headerBytes.readLimit(headerBuffer.limit());
@@ -1384,8 +1389,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     map.initTransientsFromBuilder(this);
                     initTransientsFromReplication(map, singleHashReplication, channel);
 
-                    fileChannel.position(headerBytes.readPosition());
-                    map.initBeforeMapping(fileChannel);
+                    map.initBeforeMapping(fileChannel, headerBytes.readPosition());
                     long expectedFileLength = map.expectedFileSize();
                     if (expectedFileLength != fileLength) {
                         throw new IOException("The file " + file + " the map is serialized from " +
@@ -1422,9 +1426,14 @@ public final class ChronicleMapBuilder<K, V> implements
             Wire wire = new TextWire(headerBytes);
             wire.getValueOut().typedMarshallable(map);
 
-            headerBuffer.limit((int) headerBytes.writePosition());
-            fileChannel.write(headerBuffer);
-            map.initBeforeMapping(fileChannel);
+            int headerSize = (int) headerBytes.writePosition();
+            headerBuffer.limit(headerSize);
+            try (FileLock ignored = fileChannel.lock(0, headerSize, false)) {
+                while (headerBuffer.remaining() > 0) {
+                    fileChannel.write(headerBuffer, headerBuffer.position());
+                }
+                map.initBeforeMapping(fileChannel, headerSize);
+            }
             map.createMappedStoreAndSegments(file, raf);
         }
 
