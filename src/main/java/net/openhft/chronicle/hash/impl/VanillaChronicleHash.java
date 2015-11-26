@@ -523,6 +523,13 @@ public abstract class VanillaChronicleHash<K,
         if (closed)
             return;
         closed = true;
+        if (file != null) {
+            try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+                raf.getChannel().force(true);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         bs = null;
         file = null;
     }
