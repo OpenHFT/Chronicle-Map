@@ -33,7 +33,7 @@ import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.ValueModel;
-import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -1384,7 +1384,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     headerBuffer.flip();
                     Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
                     headerBytes.readLimit(headerBuffer.limit());
-                    Wire wire = new TextWire(headerBytes);
+                    Wire wire = new BinaryWire(headerBytes);
                     VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
                     map.initTransientsFromBuilder(this);
                     initTransientsFromReplication(map, singleHashReplication, channel);
@@ -1423,7 +1423,7 @@ public final class ChronicleMapBuilder<K, V> implements
             FileChannel fileChannel = raf.getChannel();
             ByteBuffer headerBuffer = ByteBuffer.allocate(MAX_BOOTSTRAPPING_HEADER_SIZE);
             Bytes<ByteBuffer> headerBytes = Bytes.wrapForWrite(headerBuffer);
-            Wire wire = new TextWire(headerBytes);
+            Wire wire = new BinaryWire(headerBytes);
             wire.getValueOut().typedMarshallable(map);
 
             int headerSize = (int) headerBytes.writePosition();
