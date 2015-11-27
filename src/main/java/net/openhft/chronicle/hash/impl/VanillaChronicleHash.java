@@ -74,7 +74,7 @@ public abstract class VanillaChronicleHash<K,
 
     /////////////////////////////////////////////////
     // If the hash was created in the first place, or read from disk
-    public transient boolean createdOrInMemory = false;
+    public transient boolean createdOrInMemory;
 
     /////////////////////////////////////////////////
     // Key Data model
@@ -152,17 +152,16 @@ public abstract class VanillaChronicleHash<K,
 
     public transient CompactOffHeapLinearHashTable hashLookup;
 
-    protected transient volatile boolean closed = false;
+    protected transient volatile boolean closed;
 
     private transient VanillaGlobalMutableState globalMutableState;
 
     public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder) {
+        createdOrInMemory = true;
+        closed = false;
+
         // Version
         dataFileVersion = BuildVersion.version();
-
-        // Because we are in constructor. If the Hash loaded from persistence file, deserialization
-        // bypasses the constructor and createdOrInMemory = false
-        this.createdOrInMemory = true;
 
         @SuppressWarnings("deprecation")
         ChronicleHashBuilderPrivateAPI<K> privateAPI = builder.privateAPI();
@@ -225,6 +224,13 @@ public abstract class VanillaChronicleHash<K,
     }
 
     protected void readMarshallableFields(@NotNull WireIn wireIn) throws IORuntimeException {
+        // Previously assignment of these values was done in default field initializers, but
+        // with Wire serialization VanillaChronicleMap instance is created with
+        // unsafe.allocateInstance(), that doesn't guarantee (?) to initialize fields with default
+        // values (false for boolean)
+        createdOrInMemory = false;
+        closed = false;
+
         dataFileVersion = wireIn.read(() -> "dataFileVersion").text();
 
         keyClass = wireIn.read(() -> "keyClass").typeLiteral();
