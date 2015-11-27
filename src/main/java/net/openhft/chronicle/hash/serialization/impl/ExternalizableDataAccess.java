@@ -46,7 +46,8 @@ public class ExternalizableDataAccess<T extends Externalizable> extends Serializ
         try {
             return tClass.newInstance();
         } catch (InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(
+                    "Externalizable " + tClass + " must have a public no-arg constructor", e);
         }
     }
 
