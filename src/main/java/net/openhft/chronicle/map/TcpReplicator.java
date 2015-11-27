@@ -51,22 +51,13 @@ import static net.openhft.chronicle.algo.MemoryUnit.*;
 import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
 import static net.openhft.chronicle.hash.impl.util.BuildVersion.version;
 
-interface Work {
-
-    /**
-     * @param in the buffer that we will fill up
-     * @return true when all the work is complete
-     */
-    boolean doWork(@NotNull Bytes in);
-}
-
 /**
  * Used with a {@link net.openhft.chronicle.map.ReplicatedChronicleMap} to send data between the
  * maps using a socket connection {@link net.openhft.chronicle.map.TcpReplicator}
  *
  * @author Rob Austin.
  */
-public final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Closeable {
+final class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
     public static final long TIMESTAMP_FACTOR = 10000;
     private static final int STATELESS_CLIENT = -127;
@@ -1436,6 +1427,15 @@ public final class TcpReplicator<K, V> extends AbstractChannelReplicator impleme
         public long readRemoteHeartbeatIntervalFromBuffer() {
             return (entryOut.readRemaining() >= 8) ? entryOut.readLong() : Long.MIN_VALUE;
         }
+    }
+
+    interface Work {
+
+        /**
+         * @param in the buffer that we will fill up
+         * @return true when all the work is complete
+         */
+        boolean doWork(@NotNull Bytes in);
     }
 }
 

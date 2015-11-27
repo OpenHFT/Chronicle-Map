@@ -33,7 +33,8 @@ import java.nio.channels.DatagramChannel;
  * receive the data before it becomes available on TCP/IP. In order to not miss data, UdpReplicator
  * should be used in conjunction with the TCP Replicator.
  */
-final class UdpReplicator extends UdpChannelReplicator implements Replica.ModificationNotifier, Closeable {
+final class UdpReplicator extends UdpChannelReplicator
+        implements Replica.ModificationNotifier, Closeable {
 
     private static final Logger LOG =
             LoggerFactory.getLogger(UdpReplicator.class.getName());

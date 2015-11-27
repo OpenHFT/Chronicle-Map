@@ -230,18 +230,14 @@
                         <link>http://openhft.github.io/Chronicle-Algorithms/apidocs/</link>
                     </links>
                     <excludePackageNames>
-                        net.openhft.chronicle.hash.serialization.internal:net.openhft.xstream:net.openhft.xstream.*:net.openhft.chronicle.hash.impl:net.openhft.chronicle.map.impl:net.openhft.chronicle.hash.hashing
+                        net.openhft.chronicle.hash.serialization.impl:net.openhft.xstream:net.openhft.chronicle.hash.impl:net.openhft.chronicle.map.impl
                     </excludePackageNames>
                     <sourceFileExcludes>
                         <exclude>net/openhft/chronicle/hash/ChronicleHashBuilderPrivateAPI.java</exclude>
                         <exclude>net/openhft/chronicle/hash/VanillaGlobalMutableState.java</exclude>
-                        <exclude>net/openhft/chronicle/hash/Segment.java</exclude>
-                        <exclude>net/openhft/chronicle/map/ConstantValueProvider.java</exclude>
                         <exclude>net/openhft/chronicle/map/VanillaChronicleMap.java</exclude>
                         <exclude>net/openhft/chronicle/map/Replica.java</exclude>
                         <exclude>net/openhft/chronicle/map/ReplicatedChronicleMap.java</exclude>
-                        <exclude>net/openhft/chronicle/map/ServiceDescriptor.java</exclude>
-                        <exclude>net/openhft/chronicle/map/TcpReplicator.java</exclude>
                     </sourceFileExcludes>
                     <failOnError>false</failOnError>
                     <additionalparam>-Xdoclint:none</additionalparam>
