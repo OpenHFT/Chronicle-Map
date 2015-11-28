@@ -34,7 +34,7 @@ public class IterationKeyHashCode implements KeyHashCode {
     void initKeyHash() {
         long addr = s.tierBaseAddr + e.keyOffset;
         long len = e.keySize;
-        keyHash = LongHashFunction.city_1_1().hashMemory(addr, len);
+        keyHash = LongHashFunction.xx_r39().hashMemory(addr, len);
     }
 
     @Override

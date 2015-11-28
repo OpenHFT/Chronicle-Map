@@ -29,7 +29,7 @@ public class InputKeyHashCode implements KeyHashCode {
     public long keyHash = 0;
 
     void initKeyHash() {
-        keyHash = ks.inputKey.hash(LongHashFunction.city_1_1());
+        keyHash = ks.inputKey.hash(LongHashFunction.xx_r39());
     }
 
     @Override

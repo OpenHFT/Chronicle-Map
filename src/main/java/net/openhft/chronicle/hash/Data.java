@@ -138,7 +138,7 @@ public interface Data<V> {
      * <i>bytes</i> representation.
      */
     default int dataHashCode() {
-        return (int) hash(LongHashFunction.city_1_1());
+        return (int) hash(LongHashFunction.xx_r39());
     }
 
     /**
