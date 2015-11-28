@@ -19,12 +19,16 @@ package net.openhft.chronicle.set;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.*;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.map.replication.MapRemoteOperations;
+import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
+import net.openhft.chronicle.set.replication.SetRemoteOperations;
+import net.openhft.chronicle.set.replication.SetRemoteQueryContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -287,6 +291,38 @@ public final class ChronicleSetBuilder<K>
         return this;
     }
 
+    public ChronicleSetBuilder<K> entryOperations(SetEntryOperations<K, ?> entryOperations) {
+        chronicleMapBuilder.entryOperations(new MapEntryOperations<K, DummyValue, Object>() {
+            @Override
+            public Object remove(@NotNull MapEntry<K, DummyValue> entry) {
+                return entryOperations.remove((SetEntry<K>) entry);
+            }
+
+            @Override
+            public Object insert(
+                    @NotNull MapAbsentEntry<K, DummyValue> absentEntry, Data<DummyValue> value) {
+                return entryOperations.insert((SetAbsentEntry<K>) absentEntry);
+            }
+        });
+        return this;
+    }
+
+    public ChronicleSetBuilder<K> remoteOperations(SetRemoteOperations<K, ?> remoteOperations) {
+        chronicleMapBuilder.remoteOperations(new MapRemoteOperations<K, DummyValue, Object>() {
+            @Override
+            public void remove(MapRemoteQueryContext<K, DummyValue, Object> q) {
+                remoteOperations.remove((SetRemoteQueryContext) q);
+            }
+
+            @Override
+            public void put(
+                    MapRemoteQueryContext<K, DummyValue, Object> q, Data<DummyValue> newValue) {
+                remoteOperations.put((SetRemoteQueryContext) q);
+            }
+        });
+        return this;
+    }
+
     @Override
     public ChronicleHashInstanceBuilder<ChronicleSet<K>> instance() {
         return new SetInstanceBuilder<>(chronicleMapBuilder.instance());
@@ -295,13 +331,13 @@ public final class ChronicleSetBuilder<K>
     @Override
     public ChronicleSet<K> create() {
         final ChronicleMap<K, DummyValue> map = chronicleMapBuilder.create();
-        return new SetFromMap<>(map);
+        return new SetFromMap<>((VanillaChronicleMap<K, DummyValue, ?>) map);
     }
 
     @Override
     public ChronicleSet<K> createPersistedTo(File file) throws IOException {
         ChronicleMap<K, DummyValue> map = chronicleMapBuilder.createPersistedTo(file);
-        return new SetFromMap<>(map);
+        return new SetFromMap<>((VanillaChronicleMap<K, DummyValue, ?>) map);
     }
 
     /**

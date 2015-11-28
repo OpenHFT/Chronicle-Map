@@ -16,11 +16,13 @@
 
 package net.openhft.chronicle.map.impl.stage.map;
 
+import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ReplicatedChronicleMap;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
+import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.sg.Staged;
 
 @Staged
@@ -48,5 +50,14 @@ public class ReplicatedChronicleMapHolderImpl<K, V, R> extends Chaining
     @Override
     public ChronicleMap<K, V> map() {
         return m();
+    }
+
+    @Override
+    public ChronicleSet<K> set() {
+        return m.chronicleSet;
+    }
+
+    public ChronicleHash<K, ?, ?, ?> hash() {
+        return set() != null ? set() : map();
     }
 }

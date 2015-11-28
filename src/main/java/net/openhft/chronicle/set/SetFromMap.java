@@ -18,6 +18,7 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.VanillaChronicleMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -32,14 +33,20 @@ import java.util.function.Predicate;
 
 import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;
 
+/**
+ * ChronicleSet is implemented through ChronicleMap, with dummy 0-bytes values. This solution
+ * trades correctness of abstractions for simplicity and minimizing changes before production 3.x
+ * release.
+ */
 class SetFromMap<E> extends AbstractSet<E>
         implements ChronicleSet<E>, Serializable {
 
     private final ChronicleMap<E, DummyValue> m;  // The backing map
     private transient Set<E> s;       // Its keySet
 
-    SetFromMap(ChronicleMap<E, DummyValue> map) {
+    SetFromMap(VanillaChronicleMap<E, DummyValue, ?> map) {
         m = map;
+        map.chronicleSet = this;
         s = map.keySet();
     }
 

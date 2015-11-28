@@ -67,7 +67,6 @@ import net.openhft.sg.Staged;
         ReplicatedMapAbsent.class,
         DefaultValue.class,
         ValueBytesInterop.class,
-        ReplicatedMapAbsentHolder.class,
         ReplicationUpdate.class,
         ReplicatedInput.class,
 

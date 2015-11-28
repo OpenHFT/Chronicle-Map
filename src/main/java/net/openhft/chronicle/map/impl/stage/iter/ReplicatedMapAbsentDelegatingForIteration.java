@@ -20,28 +20,34 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.replication.ReplicableEntryDelegating;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.MapAbsentEntry;
-import net.openhft.chronicle.map.MapContext;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
+import net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceValueHolder;
+import net.openhft.chronicle.set.SetAbsentEntry;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
 @Staged
 public class ReplicatedMapAbsentDelegatingForIteration<K, V>
-        implements MapAbsentEntry<K, V>, ReplicableEntryDelegating {
+        implements MapAbsentEntry<K, V>, SetAbsentEntry<K>, ReplicableEntryDelegating {
 
     @StageRef ReplicatedMapSegmentIteration<K, V, ?> delegate;
     @StageRef ReplicatedMapEntryStages<K, V> e;
 
     @NotNull
     @Override
-    public MapContext<K, V, ?> context() {
+    public WrappedValueInstanceValueHolder<K, V, ?> context() {
         return delegate.context();
     }
 
     @Override
     public void doInsert(Data<V> value) {
         delegate.doInsert(value);
+    }
+
+    @Override
+    public void doInsert() {
+        delegate.doInsert();
     }
 
     @NotNull

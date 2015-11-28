@@ -21,9 +21,9 @@ import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.map.impl.stage.data.ZeroBytesStore;
 import org.jetbrains.annotations.Nullable;
 
-class DummyValueData extends AbstractData<DummyValue> {
+public class DummyValueData extends AbstractData<DummyValue> {
 
-    static final DummyValueData INSTANCE = new DummyValueData();
+    public static final DummyValueData INSTANCE = new DummyValueData();
 
     private DummyValueData() {}
 

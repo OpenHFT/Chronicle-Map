@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.HashContext;
 import net.openhft.chronicle.hash.Data;
 
@@ -35,9 +36,7 @@ public interface MapContext<K, V, R>
      * Returns the accessed {@code ChronicleMap}. Synonym to {@link #map()}.
      */
     @Override
-    default ChronicleMap<K, V> hash() {
-        return map();
-    }
+    ChronicleHash<K, ?, ?, ?> hash();
 
     /**
      * Returns the accessed {@code ChronicleMap}. Synonym to {@link #hash()}.

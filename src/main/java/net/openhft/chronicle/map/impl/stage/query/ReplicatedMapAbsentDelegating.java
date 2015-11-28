@@ -17,21 +17,24 @@
 package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.map.MapAbsentEntry;
-import net.openhft.chronicle.map.MapContext;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
 @Staged
-public class ReplicatedMapAbsentDelegating<K, V> implements MapAbsentEntry<K, V> {
+public class ReplicatedMapAbsentDelegating<K, V> implements Absent<K, V> {
 
     @StageRef ReplicatedMapAbsent<K, V> delegate;
 
     @NotNull
     @Override
-    public MapContext<K, V, ?> context() {
+    public MapQuery<K, V, ?> context() {
         return delegate.context();
+    }
+
+    @Override
+    public void doInsert() {
+        delegate.doInsert();
     }
 
     @Override

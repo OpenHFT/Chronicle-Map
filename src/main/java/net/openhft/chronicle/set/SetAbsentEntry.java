@@ -17,6 +17,7 @@
 package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.HashAbsentEntry;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Low-level operational context for the situations, when the new key is going to be inserted
@@ -28,6 +29,7 @@ import net.openhft.chronicle.hash.HashAbsentEntry;
  * @see SetQueryContext#absentEntry()
  */
 public interface SetAbsentEntry<K> extends HashAbsentEntry<K> {
+    @NotNull
     @Override
     SetContext<K, ?> context();
 

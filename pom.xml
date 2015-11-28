@@ -152,7 +152,7 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>stage-compiler</artifactId>
-            <version>1.7</version>
+            <version>1.8</version>
             <scope>provided</scope>
         </dependency>
 
@@ -238,6 +238,7 @@
                         <exclude>net/openhft/chronicle/map/VanillaChronicleMap.java</exclude>
                         <exclude>net/openhft/chronicle/map/Replica.java</exclude>
                         <exclude>net/openhft/chronicle/map/ReplicatedChronicleMap.java</exclude>
+                        <exclude>net/openhft/chronicle/set/DummyValueData.java</exclude>
                     </sourceFileExcludes>
                     <failOnError>false</failOnError>
                     <additionalparam>-Xdoclint:none</additionalparam>

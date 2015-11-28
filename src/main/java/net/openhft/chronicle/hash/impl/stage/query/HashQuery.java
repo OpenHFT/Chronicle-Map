@@ -25,6 +25,7 @@ import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.serialization.DataAccess;
+import net.openhft.chronicle.set.SetEntry;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -33,7 +34,7 @@ import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
-public abstract class HashQuery<K> implements HashEntry<K> {
+public abstract class HashQuery<K> implements SetEntry<K> {
 
     @StageRef public VanillaChronicleHashHolder<K> hh;
     @StageRef public SegmentStages s;

@@ -20,11 +20,13 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.map.MapContext;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceDataHolder;
+import net.openhft.chronicle.set.SetContext;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
 @Staged
-public abstract class WrappedValueInstanceValueHolder<K, V, R> implements MapContext<K, V, R> {
+public abstract class WrappedValueInstanceValueHolder<K, V, R>
+        implements MapContext<K, V, R>, SetContext<K, R> {
 
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef

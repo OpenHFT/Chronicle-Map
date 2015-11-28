@@ -23,8 +23,10 @@ import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.query.HashQuery.EntryPresence;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.MapAbsentEntry;
-import net.openhft.chronicle.map.MapContext;
+import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
+import net.openhft.chronicle.set.DummyValueData;
+import net.openhft.chronicle.set.SetAbsentEntry;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
-public abstract class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
+public abstract class MapAbsent<K, V> implements Absent<K, V> {
 
     @StageRef public KeySearch<K> ks;
     @StageRef MapQuery<K, V, ?> q;
@@ -40,6 +42,7 @@ public abstract class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
     @StageRef public HashLookupSearch hashLookupSearch;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef public SegmentStages s;
+    @StageRef VanillaChronicleMapHolder<K, V, ?> mh;
 
     void putEntry(Data<V> value) {
         assert ks.searchStateAbsent();
@@ -52,7 +55,7 @@ public abstract class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
 
     @NotNull
     @Override
-    public MapContext<K, V, ?> context() {
+    public MapQuery<K, V, ?> context() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return q;
     }
@@ -81,5 +84,12 @@ public abstract class MapAbsent<K, V> implements MapAbsentEntry<K, V> {
             throw new IllegalStateException(
                     "Entry is present in the map when doInsert() is called");
         }
+    }
+
+    @Override
+    public void doInsert() {
+        if (mh.set() == null)
+            throw new IllegalStateException("Called SetAbsentEntry.doInsert() from Map context");
+        doInsert((Data<V>) DummyValueData.INSTANCE);
     }
 }

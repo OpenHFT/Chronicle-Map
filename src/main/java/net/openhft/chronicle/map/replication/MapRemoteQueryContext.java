@@ -18,6 +18,7 @@ package net.openhft.chronicle.map.replication;
 
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.RemoteOperationContext;
+import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEntryOperations;
@@ -40,7 +41,7 @@ public interface MapRemoteQueryContext<K, V, R> extends MapQueryContext<K, V, R>
 
     /**
      * The value used as a tombstone, for removed entries, to save space. This value has {@linkplain
-     * SizeMarshaller#minEncodableSize() minimum possible size} for {@linkplain
+     * SizeMarshaller#minStorableSize()} minimum possible size} for {@linkplain
      * ChronicleMapBuilder#valueSizeMarshaller(SizeMarshaller) the configured value size
      * marshaller}.
      *

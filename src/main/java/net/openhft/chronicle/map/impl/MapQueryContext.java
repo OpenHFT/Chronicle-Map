@@ -58,7 +58,6 @@ import net.openhft.sg.Staged;
         MapAbsent.class,
         DefaultValue.class,
         ValueBytesInterop.class,
-        MapAbsentHolder.class,
 
         QueryAlloc.class,
 },

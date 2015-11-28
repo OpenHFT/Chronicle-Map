@@ -18,19 +18,21 @@ package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
-import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
 import net.openhft.chronicle.map.replication.MapReplicableEntry;
+import net.openhft.chronicle.set.replication.SetRemoteQueryContext;
+import net.openhft.chronicle.set.replication.SetReplicableEntry;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.Nullable;
 
 @Staged
 public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
-        implements MapRemoteQueryContext<K, V, R>, ReplicableEntry {
+        implements MapRemoteQueryContext<K, V, R>, SetRemoteQueryContext<K, R>,
+        ReplicableEntry, MapReplicableEntry<K, V>, SetReplicableEntry<K> {
 
     @StageRef ReplicatedMapEntryStages<K, V> e;
     @StageRef ReplicationUpdate ru;
@@ -39,7 +41,7 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
 
     @Nullable
     @Override
-    public MapAbsentEntry<K, V> absentEntry() {
+    public Absent<K, V> absentEntry() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         if (entryPresent()) {
             return null;
@@ -48,7 +50,7 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
                 return absentDelegating;
             } else {
                 assert e.entryDeleted();
-                return absent.absent();
+                return absent;
             }
         }
     }
@@ -61,8 +63,9 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
     @StageRef DummyValueZeroData<V> dummyValue;
 
     @Override
-    public MapReplicableEntry<K, V> entry() {
-        return (MapReplicableEntry<K, V>) super.entry();
+    public ReplicatedMapQuery<K, V, R> entry() {
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        return entryPresent() ? this : null;
     }
 
     @Override

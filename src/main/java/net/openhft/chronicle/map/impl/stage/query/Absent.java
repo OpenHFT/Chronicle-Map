@@ -17,17 +17,12 @@
 package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.map.MapAbsentEntry;
-import net.openhft.chronicle.map.impl.MapAbsentEntryHolder;
-import net.openhft.sg.StageRef;
-import net.openhft.sg.Staged;
+import net.openhft.chronicle.set.SetAbsentEntry;
+import org.jetbrains.annotations.NotNull;
 
-@Staged
-public class ReplicatedMapAbsentHolder<K, V> implements MapAbsentEntryHolder<K, V> {
+public interface Absent<K, V> extends MapAbsentEntry<K, V>, SetAbsentEntry<K> {
 
-    @StageRef ReplicatedMapAbsent<K, V> ab;
-
+    @NotNull
     @Override
-    public MapAbsentEntry<K, V> absent() {
-        return ab;
-    }
+    MapAndSetContext<K, V, ?> context();
 }

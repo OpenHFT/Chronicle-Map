@@ -19,14 +19,16 @@ package net.openhft.chronicle.map.impl.stage.iter;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.ReplicatedHashSegmentContext;
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
-import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.impl.ReplicatedIterationContext;
+import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
+import net.openhft.chronicle.set.DummyValueData;
+import net.openhft.chronicle.set.SetAbsentEntry;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
@@ -36,9 +38,9 @@ import java.util.function.Predicate;
 @Staged
 public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentIteration<K, V, R>
         implements ReplicatedIterationContext<K, V, R>, ReplicableEntry,
-        ReplicatedHashSegmentContext<K, MapEntry<K, V>>, MapAbsentEntry<K, V> {
+        ReplicatedHashSegmentContext<K, MapEntry<K, V>>, MapAbsentEntry<K, V>, SetAbsentEntry<K> {
 
-    @StageRef VanillaChronicleHashHolder<?> hh;
+    @StageRef VanillaChronicleMapHolder<K, V, R> mh;
     @StageRef ReplicatedMapEntryStages<K, V> e;
     @StageRef ReplicationUpdate<K> ru;
     @StageRef DummyValueZeroData<V> dummyValue;
@@ -73,7 +75,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
                 return true;
             boolean interrupted = false;
             long startPos = 0L;
-            CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
+            CompactOffHeapLinearHashTable hashLookup = mh.h().hashLookup;
             while (!hashLookup.empty(hashLookup.readEntry(s.tierBaseAddr, startPos))) {
                 startPos = hashLookup.step(startPos);
             }
@@ -154,5 +156,12 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
             throw new IllegalStateException(
                     "Entry is present in the map when doInsert() is called");
         }
+    }
+
+    @Override
+    public void doInsert() {
+        if (mh.set() == null)
+            throw new IllegalStateException("Called SetAbsentEntry.doInsert() from Map context");
+        doInsert((Data<V>) DummyValueData.INSTANCE);
     }
 }

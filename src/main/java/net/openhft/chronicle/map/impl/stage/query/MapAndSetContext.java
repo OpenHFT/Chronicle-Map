@@ -16,18 +16,8 @@
 
 package net.openhft.chronicle.map.impl.stage.query;
 
-import net.openhft.chronicle.map.MapAbsentEntry;
-import net.openhft.chronicle.map.impl.MapAbsentEntryHolder;
-import net.openhft.sg.StageRef;
-import net.openhft.sg.Staged;
+import net.openhft.chronicle.map.MapContext;
+import net.openhft.chronicle.set.SetContext;
 
-@Staged
-public class MapAbsentHolder<K, V> implements MapAbsentEntryHolder<K, V> {
-
-    @StageRef MapAbsent<K, V> ab;
-
-    @Override
-    public MapAbsentEntry<K, V> absent() {
-        return ab;
-    }
+public interface MapAndSetContext<K, V, R> extends MapContext<K, V, R>, SetContext<K, R> {
 }

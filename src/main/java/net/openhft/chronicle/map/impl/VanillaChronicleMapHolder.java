@@ -20,6 +20,7 @@ import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.VanillaChronicleMap;
+import net.openhft.chronicle.set.ChronicleSet;
 
 public interface VanillaChronicleMapHolder<K, V, R> extends VanillaChronicleHashHolder<K> {
     
@@ -33,4 +34,6 @@ public interface VanillaChronicleMapHolder<K, V, R> extends VanillaChronicleHash
     default ChronicleMap<K, V> map() {
         return m();
     }
+
+    ChronicleSet<K> set();
 }

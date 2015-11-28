@@ -22,15 +22,13 @@ import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.impl.stage.query.SearchAllocatedChunks;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.map.ExternalMapQueryContext;
-import net.openhft.chronicle.map.MapAbsentEntry;
-import net.openhft.chronicle.map.MapContext;
 import net.openhft.chronicle.map.MapEntry;
-import net.openhft.chronicle.map.impl.MapAbsentEntryHolder;
 import net.openhft.chronicle.map.impl.QueryContextInterface;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.chronicle.map.impl.stage.ret.DefaultReturnValue;
 import net.openhft.chronicle.map.impl.stage.ret.UsingReturnValue;
+import net.openhft.chronicle.set.ExternalSetQueryContext;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -42,7 +40,7 @@ import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.
 @Staged
 public abstract class MapQuery<K, V, R> extends HashQuery<K>
         implements MapEntry<K, V>, ExternalMapQueryContext<K, V, R>,
-        QueryContextInterface<K, V, R> {
+        ExternalSetQueryContext<K, R>, QueryContextInterface<K, V, R>, MapAndSetContext<K, V, R> {
 
     @StageRef VanillaChronicleMapHolder<K, V, R> mh;
     @StageRef MapEntryStages<K, V> e;
@@ -53,7 +51,7 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
     @StageRef public DefaultReturnValue<V> defaultReturnValue;
     @StageRef public UsingReturnValue<V> usingReturnValue;
 
-    @StageRef public MapAbsentEntryHolder<K, V> absent;
+    @StageRef public MapAbsent<K, V> absent;
 
     final DataAccess<V> innerInputValueDataAccess = mh.m().valueDataAccess.copy();
 
@@ -76,16 +74,16 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
     }
 
     @Override
-    public MapEntry<K, V> entry() {
+    public MapQuery<K, V, R> entry() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return entryPresent() ? this : null;
     }
 
     @Nullable
     @Override
-    public MapAbsentEntry<K, V> absentEntry() {
+    public Absent<K, V> absentEntry() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return entryPresent() ? null : absent.absent();
+        return entryPresent() ? null : absent;
     }
     
     protected void putPrefix() {
@@ -120,7 +118,7 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
 
     @NotNull
     @Override
-    public MapContext<K, V, ?> context() {
+    public MapQuery<K, V, R> context() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return this;
     }

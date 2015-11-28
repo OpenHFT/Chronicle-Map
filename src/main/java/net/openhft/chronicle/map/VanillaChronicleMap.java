@@ -30,6 +30,7 @@ import net.openhft.chronicle.map.impl.*;
 import net.openhft.chronicle.map.impl.CompiledMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledMapQueryContext;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
+import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -72,6 +73,9 @@ public class VanillaChronicleMap<K, V, R>
     transient boolean removeReturnsNull;
 
     transient Set<Entry<K, V>> entrySet;
+
+    /** @see net.openhft.chronicle.set.SetFromMap */
+    public transient ChronicleSet<K> chronicleSet;
     
     public transient MapEntryOperations<K, V, R> entryOperations;
     public transient MapMethods<K, V, R> methods;

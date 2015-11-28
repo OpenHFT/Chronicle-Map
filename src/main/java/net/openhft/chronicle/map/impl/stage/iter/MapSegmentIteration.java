@@ -47,7 +47,7 @@ public abstract class MapSegmentIteration<K, V, R> extends HashSegmentIteration<
 
     @NotNull
     @Override
-    public MapContext<K, V, ?> context() {
+    public WrappedValueInstanceValueHolder<K, V, ?> context() {
         return wrappedValueInstanceValueHolder;
     }
 }

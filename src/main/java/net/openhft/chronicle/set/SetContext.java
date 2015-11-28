@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.set;
 
+import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.HashContext;
 
 /**
@@ -32,9 +33,7 @@ public interface SetContext<K, R> extends HashContext<K>, SetEntryOperations<K, 
      * Returns the accessed {@code ChronicleSet}. Synonym to {@link #set()}.
      */
     @Override
-    default ChronicleSet<K> hash() {
-        return set();
-    }
+    ChronicleHash<K, ?, ?, ?> hash();
 
     /**
      * Returns the accessed {@code ChronicleSet}. Synonym to {@link #hash()}.

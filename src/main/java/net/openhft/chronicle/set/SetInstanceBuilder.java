@@ -21,6 +21,7 @@ import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.VanillaChronicleMap;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,7 +70,7 @@ final class SetInstanceBuilder<E> implements ChronicleHashInstanceBuilder<Chroni
     @Override
     public synchronized ChronicleSet<E> create() throws IOException {
         try {
-            return new SetFromMap<>(mapBuilder.create());
+            return new SetFromMap<>((VanillaChronicleMap<E, DummyValue, ?>) mapBuilder.create());
         } catch (IllegalStateException e) {
             if (e.getMessage() != null && e.getMessage().startsWith("A ChronicleMap")) {
                 throw new IllegalStateException(

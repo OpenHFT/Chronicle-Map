@@ -55,7 +55,7 @@ public interface SetRemoteOperations<K, R> {
         }
     }
 
-    default void insert(SetRemoteQueryContext<K, R> q) {
+    default void put(SetRemoteQueryContext<K, R> q) {
         SetReplicableEntry<K> entry = q.entry();
         if (entry != null) {
             if (decideOnRemoteModification(entry, q) == ACCEPT) {
