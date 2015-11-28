@@ -103,12 +103,14 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         }
         hlp.initHashLookupPos(startPos);
         long currentHashLookupPos;
+        int steps = 0;
         do {
             // Step from hlp.hashLookupPos, not currentHashLookupPos (with additional initialization
             // of this local variable to startPos outside the loop), because if e.remove() is
             // called in the `action`, hlp.hashLookupPos is stepped back in doRemove(), and
             // currentHashLookupPos become invalid
             currentHashLookupPos = hashLookup.step(hlp.hashLookupPos);
+            steps++;
             hlp.setHashLookupPos(currentHashLookupPos);
             long entry = hashLookup.readEntry(currentTierBaseAddr, currentHashLookupPos);
             initHashLookupEntry(entry);
@@ -135,12 +137,17 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
                             // slot in _current_ tier's hash lookup is shift deleted, see
                             // relocation()
                             currentHashLookupPos = hashLookup.stepBack(currentHashLookupPos);
+                            steps--;
                             hlp.initHashLookupPos(currentHashLookupPos);
                         }
                     }
                 }
             }
-        } while (currentHashLookupPos != startPos);
+            // the `steps == 0` condition and this variable updates in the loop fix the bug, when
+            // shift deletion occurs on the first entry of the tier, and the currentHashLookupPos
+            // becomes equal to start pos without making the whole loop, but only visiting a single
+            // entry
+        } while (currentHashLookupPos != startPos || steps == 0);
         return interrupted ? ~size : size;
     }
 

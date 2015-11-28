@@ -655,4 +655,28 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
             nextPosToSearchFrom = 0L;
         nextPosToSearchFrom(nextPosToSearchFrom);
     }
+
+    public void verifyTierCountersAreaData() {
+        goToFirstTier();
+        while (true) {
+            int tierSegmentIndex = TierCountersArea.segmentIndex(tierCountersAreaAddr());
+            if (tierSegmentIndex != segmentIndex) {
+                throw new AssertionError("segmentIndex: " + segmentIndex +
+                        ", tier: " + tier + ", tierIndex: " + tierIndex + ", tierBaseAddr: " +
+                        tierBaseAddr + " reports it belongs to segmentIndex " + tierSegmentIndex);
+            }
+            if (hasNextTier()) {
+                long currentTierIndex = this.tierIndex;
+                nextTier();
+                if (prevTierIndex() != currentTierIndex) {
+                    throw new AssertionError("segmentIndex: " + segmentIndex +
+                            ", tier: " + tier + ", tierIndex: " + tierIndex + ", tierBaseAddr: " +
+                            tierBaseAddr + " reports the previous tierIndex is " + prevTierIndex() +
+                            " while actually it is " + currentTierIndex);
+                }
+            } else {
+                break;
+            }
+        }
+    }
 }

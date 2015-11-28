@@ -38,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -462,6 +464,18 @@ public class VanillaChronicleMap<K, V, R>
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             methods.computeIfPresent(q, remappingFunction, q.defaultReturnValue());
             return q.defaultReturnValue().returnValue();
+        }
+    }
+
+    public void verifyTierCountersAreaData() {
+        for (int i = 0; i < actualSegments; i++) {
+            try (MapSegmentContext<K, V, ?> c = segmentContext(i)) {
+                Method verifyTierCountersAreaData =
+                        c.getClass().getMethod("verifyTierCountersAreaData");
+                verifyTierCountersAreaData.invoke(c);
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                throw new AssertionError(e);
+            }
         }
     }
 }

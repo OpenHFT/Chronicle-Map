@@ -35,19 +35,23 @@ public class OverflowAllocationDuringIterationTest {
                 map.put(i, x);
             }
             for (int i = 0; i < 3; i++) {
-                final String currentX = x;
-                map.forEachEntry(e -> {
-                    String v = e.value().get().toString();
-                    if (!currentX.contentEquals(v)) {
-                        throw new AssertionError(currentX + " != " + v + "<=" + e.key());
+                try {
+                    final String currentX = x;
+                    map.forEachEntry(e -> {
+                        String v = e.value().get().toString();
+                        if (!currentX.contentEquals(v)) {
+                            throw new AssertionError(currentX + " != " + v + "<=" + e.key());
+                        }
+                        e.doReplaceValue(e.context().wrapValueAsData(v + v));
+                    });
+                    x = x + x;
+                    for (int j = 0; j < entries; j++) {
+                        if (map.get(j) == null || !x.contentEquals(map.get(j))) {
+                            throw new AssertionError();
+                        }
                     }
-                    e.doReplaceValue(e.context().wrapValueAsData(v + v));
-                });
-                x = x + x;
-                for (int j = 0; j < entries; j++) {
-                    if (map.get(j) == null || !x.contentEquals(map.get(j))) {
-                        throw new AssertionError();
-                    }
+                } finally {
+                    ((VanillaChronicleMap) map).verifyTierCountersAreaData();
                 }
             }
         }
