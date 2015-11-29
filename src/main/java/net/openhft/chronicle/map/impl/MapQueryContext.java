@@ -74,7 +74,7 @@ nested = {
         DefaultReturnValue.class,
         UsingReturnValue.class,
 
-        HashKeyCrc32PayloadChecksumStrategy.class,
+        HashEntryChecksumStrategy.class,
 
         DummyValueZeroData.class,
 })

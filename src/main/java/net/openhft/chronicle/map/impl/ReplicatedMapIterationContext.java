@@ -81,7 +81,7 @@ import net.openhft.sg.Staged;
         ReplicatedMapAbsentDelegatingForIteration.class,
         ReplicatedMapEntryDelegating.class,
 
-        HashKeyCrc32PayloadChecksumStrategy.class,
+        HashEntryChecksumStrategy.class,
 })
 public class ReplicatedMapIterationContext {
 }

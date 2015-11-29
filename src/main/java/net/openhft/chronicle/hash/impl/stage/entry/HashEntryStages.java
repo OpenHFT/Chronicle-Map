@@ -107,9 +107,9 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
         return keyEnd();
     }
 
-    @StageRef HashKeyCrc32PayloadChecksumStrategy hashKeyCrc32PayloadChecksumStrategy;
+    @StageRef HashEntryChecksumStrategy hashEntryChecksumStrategy;
     public final ChecksumStrategy checksumStrategy = hh.h().checksumEntries ?
-            hashKeyCrc32PayloadChecksumStrategy : NoChecksumStrategy.INSTANCE;
+            hashEntryChecksumStrategy : NoChecksumStrategy.INSTANCE;
 
     @Override
     public void updateChecksum() {

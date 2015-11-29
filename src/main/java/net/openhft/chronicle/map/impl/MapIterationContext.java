@@ -72,7 +72,7 @@ import net.openhft.sg.Staged;
 
         WrappedValueInstanceDataHolder.class,
 
-        HashKeyCrc32PayloadChecksumStrategy.class,
+        HashEntryChecksumStrategy.class,
 })
 public class MapIterationContext {
 }

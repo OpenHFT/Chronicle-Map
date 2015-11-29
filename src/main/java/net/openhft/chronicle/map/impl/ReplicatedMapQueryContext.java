@@ -92,7 +92,7 @@ nested = {
 
         DummyValueZeroData.class,
 
-        HashKeyCrc32PayloadChecksumStrategy.class,
+        HashEntryChecksumStrategy.class,
 })
 public class ReplicatedMapQueryContext {
 }

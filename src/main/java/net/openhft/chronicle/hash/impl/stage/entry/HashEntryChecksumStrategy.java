@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -23,7 +24,7 @@ import net.openhft.sg.Staged;
 import static net.openhft.chronicle.hash.impl.stage.entry.ChecksumHashing.hash8To16Bytes;
 
 @Staged
-public class HashKeyCrc32PayloadChecksumStrategy implements ChecksumStrategy {
+public class HashEntryChecksumStrategy implements ChecksumStrategy {
 
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef SegmentStages s;
@@ -32,8 +33,8 @@ public class HashKeyCrc32PayloadChecksumStrategy implements ChecksumStrategy {
 
     @Override
     public void computeAndStoreChecksum() {
-        int crc = computeChecksum();
-        s.segmentBS.writeInt(e.entryEnd(), crc);
+        int checksum = computeChecksum();
+        s.segmentBS.writeInt(e.entryEnd(), checksum);
     }
 
     private int computeChecksum() {
@@ -45,8 +46,8 @@ public class HashKeyCrc32PayloadChecksumStrategy implements ChecksumStrategy {
         long checksum;
         if (len > 0) {
             long addr = s.tierBaseAddr + keyEnd;
-            int payloadCrc = Crc32.compute(addr, len);
-            checksum = hash8To16Bytes(e.keySize, keyHashCode, payloadCrc);
+            long payloadChecksum = LongHashFunction.xx_r39().hashMemory(addr, len);
+            checksum = hash8To16Bytes(e.keySize, keyHashCode, payloadChecksum);
         } else {
             // non replicated ChronicleSet has no payload
             checksum = hash8To16Bytes(e.keySize, keyHashCode, keyHashCode);
@@ -63,8 +64,8 @@ public class HashKeyCrc32PayloadChecksumStrategy implements ChecksumStrategy {
     @Override
     public boolean innerCheckSum() {
         int oldChecksum = s.segmentBS.readInt(e.entryEnd());
-        int crc = computeChecksum();
-        return oldChecksum == crc;
+        int checksum = computeChecksum();
+        return oldChecksum == checksum;
     }
 
     @Override
