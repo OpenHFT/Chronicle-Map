@@ -32,8 +32,8 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static net.openhft.chronicle.hash.replication.AcceptanceDecision.ACCEPT;
-import static net.openhft.chronicle.hash.replication.AcceptanceDecision.DISCARD;
+import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.ACCEPT;
+import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.DISCARD;
 import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.decideOnRemoteModification;
 import static org.junit.Assert.assertEquals;
 

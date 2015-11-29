@@ -24,8 +24,8 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapEntryOperations;
 
-import static net.openhft.chronicle.hash.replication.AcceptanceDecision.ACCEPT;
-import static net.openhft.chronicle.hash.replication.AcceptanceDecision.DISCARD;
+import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.ACCEPT;
+import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.DISCARD;
 import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.decideOnRemoteModification;
 
 /**

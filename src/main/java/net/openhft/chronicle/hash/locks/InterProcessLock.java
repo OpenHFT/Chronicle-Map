@@ -37,7 +37,7 @@ import java.util.concurrent.locks.Lock;
  * thread is beneficial form performance point-of-view, e. g. fields of the on-heap
  * {@code InterProcessLock} object shouldn't be {@code volatile}.
  *
- * <p>Locks is inter-process, hence it cannot afford to wait for acquisition infinitely, because
+ * <p>Lock is inter-process, hence it cannot afford to wait for acquisition infinitely, because
  * it would be too dead-lock prone. {@link #lock()} throws {@code RuntimeException} after some
  * finite time.
  *

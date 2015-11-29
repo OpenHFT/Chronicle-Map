@@ -29,8 +29,9 @@ public interface ChecksumEntry {
      * Re-computes and stores checksum for the entry. This method <i>shouldn't</i> be called before
      * or after ordinary operations like {@link MapAbsentEntry#doInsert(Data)}, {@link
      * MapEntry#doReplaceValue(Data)}: it is performed automatically underneath. Call this method,
-     * only when value bytes was updated directly, for example though Chronicle-Value-generated
-     * interface.
+     * only when value bytes was updated directly, for example though flyweight implementation of
+     * a <a href="https://github.com/OpenHFT/Chronicle-Values#value-interface-specification">value
+     * interface</a>.
      */
     void updateChecksum();
 

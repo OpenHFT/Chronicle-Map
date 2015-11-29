@@ -21,9 +21,6 @@ import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.replication.SetRemoteOperations;
 
-import static net.openhft.chronicle.hash.replication.AcceptanceDecision.ACCEPT;
-import static net.openhft.chronicle.hash.replication.AcceptanceDecision.DISCARD;
-
 /**
  * Specifies the default eventual consistency strategy for {@link ChronicleHashBuilder#replication(
  * byte) replicated} {@link ChronicleHash}es:
@@ -53,8 +50,25 @@ public final class DefaultEventualConsistencyStrategy {
         boolean shouldAccept = remoteTimestamp > originTimestamp ||
                 (remoteTimestamp == originTimestamp &&
                         context.remoteIdentifier() <= entry.originIdentifier());
-        return shouldAccept ? ACCEPT : DISCARD;
+        return shouldAccept ? AcceptanceDecision.ACCEPT : AcceptanceDecision.DISCARD;
     }
     
     private DefaultEventualConsistencyStrategy() {}
+
+    /**
+     * Decision, if {@link MapRemoteOperations remote modification operation} should be accepted
+     * or discarded. Used in {@link DefaultEventualConsistencyStrategy}.
+     */
+    public enum AcceptanceDecision {
+        /**
+         * Acceptance decision -- the remote modification operation is applied to the local
+         * {@link ChronicleHash} state.
+         */
+        ACCEPT,
+
+        /**
+         * Discard decision -- the remote modification operation is rejected.
+         */
+        DISCARD
+    }
 }

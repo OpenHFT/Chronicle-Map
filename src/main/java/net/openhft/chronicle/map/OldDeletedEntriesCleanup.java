@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
-public class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<ReplicableEntry> {
+class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<ReplicableEntry> {
     private static final Logger LOG = LoggerFactory.getLogger(OldDeletedEntriesCleanup.class);
 
     private final ReplicatedChronicleMap<?, ?, ?> map;

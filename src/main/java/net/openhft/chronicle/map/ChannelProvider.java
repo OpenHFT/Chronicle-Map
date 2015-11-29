@@ -48,7 +48,7 @@ import static net.openhft.chronicle.map.Replica.ModificationIterator;
 /**
  * @author Rob Austin.
  */
-public final class ChannelProvider implements Closeable {
+final class ChannelProvider implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(ChannelProvider.class.getName());
 
     static final Map<ReplicationHub, ChannelProvider> implMapping = new IdentityHashMap<>();

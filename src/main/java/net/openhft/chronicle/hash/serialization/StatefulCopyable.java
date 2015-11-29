@@ -54,7 +54,7 @@ public interface StatefulCopyable<T extends StatefulCopyable<T>> {
     /**
      * Creates a copy of this marshaller, with independent state. The current state itself shouldn't
      * be copied (it could be "clear" in the copy), only "configuration" of the instance, on which
-     * {@code copy()} is called, should be inherited in the copy (e. g. the class of object
+     * {@code copy()} is called, should be inherited in the copy (e. g. the class of objects
      * serialized). So, {@code copy()} should be transitive, i. e. {@code marshaller.copy()} and
      * {@code marshaller.copy().copy()} should result to identical instances.
      *
