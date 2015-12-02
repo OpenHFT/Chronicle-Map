@@ -322,10 +322,10 @@ value interfaces.** They are constantly-sized and Chronicle Map knows about that
 
 If the key or value type is constantly sized, or keys or values only of a certain size appear in
 your Chronicle Map domain, you should prefer to configure `constantKeySizeBySample()` or
-`averageValueSizeBySample()`, instead of `averageKey()` or `averageValue()`, for example:
+`constantValueSizeBySample()`, instead of `averageKey()` or `averageValue()`, for example:
 ```java
 ChronicleSet<UUID> uuids =
-    ChronicleSetBuilder.of(UUID.class)
+    ChronicleSet.of(UUID.class)
         // All UUIDs take 16 bytes.
         .constantKeySizeBySample(UUID.randomUUID())
         .entries(1_000_000)
@@ -378,8 +378,12 @@ orders.put(key, order);
 ...
 
 long[] orderIds = ...
+// Allocate a single heap instance for inserting all keys from the array.
+// This could be a cached or ThreadLocal value as well, eliminating
+// allocations altogether.
 LongValue key = Values.newHeapInstance(LongValue.class);
 for (long id : orderIds) {
+    // Reuse the heap instance for each key
     key.setValue(id);
     Order order = orders.get(key);
     // process the order...
@@ -401,11 +405,13 @@ Use `ChronicleMap#getUsing(K key, V using)` to reuse the value object. It works 
     // process the name...
  }
  ```
+
  In this case, calling `names.getUsing(key, name)` is equivalent to
  ```java
  name.setLength(0);
  name.append(names.get(key));
  ```
+
  with the difference that it doesn't generate garbage.
  - The value type is value interface, pass heap instance to read the data into it without new object
  allocation:
