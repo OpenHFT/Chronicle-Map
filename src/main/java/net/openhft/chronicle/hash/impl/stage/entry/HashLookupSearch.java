@@ -79,9 +79,12 @@ public abstract class HashLookupSearch {
     }
 
     public void putNewVolatile(long value) {
-        // correctness check + make putNewVolatile() dependant on keySearch, this, in turn,
-        // is needed for hlp.hashLookupPos re-initialization after nextTier()
-        assert !ks.searchStatePresent();
+        // Correctness check + make putNewVolatile() dependant on keySearch, this, in turn,
+        // is needed for hlp.hashLookupPos re-initialization after nextTier().
+        // Not an assert statement, because ks.searchStatePresent() should run regardless assertions
+        // enabled or not.
+        if (ks.searchStatePresent())
+            throw new AssertionError();
 
         hl().checkValueForPut(value);
         long currentEntry = hl().readEntry(addr(), hlp.hashLookupPos);

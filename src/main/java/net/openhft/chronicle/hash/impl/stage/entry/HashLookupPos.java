@@ -32,9 +32,12 @@ public abstract class HashLookupPos {
     public abstract boolean hashLookupPosInit();
 
     public void initHashLookupPos() {
-        // validation + make hashLookupPos a dependant of tier. This is needed, because after
-        // tier change should re-perform hashLookupSearch, starting from the searchStartPos
-        assert s.tier >= 0;
+        // Validation + make hashLookupPos a dependant of tier. This is needed, because after
+        // tier change should re-perform hashLookupSearch, starting from the searchStartPos.
+        // Not an assert statement, because segmentTier stage should be initialized regardless
+        // assertions enabled or not.
+        if (s.tier < 0)
+            throw new AssertionError();
         s.innerReadLock.lock();
         this.hashLookupPos = hls.searchStartPos;
     }
