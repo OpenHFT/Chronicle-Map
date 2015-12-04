@@ -518,6 +518,12 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         channel.socket().setSoLinger(false, 0);
 
         final Attached attached = new Attached();
+
+        final InetSocketAddress serverInetSocketAddress =
+                new InetSocketAddress(replicationConfig.serverPort());
+        final Details serverDetails = new Details(serverInetSocketAddress, localIdentifier);
+
+        attached.connector = new ServerConnector(serverDetails);
         attached.entryReader = new TcpSocketChannelEntryReader();
         attached.entryWriter = new TcpSocketChannelEntryWriter();
 
@@ -933,8 +939,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         }
 
         @Nullable
-        SelectableChannel doConnect() throws
-                IOException, InterruptedException {
+        SelectableChannel doConnect() throws IOException, InterruptedException {
 
             final ServerSocketChannel serverChannel = openServerSocketChannel();
 
