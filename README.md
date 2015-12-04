@@ -34,10 +34,8 @@ applications. Notably trading, financial market applications.
  - Replication *without logs*, with constant footprint cost, guarantees progress even if the network
  doesn't sustain write rates.
 
-<b><i>Chronicle Map</i> has two meanings:</b> [the language-agnostic data structure](
-https://github.com/OpenHFT/Chronicle-Map/tree/master/spec) and [the implementation of this data
-structure for the JVM](https://github.com/OpenHFT/Chronicle-Map/tree/master/src). Currently, this is
-the only implementation.
+<b><i>Chronicle Map</i> has two meanings:</b> [the language-agnostic data structure](spec) and [the
+implementation of this data structure for the JVM](src). Currently, this is the only implementation.
 
 **From Java perspective,** Chronicle Map is a `ConcurrentMap` implementation which stores the
 entries *off-heap*, serializing/deserializing key and value objects to/from off-heap memory
@@ -74,8 +72,7 @@ queries*.
 is a big chunk of shared memory (optionally mapped to disk), split into independent segments, each
 segment has an independent memory allocation for storing the entries, a hash table for search, and a
 lock in shared memory (implemented via CAS loops) for managing concurrent access. Read [the
-Chronicle Map design overview](
-https://github.com/OpenHFT/Chronicle-Map/blob/master/spec/2-design-overview.md) for more.
+Chronicle Map design overview](spec/2-design-overview.md) for more.
 
 ### Chronicle Map is *not*
 
@@ -132,7 +129,7 @@ Not supported out of the box in open-source version, but could be added in ad-ho
 
 ### Difference between Chronicle Map 2 and 3
 
-Changes in Chronicle Map 3:
+Functional changes in Chronicle Map 3:
 
  - Added support for multi-key queries.
  - "Listeners" mechanism fully reworked, see the [Behaviour Customization](#behaviour-customization)
@@ -148,9 +145,15 @@ Changes in Chronicle Map 3:
  [Number of entries configuration](#number-of-entries-configuration) section.
  - A number of smaller improvements and fixes.
 
+Non-functional changes:
+
+ - Chronicle Map 3 requires Java version 8 or newer, while Chronicle Map 2 supports Java 7.
+ - Chronicle Map 3 has [specification](spec), [versioning policy](docs/versioning.md) and
+ [compatibility policy](docs/compatibility.md). Chronicle Map 2 doesn't have such documents.
+
 If you use Chronicle Map 2, you might be looking for [Chronicle Map 2 Tutorial](
 https://github.com/OpenHFT/Chronicle-Map/tree/2.1#contents) or [Chronicle Map 2 Javadoc](
-http://openhft.github.io/Chronicle-Map/apidocs/).
+http://www.javadoc.io/doc/net.openhft/chronicle-map/2.3.9/).
 
 ### Download the library
 
@@ -167,11 +170,8 @@ http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22
 
 #### Maven Snapshot Download
 If you want to try out the latest pre-release code, you can download the snapshot artifact manually
-from:
-```xml
-https://oss.sonatype.org/content/repositories/snapshots/net/openhft/chronicle-map/
-```
-a better way is to add the following to your setting.xml, to allow maven to download snapshots:
+from https://oss.sonatype.org/content/repositories/snapshots/net/openhft/chronicle-map/.
+A better way is to add the following to your `setting.xml`, to allow maven to download snapshots:
 
 ```xml
 <repository>
@@ -765,17 +765,17 @@ is not required.
 Each map is allocated a unique identifier
 
 Server 1 has:
-```
+```java
 .replication((byte) 1, tcpConfigServer1)
 ```
 
 Server 2 has:
-```
+```java
 .replication((byte) 2, tcpConfigServer2)
 ```
 
 Server 3 has:
-```
+```java
 .replication((byte) 3, tcpConfigServer3)
 ```
 
@@ -791,12 +791,12 @@ other map is connected to. So currently, if you had 4 servers each with a Chroni
 require 6 connections.
 
 In our case we are only using 2 maps, this is how we connected map1 to map 2.
-```
+```java
 TcpTransportAndNetworkConfig.of(8076, new InetSocketAddress("localhost", 8077))
                     .heartBeatInterval(1, SECONDS);
 ```
 you could have put this instruction on map2 instead, like this 
-```
+```java
 TcpTransportAndNetworkConfig.of(8077, new InetSocketAddress("localhost", 8076))
                     .heartBeatInterval(1, SECONDS);
 ```
@@ -865,7 +865,7 @@ update. Put simply:
 * Each host must be given a unique identifier.
 * Each map must be given a unique channel.
 
-``` java
+```java
 byte identifier= 2;
 ReplicationHub replicationHub = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -878,7 +878,7 @@ With channels you are able to attach additional maps to a `ReplicationChannel` o
 running.
 
 When creating the `ReplicationChannel` you should attach your tcp or udp configuration :
-``` java
+```java
 byte identifier = 1;
 ReplicationHub replicationHub = ReplicationHub.builder()
                     .tcpTransportAndNetwork(tcpConfig)
@@ -887,7 +887,7 @@ ReplicationHub replicationHub = ReplicationHub.builder()
 
 Attaching a `ReplicationChannel` to the map :
 
-``` java
+```java
 short channel = (short) 2;
 ChronicleMap<IntValue.class, CharSequence> map = ChronicleMap
     .of(IntValue.class, CharSequence.class)
@@ -913,7 +913,7 @@ unique for each map you have.
 
 #### Channels and ReplicationChannel - Example
 
-``` java
+```java
 
 import net.openhft.chronicle.hash.replication.ReplicationChannel;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
@@ -1061,7 +1061,7 @@ Combined, interception SPI interfaces and `ChronicleMap.queryContext()` API are 
 
 Just log all modification operations on `ChronicleMap`
 
-```
+```java
 class SimpleLoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {
 
     private static final SimpleLoggingMapEntryOperations INSTANCE =
@@ -1098,7 +1098,7 @@ class SimpleLoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V, 
 
 Usage:
 
-```
+```java
 ChronicleMap<IntValue, IntValue> map = ChronicleMap
         .of(Integer.class, IntValue.class)
         .entries(100)
@@ -1113,11 +1113,11 @@ ChronicleMap<IntValue, IntValue> map = ChronicleMap
 Possible bidirectional map (i. e. a map that preserves the uniqueness of its values as well
 as that of its keys) implementation over Chronicle Maps.
 
-```
+```java
 enum DualLockSuccess {SUCCESS, FAIL}
 ```
 
-```
+```java
 class BiMapMethods<K, V> implements MapMethods<K, V, DualLockSuccess> {
     @Override
     public void remove(MapQueryContext<K, V, DualLockSuccess> q, ReturnValue<V> returnValue) {
@@ -1240,7 +1240,7 @@ class BiMapMethods<K, V> implements MapMethods<K, V, DualLockSuccess> {
 }
 ```
 
-```
+```java
 class BiMapEntryOperations<K, V> implements MapEntryOperations<K, V, DualLockSuccess> {
     ChronicleMap<V, K> reverse;
 
@@ -1302,7 +1302,7 @@ class BiMapEntryOperations<K, V> implements MapEntryOperations<K, V, DualLockSuc
 ```
 
 Usage:
-```
+```java
 BiMapEntryOperations<Integer, CharSequence> biMapOps1 = new BiMapEntryOperations<>();
 ChronicleMap<Integer, CharSequence> map1 = ChronicleMapBuilder
         .of(Integer.class, CharSequence.class)
@@ -1335,7 +1335,7 @@ System.out.println(map2.get("1"));
 `Set` values won't replace each other on replication, but will converge to a single, common set,
 the union of all elements added to all sets on all replicated nodes.
 
-```
+```java
 class GrowOnlySetValuedMapEntryOperations<K, E>
         implements MapEntryOperations<K, Set<E>, Void> {
 
@@ -1357,7 +1357,7 @@ class GrowOnlySetValuedMapEntryOperations<K, E>
 }
 ```
 
-```
+```java
 class GrowOnlySetValuedMapRemoteOperations<K, E>
         implements MapRemoteOperations<K, Set<E>, Void> {
 
@@ -1392,7 +1392,7 @@ class GrowOnlySetValuedMapRemoteOperations<K, E>
 ```
 
 Usage:
-```
+```java
 HashSet<Integer> averageValue = new HashSet<>();
 for (int i = 0; i < AVERAGE_SET_SIZE; i++) {
     averageValue.add(i);
