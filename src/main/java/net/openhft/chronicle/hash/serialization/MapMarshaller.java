@@ -50,7 +50,7 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  * @see ListMarshaller
  * @see SetMarshaller
  */
-public class MapMarshaller<K, V>
+public final class MapMarshaller<K, V>
         implements BytesReader<Map<K, V>>, BytesWriter<Map<K, V>>,
         StatefulCopyable<MapMarshaller<K, V>> {
 

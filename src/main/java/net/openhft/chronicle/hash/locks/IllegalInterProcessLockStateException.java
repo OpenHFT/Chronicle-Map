@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.hash.locks;
 
-public class IllegalInterProcessLockStateException extends IllegalMonitorStateException {
+public final class IllegalInterProcessLockStateException extends IllegalMonitorStateException {
     private static final long serialVersionUID = 0L;
     public IllegalInterProcessLockStateException(String s) {
         super(s);
