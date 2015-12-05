@@ -35,9 +35,9 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedRandomDataInputAcce
  * is marshalled to bytes lazily on demand, and bytes are lazily deserialized to object,
  * accordingly. 
  *  
- * @param <V> type of the accessed objects
+ * @param <T> type of the accessed objects
  */
-public interface Data<V> {
+public interface Data<T> {
 
     /**
      * Returns the accessor object to the {@code Data}'s bytes. For safety, this interface returns
@@ -111,13 +111,13 @@ public interface Data<V> {
      * 
      * <p>If the {@code Data} is object wrapper -- this method just returns this object.
      */
-    V get();
+    T get();
 
     /**
      * Reads the object from the value's bytes, trying to reuse the given object (might be {@code
      * null}).
      */
-    V getUsing(@Nullable V using);
+    T getUsing(@Nullable T using);
 
     /**
      * Utility method, compares two {@code Data} instances represent equivalent bytes sequences:
