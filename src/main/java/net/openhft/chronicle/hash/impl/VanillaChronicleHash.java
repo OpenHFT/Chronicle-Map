@@ -478,9 +478,9 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void zeroOutNewlyMappedTier(BytesStore bytesStore, long segmentOffset) {
+    private void zeroOutNewlyMappedTier(BytesStore bytesStore, long tierOffset) {
         // Zero out hash lookup, tier data and free list bit set. Leave entry space.
-        bytesStore.zeroOut(segmentOffset, segmentOffset + tierSize - tierEntrySpaceOuterSize);
+        bytesStore.zeroOut(tierOffset, tierOffset + tierSize - tierEntrySpaceOuterSize);
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
