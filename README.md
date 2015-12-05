@@ -126,6 +126,7 @@ Not supported out of the box in open-source version, but could be added in ad-ho
    - [Example - BiMap](#example---bimap)
    - [Example - CRDT values for replicated Chronicle Maps - Grow-only set](
    #example---crdt-values-for-replicated-chronicle-maps---grow-only-set)
+   - [Example - Monitor Chronicle Map statistics](#example---monitor-chronicle-map-statistics)
 
 ### Difference between Chronicle Map 2 and 3
 
@@ -1056,6 +1057,8 @@ Combined, interception SPI interfaces and `ChronicleMap.queryContext()` API are 
  - Perform multi-key operations on a single `ChronicleMap` correctly in concurrent environment, by
  acquiring locks on all keys before updating the entries
  - Define own replication/reconciliation logic for distributed Chronicle Maps
+ - Dump statistics of a Chronicle Map data structure -- each segment's load, size in bytes of each
+ entry, etc.
 
 #### Example - Simple logging
 
@@ -1407,4 +1410,18 @@ ChronicleMap<Integer, Set<Integer>> map1 = ChronicleMapBuilder
         .instance()
         .name("map1")
         .create();
+```
+
+#### Example - Monitor Chronicle Map Statistics
+
+```java
+    public static <K, V> void printMapStats(ChronicleMap<K, V> map) {
+        for (int i = 0; i < map.segments(); i++) {
+            try (MapSegmentContext<K, V, ?> c = map.segmentContext(i)) {
+                System.out.printf("segment %d contains %d entries\n", i, c.size());
+                c.forEachSegmentEntry(e -> System.out.printf("%s, %d bytes -> %s, %d bytes\n",
+                        e.key(), e.key().size(), e.value(), e.value().size()));
+            }
+        }
+    }
 ```
