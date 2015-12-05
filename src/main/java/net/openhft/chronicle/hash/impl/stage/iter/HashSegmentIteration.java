@@ -140,6 +140,8 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
                             steps--;
                             hlp.initHashLookupPos(currentHashLookupPos);
                         }
+                        // force entry checksum update (delayedUpdateChecksum depends on keyOffset)
+                        e.closeKeyOffset();
                     }
                 }
             }

@@ -16,9 +16,7 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
-import net.openhft.chronicle.hash.ChecksumEntry;
-
-public interface ChecksumStrategy extends ChecksumEntry {
+public interface ChecksumStrategy {
 
     int CHECKSUM_STORED_BYTES = 4;
 

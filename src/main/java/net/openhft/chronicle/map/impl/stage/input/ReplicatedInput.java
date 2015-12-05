@@ -95,32 +95,11 @@ public abstract class ReplicatedInput<K, V, R>
         mh.m().setLastModificationTime(riId, bootstrapTimestamp);
 
         q.initInputKey(replicatedInputKeyBytesValue);
-
-        boolean debugEnabled = lh.LOG.isDebugEnabled();
-
         s.innerUpdateLock.lock();
         if (isDeleted) {
-            if (debugEnabled) {
-                lh.LOG.debug("READING FROM SOURCE -  into local-id={}, remote={}, remove(key={})",
-                        mh.m().identifier(), riId, ks.inputKey);
-            }
             mh.m().remoteOperations.remove(this);
-            return;
-        }
-
-        String message = null;
-        if (debugEnabled) {
-            message = String.format(
-                    "READING FROM SOURCE -  into local-id=%d, remote-id=%d, put(key=%s,",
-                    mh.m().identifier(), riId, ks.inputKey);
-        }
-
-
-        mh.m().remoteOperations.put(this, replicatedInputValueBytesValue);
-
-
-        if (debugEnabled) {
-            lh.LOG.debug(message + "value=" + replicatedInputValueBytesValue + ")");
+        } else {
+            mh.m().remoteOperations.put(this, replicatedInputValueBytesValue);
         }
     }
 }

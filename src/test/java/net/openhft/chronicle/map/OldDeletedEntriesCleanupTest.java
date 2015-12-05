@@ -123,7 +123,7 @@ public class OldDeletedEntriesCleanupTest {
     @Test
     public void testFloodReplicatedMapWithDeletedEntries() throws InterruptedException {
         try {
-            Random r = ThreadLocalRandom.current();
+            Random r = new Random(42);
             NavigableSet<Integer> put = new TreeSet<>();
             for (int i = 0; i < Builder.SIZE * 10; i++) {
                 if (r.nextBoolean() || put.isEmpty()) {
@@ -139,9 +139,11 @@ public class OldDeletedEntriesCleanupTest {
             System.out.println("\nwaiting till equal");
 
             waitTillEqual(15000);
-
-            if (!map1.equals(map2))
-                Assert.assertEquals(Maps.difference(map1, map2).toString(), map1, map2);
+            if (!map1.equals(map2)) {
+                Assert.assertEquals(
+                        Maps.difference(new TreeMap<>(map1), new TreeMap<>(map2)).toString(),
+                        new TreeMap<>(map1), new TreeMap<>(map2));
+            }
         } finally {
             map1.close();
             map2.close();

@@ -32,6 +32,7 @@ public class UpdateLock implements InterProcessLock {
 
     @StageRef LogHolder logHolder;
     @StageRef SegmentStages s;
+    @StageRef HashEntryStages<?> entry;
     
     @Override
     public boolean isHeldByCurrentThread() {
@@ -163,6 +164,7 @@ public class UpdateLock implements InterProcessLock {
 
     @Override
     public void unlock() {
+        entry.closeDelayedUpdateChecksum();
         switch (s.localLockState) {
             case UNLOCKED:
             case READ_LOCKED:

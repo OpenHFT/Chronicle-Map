@@ -92,6 +92,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
 
     public void writeValue(Data<?> value) {
+        initDelayedUpdateChecksum(true);
         // In acquireContext(), replaceValue() is called for
         // 1) executing custom replaceValue() logic, if defined, from configured MapEntryOperations
         // 2) Update replication status (bits, timestamp)

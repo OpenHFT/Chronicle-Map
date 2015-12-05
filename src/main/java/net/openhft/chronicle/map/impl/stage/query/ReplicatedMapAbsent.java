@@ -51,7 +51,6 @@ public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
             s.incrementModCount();
             e.writeEntryPresent();
             ru.updateChange();
-            e.checksumStrategy.computeAndStoreChecksum();
         } else {
             throw new IllegalStateException(
                     "Entry is present in the map when doInsert() is called");

@@ -43,6 +43,7 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
     }
 
     void updateReplicationState(long timestamp, byte identifier) {
+        initDelayedUpdateChecksum(true);
         Bytes segmentBytes = s.segmentBytesForWrite();
         segmentBytes.writePosition(replicationBytesOffset);
         segmentBytes.writeLong(timestamp);

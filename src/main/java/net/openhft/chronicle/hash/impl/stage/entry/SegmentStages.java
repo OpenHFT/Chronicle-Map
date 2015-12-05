@@ -483,6 +483,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     @Stage("SegmentTier") public long tierIndex;
     @Stage("SegmentTier") public long tierBaseAddr;
 
+    public abstract boolean segmentTierInit();
+
     public void initSegmentTier() {
         tierIndex = segmentIndex + 1; // tiers are 1-counted
         tierBaseAddr = hh.h().segmentBaseAddr(segmentIndex);

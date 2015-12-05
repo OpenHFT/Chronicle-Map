@@ -93,10 +93,11 @@ public class ReadLock implements InterProcessLock {
 
     @Override
     public void unlock() {
-        s.readUnlockAndDecrementCount();
-        s.setLocalLockState(UNLOCKED);
         // TODO what should close here?
         hlp.closeHashLookupPos();
         entry.closePos();
+        entry.closeKeyOffset();
+        s.readUnlockAndDecrementCount();
+        s.setLocalLockState(UNLOCKED);
     }
 }

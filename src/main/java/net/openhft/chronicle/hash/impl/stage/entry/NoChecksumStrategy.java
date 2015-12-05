@@ -21,22 +21,12 @@ public enum NoChecksumStrategy implements ChecksumStrategy {
 
     @Override
     public void computeAndStoreChecksum() {
-        // no-op
-    }
-
-    @Override
-    public void updateChecksum() {
         throw new UnsupportedOperationException("Checksum is not stored in this Chronicle Hash");
     }
 
     @Override
     public boolean innerCheckSum() {
         return true;
-    }
-
-    @Override
-    public boolean checkSum() {
-        throw new UnsupportedOperationException("Checksum is not stored in this Chronicle Hash");
     }
 
     @Override

@@ -21,6 +21,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.ChecksumEntry;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.HashEntry;
+import net.openhft.chronicle.hash.impl.LocalLockState;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.data.bytes.EntryKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
@@ -51,6 +52,8 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
 
     @Stage("EntryOffset") public long keySizeOffset = -1;
 
+    public abstract boolean entryOffsetInit();
+
     public void initEntryOffset() {
         keySizeOffset = s.entrySpaceOffset + pos * hh.h().chunkSize;
     }
@@ -66,6 +69,8 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
     public void initKeyOffset(long keyOffset) {
         this.keyOffset = keyOffset;
     }
+
+    public abstract void closeKeyOffset();
 
     public void readExistingEntry(long pos) {
         initPos(pos);
@@ -111,14 +116,43 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
     public final ChecksumStrategy checksumStrategy = hh.h().checksumEntries ?
             hashEntryChecksumStrategy : NoChecksumStrategy.INSTANCE;
 
+    public boolean delayedUpdateChecksum = false;
+
+    public void initDelayedUpdateChecksum(boolean delayedUpdateChecksum) {
+        // makes delayedUpdateChecksum dependent on keySizeOffset and Locks stages, to trigger
+        // delayedUpdateChecksum close on these stages' close
+        assert entryOffsetInit() && keySizeOffset >= 0;
+        assert s.locksInit() && s.localLockState != LocalLockState.UNLOCKED;
+        assert delayedUpdateChecksum; // doesn't make sense to init to "uninit" false value
+        this.delayedUpdateChecksum = true;
+    }
+
+    abstract boolean delayedUpdateChecksumInit();
+
+    public void closeDelayedUpdateChecksum() {
+        if (hh.h().checksumEntries)
+            hashEntryChecksumStrategy.computeAndStoreChecksum();
+        delayedUpdateChecksum = false;
+    }
+
     @Override
     public void updateChecksum() {
-        checksumStrategy.updateChecksum();
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        if (!hh.h().checksumEntries) {
+            throw new UnsupportedOperationException(
+                    "Checksum is not stored in this Chronicle Hash");
+        }
+        initDelayedUpdateChecksum(true);
     }
 
     @Override
     public boolean checkSum() {
-        return checksumStrategy.checkSum();
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        if (!hh.h().checksumEntries) {
+            throw new UnsupportedOperationException(
+                    "Checksum is not stored in this Chronicle Hash");
+        }
+        return delayedUpdateChecksumInit() || checksumStrategy.innerCheckSum();
     }
 
     long entrySize() {

@@ -152,7 +152,7 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>stage-compiler</artifactId>
-            <version>1.8</version>
+            <version>1.9</version>
             <scope>provided</scope>
         </dependency>
 

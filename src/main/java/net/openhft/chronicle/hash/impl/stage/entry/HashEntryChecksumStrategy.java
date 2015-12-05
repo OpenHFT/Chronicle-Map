@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.impl.stage.entry;
 
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
-import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
@@ -26,7 +25,6 @@ import static net.openhft.chronicle.hash.impl.stage.entry.ChecksumHashing.hash8T
 @Staged
 public class HashEntryChecksumStrategy implements ChecksumStrategy {
 
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef SegmentStages s;
     @StageRef HashEntryStages<?> e;
     @StageRef KeyHashCode h;
@@ -56,22 +54,10 @@ public class HashEntryChecksumStrategy implements ChecksumStrategy {
     }
 
     @Override
-    public void updateChecksum() {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
-        computeAndStoreChecksum();
-    }
-
-    @Override
     public boolean innerCheckSum() {
         int oldChecksum = s.segmentBS.readInt(e.entryEnd());
         int checksum = computeChecksum();
         return oldChecksum == checksum;
-    }
-
-    @Override
-    public boolean checkSum() {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return innerCheckSum();
     }
 
     @Override

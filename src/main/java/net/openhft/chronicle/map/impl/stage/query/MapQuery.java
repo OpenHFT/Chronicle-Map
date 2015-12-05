@@ -99,11 +99,6 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
 
     @Override
     public void doReplaceValue(Data<V> newValue) {
-        doReplaceValueWithoutChecksum(newValue);
-        e.checksumStrategy.computeAndStoreChecksum();
-    }
-
-    public void doReplaceValueWithoutChecksum(Data<V> newValue) {
         putPrefix();
         if (entryPresent()) {
             e.innerDefaultReplaceValue(newValue);
