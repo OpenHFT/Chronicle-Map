@@ -24,7 +24,11 @@ import net.openhft.chronicle.hash.Data;
  * Context, in which {@link MapEntry MapEntries} are accessed. {@code MapContext} allows to access
  * {@link MapEntryOperations}, configured for the accessed {@link ChronicleMap} via {@link
  * ChronicleMapBuilder#entryOperations(MapEntryOperations)}. {@code MapContext} implements {@code
- * MapEntryOperations} by delegation to the configured {@code entryOperations}.
+ * MapEntryOperations} by delegation to the configured {@code entryOperations}. The same for
+ * {@link DefaultValueProvider}: {@code MapContext} delegates to the {@code DefaultValueProvider}
+ * configured for the accessed {@code ChronicleMap} via {@link
+ * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)}, or the default {@code
+ * DefaultValueProvider} implementation.
  * 
  * @param <K> the map key type
  * @param <V> the map value type

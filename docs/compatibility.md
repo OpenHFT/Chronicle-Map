@@ -34,7 +34,7 @@ branch, unless the older version has bugs that lead to data corruption.
 
 To support this,
  - Serialization forms of any classes should be changed. When e. g. a marshaller class (say,
- `StringBytesReader`) of object of some type is changed, and it's serialization form should be
+ `StringBytesReader`) of objects of some type is changed, and it's serialization form should be
  changed, a new class called `StringBytesReader_3_5` (5 is the "minor" number of the version of the
  library, in which this change is made) should be created and put along with older class.
  - When the specification revision is updated (hence binary form could be completely changed), a
@@ -59,4 +59,5 @@ If more substantial changes to the specification are required, the revision numb
 updated.
 
 The binary form of Chronicle Map and algorithms could change between revisions to any degree, but
-[guarantees](../spec/1-design-goals.md) provided by the specification shouldn't be weaken.
+[guarantees](../spec/1-design-goals.md#guarantees) provided by the specification shouldn't be
+weaken.
