@@ -39,8 +39,12 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef protected HashLookupPos hlp;
     
-    public boolean entryIsPresent() {
+    public boolean shouldTestEntry() {
         return true;
+    }
+
+    public Object entryForIteration() {
+        return this;
     }
 
     public boolean entryRemovedOnThisIteration = false;
@@ -62,27 +66,33 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     abstract void closeHashLookupEntry();
 
     @Override
-    public boolean forEachSegmentEntryWhile(Predicate<? super E> action) {
+    public boolean forEachSegmentEntryWhile(Predicate<? super E> predicate) {
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
         s.innerUpdateLock.lock();
+        return innerForEachSegmentEntryWhile(predicate, s.size());
+    }
+
+    public <T> boolean innerForEachSegmentEntryWhile(
+            Predicate<? super T> predicate, long expectedEntriesToIterate) {
         try {
-            long size = s.size();
-            if (size == 0)
+            long leftEntries = expectedEntriesToIterate;
+            if (leftEntries == 0)
                 return true;
             s.goToLastTier();
             while (true) {
                 int currentTier = s.tier;
                 long currentTierBaseAddr = s.tierBaseAddr;
                 long currentTierIndex = s.tierIndex;
-                size = forEachTierWhile(action, size,
+                leftEntries = forEachTierWhile(predicate, leftEntries,
                         currentTier, currentTierBaseAddr, currentTierIndex);
-                if (size < 0) // interrupted
+                if (leftEntries < 0) // interrupted
                     return false;
-                if (size == 0)
+                if (leftEntries == 0)
                     return true;
                 if (currentTier == 0)
                     throw new IllegalStateException("We iterated all tiers without interruption, " +
-                            "but according to size counter there should be " + size + " more " +
-                            "entries. Size diverged?");
+                            "but according to segment counters there should be " + leftEntries +
+                            " more entries. Size diverged?");
                 s.prevTier();
             }
         } finally {
@@ -92,8 +102,8 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         }
     }
 
-    private long forEachTierWhile(
-            Predicate<? super E> action, long size,
+    private <T> long forEachTierWhile(
+            Predicate<? super T> predicate, long leftEntries,
             int currentTier, long currentTierBaseAddr, long tierIndex) {
         boolean interrupted = false;
         long startPos = 0L;
@@ -107,7 +117,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         do {
             // Step from hlp.hashLookupPos, not currentHashLookupPos (with additional initialization
             // of this local variable to startPos outside the loop), because if e.remove() is
-            // called in the `action`, hlp.hashLookupPos is stepped back in doRemove(), and
+            // called in the `predicate`, hlp.hashLookupPos is stepped back in doRemove(), and
             // currentHashLookupPos become invalid
             currentHashLookupPos = hashLookup.step(hlp.hashLookupPos);
             steps++;
@@ -116,14 +126,14 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
             initHashLookupEntry(entry);
             if (!hashLookup.empty(entry)) {
                 e.readExistingEntry(hashLookup.value(entry));
-                if (entryIsPresent()) {
+                if (shouldTestEntry()) {
                     initEntryRemovedOnThisIteration(false);
                     try {
-                        if (!action.test((E) this)) {
+                        if (!predicate.test((T) entryForIteration())) {
                             interrupted = true;
                             break;
                         } else {
-                            if (--size == 0)
+                            if (--leftEntries == 0)
                                 break;
                         }
                     } finally {
@@ -150,7 +160,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
             // becomes equal to start pos without making the whole loop, but only visiting a single
             // entry
         } while (currentHashLookupPos != startPos || steps == 0);
-        return interrupted ? ~size : size;
+        return interrupted ? ~leftEntries : leftEntries;
     }
 
     @Override

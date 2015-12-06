@@ -18,7 +18,6 @@ package net.openhft.chronicle.map.impl.stage.iter;
 
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.ReplicatedHashSegmentContext;
-import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapEntry;
@@ -35,6 +34,9 @@ import net.openhft.sg.Staged;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIteration.EntriesToTest.ALL;
+import static net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIteration.EntriesToTest.PRESENT;
+
 @Staged
 public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentIteration<K, V, R>
         implements ReplicatedIterationContext<K, V, R>, ReplicableEntry,
@@ -47,9 +49,21 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     @StageRef ReplicatedMapAbsentDelegatingForIteration<K, V> absentEntryDelegating;
     @StageRef ReplicatedMapEntryDelegating<K, V> entryDelegating;
 
+    enum EntriesToTest {PRESENT, ALL}
+    EntriesToTest entriesToTest = null;
+
+    void initEntriesToTest(EntriesToTest entriesToTest) {
+        this.entriesToTest = entriesToTest;
+    }
+
     @Override
-    public boolean entryIsPresent() {
-        return !e.entryDeleted();
+    public boolean shouldTestEntry() {
+        return entriesToTest == ALL || !e.entryDeleted();
+    }
+
+    @Override
+    public Object entryForIteration() {
+        return !e.entryDeleted() ? entryDelegating : absentEntryDelegating;
     }
 
     @Override
@@ -65,42 +79,20 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     }
 
     @Override
+    public boolean forEachSegmentEntryWhile(Predicate<? super MapEntry<K, V>> predicate) {
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        initEntriesToTest(PRESENT);
+        s.innerUpdateLock.lock();
+        return innerForEachSegmentEntryWhile(predicate, s.size());
+    }
+
+    @Override
     public boolean forEachSegmentReplicableEntryWhile(
             Predicate<? super ReplicableEntry> predicate) {
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        initEntriesToTest(ALL);
         s.innerUpdateLock.lock();
-        try {
-            long entries = s.entries();
-            if (entries == 0)
-                return true;
-            boolean interrupted = false;
-            long startPos = 0L;
-            CompactOffHeapLinearHashTable hashLookup = mh.h().hashLookup;
-            while (!hashLookup.empty(hashLookup.readEntry(s.tierBaseAddr, startPos))) {
-                startPos = hashLookup.step(startPos);
-            }
-            hlp.initHashLookupPos(startPos);
-            do {
-                hlp.setHashLookupPos(hashLookup.step(hlp.hashLookupPos));
-                long entry = hashLookup.readEntry(s.tierBaseAddr, hlp.hashLookupPos);
-                if (!hashLookup.empty(entry)) {
-                    e.readExistingEntry(hashLookup.value(entry));
-                    ReplicableEntry e = !this.e.entryDeleted() ? entryDelegating :
-                            absentEntryDelegating;
-                    initEntryRemovedOnThisIteration(false);
-                    if (!predicate.test(e)) {
-                        interrupted = true;
-                        break;
-                    } else {
-                        if (--entries == 0)
-                            break;
-                    }
-                }
-            } while (hlp.hashLookupPos != startPos);
-            return !interrupted;
-        } finally {
-            s.innerReadLock.unlock();
-            initEntryRemovedOnThisIteration(false);
-        }
+        return innerForEachSegmentEntryWhile(predicate, s.entries());
     }
 
     @Override

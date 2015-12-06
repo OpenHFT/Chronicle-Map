@@ -31,16 +31,16 @@ import java.util.function.Predicate;
 public interface HashSegmentContext<K, E extends HashEntry<K>> extends HashContext<K>, Closeable {
 
     /**
-     * Performs the given action for each entry in this segment until all entries have
-     * been processed or the action throws an {@code Exception}. Exceptions thrown by the action are
-     * relayed to the caller.
+     * Performs the given action for each <i>present</i> entry in this segment until all entries
+     * have been processed or the action throws an {@code Exception}. Exceptions thrown by the
+     * action are relayed to the caller.
      *
      * @param action the action to be performed for each entry in this segment
      */
     void forEachSegmentEntry(Consumer<? super E> action);
 
     /**
-     * Checks the given predicate on each entry in this segment until all entries
+     * Checks the given predicate on each <i>present</i> entry in this segment until all entries
      * have been processed or the predicate returns {@code false} for some entry, or throws
      * an {@code Exception}. Exceptions thrown by the predicate are relayed to the caller.
      *
@@ -54,7 +54,7 @@ public interface HashSegmentContext<K, E extends HashEntry<K>> extends HashConte
     boolean forEachSegmentEntryWhile(Predicate<? super E> predicate);
 
     /**
-     * Returns the number of entries in this segment.
+     * Returns the number of <i>present</i> entries in this segment.
      */
     long size();
 }
