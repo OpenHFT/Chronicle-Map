@@ -20,10 +20,10 @@ import net.openhft.chronicle.core.Memory;
 import net.openhft.chronicle.core.OS;
 
 /**
- * The reason why this is not a data value generated class, and offsets are allocated by
- * hand -- this functionality is accessed concurrently from many threads, and data value generated
- * classes are stateful - so need to keep an instance in thread local that seems to be overall more
- * pain than gain.
+ * The reason why this is not implemented via value interface, and offsets are allocated by hand --
+ * this functionality is accessed concurrently from many threads, and native value implementations
+ * are stateful - so need to keep an instance in thread local that seems to be overall more pain
+ * than gain.
  */
 public enum TierCountersArea {
     ;
@@ -31,8 +31,8 @@ public enum TierCountersArea {
     private static Memory memory = OS.memory();
     public static final long NEXT_TIER_INDEX_OFFSET = 0L;
     public static final long PREV_TIER_INDEX_OFFSET = NEXT_TIER_INDEX_OFFSET + 8L;
-    public static final long NEXT_POS_TO_SEARCH_FROM_TIERED_OFFSET = PREV_TIER_INDEX_OFFSET + 8L;
-    public static final long SEGMENT_INDEX_OFFSET = NEXT_POS_TO_SEARCH_FROM_TIERED_OFFSET + 8L;
+    public static final long LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET = PREV_TIER_INDEX_OFFSET + 8L;
+    public static final long SEGMENT_INDEX_OFFSET = LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET + 8L;
     public static final long TIER_OFFSET = SEGMENT_INDEX_OFFSET + 4L;
 
     public static long nextTierIndex(long address) {
@@ -43,13 +43,13 @@ public enum TierCountersArea {
         memory.writeLong(address + NEXT_TIER_INDEX_OFFSET, nextTierIndex);
     }
 
-    public static long nextPosToSearchFromTiered(long address) {
-        return memory.readLong(address + NEXT_POS_TO_SEARCH_FROM_TIERED_OFFSET);
+    public static long lowestPossiblyFreeChunkTiered(long address) {
+        return memory.readLong(address + LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET);
     }
 
-    public static void nextPosToSearchFromTiered(long address, long nextPosToSearchFrom) {
-        memory.writeLong(address + NEXT_POS_TO_SEARCH_FROM_TIERED_OFFSET,
-                nextPosToSearchFrom);
+    public static void lowestPossiblyFreeChunkTiered(long address, long lowestPossiblyFreeChunk) {
+        memory.writeLong(address + LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET,
+                lowestPossiblyFreeChunk);
     }
 
     public static long prevTierIndex(long address) {

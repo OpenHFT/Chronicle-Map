@@ -143,7 +143,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private int actualSegments = -1;
     // used when reading the number of entries per
     private long entriesPerSegment = -1L;
-    private long actualChunksPerSegment = -1L;
+    private long actualChunksPerSegmentTier = -1L;
     private double averageKeySize = UNDEFINED_DOUBLE_CONFIG;
     private K averageKey;
     private K sampleKey;
@@ -675,8 +675,8 @@ public final class ChronicleMapBuilder<K, V> implements
     int maxChunksPerEntry() {
         if (constantlySizedEntries())
             return 1;
-        long actualChunksPerSegment = actualChunksPerSegment();
-        int result = (int) Math.min(actualChunksPerSegment, (long) Integer.MAX_VALUE);
+        long actualChunksPerSegmentTier = actualChunksPerSegmentTier();
+        int result = (int) Math.min(actualChunksPerSegmentTier, (long) Integer.MAX_VALUE);
         if (this.maxChunksPerEntry > 0)
             result = Math.min(this.maxChunksPerEntry, result);
         return result;
@@ -767,60 +767,59 @@ public final class ChronicleMapBuilder<K, V> implements
             entriesPerSegment = PoissonDistribution.inverseCumulativeProbability(
                     averageEntriesPerSegment, nonTieredSegmentsPercentile);
         }
-        boolean actualChunksDefined = actualChunksPerSegment > 0;
+        boolean actualChunksDefined = actualChunksPerSegmentTier > 0;
         if (!actualChunksDefined) {
             double averageChunksPerEntry = averageChunksPerEntry();
             if (entriesPerSegment * averageChunksPerEntry >
-                    MAX_SEGMENT_CHUNKS)
-                throw new IllegalStateException("Max chunks per segment is " +
-                        MAX_SEGMENT_CHUNKS +
-                        " configured entries() and " +
-                        "actualSegments() so that there should be " + entriesPerSegment +
-                        " entries per segment, while average chunks per entry is " +
-                        averageChunksPerEntry);
+                    MAX_TIER_CHUNKS)
+                throw new IllegalStateException("Max chunks per segment tier is " +
+                        MAX_TIER_CHUNKS + " configured entries() and actualSegments() so that " +
+                        "there should be " + entriesPerSegment + " entries per segment tier, " +
+                        "while average chunks per entry is " + averageChunksPerEntry);
         }
-        if (entriesPerSegment > MAX_SEGMENT_ENTRIES)
+        if (entriesPerSegment > MAX_TIER_ENTRIES)
             throw new IllegalStateException("shouldn't be more than " +
-                    MAX_SEGMENT_ENTRIES + " entries per segment");
+                    MAX_TIER_ENTRIES + " entries per segment");
         return entriesPerSegment;
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> actualChunksPerSegment(long actualChunksPerSegment) {
-        if (actualChunksPerSegment <= 0)
-            throw new IllegalArgumentException("Actual chunks per segment should be positive, " +
-                    actualChunksPerSegment + " given");
-        this.actualChunksPerSegment = actualChunksPerSegment;
+    public ChronicleMapBuilder<K, V> actualChunksPerSegmentTier(long actualChunksPerSegmentTier) {
+        if (actualChunksPerSegmentTier <= 0 || actualChunksPerSegmentTier > MAX_TIER_CHUNKS)
+            throw new IllegalArgumentException("Actual chunks per segment tier should be in [1, " +
+                    MAX_TIER_CHUNKS + "], range, " + actualChunksPerSegmentTier + " given");
+
+        this.actualChunksPerSegmentTier = actualChunksPerSegmentTier;
         return this;
     }
 
-    private void checkActualChunksPerSegmentIsConfiguredOnlyIfOtherLowLevelConfigsAreManual() {
-        if (actualChunksPerSegment > 0) {
+    private void checkActualChunksPerSegmentTierIsConfiguredOnlyIfOtherLowLevelConfigsAreManual() {
+        if (actualChunksPerSegmentTier > 0) {
             if (entriesPerSegment <= 0 || (actualChunkSize <= 0 && !constantlySizedEntries()) ||
                     actualSegments <= 0)
-                throw new IllegalStateException("Actual chunks per segment could be configured " +
-                        "only if other three low level configs are manual: " +
+                throw new IllegalStateException("Actual chunks per segment tier could be " +
+                        "configured only if other three low level configs are manual: " +
                         "entriesPerSegment(), actualSegments() and actualChunkSize(), unless " +
                         "both keys and value sizes are constant");
         }
     }
 
     private void checkActualChunksPerSegmentGreaterOrEqualToEntries() {
-        if (actualChunksPerSegment > 0 && entriesPerSegment > 0 &&
-                entriesPerSegment > actualChunksPerSegment) {
+        if (actualChunksPerSegmentTier > 0 && entriesPerSegment > 0 &&
+                entriesPerSegment > actualChunksPerSegmentTier) {
             throw new IllegalStateException("Entries per segment couldn't be greater than " +
-                    "actual chunks per segment. Entries: " + entriesPerSegment + ", " +
-                    "chunks: " + actualChunksPerSegment + " is configured");
+                    "actual chunks per segment tier. Entries: " + entriesPerSegment + ", " +
+                    "chunks: " + actualChunksPerSegmentTier + " is configured");
         }
     }
 
-    long actualChunksPerSegment() {
-        if (actualChunksPerSegment > 0)
-            return actualChunksPerSegment;
-        return chunksPerSegment(entriesPerSegment());
+    long actualChunksPerSegmentTier() {
+        if (actualChunksPerSegmentTier > 0)
+            return actualChunksPerSegmentTier;
+        return chunksPerSegmentTier(entriesPerSegment());
     }
 
-    private long chunksPerSegment(long entriesPerSegment) {
+    private long chunksPerSegmentTier(long entriesPerSegment) {
         return round(entriesPerSegment * averageChunksPerEntry());
     }
 
@@ -949,7 +948,7 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private int hashLookupSlotBytes(long entriesPerSegment) {
-        int valueBits = valueBits(chunksPerSegment(entriesPerSegment));
+        int valueBits = valueBits(chunksPerSegmentTier(entriesPerSegment));
         int keyBits = keyBits(entriesPerSegment, valueBits);
         return entrySize(keyBits, valueBits);
     }
@@ -1089,7 +1088,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 ", actualSegments=" + pretty(actualSegments) +
                 ", minSegments=" + pretty(minSegments) +
                 ", entriesPerSegment=" + pretty(entriesPerSegment) +
-                ", actualChunksPerSegment=" + pretty(actualChunksPerSegment) +
+                ", actualChunksPerSegmentTier=" + pretty(actualChunksPerSegmentTier) +
                 ", averageKeySize=" + pretty(averageKeySize) +
                 ", sampleKeyForConstantSizeComputation=" + pretty(sampleKey) +
                 ", averageValueSize=" + pretty(averageValueSize) +
@@ -1523,12 +1522,12 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private void stateChecks() {
-        checkActualChunksPerSegmentIsConfiguredOnlyIfOtherLowLevelConfigsAreManual();
+        checkActualChunksPerSegmentTierIsConfiguredOnlyIfOtherLowLevelConfigsAreManual();
         checkActualChunksPerSegmentGreaterOrEqualToEntries();
     }
 
     private boolean allLowLevelConfigurationsAreManual() {
-        return actualSegments > 0 && entriesPerSegment > 0 && actualChunksPerSegment > 0
+        return actualSegments > 0 && entriesPerSegment > 0 && actualChunksPerSegmentTier > 0
                 && actualChunkSize > 0;
     }
 

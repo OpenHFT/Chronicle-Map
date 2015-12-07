@@ -165,19 +165,14 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
                             "entry takes " + newSizeInChunks + " chunks, " +
                             m.maxChunksPerEntry + " is maximum.");
                 }
-                if (s.freeList.isRangeClear(pos + entrySizeInChunks, pos + newSizeInChunks)) {
-                    s.freeList.setRange(pos + entrySizeInChunks, pos + newSizeInChunks);
+                if (s.realloc(pos, entrySizeInChunks, newSizeInChunks)) {
                     break newValueDoesNotFit;
                 }
                 relocation(newValue, newSizeOfEverythingBeforeValue);
                 return;
             } else if (newSizeInChunks < entrySizeInChunks) {
                 // Freeing extra chunks
-                s.freeList.clearRange(pos + newSizeInChunks, pos + entrySizeInChunks);
-                // Do NOT reset nextPosToSearchFrom, because if value
-                // once was larger it could easily became larger again,
-                // But if these chunks will be taken by that time,
-                // this entry will need to be relocated.
+                s.free(pos + newSizeInChunks, entrySizeInChunks - newSizeInChunks);
             }
             // new size != old size => size is not constant => size is actually written =>
             // to prevent (at least) this execution:

@@ -33,11 +33,9 @@ import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Range;
 import net.openhft.chronicle.values.Values;
-import net.openhft.lang.values.DoubleArray;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -216,7 +214,7 @@ public class CHMUseCasesTest {
                     map1.valueClass())
                     .entriesPerSegment(vanillaMap.entriesPerSegment)
                     .actualSegments(vanillaMap.actualSegments)
-                    .actualChunksPerSegment(vanillaMap.actualChunksPerSegment);
+                    .actualChunksPerSegmentTier(vanillaMap.actualChunksPerSegmentTier);
             if (!vanillaMap.constantlySizedEntry) {
                 builder.actualChunkSize((int) vanillaMap.chunkSize);
                 builder.worstAlignment(vanillaMap.worstAlignment);

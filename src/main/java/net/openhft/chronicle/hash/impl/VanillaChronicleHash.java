@@ -96,7 +96,7 @@ public abstract class VanillaChronicleHash<K,
 
     public long chunkSize;
     public int maxChunksPerEntry;
-    public long actualChunksPerSegment;
+    public long actualChunksPerSegmentTier;
 
     /////////////////////////////////////////////////
     // Precomputed offsets and sizes for fast Context init
@@ -180,12 +180,12 @@ public abstract class VanillaChronicleHash<K,
 
         chunkSize = privateAPI.chunkSize();
         maxChunksPerEntry = privateAPI.maxChunksPerEntry();
-        actualChunksPerSegment = privateAPI.actualChunksPerSegment();
+        actualChunksPerSegmentTier = privateAPI.actualChunksPerSegmentTier();
 
         // Precomputed offsets and sizes for fast Context init
         segmentHeaderSize = privateAPI.segmentHeaderSize();
 
-        tierHashLookupValueBits = valueBits(actualChunksPerSegment);
+        tierHashLookupValueBits = valueBits(actualChunksPerSegmentTier);
         tierHashLookupKeyBits = keyBits(entriesPerSegment, tierHashLookupValueBits);
         tierHashLookupEntrySize =
                 entrySize(tierHashLookupKeyBits, tierHashLookupValueBits);
@@ -198,10 +198,10 @@ public abstract class VanillaChronicleHash<K,
         tierHashLookupOuterSize = CACHE_LINES.align(tierHashLookupInnerSize, BYTES);
 
         tierFreeListInnerSize = LONGS.align(
-                BYTES.alignAndConvert(actualChunksPerSegment, BITS), BYTES);
+                BYTES.alignAndConvert(actualChunksPerSegmentTier, BITS), BYTES);
         tierFreeListOuterSize = CACHE_LINES.align(tierFreeListInnerSize, BYTES);
 
-        tierEntrySpaceInnerSize = chunkSize * actualChunksPerSegment;
+        tierEntrySpaceInnerSize = chunkSize * actualChunksPerSegmentTier;
         tierEntrySpaceInnerOffset = privateAPI.segmentEntrySpaceInnerOffset();
         tierEntrySpaceOuterSize = CACHE_LINES.align(
                 tierEntrySpaceInnerOffset + tierEntrySpaceInnerSize, BYTES);
@@ -247,7 +247,7 @@ public abstract class VanillaChronicleHash<K,
 
         chunkSize = wireIn.read(() -> "chunkSize").int64();
         maxChunksPerEntry = wireIn.read(() -> "maxChunksPerEntry").int32();
-        actualChunksPerSegment = wireIn.read(() -> "actualChunksPerSegment").int64();
+        actualChunksPerSegmentTier = wireIn.read(() -> "actualChunksPerSegmentTier").int64();
 
         segmentHeaderSize = wireIn.read(() -> "segmentHeaderSize").int32();
 
@@ -292,7 +292,7 @@ public abstract class VanillaChronicleHash<K,
 
         wireOut.write(() -> "chunkSize").int64(chunkSize);
         wireOut.write(() -> "maxChunksPerEntry").int32(maxChunksPerEntry);
-        wireOut.write(() -> "actualChunksPerSegment").int64(actualChunksPerSegment);
+        wireOut.write(() -> "actualChunksPerSegmentTier").int64(actualChunksPerSegmentTier);
 
         wireOut.write(() -> "segmentHeaderSize").int32(segmentHeaderSize);
 

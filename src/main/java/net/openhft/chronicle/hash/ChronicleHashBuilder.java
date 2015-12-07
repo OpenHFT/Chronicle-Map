@@ -318,10 +318,11 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * attacker might do this), this segment is obviously going to be tiered.
      *
      * <p>This configuration affects the actual number of segments, if {@link #entries(long)} and
-     * {@link #entriesPerSegment(long)} or {@link #actualChunksPerSegment(long)} are configured. It
-     * affects the actual number of entries/chunks per segment, if {@link #entries(long)} and
-     * {@link #actualSegments(int)} are configured. If all 4 configurations, mentioned in this
-     * paragraph, are specified, {@code nonTieredSegmentsPercentile} is irrelevant.
+     * {@link #entriesPerSegment(long)} or {@link #actualChunksPerSegmentTier(long)} are configured.
+     * It affects the actual number of entries per segment/chunks per segment tier, if {@link
+     * #entries(long)} and {@link #actualSegments(int)} are configured. If all 4 configurations,
+     * mentioned in this paragraph, are specified, {@code nonTieredSegmentsPercentile} doesn't make
+     * any effect.
      *
      * <p>Default value is 0.99999, i. e. if hash code distribution of the keys is good, only one
      * segment of 100K is tiered on average. If your segment size is small and you want to improve
@@ -344,7 +345,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>This is a <a href="#low-level-config">low-level configuration</a>.
      *
      * @param entriesPerSegment the actual maximum number entries per segment in the
-     *                                hash containers, created by this builder
+     *                          hash containers, created by this builder
      * @return this builder back
      * @see #entries(long)
      * @see #actualSegments(int)
@@ -352,17 +353,17 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B entriesPerSegment(long entriesPerSegment);
 
     /**
-     * Configures the actual number of chunks, that will be reserved for any single segment of the
-     * hash containers, created by this builder. This configuration is a lower-level version of
+     * Configures the actual number of chunks, that will be reserved for any single segment tier of
+     * the hash containers, created by this builder. This configuration is a lower-level version of
      * {@link #entriesPerSegment(long)}. Makes sense only if {@link #actualChunkSize(int)},
      * {@link #actualSegments(int)} and {@link #entriesPerSegment(long)} are also configured
      * manually.
      *
-     * @param actualChunksPerSegment the actual number of segments, reserved per segment in the
-     *                               hash containers, created by this builder
+     * @param actualChunksPerSegmentTier the actual number of chunks, reserved per segment tier in
+     *                                   the hash containers, created by this builder
      * @return this builder back
      */
-    B actualChunksPerSegment(long actualChunksPerSegment);
+    B actualChunksPerSegmentTier(long actualChunksPerSegmentTier);
 
     /**
      * Configures the actual number of segments in the hash containers, created by this builder.

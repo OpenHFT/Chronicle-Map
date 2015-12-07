@@ -24,8 +24,8 @@ import static net.openhft.chronicle.algo.MemoryUnit.BYTES;
 
 public abstract class CompactOffHeapLinearHashTable {
     // to fit 64 bits per slot.
-    public static final int MAX_SEGMENT_CHUNKS = 1 << 30;
-    public static final int MAX_SEGMENT_ENTRIES = 1 << 29;
+    public static final int MAX_TIER_CHUNKS = 1 << 30;
+    public static final int MAX_TIER_ENTRIES = 1 << 29;
 
 
     public static int valueBits(long actualChunksPerSegment) {

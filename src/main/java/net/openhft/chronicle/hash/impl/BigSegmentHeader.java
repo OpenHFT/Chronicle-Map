@@ -50,10 +50,11 @@ public final class BigSegmentHeader implements SegmentHeader {
     static final int WAIT_PARTY = 1;
 
     static final long SIZE_OFFSET = LOCK_OFFSET + 8L; // 32-bit
-    static final long NEXT_POS_TO_SEARCH_FROM_OFFSET = SIZE_OFFSET + 4L;
+    static final long LOWEST_POSSIBLY_FREE_CHUNK_OFFSET = ENTRIES_OFFSET + 4L;
 
 
-    static final long EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET = NEXT_POS_TO_SEARCH_FROM_OFFSET + 4L;
+    static final long EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET =
+            LOWEST_POSSIBLY_FREE_CHUNK_OFFSET + 4L;
 
     static final long DELETED_OFFSET = EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET + 8L;
 
@@ -89,13 +90,14 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     @Override
-    public long nextPosToSearchFrom(long address) {
-        return OS.memory().readInt(address + NEXT_POS_TO_SEARCH_FROM_OFFSET) & UNSIGNED_INT_MASK;
+    public long lowestPossiblyFreeChunk(long address) {
+        return OS.memory().readInt(address + LOWEST_POSSIBLY_FREE_CHUNK_OFFSET) & UNSIGNED_INT_MASK;
     }
 
     @Override
-    public void nextPosToSearchFrom(long address, long nextPosToSearchFrom) {
-        OS.memory().writeInt(address + NEXT_POS_TO_SEARCH_FROM_OFFSET, (int) nextPosToSearchFrom);
+    public void lowestPossiblyFreeChunk(long address, long lowestPossiblyFreeChunk) {
+        OS.memory().writeInt(address + LOWEST_POSSIBLY_FREE_CHUNK_OFFSET,
+                (int) lowestPossiblyFreeChunk);
     }
 
     private static long getLockWord(long address) {

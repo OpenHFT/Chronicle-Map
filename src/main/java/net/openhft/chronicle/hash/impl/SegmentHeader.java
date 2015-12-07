@@ -25,8 +25,8 @@ public interface SegmentHeader {
     long deleted(long address);
     void deleted(long address, long deleted);
 
-    long nextPosToSearchFrom(long address);
-    void nextPosToSearchFrom(long address, long nextPosToSearchFrom);
+    long lowestPossiblyFreeChunk(long address);
+    void lowestPossiblyFreeChunk(long address, long lowestPossiblyFreeChunk);
 
     void readLock(long address);
     void readLockInterruptibly(long address);

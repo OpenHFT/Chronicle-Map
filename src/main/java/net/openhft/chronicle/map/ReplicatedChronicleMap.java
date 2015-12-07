@@ -204,7 +204,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     private long bitsPerSegmentInModIterBitSet() {
         // min 128 * 8 to prevent false sharing on updating bits from different segments
         // TODO this doesn't prevent false sharing. There should be GAPS between per-segment bits
-        return Maths.nextPower2(actualChunksPerSegment, 128L * 8L);
+        return Maths.nextPower2(actualChunksPerSegmentTier, 128L * 8L);
     }
 
     @Override

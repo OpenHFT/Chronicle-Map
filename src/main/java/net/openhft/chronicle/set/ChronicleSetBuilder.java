@@ -93,8 +93,8 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
-    public ChronicleSetBuilder<K> actualChunksPerSegment(long actualChunksPerSegment) {
-        chronicleMapBuilder.actualChunksPerSegment(actualChunksPerSegment);
+    public ChronicleSetBuilder<K> actualChunksPerSegmentTier(long actualChunksPerSegmentTier) {
+        chronicleMapBuilder.actualChunksPerSegmentTier(actualChunksPerSegmentTier);
         return this;
     }
 

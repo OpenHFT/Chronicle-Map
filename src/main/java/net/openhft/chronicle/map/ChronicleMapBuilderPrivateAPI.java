@@ -53,8 +53,8 @@ class ChronicleMapBuilderPrivateAPI<K> implements ChronicleHashBuilderPrivateAPI
     }
 
     @Override
-    public long actualChunksPerSegment() {
-        return b.actualChunksPerSegment();
+    public long actualChunksPerSegmentTier() {
+        return b.actualChunksPerSegmentTier();
     }
 
     @Override

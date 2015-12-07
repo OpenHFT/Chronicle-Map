@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
-import net.openhft.chronicle.algo.bitset.BitSetFrame;
 import net.openhft.chronicle.algo.bitset.ReusableBitSet;
 import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
 import net.openhft.chronicle.algo.bytes.Access;
@@ -40,6 +39,7 @@ import java.util.Objects;
 
 import static net.openhft.chronicle.algo.MemoryUnit.BITS;
 import static net.openhft.chronicle.algo.MemoryUnit.LONGS;
+import static net.openhft.chronicle.algo.bitset.BitSetFrame.NOT_FOUND;
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.TIER_COUNTERS_AREA_SIZE;
 
@@ -74,19 +74,20 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         segmentHeader.size(segmentHeaderAddress, size);
     }
 
-    long nextPosToSearchFrom() {
+    long lowestPossiblyFreeChunk() {
         if (tier == 0) {
-            return segmentHeader.nextPosToSearchFrom(segmentHeaderAddress);
+            return segmentHeader.lowestPossiblyFreeChunk(segmentHeaderAddress);
         } else {
-            return nextPosToSearchFromTiered();
+            return TierCountersArea.lowestPossiblyFreeChunkTiered(tierCountersAreaAddr());
         }
     }
 
-    public void nextPosToSearchFrom(long nextPosToSearchFrom) {
+    public void lowestPossiblyFreeChunk(long lowestPossiblyFreeChunk) {
         if (tier == 0) {
-            segmentHeader.nextPosToSearchFrom(segmentHeaderAddress, nextPosToSearchFrom);
+            segmentHeader.lowestPossiblyFreeChunk(segmentHeaderAddress, lowestPossiblyFreeChunk);
         } else {
-            nextPosToSearchFromTiered(nextPosToSearchFrom);
+            TierCountersArea.lowestPossiblyFreeChunkTiered(tierCountersAreaAddr(),
+                    lowestPossiblyFreeChunk);
         }
     }
 
@@ -519,14 +520,6 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         TierCountersArea.nextTierIndex(tierCountersAreaAddr(), nextTierIndex);
     }
 
-    public long nextPosToSearchFromTiered() {
-        return TierCountersArea.nextPosToSearchFromTiered(tierCountersAreaAddr());
-    }
-
-    public void nextPosToSearchFromTiered(long nextPosToSearchFrom) {
-        TierCountersArea.nextPosToSearchFromTiered(tierCountersAreaAddr(), nextPosToSearchFrom);
-    }
-
     public long prevTierIndex() {
         return TierCountersArea.prevTierIndex(tierCountersAreaAddr());
     }
@@ -573,8 +566,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     
     @Stage("Segment") public final PointerBytesStore segmentBS = new PointerBytesStore();
     @Stage("Segment") public final Bytes segmentBytes = new VanillaBytes(segmentBS);
-    @Stage("Segment") public final ReusableBitSet freeList = new ReusableBitSet(
-            new SingleThreadedFlatBitSetFrame(LONGS.align(hh.h().actualChunksPerSegment, BITS)),
+    @Stage("Segment") private final ReusableBitSet freeList = new ReusableBitSet(
+            new SingleThreadedFlatBitSetFrame(LONGS.align(hh.h().actualChunksPerSegmentTier, BITS)),
             Access.nativeAccess(), null, 0);
     @Stage("Segment") long entrySpaceOffset = 0;
 
@@ -612,50 +605,51 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         entrySpaceOffset = 0;
     }
 
+    @Stage("Segment")
     public long allocReturnCode(int chunks) {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         if (chunks > h.maxChunksPerEntry) {
             throw new IllegalArgumentException("Entry is too large: requires " + chunks +
                     " chucks, " + h.maxChunksPerEntry + " is maximum.");
         }
-        long ret = freeList.setNextNContinuousClearBits(nextPosToSearchFrom(), chunks);
-        if (ret == BitSetFrame.NOT_FOUND || ret + chunks > h.actualChunksPerSegment) {
-            if (ret != BitSetFrame.NOT_FOUND &&
-                    ret + chunks > h.actualChunksPerSegment && ret < h.actualChunksPerSegment) {
-                freeList.clearRange(ret, h.actualChunksPerSegment);
+        long lowestPossiblyFreeChunk = lowestPossiblyFreeChunk();
+        if (lowestPossiblyFreeChunk == h.actualChunksPerSegmentTier)
+            return -1;
+        assert lowestPossiblyFreeChunk < h.actualChunksPerSegmentTier;
+        long ret = freeList.setNextNContinuousClearBits(lowestPossiblyFreeChunk, chunks);
+        if (ret == NOT_FOUND || ret + chunks > h.actualChunksPerSegmentTier) {
+            if (ret + chunks > h.actualChunksPerSegmentTier) {
+                assert ret != NOT_FOUND;
+                freeList.clearRange(ret, ret + chunks);
             }
-            ret = freeList.setNextNContinuousClearBits(0L, chunks);
-            if (ret == BitSetFrame.NOT_FOUND || ret + chunks > h.actualChunksPerSegment) {
-                if (ret != BitSetFrame.NOT_FOUND &&
-                        ret + chunks > h.actualChunksPerSegment &&
-                        ret < h.actualChunksPerSegment) {
-                    freeList.clearRange(ret, h.actualChunksPerSegment);
-                }
-                return -1;
-            }
-            updateNextPosToSearchFrom(ret, chunks);
+            return -1;
         } else {
-            // if bit at nextPosToSearchFrom is clear, it was skipped because
-            // more than 1 chunk was requested. Don't move nextPosToSearchFrom
+            // if bit at lowestPossiblyFreeChunk is clear, it was skipped because
+            // more than 1 chunk was requested. Don't move lowestPossiblyFreeChunk
             // in this case. chunks == 1 clause is just a fast path.
-            if (chunks == 1 || freeList.isSet(nextPosToSearchFrom())) {
-                updateNextPosToSearchFrom(ret, chunks);
+            if (chunks == 1 || freeList.isSet(lowestPossiblyFreeChunk)) {
+                lowestPossiblyFreeChunk(ret + chunks);
             }
+            return ret;
         }
-        return ret;
     }
 
+    @Stage("Segment")
+    public boolean realloc(long fromPos, int oldChunks, int newChunks) {
+        if (fromPos + newChunks < hh.h().actualChunksPerSegmentTier &&
+                freeList.isRangeClear(fromPos + oldChunks, fromPos + newChunks)) {
+            freeList.setRange(fromPos + oldChunks, fromPos + newChunks);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Stage("Segment")
     public void free(long fromPos, int chunks) {
         freeList.clearRange(fromPos, fromPos + chunks);
-        if (fromPos < nextPosToSearchFrom())
-            nextPosToSearchFrom(fromPos);
-    }
-
-    public void updateNextPosToSearchFrom(long allocated, int chunks) {
-        long nextPosToSearchFrom = allocated + chunks;
-        if (nextPosToSearchFrom >= hh.h().actualChunksPerSegment)
-            nextPosToSearchFrom = 0L;
-        nextPosToSearchFrom(nextPosToSearchFrom);
+        if (fromPos < lowestPossiblyFreeChunk())
+            lowestPossiblyFreeChunk(fromPos);
     }
 
     public void verifyTierCountersAreaData() {
