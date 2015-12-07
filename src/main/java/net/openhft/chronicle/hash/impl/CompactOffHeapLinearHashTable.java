@@ -26,6 +26,7 @@ public abstract class CompactOffHeapLinearHashTable {
     // to fit 64 bits per slot.
     public static final int MAX_TIER_CHUNKS = 1 << 30;
     public static final int MAX_TIER_ENTRIES = 1 << 29;
+    public static final double MAX_LOAD_FACTOR = .2/.3;
 
 
     public static int valueBits(long actualChunksPerSegment) {
@@ -57,7 +58,7 @@ public abstract class CompactOffHeapLinearHashTable {
         if (entriesPerSegment < 0L)
             throw new IllegalArgumentException("entriesPerSegment should be positive");
         long capacity = Maths.nextPower2(entriesPerSegment, 64L);
-        if (((double) entriesPerSegment) / (double) capacity > 2./3.) {
+        if (((double) entriesPerSegment) / (double) capacity > MAX_LOAD_FACTOR) {
             // hash lookup shouldn't be too dense
             capacity <<= 1L;
         }

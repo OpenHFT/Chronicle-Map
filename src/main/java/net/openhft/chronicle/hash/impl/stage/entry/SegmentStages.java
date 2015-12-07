@@ -635,7 +635,9 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
                     " chucks, " + h.maxChunksPerEntry + " is maximum.");
         }
         long lowestPossiblyFreeChunk = lowestPossiblyFreeChunk();
-        if (lowestPossiblyFreeChunk == h.actualChunksPerSegmentTier)
+        if (lowestPossiblyFreeChunk + chunks > h.actualChunksPerSegmentTier)
+            return -1;
+        if (tierEntries() >= h.maxEntriesPerHashLookup)
             return -1;
         assert lowestPossiblyFreeChunk < h.actualChunksPerSegmentTier;
         long ret = freeList.setNextNContinuousClearBits(lowestPossiblyFreeChunk, chunks);

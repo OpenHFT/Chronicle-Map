@@ -106,6 +106,7 @@ public abstract class VanillaChronicleHash<K,
     public int tierHashLookupKeyBits;
     public int tierHashLookupEntrySize;
     public long tierHashLookupCapacity;
+    public long maxEntriesPerHashLookup;
     long tierHashLookupInnerSize;
     public long tierHashLookupOuterSize;
 
@@ -194,6 +195,7 @@ public abstract class VanillaChronicleHash<K,
                     "but hash lookup slot is " + tierHashLookupEntrySize);
         }
         tierHashLookupCapacity = CompactOffHeapLinearHashTable.capacityFor(entriesPerSegment);
+        maxEntriesPerHashLookup = (long) (tierHashLookupCapacity * MAX_LOAD_FACTOR);
         tierHashLookupInnerSize = tierHashLookupCapacity * tierHashLookupEntrySize;
         tierHashLookupOuterSize = CACHE_LINES.align(tierHashLookupInnerSize, BYTES);
 
@@ -255,6 +257,7 @@ public abstract class VanillaChronicleHash<K,
         tierHashLookupKeyBits = wireIn.read(() -> "tierHashLookupKeyBits").int32();
         tierHashLookupEntrySize = wireIn.read(() -> "tierHashLookupEntrySize").int32();
         tierHashLookupCapacity = wireIn.read(() -> "tierHashLookupCapacity").int64();
+        maxEntriesPerHashLookup = wireIn.read(() -> "maxEntriesPerHashLookup").int64();
         tierHashLookupInnerSize = wireIn.read(() -> "tierHashLookupInnerSize").int64();
         tierHashLookupOuterSize = wireIn.read(() -> "tierHashLookupOuterSize").int64();
 
@@ -300,6 +303,7 @@ public abstract class VanillaChronicleHash<K,
         wireOut.write(() -> "tierHashLookupKeyBits").int32(tierHashLookupKeyBits);
         wireOut.write(() -> "tierHashLookupEntrySize").int32(tierHashLookupEntrySize);
         wireOut.write(() -> "tierHashLookupCapacity").int64(tierHashLookupCapacity);
+        wireOut.write(() -> "maxEntriesPerHashLookup").int64(maxEntriesPerHashLookup);
         wireOut.write(() -> "tierHashLookupInnerSize").int64(tierHashLookupInnerSize);
         wireOut.write(() -> "tierHashLookupOuterSize").int64(tierHashLookupOuterSize);
 
